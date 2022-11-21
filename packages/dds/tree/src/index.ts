@@ -71,6 +71,8 @@ export {
     FieldAnchor,
     RevisionTag,
     TaggedChange,
+    RepairDataStore,
+    ReadonlyRepairDataStore,
 } from "./core";
 
 export {
@@ -121,6 +123,7 @@ export {
     FieldChangeset,
     FieldChange,
     ToDelta,
+    NodeReviver,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
@@ -143,6 +146,7 @@ export {
     typeSymbol,
     typeNameSymbol,
     valueSymbol,
+    indexSymbol,
     proxyTargetSymbol,
     getField,
     createField,

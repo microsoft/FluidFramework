@@ -5,14 +5,13 @@
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { ObjectForest } from "../../feature-libraries/object-forest";
+import { buildForest } from "../../feature-libraries/object-forest";
 
 import { InMemoryStoredSchemaRepository } from "../../schema-stored";
 import { jsonSchemaData } from "../../domains";
 import { defaultSchemaPolicy } from "../../feature-libraries";
 import { testForest } from "../forestTestSuite";
 
-testForest(
-    "object-forest",
-    () => new ObjectForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData)),
+testForest("object-forest", () =>
+    buildForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData)),
 );

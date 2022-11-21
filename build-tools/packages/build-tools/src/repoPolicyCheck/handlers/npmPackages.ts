@@ -13,9 +13,9 @@ import * as readline from "readline";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
-import { IPackageManifest } from "../../common/fluidRepo";
-import { getPackageManifest } from "../../common/fluidUtils";
-import { IPackage } from "../../common/npmPackage";
+import { IFluidBuildConfig } from "../../common/fluidRepo";
+import { getFluidBuildConfig } from "../../common/fluidUtils";
+import { PackageJson } from "../../common/npmPackage";
 import { Handler, readFile, writeFile } from "../common";
 
 const licenseId = "MIT";
@@ -35,7 +35,7 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
  */
 let _tildeDependencies: string[] | undefined;
 
-const getTildeDependencies = (manifest: IPackageManifest | undefined) => {
+const getTildeDependencies = (manifest: IFluidBuildConfig | undefined) => {
     if (_tildeDependencies === undefined) {
         _tildeDependencies = manifest?.policy?.dependencies?.requireTilde ?? [];
     }
@@ -498,7 +498,7 @@ export const handlers: Handler[] = [
         match,
         handler: (file, root) => {
             let jsonStr: string;
-            let json: IPackage;
+            let json: PackageJson;
             try {
                 jsonStr = readFile(file);
                 json = JSON.parse(jsonStr);
@@ -509,7 +509,7 @@ export const handlers: Handler[] = [
             const ret: string[] = [];
 
             const { dependencies, devDependencies } = json;
-            const manifest = getPackageManifest(root);
+            const manifest = getFluidBuildConfig(root);
             const tildeDependencies = getTildeDependencies(manifest);
             if (dependencies !== undefined) {
                 for (const [dep, ver] of Object.entries(json.dependencies)) {
