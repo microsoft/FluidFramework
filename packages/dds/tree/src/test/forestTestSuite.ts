@@ -38,7 +38,7 @@ import {
     rootFieldKeySymbol,
     UpPath,
 } from "../tree";
-import { brand } from "../util";
+import { brand, brandOpaque } from "../util";
 import { FieldKinds, singleTextCursor } from "../feature-libraries";
 import { MockDependent } from "./utils";
 import { testJsonableTreeCursor } from "./cursorTestSuite";
@@ -250,8 +250,39 @@ export function testForest(
             );
         });
 
-        // TODO: test more kinds of deltas, including moves.
+        it("clone", () => {
+            const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+            const content: JsonableTree[] = [
+                { type: jsonNumber.name, value: 1 },
+                { type: jsonNumber.name, value: 2 },
+            ];
+            initializeForest(forest, content.map(singleTextCursor));
+        });
+
         describe("can apply deltas with", () => {
+            const nestedContent: JsonableTree[] = [
+                {
+                    type: jsonObject.name,
+                    fields: {
+                        x: [
+                            {
+                                type: jsonNumber.name,
+                                value: 0,
+                            },
+                        ],
+                        y: [
+                            {
+                                type: jsonNumber.name,
+                                value: 1,
+                            },
+                        ],
+                    },
+                },
+            ];
+
+            const xField = brand<FieldKey>("x");
+            const yField = brand<FieldKey>("y");
+
             it("ensures cursors are cleared before applying deltas", () => {
                 const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
                 const content: JsonableTree[] = [{ type: jsonNumber.name, value: 1 }];
@@ -299,28 +330,8 @@ export function testForest(
 
             it("set fields", () => {
                 const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
-                const content: JsonableTree[] = [
-                    {
-                        type: jsonObject.name,
-                        fields: {
-                            x: [
-                                {
-                                    type: jsonNumber.name,
-                                    value: 0,
-                                },
-                            ],
-                            y: [
-                                {
-                                    type: jsonNumber.name,
-                                    value: 1,
-                                },
-                            ],
-                        },
-                    },
-                ];
-                initializeForest(forest, content.map(singleTextCursor));
+                initializeForest(forest, nestedContent.map(singleTextCursor));
 
-                const xField = brand<FieldKey>("x");
                 const setField: Delta.Modify = {
                     type: Delta.MarkType.Modify,
                     fields: new Map([
@@ -358,7 +369,6 @@ export function testForest(
                 ];
                 initializeForest(forest, content.map(singleTextCursor));
 
-                // TODO: does this select what to delete?
                 const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
                 const delta: Delta.Root = new Map([[rootFieldKeySymbol, [0, mark]]]);
                 // TODO: make type-safe
@@ -396,6 +406,223 @@ export function testForest(
                 assert.equal(forest.tryMoveCursorToNode(anchor, reader), TreeNavigationResult.Ok);
                 assert.equal(reader.value, 1);
                 assert.equal(reader.nextNode(), false);
+            });
+
+            it("insert", () => {
+                const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+                const content: JsonableTree[] = [
+                    { type: jsonNumber.name, value: 1 },
+                    { type: jsonNumber.name, value: 2 },
+                ];
+                initializeForest(forest, content.map(singleTextCursor));
+
+                const mark: Delta.Insert = {
+                    type: Delta.MarkType.Insert,
+                    content: [{ type: jsonNumber.name, value: 3 }].map(singleTextCursor),
+                };
+                const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
+                // TODO: make type-safe
+                forest.applyDelta(delta);
+
+                const reader = forest.allocateCursor();
+                moveToDetachedField(forest, reader);
+                assert(reader.firstNode());
+                assert.equal(reader.value, 3);
+                assert.equal(reader.nextNode(), true);
+                assert.equal(reader.value, 1);
+                assert.equal(reader.nextNode(), true);
+                assert.equal(reader.value, 2);
+                assert.equal(reader.nextNode(), false);
+            });
+
+            it("move out and move in", () => {
+                const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+                initializeForest(forest, nestedContent.map(singleTextCursor));
+
+                const moveId = brandOpaque<Delta.MoveId>(0);
+                const moveOut: Delta.MoveOut = {
+                    type: Delta.MarkType.MoveOut,
+                    count: 1,
+                    moveId,
+                };
+                const moveIn: Delta.MoveIn = {
+                    type: Delta.MarkType.MoveIn,
+                    moveId,
+                };
+                const modify: Delta.Modify = {
+                    type: Delta.MarkType.Modify,
+                    fields: new Map([
+                        [xField, [moveOut]],
+                        [yField, [1, moveIn]],
+                    ]),
+                };
+                // TODO: make type-safe
+                const delta: Delta.Root = new Map([[rootFieldKeySymbol, [modify]]]);
+                forest.applyDelta(delta);
+
+                const reader = forest.allocateCursor();
+                moveToDetachedField(forest, reader);
+                assert(reader.firstNode());
+                reader.enterField(xField);
+                assert.equal(reader.getFieldLength(), 0);
+                reader.exitField();
+                reader.enterField(yField);
+                assert.equal(reader.getFieldLength(), 2);
+            });
+
+            it("insert and modify", () => {
+                const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+                const content: JsonableTree[] = [
+                    { type: jsonNumber.name, value: 1 },
+                    { type: jsonNumber.name, value: 2 },
+                ];
+                initializeForest(forest, content.map(singleTextCursor));
+
+                const mark: Delta.InsertAndModify = {
+                    type: Delta.MarkType.InsertAndModify,
+                    content: singleTextCursor({ type: jsonNumber.name, value: 3 }),
+                    fields: new Map([
+                        [
+                            brand("newField"),
+                            [
+                                {
+                                    type: Delta.MarkType.Insert,
+                                    content: [{ type: jsonNumber.name, value: 4 }].map(
+                                        singleTextCursor,
+                                    ),
+                                },
+                            ],
+                        ],
+                    ]),
+                };
+                const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
+                // TODO: make type-safe
+                forest.applyDelta(delta);
+
+                const reader = forest.allocateCursor();
+                moveToDetachedField(forest, reader);
+                assert(reader.firstNode());
+                assert.equal(reader.value, 3);
+                reader.enterField(brand("newField"));
+                assert(reader.firstNode());
+                assert.equal(reader.value, 4);
+                assert.equal(reader.nextNode(), false);
+                reader.exitField();
+                assert.equal(reader.nextNode(), true);
+                assert.equal(reader.value, 1);
+                assert.equal(reader.nextNode(), true);
+                assert.equal(reader.value, 2);
+                assert.equal(reader.nextNode(), false);
+            });
+
+            it("modify and delete", () => {
+                const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+                initializeForest(forest, nestedContent.map(singleTextCursor));
+
+                const mark: Delta.ModifyAndDelete = {
+                    type: Delta.MarkType.ModifyAndDelete,
+                    fields: new Map([[xField, []]]),
+                };
+                const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
+                // TODO: make type-safe
+                forest.applyDelta(delta);
+
+                const reader = forest.allocateCursor();
+                moveToDetachedField(forest, reader);
+                assert.equal(reader.firstNode(), false);
+                reader.enterField(xField);
+                assert.equal(reader.firstNode(), false);
+            });
+
+            it("modify and move out", () => {
+                const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+                initializeForest(forest, nestedContent.map(singleTextCursor));
+
+                const moveId = brandOpaque<Delta.MoveId>(0);
+                const mark: Delta.Modify = {
+                    type: Delta.MarkType.Modify,
+                    fields: new Map([
+                        [
+                            xField,
+                            [
+                                {
+                                    type: Delta.MarkType.ModifyAndMoveOut,
+                                    setValue: 2,
+                                    moveId,
+                                },
+                            ],
+                        ],
+                        [yField, [{ type: Delta.MarkType.MoveIn, moveId }]],
+                    ]),
+                };
+                const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
+                // TODO: make type-safe
+                forest.applyDelta(delta);
+
+                const reader = forest.allocateCursor();
+                moveToDetachedField(forest, reader);
+                assert(reader.firstNode());
+                reader.enterField(xField);
+                assert.equal(reader.getFieldLength(), 0);
+                reader.exitField();
+                reader.enterField(yField);
+                assert(reader.firstNode());
+                assert.equal(reader.value, 2);
+                assert.equal(reader.nextNode(), true);
+            });
+
+            it.only("move in and modify", () => {
+                const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+                initializeForest(forest, nestedContent.map(singleTextCursor));
+
+                const moveId = brandOpaque<Delta.MoveId>(0);
+                const newField: FieldKey = brand("newField");
+                const mark: Delta.Modify = {
+                    type: Delta.MarkType.Modify,
+                    fields: new Map([
+                        [xField, [{ type: Delta.MarkType.MoveOut, count: 1, moveId }]],
+                        [
+                            yField,
+                            [
+                                {
+                                    type: Delta.MarkType.MoveInAndModify,
+                                    moveId,
+                                    fields: new Map([
+                                        [
+                                            newField,
+                                            [
+                                                {
+                                                    type: Delta.MarkType.Insert,
+                                                    content: [
+                                                        { type: jsonNumber.name, value: 2 },
+                                                    ].map(singleTextCursor),
+                                                },
+                                            ],
+                                        ],
+                                    ]),
+                                },
+                            ],
+                        ],
+                    ]),
+                };
+                const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
+                // TODO: make type-safe
+                forest.applyDelta(delta);
+
+                const reader = forest.allocateCursor();
+                moveToDetachedField(forest, reader);
+                assert(reader.firstNode());
+                reader.enterField(xField);
+                assert.equal(reader.getFieldLength(), 0);
+                reader.exitField();
+                reader.enterField(yField);
+                assert.equal(reader.getFieldLength(), 2);
+                assert(reader.firstNode());
+                assert.equal(reader.value, 0);
+                reader.enterField(newField);
+                assert.equal(reader.getFieldLength(), 1);
+                assert(reader.firstNode());
+                assert.equal(reader.value, 2);
             });
         });
 
