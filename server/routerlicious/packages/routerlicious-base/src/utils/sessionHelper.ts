@@ -159,24 +159,18 @@ async function updateExistingSession(
         );
         // There is no document with isSessionAlive as false. It means this session has been discovered by
         // another call, and there is a race condition with different clients writing truth into the cosmosdb
-        // from different clusters. Thus, let it call getSession for maximum three times.
-        if (!result.existing && count === 3) {
-            Lumberjack.error(`Error running getSession: retryCount ${count}`,
-                lumberjackProperties);
-            throw new Error(`Error running getSession: retryCount ${count}`);
-        } else if (!result.existing && count < 3) {
-            Lumberjack.info(
-                `The document with isSessionAlive as false does not exist`,
-                lumberjackProperties,
-            );
-            return getSession(ordererUrl,
-                historianUrl,
-                deltaStreamUrl,
-                tenantId,
-                documentId,
-                documentsCollection,
-                sessionStickinessDurationMs,
-                count + 1);
+        // from different clusters. Thus, let it get the truth from the cosmosdb with isSessionAlive as true.
+        if (!result.existing) {
+            Lumberjack.info(`The document with isSessionAlive as false does not exist`, lumberjackProperties);
+            const doc: IDocument = await documentsCollection.findOne({ tenantId, documentId, "session.isSessionAlive": true,});
+            if (!doc && !doc.session) {
+                Lumberjack.error(
+                    `Error running getSession from document: ${JSON.stringify(doc)}`,
+                    lumberjackProperties,
+                );
+                throw new Error(`Error running getSession, please try again`);
+            }
+            return doc.session;
         } else {
             Lumberjack.info(
                 `The Session ${JSON.stringify(updatedSession)} was updated into the documents collection`,
