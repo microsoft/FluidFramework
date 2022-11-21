@@ -42,8 +42,10 @@ export interface ClientDebugViewProps extends HasClientDebugger, HasContainerId 
 	 * Rendering policies for different kinds of Fluid client and object data.
 	 *
 	 * @defaultValue Strictly use default visualization policies.
+     *
+     * @privateRemarks TODO: get render options from debugger object.
 	 */
-	renderOptions?: RenderOptions; // TODO: get render options from debugger object
+	renderOptions?: RenderOptions;
 }
 
 /**
