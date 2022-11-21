@@ -27,12 +27,22 @@ describe("Idle task scheduler", () => {
     }
 
     it("Should schedule and run a synchronous task during idle time", async () => {
-        const promise = idleTask.scheduleIdleTask(() => {
-            return someTask(5);
-        }, 1000);
-
-        clock.tick(1100);
-        return promise.then((result) => assert(result));
+        let success = false;
+        (globalThis as any).requestIdleCallback = idleTask.scheduleIdleTask;
+        await new Promise((resolve, reject) => {
+            try {
+                resolve(async () => {
+                    requestIdleCallback(() => {
+                        someTask(5);
+                    });
+                });
+            } catch (e) {
+                reject(e);
+            }
+        }).then(() => {
+            success = true;
+        });
+        assert(success);
     });
 
     it("Should fall back to setTimeout when idle Task API is not available", async () => {
