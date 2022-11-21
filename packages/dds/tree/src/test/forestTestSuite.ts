@@ -571,7 +571,8 @@ export function testForest(
                 assert.equal(reader.nextNode(), true);
             });
 
-            it.only("move in and modify", () => {
+            // TODO:#2592: Unskip once MoveInAndModify is properly supported.
+            it.skip("move in and modify", () => {
                 const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
                 initializeForest(forest, nestedContent.map(singleTextCursor));
 
