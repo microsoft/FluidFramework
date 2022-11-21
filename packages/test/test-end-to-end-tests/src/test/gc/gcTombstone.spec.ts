@@ -609,10 +609,11 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
 
         itExpects("does not throw tombstone errors when ThrowOnTombstoneUsage setting is not enabled",
         [
-            { eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded" },
-            { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed", callSite: "submitMessage" },
-            { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed", callSite: "process" },
             { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested" },
+            { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded" },
+            { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed", callSite: "submitMessage" },
+            { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed", callSite: "process", clientType: "noninteractive/summarizer" },
+            { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed", callSite: "process", clientType: "interactive" },
         ],
         async () => {
             settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
@@ -621,25 +622,23 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
                 summarizingContainer,
                 summarizer,
             } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
-
-            // Use the request pattern to get the testDataObject - this is unsafe and no one should do this in their
-            // production application - causes a sweep ready loaded error
-            const dataObject = await requestFluidObject<ITestDataObject>(summarizingContainer, unreferencedId);
+            await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
 
             // The datastore should be tombstoned now
-            await summarize(summarizer);
-
+            const { summaryVersion } = await summarize(summarizer);
+            const container = await loadContainer(summaryVersion);
+            // Requesting the tombstoned data store should succeed since ThrowOnTombstoneUsage is not enabled.
+            // Logs a tombstone and sweep ready error
+            const dataObject = await requestFluidObject<ITestDataObject>(container, unreferencedId);
             // Modifying the tombstoned datastore should not fail since ThrowOnTombstoneUsage is not enabled.
+            // Logs a submitMessage error
             assert.doesNotThrow(() => dataObject._root.set("send", "op"),
                 `Should be able to send ops for a tombstoned datastore.`,
             );
 
             // Wait for the above op to be process. That will result in another error logged during process.
+            // Both the summarizing container and the submitting container log a process error
             await provider.ensureSynchronized();
-
-            // Requesting the tombstoned data store should succeed since ThrowOnTombstoneUsage is not enabled.
-            const response = await dataObject._context.IFluidHandleContext.resolveHandle({ url: unreferencedId });
-            assert(response?.status === 200, `Expecting a 200 response!`);
         });
     });
 
