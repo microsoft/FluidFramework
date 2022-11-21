@@ -24,7 +24,7 @@ export interface ISignalEnvelope {
     /**
      * The target for the envelope, undefined for the container
      */
-    address?: string;
+    address?: string; // GUID
 
     /**
      * Identifier for the signal being submitted.
@@ -36,7 +36,7 @@ export interface ISignalEnvelope {
      */
     contents: {
         type: string;
-        content: any;
+        content: any; // no idea of what is in here, only knows how to get the envelope to where it is
     };
 }
 

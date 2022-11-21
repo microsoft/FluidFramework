@@ -37,6 +37,14 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
      */
     protected async containerHasInitialized(runtime: IContainerRuntime) {
         runtime.on("signal", (message) => {
+            console.log("I am inside the example app container and I am now receiving the message");
+            console.log(message);
+            console.log(this);
+            // this.handleExternalDataSignal(message);
+            if (message.clientId === null) {
+                if (message.type === "externalDataChange") {
+                }
+            }
             // TODO: Check the message type? clientId?  And route to the TaskList for interpretation?
             // Interpretation of the message contents should probably live on the TaskList to encapsulate
             // knowledge of the task-specific data.

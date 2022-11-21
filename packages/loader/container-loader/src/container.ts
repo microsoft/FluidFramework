@@ -70,6 +70,7 @@ import {
     ISummaryTree,
     IVersion,
     MessageType,
+    SignalType,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -1763,13 +1764,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private processSignal(message: ISignalMessage) {
         // No clientId indicates a system signal message.
         console.log("here I am in processSignal -- how can I find a way to differentiate between protocol signals and non-protocol ones?");
-        console.log(`message.clientId: ${ message.clientId}`);
-        console.log(`message.content: ${ JSON.stringify(message.content)}`);
-        if (message.clientId === null) {
+        console.log(message);
+        if (message.clientId === null && message.content.type === SignalType.ExternalDataChange) {
+            console.log('I am correctly processing this signal');
+            const local = this.clientId === message.clientId;
+            this.context.processSignal(message, local); // what is local??
+        } else if (message.clientId === null) {
+            console.log('I am NOT correctly processing this signal branch 1');
             this.protocolHandler.processSignal(message);
         } else {
+            console.log('I am NOT correctly processing this signal branch 2');
             const local = this.clientId === message.clientId;
-            this.context.processSignal(message, local);
+            this.context.processSignal(message, local); // what is local??
         }
     }
 
