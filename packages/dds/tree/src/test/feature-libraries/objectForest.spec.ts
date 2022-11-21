@@ -3,15 +3,40 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { buildForest } from "../../feature-libraries/object-forest";
 
 import { InMemoryStoredSchemaRepository } from "../../schema-stored";
 import { jsonSchemaData } from "../../domains";
-import { defaultSchemaPolicy } from "../../feature-libraries";
+import {
+    defaultSchemaPolicy,
+    jsonableTreeFromCursor,
+    singleTextCursor,
+} from "../../feature-libraries";
 import { testForest } from "../forestTestSuite";
+import { testJsonableTreeCursor } from "../cursorTestSuite";
+import { initializeForest, moveToDetachedField } from "../../forest";
+import { ITreeCursor } from "../../tree";
 
 testForest("object-forest", () =>
     buildForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData)),
+);
+
+testJsonableTreeCursor(
+    "object-forest cursor",
+    (data): ITreeCursor => {
+        const forest = buildForest(
+            new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData),
+        );
+        initializeForest(forest, [singleTextCursor(data)]);
+        const cursor = forest.allocateCursor();
+        moveToDetachedField(forest, cursor);
+        assert(cursor.firstNode());
+        return cursor;
+    },
+    jsonableTreeFromCursor,
+    false,
 );

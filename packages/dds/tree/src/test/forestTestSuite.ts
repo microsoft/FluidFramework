@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { defaultSchemaPolicy, isNeverField, jsonableTreeFromCursor } from "..";
+import { defaultSchemaPolicy, isNeverField } from "..";
 import {
     fieldSchema,
     InMemoryStoredSchemaRepository,
@@ -32,7 +32,6 @@ import {
     clonePath,
     Delta,
     FieldKey,
-    ITreeCursor,
     JsonableTree,
     mapCursorField,
     rootFieldKey,
@@ -42,7 +41,6 @@ import {
 import { brand, brandOpaque } from "../util";
 import { FieldKinds, singleTextCursor } from "../feature-libraries";
 import { MockDependent } from "./utils";
-import { testJsonableTreeCursor } from "./cursorTestSuite";
 
 /**
  * Generic forest test suite
@@ -51,7 +49,7 @@ export function testForest(
     suiteName: string,
     factory: (schema: StoredSchemaRepository) => IEditableForest,
 ): void {
-    describe.only(suiteName, () => {
+    describe(suiteName, () => {
         const nestedContent: JsonableTree[] = [
             {
                 type: jsonObject.name,
@@ -721,22 +719,6 @@ export function testForest(
             });
         });
     });
-
-    testJsonableTreeCursor(
-        "object-forest cursor",
-        (data): ITreeCursor => {
-            const forest = factory(
-                new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData),
-            );
-            initializeForest(forest, [singleTextCursor(data)]);
-            const cursor = forest.allocateCursor();
-            moveToDetachedField(forest, cursor);
-            assert(cursor.firstNode());
-            return cursor;
-        },
-        jsonableTreeFromCursor,
-        false,
-    );
 
     // TODO: implement and test fine grained invalidation.
 }
