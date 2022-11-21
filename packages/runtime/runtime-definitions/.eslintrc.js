@@ -5,9 +5,9 @@
 
 module.exports = {
     "parserOptions": {
-        "project": ["./tsconfig.json", "./src/test/tsconfig.json"], "prettier"
+        "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },
     "extends": [
-        "@fluidframework/eslint-config-fluid"
+        "@fluidframework/eslint-config-fluid", "prettier"
     ]
 }
