@@ -54,7 +54,7 @@ import {
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
-import { enableThrowOnTombstoneUsageKey, GCNodeType } from "./garbageCollection";
+import { throwOnTombstoneUsageKey, GCNodeType } from "./garbageCollection";
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -83,7 +83,7 @@ export class DataStores implements IDisposable {
     // root data stores that are added.
     private dataStoresSinceLastGC: string[] = [];
     /** If true, throw an error when a tombstone data store is retrieved. */
-    private readonly shouldThrowOnTombstoneUsage: boolean;
+    private readonly throwOnTombstoneUsage: boolean;
     // The handle to the container runtime. This is used mainly for GC purposes to represent outbound reference from
     // the container runtime to other nodes.
     private readonly containerRuntimeHandle: IFluidHandle;
@@ -115,7 +115,7 @@ export class DataStores implements IDisposable {
             return baseGCDetails.get(dataStoreId);
         };
         // Read the feature flag that tells whether to throw when a tombstone data store is used.
-        this.shouldThrowOnTombstoneUsage = this.mc.config.getBoolean(enableThrowOnTombstoneUsageKey) === true;
+        this.throwOnTombstoneUsage = this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true;
 
         // Extract stores stored inside the snapshot
         const fluidDataStores = new Map<string, ISnapshotTree>();
@@ -444,8 +444,8 @@ export class DataStores implements IDisposable {
             }, error);
 
             // Always log an error when tombstoned data store is used. However, throw an error only if
-            // shouldThrowOnTombstoneUsage is set.
-            if (this.shouldThrowOnTombstoneUsage) {
+            // throwOnTombstoneUsage is set.
+            if (this.throwOnTombstoneUsage) {
                 throw error;
             }
         }

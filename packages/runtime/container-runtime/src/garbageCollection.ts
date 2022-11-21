@@ -81,7 +81,7 @@ export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
 // Feature gate key to disable the tombstone feature, i.e., tombstone information is not read / written into summary.
 export const disableTombstoneKey = "Fluid.GarbageCollection.DisableTombstone";
 // Feature gate to enable throwing an error when tombstone object is used.
-export const enableThrowOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombstoneUsage";
+export const throwOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombstoneUsage";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;

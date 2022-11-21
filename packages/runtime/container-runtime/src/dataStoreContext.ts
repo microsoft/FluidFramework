@@ -87,7 +87,7 @@ import {
     getAttributesFormatVersion,
     getFluidDataStoreAttributes,
 } from "./summaryFormat";
-import { enableThrowOnTombstoneUsageKey } from "./garbageCollection";
+import { throwOnTombstoneUsageKey } from "./garbageCollection";
 
 function createAttributes(
     pkg: readonly string[],
@@ -208,7 +208,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private _tombstoned = false;
     public get tombstoned() { return this._tombstoned; }
     /** If true, throw an error when a tombstone data store is used. */
-    private readonly shouldThrowOnTombstoneUsage: boolean;
+    private readonly throwOnTombstoneUsage: boolean;
 
     public get attachState(): AttachState {
         return this._attachState;
@@ -310,7 +310,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.pendingOpsCountThreshold, this.mc.logger);
 
         // Read the feature flag that tells whether to throw when a tombstone data store is used.
-        this.shouldThrowOnTombstoneUsage = this.mc.config.getBoolean(enableThrowOnTombstoneUsageKey) === true;
+        this.throwOnTombstoneUsage = this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true;
     }
 
     public dispose(): void {
@@ -778,14 +778,14 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             });
 
             // Always log an error when tombstoned data store is used. However, throw an error only if
-            // shouldThrowOnTombstoneUsage is set.
+            // throwOnTombstoneUsage is set.
             this.mc.logger.sendErrorEvent({
                 eventName: "GC_Tombstone_DataStore_Changed",
                 callSite,
                 pkg: packagePathToTelemetryProperty(this.pkg),
             }, error);
 
-            if (this.shouldThrowOnTombstoneUsage) {
+            if (this.throwOnTombstoneUsage) {
                 throw error;
             }
         }
