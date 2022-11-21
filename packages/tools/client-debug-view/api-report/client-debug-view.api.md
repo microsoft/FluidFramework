@@ -26,6 +26,9 @@ export interface AudienceMemberViewProps {
 export function ClientDebugView(props: ClientDebugViewProps): React_2.ReactElement;
 
 // @public
+export const clientDebugViewClassName = "fluid-client-debug-view";
+
+// @public
 export interface ClientDebugViewProps extends HasClientDebugger, HasContainerId {
     renderOptions?: RenderOptions;
 }
@@ -35,6 +38,14 @@ export const defaultRenderOptions: Required<RenderOptions>;
 
 // @public
 export const defaultSharedObjectRenderers: SharedObjectRenderOptions;
+
+// @public
+export function FluidClientDebugger(props: FluidClientDebuggerProps): React_2.ReactElement;
+
+// @public
+export interface FluidClientDebuggerProps extends HasContainerId {
+    renderOptions?: RenderOptions;
+}
 
 // @public
 export function getRenderOptionsWithDefaults(userOptions: RenderOptions | undefined): Required<RenderOptions>;
