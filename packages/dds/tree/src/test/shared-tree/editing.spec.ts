@@ -4,7 +4,7 @@
  */
 import { strict as assert } from "assert";
 import { singleTextCursor } from "../../feature-libraries";
-import { jsonString, singleJsonCursor } from "../../domains";
+import { jsonString } from "../../domains";
 import { rootFieldKeySymbol } from "../../tree";
 import { TransactionResult } from "../../checkout";
 import { JsonCompatible } from "../../util";
@@ -14,7 +14,7 @@ describe("Editing", () => {
     describe("Sequence Field", () => {
         it("can rebase dependent inserts", async () => {
             const sequencer = new Sequencer();
-            const tree1 = new TestTree({ state: singleJsonCursor("y") });
+            const tree1 = TestTree.fromJson("y");
             const tree2 = tree1.fork();
 
             const x = insert(tree1, 0, "x");

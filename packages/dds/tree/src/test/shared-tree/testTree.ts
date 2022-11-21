@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { Jsonable } from "@fluidframework/datastore-definitions";
 import { v4 as uuid } from "uuid";
 import {
     AnchorSet,
@@ -42,7 +43,6 @@ export interface TestTreeEdit {
 
 export interface TestTreeOptions {
     sessionId?: string;
-    state?: ITreeCursorSynchronous[] | ITreeCursorSynchronous;
     schemaPolicy?: SchemaPolicy;
 }
 
@@ -59,9 +59,28 @@ function commandWithResult(command: SucceedingCommand) {
 }
 
 export class TestTree {
+    static fromForest(forest: IEditableForest, options: TestTreeOptions = {}): TestTree {
+        return new TestTree(forest, options);
+    }
+
+    static fromCursor(
+        cursor: ITreeCursorSynchronous[] | ITreeCursorSynchronous,
+        options: TestTreeOptions = {},
+    ): TestTree {
+        const schemaPolicy = options.schemaPolicy ?? defaultSchemaPolicy;
+        const schema = new InMemoryStoredSchemaRepository(schemaPolicy);
+        const forest = buildForest(schema);
+        initializeForest(forest, Array.isArray(cursor) ? cursor : [cursor]);
+        return TestTree.fromForest(forest, options);
+    }
+
+    static fromJson<T>(json: Jsonable<T>[] | Jsonable<T>, options: TestTreeOptions = {}): TestTree {
+        const cursors = Array.isArray(json) ? json.map(singleJsonCursor) : singleJsonCursor(json);
+        return TestTree.fromCursor(cursors, options);
+    }
+
     public readonly sessionId: string;
     public readonly forest: IEditableForest;
-    public readonly builder: DefaultEditBuilder;
     public readonly editManager: EditManager<DefaultChangeset, DefaultChangeFamily>;
     public readonly schemaPolicy: SchemaPolicy;
 
@@ -76,23 +95,10 @@ export class TestTree {
         return this._remoteEditsApplied;
     }
 
-    public constructor(options: TestTreeOptions = {}) {
-        const { state } = options;
+    private constructor(forest: IEditableForest, options: TestTreeOptions = {}) {
         this.schemaPolicy = options.schemaPolicy ?? defaultSchemaPolicy;
         this.sessionId = options.sessionId ?? uuid();
-        const schema = new InMemoryStoredSchemaRepository(this.schemaPolicy);
-        this.forest = buildForest(schema);
-        if (state !== undefined) {
-            initializeForest(this.forest, Array.isArray(state) ? state : [state]);
-        }
-        this.builder = new DefaultEditBuilder(
-            defaultChangeFamily,
-            (change) => {
-                const delta = defaultChangeFamily.intoDelta(change);
-                this.forest.applyDelta(delta);
-            },
-            new AnchorSet(),
-        );
+        this.forest = forest;
         this.editManager = new EditManager<DefaultChangeset, DefaultChangeFamily>(
             defaultChangeFamily,
         );
@@ -112,11 +118,10 @@ export class TestTree {
     }
 
     public fork(sessionId?: string): TestTree {
-        return new TestTree({
+        const forest = this.forest.clone(this.forest.schema, new AnchorSet()) as IEditableForest;
+        return TestTree.fromForest(forest, {
             sessionId,
             schemaPolicy: this.schemaPolicy,
-            // TODO: Use the forest's clone mechanism
-            state: this.jsonRoots().map<ITreeCursorSynchronous>((r) => singleJsonCursor<any>(r)),
         });
     }
 
