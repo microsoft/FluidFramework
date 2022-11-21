@@ -4,8 +4,6 @@
  */
 
 module.exports = {
-    "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid"),
-        "prettier"
-    ]
-}
+    mode: "production",
+    devtool: "source-map",
+};
