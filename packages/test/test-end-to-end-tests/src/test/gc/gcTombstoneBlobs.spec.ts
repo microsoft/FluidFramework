@@ -6,12 +6,10 @@
 import { strict as assert } from "assert";
 import {
     IGCRuntimeOptions,
-    ISummarizer, RuntimeHeaders,
+    ISummarizer,
 } from "@fluidframework/container-runtime";
 import {
-    create404Response,
-    exceptionToResponse,
-    requestFluidObject, responseToException } from "@fluidframework/runtime-utils";
+    requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ITestObjectProvider,
     createSummarizerWithContainer,
@@ -22,66 +20,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, itExpects } from "@fluidframework/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
-import { IFluidHandle, FluidObject, IFluidHandleContext, IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-
-class RemoteFluidObjectHandle implements IFluidHandle {
-    public get IFluidRouter() { return this; }
-    public get IFluidHandleContext() { return this; }
-    public get IFluidHandle() { return this; }
-
-    public readonly isAttached = true;
-    private objectP: Promise<FluidObject> | undefined;
-
-    /**
-     * Creates a new RemoteFluidObjectHandle when parsing an IFluidHandle.
-     * @param absolutePath - The absolute path to the handle from the container runtime.
-     * @param routeContext - The root IFluidHandleContext that has a route to this handle.
-     */
-    constructor(
-        public readonly absolutePath: string,
-        public readonly routeContext: IFluidHandleContext,
-    ) {
-        assert(absolutePath.startsWith("/"), "Handles should always have absolute paths");
-    }
-
-    public async get(): Promise<any> {
-        if (this.objectP === undefined) {
-            // Add `viaHandle` header to distinguish from requests from non-handle paths.
-            const request: IRequest = { url: this.absolutePath, headers: { [RuntimeHeaders.viaHandle]: true } };
-            this.objectP = this.routeContext.resolveHandle(request)
-                .then<FluidObject>((response) => {
-                    if (response.mimeType === "fluid/object") {
-                        const fluidObject: FluidObject = response.value;
-                        return fluidObject;
-                    }
-                    throw responseToException(response, request);
-                });
-        }
-        return this.objectP;
-    }
-
-    public attachGraph(): void {
-        return;
-    }
-
-    public bind(handle: IFluidHandle): void {
-        handle.attachGraph();
-    }
-
-    public async request(request: IRequest): Promise<IResponse> {
-        try {
-            const object: FluidObject<IFluidRouter> = await this.get();
-            const router = object.IFluidRouter;
-
-            return router !== undefined
-                ? router.request(request)
-                : create404Response(request);
-        } catch (error) {
-            return exceptionToResponse(error);
-        }
-    }
-}
+import { LoaderHeader } from "@fluidframework/container-definitions";
 
 describeNoCompat("GC tombstone blob tests", (getTestObjectProvider) => {
     const waitLessThanSweepTimeoutMs = 100;
@@ -187,11 +126,6 @@ describeNoCompat("GC tombstone blob tests", (getTestObjectProvider) => {
         };
     };
 
-    const sendOpToUpdateSummaryTimestampToNow = async (container: IContainer) => {
-        const defaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
-        defaultDataObject._root.set("send a", "op");
-    };
-
     // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
     itExpects("Handle request for tombstoned blobs fails in summarizing container loaded after sweep timeout",
     [
@@ -207,9 +141,6 @@ describeNoCompat("GC tombstone blob tests", (getTestObjectProvider) => {
             summarizingContainer,
             summarizer,
         } = await summarizationWithUnreferencedBlobAfterTime(sweepTimeoutMs);
-
-        await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
-
         // The blob should be tombstoned now
         const { summaryVersion } = await summarize(summarizer);
 
@@ -221,6 +152,8 @@ describeNoCompat("GC tombstone blob tests", (getTestObjectProvider) => {
         const response = await fluidHandleContext.resolveHandle({ url: absolutePath });
         assert(response?.status === 404, `Expecting a 404 response!`);
         assert(response.value.startsWith("Blob removed by gc:"));
+        assert(summarizingContainer.closed !== true, "Summarizing container should not have closed!");
+        assert(container.closed !== true, "Container does not close");
     });
 
     // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
@@ -243,9 +176,6 @@ describeNoCompat("GC tombstone blob tests", (getTestObjectProvider) => {
             summarizingContainer,
             summarizer,
         } = await summarizationWithUnreferencedBlobAfterTime(sweepTimeoutMs);
-
-        await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
-
         // The blob should be tombstoned now
         const { summaryVersion } = await summarize(summarizer);
 
@@ -256,5 +186,7 @@ describeNoCompat("GC tombstone blob tests", (getTestObjectProvider) => {
         // Requesting the tombstoned blob should succeed since ThrowOnTombstoneUsage is not enabled.
         const response = await fluidHandleContext.resolveHandle({ url: absolutePath });
         assert(response?.status === 200, `Expecting a 200 response!`);
+        assert(summarizingContainer.closed !== true, "Summarizing container should not have closed!");
+        assert(container.closed !== true, "Container does not close");
     });
 });
