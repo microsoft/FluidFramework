@@ -11,6 +11,7 @@ import {
 } from "@fluidframework/tinylicious-client";
 
 import {
+    getFluidClientDebugger,
 	IFluidClientDebugger,
 	initializeFluidClientDebugger as initializeFluidClientDebuggerBase,
 } from "@fluid-tools/client-debugger";
@@ -136,11 +137,13 @@ export async function loadExistingFluidContainer(
  */
 export function initializeFluidClientDebugger(containerInfo: ContainerInfo): IFluidClientDebugger {
 	/* eslint-disable @typescript-eslint/no-non-null-assertion */
-	return initializeFluidClientDebuggerBase({
+	initializeFluidClientDebuggerBase({
 		containerId: containerInfo.containerId,
 		container: containerInfo.container._getInternalContainer!(),
 		containerData: containerInfo.container.initialObjects,
 	});
+
+    return getFluidClientDebugger(containerInfo.containerId)!;
 	/* eslint-enable @typescript-eslint/no-non-null-assertion */
 }
 
