@@ -15,9 +15,8 @@ export const panelClassName = "fluid-debug-view-panel";
  * Container to display debug view within.
  * Mounts itself automatically to the right side of the screen.
  */
-export function DebuggerPanel({ containerId }: { containerId: string }): React.ReactElement {
+export function DebuggerView({ containerId }: { containerId: string }): React.ReactElement {
 	// KLUDGE until we have component that manages registry stuff.
-
 	return (
 		<div
 			style={{

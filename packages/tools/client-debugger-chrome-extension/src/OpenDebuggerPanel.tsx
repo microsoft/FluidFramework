@@ -8,7 +8,7 @@ import ReactDOM from "react-dom";
 import { getFluidClientDebuggers } from "@fluid-tools/client-debugger";
 
 import { debuggerPanelId } from "./Constants";
-import { DebuggerPanel } from "./DebuggerPanel";
+import { DebuggerView } from "./DebuggerView";
 import { isDebuggerPanelOpen } from "./Utilities";
 
 /**
@@ -36,7 +36,7 @@ export async function openDebuggerPanel(): Promise<boolean> {
 
 	return new Promise<boolean>((resolve) => {
 		try {
-			ReactDOM.render(<DebuggerPanel containerId={containerIdKLUDGE} />, element, () => {
+			ReactDOM.render(<DebuggerView containerId={containerIdKLUDGE} />, element, () => {
 				resolve(true);
 			});
 		} catch (error) {
