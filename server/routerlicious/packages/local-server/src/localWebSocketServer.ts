@@ -5,10 +5,13 @@
 
 import { EventEmitter } from "events";
 import { IPubSub, ISubscriber, WebSocketSubscriber } from "@fluidframework/server-memory-orderer";
-import * as core from "@fluidframework/server-services-core";
+import {
+    IWebSocket,
+    IWebSocketServer,
+} from "@fluidframework/server-services-core";
 import { v4 as uuid } from "uuid";
 
-export class LocalWebSocket implements core.IWebSocket {
+export class LocalWebSocket implements IWebSocket {
     private readonly events = new EventEmitter();
     private readonly rooms = new Set<string>();
     private readonly subscriber: ISubscriber;
@@ -71,7 +74,7 @@ export class LocalWebSocket implements core.IWebSocket {
     }
 }
 
-export class LocalWebSocketServer implements core.IWebSocketServer {
+export class LocalWebSocketServer implements IWebSocketServer {
     private readonly events = new EventEmitter();
 
     constructor(public readonly pubsub: IPubSub) { }
@@ -82,7 +85,6 @@ export class LocalWebSocketServer implements core.IWebSocketServer {
 
     public async close(): Promise<void> {
         this.events.removeAllListeners();
-        return Promise.resolve();
     }
 
     public createConnection(): LocalWebSocket {

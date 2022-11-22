@@ -2,18 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import * as semver from "semver";
 
-import { Context, exec, MonoRepo, Package, VersionBag } from "@fluidframework/build-tools";
+import { Context, MonoRepo, Package, VersionBag, exec } from "@fluidframework/build-tools";
+
 import {
-    bumpVersionScheme,
-    bumpRange,
-    isVersionBumpType,
-    isVersionBumpTypeExtended,
     VersionChangeType,
     VersionScheme,
+    bumpRange,
+    bumpVersionScheme,
     getVersionRange,
+    isVersionBumpType,
+    isVersionBumpTypeExtended,
 } from "@fluid-tools/version-tools";
-import * as semver from "semver";
 
 /**
  * A type representing the types of dependency updates that can be done. This type is intended to match the type
@@ -136,7 +137,8 @@ export async function bumpPackageDependencies(
 /**
  * Bumps a release group or standalone package by the bumpType.
  *
- * @param bumpType - The bump type.
+ * @param context - The {@link Context}.
+ * @param bumpType - The bump type. Can be a SemVer object to set an exact version.
  * @param releaseGroupOrPackage - A release group repo or package to bump.
  * @param scheme - The version scheme to use.
  *
@@ -146,7 +148,7 @@ export async function bumpReleaseGroup(
     context: Context,
     bumpType: VersionChangeType,
     releaseGroupOrPackage: MonoRepo | Package,
-    scheme: VersionScheme,
+    scheme?: VersionScheme,
 ) {
     const translatedVersion = isVersionBumpType(bumpType)
         ? bumpVersionScheme(releaseGroupOrPackage.version, bumpType, scheme)
@@ -174,7 +176,7 @@ export async function bumpReleaseGroup(
 
     // the lerna version command sets the dependency range of managed packages to a caret (^) dependency range. However,
     // for the internal version scheme, the range needs to be a >= < range.
-    if (scheme === "internal") {
+    if (scheme === "internal" || scheme === "internalPrerelease") {
         const range = getVersionRange(translatedVersion, "^");
         if (releaseGroupOrPackage instanceof MonoRepo) {
             const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;

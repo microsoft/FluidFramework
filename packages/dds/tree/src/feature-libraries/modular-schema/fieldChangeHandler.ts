@@ -3,20 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKindIdentifier } from "../../schema-stored";
-import { Delta, FieldKey, Value } from "../../tree";
+import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange, RevisionTag } from "../../core";
 import { Brand, Invariant, JsonCompatibleReadOnly } from "../../util";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
  * implement a unified ChangeFamily supporting documents with multiple field kinds.
  */
-export interface FieldChangeHandler<TChangeset> {
+export interface FieldChangeHandler<
+    TChangeset,
+    TEditor extends FieldEditor<TChangeset> = FieldEditor<TChangeset>,
+> {
     _typeCheck?: Invariant<TChangeset>;
     rebaser: FieldChangeRebaser<TChangeset>;
     encoder: FieldChangeEncoder<TChangeset>;
-    editor: FieldEditor<TChangeset>;
-    intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
+    editor: TEditor;
+    intoDelta(change: TChangeset, deltaFromChild: ToDelta, reviver: NodeReviver): Delta.MarkList;
 
     // TODO
     // buildEditor(submitEdit: (change: TChangeset) => void): TEditor;
@@ -27,31 +29,58 @@ export interface FieldChangeRebaser<TChangeset> {
      * Compose a collection of changesets into a single one.
      * See {@link ChangeRebaser} for details.
      */
-     compose(changes: TChangeset[], composeChild: NodeChangeComposer): TChangeset;
+    compose(changes: TChangeset[], composeChild: NodeChangeComposer): TChangeset;
 
-     /**
-      * @returns the inverse of `changes`.
-      * See {@link ChangeRebaser} for details.
-      */
-     invert(change: TChangeset, invertChild: NodeChangeInverter): TChangeset;
+    /**
+     * @returns the inverse of `changes`.
+     * See {@link ChangeRebaser} for details.
+     */
+    invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter): TChangeset;
 
-     /**
-      * Rebase `change` over `over`.
-      * See {@link ChangeRebaser} for details.
-      */
-     rebase(change: TChangeset, over: TChangeset, rebaseChild: NodeChangeRebaser): TChangeset;
+    /**
+     * Rebase `change` over `over`.
+     * See {@link ChangeRebaser} for details.
+     */
+    rebase(
+        change: TChangeset,
+        over: TaggedChange<TChangeset>,
+        rebaseChild: NodeChangeRebaser,
+    ): TChangeset;
+}
+
+/**
+ * Helper for creating a {@link FieldChangeRebaser} which does not need access to revision tags
+ */
+export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
+    compose: (changes: TChangeset[], composeChild: NodeChangeComposer) => TChangeset;
+    invert: (change: TChangeset, invertChild: NodeChangeInverter) => TChangeset;
+    rebase: (change: TChangeset, over: TChangeset, rebaseChild: NodeChangeRebaser) => TChangeset;
+}): FieldChangeRebaser<TChangeset> {
+    return {
+        compose: data.compose,
+        invert: (change, invertChild) => data.invert(change.change, invertChild),
+        rebase: (change, over, rebaseChild) => data.rebase(change, over.change, rebaseChild),
+    };
 }
 
 export interface FieldChangeEncoder<TChangeset> {
     /**
      * Encodes `change` into a JSON compatible object.
      */
-     encodeForJson(formatVersion: number, change: TChangeset, encodeChild: NodeChangeEncoder): JsonCompatibleReadOnly;
+    encodeForJson(
+        formatVersion: number,
+        change: TChangeset,
+        encodeChild: NodeChangeEncoder,
+    ): JsonCompatibleReadOnly;
 
-     /**
-      * Decodes `change` from a JSON compatible object.
-      */
-     decodeJson(formatVersion: number, change: JsonCompatibleReadOnly, decodeChild: NodeChangeDecoder): TChangeset;
+    /**
+     * Decodes `change` from a JSON compatible object.
+     */
+    decodeJson(
+        formatVersion: number,
+        change: JsonCompatibleReadOnly,
+        decodeChild: NodeChangeDecoder,
+    ): TChangeset;
 }
 
 export interface FieldEditor<TChangeset> {
@@ -61,36 +90,57 @@ export interface FieldEditor<TChangeset> {
     buildChildChange(childIndex: number, change: NodeChangeset): TChangeset;
 }
 
-export type ToDelta = (child: NodeChangeset) => Delta.Modify;
+/**
+ * The `index` represents the index of the child node in the input context.
+ * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
+ */
+export type ToDelta = (child: NodeChangeset, index: number | undefined) => Delta.Modify;
+
+export type NodeReviver = (
+    revision: RevisionTag,
+    index: number,
+    count: number,
+) => Delta.ProtoNode[];
 
 export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
 
-export type NodeChangeRebaser = (
-    change: NodeChangeset,
-    baseChange: NodeChangeset
-) => NodeChangeset;
+export type NodeChangeRebaser = (change: NodeChangeset, baseChange: NodeChangeset) => NodeChangeset;
 
 export type NodeChangeComposer = (changes: NodeChangeset[]) => NodeChangeset;
+
 export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnly;
 export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
 
+/**
+ * Changeset for a subtree rooted at a specific node.
+ */
 export interface NodeChangeset {
     fieldChanges?: FieldChangeMap;
     valueChange?: ValueChange;
 }
 
-export interface ValueChange {
-    /**
-     * Can be left unset to represent the value being cleared.
-     */
-    value?: Value;
-}
+export type ValueChange =
+    | {
+          /**
+           * Can be left unset to represent the value being cleared.
+           */
+          value?: Value;
+      }
+    | {
+          /**
+           * The tag of the change that overwrote the value being restored.
+           *
+           * Undefined when the operation is the product of a tag-less change being inverted.
+           * It is invalid to try convert such an operation to a delta.
+           */
+          revert: RevisionTag | undefined;
+      };
 
 export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 export interface FieldChange {
-     fieldKind: FieldKindIdentifier;
-     change: FieldChangeset;
+    fieldKind: FieldKindIdentifier;
+    change: FieldChangeset;
 }
 
 export type FieldChangeset = Brand<unknown, "FieldChangeset">;

@@ -47,10 +47,10 @@ export function encodeForJson<TNodeChange>(
                 case "MoveOut":
                 case "Return":
                 case "Revive":
-                case "Tomb":
                     jsonMarks.push(mark as unknown as JsonCompatible);
                     break;
-                default: unreachableCase(type);
+                default:
+                    unreachableCase(type);
             }
         }
     }
@@ -88,10 +88,10 @@ export function decodeJson<TNodeChange>(
                 case "MoveOut":
                 case "Return":
                 case "Revive":
-                case "Tomb":
                     marks.push(mark);
                     break;
-                default: unreachableCase(type);
+                default:
+                    unreachableCase(type);
             }
         }
     }

@@ -6,8 +6,6 @@
 import { EventEmitter } from "events";
 import { v4 as uuid } from "uuid";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IRequest, IResponse } from "@fluidframework/core-interfaces";
-import { RequestParser } from "@fluidframework/runtime-utils";
 
 /**
  * IContact describes the public, read-only API surface for a single contact
@@ -56,21 +54,6 @@ export class Contact implements IContact {
  * The ContactCollection is our data object that implements the IContactCollection interface.
  */
 export class ContactCollection extends DataObject implements IContactCollection {
-    // The key feature of the collection pattern is its request handling.  Most data objects will respond to a
-    // request of "/" to return themselves, but the collection pattern will additionally respond to subrequests
-    // to return specific members of the collection instead.  Here we interpret the url to be of the form
-    // "/<contactId>" and get the corresponding Contact to return.
-    public async request(request: IRequest): Promise<IResponse> {
-        const requestParser = RequestParser.create(request);
-        // We interpret the first path part as the id of the contact that we should retrieve
-        if (requestParser.pathParts.length === 1) {
-            const contact = this.getContact(requestParser.pathParts[0]);
-            return { mimeType: "fluid/object", status: 200, value: contact };
-        }
-        // Otherwise we'll return the collection itself
-        return super.request(request);
-    }
-
     /**
      * initializingFirstTime is run only once by the first client to create the DataObject.  Here we use it to
      * initialize the state of the DataObject.

@@ -2,27 +2,27 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import fs from "fs";
 import { Node, TypeChecker } from "ts-morph";
-import { PackageDetails } from "./packageJson";
+
 import { ClassValidator } from "./classDecomposition";
 import { EnumValidator } from "./enumValidator";
+import { InterfaceValidator } from "./interfaceValidator";
+import { PackageDetails } from "./packageJson";
 import {
-    generateTypeDataForProject,
-    getFullTypeName,
     PackageAndTypeData,
     TypeData,
+    generateTypeDataForProject,
+    getFullTypeName,
 } from "./typeData";
 import { BreakingIncrement, IValidator, log } from "./validatorUtils";
-import { InterfaceValidator } from "./interfaceValidator";
 
 // TODO: correlate type name with exporting package to support name aliasing
 export type BrokenTypes = Map<string, BreakingIncrement>;
 
 export interface PackageResult {
-    increment: BreakingIncrement,
-    brokenTypes: BrokenTypes,
+    increment: BreakingIncrement;
+    brokenTypes: BrokenTypes;
 }
 
 /**
@@ -48,9 +48,11 @@ export async function validatePackage(
     const pkgBrokenTypes: BrokenTypes = new Map();
 
     // skip packages without tsconfigs or that haven't specified versions for now
-    if (!fs.existsSync(`${packageDir}/tsconfig.json`) ||
+    if (
+        !fs.existsSync(`${packageDir}/tsconfig.json`) ||
         packageDetails.oldVersions === undefined ||
-        packageDetails.oldVersions.length === 0) {
+        packageDetails.oldVersions.length === 0
+    ) {
         return { increment: pkgIncrement, brokenTypes: pkgBrokenTypes };
     }
 
@@ -58,8 +60,12 @@ export async function validatePackage(
     const oldVersion = packageDetails.oldVersions[packageDetails.oldVersions.length - 1];
     const newDetails: PackageAndTypeData = await generateTypeDataForProject(packageDir, undefined);
     const oldDetails: PackageAndTypeData = await generateTypeDataForProject(packageDir, oldVersion);
-    const newTypeMap = new Map<string, TypeData>(newDetails.typeData.map((v) => [getFullTypeName(v), v]));
-    const oldTypeMap = new Map<string, TypeData>(oldDetails.typeData.map((v) => [getFullTypeName(v), v]));
+    const newTypeMap = new Map<string, TypeData>(
+        newDetails.typeData.map((v) => [getFullTypeName(v), v]),
+    );
+    const oldTypeMap = new Map<string, TypeData>(
+        oldDetails.typeData.map((v) => [getFullTypeName(v), v]),
+    );
 
     // Use the new version of the package for test sources and checking diagnostics
     const project = newDetails.project;
@@ -116,7 +122,7 @@ export function createSpecificValidator(
         validator.decomposeDeclarations(oldTypeChecker, oldNode, newTypeChecker, newNode);
         return validator;
     } else if (Node.isInterfaceDeclaration(oldNode) && Node.isInterfaceDeclaration(newNode)) {
-        const validator = new InterfaceValidator()
+        const validator = new InterfaceValidator();
         validator.decomposeDeclarations(oldTypeChecker, oldNode, newTypeChecker, newNode);
         return validator;
     } else if (Node.isEnumDeclaration(oldNode) && Node.isEnumDeclaration(newNode)) {

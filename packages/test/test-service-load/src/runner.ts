@@ -180,55 +180,63 @@ async function runnerProcess(
         // Reset the workload once, on the first iteration
         let reset = true;
         while (!done) {
-            const nextFactoryPermutation = iterator.next();
-            if (nextFactoryPermutation.done === true) {
-                throw new Error("Factory permutation iterator is expected to cycle forever");
-            }
-            const { documentServiceFactory, headers } = nextFactoryPermutation.value;
-
-            // Construct the loader
-            const loader = new Loader({
-                urlResolver: testDriver.createUrlResolver(),
-                documentServiceFactory,
-                codeLoader: createCodeLoader(containerOptions[runConfig.runId % containerOptions.length]),
-                logger,
-                options: loaderOptions[runConfig.runId % containerOptions.length],
-                configProvider: {
-                    getRawConfig(name) {
-                        return configurations[runConfig.runId % configurations.length][name];
-                    },
-                },
-            });
-
-            const container: IContainer = await loader.resolve({ url, headers });
-            container.connect();
-            const test = await requestFluidObject<ILoadTest>(container, "/");
-
-            if (enableOpsMetrics) {
-                const testRuntime = await test.getRuntime();
-                metricsCleanup = await setupOpsMetrics(container, logger, runConfig.testConfig.progressIntervalMs,
-                                                       testRuntime);
-            }
-
-            // Control fault injection period through config.
-            // If undefined then no fault injection.
-            const faultInjectionMinMs = runConfig.testConfig.faultInjectionMinMs;
-            const faultInjectionMaxMs = runConfig.testConfig.faultInjectionMaxMs;
-            if (faultInjectionMaxMs !== undefined) {
-                assert(faultInjectionMinMs !== undefined, "Define faultInjectionMinMs.");
-                assert(faultInjectionMinMs >= 0, "faultInjectionMinMs must be greater than or equal to zero.");
-                assert(faultInjectionMaxMs > 0, "faultInjectionMaxMs must be greater than zero.");
-                assert(faultInjectionMaxMs >= faultInjectionMinMs,
-                    "faultInjectionMaxMs must be greater than or equal to faultInjectionMinMs.");
-
-                scheduleContainerClose(container, runConfig, faultInjectionMinMs, faultInjectionMaxMs);
-                scheduleFaultInjection(
-                    documentServiceFactory, container, runConfig, faultInjectionMinMs, faultInjectionMaxMs);
-            } else {
-                assert(faultInjectionMinMs === undefined, "Define faultInjectionMaxMs.");
-            }
-
+            let container: IContainer | undefined;
             try {
+                const nextFactoryPermutation = iterator.next();
+                if (nextFactoryPermutation.done === true) {
+                    throw new Error("Factory permutation iterator is expected to cycle forever");
+                }
+                const { documentServiceFactory, headers } = nextFactoryPermutation.value;
+
+                // Construct the loader
+                const loader = new Loader({
+                    urlResolver: testDriver.createUrlResolver(),
+                    documentServiceFactory,
+                    codeLoader: createCodeLoader(containerOptions[runConfig.runId % containerOptions.length]),
+                    logger,
+                    options: loaderOptions[runConfig.runId % containerOptions.length],
+                    configProvider: {
+                        getRawConfig(name) {
+                            return configurations[runConfig.runId % configurations.length][name];
+                        },
+                    },
+                });
+
+                container = await loader.resolve({ url, headers });
+                container.connect();
+                const test = await requestFluidObject<ILoadTest>(container, "/");
+
+                if (enableOpsMetrics) {
+                    const testRuntime = await test.getRuntime();
+                    metricsCleanup = await setupOpsMetrics(container, logger, runConfig.testConfig.progressIntervalMs,
+                                                        testRuntime);
+                }
+
+                // Control fault injection period through config.
+                // If undefined then no fault injection.
+                const faultInjection = runConfig.testConfig.faultInjectionMs;
+                if (faultInjection) {
+                    scheduleContainerClose(container, runConfig, faultInjection.min, faultInjection.max);
+                    scheduleFaultInjection(
+                        documentServiceFactory,
+                        container,
+                        runConfig,
+                        faultInjection.min,
+                        faultInjection.max);
+                }
+                const offline = runConfig.testConfig.offline;
+                if (offline) {
+                    scheduleOffline(
+                        documentServiceFactory,
+                        container,
+                        runConfig,
+                        offline.delayMs.min,
+                        offline.delayMs.max,
+                        offline.durationMs.min,
+                        offline.durationMs.max,
+                    );
+                }
+
                 printStatus(runConfig, `running`);
                 done = await test.run(runConfig, reset, logger);
                 reset = false;
@@ -239,8 +247,8 @@ async function runnerProcess(
                     testHarnessEvent: true,
                 }, error);
             } finally {
-                if (!container.closed) {
-                    container.close();
+                if (container?.closed === false) {
+                    container?.close();
                 }
                 metricsCleanup();
                 await baseLogger.flush({ url, runId: runConfig.runId });
@@ -274,21 +282,21 @@ function scheduleFaultInjection(
                     switch (random.integer(0, 5)(runConfig.randEng)) {
                         // dispreferr errors
                         case 0: {
-                            deltaConn.injectError(canRetry);
                             printStatus(runConfig, `error injected canRetry:${canRetry}`);
+                            deltaConn.injectError(canRetry);
                             break;
                         }
                         case 1:
                         case 2: {
-                            deltaConn.injectDisconnect();
                             printStatus(runConfig, "disconnect injected");
+                            deltaConn.injectDisconnect();
                             break;
                         }
                         case 3:
                         case 4:
                         default: {
-                            deltaConn.injectNack((container.resolvedUrl as IFluidResolvedUrl).id, canRetry);
                             printStatus(runConfig, `nack injected canRetry:${canRetry}`);
+                            deltaConn.injectNack((container.resolvedUrl as IFluidResolvedUrl).id, canRetry);
                             break;
                         }
                     }
@@ -355,6 +363,53 @@ function scheduleContainerClose(
     });
 }
 
+function scheduleOffline(
+    dsf: FaultInjectionDocumentServiceFactory,
+    container: IContainer,
+    runConfig: IRunConfig,
+    offlineDelayMinMs: number,
+    offlineDelayMaxMs: number,
+    offlineDurationMinMs: number,
+    offlineDurationMaxMs: number,
+) {
+    new Promise<void>((resolve) => {
+        if (container.connectionState !== ConnectionState.Connected && !container.closed) {
+            container.once("connected", () => resolve());
+            container.once("closed", () => resolve());
+        } else {
+            resolve();
+        }
+    }).then(async () => {
+        const schedule = async (): Promise<void> => {
+            if (container.closed) {
+                return;
+            }
+
+            const injectionTime = random.integer(offlineDelayMinMs, offlineDelayMaxMs)(runConfig.randEng);
+            await new Promise<void>((resolve) => setTimeout(resolve, injectionTime));
+
+            assert(container.resolvedUrl !== undefined, "no url");
+            const ds = dsf.documentServices.get(container.resolvedUrl);
+            assert(!!ds, "no documentServices");
+            const offlineTime = random.integer(offlineDurationMinMs, offlineDurationMaxMs)(runConfig.randEng);
+            printStatus(runConfig, `going offline for ${offlineTime / 1000} seconds!`);
+            ds.goOffline();
+
+            await new Promise<void>((resolve) => setTimeout(resolve, offlineTime));
+            if (!container.closed) {
+                ds.goOnline();
+                printStatus(runConfig, "going online!");
+                return schedule();
+            }
+        };
+        return schedule();
+    }).catch(async (e) => {
+        await loggerP.then(async (l) => l.sendErrorEvent({
+            eventName: "ScheduleOfflineFailed", runId: runConfig.runId,
+        }, e));
+    });
+}
+
 async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, progressIntervalMs: number,
     testRuntime: IFluidDataStoreRuntime) {
     // Use map to cache userName instead of recomputing.
@@ -377,17 +432,23 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
         }
     };
 
-    let submitedOps = 0;
+    let submittedOpsSize = 0;
+    let submittedOps = 0;
     container.deltaManager.on("submitOp", (message) => {
         if (message?.type === "op") {
-            submitedOps++;
+            submittedOps++;
+            const currOpSize = (JSON.stringify(message)).length;
+            submittedOpsSize += currOpSize;
         }
     });
 
+    let receivedOpsSize = 0;
     let receivedOps = 0;
     container.deltaManager.on("op", (message) => {
         if (message?.type === "op") {
             receivedOps++;
+            const currOpSize = (JSON.stringify(message)).length;
+            receivedOpsSize += currOpSize;
         }
     });
 
@@ -403,12 +464,12 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
 
     let t: NodeJS.Timeout | undefined;
     const sendMetrics = () => {
-        if (submitedOps > 0) {
+        if (submittedOps > 0) {
             logger.send({
                 category: "metric",
                 eventName: "Fluid Operations Sent",
                 testHarnessEvent: true,
-                value: submitedOps,
+                value: submittedOps,
                 clientId: container.clientId,
                 userName: getUserName(container),
             });
@@ -444,11 +505,33 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
                 userName: getUserName(container),
             });
         }
+        if (submittedOps > 0) {
+            logger.send({
+                category: "metric",
+                eventName: "Size of Fluid Operations Sent",
+                testHarnessEvent: true,
+                value: submittedOpsSize,
+                clientId: container.clientId,
+                userName: getUserName(container),
+            });
+        }
+        if (receivedOps > 0) {
+            logger.send({
+                category: "metric",
+                eventName: "Size of Fluid Operations Received",
+                testHarnessEvent: true,
+                value: receivedOpsSize,
+                clientId: container.clientId,
+                userName: getUserName(container),
+            });
+        }
 
-        submitedOps = 0;
+        submittedOps = 0;
         receivedOps = 0;
         submittedSignals = 0;
         receivedSignals = 0;
+        submittedOpsSize = 0;
+        receivedOpsSize = 0;
 
         t = setTimeout(sendMetrics, progressIntervalMs);
     };

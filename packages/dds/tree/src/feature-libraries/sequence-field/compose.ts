@@ -4,7 +4,15 @@
  */
 
 import { clone, fail, StackyIterator } from "../../util";
-import * as F from "./format";
+import {
+    Changeset,
+    Mark,
+    MarkList,
+    Modify,
+    ModifyInsert,
+    ModifyReattach,
+    SizedMark,
+} from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
     getInputLength,
@@ -13,7 +21,6 @@ import {
     isDetachMark,
     isReattach,
     isSkipMark,
-    isTomb,
     splitMarkOnInput,
     splitMarkOnOutput,
 } from "./utils";
@@ -33,13 +40,13 @@ export type NodeChangeComposer<TNodeChange> = (changes: TNodeChange[]) => TNodeC
  * - Support for slices is not implemented.
  */
 export function compose<TNodeChange>(
-    changes: F.Changeset<TNodeChange>[],
+    changes: Changeset<TNodeChange>[],
     composeChild: NodeChangeComposer<TNodeChange>,
-): F.Changeset<TNodeChange> {
+): Changeset<TNodeChange> {
     if (changes.length === 1) {
         return changes[0];
     }
-    let composed: F.Changeset<TNodeChange> = [];
+    let composed: Changeset<TNodeChange> = [];
     for (const change of changes) {
         composed = composeMarkLists(composed, change, composeChild);
     }
@@ -47,15 +54,15 @@ export function compose<TNodeChange>(
 }
 
 function composeMarkLists<TNodeChange>(
-    baseMarkList: F.MarkList<TNodeChange>,
-    newMarkList: F.MarkList<TNodeChange>,
+    baseMarkList: MarkList<TNodeChange>,
+    newMarkList: MarkList<TNodeChange>,
     composeChild: NodeChangeComposer<TNodeChange>,
-): F.MarkList<TNodeChange> {
+): MarkList<TNodeChange> {
     const factory = new MarkListFactory<TNodeChange>();
     const baseIter = new StackyIterator(baseMarkList);
     const newIter = new StackyIterator(newMarkList);
     for (let newMark of newIter) {
-        let baseMark: F.Mark<TNodeChange> | undefined = baseIter.pop();
+        let baseMark: Mark<TNodeChange> | undefined = baseIter.pop();
         if (baseMark === undefined) {
             // We have reached a region of the field that the base change does not affect.
             // We therefore adopt the new mark as is.
@@ -86,9 +93,6 @@ function composeMarkLists<TNodeChange>(
             // TODO: properly compose detach marks with their matching new marks if any.
             factory.pushContent(baseMark);
             newIter.push(newMark);
-        } else if (isTomb(baseMark) || isTomb(newMark)) {
-            // We don't currently support Tomb marks (and don't offer ways to generate them).
-            fail("TODO: support Tomb marks");
         } else {
             // If we've reached this branch then `baseMark` and `newMark` start at the same location
             // in the document field at the revision after the base changes and before the new changes.
@@ -129,10 +133,10 @@ function composeMarkLists<TNodeChange>(
  * @returns A mark that is equivalent to applying both `baseMark` and `newMark` successively.
  */
 function composeMarks<TNodeChange>(
-    baseMark: F.Mark<TNodeChange>,
-    newMark: F.SizedMark<TNodeChange>,
+    baseMark: Mark<TNodeChange>,
+    newMark: SizedMark<TNodeChange>,
     composeChild: NodeChangeComposer<TNodeChange>,
-): F.Mark<TNodeChange> {
+): Mark<TNodeChange> {
     if (isSkipMark(baseMark)) {
         return clone(newMark);
     }
@@ -162,7 +166,8 @@ function composeMarks<TNodeChange>(
                     // TODO: preserve the insertions as muted
                     return 0;
                 }
-                default: fail("Not implemented");
+                default:
+                    fail("Not implemented");
             }
         case "MInsert": {
             switch (newType) {
@@ -175,7 +180,8 @@ function composeMarks<TNodeChange>(
                     // TODO: preserve the insertions as muted
                     return 0;
                 }
-                default: fail("Not implemented");
+                default:
+                    fail("Not implemented");
             }
         }
         case "Modify": {
@@ -189,16 +195,18 @@ function composeMarks<TNodeChange>(
                     // In the long run we want to preserve them.
                     return clone(newMark);
                 }
-                default: fail("Not implemented");
+                default:
+                    fail("Not implemented");
             }
         }
         case "Revive": {
             switch (newType) {
                 case "Modify": {
-                    const modRevive: F.ModifyReattach<TNodeChange> = {
+                    const modRevive: ModifyReattach<TNodeChange> = {
                         type: "MRevive",
                         id: baseMark.id,
-                        tomb: baseMark.tomb,
+                        detachedBy: baseMark.detachedBy,
+                        detachIndex: baseMark.detachIndex,
                         changes: newMark.changes,
                     };
                     return modRevive;
@@ -207,16 +215,18 @@ function composeMarks<TNodeChange>(
                     // The deletion undoes the revival
                     return 0;
                 }
-                default: fail("Not implemented");
+                default:
+                    fail("Not implemented");
             }
         }
-        default: fail("Not implemented");
+        default:
+            fail("Not implemented");
     }
 }
 
 function updateModifyLike<TNodeChange>(
-    curr: F.Modify<TNodeChange>,
-    base: F.ModifyInsert<TNodeChange> | F.Modify<TNodeChange> | F.ModifyReattach<TNodeChange>,
+    curr: Modify<TNodeChange>,
+    base: ModifyInsert<TNodeChange> | Modify<TNodeChange> | ModifyReattach<TNodeChange>,
     composeChild: NodeChangeComposer<TNodeChange>,
 ) {
     base.changes = composeChild([base.changes, curr.changes]);

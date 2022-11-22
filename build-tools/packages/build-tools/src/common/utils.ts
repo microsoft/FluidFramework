@@ -2,16 +2,25 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import * as path from "path";
-import * as glob from "glob";
-import * as util from "util";
-import * as fs from "fs";
 import * as child_process from "child_process";
+import * as fs from "fs";
+import * as glob from "glob";
 import isEqual from "lodash.isequal";
+import * as path from "path";
+import * as util from "util";
 
 export function getExecutableFromCommand(command: string) {
-    return command.split(" ")[0];
+    let toReturn: string;
+    const commands = command.split(" ");
+    if (commands[0] === "flub") {
+        // Find the first flag argument, and filter them out. Assumes flags come at the end of the command, and that all
+        // subsequent arguments are flags.
+        const flagsStartIndex = commands.findIndex((c) => c.startsWith("-"));
+        toReturn = commands.slice(0, flagsStartIndex).join(" ");
+    } else {
+        toReturn = commands[0];
+    }
+    return toReturn;
 }
 
 export function toPosixPath(s: string) {
@@ -21,14 +30,16 @@ export function toPosixPath(s: string) {
 export async function globFn(pattern: string, options: glob.IOptions = {}): Promise<string[]> {
     return new Promise((resolve, reject) => {
         glob.default(pattern, options, (err, matches) => {
-            if (err) { reject(err); }
+            if (err) {
+                reject(err);
+            }
             resolve(matches);
         });
     });
 }
 
 export function unquote(str: string) {
-    if (str.length >= 2 && str[0] === "\"" && str[str.length - 1] === "\"") {
+    if (str.length >= 2 && str[0] === '"' && str[str.length - 1] === '"') {
         return str.substr(1, str.length - 2);
     }
     return str;
@@ -53,7 +64,11 @@ export interface ExecAsyncResult {
     stderr: string;
 }
 
-export async function execAsync(command: string, options: child_process.ExecOptions, pipeStdIn?: string): Promise<ExecAsyncResult> {
+export async function execAsync(
+    command: string,
+    options: child_process.ExecOptions,
+    pipeStdIn?: string,
+): Promise<ExecAsyncResult> {
     return new Promise((resolve, reject) => {
         const p = child_process.exec(command, options, (error, stdout, stderr) => {
             resolve({ error, stdout, stderr });
@@ -66,7 +81,13 @@ export async function execAsync(command: string, options: child_process.ExecOpti
     });
 }
 
-export async function execWithErrorAsync(command: string, options: child_process.ExecOptions, errorPrefix: string, warning: boolean = true, pipeStdIn?: string): Promise<ExecAsyncResult> {
+export async function execWithErrorAsync(
+    command: string,
+    options: child_process.ExecOptions,
+    errorPrefix: string,
+    warning: boolean = true,
+    pipeStdIn?: string,
+): Promise<ExecAsyncResult> {
     const ret = await execAsync(command, options, pipeStdIn);
     printExecError(ret, command, errorPrefix, warning);
     return ret;
@@ -74,7 +95,15 @@ export async function execWithErrorAsync(command: string, options: child_process
 
 async function rimrafAsync(deletePath: string) {
     return execAsync(`rimraf "${deletePath}"`, {
-        env: { PATH: `${process.env["PATH"]}${path.delimiter}${path.join(__dirname, "..", "..", "node_modules", ".bin")}` }
+        env: {
+            PATH: `${process.env["PATH"]}${path.delimiter}${path.join(
+                __dirname,
+                "..",
+                "..",
+                "node_modules",
+                ".bin",
+            )}`,
+        },
     });
 }
 
@@ -84,11 +113,20 @@ export async function rimrafWithErrorAsync(deletePath: string, errorPrefix: stri
     return ret;
 }
 
-function printExecError(ret: ExecAsyncResult, command: string, errorPrefix: string, warning: boolean) {
+function printExecError(
+    ret: ExecAsyncResult,
+    command: string,
+    errorPrefix: string,
+    warning: boolean,
+) {
     if (ret.error) {
         console.error(`${errorPrefix}: error during command ${command}`);
         console.error(`${errorPrefix}: ${ret.error.message}`);
-        console.error(ret.stdout ? `${errorPrefix}: ${ret.stdout}\n${ret.stderr}` : `${errorPrefix}: ${ret.stderr}`);
+        console.error(
+            ret.stdout
+                ? `${errorPrefix}: ${ret.stdout}\n${ret.stderr}`
+                : `${errorPrefix}: ${ret.stderr}`,
+        );
     } else if (warning && ret.stderr) {
         // no error code but still error messages, treat them is non fatal warnings
         console.warn(`${errorPrefix}: warning during command ${command}`);
@@ -123,7 +161,10 @@ export function readJsonSync(filename: string) {
     return JSON.parse(content);
 }
 
-export async function lookUpDirAsync(dir: string, callback: (currentDir: string) => Promise<boolean>) {
+export async function lookUpDirAsync(
+    dir: string,
+    callback: (currentDir: string) => Promise<boolean>,
+) {
     let curr = path.resolve(dir);
     // eslint-disable-next-line no-constant-condition
     while (true) {
@@ -160,10 +201,16 @@ export function lookUpDirSync(dir: string, callback: (currentDir: string) => boo
 }
 
 export function isSameFileOrDir(f1: string, f2: string) {
-    if (f1 === f2) { return true; }
+    if (f1 === f2) {
+        return true;
+    }
     const n1 = path.normalize(f1);
     const n2 = path.normalize(f2);
-    if (n1 === n2) { return true; }
-    if (n1.toLowerCase() != n2.toLowerCase()) { return false; }
+    if (n1 === n2) {
+        return true;
+    }
+    if (n1.toLowerCase() != n2.toLowerCase()) {
+        return false;
+    }
     return isEqual(fs.lstatSync(n1), fs.lstatSync(n2));
 }

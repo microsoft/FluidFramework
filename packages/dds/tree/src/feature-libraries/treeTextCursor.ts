@@ -8,12 +8,12 @@ import {
     genericTreeKeys,
     getGenericTreeField,
     JsonableTree,
-    ITreeCursorNew as ITreeCursor,
+    ITreeCursor,
     CursorLocationType,
-    mapCursorFieldNew as mapCursorField,
+    mapCursorField,
     ITreeCursorSynchronous,
     setGenericTreeField,
-} from "../tree";
+} from "../core";
 import { CursorAdapter, singleStackTreeCursor } from "./treeCursorUtils";
 
 /**
@@ -47,6 +47,8 @@ export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous {
 }
 
 const adapter: CursorAdapter<JsonableTree> = {
+    value: (node) => node.value,
+    type: (node) => node.type,
     keysFromNode: genericTreeKeys,
     getFieldFromNode: (node, key): readonly JsonableTree[] => getGenericTreeField(node, key, false),
 };

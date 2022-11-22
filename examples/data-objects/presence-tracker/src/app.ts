@@ -10,7 +10,6 @@ import {
 } from "fluid-framework";
 import {
     TinyliciousClient,
-    TinyliciousMember,
     TinyliciousContainerServices,
 } from "@fluidframework/tinylicious-client";
 import { FocusTracker } from "./FocusTracker";
@@ -37,7 +36,7 @@ function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
 
     const onFocusChanged = () => {
         focusDiv.innerHTML = `
-            Current user: ${(focusTracker.audience.getMyself() as TinyliciousMember)?.userName}</br>
+            Current user: ${(focusTracker.audience.getMyself())?.userName}</br>
             ${getFocusPresencesString("</br>", focusTracker)}
         `;
     };

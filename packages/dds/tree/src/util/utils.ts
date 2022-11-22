@@ -8,9 +8,14 @@ import structuredClone from "@ungap/structured-clone";
 /**
  * Make all transitive properties in T readonly
  */
- export type RecursiveReadonly<T> = {
+export type RecursiveReadonly<T> = {
     readonly [P in keyof T]: RecursiveReadonly<T[P]>;
 };
+
+/**
+ * Remove `readonly` from all fields.
+ */
+export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
 export function clone<T>(original: T): T {
     return structuredClone(original);
@@ -55,6 +60,56 @@ export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
 }
 
 /**
+ * A numeric comparator used for sorting in ascending order.
+ *
+ * Handles +/-0 like Map: -0 is equal to +0.
+ */
+export function compareFiniteNumbers<T extends number>(a: T, b: T): number {
+    return a - b;
+}
+
+/**
+ * A numeric comparator used for sorting in descending order.
+ *
+ * Handles +/-0 like Map: -0 is equal to +0.
+ */
+export function compareFiniteNumbersReversed<T extends number>(a: T, b: T): number {
+    return b - a;
+}
+
+/**
+ * Compares strings lexically to form a strict partial ordering.
+ */
+export function compareStrings<T extends string>(a: T, b: T): number {
+    return a > b ? 1 : a === b ? 0 : -1;
+}
+
+/**
+ * Compare two arrays and return true if their elements are equivalent and in the same order.
+ * @param arrayA - The first array to compare
+ * @param arrayB - The second array to compare
+ * @param elementComparator - The function used to check if two `T`s are equivalent.
+ * Defaults to `Object.is()` equality (a shallow compare)
+ */
+export function compareArrays<T>(
+    arrayA: readonly T[],
+    arrayB: readonly T[],
+    elementComparator: (a: T, b: T) => boolean = Object.is,
+): boolean {
+    if (arrayA.length !== arrayB.length) {
+        return false;
+    }
+
+    for (let i = 0; i < arrayA.length; i++) {
+        if (!elementComparator(arrayA[i], arrayB[i])) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
  * Compares two sets using callbacks.
  * Early returns on first false comparison.
  *
@@ -65,7 +120,13 @@ export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
  * @param same - Called for items in `a` and `b`.
  * @returns false iff any of the call backs returned false.
  */
-export function compareSets<T>({ a, b, aExtra, bExtra, same }: {
+export function compareSets<T>({
+    a,
+    b,
+    aExtra,
+    bExtra,
+    same,
+}: {
     a: ReadonlySet<T> | ReadonlyMap<T, unknown>;
     b: ReadonlySet<T> | ReadonlyMap<T, unknown>;
     aExtra?: (t: T) => boolean;
@@ -94,17 +155,88 @@ export function compareSets<T>({ a, b, aExtra, bExtra, same }: {
 }
 
 /**
+ * Compare two maps and return true if their contents are equivalent.
+ * @param mapA - The first array to compare
+ * @param mapB - The second array to compare
+ * @param elementComparator - The function used to check if two `T`s are equivalent.
+ * Defaults to `Object.is()` equality (a shallow compare)
+ */
+export function compareMaps<K, V>(
+    mapA: ReadonlyMap<K, V>,
+    mapB: ReadonlyMap<K, V>,
+    elementComparator: (a: V, b: V) => boolean = Object.is,
+): boolean {
+    if (mapA.size !== mapB.size) {
+        return false;
+    }
+
+    for (const [keyA, valueA] of mapA) {
+        const valueB = mapB.get(keyA);
+        if (valueB === undefined || !elementComparator(valueA, valueB)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Retrieve a value from a map with the given key, or create a new entry if the key is not in the map.
+ * @param map - The map to query/update
+ * @param key - The key to lookup in the map
+ * @param defaultValue - a function which returns a default value. This is called and used to set an initial value for the given key in the map if none exists
+ * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
+ */
+export function getOrCreate<K, V>(map: Map<K, V>, key: K, defaultValue: (key: K) => V): V {
+    let value = map.get(key);
+    if (value === undefined) {
+        value = defaultValue(key);
+        map.set(key, value);
+    }
+    return value;
+}
+
+/**
  * Utility for dictionaries whose values are lists.
  * Gets the list associated with the provided key, if it exists.
  * Otherwise, creates an entry with an empty list, and returns that list.
  */
- export function getOrAddEmptyToMap<K, V>(map: Map<K, V[]>, key: K): V[] {
-	let collection = map.get(key);
-	if (collection === undefined) {
-		collection = [];
-		map.set(key, collection);
-	}
-	return collection;
+export function getOrAddEmptyToMap<K, V>(map: Map<K, V[]>, key: K): V[] {
+    let collection = map.get(key);
+    if (collection === undefined) {
+        collection = [];
+        map.set(key, collection);
+    }
+    return collection;
+}
+
+/**
+ * Copies a property in such a way that it is only set on `destination` if it is present on `source`.
+ * This avoids having explicit undefined values under properties that would cause `Object.hasOwnProperty` to return true.
+ */
+export function copyPropertyIfDefined<TSrc, TDst>(
+    source: TSrc,
+    destination: TDst,
+    property: keyof TSrc,
+): void {
+    const value = source[property];
+    if (value !== undefined) {
+        (destination as any)[property] = value;
+    }
+}
+
+/**
+ * Sets a property in such a way that it is only set on `destination` if the provided value is not undefined.
+ * This avoids having explicit undefined values under properties that would cause `Object.hasOwnProperty` to return true.
+ */
+export function setPropertyIfDefined<TDst, P extends keyof TDst>(
+    value: TDst[P] | undefined,
+    destination: TDst,
+    property: P,
+): void {
+    if (value !== undefined) {
+        destination[property] = value;
+    }
 }
 
 /**
@@ -113,8 +245,14 @@ export function compareSets<T>({ a, b, aExtra, bExtra, same }: {
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
  */
-// eslint-disable-next-line @rushstack/no-new-null
-export type JsonCompatible = string | number | boolean | null | JsonCompatible[] | JsonCompatibleObject;
+export type JsonCompatible =
+    | string
+    | number
+    | boolean
+    // eslint-disable-next-line @rushstack/no-new-null
+    | null
+    | JsonCompatible[]
+    | JsonCompatibleObject;
 
 /**
  * Use for Json object compatible data.
@@ -122,7 +260,7 @@ export type JsonCompatible = string | number | boolean | null | JsonCompatible[]
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
  */
-export type JsonCompatibleObject = { [P in string]: JsonCompatible; };
+export type JsonCompatibleObject = { [P in string]: JsonCompatible };
 
 /**
  * Use for readonly view of Json compatible data.
@@ -137,4 +275,44 @@ export type JsonCompatibleReadOnly =
     // eslint-disable-next-line @rushstack/no-new-null
     | null
     | readonly JsonCompatibleReadOnly[]
-    | { readonly [P in string]: JsonCompatibleReadOnly | undefined; };
+    | { readonly [P in string]: JsonCompatibleReadOnly | undefined };
+
+/**
+ * Returns if a particular json compatible value is an object.
+ * Does not include `null` or arrays.
+ */
+export function isJsonObject(
+    value: JsonCompatibleReadOnly,
+): value is { readonly [P in string]: JsonCompatibleReadOnly | undefined } {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** A union type of the first `N` positive integers */
+export type TakeWholeNumbers<N extends number, A extends never[] = []> = N extends A["length"]
+    ? never
+    : A["length"] | TakeWholeNumbers<N, [never, ...A]>;
+
+/** Returns a tuple type with exactly `Length` elements of type `T` */
+export type ArrayOfLength<T, Length extends number, A extends T[] = []> = Length extends A["length"]
+    ? A
+    : ArrayOfLength<T, Length, [T, ...A]>;
+
+/**
+ * Returns true iff `array` has exactly `length` elements
+ */
+export function hasExactlyLength<T, Len extends TakeWholeNumbers<16>>(
+    array: readonly T[],
+    length: Len,
+): array is ArrayOfLength<T, Len> {
+    return array.length === length;
+}
+
+/**
+ * Fails true iff `array` has at least `length` elements
+ */
+export function hasAtLeastLength<T, Len extends TakeWholeNumbers<16>>(
+    array: readonly T[],
+    length: Len,
+): array is [...ArrayOfLength<T, Len>, ...T[]] {
+    return array.length >= length;
+}

@@ -2,9 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { EmptyKey, Value } from "../../tree";
-import { brand, fail } from "../../util";
-import { TreeSchema, ValueSchema, FieldSchema, LocalFieldKey } from "../../schema-stored";
+
+import { assert } from "@fluidframework/common-utils";
+import { fail } from "../../util";
+import {
+    EmptyKey,
+    FieldKey,
+    isGlobalFieldKey,
+    keyFromSymbol,
+    Value,
+    TreeSchema,
+    ValueSchema,
+    FieldSchema,
+    LocalFieldKey,
+    SchemaDataAndPolicy,
+    lookupGlobalFieldSchema,
+} from "../../core";
 // TODO:
 // This module currently is assuming use of defaultFieldKinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
@@ -22,8 +35,11 @@ import { FieldKind } from "../modular-schema";
 export function isPrimitive(schema: TreeSchema): boolean {
     // TODO: use a separate `TreeViewSchema` type, with metadata that determines if the type is primitive.
     // Since the above is not done yet, use use a heuristic:
-    return schema.value !== ValueSchema.Nothing &&
-        schema.localFields.size === 0 && schema.globalFields.size === 0;
+    return (
+        schema.value !== ValueSchema.Nothing &&
+        schema.localFields.size === 0 &&
+        schema.globalFields.size === 0
+    );
 }
 
 export type PrimitiveValue = string | boolean | number;
@@ -32,7 +48,26 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue 
     return nodeValue !== undefined && typeof nodeValue !== "object";
 }
 
-export function getPrimaryField(schema: TreeSchema): { key: LocalFieldKey; schema: FieldSchema; } | undefined {
+export function assertPrimitiveValueType(nodeValue: Value, schema: TreeSchema): void {
+    assert(isPrimitiveValue(nodeValue), 0x45b /* The value is not primitive */);
+    switch (schema.value) {
+        case ValueSchema.String:
+            assert(typeof nodeValue === "string", 0x45c /* Expected string */);
+            break;
+        case ValueSchema.Number:
+            assert(typeof nodeValue === "number", 0x45d /* Expected number */);
+            break;
+        case ValueSchema.Boolean:
+            assert(typeof nodeValue === "boolean", 0x45e /* Expected boolean */);
+            break;
+        default:
+            fail("wrong value schema");
+    }
+}
+
+export function getPrimaryField(
+    schema: TreeSchema,
+): { key: LocalFieldKey; schema: FieldSchema } | undefined {
     // TODO: have a better mechanism for this. See note on EmptyKey.
     const field = schema.localFields.get(EmptyKey);
     if (field === undefined) {
@@ -42,11 +77,19 @@ export function getPrimaryField(schema: TreeSchema): { key: LocalFieldKey; schem
 }
 
 // TODO: this (and most things in this file) should use ViewSchema, and already have the full kind information.
-export function getFieldSchema(schema: TreeSchema, name: string): FieldSchema {
-    // TODO: this assumes the name is a local field key.
-    // Eventually support for global field keys should be added somehow.
-    // (Maybe not use strings for them at this API level?)
-    return schema.localFields.get(brand(name)) ?? schema.extraLocalFields;
+export function getFieldSchema(
+    field: FieldKey,
+    schemaData: SchemaDataAndPolicy,
+    schema?: TreeSchema,
+): FieldSchema {
+    if (isGlobalFieldKey(field)) {
+        return lookupGlobalFieldSchema(schemaData, keyFromSymbol(field));
+    }
+    assert(
+        schema !== undefined,
+        0x423 /* The field is a local field, a parent schema is required. */,
+    );
+    return schema.localFields.get(field) ?? schema.extraLocalFields;
 }
 
 export function getFieldKind(fieldSchema: FieldSchema): FieldKind {
@@ -60,7 +103,7 @@ export function getFieldKind(fieldSchema: FieldSchema): FieldKind {
  * Variant of ProxyHandler covering when the type of the target and implemented interface are different.
  * Only the parts needed so far are included.
  */
- export interface AdaptingProxyHandler<T extends object, TImplements extends object> {
+export interface AdaptingProxyHandler<T extends object, TImplements extends object> {
     // apply?(target: T, thisArg: any, argArray: any[]): any;
     // construct?(target: T, argArray: any[], newTarget: Function): object;
     // defineProperty?(target: T, p: string | symbol, attributes: PropertyDescriptor): boolean;
@@ -77,12 +120,20 @@ export function getFieldKind(fieldSchema: FieldSchema): FieldKind {
 }
 
 export function adaptWithProxy<From extends object, To extends object>(
-    target: From, proxyHandler: AdaptingProxyHandler<From, To>): To {
+    target: From,
+    proxyHandler: AdaptingProxyHandler<From, To>,
+): To {
     // Proxy constructor assumes handler emulates target's interface.
     // Ours does not, so this cast is required.
     return new Proxy<From>(target, proxyHandler as ProxyHandler<From>) as unknown as To;
 }
 
-export function getArrayOwnKeys(length: number): string[] {
+export function getOwnArrayKeys(length: number): string[] {
     return Object.getOwnPropertyNames(Array.from(Array(length)));
+}
+
+export function keyIsValidIndex(key: string | number, length: number): boolean {
+    const index = Number(key);
+    if (typeof key === "string" && String(index) !== key) return false;
+    return Number.isInteger(index) && 0 <= index && index < length;
 }

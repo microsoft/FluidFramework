@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { VersionBumpType, detectVersionScheme } from "@fluid-tools/version-tools";
 
-import { detectVersionScheme, VersionBumpType } from "@fluid-tools/version-tools";
 import {
     bumpTypeFlag,
     checkFlags,
@@ -14,6 +14,7 @@ import {
 import { FluidReleaseStateHandler, FluidReleaseStateHandlerData, StateHandler } from "../handlers";
 import { PromptWriter } from "../instructionalPromptWriter";
 import { FluidReleaseMachine } from "../machines";
+import { branchesRunDefaultPolicy } from "../repoConfig";
 import { StateMachineCommand } from "../stateMachineCommand";
 
 /**
@@ -57,16 +58,29 @@ export class ReleaseCommand<T extends typeof ReleaseCommand.flags> extends State
         const [context] = await Promise.all([this.getContext(), this.initMachineHooks()]);
         const flags = this.processedFlags;
 
+        // oclif doesn't support nullable boolean flags, so this works around that limitation by checking the args
+        // passed into the command. If neither are passed, then the default is determined by the branch config.
+        const branchPolicyCheckDefault = branchesRunDefaultPolicy.includes(
+            context.originalBranchName,
+        );
+        const userPolicyCheckChoice = this.argv.includes("--policyCheck")
+            ? true
+            : this.argv.includes("--no-policyCheck")
+            ? false
+            : undefined;
+
         this.handler = new FluidReleaseStateHandler(this.machine, this.logger);
         this.data.context = context;
         this.data.promptWriter = new PromptWriter(this.logger);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.data.releaseGroup = flags.releaseGroup ?? flags.package!;
         this.data.releaseVersion = context.getVersion(this.data.releaseGroup);
         this.data.bumpType = flags.bumpType as VersionBumpType;
         this.data.versionScheme = detectVersionScheme(this.data.releaseVersion);
 
         this.data.shouldSkipChecks = flags.skipChecks;
-        this.data.shouldCheckPolicy = flags.policyCheck && !flags.skipChecks;
+        this.data.shouldCheckPolicy =
+            userPolicyCheckChoice ?? (branchPolicyCheckDefault && !flags.skipChecks);
         this.data.shouldCheckBranch = flags.branchCheck && !flags.skipChecks;
         this.data.shouldCheckMainNextIntegrated = !flags.skipChecks;
         this.data.shouldCommit = flags.commit && !flags.skipChecks;

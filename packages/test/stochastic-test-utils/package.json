@@ -1,7 +1,6 @@
 {
   "name": "@fluid-internal/stochastic-test-utils",
-  "version": "2.0.0-internal.1.3.0",
-  "private": true,
+  "version": "2.0.0-internal.2.2.0",
   "description": "Utilities for stochastic tests",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -33,9 +32,7 @@
     "test:mocha": "mocha --recursive dist/test --unhandled-rejections=strict -r node_modules/@fluidframework/mocha-test-setup",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "test:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test",
-    "tsc": "tsc",
-    "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsc": "tsc"
   },
   "nyc": {
     "all": true,
@@ -63,9 +60,9 @@
   },
   "devDependencies": {
     "@fluid-tools/benchmark": "^0.43.0",
-    "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/eslint-config-fluid": "^1.0.0",
-    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/build-common": "^1.1.0",
+    "@fluidframework/eslint-config-fluid": "^1.2.0",
+    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.0",
@@ -78,7 +75,6 @@
     "nyc": "^15.0.0",
     "random-js": "^1.0.8",
     "rimraf": "^2.6.2",
-    "typescript": "~4.5.5",
-    "typescript-formatter": "7.1.0"
+    "typescript": "~4.5.5"
   }
 }

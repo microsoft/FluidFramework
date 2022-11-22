@@ -12,6 +12,7 @@ const fakeUrl = "/FakeUrlResolver/";
 
 /**
  * Fake URL resolver that returns hard coded values on every request
+ * @internal
  */
 export class FakeUrlResolver implements IUrlResolver {
     public async resolve(_request: IRequest): Promise<IResolvedUrl | undefined> {

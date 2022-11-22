@@ -6,6 +6,7 @@
 module.exports = {
     extends: [
         require.resolve("@fluidframework/eslint-config-fluid"),
+        "prettier"
     ],
     rules: {
         "@typescript-eslint/no-floating-promises": "off",

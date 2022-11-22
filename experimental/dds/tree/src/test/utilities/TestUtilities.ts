@@ -25,11 +25,11 @@ import {
 } from '@fluidframework/test-utils';
 import { LocalServerTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { TelemetryNullLogger } from '@fluidframework/common-utils';
 import type { IContainer, IHostLoader } from '@fluidframework/container-definitions';
 import type { IFluidCodeDetails, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
+import { TelemetryNullLogger } from '@fluidframework/telemetry-utils';
 import { IRequest } from '@fluidframework/core-interfaces';
 import {
 	AttributionId,
@@ -59,7 +59,7 @@ import { TraitLocation, TreeView } from '../../TreeView';
 import { SharedTreeDiagnosticEvent } from '../../EventTypes';
 import { getNodeId, getNodeIdContext, NodeIdContext, NodeIdConverter, NodeIdNormalizer } from '../../NodeIdUtilities';
 import { newEdit, setTrait } from '../../EditUtilities';
-import { SharedTree, SharedTreeFactory } from '../../SharedTree';
+import { SharedTree, SharedTreeFactory, SharedTreeOptions_0_0_2 } from '../../SharedTree';
 import { BuildNode, Change, StablePlace } from '../../ChangeTypes';
 import { convertEditIds } from '../../IdConversion';
 import { OrderedEditSet } from '../../EditLog';
@@ -164,7 +164,8 @@ export function setUpTestSharedTree(
 	// Enable expensiveValidation
 	let factory: SharedTreeFactory;
 	if (writeFormat === WriteFormat.v0_0_2) {
-		factory = SharedTree.getFactory(writeFormat, { summarizeHistory: summarizeHistory ?? true });
+		const options: SharedTreeOptions_0_0_2 = { summarizeHistory: summarizeHistory ?? true };
+		factory = SharedTree.getFactory(writeFormat, options);
 	} else {
 		const options = {
 			summarizeHistory: summarizeHistory ?? true ? { uploadEditChunks: true } : false,
@@ -305,7 +306,8 @@ export async function setUpLocalServerTestSharedTree(
 	const treeId = id ?? 'test';
 	let factory: SharedTreeFactory;
 	if (writeFormat === WriteFormat.v0_0_2) {
-		factory = SharedTree.getFactory(writeFormat, { summarizeHistory: summarizeHistory ?? true });
+		const options: SharedTreeOptions_0_0_2 = { summarizeHistory: summarizeHistory ?? true };
+		factory = SharedTree.getFactory(writeFormat, options);
 	} else {
 		const options = {
 			summarizeHistory: summarizeHistory ?? true ? { uploadEditChunks: uploadEditChunks ?? true } : false,
