@@ -25,7 +25,7 @@ import { LeaderElection } from "./leaderElection";
 import {
     rootDataObjectFactory,
     IGCDataStore,
-} from "./gcDataStore";
+} from "./gcDataStores";
 
 export interface IRunConfig {
 	runId: number;
