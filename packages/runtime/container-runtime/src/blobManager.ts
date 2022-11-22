@@ -172,7 +172,9 @@ export class BlobManager {
     ) {
         this.mc = loggerToMonitoringContext(ChildLogger.create(this.runtime.logger, "BlobManager"));
         // Read the feature flag that tells whether to throw when a tombstone blob is requested.
-        this.throwOnTombstoneUsage = this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true;
+        this.throwOnTombstoneUsage =
+            this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
+            this.runtime.clientDetails.type !== summarizerClientType;
         this.runtime.on("disconnected", () => this.onDisconnected());
         this.redirectTable = this.load(snapshot);
 
@@ -261,7 +263,7 @@ export class BlobManager {
                 url: request.url,
                 viaHandle: true,
             });
-            if (this.throwOnTombstoneUsage && this.runtime.clientDetails.type !== summarizerClientType) {
+            if (this.throwOnTombstoneUsage) {
                 throw responseToException(createResponseError(404, "Blob removed by gc", request), request);
             }
         }
