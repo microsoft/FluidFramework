@@ -394,7 +394,10 @@ export function testForest(
                                 { type: Delta.MarkType.Delete, count: 1 },
                                 {
                                     type: Delta.MarkType.Insert,
-                                    content: singleTextCursor({ type: jsonBoolean.name, value: true }),
+                                    content: [singleTextCursor({
+                                        type: jsonBoolean.name,
+                                        value: true,
+                                    })],
                                 },
                             ],
                         ],
@@ -469,7 +472,7 @@ export function testForest(
 
                 const mark: Delta.Insert = {
                     type: Delta.MarkType.Insert,
-                    content: singleTextCursor({ type: jsonNumber.name, value: 3 }),
+                    content: [singleTextCursor({ type: jsonNumber.name, value: 3 })],
                 };
                 const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
                 // TODO: make type-safe
