@@ -340,6 +340,8 @@ stages:
         value: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests/.timeTestsOutput
       - name: memoryUsageTestOutputFolder
         value: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests/.memoryTestsOutput
+      - name: testPackage
+        value: '@fluidframework/test-end-to-end-tests'
     jobs:
     - template: templates/include-test-perf-benchmarks.yml
       parameters:
@@ -369,8 +371,8 @@ stages:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}
             script: |
-              echo "Install @fluidframework/test-end-to-end-tests"
-              TEST_PACKAGE_FILE_PATTERN=${{ replace(replace('@fluidframework/test-end-to-end-tests', '@', '' ), '/', '-') }}-?.?.?-*.tgz
+              echo "Install ${{ variables.testPackage }}"
+              TEST_PACKAGE_FILE_PATTERN=${{ replace(replace('${{ variables.testPackage }}', '@', '' ), '/', '-') }}-?.?.?-*.tgz
               TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN
 
               echo $TEST_PACKAGE_FILE_PATTERN
@@ -383,7 +385,7 @@ stages:
                 TEST_PACKAGE_TGZ=`ls $TEST_PACKAGE_PATH_PATTERN`
               else
                 ls -1 $TEST_PACKAGE_PATH_PATTERN
-                echo "##vso[task.logissue type=error]Test package '${{ testPackage }}' not found, or there are more then one found"
+                echo "##vso[task.logissue type=error]Test package '${{ variables.testPackage }}' not found, or there are more then one found"
                 exit -1
               fi
 
@@ -401,7 +403,7 @@ stages:
             runVersion: latestFromBranch
             runBranch: $(Build.SourceBranch)
             artifact: pack
-            patterns: "**/${{ replace(replace('@fluidframework/test-end-to-end-tests', '@', '' ), '/', '-') }}-?.?.?-*.tgz"
+            patterns: "**/${{ replace(replace('${{ variables.testPackage }}', '@', '' ), '/', '-') }}-?.?.?-*.tgz"
             path: $(Pipeline.Workspace)/client/pack
 
         # Unpack test files
@@ -410,19 +412,19 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              echo "Unpack test files for @fluidframework/test-end-to-end-tests"
-              TAR_FILE=${{ replace(replace(replace(replace('@fluidframework/test-end-to-end-tests', '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
-              mkdir -p ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests/src/test
-              mkdir -p ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests/dist/test
+              echo "Unpack test files for ${{ variables.testPackage }}"
+              TAR_FILE=${{ replace(replace(replace(replace('${{ variables.testPackage }}', '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
+              mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}/src/test
+              mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}/dist/test
               tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
-              mv $(Pipeline.Workspace)/test-files/src/test/* ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests/src/test
-              mv $(Pipeline.Workspace)/test-files/dist/test/* ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests/dist/test
+              mv $(Pipeline.Workspace)/test-files/src/test/* ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}/src/test
+              mv $(Pipeline.Workspace)/test-files/dist/test/* ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}/dist/test
 
         - task: Bash@3
           displayName: Prepare test package to run tests
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
+            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
             script: |
               cp ${{ variables.testWorkspace }}/.npmrc . ;
               npm i ;
@@ -431,7 +433,7 @@ stages:
           displayName: Run execution time tests
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
+            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
             script: |
               npm run test:benchmark:report;
 
@@ -439,7 +441,7 @@ stages:
           displayName: Run memory usage tests
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
+            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
             script: |
               npm run test:memory-profiling:report;
 
