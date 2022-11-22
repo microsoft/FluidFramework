@@ -106,4 +106,5 @@ jobs:
           npm i;
           npm run build:compile;
 
+    # Custom steps specified by the "caller" of this template, to actually run perf tests
     - ${{ parameters.customSteps }}
