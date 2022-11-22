@@ -1786,12 +1786,21 @@ export class MergeTree {
                 insertPos += newSegment.cachedLength;
 
                 let moveUpperBound = Number.POSITIVE_INFINITY;
-                let movedSegment: ISegment | undefined = undefined as any;
                 const smallestSeqMoveOp = this.getSmallestSeqMoveOp();
-                const findAdjacentMovedSegment = (seg: ISegment) => {
-                    if ((seg.movedSeq !== undefined && seg.movedSeq >= refSeq) || seg.localMovedSeq !== undefined) {
-                        movedSegment = seg;
-                        return false;
+
+                let leftMovedSegment: ISegment | undefined = undefined as any;
+                let rightMovedSegment: ISegment | undefined = undefined as any;
+
+                const leftAckedSegments: Record<number, ISegment> = {};
+                const leftLocalSegments: Record<number, ISegment> = {};
+
+                const findLeftMovedSegment = (seg: ISegment) => {
+                    if ((seg.movedSeq !== undefined && seg.movedSeq >= refSeq)) {
+                        leftAckedSegments[seg.movedSeq] = seg;
+                        return true;
+                    } else if (seg.localMovedSeq !== undefined) {
+                        leftLocalSegments[seg.localMovedSeq] = seg;
+                        return true;
                     }
 
                     if (!isRemovedAndAcked(seg) || wasRemovedAfter(seg, moveUpperBound)) {
@@ -1799,23 +1808,41 @@ export class MergeTree {
                     }
                     // If we've reached a segment that existed before any of our in-collab-window move ops
                     // happened, no need to continue.
-                    return moveUpperBound > smallestSeqMoveOp;
+                    return moveUpperBound >= smallestSeqMoveOp;
                 };
 
-                forwardExcursion(newSegment, findAdjacentMovedSegment);
-                const rightMovedSegment = movedSegment;
+                const findRightMovedSegment = (seg: ISegment) => {
+                    if ((seg.movedSeq !== undefined && seg.movedSeq >= refSeq)) {
+                        const left = leftAckedSegments[seg.movedSeq];
+                        if (left) {
+                            leftMovedSegment = left;
+                            rightMovedSegment = seg;
+                            return false;
+                        }
+                        return true;
+                    } else if (seg.localMovedSeq !== undefined) {
+                        const left = leftLocalSegments[seg.localMovedSeq];
+                        if (left) {
+                            leftMovedSegment = left;
+                            rightMovedSegment = seg;
+                            return false;
+                        }
+                        return true;
+                    }
 
-                movedSegment = undefined as ISegment | undefined;
-                backwardExcursion(newSegment, findAdjacentMovedSegment);
-                const leftMovedSegment = movedSegment;
+                    if (!isRemovedAndAcked(seg) || wasRemovedAfter(seg, moveUpperBound)) {
+                        moveUpperBound = Math.min(moveUpperBound, seg.seq ?? Number.POSITIVE_INFINITY);
+                    }
+                    // If we've reached a segment that existed before any of our in-collab-window move ops
+                    // happened, no need to continue.
+                    return moveUpperBound >= smallestSeqMoveOp;
+                };
 
-                const movedInSameSeq = leftMovedSegment
-                    && rightMovedSegment
-                    && (leftMovedSegment.movedSeq === -1 && rightMovedSegment.movedSeq === -1
-                    ? leftMovedSegment.localMovedSeq === rightMovedSegment.localMovedSeq
-                    : leftMovedSegment.movedSeq === rightMovedSegment.movedSeq);
+                backwardExcursion(newSegment, findLeftMovedSegment);
+                moveUpperBound = Number.POSITIVE_INFINITY;
+                forwardExcursion(newSegment, findRightMovedSegment);
 
-                if (leftMovedSegment && rightMovedSegment && movedInSameSeq) {
+                if (leftMovedSegment && rightMovedSegment) {
                     const nearMoveInfo = toMoveInfo(leftMovedSegment);
                     const farMoveInfo = toMoveInfo(rightMovedSegment);
                     // The inserted segment could potentially be adjacent to two different moved regions.
@@ -2093,7 +2120,7 @@ export class MergeTree {
         overwrite: boolean = false,
         opArgs: IMergeTreeDeltaOpArgs,
     ): void {
-        if (seq !== UnassignedSequenceNumber) {
+        if (seq !== UnassignedSequenceNumber && seq !== this.moveSeqs[this.moveSeqs.length - 1]) {
             this.moveSeqs.push(seq);
         }
 
