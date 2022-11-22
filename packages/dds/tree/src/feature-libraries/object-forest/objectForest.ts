@@ -216,13 +216,6 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
         if (path === undefined) {
             return TreeNavigationResult.NotFound;
         }
-        // TODO: is this reasonable? This is the case where the path is still "alive", whatever that means
-        // but the node it leads to doesn't actually exist anymore.
-        try {
-            this.moveCursorToPath(path, cursorToMove);
-        } catch {
-            return TreeNavigationResult.NotFound;
-        }
         return TreeNavigationResult.Ok;
     }
 

@@ -260,6 +260,7 @@ export function testForest(
             const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
             // TODO: make type-safe
             forest.applyDelta(delta);
+            forest.anchors.applyDelta(delta);
 
             assert.equal(
                 forest.tryMoveCursorToNode(firstNodeAnchor, cursor),
@@ -394,10 +395,12 @@ export function testForest(
                                 { type: Delta.MarkType.Delete, count: 1 },
                                 {
                                     type: Delta.MarkType.Insert,
-                                    content: [singleTextCursor({
-                                        type: jsonBoolean.name,
-                                        value: true,
-                                    })],
+                                    content: [
+                                        singleTextCursor({
+                                            type: jsonBoolean.name,
+                                            value: true,
+                                        }),
+                                    ],
                                 },
                             ],
                         ],
