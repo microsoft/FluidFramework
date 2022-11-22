@@ -148,7 +148,6 @@ export function testForest(
             reader2.free();
         });
 
-        // TODOJ: unskip this once Noah makes the fix
         it("moving a cursor to the root of an empty forest fails", () => {
             const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
             const dependent = new MockDependent("dependent");
