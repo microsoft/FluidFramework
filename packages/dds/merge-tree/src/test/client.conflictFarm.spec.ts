@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import random from "random-js";
-import { describeFuzz } from "@fluid-internal/stochastic-test-utils";
+import { describeFuzz, makeRandom } from "@fluid-internal/stochastic-test-utils";
 import {
     annotateRange,
     doOverRange,
@@ -72,14 +71,12 @@ const clientNames = generateClientNames();
 function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): void {
     doOverRange(opts.minLength, opts.growthFunc, (minLength) => {
         it(`ConflictFarm_${minLength}`, async () => {
-            const mt = random.engines.mt19937();
-            const seedArray = [0xDEADBEEF, 0XFEEDBED, minLength];
+            const random = makeRandom(0xDEADBEEF, 0xFEEDBED, minLength, extraSeed ?? 0);
+            const testOpts = { ...opts };
             if (extraSeed) {
-                opts.resultsFilePostfix ??= "";
-                opts.resultsFilePostfix += extraSeed;
-                seedArray.push(extraSeed);
+                testOpts.resultsFilePostfix ??= "";
+                testOpts.resultsFilePostfix += extraSeed;
             }
-            mt.seedWithArray(seedArray);
 
             const clients: TestClient[] = [new TestClient({ mergeTreeUseNewLengthCalculations: true })];
             clients.forEach(
@@ -97,7 +94,7 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
                 }
 
                 seq = runMergeTreeOperationRunner(
-                    mt,
+                    random,
                     seq,
                     clients,
                     minLength,

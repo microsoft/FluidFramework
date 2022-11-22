@@ -117,6 +117,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get disposed(): boolean;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
+    ensureNoDataModelChanges<T>(callback: () => T): T;
     // Warning: (ae-forgotten-export) The symbol "BatchMessage" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
@@ -149,7 +150,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get IFluidTokenProvider(): IFluidTokenProvider | undefined;
     get isDirty(): boolean;
+    // @deprecated (undocumented)
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean): Promise<ContainerRuntime>;
+    static loadRuntime(params: {
+        context: IContainerContext;
+        registryEntries: NamedFluidDataStoreRegistryEntries;
+        existing: boolean;
+        requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+        runtimeOptions?: IContainerRuntimeOptions;
+        containerScope?: FluidObject;
+    }): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)
@@ -331,6 +341,7 @@ export interface IConnectableRuntime {
 export interface IContainerRuntimeOptions {
     readonly compressionOptions?: ICompressionRuntimeOptions;
     readonly enableOfflineLoad?: boolean;
+    readonly enableOpReentryCheck?: boolean;
     readonly flushMode?: FlushMode;
     // (undocumented)
     readonly gcOptions?: IGCRuntimeOptions;
@@ -402,7 +413,7 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
     readonly reason: string;
 }
 
-// @public
+// @public @deprecated
 export interface IPendingFlush {
     // (undocumented)
     type: "flush";
@@ -515,10 +526,6 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     closeFn(): void;
     // (undocumented)
     readonly logger: ITelemetryLogger;
-    // @deprecated (undocumented)
-    on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
-    // @deprecated (undocumented)
-    removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
     readonly summarizerClientId: string | undefined;
 }
 
@@ -616,17 +623,7 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 // @public (undocumented)
 export interface ISummaryRuntimeOptions {
     // @deprecated
-    disableSummaries?: boolean;
-    // @deprecated
     initialSummarizerDelayMs?: number;
-    // @deprecated (undocumented)
-    maxOpsSinceLastSummary?: number;
-    // @deprecated
-    summarizerClientElection?: boolean;
-    // Warning: (ae-forgotten-export) The symbol "ISummarizerOptions" needs to be exported by the entry point index.d.ts
-    //
-    // @deprecated
-    summarizerOptions?: Readonly<Partial<ISummarizerOptions>>;
     summaryConfigOverrides?: ISummaryConfiguration;
 }
 
