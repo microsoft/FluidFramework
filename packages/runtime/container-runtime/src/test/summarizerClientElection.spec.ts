@@ -316,39 +316,6 @@ describe("Summarizer Client Election", () => {
             defaultOp(maxOps);
             assertState("b-summarizer", "b", 4800, "should not reelect <= max ops");
 
-            // Should not elect first client at this point, even when we reach max ops.
-            defaultOp();
-            assertState("b-summarizer", "b", 4800, "b's summarizer still working");
-            summarizer.runDeferred.resolve();
-            await flushPromises();
-            assertState("b-summarizer", "b", 4800, "should keep same summarizer");
-
-            // Do not trigger another reelection
-            defaultOp(maxOps);
-            assertState("b-summarizer", "b", 4800, "should not reelect <= max ops since baseline");
-            defaultOp();
-            summarizer.runDeferred.resolve();
-            await flushPromises();
-            assertState("b-summarizer", "b", 4800, "should not reelect again");
-        });
-
-        it("Should not reelect when client not summarizing and election is disabled", async () => {
-            currentSequenceNumber = 4800;
-            createElection([
-                ["s1", 1, false],
-                ["a", 2, true],
-                ["s2", 4, false],
-                ["b", 7, true],
-            ], { electedClientId: "b", electedParentId: "b", electionSequenceNumber: 4000 });
-            assertState("b", "b", 4000, "elected client based on initial state");
-            connectedState.connect();
-            await flushPromises();
-            assertState("b-summarizer", "b", 4800, "should elect b's summarizer");
-
-            // Should stay the same right up until max ops
-            defaultOp(maxOps);
-            assertState("b-summarizer", "b", 4800, "should not reelect <= max ops");
-
             // Should not elect another  client at this point, so the parent will stay as "b"
             defaultOp();
             assertState("b-summarizer", "b", 4800, "b's summarizer still working");
