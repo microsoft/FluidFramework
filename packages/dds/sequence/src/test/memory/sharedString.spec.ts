@@ -6,7 +6,7 @@
 import {
     MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils";
-import { benchmarkMemory } from "@fluid-tools/benchmark";
+import { benchmarkMemory, benchmarkMemory2, MemoryTestObjectInterface } from "@fluid-tools/benchmark";
 import {
     Marker,
     ReferenceType,
@@ -46,6 +46,14 @@ describe("SharedString memory usage", () => {
         },
     });
 
+    benchmarkMemory2(new class implements MemoryTestObjectInterface {
+        title = "Create empty SharedString NEW";
+
+        async run() {
+            const sharedString = createLocalSharedString("testSharedString");
+        }
+    }());
+
     const numbersOfEntriesForTests = [100, 1000, 10_000];
 
     numbersOfEntriesForTests.forEach((x) => {
@@ -60,6 +68,25 @@ describe("SharedString memory usage", () => {
             },
         });
 
+
+        benchmarkMemory2(new class implements MemoryTestObjectInterface {
+            title = `Insert and remove text ${x} times NEW`;
+            private sharedString = createLocalSharedString("testSharedString");
+
+            async run() {
+                this.sharedString = createLocalSharedString("testSharedString");
+                    for (let i = 0; i < x; i++) {
+                        this.sharedString.insertText(0, "my-test-text");
+                        this.sharedString.removeText(0, 12);
+                    }
+            }
+
+            beforeIteration() {
+                this.sharedString = createLocalSharedString("testestSharedStringtMap");
+            }
+        }());
+
+
         benchmarkMemory({
             title: `Replace text ${x} times`,
             benchmarkFn: async () => {
@@ -70,6 +97,23 @@ describe("SharedString memory usage", () => {
                 }
             },
         });
+
+        benchmarkMemory2(new class implements MemoryTestObjectInterface {
+            title = `Replace text ${x} times NEW`;
+            private sharedString = createLocalSharedString("testSharedString");
+
+            async run() {
+                this.sharedString = createLocalSharedString("testSharedString");
+                this.sharedString.insertText(0, "0000");
+                for (let i = 0; i < x; i++) {
+                    this.sharedString.replaceText(0, 4, i.toString().padStart(4, "0"));
+                }
+            }
+
+            beforeIteration() {
+                this.sharedString = createLocalSharedString("testestSharedStringtMap");
+            }
+        }());
 
         benchmarkMemory({
             title: `Get text annotation ${x} times`,
@@ -85,6 +129,28 @@ describe("SharedString memory usage", () => {
                 }
             },
         });
+
+        benchmarkMemory2(new class implements MemoryTestObjectInterface {
+            title = `Get text annotation ${x} times NEW`;
+            private sharedString = createLocalSharedString("testSharedString");
+            private text = "hello world";
+            private styleProps = { style: "bold" };
+
+            async run() {
+                this.sharedString = createLocalSharedString("testSharedString");
+                this.text = "hello world";
+                this.styleProps = { style: "bold" };
+                this.sharedString.insertText(0, this.text, this.styleProps);
+
+                for (let i = 0; i < x; i++) {
+                    this.sharedString.getPropertiesAtPosition(i);
+                }
+            }
+
+            beforeIteration() {
+                this.sharedString = createLocalSharedString("testestSharedStringtMap");
+            }
+        }());
 
         benchmarkMemory({
             title: `Get marker ${x} times`,
@@ -103,6 +169,31 @@ describe("SharedString memory usage", () => {
                 }
             },
         });
+
+        benchmarkMemory2(new class implements MemoryTestObjectInterface {
+            title = `Get marker ${x} times NEW`;
+            private markerId = "myMarkerId";
+            private sharedString = createLocalSharedString("testSharedString");
+
+            async run() {
+                this.markerId = "myMarkerId";
+                this.sharedString = createLocalSharedString("testSharedString");
+                this.sharedString.insertText(0, "my-test-text");
+                this.sharedString.insertMarker(
+                    0,
+                    ReferenceType.Simple,
+                    {
+                        [reservedMarkerIdKey]: this.markerId,
+                    });
+                for (let i = 0; i < x; i++) {
+                    this.sharedString.getMarkerFromId(this.markerId);
+                }
+            }
+
+            beforeIteration() {
+                this.sharedString = createLocalSharedString("testestSharedStringtMap");
+            }
+        }());
 
         benchmarkMemory({
             title: `Annotate marker ${x} times with same options`,
@@ -124,5 +215,34 @@ describe("SharedString memory usage", () => {
                 }
             },
         });
+
+        benchmarkMemory2(new class implements MemoryTestObjectInterface {
+            title = `Annotate marker ${x} times with same options NEW`;
+            private markerId = "myMarkerId";
+            private sharedString = createLocalSharedString("testSharedString");
+            private simpleMarker = this.sharedString.getMarkerFromId(this.markerId) as Marker;
+
+            async run() {
+                this.markerId = "myMarkerId";
+                this.sharedString = createLocalSharedString("testSharedString");
+                this.sharedString.insertText(0, "my-test-text");
+                this.sharedString.insertMarker(
+                    0,
+                    ReferenceType.Simple,
+                    {
+                        [reservedMarkerIdKey]: this.markerId,
+                    },
+                );
+
+                this.simpleMarker = this.sharedString.getMarkerFromId(this.markerId) as Marker;
+                for (let i = 0; i < x; i++) {
+                    this.sharedString.annotateMarker(this.simpleMarker, { color: "blue" });
+                }
+            }
+
+            beforeIteration() {
+                this.sharedString = createLocalSharedString("testestSharedStringtMap");
+            }
+        }());
     });
 });
