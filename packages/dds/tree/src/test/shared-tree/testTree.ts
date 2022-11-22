@@ -17,12 +17,13 @@ import {
     ITreeCursorSynchronous,
     mapCursorField,
     moveToDetachedField,
+    SchemaData,
     SchemaPolicy,
     SeqNumber,
     SessionId,
     TransactionResult,
 } from "../../core";
-import { cursorToJsonObject, singleJsonCursor } from "../../domains";
+import { cursorToJsonObject, jsonSchemaData, singleJsonCursor } from "../../domains";
 import {
     buildForest,
     DefaultChangeFamily,
@@ -44,6 +45,7 @@ export interface TestTreeEdit {
 export interface TestTreeOptions {
     sessionId?: string;
     schemaPolicy?: SchemaPolicy;
+    schemaData?: SchemaData;
 }
 
 /**
@@ -68,7 +70,7 @@ export class TestTree {
         options: TestTreeOptions = {},
     ): TestTree {
         const schemaPolicy = options.schemaPolicy ?? defaultSchemaPolicy;
-        const schema = new InMemoryStoredSchemaRepository(schemaPolicy);
+        const schema = new InMemoryStoredSchemaRepository(schemaPolicy, options.schemaData);
         const forest = buildForest(schema);
         initializeForest(forest, Array.isArray(cursor) ? cursor : [cursor]);
         return TestTree.fromForest(forest, options);
@@ -76,7 +78,7 @@ export class TestTree {
 
     static fromJson<T>(json: Jsonable<T>[] | Jsonable<T>, options: TestTreeOptions = {}): TestTree {
         const cursors = Array.isArray(json) ? json.map(singleJsonCursor) : singleJsonCursor(json);
-        return TestTree.fromCursor(cursors, options);
+        return TestTree.fromCursor(cursors, { schemaData: jsonSchemaData, ...options });
     }
 
     public readonly sessionId: string;
