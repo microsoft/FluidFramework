@@ -174,7 +174,10 @@ describe("SequenceField - Compose", () => {
     it("revive and modify ○ modify", () => {
         const childChangeA = TestChange.mint([0], 1);
         const childChangeB = TestChange.mint([0, 1], 2);
-        const childChangeAB = TestChange.compose([childChangeA, childChangeB]);
+        const childChangeAB = TestChange.compose([
+            makeAnonChange(childChangeA),
+            makeAnonChange(childChangeB),
+        ]);
         const revive: TestChangeset = [
             {
                 type: "MRevive",
@@ -199,7 +202,7 @@ describe("SequenceField - Compose", () => {
                 changes: childChangeAB,
             },
         ];
-        const actual = compose([revive, modify]);
+        const actual = compose([makeAnonChange(revive), makeAnonChange(modify)]);
         assert.deepEqual(actual, expected);
     });
 
@@ -363,7 +366,7 @@ describe("SequenceField - Compose", () => {
             },
         ];
         const deletion: SF.Changeset = [{ type: "Delete", id: 3, count: 2 }];
-        const actual = shallowCompose([revive, deletion]);
+        const actual = shallowCompose([makeAnonChange(revive), makeAnonChange(deletion)]);
         const expected: SF.Changeset = [{ type: "Delete", id: 3, count: 1 }];
         assert.deepEqual(actual, expected);
     });
