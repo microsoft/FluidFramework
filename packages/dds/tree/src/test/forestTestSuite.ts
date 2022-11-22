@@ -399,9 +399,7 @@ export function testForest(
                                 { type: Delta.MarkType.Delete, count: 1 },
                                 {
                                     type: Delta.MarkType.Insert,
-                                    content: [{ type: jsonBoolean.name, value: true }].map(
-                                        singleTextCursor,
-                                    ),
+                                    content: singleTextCursor({ type: jsonBoolean.name, value: true }),
                                 },
                             ],
                         ],
