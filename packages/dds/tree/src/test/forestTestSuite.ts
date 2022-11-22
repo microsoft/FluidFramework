@@ -257,7 +257,7 @@ export function testForest(
             cursor.clear();
 
             const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
-            const delta: Delta.Root = new Map([[rootFieldKeySymbol, [0, mark]]]);
+            const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
             // TODO: make type-safe
             forest.applyDelta(delta);
 
@@ -267,7 +267,7 @@ export function testForest(
             );
         });
 
-        describe.only("can clone", () => {
+        describe("can clone", () => {
             it("an empty forest", () => {
                 const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
                 const clone = forest.clone(forest.schema, forest.anchors);
@@ -394,9 +394,7 @@ export function testForest(
                                 { type: Delta.MarkType.Delete, count: 1 },
                                 {
                                     type: Delta.MarkType.Insert,
-                                    content: [{ type: jsonBoolean.name, value: true }].map(
-                                        singleTextCursor,
-                                    ),
+                                    content: singleTextCursor({ type: jsonBoolean.name, value: true }),
                                 },
                             ],
                         ],
@@ -454,7 +452,7 @@ export function testForest(
                 // TODO: make type-safe
                 forest.applyDelta(delta);
 
-                // Inspect resulting tree: should just have `2`.
+                // Inspect resulting tree: should just have `1`.
                 const reader = forest.allocateCursor();
                 assert.equal(forest.tryMoveCursorToNode(anchor, reader), TreeNavigationResult.Ok);
                 assert.equal(reader.value, 1);
@@ -471,7 +469,7 @@ export function testForest(
 
                 const mark: Delta.Insert = {
                     type: Delta.MarkType.Insert,
-                    content: [{ type: jsonNumber.name, value: 3 }].map(singleTextCursor),
+                    content: singleTextCursor({ type: jsonNumber.name, value: 3 }),
                 };
                 const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
                 // TODO: make type-safe
