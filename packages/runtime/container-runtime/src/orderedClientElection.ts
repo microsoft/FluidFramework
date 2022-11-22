@@ -204,7 +204,10 @@ export interface IOrderedClientElectionEvents extends IEvent {
     ) => void);
 }
 
-/** Serialized state of IOrderedClientElection. */
+/** 
+ * Serialized state of IOrderedClientElection.
+ * @internal
+ */
 export interface ISerializedElection {
     /** Sequence number at the time of the latest election. */
     readonly electionSequenceNumber: number;

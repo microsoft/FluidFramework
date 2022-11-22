@@ -74,6 +74,7 @@ class CancellableThrottler {
 
 /**
  * Information from a snapshot needed to load BlobManager
+ * @internal
  */
 export interface IBlobManagerLoadInfo {
     ids?: string[];
