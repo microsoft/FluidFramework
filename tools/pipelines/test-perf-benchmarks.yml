@@ -55,12 +55,16 @@ variables:
   # basic ANSI color support though, so force that in the pipeline
   - name: FORCE_COLOR
     value: 1
+    readonly: true
   - name: testWorkspace
     value: $(Pipeline.Workspace)/test
+    readonly: true
   - name: artifactPipeline
     value: Build - client packages
+    readonly: true
   - name: toolAbsolutePath
     value: $(Build.SourcesDirectory)/tools/telemetry-generator
+    readonly: true
 
 stages:
   # Performance unit tests - runtime
@@ -69,6 +73,7 @@ stages:
     variables:
       - name: consolidatedTestsOutputFolder
         value: ${{ variables.testWorkspace }}/benchmarkOutput
+        readonly: true
     jobs:
     - template: templates/include-test-perf-benchmarks.yml
       parameters:
@@ -205,6 +210,7 @@ stages:
     variables:
       - name: consolidatedTestsOutputFolder
         value: ${{ variables.testWorkspace }}/memoryTestsOutput
+        readonly: true
     jobs:
     - template: templates/include-test-perf-benchmarks.yml
       parameters:
@@ -342,10 +348,13 @@ stages:
       # The following two paths are defined by the npm scripts invocations in @fluidframework/test-end-to-end-tests
       - name: executionTimeTestOutputFolder
         value: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests/.timeTestsOutput
+        readonly: true
       - name: memoryUsageTestOutputFolder
         value: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests/.memoryTestsOutput
+        readonly: true
       - name: testPackage
         value: '@fluidframework/test-end-to-end-tests'
+        readonly: true
     jobs:
     - template: templates/include-test-perf-benchmarks.yml
       parameters:
@@ -382,7 +391,7 @@ stages:
             runVersion: latestFromBranch
             runBranch: $(Build.SourceBranch)
             artifact: pack
-            patterns: "**/${{ replace(replace('${{ variables.testPackage }}', '@', '' ), '/', '-') }}-?.?.?-*.tgz"
+            patterns: "**/${{ replace(replace(variables.testPackage, '@', '' ), '/', '-') }}-?.?.?-*.tgz"
             path: $(Pipeline.Workspace)/client/pack
 
         # Install e2e test package
@@ -393,7 +402,7 @@ stages:
             workingDirectory: ${{ variables.testWorkspace }}
             script: |
               echo "Install ${{ variables.testPackage }}"
-              TEST_PACKAGE_FILE_PATTERN=${{ replace(replace('${{ variables.testPackage }}', '@', '' ), '/', '-') }}-?.?.?-*.tgz
+              TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(variables.testPackage, '@', '' ), '/', '-') }}-?.?.?-*.tgz
               TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN
 
               echo $TEST_PACKAGE_FILE_PATTERN
@@ -424,7 +433,7 @@ stages:
             runVersion: latestFromBranch
             runBranch: $(Build.SourceBranch)
             artifact: pack
-            patterns: "**/${{ replace(replace('${{ variables.testPackage }}', '@', '' ), '/', '-') }}-?.?.?-*.tgz"
+            patterns: "**/${{ replace(replace(variables.testPackage, '@', '' ), '/', '-') }}-?.?.?-*.tgz"
             path: $(Pipeline.Workspace)/client/pack
 
         # Unpack test files
@@ -434,7 +443,7 @@ stages:
             targetType: 'inline'
             script: |
               echo "Unpack test files for ${{ variables.testPackage }}"
-              TAR_FILE=${{ replace(replace(replace(replace('${{ variables.testPackage }}', '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
+              TAR_FILE=${{ replace(replace(replace(replace(variables.testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
               mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}/src/test
               mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}/dist/test
               tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
