@@ -216,6 +216,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
         if (path === undefined) {
             return TreeNavigationResult.NotFound;
         }
+        this.moveCursorToPath(path, cursorToMove);
         return TreeNavigationResult.Ok;
     }
 
