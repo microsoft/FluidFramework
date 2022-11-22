@@ -629,7 +629,11 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
             const container = await loadContainer(summaryVersion);
             // Requesting the tombstoned data store should succeed since ThrowOnTombstoneUsage is not enabled.
             // Logs a tombstone and sweep ready error
-            const dataObject = await requestFluidObject<ITestDataObject>(container, unreferencedId);
+            let dataObject: ITestDataObject;
+            await assert.doesNotReject(
+                async () => { dataObject = await requestFluidObject<ITestDataObject>(container, unreferencedId); },
+                `Should be able to request a tombstoned datastore.`,
+            );
             // Modifying the tombstoned datastore should not fail since ThrowOnTombstoneUsage is not enabled.
             // Logs a submitMessage error
             assert.doesNotThrow(() => dataObject._root.set("send", "op"),

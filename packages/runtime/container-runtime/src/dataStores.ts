@@ -115,8 +115,10 @@ export class DataStores implements IDisposable {
             const baseGCDetails = await baseGCDetailsP;
             return baseGCDetails.get(dataStoreId);
         };
-        // Read the feature flag that tells whether to throw when a tombstone data store is used.
-        this.throwOnTombstoneUsage = this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true;
+        // Tombstone should only be thrown when the feature flag is enabled and the client isn't a summarizer
+        this.throwOnTombstoneUsage =
+            this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
+            this.runtime.clientDetails.type !== summarizerClientType;
 
         // Extract stores stored inside the snapshot
         const fluidDataStores = new Map<string, ISnapshotTree>();
@@ -446,7 +448,7 @@ export class DataStores implements IDisposable {
             }, error);
             // Always log an error when tombstoned data store is used. However, throw an error only if
             // throwOnTombstoneUsage is set and the client is not a summarizer.
-            if (this.throwOnTombstoneUsage && this.runtime.clientDetails.type !== summarizerClientType) {
+            if (this.throwOnTombstoneUsage) {
                 throw error;
             }
         }
