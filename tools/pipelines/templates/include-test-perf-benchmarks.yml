@@ -11,7 +11,6 @@ parameters:
 
 jobs:
   - job: build
-    displayName: Run performance tests - ${{ parameters.displayName}}
     pool: ${{ parameters.poolBuild }}
     variables:
       feed: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
