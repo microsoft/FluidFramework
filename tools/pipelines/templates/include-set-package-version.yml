@@ -54,6 +54,8 @@ steps:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
+        echo "installing version @${{ parameters.buildToolsVersionToInstall }}"
+
         npm install --global "@fluid-tools/build-cli@${{ parameters.buildToolsVersionToInstall }}"
 
         # This can be removed once all builds tools are moved to the build-cli library
