@@ -35,10 +35,7 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
     const remainingTimeUntilSweepMs = 100;
     const sweepTimeoutMs = 200;
     assert(remainingTimeUntilSweepMs < sweepTimeoutMs, "remainingTimeUntilSweepMs should be < sweepTimeoutMs");
-    const settings = {
-        "Fluid.GarbageCollection.Test.Tombstone": "true",
-        "Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": sweepTimeoutMs,
-    };
+    const settings = {};
 
     const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0 };
     const testContainerConfig: ITestContainerConfig = {
@@ -60,6 +57,8 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         if (provider.driver.type !== "local") {
             this.skip();
         }
+        settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
+        settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
     });
 
     async function loadContainer(summaryVersion: string) {
@@ -564,6 +563,41 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
             sendDataObject._runtime.submitSignal("can receive", "a signal");
             await provider.ensureSynchronized();
         });
+
+        itExpects("does not throw tombstone errors when ThrowOnTombstoneUsage setting is not enabled",
+        [
+            { eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded" },
+            { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed", callSite: "submitMessage" },
+            { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed", callSite: "process" },
+            { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested" },
+        ],
+        async () => {
+            settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
+            const {
+                unreferencedId,
+                summarizingContainer,
+                summarizer,
+            } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+
+            // Use the request pattern to get the testDataObject - this is unsafe and no one should do this in their
+            // production application - causes a sweep ready loaded error
+            const dataObject = await requestFluidObject<ITestDataObject>(summarizingContainer, unreferencedId);
+
+            // The datastore should be tombstoned now
+            await summarize(summarizer);
+
+            // Modifying the tombstoned datastore should not fail since ThrowOnTombstoneUsage is not enabled.
+            assert.doesNotThrow(() => dataObject._root.set("send", "op"),
+                `Should be able to send ops for a tombstoned datastore.`,
+            );
+
+            // Wait for the above op to be process. That will result in another error logged during process.
+            await provider.ensureSynchronized();
+
+            // Requesting the tombstoned data store should succeed since ThrowOnTombstoneUsage is not enabled.
+            const response = await dataObject._context.IFluidHandleContext.resolveHandle({ url: unreferencedId });
+            assert(response?.status === 200, `Expecting a 200 response!`);
+        });
     });
 
     describe("Tombstone information in summary", () => {
@@ -842,12 +876,8 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
             const summary2 = await summarizeNow(summarizer);
             validateTombstoneState(summary2.summaryTree, [newDataStoreUrl], [mainDataStoreUrl]);
 
-            // Load a container from the above summary. The tombstoned data store should be marked in this container.
+            // Load a container from the above summary. The tombstoned data store should be correctly marked.
             const container2 = await loadContainer(summary2.summaryVersion);
-            const mainDataStore2 = await requestFluidObject<ITestDataObject>(container2, "default");
-            // Send an op so that the container transitions to write mode.
-            mainDataStore2._root.set("writeMode", "true");
-            await waitForContainerConnection(container2);
 
             // Requesting the tombstoned data store should result in an error.
             await assert.rejects(async () => requestFluidObject<ITestDataObject>(container2, newDataStore._context.id),
