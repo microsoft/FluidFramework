@@ -262,7 +262,7 @@ export function testForest(
             cursor.clear();
 
             const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
-            const delta: Delta.Root = new Map([[rootFieldKeySymbol, [0, mark]]]);
+            const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
             // TODO: make type-safe
             forest.applyDelta(delta);
 
