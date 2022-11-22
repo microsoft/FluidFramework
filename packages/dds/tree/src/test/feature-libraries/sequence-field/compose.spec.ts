@@ -17,17 +17,17 @@ const tag1: RevisionTag = brand(1);
 const tag2: RevisionTag = brand(2);
 
 function compose(changes: TestChangeset[]): TestChangeset {
-    changes.forEach(deepFreeze);
+    changes.forEach((c) => deepFreeze(c));
     return SF.compose(changes, TestChange.compose);
 }
 
 function composeNoVerify(changes: TestChangeset[]): TestChangeset {
-    changes.forEach(deepFreeze);
+    changes.forEach((c) => deepFreeze(c));
     return SF.compose(changes, (cs: TestChange[]) => TestChange.compose(cs, false));
 }
 
 function shallowCompose(changes: SF.Changeset[]): SF.Changeset {
-    changes.forEach(deepFreeze);
+    changes.forEach((c) => deepFreeze(c));
     return SF.sequenceFieldChangeRebaser.compose(changes, () =>
         assert.fail("Unexpected call to child rebaser"),
     );
