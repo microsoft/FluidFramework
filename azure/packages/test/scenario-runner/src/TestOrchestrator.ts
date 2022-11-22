@@ -84,7 +84,7 @@ export class TestOrchestrator {
             { version: "westus2", config: this.getConfig("westus2") },
             { version: "westus3", config: this.getConfig("westus3") },
             { version: "eastus", config: this.getConfig("eastus") },
-            { version: "europe", config: this.getConfig("europe") },
+            { version: "westeurope", config: this.getConfig("westeurope") },
         ];
     }
 
@@ -249,8 +249,8 @@ export class TestOrchestrator {
             case "eastus": {
                 return "./testConfig_eastus.yml";
             }
-            case "europe": {
-                return "./testConfig_europe.yml";
+            case "westeurope": {
+                return "./testConfig_westeurope.yml";
             }
             default: {
                 return "";

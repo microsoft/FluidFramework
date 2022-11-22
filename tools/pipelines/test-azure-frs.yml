@@ -46,7 +46,7 @@ variables:
 stages:
   # Run Azure Client FRS Tests (WestUS2)
   - stage:
-    displayName: e2e - frs perf tests (westus2)
+    displayName: e2e - frs perf tests (WestUS2)
     dependsOn: []
     jobs:
       - template: templates/include-test-real-service.yml
@@ -58,11 +58,11 @@ stages:
           downloadAzureTestArtifacts: true
           env:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-            azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
-            azure__fluid__relay__service__function__url: $(azure-fluid-relay-service-function-url)
+            azure__fluid__relay__service__tenantId: $(fluid-afr-perf-test-westus2-tenantId)
+            azure__fluid__relay__service__function__url: $(fluid-afr-perf-test-westus2-function-url)
   # Run Azure Client FRS Tests (WestUS3)
   - stage:
-    displayName: e2e - frs perf tests (westus3)
+    displayName: e2e - frs perf tests (WestUS3)
     dependsOn: []
     jobs:
       - template: templates/include-test-real-service.yml
@@ -74,11 +74,11 @@ stages:
           downloadAzureTestArtifacts: true
           env:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-            azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
-            azure__fluid__relay__service__function__url: $(azure-fluid-relay-service-function-url)
+            azure__fluid__relay__service__tenantId: $(fluid-afr-perf-test-westus3-tenantId)
+            azure__fluid__relay__service__function__url: $(fluid-afr-perf-test-westus3-function-url)
   # Run Azure Client FRS Tests (EastUS)
   - stage:
-    displayName: e2e - frs perf tests (eastus)
+    displayName: e2e - frs perf tests (EastUS)
     dependsOn: []
     jobs:
       - template: templates/include-test-real-service.yml
@@ -90,11 +90,11 @@ stages:
           downloadAzureTestArtifacts: true
           env:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-            azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
-            azure__fluid__relay__service__function__url: $(azure-fluid-relay-service-function-url)
+            azure__fluid__relay__service__tenantId: $(fluid-afr-perf-test-eastus-tenantId)
+            azure__fluid__relay__service__function__url: $(fluid-afr-perf-test-eastus-function-url)
   # Run Azure Client FRS Tests (Europe)
   - stage:
-    displayName: e2e - frs perf tests (europe)
+    displayName: e2e - frs perf tests (WestEurope)
     dependsOn: []
     jobs:
       - template: templates/include-test-real-service.yml
@@ -106,8 +106,8 @@ stages:
           downloadAzureTestArtifacts: true
           env:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-            azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
-            azure__fluid__relay__service__function__url: $(azure-fluid-relay-service-function-url)
+            azure__fluid__relay__service__tenantId: $(fluid-afr-perf-test-westeurope-tenantId)
+            azure__fluid__relay__service__function__url: $(fluid-afr-perf-test-westeurope-function-url)
   - stage:
     displayName: e2e - azure client with frs
     dependsOn: []
