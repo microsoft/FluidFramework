@@ -29,9 +29,10 @@ function composeNoVerify(changes: TaggedChange<TestChangeset>[]): TestChangeset 
 
 function shallowCompose(changes: TaggedChange<SF.Changeset>[]): SF.Changeset {
     changes.forEach(deepFreeze);
-    return SF.sequenceFieldChangeRebaser.compose(changes, () =>
-        assert.fail("Unexpected call to child rebaser"),
-    );
+    return SF.sequenceFieldChangeRebaser.compose(changes, (children) => {
+        assert(children.length === 1, "Should only have one child to compose");
+        return children[0].change;
+    });
 }
 
 describe("SequenceField - Compose", () => {

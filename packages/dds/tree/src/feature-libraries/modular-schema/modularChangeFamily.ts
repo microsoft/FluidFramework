@@ -192,6 +192,10 @@ export class ModularChangeFamily
         const inverse: NodeChangeset = {};
 
         if (change.change.valueChange !== undefined) {
+            assert(
+                !("revert" in change.change.valueChange),
+                "Inverting inverse changes is currently not supported",
+            );
             const revision = change.change.valueChange.revision ?? change.revision;
             inverse.valueChange = { revert: revision };
         }

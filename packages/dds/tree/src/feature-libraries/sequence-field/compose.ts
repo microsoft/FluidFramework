@@ -20,6 +20,7 @@ import {
     getOutputLength,
     isAttach,
     isDetachMark,
+    isModifyingMark,
     isReattach,
     isSkipMark,
     splitMarkOnInput,
@@ -65,12 +66,12 @@ function composeMarkLists<TNodeChange>(
         if (baseMark === undefined) {
             // We have reached a region of the field that the base change does not affect.
             // We therefore adopt the new mark as is.
-            factory.push(clone(newMark));
+            factory.push(composeMark(newMark, newRev, composeChild));
         } else if (isAttach(newMark)) {
             // Content that is being attached by the new changeset cannot interact with base changes.
             // Note that attach marks from different changesets can only target the same gap if they are concurrent.
             // This method assumes that `newMarkList` is based on `baseMarkList`, so they are not concurrent.
-            factory.pushContent(clone(newMark));
+            factory.pushContent(composeMark(newMark, newRev, composeChild));
             baseIter.push(baseMark);
         } else if (isReattach(newMark)) {
             // Content that is being re-attached by the new changeset can interact with base changes.
@@ -80,7 +81,7 @@ function composeMarkLists<TNodeChange>(
             // We're ignoring these cases for now. The impact of ignoring them is that the relative order of
             // reattached content and concurrently attached content is not preserved.
             // TODO: properly compose reattach marks with their matching base marks if any.
-            factory.pushContent(clone(newMark));
+            factory.pushContent(composeMark(newMark, newRev, composeChild));
             baseIter.push(baseMark);
         } else if (isDetachMark(baseMark)) {
             // Content that is being detached by the base changeset can interact with the new changes.
@@ -231,8 +232,28 @@ function updateModifyLike<TNodeChange>(
     base: ModifyInsert<TNodeChange> | Modify<TNodeChange> | ModifyReattach<TNodeChange>,
     composeChild: NodeChangeComposer<TNodeChange>,
 ) {
+    // `base.changes` is assumed to be the result of a call to `composeChildren`, so it does not need a revision tag.
+    // See the contract of `FieldChangeHandler.compose`.
     base.changes = composeChild([
         tagChange(base.changes, undefined),
         tagChange(curr.changes, currRev),
     ]);
+}
+
+function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
+    mark: TMark,
+    revision: RevisionTag | undefined,
+    composeChild: NodeChangeComposer<TNodeChange>,
+): TMark {
+    if (isSkipMark(mark)) {
+        return mark;
+    }
+
+    if (isModifyingMark(mark)) {
+        const cloned = clone(mark);
+        cloned.changes = composeChild([tagChange(mark.changes, revision)]);
+        return cloned;
+    }
+
+    return clone(mark);
 }

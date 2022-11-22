@@ -82,6 +82,9 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
                         composed.splice(listIndex, 1, {
                             index,
                             nodeChange: composeChildren([
+                                // `match.nodeChange` was the result of a call to `composeChildren`,
+                                // so it does not need a revision tag.
+                                // See the contract of `FieldChangeHandler.compose`.
                                 makeAnonChange(match.nodeChange),
                                 taggedChange,
                             ]),

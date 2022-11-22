@@ -29,6 +29,8 @@ export interface FieldChangeRebaser<TChangeset> {
      * Compose a collection of changesets into a single one.
      * Every child included in the composed change must be the result of a call to `composeChild`,
      * and should be tagged with the revision of its parent change.
+     * Children which were the reuslt of an earlier call to `composeChild` should be tagged with
+     * undefined revision if later passed as an argument to `composeChild`.
      * See {@link ChangeRebaser} for more details.
      */
     compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer): TChangeset;
