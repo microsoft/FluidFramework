@@ -27,6 +27,7 @@ import {
     IFluidContainer,
     RootDataObject,
 } from "@fluidframework/fluid-static";
+import { IClient } from "@fluidframework/protocol-definitions";
 import {
     TinyliciousClientProps,
     TinyliciousContainerServices,
@@ -53,7 +54,7 @@ export class TinyliciousClient {
             this.props?.connection?.domain,
         );
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
-            tokenProvider,
+            this.props?.connection?.tokenProvider ?? tokenProvider,
         );
     }
 
@@ -64,7 +65,10 @@ export class TinyliciousClient {
      */
     public async createContainer(
         containerSchema: ContainerSchema,
-    ): Promise<{ container: IFluidContainer; services: TinyliciousContainerServices; }> {
+    ): Promise<{
+        container: IFluidContainer;
+        services: TinyliciousContainerServices;
+    }> {
         const loader = this.createLoader(containerSchema);
 
         // We're not actually using the code proposal (our code loader always loads the same module
@@ -103,7 +107,10 @@ export class TinyliciousClient {
     public async getContainer(
         id: string,
         containerSchema: ContainerSchema,
-    ): Promise<{ container: IFluidContainer; services: TinyliciousContainerServices; }> {
+    ): Promise<{
+        container: IFluidContainer;
+        services: TinyliciousContainerServices;
+    }> {
         const loader = this.createLoader(containerSchema);
         const container = await loader.resolve({ url: id });
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
@@ -133,12 +140,24 @@ export class TinyliciousClient {
         };
 
         const codeLoader = { load };
+        const client: IClient = {
+            details: {
+                capabilities: { interactive: true },
+            },
+            permission: [],
+            scopes: [],
+            user: { id: "" },
+            mode: "write",
+        };
+
         const loader = new Loader({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
             logger: this.props?.logger,
+            options: { client },
         });
+
         return loader;
     }
     // #endregion
