@@ -139,8 +139,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     // (undocumented)
-    getSnapshotBlobs(): Promise<void>;
-    // (undocumented)
     get IContainerRuntime(): this;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
@@ -557,6 +555,7 @@ export interface ISummaryBaseConfiguration {
     initialSummarizerDelayMs: number;
     maxAckWaitTime: number;
     maxOpsSinceLastSummary: number;
+    // @deprecated (undocumented)
     summarizerClientElection: boolean;
 }
 
@@ -591,6 +590,7 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
     maxTime: number;
     minIdleTime: number;
     minOpsForLastSummaryAttempt: number;
+    nonRuntimeHeuristicThreshold?: number;
     nonRuntimeOpWeight: number;
     runtimeOpWeight: number;
     // (undocumented)

@@ -10,7 +10,7 @@ import * as path from "path";
 import sortPackageJson from "sort-package-json";
 
 import { options } from "../fluidBuild/options";
-import { IPackageManifest } from "./fluidRepo";
+import { IFluidBuildConfig } from "./fluidRepo";
 import { defaultLogger } from "./logging";
 import { MonoRepo, MonoRepoKind, PackageManager } from "./monoRepo";
 import {
@@ -35,7 +35,10 @@ interface IPerson {
     url: string;
 }
 
-export interface IPackage {
+/**
+ * A type representing all relevant fields in package.json, including fluid-build-specific config.
+ */
+export interface PackageJson {
     name: string;
     version: string;
     private: boolean;
@@ -65,8 +68,57 @@ export interface IPackage {
     cpu: string[];
     [key: string]: any;
 
-    fluidBuild?: IPackageManifest;
+    /**
+     * fluid-build config. Some properties only apply when set in the root or release group root package.json.
+     */
+    fluidBuild?: IFluidBuildConfig;
+
+    /**
+     * type compatibility test configuration. This only takes effect when set in the package.json of a package. Setting
+     * it at the root of the repo or release group has no effect.
+     */
+    typeValidation?: {
+        /**
+         * The version of the package. Should match the version field in package.json.
+         */
+        version: string;
+
+        /**
+         * An object containing types that are known to be broken.
+         */
+        broken: BrokenCompatTypes;
+
+        /**
+         * If true, disables type test preparation and generation for the package.
+         */
+        disabled?: boolean;
+
+        /**
+         * The version range used as the "previous" version to compare against when generating type tests. This may be
+         * an exact version or a range string.
+         */
+        baselineRange?: string;
+
+        /**
+         * The exact version used as the "previous" version to compare against when generating type tests. This should
+         * always be an exact version.
+         */
+        baselineVersion?: string;
+    };
 }
+
+/**
+ * Metadata about known-broken types.
+ */
+export interface BrokenCompatSettings {
+    backCompat?: false;
+    forwardCompat?: false;
+}
+
+/**
+ * A mapping of a type name to its {@link BrokenCompatSettings}.
+ */
+export type BrokenCompatTypes = Partial<Record<string, BrokenCompatSettings>>;
 
 export class Package {
     private static packageCount: number = 0;
@@ -88,16 +140,15 @@ export class Package {
         chalk.default.whiteBright,
     ];
 
-    public get packageJson(): IPackage {
+    public get packageJson(): PackageJson {
         return this._packageJson;
     }
     private readonly packageId = Package.packageCount++;
     private _matched: boolean = false;
     private _markForBuild: boolean = false;
 
-    private _packageJson: IPackage;
+    private _packageJson: PackageJson;
     public readonly packageManager: PackageManager;
-
     constructor(
         private readonly packageJsonFileName: string,
         public readonly group: string,
@@ -124,6 +175,10 @@ export class Package {
 
     public get version(): string {
         return this.packageJson.version;
+    }
+
+    public get fluidBuildConfig(): IFluidBuildConfig | undefined {
+        return this._packageJson.fluidBuild;
     }
 
     public get isPublished(): boolean {
@@ -155,7 +210,7 @@ export class Package {
     }
 
     public get combinedDependencies() {
-        const it = function* (packageJson: IPackage) {
+        const it = function* (packageJson: PackageJson) {
             for (const item in packageJson.dependencies) {
                 yield { name: item, version: packageJson.dependencies[item], dev: false };
             }

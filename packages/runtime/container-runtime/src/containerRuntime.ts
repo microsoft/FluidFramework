@@ -211,6 +211,7 @@ export interface ISummaryBaseConfiguration {
     initialSummarizerDelayMs: number;
 
     /**
+     * @deprecated
      * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
      * This defaults to false (disabled) and must be explicitly set to true to enable.
      */
@@ -276,6 +277,17 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
      * For example: (multiplier) * (number of non-runtime ops) = weighted number of non-runtime ops
      */
     nonRuntimeOpWeight: number;
+
+    /**
+     * Number of ops since last summary needed before a non-runtime op can trigger running summary heuristics.
+     *
+     * Note: Any runtime ops sent before the threshold is reached will trigger heuristics normally.
+     * This threshold ONLY applies to non-runtime ops triggering summaries.
+     *
+     * For example: Say the threshold is 20. Sending 19 non-runtime ops will not trigger any heuristic checks.
+     * Sending the 20th non-runtime op will trigger the heuristic checks for summarizing.
+     */
+    nonRuntimeHeuristicThreshold?: number;
 }
 
 export interface ISummaryConfigurationDisableSummarizer {
@@ -315,6 +327,8 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     nonRuntimeOpWeight: 0.1,
 
     runtimeOpWeight: 1.0,
+
+    nonRuntimeHeuristicThreshold: 20,
 };
 
 export interface IGCRuntimeOptions {
@@ -768,7 +782,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             pendingRuntimeState.savedOps = [];
         }
 
-        await runtime.getSnapshotBlobs();
+        // Initialize the base state of the runtime before it's returned.
+        await runtime.initializeBaseState();
 
         return runtime;
     }
@@ -1006,6 +1021,27 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         },
     ) {
         super();
+
+        let loadSummaryNumber: number;
+        // Get the container creation metadata. For new container, we initialize these. For existing containers,
+        // get the values from the metadata blob.
+        if (existing) {
+            this.createContainerMetadata = {
+                createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,
+                createContainerTimestamp: metadata?.createContainerTimestamp,
+            };
+            // summaryNumber was renamed from summaryCount. For older docs that haven't been opened for a long time,
+            // the count is reset to 0.
+            loadSummaryNumber = metadata?.summaryNumber ?? 0;
+        } else {
+            this.createContainerMetadata = {
+                createContainerRuntimeVersion: pkgVersion,
+                createContainerTimestamp: Date.now(),
+            };
+            loadSummaryNumber = 0;
+        }
+        this.nextSummaryNumber = loadSummaryNumber + 1;
+
         this.messageAtLastSummary = metadata?.message;
 
         this._connected = this.context.connected;
@@ -1064,6 +1100,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             baseLogger: this.mc.logger,
             existing,
             metadata,
+            createContainerMetadata: this.createContainerMetadata,
             isSummarizerClient: this.context.clientDetails.type === summarizerClientType,
             getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
             getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
@@ -1279,26 +1316,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             ...getDeviceSpec(),
         });
 
-        let loadSummaryNumber: number;
-        // Get the container creation metadata. For new container, we initialize these. For existing containers,
-        // get the values from the metadata blob.
-        if (existing) {
-            this.createContainerMetadata = {
-                createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,
-                createContainerTimestamp: metadata?.createContainerTimestamp,
-            };
-            // summaryNumber was renamed from summaryCount. For older docs that haven't been opened for a long time,
-            // the count is reset to 0.
-            loadSummaryNumber = metadata?.summaryNumber ?? 0;
-        } else {
-            this.createContainerMetadata = {
-                createContainerRuntimeVersion: pkgVersion,
-                createContainerTimestamp: Date.now(),
-            };
-            loadSummaryNumber = 0;
-        }
-        this.nextSummaryNumber = loadSummaryNumber + 1;
-
         this.logger.sendTelemetryEvent({
             eventName: "ContainerLoadStats",
             ...this.createContainerMetadata,
@@ -1311,6 +1328,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
         BindBatchTracker(this, this.logger);
+    }
+
+    /**
+     * Initializes the state from the base snapshot this container runtime loaded from.
+     */
+    private async initializeBaseState(): Promise<void> {
+        await this.initializeBaseSnapshotBlobs();
+        await this.garbageCollector.initializeBaseState();
     }
 
     public dispose(error?: Error): void {
@@ -2979,7 +3004,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    public async getSnapshotBlobs(): Promise<void> {
+    private async initializeBaseSnapshotBlobs(): Promise<void> {
         if (!(this.mc.config.getBoolean("enableOfflineLoad") ?? this.runtimeOptions.enableOfflineLoad) ||
             this.attachState !== AttachState.Attached || this.context.pendingLocalState) {
             return;

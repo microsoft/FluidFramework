@@ -98,7 +98,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
      * does not include current level (which is stored in `siblings`).
      * Even levels in the stack (starting from 0) are sequences of nodes and odd levels
      * are for fields keys on a node.
-     * @param indexStack - Stack of indices into the corosponding levels in `siblingStack`.
+     * @param indexStack - Stack of indices into the corresponding levels in `siblingStack`.
      * @param siblings - Siblings at the current level (not included in `siblingStack`).
      * @param index - Index into `siblings`.
      */
