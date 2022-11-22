@@ -336,6 +336,77 @@ importers:
       webpack-dev-server: 4.6.0_5v66e2inugklgvlh4huuavolfq
       webpack-merge: 5.8.0
 
+  examples/apps/snapshotFetchPerfApp:
+    specifiers:
+      '@fluid-tools/build-cli': ^0.6.0-109663
+      '@fluid-tools/fluidapp-odsp-urlresolver': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-tools': ^0.6.0-109663
+      '@fluidframework/common-utils': ^1.0.0
+      '@fluidframework/eslint-config-fluid': ^1.2.0
+      '@fluidframework/odsp-doclib-utils': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/odsp-driver': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/odsp-driver-definitions': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/telemetry-utils': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
+      '@rushstack/eslint-config': ^2.5.1
+      '@types/express': ^4.11.0
+      '@types/fs-extra': ^9.0.11
+      '@types/node': ^14.18.0
+      buffer: ^6.0.3
+      concurrently: ^6.2.0
+      css-loader: ^1.0.0
+      eslint: ~8.6.0
+      express: ^4.16.3
+      fs-extra: ^9.1.0
+      nconf: ^0.11.4
+      nyc: ^15.0.0
+      rimraf: ^2.6.2
+      source-map-loader: ^2.0.0
+      style-loader: ^1.0.0
+      ts-loader: ^9.3.0
+      typescript: ~4.5.5
+      webpack: ^5.72.0
+      webpack-cli: ^4.9.2
+      webpack-dev-middleware: ^5.3.3
+      webpack-dev-server: ~4.6.0
+      webpack-hot-middleware: ^2.25.3
+      webpack-merge: ^5.8.0
+    dependencies:
+      '@fluid-tools/fluidapp-odsp-urlresolver': link:../../../packages/drivers/fluidapp-odsp-urlResolver
+      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/odsp-doclib-utils': link:../../../packages/utils/odsp-doclib-utils
+      '@fluidframework/odsp-driver': link:../../../packages/drivers/odsp-driver
+      '@fluidframework/odsp-driver-definitions': link:../../../packages/drivers/odsp-driver-definitions
+      '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
+      express: 4.18.2
+      nconf: 0.11.4
+      webpack-dev-server: 4.6.0_nsornugb7ycligvwdpxm6xbgzi
+    devDependencies:
+      '@fluid-tools/build-cli': 0.6.0-109663_webpack-cli@4.10.0
+      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-tools': 0.6.0-109663_webpack-cli@4.10.0
+      '@fluidframework/eslint-config-fluid': 1.2.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
+      '@types/express': 4.17.14
+      '@types/fs-extra': 9.0.13
+      '@types/node': 14.18.0
+      buffer: 6.0.3
+      concurrently: 6.3.0
+      css-loader: 1.0.1_webpack@5.74.0
+      eslint: 8.6.0
+      fs-extra: 9.1.0
+      nyc: 15.1.0
+      rimraf: 2.7.1
+      source-map-loader: 2.0.2_webpack@5.74.0
+      style-loader: 1.3.0_webpack@5.74.0
+      ts-loader: 9.4.1_c7vzyzxpsxf4kskkum3br4suwu
+      typescript: 4.5.5
+      webpack: 5.74.0_webpack-cli@4.10.0
+      webpack-cli: 4.10.0_ytu6snrkbfm7moq22wnocflvr4
+      webpack-dev-middleware: 5.3.3_webpack@5.74.0
+      webpack-hot-middleware: 2.25.3
+      webpack-merge: 5.8.0
+
   examples/apps/view-framework-sampler:
     specifiers:
       '@fluid-example/example-utils': '>=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0'
@@ -4481,6 +4552,7 @@ importers:
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
@@ -4500,6 +4572,7 @@ importers:
       concurrently: 6.3.0
       copyfiles: 2.4.1
       eslint: 8.6.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       typescript: 4.5.5
 
@@ -4516,6 +4589,7 @@ importers:
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       typescript: ~4.5.5
     devDependencies:
@@ -4530,6 +4604,7 @@ importers:
       concurrently: 6.3.0
       copyfiles: 2.4.1
       eslint: 8.6.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       typescript: 4.5.5
 
@@ -4548,6 +4623,7 @@ importers:
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
@@ -4565,6 +4641,7 @@ importers:
       concurrently: 6.3.0
       copyfiles: 2.4.1
       eslint: 8.6.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       typescript: 4.5.5
 
@@ -7960,6 +8037,7 @@ importers:
       eslint: ~8.6.0
       mocha: ^10.0.0
       nyc: ^15.0.0
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -7985,6 +8063,7 @@ importers:
       eslint: 8.6.0
       mocha: 10.1.0
       nyc: 15.1.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       ts-loader: 9.4.1_c7vzyzxpsxf4kskkum3br4suwu
       typescript: 4.5.5
@@ -8043,6 +8122,7 @@ importers:
       mocha: ^10.0.0
       nock: ^10.0.1
       nyc: ^15.0.0
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -8100,6 +8180,7 @@ importers:
       mocha: 10.1.0
       nock: 10.0.6
       nyc: 15.1.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       ts-loader: 9.4.1_c7vzyzxpsxf4kskkum3br4suwu
       typescript: 4.5.5
@@ -8124,6 +8205,7 @@ importers:
       eslint: ~8.6.0
       mocha: ^10.0.0
       nyc: ^15.0.0
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
@@ -8143,6 +8225,7 @@ importers:
       copyfiles: 2.4.1
       eslint: 8.6.0
       nyc: 15.1.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       typescript: 4.5.5
 
@@ -8182,6 +8265,7 @@ importers:
       eslint: ~8.6.0
       mocha: ^10.0.0
       nyc: ^15.0.0
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
@@ -8220,6 +8304,7 @@ importers:
       eslint: 8.6.0
       mocha: 10.1.0
       nyc: 15.1.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       typescript: 4.5.5
 
@@ -8241,6 +8326,7 @@ importers:
       eslint: ~8.6.0
       mocha: ^10.0.0
       nyc: ^15.0.0
+      prettier: ~2.6.2
       random-js: ^1.0.8
       rimraf: ^2.6.2
       typescript: ~4.5.5
@@ -8262,6 +8348,7 @@ importers:
       eslint: 8.6.0
       mocha: 10.1.0
       nyc: 15.1.0
+      prettier: 2.6.2
       random-js: 1.0.8
       rimraf: 2.7.1
       typescript: 4.5.5
@@ -8283,6 +8370,7 @@ importers:
       eslint: ~8.6.0
       mocha: ^10.0.0
       nyc: ^15.0.0
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       start-server-and-test: ^1.11.7
       typescript: ~4.5.5
@@ -8303,6 +8391,7 @@ importers:
       eslint: 8.6.0
       mocha: 10.1.0
       nyc: 15.1.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       start-server-and-test: 1.14.0
       typescript: 4.5.5
@@ -8325,6 +8414,7 @@ importers:
       eslint: ~8.6.0
       mocha: ^10.0.0
       nyc: ^15.0.0
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       typescript: ~4.5.5
       uuid: ^8.3.1
@@ -8347,6 +8437,7 @@ importers:
       eslint: 8.6.0
       mocha: 10.1.0
       nyc: 15.1.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       typescript: 4.5.5
 
@@ -8384,6 +8475,7 @@ importers:
       eslint: ~8.6.0
       mocha: ^10.0.0
       nyc: ^15.0.0
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       semver: ^7.3.4
       typescript: ~4.5.5
@@ -8424,6 +8516,7 @@ importers:
       eslint: 8.6.0
       mocha: 10.1.0
       nyc: 15.1.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       typescript: 4.5.5
 
@@ -8484,6 +8577,7 @@ importers:
       mocha: ^10.0.0
       nock: ^10.0.1
       nyc: ^15.0.0
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       semver: ^7.3.4
       sinon: ^7.4.2
@@ -8555,6 +8649,7 @@ importers:
       eslint: 8.6.0
       nock: 10.0.6
       nyc: 15.1.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       typescript: 4.5.5
 
@@ -8597,6 +8692,7 @@ importers:
       mocha: ^10.0.0
       nock: ^10.0.1
       nyc: ^15.0.0
+      prettier: ~2.6.2
       random-js: ^1.0.8
       rimraf: ^2.6.2
       typescript: ~4.5.5
@@ -8642,6 +8738,7 @@ importers:
       eslint: 8.6.0
       nock: 10.0.6
       nyc: 15.1.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       typescript: 4.5.5
 
@@ -8661,6 +8758,7 @@ importers:
       eslint: ~8.6.0
       mocha: ^10.0.0
       nyc: ^15.0.0
+      prettier: ~2.6.2
       random-js: ^1.0.8
       rimraf: ^2.6.2
       typescript: ~4.5.5
@@ -8681,6 +8779,7 @@ importers:
       eslint: 8.6.0
       mocha: 10.1.0
       nyc: 15.1.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       typescript: 4.5.5
 
@@ -8722,6 +8821,7 @@ importers:
       eslint: ~8.6.0
       mocha: ^10.0.0
       nyc: ^15.0.0
+      prettier: ~2.6.2
       ps-node: ^0.1.6
       random-js: ^1.0.8
       rimraf: ^2.6.2
@@ -8770,6 +8870,7 @@ importers:
       eslint: 8.6.0
       mocha: 10.1.0
       nyc: 15.1.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       typescript: 4.5.5
 
@@ -8816,6 +8917,7 @@ importers:
       eslint: ~8.6.0
       mocha: ^10.0.0
       nyc: ^15.0.0
+      prettier: ~2.6.2
       random-js: ^1.0.8
       rimraf: ^2.6.2
       typescript: ~4.5.5
@@ -8864,6 +8966,7 @@ importers:
       eslint: 8.6.0
       mocha: 10.1.0
       nyc: 15.1.0
+      prettier: 2.6.2
       random-js: 1.0.8
       rimraf: 2.7.1
       typescript: 4.5.5
@@ -8912,6 +9015,7 @@ importers:
       nconf: ^0.11.4
       nock: ^10.0.1
       nyc: ^15.0.0
+      prettier: ~2.6.2
       proper-lockfile: ^4.1.2
       rimraf: ^2.6.2
       semver: ^7.3.4
@@ -8966,6 +9070,7 @@ importers:
       mocha: 10.1.0
       nock: 10.0.6
       nyc: 15.1.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       ts-loader: 9.4.1_c7vzyzxpsxf4kskkum3br4suwu
       typescript: 4.5.5
@@ -8999,6 +9104,7 @@ importers:
       '@types/node': ^14.18.0
       concurrently: ^6.2.0
       eslint: ~8.6.0
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
@@ -9027,6 +9133,7 @@ importers:
       '@types/node': 14.18.0
       concurrently: 6.3.0
       eslint: 8.6.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       typescript: 4.5.5
 
@@ -9055,6 +9162,7 @@ importers:
       json2csv: ^5.0.7
       mocha: ^10.0.0
       nyc: ^15.0.0
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       typescript: ~4.5.5
       yargs: 13.2.2
@@ -9084,6 +9192,7 @@ importers:
       eslint: 8.6.0
       mocha: 10.1.0
       nyc: 15.1.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       typescript: 4.5.5
 
@@ -9128,6 +9237,7 @@ importers:
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       json-stable-stringify: ^1.0.1
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
@@ -9171,6 +9281,7 @@ importers:
       concurrently: 6.3.0
       copyfiles: 2.4.1
       eslint: 8.6.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       typescript: 4.5.5
 
@@ -9218,6 +9329,7 @@ importers:
       mocha: ^10.0.0
       nconf: ^0.11.4
       nyc: ^15.0.0
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       sillyname: ^0.1.0
       source-map-loader: ^2.0.0
@@ -9274,6 +9386,7 @@ importers:
       fs-extra: 9.1.0
       mocha: 10.1.0
       nyc: 15.1.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       source-map-loader: 2.0.2_webpack@5.74.0
       ts-loader: 9.4.1_c7vzyzxpsxf4kskkum3br4suwu
@@ -9305,6 +9418,7 @@ importers:
       mocha: ^10.0.0
       node-fetch: ^2.6.1
       nyc: ^15.0.0
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       typescript: ~4.5.5
     dependencies:
@@ -9331,6 +9445,7 @@ importers:
       eslint: 8.6.0
       mocha: 10.1.0
       nyc: 15.1.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       typescript: 4.5.5
 
@@ -9358,6 +9473,7 @@ importers:
       events: ^3.1.0
       mocha: ^10.0.0
       nyc: ^15.0.0
+      prettier: ~2.6.2
       rimraf: ^2.6.2
       sinon: ^7.4.2
       typescript: ~4.5.5
@@ -9387,6 +9503,7 @@ importers:
       eslint: 8.6.0
       mocha: 10.1.0
       nyc: 15.1.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       sinon: 7.5.0
       typescript: 4.5.5
@@ -9418,6 +9535,7 @@ importers:
       jwt-decode: ^2.2.0
       mocha: ^10.0.0
       nyc: ^15.0.0
+      prettier: ~2.6.2
       proper-lockfile: ^4.1.2
       rimraf: ^2.6.2
       typescript: ~4.5.5
@@ -9449,6 +9567,7 @@ importers:
       eslint: 8.6.0
       mocha: 10.1.0
       nyc: 15.1.0
+      prettier: 2.6.2
       rimraf: 2.7.1
       typescript: 4.5.5
 
@@ -30148,7 +30267,7 @@ packages:
     dependencies:
       '@babel/core': 7.20.2
       '@istanbuljs/schema': 0.1.2
-      istanbul-lib-coverage: 3.0.0
+      istanbul-lib-coverage: 3.2.0
       semver: 6.3.0
     transitivePeerDependencies:
       - supports-color
@@ -30183,7 +30302,7 @@ packages:
     resolution: {integrity: sha512-wcdi+uAKzfiGT2abPpKZ0hSU1rGQjUQnLvtY5MpQ7QCTahD3VODhcu4wcfY1YtkGaDD5yuydOLINXsfbus9ROw==}
     engines: {node: '>=8'}
     dependencies:
-      istanbul-lib-coverage: 3.0.0
+      istanbul-lib-coverage: 3.2.0
       make-dir: 3.1.0
       supports-color: 7.2.0
     dev: true
@@ -30193,7 +30312,7 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       debug: 4.3.4
-      istanbul-lib-coverage: 3.0.0
+      istanbul-lib-coverage: 3.2.0
       source-map: 0.6.1
     transitivePeerDependencies:
       - supports-color
@@ -33797,7 +33916,7 @@ packages:
       foreground-child: 2.0.0
       get-package-type: 0.1.0
       glob: 7.2.3
-      istanbul-lib-coverage: 3.0.0
+      istanbul-lib-coverage: 3.2.0
       istanbul-lib-hook: 3.0.0
       istanbul-lib-instrument: 4.0.3
       istanbul-lib-processinfo: 2.0.3
