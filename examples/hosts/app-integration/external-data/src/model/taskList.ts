@@ -56,7 +56,13 @@ export class TaskList extends DataObject implements ITaskList {
      * collection pattern -- see the contact-collection example for more details on this pattern.
      */
     private readonly tasks = new Map<string, Task>();
-
+    private readonly draftData = new Map<string, Task>();
+    private readonly savedData = new Map<string,
+        {
+            id: string;
+            nameString: SharedString;
+            priorityCell: SharedCell<number>;
+        }>();
     public readonly addTask = (id: string, name: string, priority: number) => {
         if (this.tasks.get(id) !== undefined) {
             throw new Error("Task already exists");
@@ -69,35 +75,10 @@ export class TaskList extends DataObject implements ITaskList {
         // and persisted.  In turn, this will trigger the "valueChanged" event and handleTaskAdded which will update
         // the this.tasks collection.
         this.root.set(id, { id, name: nameString.handle, priority: priorityCell.handle });
-        // TODO: Ultimately we want to retain the data we retrieved from the external source separate from the draft
-        // Fluid data.  Maybe we do this by just adding it to the objects we're already storing in the root?
-        // this.root.set(
-        //     id,
-        //     {
-        //         id,
-        //         draftName: nameString.handle,
-        //         savedName: name,
-        //         draftPriority: priorityCell.handle,
-        //         savedPriority: priority,
-        //     },
-        // );
-        // Or maybe we create a separate map for it.  I probably prefer this direction.
-        // this.savedData.set(
-        //     id,
-        //     {
-        //         id,
-        //         name,
-        //         priority,
-        //     },
-        // );
-        // this.draftData.set(
-        //     id,
-        //     {
-        //         id,
-        //         name: nameString.handle,
-        //         priority: priorityCell.handle,
-        //     },
-        // );
+
+        const task = new Task(id, nameString, priorityCell);
+        this.savedData.set(id, { id, nameString, priorityCell });
+        this.draftData.set(id, task);
     };
 
     public readonly deleteTask = (id: string) => {
@@ -178,7 +159,7 @@ export class TaskList extends DataObject implements ITaskList {
         // as what we do for summarization).
         const tasks = this.getTasks();
         const taskStrings = tasks.map((task) => {
-            return `${ task.id }:${ task.name.getText() }:${ task.priority.toString() }`;
+            return `${task.id}:${task.name.getText()}:${task.priority.toString()}`;
         });
         const stringDataToWrite = `${taskStrings.join("\n")}`;
         // TODO: Do something reasonable to handle failure, retry, etc.
