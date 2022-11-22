@@ -625,7 +625,8 @@ export function testForest(
                 assert.equal(reader.nextNode(), true);
             });
 
-            // TODO:#2592: Unskip once MoveInAndModify is properly supported.
+            // TODO: Unskip once MoveInAndModify is properly supported.
+            // MoveInAndModify should support inner deltas e.g. Insert, MoveOut, etc.
             it.skip("move in and modify", () => {
                 const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
                 initializeForest(forest, nestedContent.map(singleTextCursor));
