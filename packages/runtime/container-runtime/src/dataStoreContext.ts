@@ -310,8 +310,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "FluidDataStoreContext"));
         this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.pendingOpsCountThreshold, this.mc.logger);
 
-        // Always log an error when tombstoned data store is used. However, throw an error only if
-        // throwOnTombstoneUsage is set and the client is not a summarizer.
+        // Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
         this.throwOnTombstoneUsage =
             this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
             this.clientDetails.type !== summarizerClientType;

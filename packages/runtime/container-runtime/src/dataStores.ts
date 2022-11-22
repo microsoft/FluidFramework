@@ -115,7 +115,7 @@ export class DataStores implements IDisposable {
             const baseGCDetails = await baseGCDetailsP;
             return baseGCDetails.get(dataStoreId);
         };
-        // Tombstone should only be thrown when the feature flag is enabled and the client isn't a summarizer
+        // Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
         this.throwOnTombstoneUsage =
             this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
             this.runtime.clientDetails.type !== summarizerClientType;
@@ -447,7 +447,7 @@ export class DataStores implements IDisposable {
                 viaHandle,
             }, error);
             // Always log an error when tombstoned data store is used. However, throw an error only if
-            // throwOnTombstoneUsage is set and the client is not a summarizer.
+            // throwOnTombstoneUsage is set.
             if (this.throwOnTombstoneUsage) {
                 throw error;
             }
