@@ -18,8 +18,7 @@ import {
 } from "../../feature-libraries";
 import { testForest } from "../forestTestSuite";
 import { testJsonableTreeCursor } from "../cursorTestSuite";
-import { initializeForest, moveToDetachedField } from "../../forest";
-import { ITreeCursor } from "../../tree";
+import { initializeForest, moveToDetachedField, ITreeCursor } from "../../core";
 
 testForest("object-forest", () =>
     buildForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData)),

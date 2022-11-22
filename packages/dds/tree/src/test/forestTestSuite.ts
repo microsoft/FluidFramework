@@ -7,16 +7,22 @@ import { strict as assert } from "assert";
 
 import { defaultSchemaPolicy, isNeverField } from "..";
 import {
-    fieldSchema,
-    InMemoryStoredSchemaRepository,
-    StoredSchemaRepository,
-} from "../schema-stored";
-import {
     IEditableForest,
     initializeForest,
     moveToDetachedField,
     TreeNavigationResult,
-} from "../forest";
+    fieldSchema,
+    InMemoryStoredSchemaRepository,
+    StoredSchemaRepository,
+    recordDependency,
+    Delta,
+    FieldKey,
+    JsonableTree,
+    mapCursorField,
+    rootFieldKey,
+    rootFieldKeySymbol,
+    UpPath,
+} from "../core";
 import {
     cursorToJsonObject,
     jsonNumber,
@@ -27,17 +33,7 @@ import {
     jsonBoolean,
     jsonString,
 } from "../domains";
-import { recordDependency } from "../dependency-tracking";
-import {
-    clonePath,
-    Delta,
-    FieldKey,
-    JsonableTree,
-    mapCursorField,
-    rootFieldKey,
-    rootFieldKeySymbol,
-    UpPath,
-} from "../tree";
+import { clonePath } from "../tree";
 import { brand, brandOpaque } from "../util";
 import { FieldKinds, singleTextCursor } from "../feature-libraries";
 import { MockDependent } from "./utils";
