@@ -4,7 +4,7 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { RevisionTag } from "../../../core";
+import { makeAnonChange, RevisionTag } from "../../../core";
 import { Delta, FieldKey, ITreeCursorSynchronous } from "../../../tree";
 import {
     FieldChange,
@@ -196,9 +196,9 @@ describe("SequenceField - toDelta", () => {
     it("multiple changes", () => {
         const changeset = SF.sequenceFieldChangeRebaser.compose(
             [
-                createDeleteChangeset(0, 10),
-                createInsertChangeset(3, 1),
-                createModifyChangeset(5, TestChange.mint([0], 1)),
+                makeAnonChange(createDeleteChangeset(0, 10)),
+                makeAnonChange(createInsertChangeset(3, 1)),
+                makeAnonChange(createModifyChangeset(5, TestChange.mint([0], 1))),
             ],
             TestChange.compose,
         );
@@ -221,7 +221,10 @@ describe("SequenceField - toDelta", () => {
 
     it("insert and modify => insert", () => {
         const changeset = SF.sequenceFieldChangeRebaser.compose(
-            [createInsertChangeset(0, 1), createModifyChangeset(0, TestChange.mint([0], 1))],
+            [
+                makeAnonChange(createInsertChangeset(0, 1)),
+                makeAnonChange(createModifyChangeset(0, TestChange.mint([0], 1))),
+            ],
             TestChange.compose,
         );
         const mark: Delta.Insert = {
@@ -240,7 +243,10 @@ describe("SequenceField - toDelta", () => {
 
     it("modify and delete => delete", () => {
         const changeset = SF.sequenceFieldChangeRebaser.compose(
-            [createModifyChangeset(0, TestChange.mint([0], 1)), createDeleteChangeset(0, 1)],
+            [
+                makeAnonChange(createModifyChangeset(0, TestChange.mint([0], 1))),
+                makeAnonChange(createDeleteChangeset(0, 1)),
+            ],
             TestChange.compose,
         );
         const mark: Delta.Delete = {

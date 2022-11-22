@@ -8,7 +8,7 @@ import { brand } from "../../../util";
 import { Delta, RevisionTag, TaggedChange, TreeSchemaIdentifier } from "../../../core";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze, fakeRepair } from "../../utils";
-import { tagChange } from "../../../rebase";
+import { makeAnonChange, tagChange } from "../../../rebase";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag: RevisionTag = brand(42);
@@ -27,7 +27,10 @@ export const cases: {
     insert: createInsertChangeset(1, 2, 1),
     modify: SF.sequenceFieldEditor.buildChildChange(0, TestChange.mint([], 1)),
     modify_insert: SF.sequenceFieldChangeRebaser.compose(
-        [createInsertChangeset(1, 1, 1), createModifyChangeset(1, TestChange.mint([], 2))],
+        [
+            makeAnonChange(createInsertChangeset(1, 1, 1)),
+            makeAnonChange(createModifyChangeset(1, TestChange.mint([], 2))),
+        ],
         TestChange.compose,
     ),
     delete: createDeleteChangeset(1, 3),
@@ -64,6 +67,11 @@ export function createModifyChangeset<TNodeChange>(
     change: TNodeChange,
 ): SF.Changeset<TNodeChange> {
     return SF.sequenceFieldEditor.buildChildChange(index, change);
+}
+
+export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
+    const taggedChanges = changes.map(makeAnonChange);
+    return SF.sequenceFieldChangeRebaser.compose(taggedChanges, TestChange.compose);
 }
 
 export function rebaseTagged(

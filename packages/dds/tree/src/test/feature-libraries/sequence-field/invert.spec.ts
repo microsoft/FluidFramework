@@ -10,6 +10,7 @@ import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import {
+    composeAnonChanges,
     createDeleteChangeset,
     createInsertChangeset,
     createModifyChangeset,
@@ -58,7 +59,7 @@ describe("SequenceField - Invert", () => {
     it("modified insert => delete", () => {
         const insert = createInsertChangeset(0, 1);
         const modify = createModifyChangeset(0, TestChange.mint([], 42));
-        const input = SF.sequenceFieldChangeRebaser.compose([insert, modify], TestChange.compose);
+        const input = composeAnonChanges([insert, modify]);
         const expected = createDeleteChangeset(0, 1);
         const actual = shallowInvert(input);
         assert.deepEqual(actual, expected);
