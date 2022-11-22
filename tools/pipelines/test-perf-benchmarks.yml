@@ -453,7 +453,7 @@ stages:
           condition: succeededOrFailed()
           inputs:
             targetPath: '${{ variables.executionTimeTestOutputFolder }}'
-            artifactName: 'perf-test-outputs-e2e_memory-usage'
+            artifactName: 'perf-test-outputs-e2e_execution-time'
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - E2E perf tests output - memory usage
