@@ -505,11 +505,6 @@ export class GarbageCollector implements IGarbageCollector {
 
         let prevSummaryGCVersion: number | undefined;
 
-        // This override applies to new documents, and will always adjust the timeout used in this session
-        // But it will not modify the value persisted in an existing container, and must not exceed that value.
-        const overrideSessionExpiryTimeoutMs =
-                this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SessionExpiryMs");
-
         /**
          * Sweep timeout is the time after which unreferenced content can be swept.
          * Sweep timeout = session expiry timeout + snapshot cache expiry timeout + one day buffer.
@@ -562,10 +557,7 @@ export class GarbageCollector implements IGarbageCollector {
 
             // Set the Session Expiry only if the flag is enabled and GC is enabled.
             if (this.mc.config.getBoolean(runSessionExpiryKey) && this.gcEnabled) {
-                this.sessionExpiryTimeoutMs =
-                    overrideSessionExpiryTimeoutMs
-                    ?? this.gcOptions.sessionExpiryTimeoutMs
-                    ?? defaultSessionExpiryDurationMs;
+                this.sessionExpiryTimeoutMs = this.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
             }
             this.sweepTimeoutMs =
                 testOverrideSweepTimeoutMs
