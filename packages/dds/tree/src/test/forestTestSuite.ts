@@ -272,7 +272,7 @@ export function testForest(
             );
         });
 
-        describe.only("can clone", () => {
+        describe("can clone", () => {
             it("an empty forest", () => {
                 const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
                 const clone = forest.clone(forest.schema, forest.anchors);
