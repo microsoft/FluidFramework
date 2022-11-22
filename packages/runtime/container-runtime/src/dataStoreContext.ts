@@ -88,6 +88,7 @@ import {
     getFluidDataStoreAttributes,
 } from "./summaryFormat";
 import { throwOnTombstoneUsageKey } from "./garbageCollection";
+import { summarizerClientType } from "./summarizerClientElection";
 
 function createAttributes(
     pkg: readonly string[],
@@ -313,8 +314,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "FluidDataStoreContext"));
         this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.pendingOpsCountThreshold, this.mc.logger);
 
-        // Read the feature flag that tells whether to throw when a tombstone data store is used.
-        this.throwOnTombstoneUsage = this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true;
+        // Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
+        this.throwOnTombstoneUsage =
+            this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
+            this.clientDetails.type !== summarizerClientType;
     }
 
     public dispose(): void {
@@ -790,7 +793,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
                 callSite,
                 pkg: packagePathToTelemetryProperty(this.pkg),
             }, error);
-
+            // Always log an error when tombstoned data store is used. However, throw an error only if
+            // throwOnTombstoneUsage is set and the client is not a summarizer.
             if (this.throwOnTombstoneUsage) {
                 throw error;
             }
