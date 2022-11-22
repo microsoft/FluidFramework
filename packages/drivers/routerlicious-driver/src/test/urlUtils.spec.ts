@@ -4,7 +4,13 @@
  */
 
 import assert from "assert";
-import { parseFluidUrl, replaceDocumentIdInPath } from "../urlUtils";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { ISession } from "@fluidframework/server-services-client";
+import {
+    getDiscoveredFluidResolvedUrl,
+    parseFluidUrl,
+    replaceDocumentIdInPath
+} from "../urlUtils";
 
 describe("UrlUtils", () => {
     const exampleFluidUrl1 = "fluid://orderer.examplehost.com/example-tenant/some-document?param1=value1";
@@ -47,6 +53,42 @@ describe("UrlUtils", () => {
             const parsedUrl = parseFluidUrl(exampleFluidUrl1);
             parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, "otherdoc"));
             assert.strictEqual(parsedUrl.toString(), exampleFluidUrl1.replace("some-document", "otherdoc"));
+        });
+    });
+
+    describe("getDiscoveredFluidResolvedUrl()", () => {
+        let testResolvedURL: IFluidResolvedUrl;
+        let testSession: ISession;
+
+        before(() => {
+            testResolvedURL = {
+                type: "fluid",
+                id: "id",
+                url: "url",
+                tokens: {
+                    testKey: "testValue"
+                },
+                endpoints: {
+                }
+
+            };
+
+            testSession = {
+                ordererUrl: "http://ordererUrl.test",
+                deltaStreamUrl: "http://deltaStreamUrl.test",
+                historianUrl: "http://historianUrl.test",
+                isSessionActive: false,
+                isSessionAlive: false
+            };
+        });
+
+        it("overrides resolvedURL endpoints with session endpoints", () => {
+            const result = getDiscoveredFluidResolvedUrl(testResolvedURL, testSession);
+
+            assert.strictEqual("ordererurl.test", result.endpoints.deltaStorageUrl);
+            assert.strictEqual("historianurl.test", result.endpoints.storageUrl);
+            assert.strictEqual(testSession.ordererUrl, result.endpoints.ordererUrl);
+            assert.strictEqual(testSession.deltaStreamUrl, result.endpoints.deltaStreamUrl);
         });
     });
 });
