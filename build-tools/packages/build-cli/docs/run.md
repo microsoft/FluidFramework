@@ -11,7 +11,7 @@ Generate a report from input bundle stats collected through the collect bundleSt
 
 ```
 USAGE
-  $ flub run bundleStats [--dirname <value>] [-v]
+  $ flub run bundleStats [-v] [--dirname <value>]
 
 FLAGS
   -v, --verbose      Verbose logging.
