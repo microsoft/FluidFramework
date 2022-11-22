@@ -73,6 +73,8 @@ stages:
     - template: templates/include-test-perf-benchmarks.yml
       parameters:
         poolBuild: ${{ parameters.poolBuild }}
+        testWorkspace: ${{ variables.testWorkspace }}
+        artifactPipeline: ${{ variables.artifactPipeline }}
         # env:
         #   FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
         customSteps:
@@ -207,6 +209,8 @@ stages:
     - template: templates/include-test-perf-benchmarks.yml
       parameters:
         poolBuild: ${{ parameters.poolBuild }}
+        testWorkspace: ${{ variables.testWorkspace }}
+        artifactPipeline: ${{ variables.artifactPipeline }}
         # env:
         #   FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
         customSteps:
@@ -346,6 +350,8 @@ stages:
     - template: templates/include-test-perf-benchmarks.yml
       parameters:
         poolBuild: ${{ parameters.poolBuild }}
+        testWorkspace: ${{ variables.testWorkspace }}
+        artifactPipeline: ${{ variables.artifactPipeline }}
         # env:
         #   FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
         customSteps:

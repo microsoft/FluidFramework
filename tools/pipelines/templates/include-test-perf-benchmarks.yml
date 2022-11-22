@@ -9,6 +9,12 @@ parameters:
 - name: customSteps
   type: stepList
 
+- name: testWorkspace
+  type: string
+
+- name: artifactPipeline
+  type: string
+
 jobs:
   - job: build
     pool: ${{ parameters.poolBuild }}
@@ -31,13 +37,13 @@ jobs:
       inputs:
         targetType: 'inline'
         script: |
-          mkdir ${{ variables.testWorkspace }}
+          mkdir ${{ parameters.testWorkspace }}
 
     - task: Bash@3
       displayName: Initialize npmrc
       inputs:
         targetType: 'inline'
-        workingDirectory: ${{ variables.testWorkspace }}
+        workingDirectory: ${{ parameters.testWorkspace }}
         script: |
           echo Initialize package
           npm init --yes
@@ -59,13 +65,13 @@ jobs:
     - task: npmAuthenticate@0
       displayName: 'npm authenticate (internal feed)'
       inputs:
-        workingFile: ${{ variables.testWorkspace }}/.npmrc
+        workingFile: ${{ parameters.testWorkspace }}/.npmrc
 
     # Auth to Office feed
     - task: npmAuthenticate@0
       displayName: 'npm authenticate (office feed)'
       inputs:
-        workingFile: ${{ variables.testWorkspace }}/.npmrc
+        workingFile: ${{ parameters.testWorkspace }}/.npmrc
         customEndpoint: 'Office Packages - Readonly'
 
     - task: Bash@3
@@ -80,9 +86,9 @@ jobs:
 
           Task Variables:
             toolAbsolutePath=$(toolAbsolutePath)
-            artifactPipeline=${{ variables.artifactPipeline}}
+            artifactPipeline=${{ parameters.artifactPipeline}}
             feed=$(feed)
-            testWorkspace=${{ variables.testWorkspace }}
+            testWorkspace=${{ parameters.testWorkspace }}
 
           Build Params
             SourceBranch=$(Build.SourceBranch)
@@ -94,7 +100,7 @@ jobs:
         targetType: 'inline'
         workingDirectory: $(toolAbsolutePath)
         script: |
-          cp ${{ variables.testWorkspace }}/.npmrc . ;
+          cp ${{ parameters.testWorkspace }}/.npmrc . ;
           npm install @ff-internal/aria-logger;
           npm i;
           npm run build:compile;
