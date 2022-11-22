@@ -28,16 +28,19 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+    "format": "npm run prettier:fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
+    "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
+    "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "test:mocha": "mocha --ignore 'dist/test/types/*' --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
-    "typetests:gen": "flub generate typetests --generate --dir . --no-generateInName",
-    "typetests:prepare": "flub generate typetests --prepare --dir . --no-generateInName",
+    "typetests:gen": "flub generate typetests --generate --dir .",
+    "typetests:prepare": "flub generate typetests --prepare --dir . --pin",
     "webpack": "webpack --color --config webpack.config.js"
   },
   "nyc": {
@@ -91,7 +94,7 @@
   },
   "devDependencies": {
     "@fluid-tools/build-cli": "^0.6.0-109663",
-    "@fluid-tools/webpack-fluid-loader-previous": "npm:@fluid-tools/webpack-fluid-loader@2.0.0-internal.2.0.0",
+    "@fluid-tools/webpack-fluid-loader-previous": "npm:@fluid-tools/webpack-fluid-loader@2.0.0-internal.2.1.0",
     "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/build-tools": "^0.6.0-109663",
     "@fluidframework/eslint-config-fluid": "^1.2.0",
@@ -108,6 +111,7 @@
     "fs-extra": "^9.1.0",
     "mocha": "^10.0.0",
     "nyc": "^15.0.0",
+    "prettier": "~2.6.2",
     "rimraf": "^2.6.2",
     "source-map-loader": "^2.0.0",
     "ts-loader": "^9.3.0",
@@ -117,7 +121,8 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.2.0",
-    "baselineRange": "2.0.0-internal.2.0.0",
+    "baselineRange": ">=2.0.0-internal.2.1.0 <2.0.0-internal.2.2.0",
+    "baselineVersion": "2.0.0-internal.2.1.0",
     "broken": {}
   }
 }
