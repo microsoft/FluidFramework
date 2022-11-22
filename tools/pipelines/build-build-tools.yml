@@ -81,13 +81,13 @@ extends:
       displayName: Use Node 14.x
       inputs:
         version: 14.x
-    - task: Npm@1
-      displayName: npm ci
+    - task: Bash@3
+      displayName: Install dependencies
       inputs:
-        command: 'custom'
-        customCommand: 'ci'
-        customRegistry: 'useNpmrc'
-        workingDir: '$(Build.SourcesDirectory)/build-tools'
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: |
+          npm i -g pnpm && pnpm i
     # Build the build-tools locally so it can be used to generate the monorepo package.json
     - task: Npm@1
       displayName: 'npm run build:full'
