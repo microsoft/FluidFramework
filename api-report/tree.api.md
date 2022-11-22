@@ -463,6 +463,7 @@ export interface IDefaultEditBuilder {
 export interface IEditableForest extends IForestSubscription {
     readonly anchors: AnchorSet;
     applyDelta(delta: Delta.Root): void;
+    clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
 }
 
 // @public

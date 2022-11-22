@@ -336,6 +336,34 @@ export function testForest(
             });
         });
 
+        it("editing a cloned forest does not modify the original", () => {
+            const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+            const content: JsonableTree[] = [
+                { type: jsonNumber.name, value: 1 },
+                { type: jsonBoolean.name, value: true },
+                { type: jsonString.name, value: "test" },
+            ];
+            initializeForest(forest, content.map(singleTextCursor));
+
+            const clone = forest.clone(forest.schema, forest.anchors);
+            const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: 2 };
+            // TODO: make type-safe
+            const delta: Delta.Root = new Map([[rootFieldKeySymbol, [setValue]]]);
+            clone.applyDelta(delta);
+
+            // Check the clone has the new value
+            const cloneReader = clone.allocateCursor();
+            moveToDetachedField(clone, cloneReader);
+            assert(cloneReader.firstNode());
+            assert.equal(cloneReader.value, 2);
+
+            // Check the original has the old value
+            const originalReader = forest.allocateCursor();
+            moveToDetachedField(forest, originalReader);
+            assert(originalReader.firstNode());
+            assert.equal(originalReader.value, 1);
+        });
+
         describe("can apply deltas with", () => {
             it("ensures cursors are cleared before applying deltas", () => {
                 const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
