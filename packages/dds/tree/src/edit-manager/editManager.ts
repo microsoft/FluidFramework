@@ -52,6 +52,8 @@ export class EditManager<
 
     private localSessionId?: SessionId;
 
+    private minimumSequenceNumber: number = -1;
+
     public readonly computationName: string = "EditManager";
 
     public constructor(
@@ -59,6 +61,17 @@ export class EditManager<
         public readonly anchors?: AnchorSet,
     ) {
         super();
+    }
+
+    public setMinimumSequenceNumber(minimumSequenceNumber: number): void {
+        this.minimumSequenceNumber = minimumSequenceNumber;
+        this.trimTrunkCommits();
+    }
+
+    private trimTrunkCommits(): void {
+        while (this.trunk[0].seqNumber < this.minimumSequenceNumber) {
+            this.trunk.shift();
+        }
     }
 
     /**
