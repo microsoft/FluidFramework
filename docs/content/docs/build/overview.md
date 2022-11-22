@@ -37,7 +37,7 @@ For more about containers see [Containers](./containers.md).
 ### Shared objects
 
 A *shared object* is any object type that supports collaboration (simultaneous editing). 
-The fundamental type of shared object that is provided by Fluid Framework is called a **Distributed data structure (DDS)**. A DDS holds shared data that the collaborators are working with.
+The fundamental type of shared object that is provided by Fluid Framework is called a **Distributed Data Structure (DDS)**. A DDS holds shared data that the collaborators are working with.
 
 Fluid Framework supports a second type of shared object called **Data Object**. 
 *This type of object is in beta and should not be used in a production application.* 
