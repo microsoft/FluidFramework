@@ -523,6 +523,19 @@ export class PartialSequenceLengths {
             seqOrLocalSeq = isLocal ? moveInfo.localMovedSeq! : moveInfo.movedSeq;
             segmentLen = -segmentLen;
 
+            // if segment was obliterated before it was inserted, the len will always be 0
+            if (
+                segment.movedSeq !== UnassignedSequenceNumber && segment.seq === UnassignedSequenceNumber
+                || (segment.seq !== UnassignedSequenceNumber
+                    && segment.seq !== undefined
+                    && segment.movedSeq !== UnassignedSequenceNumber
+                    && segment.movedSeq !== undefined
+                    && segment.movedSeq < segment.seq)
+            ) {
+                segmentLen = 0;
+                remoteObliteratedLen = 0;
+            }
+
             // TODO: overlap?
             // const hasOverlap = removalInfo.removedClientIds.length > 1;
             // removeClientOverlap = hasOverlap ? removalInfo.removedClientIds : undefined;
