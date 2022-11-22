@@ -25,8 +25,8 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
-    "typetests:gen": "flub generate typetests --generate --dir . --no-generateInName",
-    "typetests:prepare": "flub generate typetests --prepare --dir . --no-generateInName"
+    "typetests:gen": "flub generate typetests --generate --dir .",
+    "typetests:prepare": "flub generate typetests --prepare --dir . --pin"
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
@@ -39,7 +39,7 @@
     "@fluid-tools/build-cli": "^0.6.0-109663",
     "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/eslint-config-fluid": "^1.2.0",
-    "@fluidframework/test-loader-utils-previous": "npm:@fluidframework/test-loader-utils@2.0.0-internal.2.0.0",
+    "@fluidframework/test-loader-utils-previous": "npm:@fluidframework/test-loader-utils@2.0.0-internal.2.1.0",
     "@rushstack/eslint-config": "^2.5.1",
     "concurrently": "^6.2.0",
     "eslint": "~8.6.0",
@@ -48,7 +48,8 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.2.0",
-    "baselineRange": "2.0.0-internal.2.0.0",
+    "baselineRange": ">=2.0.0-internal.2.1.0 <2.0.0-internal.2.2.0",
+    "baselineVersion": "2.0.0-internal.2.1.0",
     "broken": {}
   }
 }
