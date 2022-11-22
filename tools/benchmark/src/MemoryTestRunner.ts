@@ -78,7 +78,7 @@ export interface MemoryTestObjectInterface extends MemoryTestObjectProps {
     after?: HookFunction;
 }
 
-interface MemoryTestObjectProps extends MochaExclusiveOptions {
+export interface MemoryTestObjectProps extends MochaExclusiveOptions {
     /**
      * If true, this benchmark will create a Mocha test function with `it.only()`
      * instead of `it()`.
