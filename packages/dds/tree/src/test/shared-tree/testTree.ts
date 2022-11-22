@@ -60,6 +60,15 @@ function commandWithResult(command: SucceedingCommand) {
     };
 }
 
+/**
+ * A `SharedTree`-like class for the purpose of testing rebasing and editing logic.
+ * Specifically, this class is help to write tests that:
+ * - Control the sequencing order of edits. (see `Sequencer`)
+ * - Target more stable APIs than unit tests can.
+ *
+ * Before you write a test using this class, please consider if a unit test or an integration test using the
+ * actual `SharedTree` would be appropriate instead.
+ */
 export class TestTree {
     static fromForest(forest: IEditableForest, options: TestTreeOptions = {}): TestTree {
         return new TestTree(forest, options);
@@ -127,6 +136,10 @@ export class TestTree {
         });
     }
 
+    /**
+     * Runs the given `command`, applying the resulting edit to the document.
+     * @returns A edit that can be sequenced by the `Sequencer`.
+     */
     public runTransaction(command: SucceedingCommand): TestTreeEdit {
         const trueCommand = commandWithResult(command);
         let changeset: DefaultChangeset | undefined;
@@ -154,6 +167,9 @@ export class TestTree {
         return resultingEdit;
     }
 
+    /**
+     * Updates the tree's internal state in accordance with the sequenced edits.
+     */
     public receive(edits: CommittedTestTreeEdit[] | CommittedTestTreeEdit): void {
         if (!Array.isArray(edits)) {
             this.receive([edits]);
@@ -170,12 +186,27 @@ export class TestTree {
 
 export type CommittedTestTreeEdit = TestTreeEdit & Commit<DefaultChangeset>;
 
+interface ClientData {
+    localEditNumber: number;
+    refNumber: number;
+}
+
+/**
+ * A test helper that allows the author of the test to control the sequencing order of edits.
+ */
 export class Sequencer {
     private seqNumber: number = 0;
+    private readonly clients = new Map<SessionId, ClientData>();
 
     public constructor() {}
 
+    /**
+     * Sequences the given edit.
+     */
     public order(edit: TestTreeEdit): CommittedTestTreeEdit;
+    /**
+     * Sequences the given edits in the given order.
+     */
     public order(edits: TestTreeEdit[]): CommittedTestTreeEdit[];
     public order(
         edits: TestTreeEdit | TestTreeEdit[],
@@ -184,6 +215,18 @@ export class Sequencer {
             return edits.map((e) => this.order(e));
         }
         const edit: TestTreeEdit = edits;
+        if (!this.clients.has(edit.sessionId)) {
+            this.clients.set(edit.sessionId, { localEditNumber: -1, refNumber: -1 });
+        }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const clientData = this.clients.get(edit.sessionId)!;
+        assert(
+            edit.sessionEditNumber === clientData.localEditNumber + 1,
+            "The sequencer should ingest all edits from each client",
+        );
+        assert(edit.refNumber >= clientData.refNumber, "Client's ref number should never decrease");
+        clientData.localEditNumber = edit.sessionEditNumber;
+        clientData.refNumber = edit.refNumber;
         const commit: CommittedTestTreeEdit = {
             ...edit,
             seqNumber: brand(this.seqNumber),
