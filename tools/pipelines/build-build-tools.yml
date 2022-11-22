@@ -95,13 +95,3 @@ extends:
         command: 'custom'
         customCommand: 'run build:full'
         workingDir: '$(Build.SourcesDirectory)/build-tools'
-    - task: Bash@3
-      displayName: 'Generate Mono repo package json'
-      inputs:
-        targetType: 'inline'
-        script: |
-          # Generate the package/package lock for the lerna project so we would scan it.
-          cd build-tools
-          node packages/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --build-tools
-          cp repo-package.json packages/package.json
-          cp repo-package-lock.json packages/package-lock.json
