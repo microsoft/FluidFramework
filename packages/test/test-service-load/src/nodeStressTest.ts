@@ -113,7 +113,7 @@ async function orchestratorProcess(
         // In case testId is provided, name of the file to be created is taken as the testId provided
         : initialize(testDriver, seed, profile, args.verbose === true, args.testId));
 
-    const estRunningTimeMin = Math.floor(profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
+    const estRunningTimeMin = Math.floor(profile.totalSendCount / profile.opRatePerMin);
     console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);
     console.log(`Selected test profile: ${profile.name}`);
     console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
