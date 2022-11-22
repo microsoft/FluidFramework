@@ -10,6 +10,7 @@ export {
     Detach,
     Effects,
     GapCount,
+    HasChanges,
     HasOpId,
     HasLength,
     HasPlaceFields,

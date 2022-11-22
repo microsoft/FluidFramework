@@ -11,7 +11,7 @@ Get info about the repo, release groups, and packages.
 
 ```
 USAGE
-  $ flub info [-g client|server|azure|build-tools] [-p] [-v]
+  $ flub info [-v] [-g client|server|azure|build-tools] [-p]
 
 FLAGS
   -g, --releaseGroup=<option>  Name of the release group
