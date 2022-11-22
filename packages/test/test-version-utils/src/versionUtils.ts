@@ -237,10 +237,18 @@ export function getRequestedRange(baseVersion: string, requested?: number | stri
     if (typeof requested === "string") { return requested; }
 
     const isInternal = baseVersion.includes("internal");
+    const isDev = baseVersion.includes("dev");
 
+    // if the baseVersion passed is an internal version
     if (isInternal) {
         const internalVersions = baseVersion.split("-internal.");
         return internalSchema(internalVersions[0], internalVersions[1], requested);
+    }
+
+    // if the baseVersion passed is a pre-released version
+    if(isDev) {
+        const devVersions = baseVersion.split("-dev.");
+        return internalSchema(devVersions[0], devVersions[1].split(".", 3).join("."), requested);
     }
 
     let version;
