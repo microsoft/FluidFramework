@@ -56,7 +56,7 @@ variables:
 stages:
   # Performance unit tests - runtime
   - stage: perf_unit_tests_runtime
-    displayName: Run performance unit tests - runtime
+    displayName: Perf unit tests - runtime
     variables:
       - name: consolidatedTestsOutputFolder
         value: ${{ variables.testWorkspace }}/benchmarkOutput
@@ -191,7 +191,7 @@ stages:
 
   # Performance unit tests - memory
   - stage: perf_unit_tests_memory
-    displayName: Run performance unit tests - memory
+    displayName: Perf unit tests - memory
     variables:
       - name: consolidatedTestsOutputFolder
         value: ${{ variables.testWorkspace }}/memoryTestsOutput
@@ -326,7 +326,7 @@ stages:
 
   # Performance e2e tests
   - stage: perf_e2e_tests
-    displayName: Run e2e performance tests
+    displayName: Perf e2e tests
     variables:
       # The following two paths are defined by the npm scripts invocations in @fluidframework/test-end-to-end-tests
       - name: executionTimeTestOutputFolder

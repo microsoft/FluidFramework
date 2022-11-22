@@ -16,7 +16,8 @@ parameters:
   type: string
 
 jobs:
-  - job: build
+  - job: runTests
+    displayName: Run tests
     pool: ${{ parameters.poolBuild }}
     variables:
       feed: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
