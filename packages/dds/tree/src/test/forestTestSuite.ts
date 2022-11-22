@@ -584,8 +584,6 @@ export function testForest(
                 const reader = forest.allocateCursor();
                 moveToDetachedField(forest, reader);
                 assert.equal(reader.firstNode(), false);
-                reader.enterField(xField);
-                assert.equal(reader.firstNode(), false);
             });
 
             it("modify and move out", () => {
