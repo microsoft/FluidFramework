@@ -457,7 +457,7 @@ export function testForest(
                 // TODO: make type-safe
                 forest.applyDelta(delta);
 
-                // Inspect resulting tree: should just have `2`.
+                // Inspect resulting tree: should just have `1`.
                 const reader = forest.allocateCursor();
                 assert.equal(forest.tryMoveCursorToNode(anchor, reader), TreeNavigationResult.Ok);
                 assert.equal(reader.value, 1);
