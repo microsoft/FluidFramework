@@ -11,6 +11,7 @@
     "edit-manager",
     "forest",
     "rebase",
+    "repair",
     "schema-stored",
     "schema-view",
     "shared-tree-core",

@@ -58,6 +58,12 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 // @public
 export const agentSchedulerId = "_scheduler";
 
+// @public
+export enum CompressionAlgorithms {
+    // (undocumented)
+    lz4 = "lz4"
+}
+
 // @public (undocumented)
 export enum ContainerMessageType {
     // (undocumented)
@@ -103,7 +109,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
-    deleteUnusedRoutes(unusedRoutes: string[]): void;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
@@ -133,8 +138,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     getQuorum(): IQuorumClients;
     // (undocumented)
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
-    // (undocumented)
-    getSnapshotBlobs(): Promise<void>;
     // (undocumented)
     get IContainerRuntime(): this;
     // (undocumented)
@@ -192,6 +195,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
     updateStateBeforeGC(): Promise<void>;
+    updateUnusedRoutes(unusedRoutes: string[], tombstone: boolean): void;
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
@@ -305,7 +309,8 @@ export interface IClientSummaryWatcher extends IDisposable {
 
 // @public
 export interface ICompressionRuntimeOptions {
-    readonly minimumSize?: number;
+    readonly compressionAlgorithm: CompressionAlgorithms;
+    readonly minimumBatchSizeInBytes: number;
 }
 
 // @public (undocumented)
@@ -550,6 +555,7 @@ export interface ISummaryBaseConfiguration {
     initialSummarizerDelayMs: number;
     maxAckWaitTime: number;
     maxOpsSinceLastSummary: number;
+    // @deprecated (undocumented)
     summarizerClientElection: boolean;
 }
 
@@ -584,6 +590,7 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
     maxTime: number;
     minIdleTime: number;
     minOpsForLastSummaryAttempt: number;
+    nonRuntimeHeuristicThreshold?: number;
     nonRuntimeOpWeight: number;
     runtimeOpWeight: number;
     // (undocumented)
