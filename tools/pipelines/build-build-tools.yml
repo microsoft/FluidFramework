@@ -68,7 +68,7 @@ extends:
     packageManagerInstallCommand: 'npm i -g pnpm && pnpm i'
     buildDirectory: build-tools
     tagName: build-tools
-    taskBuild: build
+    taskBuild: 'build:full'
     taskBuildDocs: false
     taskLint: true
     poolBuild: Large
