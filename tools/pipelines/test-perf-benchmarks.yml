@@ -365,20 +365,6 @@ stages:
         #   FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
         customSteps:
 
-        # Download Artifact - Test Files
-        - task: DownloadPipelineArtifact@2
-          displayName: Download test files
-          inputs:
-            source: specific
-            project: internal
-            pipeline: ${{ variables.artifactPipeline }}
-            preferTriggeringPipeline: true
-            allowPartiallySucceededBuilds: true
-            runVersion: latestFromBranch
-            runBranch: $(Build.SourceBranch)
-            artifact: test-files
-            path: $(Pipeline.Workspace)/test-files/
-
         # Download test package
         - task: DownloadPipelineArtifact@2
           displayName: Download test package
@@ -420,35 +406,6 @@ stages:
               fi
 
               npm install $TEST_PACKAGE_TGZ
-
-        # Download package artifacts
-        - task: DownloadPipelineArtifact@2
-          displayName: Download test package
-          inputs:
-            source: specific
-            project: internal
-            pipeline: ${{ variables.artifactPipeline }}
-            preferTriggeringPipeline: true
-            allowPartiallySucceededBuilds: true
-            runVersion: latestFromBranch
-            runBranch: $(Build.SourceBranch)
-            artifact: pack
-            patterns: "**/${{ replace(replace(variables.testPackage, '@', '' ), '/', '-') }}-?.?.?-*.tgz"
-            path: $(Pipeline.Workspace)/client/pack
-
-        # Unpack test files
-        - task: Bash@3
-          displayName: Unpack test files
-          inputs:
-            targetType: 'inline'
-            script: |
-              echo "Unpack test files for ${{ variables.testPackage }}"
-              TAR_FILE=${{ replace(replace(replace(replace(variables.testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
-              mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}/src/test
-              mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}/dist/test
-              tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
-              mv $(Pipeline.Workspace)/test-files/src/test/* ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}/src/test
-              mv $(Pipeline.Workspace)/test-files/dist/test/* ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}/dist/test
 
         - task: Bash@3
           displayName: Prepare test package to run tests
