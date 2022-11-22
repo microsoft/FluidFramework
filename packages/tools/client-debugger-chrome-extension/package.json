@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/client-debugger-chrome-extension",
-	"version": "2.0.0-internal.1.2.0",
+	"version": "0.1.0",
 	"private": true,
 	"description": "A Chrome extension visual debugger for the Fluid Client.",
 	"homepage": "https://fluidframework.com",
@@ -11,7 +11,6 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"main": "dist/index.js",
 	"scripts": {
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run build:tsc && npm run webpack",
