@@ -1455,6 +1455,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    /**
+     * {@inheritDoc @fluidframework/container-runtime-definitions#IContainerRuntime.entrypoint}
+     */
+    readonly entryPoint?: IFluidHandle<FluidObject>;
     private internalId(maybeAlias: string): string {
         return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;
     }
