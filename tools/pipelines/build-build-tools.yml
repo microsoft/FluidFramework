@@ -85,7 +85,7 @@ extends:
       displayName: Install dependencies
       inputs:
         targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: 'build-tools'
         script: |
           npm i -g pnpm && pnpm i
     # Build the build-tools locally so it can be used to generate the monorepo package.json
