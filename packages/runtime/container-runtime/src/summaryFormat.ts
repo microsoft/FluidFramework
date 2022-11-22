@@ -73,7 +73,6 @@ export function getAttributesFormatVersion(attributes: ReadFluidDataStoreAttribu
 export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): boolean {
     return !!attributes.summaryFormatVersion && !attributes.disableIsolatedChannels;
 }
-
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
     readonly summaryFormatVersion: 1;
     /** The last message processed at the time of summary. Only primitive property types are added to the summary. */

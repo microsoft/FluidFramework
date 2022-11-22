@@ -722,17 +722,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         const loadExisting = existing === true || context.existing === true;
 
-        const tryFetchBlobById = async <T>(id: string): Promise<T> => {
-            // IContainerContext storage api return type still has undefined in 0.39 package version.
-            // So once we release 0.40 container-defn package we can remove this check.
-            assert(storage !== undefined, 0x256 /* "storage undefined in attached container" */);
-            return readAndParse(storage, id);
-        };
-
         // read snapshot blobs needed for BlobManager to load
         const blobManagerSnapshot = await BlobManager.load(
             baseSnapshot?.trees[blobsTreeName],
-            tryFetchBlobById           
+            async (id) => {
+                // IContainerContext storage api return type still has undefined in 0.39 package version.
+                // So once we release 0.40 container-defn package we can remove this check.
+                assert(storage !== undefined, 0x256 /* "storage undefined in attached container" */);
+                return readAndParse(storage, id);
+            },
         );
 
         // Verify summary runtime sequence number matches protocol sequence number.

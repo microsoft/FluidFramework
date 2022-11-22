@@ -602,7 +602,6 @@ describe("Runtime", () => {
         });
 
         it("supports mixin classes", async () => {
-
             const makeMixin = <T>(Base: typeof ContainerRuntime, methodName: string, methodReturn: T) =>
                 class MixinContainerRuntime extends Base {
                     public static async load(
