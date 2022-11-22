@@ -72,10 +72,7 @@ class CancellableThrottler {
     }
 }
 
-/**
- * Information from a snapshot needed to load BlobManager
- * @internal
- */
+/** Information from a snapshot needed to load BlobManager */
 export interface IBlobManagerLoadInfo {
     ids?: string[];
     redirectTable?: [string, string][];

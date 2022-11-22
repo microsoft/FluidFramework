@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export type {
-    IBlobManagerLoadInfo
-} from "./blobManager";
 export {
     ContainerMessageType,
     IChunkedOp,
@@ -36,9 +33,6 @@ export {
     gcTreeKey,
     IGCStats,
 } from "./garbageCollection";
-export type {
-    ISerializedElection
-} from "./orderedClientElection";
 export {
     IPendingFlush,
     IPendingLocalState,

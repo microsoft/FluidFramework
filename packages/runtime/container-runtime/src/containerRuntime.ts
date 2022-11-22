@@ -1004,6 +1004,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private nextSummaryNumber: number;
 
+    /**
+     * @internal
+     */
     protected constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,

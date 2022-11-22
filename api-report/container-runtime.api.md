@@ -85,8 +85,10 @@ export enum ContainerMessageType {
 // @public
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements IContainerRuntime, IGarbageCollectionRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider {
     // Warning: (ae-forgotten-export) The symbol "IContainerRuntimeMetadata" needs to be exported by the entry point index.d.ts
-    // Warning: (ae-incompatible-release-tags) The symbol "__constructor" is marked as @public, but its signature references "ISerializedElection" which is marked as @internal
-    // Warning: (ae-incompatible-release-tags) The symbol "__constructor" is marked as @public, but its signature references "IBlobManagerLoadInfo" which is marked as @internal
+    // Warning: (ae-forgotten-export) The symbol "ISerializedElection" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "IBlobManagerLoadInfo" needs to be exported by the entry point index.d.ts
+    //
+    // @internal
     protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, logger: ITelemetryLogger, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration);
     // (undocumented)
     protected addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): void;
@@ -273,14 +275,6 @@ export interface IBaseSummarizeResult {
     readonly stage: "base";
 }
 
-// @internal
-export interface IBlobManagerLoadInfo {
-    // (undocumented)
-    ids?: string[];
-    // (undocumented)
-    redirectTable?: [string, string][];
-}
-
 // @public (undocumented)
 export interface IBroadcastSummaryResult {
     // (undocumented)
@@ -465,13 +459,6 @@ export interface IRefreshSummaryAckOptions {
 // @public
 export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
     gcStats?: IGCStats;
-}
-
-// @internal
-export interface ISerializedElection {
-    readonly electedClientId: string | undefined;
-    readonly electedParentId: string | undefined;
-    readonly electionSequenceNumber: number;
 }
 
 // @public @deprecated (undocumented)
