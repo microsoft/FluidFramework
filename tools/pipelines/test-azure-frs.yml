@@ -102,7 +102,7 @@ stages:
           poolBuild: Small
           testPackage: "@fluidframework/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
-          testCommand: start:europe
+          testCommand: start:westeurope
           downloadAzureTestArtifacts: true
           env:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
