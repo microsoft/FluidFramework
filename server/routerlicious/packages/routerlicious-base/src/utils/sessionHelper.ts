@@ -167,7 +167,7 @@ async function updateExistingSession(
                 "getDocumentWithAlive",
                 3 /* maxRetries */,
                 1000 /* retryAfterMs */,
-                getLumberBaseProperties(documentId, tenantId),
+                lumberjackProperties,
                 undefined, /* shouldIgnoreError */
                 (error) => true, /* shouldRetry */
             );
@@ -176,7 +176,7 @@ async function updateExistingSession(
                     `Error running getSession from document: ${JSON.stringify(doc)}`,
                     lumberjackProperties,
                 );
-                throw new Error(`Error running getSession, please try again`);
+                throw new NetworkError(500, "Error running getSession, please try again");
             }
             return doc.session;
         } else {
