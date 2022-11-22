@@ -27,9 +27,13 @@ export interface FieldChangeHandler<
 export interface FieldChangeRebaser<TChangeset> {
     /**
      * Compose a collection of changesets into a single one.
-     * See {@link ChangeRebaser} for details.
+     * Every child included in the composed change must be the result of a call to `composeChild`,
+     * and should be tagged with the revision of its parent change.
+     * Children which were the result of an earlier call to `composeChild` should be tagged with
+     * undefined revision if later passed as an argument to `composeChild`.
+     * See {@link ChangeRebaser} for more details.
      */
-    compose(changes: TChangeset[], composeChild: NodeChangeComposer): TChangeset;
+    compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer): TChangeset;
 
     /**
      * @returns the inverse of `changes`.
@@ -49,17 +53,18 @@ export interface FieldChangeRebaser<TChangeset> {
 }
 
 /**
- * Helper for creating a {@link FieldChangeRebaser} which does not need access to revision tags
+ * Helper for creating a {@link FieldChangeRebaser} which does not need access to revision tags.
+ * This should only be used for fields where the child nodes cannot be edited.
  */
 export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
-    compose: (changes: TChangeset[], composeChild: NodeChangeComposer) => TChangeset;
-    invert: (change: TChangeset, invertChild: NodeChangeInverter) => TChangeset;
-    rebase: (change: TChangeset, over: TChangeset, rebaseChild: NodeChangeRebaser) => TChangeset;
+    compose: (changes: TChangeset[]) => TChangeset;
+    invert: (change: TChangeset) => TChangeset;
+    rebase: (change: TChangeset, over: TChangeset) => TChangeset;
 }): FieldChangeRebaser<TChangeset> {
     return {
-        compose: data.compose,
-        invert: (change, invertChild) => data.invert(change.change, invertChild),
-        rebase: (change, over, rebaseChild) => data.rebase(change, over.change, rebaseChild),
+        compose: (changes, composeChild) => data.compose(changes.map((c) => c.change)),
+        invert: (change, invertChild) => data.invert(change.change),
+        rebase: (change, over, rebaseChild) => data.rebase(change, over.change),
     };
 }
 
@@ -106,7 +111,7 @@ export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
 
 export type NodeChangeRebaser = (change: NodeChangeset, baseChange: NodeChangeset) => NodeChangeset;
 
-export type NodeChangeComposer = (changes: NodeChangeset[]) => NodeChangeset;
+export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
 
 export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnly;
 export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
@@ -122,11 +127,23 @@ export interface NodeChangeset {
 export type ValueChange =
     | {
           /**
+           * The revision in which this change occurred.
+           * Undefined when it can be inferred from context.
+           */
+          revision?: RevisionTag;
+
+          /**
            * Can be left unset to represent the value being cleared.
            */
           value?: Value;
       }
     | {
+          /**
+           * The revision in which this change occurred.
+           * Undefined when it can be inferred from context.
+           */
+          revision?: RevisionTag;
+
           /**
            * The tag of the change that overwrote the value being restored.
            *
@@ -140,6 +157,15 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 export interface FieldChange {
     fieldKind: FieldKindIdentifier;
+
+    /**
+     * If defined, `change` is part of the specified revision.
+     * Undefined in the following cases:
+     * A) A revision is specified on an ancestor of this `FieldChange`, in which case `change` is part of that revision.
+     * B) `change` is composed of multiple revisions.
+     * C) `change` is part of an anonymous revision.
+     */
+    revision?: RevisionTag;
     change: FieldChangeset;
 }
 
