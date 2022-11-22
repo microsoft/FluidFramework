@@ -52,14 +52,10 @@ export class ReservationManager extends EventEmitter implements IReservationMana
         collection: ICollection<IReservation>): Promise<any> {
         const newReservation: IReservation = { _id: key, node: node.id };
 
-        if (existing) {
-            await collection.update(
+        await (existing ? collection.update(
                 { _id: key, node: existing.node },
                 newReservation,
-                null);
-        } else {
-            await collection.insertOne(newReservation);
-        }
+                null) : collection.insertOne(newReservation));
     }
 
     private async getReservationsCollection(): Promise<ICollection<IReservation>> {

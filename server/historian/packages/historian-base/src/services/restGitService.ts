@@ -62,19 +62,16 @@ export class RestGitService {
         private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
         private readonly storageName?: string,
         private readonly storageUrl?: string) {
-        let defaultHeaders: AxiosRequestHeaders;
-        if (storageName !== undefined) {
-            defaultHeaders = {
+        const defaultHeaders: AxiosRequestHeaders = storageName !== undefined
+            ? {
                 "User-Agent": userAgent,
                 "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
                 "Storage-Name": this.storageName,
-            };
-        } else {
-            defaultHeaders = {
+            }
+            : {
                 "User-Agent": userAgent,
                 "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
             };
-        }
         if (storage.credentials) {
             const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
             defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
@@ -213,7 +210,7 @@ export class RestGitService {
     public async createSummary(summaryParams: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
         const summaryResponse = await this.post<IWholeFlatSummary | IWriteSummaryResponse>(
             `/repos/${this.getRepoPath()}/git/summaries`,
-             summaryParams);
+            summaryParams);
         if (summaryParams.type === "container" && (summaryResponse as IWholeFlatSummary).trees !== undefined) {
             // Cache the written summary for future retrieval. If this fails, next summary retrieval
             // will receive an older version, but that is OK. Client will catch up with ops.
@@ -239,7 +236,7 @@ export class RestGitService {
         return this.delete<boolean>(`/repos/${this.getRepoPath()}/git/summaries`, headers);
     }
 
-    public async getSummary(sha: string, useCache: boolean): Promise<IWholeFlatSummary> {
+    public async getSummary(sha: string, _useCache: boolean): Promise<IWholeFlatSummary> {
         const summaryFetch = async () => this.get<IWholeFlatSummary>(
             `/repos/${this.getRepoPath()}/git/summaries/${encodeURIComponent(sha)}`);
 
@@ -254,14 +251,17 @@ export class RestGitService {
         // the request.
         const summaryCacheKey = this.getSummaryCacheKey("container");
 
-        if (!useCache) {
-            // We set the useCache flag as false when we fetch the initial latest summary for a document.
-            // In that scenario, useCache as false means that we need to get the summary from storage and bypass the
-            // cache, since the cached data might be obsolete due to a cluster change. After fetching the value from
-            // storage, we add it to the cache so it can be up-to-date. As a result, subsequent requests that use
-            // the cache can read the correct value.
-            return this.fetchAndCache(summaryCacheKey, summaryFetch);
-        }
+        // To do: Right now, we enable the cache anytime. We will choose either one of the following options:
+        // 1. Always using the cache but clearing the cache at session end from the server.
+        // 2. The driver fix to disable cache only on session start or cluster change if we can detect it.
+        // if (!useCache) {
+        //     // We set the useCache flag as false when we fetch the initial latest summary for a document.
+        //     // In that scenario, useCache as false means that we need to get the summary from storage and bypass the
+        //     // cache, since the cached data might be obsolete due to a cluster change. After fetching the value from
+        //     // storage, we add it to the cache so it can be up-to-date. As a result, subsequent requests that use
+        //     // the cache can read the correct value.
+        //     return this.fetchAndCache(summaryCacheKey, summaryFetch);
+        // }
 
         // If we get to this point, we want to obtain the latest summary, and we want to try reading it from the cache.
         return this.resolve(summaryCacheKey, summaryFetch, true);
@@ -478,8 +478,8 @@ export class RestGitService {
     }
 
     private async resolve<T>(key: string,
-                             fetch: () => Promise<T>,
-                             useCache: boolean): Promise<T> {
+        fetch: () => Promise<T>,
+        useCache: boolean): Promise<T> {
         if (this.cache && useCache) {
             // Attempt to grab the value from the cache. Log any errors but don't fail the request
             const cachedValue: T | undefined = await this.cache.get<T>(key).catch((error) => {

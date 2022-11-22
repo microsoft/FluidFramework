@@ -1,0 +1,22 @@
+{
+  "tags": ["core"],
+  "exports": ["index"],
+  // Depending on "shared-tree-core" so implementations of Indexes can be here.
+  // Could move the index abstraction elsewhere instead.
+  "imports": [
+    "change-family",
+    "checkout",
+    "core",
+    "dependency-tracking",
+    "edit-manager",
+    "forest",
+    "rebase",
+    "repair",
+    "schema-stored",
+    "schema-view",
+    "shared-tree-core",
+    "transaction",
+    "tree",
+    "util"
+  ]
+}

@@ -53,6 +53,9 @@ describe("Routerlicious", () => {
             let factoryWithSignals: DeliLambdaFactory;
             let lambdaWithSignals: IPartitionLambda;
 
+            let factoryWithBatching: DeliLambdaFactory;
+            let lambdaWithBatching: IPartitionLambda;
+
             let messageFactory: MessageFactory;
             let kafkaMessageFactory: KafkaMessageFactory;
 
@@ -133,12 +136,30 @@ describe("Routerlicious", () => {
                         },
                     });
                 lambdaWithSignals = await factoryWithSignals.create({ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 }, testContext);
+
+                factoryWithBatching = new DeliLambdaFactory(
+                    mongoManager,
+                    testCollection,
+                    testTenantManager,
+                    undefined,
+                    testForwardProducer,
+                    undefined,
+                    testReverseProducer,
+                    {
+                        ...DefaultServiceConfiguration,
+                        deli: {
+                            ...DefaultServiceConfiguration.deli,
+                            maintainBatches: true,
+                        },
+                    });
+                lambdaWithBatching = await factoryWithBatching.create({ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 }, testContext);
             });
 
             afterEach(async () => {
                 lambda.close(LambdaCloseType.Stop);
                 lambdaWithSignals.close(LambdaCloseType.Stop);
-                await Promise.all([factory.dispose(), factoryWithSignals.dispose()]);
+                lambdaWithBatching.close(LambdaCloseType.Stop);
+                await Promise.all([factory.dispose(), factoryWithSignals.dispose(), factoryWithBatching.dispose()]);
             });
 
             describe(".handler", () => {
@@ -341,7 +362,33 @@ describe("Routerlicious", () => {
                     // assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 20);
                 });
 
-                it("Should remove clients after a disconnect", async () => {
+                it("Should timeout idle clients while maintaining batches", async () => {
+                    const secondMessageFactory = new MessageFactory(testId, "test2");
+
+                    // enqueue messages as a single boxcar
+                    await lambdaWithBatching.handler(kafkaMessageFactory.sequenceMessage([
+                        messageFactory.createJoin(0),
+                        messageFactory.create(MessageType.Operation, 10, 1),
+                        secondMessageFactory.createJoin(2),
+                        secondMessageFactory.create(MessageType.Operation, 20, 10),
+                    ], testId));
+
+                    await quiesceWithClientsConnected();
+                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 10);
+
+                    await lambdaWithBatching.handler(
+                        kafkaMessageFactory.sequenceMessage(secondMessageFactory.create(MessageType.Operation, 20, 1 + DefaultServiceConfiguration.deli.clientTimeout),
+                            testId));
+                    await lambdaWithBatching.handler(kafkaMessageFactory.sequenceMessage(
+                        secondMessageFactory.create(
+                            MessageType.Operation,
+                            20,
+                            DefaultServiceConfiguration.deli.clientTimeout + 2 * MinSequenceNumberWindow),
+                        testId));
+                    await quiesceWithClientsConnected();
+                });
+
+                const removeClientsAfterDisconnectTest = async (lambda: IPartitionLambda) => {
                     const secondMessageFactory = new MessageFactory(testId, "test2");
 
                     let timeOffset = 0;
@@ -395,6 +442,14 @@ describe("Routerlicious", () => {
                         kafkaMessageFactory.sequenceMessage(thirdMessageFactory.create(MessageType.Operation, 7, timeOffset), testId));
                     await quiesceWithClientsConnected();
                     assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 7);
+                };
+
+                it("Should remove clients after a disconnect", async () => {
+                    return removeClientsAfterDisconnectTest(lambda);
+                });
+
+                it("Should remove clients after a disconnect while maintaining batches", async () => {
+                    return removeClientsAfterDisconnectTest(lambdaWithBatching);
                 });
             });
         });

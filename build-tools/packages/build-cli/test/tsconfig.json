@@ -6,9 +6,10 @@
     "declarationMap": false,
     "noUnusedLocals": false,
     "rootDir": "./",
-    "outDir": "../dist/test",
+    "outDir": "../lib/test",
     "types": ["node", "mocha", "chai"],
     "skipLibCheck": true,
+    "target": "ES2015",
   },
   "references": [
     {

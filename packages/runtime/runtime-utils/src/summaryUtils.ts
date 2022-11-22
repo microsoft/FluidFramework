@@ -70,11 +70,7 @@ export function utf8ByteLength(str: string): number {
 }
 
 export function getBlobSize(content: ISummaryBlob["content"]): number {
-    if (typeof content === "string") {
-        return utf8ByteLength(content);
-    } else {
-        return content.byteLength;
-    }
+    return typeof content === "string" ? utf8ByteLength(content) : content.byteLength;
 }
 
 function calculateStatsCore(summaryObject: SummaryObject, stats: ISummaryStats): void {
@@ -202,12 +198,9 @@ export function convertToSummaryTreeWithStats(
         switch (entry.type) {
             case TreeEntry.Blob: {
                 const blob = entry.value;
-                let content: string | Uint8Array;
-                if (blob.encoding === "base64") {
-                    content = IsoBuffer.from(blob.contents, "base64");
-                } else {
-                    content = blob.contents;
-                }
+                const content = blob.encoding === "base64"
+                    ? IsoBuffer.from(blob.contents, "base64")
+                    : blob.contents;
                 builder.addBlob(entry.path, content);
                 break;
             }

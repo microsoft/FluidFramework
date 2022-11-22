@@ -10,7 +10,6 @@ import {
 	IPendingBoxcar,
 	IProducer,
 	PendingBoxcar,
-	MaxBatchSize,
 	IContextErrorData,
 } from "@fluidframework/server-services-core";
 import { NetworkError } from "@fluidframework/server-services-client";
@@ -18,13 +17,33 @@ import { Deferred } from "@fluidframework/common-utils";
 
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 
+/**
+ * Rdkafka producer options
+ */
 export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
+	/**
+	 * Determines if the producer should be closed and reopened when a fatal error occurs.
+	 * Defaults to false because most errors are recoverable (it won't break the existing producer).
+	 */
+	reconnectOnNonFatalErrors: boolean;
+
+	/**
+	 * See https://github.com/edenhill/librdkafka/blob/master/INTRODUCTION.md#idempotent-producer
+	 */
 	enableIdempotence: boolean;
-	pollIntervalMs: number;
-	maxBatchSize: number;
-	maxMessageSize: number;
+
+	/**
+	 * See https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
+	 */
 	additionalOptions?: kafkaTypes.ProducerGlobalConfig;
+
+	/**
+	 * See https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
+	 */
 	topicConfig?: kafkaTypes.ProducerTopicConfig;
+
+	pollIntervalMs: number;
+	maxMessageSize: number;
 }
 
 /**
@@ -32,17 +51,21 @@ export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
  */
 export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	private readonly producerOptions: IKafkaProducerOptions;
-	private readonly messages = new Map<string, IPendingBoxcar[]>();
+
+	/**
+	 * Messages queued up to be sent once the producer connects
+	 */
+	private pendingMessages: IPendingBoxcar[] = [];
 
 	/**
 	 * Boxcar promises that have been queued into rdkafka and we are waiting for a response
 	 */
 	private readonly inflightPromises: Set<Deferred<void>> = new Set();
 
-	private producer?: kafkaTypes.Producer;
+	private connectedProducer?: kafkaTypes.Producer;
+	private connectingProducer?: kafkaTypes.Producer;
+
 	private sendPending?: NodeJS.Immediate;
-	private connecting = false;
-	private connected = false;
 	private closed = false;
 
 	constructor(
@@ -63,9 +86,9 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 		this.producerOptions = {
 			...options,
+			reconnectOnNonFatalErrors: options?.reconnectOnNonFatalErrors ?? false,
 			enableIdempotence: options?.enableIdempotence ?? false,
 			pollIntervalMs: options?.pollIntervalMs ?? 10,
-			maxBatchSize: options?.maxBatchSize ?? MaxBatchSize,
 			maxMessageSize: options?.maxMessageSize ?? Number.MAX_SAFE_INTEGER,
 		};
 	}
@@ -74,7 +97,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	 * Returns true if the producer is connected
 	 */
 	public isConnected() {
-		return this.connected;
+		return this.connectedProducer !== undefined;
 	}
 
 	/**
@@ -82,11 +105,9 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	 */
 	protected connect() {
 		// Exit out if we are already connected, are in the process of connecting, or closed
-		if (this.connected || this.connecting || this.closed) {
+		if (this.connectedProducer || this.connectingProducer || this.closed) {
 			return;
 		}
-
-		this.connecting = true;
 
 		const options: kafkaTypes.ProducerGlobalConfig = {
 			"metadata.broker.list": this.endpoints.kafka.join(","),
@@ -101,37 +122,49 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			...this.sslOptions,
 		};
 
-		const producer: kafkaTypes.Producer = this.producer =
+		const producer: kafkaTypes.Producer = this.connectingProducer =
 			new this.kafka.HighLevelProducer(options, this.producerOptions.topicConfig);
 
 		producer.on("ready", () => {
-			this.connected = true;
-			this.connecting = false;
+			this.connectedProducer = producer;
+			this.connectingProducer = undefined;
 
-			this.emit("connected");
+			this.emit("connected", producer);
 
-			this.sendPendingMessages();
+			// send pending messages
+			this.requestSend();
 		});
 
 		producer.on("disconnected", () => {
-			this.connected = false;
-			this.connecting = false;
-
-			this.emit("disconnected");
+			if (this.connectedProducer === producer || this.connectingProducer === producer) {
+				this.emit("disconnected");
+			}
 		});
 
-		producer.on("connection.failure", (error) => {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			this.handleError(error);
+		/**
+		 * connection.failure is emitted if the initial connection fails.
+		 * we must try closing & reconnecting in that case
+		 */
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
+		producer.on("connection.failure", async (error) => {
+			await this.close(true);
+
+			this.error(error);
+
+			this.connect();
 		});
 
 		producer.on("event.error", (error) => {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			this.handleError(error);
+			this.handleError(producer, error);
 		});
 
 		producer.on("event.throttle", (event) => {
 			this.emit("throttled", event);
+		});
+
+		producer.on("event.log", (event) => {
+			this.emit("log", event);
 		});
 
 		producer.connect();
@@ -139,6 +172,10 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		producer.setPollInterval(this.producerOptions.pollIntervalMs);
 	}
 
+	/**
+	 * Closes the producer and rejects any inflight messages
+	 * @param reconnecting - Flag to set if the producer will reconnect after closing
+	 */
 	public async close(reconnecting: boolean = false): Promise<void> {
 		if (this.closed) {
 			return;
@@ -149,12 +186,18 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			this.closed = true;
 		}
 
-		this.connecting = this.connected = false;
-
-		if (this.sendPending) {
+		if (this.sendPending !== undefined) {
 			clearImmediate(this.sendPending);
 			this.sendPending = undefined;
 		}
+
+		// ensure producers are disconnected
+		// note: setting them to undefined before rejecting inflight promises because
+		// we need to ensure a subsequent send in the rejection handling will queue instead of trying to send again
+		const connectedProducer = this.connectedProducer;
+		const connectingProducer = this.connectingProducer;
+		this.connectedProducer = undefined;
+		this.connectingProducer = undefined;
 
 		// reject any messages that are currently inflight
 		for (const promise of this.inflightPromises) {
@@ -163,16 +206,22 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 		this.inflightPromises.clear();
 
-		await new Promise<void>((resolve) => {
-			const producer = this.producer;
-			this.producer = undefined;
-			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-			if (producer && producer.isConnected()) {
-				producer.disconnect(resolve);
-			} else {
-				resolve();
-			}
-		});
+		await Promise.all([
+			new Promise<void>((resolve) => {
+				if (connectedProducer?.isConnected()) {
+					connectedProducer.disconnect(resolve);
+				} else {
+					resolve();
+				}
+			}),
+			new Promise<void>((resolve) => {
+				if (connectingProducer?.isConnected()) {
+					connectingProducer.disconnect(resolve);
+				} else {
+					resolve();
+				}
+			}),
+		]);
 
 		if (this.closed) {
 			this.emit("closed");
@@ -185,44 +234,21 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	 */
 	// eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
 	public send(messages: object[], tenantId: string, documentId: string, partitionId?: number): Promise<any> {
-		const key = `${tenantId}/${documentId}`;
-
-		// the latest boxcar
-		let boxcar: PendingBoxcar;
-
-		// Get the list of boxcars for the given key
-		let boxcars = this.messages.get(key);
-		if (boxcars) {
-			boxcar = boxcars[boxcars.length - 1];
-
-			// Create a new boxcar if necessary
-			if (boxcar.partitionId !== partitionId ||
-				boxcar.messages.length + messages.length >= this.producerOptions.maxBatchSize) {
-				boxcar = new PendingBoxcar(tenantId, documentId);
-				boxcars.push(boxcar);
-			}
-		} else {
-			boxcar = new PendingBoxcar(tenantId, documentId);
-			boxcars = [boxcar];
-			this.messages.set(key, boxcars);
-		}
-
-		// Add the message to the boxcar
-		boxcar.messages.push(...messages);
+		// createa boxcar for these messages
+		const boxcar = new PendingBoxcar(tenantId, documentId);
+		boxcar.messages = messages;
 
 		if (partitionId !== undefined) {
 			// sending this boxcar to a specific partition
 			boxcar.partitionId = partitionId;
 		}
 
-		// If adding a new message to the boxcar filled it up, and we are connected, then send immediately. Otherwise
-		// request a send
-		if (this.connected && boxcar.messages.length >= this.producerOptions.maxBatchSize) {
-			// Send all the boxcars
-			this.sendBoxcars(boxcars);
-			this.messages.delete(key);
+		// Send immediately if we are connected we are connected, otherwise request a send
+		if (this.connectedProducer) {
+			this.sendBoxcar(boxcar);
 		} else {
-			// Mark the need to send a message
+			this.pendingMessages.push(boxcar);
+
 			this.requestSend();
 		}
 
@@ -230,12 +256,11 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	}
 
 	/**
-	 * Notifies of the need to send pending messages. We defer sending messages to batch together messages
-	 * to the same partition.
+	 * Notifies of the need to send pending messages
 	 */
 	private requestSend() {
 		// If we aren't connected yet defer sending until connected
-		if (!this.connected) {
+		if (!this.connectedProducer) {
 			return;
 		}
 
@@ -255,98 +280,124 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	 * Sends all pending messages
 	 */
 	private sendPendingMessages() {
-		const messages = Array.from(this.messages.values());
+		const messages = this.pendingMessages;
 
 		// clear messages now because sendBoxcars may insert some
-		this.messages.clear();
+		this.pendingMessages = [];
 
 		for (const message of messages) {
-			this.sendBoxcars(message);
-		}
-	}
-
-	private sendBoxcars(boxcars: IPendingBoxcar[]) {
-		for (const boxcar of boxcars) {
-			const boxcarMessage: IBoxcarMessage = {
-				contents: boxcar.messages,
-				documentId: boxcar.documentId,
-				tenantId: boxcar.tenantId,
-				type: BoxcarType,
-			};
-
-			const message = Buffer.from(JSON.stringify(boxcarMessage));
-			if (message.byteLength > this.producerOptions.maxMessageSize) {
-				const error = new NetworkError(
-					413,
-					// eslint-disable-next-line max-len
-					`Boxcar message size (${message.byteLength}) exceeded max message size (${this.producerOptions.maxMessageSize})`,
-				);
-				boxcar.deferred.reject(error);
-				continue;
-			}
-
-			try {
-				if (this.producer && this.connected) {
-					this.inflightPromises.add(boxcar.deferred);
-
-					this.producer.produce(
-						this.topic, // topic
-						boxcar.partitionId ?? null, // partition id or null for consistent random for keyed messages
-						message, // message
-						boxcar.documentId, // key
-						undefined, // timestamp
-						(err: any, offset?: number) => {
-							this.inflightPromises.delete(boxcar.deferred);
-
-							if (err) {
-								boxcar.deferred.reject(err);
-
-								// eslint-disable-next-line @typescript-eslint/no-floating-promises
-								this.handleError(err, {
-									restart: true,
-									tenantId: boxcar.tenantId,
-									documentId: boxcar.documentId,
-								});
-							} else {
-								boxcar.deferred.resolve();
-								this.emit("produced", boxcarMessage, offset, message.length);
-							}
-						},
-					);
-				} else {
-					// we don't have a producer or we are not connected.
-					// normally sendBoxcars would not be called in this scenario, but it could happen if
-					// the above this.producer.produce call errors out and calls this.handleError within this for loop.
-					// when this happens, let's requeue the messages for later.
-					// note: send will return a new deferred. we need to hook it into
-					// the existing boxcar deferred to ensure continuity
-					/* eslint-disable @typescript-eslint/unbound-method */
-					this.send(boxcar.messages, boxcar.tenantId, boxcar.documentId, boxcar.partitionId)
-						.then(boxcar.deferred.resolve)
-						.catch(boxcar.deferred.reject);
-					/* eslint-enable @typescript-eslint/unbound-method */
-				}
-			} catch (ex) {
-				// produce can throw if the outgoing message queue is full
-				boxcar.deferred.reject(ex);
-
-				// eslint-disable-next-line @typescript-eslint/no-floating-promises
-				this.handleError(ex, {
-					restart: true,
-					tenantId: boxcar.tenantId,
-					documentId: boxcar.documentId,
-				});
-			}
+			this.sendBoxcar(message);
 		}
 	}
 
 	/**
-	 * Handles an error that requires a reconnect to Kafka
+	 * Produce the boxcars to Kafka
 	 */
-	private async handleError(error: any, errorData?: IContextErrorData) {
-		await this.close(true);
+	private sendBoxcar(boxcar: IPendingBoxcar): void {
+		const boxcarMessage: IBoxcarMessage = {
+			contents: boxcar.messages,
+			documentId: boxcar.documentId,
+			tenantId: boxcar.tenantId,
+			type: BoxcarType,
+		};
 
+		const message = Buffer.from(JSON.stringify(boxcarMessage));
+		if (message.byteLength > this.producerOptions.maxMessageSize) {
+			const error = new NetworkError(
+				413,
+				// eslint-disable-next-line max-len
+				`Message size too large. Boxcar message count: ${boxcar.messages.length}, size: ${message.byteLength}, max message size: ${this.producerOptions.maxMessageSize}.`,
+			);
+			boxcar.deferred.reject(error);
+			return;
+		}
+
+		const producer = this.connectedProducer;
+		if (!producer) {
+			// we don't have a producer or we are not connected.
+			// normally sendBoxcars would not be called in this scenario, but it could happen if
+			// a previous this.producer.produce call errored out and calls this.handleError.
+			// when this happens, let's requeue the messages for later.
+			// note: send will return a new deferred. we need to hook it into
+			// the existing boxcar deferred to ensure continuity
+			/* eslint-disable @typescript-eslint/unbound-method */
+			this.send(boxcar.messages, boxcar.tenantId, boxcar.documentId, boxcar.partitionId)
+				.then(boxcar.deferred.resolve)
+				.catch(boxcar.deferred.reject);
+			/* eslint-enable @typescript-eslint/unbound-method */
+			return;
+		}
+
+		try {
+			// mark that this message is "inflight" (we are in the process of producing it)
+			this.inflightPromises.add(boxcar.deferred);
+
+			producer.produce(
+				this.topic, // topic
+				boxcar.partitionId ?? null, // partition id or null for consistent random for keyed messages
+				message, // message
+				boxcar.documentId, // key
+				undefined, // timestamp
+				(err: any, offset?: number) => {
+					this.inflightPromises.delete(boxcar.deferred);
+
+					if (err) {
+						boxcar.deferred.reject(err);
+
+						// eslint-disable-next-line @typescript-eslint/no-floating-promises
+						this.handleError(producer, err, {
+							restart: true,
+							tenantId: boxcar.tenantId,
+							documentId: boxcar.documentId,
+						});
+					} else {
+						boxcar.deferred.resolve();
+						this.emit("produced", boxcarMessage, offset, message.length, boxcar.partitionId);
+					}
+				},
+			);
+		} catch (ex) {
+			// produce can throw if the outgoing message queue is full
+			boxcar.deferred.reject(ex);
+
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			this.handleError(producer, ex, {
+				restart: true,
+				tenantId: boxcar.tenantId,
+				documentId: boxcar.documentId,
+			});
+		}
+	}
+
+	/**
+	 * Handles an producer error.
+	 * It may cause a reconnection is the producer that had the error
+	 * is currently 'valid' (being tracked as connecting or connected).
+	 */
+	private async handleError(producer: kafkaTypes.Producer, error: any, errorData?: IContextErrorData) {
 		this.error(error, errorData);
+
+		if (!this.producerOptions.reconnectOnNonFatalErrors) {
+			// we should not reconnect on non fatal errors
+			const isFatalError = (RdkafkaBase as any).isObject(error) &&
+				(error as kafkaTypes.LibrdKafkaError).code === this.kafka.CODES.ERRORS.ERR__FATAL;
+			if (!isFatalError) {
+				// it's not fatal!
+				return;
+			}
+		}
+
+		if (this.connectingProducer && this.connectingProducer !== producer) {
+			// a producer is currently connecting and this error is not related to it
+			return;
+		}
+
+		if (this.connectedProducer && this.connectedProducer !== producer) {
+			// a producer is currently connected and this error is not related to it
+			return;
+		}
+
+		await this.close(true);
 
 		this.connect();
 	}

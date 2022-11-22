@@ -4,34 +4,43 @@
  */
 
 import { strict as assert } from "assert";
-import { Transposed as T } from "../../changeset";
 import {
+    Transposed as T,
     sequenceChangeFamily,
     sequenceChangeRebaser,
-    SequenceChangeset,
-} from "../../feature-libraries";
+    // eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/sequence-change-family";
+import { makeAnonChange } from "../../rebase";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { Delta } from "../../tree";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
+import { asForest } from "./cases";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tomb = "Dummy Changeset Tag";
 
 const testMarks: [string, T.Mark][] = [
     ["SetValue", { type: "Modify", value: { id: 0, value: 42 } }],
-    ["MInsert", { type: "MInsert", id: 0, content: { type, value: 42 }, value: { id: 0, value: 43 } }],
-    ["Insert", { type: "Insert", id: 0, content: [{ type, value: 42 }, { type, value: 43 }] }],
+    [
+        "MInsert",
+        { type: "MInsert", id: 0, content: { type, value: 42 }, value: { id: 0, value: 43 } },
+    ],
+    [
+        "Insert",
+        {
+            type: "Insert",
+            id: 0,
+            content: [
+                { type, value: 42 },
+                { type, value: 43 },
+            ],
+        },
+    ],
     ["Delete", { type: "Delete", id: 0, count: 2 }],
     ["Revive", { type: "Revive", id: 0, count: 2, tomb }],
 ];
 deepFreeze(testMarks);
-
-function asForest(markList: T.MarkList): SequenceChangeset {
-    return {
-        marks: { root: markList },
-    };
-}
 
 describe("SequenceChangeFamily", () => {
     /**
@@ -44,12 +53,14 @@ describe("SequenceChangeFamily", () => {
                     it.skip(`${name1} ↷ [${name2}, ${name2}⁻¹] => ${name1}`, () => {
                         /**
                          * These cases are currently disabled because:
+                         *
                          * - Marks that affect existing content are removed instead of muted
-                         *   when rebased over the deletion of that content. This prevents us
-                         *   from then reinstating the mark when rebasing over the revive.
+                         * when rebased over the deletion of that content. This prevents us
+                         * from then reinstating the mark when rebasing over the revive.
+                         *
                          * - Tombs are not added when rebasing an insert over a gap that is
-                         *   immediately left of deleted content. This prevents us from being able to
-                         *   accurately track the position of the insert.
+                         * immediately left of deleted content. This prevents us from being able to
+                         * accurately track the position of the insert.
                          */
                     });
                 } else {
@@ -58,9 +69,12 @@ describe("SequenceChangeFamily", () => {
                             for (let offset2 = 1; offset2 <= 4; ++offset2) {
                                 const change1 = asForest([offset1, mark1]);
                                 const change2 = asForest([offset2, mark2]);
-                                const inv = sequenceChangeRebaser.invert(change2);
-                                const r1 = sequenceChangeRebaser.rebase(change1, change2);
-                                const r2 = sequenceChangeRebaser.rebase(r1, inv);
+                                const inv = sequenceChangeRebaser.invert(makeAnonChange(change2));
+                                const r1 = sequenceChangeRebaser.rebase(
+                                    change1,
+                                    makeAnonChange(change2),
+                                );
+                                const r2 = sequenceChangeRebaser.rebase(r1, makeAnonChange(inv));
                                 assert.deepEqual(r2, change1);
                             }
                         }
@@ -86,10 +100,13 @@ describe("SequenceChangeFamily", () => {
                         for (let offset2 = 1; offset2 <= 4; ++offset2) {
                             const change1 = asForest([offset1, mark1]);
                             const change2 = asForest([offset2, mark2]);
-                            const inverse2 = sequenceChangeRebaser.invert(change2);
-                            const r1 = sequenceChangeRebaser.rebase(change1, change2);
-                            const r2 = sequenceChangeRebaser.rebase(r1, inverse2);
-                            const r3 = sequenceChangeRebaser.rebase(r2, change2);
+                            const inverse2 = sequenceChangeRebaser.invert(makeAnonChange(change2));
+                            const r1 = sequenceChangeRebaser.rebase(
+                                change1,
+                                makeAnonChange(change2),
+                            );
+                            const r2 = sequenceChangeRebaser.rebase(r1, makeAnonChange(inverse2));
+                            const r3 = sequenceChangeRebaser.rebase(r2, makeAnonChange(change2));
                             assert.deepEqual(r3, r1);
                         }
                     }
@@ -110,8 +127,11 @@ describe("SequenceChangeFamily", () => {
             } else {
                 it(`${name} ○ ${name}⁻¹ === ε`, () => {
                     const change = asForest([mark]);
-                    const inv = sequenceChangeRebaser.invert(change);
-                    const actual = sequenceChangeRebaser.compose([change, inv]);
+                    const inv = sequenceChangeRebaser.invert(makeAnonChange(change));
+                    const actual = sequenceChangeRebaser.compose([
+                        makeAnonChange(change),
+                        makeAnonChange(inv),
+                    ]);
                     const delta = sequenceChangeFamily.intoDelta(actual);
                     assert.deepEqual(delta, Delta.empty);
                 });

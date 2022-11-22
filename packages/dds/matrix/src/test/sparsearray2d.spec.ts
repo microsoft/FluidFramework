@@ -41,17 +41,14 @@ describe("SparseArray2D", () => {
         function makeCases(clearRows: boolean): IClearTestConfig[] {
             function makeCase(rowStart: number, colStart: number, rowCount: number, colCount: number,
                 clearStart: number, clearCount: number) {
-                if (clearRows) {
-                    return {
+                return clearRows
+                    ? {
                         rowStart, colStart, rowCount, colCount, rowClearStart: clearStart,
                         rowClearCount: clearCount, colClearStart: 0, colClearCount: 0,
-                    };
-                } else {
-                    return {
+                    } : {
                         rowStart, colStart, rowCount, colCount, rowClearStart: 0, rowClearCount: 0,
                         colClearStart: clearStart, colClearCount: clearCount,
                     };
-                }
             }
 
             const cases = [

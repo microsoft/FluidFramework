@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/odsp-driver-definitions",
-  "version": "2.0.0-internal.1.1.0",
+  "version": "2.0.0-internal.2.2.0",
   "description": "Socket storage implementation for SPO and ODC",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -31,19 +31,19 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
-    "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace",
-    "typetests:gen": "fluid-type-validator -g -d ."
+    "typetests:gen": "flub generate typetests --generate --dir .",
+    "typetests:prepare": "flub generate typetests --prepare --dir . --pin"
   },
   "dependencies": {
-    "@fluidframework/driver-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0"
+    "@fluidframework/driver-definitions": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0",
-    "@fluidframework/build-tools": "^0.3.1000",
-    "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/odsp-driver-definitions-previous": "npm:@fluidframework/odsp-driver-definitions@^1.0.0",
-    "@fluidframework/protocol-definitions": "^1.0.0",
+    "@fluid-tools/build-cli": "^0.6.0-109663",
+    "@fluidframework/build-common": "^1.1.0",
+    "@fluidframework/build-tools": "^0.6.0-109663",
+    "@fluidframework/eslint-config-fluid": "^1.2.0",
+    "@fluidframework/odsp-driver-definitions-previous": "npm:@fluidframework/odsp-driver-definitions@2.0.0-internal.2.1.0",
+    "@fluidframework/protocol-definitions": "^1.1.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "concurrently": "^6.2.0",
@@ -51,21 +51,12 @@
     "cross-env": "^7.0.2",
     "eslint": "~8.6.0",
     "rimraf": "^2.6.2",
-    "typescript": "~4.5.5",
-    "typescript-formatter": "7.1.0"
+    "typescript": "~4.5.5"
   },
   "typeValidation": {
-    "version": "2.0.0",
-    "broken": {
-      "TypeAliasDeclaration_OdspError": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IOdspError": {
-        "forwardCompat": false
-      },
-      "EnumDeclaration_OdspErrorType": {
-        "forwardCompat": false
-      }
-    }
+    "version": "2.0.0-internal.2.2.0",
+    "baselineRange": ">=2.0.0-internal.2.1.0 <2.0.0-internal.2.2.0",
+    "baselineVersion": "2.0.0-internal.2.1.0",
+    "broken": {}
   }
 }

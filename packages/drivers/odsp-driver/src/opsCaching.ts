@@ -40,8 +40,9 @@ export class OpsCache {
     private readonly timerGranularity,
     private totalOpsToCache,
   ) {
-        /** initial batch is a special case because it will never be full - all ops prior (inclusive) to
-         *  startingSequenceNumber are never going to show up (undefined)
+        /**
+         * Initial batch is a special case because it will never be full - all ops prior (inclusive) to
+         * `startingSequenceNumber` are never going to show up (undefined)
          */
         const remainingSlots = this.batchSize - this.getPositionInBatchArray(startingSequenceNumber) - 1;
         if (remainingSlots !== 0) {

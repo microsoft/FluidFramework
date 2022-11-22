@@ -58,7 +58,6 @@ describe("Runtime", () => {
             };
             const summaryConfig: ISummaryConfiguration = {
                 state: "enabled",
-                idleTime: 5000, // 5 sec (idle)
                 maxTime: 5000 * 12, // 1 min (active)
                 maxOps: 1000, // 1k ops (active)
                 minOpsForLastSummaryAttempt: 50,
@@ -66,6 +65,7 @@ describe("Runtime", () => {
                 maxIdleTime: 5000, // This must remain the same as minIdleTime for tests to pass nicely
                 nonRuntimeOpWeight: 0.1,
                 runtimeOpWeight: 1.0,
+                nonRuntimeHeuristicThreshold: 20,
                 ...summaryCommon,
             };
             const summaryConfigDisableHeuristics: ISummaryConfiguration = {
@@ -94,6 +94,20 @@ describe("Runtime", () => {
                 await flushPromises();
             }
 
+            async function emitNoOp(
+                increment: number = 1,
+            ) {
+                heuristicData.numNonRuntimeOps += increment - 1; // -1 because we emit an op below
+                lastRefSeq += increment;
+                const op: Partial<ISequencedDocumentMessage> = {
+                    sequenceNumber: lastRefSeq,
+                    timestamp: Date.now(),
+                    type: MessageType.NoOp,
+                };
+                mockDeltaManager.emit("op", op);
+                await flushPromises();
+            }
+
             function emitBroadcast(timestamp = Date.now()) {
                 mockDeltaManager.emit("op", {
                     type: MessageType.Summarize,
@@ -117,7 +131,7 @@ describe("Runtime", () => {
                     summaryProposal,
                 };
                 mockDeltaManager.emit("op", {
-                    contents,
+                    data: JSON.stringify(contents),
                     type: MessageType.SummaryAck,
                     sequenceNumber: ++lastRefSeq,
                 });
@@ -135,7 +149,7 @@ describe("Runtime", () => {
                     message: "test-nack",
                 };
                 mockDeltaManager.emit("op", {
-                    contents,
+                    data: JSON.stringify(contents),
                     type: MessageType.SummaryNack,
                     sequenceNumber: ++lastRefSeq,
                 });
@@ -455,6 +469,29 @@ describe("Runtime", () => {
                     assert.strictEqual(heuristicData.numRuntimeOps, 0);
                     assert.strictEqual(heuristicData.numNonRuntimeOps, 1);
                 });
+
+                it("Should not summarize on non-runtime op before threshold is reached", async () => {
+                    // Creating RunningSummarizer starts heuristics automatically
+                    await emitNoOp(1);
+                    await tickAndFlushPromises(summaryConfig.minIdleTime);
+                    assertRunCounts(1, 0, 0, "should perform summary");
+                    await emitAck();
+
+                    assert(summaryConfig.nonRuntimeHeuristicThreshold !== undefined,
+                        "Expect nonRuntimeHeuristicThreshold to be provided");
+
+                    await emitNoOp(summaryConfig.nonRuntimeHeuristicThreshold - 2); // SummaryAck is included
+                    await tickAndFlushPromises(summaryConfig.minIdleTime);
+
+                    assertRunCounts(1, 0, 0, "should not perform summary");
+                    assert.strictEqual(heuristicData.numRuntimeOps, 0);
+                    assert.strictEqual(heuristicData.numNonRuntimeOps, summaryConfig.nonRuntimeHeuristicThreshold - 1);
+
+                    await emitNoOp(1);
+                    await tickAndFlushPromises(summaryConfig.minIdleTime);
+
+                    assertRunCounts(2, 0, 0, "should perform summary");
+                });
             });
 
             describe("Safe Retries", () => {
@@ -757,7 +794,7 @@ describe("Runtime", () => {
                     assert(!ackNackResult.success, "on-demand summary should fail");
                     assert(ackNackResult.data?.summaryNackOp.type === MessageType.SummaryNack,
                         "should be nack");
-                    assert(ackNackResult.data.summaryNackOp.contents.message === "test-nack",
+                    assert(JSON.parse((ackNackResult.data.summaryNackOp as any).data).message === "test-nack",
                         "summary nack error should be test-nack");
                 });
 

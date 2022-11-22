@@ -33,12 +33,16 @@ import {
  * Encapsulates a module entry point with corresponding code details.
  */
 export interface IFluidModuleWithDetails {
-    /** Fluid code module that implements the runtime factory needed to instantiate the container runtime. */
+    /**
+     * Fluid code module that implements the runtime factory needed to instantiate the container runtime.
+     */
     module: IFluidModule;
+
     /**
      * Code details associated with the module. Represents a document schema this module supports.
-     * If the code loader implements the {@link @fluidframework/core-interfaces#IFluidCodeDetailsComparer} interface,
-     * it'll be called to determine whether the module code details satisfy the new code proposal in the quorum.
+     * If the code loader implements the {@link @fluidframework/core-interfaces#(IFluidCodeDetailsComparer:interface)}
+     * interface, it'll be called to determine whether the module code details satisfy the new code proposal in the
+     * quorum.
      */
     details: IFluidCodeDetails;
 }
@@ -50,7 +54,7 @@ export interface IFluidModuleWithDetails {
 export interface ICodeDetailsLoader
     extends Partial<IProvideFluidCodeDetailsComparer> {
     /**
-     * Load the code module (package) that is capable to interact with the document.
+     * Load the code module (package) that can interact with the document.
      *
      * @param source - Code proposal that articulates the current schema the document is written in.
      * @returns - Code module entry point along with the code details associated with it.
@@ -59,7 +63,7 @@ export interface ICodeDetailsLoader
 }
 
 /**
-* The interface returned from a IFluidCodeResolver which represents IFluidCodeDetails
+ * The interface returned from a IFluidCodeResolver which represents IFluidCodeDetails
  * that have been resolved and are ready to load
  */
 export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
@@ -82,12 +86,10 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
  */
 export interface IFluidCodeResolver {
     /**
-     * Resolves a Fluid code details into a form that can be loaded
-     * @param details - The Fluid code details to resolve
-     * @returns - A IResolvedFluidCodeDetails where the
-     *            resolvedPackage's Fluid file entries are absolute urls, and
-     *            an optional resolvedPackageCacheId if the loaded package should be
-     *            cached.
+     * Resolves a Fluid code details into a form that can be loaded.
+     * @param details - The Fluid code details to resolve.
+     * @returns - A IResolvedFluidCodeDetails where the resolvedPackage's Fluid file entries are absolute urls, and
+     * an optional resolvedPackageCacheId if the loaded package should be cached.
      */
     resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails>;
 }
@@ -118,17 +120,18 @@ export interface IContainerEvents extends IEvent {
  * Namespace for the different connection states a container can be in
  * PLEASE NOTE: The sequence of the numerical values does no correspond to the typical connection state progression
  */
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace ConnectionState {
     /**
-     * The container is not connected to the delta server
+     * The container is not connected to the delta server.
      * Note - When in this state the container may be about to reconnect,
      * or may remain disconnected until explicitly told to connect.
      */
     export type Disconnected = 0;
 
     /**
-     * The container is disconnected but actively trying to establish a new connection
-     * PLEASE NOTE that this numerical value falls out of the order you may expect for this state
+     * The container is disconnected but actively trying to establish a new connection.
+     * PLEASE NOTE that this numerical value falls out of the order you may expect for this state.
      */
     export type EstablishingConnection = 3;
 
@@ -138,13 +141,13 @@ export namespace ConnectionState {
     export type CatchingUp = 1;
 
     /**
-     * The container is fully connected and syncing
+     * The container is fully connected and syncing.
      */
     export type Connected = 2;
 }
 
 /**
- * Type defining the different states of connectivity a container can be in
+ * Type defining the different states of connectivity a Container can be in.
  */
 export type ConnectionState =
     | ConnectionState.Disconnected
@@ -153,7 +156,7 @@ export type ConnectionState =
     | ConnectionState.Connected;
 
 /**
- * The Host's view of the Container and its connection to storage
+ * The Host's view of a Container and its connection to storage
  */
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
 
@@ -193,12 +196,12 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
 
     /**
-     * Returns true if the container has been closed, otherwise false
+     * Returns true if the Container has been closed, otherwise false
      */
     readonly closed: boolean;
 
     /**
-     * Returns true if the container is dirty, i.e. there are user changes that has not been saved
+     * Returns true if the Container is dirty, i.e. there are user changes that have not been saved.
      * Closing container in this state results in data loss for user.
      * Container usually gets into this situation due to loss of connectivity.
      */
@@ -232,7 +235,8 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     attach(request: IRequest): Promise<void>;
 
     /**
-     * Extract the snapshot from the detached container.
+     * Extract a snapshot of the container as long as it is in detached state. Calling this on an attached container
+     * is an error.
      */
     serialize(): string;
 
@@ -334,27 +338,27 @@ export type ILoaderOptions = {
     [key in string | number]: any;
 } & {
     /**
-     * Set caching behavior for the loader.  If true, we will load a container from cache if one
+     * Set caching behavior for the loader. If true, we will load a container from cache if one
      * with the same id/version exists or create a new container and cache it if it does not. If
      * false, always load a new container and don't cache it. If the container has already been
-     * closed, it will not be cached.  A cache option in the LoaderHeader for an individual
+     * closed, it will not be cached. A cache option in the LoaderHeader for an individual
      * request will override the Loader's value.
      * Defaults to true.
      */
     cache?: boolean;
 
     /**
-     * Provide the current Loader through the scope object when creating Containers.  It is added
+     * Provide the current Loader through the scope object when creating Containers. It is added
      * as the `ILoader` property, and will overwrite an existing property of the same name on the
-     * scope.  Useful for when the host wants to provide the current Loader's functionality to
+     * scope. Useful for when the host wants to provide the current Loader's functionality to
      * individual Data Stores, which is typically expected when creating with a Loader.
      * Defaults to true.
      */
     provideScopeLoader?: boolean;
 
     /**
-     * Max time(in ms) container will wait for a leave message of a disconnected client.
-    */
+     * Max time (in ms) container will wait for a leave message of a disconnected client.
+     */
     maxClientLeaveWaitTime?: number;
 };
 
@@ -406,6 +410,7 @@ export interface IContainerLoadMode {
      * recommended to have some progress UX / cancellation built into loading flow when using this option.
      */
     | "all";
+
     deltaConnection?:
     /*
      * Connection to delta stream is made only when Container.connect() call is made. Op processing

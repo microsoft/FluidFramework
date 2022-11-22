@@ -10,6 +10,7 @@ import {
 } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+    FluidObject,
     IFluidHandle,
     IFluidHandleContext,
     IRequest,
@@ -48,6 +49,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
+import { MockHandle } from "./mockHandle";
 
 /**
  * Mock implementation of IDeltaConnection for testing
@@ -211,11 +213,7 @@ export class MockContainerRuntimeFactory {
     public getMinSeq(): number {
         let minSeq: number | undefined;
         for (const [, clientSeq] of this.minSeq) {
-            if (minSeq === undefined) {
-                minSeq = clientSeq;
-            } else {
-                minSeq = Math.min(minSeq, clientSeq);
-            }
+            minSeq = minSeq === undefined ? clientSeq : Math.min(minSeq, clientSeq);
         }
         return minSeq ?? 0;
     }
@@ -378,10 +376,17 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
  */
 export class MockFluidDataStoreRuntime extends EventEmitter
     implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
-    constructor(overrides?: { clientId?: string; }) {
+    constructor(
+        overrides?: {
+            clientId?: string;
+            entryPoint?: IFluidHandle<FluidObject>;
+        }) {
         super();
         this.clientId = overrides?.clientId ?? uuid();
+        this.entryPoint = overrides?.entryPoint ?? new MockHandle(null, "", "");
     }
+
+    public readonly entryPoint?: IFluidHandle<FluidObject>;
 
     public get IFluidHandleContext(): IFluidHandleContext { return this; }
     public get rootRoutingContext(): IFluidHandleContext { return this; }
@@ -531,7 +536,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         };
     }
 
-    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {}
+    public updateUsedRoutes(usedRoutes: string[]) {}
 
     public getAttachSnapshot(): ITreeEntry[] {
         return [];
@@ -619,10 +624,7 @@ export class MockObjectStorageService implements IChannelStorageService {
 export class MockSharedObjectServices implements IChannelServices {
     public static createFromSummary(summaryTree: ISummaryTree) {
         const contents: { [key: string]: string; } = {};
-        for (const [key, value] of Object.entries(summaryTree.tree)) {
-            assert(value.type === SummaryType.Blob, "Unexpected summary type on mock createFromSummary");
-            contents[key] = value.content as string;
-        }
+        setContentsFromSummaryTree(summaryTree, "", contents);
         return new MockSharedObjectServices(contents);
     }
 
@@ -631,5 +633,24 @@ export class MockSharedObjectServices implements IChannelServices {
 
     public constructor(contents: { [key: string]: string; }) {
         this.objectStorage = new MockObjectStorageService(contents);
+    }
+}
+
+/**
+ * Populate the given `contents` object with all paths/values in a summary tree
+ */
+function setContentsFromSummaryTree({ tree }: ISummaryTree, path: string, contents: { [key: string]: string; }): void {
+    for (const [key, value] of Object.entries(tree)) {
+        switch (value.type) {
+            case SummaryType.Blob:
+                assert(typeof value.content === "string", "Unexpected blob value on mock createFromSummary");
+                contents[`${path}${key}`] = value.content;
+                break;
+            case SummaryType.Tree:
+                setContentsFromSummaryTree(value, `${path}${key}/`, contents);
+                break;
+            default:
+                assert(false, "Unexpected summary type on mock createFromSummary");
+        }
     }
 }

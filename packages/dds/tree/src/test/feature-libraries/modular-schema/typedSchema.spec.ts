@@ -4,13 +4,16 @@
  */
 
 import {
-    typedTreeSchema, typedFieldSchema, FieldInfo, TypeInfo,
-// Allow importing from this specific file which is being tested:
-/* eslint-disable-next-line import/no-internal-modules */
+    typedTreeSchema,
+    typedFieldSchema,
+    FieldInfo,
+    TypeInfo,
+    // Allow importing from this specific file which is being tested:
+    /* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/modular-schema/typedSchema";
 
 import { ValueSchema } from "../../../schema-stored";
-import { requireTrue } from "../../../util";
+import { brand, requireTrue } from "../../../util";
 import { FieldKinds } from "../../../feature-libraries";
 
 // These tests currently just cover the type checking, so its all compile time.
@@ -27,6 +30,7 @@ const testField = typedFieldSchema({
 });
 
 export const testTreeSchema = typedTreeSchema({
+    name: brand("testTreeSchema"),
     local: { localKey1Name: testField },
     global: {},
     extraLocalFields: testField,

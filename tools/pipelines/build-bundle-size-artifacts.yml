@@ -36,7 +36,7 @@ extends:
   template: templates/build-npm-package.yml
   parameters:
     taskLint: false
-    taskTest: false
+    taskTest: [] # no tests
     taskPack: false
     taskBundleAnalysis: true
     taskPublishBundleSizeArtifacts: true

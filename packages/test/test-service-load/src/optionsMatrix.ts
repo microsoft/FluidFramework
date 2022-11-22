@@ -4,6 +4,7 @@
  */
 
 import {
+    CompressionAlgorithms,
     IContainerRuntimeOptions,
     IGCRuntimeOptions,
     ISummaryRuntimeOptions,
@@ -57,12 +58,11 @@ const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
 };
 
 const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
-    disableIsolatedChannels: [undefined],
     disableSummaries: [false],
     initialSummarizerDelayMs: numberCases,
     summaryConfigOverrides: [undefined],
     maxOpsSinceLastSummary: numberCases,
-    summarizerClientElection: booleanCases,
+    summarizerClientElection: [false],
     summarizerOptions: [undefined],
 };
 
@@ -79,6 +79,8 @@ export function generateRuntimeOptions(
         loadSequenceNumberVerification: [undefined],
         enableOfflineLoad: [undefined],
         flushMode: [undefined],
+        compressionOptions: [{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 }],
+        maxBatchSizeInBytes: [undefined],
     };
 
     return generatePairwiseOptions<IContainerRuntimeOptions>(

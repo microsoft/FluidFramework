@@ -2,9 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Definition of the array property class
  */
+
 const {
     ArrayChangeSetIterator,
     ChangeSet,
@@ -239,7 +241,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * Add one or more values at the end of the array
      * @param {Array<property-properties.BaseProperty>|property-properties.BaseProperty|*|Array<*>} in_values- -
      * the item or items to be pushed (either properties or values). If an array is passed, .push
-     *  will be called on each item in the array.
+     * will be called on each item in the array.
      * @throws if trying to push a property that is a root property
      * @return {number} new length of the array
      */
@@ -368,12 +370,11 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
                 for (var i = 0; i < in_values.length; i++) {
                     var prop = in_values[i];
 
-                    if (in_values[i] instanceof BaseProperty) {
-                        prop = in_values[i];
-                    } else {
-                        prop = Property.PropertyFactory._createProperty(
+                    prop = in_values[i] instanceof BaseProperty
+                        ? in_values[i]
+                        : Property.PropertyFactory._createProperty(
                             in_values[i].typeid || this._typeid, null, in_values[i].value, this._getScope());
-                    }
+
                     arr.push(prop);
                 }
 
@@ -532,11 +533,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         if (this._dirty) {
             if (this._dirty.dirty === undefined &&
                 this._dirty.pending === undefined) {
-                if (oldFlags === 0) {
-                    this._dirty = undefined;
-                } else {
-                    this._dirty = DIRTY_STATE_FLAGS_ARRAY[oldFlags];
-                }
+                this._dirty = oldFlags === 0 ? undefined : DIRTY_STATE_FLAGS_ARRAY[oldFlags];
             } else {
                 this._dirty.flags = oldFlags;
             }
@@ -653,7 +650,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
     /**
      * Removes a given number of elements from the array property (or given number of letters from a StringProperty)
-     *  and shifts remaining values to the left.
+     * and shifts remaining values to the left.
      * E.g. [1, 2, 3, 4, 5]  .removeRange(1, 3) => [1, 5]
      * @param {number} in_offset - Target start index
      * @param {number} in_deleteCount - number of elements to be deleted
@@ -872,42 +869,53 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             return prop;
         }
 
-        if (in_position === PATH_TOKENS.ROOT) {
-            return prop.getRoot();
-        } else if (in_position === PATH_TOKENS.UP) {
-            return prop.getParent();
-        } else if (in_position === PATH_TOKENS.REF) {
-            throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
-        } else {
-            var pos = Math.floor(in_position);
-            ConsoleUtils.assert(isFinite(pos), MSG.IN_POSITION_MUST_BE_NUMBER);
-            var result = this._dataArrayGetValue(pos);
-            if (in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.ALWAYS) {
-                if (result instanceof Property.ReferenceProperty) {
-                    result = result.ref;
-                }
+        switch (in_position) {
+            case PATH_TOKENS.ROOT: {
+                return prop.getRoot();
             }
-            return result;
+            case PATH_TOKENS.UP: {
+                return prop.getParent();
+            }
+            case PATH_TOKENS.REF: {
+                throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
+            }
+            default: {
+                var pos = Math.floor(in_position);
+                ConsoleUtils.assert(isFinite(pos), MSG.IN_POSITION_MUST_BE_NUMBER);
+                var result = this._dataArrayGetValue(pos);
+                if (in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.ALWAYS) {
+                    if (result instanceof Property.ReferenceProperty) {
+                        result = result.ref;
+                    }
+                }
+                return result;
+            }
         }
     }
 
     /**
      * Returns an object with all the nested values contained in this property
-     * @return {array<object> | array<*>} an array of objects or values representing the values of your property
-     * for example: [
-     * {
-     *   position: {
-     *    x: 2,
-     *    y: 5
-     *   }
-     * },
-     * {
-     *   position: {
-     *    x: 1,
-     *    y: -8
+     * @return {array<object> | array<*>} an array of objects or values representing the values of your property.
+     * For example:
+     *
+     * ```json
+     * [
+     *  {
+     *      position: {
+     *          x: 2,
+     *          y: 5
+     *      }
+     *  },
+     *  {
+     *      position: {
+     *          x: 1,
+     *          y: -8
+     *      }
      *  }
-     * }]
-     * or for a Value Array: [1, 3, 6]
+     * ]
+     * ```
+     *
+     * or for a Value Array: `[1, 3, 6]`
      */
     getValues() {
         var result = [];
@@ -1030,8 +1038,8 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
     /**
      * Removes the dirtiness flag from this property
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean, if none are supplied all
-     *                                                                       will be removed
+     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean.
+     * If none are supplied, all will be removed.
      * @private
      */
     _cleanDirty(in_flags) {
@@ -1055,10 +1063,10 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     }
 
     /**
-     * Removes the dirtiness flag from this property and recursively from all of its children
+     * Removes the dirtiness flag from this property and recursively from all of its children.
      *
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] - The flags to clean,
-     * if none are supplied all will be removed
+     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] - The flags to clean.
+     * If none are supplied, all will be removed.
      */
     cleanDirty(in_dirtinessType) {
         if (!this._isPrimitive) {
@@ -1074,12 +1082,11 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * Internal helper function that implements the deserialize algorithm for an array of named properties.
      *
      * @param {property-properties.SerializedChangeSet} in_serializedObj - The serialized changeset to apply. This
-     *     has to be a normalized change-set (only containing inserts. Removes and Modifies are forbidden).
+     * has to be a normalized change-set (only containing inserts. Removes and Modifies are forbidden).
      * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
-     *                                             and trigger a modified event there. When batching updates, this
-     *                                             can be prevented via this flag.
+     * and trigger a modified event there. When batching updates, this can be prevented via this flag.
      * @return {property-properties.SerializedChangeSet} ChangeSet with the changes that actually were performed during the
-     *     deserialization
+     * deserialization.
      */
     _deserializeNamedPropertyArray(in_serializedObj, in_reportToView) {
         if (!_.isArray(in_serializedObj.insert[0][1])) {
@@ -1473,36 +1480,45 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
                 }
             } else if (currentArrayIndex === opStartIndex) {
                 // handle the op
-                if (op.type === ArrayChangeSetIterator.types.REMOVE) {
-                    // no need to do something (removes are just copied)
-                    iterator.next(); // we've completely consumed that op
-                } else if (op.type === ArrayChangeSetIterator.types.INSERT) {
-                    // we have to convert the inserts:
-                    var currentInsert = op.operation;
-                    var newInsert = [currentInsert[0], []];
-                    for (var j = 0; j < currentInsert[1].length; ++j) {
-                        // TODO: we don't use the data from the changeset anymore, since we directly
-                        // TODO: read the data from the array now - remove the data from the op and
-                        // TODO: replace it with just the length instead
-                        if (!this._dataArrayGetValue(opStartIndex + j)) {
-                            throw new Error('insert: invalid index');
+                switch (op.type) {
+                    case ArrayChangeSetIterator.types.REMOVE: {
+                        // no need to do something (removes are just copied)
+                        iterator.next(); // we've completely consumed that op
+                        break;
+                    }
+                    case ArrayChangeSetIterator.types.INSERT: {
+                        // we have to convert the inserts:
+                        var currentInsert = op.operation;
+                        var newInsert = [currentInsert[0], []];
+                        for (var j = 0; j < currentInsert[1].length; ++j) {
+                            // TODO: we don't use the data from the changeset anymore, since we directly
+                            // TODO: read the data from the array now - remove the data from the op and
+                            // TODO: replace it with just the length instead
+                            if (!this._dataArrayGetValue(opStartIndex + j)) {
+                                throw new Error('insert: invalid index');
+                            }
+                            newInsert[1].push(this._dataArrayGetValue(opStartIndex + j).serialize(
+                                {
+                                    'dirtyOnly': false, 'includeRootTypeid': true, 'dirtinessType': in_dirtinessType,
+                                    'includeReferencedRepositories': in_includeReferencedRepositories,
+                                }));
                         }
-                        newInsert[1].push(this._dataArrayGetValue(opStartIndex + j).serialize(
-                            {
-                                'dirtyOnly': false, 'includeRootTypeid': true, 'dirtinessType': in_dirtinessType,
-                                'includeReferencedRepositories': in_includeReferencedRepositories,
-                            }));
+                        if (!result.insert) {
+                            result.insert = [];
+                        }
+                        result.insert.push(newInsert);
+                        currentArrayIndex += currentInsert[1].length; // we've read and used these entries above
+                        iterator.next(); // we've completely consumed that op
+                        break;
                     }
-                    if (!result.insert) {
-                        result.insert = [];
+                    case ArrayChangeSetIterator.types.MODIFY: {
+                        // Prevent from looping infinitly
+                        // TODO: Might want to decide if there's something to do here
+                        iterator.next(); // we've completely consumed that op
+                        break;
                     }
-                    result.insert.push(newInsert);
-                    currentArrayIndex += currentInsert[1].length; // we've read and used these entries above
-                    iterator.next(); // we've completely consumed that op
-                } else if (op.type === ArrayChangeSetIterator.types.MODIFY) {
-                    // Prevent from looping infinitly
-                    // TODO: Might want to decide if there's something to do here
-                    iterator.next(); // we've completely consumed that op
+                    default:
+                        break;
                 }
             }
         }
@@ -1512,17 +1528,14 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * Serialize the property
      *
-     * @param {boolean} in_dirtyOnly -
-     *     Only include dirty entries in the serialization
-     * @param {boolean} in_includeRootTypeid -
-     *     Include the typeid of the root of the hierarchy - has no effect for ArrayProperty
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] -
-     *     The type of dirtiness to use when reporting dirty changes. By default this is
-     *     PENDING_CHANGE
+     * @param {boolean} in_dirtyOnly - Only include dirty entries in the serialization
+     * @param {boolean} in_includeRootTypeid - Include the typeid of the root of the hierarchy.
+     * Has no effect for `ArrayProperty`.
+     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] - The type of dirtiness to use
+     * when reporting dirty changes. By default this is `PENDING_CHANGE`.
      * @param {boolean} [in_includeReferencedRepositories=false] - If this is set to true, the _serialize
-     *     function will descend into referenced repositories. WARNING: if there are loops in the references
-     *     this can result in an infinite loop
-     *
+     * function will descend into referenced repositories.
+     * WARNING: if there are loops in the references this can result in an infinite loop.
      *
      * @return {Object} The serialized representation of this property
      * @private
@@ -1574,8 +1587,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * Repeatedly calls back the given function with human-readable string
      * representations of the property and of its sub-properties.
      * @param {string} indent - Leading spaces to create the tree representation
-     * @param {string} externalId - Name of the current property at the upper level.
-     *                              Used for arrays.
+     * @param {string} externalId - Name of the current property at the upper level. Used for arrays.
      * @param {function} printFct - Function to call for printing each property
      */
     _prettyPrint(indent, externalId, printFct) {
@@ -1647,11 +1659,9 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * @return {string} The typeid
      */
     getFullTypeid(in_hideCollection) {
-        if (in_hideCollection) {
-            return this._typeid;
-        } else {
-            return TypeIdHelper.createSerializationTypeId(this._typeid, 'array');
-        }
+        return in_hideCollection
+            ? this._typeid
+            : TypeIdHelper.createSerializationTypeId(this._typeid, 'array');
     }
 
     /**
@@ -1749,11 +1759,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     _getScope() {
         var scope = AbstractStaticCollectionProperty.prototype._getScope.call(this);
 
-        if (scope !== undefined) {
-            return scope;
-        } else {
-            return this._scope;
-        }
+        return scope !== undefined ? scope : this._scope;
     }
 
     /**

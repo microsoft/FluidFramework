@@ -26,13 +26,15 @@
                     </thead>
                     <tbody>
                         {{ range $names }}
-
-                        {{ range where $packagePages "Params.package" . }}
+                        {{- range where $packagePages "Params.package" . -}}
                         <tr>
                             <td><a href="{{ .RelPermalink | safeURL }}" title="{{ .Title }}">{{ .Title }}</a></td>
-                            <td>{{ truncate 170 (.Params.Summary | markdownify) }}</td>
+                            <td>
+                                {{ $firstLine := index (split .Params.Summary "\n\n") 0 }}
+                                {{- $firstLine | .RenderString -}}
+                            </td>
                         </tr>
-                        {{ end }}
+                        {{- end -}}
                         {{ end }}
                     </tbody>
                 </table>

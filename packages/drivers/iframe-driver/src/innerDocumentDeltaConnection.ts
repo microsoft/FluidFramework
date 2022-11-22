@@ -19,21 +19,38 @@ import {
 } from "@fluidframework/protocol-definitions";
 import * as Comlink from "comlink";
 
+/**
+ * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+ */
 export interface IOuterDocumentDeltaConnectionProxy {
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     handshake: Deferred<any>;
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     getDetails(): Promise<IConnected>;
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     submit(messages: IDocumentMessage[]): Promise<void>;
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     submitSignal(message: IDocumentMessage): Promise<void>;
 }
 
 /**
  * Represents a connection to a stream of delta updates
+ * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
  */
 export class InnerDocumentDeltaConnection
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
     implements IDocumentDeltaConnection, IDisposable {
     /**
      * Create a DocumentDeltaConnection
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
      *
      * @param id - document ID
      */
@@ -60,6 +77,7 @@ export class InnerDocumentDeltaConnection
 
     /**
      * Get the ID of the client who is sending the message
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
      *
      * @returns the client ID
      */
@@ -69,6 +87,7 @@ export class InnerDocumentDeltaConnection
 
     /**
      * Get the mode of the client
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
      *
      * @returns the client mode
      */
@@ -78,6 +97,7 @@ export class InnerDocumentDeltaConnection
 
     /**
      * Get the claims of the client who is sending the message
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
      *
      * @returns client claims
      */
@@ -87,6 +107,7 @@ export class InnerDocumentDeltaConnection
 
     /**
      * Get whether or not this is an existing document
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
      *
      * @returns true if the document exists
      */
@@ -96,6 +117,7 @@ export class InnerDocumentDeltaConnection
 
     /**
      * Get the maximum size of a message before chunking is required
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
      *
      * @returns the maximum size of a message before chunking is required
      */
@@ -105,6 +127,7 @@ export class InnerDocumentDeltaConnection
 
     /**
      * Semver of protocol being used with the service
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
      */
     public get version(): string {
         return this.details.version;
@@ -112,6 +135,7 @@ export class InnerDocumentDeltaConnection
 
     /**
      * Configuration details provided by the service
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
      */
     public get serviceConfiguration(): IClientConfiguration {
         return this.details.serviceConfiguration;
@@ -119,6 +143,7 @@ export class InnerDocumentDeltaConnection
 
     /**
      * Get messages sent during the connection
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
      *
      * @returns messages sent during the connection
      */
@@ -128,6 +153,7 @@ export class InnerDocumentDeltaConnection
 
     /**
      * Get signals sent during the connection
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
      *
      * @returns signals sent during the connection
      */
@@ -137,6 +163,7 @@ export class InnerDocumentDeltaConnection
 
     /**
      * Get initial client list
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
      *
      * @returns initial client list sent during the connection
      */
@@ -144,6 +171,9 @@ export class InnerDocumentDeltaConnection
         return this.details.initialClients;
     }
 
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     public get lastKnownOpNumber() {
         // TODO: remove once latest server bits are picked up
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -154,9 +184,18 @@ export class InnerDocumentDeltaConnection
      * @param socket - websocket to be used
      * @param documentId - ID of the document
      * @param details - details of the websocket connection
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
      */
     private constructor(
+        /**
+         * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming
+         * release
+         */
         public details: IConnected,
+        /**
+         * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming
+         * release
+         */
         public outerProxy: IOuterDocumentDeltaConnectionProxy,
         tempEmitter: EventEmitter) {
         super();
@@ -173,6 +212,7 @@ export class InnerDocumentDeltaConnection
 
     /**
      * Submits a new delta operation to the server
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
      *
      * @param message - delta operation to submit
      */
@@ -183,6 +223,7 @@ export class InnerDocumentDeltaConnection
 
     /**
      * Submits a new signal to the server
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
      *
      * @param message - signal to submit
      */
@@ -191,7 +232,13 @@ export class InnerDocumentDeltaConnection
         this.outerProxy.submitSignal(message);
     }
 
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     public get disposed() { return false; }
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     public dispose() {
         throw new Error("InnerDocumentDeltaConnection: close() not implemented Yet");
     }

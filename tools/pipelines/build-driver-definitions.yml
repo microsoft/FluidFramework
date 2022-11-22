@@ -63,4 +63,4 @@ extends:
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: common/lib/driver-definitions
     tagName: driver-definitions
-    taskTest: false
+    taskTest: [] # no tests

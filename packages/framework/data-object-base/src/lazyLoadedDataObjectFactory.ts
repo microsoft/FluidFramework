@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
+import {
+    FluidObject,
+    IProvideFluidRouter,
+    IRequest,
+} from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry, mixinRequestHandler } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
@@ -17,8 +21,7 @@ import {
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { LazyPromise } from "@fluidframework/common-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { LazyLoadedDataObject } from "./lazyLoadedDataObject";
 
 export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> implements IFluidDataStoreFactory {
@@ -52,26 +55,30 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
         existing: boolean,
     ): Promise<FluidDataStoreRuntime> {
         const runtimeClass = mixinRequestHandler(
-            async (request: IRequest) => {
-                const router = await instance;
-                return router.request(request);
+            async (request: IRequest, rt: FluidDataStoreRuntime) => {
+                const maybeRouter: FluidObject<IProvideFluidRouter> | undefined = await rt.entryPoint?.get();
+                assert(maybeRouter !== undefined, 0x46c /* entryPoint should have been initialized by now */);
+                assert(maybeRouter?.IFluidRouter !== undefined,
+                    0x46d /* Data store runtime entryPoint is not an IFluidRouter */);
+                return maybeRouter.IFluidRouter.request(request);
             });
 
-        const runtime = new runtimeClass(context, this.ISharedObjectRegistry, existing);
-
-        // Note this may synchronously return an instance or a deferred LazyPromise,
-        // depending of if a new store is being created or an existing store
-        // is being loaded.
-        const instance = this.instantiate(context, runtime, existing);
-
-        return runtime;
+        return new runtimeClass(
+            context,
+            this.ISharedObjectRegistry,
+            existing,
+            async (dataStoreRuntime) => this.instantiate(context, dataStoreRuntime, existing));
     }
 
     public async create(parentContext: IFluidDataStoreContext, props?: any): Promise<FluidObject> {
         const { containerRuntime, packagePath } = parentContext;
 
-        const router = await containerRuntime.createDataStore(packagePath.concat(this.type));
-        return requestFluidObject(router, "/");
+        const dataStore = await containerRuntime.createDataStore(packagePath.concat(this.type));
+        const entryPoint = await dataStore.entryPoint?.get();
+        // This data object factory should always be setting the entryPoint. Need the non-null assertion
+        // while we're plumbing it everywhere and entryPoint could still be undefined.
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return entryPoint!;
     }
 
     private instantiate(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, existing: boolean) {

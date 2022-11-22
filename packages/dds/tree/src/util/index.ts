@@ -3,17 +3,54 @@
  * Licensed under the MIT License.
  */
 
-/**
- * This module contains miscellaneous typescript utilities.
- * To be here these utilities must meet the following requirements:
- * - Not be logically specific to anything in this package.
- * - Could be factored out into its own Package.
- * - Is not currently worth factoring out into a separate package.
- * - Is not needed by users outside this package except to consume this package.
- */
-
-export * from "./utils";
-export * from "./typeCheck";
-export * from "./brand";
-export * from "./offsetList";
-export * from "./stackyIterator";
+export {
+    brand,
+    Brand,
+    BrandedType,
+    brandOpaque,
+    extractFromOpaque,
+    ExtractFromOpaque,
+    NameFromBranded,
+    Opaque,
+    ValueFromBranded,
+} from "./brand";
+export { OffsetList, OffsetListFactory } from "./offsetList";
+export {
+    areSafelyAssignable,
+    Bivariant,
+    Contravariant,
+    Covariant,
+    eitherIsAny,
+    EnforceTypeCheckTests,
+    Invariant,
+    isAny,
+    isAssignableTo,
+    isStrictSubset,
+    MakeNominal,
+    requireFalse,
+    requireTrue,
+} from "./typeCheck";
+export { StackyIterator } from "./stackyIterator";
+export {
+    clone,
+    compareArrays,
+    compareFiniteNumbers,
+    compareFiniteNumbersReversed,
+    compareMaps,
+    compareSets,
+    compareStrings,
+    copyPropertyIfDefined,
+    fail,
+    getOrCreate,
+    hasAtLeastLength,
+    getOrAddEmptyToMap,
+    isJsonObject,
+    JsonCompatible,
+    JsonCompatibleObject,
+    JsonCompatibleReadOnly,
+    makeArray,
+    Mutable,
+    RecursiveReadonly,
+    setPropertyIfDefined,
+    unreachableCase,
+} from "./utils";

@@ -42,3 +42,7 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
      */
     delete(): void;
 }
+export interface ICellLocalOpMetadata {
+    pendingMessageId: number;
+    previousValue?: any;
+}

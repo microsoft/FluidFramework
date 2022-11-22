@@ -142,11 +142,9 @@ function stronglyTypedParse(input: ConfigTypes): StronglyTypedValue | undefined 
     return defaultReturn;
 }
 
-/** Referencing the `sessionStorage` variable can throw in some environments such as Node */
+/** `sessionStorage` is undefined in some environments such as Node */
 const safeSessionStorage = (): Storage | undefined => {
-    try {
-        return sessionStorage !== null ? sessionStorage : undefined;
-    } catch { return undefined; }
+    return globalThis.sessionStorage;
 };
 
 /**

@@ -2,20 +2,23 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import * as path from "path";
 import * as os from "os";
-import { commonOptionString, parseOption } from "../common/commonOptions"
+import * as path from "path";
+
+import { commonOptionString, parseOption } from "../common/commonOptions";
+import { defaultLogger } from "../common/logging";
 import { existsSync } from "../common/utils";
 import { IPackageMatchedOptions } from "./fluidRepoBuild";
 import { ISymlinkOptions } from "./symlinkUtils";
+
+const { log, errorLog } = defaultLogger;
 
 interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
     nolint: boolean;
     lintonly: boolean;
     showExec: boolean;
     clean: boolean;
-    matchedOnly: boolean
+    matchedOnly: boolean;
     buildScriptNames: string[];
     build?: boolean;
     vscode: boolean;
@@ -23,7 +26,7 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
     fullSymlink: boolean | undefined;
     depcheck: boolean;
     force: boolean;
-    install: boolean
+    install: boolean;
     nohoist: boolean;
     uninstall: boolean;
     concurrency: number;
@@ -59,6 +62,7 @@ export const options: FastBuildOptions = {
     all: false,
     server: false,
     azure: false,
+    buildTools: false,
     services: false,
     worker: false,
     workerThreads: false,
@@ -68,7 +72,7 @@ export const options: FastBuildOptions = {
 // This string is duplicated in the readme: update readme if changing this.
 
 function printUsage() {
-    console.log(
+    log(
         `
 Usage: fluid-build <options> [(<package regexp>|<path>) ...]
     [<package regexp> ...] Regexp to match the package name (default: all packages)
@@ -85,13 +89,15 @@ Options:
        --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
     -s --script <name>  npm script to execute (default:build)
        --azure          Operate on the azure monorepo (default: client monorepo). Overridden by "--all"
+       --buildTools     Operate on the build-tools monorepo (default: client monorepo). Overridden by "--all"
        --server         Operate on the server monorepo (default: client monorepo). Overridden by "--all"
        --symlink        Fix symlink between packages within monorepo (isolate mode). This configures the symlinks to only connect within each lerna managed group of packages. This is the configuration tested by CI and should be kept working.
        --symlink:full   Fix symlink between packages across monorepo (full mode). This symlinks everything in the repo together. CI does not ensure this configuration is functional, so it may or may not work.
        --uninstall      Clean all node_modules. This errors if some node-nodules folders do not exists: if hitting this limitation you can do an install first to work around it.
        --vscode         Output error message to work with default problem matcher in vscode
 ${commonOptionString}
-`);
+`,
+    );
 }
 
 function setClean(build: boolean) {
@@ -219,6 +225,11 @@ export function parseOptions(argv: string[]) {
             continue;
         }
 
+        if (arg === "--buildTools") {
+            options.buildTools = true;
+            continue;
+        }
+
         if (arg === "--server") {
             options.server = true;
             continue;
@@ -230,7 +241,7 @@ export function parseOptions(argv: string[]) {
                 setBuild(true);
                 continue;
             }
-            console.error("ERROR: Missing argument for --script");
+            errorLog("Missing argument for --script");
             error = true;
             break;
         }
@@ -290,9 +301,9 @@ export function parseOptions(argv: string[]) {
                     options.workerMemoryLimit = mb * 1024 * 1024;
                     continue;
                 }
-                console.error("ERROR: Argument for --workerMemoryLimitMB is not a number");
+                errorLog("Argument for --workerMemoryLimitMB is not a number");
             } else {
-                console.error("ERROR: Missing argument for --workerMemoryLimit");
+                errorLog("Missing argument for --workerMemoryLimit");
             }
             error = true;
             break;
@@ -309,7 +320,7 @@ export function parseOptions(argv: string[]) {
             continue;
         }
 
-        console.error(`ERROR: Invalid arguments ${arg}`);
+        errorLog(`Invalid arguments ${arg}`);
         error = true;
         break;
     }

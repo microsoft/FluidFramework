@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 /**
- * @fileoverview
- * Declaration of the PropertyTemplate module
- * PropertyTemplate is used to describe a static property
+ * @fileoverview Declaration of the PropertyTemplate module.
+ * PropertyTemplate is used to describe a static property.
  */
 const _ = require('lodash');
 const { TypeIdHelper } = require('@fluid-experimental/property-changeset');
@@ -22,15 +21,15 @@ export class PropertyTemplate {
      * @param {string} in_params.name - Name of the property
      * @param {string} in_params.typeid - The type identifier
      * @param {number=} [in_params.length=1] - The length of the property. Only valid if
-     *   the property is an array, otherwise the length defaults to 1
+     * the property is an array, otherwise the length defaults to 1
      * @param {string} in_params.context - The type of property this template represents
-     *   i.e. array, hash, etc.
+     * i.e. array, hash, etc.
      * @param {Array.<object>} in_params.properties - List of property templates that
-     *   are used to define children properties
+     * are used to define children properties
      * @param {Array.<object>} in_params.constants - List of property templates that
-     *   are used to define constant properties and their values
+     * are used to define constant properties and their values
      * @param {Array.<string>} in_params.inherits - List of property template typeids that this
-     *   PropertyTemplate inherits from
+     * PropertyTemplate inherits from
      *
      * @constructor
      * @protected
@@ -45,11 +44,7 @@ export class PropertyTemplate {
 
         /** Size of the property (if this is an array) */
         if (params.context === 'array') {
-            if (params.length !== undefined) {
-                this.length = params.length;
-            } else {
-                this.length = 0;
-            }
+            this.length = params.length !== undefined ? params.length : 0;
         } else {
             this.length = 1;
         }
@@ -126,11 +121,7 @@ export class PropertyTemplate {
             minValue = value < minValue ? value : minValue;
         }
 
-        if (enumDictionary.enumEntriesByValue.hasOwnProperty(0)) {
-            enumDictionary.defaultValue = 0;
-        } else {
-            enumDictionary.defaultValue = minValue;
-        }
+        enumDictionary.defaultValue = enumDictionary.enumEntriesByValue.hasOwnProperty(0) ? 0 : minValue;
 
         return enumDictionary;
     }
@@ -216,7 +207,7 @@ export class PropertyTemplate {
                 (_.isObject(in_obj) !== _.isObject(target)) ||
                 (_.isArray(in_obj) !== _.isArray(target)) ||
                 !_.isObject(target)) {
-                throw new Error(
+                throw new TypeError(
                     MSG.INVALID_TARGET_PROPERTY_TEMPLATE + this.typeid,
                 );
             }
@@ -239,7 +230,7 @@ export class PropertyTemplate {
                 target = _.isArray(in_obj) ? [] : {};
                 copyMembers = true;
             } else {
-                throw new Error(
+                throw new TypeError(
                     MSG.MISSING_CASE_IN_TEMPLATE_SERIALIZATION + this.typeid,
                 );
             }

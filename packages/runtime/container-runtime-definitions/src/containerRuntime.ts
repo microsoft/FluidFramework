@@ -26,21 +26,29 @@ import {
     FlushMode,
     IContainerRuntimeBase,
     IContainerRuntimeBaseEvents,
+    IDataStore,
     IFluidDataStoreContextDetached,
     IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 
 /**
- * @deprecated - This will be removed in a later release.
+ * @deprecated Not necessary if consumers add a new dataStore to the container by storing its handle.
+ */
+export interface IDataStoreWithBindToContext_Deprecated extends IDataStore {
+    fluidDataStoreChannel?: { bindToContext?(): void; };
+}
+
+/**
+ * @deprecated This will be removed in a later release.
  */
 export const IContainerRuntime: keyof IProvideContainerRuntime = "IContainerRuntime";
 
 /**
- * @deprecated - This will be removed in a later release.
+ * @deprecated This will be removed in a later release.
  */
 export interface IProvideContainerRuntime {
     /**
-     * @deprecated - This will be removed in a later release.
+     * @deprecated This will be removed in a later release.
      */
     IContainerRuntime: IContainerRuntime;
 }
@@ -97,13 +105,6 @@ export interface IContainerRuntime extends
      * either were not sent out to delta stream or were not yet acknowledged.
      */
     readonly isDirty: boolean;
-
-    /**
-     * Flushes any ops currently being batched to the loader
-     * @deprecated - This will be removed in a later release. If a more manual flushing process is needed,
-     * move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
-     */
-    flush(): void;
 
     /**
      * Get an absolute url for a provided container-relative request.

@@ -9,7 +9,6 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { IRandom } from "@fluid-internal/stochastic-test-utils";
-import { ContainerDataObjectManager } from "./containerDataObjectManager";
 
 /**
  * Responsible for tracking the lifetime of containers
@@ -34,11 +33,12 @@ export class ContainerManager {
         return container;
     }
 
-    public async loadContainer(): Promise<void> {
+    public async loadContainer(): Promise<IContainer> {
         const container = await this.provider.loadContainer(this.runtimeFactory, {
             configProvider: this.configProvider,
         });
         this.trackContainer(container);
+        return container;
     }
 
     private trackContainer(container: IContainer) {
@@ -62,14 +62,5 @@ export class ContainerManager {
 
     public get connectedContainerCount(): number {
         return this.connectedContainers.length;
-    }
-
-    public async getRandomContainer(random: IRandom): Promise<ContainerDataObjectManager> {
-        if (!this.hasConnectedContainers()) {
-            await this.loadContainer();
-        }
-        const container = random.pick(this.connectedContainers);
-        assert(!container.closed, "Picked container should not be closed!");
-        return new ContainerDataObjectManager(container);
     }
 }

@@ -850,6 +850,32 @@
           }
         },
         {
+          "kind": "Variable",
+          "canonicalReference": "simple-suite-test!testConstWithEmptyDeprecatedBlock:var",
+          "docComment": "/**\n * I have a `@deprecated` tag with an empty comment block.\n *\n * @deprecated\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "testConstWithEmptyDeprecatedBlock = "
+            },
+            {
+              "kind": "Content",
+              "text": "\"I have a `@deprecated` tag with an empty comment block.\""
+            }
+          ],
+          "initializerTokenRange": {
+            "startIndex": 1,
+            "endIndex": 2
+          },
+          "isReadonly": true,
+          "releaseTag": "Public",
+          "name": "testConstWithEmptyDeprecatedBlock",
+          "variableTypeTokenRange": {
+            "startIndex": 0,
+            "endIndex": 0
+          }
+        },
+        {
           "kind": "Interface",
           "canonicalReference": "simple-suite-test!TestEmptyInterface:interface",
           "docComment": "/**\n * An empty interface\n *\n * @public\n */\n",
@@ -1498,6 +1524,67 @@
               "endIndex": 6
             }
           ]
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "simple-suite-test!TestInterfaceWithIndexSignature:interface",
+          "docComment": "/**\n * An interface with an index signature.\n *\n * @public\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface TestInterfaceWithIndexSignature "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "TestInterfaceWithIndexSignature",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "IndexSignature",
+              "canonicalReference": "simple-suite-test!TestInterfaceWithIndexSignature:index(1)",
+              "docComment": "/**\n * Test index signature.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "[foo: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": "]: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        bar: string;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "foo",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                }
+              ]
+            }
+          ],
+          "extendsTokenRanges": []
         },
         {
           "kind": "Interface",

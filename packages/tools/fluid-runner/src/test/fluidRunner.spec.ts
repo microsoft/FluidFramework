@@ -8,14 +8,15 @@ import path from "path";
 import { strict as assert } from "assert";
 import { spawnSync } from "child_process";
 
-describe("fluidRunner from command line", () => {
-    const command = path.join(__dirname, "../../bin/fluidRunner");
+describe("fluid-runner from command line", () => {
+    const command = path.join(__dirname, "../../bin/fluid-runner");
 
     describe("exportFile", () => {
         const codeLoader = path.join(__dirname, "sampleCodeLoaders", "sampleCodeLoader.js");
         const folderRoot = path.join(__dirname, "../../src/test");
         const snapshot = path.join(folderRoot, "localOdspSnapshots", "odspSnapshot2.json");
         const outputFolder = path.join(folderRoot, "outputFolder");
+        const outputFilePath = path.join(outputFolder, "result.txt");
         const telemetryFile = path.join(outputFolder, "telemetryFile.txt");
 
         beforeEach(() => {
@@ -32,9 +33,9 @@ describe("fluidRunner from command line", () => {
                 "exportFile",
                 `--codeLoader=${codeLoader}`,
                 `--inputFile=${snapshot}`,
-                `--outputFolder=${outputFolder}`,
+                `--outputFile=${outputFilePath}`,
                 `--telemetryFile=${telemetryFile}`,
-                "--scenario=test",
+                `--telemetryFormat=CSV`,
             ], { encoding: "utf-8" });
 
             assert.strictEqual(exportFile.status, 0,
@@ -47,9 +48,8 @@ describe("fluidRunner from command line", () => {
                 "exportFile",
                 `--codeLoader=${codeLoader}`,
                 `--inputFile=${snapshot}`,
-                `--outputFolder=${outputFolder}`,
-                `--telemetryFile=${telemetryFile}`,
-                "--scenario=\"\"", // Empty scenario is not allowed
+                `--outputFile=${outputFilePath}`,
+                "--telemetryFile=\"\"", // Empty telemetryFile is not allowed
             ], { encoding: "utf-8" });
 
             assert.strictEqual(exportFile.status, 1,
@@ -65,13 +65,78 @@ describe("fluidRunner from command line", () => {
                 "exportFile",
                 `--codeLoader=${codeLoader}`,
                 `--inputFile=${snapshot}`,
-                `--outputFolder=${outputFolder}`,
+                `--outputFile=${outputFilePath}`,
                 `--telemetryFile=${telemetryFile}`,
-                "--scenario=test",
             ]);
 
             assert.notStrictEqual(fs.statSync(telemetryFile).size, 0,
                 "Expect some content to be written to telemetry file");
+        });
+
+        it("Produces some output result file", () => {
+            assert(!fs.existsSync(outputFilePath), "Result file should not yet exist");
+
+            spawnSync("node", [
+                command,
+                "exportFile",
+                `--codeLoader=${codeLoader}`,
+                `--inputFile=${snapshot}`,
+                `--outputFile=${outputFilePath}`,
+                `--telemetryFile=${telemetryFile}`,
+            ]);
+
+            assert.notStrictEqual(fs.statSync(outputFilePath).size, 0, "Expect some result file");
+        });
+    });
+});
+
+describe("custom fluidFileConverter provided", () => {
+    const command = path.join(__dirname, "../../src/test/sampleCodeLoaders", "sample-executable");
+
+    describe("exportFile", () => {
+        const folderRoot = path.join(__dirname, "../../src/test");
+        const codeLoader = path.join(__dirname, "sampleCodeLoaders", "sampleCodeLoader.js");
+        const snapshot = path.join(folderRoot, "localOdspSnapshots", "odspSnapshot2.json");
+        const outputFolder = path.join(folderRoot, "outputFolder");
+        const outputFilePath = path.join(outputFolder, "result.txt");
+        const telemetryFile = path.join(outputFolder, "telemetryFile.txt");
+
+        beforeEach(() => {
+            fs.mkdirSync(outputFolder);
+        });
+
+        afterEach(() => {
+            fs.rmdirSync(outputFolder, { recursive: true });
+        });
+
+        it("codeLoader command line arg is not needed", () => {
+            const exportFile = spawnSync("node", [
+                command,
+                "exportFile",
+                `--inputFile=${snapshot}`,
+                `--outputFile=${outputFilePath}`,
+                `--telemetryFile=${telemetryFile}`,
+                `--telemetryFormat=CSV`,
+            ], { encoding: "utf-8" });
+
+            assert.strictEqual(exportFile.status, 0,
+                `Process was not exited with code 0. Error: [${exportFile.stderr}]`);
+        });
+
+        it("Process exits with code 1 when both codeLoader and command line argument are provided", () => {
+            const exportFile = spawnSync("node", [
+                command,
+                "exportFile",
+                `--codeLoader=${codeLoader}`,
+                `--inputFile=${snapshot}`,
+                `--outputFile=${outputFilePath}`,
+                `--telemetryFile=${telemetryFile}`,
+            ], { encoding: "utf-8" });
+
+            assert.strictEqual(exportFile.status, 1,
+                `Process was not exited with code 1. Error: [${exportFile.stderr}]`);
+            assert.notStrictEqual(exportFile.stderr, "", "Expect some error output");
+            assert(exportFile.stderr.includes("cannot both be provided"), `unexpected error message [${exportFile.stderr}]`);
         });
     });
 });

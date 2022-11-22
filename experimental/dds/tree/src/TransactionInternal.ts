@@ -419,6 +419,7 @@ export interface GenericTransactionPolicy {
  * the results from `close` must be used to actually submit an `Edit`.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace TransactionInternal {
 	/**
 	 * Makes a new {@link GenericTransaction} that follows the {@link TransactionInternal.Policy} policy.

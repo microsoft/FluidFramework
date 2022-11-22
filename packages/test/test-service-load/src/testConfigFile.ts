@@ -20,9 +20,32 @@ export interface ILoadTestConfig {
     progressIntervalMs: number;
     numClients: number;
     totalSendCount: number;
+    totalSignalsSendCount?: number;
     readWriteCycleMs: number;
-    faultInjectionMaxMs?: number;
-    faultInjectionMinMs?: number;
+    signalsPerMin?: number;
+    faultInjectionMs?: {
+        min: number;
+        max: number;
+    };
+    /**
+     * Simulate clients going offline
+     */
+    offline?: {
+        /**
+         * Amount of time to wait before going offline in milliseconds
+         */
+        delayMs: {
+            min: number;
+            max: number;
+        };
+        /**
+         * Amount of time clients stay offline in milliseconds
+         */
+        durationMs: {
+            min: number;
+            max: number;
+        };
+    };
     /**
      * Number of "attachment" type blobs to upload over the course of the test run.
      */
@@ -41,6 +64,10 @@ export interface ILoadTestConfig {
      * Override loader options to force a specific value
      */
     optionOverrides?: Record<TestDriverTypes, OptionOverride | undefined>;
+    /**
+     * Specify Ops payload size for the test run.
+     */
+    opSizeinBytes?: number;
 }
 
 export interface OptionOverride{

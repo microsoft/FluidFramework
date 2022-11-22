@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./tree";
+export { TreeArrayProxy, TreeObjectProxy } from "./tree";
 export { fromJson } from "./treeutils";

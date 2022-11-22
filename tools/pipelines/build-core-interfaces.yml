@@ -63,4 +63,4 @@ extends:
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: common/lib/core-interfaces
     tagName: core-interfaces
-    taskTest: false
+    taskTest: [] # no tests

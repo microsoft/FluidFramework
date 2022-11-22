@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* globals describe */
-/* eslint-disable no-unused-expressions */
+
 /**
- * @fileoverview In this file, we will test the map property
- *    object described in /src/properties/mapProperty.js
+ * @fileoverview
+ * In this file, we will test the map property object described in /src/properties/mapProperty.js
  */
 const { ChangeSet } = require('@fluid-experimental/property-changeset');
 const { PropertyFactory } = require('../..');

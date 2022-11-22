@@ -2,15 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { IFluidContainer, IValueChanged, SharedMap } from "fluid-framework";
+
 import {
-    AzureFunctionTokenProvider,
     AzureClient,
-    AzureRemoteConnectionConfig,
-    AzureLocalConnectionConfig,
     AzureContainerServices,
+    AzureFunctionTokenProvider,
+    AzureLocalConnectionConfig,
+    AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
-import { generateTestUser, InsecureTokenProvider } from "@fluidframework/test-client-utils";
-import { IValueChanged, IFluidContainer, SharedMap } from "fluid-framework";
+import { InsecureTokenProvider, generateTestUser } from "@fluidframework/test-client-utils";
+
 import { DiceRollerController, DiceRollerControllerProps } from "./controller";
 import { makeAppView } from "./view";
 
@@ -50,7 +52,7 @@ const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig
 
 // Define the schema of our Container.
 // This includes the DataObjects we support and any initial DataObjects we want created
-// when the container is first created.
+// when the Container is first created.
 const containerSchema = {
     initialObjects: {
         /* [id]: DataObject */

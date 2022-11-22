@@ -15,51 +15,19 @@ import {
 } from "@microsoft/api-extractor-model";
 import { DocSection } from "@microsoft/tsdoc";
 
-import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
+import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { ApiModuleLike, filterByKind, mergeSections } from "../../utilities";
-import { renderMemberTables } from "../helpers";
-import { renderChildDetailsSection } from "../helpers/RenderingHelpers";
+import { renderChildDetailsSection, renderMemberTables } from "../helpers";
 
 /**
  * Default policy for rendering doc sections for module-like API items (packages, namespaces).
  *
  * @remarks Format:
  *
- * - Tables
+ * - Tables: interfaces, classes, enums, type-aliases, functions, variables, namespaces
  *
- *   - classes
- *
- *   - enums
- *
- *   - functions
- *
- *   - interfaces
- *
- *   - namespaces
- *
- *   - variables
- *
- *   - type-aliases
- *
- * - Details (for any types not rendered to their own documents - see
- *   {@link PolicyOptions.documentBoundaries})
- *
- *   - classes
- *
- *   - enums
- *
- *   - functions
- *
- *   - interfaces
- *
- *   - namespaces
- *
- *   - variables
- *
- *   - type-aliases
- *
- * Note: this ordering was established to mirror existing fluidframework.com rendering.
- * The plan is to change this in a subsequent change (before public release).
+ * - Details (for any types not rendered to their own documents - see {@link PolicyOptions.documentBoundaries}):
+ * interfaces, classes, enums, type-aliases, functions, variables, namespaces
  */
 export function renderModuleLikeSection(
     apiItem: ApiModuleLike,
@@ -69,41 +37,46 @@ export function renderModuleLikeSection(
 ): DocSection {
     const docSections: DocSection[] = [];
 
-    const hasAnyChildren = apiItem.members.length !== 0;
+    const hasAnyChildren = apiItem.members.length > 0;
 
     if (hasAnyChildren) {
         // Accumulate child items
         const interfaces = filterByKind(childItems, [ApiItemKind.Interface]).map(
-            (apiItem) => apiItem as ApiInterface,
+            (childItem) => childItem as ApiInterface,
         );
 
         const classes = filterByKind(childItems, [ApiItemKind.Class]).map(
-            (apiItem) => apiItem as ApiClass,
+            (childItem) => childItem as ApiClass,
         );
 
         const namespaces = filterByKind(childItems, [ApiItemKind.Namespace]).map(
-            (apiItem) => apiItem as ApiNamespace,
+            (childItem) => childItem as ApiNamespace,
         );
 
         const types = filterByKind(childItems, [ApiItemKind.TypeAlias]).map(
-            (apiItem) => apiItem as ApiTypeAlias,
+            (childItem) => childItem as ApiTypeAlias,
         );
 
         const functions = filterByKind(childItems, [ApiItemKind.Function]).map(
-            (apiItem) => apiItem as ApiFunction,
+            (childItem) => childItem as ApiFunction,
         );
 
         const enums = filterByKind(childItems, [ApiItemKind.Enum]).map(
-            (apiItem) => apiItem as ApiEnum,
+            (childItem) => childItem as ApiEnum,
         );
 
         const variables = filterByKind(childItems, [ApiItemKind.Variable]).map(
-            (apiItem) => apiItem as ApiVariable,
+            (childItem) => childItem as ApiVariable,
         );
 
         // Render summary tables
         const renderedMemberTables = renderMemberTables(
             [
+                {
+                    headingTitle: "Interfaces",
+                    itemKind: ApiItemKind.Interface,
+                    items: interfaces,
+                },
                 {
                     headingTitle: "Classes",
                     itemKind: ApiItemKind.Class,
@@ -115,19 +88,14 @@ export function renderModuleLikeSection(
                     items: enums,
                 },
                 {
+                    headingTitle: "Types",
+                    itemKind: ApiItemKind.TypeAlias,
+                    items: types,
+                },
+                {
                     headingTitle: "Functions",
                     itemKind: ApiItemKind.Function,
                     items: functions,
-                },
-                {
-                    headingTitle: "Interfaces",
-                    itemKind: ApiItemKind.Interface,
-                    items: interfaces,
-                },
-                {
-                    headingTitle: "Namespaces",
-                    itemKind: ApiItemKind.Namespace,
-                    items: namespaces,
                 },
                 {
                     headingTitle: "Variables",
@@ -135,9 +103,9 @@ export function renderModuleLikeSection(
                     items: variables,
                 },
                 {
-                    headingTitle: "Types",
-                    itemKind: ApiItemKind.TypeAlias,
-                    items: types,
+                    headingTitle: "Namespaces",
+                    itemKind: ApiItemKind.Namespace,
+                    items: namespaces,
                 },
             ],
             config,
@@ -151,7 +119,12 @@ export function renderModuleLikeSection(
         const renderedDetailsSection = renderChildDetailsSection(
             [
                 {
-                    headingTitle: "Classe Details",
+                    headingTitle: "Interface Details",
+                    itemKind: ApiItemKind.Interface,
+                    items: interfaces,
+                },
+                {
+                    headingTitle: "Class Details",
                     itemKind: ApiItemKind.Class,
                     items: classes,
                 },
@@ -161,19 +134,14 @@ export function renderModuleLikeSection(
                     items: enums,
                 },
                 {
+                    headingTitle: "Type Details",
+                    itemKind: ApiItemKind.TypeAlias,
+                    items: types,
+                },
+                {
                     headingTitle: "Function Details",
                     itemKind: ApiItemKind.Function,
                     items: functions,
-                },
-                {
-                    headingTitle: "Interface Details",
-                    itemKind: ApiItemKind.Interface,
-                    items: interfaces,
-                },
-                {
-                    headingTitle: "Namespace Details",
-                    itemKind: ApiItemKind.Namespace,
-                    items: namespaces,
                 },
                 {
                     headingTitle: "Variable Details",
@@ -181,9 +149,9 @@ export function renderModuleLikeSection(
                     items: variables,
                 },
                 {
-                    headingTitle: "Type Details",
-                    itemKind: ApiItemKind.TypeAlias,
-                    items: types,
+                    headingTitle: "Namespace Details",
+                    itemKind: ApiItemKind.Namespace,
+                    items: namespaces,
                 },
             ],
             config,

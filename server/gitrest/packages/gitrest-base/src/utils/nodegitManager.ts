@@ -16,31 +16,31 @@ import {
     IRepositoryManager,
     IFileSystemManagerFactory,
     IStorageDirectoryConfig,
-    BaseGitRestTelemetryProperties,
     IFileSystemManager,
 } from "./definitions";
+import { BaseGitRestTelemetryProperties } from "./gitrestTelemetryDefinitions";
+import { RepositoryManagerBase } from "./repositoryManagerBase";
 import { RepositoryManagerFactoryBase } from "./repositoryManagerFactoryBase";
 
-export class NodegitRepositoryManager implements IRepositoryManager {
+export class NodegitRepositoryManager extends RepositoryManagerBase {
     constructor(
         private readonly repoOwner: string,
         private readonly repoName: string,
         private readonly repo: nodegit.Repository,
-        private readonly directory: string,
+        directory: string,
         private readonly externalStorageManager: IExternalStorageManager,
-        private readonly lumberjackBaseProperties: Record<string, any>,
-    ) {}
-
-    public get path(): string {
-        return this.directory;
+        lumberjackBaseProperties: Record<string, any>,
+        enableRepositoryManagerMetrics: boolean = false,
+    ) {
+        super(directory, lumberjackBaseProperties, enableRepositoryManagerMetrics);
     }
 
-    public async getCommit(sha: string): Promise<resources.ICommit> {
+    protected async getCommitCore(sha: string): Promise<resources.ICommit> {
         const commit = await this.repo.getCommit(sha);
         return conversions.commitToICommit(commit);
     }
 
-    public async getCommits(
+    protected async getCommitsCore(
         sha: string,
         count: number,
         externalWriterConfig?: IExternalWriterConfig,
@@ -139,19 +139,19 @@ export class NodegitRepositoryManager implements IRepositoryManager {
         });
     }
 
-    public async getTree(rootSha: string, recursive: boolean): Promise<resources.ITree> {
+    protected async getTreeCore(rootSha: string, recursive: boolean): Promise<resources.ITree> {
         if (recursive) {
             return this.getTreeInternalRecursive(rootSha);
         }
         return this.getTreeInternal(rootSha);
     }
 
-    public async getBlob(sha: string): Promise<resources.IBlob> {
+    protected async getBlobCore(sha: string): Promise<resources.IBlob> {
         const blob = await this.repo.getBlob(sha);
         return conversions.blobToIBlob(blob, this.repoOwner, this.repoName);
     }
 
-    public async getContent(commit: string, contentPath: string): Promise<resources.IBlob> {
+    protected async getContentCore(commit: string, contentPath: string): Promise<resources.IBlob> {
         const revObj = await nodegit.Revparse.single(this.repo, `${commit}:${contentPath}`);
 
         // TODO switch on the type of object
@@ -159,7 +159,8 @@ export class NodegitRepositoryManager implements IRepositoryManager {
         return conversions.blobToIBlob(blob, this.repoOwner, this.repoName);
     }
 
-    public async createBlob(createBlobParams: resources.ICreateBlobParams): Promise<resources.ICreateBlobResponse> {
+    protected async createBlobCore(
+        createBlobParams: resources.ICreateBlobParams): Promise<resources.ICreateBlobResponse> {
         if (!helpers.validateBlobContent(createBlobParams.content) ||
             !helpers.validateBlobEncoding(createBlobParams.encoding)) {
             throw new NetworkError(400, "Invalid blob");
@@ -175,7 +176,7 @@ export class NodegitRepositoryManager implements IRepositoryManager {
         };
     }
 
-    public async createTree(params: resources.ICreateTreeParams): Promise<resources.ITree> {
+    protected async createTreeCore(params: resources.ICreateTreeParams): Promise<resources.ITree> {
         const builder = await nodegit.Treebuilder.create(this.repo, null);
 
         // build up the tree
@@ -188,7 +189,7 @@ export class NodegitRepositoryManager implements IRepositoryManager {
         return this.getTreeInternal(id.tostrS());
     }
 
-    public async createCommit(commit: resources.ICreateCommitParams): Promise<resources.ICommit> {
+    protected async createCommitCore(commit: resources.ICreateCommitParams): Promise<resources.ICommit> {
         const date = Date.parse(commit.author.date);
         if (isNaN(date)) {
             throw new NetworkError(400, "Invalid input");
@@ -222,7 +223,7 @@ export class NodegitRepositoryManager implements IRepositoryManager {
         };
     }
 
-    public async getRefs(): Promise<resources.IRef[]> {
+    protected async getRefsCore(): Promise<resources.IRef[]> {
         const refIds = await nodegit.Reference.list(this.repo);
         const refsP = await Promise.all(refIds.map(
             async (refId) => nodegit.Reference.lookup(this.repo, refId, undefined),
@@ -230,7 +231,7 @@ export class NodegitRepositoryManager implements IRepositoryManager {
         return refsP.map((ref) => conversions.refToIRef(ref));
     }
 
-    public async getRef(refId: string, externalWriterConfig?: IExternalWriterConfig): Promise<resources.IRef> {
+    protected async getRefCore(refId: string, externalWriterConfig?: IExternalWriterConfig): Promise<resources.IRef> {
         try {
             const ref = await nodegit.Reference.lookup(this.repo, refId, undefined);
             return conversions.refToIRef(ref);
@@ -259,7 +260,7 @@ export class NodegitRepositoryManager implements IRepositoryManager {
         }
     }
 
-    public async createRef(
+    protected async createRefCore(
         createRefParams: resources.ICreateRefParams,
         externalWriterConfig?: IExternalWriterConfig,
     ): Promise<resources.IRef> {
@@ -281,7 +282,7 @@ export class NodegitRepositoryManager implements IRepositoryManager {
         return conversions.refToIRef(ref);
     }
 
-    public async patchRef(
+    protected async patchRefCore(
         refId: string,
         patchRefParams: resources.IPatchRefParams,
         externalWriterConfig?: IExternalWriterConfig,
@@ -310,19 +311,19 @@ export class NodegitRepositoryManager implements IRepositoryManager {
         return conversions.refToIRef(ref);
     }
 
-    public async deleteRef(refId: string): Promise<void> {
+    protected async deleteRefCore(refId: string): Promise<void> {
         const code = nodegit.Reference.remove(this.repo, refId);
         if (code !== 0) {
             throw new NetworkError(500, `Failed to delete ref. Code: ${code}`);
         }
     }
 
-    public async getTag(tagId: string): Promise<resources.ITag> {
+    protected async getTagCore(tagId: string): Promise<resources.ITag> {
         const tag = await nodegit.Tag.lookup(this.repo, tagId);
         return conversions.tagToITag(tag);
     }
 
-    public async createTag(tagParams: resources.ICreateTagParams): Promise<resources.ITag> {
+    protected async createTagCore(tagParams: resources.ICreateTagParams): Promise<resources.ITag> {
         const date = Date.parse(tagParams.tagger.date);
         if (isNaN(date)) {
             throw new NetworkError(400, "Invalid input");
@@ -355,8 +356,14 @@ export class NodegitRepositoryManagerFactory extends RepositoryManagerFactoryBas
         fileSystemManagerFactory: IFileSystemManagerFactory,
         externalStorageManager: IExternalStorageManager,
         repoPerDocEnabled: boolean,
+        enableRepositoryManagerMetrics: boolean = false,
     ) {
-        super(storageDirectoryConfig, fileSystemManagerFactory, externalStorageManager, repoPerDocEnabled);
+        super(
+            storageDirectoryConfig,
+            fileSystemManagerFactory,
+            externalStorageManager,
+            repoPerDocEnabled,
+            enableRepositoryManagerMetrics);
     }
 
     protected async initGitRepo(fs: IFileSystemManager, gitdir: string): Promise<nodegit.Repository> {
@@ -377,13 +384,15 @@ export class NodegitRepositoryManagerFactory extends RepositoryManagerFactoryBas
         repo: nodegit.Repository,
         gitdir: string,
         externalStorageManager: IExternalStorageManager,
-        lumberjackBaseProperties: Record<string, any>): IRepositoryManager {
+        lumberjackBaseProperties: Record<string, any>,
+        enableRepositoryManagerMetrics: boolean): IRepositoryManager {
             return new NodegitRepositoryManager(
                 repoOwner,
                 repoName,
                 repo,
                 gitdir,
                 externalStorageManager,
-                lumberjackBaseProperties);
+                lumberjackBaseProperties,
+                enableRepositoryManagerMetrics);
     }
 }

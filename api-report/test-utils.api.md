@@ -28,6 +28,7 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidModule } from '@fluidframework/container-definitions';
 import { IFluidModuleWithDetails } from '@fluidframework/container-definitions';
+import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IGCRuntimeOptions } from '@fluidframework/container-runtime';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
@@ -72,6 +73,12 @@ export function createSummarizer(provider: ITestObjectProvider, container: ICont
 
 // @public (undocumented)
 export function createSummarizerFromFactory(provider: ITestObjectProvider, container: IContainer, dataStoreFactory: IFluidDataStoreFactory, summaryVersion?: string, containerRuntimeFactoryType?: typeof ContainerRuntimeFactoryWithDefaultDataStore, registryEntries?: NamedFluidDataStoreRegistryEntries): Promise<ISummarizer>;
+
+// @public (undocumented)
+export function createSummarizerWithContainer(provider: ITestObjectProvider, absoluteUrl: string | undefined, summaryVersion?: string, gcOptions?: IGCRuntimeOptions, configProvider?: IConfigProviderBase): Promise<{
+    container: IContainer;
+    summarizer: ISummarizer;
+}>;
 
 // @public
 export const createTestContainerRuntimeFactory: (containerRuntimeCtor: typeof ContainerRuntime) => {
@@ -183,7 +190,7 @@ export interface ITestObjectProvider {
     // (undocumented)
     driver: ITestDriver;
     // (undocumented)
-    ensureSynchronized(): Promise<void>;
+    ensureSynchronized(timeoutDuration?: number): Promise<void>;
     // (undocumented)
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)
@@ -208,6 +215,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
     constructor(syncSummarizerClients?: boolean);
     add<LoaderType extends IHostLoader>(loader: LoaderType): void;
     ensureSynchronized(...containers: IContainer[]): Promise<void>;
+    ensureSynchronizedWithTimeout?(timeoutDuration: number | undefined, ...containers: IContainer[]): Promise<void>;
     pauseProcessing(...containers: IContainer[]): Promise<void>;
     processIncoming(...containers: IContainer[]): Promise<void>;
     processOutgoing(...containers: IContainer[]): Promise<void>;
@@ -253,7 +261,7 @@ export const TestContainerRuntimeFactory: {
 };
 
 // @public
-export class TestFluidObject implements ITestFluidObject {
+export class TestFluidObject implements ITestFluidObject, IFluidRouter {
     constructor(runtime: IFluidDataStoreRuntime, channel: IFluidDataStoreChannel, context: IFluidDataStoreContext, factoryEntriesMap: Map<string, IChannelFactory>);
     // (undocumented)
     readonly channel: IFluidDataStoreChannel;
@@ -264,6 +272,8 @@ export class TestFluidObject implements ITestFluidObject {
     get handle(): IFluidHandle<this>;
     // (undocumented)
     get IFluidLoadable(): this;
+    // (undocumented)
+    get IFluidRouter(): this;
     // (undocumented)
     get ITestFluidObject(): this;
     // (undocumented)
@@ -303,7 +313,7 @@ export class TestObjectProvider implements ITestObjectProvider {
     // (undocumented)
     readonly driver: ITestDriver;
     // (undocumented)
-    ensureSynchronized(): Promise<void>;
+    ensureSynchronized(timeoutDuration?: number): Promise<void>;
     // (undocumented)
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)

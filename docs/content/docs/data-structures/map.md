@@ -5,7 +5,7 @@ menuPosition: 2
 
 ## Introduction
 
-The `SharedMap` distributed data structure (DDS) is use to store key-value data.
+The `SharedMap` distributed data structure (DDS) is used to store key-value data.
 It provides the same API as the built-in [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) object that is provided in JavaScript, but also ensures that any edits being made to the object are simultaneously transmitted to all clients.
 
 For example, in a traditional `Map`, setting a key would only set it on the local object. In a `SharedMap`, the moment one client sets that key, that update is automatically sent to all of the other connected clients who will update their local state with the new remote change. From a development standpoint, this allows you to develop against the `SharedMap` DDS as you would with a traditional `Map`, while ensuring that the data being updated is synced between all clients with all of the logic for managing and merging the changes abstracted away.

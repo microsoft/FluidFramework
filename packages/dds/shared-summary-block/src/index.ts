@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./interfaces";
-export * from "./sharedSummaryBlock";
-export * from "./sharedSummaryBlockFactory";
+export { ISharedSummaryBlock } from "./interfaces";
+export { SharedSummaryBlock } from "./sharedSummaryBlock";
+export { SharedSummaryBlockFactory } from "./sharedSummaryBlockFactory";

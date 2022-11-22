@@ -11,6 +11,7 @@
 const SchemaValidatorError = {
     /**
      * methods: PropertyFactory.register
+     *
      * The context ‘set’ is only valid for properties that are instances of NamedProperties. If you want to
      * use a context of ‘set’, make sure your template includes:
      * Inherits: ‘NamedProperty’
@@ -31,6 +32,7 @@ const SchemaValidatorError = {
 
     /**
      * methods: PropertyFactory.register
+     *
      * The template version number is not valid. A valid version number should look like: ‘1.0.0’
      */
     INVALID_VERSION_1:
@@ -38,7 +40,9 @@ const SchemaValidatorError = {
 
     /**
      * methods: PropertyFactory.register
+     *
      * Your property template should include a typeid attribute.
+     *
      * @example
      *```json
      * {
@@ -55,19 +59,24 @@ const SchemaValidatorError = {
 
     /**
      * methods: PropertyFactory.register
+     *
      * Typeid should contain a template version number.
-     * @example
-     * “typeid: my.example:point2d-1.0.0”
+     *
+     * @example “typeid: my.example:point2d-1.0.0”
      */
     MISSING_VERSION:
         "SV-005: Missing template version in 'typeid' attribute: ",
 
     /**
      * methods: PropertyFactory.register
+     *
      * The template you are using is different from the previous version and you did not update the version number.
      * If any changes were made to the template, you should update the version number to a higher number.
+     *
      * - Major change: removing one or more attribute (e.g. 1.0.0 -\> 2.0.0)
+     *
      * - Minor change: adding one or more attribute (e.g. 1.0.0 -\> 1.1.0)
+     *
      * - Patch: template description changes (e.g. 1.0.0 -\> 1.0.1)
      */
     MODIFIED_TEMPLATE_1:
@@ -75,6 +84,7 @@ const SchemaValidatorError = {
 
     /**
      * methods: PropertyFactory.register
+     *
      * When changing your template, you need to increase its version number. For example, if the previous version
      * number was 1.0.0, it should increase to 1.0.1 for a patch (if the template description has changed),
      * to 1.1.0 for a minor change (if you added one or more attributes) or to 2.0.0 for a major change (if you
@@ -85,6 +95,7 @@ const SchemaValidatorError = {
 
     /**
      * methods: PropertyFactory.register
+     *
      * PropertyFactory.register requires a template as a parameter.
      */
     NO_TEMPLATE:
@@ -92,6 +103,7 @@ const SchemaValidatorError = {
 
     /**
      * methods: PropertyFactory.register
+     *
      * When updating a template’s version number, the version number can only increase, never decrease.
      */
     VERSION_REGRESSION_1:
@@ -141,18 +153,21 @@ const PropertyError = {
     TYPEID_NOT_NATIVE: "TYPEID_NOT_NATIVE",
     /**
      * methods: ArrayProperty.length.set, StringProperty.length.set
+     *
      * Cannot directly set the array.length or string.length. This is a read-only property.
      */
     MODIFY_READ_ONLY: "PR-001: Trying to modify read only property value (array.length).",
 
     /**
      * methods: Property.getRelativePath
+     *
      * There is no path between the property and the ancestor you passed in to .getRelativePath.
      */
     NO_PATH_BETWEEN: "PR-002: No path between ",
 
     /**
      * methods: Property.applyChangeSet
+     *
      * One of the paths included in your changeSet is not valid for this property.
      * Check that the modifications in the changeSet match the structure of the template.
      */
@@ -160,6 +175,7 @@ const PropertyError = {
 
     /**
      * methods: NodeProperty.insert
+     *
      * The property you inserted into a NodeProperty has a parent.
      * If your property has a parent, changing the property’s id will break the parent.
      * Make the change to the parent first.
@@ -168,19 +184,22 @@ const PropertyError = {
 
     /**
      * methods: Property.resolvePath
+     *
      * Part of the path entered to Property.resolvePath was not valid.
      */
     INVALID_PATH_TOKEN: "PR-005: ResolvePath error: accessed a child via an invalid path syntax: ",
 
     /**
      * methods: MapProperty.insert, NodeProperty.insert, ReferenceMapProperty.insert, Workspace.insert,
-     *  SetProperty.insert
+     * SetProperty.insert
+     *
      * Your map, set or nodeproperty already contains an entry under in_key.
      */
     PROPERTY_ALREADY_EXISTS: "PR-006: The property already exists in this collection: ",
 
     /**
      * methods: MapProperty.applyChangeset, NodeProperty.applyChangeset, SetProperty.applyChangeset
+     *
      * The changeset you applied contains properties that have already been inserted.
      * Check the ‘insert’ fields in your changeSet for properties that might already exist.
      */
@@ -188,6 +207,7 @@ const PropertyError = {
 
     /**
      * methods: MapProperty.remove, SetProperty.remove
+     *
      * Tried to remove an entry that does not exist.
      * This can be caused indirectly by deserialize / applyChangeset methods.
      * One of the ‘remove’ fields in your changeSet must contain a property that does not exist.
@@ -196,6 +216,7 @@ const PropertyError = {
 
     /**
      * methods: MapProperty.applyChangeset, NodeProperty.applyChangeset, SetProperty.applyChangeset
+     *
      * One of the key you are trying to modify in your changeSet does not exist.
      * One of the ‘modify’ fields in your changeSet refers to a property that does not exist.
      */
@@ -203,6 +224,7 @@ const PropertyError = {
 
     /**
      * methods: MapProperty.insert, MapProperty.set, SetProperty.insert, NodeProperty.insert
+     *
      * The value you are trying to insert in your map property, set property or node property has a parent.
      * You cannot insert a property that has a parent.
      */
@@ -211,6 +233,7 @@ const PropertyError = {
 
     /**
      * methods: Property.resolvePath, Workspace.resolvePath
+     *
      * Paths should not contain empty sections such as ‘..’, ‘//’ or ‘[], etc.
      * Sections in the path are delimited by ‘.’ ‘[ ]’, ‘/’ .
      * There should always be a path between any two delimiters.
@@ -219,6 +242,7 @@ const PropertyError = {
 
     /**
      * methods: Property.resolvePath, Workspace.resolvePath
+     *
      * Paths should not contain quotes except at the beginning and end of the path.
      * For example: resolvePath('my"path.nested".other') is not valid because the first quote is in front of ‘path’
      * but after the ‘.nested’ which is part of the subsequent path.
@@ -228,6 +252,7 @@ const PropertyError = {
 
     /**
      * methods: Property.resolvePath, Workspace.resolvePath
+     *
      * Paths should not end with a ‘.’
      */
     DOT_AT_END: "PR-013: ResolvePath error: Encountered a dot at the end of path: ",
@@ -242,6 +267,7 @@ const PropertyError = {
 
     /**
      * methods: Property.resolvePath, Workspace.resolvePath
+     *
      * resolvePath error while parsing your string.
      * It encountered an end to a path segment that was not
      * followed by a “.” or a “[“ indicating the beginning of a new segment.
@@ -250,6 +276,7 @@ const PropertyError = {
 
     /**
      * methods: Property.resolvePath, Workspace.resolvePath
+     *
      * Closing square bracket not followed by the correct character (., [ or *).
      * For example, this is not valid: resolvePath(myArray[2]nested).
      * This is valid: resolvePath(myArray[2].nested).
@@ -259,12 +286,14 @@ const PropertyError = {
 
     /**
      * methods: Property.resolvePath, Workspace.resolvePath
+     *
      * Every opening bracket ([) needs a matching closing bracket (])
      */
     UNCLOSED_BRACKETS: "PR-017: ResolvePath error: Unclosed brackets at the end of path: ",
 
     /**
      * methods: Property.resolvePath, Workspace.resolvePath
+     *
      * Any closing bracket (]) must be preceded by a matching opening bracket ([).
      */
     CLOSING_BRACKET_WITHOUT_OPENING: "PR-018: ResolvePath error: Encountered closing bracket without " +
@@ -277,17 +306,20 @@ const PropertyError = {
 
     /**
      * methods: Property.resolvePath, Workspace.resolvePath
+     *
      * A quotation mark at the beginning of a path must have a matching closing quotation mark
-     *  at the end of the same path.
+     * at the end of the same path.
      */
     UNCLOSED_QUOTATION_MARKS: "PR-020: ResolvePath error: Encountered unclosed quotation marks in path: ",
 
     /**
      * methods: SetProperty.insert, SetProperty.set, SetProperty.setValues
+     *
      * The property you insert in a setProperty must be an instance of NamedProperty.
      * When creating the property to be inserted, make sure it inherits from NamedProperty.
-     * @example
-     * #Creating a property that inherits from NamedProperty
+     *
+     * @example Creating a property that inherits from NamedProperty
+     *
      * ```json
      * {
      *   typeid:”my.example:myprop-1.0.0”,
@@ -300,6 +332,7 @@ const PropertyError = {
 
     /**
      * methods: NodeProperty.insert, Workspace.insert
+     *
      * The property you inserted does not have an id.
      * Unless the property is an instance of NamedProperty, you must pass in an id as the first parameter
      * (and the property second)
@@ -308,6 +341,7 @@ const PropertyError = {
 
     /**
      * methods: ArrayProperty.resolvePath
+     *
      * Cannot use .resolvePath on a primitive array, only on a Custom type array.
      * For a primitive array, use .getValue instead.
      * For example, instead of MyValueArray.resolvePath(1), use MyValueArray.getValue(1)
@@ -316,12 +350,14 @@ const PropertyError = {
 
     /**
      * methods: ArrayProperty.resolvePath
+     *
      * When using an array index as part of your path, it needs to have a numeric value.
      */
     INVALID_NON_NUMERIC_SEGMENT_IN_PATH: "PR-024: ResolvePath error: Accessed an array via an non numeric index: ",
 
     /**
      * methods: ArrayProperty.getRelativePath, ArrayProperty.getAbsolutePath
+     *
      * INTERNAL ERROR
      * If you encounter this error, please contact the development team.
      * Part of the path you are trying to find points to a non-existing array item.
@@ -330,7 +366,6 @@ const PropertyError = {
         "for an entry that is not an entry of the collection. ",
 
     /**
-     * methods:
      * The changeSet passed to .deserialize was not a valid non-normalized changeset.
      */
     NO_NORMALIZED_CHANGESET: "PR-026: deserialize was called with a non-normalized ChangeSet.",
@@ -345,6 +380,7 @@ const PropertyError = {
     /**
      * methods: EnumProperty.getEnumString, EnumProperty.setValue, EnumProperty.setEnumByString,
      * EnumProperty.getEnumString, EnumArrayProperty.getEnumStrings
+     *
      * This Enum Property does not have any entry with that value.
      * EnumProperty.getEnumByString -\> the EnumProperty you used to pass this function does not have an entry.
      * EnumProperty.setValue -\> no entry exists for in_value
@@ -357,6 +393,7 @@ const PropertyError = {
 
     /**
      * methods: Property.applyChangeSet
+     *
      * Changeset contains an operation that is unknown.
      * Valid operations are insert, modify and remove.
      */
@@ -364,6 +401,7 @@ const PropertyError = {
 
     /**
      * methods: Workspace.remove, NodeProperty.remove
+     *
      * The property you passed to workspace.remove or nodeProperty.remove does not exist.
      * Check that you passed the correct property, and that it has not yet been removed.
      */
@@ -371,7 +409,9 @@ const PropertyError = {
 
     /**
      * methods: Workspace.get, Property.get
+     *
      * Workspace.get and Property.get take in an id (string or number) or an array of ids.
+     *
      * @example
      * ```typescript
      *.get(‘position’).get(‘x’) or .get([‘property’, ‘x’])
@@ -381,12 +421,14 @@ const PropertyError = {
 
     /**
      * methods: Property.serialize
+     *
      * Property.serialize only takes in one parameter: an options object. That parameter is optional.
      */
     SERIALIZE_TAKES_OBJECT: "PR-035: Argument of serialize() should be an object.",
 
     /**
-     * ArrayProperty.insert, ArrayProperty.insertRange
+     * methods: ArrayProperty.insert, ArrayProperty.insertRange
+     *
      * The in_position (for .insert) or in_offset (for .insertRange) should not be smaller than 0
      * or larger than the length of the array.
      */
@@ -405,13 +447,15 @@ const PropertyError = {
 
     /**
      * methods ArrayProperty.set, ArrayProperty.setRange
+     *
      * Your first parameter: in_position (for .set) and in_offset (for .setRange) cannot have a negative value.
      */
     START_OFFSET_NEGATIVE: "PR-039: ArrayProperty: Modify range - Start offset cannot be negative: ",
 
     /**
      * methods: ArrayProperty.removeRange, ArrayProperty.setRange, ArrayProperty.insertRange,
-     *   ArrayProperty.insert, EnumArrayProperty.getEnumStrings
+     * ArrayProperty.insert, EnumArrayProperty.getEnumStrings
+     *
      * The parameter needs to be a number.
      * For .removeRange: in_offset and in_deleteCount
      * For .setRange: in_offset
@@ -423,6 +467,7 @@ const PropertyError = {
 
     /**
      * methods: Property.traverseUp, Property.traverseDown
+     *
      * Property.traverseUp and Property.traverseDown take one parameter: a callback function
      */
     CALLBACK_NOT_FCT: "PR-050: traverseUp / traverseDown parameter: in_callback must " +
@@ -430,6 +475,7 @@ const PropertyError = {
 
     /**
      * methods: ArrayProperty.insertRange
+     *
      * Array.insertRange takes two parameters. The second one (in_array) must be an array.
      * To pass in only one item, either use .insert(index, item)
      * or put that item into an array: .insertRange(index, [item])
@@ -438,6 +484,7 @@ const PropertyError = {
 
     /**
      * methods: EnumProperty.setEnumByString
+     *
      * EnumProperty.setEnumByString takes one parameter: a string id. It must be a string.
      */
     STRING_ID_MUST_BE_STRING: "PR-052: EnumProperty.setEnumByString parameter: in_stringId must " +
@@ -445,6 +492,7 @@ const PropertyError = {
 
     /**
      * methods: Integer64Property.setValueHigh
+     *
      * Integer64Property.setValueHigh takes one parameter: a number.
      */
     IN_HIGH_MUST_BE_NUMBER: "PR-053: Integer64Property.setValueHigh parameter: in_high must " +
@@ -452,6 +500,7 @@ const PropertyError = {
 
     /**
      * methods: Integer64Property.setValueLow
+     *
      * Integer64Property.setValueLow takes one parameter: a number.
      */
     IN_LOW_MUST_BE_NUMBER: "PR-054: Integer64Property.setValueLow parameter: in_low must " +
@@ -459,6 +508,7 @@ const PropertyError = {
 
     /**
      * methods: IntegerProperty.toString
+     *
      * Integer64Property.toString takes one optional parameter: a number (in_radix).
      * If no value is passed, will default to 10.
      */
@@ -466,6 +516,7 @@ const PropertyError = {
 
     /**
      * methods: IntegerProperty.fromString
+     *
      * Integer64Property.fromString takes two parameters. The first parameter (in_string) must be a string.
      * (the second parameter is in_radix, a number. It is optional: defaults to 10).
      */
@@ -474,6 +525,7 @@ const PropertyError = {
 
     /**
      * methods: Integer64Property.fromString
+     *
      * Integer64Property.fromString takes two parameters. The second parameter is optional but if passed,
      * it must be a number between 2 and 36. If not passed, it defaults to 10. (the first parameter is
      * in_string and must be a string).
@@ -483,6 +535,7 @@ const PropertyError = {
 
     /**
      * methods MapProperty.insert, ReferenceMapProperty.set
+     *
      * MapProperty.insert and ReferenceMapProperty.set both take two parameters.
      * The first parameter (in_key) must be a string.
      */
@@ -491,7 +544,8 @@ const PropertyError = {
 
     /**
      * methods: NodeProperty.insert, Workspace.insert
-     * he second parameter (in_property) must be a valid property (it must be an instance of BaseProperty).
+     *
+     * The second parameter (in_property) must be a valid property (it must be an instance of BaseProperty).
      */
     NOT_A_PROPERTY: "PR-059: NodeProperty.insert parameter in_property is not a property. " +
         "The property you passed is not a valid property.",
@@ -499,6 +553,7 @@ const PropertyError = {
     /**
      * methods: ReferenceProperty.set / setValue, ReferenceMapProperty.insert / set / setValue / setValues,
      * ReferenceArrayProperty.enqueue / push / unshift / insert / insertRange / set / setRange / setValue / setValues
+     *
      * The provided value (or values) must be a valid property (an instance of BaseProperty), be undefined or a string (a path).
      */
     PROPERTY_OR_UNDEFINED:
@@ -506,6 +561,7 @@ const PropertyError = {
 
     /**
      * ArrayProperty.insertRange, ArrayProperty.insert, ArrayProperty.push
+     *
      * INTERNAL ERROR - If you encounter this error, please contact the development team.
      * The item (or one of the items) you are trying to insert in this array has a parent that is not the array.
      */
@@ -514,6 +570,7 @@ const PropertyError = {
 
     /**
      * methods: ArrayProperty.get
+     *
      * ArrayProperty.get takes in one parameter: in_position, which can a single position or an array.
      * If it is a single position, it is the numerical position of the item in the array.
      * It must be a number or a string that parses into a number (e.g. '2').
@@ -526,6 +583,7 @@ const PropertyError = {
 
     /**
      * methods: ArrayProperty.get
+     *
      * ArrayProperty.get takes in one parameter: in_position, which can a single position or an array.
      * If it is a single position, it is the numerical position of the item in the array.
      * It must be a number or a string that parses into a number (e.g. '2').
@@ -537,6 +595,7 @@ const PropertyError = {
 
     /**
      * methods: Property.getValue
+     *
      * Property.getValue takes one parameter: in_id.
      * It can either be a string or an array of strings. It cannot be an empty array.
      */
@@ -544,6 +603,7 @@ const PropertyError = {
 
     /**
      * methods: EnumArrayProperty.set
+     *
      * EnumArrayProperty.set takes two parameters: in_index and in_value.
      * In_value should be a number. setValue cannot be used to set enum by string.
      * Use .setEnumByString instead.
@@ -554,6 +614,7 @@ const PropertyError = {
 
     /**
      * methods: EnumArrayProperty.setEnumByString
+     *
      * EnumArrayProperty.setEnumByString cannot be use to set enum by number. Use .set instead.
      */
     VALUE_SHOULD_BE_STRING: "PR-098: EnumArrayProperty.setEnumByString parameter: in_value should be " +
@@ -561,6 +622,7 @@ const PropertyError = {
 
     /**
      * methods: ArrayProperty.get
+     *
      * In_position or in_offset is either lower than 0 or higher than the length of the array.
      * Make sure that the property you are trying to get from the array exists and that the position is correct.
      */
@@ -568,6 +630,7 @@ const PropertyError = {
 
     /**
      * methods: ArrayProperty.setRange, ArrayProperty.set
+     *
      * setRange: Either in_offset is lower than zero or in_offset + length of in_array is higher than
      * the length of the array. If you need to add items that were not there before, add those using
      * .push, .insert or .insertRange.
@@ -576,6 +639,7 @@ const PropertyError = {
 
     /**
      * methods: ArrayProperty.removeRange, ArrayProperty.remove
+     *
      * RemoveRange: Either in_offset is smaller than zero or in_offset + in_deleteCount is higher than
      * the length of the array. Make sure that the properties you are trying to remove exist in that
      * array and that you entered the positions correctly.
@@ -585,6 +649,7 @@ const PropertyError = {
 
     /**
      * methods: PropertyFactory.create
+     *
      * INTERNAL ERROR - If you encounter this error, please contact the development team.
      * Warning: Something went wrong when creating your property: it did not successfully create
      * the property and then tried to set its value.
@@ -594,6 +659,7 @@ const PropertyError = {
 
     /**
      * methods: Property.setValues
+     *
      * One of the path you used in .setValues leads to a property.
      * When passing an object to setValues, make sure that all paths lead to a primitive value.
      */
@@ -601,12 +667,14 @@ const PropertyError = {
 
     /**
      * methods: Property.setValues
+     *
      * One of the path in the object you passed to .setValues does not match the structure of this property.
      */
     SET_VALUES_PATH_INVALID: "PR-116: trying to set value to an invalid path: ",
 
     /**
      * methods: Property.setValues
+     *
      * .setValues takes one parameter: an object containing paths to the values to be changed.
      * It should be an object (or in the case of ArrayProperty, an array)
      */
@@ -614,6 +682,7 @@ const PropertyError = {
 
     /**
      * methods: PropertyFactory.create
+     *
      * The array you tried to create had a typeid that was no recognized.
      * It was not a custom type array or one of the following: ‘String’, ‘Int64’, ‘Uint64’ or ‘Bool’.
      */
@@ -621,6 +690,7 @@ const PropertyError = {
 
     /**
      * methods: MapProperty.insert, MapProperty.set
+     *
      * .insert and .set take two parameters. The first one is in_id (or in_key), which is the id under
      * which the property is added. It can only be a string or a number. Only in the case of named
      * property can it be omitted.
@@ -629,12 +699,14 @@ const PropertyError = {
 
     /**
      * methods: ValueProperty.deserialize
+     *
      * .deserialize takes on parameter: a serialized object. It cannot be undefined.
      */
     DESERIALIZE_EMPTY_CHANGESET: "PR-121: ValueProperty.deserialize() called on an empty changeset",
 
     /**
      * methods: IntMapProperty.insert, UintMapProperty.insert
+     *
      * You tried to insert into a (u)Int64MapProperty or (u)Int64ArrayProperty properties that
      * were not Int64 or UInt64 properties or properties that can be casted to the correct type.
      */
@@ -647,6 +719,7 @@ const PropertyError = {
 
     /**
      * methods: Integer64.fromString
+     *
      * If your property is an instance of Uint64, you cannot set it to a negative number.
      * Uint64 does not support negative numbers. Use Int64 if you need to support negative numbers.
      */
@@ -654,12 +727,14 @@ const PropertyError = {
 
     /**
      * methods: Integer64.fromString
+     *
      * The string you passed as a first parameter to .fromString contains non-numerical characters.
      */
     CANNOT_PARSE_INVALID_CHARACTERS: "PR-125: Cannot parse. String contains invalid characters: ",
 
     /**
      * methods: Property constructor
+     *
      * INTERNAL ERROR - If you encounter this error, please contact the development team.
      * Something went wrong while the property constructor was creating a property.
      * The parameters it received were not objects.
@@ -669,6 +744,7 @@ const PropertyError = {
 
     /**
      * methods: Property.applyChangeSet
+     *
      * One of the ‘modify’ field in your changeset points to an index in the array that does not exist.
      * Check that the changeset you passed to applyChangeSet is valid. If you did not enter the changeSet yourself,
      * this is an internal error and you should contact the development team.
@@ -677,12 +753,14 @@ const PropertyError = {
 
     /**
      * methods: Property.isAncestorOf, Property.isDescendantOf
+     *
      * Property.isAncestorOf and .isDescendantOf take one parameter: a property. It cannot be undefined.
      */
     MISSING_IN_OTHERPROP: "PR-132: isAncestorOf parameter: in_otherProperty must be specified.",
 
     /**
      * methods: StringProperty.insert, StringProperty.push
+     *
      * StringProperty.insert takes two parameters: in_position and in_value.
      * The second one (in_value) must be a string.
      * StringProperty.push takes only one parameter (in_value), which must be a string.
@@ -691,6 +769,7 @@ const PropertyError = {
 
     /**
      * methods: ValueProperty.getValues
+     *
      * You cannot use the method .getValues on value properties. getValues is used to get multiple nested
      * values from a custom property. To get the value of a primitive property, use .getValue instead.
      */
@@ -701,12 +780,14 @@ const PropertyError = {
      * methods: Property.setValues, ArrayProperty.insertRange, ArrayProperty.removeRange,
      * ArrayProperty.setRange, EnumArrayProperty.setEnumByString, ArrayProperty.insert, ArrayProperty.set,
      * ArrayProperty.clear
+     *
      * If a property is created as a constant, it cannot be changed.
      */
     MODIFICATION_OF_CONSTANT_PROPERTY: "PR-140: Modifications of constants are not allowed.",
 
     /**
      * methods: ArrayProperty.insert, ArrayProperty.insertRange
+     *
      * In a non-primitive array, you can only insert instances of properties. You should use PropertyFactory.create
      * to create an instance of your property before inserting it into the array.
      */
@@ -720,6 +801,7 @@ const PropertyError = {
 
     /**
      * methods: Property.getValue
+     *
      * Property.getValue(in_ids) is a shortcut for Property.get(in_ids).getValue().
      * Property.get(in_ids) must resolve to a ValueProperty.
      */
@@ -727,6 +809,7 @@ const PropertyError = {
 
     /**
      * methods: MapProperty.insert
+     *
      * If your map is not a ValueMap, in_property must be an instance of BaseProperty.
      * Use PropertyFactory.create to create an instance of a property.
      */
@@ -734,6 +817,7 @@ const PropertyError = {
 
     /**
      * methods: PropertyFactory.create
+     *
      * INTERNAL ERROR - If you encounter this error, please contact the development team.
      * This error is thrown while creating a Property, when the actual context
      * ('array', 'map', 'set' or 'single') is different than what was expected.
@@ -742,6 +826,7 @@ const PropertyError = {
 
     /**
      * methods: Property.deserialize
+     *
      * INTERNAL ERROR - If you encounter this error, please contact the development team.
      * This error is thrown by .deserialize but is caused by an invalid changeSet. A serialized ChangeSet for an
      * Integer64Property must be an array of 2 integers: the low and the high values. Since users cannot yet supply
@@ -751,6 +836,7 @@ const PropertyError = {
 
     /**
      * methods: StringProperty.set
+     *
      * StringProperty.set takes two parameters: in_index (a number, the index of the string that you wish to change)
      * and in_string (the string you want to insert at that index). To set the value of the whole string, use
      * setValue.
@@ -759,17 +845,25 @@ const PropertyError = {
 
     /**
      * methods: Property.get
+     *
      * The token DEREFERENCE_TOKEN should only be used with .get when the in_ids passed to .get is an array.
      * the DEREFERENCE_TOKEN should follow a path to a reference.
-     * @example <caption>valid: </caption>
+     *
+     * @example Valid:
+     * ```typescript
      * myProp.get(['myReference', TOKENS.DEREFERENCE_TOKEN])
-     * @example <caption>not valid: </caption>
+     * ```
+     *
+     * @example Not valid:
+     * ```typescript
      * myProp.get('myReference').get(TOKENS.DEREFERENCE_TOKEN)
+     * ```
      */
     NO_GET_DEREFERENCE_ONLY: "PR-166: Cannot use a dereference token only with .get",
 
     /**
      * methods: StringProperty.setValues
+     *
      * You cannot call .setValues on a StringProperty. To set the value of the string, use .setValue
      * instead.
      */
@@ -777,6 +871,7 @@ const PropertyError = {
 
     /**
      * methods: Property.getRelativePath
+     *
      * In cases where you have more than one repository reference property pointing to the same repository, finding a path
      * between a properties in different repositories can lead to more than one valid results. In that case, .getRelativePath
      * will return the first valid path it finds. If you want to control how which path is used, you should construct the
@@ -787,6 +882,7 @@ const PropertyError = {
 
     /**
      * methods: Property.getRelativePath
+     *
      * getRelativePath takes one parameter: the property from which the path will start. This must be an instance of
      * BaseProperty. The method will return the path from that property to the property on which it was called ('this')
      */
@@ -794,6 +890,7 @@ const PropertyError = {
 
     /**
      * methods: Property.getRelativePath
+     *
      * getRelativePath does not return a path between a property that is inside a child repository to one that is in
      * a parent repository. A path like this could not be used with .resolvePath or be used in a reference property
      * because neither method can go from the root of a referenced repository to a reference property.
@@ -802,6 +899,7 @@ const PropertyError = {
 
     /**
      * methods: getReferencedWorkspace
+     *
      * This repository reference is in read-only mode. Call enableWrite() to access the workspace.
      */
     REPOSITORY_REFERENCE_WORKSPACE_READ_ONLY:
@@ -809,12 +907,14 @@ const PropertyError = {
 
     /**
      * methods: Property.enableWrite
+     *
      * Repository reference is already in writable mode.
      */
     REPOSITORY_REFERENCE_WORKSPACE_EXIST_ALREADY: "PR-174: Repository reference is already in writable mode",
 
     /**
      * methods: Property.enableWrite
+     *
      * Can't enable write on an empty repository reference without at least a repositoryGUID and branchGUID.
      */
     WRITABLE_REPOSITORY_REFERENCE_NEED_GUIDS:
@@ -822,12 +922,14 @@ const PropertyError = {
 
     /**
      * methods: Property.enableWrite
+     *
      * Repository reference failed to automatically commit the new commitGUID.
      */
     WRITABLE_REPOSITORY_AUTO_COMMIT_FAIL: "PR-177: Repository reference failed to automatically commit the new commitGUID",
 
     /**
      * methods: Property._setFollowBranch
+     *
      * An unexpected error occurred while trying to switch a repository reference followBranch property
      */
     WRITABLE_REPOSITORY_SET_FOLLOW_BRANCH_FAILED:
@@ -835,6 +937,7 @@ const PropertyError = {
 
     /**
      * methods: MapProperty.insert, MapProperty.set
+     *
      * .insert and .set take two parameters. The first one is in_id (or in_key), which is the id under
      * which the property is added. It can not be an empty string.
      */
@@ -843,12 +946,14 @@ const PropertyError = {
 
     /**
      * methods: StringProperty.set
+     *
      * StringProperty.set: in_character must have a length of 1.
      */
     STRING_SET_ONE_CHAR: "PR-180: String.set, only one character can be set (in_character must have a length of 1).",
 
     /**
      * methods: EnumArrayProperty.set
+     *
      * EnumArrayProperty.set only accepts a string or number as input for in_value
      */
     VALUE_STRING_OR_NUMBER:
@@ -856,6 +961,7 @@ const PropertyError = {
 
     /**
      * methods: ArrayProperty.set
+     *
      * The in_value input of ArrayProperty.set should not be an array.
      */
     ARRAY_SET_ONE_ELEMENT:
@@ -865,12 +971,14 @@ const PropertyError = {
 
     /**
      * methods: MapProperty.insert, MapProperty.set, SetProperty.insert, NodeProperty.insert
+     *
      * The property you are trying to insert in your map property, set property or node property is a root.
      */
     INSERTED_ROOT_ENTRY: "PR-184: Trying to insert a root property into a collection.",
 
     /**
      * methods: MapProperty.insert, MapProperty.set, SetProperty.insert, NodeProperty.insert
+     *
      * The property you are trying to insert in your map property, set property or node property is already
      * a parent of the map, set, or node property. You cannot insert this property there or you would create
      * a cycle in your data tree.
@@ -880,6 +988,7 @@ const PropertyError = {
 
     /**
      * methods: MapProperty.insert, MapProperty.set, SetProperty.insert, NodeProperty.insert
+     *
      * The property you are trying to insert (or at least one if its children) in your map property, set
      * property or node property is not covered by the paths of the partial checkout.
      * You cannot insert this property because you would not receive updates for this path after the
@@ -894,9 +1003,9 @@ const PropertyError = {
 };
 
 const PropertyFactoryError = {
-
     /**
      * methods: PropertyFactory.create
+     *
      * Each property created with PropertyFactory.create should have a unique id. You should make sure your
      * code generates a unique id for each property created, or make your property an instanced of NamedProperties
      * (which are identified by a unique Urn)
@@ -905,12 +1014,14 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyFactory.register
+     *
      * Warning: The template passed into the register method does not match the expected structure for this type.
      */
     TEMPLATE_MISMATCH: "PF-004: Template structures do not match for typeid: ",
 
     /**
      * methods: PropertyFactory.register
+     *
      * The typeid assigned to your property template should include a version.
      * E.g. 1.0.0 - an example of a valid typeid: “my.example:point2d-1.0.0”
      */
@@ -926,6 +1037,7 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyFactory.create
+     *
      * RepositoryReferences are not yet fully implemented. They will be soon.
      */
     REPOSITORY_REF_NOT_FULLY_IMPLEMENTED: "PF-007: Repository references are not yet fully implemented and may not " +
@@ -933,7 +1045,9 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyFactory.create
+     *
      * When using ‘inherits’ in your property template, it must be a string or an array.
+     *
      * @example
      * ```json
      * {
@@ -941,7 +1055,9 @@ const PropertyFactoryError = {
      * inherits: ‘ another property’
      * }
      * ```
+     *
      * or :
+     *
      * ```json
      * {
      *   typeid:'my.example:point2d-1.0.0',
@@ -953,12 +1069,14 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyFactory.create
+     *
      * Context can be ‘array, ‘set’, ‘map’, ‘enum’ or ‘single’. If not specified, will default to ‘single’.
      */
     UNKNOWN_CONTEXT_SPECIFIED: "PF-009: Unknown context specified: ",
 
     /**
      * methods: PropertyFactory.create
+     *
      * The property you entered into PropertyFactory.create has a typeid that is not registered.
      * Make sure you register the template before creating an instance of that property. This could
      * also be caused by a failure in the registration process.
@@ -967,6 +1085,7 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyFactory.getAllParentsForTemplate, PropertyFactory.inheritsFrom
+     *
      * Cannot find a template for this typeid. Make sure you registered the template and that the typeid
      * is entered correctly. This can be an error with the template you are trying to insert or one of the
      * templates it inherits from.
@@ -975,6 +1094,7 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyFactory.register
+     *
      * The property you passed in to .register is a primitive property. These do not need to be registered with a
      * typeid. It can be created without being registered. E.g. PropertyFactory.create(‘String’)
      */
@@ -983,12 +1103,14 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
+     *
      * Your template’s id field must be a string.
      */
     DEFINITION_ID_MUST_BE_STRING: 'PF-024: Value "id" of a definition should be a string. "',
 
     /**
      * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
+     *
      * The "$ref" keyword is used to reference a schema, and provides the ability to validate recursive structures
      * through self-reference.
      * An object schema with a "$ref" property MUST be interpreted as a "$ref" reference. The value of the "$ref"
@@ -998,24 +1120,28 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
+     *
      * The identifier passed to $ref does not point to any schema.
      */
     COULD_NOT_FIND_REFERENCE: 'PF-026: Couldn\'t find reference "',
 
     /**
      * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
+     *
      * The identifier passed to $ref does not point to an object.
      */
     REFERENCED_DEFINITION_SHOULD_BE_OBJECT: 'PF-027: A referenced definition should be an object. "',
 
     /**
      * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
+     *
      * In a JSON schema, the properties field must be an object.
      */
     PROPERTIES_SHOULD_BE_OBJECT: 'PF-028: The "properties" value should be an object. "',
 
     /**
      * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
+     *
      * oneOf’s value MUST be a non-empty array. Each item of the array MUST be a valid JSON Schema.
      * An instance validates successfully against this keyword if it validates successfully against exactly one
      * schema defined by this keyword's value.
@@ -1024,24 +1150,28 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
+     *
      * oneOf’s value MUST be a non-empty array. Each item of the array MUST be a valid JSON Schema.
      */
     ONE_OF_SHOULD_CONTAIN_OBJECTS: 'PF-030: The "oneOf" array should contain objects. "',
 
     /**
      * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
+     *
      * This keyword's value MUST be a non-empty array. Each item of the array MUST be a valid JSON Schema.
      */
     ALL_OF_SHOULD_BE_ARRAY: 'PF-031: The "allOf" object should be an array.',
 
     /**
      * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
+     *
      * This keyword's value MUST be a non-empty array. Each item of the array MUST be a valid JSON Schema.
      */
     ALL_OF_SHOULD_CONTAIN_OBJECTS: 'PF-032: The "allOf" array should contain objects. Element ',
 
     /**
      * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
+     *
      * Your schema definition contains infinite recursion. For example, if your definition ‘a’ refers to definition
      * ‘b’ as being one of its children and ‘b’ refers to ‘a’ as one of its children.
      */
@@ -1049,6 +1179,7 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
+     *
      * One part of your template object might contain something that is not of type ‘object’, ‘string’,
      * ‘number’ or ‘integer’.
      */
@@ -1073,6 +1204,7 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
+     *
      * Warning: If you have a ‘length’ field in your template and the context is not set to ‘array’,
      * ‘length’ will be ignored.
      */
@@ -1080,25 +1212,30 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
+     *
      * In your template, the field ‘length’ should be a number.
      */
     LENGTH_SHOULD_BE_NUMBER: 'PF-040: The "length" value should be a number. This is not valid: ',
 
     /**
      * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
+     *
      * Your template contains more than one definition field for this field.
      */
     DUPLICATE_DEFINITION: "PF-041: Duplicate definition for ",
 
     /**
      * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
+     *
      * The field ‘id’ is missing from your JSON schema.
      */
     FIELD_ID_IS_REQUIRED: 'PF-042: Field "id" is required.',
 
     /**
      * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
+     *
      * You need a ‘typeid’ field in your template schema.
+     *
      * @example
      * ```json
      * {
@@ -1117,13 +1254,16 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyFactory.register
+     *
      * The ‘length’ field in your template must be a number.
      */
     LENGTH_MUST_BE_NUMBER: "PF-045: length must be a number. This is not valid: ",
 
     /**
      * methods: PropertyFactory.register
+     *
      * Each entry in your enum property array must have an id.
+     *
      * @example
      * ```json
      * {
@@ -1142,7 +1282,9 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyTemplate constructor
+     *
      * Each entry in your enum property must have a value that is a number.
+     *
      * @example
      * ```json
      * {
@@ -1161,6 +1303,7 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyTemplate.getVersion
+     *
      * INTERNAL ERROR - If you encounter this error, please contact the development team.
      * Warning: you that the template on which you are calling the .getVersion method is not versioned.
      * The method will return undefined. This should not happen as we now validate that all templates are
@@ -1170,6 +1313,7 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyFactory.register
+     *
      * Warning: Template already exists. The incoming template MUST match what is currently registered.
      * If they do not match, an error will be thrown letting you know that the templates are incompatible.
      * See error PF-004
@@ -1178,12 +1322,14 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyFactory.register
+     *
      * There were errors validating the template you are trying to register. See detailed errors attached.
      */
     FAILED_TO_REGISTER: "PF-050: Failed to register typeid = ",
 
     /**
      * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
+     *
      * So far, these methods can only convert from a JSON schema. The first parameter (in_fromType)
      * must be ‘JSONSchema’.
      */
@@ -1200,6 +1346,7 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyFactory.loadTemplate
+     *
      * In order for the PropertyFactory to retrieve templates from remote store it has to have at least one store
      * interface to interact with. This is accomplished by making the PropertyFactory.addStore call.
      */
@@ -1209,6 +1356,7 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyFactory.register
+     *
      * PropertyFactory.register takes one parameter, which can be a string (typeid), a json object (a template) or an
      * array of these.
      */
@@ -1216,6 +1364,7 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyFactory.resolve
+     *
      * No store has been added yet to the PropertyFactory. A template store has to be instantiated then added with
      * propertyFactory.addStore()
      */
@@ -1223,30 +1372,36 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyFactory.resolve
+     *
      * resolve cannot be called until previous call to resolve has completed.
      */
     DEPENDENCIES_RESOLUTION_IN_PROGRESS: "PF-060: Dependencies resolution already in progress",
 
     /**
      * methods: PropertyFactory.create
+     *
      * Typed values must contain properties that inherit from the base type.
      */
     TYPED_VALUES_MUST_DERIVE_FROM_BASE_TYPE: "PF-061: Typed values must be derived from base type: ",
 
     /**
      * methods: PropertyFactory.create
+     *
      * The field ‘value’ is missing from your JSON schema.
      */
     FIELD_VALUE_IS_REQUIRED: 'PF-062: Field "value" is required: ',
 
     /**
      * methods: PropertyFactory.register
-     * Warning: The structure of the template passed into the register method does not match the structure of a remote template registered under the same typeid.
+     *
+     * Warning: The structure of the template passed into the register method does not match the structure of a
+     * remote template registered under the same typeid.
      */
     REMOTE_TEMPLATE_MISMATCH: "PF-064: Template structures do not match an already registered remote template with the same typeid for typeid: ",
 
     /**
      * methods: PropertyFactory.initializeSchemaStore
+     *
      * Warning: The initializeSchemaStore method must be provided with an options object
      * containing a getBearerToken function and the url to the ForgeSchemaService.
      */
@@ -1255,18 +1410,21 @@ const PropertyFactoryError = {
 
     /**
      * methods: PropertyFactory.initializeSchemaStore
+     *
      * Warning: The initializeSchemaStore method url option must be passed a valid base url.
      */
     FSS_BASEURL_WRONG: "PF-066: The initializeSchemaStore method url option must be passed a valid base url.",
 
     /**
      * methods: PropertyFactory.create
+     *
      * Overridden properties must have same context as the base type.
      */
     OVERRIDEN_PROP_MUST_HAVE_SAME_CONTEXT_AS_BASE_TYPE: "PF-067: Overridden properties must have same context as the base type: ",
 
     /**
      * methods: PropertyFactory.create
+     *
      * Primitive types does not support typedValues.
      */
     TYPED_VALUES_FOR_PRIMITIVES_NOT_SUPPORTED: "PF-068: Primitive types does not support typedValues: ",
@@ -1281,6 +1439,7 @@ const RepositoryError = {
 
     /**
      * methods: NodeProperty.remove
+     *
      * The property you tried to remove does not exist (its id was not found) - check that the id is correct
      * and that the property has not already been removed.
      */
@@ -1288,6 +1447,7 @@ const RepositoryError = {
 
     /**
      * methods: BranchNode.isEqual, CommitNode.isEqual
+     *
      * In_node parameter is required. In_node is the branch or commit you wish to compare to ‘this’ branch/commit
      * node to check for equality.
      */
@@ -1296,6 +1456,7 @@ const RepositoryError = {
 
     /**
      * methods: BranchNode, CommitNode, Workspace.commit
+     *
      * The BranchNode or CommitNode constructor was called without in_params.guid or we tried to send a commit
      * without a guid.
      */
@@ -1336,7 +1497,6 @@ const RepositoryError = {
 };
 
 const ServerError = {
-
     /**
      * INTERNAL ERROR - If you encounter this error, please contact the development team.
      */
@@ -1349,7 +1509,6 @@ const ServerError = {
 };
 
 const ChangeSetError = {
-
     /**
      * Context can only be ‘single’, ‘array’, ‘map’, ‘set’ or ‘enum’. All other values are invalid.
      */
@@ -1379,6 +1538,7 @@ const UtilsError = {
 
     /**
      * methods: Utils.traverseChangesetRecursively
+     *
      * Your changeset contains an operator other than MODIFY, INSERT or REMOVE. If you created the changeset youserlf,
      * check that you only use valid operators. Otherwise, this is an internal error. Please contact the development team.
      */
@@ -1397,25 +1557,25 @@ const UtilsError = {
 
     /**
      * INTERNAL ERROR - If you encounter this error, please contact the development team.
-     *              See specific message for more details.
+     * See specific message for more details.
      */
     ASSERTION_FAILED: "UT-007: INTERNAL ERROR. Failed assertion. ",
 
     /**
      * You used a deprecated function. It will likely be removed in the next major version.
-     *              See the custom information if provided.
+     * See the custom information if provided.
      */
     DEPRECATED_FUNCTION: "UT-008: Deprecated function %s.",
 
     /**
      * You used a deprecated function parameter. It will likely be removed in the next major version.
-     *              See the custom information if provided.
+     * See the custom information if provided.
      */
     DEPRECATED_PARAMETER: "UT-009: Deprecated function parameter %s of %s.",
 
     /**
      * You used an experimental feature. It will likely changed in future releases.
-     *              See the custom information if provided.
+     * See the custom information if provided.
      */
     EXPERIMENTAL_FEATURE: "UT-010: Feature %s is experimental and subject to future changes.",
 };

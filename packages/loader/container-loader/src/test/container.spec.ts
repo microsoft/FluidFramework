@@ -7,16 +7,12 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
 import assert from "assert";
-import { EventEmitter } from "events";
 import { AttachState, IAudience, IContainer, IContainerEvents, IDeltaManager, IDeltaManagerEvents, ReadOnlyInfo } from "@fluidframework/container-definitions";
-import { sessionStorageConfigProvider } from "@fluidframework/telemetry-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidRouter } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, IDocumentMessage } from "@fluidframework/protocol-definitions";
-import { Container, waitContainerToCatchUp } from "../container";
-import { Loader } from "../loader";
-import { CatchUpMonitor, ImmediateCatchUpMonitor } from "../catchUpMonitor";
+import { waitContainerToCatchUp } from "../container";
 import { ConnectionState } from "../connectionState";
 
 class MockDeltaManager
@@ -50,46 +46,6 @@ class MockContainer extends TypedEventEmitter<IContainerEvents> implements Parti
 }
 
 describe("Container", () => {
-    describe("constructor", () => {
-        const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
-        let injectedSettings = {};
-
-        before(() => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            sessionStorageConfigProvider.value.getRawConfig = (name) => injectedSettings[name];
-        });
-
-        afterEach(() => {
-            injectedSettings = {};
-        });
-
-        after(() => {
-            sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
-        });
-
-        it("Fluid.Container.CatchUpBeforeDeclaringConnected = true, use CatchUpMonitor", () => {
-            injectedSettings["Fluid.Container.CatchUpBeforeDeclaringConnected"] = true;
-
-            const container = new Container({ services: { options: {} } } as Loader, {});
-            const deltaManager: any = container.deltaManager;
-            deltaManager.connectionManager.connection = {}; // Avoid assert 0x0df
-            (deltaManager as EventEmitter).emit("connect", { clientId: "someClientId" });
-
-            const catchUpMonitor = (container as any).connectionStateHandler.catchUpMonitor;
-            assert(catchUpMonitor instanceof CatchUpMonitor);
-        });
-
-        it("Fluid.Container.CatchUpBeforeDeclaringConnected undefined, use ImmediateCatchUpMonitor", () => {
-            const container = new Container({ services: { options: {} } } as Loader, {});
-            const deltaManager: any = container.deltaManager;
-            deltaManager.connectionManager.connection = {}; // Avoid assert 0x0df
-            (deltaManager as EventEmitter).emit("connect", { clientId: "someClientId" });
-
-            const catchUpMonitor = (container as any).connectionStateHandler.catchUpMonitor;
-            assert(catchUpMonitor instanceof ImmediateCatchUpMonitor);
-        });
-    });
-
     describe("waitContainerToCatchUp", () => {
         it("Closed Container fails", async () => {
             const mockContainer = new MockContainer();

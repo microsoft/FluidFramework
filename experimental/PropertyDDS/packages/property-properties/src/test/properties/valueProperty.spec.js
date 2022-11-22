@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* globals assert */
-/* eslint-disable no-unused-expressions */
+
 /**
- * @fileoverview In this file, we will test ValueProperty
- *    object described in /src/properties/valueProperty.js
+ * @fileoverview In this file, we will test ValueProperty object described in /src/properties/valueProperty.js
  */
+
 const { Int64, Uint64 } = require('@fluid-experimental/property-common');
 const { ValueProperty } = require('../../properties/valueProperty');
 const { PropertyFactory } = require('../..');
