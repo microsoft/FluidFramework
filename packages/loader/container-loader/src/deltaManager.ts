@@ -210,12 +210,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get readOnlyInfo() { return this.connectionManager.readOnlyInfo; }
     public get clientDetails() { return this.connectionManager.clientDetails; }
 
-    public submit(type: MessageType, contents?: string, batch = false, metadata?: any) {
+    public submit(type: MessageType, contents?: string, batch = false, metadata?: any, compression?: string) {
         const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
             contents,
             metadata,
             referenceSequenceNumber: this.lastProcessedSequenceNumber,
             type,
+            compression,
         };
 
         if (!batch) {

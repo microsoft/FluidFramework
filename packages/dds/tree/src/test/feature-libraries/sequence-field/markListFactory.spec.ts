@@ -4,12 +4,14 @@
  */
 
 import { strict as assert } from "assert";
+import { RevisionTag } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 
 const dummyMark: SF.Detach = { type: "Delete", id: 0, count: 1 };
 const type: TreeSchemaIdentifier = brand("Node");
+const detachedBy: RevisionTag = brand(42);
 
 describe("SequenceField - MarkListFactory", () => {
     it("Inserts an offset when there is content after the offset", () => {
@@ -89,28 +91,78 @@ describe("SequenceField - MarkListFactory", () => {
 
     it("Can merge consecutive revives", () => {
         const factory = new SF.MarkListFactory();
-        const revive1: SF.Reattach = { type: "Revive", id: 0, tomb: 42, count: 1 };
-        const revive2: SF.Reattach = { type: "Revive", id: 0, tomb: 42, count: 1 };
+        const revive1: SF.Reattach = {
+            type: "Revive",
+            id: 0,
+            detachedBy,
+            detachIndex: 0,
+            count: 1,
+        };
+        const revive2: SF.Reattach = {
+            type: "Revive",
+            id: 0,
+            detachedBy,
+            detachIndex: 1,
+            count: 1,
+        };
         factory.pushContent(revive1);
         factory.pushContent(revive2);
-        assert.deepStrictEqual(factory.list, [{ type: "Revive", id: 0, tomb: 42, count: 2 }]);
+        const expected: SF.Reattach = {
+            type: "Revive",
+            id: 0,
+            detachedBy,
+            detachIndex: 0,
+            count: 2,
+        };
+        assert.deepStrictEqual(factory.list, [expected]);
+    });
+
+    it("Does not merge revives with gaps", () => {
+        const factory = new SF.MarkListFactory();
+        const revive1: SF.Reattach = {
+            type: "Revive",
+            id: 0,
+            detachedBy,
+            detachIndex: 0,
+            count: 1,
+        };
+        const revive2: SF.Reattach = {
+            type: "Revive",
+            id: 0,
+            detachedBy,
+            detachIndex: 2,
+            count: 1,
+        };
+        factory.pushContent(revive1);
+        factory.pushContent(revive2);
+        assert.deepStrictEqual(factory.list, [revive1, revive2]);
     });
 
     it("Can merge consecutive returns", () => {
         const factory = new SF.MarkListFactory();
-        const return1: SF.Reattach = { type: "Return", id: 0, tomb: 42, count: 1 };
-        const return2: SF.Reattach = { type: "Return", id: 0, tomb: 42, count: 1 };
+        const return1: SF.Reattach = {
+            type: "Return",
+            id: 0,
+            detachedBy,
+            detachIndex: 0,
+            count: 1,
+        };
+        const return2: SF.Reattach = {
+            type: "Return",
+            id: 0,
+            detachedBy,
+            detachIndex: 1,
+            count: 1,
+        };
         factory.pushContent(return1);
         factory.pushContent(return2);
-        assert.deepStrictEqual(factory.list, [{ type: "Return", id: 0, tomb: 42, count: 2 }]);
-    });
-
-    it("Can merge consecutive tombs", () => {
-        const factory = new SF.MarkListFactory();
-        const tomb1: SF.Tomb = { type: "Tomb", change: 42, count: 1 };
-        const tomb2: SF.Tomb = { type: "Tomb", change: 42, count: 1 };
-        factory.pushContent(tomb1);
-        factory.pushContent(tomb2);
-        assert.deepStrictEqual(factory.list, [{ type: "Tomb", change: 42, count: 2 }]);
+        const expected: SF.Reattach = {
+            type: "Return",
+            id: 0,
+            detachedBy,
+            detachIndex: 0,
+            count: 2,
+        };
+        assert.deepStrictEqual(factory.list, [expected]);
     });
 });

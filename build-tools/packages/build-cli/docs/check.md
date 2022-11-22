@@ -12,7 +12,7 @@ Checks that the dependencies between Fluid Framework packages are properly layer
 
 ```
 USAGE
-  $ flub check layers --info <value> [--md <value>] [--dot <value>] [--logtime] [-v]
+  $ flub check layers --info <value> [-v] [--md <value>] [--dot <value>] [--logtime]
 
 FLAGS
   -v, --verbose   Verbose logging.
@@ -31,7 +31,7 @@ Checks and applies policies to the files in the repository, such as ensuring a c
 
 ```
 USAGE
-  $ flub check policy -e <value> [-D <value> | -d <value>] [--listHandlers | --stdin | -p <value> | -f | ] [-v]
+  $ flub check policy -e <value> [-v] [-D <value> | -d <value>] [--listHandlers | --stdin | -p <value> | -f | ]
 
 FLAGS
   -D, --excludeHandler=<value>...  Exclude handler by name. Can be specified multiple times to exclude multiple

@@ -62,7 +62,7 @@ export class SubSequence<T> extends BaseSegment {
     }
 
     public append(segment: ISegment) {
-        assert(SubSequence.is(segment), "can only append to another run segment");
+        assert(SubSequence.is(segment), 0x448 /* can only append to another run segment */);
         super.append(segment);
         this.items = this.items.concat(segment.items);
     }

@@ -15,9 +15,9 @@ import {
     IFileSystemManagerFactory,
     IRepoManagerParams,
     IStorageDirectoryConfig,
-    BaseGitRestTelemetryProperties,
     Constants,
 } from "./definitions";
+import { BaseGitRestTelemetryProperties } from "./gitrestTelemetryDefinitions";
 
 type RepoOperationType = "create" | "open";
 
@@ -45,19 +45,19 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
         repo: TRepo,
         gitdir: string,
         externalStorageManager: IExternalStorageManager,
-        lumberjackBaseProperties: Record<string, any>): IRepositoryManager;
+        lumberjackBaseProperties: Record<string, any>,
+        enableRepositoryManagerMetrics: boolean): IRepositoryManager;
 
     constructor(
         private readonly storageDirectoryConfig: IStorageDirectoryConfig,
         private readonly fileSystemManagerFactory: IFileSystemManagerFactory,
         private readonly externalStorageManager: IExternalStorageManager,
         repoPerDocEnabled: boolean,
+        private readonly enableRepositoryManagerMetrics: boolean = false,
     ) {
-        if (repoPerDocEnabled) {
-            this.internalHandler = this.repoPerDocInternalHandler.bind(this);
-        } else {
-            this.internalHandler = this.repoPerTenantInternalHandler.bind(this);
-        }
+        this.internalHandler = repoPerDocEnabled
+            ? this.repoPerDocInternalHandler.bind(this)
+            : this.repoPerTenantInternalHandler.bind(this);
     }
 
     public async create(params: IRepoManagerParams): Promise<IRepositoryManager> {
@@ -94,9 +94,9 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
                     ...(lumberjackBaseProperties),
                     [BaseGitRestTelemetryProperties.directoryPath]: gitdir,
                 });
-                // services-client/getOrCreateRepository depends on a 400 response code
-                throw new NetworkError(400, `Repo does not exist ${gitdir}`);
-            };
+            // services-client/getOrCreateRepository depends on a 400 response code
+            throw new NetworkError(400, `Repo does not exist ${gitdir}`);
+        };
 
         return this.internalHandler(params, onRepoNotExists, "open");
     }
@@ -208,7 +208,8 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
                 repository,
                 directoryPath,
                 this.externalStorageManager,
-                lumberjackBaseProperties);
+                lumberjackBaseProperties,
+                this.enableRepositoryManagerMetrics);
         };
 
         // RepoManagerFactories support 2 types of operations: "create repo" and "open repo". "Open repo"
