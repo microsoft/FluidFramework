@@ -125,6 +125,9 @@ type DescribeWithVersions = DescribeSuiteWithVersions & Record<"skip" | "only", 
 
 /**
  * Creates a test suite which will priorly install a set of requested Fluid versions for the tests to use.
+ * The packages are installed before any test code runs, so it is guaranteed that the package is present
+ * when the test code is invoked, including the top level scope inside the `describeInstallVersions` block.
+ *
  * If package installation fails for any of the requested versions, the test suite will not be created and
  * the test run will fail.
  *
@@ -134,7 +137,7 @@ type DescribeWithVersions = DescribeSuiteWithVersions & Record<"skip" | "only", 
  * If unspecified, the timeout is 20000 ms.
  * @returns A mocha test suite
  */
-export function installVersionsDescribe(
+export function describeInstallVersions(
     requestedVersions?: IRequestedFluidVersions,
     timeoutMs?: number,
 ): DescribeWithVersions {

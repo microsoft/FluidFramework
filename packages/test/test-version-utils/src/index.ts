@@ -9,7 +9,7 @@ export {
     ITestDataObject,
     TestDataObjectType,
 } from "./compatUtils";
-export { installVersionsDescribe } from "./describeWithVersions";
+export { describeInstallVersions } from "./describeWithVersions";
 export {
     DescribeCompat,
     DescribeCompatSuite,

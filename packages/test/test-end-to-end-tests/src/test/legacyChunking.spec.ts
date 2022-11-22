@@ -14,14 +14,14 @@ import {
     DataObjectFactoryType,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { installVersionsDescribe, getContainerRuntimeApi } from "@fluidframework/test-version-utils";
+import { describeInstallVersions, getContainerRuntimeApi } from "@fluidframework/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { FlushMode, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 
 const versionWithChunking = "0.56.0";
 
-installVersionsDescribe(
+describeInstallVersions(
     {
         requestAbsoluteVersions: [versionWithChunking],
     }
