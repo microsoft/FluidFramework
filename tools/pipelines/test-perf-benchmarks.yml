@@ -3,6 +3,7 @@
 
 name: $(Build.BuildId)
 
+trigger: none
 pr: none
 
 resources:
@@ -15,20 +16,6 @@ resources:
       - main
       - next
       - lts
-
-trigger:
-  branches:
-    include:
-    - release/*
-    - main
-    - next
-    - lts
-  paths:
-    include:
-    - tools/benchmark
-    - tools/telemetry-generator
-    - tools/pipelines/test-perf-benchmarks.yml
-    - tools/pipelines/templates/include-test-perf-benchmarks.yml
 
 parameters:
 
