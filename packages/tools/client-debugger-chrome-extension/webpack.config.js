@@ -21,7 +21,7 @@ module.exports = {
 		CloseDebuggerView: path.join(sourceDirectoryPath, "InjectDebuggerCloseScript.ts"),
 
 		// The Injected scripts
-		OpenDebuggerPanelScript: path.join(sourceDirectoryPath, "OpenDebuggerPanelScript.tsx"),
+		OpenDebuggerPanelScript: path.join(sourceDirectoryPath, "OpenDebuggerPanelScript.ts"),
 		CloseDebuggerPanelScript: path.join(sourceDirectoryPath, "CloseDebuggerPanelScript.ts"),
 	},
 	output: {

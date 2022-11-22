@@ -36,9 +36,13 @@ export async function openDebuggerPanel(): Promise<boolean> {
 
 	return new Promise<boolean>((resolve) => {
 		try {
-			ReactDOM.render(<DebuggerView containerId={containerIdKLUDGE} />, element, () => {
-				resolve(true);
-			});
+			ReactDOM.render(
+				React.createElement(DebuggerView, { containerId: containerIdKLUDGE }),
+				element,
+				() => {
+					resolve(true);
+				},
+			);
 		} catch (error) {
 			console.error(`Could not open the debugger view due to an error: ${error}.`);
 			return false;
