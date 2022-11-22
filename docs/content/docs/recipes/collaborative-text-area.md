@@ -330,7 +330,7 @@ if (sharedString) {
 
     If tinylicious is not installed, you will be prompted to install it. When the Fluid service is running, you will see `info: Listening on port ...` in the Command Prompt.
 
-1. Open a new Command Prompt and navigate to the root of the project; for example, `C:\My Fluid Projects\collaborative-text-area-tutorial`. Start the application server with the following command. The application opens in your browser. This may take a few minutes.
+1. Open a new Command Prompt and navigate to the root of the project; for example, `C:\My Fluid Projects\collaborative-text-area-tutorial`. Start the application server with the following command. The application opens in your browser.
 
     ```dotnetcli
     npm run start
