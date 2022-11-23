@@ -57,11 +57,11 @@ describe("Container copy scenarios", () => {
     });
 
     /**
-     * Scenario: test if Azure Client can handle bad version ID when versions are requested.
+     * Scenario: test if Azure Client can handle bad document ID when versions are requested.
      *
      * Expected behavior: Client should throw an error.
      */
-    it("can handle bad versions of current document", async () => {
+    it("can handle bad document id when requesting versions", async () => {
         const resources = client.getContainerVersions("badid");
         const errorFn = (error: Error): boolean => {
             assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
