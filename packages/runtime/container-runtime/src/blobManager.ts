@@ -24,7 +24,6 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summarizerClientElection";
-import { throwOnTombstoneUsageKey } from "./garbageCollection";
 
 /**
  * This class represents blob (long string)
