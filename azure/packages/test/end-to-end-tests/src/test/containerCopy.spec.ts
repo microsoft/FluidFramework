@@ -64,10 +64,11 @@ describe("Container copy scenarios", () => {
     it("can handle bad versions of current document", async () => {
         const resources = client.getContainerVersions("badid");
         const errorFn = (error: Error): boolean => {
-            assert.notStrictEqual(
-                error.message.startsWith("connect ECONNREFUSED"),
-                true,
-                "Connection not established.",
+            assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
+            assert.strictEqual(
+                error.message,
+                "R11s fetch error: Document is deleted and cannot be accessed.",
+                `Unexpected error: ${error.message}`,
             );
             return true;
         };
@@ -188,10 +189,11 @@ describe("Container copy scenarios", () => {
     it("can handle non-existing container", async () => {
         const resources = client.copyContainer("badidoncopy", schema);
         const errorFn = (error: Error): boolean => {
-            assert.notStrictEqual(
-                error.message.startsWith("connect ECONNREFUSED"),
-                true,
-                "Connection not established.",
+            assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
+            assert.strictEqual(
+                error.message,
+                "R11s fetch error: Document is deleted and cannot be accessed.",
+                `Unexpected error: ${error.message}`,
             );
             return true;
         };
