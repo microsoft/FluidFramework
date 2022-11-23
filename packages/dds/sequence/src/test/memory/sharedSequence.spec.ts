@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { benchmarkMemory, benchmarkMemory2, MemoryTestObjectInterface } from "@fluid-tools/benchmark";
+import { benchmarkMemory, MemoryTestObjectInterface } from "@fluid-tools/benchmark";
 import { SubSequence } from "../../sharedSequence";
 
 describe("SharedSequence memory usage", () => {
@@ -28,18 +28,7 @@ describe("SharedSequence memory usage", () => {
     const numbersOfEntriesForTests = [100, 1000, 10_000];
 
     numbersOfEntriesForTests.forEach((x) => {
-        benchmarkMemory({
-            title: `Append and remove ${x} subsequences`,
-            benchmarkFn: async () => {
-                const segment = new SubSequence<number>([]);
-                for (let i = 0; i < x; i++) {
-                    segment.append(new SubSequence<number>([i]));
-                    segment.removeRange(0, 1);
-                }
-            },
-        });
-
-        benchmarkMemory2(new class implements MemoryTestObjectInterface {
+        benchmarkMemory(new class implements MemoryTestObjectInterface {
             title = `Append and remove ${x} subsequences NEW`;
             private segment = new SubSequence<number>([]);
 
@@ -51,7 +40,6 @@ describe("SharedSequence memory usage", () => {
                 }
             }
         }());
-
 
         // NOTE: This test is commented out because SharedSequence does not exist
         // as an implementable standalone datastructure. In order to implement the
