@@ -85,13 +85,13 @@ parameters:
   type: string
   default: repo
 
+- name: packageManager
+  type: string
+  default: npm
+
 - name: packageManagerInstallCommand
   type: string
   default: 'npm ci --unsafe-perm'
-
-- name: usePnpmCache
-  type: boolean
-  default: false
 
 trigger: none
 
@@ -101,7 +101,7 @@ variables:
   # basic ANSI color support though, so force that in the pipeline
   - name: FORCE_COLOR
     value: 1
-  - name: pnpm_config_cache
+  - name: pnpmCachePath
     value: $(Pipeline.Workspace)/.pnpm-store
   - template: include-vars.yml
     parameters:
@@ -211,13 +211,13 @@ stages:
           inputs:
             version: 14.x
 
+        - ${{ if eq(parameters.packageManager, 'pnpm') }}:
         # Install and cache pnpm
-        - ${{ if eq(parameters.usePnpmCache, true) }}:
           - task: Cache@2
             displayName: Check dependency cache
             inputs:
               key: 'pnpm | "$(Agent.OS)" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
-              path: $(pnpm_config_cache)
+              path: $[variables.pnpmCachePath]
 
           - task: Bash@3
             displayName: Install and configure pnpm
@@ -226,7 +226,7 @@ stages:
               workingDirectory: ${{ parameters.buildDirectory }}
               script: |
                 curl -f https://get.pnpm.io/v6.16.js | node - add --global pnpm@7
-                pnpm config set store-dir $(pnpm_config_cache)
+                pnpm config set store-dir $[variables.pnpmCachePath]
 
         - task: Bash@3
           displayName: Install dependencies
@@ -244,6 +244,7 @@ stages:
             buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
             installPnpm: ${{ not(parameters.usePnpmCache) }}
             tagName: ${{ parameters.tagName }}
+            pnpmCachePath: $[variables.pnpmCachePath]
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
