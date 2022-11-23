@@ -63,9 +63,17 @@ describe("Container copy scenarios", () => {
      */
     it("can handle bad versions of current document", async () => {
         const resources = client.getContainerVersions("badid");
+        const errorFn = (error: Error): boolean => {
+            assert.notStrictEqual(
+                error.message.startsWith("connect ECONNREFUSED"),
+                true,
+                "Connection not established.",
+            );
+            return true;
+        };
         await assert.rejects(
             resources,
-            () => true,
+            errorFn,
             "We should not be able to get container versions.",
         );
     });
@@ -179,6 +187,15 @@ describe("Container copy scenarios", () => {
      */
     it("can handle non-existing container", async () => {
         const resources = client.copyContainer("badidoncopy", schema);
-        await assert.rejects(resources, () => true, "We should not be able to copy container.");
+        const errorFn = (error: Error): boolean => {
+            assert.notStrictEqual(
+                error.message.startsWith("connect ECONNREFUSED"),
+                true,
+                "Connection not established.",
+            );
+            return true;
+        };
+
+        await assert.rejects(resources, errorFn, "We should not be able to copy container.");
     });
 });
