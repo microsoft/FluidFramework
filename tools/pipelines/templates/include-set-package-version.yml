@@ -20,27 +20,11 @@ parameters:
 #   default: false
 - name: pnpmCachePath
   type: string
+  default: $(Pipeline.Workspace)/build-tools/.pnpm-store
 
 # Set version
 steps:
-# Install and cache pnpm
-# - ${{ if eq(parameters.installPnpm, true) }}:
-
 - ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
-  - task: Cache@2
-    displayName: Check dependency cache
-    inputs:
-      key: 'pnpm | "$(Agent.OS)" | build-tools/pnpm-lock.yaml'
-      path: ${{ parameters.pnpmCachePath }}
-
-  - task: Bash@3
-    displayName: Install and configure pnpm
-    inputs:
-      targetType: 'inline'
-      workingDirectory: ${{ parameters.buildDirectory }}
-      script: |
-        curl -f https://get.pnpm.io/v6.16.js | node - add --global pnpm@7
-        pnpm config set store-dir ${{ parameters.pnpmCachePath }}
   - task: Bash@3
     name: PrependPath
     displayName: Prepend build-tools CLI to path
@@ -61,6 +45,7 @@ steps:
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
         pushd "$(Build.SourcesDirectory)/build-tools"
+        npm i -g pnpm
         pnpm i
         npm run build:compile
         popd
