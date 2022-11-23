@@ -89,6 +89,10 @@ parameters:
   type: string
   default: 'npm ci --unsafe-perm'
 
+- name: usePnpmCache
+  type: boolean
+  default: false
+
 trigger: none
 
 variables:
@@ -97,6 +101,8 @@ variables:
   # basic ANSI color support though, so force that in the pipeline
   - name: FORCE_COLOR
     value: 1
+  - name: pnpm_config_cache
+    value: $(Pipeline.Workspace)/.pnpm-store
   - template: include-vars.yml
     parameters:
       publishOverride: ${{ parameters.publishOverride }}
@@ -204,6 +210,20 @@ stages:
           displayName: Use Node 14.x
           inputs:
             version: 14.x
+
+        # Install and cache pnpm
+        - ${{ if eq(parameters.usePnpmCache, true) }}:
+          - task: Cache@2
+            displayName: Cache pnpm
+            inputs:
+              key: 'pnpm | "$(Agent.OS)" | pnpm-lock.yaml'
+              path: $(pnpm_config_cache)
+
+          - displayName: "Setup pnpm"
+            script: |
+              curl -f https://get.pnpm.io/v6.16.js | node - add --global pnpm@7
+              pnpm config set store-dir $(pnpm_config_cache)
+
         - task: Bash@3
           displayName: Install dependencies
           inputs:
