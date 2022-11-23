@@ -14,6 +14,7 @@ export {
     HasOpId,
     HasLength,
     HasPlaceFields,
+    HasRevisionTag,
     HasTiebreakPolicy,
     Insert,
     Mark,
