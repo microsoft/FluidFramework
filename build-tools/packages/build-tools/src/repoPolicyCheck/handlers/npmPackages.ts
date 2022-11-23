@@ -607,15 +607,15 @@ export const handlers: Handler[] = [
             if (!(hasPrettierProperty && hasPrettierFixProperty && hasFormatProperty)) {
                 const missingScripts: string[] = [];
 
-                if (hasPrettierProperty === false) {
+                if (!hasPrettierProperty) {
                     missingScripts.push(`prettier`)
                 }
 
-                if (hasPrettierFixProperty === false) {
+                if (!hasPrettierFixProperty) {
                     missingScripts.push(`prettier:fix`)
                 }
 
-                if (hasFormatProperty === false) {
+                if (!hasFormatProperty) {
                     missingScripts.push(`format`)
                 }
 
