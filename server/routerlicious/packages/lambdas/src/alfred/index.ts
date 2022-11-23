@@ -80,7 +80,9 @@ const getSubmitOpThrottleId = (clientId: string, tenantId: string) => `${clientI
 
 const getSubmitSignalThrottleId = (clientId: string, tenantId: string) => `${clientId}_${tenantId}_SubmitSignal`;
 
-// Sanitize the received op before sending.
+/**
+ * Sanitize the received op before sending.
+ */
 function sanitizeMessage(message: any): IDocumentMessage {
     const sanitizedMessage: IDocumentMessage = {
         clientSequenceNumber: message.clientSequenceNumber,
@@ -132,7 +134,7 @@ async function storeClientConnectivityTime(
     documentId: string,
     tenantId: string,
     connectionTimestamp: number,
-    throttleAndUsageStorageManager: core.IThrottleAndUsageStorageManager) {
+    throttleAndUsageStorageManager: core.IThrottleAndUsageStorageManager): Promise<void> {
     try {
         const now = Date.now();
         const connectionTimeInMinutes = (now - connectionTimestamp) / 60000;
@@ -167,7 +169,7 @@ function checkThrottleAndUsage(
     usageStorageId?: string,
     usageData?: core.IUsageData): core.ThrottlingError | undefined {
     if (!throttler) {
-        return;
+        return undefined;
     }
 
     try {
@@ -213,32 +215,45 @@ export function configureWebSocketServices(
     verifyMaxMessageSize?: boolean,
 ) {
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
-        // Map from client IDs on this connection to the object ID and user info.
+        /**
+         * Map from client IDs on this connection to the object ID and user info.
+         */
         const connectionsMap = new Map<string, core.IOrdererConnection>();
-        // Map from client IDs to room.
+
+        /**
+         * Map from client IDs to room.
+         */
         const roomMap = new Map<string, IRoom>();
-        // Map from client Ids to scope.
+
+        /**
+         * Map from client Ids to scope.
+         */
         const scopeMap = new Map<string, string[]>();
-        // Map from client Ids to connection time.
+
+        /**
+         * Map from client Ids to connection time.
+         */
         const connectionTimeMap = new Map<string, number>();
 
-        // Timer to check token expiry for this socket connection
+        /**
+         * Timer to check token expiry for this socket connection
+         */
         let expirationTimer: NodeJS.Timer | undefined;
 
-        const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
+        const hasWriteAccess = (scopes: string[]): boolean => canWrite(scopes) || canSummarize(scopes);
 
         function isWriter(scopes: string[], mode: ConnectionMode): boolean {
             return hasWriteAccess(scopes) ? mode === "write" : false;
         }
 
-        function clearExpirationTimer() {
+        function clearExpirationTimer(): void {
             if (expirationTimer !== undefined) {
                 clearTimeout(expirationTimer);
                 expirationTimer = undefined;
             }
         }
 
-        function setExpirationTimer(mSecUntilExpiration: number) {
+        function setExpirationTimer(mSecUntilExpiration: number): void {
             clearExpirationTimer();
             expirationTimer = setTimeout(() => {
                 socket.disconnect(true);
