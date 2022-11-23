@@ -214,13 +214,13 @@ stages:
         # Install and cache pnpm
         - ${{ if eq(parameters.usePnpmCache, true) }}:
           - task: Cache@2
-            displayName: Cache pnpm
+            displayName: Check dependency cache
             inputs:
               key: 'pnpm | "$(Agent.OS)" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
               path: $(pnpm_config_cache)
 
           - task: Bash@3
-            displayName: Setup pnpm
+            displayName: Install and configure pnpm
             inputs:
               targetType: 'inline'
               workingDirectory: ${{ parameters.buildDirectory }}
