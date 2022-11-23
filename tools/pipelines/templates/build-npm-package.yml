@@ -489,10 +489,13 @@ stages:
     # cache key (which is based on the contents of the lockfile) to be the unmodified file. So we reset the lockfile as
     # the last step so that when the dependency cache is uploaded, the cache key matches what it was at the beginning of
     # the CI job.
-    - task: Bash@3
+    - job: reset-lockfile
       displayName: Reset lockfile
-      inputs:
-        targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
-        script: |
-          git checkout HEAD -- pnpm-lock.yaml
+      steps:
+      - task: Bash@3
+        displayName: Reset lockfile
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ parameters.buildDirectory }}
+          script: |
+            git checkout HEAD -- pnpm-lock.yaml
