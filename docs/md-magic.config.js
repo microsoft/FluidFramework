@@ -158,7 +158,7 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 }
 
 /**
- * Generats a simple Markdown heading and contents with a section pointing developers to our contribution guidelines.
+ * Generates a Markdown heading and contents with a section pointing developers to our contribution guidelines.
  *
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
  */
@@ -178,7 +178,7 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
  */
 const generateHelpSection = (includeHeading) => {
     const sectionBody = `Not finding what you're looking for in this README?
-Check out our [Github Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
+Check out our [GitHub Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
 
 Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
 Thank you!`;
