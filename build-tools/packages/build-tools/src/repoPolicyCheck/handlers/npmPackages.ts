@@ -605,7 +605,6 @@ export const handlers: Handler[] = [
             const hasFormatProperty = Object.prototype.hasOwnProperty.call(json, "format");
 
             if (!(hasPrettierProperty && hasPrettierFixProperty && hasFormatProperty)) {
-                //return "Error parsing JSON file: " + file;
                 const missingScripts: string[] = [];
 
                 if (hasPrettierProperty === false) {
