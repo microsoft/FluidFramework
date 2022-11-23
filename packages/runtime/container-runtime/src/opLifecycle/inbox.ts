@@ -3,15 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ContainerMessageType, ContainerRuntimeMessage } from "..";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { OpDecompressor } from "../opDecompressor";
+import { OpUnpacker } from "./opUnpacker";
 import { OpSplitter } from "./opSplitter";
+
+export interface IProcessingResult {
+    readonly message: ISequencedDocumentMessage;
+    readonly state: "Processed" | "Skipped" | "NotReady";
+}
+
+export interface IRemoteMessageProcessor {
+    processRemoteMessage(remoteMessage: ISequencedDocumentMessage): IProcessingResult;
+}
 
 export class Inbox {
     constructor(
         private readonly opSplitter: OpSplitter,
         private readonly opDecompressor: OpDecompressor,
+        private readonly opUnpacker: OpUnpacker,
     ) { }
 
     public get hasPartialMessages(): boolean {
@@ -27,14 +37,18 @@ export class Inbox {
     }
 
     public process(remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage {
-        const message = this.opSplitter.processIncoming(this.prepare(remoteMessage));
-        if (remoteMessage.type === ContainerMessageType.ChunkedOp) {
-            // If the op splitter didn't turn out the original message,
+        const message = this.prepare(remoteMessage);
+        const decompressionResult = this.opDecompressor.processRemoteMessage(message);
+        const unpackResult = this.opUnpacker.processRemoteMessage(decompressionResult.message);
+
+        const joinResult = this.opSplitter.processRemoteMessage(unpackResult.message);
+        if (joinResult.state === "NotReady") {
+            // If the op splitter detected a split message but didn't turn out the original message,
             // there is no point in processing this further
-            return message;
+            return joinResult.message;
         }
 
-        return this.unpack(this.opDecompressor.processMessage(message));
+        return joinResult.message;
     }
 
     private prepare(remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage {
@@ -49,28 +63,6 @@ export class Inbox {
         // Old ops may contain empty string (I assume noops).
         if (typeof message.contents === "string" && message.contents !== "") {
             message.contents = JSON.parse(message.contents);
-        }
-
-        return message;
-    }
-
-    private unpack(message: ISequencedDocumentMessage): ISequencedDocumentMessage {
-        if (message.type !== MessageType.Operation) {
-            // Legacy format, but it's already "unpacked",
-            // i.e. message.type is actually ContainerMessageType.
-            // Or it's non-runtime message.
-            // Nothing to do in such case.
-            return message;
-        }
-
-        // legacy op format?
-        if (message.contents.address !== undefined && message.contents.type === undefined) {
-            message.type = ContainerMessageType.FluidDataStoreOp;
-        } else {
-            // new format
-            const innerContents = message.contents as ContainerRuntimeMessage;
-            message.type = innerContents.type;
-            message.contents = innerContents.contents;
         }
 
         return message;

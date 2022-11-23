@@ -6,6 +6,7 @@
 import { decompress } from "lz4js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { IProcessingResult, IRemoteMessageProcessor } from "./opLifecycle";
 import { CompressionAlgorithms } from ".";
 
 /**
@@ -16,12 +17,12 @@ import { CompressionAlgorithms } from ".";
  * 3. The final message of a batch will have batch metadata set to false
  * 4. An individually compressed op will have undefined batch metadata and compression set to true
  */
-export class OpDecompressor {
+export class OpDecompressor implements IRemoteMessageProcessor {
     private activeBatch = false;
     private rootMessageContents: any | undefined;
     private processedCount = 0;
 
-    public processMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage {
+    public processRemoteMessage(message: ISequencedDocumentMessage): IProcessingResult {
         // We're checking for compression = true or top level compression property so
         // that we can enable compression without waiting on all ordering services
         // to pick up protocol change. Eventually only the top level property should
@@ -33,7 +34,7 @@ export class OpDecompressor {
             if (message.compression) {
                 // lz4 is the only supported compression algorithm for now
                 assert(message.compression === CompressionAlgorithms.lz4,
-                        "lz4 is currently the only supported compression algorithm");
+                    "lz4 is currently the only supported compression algorithm");
             }
 
             this.activeBatch = true;
@@ -44,24 +45,37 @@ export class OpDecompressor {
             const asObj = JSON.parse(intoString);
             this.rootMessageContents = asObj;
 
-            return { ...message, contents: this.rootMessageContents[this.processedCount++] };
+            return {
+                message: {
+                    ...message, contents: this.rootMessageContents[this.processedCount++],
+                },
+                state: "Processed",
+            };
         }
 
         if (this.rootMessageContents !== undefined && message.metadata?.batch === undefined && this.activeBatch) {
             // Continuation of compressed batch
-            return { ...message, contents: this.rootMessageContents[this.processedCount++] };
+            return {
+                message: { ...message, contents: this.rootMessageContents[this.processedCount++] },
+                state: "Processed",
+            };
         }
 
         if (this.rootMessageContents !== undefined && message.metadata?.batch === false) {
             // End of compressed batch
-            const returnMessage = { ...message,
-                                    contents: this.rootMessageContents[this.processedCount++] };
+            const returnMessage = {
+                ...message,
+                contents: this.rootMessageContents[this.processedCount++]
+            };
 
             this.activeBatch = false;
             this.rootMessageContents = undefined;
             this.processedCount = 0;
 
-            return returnMessage;
+            return {
+                message: returnMessage,
+                state: "Processed",
+            };
         }
 
         if (message.metadata?.batch === undefined &&
@@ -74,9 +88,12 @@ export class OpDecompressor {
             const intoString = new TextDecoder().decode(decompressedMessage);
             const asObj = JSON.parse(intoString);
 
-            return { ...message, contents: asObj[0] };
+            return {
+                message: { ...message, contents: asObj[0] },
+                state: "Processed",
+            };
         }
 
-        return message;
+        return { message, state: "Skipped", };
     }
 }

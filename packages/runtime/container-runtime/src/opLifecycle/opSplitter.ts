@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ContainerMessageType } from "../containerRuntime";
+import { IProcessingResult, IRemoteMessageProcessor } from "./inbox";
 
 export interface IChunkedOp {
     chunkId: number;
@@ -17,13 +18,11 @@ export interface IChunkedOp {
 /**
  * Responsible for keeping track of remote chunked messages.
  */
-export class OpSplitter {
+export class OpSplitter implements IRemoteMessageProcessor {
     // Local copy of incomplete received chunks.
     private readonly chunkMap: Map<string, string[]>;
 
-    constructor(
-        chunks: [string, string[]][],
-    ) {
+    constructor(chunks: [string, string[]][]) {
         this.chunkMap = new Map<string, string[]>(chunks);
     }
 
@@ -35,9 +34,9 @@ export class OpSplitter {
         return this.chunkMap;
     }
 
-    public processIncoming(message: ISequencedDocumentMessage) {
+    public processRemoteMessage(message: ISequencedDocumentMessage): IProcessingResult {
         if (message.type !== ContainerMessageType.ChunkedOp) {
-            return message;
+            return { message, state: "Skipped" };
         }
 
         const clientId = message.clientId;
@@ -48,13 +47,16 @@ export class OpSplitter {
             const serializedContent = this.chunkMap.get(clientId)!.join("");
             this.clearPartialChunks(clientId);
             return {
-                ...message,
-                contents: serializedContent === "" ? undefined : JSON.parse(serializedContent),
-                type: chunkedContent.originalType,
+                message: {
+                    ...message,
+                    contents: serializedContent === "" ? undefined : JSON.parse(serializedContent),
+                    type: chunkedContent.originalType,
+                },
+                state: "Processed",
             };
         }
 
-        return message;
+        return { message, state: "NotReady" };
     }
 
     public clearPartialChunks(clientId: string) {

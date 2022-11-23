@@ -84,51 +84,56 @@ describe("OpDecompressor", () => {
     });
 
     it("Processes single compressed op", () => {
-        const message = decompressor.processMessage(generateCompressedBatchMessage(1));
-        assert.strictEqual(message.contents.contents, "value0");
+        const result = decompressor.processRemoteMessage(generateCompressedBatchMessage(1));
+        assert.strictEqual(result.state, "Processed");
+        assert.strictEqual(result.message.contents.contents, "value0");
     });
 
     it("Processes multiple compressed ops", () => {
         const rootMessage = generateCompressedBatchMessage(5);
-        const firstMessage = decompressor.processMessage(rootMessage);
+        const firstMessageResult = decompressor.processRemoteMessage(rootMessage);
 
-        assert.strictEqual(firstMessage.contents.contents, "value0");
+        assert.strictEqual(firstMessageResult.state, "Processed");
+        assert.strictEqual(firstMessageResult.message.contents.contents, "value0");
 
         for (let i = 1; i < 4; i++) {
-            const message = decompressor.processMessage(emptyMessage);
-            assert.strictEqual(message.contents.contents, `value${i}`);
+            const messageResult = decompressor.processRemoteMessage(emptyMessage);
+            assert.strictEqual(messageResult.state, "Processed");
+            assert.strictEqual(messageResult.message.contents.contents, `value${i}`);
         }
 
-        assert.strictEqual(decompressor.processMessage(endBatchEmptyMessage).contents.contents, "value4");
+        const lastMessageResult = decompressor.processRemoteMessage(endBatchEmptyMessage);
+        assert.strictEqual(lastMessageResult.state, "Processed");
+        assert.strictEqual(lastMessageResult.message.contents.contents, "value4");
     });
 
     it("Processes multiple batches of compressed ops", () => {
         const rootMessage = generateCompressedBatchMessage(5);
-        const firstMessage = decompressor.processMessage(rootMessage);
+        const firstMessage = decompressor.processRemoteMessage(rootMessage).message;
 
         assert.strictEqual(firstMessage.contents.contents, "value0");
 
         for (let i = 1; i < 4; i++) {
-            const message = decompressor.processMessage(emptyMessage);
+            const message = decompressor.processRemoteMessage(emptyMessage).message;
             assert.strictEqual(message.contents.contents, `value${i}`);
         }
 
-        assert.strictEqual(decompressor.processMessage(endBatchEmptyMessage).contents.contents, "value4");
+        assert.strictEqual(decompressor.processRemoteMessage(endBatchEmptyMessage).message.contents.contents, "value4");
 
         const nextRootMessage = generateCompressedBatchMessage(3);
-        const nextFirstMessage = decompressor.processMessage(nextRootMessage);
+        const nextFirstMessage = decompressor.processRemoteMessage(nextRootMessage).message;
 
         assert.strictEqual(nextFirstMessage.contents.contents, "value0");
 
-        const middleMessage = decompressor.processMessage(emptyMessage);
+        const middleMessage = decompressor.processRemoteMessage(emptyMessage).message;
         assert.strictEqual(middleMessage.contents.contents, "value1");
 
-        assert.strictEqual(decompressor.processMessage(endBatchEmptyMessage).contents.contents, "value2");
+        assert.strictEqual(decompressor.processRemoteMessage(endBatchEmptyMessage).message.contents.contents, "value2");
     });
 
     it("Processes single compressed op wth only protocol property", () => {
         const rootMessage = generateCompressedBatchMessage(5, false);
-        const firstMessage = decompressor.processMessage(rootMessage);
+        const firstMessage = decompressor.processRemoteMessage(rootMessage).message;
 
         assert.strictEqual(firstMessage.contents.contents, "value0");
     });

@@ -5,8 +5,13 @@
 
 export {
     Inbox,
+    IProcessingResult,
+    IRemoteMessageProcessor,
 } from "./inbox";
 export {
     IChunkedOp,
     OpSplitter,
 } from "./opSplitter";
+export {
+    OpUnpacker,
+} from "./opUnpacker";

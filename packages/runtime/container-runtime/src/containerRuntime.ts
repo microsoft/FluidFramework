@@ -168,7 +168,7 @@ import { BindBatchTracker } from "./batchTracker";
 import { ISerializedBaseSnapshotBlobs, SerializedSnapshotStorage } from "./serializedSnapshotStorage";
 import { ScheduleManager } from "./scheduleManager";
 import { OpDecompressor } from "./opDecompressor";
-import { Inbox, OpSplitter } from "./opLifecycle";
+import { Inbox, OpSplitter, OpUnpacker } from "./opLifecycle";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -581,7 +581,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 }
 
 /**
- * Unpacks runtime messages
+ * Unpacks runtime messages. To be removed and replaced with `OpUnpacker` ADO:2465
  *
  * @remarks This API makes no promises regarding backward-compatibility. This is internal API.
  * @param message - message (as it observed in storage / service)
@@ -1034,7 +1034,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.messageAtLastSummary = metadata?.message;
 
         this._connected = this.context.connected;
-        this.inbox = new Inbox(new OpSplitter(chunks), new OpDecompressor());
+        this.inbox = new Inbox(new OpSplitter(chunks), new OpDecompressor(), new OpUnpacker());
 
         this.handleContext = new ContainerFluidHandleContext("", this);
 
