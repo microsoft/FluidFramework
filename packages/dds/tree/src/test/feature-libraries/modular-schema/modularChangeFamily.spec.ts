@@ -17,12 +17,13 @@ import {
     FieldEditor,
     NodeChangeset,
     genericFieldKind,
+    FieldChange,
 } from "../../../feature-libraries";
-import { makeAnonChange, RevisionTag } from "../../../rebase";
+import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../../rebase";
 import { FieldKindIdentifier } from "../../../schema-stored";
 import { AnchorSet, Delta, FieldKey, UpPath } from "../../../tree";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
-import { assertDeltaEqual } from "../../utils";
+import { assertDeltaEqual, deepFreeze } from "../../utils";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
@@ -283,7 +284,10 @@ describe("ModularChangeFamily", () => {
                     },
                 ],
             ]);
-            assert.deepEqual(family.compose([rootChange1a, rootChange2]), expectedCompose);
+            assert.deepEqual(
+                family.compose([makeAnonChange(rootChange1a), makeAnonChange(rootChange2)]),
+                expectedCompose,
+            );
         });
 
         it("compose specific ○ generic", () => {
@@ -303,7 +307,10 @@ describe("ModularChangeFamily", () => {
                     },
                 ],
             ]);
-            assert.deepEqual(family.compose([rootChange1a, rootChange2Generic]), expectedCompose);
+            assert.deepEqual(
+                family.compose([makeAnonChange(rootChange1a), makeAnonChange(rootChange2Generic)]),
+                expectedCompose,
+            );
         });
 
         it("compose generic ○ specific", () => {
@@ -323,7 +330,10 @@ describe("ModularChangeFamily", () => {
                     },
                 ],
             ]);
-            assert.deepEqual(family.compose([rootChange1aGeneric, rootChange2]), expectedCompose);
+            assert.deepEqual(
+                family.compose([makeAnonChange(rootChange1aGeneric), makeAnonChange(rootChange2)]),
+                expectedCompose,
+            );
         });
 
         it("compose generic ○ generic", () => {
@@ -349,9 +359,98 @@ describe("ModularChangeFamily", () => {
                 ],
             ]);
             assert.deepEqual(
-                family.compose([rootChange1aGeneric, rootChange2Generic]),
+                family.compose([
+                    makeAnonChange(rootChange1aGeneric),
+                    makeAnonChange(rootChange2Generic),
+                ]),
                 expectedCompose,
             );
+        });
+
+        it("compose tagged changes", () => {
+            const change1A: FieldChange = {
+                fieldKind: valueField.identifier,
+                change: brand(valueChange1a),
+            };
+
+            const value1 = "Value 1";
+            const nodeChange1: NodeChangeset = {
+                valueChange: { value: value1 },
+            };
+
+            const change1B: FieldChange = {
+                fieldKind: singleNodeField.identifier,
+                change: brand(nodeChange1),
+            };
+
+            const change1: TaggedChange<FieldChangeMap> = tagChange(
+                new Map([
+                    [fieldA, change1A],
+                    [fieldB, change1B],
+                ]),
+                brand(1),
+            );
+
+            const nodeChange2: NodeChangeset = {
+                fieldChanges: new Map([
+                    [
+                        fieldA,
+                        {
+                            fieldKind: valueField.identifier,
+                            change: brand(valueChange2),
+                        },
+                    ],
+                ]),
+            };
+
+            const change2B: FieldChange = {
+                fieldKind: singleNodeField.identifier,
+                change: brand(nodeChange2),
+            };
+
+            deepFreeze(change2B);
+            const change2: TaggedChange<FieldChangeMap> = tagChange(
+                new Map([[fieldB, change2B]]),
+                brand(2),
+            );
+
+            deepFreeze(change1);
+            deepFreeze(change2);
+            const composed = family.compose([change1, change2]);
+
+            const expectedNodeChange: NodeChangeset = {
+                valueChange: { revision: change1.revision, value: value1 },
+                fieldChanges: new Map([
+                    [
+                        fieldA,
+                        {
+                            revision: change2.revision,
+                            fieldKind: valueField.identifier,
+                            change: brand(valueChange2),
+                        },
+                    ],
+                ]),
+            };
+
+            const expected: FieldChangeMap = new Map([
+                [
+                    fieldA,
+                    {
+                        revision: change1.revision,
+                        fieldKind: valueField.identifier,
+                        change: brand(valueChange1a),
+                    },
+                ],
+                [
+                    fieldB,
+                    {
+                        fieldKind: singleNodeField.identifier,
+                        change: brand(expectedNodeChange),
+                    },
+                ],
+            ]);
+
+            assert.deepEqual(composed, expected);
         });
     });
 

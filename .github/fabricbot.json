@@ -700,7 +700,7 @@
       "subCapability": "AutoMerge",
       "version": "1.0",
       "config": {
-        "taskName": "Automatically merge pull requests in next",
+        "taskName": "Automatically merge pull requests ",
         "label": "msftbot: merge-next",
         "silentMode": false,
         "minMinutesOpen": "5",
@@ -729,23 +729,8 @@
           }
         ],
         "mergeType": "squash",
-        "requireSpecificCheckRuns": true,
-        "requireSpecificCheckRunsList": [
-          "Build - tinylicious",
-          "Build - build-tools",
-          "Build - build-common",
-          "build - common-definitions",
-          "Build - common-utils",
-          "Build - client packages",
-          "Build - eslint-config-fluid",
-          "Build - protocol-definitions",
-          "license/cla",
-          "server-gitrest",
-          "server-gitssh",
-          "server-routerlicious",
-          "repo-policy-check",
-          "Build - azure"
-        ]
+        "requireSpecificCheckRuns": false,
+        "requireSpecificCheckRunsList": []
       },
       "disabled": false
     },

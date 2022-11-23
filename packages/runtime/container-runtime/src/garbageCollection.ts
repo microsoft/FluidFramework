@@ -54,6 +54,7 @@ import {
     ReadFluidDataStoreAttributes,
     dataStoreAttributesBlobName,
     IGCMetadata,
+    ICreateContainerMetadata,
 } from "./summaryFormat";
 
 /** This is the current version of garbage collection. */
@@ -78,8 +79,10 @@ export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
 export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
 // Feature gate key to turn GC sweep log off.
 export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
-// Feature gate key to tombstone datastores.
-export const testTombstoneKey = "Fluid.GarbageCollection.Test.Tombstone";
+// Feature gate key to disable the tombstone feature, i.e., tombstone information is not read / written into summary.
+export const disableTombstoneKey = "Fluid.GarbageCollection.DisableTombstone";
+// Feature gate to enable throwing an error when tombstone object is used.
+export const throwOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombstoneUsage";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -186,6 +189,7 @@ export interface IGarbageCollectorCreateParams {
     readonly baseLogger: ITelemetryLogger;
     readonly existing: boolean;
     readonly metadata: IContainerRuntimeMetadata | undefined;
+    readonly createContainerMetadata: ICreateContainerMetadata;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly isSummarizerClient: boolean;
     readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
@@ -453,6 +457,7 @@ export class GarbageCollector implements IGarbageCollector {
     private completedRuns = 0;
 
     private readonly runtime: IGarbageCollectionRuntime;
+    private readonly createContainerMetadata: ICreateContainerMetadata;
     private readonly gcOptions: IGCRuntimeOptions;
     private readonly isSummarizerClient: boolean;
 
@@ -494,6 +499,7 @@ export class GarbageCollector implements IGarbageCollector {
         this.runtime = createParams.runtime;
         this.isSummarizerClient = createParams.isSummarizerClient;
         this.gcOptions = createParams.gcOptions;
+        this.createContainerMetadata = createParams.createContainerMetadata;
         this.getNodePackagePath = createParams.getNodePackagePath;
         this.getLastSummaryTimestampMs = createParams.getLastSummaryTimestampMs;
         this.activeConnection = createParams.activeConnection;
@@ -636,7 +642,8 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
         this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? this.gcOptions.runGCInTestMode === true;
-        this.tombstoneMode = this.mc.config.getBoolean(testTombstoneKey) ?? false;
+        // Whether we are running in tombstone mode. This is true by default unless disabled via feature flags.
+        this.tombstoneMode = this.mc.config.getBoolean(disableTombstoneKey) !== true;
 
         // The GC state needs to be reset if the base snapshot contains GC tree and GC is disabled or it doesn't
         // contain GC tree and GC is enabled.
@@ -982,7 +989,9 @@ export class GarbageCollector implements IGarbageCollector {
         }
 
         const serializedGCState = JSON.stringify(generateSortedGCState(gcState));
-        const serializedTombstones = this.tombstones.length > 0 ? JSON.stringify(this.tombstones.sort()) : undefined;
+        const serializedTombstones = this.tombstoneMode
+            ? (this.tombstones.length > 0 ? JSON.stringify(this.tombstones.sort()) : undefined)
+            : undefined;
 
         /**
          * Incremental summary of GC data - If any of the GC state or tombstone state hasn't changed since the last
@@ -1517,6 +1526,7 @@ export class GarbageCollector implements IGarbageCollector {
                 : this.sweepTimeoutMs,
             completedGCRuns: this.completedRuns,
             lastSummaryTime: this.getLastSummaryTimestampMs(),
+            ...this.createContainerMetadata,
             externalRequest: requestHeaders?.[RuntimeHeaders.externalRequest],
             viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
             fromId: fromNodeId,

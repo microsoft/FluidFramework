@@ -120,6 +120,7 @@ export {
     RevisionTag,
     TaggedChange,
     ChangesetFromChangeRebaser,
+    makeAnonChange,
     tagChange,
 } from "../rebase";
 
