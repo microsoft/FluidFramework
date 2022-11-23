@@ -589,23 +589,21 @@ export const handlers: Handler[] = [
         name: "npm-package-json-prettier",
         match,
         handler: (file) => {
-            console.log('npm-package-json-prettier');
-            return undefined
-            // let json;
+            let json;
 
-            // try {
-            //     json = JSON.parse(readFile(file))
-            // } catch (err) {
-            //     return "Error parsing JSON file: " + file;
-            // }
+            try {
+                json = JSON.parse(readFile(file))
+            } catch (err) {
+                return "Error parsing JSON file: " + file;
+            }
 
-            // const hasPrettierProperty = Object.prototype.hasOwnProperty.call(json, "prettier");
-            // const hasPrettierFixProperty = Object.prototype.hasOwnProperty.call(json, "prettier:fix");
-            // const hasFormatProperty = Object.prototype.hasOwnProperty.call(json, "format");
+            const hasPrettierProperty = Object.prototype.hasOwnProperty.call(json, "prettier");
+            const hasPrettierFixProperty = Object.prototype.hasOwnProperty.call(json, "prettier:fix");
+            const hasFormatProperty = Object.prototype.hasOwnProperty.call(json, "format");
 
-            // if (!(hasPrettierProperty && hasPrettierFixProperty && hasFormatProperty)) {
-            //     return "Error parsing JSON file: " + file;
-            // }
+            if (!(hasPrettierProperty && hasPrettierFixProperty && hasFormatProperty)) {
+                return "Error parsing JSON file: " + file;
+            }
         },
     },
 ];
