@@ -44,7 +44,7 @@ export async function runWithRetry<T>({
     shouldRetry,
     calculateIntervalMs = (error, numRetries, retryAfterInterval) => retryAfterInterval * 2 ** numRetries,
     onErrorFn,
-    telemetryEnabled = false
+    telemetryEnabled = false,
 } : runWithRetryParams<T>): Promise<T | undefined> {
     let result: T | undefined;
     let retryCount = 0;

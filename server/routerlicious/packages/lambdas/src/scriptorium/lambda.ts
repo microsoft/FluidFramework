@@ -119,6 +119,6 @@ export class ScriptoriumLambda implements IPartitionLambda {
             shouldIgnoreError: (error) => error.code === 11000,
             shouldRetry: (error) => !this.clientFacadeRetryEnabled,
             telemetryEnabled: true,
-    });
+        });
     }
 }
