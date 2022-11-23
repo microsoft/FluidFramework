@@ -11,7 +11,7 @@ import {
     NodeReviver,
     singleTextCursor,
 } from "../../feature-libraries";
-import { makeAnonChange, RevisionTag } from "../../rebase";
+import { makeAnonChange, RevisionTag, TaggedChange } from "../../rebase";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { Delta } from "../../tree";
 import { brand, JsonCompatibleReadOnly } from "../../util";
@@ -47,9 +47,12 @@ const childDecoder1 = (encodedChange: JsonCompatibleReadOnly) => {
     return nodeChange1;
 };
 
-const childComposer1_2 = (changes: NodeChangeset[]): NodeChangeset => {
+const childComposer1_2 = (changes: TaggedChange<NodeChangeset>[]): NodeChangeset => {
     assert(changes.length === 2);
-    assert.deepEqual(changes, [nodeChange1, nodeChange2]);
+    assert.deepEqual(
+        changes.map((c) => c.change),
+        [nodeChange1, nodeChange2],
+    );
     return nodeChange3;
 };
 
@@ -73,9 +76,9 @@ describe("Value field changesets", () => {
         value: { revert: detachedBy },
     };
 
-    const simpleChildComposer = (changes: NodeChangeset[]) => {
+    const simpleChildComposer = (changes: TaggedChange<NodeChangeset>[]) => {
         assert.equal(changes.length, 1);
-        return changes[0];
+        return changes[0].change;
     };
 
     it("can be created", () => {
@@ -84,14 +87,20 @@ describe("Value field changesets", () => {
     });
 
     it("can be composed", () => {
-        const composed = fieldHandler.rebaser.compose([change1, change2], simpleChildComposer);
+        const composed = fieldHandler.rebaser.compose(
+            [makeAnonChange(change1), makeAnonChange(change2)],
+            simpleChildComposer,
+        );
 
         assert.deepEqual(composed, change2);
     });
 
     it("can be composed with child changes", () => {
         assert.deepEqual(
-            fieldHandler.rebaser.compose([change1, childChange1], simpleChildComposer),
+            fieldHandler.rebaser.compose(
+                [makeAnonChange(change1), makeAnonChange(childChange1)],
+                simpleChildComposer,
+            ),
             change1WithChildChange,
         );
 
@@ -102,12 +111,18 @@ describe("Value field changesets", () => {
 
         assert.deepEqual(change1WithChildChange, expected);
         assert.deepEqual(
-            fieldHandler.rebaser.compose([childChange1, change1], simpleChildComposer),
+            fieldHandler.rebaser.compose(
+                [makeAnonChange(childChange1), makeAnonChange(change1)],
+                simpleChildComposer,
+            ),
             change1,
         );
 
         assert.deepEqual(
-            fieldHandler.rebaser.compose([childChange1, childChange2], childComposer1_2),
+            fieldHandler.rebaser.compose(
+                [makeAnonChange(childChange1), makeAnonChange(childChange2)],
+                childComposer1_2,
+            ),
             childChange3,
         );
     });
@@ -227,8 +242,12 @@ describe("Optional field changesets", () => {
     });
 
     it("can be composed", () => {
-        const childComposer = (_: NodeChangeset[]) => assert.fail("Should not be called");
-        const composed = fieldHandler.rebaser.compose([change1, change2], childComposer);
+        const childComposer = (_: TaggedChange<NodeChangeset>[]) =>
+            assert.fail("Should not be called");
+        const composed = fieldHandler.rebaser.compose(
+            [makeAnonChange(change1), makeAnonChange(change2)],
+            childComposer,
+        );
         assert.deepEqual(composed, change3);
     });
 
@@ -239,7 +258,10 @@ describe("Optional field changesets", () => {
         };
 
         assert.deepEqual(
-            fieldHandler.rebaser.compose([change1, change4], childComposer1_2),
+            fieldHandler.rebaser.compose(
+                [makeAnonChange(change1), makeAnonChange(change4)],
+                childComposer1_2,
+            ),
             expected,
         );
     });
