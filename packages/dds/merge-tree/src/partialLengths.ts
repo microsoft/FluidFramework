@@ -454,10 +454,12 @@ export class PartialSequenceLengths {
         removalInfo?: IRemovalInfo,
         moveInfo?: IMoveInfo,
         obliterateRefSeq?: number) {
+        const removalIsLocal = !!removalInfo && removalInfo.removedSeq === UnassignedSequenceNumber;
+        const moveIsLocal = !!moveInfo && moveInfo.movedSeq === UnassignedSequenceNumber;
         const isLocal =
-            (removalInfo === undefined && moveInfo === undefined && segment.seq === UnassignedSequenceNumber)
-            || (removalInfo !== undefined && segment.removedSeq === UnassignedSequenceNumber)
-            || (moveInfo !== undefined && segment.movedSeq === UnassignedSequenceNumber);
+            (!removalInfo && !moveInfo && segment.seq === UnassignedSequenceNumber)
+            || (removalInfo && removalIsLocal && (!moveInfo || moveIsLocal))
+            || (moveInfo && moveIsLocal && (!removalInfo || removalIsLocal));
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         let seqOrLocalSeq = isLocal ? segment.localSeq! : segment.seq!;
         let segmentLen = segment.cachedLength;
@@ -466,9 +468,6 @@ export class PartialSequenceLengths {
         let remoteObliteratedLen: number | undefined;
 
         if (removalInfo && moveInfo) {
-            const removalIsLocal = removalInfo.removedSeq === UnassignedSequenceNumber;
-            const moveIsLocal = moveInfo.movedSeq === UnassignedSequenceNumber;
-
             assert(!moveIsLocal && !removalIsLocal || moveIsLocal !== removalIsLocal, "");
 
             if (removalIsLocal) {
@@ -515,7 +514,7 @@ export class PartialSequenceLengths {
                 && obliterateRefSeq !== undefined
                 && segment.seq !== undefined
                 && obliterateRefSeq < segment.seq
-                ) {
+            ) {
                 remoteObliteratedLen = segmentLen;
             }
 
