@@ -359,7 +359,7 @@ describe("Summarizer Client Election", () => {
             summaryAck();
             assertState("b", "b", maxOps + 4001, "should not reelect after summary ack");
 
-            // Summary ack should prevent reelection
+            // Summary ack should prevent reelection.
             defaultOp(maxOps);
             assertState("b", "b", maxOps + 4001, "should not reelect <= max ops since summary ack");
 
