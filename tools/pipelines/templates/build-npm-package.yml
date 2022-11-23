@@ -221,9 +221,11 @@ stages:
 
           - task: Bash@3
             displayName: Setup pnpm
-            script: |
-              curl -f https://get.pnpm.io/v6.16.js | node - add --global pnpm@7
-              pnpm config set store-dir $(pnpm_config_cache)
+            inputs:
+              targetType: 'inline'
+              script: |
+                curl -f https://get.pnpm.io/v6.16.js | node - add --global pnpm@7
+                pnpm config set store-dir $(pnpm_config_cache)
 
         - task: Bash@3
           displayName: Install dependencies
