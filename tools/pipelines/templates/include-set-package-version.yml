@@ -30,7 +30,7 @@ steps:
   - task: Cache@2
     displayName: Check dependency cache
     inputs:
-      key: 'pnpm | "$(Agent.OS)" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+      key: 'pnpm | "$(Agent.OS)" | build-tools/pnpm-lock.yaml'
       path: ${{ parameters.pnpmCachePath }}
 
   - task: Bash@3
