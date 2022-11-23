@@ -174,7 +174,7 @@ export class BlobManager {
         this.redirectTable = this.load(snapshot);
 
         if (this.throwOnTombstoneUsage) {
-            assert(false != false, "test");
+            console.log("test");
         }
         // Begin uploading stashed blobs from previous container instance
         Object.entries(stashedBlobs).forEach(([localId, entry]) => {
