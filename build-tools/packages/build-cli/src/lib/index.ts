@@ -25,17 +25,13 @@ export { Repository } from "./git";
 export {
     filterVersionsOlderThan,
     generateReleaseGitTagName,
-    getAllVersions,
     getFluidDependencies,
     getPreReleaseDependencies,
-    getTagsForReleaseGroup,
-    getVersionFromTag,
     isReleased,
     npmCheckUpdates,
     PackageVersionMap,
     PreReleaseDependencies,
     sortVersions,
-    VersionDetails,
 } from "./package";
 export { difference } from "./sets";
 export { getIndent, indentString } from "./text";
