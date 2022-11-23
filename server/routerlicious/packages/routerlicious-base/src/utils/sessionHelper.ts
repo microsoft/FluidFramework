@@ -66,6 +66,7 @@ async function updateExistingSession(
     documentsCollection: ICollection<IDocument>,
     sessionStickinessDurationMs: number,
     lumberjackProperties: Record<string, any>,
+    count: number,
 ): Promise<ISession> {
     let updatedDeli: string | undefined;
     let updatedScribe: string | undefined;
@@ -222,6 +223,7 @@ export async function getSession(
     documentId: string,
     documentsCollection: ICollection<IDocument>,
     sessionStickinessDurationMs: number = defaultSessionStickinessDurationMs,
+    count: number = 0,
 ): Promise<ISession> {
     const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
@@ -267,6 +269,7 @@ export async function getSession(
         documentsCollection,
         sessionStickinessDurationMs,
         lumberjackProperties,
+        count,
     );
     return convertSessionToFreshSession(updatedSession, lumberjackProperties);
 }
