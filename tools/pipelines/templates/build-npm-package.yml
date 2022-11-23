@@ -216,7 +216,10 @@ stages:
           - task: Cache@2
             displayName: Cache dependencies
             inputs:
-              key: 'pnpm | "$(Agent.OS)" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+              key: '"pnpm-store" | "$(Agent.OS)" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+              restoreKeys: |
+                "pnpm-store" | "$(Agent.OS)"
+                "pnpm-store"
               path: ${{ variables.pnpmCachePath }}
 
           - task: Bash@3
