@@ -483,3 +483,16 @@ stages:
         namespace: ${{ parameters.namespace }}
         tagName: ${{ parameters.tagName }}
         publishNonScopedPackages: ${{ variables.publishNonScopedPackages }}
+
+  - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+    # Reset the pnpm-lock.yaml file since it's been modified by the versioning. But for dependency caching we want the
+    # cache key (which is based on the contents of the lockfile) to be the unmodified file. So we reset the lockfile as
+    # the last step so that when the dependency cache is uploaded, the cache key matches what it was at the beginning of
+    # the CI job.
+    - task: Bash@3
+      displayName: Reset lockfile
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: |
+          git checkout HEAD -- pnpm-lock.yaml
