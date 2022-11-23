@@ -1,7 +1,6 @@
 {
   "name": "@fluid-internal/tree",
-  "version": "2.0.0-internal.2.1.0",
-  "private": true,
+  "version": "2.0.0-internal.2.2.0",
   "description": "Tree",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -34,6 +33,7 @@
     "format": "npm run prettier:fix",
     "lint": "npm run prettier && npm run eslint",
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
+    "postpack": "tar -cf ./tree.test-files.tar ./src/test ./dist/test",
     "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
     "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
     "test": "npm run test:mocha",
@@ -42,9 +42,8 @@
     "test:mocha": "mocha --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup -r source-map-support/register --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
-    "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace",
-    "typetests:gen": "fluid-type-validator -g -d ."
+    "typetests:gen": "flub generate typetests --generate --dir .",
+    "typetests:prepare": "flub generate typetests --prepare --dir . --pin"
   },
   "nyc": {
     "all": true,
@@ -67,31 +66,32 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
+    "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^1.0.0",
-    "@fluidframework/container-runtime": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/core-interfaces": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/datastore-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/container-runtime": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/datastore-definitions": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@fluidframework/protocol-definitions": "^1.1.0",
-    "@fluidframework/runtime-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/runtime-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/shared-object-base": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/runtime-definitions": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/runtime-utils": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/shared-object-base": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@ungap/structured-clone": "^0.3.4",
+    "sorted-btree": "^1.8.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluid-internal/stochastic-test-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluid-internal/stochastic-test-utils": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@fluid-tools/benchmark": "^0.43.0",
-    "@fluid-tools/build-cli": "^0.5.0-103719",
-    "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/build-tools": "^0.5.0-103719",
-    "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/container-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/container-loader": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/eslint-config-fluid": "^1.1.0",
-    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/test-drivers": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/test-runtime-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/test-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluid-tools/build-cli": "^0.6.0-109663",
+    "@fluidframework/build-common": "^1.1.0",
+    "@fluidframework/build-tools": "^0.6.0-109663",
+    "@fluidframework/container-definitions": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/container-loader": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/eslint-config-fluid": "^1.2.0",
+    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/test-drivers": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/test-runtime-utils": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/test-utils": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",
@@ -107,10 +107,9 @@
     "good-fences": "^1.1.1",
     "mocha": "^10.0.0",
     "nyc": "^15.0.0",
-    "prettier": "~2.3.1",
+    "prettier": "~2.6.2",
     "rimraf": "^2.6.2",
     "source-map-support": "^0.5.16",
-    "typescript": "~4.5.5",
-    "typescript-formatter": "7.1.0"
+    "typescript": "~4.5.5"
   }
 }

@@ -48,6 +48,23 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue 
     return nodeValue !== undefined && typeof nodeValue !== "object";
 }
 
+export function assertPrimitiveValueType(nodeValue: Value, schema: TreeSchema): void {
+    assert(isPrimitiveValue(nodeValue), 0x45b /* The value is not primitive */);
+    switch (schema.value) {
+        case ValueSchema.String:
+            assert(typeof nodeValue === "string", 0x45c /* Expected string */);
+            break;
+        case ValueSchema.Number:
+            assert(typeof nodeValue === "number", 0x45d /* Expected number */);
+            break;
+        case ValueSchema.Boolean:
+            assert(typeof nodeValue === "boolean", 0x45e /* Expected boolean */);
+            break;
+        default:
+            fail("wrong value schema");
+    }
+}
+
 export function getPrimaryField(
     schema: TreeSchema,
 ): { key: LocalFieldKey; schema: FieldSchema } | undefined {

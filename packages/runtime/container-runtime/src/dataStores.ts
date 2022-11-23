@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
 import { DataCorruptionError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
@@ -34,9 +34,10 @@ import {
     create404Response,
     createResponseError,
     responseToException,
+    packagePathToTelemetryProperty,
     SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
-import { ChildLogger, LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { ChildLogger, loggerToMonitoringContext, LoggingError, MonitoringContext, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { BlobCacheStorageService, buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy, LazyPromise } from "@fluidframework/common-utils";
@@ -53,7 +54,8 @@ import {
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
-import { GCNodeType } from "./garbageCollection";
+import { throwOnTombstoneUsageKey, GCNodeType } from "./garbageCollection";
+import { summarizerClientType } from "./summarizerClientElection";
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -67,7 +69,7 @@ export class DataStores implements IDisposable {
     // 0.24 back-compat attachingBeforeSummary
     public readonly attachOpFiredForDataStore = new Set<string>();
 
-    private readonly logger: ITelemetryLogger;
+    private readonly mc: MonitoringContext;
 
     private readonly disposeOnce = new Lazy<void>(() => this.contexts.dispose());
 
@@ -81,6 +83,8 @@ export class DataStores implements IDisposable {
     // Stores the ids of new data stores between two GC runs. This is used to notify the garbage collector of new
     // root data stores that are added.
     private dataStoresSinceLastGC: string[] = [];
+    /** If true, throw an error when a tombstone data store is retrieved. */
+    private readonly throwOnTombstoneUsage: boolean;
     // The handle to the container runtime. This is used mainly for GC purposes to represent outbound reference from
     // the container runtime to other nodes.
     private readonly containerRuntimeHandle: IFluidHandle;
@@ -100,7 +104,7 @@ export class DataStores implements IDisposable {
         private readonly aliasMap: Map<string, string>,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
-        this.logger = ChildLogger.create(baseLogger);
+        this.mc = loggerToMonitoringContext(ChildLogger.create(baseLogger));
         this.containerRuntimeHandle = new FluidObjectHandle(this.runtime, "/", this.runtime.IFluidHandleContext);
 
         const baseGCDetailsP = new LazyPromise(async () => {
@@ -111,6 +115,10 @@ export class DataStores implements IDisposable {
             const baseGCDetails = await baseGCDetailsP;
             return baseGCDetails.get(dataStoreId);
         };
+        // Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
+        this.throwOnTombstoneUsage =
+            this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
+            this.runtime.clientDetails.type !== summarizerClientType;
 
         // Extract stores stored inside the snapshot
         const fluidDataStores = new Map<string, ISnapshotTree>();
@@ -280,7 +288,7 @@ export class DataStores implements IDisposable {
 
         const context = this.contexts.get(aliasMessage.internalId);
         if (context === undefined) {
-            this.logger.sendErrorEvent({
+            this.mc.logger.sendErrorEvent({
                 eventName: "AliasFluidDataStoreNotFound",
                 fluidDataStoreId: aliasMessage.internalId,
             });
@@ -429,14 +437,20 @@ export class DataStores implements IDisposable {
         }
 
         if (context.tombstoned) {
+            // The requested data store is removed by gc. Create a 404 gc response exception.
+            const error = responseToException(createResponseError(404, "Datastore removed by gc", request), request);
             // Note: if a user writes a request to look like it's viaHandle, we will also send this telemetry event
-            this.logger.sendErrorEvent({
-                eventName: "TombstonedDataStoreRequested",
+            this.mc.logger.sendErrorEvent({
+                eventName: "GC_Tombstone_DataStore_Requested",
                 url: request.url,
+                pkg: packagePathToTelemetryProperty(context.isLoaded ? context.packagePath : undefined),
                 viaHandle,
-            });
-            // The requested data store is removed by gc. Throw a 404 gc response exception.
-            throw responseToException(createResponseError(404, "Datastore removed by gc", request), request);
+            }, error);
+            // Always log an error when tombstoned data store is used. However, throw an error only if
+            // throwOnTombstoneUsage is set.
+            if (this.throwOnTombstoneUsage) {
+                throw error;
+            }
         }
 
         return context;
@@ -447,7 +461,7 @@ export class DataStores implements IDisposable {
         if (!context) {
             // Attach message may not have been processed yet
             assert(!local, 0x163 /* "Missing datastore for local signal" */);
-            this.logger.sendTelemetryEvent({
+            this.mc.logger.sendTelemetryEvent({
                 eventName: "SignalFluidDataStoreNotFound",
                 fluidDataStoreId: {
                     value: address,
@@ -465,7 +479,7 @@ export class DataStores implements IDisposable {
             try {
                 context.setConnectionState(connected, clientId);
             } catch (error) {
-                this.logger.sendErrorEvent({
+                this.mc.logger.sendErrorEvent({
                     eventName: "SetConnectionStateError",
                     clientId,
                     fluidDataStore,
@@ -609,6 +623,11 @@ export class DataStores implements IDisposable {
         // Verify that the used routes are correct.
         for (const [id] of usedDataStoreRoutes) {
             assert(this.contexts.has(id), 0x167 /* "Used route does not belong to any known data store" */);
+
+            // Revive datastores regardless of whether or not tombstone the tombstone flag is flipped
+            const dataStore = this.contexts.get(id);
+            assert(dataStore !== undefined, 0x46e /* No data store retrieved with specified id */);
+            dataStore.setTombstone(false /* tombstone */);
         }
 
         // Update the used routes in each data store. Used routes is empty for unused data stores.
@@ -618,12 +637,13 @@ export class DataStores implements IDisposable {
     }
 
     /**
-     * When running GC in test mode, this is called to delete objects whose routes are unused. This enables testing
-     * scenarios with accessing deleted content.
+     * This is called to update objects whose routes are unused. The unused objects are either deleted or marked as
+     * tombstones.
      * @param unusedRoutes - The routes that are unused in all data stores in this Container.
-     * @param tombstone - set the objects corresponding to routes as tombstones.
+     * @param tombstone - if true, the objects corresponding to unused routes are marked tombstones. Otherwise, they
+     * are deleted.
      */
-    public deleteUnusedRoutes(unusedRoutes: string[], tombstone: boolean = false) {
+    public updateUnusedRoutes(unusedRoutes: string[], tombstone: boolean) {
         for (const route of unusedRoutes) {
             const pathParts = route.split("/");
             // Delete data store only if its route (/datastoreId) is in unusedRoutes. We don't want to delete a data
@@ -642,8 +662,7 @@ export class DataStores implements IDisposable {
             if (tombstone) {
                 const dataStore = this.contexts.get(dataStoreId);
                 assert(dataStore !== undefined, 0x442 /* No data store retrieved with specified id */);
-                // Delete the contexts of unused data stores.
-                dataStore.tombstone();
+                dataStore.setTombstone(true /* tombstone */);
                 continue;
             }
 

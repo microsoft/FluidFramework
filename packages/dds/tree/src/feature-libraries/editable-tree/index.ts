@@ -4,7 +4,6 @@
  */
 
 export {
-    anchorSymbol,
     typeSymbol,
     typeNameSymbol,
     EditableTree,
@@ -16,7 +15,9 @@ export {
     UnwrappedEditableTree,
     UnwrappedEditableField,
     valueSymbol,
-    getWithoutUnwrappingSymbol,
+    indexSymbol,
+    getField,
+    createField,
 } from "./editableTree";
 
 export { EditableTreeContext, getEditableTreeContext } from "./editableTreeContext";

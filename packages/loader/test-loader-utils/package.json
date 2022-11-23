@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/test-loader-utils",
-  "version": "2.0.0-internal.2.1.0",
+  "version": "2.0.0-internal.2.2.0",
   "description": "Mocks and other test utilities for the Fluid Framework Loader",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -25,31 +25,31 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
-    "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace",
-    "typetests:gen": "fluid-type-validator -g -d ."
+    "typetests:gen": "flub generate typetests --generate --dir .",
+    "typetests:prepare": "flub generate typetests --prepare --dir . --pin"
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^1.0.0",
-    "@fluidframework/driver-definitions": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/driver-utils": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/driver-definitions": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/driver-utils": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@fluidframework/protocol-definitions": "^1.1.0"
   },
   "devDependencies": {
-    "@fluid-tools/build-cli": "^0.5.0-103719",
-    "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/eslint-config-fluid": "^1.1.0",
-    "@fluidframework/test-loader-utils-previous": "npm:@fluidframework/test-loader-utils@2.0.0-internal.2.0.0",
+    "@fluid-tools/build-cli": "^0.6.0-109663",
+    "@fluidframework/build-common": "^1.1.0",
+    "@fluidframework/eslint-config-fluid": "^1.2.0",
+    "@fluidframework/test-loader-utils-previous": "npm:@fluidframework/test-loader-utils@2.0.0-internal.2.1.0",
     "@rushstack/eslint-config": "^2.5.1",
     "concurrently": "^6.2.0",
     "eslint": "~8.6.0",
     "rimraf": "^2.6.2",
-    "typescript": "~4.5.5",
-    "typescript-formatter": "7.1.0"
+    "typescript": "~4.5.5"
   },
   "typeValidation": {
-    "version": "2.0.0-internal.2.1.0",
+    "version": "2.0.0-internal.2.2.0",
+    "baselineRange": ">=2.0.0-internal.2.1.0 <2.0.0-internal.2.2.0",
+    "baselineVersion": "2.0.0-internal.2.1.0",
     "broken": {}
   }
 }
