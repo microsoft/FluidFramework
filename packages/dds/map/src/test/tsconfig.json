@@ -10,7 +10,6 @@
             "mocha"
         ],
         "skipLibCheck": true,
-        "noUnusedLocals": false, // Need it so memory tests can declare local variables just for the sake of keeping things in memory
     },
     "include": [
         "./**/*"
