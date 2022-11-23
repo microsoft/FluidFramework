@@ -106,12 +106,16 @@ export class ScriptoriumLambda implements IPartitionLambda {
             ...message,
             mongoTimestamp: new Date(message.operation.timestamp),
         }));
+
+        const documentId = messages.length > 0 ? messages[0].documentId : "";
+        const tenantId = messages.length > 0 ? messages[0].tenantId : "";
+
         return runWithRetry(
             async () => this.opCollection.insertMany(dbOps, false),
             "insertOpScriptorium",
             3 /* maxRetries */,
             1000 /* retryAfterMs */,
-            getLumberBaseProperties(this.documentId, this.tenantId),
+            getLumberBaseProperties(documentId, tenantId),
             (error) => error.code === 11000,
             (error) => !this.clientFacadeRetryEnabled, /* shouldRetry */
         );
