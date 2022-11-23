@@ -146,10 +146,10 @@ We make use of [Redis][] for push notifications. New operations are placed insid
 
 #### [Deli](./packages/routerlicious/src/deli)
 
-Deli retrieves unsequenced messages from [Kafka][] and then attaches a new sequence number to them. Sequence numbers
-are per-document monotonically increasing numbers. Sequenced messages are placed back into [Apache Kafka][] for processing.
-The Deli microservice also runs the [Broadcaster](./packages/lambdas/src/broadcaster) lambda that directly put sequenced
-message into redis so that Alfred can listen and broadcast back to the clients.
+Deli retrieves unsequenced messages from [Kafka][] and then attaches a new sequence number to them.
+Sequence numbers are per-document, monotonically increasing numbers.
+Sequenced messages are placed back into [Apache Kafka][] for processing.
+The Deli microservice also runs the [Broadcaster](./packages/lambdas/src/broadcaster) lambda that directly puts sequenced message into [Redis][] so that Alfred can listen and broadcast back to the clients.
 
 #### [Scriptorium](./packages/routerlicious/src/scriptorium)
 
