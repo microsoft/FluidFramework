@@ -619,7 +619,7 @@ export const handlers: Handler[] = [
                     missingScripts.push(`format`)
                 }
 
-                return file + ` missing following scripts in package.json` + missingScripts.join("\n");
+                return `${file} is missing the following scripts: ${missingScripts.join("\n\t")}`;
             }
 
             return undefined;
