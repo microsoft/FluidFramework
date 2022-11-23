@@ -153,8 +153,9 @@ The Deli microservice also runs the [Broadcaster](./packages/lambdas/src/broadca
 
 #### [Scriptorium](./packages/routerlicious/src/scriptorium)
 
-Scriptorium retrieves sequenced messages from [Kafka][]. It then writes the message
-to a database for storage. We currently make use of [Redis][] for broadcasting and [MongoDB][] for storage.
+Scriptorium retrieves sequenced messages from [Kafka][].
+It then writes the message to a database for storage.
+We currently make use of [Redis][] for broadcasting and [MongoDB][] for storage.
 
 #### [Scribe](./packages/routerlicious/src/scribe)
 
