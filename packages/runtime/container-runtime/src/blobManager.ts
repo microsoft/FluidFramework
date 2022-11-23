@@ -19,6 +19,8 @@ import {
     ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
+import { throwOnTombstoneUsageKey } from "./garbageCollection";
+import { summarizerClientType } from "./summarizerClientElection";
 
 /**
  * This class represents blob (long string)
@@ -83,7 +85,8 @@ export interface IBlobManagerLoadInfo {
 // Restrict the IContainerRuntime interface to the subset required by BlobManager.  This helps to make
 // the contract explicit and reduces the amount of mocking required for tests.
 export type IBlobManagerRuntime =
-    Pick<IContainerRuntime, "attachState" | "connected" | "logger"> & TypedEventEmitter<IContainerRuntimeEvents>;
+    Pick<IContainerRuntime, "attachState" | "connected" | "logger" | "clientDetails">
+    & TypedEventEmitter<IContainerRuntimeEvents>;
 
 // Note that while offline we "submit" an op before uploading the blob, but we always
 // expect blobs to be uploaded before we actually see the op round-trip
@@ -110,6 +113,8 @@ export class BlobManager {
     // private readonly logger: ITelemetryLogger;
     private readonly mc: MonitoringContext;
 
+    /** If true, throw an error when a tombstone data store is retrieved. */
+    private readonly throwOnTombstoneUsage: boolean;
     /**
      * Map of local (offline/detached) IDs to storage IDs. Contains identity entries
      * (id → id) for storage IDs, so all requested IDs should be a key in this map.
@@ -160,9 +165,17 @@ export class BlobManager {
         stashedBlobs: IPendingBlobs = {},
     ) {
         this.mc = loggerToMonitoringContext(ChildLogger.create(this.runtime.logger, "BlobManager"));
+         // Read the feature flag that tells whether to throw when a tombstone blob is requested.
+         this.throwOnTombstoneUsage =
+         this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
+         this.runtime.clientDetails.type !== summarizerClientType;
+
         this.runtime.on("disconnected", () => this.onDisconnected());
         this.redirectTable = this.load(snapshot);
 
+        if (this.throwOnTombstoneUsage) {
+            assert(false != false, "test");
+        }
         // Begin uploading stashed blobs from previous container instance
         Object.entries(stashedBlobs).forEach(([localId, entry]) => {
             const blob = stringToBuffer(entry.blob, "base64");
