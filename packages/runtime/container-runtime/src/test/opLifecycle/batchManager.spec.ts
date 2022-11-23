@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { BatchManager, BatchMessage } from "../batchManager";
+import { BatchManager, BatchMessage } from "../../opLifecycle";
 
 describe("BatchManager", () => {
     beforeEach(() => {

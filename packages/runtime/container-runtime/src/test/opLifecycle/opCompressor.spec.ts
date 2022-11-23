@@ -5,9 +5,8 @@
 
 import { strict as assert } from "assert";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
-import { ContainerMessageType } from "..";
-import { BatchMessage, IBatch } from "../batchManager";
-import { OpCompressor } from "../opCompressor";
+import { ContainerMessageType } from "../..";
+import { BatchMessage, IBatch, OpCompressor } from "../../opLifecycle";
 
 describe("OpCompressor", () => {
     let compressor: OpCompressor;

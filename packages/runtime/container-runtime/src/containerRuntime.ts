@@ -117,7 +117,6 @@ import {
     IPendingLocalState,
     PendingStateManager,
 } from "./pendingStateManager";
-import { IBatchCheckpoint, BatchMessage } from "./batchManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager";
 import { DataStores, getSummaryForDatastores } from "./dataStores";
@@ -165,9 +164,8 @@ import {
 import { BindBatchTracker } from "./batchTracker";
 import { ISerializedBaseSnapshotBlobs, SerializedSnapshotStorage } from "./serializedSnapshotStorage";
 import { ScheduleManager } from "./scheduleManager";
-import { OpCompressor } from "./opCompressor";
 import { OpDecompressor } from "./opDecompressor";
-import { Outbox } from "./opLifecycle";
+import { BatchMessage, IBatchCheckpoint, OpCompressor, Outbox } from "./opLifecycle";
 
 export enum ContainerMessageType {
     // An op to be delivered to store

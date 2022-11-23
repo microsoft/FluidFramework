@@ -8,7 +8,7 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
 import { PendingStateManager } from "../pendingStateManager";
-import { BatchManager, BatchMessage } from "../batchManager";
+import { BatchManager, BatchMessage } from "../opLifecycle";
 
 describe("Pending State Manager", () => {
     describe("Rollback", () => {

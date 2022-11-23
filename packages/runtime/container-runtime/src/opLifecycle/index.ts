@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
+export { BatchManager } from "./batchManager";
 export {
+    BatchMessage,
+    IBatch,
+    IBatchCheckpoint,
     IBatchProcessor,
-    Outbox,
-} from "./outbox";
+} from "./definitions";
+export { Outbox } from "./outbox";
+export { OpCompressor } from "./opCompressor";

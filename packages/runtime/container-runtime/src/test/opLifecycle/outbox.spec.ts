@@ -6,8 +6,6 @@
 import { strict as assert } from "assert";
 import { IBatchMessage, IContainerContext, IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { IBatchProcessor, Outbox } from "../../opLifecycle";
-import { BatchMessage, IBatch } from "../../batchManager";
 import { PendingStateManager } from "../../pendingStateManager";
 import {
     CompressionAlgorithms,
@@ -15,6 +13,7 @@ import {
     ContainerRuntimeMessage,
     ICompressionRuntimeOptions,
 } from "../..";
+import { BatchMessage, IBatch, IBatchProcessor, Outbox } from "../../opLifecycle";
 
 describe("Outbox", () => {
     const maxBatchSizeInBytes = 1024;

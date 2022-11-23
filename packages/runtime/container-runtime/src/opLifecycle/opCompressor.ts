@@ -7,9 +7,8 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IsoBuffer } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { compress } from "lz4js";
-import { BatchMessage, IBatch } from "./batchManager";
-import { CompressionAlgorithms, ContainerRuntimeMessage } from "./containerRuntime";
-import { IBatchProcessor } from "./opLifecycle";
+import { CompressionAlgorithms, ContainerRuntimeMessage } from "../containerRuntime";
+import { IBatchProcessor, IBatch, BatchMessage } from "./definitions";
 
 /**
  * Compresses batches of ops. It generates a single compressed op that contains

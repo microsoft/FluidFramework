@@ -7,23 +7,9 @@ import { assert } from "@fluidframework/common-utils";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { GenericError } from "@fluidframework/container-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { BatchManager, BatchMessage, IBatch } from "../batchManager";
-import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
-
-export interface IOutboxOptions {
-    readonly compressionOptions?: ICompressionRuntimeOptions;
-    readonly enableOpReentryCheck?: boolean;
-    readonly maxBatchSizeInBytes: number;
-};
-
-export interface IBatchProcessor {
-    processOutgoing(batch: IBatch): IBatch;
-}
-
-export interface IBatchProcessors {
-    readonly compressor: IBatchProcessor;
-}
+import { BatchManager } from "./batchManager";
+import { IOutboxOptions, IBatchProcessors, BatchMessage, IBatch } from "./definitions";
 
 export class Outbox {
     private readonly attachFlowBatch: BatchManager;
