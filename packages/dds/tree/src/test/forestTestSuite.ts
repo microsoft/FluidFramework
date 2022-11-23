@@ -739,7 +739,10 @@ export function testForest(
                 forest.applyDelta(delta);
                 assert.deepEqual(dependent.tokens.length, 2);
 
-                // TODO: maybe test some other deltas.
+                // Remove the dependency so the dependent stops getting invalidation messages
+                forest.removeDependent(dependent);
+                forest.applyDelta(delta);
+                assert.deepEqual(dependent.tokens.length, 2);
             });
 
             it("schema editing", () => {
