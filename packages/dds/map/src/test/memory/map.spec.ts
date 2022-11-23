@@ -77,5 +77,10 @@ describe("SharedMap memory usage", () => {
             title: `Add ${x} integers to a local map, clear it`,
             benchmarkFn: createTestForAddingIntegerEntriesAndClearing(x),
         });
+
+        benchmarkMemory({
+            title: `Add ${x} integers to a local map, clear it, run GC`,
+            benchmarkFn: createTestForAddingIntegerEntriesAndClearing(x, true),
+        });
     });
 });
