@@ -108,10 +108,8 @@ the previousMajor version is `${min(v.major - 1, 1)}.0.0`, the previousMinor ver
 The "previous" versions never roll back below 1 for the major version and 0 for minor and patch. That is, the
 previousMajor, previousMinor, and previousPatch versions for `1.0.0` are all `1.0.0`.
 
-> **Warning**
->
-> `^previousMinor` allows the "previous" version to jump into the same range as the baseline, so use with caution.
-> In most cases, you probably want to use `~previousMinor`.
+**Warning**: `^previousMinor` allows the baseline (the "previous" version) to jump into the same range as the current version, so use with caution.
+In most cases, you probably want to use `~previousMinor`.
 
 #### Examples
 
