@@ -510,8 +510,8 @@ export class SharedPropertyTree extends SharedObject {
                 remoteHeadGuid: this.headCommitGuid,
 				unrebasedRemoteChanges: this.unrebasedRemoteChanges,
 			};
-            console.log("Summary sent", summary);
-			const chunkSize = 5000 * 1024; // Default limit seems to be 5MB
+
+            const chunkSize = 5000 * 1024; // Default limit seems to be 5MB
 			let totalBlobsSize = 0;
 			const serializedSummary = this.encodeSummary(summary);
 			for (let pos = 0, i = 0; pos < serializedSummary.length; pos += chunkSize, i++) {
