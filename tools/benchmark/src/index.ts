@@ -30,7 +30,6 @@ export {
 export { benchmark } from "./Runner";
 export {
     benchmarkMemory,
-    benchmarkMemory2,
     MemoryTestArguments,
     MemoryTestObjectInterface,
     MemoryTestObjectProps,

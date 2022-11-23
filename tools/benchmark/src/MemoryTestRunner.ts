@@ -211,7 +211,7 @@ export interface MemoryTestArguments extends MochaExclusiveOptions, HookArgument
  * to change.
  */
 
-export function benchmarkMemory2(testObject: MemoryTestObjectInterface): Test {
+export function benchmarkMemory(testObject: MemoryTestObjectInterface): Test {
     const options: Required<MemoryTestObjectProps> = {
         maxBenchmarkDurationSeconds: testObject.maxBenchmarkDurationSeconds ?? 10,
         minSampleCount: testObject.minSampleCount ?? 5,
