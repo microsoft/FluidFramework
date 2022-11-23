@@ -15,12 +15,6 @@ parameters:
 - name: buildToolsVersionToInstall
   type: string
   default: repo
-# - name: installPnpm
-#   type: boolean
-#   default: false
-- name: pnpmCachePath
-  type: string
-  default: $(Pipeline.Workspace)/build-tools/.pnpm-store
 
 # Set version
 steps:
