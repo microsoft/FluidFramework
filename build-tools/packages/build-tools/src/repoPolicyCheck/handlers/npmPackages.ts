@@ -592,13 +592,16 @@ export const handlers: Handler[] = [
             let json;
 
             try {
-                json = JSON.parse(readFile(file))
+                json = JSON.parse(readFile(file));
             } catch (err) {
                 return "Error parsing JSON file: " + file;
             }
 
             const hasPrettierProperty = Object.prototype.hasOwnProperty.call(json, "prettier");
-            const hasPrettierFixProperty = Object.prototype.hasOwnProperty.call(json, "prettier:fix");
+            const hasPrettierFixProperty = Object.prototype.hasOwnProperty.call(
+                json,
+                "prettier:fix",
+            );
             const hasFormatProperty = Object.prototype.hasOwnProperty.call(json, "format");
 
             if (!(hasPrettierProperty && hasPrettierFixProperty && hasFormatProperty)) {
