@@ -5,7 +5,8 @@
 
 module.exports = {
     "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid")
+        require.resolve("@fluidframework/eslint-config-fluid"),
+        "prettier"
     ],
     "rules": {
         "@typescript-eslint/no-non-null-assertion": "off",
