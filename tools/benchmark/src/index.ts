@@ -32,6 +32,7 @@ export {
     benchmarkMemory,
     MemoryTestArguments,
     MemoryTestObjectInterface,
+    MemoryTestObjectProps,
 } from "./MemoryTestRunner";
 export { prettyNumber, geometricMean } from "./ReporterUtilities";
 export { BenchmarkReporter, BenchmarkData } from "./Reporter";
