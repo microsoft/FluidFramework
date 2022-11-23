@@ -1,6 +1,6 @@
 # Routerlicious
 
-Routerlicious handles the receiving of delta operations and is responsible for the ordering and assignment of a
+Routerlicious handles the receiving of delta operations (ops) and is responsible for the ordering and assignment of a
 sequence number to them. Once assigned it is also responsible for notifying connected clients of a new sequence
 number.
 
