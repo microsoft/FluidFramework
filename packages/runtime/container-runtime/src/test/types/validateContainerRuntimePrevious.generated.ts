@@ -211,6 +211,30 @@ use_old_VariableDeclaration_gcBlobPrefix(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_gcTombstoneBlobKey": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_gcTombstoneBlobKey():
+    TypeOnly<typeof old.gcTombstoneBlobKey>;
+declare function use_current_VariableDeclaration_gcTombstoneBlobKey(
+    use: TypeOnly<typeof current.gcTombstoneBlobKey>);
+use_current_VariableDeclaration_gcTombstoneBlobKey(
+    get_old_VariableDeclaration_gcTombstoneBlobKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_gcTombstoneBlobKey": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_gcTombstoneBlobKey():
+    TypeOnly<typeof current.gcTombstoneBlobKey>;
+declare function use_old_VariableDeclaration_gcTombstoneBlobKey(
+    use: TypeOnly<typeof old.gcTombstoneBlobKey>);
+use_old_VariableDeclaration_gcTombstoneBlobKey(
+    get_current_VariableDeclaration_gcTombstoneBlobKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_gcTreeKey": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_gcTreeKey():
@@ -523,18 +547,6 @@ declare function use_old_InterfaceDeclaration_IEnqueueSummarizeOptions(
     use: TypeOnly<old.IEnqueueSummarizeOptions>);
 use_old_InterfaceDeclaration_IEnqueueSummarizeOptions(
     get_current_InterfaceDeclaration_IEnqueueSummarizeOptions());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IGarbageCollectionRuntime": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IGarbageCollectionRuntime": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

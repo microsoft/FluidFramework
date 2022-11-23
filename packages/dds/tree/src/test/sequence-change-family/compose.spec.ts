@@ -9,6 +9,7 @@ import {
     SequenceChangeset,
     // eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/sequence-change-family";
+import { makeAnonChange } from "../../rebase";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
@@ -18,8 +19,8 @@ const type: TreeSchemaIdentifier = brand("Node");
 const tomb = "Dummy Changeset Tag";
 
 function compose(changes: SequenceChangeset[]): SequenceChangeset {
-    changes.forEach((c) => deepFreeze(c));
-    return sequenceChangeRebaser.compose(changes);
+    changes.forEach(deepFreeze);
+    return sequenceChangeRebaser.compose(changes.map(makeAnonChange));
 }
 
 describe("SequenceChangeFamily - Compose", () => {

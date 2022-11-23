@@ -33,8 +33,8 @@
     "test:mocha": "mocha --unhandled-rejections=strict  --recursive dist/test/*.spec.js --exit --project src/test/tsconfig.json -r node_modules/@fluidframework/mocha-test-setup",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
-    "typetests:gen": "flub generate typetests --generate --dir . --no-generateInName",
-    "typetests:prepare": "flub generate typetests --prepare --dir . --no-generateInName"
+    "typetests:gen": "flub generate typetests --generate --dir .",
+    "typetests:prepare": "flub generate typetests --prepare --dir . --pin"
   },
   "nyc": {
     "all": true,
@@ -113,7 +113,10 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.2.0",
-    "baselineRange": "2.0.0-internal.2.0.0",
-    "broken": {}
+    "baselineRange": ">=2.0.0-internal.2.1.0 <2.0.0-internal.2.2.0",
+    "baselineVersion": "2.0.0-internal.2.1.0",
+    "broken": {
+      "InterfaceDeclaration_ITestDataObject": {"forwardCompat": false}
+    }
   }
 }
