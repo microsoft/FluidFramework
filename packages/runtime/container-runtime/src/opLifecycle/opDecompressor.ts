@@ -6,8 +6,8 @@
 import { decompress } from "lz4js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
-import { IProcessingResult, IRemoteMessageProcessor } from "./opLifecycle";
-import { CompressionAlgorithms } from ".";
+import { CompressionAlgorithms } from "..";
+import { IProcessingResult, IRemoteMessageProcessor } from ".";
 
 /**
  * State machine that "unrolls" contents of compressed batches of ops after decompressing them.

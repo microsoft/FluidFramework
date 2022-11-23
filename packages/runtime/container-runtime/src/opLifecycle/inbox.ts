@@ -4,7 +4,7 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { OpDecompressor } from "../opDecompressor";
+import { OpDecompressor } from "./opDecompressor";
 import { OpUnpacker } from "./opUnpacker";
 import { OpSplitter } from "./opSplitter";
 
