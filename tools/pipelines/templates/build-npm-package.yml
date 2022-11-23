@@ -242,6 +242,7 @@ stages:
             buildDirectory: ${{ parameters.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
             buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+            installPnpm: ${{ not(parameters.usePnpmCache) }}
             tagName: ${{ parameters.tagName }}
 
         # Build
