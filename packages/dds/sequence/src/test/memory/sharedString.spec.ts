@@ -40,9 +40,10 @@ describe("SharedString memory usage", () => {
 
     benchmarkMemory(new class implements MemoryTestObjectInterface {
         title = "Create empty SharedString";
+        private sharedString = createLocalSharedString("testSharedString");
 
         async run() {
-            const sharedString = createLocalSharedString("testSharedString");
+            this.sharedString = createLocalSharedString("testSharedString");
         }
     }());
 
@@ -62,7 +63,7 @@ describe("SharedString memory usage", () => {
             }
 
             beforeIteration() {
-                this.sharedString = createLocalSharedString("testestSharedStringtMap");
+                this.sharedString = createLocalSharedString("testestSharedString");
             }
         }());
 
@@ -79,7 +80,7 @@ describe("SharedString memory usage", () => {
             }
 
             beforeIteration() {
-                this.sharedString = createLocalSharedString("testestSharedStringtMap");
+                this.sharedString = createLocalSharedString("testestSharedString");
             }
         }());
 
@@ -101,7 +102,7 @@ describe("SharedString memory usage", () => {
             }
 
             beforeIteration() {
-                this.sharedString = createLocalSharedString("testestSharedStringtMap");
+                this.sharedString = createLocalSharedString("testestSharedString");
             }
         }());
 
@@ -126,7 +127,7 @@ describe("SharedString memory usage", () => {
             }
 
             beforeIteration() {
-                this.sharedString = createLocalSharedString("testestSharedStringtMap");
+                this.sharedString = createLocalSharedString("testestSharedString");
             }
         }());
 
@@ -155,7 +156,7 @@ describe("SharedString memory usage", () => {
             }
 
             beforeIteration() {
-                this.sharedString = createLocalSharedString("testestSharedStringtMap");
+                this.sharedString = createLocalSharedString("testestSharedString");
             }
         }());
     });
