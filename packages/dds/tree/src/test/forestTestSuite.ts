@@ -604,17 +604,24 @@ export function testForest(
                 const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
                 initializeForest(forest, nestedContent.map(singleTextCursor));
 
+                const moveId = brandOpaque<Delta.MoveId>(0);
                 const mark: Delta.ModifyAndDelete = {
                     type: Delta.MarkType.ModifyAndDelete,
-                    fields: new Map([[xField, []]]),
+                    fields: new Map([
+                        [xField, [{ type: Delta.MarkType.MoveOut, count: 1, moveId }]],
+                    ]),
                 };
-                const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
+                const delta: Delta.Root = new Map([
+                    [rootFieldKeySymbol, [mark, { type: Delta.MarkType.MoveIn, moveId }]],
+                ]);
                 // TODO: make type-safe
                 forest.applyDelta(delta);
 
                 const reader = forest.allocateCursor();
                 moveToDetachedField(forest, reader);
-                assert.equal(reader.firstNode(), false);
+                assert.equal(reader.firstNode(), true);
+                assert.equal(reader.value, 0);
+                assert.equal(reader.firstField(), false);
             });
 
             it("modify and move out", () => {
