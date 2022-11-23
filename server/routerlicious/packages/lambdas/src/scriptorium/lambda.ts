@@ -110,14 +110,15 @@ export class ScriptoriumLambda implements IPartitionLambda {
         const documentId = messages.length > 0 ? messages[0].documentId : "";
         const tenantId = messages.length > 0 ? messages[0].tenantId : "";
 
-        return runWithRetry(
-            async () => this.opCollection.insertMany(dbOps, false),
-            "insertOpScriptorium",
-            3 /* maxRetries */,
-            1000 /* retryAfterMs */,
-            getLumberBaseProperties(documentId, tenantId),
-            (error) => error.code === 11000,
-            (error) => !this.clientFacadeRetryEnabled, /* shouldRetry */
-        );
+        return runWithRetry({
+            api: async () => this.opCollection.insertMany(dbOps, false),
+            callName: "insertOpScriptorium",
+            maxRetries: 3,
+            retryAfterMs: 1000,
+            telemetryProperties: getLumberBaseProperties(documentId, tenantId),
+            shouldIgnoreError: (error) => error.code === 11000,
+            shouldRetry: (error) => !this.clientFacadeRetryEnabled,
+            telemetryEnabled: true,
+    });
     }
 }

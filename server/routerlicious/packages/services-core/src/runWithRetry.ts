@@ -7,6 +7,19 @@ import { delay } from "@fluidframework/common-utils";
 import { Lumber, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { NetworkError } from "@fluidframework/server-services-client";
 
+interface runWithRetryParams<T> {
+    api: () => Promise<T>,
+    callName: string,
+    maxRetries: number,
+    retryAfterMs: number,
+    telemetryProperties?: Map<string, any> | Record<string, any>,
+    shouldIgnoreError?: (error) => boolean,
+    shouldRetry?: (error) => boolean,
+    calculateIntervalMs?: (error, numRetries, retryAfterInterval) => number,
+    onErrorFn?: (error) => void,
+    telemetryEnabled?: boolean
+}
+
 /**
  * Executes a given API while providing support to retry on failures, ignore failures, and taking action on error.
  * @param api - function to run and retry in case of error
@@ -21,18 +34,18 @@ import { NetworkError } from "@fluidframework/server-services-client";
  * @param onErrorFn - function allowing caller to define custom logic to run on error e.g. custom logs
  * @param telemetryEnabled - whether to log telemetry metric, default is false
  */
-export async function runWithRetry<T>(
-    api: () => Promise<T>,
-    callName: string,
-    maxRetries: number,
-    retryAfterMs: number,
-    telemetryProperties?: Map<string, any> | Record<string, any>,
-    shouldIgnoreError?: (error) => boolean,
-    shouldRetry?: (error) => boolean,
+export async function runWithRetry<T>({
+    api,
+    callName,
+    maxRetries,
+    retryAfterMs,
+    telemetryProperties,
+    shouldIgnoreError,
+    shouldRetry,
     calculateIntervalMs = (error, numRetries, retryAfterInterval) => retryAfterInterval * 2 ** numRetries,
-    onErrorFn?: (error) => void,
-    telemetryEnabled = false,
-): Promise<T | undefined> {
+    onErrorFn,
+    telemetryEnabled = false
+} : runWithRetryParams<T>): Promise<T | undefined> {
     let result: T | undefined;
     let retryCount = 0;
     let success = false;

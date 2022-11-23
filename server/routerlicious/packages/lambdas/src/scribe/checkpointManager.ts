@@ -51,15 +51,15 @@ export class CheckpointManager implements ICheckpointManager {
         const dbOps = pending.map((message) => ({ ...message,
             mongoTimestamp: new Date(message.operation.timestamp) }));
         if (dbOps.length > 0) {
-            await runWithRetry(
-                async () => this.opCollection.insertMany(dbOps, false),
-                "writeCheckpointScribe",
-                3 /* maxRetries */,
-                1000 /* retryAfterMs */,
-                getLumberBaseProperties(this.documentId, this.tenantId),
-                (error) => error.code === 11000 /* shouldIgnoreError */,
-                (error) => !this.clientFacadeRetryEnabled, /* shouldRetry */
-            );
+            await runWithRetry({
+                api: async () => this.opCollection.insertMany(dbOps, false),
+                callName: "writeCheckpointScribe",
+                maxRetries: 3,
+                retryAfterMs: 1000,
+                telemetryProperties: getLumberBaseProperties(this.documentId, this.tenantId),
+                shouldIgnoreError: (error) => error.code === 11000,
+                shouldRetry: (error) => !this.clientFacadeRetryEnabled,
+            });
         }
 
         // Write out the full state first that we require
