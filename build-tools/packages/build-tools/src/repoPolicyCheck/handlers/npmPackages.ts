@@ -605,8 +605,25 @@ export const handlers: Handler[] = [
             const hasFormatProperty = Object.prototype.hasOwnProperty.call(json, "format");
 
             if (!(hasPrettierProperty && hasPrettierFixProperty && hasFormatProperty)) {
-                return "Error parsing JSON file: " + file;
+                //return "Error parsing JSON file: " + file;
+                const missingScripts: string[] = [];
+
+                if (hasPrettierProperty === false) {
+                    missingScripts.push(`prettier`)
+                }
+
+                if (hasPrettierFixProperty === false) {
+                    missingScripts.push(`prettier:fix`)
+                }
+
+                if (hasFormatProperty === false) {
+                    missingScripts.push(`format`)
+                }
+
+                return file + ` missing following scripts in package.json` + missingScripts.join("\n");
             }
+
+            return undefined;
         },
     },
 ];
