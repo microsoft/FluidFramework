@@ -121,7 +121,7 @@ describe("Matrix memory usage", () => {
         });
 
         benchmarkMemory2(new class implements MemoryTestObjectInterface {
-            title = `Insert and remove ${x} rows and columns`;
+            title = `Insert and remove ${x} rows and columns NEW`;
             private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
 
             async run() {
@@ -137,7 +137,7 @@ describe("Matrix memory usage", () => {
             beforeIteration() {
                 this.localMatrix = createLocalMatrix("testLocalMatrix");
             }
-        });
+        }());
 
         benchmarkMemory({
             title: `Set ${x} cells`,
@@ -152,7 +152,7 @@ describe("Matrix memory usage", () => {
         });
 
         benchmarkMemory2(new class implements MemoryTestObjectInterface {
-            title = `Set ${x} cells`;
+            title = `Set ${x} cells NEW`;
             private localMatrix = createLocalMatrix("testLocalMatrix");
 
             async run() {
@@ -167,6 +167,6 @@ describe("Matrix memory usage", () => {
             beforeIteration() {
                 this.localMatrix = createLocalMatrix("testLocalMatrix");
             }
-        });
+        }());
     });
 });
