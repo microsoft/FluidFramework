@@ -214,7 +214,7 @@ export function configureWebSocketServices(
     throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
     verifyMaxMessageSize?: boolean,
 ) {
-    webSocketServer.on("connection", (socket: core.IWebSocket) => {
+    webSocketServer.on("connection", (socket: core.IWebSocket): void => {
         /**
          * Map from client IDs on this connection to the object ID and user info.
          */
@@ -332,13 +332,13 @@ export function configureWebSocketServices(
 
             // Join the room to receive signals.
             roomMap.set(clientId, room);
+
             // Iterate over the version ranges provided by the client and select the best one that works
             const connectVersions = message.versions ? message.versions : ["^0.1.0"];
             const version = selectProtocolVersion(connectVersions);
             if (!version) {
                 throw new NetworkError(
                     400,
-                    // eslint-disable-next-line max-len
                     `Unsupported client protocol. Server: ${protocolVersions}. Client: ${JSON.stringify(connectVersions)}`,
                 );
             }
@@ -410,8 +410,11 @@ export function configureWebSocketServices(
                 connection.once("error", (error) => {
                     const messageMetaData = getMessageMetadata(connection.documentId, connection.tenantId);
 
-                    // eslint-disable-next-line max-len
-                    logger.error(`Disconnecting socket on connection error: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
+                    logger.error(
+                        `Disconnecting socket on connection error: ${safeStringify(error, undefined, 2)}`,
+                        { messageMetaData }
+                    );
+
                     Lumberjack.error(
                         `Disconnecting socket on connection error`,
                         getLumberBaseProperties(connection.documentId, connection.tenantId),
@@ -423,7 +426,6 @@ export function configureWebSocketServices(
 
                 connection.connect()
                     .catch(async (err) => {
-                        // eslint-disable-next-line max-len
                         const errMsg = `Failed to connect to the orderer connection. Error: ${safeStringify(err, undefined, 2)}`;
                         connectDocumentOrdererConnectionMetric.error("Failed to establish orderer connection", err);
                         return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
@@ -478,9 +480,8 @@ export function configureWebSocketServices(
             };
         }
 
-        // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        socket.on("connect_document", async (connectionMessage: IConnect) => {
+        // Note: "connect" is a reserved socket.io word so we use "connect_document" to represent the connect request.
+        socket.on("connect_document", (connectionMessage: IConnect): void => {
             const userAgentInfo = parseRelayUserAgent(connectionMessage.relayUserAgent);
             const driverVersion: string | undefined = userAgentInfo.driverVersion;
             const connectMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectDocument);
@@ -513,10 +514,10 @@ export function configureWebSocketServices(
                 });
         });
 
-        // Message sent when a new operation is submitted to the router
+        // Message sent when a new operation is submitted to the router.
         socket.on(
             "submitOp",
-            (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[]) => {
+            (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[]): void => {
                 // Verify the user has an orderer connection.
                 const connection = connectionsMap.get(clientId);
                 if (!connection) {
@@ -607,10 +608,10 @@ export function configureWebSocketServices(
                 }
             });
 
-        // Message sent when a new signal is submitted to the router
+        // Message sent when a new signal is submitted to the router.
         socket.on(
             "submitSignal",
-            (clientId: string, contentBatches: (IDocumentMessage | IDocumentMessage[])[]) => {
+            (clientId: string, contentBatches: (IDocumentMessage | IDocumentMessage[])[]): void => {
                 // Verify the user has subscription to the room.
                 const room = roomMap.get(clientId);
                 if (!room) {
