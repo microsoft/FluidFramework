@@ -70,22 +70,79 @@ If you want to use this, you'll want to test it thoroughly in your scenario to m
 ## Profiling runtime
 
 To profile runtime, define tests using the `benchmark()` function.
-The object you pass as the single parameter lets you set a title for the test
+The `BenchmarkArguments` object you pass as argument lets you configure several things about the test, the most important
+ones being a title and the code that the test should run. It's important that you use the correct property to define your
+test code, depending on if it's fully synchronous (use `benchmarkFn`) or asynchronous (use `benchmarkFnAsync`).
 
+Look at the documentation for `BenchmarkArguments` for more details on what the rest of its properties do.
 
-When ran, the tests will be tagged with `@Benchmark` (or whatever you pass in `BenchmarkOptions.type` when defining
-a test) and `@ExecutionTime` (as opposed to `@MemoryUsage` for memory profiling tests).
-
-
-
-See `BenchmarkType` for more information.
+When ran, tests for runtime profiling will be tagged with `@Benchmark` (or whatever you pass in `BenchmarkOptions.type`
+when you define the test) and `@ExecutionTime` (as opposed to `@MemoryUsage` for memory profiling tests).
 
 ## Profiling memory usage
 
-The `benchmarkMemory()` function tags its tests with `@Benchmark` (or whatever you pass in `BenchmarkOptions.type` when defining
-a test) and `@ExecutionTime` (as opposed to `@MemoryUsage` for memory profiling tests).
+To profile memory usage, define tests using the `benchmarkMemory()` function.
+The single argument to the function must be an **instance of a class** that implement `IMemoryTestObject`.
+This leads to some uncommon ways of writing tests and might feel strange, but it was done this way to try to ensure
+that these tests are written in a way in which they can obtain accurate measurements and not run into problems because
+of cross-test contamination, which are very easy to run into when trying to profile memory usage.
 
+A high-level explanation of how memory profiling tests execute might help make this clearer:
+
+For each test:
+
+01. The `before()` method in the class instance is called.
+02. The `beforeIteration()` method in the class instance is called.
+03. Garbage Collection is triggered.
+04. We collect a baseline "before" memory measurement.
+05. The `run()` method in the class instance is called.
+06. The `afterIteration()` method in the class instance is called.
+07. Garbage Collection is triggered.
+08. We collect an "after" memory measurement.
+09. Repeat steps 2-9 until some conditions are met.
+10. The `after()` method in the class instance is called.
+
+In general terms, this means you should:
+
+- Put code that sets up the test but should *not* be included in the baseline "before" memory measurement in the
+  `beforeIteration()` method.
+- Put test code in the `run()` method, and ensure that things that need to be considered in the "after" memory measurement
+  are assigned to local variables declared *outside* of the `run()` method, so they won't go out of scope as soon as
+  the method returns, and thus are not collected when GC runs in step 7 above.
+
+  Technically, those variables could be declared outside the class, but that is prone to cross-test contamination.
+  Private variables declared inside the class (which in a way "represents" the test), should make it clear that they are
+  only relevant for that test, and help avoid cross-contamination because the class instance will be out of scope (and
+  thus garbage-collectable) by the time the next test executes.
+
+The pattern most memory tests will want to follow is something like this (note the `()` after the test declaration
+to immediately instantiate it):
+
+```typescript
+benchmarkMemory(new class implements IMemoryTestObject {
+    title = `My test title`;
+    private someLocalVariable: MyType | undefined;
+
+    beforeIteration() {
+        // Code that sets up the test but should *not* be included in the baseline "before" memory measurement.
+
+        // For example, clearing someLocalVariable to set up an "empty state" before we take the first measurement.
+    }
+
+    async run() {
+        // The actual code that you want to measure.
+
+        // For example, creating a new object and assigning it to someLocalVariable.
+        // Since someLocalVariable belongs to the class instance, which isn't yet out of scope after this method returns,
+        // the memory allocated into the variable will be "seen" by the "after" memory measurement.
+    }
+}());
 ```
+
+When ran, tests for memory profiling will be tagged with `@Benchmark` (or whatever you pass in `IMemoryTestObject.type`
+when you define the test) and `@MemoryUsage` (as opposed to `@ExecutionTime` for runtime profiling tests).
+
+For more details, look at the documentation for `IMemoryTestObject`.
 
 ## Trademark
 
