@@ -589,11 +589,10 @@ export const handlers: Handler[] = [
         name: "npm-package-json-prettier",
         match,
         handler: (file) => {
-            let jsonStr: string;
             let json;
+
             try {
-                jsonStr = readFile(file);
-                json = JSON.parse(jsonStr);
+                json = JSON.parse(readFile(file))
             } catch (err) {
                 return "Error parsing JSON file: " + file;
             }
