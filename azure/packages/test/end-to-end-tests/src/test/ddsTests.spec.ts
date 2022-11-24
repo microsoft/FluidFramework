@@ -233,6 +233,7 @@ describe("Fluid data updates", () => {
         };
 
         const { container } = await client.createContainer(dynamicSchema);
+        await container.attach();
 
         const newDo = await container.create(TestDataObject);
         assert.ok(newDo?.handle);
