@@ -32,15 +32,12 @@
     "start:debug": "node --inspect=0.0.0.0:9229 dist/index.js",
     "stop": "forever stop dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "tsc": "tsc",
-    "typetests:gen": "flub generate typetests --generate --dir .",
-    "typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+    "tsc": "tsc"
   },
   "dependencies": {
     "tinylicious": "^0.4.89251"
   },
   "devDependencies": {
-    "@fluidframework/azure-local-service-previous": "npm:@fluidframework/azure-local-service@^1.0.0",
     "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/eslint-config-fluid": "^1.2.1",
     "@microsoft/api-extractor": "^7.22.2",
@@ -59,8 +56,8 @@
     "node": ">=14.0.0"
   },
   "typeValidation": {
+    "disabled": true,
     "version": "1.2.0",
-    "baselineRange": "^1.0.0",
     "broken": {}
   }
 }
