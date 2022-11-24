@@ -1,4 +1,0 @@
-packages:
-  - "examples/**"
-  - "experimental/**"
-  - "packages/**"
