@@ -117,7 +117,6 @@ importers:
 
   packages/azure-local-service:
     specifiers:
-      '@fluidframework/azure-local-service-previous': npm:@fluidframework/azure-local-service@^1.0.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/eslint-config-fluid': ^1.2.1
       '@microsoft/api-extractor': ^7.22.2
@@ -135,7 +134,6 @@ importers:
     dependencies:
       tinylicious: 0.4.94771
     devDependencies:
-      '@fluidframework/azure-local-service-previous': 'link:'
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 1.2.1_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.33.6
