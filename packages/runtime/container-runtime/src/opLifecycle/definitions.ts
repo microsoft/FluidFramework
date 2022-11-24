@@ -4,7 +4,8 @@
  */
 
 import { IBatchMessage } from "@fluidframework/container-definitions";
-import { CompressionAlgorithms, ContainerRuntimeMessage, ICompressionRuntimeOptions } from "..";
+import { MessageType } from "@fluidframework/protocol-definitions";
+import { CompressionAlgorithms, ContainerMessageType, ContainerRuntimeMessage, ICompressionRuntimeOptions } from "..";
 
 export interface IOutboxOptions {
     readonly compressionOptions?: ICompressionRuntimeOptions;
@@ -18,6 +19,7 @@ export interface IBatchProcessor {
 
 export interface IBatchProcessors {
     readonly compressor: IBatchProcessor;
+    readonly splitter: IBatchProcessor;
 }
 
 export interface IBatchManagerOptions {
@@ -43,4 +45,13 @@ export interface IBatch {
 
 export interface IBatchCheckpoint {
     rollback: (action: (message: BatchMessage) => void) => void;
+}
+
+export interface IChunkedOp {
+    chunkId: number;
+    totalChunks: number;
+    contents: string;
+    originalType: MessageType | ContainerMessageType;
+    metadata?: Record<string, unknown>;
+    compression?: string;
 }

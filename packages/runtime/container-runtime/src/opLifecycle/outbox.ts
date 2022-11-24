@@ -103,13 +103,21 @@ export class Outbox {
             return batch;
         }
 
+        if (this.options.compressionOptions !== undefined) {
+            // Compression is not enabled
+        }
+
         let processedBatch = batch;
         if (this.options.compressionOptions !== undefined
             && this.options.compressionOptions.minimumBatchSizeInBytes < batch.contentSizeInBytes) {
             processedBatch = this.batchProcessors.compressor.processOutgoing(batch);
         }
 
-        return this.addBatchMetadataToBatch(processedBatch);
+        if (processedBatch.contentSizeInBytes < this.options.maxBatchSizeInBytes) {
+            processedBatch = this.batchProcessors.splitter.processOutgoing(batch);
+        }
+
+        return processedBatch;
     }
 
     private flushBatch(batch: IBatch): void {

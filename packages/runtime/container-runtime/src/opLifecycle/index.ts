@@ -9,13 +9,14 @@ export {
     IBatch,
     IBatchCheckpoint,
     IBatchProcessor,
+    IChunkedOp,
 } from "./definitions";
 export {
     Inbox,
     IProcessingResult,
     IRemoteMessageProcessor,
 } from "./inbox";
-export { IChunkedOp, OpSplitter } from "./opSplitter";
+export { OpSplitter } from "./opSplitter";
 export { OpUnpacker } from "./opUnpacker";
 export { Outbox } from "./outbox";
 export { OpCompressor } from "./opCompressor";
