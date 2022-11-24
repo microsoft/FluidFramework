@@ -5,7 +5,7 @@ importers:
   .:
     specifiers:
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': ^0.4.4000
+      '@fluidframework/build-tools': ^0.6.0-110879
       '@fluidframework/test-tools': ^0.2.3074
       '@microsoft/api-documenter': ^7.17.9
       '@microsoft/api-extractor': ^7.22.2
@@ -19,7 +19,7 @@ importers:
       typescript: ~4.5.5
     devDependencies:
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.4.8000
+      '@fluidframework/build-tools': 0.6.0-110879
       '@fluidframework/test-tools': 0.2.3074
       '@microsoft/api-documenter': 7.19.24
       '@microsoft/api-extractor': 7.33.6
@@ -38,7 +38,7 @@ importers:
       '@fluidframework/azure-client-previous': npm:@fluidframework/azure-client@1.0.0-73930
       '@fluidframework/azure-local-service': ^1.2.0
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': ^0.4.4000
+      '@fluidframework/build-tools': ^0.6.0-110879
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.0.0
       '@fluidframework/container-definitions': ^1.4.0-108057
@@ -94,7 +94,7 @@ importers:
       '@fluidframework/azure-client-previous': /@fluidframework/azure-client/1.0.0-73930
       '@fluidframework/azure-local-service': link:../azure-local-service
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.4.8000
+      '@fluidframework/build-tools': 0.6.0-110879
       '@fluidframework/counter': 1.4.0-108057
       '@fluidframework/eslint-config-fluid': 1.1.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-client-utils': 1.4.0-108057
@@ -152,7 +152,7 @@ importers:
     specifiers:
       '@fluidframework/azure-service-utils-previous': npm:@fluidframework/azure-service-utils@1.0.0
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': ^0.4.4000
+      '@fluidframework/build-tools': ^0.6.0-110879
       '@fluidframework/eslint-config-fluid': ^1.1.0
       '@fluidframework/protocol-definitions': ^1.0.0
       '@microsoft/api-extractor': ^7.22.2
@@ -175,7 +175,7 @@ importers:
     devDependencies:
       '@fluidframework/azure-service-utils-previous': /@fluidframework/azure-service-utils/1.0.0
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.4.8000
+      '@fluidframework/build-tools': 0.6.0-110879
       '@fluidframework/eslint-config-fluid': 1.1.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.33.6
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
@@ -918,12 +918,13 @@ packages:
       - utf-8-validate
     dev: true
 
-  /@fluid-tools/version-tools/0.4.8000:
-    resolution: {integrity: sha512-HdcfcgtVP4gbuv7aSlR6qPf6d8govOwHCkPy+OOQ0WGPH2nOVWz5urhOkLgqd863fUqNGoO+jU1va4K8a/A2vA==}
+  /@fluid-tools/version-tools/0.6.0-110879:
+    resolution: {integrity: sha512-PiB8gsS5TYfaXpzISEBiiB6nX8pYYP3TxNVWXLw/IK8SuMqx77nHxPWO0h15Z9yuxFk+dLDBt4xefuNIYUknfQ==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
       '@oclif/core': 1.20.4
+      '@oclif/plugin-autocomplete': 1.3.6
       '@oclif/plugin-commands': 2.2.1
       '@oclif/plugin-help': 5.1.18
       '@oclif/plugin-not-found': 2.3.8
@@ -1046,12 +1047,14 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools/0.4.8000:
-    resolution: {integrity: sha512-oudYsTB0BT7rb/sfiXF8s+gRl7vKtQ0s1Ex9w9j/74DyO5/Qo6zmzid2Z1pZhqQyubatSekL7GWQ9WztnWeDBw==}
+  /@fluidframework/build-tools/0.6.0-110879:
+    resolution: {integrity: sha512-auhFTqKEy0gH5jw6LpWDfjRJDKFum7JcSrDKKtJM8gmkQRT3Z2+kp/31wdUaUgq/oDFCjtD0rYe4NznbUVQNYQ==}
+    engines: {node: '>=14.13.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.4.8000
-      '@fluidframework/bundle-size-tools': 0.4.8000
+      '@fluid-tools/version-tools': 0.6.0-110879
+      '@fluidframework/bundle-size-tools': 0.6.0-110879
+      '@rushstack/node-core-library': 3.53.2
       async: 3.2.4
       chalk: 2.4.2
       commander: 6.2.1
@@ -1062,6 +1065,7 @@ packages:
       glob: 7.2.3
       ignore: 5.2.0
       json5: 2.2.1
+      lodash: 4.17.21
       lodash.isequal: 4.5.0
       lodash.merge: 4.6.2
       minimatch: 3.1.2
@@ -1083,8 +1087,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools/0.4.8000:
-    resolution: {integrity: sha512-eLsZUzqBBv8sPXxKlmqMQvdX6UGpjKZPxsFClaurq6PnwnZ1vuCG3pIDazncKWtr3WK9oj6UQXku4wdK/C6+Vw==}
+  /@fluidframework/bundle-size-tools/0.6.0-110879:
+    resolution: {integrity: sha512-OUEhtbaOo1eykpykKNLSBr3bMVkm9d0HTy5IhfsxSTCWbjEKaDICVOb3GbZSfXE8WTgXWQK13x3TzXpnFSExMg==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -3964,6 +3968,18 @@ packages:
 
   /@oclif/linewrap/1.0.0:
     resolution: {integrity: sha512-Ups2dShK52xXa8w6iBWLgcjPJWjais6KPJQq3gQ/88AY6BXoTX+MIGFPrWQO1KLMiQfoTpcLnUwloN4brrVUHw==}
+    dev: true
+
+  /@oclif/plugin-autocomplete/1.3.6:
+    resolution: {integrity: sha512-XmSuuVohfGPAi2ouoCbWbVUjaaxprK+4KsNOkUafK2rqCMmmoK/VuAQvv539yMpM9IhSvARwS7NnGvFY9HmZVw==}
+    engines: {node: '>=12.0.0'}
+    dependencies:
+      '@oclif/core': 1.20.4
+      chalk: 4.1.2
+      debug: 4.3.4
+      fs-extra: 9.1.0
+    transitivePeerDependencies:
+      - supports-color
     dev: true
 
   /@oclif/plugin-commands/2.2.1:
