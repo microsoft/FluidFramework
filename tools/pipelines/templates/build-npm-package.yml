@@ -217,8 +217,6 @@ stages:
             displayName: Cache pnpm store
             inputs:
               key: '"pnpm-store" | "$(Agent.OS)" | "${{ parameters.tagName }}" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
-              restoreKeys: |
-                "pnpm-store" | "$(Agent.OS)" | "${{ parameters.tagName }}"
               path: ${{ variables.pnpmCachePath }}
 
           - task: Bash@3
