@@ -219,8 +219,6 @@ stages:
               key: '"pnpm-store" | "$(Agent.OS)" | "${{ parameters.tagName }}" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
               restoreKeys: |
                 "pnpm-store" | "$(Agent.OS)" | "${{ parameters.tagName }}"
-                "pnpm-store" | "$(Agent.OS)"
-                "pnpm-store"
               path: ${{ variables.pnpmCachePath }}
 
           - task: Bash@3
@@ -443,18 +441,6 @@ stages:
               artifactName: '_api-extractor-temp'
               publishLocation: 'pipeline'
 
-        - task: Bash@3
-          displayName: Check for extraneous modified files
-          inputs:
-            targetType: 'inline'
-            script: |
-              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|build-cli/README.md|build-tools/pnpm-lock.yaml|build-tools/.npmrc|version-tools/README.md|\(use.*' | grep '^\s' > git_status.log
-              if [ `cat git_status.log | wc -l` != "0" ]; then
-                cat git_status.log
-                echo "##vso[task.logissue type=error]Build should not create extraneous files"
-                exit -1;
-              fi
-
         - ${{ if eq(parameters.packageManager, 'pnpm') }}:
           # Reset the pnpm-lock.yaml file since it's been modified by the versioning. But for dependency caching we want
           # the cache key (which is based on the contents of the lockfile) to be the unmodified file. So we reset the
@@ -467,6 +453,18 @@ stages:
               workingDirectory: ${{ parameters.buildDirectory }}
               script: |
                 git checkout HEAD -- pnpm-lock.yaml
+
+        - task: Bash@3
+          displayName: Check for extraneous modified files
+          inputs:
+            targetType: 'inline'
+            script: |
+              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|build-cli/README.md|build-tools/.npmrc|version-tools/README.md|\(use.*' | grep '^\s' > git_status.log
+              if [ `cat git_status.log | wc -l` != "0" ]; then
+                cat git_status.log
+                echo "##vso[task.logissue type=error]Build should not create extraneous files"
+                exit -1;
+              fi
 
       # Job - Component detection
       - ${{ if eq(variables.componentDetection, true) }}:
