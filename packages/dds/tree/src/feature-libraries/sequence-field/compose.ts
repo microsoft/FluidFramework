@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { RevisionTag, tagChange, TaggedChange } from "../../core";
 import { clone, fail, StackyIterator } from "../../util";
 import {
     Changeset,
@@ -19,14 +20,14 @@ import {
     getOutputLength,
     isAttach,
     isDetachMark,
+    isModifyingMark,
     isReattach,
     isSkipMark,
-    isTomb,
     splitMarkOnInput,
     splitMarkOnOutput,
 } from "./utils";
 
-export type NodeChangeComposer<TNodeChange> = (changes: TNodeChange[]) => TNodeChange;
+export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
 
 /**
  * Composes a sequence of changesets into a single changeset.
@@ -41,21 +42,19 @@ export type NodeChangeComposer<TNodeChange> = (changes: TNodeChange[]) => TNodeC
  * - Support for slices is not implemented.
  */
 export function compose<TNodeChange>(
-    changes: Changeset<TNodeChange>[],
+    changes: TaggedChange<Changeset<TNodeChange>>[],
     composeChild: NodeChangeComposer<TNodeChange>,
 ): Changeset<TNodeChange> {
-    if (changes.length === 1) {
-        return changes[0];
-    }
     let composed: Changeset<TNodeChange> = [];
     for (const change of changes) {
-        composed = composeMarkLists(composed, change, composeChild);
+        composed = composeMarkLists(composed, change.revision, change.change, composeChild);
     }
     return composed;
 }
 
 function composeMarkLists<TNodeChange>(
     baseMarkList: MarkList<TNodeChange>,
+    newRev: RevisionTag | undefined,
     newMarkList: MarkList<TNodeChange>,
     composeChild: NodeChangeComposer<TNodeChange>,
 ): MarkList<TNodeChange> {
@@ -67,12 +66,12 @@ function composeMarkLists<TNodeChange>(
         if (baseMark === undefined) {
             // We have reached a region of the field that the base change does not affect.
             // We therefore adopt the new mark as is.
-            factory.push(clone(newMark));
+            factory.push(composeMark(newMark, newRev, composeChild));
         } else if (isAttach(newMark)) {
             // Content that is being attached by the new changeset cannot interact with base changes.
             // Note that attach marks from different changesets can only target the same gap if they are concurrent.
             // This method assumes that `newMarkList` is based on `baseMarkList`, so they are not concurrent.
-            factory.pushContent(clone(newMark));
+            factory.pushContent(composeMark(newMark, newRev, composeChild));
             baseIter.push(baseMark);
         } else if (isReattach(newMark)) {
             // Content that is being re-attached by the new changeset can interact with base changes.
@@ -82,7 +81,7 @@ function composeMarkLists<TNodeChange>(
             // We're ignoring these cases for now. The impact of ignoring them is that the relative order of
             // reattached content and concurrently attached content is not preserved.
             // TODO: properly compose reattach marks with their matching base marks if any.
-            factory.pushContent(clone(newMark));
+            factory.pushContent(composeMark(newMark, newRev, composeChild));
             baseIter.push(baseMark);
         } else if (isDetachMark(baseMark)) {
             // Content that is being detached by the base changeset can interact with the new changes.
@@ -94,9 +93,6 @@ function composeMarkLists<TNodeChange>(
             // TODO: properly compose detach marks with their matching new marks if any.
             factory.pushContent(baseMark);
             newIter.push(newMark);
-        } else if (isTomb(baseMark) || isTomb(newMark)) {
-            // We don't currently support Tomb marks (and don't offer ways to generate them).
-            fail("TODO: support Tomb marks");
         } else {
             // If we've reached this branch then `baseMark` and `newMark` start at the same location
             // in the document field at the revision after the base changes and before the new changes.
@@ -117,7 +113,7 @@ function composeMarkLists<TNodeChange>(
             // Past this point, we are guaranteed that `newMark` and `baseMark` have the same length and
             // start at the same location in the revision after the base changes.
             // They therefore refer to the same range for that revision.
-            const composedMark = composeMarks(baseMark, newMark, composeChild);
+            const composedMark = composeMarks(baseMark, newRev, newMark, composeChild);
             factory.push(composedMark);
         }
     }
@@ -130,14 +126,16 @@ function composeMarkLists<TNodeChange>(
 
 /**
  * Composes two marks where `newMark` is based on the state produced by `baseMark`.
- * @param newMark - The mark to compose with `baseMark`.
- * Its input range should be the same as `baseMark`'s output range.
  * @param baseMark - The mark to compose with `newMark`.
  * Its output range should be the same as `newMark`'s input range.
+ * @param newRev - The revision the new mark is part of.
+ * @param newMark - The mark to compose with `baseMark`.
+ * Its input range should be the same as `baseMark`'s output range.
  * @returns A mark that is equivalent to applying both `baseMark` and `newMark` successively.
  */
 function composeMarks<TNodeChange>(
     baseMark: Mark<TNodeChange>,
+    newRev: RevisionTag | undefined,
     newMark: SizedMark<TNodeChange>,
     composeChild: NodeChangeComposer<TNodeChange>,
 ): Mark<TNodeChange> {
@@ -173,10 +171,11 @@ function composeMarks<TNodeChange>(
                 default:
                     fail("Not implemented");
             }
+        case "MRevive":
         case "MInsert": {
             switch (newType) {
                 case "Modify": {
-                    updateModifyLike(newMark, baseMark, composeChild);
+                    updateModifyLike(newRev, newMark, baseMark, composeChild);
                     return baseMark;
                 }
                 case "Delete": {
@@ -191,7 +190,7 @@ function composeMarks<TNodeChange>(
         case "Modify": {
             switch (newType) {
                 case "Modify": {
-                    updateModifyLike(newMark, baseMark, composeChild);
+                    updateModifyLike(newRev, newMark, baseMark, composeChild);
                     return baseMark;
                 }
                 case "Delete": {
@@ -209,7 +208,8 @@ function composeMarks<TNodeChange>(
                     const modRevive: ModifyReattach<TNodeChange> = {
                         type: "MRevive",
                         id: baseMark.id,
-                        tomb: baseMark.tomb,
+                        detachedBy: baseMark.detachedBy,
+                        detachIndex: baseMark.detachIndex,
                         changes: newMark.changes,
                     };
                     return modRevive;
@@ -228,9 +228,33 @@ function composeMarks<TNodeChange>(
 }
 
 function updateModifyLike<TNodeChange>(
+    currRev: RevisionTag | undefined,
     curr: Modify<TNodeChange>,
     base: ModifyInsert<TNodeChange> | Modify<TNodeChange> | ModifyReattach<TNodeChange>,
     composeChild: NodeChangeComposer<TNodeChange>,
 ) {
-    base.changes = composeChild([base.changes, curr.changes]);
+    // `base.changes` is assumed to be the result of a call to `composeChildren`, so it does not need a revision tag.
+    // See the contract of `FieldChangeHandler.compose`.
+    base.changes = composeChild([
+        tagChange(base.changes, undefined),
+        tagChange(curr.changes, currRev),
+    ]);
+}
+
+function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
+    mark: TMark,
+    revision: RevisionTag | undefined,
+    composeChild: NodeChangeComposer<TNodeChange>,
+): TMark {
+    if (isSkipMark(mark)) {
+        return mark;
+    }
+
+    if (isModifyingMark(mark)) {
+        const cloned = clone(mark);
+        cloned.changes = composeChild([tagChange(mark.changes, revision)]);
+        return cloned;
+    }
+
+    return clone(mark);
 }

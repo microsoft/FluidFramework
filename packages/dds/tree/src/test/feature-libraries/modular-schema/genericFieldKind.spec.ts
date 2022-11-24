@@ -13,9 +13,10 @@ import {
     GenericChangeset,
     genericFieldKind,
 } from "../../../feature-libraries";
-import { makeAnonChange } from "../../../rebase";
+import { makeAnonChange, tagChange, TaggedChange } from "../../../rebase";
 import { Delta, FieldKey } from "../../../tree";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
+import { noRepair } from "../../utils";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
@@ -70,8 +71,10 @@ const nodeChange0To2: NodeChangeset = nodeChangeFromValueChange(valueChange0To2)
 
 const unexpectedDelegate = () => assert.fail("Unexpected call");
 
-const childComposer = (nodeChanges: NodeChangeset[]): NodeChangeset => {
-    const valueChanges = nodeChanges.map(valueChangeFromNodeChange);
+const childComposer = (nodeChanges: TaggedChange<NodeChangeset>[]): NodeChangeset => {
+    const valueChanges = nodeChanges.map((c) =>
+        tagChange(valueChangeFromNodeChange(c.change), c.revision),
+    );
     const valueChange = valueHandler.rebaser.compose(valueChanges, unexpectedDelegate);
     return nodeChangeFromValueChange(valueChange);
 };
@@ -156,7 +159,7 @@ describe("Generic FieldKind", () => {
                 },
             ];
             const actual = genericFieldKind.changeHandler.rebaser.compose(
-                [changeA, changeB],
+                [makeAnonChange(changeA), makeAnonChange(changeB)],
                 childComposer,
             );
             assert.deepEqual(actual, expected);
@@ -198,7 +201,7 @@ describe("Generic FieldKind", () => {
                 },
             ];
             const actual = genericFieldKind.changeHandler.rebaser.compose(
-                [changeA, changeB],
+                [makeAnonChange(changeA), makeAnonChange(changeB)],
                 childComposer,
             );
             assert.deepEqual(actual, expected);
@@ -337,7 +340,7 @@ describe("Generic FieldKind", () => {
 
         const expected: Delta.MarkList = [valueDelta1, 1, valueDelta2];
 
-        const actual = genericFieldKind.changeHandler.intoDelta(input, childToDelta);
+        const actual = genericFieldKind.changeHandler.intoDelta(input, childToDelta, noRepair);
         assert.deepEqual(actual, expected);
     });
 

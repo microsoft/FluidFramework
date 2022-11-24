@@ -646,13 +646,28 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
                 logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => {
+                    const mode = this.connectionMode;
                     // We get here when socket does not receive any ops on "write" connection, including
                     // its own join op. Attempt recovery option.
                     this._deltaManager.logConnectionIssue({
                         eventName,
+                        mode,
                         duration: performance.now() - this.connectionTransitionTimes[ConnectionState.CatchingUp],
                         ...(details === undefined ? {} : { details: JSON.stringify(details) }),
                     });
+
+                    // If this is "write" connection, it took too long to receive join op. But in most cases that's due
+                    // to very slow op fetches and we will eventually get there.
+                    // For "read" connections, we get here due to self join signal not arriving on time. We will need to
+                    // better understand when and why it may happen.
+                    // For now, attempt to recover by reconnecting. In future, maybe we can query relay service for
+                    // current state of audience.
+                    // Other possible recovery path - move to connected state (i.e. ConnectionStateHandler.joinOpTimer
+                    // to call this.applyForConnectedState("addMemberEvent") for "read" connections)
+                    if (mode === "read") {
+                        this.disconnect();
+                        this.connect();
+                    }
                 },
             },
             this.deltaManager,
@@ -1510,8 +1525,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         deltaManager.inboundSignal.pause();
 
         deltaManager.on("connect", (details: IConnectionDetails, _opsBehind?: number) => {
+            assert(this.connectionMode === details.mode, "mismatch");
             this.connectionStateHandler.receivedConnectEvent(
-                this.connectionMode,
                 details,
             );
         });
@@ -1526,7 +1541,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // Some "warning" events come from outside the container and are logged
             // elsewhere (e.g. summarizing container). We shouldn't log these here.
             if (warn.logged !== true) {
-                this.logContainerError(warn);
+                this.mc.logger.sendTelemetryEvent({ eventName: "ContainerWarning" }, warn);
             }
             this.emit("warning", warn);
         });
@@ -1671,7 +1686,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 MessageType.Operation,
                 message.contents,
                 true, // batch
-                message.metadata);
+                message.metadata,
+                message.compression);
         }
         this._deltaManager.flush();
         return clientSequenceNumber;
@@ -1690,7 +1706,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.submitMessage(MessageType.Summarize, JSON.stringify(summary), false /* batch */);
     }
 
-    private submitMessage(type: MessageType, contents?: string, batch?: boolean, metadata?: any): number {
+    private submitMessage(type: MessageType,
+                          contents?: string,
+                          batch?: boolean,
+                          metadata?: any,
+                          compression?: string): number {
         if (this.connectionState !== ConnectionState.Connected) {
             this.mc.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
             return -1;
@@ -1698,7 +1718,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.messageCountAfterDisconnection += 1;
         this.collabWindowTracker?.stopSequenceNumberUpdate();
-        return this._deltaManager.submit(type, contents, batch, metadata);
+        return this._deltaManager.submit(type, contents, batch, metadata, compression);
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage) {
@@ -1828,10 +1848,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         this._dirtyContainer = dirty;
         this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
-    }
-
-    private logContainerError(warning: ContainerWarning) {
-        this.mc.logger.sendErrorEvent({ eventName: "ContainerWarning" }, warning);
     }
 
     /**

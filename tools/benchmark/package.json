@@ -24,9 +24,12 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint src",
     "eslint:fix": "eslint src --fix",
+    "format": "npm run prettier:fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "perf": "mocha --config ./.mocharc.js --timeout 999999 -r node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter ./dist/MochaReporter.js \"./dist/**/*.tests.js\"",
+    "prettier": "prettier --check .",
+    "prettier:fix": "prettier --write .",
     "test": "npm run test:mocha",
     "test:mocha": "mocha \"dist/test/**/*.js\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
@@ -53,6 +56,7 @@
     "cross-env": "^7.0.2",
     "eslint": "~8.6.0",
     "nyc": "^15.0.0",
+    "prettier": "~2.6.2",
     "rimraf": "^2.6.2",
     "typescript": "~4.5.5"
   }

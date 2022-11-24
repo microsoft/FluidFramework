@@ -11,7 +11,9 @@ import {
     JsonableTree,
     ITreeCursor,
     TaggedChange,
-    TreeSchemaIdentifier,
+    RevisionTag,
+    ITreeCursorSynchronous,
+    tagChange,
 } from "../core";
 import { brand, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
@@ -31,6 +33,7 @@ import {
     NodeChangeEncoder,
     FieldEditor,
     referenceFreeFieldChangeRebaser,
+    NodeReviver,
 } from "./modular-schema";
 import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
 import { applyModifyToTree } from "./deltaUtils";
@@ -97,7 +100,6 @@ export function lastWriteWinsRebaser<TChange>(data: {
 }): FieldChangeRebaser<TChange> {
     const compose = (changes: TChange[]) =>
         changes.length >= 0 ? changes[changes.length - 1] : data.noop;
-
     const rebase = (change: TChange, _over: TChange) => change;
     return referenceFreeFieldChangeRebaser({ ...data, compose, rebase });
 }
@@ -115,21 +117,17 @@ export type ReplaceOp<T> = Replacement<T> | 0;
  * Consistent if used on valid paths with correct old states.
  */
 export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
-    return {
-        rebase: (
-            change: ReplaceOp<T>,
-            over: TaggedChange<ReplaceOp<T>>,
-            rebaseChild: NodeChangeRebaser,
-        ) => {
+    return referenceFreeFieldChangeRebaser({
+        rebase: (change: ReplaceOp<T>, over: ReplaceOp<T>) => {
             if (change === 0) {
                 return 0;
             }
-            if (over.change === 0) {
+            if (over === 0) {
                 return change;
             }
-            return { old: over.change.new, new: change.new };
+            return { old: over.new, new: change.new };
         },
-        compose: (changes: ReplaceOp<T>[], composeChild: NodeChangeComposer) => {
+        compose: (changes: ReplaceOp<T>[]) => {
             const f = changes.filter((c): c is Replacement<T> => c !== 0);
             if (f.length === 0) {
                 return 0;
@@ -139,11 +137,10 @@ export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
             }
             return { old: f[0].old, new: f[f.length - 1].new };
         },
-        invert: (change: TaggedChange<ReplaceOp<T>>, invertChild: NodeChangeInverter) => {
-            const changes = change.change;
+        invert: (changes: ReplaceOp<T>) => {
             return changes === 0 ? 0 : { old: changes.new, new: changes.old };
         },
-    };
+    });
 }
 
 /**
@@ -151,9 +148,9 @@ export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
  */
 export const noChangeHandler: FieldChangeHandler<0> = {
     rebaser: referenceFreeFieldChangeRebaser({
-        compose: (changes: 0[], composeChild: NodeChangeComposer) => 0,
-        invert: (changes: 0, invertChild: NodeChangeInverter) => 0,
-        rebase: (change: 0, over: 0, rebaseChild: NodeChangeRebaser) => 0,
+        compose: (changes: 0[]) => 0,
+        invert: (changes: 0) => 0,
+        rebase: (change: 0, over: 0) => 0,
     }),
     encoder: new UnitEncoder(),
     editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
@@ -210,19 +207,34 @@ export const counter: FieldKind = new FieldKind(
     new Set(),
 );
 
+export type NodeUpdate =
+    | { set: JsonableTree }
+    | {
+          /**
+           * The tag of the change that deleted the node being restored.
+           *
+           * Undefined when the operation is the product of a tag-less change being inverted.
+           * It is invalid to try convert such an operation to a delta.
+           */
+          revert: RevisionTag | undefined;
+      };
+
 export interface ValueChangeset {
-    value?: JsonableTree;
+    value?: NodeUpdate;
     changes?: NodeChangeset;
 }
 
-const valueRebaser: FieldChangeRebaser<ValueChangeset> = referenceFreeFieldChangeRebaser({
-    compose: (changes: ValueChangeset[], composeChildren: NodeChangeComposer): ValueChangeset => {
+const valueRebaser: FieldChangeRebaser<ValueChangeset> = {
+    compose: (
+        changes: TaggedChange<ValueChangeset>[],
+        composeChildren: NodeChangeComposer,
+    ): ValueChangeset => {
         if (changes.length === 0) {
             return {};
         }
-        let newValue: JsonableTree | undefined;
-        const childChanges: NodeChangeset[] = [];
-        for (const change of changes) {
+        let newValue: NodeUpdate | undefined;
+        const childChanges: TaggedChange<NodeChangeset>[] = [];
+        for (const { change, revision } of changes) {
             if (change.value !== undefined) {
                 newValue = change.value;
 
@@ -232,7 +244,7 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = referenceFreeFieldChang
             }
 
             if (change.changes !== undefined) {
-                childChanges.push(change.changes);
+                childChanges.push(tagChange(change.changes, revision));
             }
         }
 
@@ -248,29 +260,34 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = referenceFreeFieldChang
         return composed;
     },
 
-    invert: (change: ValueChangeset, invertChild: NodeChangeInverter): ValueChangeset => {
-        // TODO: Handle the value inverse
+    invert: (
+        { revision, change }: TaggedChange<ValueChangeset>,
+        invertChild: NodeChangeInverter,
+    ): ValueChangeset => {
         const inverse: ValueChangeset = {};
         if (change.changes !== undefined) {
             inverse.changes = invertChild(change.changes);
+        }
+        if (change.value !== undefined) {
+            inverse.value = { revert: revision };
         }
         return inverse;
     },
 
     rebase: (
         change: ValueChangeset,
-        over: ValueChangeset,
+        over: TaggedChange<ValueChangeset>,
         rebaseChild: NodeChangeRebaser,
     ): ValueChangeset => {
-        if (change.changes === undefined || over.changes === undefined) {
+        if (change.changes === undefined || over.change.changes === undefined) {
             return change;
         }
-        return { ...change, changes: rebaseChild(change.changes, over.changes) };
+        return { ...change, changes: rebaseChild(change.changes, over.change.changes) };
     },
-});
+};
 
 interface EncodedValueChangeset {
-    value?: JsonableTree;
+    value?: NodeUpdate;
     changes?: JsonCompatibleReadOnly;
 }
 
@@ -324,7 +341,7 @@ const valueFieldEditor: ValueFieldEditor = {
         return { changes: change };
     },
 
-    set: (newValue: ITreeCursor) => ({ value: jsonableTreeFromCursor(newValue) }),
+    set: (newValue: ITreeCursor) => ({ value: { set: jsonableTreeFromCursor(newValue) } }),
 };
 
 const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> = {
@@ -332,14 +349,25 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
     encoder: valueFieldEncoder,
     editor: valueFieldEditor,
 
-    intoDelta: (change: ValueChangeset, deltaFromChild: ToDelta) => {
+    intoDelta: (change: ValueChangeset, deltaFromChild: ToDelta, reviver: NodeReviver) => {
         if (change.value !== undefined) {
             let mark: Delta.Mark;
-            if (change.changes === undefined) {
-                mark = { type: Delta.MarkType.Insert, content: [singleTextCursor(change.value)] };
+            let newValue: ITreeCursorSynchronous;
+            if ("revert" in change.value) {
+                const revision = change.value.revert;
+                assert(revision !== undefined, "Unable to revert to undefined revision");
+                newValue = reviver(revision, 0, 1)[0];
             } else {
-                const modify = deltaFromChild(change.changes);
-                const cursor = singleTextCursor(change.value);
+                newValue = singleTextCursor(change.value.set);
+            }
+            if (change.changes === undefined) {
+                mark = {
+                    type: Delta.MarkType.Insert,
+                    content: [newValue],
+                };
+            } else {
+                const modify = deltaFromChild(change.changes, 0);
+                const cursor = singleTextCursor(newValue);
                 const mutableTree = mapTreeFromCursor(cursor);
                 const fields = applyModifyToTree(mutableTree, modify);
                 mark =
@@ -358,7 +386,7 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
             return [{ type: Delta.MarkType.Delete, count: 1 }, mark];
         }
 
-        return change.changes === undefined ? [] : [deltaFromChild(change.changes)];
+        return change.changes === undefined ? [] : [deltaFromChild(change.changes, 0)];
     },
 };
 
@@ -381,7 +409,7 @@ export interface OptionalFieldChange {
     /**
      * The new content for the trait. If undefined, the trait will be cleared.
      */
-    newContent?: JsonableTree;
+    newContent?: NodeUpdate;
 
     /**
      * Whether the field was empty in the state this change is based on.
@@ -401,103 +429,102 @@ export interface OptionalChangeset {
     childChange?: NodeChangeset;
 }
 
-const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("RevivedNode");
-
-const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> =
-    referenceFreeFieldChangeRebaser({
-        compose: (
-            changes: OptionalChangeset[],
-            composeChild: NodeChangeComposer,
-        ): OptionalChangeset => {
-            let fieldChange: OptionalFieldChange | undefined;
-            const childChanges: NodeChangeset[] = [];
-            for (const change of changes) {
-                if (change.fieldChange !== undefined) {
-                    if (fieldChange === undefined) {
-                        fieldChange = { wasEmpty: change.fieldChange.wasEmpty };
-                    }
-
-                    if (change.fieldChange.newContent !== undefined) {
-                        fieldChange.newContent = change.fieldChange.newContent;
-                    } else {
-                        delete fieldChange.newContent;
-                    }
-
-                    // The previous changes applied to a different value, so we discard them.
-                    // TODO: Represent muted changes
-                    childChanges.length = 0;
-                }
-                if (change.childChange !== undefined) {
-                    childChanges.push(change.childChange);
-                }
-            }
-
-            const composed: OptionalChangeset = {};
-            if (fieldChange !== undefined) {
-                composed.fieldChange = fieldChange;
-            }
-
-            if (childChanges.length > 0) {
-                composed.childChange = composeChild(childChanges);
-            }
-
-            return composed;
-        },
-
-        invert: (change: OptionalChangeset, invertChild: NodeChangeInverter): OptionalChangeset => {
-            const inverse: OptionalChangeset = {};
-
+const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
+    compose: (
+        changes: TaggedChange<OptionalChangeset>[],
+        composeChild: NodeChangeComposer,
+    ): OptionalChangeset => {
+        let fieldChange: OptionalFieldChange | undefined;
+        const childChanges: TaggedChange<NodeChangeset>[] = [];
+        for (const { change, revision } of changes) {
             if (change.fieldChange !== undefined) {
-                inverse.fieldChange = { wasEmpty: change.fieldChange.newContent === undefined };
-                if (!change.fieldChange.wasEmpty) {
-                    // TODO: restore the real node.
-                    // This temporary hack makes it possible to clear optional fields in transactions that succeed
-                    // because they roll-back the edit only to reapply it immediately after.
-                    inverse.fieldChange.newContent = { type: DUMMY_REVIVED_NODE_TYPE };
+                if (fieldChange === undefined) {
+                    fieldChange = { wasEmpty: change.fieldChange.wasEmpty };
                 }
-            }
 
+                if (change.fieldChange.newContent !== undefined) {
+                    fieldChange.newContent = change.fieldChange.newContent;
+                } else {
+                    delete fieldChange.newContent;
+                }
+
+                // The previous changes applied to a different value, so we discard them.
+                // TODO: Represent muted changes
+                childChanges.length = 0;
+            }
             if (change.childChange !== undefined) {
-                inverse.childChange = invertChild(change.childChange);
+                childChanges.push(tagChange(change.childChange, revision));
             }
+        }
 
-            return inverse;
-        },
+        const composed: OptionalChangeset = {};
+        if (fieldChange !== undefined) {
+            composed.fieldChange = fieldChange;
+        }
 
-        rebase: (
-            change: OptionalChangeset,
-            over: OptionalChangeset,
-            rebaseChild: NodeChangeRebaser,
-        ): OptionalChangeset => {
-            if (change.fieldChange !== undefined) {
-                if (over.fieldChange !== undefined) {
-                    const wasEmpty = over.fieldChange.newContent === undefined;
+        if (childChanges.length > 0) {
+            composed.childChange = composeChild(childChanges);
+        }
 
-                    // We don't have to rebase the child changes, since the other child changes don't apply to the same node
-                    return {
-                        ...change,
-                        fieldChange: { ...change.fieldChange, wasEmpty },
-                    };
-                }
+        return composed;
+    },
 
-                return change;
+    invert: (
+        { revision, change }: TaggedChange<OptionalChangeset>,
+        invertChild: NodeChangeInverter,
+    ): OptionalChangeset => {
+        const inverse: OptionalChangeset = {};
+
+        const fieldChange = change.fieldChange;
+        if (fieldChange !== undefined) {
+            inverse.fieldChange = { wasEmpty: fieldChange.newContent === undefined };
+            if (!fieldChange.wasEmpty) {
+                inverse.fieldChange.newContent = { revert: revision };
             }
+        }
 
-            if (change.childChange !== undefined) {
-                if (over.fieldChange !== undefined) {
-                    // The node the child changes applied to no longer exists so we drop the changes.
-                    // TODO: Represent muted changes
-                    return {};
-                }
+        if (change.childChange !== undefined) {
+            inverse.childChange = invertChild(change.childChange);
+        }
 
-                if (over.childChange !== undefined) {
-                    return { childChange: rebaseChild(change.childChange, over.childChange) };
-                }
+        return inverse;
+    },
+
+    rebase: (
+        change: OptionalChangeset,
+        overTagged: TaggedChange<OptionalChangeset>,
+        rebaseChild: NodeChangeRebaser,
+    ): OptionalChangeset => {
+        const over = overTagged.change;
+        if (change.fieldChange !== undefined) {
+            if (over.fieldChange !== undefined) {
+                const wasEmpty = over.fieldChange.newContent === undefined;
+
+                // We don't have to rebase the child changes, since the other child changes don't apply to the same node
+                return {
+                    ...change,
+                    fieldChange: { ...change.fieldChange, wasEmpty },
+                };
             }
 
             return change;
-        },
-    });
+        }
+
+        if (change.childChange !== undefined) {
+            if (over.fieldChange !== undefined) {
+                // The node the child changes applied to no longer exists so we drop the changes.
+                // TODO: Represent muted changes
+                return {};
+            }
+
+            if (over.childChange !== undefined) {
+                return { childChange: rebaseChild(change.childChange, over.childChange) };
+            }
+        }
+
+        return change;
+    },
+};
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
     /**
@@ -511,7 +538,12 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 const optionalFieldEditor: OptionalFieldEditor = {
     set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): OptionalChangeset => ({
         fieldChange: {
-            newContent: newContent === undefined ? undefined : jsonableTreeFromCursor(newContent),
+            newContent:
+                newContent === undefined
+                    ? undefined
+                    : {
+                          set: jsonableTreeFromCursor(newContent),
+                      },
             wasEmpty,
         },
     }),
@@ -567,12 +599,13 @@ const optionalFieldEncoder: FieldChangeEncoder<OptionalChangeset> = {
 function deltaFromInsertAndChange(
     insertedContent: JsonableTree | undefined,
     nodeChange: NodeChangeset | undefined,
+    index: number,
     deltaFromNode: ToDelta,
 ): Delta.Mark[] {
     if (insertedContent !== undefined) {
         const content = mapTreeFromCursor(singleTextCursor(insertedContent));
         if (nodeChange !== undefined) {
-            const nodeDelta = deltaFromNode(nodeChange);
+            const nodeDelta = deltaFromNode(nodeChange, index);
             const fields = applyModifyToTree(content, nodeDelta);
             if (fields.size > 0) {
                 return [
@@ -588,7 +621,7 @@ function deltaFromInsertAndChange(
     }
 
     if (nodeChange !== undefined) {
-        return [deltaFromNode(nodeChange)];
+        return [deltaFromNode(nodeChange, index)];
     }
 
     return [];
@@ -605,10 +638,20 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
         encoder: optionalFieldEncoder,
         editor: optionalFieldEditor,
 
-        intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) => {
+        intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta, reviver: NodeReviver) => {
+            const update = change.fieldChange?.newContent;
+            let content: JsonableTree | ITreeCursorSynchronous | undefined;
+            if (update === undefined || "set" in update) {
+                content = update?.set;
+            } else {
+                const revision = update.revert;
+                assert(revision !== undefined, "Unable to revert to undefined revision");
+                content = reviver(revision, 0, 1)[0];
+            }
             const insertDelta = deltaFromInsertAndChange(
-                change.fieldChange?.newContent,
+                content,
                 change.childChange,
+                0,
                 deltaFromChild,
             );
 

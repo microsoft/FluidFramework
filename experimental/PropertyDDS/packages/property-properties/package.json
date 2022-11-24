@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/property-properties",
-  "version": "2.0.0-internal.2.1.0",
+  "version": "2.0.0-internal.2.2.0",
   "description": "definitions of properties",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -36,9 +36,7 @@
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "test:mocha": "mocha --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-    "tsc": "tsc",
-    "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsc": "tsc"
   },
   "nyc": {
     "all": true,
@@ -61,8 +59,8 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluid-experimental/property-changeset": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
-    "@fluid-experimental/property-common": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluid-experimental/property-changeset": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
+    "@fluid-experimental/property-common": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "ajv": "7.1.1",
     "async": "^3.2.0",
     "fastest-json-copy": "^1.0.1",
@@ -72,9 +70,8 @@
     "underscore": "^1.12.1"
   },
   "devDependencies": {
-    "@fluid-experimental/property-properties-previous": "npm:@fluid-experimental/property-properties@2.0.0-internal.2.0.0",
-    "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/build-common": "^1.1.0",
+    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@types/mocha": "^9.1.1",
     "chai": "^4.2.0",
     "concurrently": "^6.2.0",
@@ -85,11 +82,12 @@
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
     "sinon": "^7.4.2",
-    "typescript": "~4.5.5",
-    "typescript-formatter": "7.1.0"
+    "typescript": "~4.5.5"
   },
   "typeValidation": {
-    "version": "2.0.0-internal.2.1.0",
+    "disabled": true,
+    "version": "2.0.0-internal.2.2.0",
+    "baselineRange": "2.0.0-internal.2.0.0",
     "broken": {}
   }
 }

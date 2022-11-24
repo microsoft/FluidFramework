@@ -700,14 +700,14 @@
       "subCapability": "AutoMerge",
       "version": "1.0",
       "config": {
-        "taskName": "Automatically merge pull requests in next",
+        "taskName": "Automatically merge pull requests ",
         "label": "msftbot: merge-next",
         "silentMode": false,
         "minMinutesOpen": "5",
         "deleteBranches": true,
         "allowAutoMergeInstructionsWithoutLabel": true,
         "enforceDMPAsStatus": true,
-        "removeLabelOnPush": true,
+        "removeLabelOnPush": false,
         "usePrDescriptionAsCommitMessage": true,
         "requireAllStatuses": false,
         "conditionalMergeTypes": [
@@ -728,7 +728,9 @@
             }
           }
         ],
-        "mergeType": "squash"
+        "mergeType": "squash",
+        "requireSpecificCheckRuns": false,
+        "requireSpecificCheckRunsList": []
       },
       "disabled": false
     },

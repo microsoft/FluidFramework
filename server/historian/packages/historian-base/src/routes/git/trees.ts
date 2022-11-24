@@ -67,7 +67,7 @@ export function create(
                 false,
                 undefined,
                 201);
-    });
+        });
 
     router.get("/repos/:ignored?/:tenantId/git/trees/:sha",
         utils.validateRequestParams("tenantId", "sha"),
@@ -84,7 +84,7 @@ export function create(
                 treeP,
                 response,
                 useCache);
-    });
+        });
 
     return router;
 }
