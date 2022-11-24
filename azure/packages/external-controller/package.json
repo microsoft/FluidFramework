@@ -36,6 +36,8 @@
     "test:jest": "jest",
     "test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
     "tsc": "tsc",
+    "typetests:gen": "flub generate typetests --generate --dir .",
+    "typetests:prepare": "flub generate typetests --prepare --dir . --pin",
     "webpack": "webpack --env production",
     "webpack:dev": "webpack --env development"
   },

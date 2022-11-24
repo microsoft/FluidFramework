@@ -38,7 +38,8 @@
     "test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7071 test:realsvc:azure:run",
     "test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc",
     "tsc": "tsc",
-    "typetests:gen": "fluid-type-validator -g -d ."
+    "typetests:gen": "flub generate typetests --generate --dir .",
+    "typetests:prepare": "flub generate typetests --prepare --dir . --pin"
   },
   "nyc": {
     "all": true,
