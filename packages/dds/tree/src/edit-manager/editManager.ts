@@ -64,6 +64,10 @@ export class EditManager<
     }
 
     public setMinimumSequenceNumber(minimumSequenceNumber: number): void {
+        assert(
+            minimumSequenceNumber >= this.minimumSequenceNumber,
+            "number must be larger or equal to current minimumSequenceNumber.",
+        );
         this.minimumSequenceNumber = minimumSequenceNumber;
         this.trimTrunkCommits();
     }
