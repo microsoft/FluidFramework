@@ -10,7 +10,7 @@
             "mocha"
         ],
         "skipLibCheck": true,
-        "noUnusedLocals": true
+        "noUnusedLocals": false,
     },
     "include": [
         "./**/*"
