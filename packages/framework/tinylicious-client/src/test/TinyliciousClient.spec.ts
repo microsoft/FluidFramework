@@ -367,23 +367,23 @@ describe("TinyliciousClient", () => {
      */
      it.only("disconnects with a reason", async () => {
         const { container } = await tinyliciousClient.createContainer(schema);
-        container.on("disconnected", (reason: string) =>
-            console.log(`disconnected from TinyliciousClientTest: ${reason}`));
+        container.on("disconnected", (reason?: string) =>
+            console.log(`disconnected ${(reason !== undefined) ? `with reason ${reason}` : "without reason"}`));
         container.on("disposed", (reason?: IErrorBase) =>
-            console.log(`disposed from TinyliciousClientTest: ${reason}`));
+            console.log(`disposed ${(reason !== undefined) ? `with reason ${reason}` : "without reason"}`));
         await container.attach();
         console.log("container attached");
         await timeoutPromise((resolve) => container.once("connected", resolve));
         console.log("container connected");
-        await timeoutPromise((resolve) => setTimeout(resolve, 1000),
-        {
-            durationMs: 2000,
-            errorMsg: "container connect() timeout",
-        });
-        container.disconnect();
+        // await timeoutPromise((resolve) => setTimeout(resolve, 1000),
+        // {
+        //     durationMs: 2000,
+        //     errorMsg: "container connect() timeout",
+        // });
         console.log("disconnect");
-        container.dispose();
+        container.disconnect();
         console.log("dispose");
+        container.dispose();
         console.log("timeout");
     });
 });
