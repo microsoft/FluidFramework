@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { benchmarkMemory, MemoryTestObjectInterface } from "@fluid-tools/benchmark";
+import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { SubSequence } from "../../sharedSequence";
 
 describe("SharedSequence memory usage", () => {
@@ -28,7 +28,7 @@ describe("SharedSequence memory usage", () => {
     const numbersOfEntriesForTests = [100, 1000, 10_000];
 
     numbersOfEntriesForTests.forEach((x) => {
-        benchmarkMemory(new class implements MemoryTestObjectInterface {
+        benchmarkMemory(new class implements IMemoryTestObject {
             title = `Append and remove ${x} subsequences NEW`;
             private segment = new SubSequence<number>([]);
 

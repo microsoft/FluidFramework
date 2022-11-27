@@ -6,7 +6,7 @@
 import {
     MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils";
-import { benchmarkMemory, MemoryTestObjectInterface } from "@fluid-tools/benchmark";
+import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { MapFactory, SharedMap } from "../../map";
 
 function createLocalMap(id: string) {
@@ -33,7 +33,7 @@ describe("SharedMap memory usage", () => {
         // See the comment at the top of the test suite for more details.
     });
 
-    benchmarkMemory(new class implements MemoryTestObjectInterface {
+    benchmarkMemory(new class implements IMemoryTestObject {
         title = "Create empty map";
         private map: SharedMap = createLocalMap("testMap");
 
@@ -45,7 +45,7 @@ describe("SharedMap memory usage", () => {
     const numbersOfEntriesForTests = [1000, 10_000, 100_000];
 
     numbersOfEntriesForTests.forEach((x) => {
-        benchmarkMemory(new class implements MemoryTestObjectInterface {
+        benchmarkMemory(new class implements IMemoryTestObject {
             title = `Add ${x} integers to a local map, clear it`;
             private map: SharedMap = createLocalMap("testMap");
 

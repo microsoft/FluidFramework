@@ -6,7 +6,7 @@
 import {
     MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils";
-import { benchmarkMemory, MemoryTestObjectInterface } from "@fluid-tools/benchmark";
+import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { SharedMatrix, SharedMatrixFactory } from "../..";
 
 function createLocalMatrix(id: string) {
@@ -32,7 +32,7 @@ describe("Matrix memory usage", () => {
         // See the comment at the top of the test suite for more details.
     });
 
-    benchmarkMemory(new class implements MemoryTestObjectInterface {
+    benchmarkMemory(new class implements IMemoryTestObject {
         title = "Create empty Matrix";
         private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
 
@@ -44,7 +44,7 @@ describe("Matrix memory usage", () => {
     const numbersOfEntriesForTests = [100, 1000, 10_000];
 
     numbersOfEntriesForTests.forEach((x) => {
-        benchmarkMemory(new class implements MemoryTestObjectInterface {
+        benchmarkMemory(new class implements IMemoryTestObject {
             title = `Insert and remove ${x} columns`;
             private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
 
@@ -61,7 +61,7 @@ describe("Matrix memory usage", () => {
             }
         }());
 
-        benchmarkMemory(new class implements MemoryTestObjectInterface {
+        benchmarkMemory(new class implements IMemoryTestObject {
             title = `Insert and remove ${x} rows`;
             private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
 
@@ -78,7 +78,7 @@ describe("Matrix memory usage", () => {
             }
         }());
 
-        benchmarkMemory(new class implements MemoryTestObjectInterface {
+        benchmarkMemory(new class implements IMemoryTestObject {
             title = `Insert and remove ${x} rows and columns`;
             private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
 
@@ -97,7 +97,7 @@ describe("Matrix memory usage", () => {
             }
         }());
 
-        benchmarkMemory(new class implements MemoryTestObjectInterface {
+        benchmarkMemory(new class implements IMemoryTestObject {
             title = `Set ${x} cells`;
             private localMatrix = createLocalMatrix("testLocalMatrix");
 

@@ -13,7 +13,6 @@ import {
     isInPerformanceTestingMode,
     performanceTestSuiteTag,
     MochaExclusiveOptions,
-    HookArguments,
     HookFunction,
     BenchmarkType,
     userCategoriesSplitter,
@@ -45,55 +44,61 @@ export interface MemoryBenchmarkStats {
     error?: Error;
 }
 
-export interface MemoryTestObjectInterface extends MemoryTestObjectProps {
+export interface IMemoryTestObject extends MemoryTestObjectProps {
     /**
-     * The function with code to benchmark. Expects an async function for maximum compatibility.
+     * The method with code to profile.
+     * It will be called for each iteration of the test.
+     * Expects an async function for maximum compatibility.
      * Wrap synchronous code in a Promise/async-function if necessary.
      */
     run(): Promise<unknown>;
 
     /**
-     * Function to run before each iteration of the benchmark. It runs right before garbage collection is
-     * triggered, prior to taking the "before" memory measurements. If you need to perform per-iteration
-     * setup that should not be included in the baseline "before" memory measurement, do it here.
+     * Method to execute before each call to run().
+     * It executes right before garbage collection is triggered, prior to taking the "before" memory measurements.
+     * If you need to perform per-iteration setup that should not be included in the baseline "before" memory
+     * measurement, do it here.
      */
     beforeIteration?: HookFunction;
 
     /**
-     * Function to run after each iteration of the benchmark. It runs after the benchmarked code but
-     * before garbage collection is triggered, prior to taking the "after" memory measurements. If you
-     * need to cleanup things that shouldn't be considered part of the memory usage in the "after"
-     * measurement, clean them up here.
+     * Method to execute after each call to run().
+     * It runs after the code to be profiled but before garbage collection is triggered, prior to taking the "after"
+     * memory measurements.
+     * If you need to cleanup things that shouldn't be considered part of the memory usage in the "after" measurement,
+     * clean them up here so they can be garbage collected before the measurement is taken.
      */
     afterIteration?: HookFunction;
 
     /**
-     * Function to run *once* before all iterations of the benchmark.
+     * Method to execute *once* before all iterations of the test (i.e. before any calls to run()).
      */
     before?: HookFunction;
 
     /**
-     * Function to run *once* after all iterations of the benchmark.
+     * Method to execute *once* after all iterations of the test (i.e. after all calls to run()).
      */
     after?: HookFunction;
 }
 
 export interface MemoryTestObjectProps extends MochaExclusiveOptions {
     /**
-     * If true, this benchmark will create a Mocha test function with `it.only()`
-     * instead of `it()`.
+     * If true, this benchmark will create a Mocha test function with 'it.only()'
+     * instead of just 'it()'.
      */
     only?: boolean;
 
     /**
-     * The max time in seconds to run the benchmark. This is not a guaranteed immediate stop time.
-     * Elapsed time gets checked between iterations of the test that is being benchmarked. Defaults
-     * to 10 seconds.
+     * The max time in seconds to run the benchmark.
+     * This is not a guaranteed immediate stop time.
+     * Elapsed time gets checked between iterations of the test that is being benchmarked.
+     * Defaults to 10 seconds.
      */
     maxBenchmarkDurationSeconds?: number;
 
     /**
-     * The min sample count to reach. Defaults to 5.
+     * The min sample count to reach.
+     * Defaults to 5.
      *
      * @remarks This takes precedence over {@link MemoryTestObjectProps.maxBenchmarkDurationSeconds}.
      */
@@ -101,7 +106,8 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions {
 
     /**
      * The benchmark will iterate the test as many times as necessary to try to get the absolute value of
-     * the relative margin of error below this number. Specify as an integer (e.g. 5 means RME below 5%).
+     * the relative margin of error below this number.
+     * Specify as an integer (e.g. 5 means RME below 5%).
      * Defaults to 2.5.
      *
      * @remarks {@link MemoryTestObjectProps.maxBenchmarkDurationSeconds} takes precedence over this, since a
@@ -115,103 +121,57 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions {
     type?: BenchmarkType;
 
     /**
-     * The title of the benchmark. This will show up in the output file, well as the mocha reporter.
+     * The title of the benchmark.
+     * This will show up in the output file, as well as the mocha reporter.
      */
     title: string;
 
     /**
-     * Percentage of samples (0.1 - 1) to use for calculating the statistics. Defaults to 1.
+     * Percentage of samples (0.1 - 1) to use for calculating the statistics.
+     * Defaults to 1.
+     * Use a lower number to drop the highest/lowest measurements.
      */
     samplePercentageToUse?: number;
 
     /**
-     * A free-form field to add a category to the test. This gets added to an internal version of the test name
-     * with an '\@' prepended to it, so it can be leveraged in combination with mocha's --grep/--fgrep options to
-     * only execute specific tests.
-     */
-    category?: string;
- }
-
-export interface MemoryTestArguments extends MochaExclusiveOptions, HookArguments {
-    /**
-     * The title of the benchmark. This will show up in the output file, well as the mocha reporter.
-     */
-    title: string;
-
-    /**
-     * The function with code to benchmark. Expects an async function for maximum compatibility. Wrap synchronous
-     * code in a Promise/async-function if necessary.
-     */
-    benchmarkFn: () => Promise<unknown>;
-
-    /**
-     * The max time in seconds to run the benchmark. This is not a guaranteed immediate stop time.
-     * Elapsed time gets checked between iterations of the test that is being benchmarked. Defaults
-     * to 10 seconds.
-     */
-    maxBenchmarkDurationSeconds?: number;
-
-    /**
-     * The min sample count to reach. Defaults to 5.
-     *
-     * @remarks This takes precedence over {@link MemoryTestArguments.maxBenchmarkDurationSeconds}.
-     */
-    minSampleCount?: number;
-
-    /**
-     * The benchmark will iterate the test as many times as necessary to try to get the absolute value of
-     * the relative margin of error below this number. Specify as an integer (e.g. 5 means RME below 5%).
-     * Defaults to 2.5.
-     *
-     * @remarks {@link MemoryTestArguments.maxBenchmarkDurationSeconds} takes precedence over this, since a
-     * benchmark with a very high measurement variance might never get a low enough RME.
-     */
-     maxRelativeMarginOfError?: number;
-
-    /**
-     * The kind of benchmark.
-     */
-    type?: BenchmarkType;
-
-    /**
-     * Percentage of samples (0.1 - 1) to use for calculating the statistics. Defaults to 1.
-     */
-    samplePercentageToUse?: number;
-
-    /**
-     * A free-form field to add a category to the test. This gets added to an internal version of the test name
-     * with an '\@' prepended to it, so it can be leveraged in combination with mocha's --grep/--fgrep options to
-     * only execute specific tests.
+     * A free-form field to add a category to the test.
+     * This gets added to an internal version of the test name with an '\@' prepended to it, so it can be leveraged
+     * in combination with mocha's --grep/--fgrep options to only execute specific tests.
      */
     category?: string;
 }
 
 /**
- * This is wrapper for Mocha's `it` function, that runs a memory benchmark.
+ * This is wrapper for Mocha's 'it()' function, that runs a memory benchmark.
  *
- * Here is how this benchmarking works:
+ * Here is how this benchmarking works at a high-level:
  *
  * ```
  *  For each benchmark
- *      // Run args.benchmarkFn  multiple times and measure results.
- *      Iterate until args.minSampleCount has been reached, and one of
- *      these two things is also true: RME is lower than maxRelativeMarginOfError,
- *      or we've iterated for longer than args.maxBenchmarkDurationSeconds.
- *          args.benchmarkFn()
+ *      Run testObject.before().
+ *      Run these methods multiple times and measure results:
+ *          testObject.beforeIteration()
+ *          testObject.run()
+ *          testObject.afterIteration()
+ *      Iterate until testObject.minSampleCount has been reached, and one of
+ *        these two things is also true: RME is lower than maxRelativeMarginOfError,
+ *        or we've iterated for longer than testObject.maxBenchmarkDurationSeconds.
+ *      Run testObject.after().
  * ```
  *
- * Optionally, setup and teardown functions for the whole benchmark can be provided via the
- * `before` and `after` options. Each of them will run only once, before/after all the
- * iterations/samples.
+ * Optional setup and teardown functions for the whole benchmark can be provided via
+ * {@link IMemoryTestObject.before} and {@link IMemoryTestObject.after}.
+ * Each of them will run only once, before/after all the iterations/samples.
+ *
+ * * Optional setup and teardown functions for each iteration of the benchmark can be provided via
+ * {@link IMemoryTestObject.beforeIteration} and {@link IMemoryTestObject.afterIteration}.
+ * These will run before/after every iteration of the test code.
  *
  * Tests created with this function get tagged with '\@MemoryUsage', so mocha's --grep/--fgrep
  * options can be used to only run this type of tests by fitering on that value.
- *
- * @alpha The specifics of how this function works and what its output means are still subject
- * to change.
  */
 
-export function benchmarkMemory(testObject: MemoryTestObjectInterface): Test {
+export function benchmarkMemory(testObject: IMemoryTestObject): Test {
     const options: Required<MemoryTestObjectProps> = {
         maxBenchmarkDurationSeconds: testObject.maxBenchmarkDurationSeconds ?? 10,
         minSampleCount: testObject.minSampleCount ?? 5,

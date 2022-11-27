@@ -6,7 +6,7 @@
 import {
     MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils";
-import { benchmarkMemory, MemoryTestObjectInterface } from "@fluid-tools/benchmark";
+import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { DirectoryFactory, SharedDirectory } from "../../directory";
 
 function createLocalDirectory(id: string) {
@@ -33,7 +33,7 @@ describe("SharedDirectory memory usage", () => {
         // See the comment at the top of the test suite for more details.
     });
 
-    benchmarkMemory(new class implements MemoryTestObjectInterface {
+    benchmarkMemory(new class implements IMemoryTestObject {
         title = "Create empty directory";
         private dir: SharedDirectory = createLocalDirectory("testDirectory");
 
@@ -45,7 +45,7 @@ describe("SharedDirectory memory usage", () => {
     const numbersOfEntriesForTests = [1000, 10_000, 100_000];
 
     numbersOfEntriesForTests.forEach((x) => {
-        benchmarkMemory(new class implements MemoryTestObjectInterface {
+        benchmarkMemory(new class implements IMemoryTestObject {
             title = `Add ${x} integers to a local directory`;
             private dir: SharedDirectory = createLocalDirectory("testDirectory");
 
@@ -61,7 +61,7 @@ describe("SharedDirectory memory usage", () => {
             }
         }());
 
-        benchmarkMemory(new class implements MemoryTestObjectInterface {
+        benchmarkMemory(new class implements IMemoryTestObject {
             title = `Add ${x} integers to a local directory, clear it`;
             private dir: SharedDirectory = createLocalDirectory("testDirectory");
 
