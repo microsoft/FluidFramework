@@ -34,9 +34,10 @@ describe("Matrix memory usage", () => {
 
     benchmarkMemory(new class implements MemoryTestObjectInterface {
         title = "Create empty Matrix";
+        private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
 
         async run() {
-            const matrix = createLocalMatrix("testMatrix");
+            this.localMatrix = createLocalMatrix("testLocalMatrix");
         }
     }());
 
