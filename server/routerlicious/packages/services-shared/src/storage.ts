@@ -197,6 +197,7 @@ export class DocumentStorage implements IDocumentStorage {
             sequenceNumber,
             lastClientSummaryHead: undefined,
             lastSummarySequenceNumber: 0,
+            validParentSummaries: undefined,
         };
 
         const session: ISession = {

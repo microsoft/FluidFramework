@@ -109,7 +109,7 @@ export class SummaryWriter implements ISummaryWriter {
                 // However, the ack itself might be lost If scribe dies right after creating the summary. In that case,
                 // the client code just fetches the last summary which should be the same as existingRef sha.
                 if (!existingRef ||
-                    (lastSummaryHead !== content.head && existingRef.object.sha !== content.head)) {
+                    (lastSummaryHead !== content.head && existingRef.object.sha !== content.head && !checkpoint.validParentSummaries?.includes(content.head))) {
                     clientSummaryMetric.error(`Proposed parent summary does not match actual parent summary`);
                     return {
                         message: {
@@ -339,7 +339,7 @@ export class SummaryWriter implements ISummaryWriter {
         op: ISequencedDocumentAugmentedMessage,
         currentProtocolHead: number,
         checkpoint: IScribe,
-        pendingOps: ISequencedOperationMessage[]): Promise<boolean> {
+        pendingOps: ISequencedOperationMessage[]): Promise<string | false> {
         const serviceSummaryMetric = Lumberjack.newLumberMetric(LumberEventName.ServiceSummary);
         this.setSummaryProperties(serviceSummaryMetric, op);
         try {
@@ -382,8 +382,9 @@ export class SummaryWriter implements ISummaryWriter {
                 op.additionalContent,
                 JSON.stringify(checkpoint));
 
+            let uploadedSummaryHandle: string | undefined;
             if (this.enableWholeSummaryUpload) {
-                await requestWithRetry(
+                uploadedSummaryHandle = await requestWithRetry(
                     async () => this.createWholeServiceSummary(
                         existingRef.object.sha,
                         logTailEntries,
@@ -476,9 +477,10 @@ export class SummaryWriter implements ISummaryWriter {
                     this.lumberProperties,
                     shouldRetryNetworkError,
                     this.maxRetriesOnError);
+                uploadedSummaryHandle = commit.sha;
             }
             serviceSummaryMetric.success(`Service summary success`);
-            return true;
+            return uploadedSummaryHandle ?? false;
         } catch (error) {
             serviceSummaryMetric.error(`Service summary failed`, error);
             if (error instanceof Error &&
