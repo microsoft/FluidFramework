@@ -17,8 +17,7 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:codegen": "npm run build:plugins && graphql-codegen --config codegen.yml && prettier --write src/graphql-generated/*",
-    "build:commonjs": "npm run tsc && npm run typetests:gen",
-    "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:docs": "api-extractor run --local",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
@@ -34,9 +33,7 @@
     "test": "nyc npm run test:mocha",
     "test:mocha": "mocha \"dist/**/*.tests.js\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-    "tsc": "tsc",
-    "typetests:gen": "flub generate typetests --generate --dir . --no-generateInName",
-    "typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+    "tsc": "tsc"
   },
   "dependencies": {
     "@fluid-experimental/tree": "^1.4.0",
