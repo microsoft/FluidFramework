@@ -218,9 +218,9 @@ describe("BlobManager", () => {
         // ensures this blob will be processed next time runtime.processBlobs() is called
         waitForBlob = async (blob) => {
             if (!runtime.unprocessedBlobs.has(blob)) {
-                await new Promise<void>((res) => runtime.on("blob", () => {
+                await new Promise<void>((resolve) => runtime.on("blob", () => {
                     if (!runtime.unprocessedBlobs.has(blob)) {
-                        res();
+                        resolve();
                     }
                 }));
             }
@@ -232,6 +232,12 @@ describe("BlobManager", () => {
             handlePs.push(handleP);
             await waitForBlob(blob);
         };
+
+        const onNoPendingBlobs = () => {
+            assert((runtime.blobManager as any).pendingBlobs.size === 0);
+        };
+
+        runtime.blobManager.on("noPendingBlobs", () => onNoPendingBlobs());
     });
 
     afterEach(async () => {
@@ -251,9 +257,22 @@ describe("BlobManager", () => {
 
         await createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.processAll();
-
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
+        assert.strictEqual(summaryData.redirectTable, undefined);
+    });
+
+    it("hasPendingBlobs()", async () => {
+        await runtime.attach();
+        await runtime.connect();
+
+        await createBlob(IsoBuffer.from("blob", "utf8"));
+        await createBlob(IsoBuffer.from("blob2", "utf8"));
+        assert.strictEqual(runtime.blobManager.hasPendingBlobs(), true);
+        await runtime.processAll();
+        assert.strictEqual(runtime.blobManager.hasPendingBlobs(), false);
+        const summaryData = validateSummary(runtime);
+        assert.strictEqual(summaryData.ids.length, 2);
         assert.strictEqual(summaryData.redirectTable, undefined);
     });
 

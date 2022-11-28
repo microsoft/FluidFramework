@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import EventEmitter from "events";
 import { v4 as uuid } from "uuid";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -104,7 +105,7 @@ interface PendingBlob {
 
 export interface IPendingBlobs { [id: string]: { blob: string; }; }
 
-export class BlobManager {
+export class BlobManager extends EventEmitter {
     public static readonly basePath = "_blobs";
     private static readonly redirectTableBlobName = ".redirectTable";
     private readonly logger: ITelemetryLogger;
@@ -158,6 +159,7 @@ export class BlobManager {
         private readonly runtime: IBlobManagerRuntime,
         stashedBlobs: IPendingBlobs = {},
     ) {
+        super();
         this.logger = ChildLogger.create(this.runtime.logger, "BlobManager");
         this.runtime.on("disconnected", () => this.onDisconnected());
         this.redirectTable = this.load(snapshot);
@@ -337,6 +339,9 @@ export class BlobManager {
                     // no need to submit BlobAttach op in this case
                     entry.handleP.resolve(this.getBlobHandle(response.id));
                     this.pendingBlobs.delete(localId);
+                    if (!this.hasPendingBlobs()) {
+                        this.emit("noPendingBlobs");
+                    }
                 } else {
                     // Check for still-pending duplicates too; if an op is already in flight we can wait for that one
                     if (!this.opsInFlight.has(response.id)) {
@@ -439,6 +444,9 @@ export class BlobManager {
                     if (pendingBlobEntry.status === PendingBlobStatus.OnlinePendingOp) {
                         pendingBlobEntry.handleP.resolve(this.getBlobHandle(message.metadata.blobId));
                         this.pendingBlobs.delete(localId);
+                        if (!this.hasPendingBlobs()) {
+                            this.emit("noPendingBlobs");
+                        }
                     }
                 });
             } else {
@@ -446,6 +454,9 @@ export class BlobManager {
                 assert(this.pendingBlobs.get(message.metadata.localId)?.status === PendingBlobStatus.OfflinePendingOp,
                     0x1f8 /* "local BlobAttach op with no pending blob" */);
                 this.pendingBlobs.delete(message.metadata.localId);
+                if (!this.hasPendingBlobs()) {
+                    this.emit("noPendingBlobs");
+                }
             }
         }
     }
@@ -587,5 +598,9 @@ export class BlobManager {
             blobs[key] = { blob: bufferToString(entry.blob, "base64") };
         }
         return blobs;
+    }
+
+    public hasPendingBlobs(): boolean {
+        return this.pendingBlobs.size > 0;
     }
 }
