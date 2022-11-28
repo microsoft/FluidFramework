@@ -5,7 +5,7 @@
 
 import { v4 as uuid } from "uuid";
 import { assert, Uint8ArrayToString } from "@fluidframework/common-utils";
-import { getDocAttributesFromProtocolSummary, NonRetryableError } from "@fluidframework/driver-utils";
+import { getDocAttributesFromProtocolSummary, NonRetryableError, UsageError } from "@fluidframework/driver-utils";
 import { getGitType } from "@fluidframework/protocol-base";
 import { SummaryType, ISummaryTree, ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -78,8 +78,9 @@ export async function createNewFluidFile(
     }
 
     if (!isNewFileInfo(fileInfo) && !fileInfo.itemId) {
-        throw new NonRetryableError(
-            "Invalid itemId for createNew", OdspErrorType.invalidItemIdError, { driverVersion });
+        const toThrow = new UsageError("Invalid itemId for createNew");
+        logger.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
+        throw toThrow;
     }
 
     let itemId: string;
@@ -90,8 +91,9 @@ export async function createNewFluidFile(
             itemId = await createNewEmptyFluidFile(
                 getStorageToken, fileInfo, logger, epochTracker, forceAccessTokenViaAuthorizationHeader);
         } else {
-            throw new NonRetryableError(
-                "Summary is required to create container on existing file", OdspErrorType.invalidSummaryError, { driverVersion });
+            const toThrow = new UsageError("Summary is required to create container on existing file");
+            logger.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
+            throw toThrow;
         }
     } else {
         const restArgs: CreateNewFluidContainerFromSummaryArgs = [

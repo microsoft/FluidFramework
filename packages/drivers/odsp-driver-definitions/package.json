@@ -54,16 +54,6 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.1.0",
-    "broken": {
-      "InterfaceDeclaration_IOdspError": {
-        "backCompat": false
-      },
-      "TypeAliasDeclaration_OdspError": {
-        "backCompat": false
-      },
-      "EnumDeclaration_OdspErrorType": {
-        "backCompat": false
-      }
-    }
+    "broken": {}
   }
 }

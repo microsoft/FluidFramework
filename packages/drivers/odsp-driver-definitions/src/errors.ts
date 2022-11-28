@@ -46,16 +46,6 @@ export enum OdspErrorType {
     // SPO can occasionally return 403 for r/w operations on document when there is a fail over to another data center.
     // So to preserve integrity of the data, the data becomes readonly.
     serviceReadOnly = "serviceReadOnly",
-
-    /**
-     * Invalid item id (during creation of Fluid container on existing file)
-     */
-    invalidItemIdError = "invalidItemIdError",
-
-    /**
-     * Invalid summary (during creation of Fluid container on existing file)
-     */
-    invalidSummaryError = "invalidSummaryError"
 }
 
 export interface IOdspErrorAugmentations {
