@@ -24,9 +24,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
     constructor(
         private readonly opCollection: ICollection<any>,
-        protected context: IContext,
-        protected readonly tenantId: string,
-        protected readonly documentId: string) {
+        protected context: IContext) {
         this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
     }
 
