@@ -29,7 +29,7 @@
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
-    "typetests:gen": "flub generate typetests --generate --dir .",
+    "typetests:gen": "flub generate typetests --generate --dir . --no-generateInName",
     "typetests:prepare": "flub generate typetests --prepare --dir . --pin"
   },
   "dependencies": {

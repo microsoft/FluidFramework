@@ -69,7 +69,7 @@
     "tsc:fast": "fluid-build  --root . -s tsc",
     "tsfmt": "lerna run tsfmt:fix --no-sort --stream --no-bail",
     "tsfmt:fix": "lerna run tsfmt:fix --no-sort --stream --no-bail",
-    "typetests:gen": "flub generate typetests --generate --releaseGroup client",
+    "typetests:gen": "flub generate typetests --generate --releaseGroup client --no-generateInName",
     "typetests:prepare": "flub generate typetests --prepare --releaseGroup client --pin",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",

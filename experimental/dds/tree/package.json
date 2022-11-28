@@ -35,7 +35,7 @@
     "test:mocha": "mocha \"dist/**/*.tests.js\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
-    "typetests:gen": "flub generate typetests --generate --dir .",
+    "typetests:gen": "flub generate typetests --generate --dir . --no-generateInName",
     "typetests:prepare": "flub generate typetests --prepare --dir . --pin"
   },
   "dependencies": {

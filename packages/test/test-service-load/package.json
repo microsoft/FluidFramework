@@ -48,7 +48,7 @@
     "test:realsvc:tinylicious": "cross-env fluid__test__driver=t9s start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
     "test:realsvc:tinylicious:run": "npm run test:realsvc:run",
     "tsc": "tsc",
-    "typetests:gen": "flub generate typetests --generate --dir .",
+    "typetests:gen": "flub generate typetests --generate --dir . --no-generateInName",
     "typetests:prepare": "flub generate typetests --prepare --dir . --pin",
     "usePrereleaseDeps": "node ./scripts/usePrereleaseDeps.js"
   },
