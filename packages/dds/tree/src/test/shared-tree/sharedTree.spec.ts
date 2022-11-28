@@ -25,6 +25,7 @@ import { SharedTreeTestFactory, TestTreeProvider } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import { TransactionResult } from "../../checkout";
 import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData } from "../../schema-stored";
+import { treeGenerator } from "./treeGenerator";
 
 const fooKey: FieldKey = brand("foo");
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
@@ -433,6 +434,13 @@ describe("SharedTree", () => {
             const expected = ["x", "y", "a", "b", "c"];
             validateRootField(tree1, expected);
             validateRootField(tree2, expected);
+        });
+    });
+    describe("Fuzz", () => {
+        it("initialize tree", async () => {
+            const test = treeGenerator();
+            const a = 1;
+            assert(a === 1)
         });
     });
 });

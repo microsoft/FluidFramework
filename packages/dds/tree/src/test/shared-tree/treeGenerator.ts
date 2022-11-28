@@ -13,14 +13,14 @@ const rootPath = {
     parentField: "rootFieldKeySymbol",
 };
 
-const paths = new Map();
+const paths = new Map<any, number[][]>();
 paths.set(JSON.stringify(rootPath), [[0, 42]]);
 
 export function treeGenerator(state=paths): any {
-    const treeType = random.pick(['leaf', 'stick', 'balanced'])
+    let treeType = random.pick(['leaf', 'stick', 'balanced'])
+    treeType = 'balanced'
     const keys = Array.from(state.keys());
-    const parentPath = JSON.parse(random.pick(keys))
-
+    const parentPath = random.pick(keys)
     switch (treeType) {
         // add one node at the parentPath
         case 'leaf':
@@ -45,23 +45,32 @@ function addLeaf(state: any, path:any): any{
 }
 
 function addStick(state: any, path:any): any{
+    const indices = state.get(path)
+    const index = indices[random.integer(0, indices.length-1)][0]
+    // TODO: parent field must be randomly chosen
+    const parentPath = addIndexToPath(JSON.parse(path), index)
     const newPath = {
-        parent: path,
+        parent: parentPath,
         parentField: "rootFieldKeySymbol"
     }
     const key = JSON.stringify(newPath);
     if (state.has(key)){
         addLeaf(state, newPath)
     } else {
-        state.set(key, [0, random.integer(0, Number.MAX_SAFE_INTEGER)])
+        state.set(
+            key,[[1, random.integer(0, Number.MAX_SAFE_INTEGER)]]
+        )
     }
     return state
 }
 
 function addBalanced(state: any, path:any): any{
+    const indices = state.get(path)
+    const index = indices[random.integer(0, indices.length-1)][0]
     // TODO: parent field must be randomly chosen
+    const parentPath = addIndexToPath(JSON.parse(path), index)
     const newPath = {
-        parent: path,
+        parent: parentPath,
         parentField: "rootFieldKeySymbol"
     }
     const key = JSON.stringify(newPath);
@@ -69,9 +78,24 @@ function addBalanced(state: any, path:any): any{
         addLeaf(state, newPath)
         addLeaf(state, newPath)
     } else {
-        state.set(key, [0, random.integer(0, Number.MAX_SAFE_INTEGER)])
+        state.set(
+            key,
+            [
+                [0, random.integer(0, Number.MAX_SAFE_INTEGER)],
+                [1, random.integer(0, Number.MAX_SAFE_INTEGER)]
+            ]
+        )
     }
     return state
+}
+
+function addIndexToPath(path:any, index:number): any {
+    const newPath = {
+        parent: path.parent,
+        parentField: path.parentField,
+        parentIndex: index
+    }
+    return newPath
 }
 
 function getMaxIndex(indices:number[][]): number {
