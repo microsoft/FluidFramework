@@ -5,8 +5,10 @@
 import { strict as assert } from "node:assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ContainerSchema } from "@fluidframework/fluid-static";
+import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
+import { ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
+import { timeoutPromise } from "@fluidframework/test-utils";
 import { AzureClient } from "../AzureClient";
 import { createAzureClient } from "./AzureClientFactory";
 import { TestDataObject } from "./TestDataObject";
@@ -31,6 +33,9 @@ const mapWait = async <T>(map: ISharedMap, key: string): Promise<T> => {
         map.on("valueChanged", handler);
     });
 };
+const connectionModeOf = (container: IFluidContainer): ConnectionMode =>
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    (container as any).container.connectionMode as ConnectionMode;
 
 describe("AzureClient", () => {
     let client: AzureClient;
@@ -280,4 +285,72 @@ describe("AzureClient", () => {
         );
     });
     */
+
+    /**
+     * Scenario: Test if AzureClient with only read permission starts the container in read mode.
+     * AzureClient will attempt to start the connection in write mode, and since access permissions
+     * does not offer write capabilities, the established connection mode will be `read`.
+     *
+     * Expected behavior: AzureClient should start the container with the connectionMode in `read`.
+     */
+    it("can create a container with only read permission in read mode", async () => {
+        const readOnlyAzureClient = createAzureClient([ScopeType.DocRead]);
+
+        const { container } = await readOnlyAzureClient.createContainer(schema);
+        const containerId = await container.attach();
+        await timeoutPromise((resolve) => container.once("connected", resolve), {
+            durationMs: 1000,
+            errorMsg: "container connect() timeout",
+        });
+        const { container: containerGet } = await readOnlyAzureClient.getContainer(
+            containerId,
+            schema,
+        );
+
+        assert.strictEqual(
+            connectionModeOf(container),
+            "read",
+            "Creating a container with only read permission is not in read mode",
+        );
+
+        assert.strictEqual(
+            connectionModeOf(containerGet),
+            "read",
+            "Getting a container with only read permission is not in read mode",
+        );
+    });
+
+    /**
+     * Scenario: Test if AzureClient with read and write permissions starts the container in write mode.
+     * AzureClient will attempt to start the connection in write mode, and since access permissions offer
+     * write capability, the established connection mode will be `write`.
+     *
+     * Expected behavior: AzureClient should start the container with the connectionMode in `write`.
+     */
+    it("can create a container with read and write permissions in write mode", async () => {
+        const readWriteAzureClient = createAzureClient([ScopeType.DocRead, ScopeType.DocWrite]);
+
+        const { container } = await readWriteAzureClient.createContainer(schema);
+        const containerId = await container.attach();
+        await timeoutPromise((resolve) => container.once("connected", resolve), {
+            durationMs: 1000,
+            errorMsg: "container connect() timeout",
+        });
+        const { container: containerGet } = await readWriteAzureClient.getContainer(
+            containerId,
+            schema,
+        );
+
+        assert.strictEqual(
+            connectionModeOf(container),
+            "write",
+            "Creating a container with only write permission is not in write mode",
+        );
+
+        assert.strictEqual(
+            connectionModeOf(containerGet),
+            "write",
+            "Getting a container with only write permission is not in write mode",
+        );
+    });
 });
