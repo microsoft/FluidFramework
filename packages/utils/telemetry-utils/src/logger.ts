@@ -31,7 +31,6 @@ import {
     ITelemetryGenericEventExt,
     ITelemetryLoggerExt,
     ITelemetryPerformanceEventExt,
-    TelemetryEventTypes,
 } from "./telemetryTypes";
 
 /**
@@ -599,7 +598,7 @@ export class TelemetryNullLogger implements ITelemetryLogger {
  * Take in a event object, stringify any fields that are non-primitives, and return the new event object.
  * @param event - Event with fields you want to stringify.
  */
- function convertToBaseEvent(event: TelemetryEventTypes): ITelemetryBaseEvent {
+ function convertToBaseEvent(event: ITelemetryGenericEventExt): ITelemetryBaseEvent {
     const newEvent = {
         ...event
     };

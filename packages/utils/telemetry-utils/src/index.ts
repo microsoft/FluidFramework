@@ -51,7 +51,6 @@ export { SampledTelemetryHelper } from "./sampledTelemetryHelper";
 export { logIfFalse } from "./utils";
 export {
 	TelemetryEventPropertyTypeExt,
-    TelemetryEventTypes,
     ITelemetryEvent as ITelemetryBaseEventExt,
     ITelemetryBaseLoggerExt,
     ITelemetryGenericEventExt,

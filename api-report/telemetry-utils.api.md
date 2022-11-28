@@ -333,9 +333,6 @@ export type TelemetryEventPropertyTypeExt = string | number | boolean | undefine
 // @public (undocumented)
 export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 
-// @public (undocumented)
-export type TelemetryEventTypes = ITelemetryBaseEventExt | ITelemetryGenericEventExt | ITelemetryErrorEventExt | ITelemetryPerformanceEventExt;
-
 // @public
 export abstract class TelemetryLogger implements ITelemetryLoggerExt {
     constructor(namespace?: string | undefined, properties?: ITelemetryLoggerPropertyBags | undefined);
@@ -346,7 +343,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
     // (undocumented)
     protected readonly namespace?: string | undefined;
     static numberFromString(str: string | null | undefined): string | number | undefined;
-    static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean): void;
+    static prepareErrorObject(event: ITelemetryBaseEventExt, error: any, fetchStack: boolean): void;
     // (undocumented)
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent;
     // (undocumented)

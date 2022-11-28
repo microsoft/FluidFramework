@@ -103,9 +103,3 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
      */
     sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: any): void;
 }
-
-export type TelemetryEventTypes =
-    | ITelemetryEvent
-    | ITelemetryGenericEventExt
-    | ITelemetryErrorEventExt
-    | ITelemetryPerformanceEventExt;
