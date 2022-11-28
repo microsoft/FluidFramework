@@ -42,6 +42,7 @@
     "typescript": "~4.5.5"
   },
   "typeValidation": {
+    "disabled": true,
     "version": "1.4.0",
     "baselineRange": "~1.3.0",
     "baselineVersion": "1.3.1",
