@@ -597,25 +597,25 @@ export const handlers: Handler[] = [
                 return "Error parsing JSON file: " + file;
             }
 
-            const hasPrettierProperty = Object.prototype.hasOwnProperty.call(json, "prettier");
-            const hasPrettierFixProperty = Object.prototype.hasOwnProperty.call(
+            const hasPrettierScript = Object.prototype.hasOwnProperty.call(json.scripts, "prettier");
+            const hasPrettierFixScript = Object.prototype.hasOwnProperty.call(
                 json,
                 "prettier:fix",
             );
-            const hasFormatProperty = Object.prototype.hasOwnProperty.call(json, "format");
+            const hasFormatScript = Object.prototype.hasOwnProperty.call(json, "format");
 
-            if (!(hasPrettierProperty && hasPrettierFixProperty && hasFormatProperty)) {
+            if (!(hasPrettierScript && hasPrettierFixScript && hasFormatScript)) {
                 const missingScripts: string[] = [];
 
-                if (!hasPrettierProperty) {
+                if (!hasPrettierScript) {
                     missingScripts.push(`prettier`);
                 }
 
-                if (!hasPrettierFixProperty) {
+                if (!hasPrettierFixScript) {
                     missingScripts.push(`prettier:fix`);
                 }
 
-                if (!hasFormatProperty) {
+                if (!hasFormatScript) {
                     missingScripts.push(`format`);
                 }
 
@@ -653,30 +653,25 @@ function addPrettier(
     jsonDevDependencies: Map<string, string>,
     jsonScripts: Map<string, string>,
 ) {
-    // if devDependencies or scripts does not exist in package.json
-    if (jsonDevDependencies === undefined || jsonScripts === undefined) {
-        // create deveDependencies and add prettier
-        if (jsonDevDependencies === undefined) {
-            json["devDependencies"] = { prettier: "~2.6.2" };
-        }
-
-        // create scripts and add format, prettier and prettier:fix scripts
-        if (jsonScripts === undefined) {
-            json["scripts"] = {
-                "format": "npm run prettier:fix",
-                "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-                "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
-            };
-        }
+    // if devDependencies does not exist in package.json
+    if (jsonDevDependencies === undefined) {
+        json["devDependencies"] = {}
     }
-    // if both devDependencies and scripts exist in package.json
-    else {
-        jsonDevDependencies["prettier"] = "~2.6.2";
 
-        jsonScripts["format"] = "npm run prettier:fix";
-        jsonScripts["prettier"] = "prettier --check . --ignore-path ../../../.prettierignore";
-        jsonScripts["prettier:fix"] = "prettier --write . --ignore-path ../../../.prettierignore";
+    // if scripts does not exist in package.json
+    if (jsonScripts === undefined) {
+        json["scripts"] = {}
     }
+
+
+    // update devDependencies "prettier" to latest version, intentionally left undefined
+    jsonDevDependencies["prettier"] = undefined;
+
+    // update scripts
+    jsonScripts["format"] = "npm run prettier:fix";
+    jsonScripts["prettier"] = "prettier --check .";
+    jsonScripts["prettier:fix"] = "prettier --write .";
+
 
     // package.json in root of the release-group should have lerna script
     if (jsonCheckRoot === "root") {
