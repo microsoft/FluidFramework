@@ -169,7 +169,7 @@ export function revert(
 				fail('Revert does not support the change type.');
 		}
 
-		// Update the revision and abort the revert if this edit can't be applied successfully
+		// Abort the entire revert if this change can't be applied successfully.
         if (editor.applyChange(change).status !== EditStatus.Applied) {
             return undefined;
         }
