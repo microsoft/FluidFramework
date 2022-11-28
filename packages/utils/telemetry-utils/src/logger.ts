@@ -92,7 +92,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
      * @param error - Error to extract info from
      * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
      */
-    public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
+    public static prepareErrorObject(event: ITelemetryEvent, error: any, fetchStack: boolean) {
         const { message, errorType, stack } = extractLogSafeErrorProperties(error, true /* sanitizeStack */);
         // First, copy over error message, stack, and errorType directly (overwrite if present on event)
         event.stack = stack;
@@ -632,7 +632,7 @@ function convertToBasePropertyType(x: any, key: string): TelemetryEventPropertyT
                 return JSON.stringify(x);
             }
             // We don't support logging arbitrary objects
-            console.error(`UnSupported Format of Logging Error Property for key ${key}:`, x);
-            return "REDACTED (arbitrary object)";
+            console.error(`UnSupported Format of Logging Property for key ${key}:`, x);
+            return "INVALID PROPERTY (arbitrary object)";
     }
 }
