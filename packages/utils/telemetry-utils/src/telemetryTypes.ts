@@ -7,10 +7,6 @@ import { ITelemetryBaseLogger, TelemetryEventCategory } from "@fluidframework/co
 
 /**
  * Property types that can be logged.
- *
- * @remarks Logging entire objects is considered extremely dangerous from a telemetry point of view because people can
- * easily add fields to objects that shouldn't be logged and not realize it's going to be logged.
- * General best practice is to explicitly log the fields you care about from objects.
  */
 export type TelemetryEventPropertyTypeExt =
     | string
@@ -22,7 +18,7 @@ export type TelemetryEventPropertyTypeExt =
  /**
   * A property to be logged to telemetry containing both the value and a tag. Tags are generic strings that can be used
   * to mark pieces of information that should be organized or handled differently by loggers in various first or third
-  * party scenarios. For example, tags are used to mark PII that should not be stored in logs.
+  * party scenarios. For example, tags are used to mark personal information that should not be stored in logs.
   */
 export interface ITaggedTelemetryPropertyTypeExt {
     value: TelemetryEventPropertyTypeExt;
@@ -97,11 +93,6 @@ export interface ILoggingErrorExt extends Error {
     getTelemetryProperties(): ITelemetryPropertiesExt;
 }
 
-/**
- * ITelemetryLogger interface contains various helper telemetry methods,
- * encoding in one place schemas for various types of Fluid telemetry events.
- * Creates sub-logger that appends properties to all events
- */
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
     /**
      * Actual implementation that sends telemetry event
