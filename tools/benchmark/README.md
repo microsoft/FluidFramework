@@ -37,10 +37,11 @@ cross-test contamination.
 
 ### `--fgrep @Benchmark`
 
-All tests created with the tools in this package get tagged with `@Benchmark` in their name, so most of the time you'll
-want to use `--fgrep @Benchmark` to only run tests that were defined with the tools provided here.
-You can be more specific and only run tests with a particular tag, which you might set or provide when writing the tests,
-e.g. `--fgrep @Measurement`.
+All tests created with the tools in this package get tagged with `@Benchmark` in their name by default, so most of the
+time you'll want to use `--fgrep @Benchmark` to only run tests that were defined with the tools provided here.
+You can change the `@Benchmark` tag to a few other values (like `@Measurement`, `@Perspective`, or `@Diagnostic`) with
+one of the arguments to the functions exposed in this package, and if you do, you can be more specific about which tests
+want to run by passing a different filter, e.g. `--fgrep @Measurement`.
 
 ### `--fgrep @ExecutionTime` or `--fgrep @MemoryUsage`
 
@@ -104,7 +105,7 @@ For each test:
 
 In general terms, this means you should:
 
-- Put code that sets up the test but should *not* be included in the baseline "before" memory measurement in the
+- Put code that sets up the test but should *not* be included in the baseline "before" memory measurement, in the
   `beforeIteration()` method.
 - Put test code in the `run()` method, and ensure that things that need to be considered in the "after" memory measurement
   are assigned to local variables declared *outside* of the `run()` method, so they won't go out of scope as soon as
