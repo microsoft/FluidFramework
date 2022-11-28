@@ -258,7 +258,6 @@ export function testForest(
 
             const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
             const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
-            // TODO: make type-safe
             forest.applyDelta(delta);
             forest.anchors.applyDelta(delta);
 
@@ -347,7 +346,6 @@ export function testForest(
 
             const clone = forest.clone(forest.schema, forest.anchors);
             const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: 2 };
-            // TODO: make type-safe
             const delta: Delta.Root = new Map([[rootFieldKeySymbol, [setValue]]]);
             clone.applyDelta(delta);
 
@@ -383,7 +381,6 @@ export function testForest(
                 initializeForest(forest, [singleTextCursor(content)]);
 
                 const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: 2 };
-                // TODO: make type-safe
                 const delta: Delta.Root = new Map([[rootFieldKeySymbol, [setValue]]]);
                 forest.applyDelta(delta);
 
@@ -400,7 +397,6 @@ export function testForest(
                 initializeForest(forest, [singleTextCursor(content)]);
 
                 const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: undefined };
-                // TODO: make type-safe
                 const delta: Delta.Root = new Map([[rootFieldKeySymbol, [setValue]]]);
                 forest.applyDelta(delta);
 
@@ -434,7 +430,6 @@ export function testForest(
                         ],
                     ]),
                 };
-                // TODO: make type-safe
                 const delta: Delta.Root = new Map([[rootFieldKeySymbol, [setField]]]);
                 forest.applyDelta(delta);
 
@@ -456,7 +451,6 @@ export function testForest(
 
                 const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
                 const delta: Delta.Root = new Map([[rootFieldKeySymbol, [0, mark]]]);
-                // TODO: make type-safe
                 forest.applyDelta(delta);
 
                 // Inspect resulting tree: should just have `2`.
@@ -483,7 +477,6 @@ export function testForest(
                 const skip: Delta.Skip = 1;
                 const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
                 const delta: Delta.Root = new Map([[rootFieldKeySymbol, [skip, mark]]]);
-                // TODO: make type-safe
                 forest.applyDelta(delta);
 
                 // Inspect resulting tree: should just have `1`.
@@ -506,7 +499,6 @@ export function testForest(
                     content: [singleTextCursor({ type: jsonNumber.name, value: 3 })],
                 };
                 const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
-                // TODO: make type-safe
                 forest.applyDelta(delta);
 
                 const reader = forest.allocateCursor();
@@ -541,10 +533,8 @@ export function testForest(
                         [yField, [1, moveIn]],
                     ]),
                 };
-                // TODO: make type-safe
                 const delta: Delta.Root = new Map([[rootFieldKeySymbol, [modify]]]);
                 forest.applyDelta(delta);
-
                 const reader = forest.allocateCursor();
                 moveToDetachedField(forest, reader);
                 assert(reader.firstNode());
@@ -581,7 +571,6 @@ export function testForest(
                     ]),
                 };
                 const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
-                // TODO: make type-safe
                 forest.applyDelta(delta);
 
                 const reader = forest.allocateCursor();
@@ -614,7 +603,6 @@ export function testForest(
                 const delta: Delta.Root = new Map([
                     [rootFieldKeySymbol, [mark, { type: Delta.MarkType.MoveIn, moveId }]],
                 ]);
-                // TODO: make type-safe
                 forest.applyDelta(delta);
 
                 const reader = forest.allocateCursor();
@@ -646,7 +634,6 @@ export function testForest(
                     ]),
                 };
                 const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
-                // TODO: make type-safe
                 forest.applyDelta(delta);
 
                 const reader = forest.allocateCursor();
@@ -698,7 +685,6 @@ export function testForest(
                     ]),
                 };
                 const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
-                // TODO: make type-safe
                 forest.applyDelta(delta);
 
                 const reader = forest.allocateCursor();
@@ -729,7 +715,6 @@ export function testForest(
                     type: Delta.MarkType.Insert,
                     content: content.map(singleTextCursor),
                 };
-                // TODO: make type-safe
                 const delta: Delta.Root = new Map([[rootFieldKeySymbol, [insert]]]);
 
                 assert.deepEqual(dependent.tokens, []);

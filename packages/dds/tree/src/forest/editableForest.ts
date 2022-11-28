@@ -4,7 +4,6 @@
  */
 
 import { InvalidationToken } from "../dependency-tracking";
-import { StoredSchemaRepository } from "../schema-stored";
 import {
     AnchorSet,
     FieldKey,
@@ -29,13 +28,6 @@ export interface IEditableForest extends IForestSubscription {
      * update the anchors in a semantically optimal way.
      */
     readonly anchors: AnchorSet;
-
-    /**
-     * Create an independent copy of this forest, that uses the provided schema and anchors.
-     *
-     * The new copy will not invalidate observers (dependents) of the old one.
-     */
-    clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
 
     /**
      * Applies the supplied Delta to the forest.
