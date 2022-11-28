@@ -53,8 +53,8 @@
     "test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
     "test:report": "nyc npm run test:mocha:report && npm run test:jest:report",
     "tsc": "tsc",
-    "typetests:gen": "fluid-type-validator -d .",
-    "typetests:prepare": "fluid-type-validator -d . -p"
+    "typetests:gen": "flub generate typetests --generate --dir .",
+    "typetests:prepare": "flub generate typetests --prepare --dir . --pin"
   },
   "nyc": {
     "all": true,
@@ -124,6 +124,8 @@
   },
   "typeValidation": {
     "version": "1.1.0",
+    "baselineRange": "~1.0.0",
+    "baselineVersion": "1.0.0",
     "broken": {}
   }
 }

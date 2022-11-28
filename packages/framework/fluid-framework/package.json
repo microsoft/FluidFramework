@@ -30,7 +30,8 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
-    "typetests:gen": "fluid-type-validator -g -d ."
+    "typetests:gen": "flub generate typetests --generate --dir .",
+    "typetests:prepare": "flub generate typetests --prepare --dir . --pin"
   },
   "dependencies": {
     "@fluidframework/container-definitions": ">=2.0.0-internal.2.1.2 <2.0.0-internal.3.0.0",
@@ -52,25 +53,15 @@
     "copyfiles": "^2.4.1",
     "cross-env": "^7.0.2",
     "eslint": "~8.6.0",
-    "fluid-framework-previous": "npm:fluid-framework@2.0.0-internal.2.0.0",
+    "fluid-framework-previous": "npm:fluid-framework@2.0.0-internal.2.1.0",
     "rimraf": "^2.6.2",
     "typescript": "~4.5.5"
   },
   "typeValidation": {
-    "version": "2.0.0-internal.2.1.0",
-    "broken": {
-      "EnumDeclaration_ContainerErrorType": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "EnumDeclaration_DriverErrorType": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "TypeAliasDeclaration_ICriticalContainerError": {
-        "backCompat": false,
-        "forwardCompat": false
-      }
-    }
+    "disabled": true,
+    "version": "2.0.0-internal.2.2.0",
+    "baselineRange": ">=2.0.0-internal.2.1.0 <2.0.0-internal.2.2.0",
+    "baselineVersion": "2.0.0-internal.2.1.0",
+    "broken": {}
   }
 }
