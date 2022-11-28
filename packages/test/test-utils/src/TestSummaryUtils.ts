@@ -105,6 +105,23 @@ export async function createSummarizer(
     gcOptions?: IGCRuntimeOptions,
     configProvider: IConfigProviderBase = mockConfigProvider(),
 ): Promise<ISummarizer> {
+    const absoluteUrl = await container.getAbsoluteUrl("");
+    return (await createSummarizerWithContainer(
+        provider,
+        absoluteUrl,
+        summaryVersion,
+        gcOptions,
+        configProvider,
+    )).summarizer;
+}
+
+export async function createSummarizerWithContainer(
+    provider: ITestObjectProvider,
+    absoluteUrl: string | undefined,
+    summaryVersion?: string,
+    gcOptions?: IGCRuntimeOptions,
+    configProvider: IConfigProviderBase = mockConfigProvider(),
+): Promise<{ container: IContainer; summarizer: ISummarizer; }> {
     const testContainerConfig: ITestContainerConfig = {
         runtimeOptions: {
             summaryOptions: defaultSummaryOptions,
@@ -112,18 +129,6 @@ export async function createSummarizer(
         },
         loaderProps: { configProvider },
     };
-
-    const loader = provider.makeTestLoader(testContainerConfig);
-    const absoluteUrl = await container.getAbsoluteUrl("");
-    return (await createSummarizerCore(absoluteUrl, loader, summaryVersion)).summarizer;
-}
-
-export async function createSummarizerWithContainer(
-    provider: ITestObjectProvider,
-    absoluteUrl: string | undefined,
-    testContainerConfig: ITestContainerConfig,
-    summaryVersion?: string,
-): Promise<{ container: IContainer; summarizer: ISummarizer; }> {
     const loader = provider.makeTestLoader(testContainerConfig);
     return createSummarizerCore(absoluteUrl, loader, summaryVersion);
 }

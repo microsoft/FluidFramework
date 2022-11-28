@@ -550,6 +550,11 @@ export class SummaryWriter implements ISummaryWriter {
                 },
             },
         ];
+
+        if (fullLogTail.length > 0) {
+            Lumberjack.info(`LogTail of length ${fullLogTail.length} generated from seq no ${fullLogTail[0].sequenceNumber} to ${fullLogTail[fullLogTail.length - 1].sequenceNumber}`, this.lumberProperties);
+        }
+        
         return logTailEntries;
     }
 

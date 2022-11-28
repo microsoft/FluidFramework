@@ -71,7 +71,7 @@ function rebaseMarkList<TNodeChange>(
         if (baseMark === undefined) {
             assert(
                 currMark !== undefined,
-                "Loop condition should prevent both iterators from being empty",
+                0x461 /* Loop condition should prevent both iterators from being empty */,
             );
             if (baseDetachOffset > 0 && isAttach(currMark)) {
                 currIter.pop();
@@ -82,7 +82,7 @@ function rebaseMarkList<TNodeChange>(
         } else if (currMark === undefined) {
             assert(
                 baseMark !== undefined,
-                "Loop condition should prevent both iterators from being empty",
+                0x462 /* Loop condition should prevent both iterators from being empty */,
             );
             baseIter.pop();
             if (isDetachMark(baseMark)) {
@@ -101,7 +101,7 @@ function rebaseMarkList<TNodeChange>(
                     if (offset >= reattachLength) {
                         assert(
                             offset === reattachLength,
-                            "Reattach is shorter than recorded detach",
+                            0x463 /* Reattach is shorter than recorded detach */,
                         );
                         baseIter.pop();
                         factory.pushOffset(reattachLength);
@@ -302,9 +302,9 @@ function updateLineage<T>(requests: LineageRequest<T>[], revision: RevisionTag) 
 }
 
 function removeLineageEvent<T>(mark: Attach<T>, revisionToRemove: RevisionTag) {
-    assert(mark.lineage !== undefined, "Cannot remove event from empty lineage");
+    assert(mark.lineage !== undefined, 0x464 /* Cannot remove event from empty lineage */);
     const index = mark.lineage.findIndex((event) => event.revision === revisionToRemove);
-    assert(index >= 0, "Lineage event not found");
+    assert(index >= 0, 0x465 /* Lineage event not found */);
     mark.lineage.splice(index, 1);
     if (mark.lineage.length === 0) {
         delete mark.lineage;

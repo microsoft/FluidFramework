@@ -58,6 +58,12 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 // @public
 export const agentSchedulerId = "_scheduler";
 
+// @public
+export enum CompressionAlgorithms {
+    // (undocumented)
+    lz4 = "lz4"
+}
+
 // @public (undocumented)
 export enum ContainerMessageType {
     // (undocumented)
@@ -74,6 +80,8 @@ export enum ContainerMessageType {
     Rejoin = "rejoin"
 }
 
+// Warning: (ae-forgotten-export) The symbol "IGarbageCollectionRuntime" needs to be exported by the entry point index.d.ts
+//
 // @public
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements IContainerRuntime, IGarbageCollectionRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider {
     addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
@@ -101,7 +109,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
-    deleteUnusedRoutes(unusedRoutes: string[]): void;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
@@ -131,8 +138,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     getQuorum(): IQuorumClients;
     // (undocumented)
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
-    // (undocumented)
-    getSnapshotBlobs(): Promise<void>;
     // (undocumented)
     get IContainerRuntime(): this;
     // (undocumented)
@@ -190,6 +195,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
     updateStateBeforeGC(): Promise<void>;
+    updateUnusedRoutes(unusedRoutes: string[], tombstone: boolean): void;
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
@@ -228,6 +234,9 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
 
 // @public (undocumented)
 export const gcBlobPrefix = "__gc";
+
+// @public (undocumented)
+export const gcTombstoneBlobKey = "__tombstones";
 
 // @public (undocumented)
 export const gcTreeKey = "gc";
@@ -300,7 +309,8 @@ export interface IClientSummaryWatcher extends IDisposable {
 
 // @public
 export interface ICompressionRuntimeOptions {
-    readonly minimumSize?: number;
+    readonly compressionAlgorithm: CompressionAlgorithms;
+    readonly minimumBatchSizeInBytes: number;
 }
 
 // @public (undocumented)
@@ -334,17 +344,6 @@ export interface IContainerRuntimeOptions {
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
     readonly afterSequenceNumber?: number;
     readonly override?: boolean;
-}
-
-// @public
-export interface IGarbageCollectionRuntime {
-    closeFn: (error?: ICriticalContainerError) => void;
-    deleteUnusedRoutes(unusedRoutes: string[]): void;
-    getCurrentReferenceTimestampMs(): number | undefined;
-    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
-    getNodeType(nodePath: string): GCNodeType;
-    updateStateBeforeGC(): Promise<void>;
-    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 // @public (undocumented)
@@ -556,6 +555,7 @@ export interface ISummaryBaseConfiguration {
     initialSummarizerDelayMs: number;
     maxAckWaitTime: number;
     maxOpsSinceLastSummary: number;
+    // @deprecated (undocumented)
     summarizerClientElection: boolean;
 }
 
@@ -590,6 +590,7 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
     maxTime: number;
     minIdleTime: number;
     minOpsForLastSummaryAttempt: number;
+    nonRuntimeHeuristicThreshold?: number;
     nonRuntimeOpWeight: number;
     runtimeOpWeight: number;
     // (undocumented)
@@ -757,8 +758,6 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary>;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "unpackRuntimeMessage" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 

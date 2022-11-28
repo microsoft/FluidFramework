@@ -6,6 +6,7 @@
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { TestObjectProvider } from '@fluidframework/test-utils';
 import { expect } from 'chai';
+import { fail } from '../../Common';
 import { Definition, EditId, SessionId, TraitLabel } from '../../Identifiers';
 import { Change, StablePlace, StableRange } from '../../ChangeTypes';
 import { SharedTree } from '../../SharedTree';
@@ -142,8 +143,10 @@ export function runSummarySizeTests(
 			if (revertEdits) {
 				for (let i = changes.length - 1; i >= 0; i--) {
 					const editIndex = tree.edits.getIndexOfId(edits[i].id);
-					const edit = tree.edits.getEditInSessionAtIndex(editIndex) as unknown as Edit<ChangeInternal>;
-					const reverted = revert(edit.changes, tree.logViewer.getRevisionViewInSession(editIndex));
+					const edit =
+						(tree.edits.tryGetEditAtIndex(editIndex) as unknown as Edit<ChangeInternal>) ??
+						fail('edit not found');
+					const reverted = revert(edit.changes, tree.logViewer.getRevisionViewInMemory(editIndex));
 					if (reverted !== undefined) {
 						tree.applyEditInternal(reverted);
 					}

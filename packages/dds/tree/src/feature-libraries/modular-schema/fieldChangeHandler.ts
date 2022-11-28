@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange } from "../../core";
+import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange, RevisionTag } from "../../core";
 import { Brand, Invariant, JsonCompatibleReadOnly } from "../../util";
 
 /**
@@ -18,18 +18,19 @@ export interface FieldChangeHandler<
     rebaser: FieldChangeRebaser<TChangeset>;
     encoder: FieldChangeEncoder<TChangeset>;
     editor: TEditor;
-    intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
-
-    // TODO
-    // buildEditor(submitEdit: (change: TChangeset) => void): TEditor;
+    intoDelta(change: TChangeset, deltaFromChild: ToDelta, reviver: NodeReviver): Delta.MarkList;
 }
 
 export interface FieldChangeRebaser<TChangeset> {
     /**
      * Compose a collection of changesets into a single one.
-     * See {@link ChangeRebaser} for details.
+     * Every child included in the composed change must be the result of a call to `composeChild`,
+     * and should be tagged with the revision of its parent change.
+     * Children which were the result of an earlier call to `composeChild` should be tagged with
+     * undefined revision if later passed as an argument to `composeChild`.
+     * See {@link ChangeRebaser} for more details.
      */
-    compose(changes: TChangeset[], composeChild: NodeChangeComposer): TChangeset;
+    compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer): TChangeset;
 
     /**
      * @returns the inverse of `changes`.
@@ -49,17 +50,18 @@ export interface FieldChangeRebaser<TChangeset> {
 }
 
 /**
- * Helper for creating a {@link FieldChangeRebaser} which does not need access to revision tags
+ * Helper for creating a {@link FieldChangeRebaser} which does not need access to revision tags.
+ * This should only be used for fields where the child nodes cannot be edited.
  */
 export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
-    compose: (changes: TChangeset[], composeChild: NodeChangeComposer) => TChangeset;
-    invert: (change: TChangeset, invertChild: NodeChangeInverter) => TChangeset;
-    rebase: (change: TChangeset, over: TChangeset, rebaseChild: NodeChangeRebaser) => TChangeset;
+    compose: (changes: TChangeset[]) => TChangeset;
+    invert: (change: TChangeset) => TChangeset;
+    rebase: (change: TChangeset, over: TChangeset) => TChangeset;
 }): FieldChangeRebaser<TChangeset> {
     return {
-        compose: data.compose,
-        invert: (change, invertChild) => data.invert(change.change, invertChild),
-        rebase: (change, over, rebaseChild) => data.rebase(change, over.change, rebaseChild),
+        compose: (changes, composeChild) => data.compose(changes.map((c) => c.change)),
+        invert: (change, invertChild) => data.invert(change.change),
+        rebase: (change, over, rebaseChild) => data.rebase(change, over.change),
     };
 }
 
@@ -90,13 +92,23 @@ export interface FieldEditor<TChangeset> {
     buildChildChange(childIndex: number, change: NodeChangeset): TChangeset;
 }
 
-export type ToDelta = (child: NodeChangeset) => Delta.Modify;
+/**
+ * The `index` represents the index of the child node in the input context.
+ * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
+ */
+export type ToDelta = (child: NodeChangeset, index: number | undefined) => Delta.Modify;
+
+export type NodeReviver = (
+    revision: RevisionTag,
+    index: number,
+    count: number,
+) => Delta.ProtoNode[];
 
 export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
 
 export type NodeChangeRebaser = (change: NodeChangeset, baseChange: NodeChangeset) => NodeChangeset;
 
-export type NodeChangeComposer = (changes: NodeChangeset[]) => NodeChangeset;
+export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
 
 export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnly;
 export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
@@ -109,17 +121,48 @@ export interface NodeChangeset {
     valueChange?: ValueChange;
 }
 
-export interface ValueChange {
-    /**
-     * Can be left unset to represent the value being cleared.
-     */
-    value?: Value;
-}
+export type ValueChange =
+    | {
+          /**
+           * The revision in which this change occurred.
+           * Undefined when it can be inferred from context.
+           */
+          revision?: RevisionTag;
+
+          /**
+           * Can be left unset to represent the value being cleared.
+           */
+          value?: Value;
+      }
+    | {
+          /**
+           * The revision in which this change occurred.
+           * Undefined when it can be inferred from context.
+           */
+          revision?: RevisionTag;
+
+          /**
+           * The tag of the change that overwrote the value being restored.
+           *
+           * Undefined when the operation is the product of a tag-less change being inverted.
+           * It is invalid to try convert such an operation to a delta.
+           */
+          revert: RevisionTag | undefined;
+      };
 
 export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 export interface FieldChange {
     fieldKind: FieldKindIdentifier;
+
+    /**
+     * If defined, `change` is part of the specified revision.
+     * Undefined in the following cases:
+     * A) A revision is specified on an ancestor of this `FieldChange`, in which case `change` is part of that revision.
+     * B) `change` is composed of multiple revisions.
+     * C) `change` is part of an anonymous revision.
+     */
+    revision?: RevisionTag;
     change: FieldChangeset;
 }
 
