@@ -135,9 +135,13 @@ export class TaskList extends DataObject implements ITaskList {
         this.emit("taskDeleted", deletedTask);
     };
 
-    public async handleExternalDataSignal() {
+    public async handleSignal(message: any) {
+        console.log("I'm here in the handleSignal task list");
             // cankeep registry in here of how to handle different signals
-    }
+            if (message.contents.type === "externalDataChanged") {
+                await this.importExternalData();
+            }
+    };
 
     // TODO: Is it useful to block further changes during the sync'ing process?  Consider implementing a state to
     // put the data object in while import is occurring (e.g. to disable input, etc.).

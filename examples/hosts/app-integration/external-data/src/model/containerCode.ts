@@ -36,9 +36,15 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
      * {@inheritDoc ModelContainerRuntimeFactory.containerHasInitialized}
      */
     protected async containerHasInitialized(runtime: IContainerRuntime) {
+        // const taskList = await requestFluidObject<ITaskList>(
+        //     await runtime.getRootDataStore(taskListId),
+        //     "",
+        // );
         runtime.on("signal", (message) => {
             console.log("I am inside the example code and I am now receiving the message");
             console.log(message);
+            console.log(runtime);
+            // await taskList.handleSignal(message);
             // TODO: Check the message type? clientId?  And route to the TaskList for interpretation?
             // Interpretation of the message contents should probably live on the TaskList to encapsulate
             // knowledge of the task-specific data.
