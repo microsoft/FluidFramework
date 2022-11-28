@@ -19,8 +19,9 @@ import {
     TaggedChange,
     ReadonlyRepairDataStore,
     RevisionTag,
+    tagChange,
 } from "../../core";
-import { brand, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
+import { brand, clone, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
 import {
     FieldChangeHandler,
@@ -44,7 +45,7 @@ export class ModularChangeFamily
     implements ChangeFamily<ModularEditBuilder, FieldChangeMap>, ChangeRebaser<FieldChangeMap>
 {
     readonly encoder: ChangeEncoder<FieldChangeMap>;
-    private readonly childComposer = (childChanges: NodeChangeset[]) =>
+    private readonly childComposer = (childChanges: TaggedChange<NodeChangeset>[]) =>
         this.composeNodeChanges(childChanges);
 
     constructor(readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
@@ -92,44 +93,63 @@ export class ModularChangeFamily
         return { fieldKind, changesets: normalizedChanges };
     }
 
-    compose(changes: FieldChangeMap[]): FieldChangeMap {
-        if (changes.length === 1) {
-            return changes[0];
-        }
-
+    compose(changes: TaggedChange<FieldChangeMap>[]): FieldChangeMap {
         const fieldChanges = new Map<FieldKey, FieldChange[]>();
         for (const change of changes) {
-            for (const [key, fieldChange] of change) {
-                getOrAddEmptyToMap(fieldChanges, key).push(fieldChange);
+            for (const [key, fieldChange] of change.change) {
+                const fieldChangeToCompose =
+                    fieldChange.revision !== undefined || change.revision === undefined
+                        ? fieldChange
+                        : {
+                              ...fieldChange,
+                              revision: change.revision,
+                          };
+
+                getOrAddEmptyToMap(fieldChanges, key).push(fieldChangeToCompose);
             }
         }
 
         const composedFields: FieldChangeMap = new Map();
         for (const [field, changesForField] of fieldChanges) {
-            const { fieldKind, changesets } = this.normalizeFieldChanges(changesForField);
-            const composedField = fieldKind.changeHandler.rebaser.compose(
-                changesets,
-                this.childComposer,
-            );
+            let composedField: FieldChange;
+            if (changesForField.length === 1) {
+                composedField = changesForField[0];
+            } else {
+                const { fieldKind, changesets } = this.normalizeFieldChanges(changesForField);
+                assert(
+                    changesets.length === changesForField.length,
+                    "Number of changes should be constant when normalizing",
+                );
+                const taggedChangesets = changesets.map((change, i) =>
+                    tagChange(change, changesForField[i].revision),
+                );
+                const composedChange = fieldKind.changeHandler.rebaser.compose(
+                    taggedChangesets,
+                    this.childComposer,
+                );
+
+                composedField = {
+                    fieldKind: fieldKind.identifier,
+                    change: brand(composedChange),
+                };
+            }
 
             // TODO: Could optimize by checking that composedField is non-empty
-            composedFields.set(field, {
-                fieldKind: fieldKind.identifier,
-                change: brand(composedField),
-            });
+            composedFields.set(field, composedField);
         }
         return composedFields;
     }
 
-    private composeNodeChanges(changes: NodeChangeset[]): NodeChangeset {
-        const fieldChanges = [];
+    private composeNodeChanges(changes: TaggedChange<NodeChangeset>[]): NodeChangeset {
+        const fieldChanges: TaggedChange<FieldChangeMap>[] = [];
         let valueChange: ValueChange | undefined;
         for (const change of changes) {
-            if (change.valueChange !== undefined) {
-                valueChange = change.valueChange;
+            if (change.change.valueChange !== undefined) {
+                valueChange = clone(change.change.valueChange);
+                valueChange.revision ??= change.revision;
             }
-            if (change.fieldChanges !== undefined) {
-                fieldChanges.push(change.fieldChanges);
+            if (change.change.fieldChanges !== undefined) {
+                fieldChanges.push(tagChange(change.change.fieldChanges, change.revision));
             }
         }
 
@@ -150,15 +170,17 @@ export class ModularChangeFamily
         const invertedFields: FieldChangeMap = new Map();
 
         for (const [field, fieldChange] of changes.change) {
+            const { revision } = fieldChange.revision !== undefined ? fieldChange : changes;
+
             const invertedChange = getChangeHandler(
                 this.fieldKinds,
                 fieldChange.fieldKind,
-            ).rebaser.invert({ ...changes, change: fieldChange.change }, (childChanges) =>
-                this.invertNodeChange({ ...changes, change: childChanges }),
+            ).rebaser.invert({ revision, change: fieldChange.change }, (childChanges) =>
+                this.invertNodeChange({ revision, change: childChanges }),
             );
 
             invertedFields.set(field, {
-                fieldKind: fieldChange.fieldKind,
+                ...fieldChange,
                 change: brand(invertedChange),
             });
         }
@@ -170,7 +192,12 @@ export class ModularChangeFamily
         const inverse: NodeChangeset = {};
 
         if (change.change.valueChange !== undefined) {
-            inverse.valueChange = { revert: change.revision };
+            assert(
+                !("revert" in change.change.valueChange),
+                "Inverting inverse changes is currently not supported",
+            );
+            const revision = change.change.valueChange.revision ?? change.revision;
+            inverse.valueChange = { revert: revision };
         }
 
         if (change.change.fieldChanges !== undefined) {
@@ -192,11 +219,13 @@ export class ModularChangeFamily
                     fieldKind,
                     changesets: [fieldChangeset, baseChangeset],
                 } = this.normalizeFieldChanges([fieldChange, baseChanges]);
+
+                const { revision } = fieldChange.revision !== undefined ? fieldChange : over;
                 const rebasedField = fieldKind.changeHandler.rebaser.rebase(
                     fieldChangeset,
-                    { ...over, change: baseChangeset },
+                    { revision, change: baseChangeset },
                     (child, baseChild) =>
-                        this.rebaseNodeChange(child, { ...over, change: baseChild }),
+                        this.rebaseNodeChange(child, { revision, change: baseChild }),
                 );
 
                 // TODO: Could optimize by skipping this assignment if `rebasedField` is empty
