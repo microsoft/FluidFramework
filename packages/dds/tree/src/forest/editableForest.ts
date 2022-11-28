@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { StoredSchemaRepository } from "../core";
 import { InvalidationToken } from "../dependency-tracking";
+import { StoredSchemaRepository } from "../schema-stored";
 import {
     AnchorSet,
     FieldKey,
