@@ -171,6 +171,7 @@ function composeMarks<TNodeChange>(
                 default:
                     fail("Not implemented");
             }
+        case "MRevive":
         case "MInsert": {
             switch (newType) {
                 case "Modify": {

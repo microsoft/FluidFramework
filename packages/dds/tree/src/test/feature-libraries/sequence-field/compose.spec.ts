@@ -171,6 +171,41 @@ describe("SequenceField - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
+    it("revive and modify ○ modify", () => {
+        const childChangeA = TestChange.mint([0], 1);
+        const childChangeB = TestChange.mint([0, 1], 2);
+        const childChangeAB = TestChange.compose([
+            makeAnonChange(childChangeA),
+            makeAnonChange(childChangeB),
+        ]);
+        const revive: TestChangeset = [
+            {
+                type: "MRevive",
+                id: 1,
+                detachedBy: tag1,
+                detachIndex: 0,
+                changes: childChangeA,
+            },
+        ];
+        const modify: TestChangeset = [
+            {
+                type: "Modify",
+                changes: childChangeB,
+            },
+        ];
+        const expected: TestChangeset = [
+            {
+                type: "MRevive",
+                id: 1,
+                detachedBy: tag1,
+                detachIndex: 0,
+                changes: childChangeAB,
+            },
+        ];
+        const actual = compose([makeAnonChange(revive), makeAnonChange(modify)]);
+        assert.deepEqual(actual, expected);
+    });
+
     it("modify ○ modify", () => {
         const childChangeA = TestChange.mint([0], 1);
         const childChangeB = TestChange.mint([0, 1], 2);
@@ -317,6 +352,22 @@ describe("SequenceField - Compose", () => {
             { type: "Revive", id: 1, count: 1, detachedBy: tag1, detachIndex: 2 },
             { type: "Delete", id: 4, count: 1 },
         ];
+        assert.deepEqual(actual, expected);
+    });
+
+    it("revive and modify ○ delete", () => {
+        const revive: SF.Changeset = [
+            {
+                type: "MRevive",
+                id: 1,
+                detachedBy: tag1,
+                detachIndex: 0,
+                changes: { valueChange: { value: 1 } },
+            },
+        ];
+        const deletion: SF.Changeset = [{ type: "Delete", id: 3, count: 2 }];
+        const actual = shallowCompose([makeAnonChange(revive), makeAnonChange(deletion)]);
+        const expected: SF.Changeset = [{ type: "Delete", id: 3, count: 1 }];
         assert.deepEqual(actual, expected);
     });
 
