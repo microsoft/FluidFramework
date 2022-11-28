@@ -226,11 +226,13 @@ export async function fetchAndParseAsJSONHelper<T>(
 
 
 export interface IFileInfoBase {
+    type?: 'New' | 'Existing';
     siteUrl: string;
     driveId: string;
 }
 
 export interface INewFileInfo extends IFileInfoBase {
+    type?: 'New';
     filename: string;
     filePath: string;
     /**
@@ -244,11 +246,12 @@ export interface INewFileInfo extends IFileInfoBase {
 }
 
 export interface IExistingFileInfo extends IFileInfoBase {
+    type: 'Existing';
     itemId: string;
 }
 
 export function isNewFileInfo(fileInfo: INewFileInfo | IExistingFileInfo): fileInfo is INewFileInfo {
-    return !!(fileInfo as INewFileInfo).filename;
+    return fileInfo.type === undefined || fileInfo.type === 'New';
 }
 
 export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl {

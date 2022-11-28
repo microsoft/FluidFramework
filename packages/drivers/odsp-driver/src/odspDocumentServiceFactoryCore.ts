@@ -42,8 +42,9 @@ import {
     ICacheAndTracker,
 } from "./epochTracker";
 import { OdspDocumentService } from "./odspDocumentService";
-import { INewFileInfo, getOdspResolvedUrl, createOdspLogger, toInstrumentedOdspTokenFetcher, IExistingFileInfo } from "./odspUtils";
+import { INewFileInfo, getOdspResolvedUrl, createOdspLogger, toInstrumentedOdspTokenFetcher, IExistingFileInfo, isNewFileInfo } from "./odspUtils";
 import { createNewFluidFile } from "./createFile";
+import { createNewContainerOnExistingFile } from "./createNewContainerOnExistingFile";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -85,6 +86,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         if (odspResolvedUrl.fileName) {
             createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
             fileInfo = {
+                type: 'New',
                 driveId: odspResolvedUrl.driveId,
                 siteUrl: odspResolvedUrl.siteUrl,
                 filePath,
@@ -93,6 +95,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             };
         } else if (odspResolvedUrl.itemId) {
             fileInfo = {
+                type: 'Existing',
                 driveId: odspResolvedUrl.driveId,
                 siteUrl: odspResolvedUrl.siteUrl,
                 itemId: odspResolvedUrl.itemId
@@ -128,24 +131,37 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
             },
             async (event) => {
-                odspResolvedUrl = await createNewFluidFile(
-                    toInstrumentedOdspTokenFetcher(
-                        odspLogger,
-                        resolvedUrlData,
-                        this.getStorageToken,
-                        true /* throwOnNullToken */,
-                    ),
-                    fileInfo,
+                const getStorageToken = toInstrumentedOdspTokenFetcher(
                     odspLogger,
-                    createNewSummary,
-                    cacheAndTracker.epochTracker,
-                    fileEntry,
-                    this.hostPolicy.cacheCreateNewSummary ?? true,
-                    !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
-                    odspResolvedUrl.isClpCompliantApp,
-                    this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
-                    this.hostPolicy.enableShareLinkWithCreate,
+                    resolvedUrlData,
+                    this.getStorageToken,
+                    true /* throwOnNullToken */,
                 );
+                odspResolvedUrl = isNewFileInfo(fileInfo)
+                    ? await createNewFluidFile(
+                        getStorageToken,
+                        fileInfo,
+                        odspLogger,
+                        createNewSummary,
+                        cacheAndTracker.epochTracker,
+                        fileEntry,
+                        this.hostPolicy.cacheCreateNewSummary ?? true,
+                        !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                        odspResolvedUrl.isClpCompliantApp,
+                        this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
+                        this.hostPolicy.enableShareLinkWithCreate
+                    )
+                    : await createNewContainerOnExistingFile(
+                        getStorageToken,
+                        fileInfo,
+                        odspLogger,
+                        createNewSummary,
+                        cacheAndTracker.epochTracker,
+                        fileEntry,
+                        this.hostPolicy.cacheCreateNewSummary ?? true,
+                        !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                        odspResolvedUrl.isClpCompliantApp,
+                    );
                 const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger,
                     cacheAndTracker, clientIsSummarizer);
                 event.end({
