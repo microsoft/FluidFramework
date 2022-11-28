@@ -34,7 +34,7 @@
     "start:client:test": "webpack serve --config webpack.test.js",
     "start:test": "start-server-and-test start:tinylicious 7070 start:client:test",
     "start:tinylicious": "tinylicious",
-    "test": "start-server-and-test start:tinylicious 7070 test:jest",
+    "test": "npm run test:jest",
     "test:jest": "jest --detectOpenHandles",
     "test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --detectOpenHandles",
     "tsc": "tsc",
