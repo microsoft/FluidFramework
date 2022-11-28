@@ -7,8 +7,8 @@ import { strict as assert } from "assert";
 import { bufferToString } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISummaryTree, SummaryType, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { convertSummaryTreeToSnapshotITree } from "../treeConversions";
 import { BlobAggregationStorage } from "../blobAggregationStorage";
 import { buildSnapshotTree } from "../buildSnapshotTree";
 
@@ -58,7 +58,7 @@ class InMemoryStorage {
 
     async getSnapshotTree(version) {
         assert(this.summaryWritten !== undefined, "Missing summary to build tree from");
-        return buildSnapshotTree(convertSummaryTreeToITree(this.summaryWritten).entries, this.blobs);
+        return buildSnapshotTree(convertSummaryTreeToSnapshotITree(this.summaryWritten).entries, this.blobs);
     }
 
     async readBlob(id: string) {

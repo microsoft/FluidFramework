@@ -30,7 +30,7 @@ import {
     LoggingError,
     raiseConnectedEvent,
 } from "@fluidframework/telemetry-utils";
-import { buildSnapshotTree } from "@fluidframework/driver-utils";
+import { buildSnapshotTree, convertSummaryTreeToSnapshotITree } from "@fluidframework/driver-utils";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -56,7 +56,6 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
     convertSnapshotTreeToSummaryTree,
-    convertSummaryTreeToITree,
     generateHandleContextPath,
     RequestParser,
     SummaryTreeBuilder,
@@ -852,7 +851,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         const summarizeResult = summarizeChannel(channel, true /* fullTree */, false /* trackState */);
         // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
-        const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
+        const snapshot = convertSummaryTreeToSnapshotITree(summarizeResult.summary);
 
         const message: IAttachMessage = {
             id: channel.id,

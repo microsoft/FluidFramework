@@ -23,7 +23,7 @@ import {
     TypedEventEmitter,
 } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse, convertSummaryTreeToSnapshotITree } from "@fluidframework/driver-utils";
 import { BlobTreeEntry } from "@fluidframework/protocol-base";
 import {
     IClientDetails,
@@ -60,7 +60,6 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
-    convertSummaryTreeToITree,
     packagePathToTelemetryProperty,
 } from "@fluidframework/runtime-utils";
 import {
@@ -937,7 +936,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
-        const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
+        const snapshot = convertSummaryTreeToSnapshotITree(summarizeResult.summary);
 
         const message: IAttachMessage = {
             id: this.id,

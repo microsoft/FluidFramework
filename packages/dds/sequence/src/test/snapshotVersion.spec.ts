@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import fs from "fs";
 import path from "path";
-import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+import { convertSummaryTreeToSnapshotITree } from "@fluidframework/driver-utils";
 import {
     MockContainerRuntimeFactory,
     MockFluidDataStoreRuntime,
@@ -134,7 +134,7 @@ describe("SharedString Snapshot Version", () => {
             const dataObject = JSON.parse(data);
 
             const summaryTree = testString.getAttachSummary().summary;
-            const snapshotTree = convertSummaryTreeToITree(summaryTree);
+            const snapshotTree = convertSummaryTreeToSnapshotITree(summaryTree);
             const testData = JSON.stringify(snapshotTree, undefined, 1).trim();
             const testDataObject = JSON.parse(testData);
 
@@ -166,7 +166,7 @@ describe("SharedString Snapshot Version", () => {
         const collectionId = "015e0f46-efa3-42d7-a9ab-970ecc376df9";
         originalString.getIntervalCollection(collectionId).add(1, 2, IntervalType.SlideOnRemove);
         const summaryTree = originalString.getAttachSummary().summary;
-        const snapshotTree = convertSummaryTreeToITree(summaryTree);
+        const snapshotTree = convertSummaryTreeToSnapshotITree(summaryTree);
         const serializedSnapshot = JSON.stringify(snapshotTree);
         const denormalizedSnapshot = serializedSnapshot.replace(collectionId, `intervalCollections/${collectionId}`);
 

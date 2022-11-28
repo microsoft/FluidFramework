@@ -9,6 +9,7 @@ import {
     stringToBuffer,
     Uint8ArrayToString,
 } from "@fluidframework/common-utils";
+import { convertSummaryTreeToSnapshotITree } from "@fluidframework/driver-utils";
 import {
     SummaryObject,
     ISummaryTree,
@@ -21,7 +22,6 @@ import {
 import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
     convertSnapshotTreeToSummaryTree,
-    convertSummaryTreeToITree,
     convertToSummaryTree,
     TelemetryContext,
     utf8ByteLength,
@@ -168,7 +168,7 @@ describe("Summary Utils", () => {
             const summaryTree = assertSummaryTree(summaryResults.summary);
 
             // Covert the ISummaryTree back to ITree and validate that it matches with the original tree.
-            const iTree = convertSummaryTreeToITree(summaryTree);
+            const iTree = convertSummaryTreeToSnapshotITree(summaryTree);
             assert.deepStrictEqual(treeWithoutHandles, iTree, "Could not covert back to ITree correctly");
         });
     });

@@ -6,14 +6,15 @@
 import { assert, stringToBuffer } from "@fluidframework/common-utils";
 import { IBlob, ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { convertSummaryTreeToITree, listBlobsAtTreePath } from "@fluidframework/runtime-utils";
+import { listBlobsAtTreePath } from "@fluidframework/runtime-utils";
+import { convertSummaryTreeToSnapshotITree } from "@fluidframework/driver-utils";
 
 /**
  * Mock implementation of IChannelStorageService based on ITree input.
  */
 export class MockStorage implements IChannelStorageService {
     public static createFromSummary(summaryTree: ISummaryTree) {
-        const tree = convertSummaryTreeToITree(summaryTree);
+        const tree = convertSummaryTreeToSnapshotITree(summaryTree);
         return new MockStorage(tree);
     }
 
