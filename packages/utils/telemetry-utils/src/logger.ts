@@ -27,7 +27,7 @@ import {
     generateStack,
 } from "./errorLogging";
 import {
-    ITelemetryBaseEventExt,
+    ITelemetryEvent,
     ITelemetryBaseLoggerExt,
     ITelemetryGenericEventExt,
     ITelemetryLoggerExt,
@@ -93,7 +93,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
      * @param error - Error to extract info from
      * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
      */
-    public static prepareErrorObject(event: ITelemetryBaseEventExt, error: any, fetchStack: boolean) {
+    public static prepareErrorObject(event: ITelemetryEvent, error: any, fetchStack: boolean) {
         const { message, errorType, stack } = extractLogSafeErrorProperties(error, true /* sanitizeStack */);
         // First, copy over error message, stack, and errorType directly (overwrite if present on event)
         event.stack = stack;
@@ -128,7 +128,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
      *
      * @param event - the event to send
      */
-    public abstract send(event: ITelemetryBaseEventExt): void;
+    public abstract send(event: ITelemetryEvent): void;
 
     /**
      * Send a telemetry event with the logger
@@ -149,7 +149,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
      protected sendTelemetryEventCore(
         event: ITelemetryGenericEventExt & { category: TelemetryEventCategory; },
         error?: any) {
-        const newEvent = convertToBaseEvent(event) as ITelemetryBaseEventExt;
+        const newEvent = convertToBaseEvent(event) as ITelemetryEvent;
         if (error !== undefined) {
             TelemetryLogger.prepareErrorObject(newEvent, error, false);
         }
@@ -193,9 +193,9 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
         this.sendTelemetryEventCore(perfEvent, error);
     }
 
-    protected prepareEvent(event: ITelemetryBaseEventExt): ITelemetryBaseEventExt {
+    protected prepareEvent(event: ITelemetryEvent): ITelemetryEvent {
         const includeErrorProps = event.category === "error" || event.error !== undefined;
-        const newEvent: ITelemetryBaseEventExt = convertToBaseEvent(event) as ITelemetryBaseEventExt;
+        const newEvent: ITelemetryEvent = convertToBaseEvent(event) as ITelemetryEvent;
         if (this.namespace !== undefined) {
             newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
         }
@@ -350,7 +350,7 @@ export class ChildLogger extends TelemetryLogger {
      *
      * @param event - the event to send
      */
-    public send(event: ITelemetryBaseEventExt): void {
+    public send(event: ITelemetryEvent): void {
         this.baseLogger.send(this.prepareEvent(event));
     }
 }
@@ -390,7 +390,7 @@ export class MultiSinkLogger extends TelemetryLogger {
      *
      * @param event - the event to send to all the registered logger
      */
-    public send(event: ITelemetryBaseEventExt): void {
+    public send(event: ITelemetryEvent): void {
         const newEvent = this.prepareEvent(event);
         this.loggers.forEach((logger: ITelemetryBaseLoggerExt) => {
             logger.send(newEvent);

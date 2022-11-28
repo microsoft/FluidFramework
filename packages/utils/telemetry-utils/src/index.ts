@@ -52,7 +52,7 @@ export { logIfFalse } from "./utils";
 export {
 	TelemetryEventPropertyTypeExt,
     TelemetryEventTypes,
-    ITelemetryBaseEventExt,
+    ITelemetryEvent as ITelemetryBaseEventExt,
     ITelemetryBaseLoggerExt,
     ITelemetryGenericEventExt,
     ITelemetryErrorEventExt,

@@ -38,7 +38,7 @@ export interface ITelemetryPropertiesExt {
  * @param category - category of the event, like "error", "performance", "generic", etc.
  * @param eventName - name of the event.
  */
- export interface ITelemetryBaseEventExt extends ITelemetryPropertiesExt {
+ export interface ITelemetryEvent extends ITelemetryPropertiesExt {
     category: string;
     eventName: string;
 }
@@ -55,7 +55,7 @@ export interface ITelemetryPropertiesExt {
      * current logger implementation in `telmetry-utils` handles tags in a separate manner.
      */
     supportsTags?: true;
-    send(event: ITelemetryBaseEventExt): void;
+    send(event: ITelemetryEvent): void;
 }
 
 /**
@@ -99,7 +99,7 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
      * Implemented by derived classes
      * @param event - Telemetry event to send over
      */
-    send(event: ITelemetryBaseEventExt): void;
+    send(event: ITelemetryEvent): void;
 
     /**
      * Send information telemetry event
@@ -122,7 +122,7 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 }
 
 export type TelemetryEventTypes =
-    | ITelemetryBaseEventExt
+    | ITelemetryEvent
     | ITelemetryGenericEventExt
     | ITelemetryErrorEventExt
     | ITelemetryPerformanceEventExt;

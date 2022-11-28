@@ -5,11 +5,11 @@
 
 import assert from "assert";
 import { ITelemetryLoggerPropertyBags, ITelemetryLoggerPropertyBag, TelemetryLogger } from "../logger";
-import { ITelemetryBaseEventExt } from "../telemetryTypes";
+import { ITelemetryEvent } from "../telemetryTypes";
 
 class TestTelemetryLogger extends TelemetryLogger {
-    public events: ITelemetryBaseEventExt[] = [];
-    public send(event: ITelemetryBaseEventExt): void {
+    public events: ITelemetryEvent[] = [];
+    public send(event: ITelemetryEvent): void {
         this.events.push(this.prepareEvent(event));
     }
 }
