@@ -32,7 +32,7 @@
     "lint:fix": "npm run eslint:fix",
     "test": "jest",
     "tsc": "tsc",
-    "typetests:gen": "flub generate typetests --generate --dir . --no-generateInName",
+    "typetests:gen": "flub generate typetests --generate --dir .",
     "typetests:prepare": "flub generate typetests --prepare --dir . --pin"
   },
   "dependencies": {
