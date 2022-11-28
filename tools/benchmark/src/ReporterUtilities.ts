@@ -109,7 +109,6 @@ export function geometricMean(values: number[]): number {
  * T-Distribution two-tailed critical values for 95% confidence.
  * For more info see http://www.itl.nist.gov/div898/handbook/eda/section3/eda3672.htm.
  */
-/* eslint-disable quote-props,key-spacing,no-multi-spaces */
 const tTable = {
     "1":  12.706, "2":  4.303, "3":  3.182, "4":  2.776, "5":  2.571, "6":  2.447,
     "7":  2.365,  "8":  2.306, "9":  2.262, "10": 2.228, "11": 2.201, "12": 2.179,
@@ -118,7 +117,6 @@ const tTable = {
     "25": 2.06,   "26": 2.056, "27": 2.052, "28": 2.048, "29": 2.045, "30": 2.042,
     "infinity": 1.96,
 };
-/* eslint-enable */
 
 /**
  * Compute statistics for an array of numbers. For homogeneity, it outputs the same
