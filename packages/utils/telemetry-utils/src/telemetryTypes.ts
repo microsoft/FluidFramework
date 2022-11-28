@@ -85,13 +85,6 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
 
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
     /**
-     * Actual implementation that sends telemetry event
-     * Implemented by derived classes
-     * @param event - Telemetry event to send over
-     */
-    send(event: ITelemetryEvent): void;
-
-    /**
      * Send information telemetry event
      * @param event - Event to send
      * @param error - optional error object to log

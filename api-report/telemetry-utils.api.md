@@ -183,7 +183,6 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
 
 // @public (undocumented)
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
-    send(event: ITelemetryBaseEventExt): void;
     sendErrorEvent(event: ITelemetryErrorEventExt, error?: any): void;
     sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: any): void;
     sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any): void;
