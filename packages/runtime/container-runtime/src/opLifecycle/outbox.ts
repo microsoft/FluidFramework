@@ -80,7 +80,9 @@ export class Outbox {
     }
 
     private flushInternal(batch: IBatch) {
-        this.flushBatch(this.prepareBatch(batch));
+        this.flushBatch(
+            this.addBatchMetadataToBatch(
+                this.processBatch(batch)));
     }
 
     private addBatchMetadataToBatch(batch: IBatch): IBatch {
@@ -98,22 +100,16 @@ export class Outbox {
         return batch;
     }
 
-    private prepareBatch(batch: IBatch): IBatch {
-        if (batch.content.length === 0) {
+    private processBatch(batch: IBatch): IBatch {
+        if (batch.content.length === 0
+            || this.options.compressionOptions === undefined
+            || this.options.compressionOptions.minimumBatchSizeInBytes >= batch.contentSizeInBytes) {
+            // Nothing to do if the batch is empty or if compression is disabled or if we don't need to compress
             return batch;
         }
 
-        if (this.options.compressionOptions !== undefined) {
-            // Compression is not enabled
-        }
-
-        let processedBatch = batch;
-        if (this.options.compressionOptions !== undefined
-            && this.options.compressionOptions.minimumBatchSizeInBytes < batch.contentSizeInBytes) {
-            processedBatch = this.batchProcessors.compressor.processOutgoing(batch);
-        }
-
-        if (processedBatch.contentSizeInBytes < this.options.maxBatchSizeInBytes) {
+        let processedBatch = this.batchProcessors.compressor.processOutgoing(batch);
+        if (processedBatch.contentSizeInBytes >= this.options.maxBatchSizeInBytes) {
             processedBatch = this.batchProcessors.splitter.processOutgoing(batch);
         }
 
