@@ -21,5 +21,12 @@ module.exports = {
                 "import/no-nodejs-modules": ["error", { allow: ["assert","events"] }],
             },
         },
+        {
+            // Rules only for type validation files
+            files: ["**/types/*validate*Previous*.ts"],
+            rules: {
+                "@typescript-eslint/comma-spacing": "off",
+            },
+        },
     ],
 };

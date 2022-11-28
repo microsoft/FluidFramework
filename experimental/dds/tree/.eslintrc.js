@@ -62,6 +62,7 @@ module.exports = {
 			// Rules only for type validation files
 			files: ['**/types/*validate*Previous*.ts'],
 			rules: {
+                "@typescript-eslint/comma-spacing": "off",
 				'@typescript-eslint/quotes': 'off',
 			},
 		},

@@ -10,4 +10,13 @@ module.exports = {
     "parserOptions": {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },
+    overrides: [
+        {
+            // Rules only for type validation files
+            files: ["**/types/*validate*Previous*.ts"],
+            rules: {
+                "@typescript-eslint/comma-spacing": "off",
+            },
+        },
+    ],
 }
