@@ -31,9 +31,9 @@ export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
 // @public
 export class ChildLogger extends TelemetryLogger {
     // (undocumented)
-    protected readonly baseLogger: ITelemetryBaseLoggerExt;
-    static create(baseLogger?: ITelemetryBaseLoggerExt, namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    send(event: ITelemetryBaseEventExt): void;
+    protected readonly baseLogger: ITelemetryBaseLogger;
+    static create(baseLogger?: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    send(event: ITelemetryBaseEvent): void;
 }
 
 // @public (undocumented)
@@ -265,7 +265,7 @@ export class MultiSinkLogger extends TelemetryLogger {
     addLogger(logger?: ITelemetryBaseLogger): void;
     // (undocumented)
     protected loggers: ITelemetryBaseLogger[];
-    send(event: ITelemetryBaseEventExt): void;
+    send(event: ITelemetryBaseEvent): void;
 }
 
 // @public
@@ -346,9 +346,9 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
     // (undocumented)
     protected readonly namespace?: string | undefined;
     static numberFromString(str: string | null | undefined): string | number | undefined;
-    static prepareErrorObject(event: ITelemetryBaseEventExt, error: any, fetchStack: boolean): void;
+    static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean): void;
     // (undocumented)
-    protected prepareEvent(event: ITelemetryBaseEventExt): ITelemetryBaseEventExt;
+    protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent;
     // (undocumented)
     protected readonly properties?: ITelemetryLoggerPropertyBags | undefined;
     // (undocumented)

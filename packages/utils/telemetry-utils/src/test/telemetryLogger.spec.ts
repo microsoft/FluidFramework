@@ -4,12 +4,12 @@
  */
 
 import assert from "assert";
+import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { ITelemetryLoggerPropertyBags, ITelemetryLoggerPropertyBag, TelemetryLogger } from "../logger";
-import { ITelemetryEvent } from "../telemetryTypes";
 
 class TestTelemetryLogger extends TelemetryLogger {
-    public events: ITelemetryEvent[] = [];
-    public send(event: ITelemetryEvent): void {
+    public events: ITelemetryBaseEvent[] = [];
+    public send(event: ITelemetryBaseEvent): void {
         this.events.push(this.prepareEvent(event));
     }
 }
