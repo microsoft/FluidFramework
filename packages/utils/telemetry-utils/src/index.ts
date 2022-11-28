@@ -57,7 +57,6 @@ export {
     ITelemetryGenericEventExt,
     ITelemetryErrorEventExt,
     ITelemetryPerformanceEventExt,
-    ILoggingErrorExt,
     ITelemetryLoggerExt,
     ITaggedTelemetryPropertyTypeExt,
     ITelemetryPropertiesExt,

@@ -120,11 +120,6 @@ export interface IFluidErrorBase extends Error {
 }
 
 // @public
-export interface ILoggingErrorExt extends Error {
-    getTelemetryProperties(): ITelemetryPropertiesExt;
-}
-
-// @public
 export interface IPerformanceEventMarkers {
     // (undocumented)
     cancel?: "generic" | "error";
@@ -226,7 +221,7 @@ export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITele
 // @public
 export class LoggingError extends Error implements ILoggingError, Omit<IFluidErrorBase, "errorType"> {
     constructor(message: string, props?: ITelemetryProperties, omitPropsFromLogging?: Set<string>);
-    addTelemetryProperties(props: ITelemetryProperties): void;
+    addTelemetryProperties(props: ITelemetryPropertiesExt): void;
     // (undocumented)
     get errorInstanceId(): string;
     getTelemetryProperties(): ITelemetryProperties;

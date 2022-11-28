@@ -83,16 +83,6 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
     duration?: number; // Duration of event (optional)
 }
 
-/**
- * An error object that supports exporting its properties to be logged to telemetry
- */
-export interface ILoggingErrorExt extends Error {
-    /**
-     * Return all properties from this object that should be logged to telemetry
-     */
-    getTelemetryProperties(): ITelemetryPropertiesExt;
-}
-
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
     /**
      * Actual implementation that sends telemetry event
