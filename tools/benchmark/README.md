@@ -76,7 +76,7 @@ test code, depending on if it's fully synchronous (use `benchmarkFn`) or asynchr
 
 Look at the documentation for `BenchmarkArguments` for more details on what the rest of its properties do.
 
-When ran, tests for runtime profiling will be tagged with `@Benchmark` (or whatever you pass in `BenchmarkOptions.type`
+When run, tests for runtime profiling will be tagged with `@Benchmark` (or whatever you pass in `BenchmarkOptions.type`
 when you define the test) and `@ExecutionTime` (as opposed to `@MemoryUsage` for memory profiling tests).
 
 ## Profiling memory usage
