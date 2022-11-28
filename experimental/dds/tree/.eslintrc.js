@@ -7,7 +7,7 @@ module.exports = {
 	extends: ['@fluidframework/eslint-config-fluid'],
 	root: true,
 	rules: {
-		// TODO: Recover "noUnusedLocals" behavior as part of linting.  (This rule seems to be broken in the Fluid repo.)
+		// TODO: Recover 'noUnusedLocals' behavior as part of linting.  (This rule seems to be broken in the Fluid repo.)
 		// '@typescript-eslint/no-unused-vars': ['error', { args: 'none', varsIgnorePattern: '^_' }],
 		'@typescript-eslint/brace-style': 'off',
 		'@typescript-eslint/quotes': [
@@ -56,6 +56,13 @@ module.exports = {
 			rules: {
 				// Test code and the main package export shouldn't be linted for unused exports
 				'import/no-unused-modules': 'off',
+			},
+		},
+		{
+			// Rules only for type validation files
+			files: ['**/types/*validate*Previous*.ts'],
+			rules: {
+				'@typescript-eslint/quotes': 'off',
 			},
 		},
 	],
