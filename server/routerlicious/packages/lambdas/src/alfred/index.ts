@@ -473,6 +473,8 @@ export function configureWebSocketServices(
             // back-compat: remove cast to any once new definition of IConnected comes through.
             (connectedMessage as any).timestamp = connectedTimestamp;
 
+            // TODO: KLUDGE webhook connection
+
             return {
                 connection: connectedMessage,
                 connectVersions,
