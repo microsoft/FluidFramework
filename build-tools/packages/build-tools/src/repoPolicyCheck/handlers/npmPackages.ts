@@ -634,18 +634,11 @@ export const handlers: Handler[] = [
 
             const resolved = true;
 
-            console.log("--------------------------");
-            console.log(json);
-            console.log("--------------------------");
-
             const jsonCheckRoot = json.name;
             const jsonDevDependencies = json.devDependencies;
             const jsonScripts = json.scripts;
 
             addPrettier(json, jsonCheckRoot, jsonDevDependencies, jsonScripts);
-
-            //json[jsonDevDependencies] = newDevDependencies;
-            //json[jsonScripts] = newScripts;
 
             writeFile(file, JSON.stringify(sortPackageJson(json), undefined, 2) + newline);
 
@@ -660,11 +653,14 @@ function addPrettier(
     jsonDevDependencies: Map<string, string>,
     jsonScripts: Map<string, string>,
 ) {
+    // if devDependencies or scripts does not exist in package.json
     if (jsonDevDependencies === undefined || jsonScripts === undefined) {
+        // create deveDependencies and add prettier
         if (jsonDevDependencies === undefined) {
             json["devDependencies"] = { prettier: "~2.6.2" };
         }
 
+        // create scripts and add format, prettier and prettier:fix scripts
         if (jsonScripts === undefined) {
             json["scripts"] = {
                 "format": "npm run prettier:fix",
@@ -672,19 +668,19 @@ function addPrettier(
                 "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
             };
         }
-
-        if (jsonCheckRoot === "root") {
-            json["scripts"]["format"] = "lerna run format --no-sort --stream -- -- -- --color";
-        }
-    } else {
+    }
+    // if both devDependencies and scripts exist in package.json
+    else {
         jsonDevDependencies["prettier"] = "~2.6.2";
 
+        jsonScripts["format"] = "npm run prettier:fix";
         jsonScripts["prettier"] = "prettier --check . --ignore-path ../../../.prettierignore";
         jsonScripts["prettier:fix"] = "prettier --write . --ignore-path ../../../.prettierignore";
+    }
 
-        if (jsonCheckRoot != "root") {
-            jsonScripts["format"] = "npm run prettier:fix";
-        }
+    // package.json in root of the release-group should have lerna script
+    if (jsonCheckRoot === "root") {
+        json["scripts"]["format"] = "lerna run format --no-sort --stream -- -- -- --color";
     }
 
     return undefined;
