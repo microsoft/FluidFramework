@@ -608,15 +608,15 @@ export const handlers: Handler[] = [
                 const missingScripts: string[] = [];
 
                 if (!hasPrettierProperty) {
-                    missingScripts.push(`prettier`)
+                    missingScripts.push(`prettier`);
                 }
 
                 if (!hasPrettierFixProperty) {
-                    missingScripts.push(`prettier:fix`)
+                    missingScripts.push(`prettier:fix`);
                 }
 
                 if (!hasFormatProperty) {
-                    missingScripts.push(`format`)
+                    missingScripts.push(`format`);
                 }
 
                 return `${file} is missing the following scripts: ${missingScripts.join("\n\t")}`;
@@ -624,8 +624,71 @@ export const handlers: Handler[] = [
 
             return undefined;
         },
+        resolver: (file) => {
+            let json;
+            try {
+                json = JSON.parse(readFile(file));
+            } catch (err) {
+                return { resolved: false, message: "Error parsing JSON file: " + file };
+            }
+
+            const resolved = true;
+
+            console.log("--------------------------");
+            console.log(json);
+            console.log("--------------------------");
+
+            const jsonCheckRoot = json.name;
+            const jsonDevDependencies = json.devDependencies;
+            const jsonScripts = json.scripts;
+
+            addPrettier(json, jsonCheckRoot, jsonDevDependencies, jsonScripts);
+
+            //json[jsonDevDependencies] = newDevDependencies;
+            //json[jsonScripts] = newScripts;
+
+            writeFile(file, JSON.stringify(sortPackageJson(json), undefined, 2) + newline);
+
+            return { resolved: resolved };
+        },
     },
 ];
+
+function addPrettier(
+    json: Map<any, any>,
+    jsonCheckRoot: string,
+    jsonDevDependencies: Map<string, string>,
+    jsonScripts: Map<string, string>,
+) {
+    if (jsonDevDependencies === undefined || jsonScripts === undefined) {
+        if (jsonDevDependencies === undefined) {
+            json["devDependencies"] = { prettier: "~2.6.2" };
+        }
+
+        if (jsonScripts === undefined) {
+            json["scripts"] = {
+                "format": "npm run prettier:fix",
+                "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
+                "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+            };
+        }
+
+        if (jsonCheckRoot === "root") {
+            json["scripts"]["format"] = "lerna run format --no-sort --stream -- -- -- --color";
+        }
+    } else {
+        jsonDevDependencies["prettier"] = "~2.6.2";
+
+        jsonScripts["prettier"] = "prettier --check . --ignore-path ../../../.prettierignore";
+        jsonScripts["prettier:fix"] = "prettier --write . --ignore-path ../../../.prettierignore";
+
+        if (jsonCheckRoot != "root") {
+            jsonScripts["format"] = "npm run prettier:fix";
+        }
+    }
+
+    return undefined;
+}
 
 function runNpmJsonLint(json: any, file: string) {
     const lintConfig = getLintConfig(file);
