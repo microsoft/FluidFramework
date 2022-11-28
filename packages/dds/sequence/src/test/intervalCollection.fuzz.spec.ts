@@ -412,7 +412,7 @@ function getPath(seed: number): string {
     return path.join(directory, `${seed}.json`);
 }
 
-const describeFuzz = createFuzzDescribe({ defaultTestCount: 10 });
+const describeFuzz = createFuzzDescribe({ defaultTestCount: 1000 });
 
 describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
     before(() => {

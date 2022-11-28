@@ -1725,6 +1725,31 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         });
     }
 
+    private rebasePositionWithSegmentSlide(
+        pos: number,
+        seqNumberFrom: number,
+        localSeq: number,
+    ): number | undefined {
+        if (!this.client) {
+            throw new LoggingError("mergeTree client must exist");
+        }
+        const { clientId } = this.client.getCollabWindow();
+        const { segment, offset } = this.client.getContainingSegmentWithSeqNumber(pos, seqNumberFrom, localSeq, clientId);
+
+        // if segment is undefined, it slid off the string
+        assert(segment !== undefined, "No segment found");
+
+        const segoff = this.client.getSlideToSegment({ segment, offset }) ?? segment;
+
+        // case happens when rebasing op, but concurrently entire string has been deleted
+        if (segoff.segment === undefined || segoff.offset === undefined) {
+            return DetachedReferencePosition;
+        }
+
+        assert(offset !== undefined && 0 <= offset && offset < segment.cachedLength, "Invalid offset");
+        return this.client.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
+    }
+
     /**
      * Returns new interval after rebasing. If undefined, the interval was
      * deleted as a result of rebasing. This can occur if the interval applies
@@ -1747,9 +1772,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
         const { start, end, intervalType, properties, sequenceNumber } = serializedInterval;
         const startRebased = start === undefined ? undefined :
-            this.client.rebasePosition(start, sequenceNumber, localSeq);
+            this.rebasePositionWithSegmentSlide(start, sequenceNumber, localSeq);
         const endRebased = end === undefined ? undefined :
-            this.client.rebasePosition(end, sequenceNumber, localSeq);
+            this.rebasePositionWithSegmentSlide(end, sequenceNumber, localSeq);
 
         const intervalId = properties?.[reservedIntervalIdKey];
         const localInterval = this.localCollection?.getIntervalById(intervalId);
