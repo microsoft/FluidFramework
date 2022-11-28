@@ -191,6 +191,7 @@ export class DocumentStorage implements IDocumentStorage {
             sequenceNumber,
             lastClientSummaryHead: undefined,
             lastSummarySequenceNumber: 0,
+            validParentSummaries: undefined,
         };
 
         const session: ISession = {
@@ -211,19 +212,19 @@ export class DocumentStorage implements IDocumentStorage {
         try {
             const collection = await this.databaseManager.getDocumentCollection();
             const result = await collection.findOrCreate(
-            {
-                documentId,
-                tenantId,
-            },
-            {
-                createTime: Date.now(),
-                deli: JSON.stringify(deli),
-                documentId,
-                session,
-                scribe: JSON.stringify(scribe),
-                tenantId,
-                version: "0.1",
-            });
+                {
+                    documentId,
+                    tenantId,
+                },
+                {
+                    createTime: Date.now(),
+                    deli: JSON.stringify(deli),
+                    documentId,
+                    session,
+                    scribe: JSON.stringify(scribe),
+                    tenantId,
+                    version: "0.1",
+                });
             updateDocumentCollectionMetric.success("Successfully updated document collection");
             return result;
         } catch (error: any) {

@@ -45,7 +45,7 @@ export interface ISummaryWriter {
         op: ISequencedDocumentAugmentedMessage,
         currentProtocolHead: number,
         checkpoint: IScribe,
-        pendingOps: ISequencedOperationMessage[]): Promise<boolean>;
+        pendingOps: ISequencedOperationMessage[]): Promise<string | false>;
 
     isExternal: boolean;
 }
