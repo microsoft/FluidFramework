@@ -29,7 +29,7 @@ describe("SharedSequence memory usage", () => {
 
     numbersOfEntriesForTests.forEach((x) => {
         benchmarkMemory(new class implements IMemoryTestObject {
-            title = `Append and remove ${x} subsequences NEW`;
+            title = `Append and remove ${x} subsequences`;
             private segment = new SubSequence<number>([]);
 
             async run() {
