@@ -310,13 +310,8 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 }
             }
 
-            // All of our outstanding volunteer ops will be for the old clientId even if they get ack'd, so we should
-            // delete them.
-            this.latestPendingOps.forEach((pendingOp, taskId) => {
-                if (pendingOp.type === "volunteer") {
-                    this.latestPendingOps.delete(taskId);
-                }
-            });
+            // All of our outstanding ops will be for the old clientId even if they get ack'd
+            this.latestPendingOps.clear();
         });
     }
 
