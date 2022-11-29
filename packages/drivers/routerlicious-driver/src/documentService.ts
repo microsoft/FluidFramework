@@ -224,7 +224,7 @@ export class DocumentService implements api.IDocumentService {
                     return R11sDocumentDeltaConnection.create(
                         this.tenantId,
                         this.documentId,
-                        ordererToken.jwt,
+                        ordererToken?.jwt ?? null,
                         io,
                         client,
                         this.deltaStreamUrl,
