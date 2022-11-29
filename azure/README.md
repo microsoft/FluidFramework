@@ -8,7 +8,7 @@ See the [package README](./packages/azure-client/README.md) for more information
 
 ## @fluidframework/azure-local-services
 
-The azure-local-services package provides a minimal, self-contained, test implementation of the Azure Fluid Relay service that can be run locally and used for development/testing Fluid functionality in conjunction with the `AzureClient` in local mode.
+The azure-local-service package provides a minimal, self-contained, test implementation of the Azure Fluid Relay service that can be run locally and used for development/testing Fluid functionality in conjunction with the `AzureClient` in local mode.
 
 See the [package README](./packages/azure-client/README.md) for more information.
 
