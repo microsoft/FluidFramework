@@ -15,7 +15,7 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
         index: number,
         count: number,
         detachIndex: number,
-        revision?: RevisionTag,
+        revision: RevisionTag,
     ): Changeset<never>;
 }
 
@@ -38,7 +38,7 @@ export const sequenceFieldEditor = {
         index: number,
         count: number,
         detachIndex: number,
-        revision?: RevisionTag,
+        revision: RevisionTag,
     ): Changeset<never> =>
         count === 0
             ? []

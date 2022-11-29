@@ -57,7 +57,7 @@ export function createReviveChangeset(
     startIndex: number,
     count: number,
     detachIndex: number,
-    revision?: RevisionTag,
+    revision: RevisionTag,
 ): SF.Changeset<never> {
     return SF.sequenceFieldEditor.revive(startIndex, count, detachIndex, revision);
 }
