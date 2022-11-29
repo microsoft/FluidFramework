@@ -626,15 +626,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             // a new clientId.
             this.removeClientFromAllQueues(placeholderClientId);
         }
-        const filteredMap = new Map<string, string[]>();
-        this.taskQueues.forEach((queue: string[], taskId: string) => {
-            if (queue === undefined || queue.length === 0) {
-                // Filter out tasks without any clients in the queue.
-                return;
-            }
-            filteredMap.set(taskId, queue);
-        });
-        const content = [...filteredMap.entries()];
+        const content = [...this.taskQueues.entries()];
         return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));
     }
 
