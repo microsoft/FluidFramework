@@ -143,7 +143,7 @@ export function initializeFluidClientDebugger(containerInfo: ContainerInfo): IFl
 		containerData: containerInfo.container.initialObjects,
 	});
 
-    return getFluidClientDebugger(containerInfo.containerId)!;
+    return getFluidClientDebugger(containerInfo.containerId);
 	/* eslint-enable @typescript-eslint/no-non-null-assertion */
 }
 

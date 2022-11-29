@@ -14,4 +14,10 @@ ReactDOM.render(
 		<App />
 	</React.StrictMode>,
 	document.querySelector("#content"),
+
 );
+
+// renderClientDebugger(document.querySelector("#content"));
+
+// V1: renderClientDebugger(document.querySelector("#content"))
+// V2: renderClientDebugger("#content");
