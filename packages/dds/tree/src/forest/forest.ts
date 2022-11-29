@@ -15,6 +15,7 @@ import {
     ITreeCursor,
     rootField,
 } from "../tree";
+import type { IEditableForest } from "./editableForest";
 
 /**
  * APIs for forest designed so the implementation can be copy on write,
@@ -37,7 +38,7 @@ export interface IForestSubscription extends Dependee {
      *
      * The new copy will not invalidate observers (dependents) of the old one.
      */
-    clone(schema: StoredSchemaRepository, anchors: AnchorSet): IForestSubscription;
+    clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
 
     /**
      * Schema used within this forest.

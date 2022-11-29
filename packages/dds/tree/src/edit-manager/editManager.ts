@@ -233,9 +233,9 @@ export class EditManager<
         }
 
         const netChange = this.changeFamily.rebaser.compose([
-            ...inverses.map((change) => change.change),
-            trunkChange.change,
-            ...newBranchChanges.map((change) => change.change),
+            ...inverses,
+            trunkChange,
+            ...newBranchChanges,
         ]);
 
         if (this.anchors !== undefined) {
