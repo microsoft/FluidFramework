@@ -15,7 +15,7 @@ import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorage
 import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
 import { NullBlobStorageService } from "./nullBlobStorageService";
-import { ITokenProvider, ITokenResponse } from "./tokens";
+import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper, RouterliciousStorageRestWrapper } from "./restWrapper";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache } from "./cache";
@@ -37,7 +37,6 @@ const RediscoverAfterTimeSinceDiscoveryMs = 5 * 60000; // 5 minute
 export class DocumentService implements api.IDocumentService {
     private lastDiscoveredAt: number = Date.now();
     private discoverP: Promise<void> | undefined;
-    private ordererToken: ITokenResponse | undefined;
 
     private storageManager: GitManager | undefined;
     private noCacheStorageManager: GitManager | undefined;
@@ -62,7 +61,6 @@ export class DocumentService implements api.IDocumentService {
         private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>,
         private readonly discoverFluidResolvedUrl: () => Promise<api.IFluidResolvedUrl>,
     ) {
-        this.ordererToken = RouterliciousOrdererRestWrapper.getOrdererToken();
     }
 
     private documentStorageService: DocumentStorageService | undefined;
@@ -164,7 +162,6 @@ export class DocumentService implements api.IDocumentService {
                 );
             }
 
-            this.ordererToken = RouterliciousOrdererRestWrapper.getOrdererToken();
             return this.ordererRestWrapper;
         };
         const restWrapper = await getRestWrapper();
@@ -191,7 +188,7 @@ export class DocumentService implements api.IDocumentService {
      */
     public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
         const connect = async (refreshToken?: boolean) => {
-            let ordererToken = this.ordererToken;
+            let ordererToken = RouterliciousOrdererRestWrapper.getOrdererToken();
             if (this.shouldUpdateDiscoveredSessionInfo()) {
                 await this.refreshDiscovery();
             }
@@ -207,13 +204,13 @@ export class DocumentService implements api.IDocumentService {
                         }),
                     },
                     async () => {
-                        this.ordererToken = await this.tokenProvider.fetchOrdererToken(
+                        const newOrdererToken = await this.tokenProvider.fetchOrdererToken(
                             this.tenantId,
                             this.documentId,
                             refreshToken,
                         );
-
-                        return this.ordererToken;
+                        RouterliciousOrdererRestWrapper.setOrdererToken(newOrdererToken);
+                        return newOrdererToken;
                     }
                 );
             }

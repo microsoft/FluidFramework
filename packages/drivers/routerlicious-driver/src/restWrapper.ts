@@ -244,4 +244,8 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
     public static getOrdererToken() {
         return this.ordererToken;
     }
+
+    public static setOrdererToken(token: ITokenResponse) {
+        this.ordererToken = token;
+    }
 }

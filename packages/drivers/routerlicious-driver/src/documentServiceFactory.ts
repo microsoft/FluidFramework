@@ -241,10 +241,11 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                     docId: documentId,
                 },
                 async () => {
-                    // The service responds with the current document session associated with the container.
                     if (!ordererRestWrapper) {
                         throw new Error("OrdererRestWrapper undefined");
                     }
+
+                    // The service responds with the current document session associated with the container.
                     return ordererRestWrapper.get<ISession>(
                         `${resolvedUrl.endpoints.ordererUrl}/documents/${tenantId}/session/${documentId}`);
                 });
