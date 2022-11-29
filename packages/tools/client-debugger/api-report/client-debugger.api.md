@@ -56,6 +56,7 @@ export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebugge
     getAudienceMembers(): Map<string, IClient>;
     getClientId(): string | undefined;
     getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];
+    getContainerContent(): Promise<String>;
     getContainerResolvedUrl(): IResolvedUrl | undefined;
     isContainerAttached(): boolean;
     isContainerClosed(): boolean;

@@ -42,6 +42,7 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
 	const [containerConnectionState, setContainerConnectionState] = React.useState<ConnectionState>(
 		container.connectionState,
 	);
+
 	const [containerResolvedUrl, setContainerResolvedUrl] = React.useState<
 		IResolvedUrl | undefined
 	>(container.resolvedUrl);

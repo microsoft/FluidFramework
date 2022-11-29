@@ -132,13 +132,12 @@ export async function loadExistingFluidContainer(
  * not here.
  */
 export function initializeFluidClientDebugger(containerInfo: ContainerInfo): void {
-	/* eslint-disable @typescript-eslint/no-non-null-assertion */
 	initializeFluidClientDebuggerBase({
 		containerId: containerInfo.containerId,
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		container: containerInfo.container._getInternalContainer!(),
 		containerData: containerInfo.container.initialObjects,
 	});
-	/* eslint-enable @typescript-eslint/no-non-null-assertion */
 }
 
 // Convenience re-export, since no adapter logic is required for clean-up
