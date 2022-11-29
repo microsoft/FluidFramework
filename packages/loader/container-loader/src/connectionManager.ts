@@ -181,7 +181,7 @@ export class ConnectionManager implements IConnectionManager {
     private localOpsToIgnore = 0;
 
     /** track clientId used last time when we sent any ops */
-    private lastSubmittedClientId: string | undefined;
+    public lastSubmittedClientId: string | undefined;
 
     private connectFirstConnection = true;
 

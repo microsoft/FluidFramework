@@ -103,6 +103,7 @@ export interface IConnectionManager {
     dispose(error?: ICriticalContainerError): void;
 
     get connectionMode(): ConnectionMode;
+    readonly lastSubmittedClientId: string | undefined;
 }
 
 /**
