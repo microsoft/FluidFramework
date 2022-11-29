@@ -161,7 +161,6 @@ export class DocumentService implements api.IDocumentService {
                     this.driverPolicies.enableRestLess,
                 );
             }
-
             return this.ordererRestWrapper;
         };
         const restWrapper = await getRestWrapper();
@@ -225,7 +224,7 @@ export class DocumentService implements api.IDocumentService {
                     return R11sDocumentDeltaConnection.create(
                         this.tenantId,
                         this.documentId,
-                        ordererToken?.jwt ?? null,
+                        ordererToken.jwt,
                         io,
                         client,
                         this.deltaStreamUrl,
