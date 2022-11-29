@@ -20,6 +20,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summarizerClientElection";
+import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
 
 /**
  * This class represents blob (long string)
@@ -166,7 +167,7 @@ export class BlobManager {
         this.mc = loggerToMonitoringContext(ChildLogger.create(this.runtime.logger, "BlobManager"));
          // Read the feature flag that tells whether to throw when a tombstone blob is requested.
          this.throwOnTombstoneUsage =
-         this.mc.config.getBoolean("Fluid.GarbageCollection.ThrowOnTombstoneUsage") === true &&
+         this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
          this.runtime.clientDetails.type !== summarizerClientType;
 
         this.runtime.on("disconnected", () => this.onDisconnected());
