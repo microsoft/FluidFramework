@@ -153,7 +153,13 @@ export function setGenericTreeField<T>(
 ): void {
     const [scope, keyString] = scopeFromKey(key);
     const children = getGenericTreeFieldMap(node, scope, true);
-    children[keyString] = content;
+    // like `children[keyString] = content;` except safe when keyString == "__proto__".
+    Object.defineProperty(children, keyString, {
+        enumerable: true,
+        configurable: true,
+        writable: true,
+        value: content,
+    });
 }
 
 /**
@@ -170,14 +176,14 @@ export function genericTreeKeys<T>(tree: GenericFieldsNode<T>): readonly FieldKe
         if (global === undefined) {
             return [];
         }
-        return (Object.getOwnPropertyNames(global) as GlobalFieldKey[]).map(symbolFromKey);
+        return (Object.keys(global) as GlobalFieldKey[]).map(symbolFromKey);
     }
     if (global === undefined) {
-        return Object.getOwnPropertyNames(local) as LocalFieldKey[];
+        return Object.keys(local) as LocalFieldKey[];
     }
     return [
-        ...(Object.getOwnPropertyNames(local) as LocalFieldKey[]),
-        ...(Object.getOwnPropertyNames(global) as GlobalFieldKey[]).map(symbolFromKey),
+        ...(Object.keys(local) as LocalFieldKey[]),
+        ...(Object.keys(global) as GlobalFieldKey[]).map(symbolFromKey),
     ];
 }
 
@@ -197,7 +203,7 @@ export function genericTreeDeleteIfEmpty<T>(
             // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
             delete children[keyString];
             if (removeMapObject) {
-                if (Object.getOwnPropertyNames(children).length === 0) {
+                if (Object.keys(children).length === 0) {
                     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                     delete node[scope];
                 }

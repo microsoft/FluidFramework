@@ -1,3 +1,0 @@
-# @fluidframework/attributor
-
-TODO

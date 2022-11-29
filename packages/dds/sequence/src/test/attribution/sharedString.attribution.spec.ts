@@ -21,21 +21,27 @@ import {
     Reducer,
     take,
 } from "@fluid-internal/stochastic-test-utils";
+import { IAttributor } from "@fluidframework/runtime-definitions";
 import {
     MockFluidDataStoreRuntime,
     MockStorage,
 	MockContainerRuntimeFactoryForReconnection,
 } from "@fluidframework/test-runtime-utils";
-import { IAttributor, Attributor, gzipEncoder } from "@fluidframework/attributor';
+import {
+	chain as chainEncoders,
+	OpStreamAttributor,
+	makeGzipEncoder,
+	AttributorSerializer,
+	Encoder,
+	deltaEncoder,
+} from "@fluid-internal/attributor";
 import { IChannelServices, IFluidDataStoreRuntime, Jsonable } from "@fluidframework/datastore-definitions";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { IClient } from "@fluidframework/protocol-definitions";
+import { IClient, ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IAudience } from "@fluidframework/container-definitions";
-import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../../sharedString";
 import { SharedStringFactory } from "../../sequenceFactory";
 import { assertConsistent, Client } from "../intervalUtils";
-
 
 function makeMockAudience(clientIds: string[]): IAudience {
 	const clients = new Map<string, IClient>();
@@ -47,21 +53,22 @@ function makeMockAudience(clientIds: string[]): IAudience {
 		const user = {
 			id: userId,
 			name,
-			email
+			email,
 		};
-		clients.set(clientId, { 
+		clients.set(clientId, {
 			mode: "write",
 			details: { capabilities: { interactive: true } },
 			permission: [],
 			user,
-			scopes: []		
+			scopes: [],
 		});
 	});
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	return {
 		getMember: (clientId: string): IClient | undefined => {
 			return clients.get(clientId);
-		}
-	} as IAudience
+		},
+	} as IAudience;
 }
 
 interface FuzzTestState extends BaseFuzzTestState {
@@ -70,6 +77,7 @@ interface FuzzTestState extends BaseFuzzTestState {
 	// Note: eventually each client will have an Attributor. While design/implementation is in flux, this test suite
 	// just stores a singleton attributor for the purposes of assessing its size.
 	attributor?: IAttributor;
+	serializer?: Encoder<IAttributor, string>;
 }
 
 interface ClientSpec {
@@ -203,20 +211,23 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
 function createSharedString(
 	random: IRandom,
 	generator: Generator<Operation, FuzzTestState>,
-	makeAttributor?: (runtime: IFluidDataStoreRuntime) => IAttributor
+	makeSerializer?: (runtime: IFluidDataStoreRuntime) => Encoder<IAttributor, string>,
 ): FuzzTestState {
 	const numClients = 3;
 	const clientIds = Array.from({ length: numClients }, () => random.uuid4());
 	const audience = makeMockAudience(clientIds);
 	const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 	let attributor: IAttributor | undefined;
+	let serializer: Encoder<IAttributor, string> | undefined;
 	const initialState: FuzzTestState = {
 		clients: clientIds.map((clientId, index) => {
 			const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
+			dataStoreRuntime.options.trackAttribution = true;
 			const { deltaManager } = dataStoreRuntime;
-			deltaManager.inbound.processCallback = (op) => { deltaManager.emit("op", op); }
-			if (index === 0) {
-				attributor = makeAttributor?.(dataStoreRuntime);
+
+			if (index === 0 && makeSerializer !== undefined) {
+				attributor = new OpStreamAttributor(deltaManager, dataStoreRuntime.getAudience());
+				serializer = makeSerializer(dataStoreRuntime);
 			}
 			const sharedString = new SharedString(
 				dataStoreRuntime,
@@ -225,15 +236,14 @@ function createSharedString(
 			);
 			// DeltaManager mock doesn't have high fidelity but attribution requires DataStoreRuntime implements
 			// audience / op emission.
+			let opIndex = 0;
 			sharedString.on("op", (message) => {
-				if (message.timestamp === undefined) {
-					// TODO: Make this apples-to-apples comparison of timestamps.
-					message.timestamp = Date.now();
-				}
-				deltaManager.emit("op", message)
+				opIndex++;
+				message.timestamp = getTimestamp(opIndex);
+				deltaManager.emit("op", message);
 			});
 			dataStoreRuntime.getAudience = () => audience;
-			
+
 			const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services: IChannelServices = {
 				deltaConnection: containerRuntime.createDeltaConnection(),
@@ -248,6 +258,7 @@ function createSharedString(
 		random,
 	};
 	initialState.attributor = attributor;
+	initialState.serializer = serializer;
 
     // Small wrapper to avoid having to return the same state repeatedly; all operations in this suite mutate.
     // Also a reasonable point to inject logging of incremental state.
@@ -332,15 +343,18 @@ function writeJson(filepath: string, content: Jsonable) {
 
 const validateInterval = 10;
 
-function embedAttributionInProps(operations: Operation[]): Operation[] {
+function getTimestamp(opIndex: number): number {
 	// This is an arbitrary start point of the same magnitude as current data.
 	// Wed Oct 12 2022 11:40:00 GMT-0700
 	const baseDate = 1665600000000;
+	return baseDate + Math.floor(opIndex / 10) * 5000;
+}
+
+function embedAttributionInProps(operations: Operation[]): Operation[] {
 	return operations.map((operation, index) => {
 		if (operation.type !== "addText") {
 			return operation;
 		} else {
-			const timestamp = baseDate + Math.floor(index / validateInterval) * 5000;
 			const name = operation.stringId.repeat(10);
 			const id = `${name}@microsoft.com`;
 			const email = id;
@@ -349,7 +363,7 @@ function embedAttributionInProps(operations: Operation[]): Operation[] {
 					id,
 					name,
 					email,
-					timestamp,
+					timestamp: getTimestamp(index),
 				},
 			};
 			return {
@@ -361,80 +375,143 @@ function embedAttributionInProps(operations: Operation[]): Operation[] {
 }
 
 const summaryFromState = async (state: FuzzTestState): Promise<ISummaryTree> => {
+	state.containerRuntimeFactory.processAllMessages();
 	const { sharedString } = state.clients[0];
 	const { summary } = await sharedString.summarize();
-	// KLUDGE: For now, since attribution info isn't embedded at a proper location in the summary tree, just add a property
-	// to the root so that its size is reported
-	if (state.attributor) {
-		(summary as any).attribution = state.attributor.serialize();
+	// KLUDGE: For now, since attribution info isn't embedded at a proper location in the summary tree, just
+	// add a property to the root so that its size is reported
+	if (state.attributor && state.serializer) {
+		(summary as any).attribution = state.serializer.encode(state.attributor);
 	}
 	return summary;
 };
 
 const noopEncoder = {
-	encode: x => x,
-	decode: x => x
+	encode: (x: any): any => x,
+	decode: (x: any): any => x,
 };
 
-describe("SharedString Attribution", () => {
-	// Entries of this list produce documents which should contain the same attribution information but
-	// stored in different formats. The "None" factory is an exception in that it contains no attribution
-	// information, and is useful as a baseline for comparison.
-	const dataGenerators: {
-		name: string;
-		factory: (operations: Operation[]) => FuzzTestState;
-		filename: string;
-	}[] = [
-		{ 
-			name: "None",
-			factory: (operations: Operation[]) => createSharedString(
-				makeRandom(0),
-				generatorFromArray(operations),
-			),
-			filename: "no-attribution-snap.json"
-		},
-		{ 
-			name: "Prop",
-			factory: (operations: Operation[]) => createSharedString(
-				makeRandom(0),
-				generatorFromArray(embedAttributionInProps(operations)),
-			),
-			filename: "prop-attribution-snap.json"
-		},
-		{ 
-			name: "Attributor without any compression",
-			factory: (operations: Operation[]) => createSharedString(
-				makeRandom(0),
-				generatorFromArray(operations), (runtime) => new Attributor(runtime, undefined, { summary: noopEncoder, timestamps: noopEncoder }),
-			),
-			filename: "compressed-attribution-snap.json"
-		},
-		{ 
-			name: "Attributor without delta encoding",
-			factory: (operations: Operation[]) => createSharedString(
-				makeRandom(0),
-				generatorFromArray(operations), (runtime) => new Attributor(runtime, undefined, { summary: gzipEncoder, timestamps: noopEncoder }),
-			),
-			filename: "compressed-attribution-snap.json"
-		},
-		{ 
-			name: "Attributor",
-			factory: (operations: Operation[]) => createSharedString(
-				makeRandom(0),
-				generatorFromArray(operations), (runtime) => new Attributor(runtime),
-			),
-			filename: "compressed-attribution-snap.json"
-		},
-	]
+class DataTable<T> {
+	private readonly rows: Map<string, T[]> = new Map();
+	constructor(private readonly columnNames: string[]) { }
 
+	public addRow(name: string, data: T[]): void {
+		this.rows.set(name, data);
+	}
+
+	public log(dataToString: (t: T) => string = (t) => `${t}`): void {
+		const namePaddingLength = 1 + Math.max(...Array.from(
+			this.rows.keys(),
+			(docName) => docName.length),
+		);
+		const rowStrings = new Map<string, string[]>();
+		const paddingByColumn = this.columnNames.map((name) => name.length);
+		for (const [name, data] of this.rows.entries()) {
+			const dataStrings = data.map(dataToString);
+			rowStrings.set(name, dataStrings);
+			dataStrings.forEach((s, i) => {
+				paddingByColumn[i] = Math.max(paddingByColumn[i], s.length);
+			});
+		}
+		paddingByColumn.forEach((_, i) => { paddingByColumn[i]++; });
+
+		console.log(
+			[
+				`${"Name".padEnd(namePaddingLength)}`,
+				...this.columnNames.map((name, i) => `${name.padStart(paddingByColumn[i])} `),
+			].join("|"),
+		);
+
+		for (const [name, result] of rowStrings.entries()) {
+			console.log(`${
+				name.padEnd(namePaddingLength)
+			}|${
+				result
+					.map((s, i) => `${s.padStart(paddingByColumn[i])} `)
+					.join("|")
+			}`);
+		}
+	}
+}
+
+const getSummaryLength = (summary: ISummaryTree) => formatNumber(JSON.stringify(summary).length);
+
+describe("SharedString Attribution", () => {
 	/**
 	 * This test suite is aimed at assessing the overhead of storing attribution information in a document.
 	 * See 'documents/README.md' for more details.
-	 *
-	 * TODO: Convert test document into one that can be used here
 	 */
 
 	describe("using randomly generated documents", () => {
+		// Entries of this list produce documents which should contain the same attribution information but
+		// stored in different formats. The "None" factory is an exception in that it contains no attribution
+		// information, and is useful as a baseline for comparison.
+		const dataGenerators: {
+			name: string;
+			factory: (operations: Operation[]) => FuzzTestState;
+			filename: string;
+		}[] = [
+			{
+				name: "None",
+				factory: (operations: Operation[]) => createSharedString(
+					makeRandom(0),
+					generatorFromArray(operations),
+				),
+				filename: "no-attribution-snap.json",
+			},
+			{
+				name: "Prop",
+				factory: (operations: Operation[]) => createSharedString(
+					makeRandom(0),
+					generatorFromArray(embedAttributionInProps(operations)),
+				),
+				filename: "prop-attribution-snap.json",
+			},
+			{
+				name: "OpStreamAttributor without any compression",
+				factory: (operations: Operation[]) => createSharedString(
+					makeRandom(0),
+					generatorFromArray(operations),
+					(runtime) => chainEncoders(
+						new AttributorSerializer(
+							(entries) => new OpStreamAttributor(runtime.deltaManager, runtime.getAudience(), entries),
+							noopEncoder
+						),
+						noopEncoder
+					),
+				),
+				filename: "attributor-no-compression-snap.json",
+			},
+			{
+				name: "OpStreamAttributor without delta encoding",
+				factory: (operations: Operation[]) => createSharedString(
+					makeRandom(0),
+					generatorFromArray(operations),
+					(runtime) => chainEncoders(
+						new AttributorSerializer(
+							(entries) => new OpStreamAttributor(runtime.deltaManager, runtime.getAudience(), entries),
+							noopEncoder
+						),
+						makeGzipEncoder(),
+					)
+				),
+				filename: "attributor-gzip-compression-snap.json",
+			},
+			{
+				name: "OpStreamAttributor",
+				factory: (operations: Operation[]) => createSharedString(
+					makeRandom(0),
+					generatorFromArray(operations),
+					(runtime) => chainEncoders(
+						new AttributorSerializer(
+							(entries) => new OpStreamAttributor(runtime.deltaManager, runtime.getAudience(), entries),
+							deltaEncoder
+						),
+						makeGzipEncoder(),
+					)				),
+				filename: "attributor-gzip-and-delta-snap.json",
+			},
+		];
 
 		it.skip("Generate a new document", async () => {
 			const paths = getDocumentPaths("basic");
@@ -442,31 +519,31 @@ describe("SharedString Attribution", () => {
 				take(100, makeOperationGenerator({ validateInterval })),
 				generatorFromArray<Operation, FuzzTestState>([{ type: "synchronize" }]),
 			);
-	
+
 			const { generator, operations } = spyOnOperations(attributionlessGenerator);
 			createSharedString(makeRandom(0), generator);
 			writeJson(paths.operations, operations);
-	
+
 			await Promise.all(
 				dataGenerators.map(async ({ filename, factory }) => {
 					const summary = await summaryFromState(factory(operations));
 					writeJson(path.join(paths.directory, filename), summary);
-				})
-			)
+				}),
+			);
 		});
-	
+
 		const documents = getDocuments();
 		for (const document of documents) {
-			describe(`document name: ${document} has up-to-date`, () => {
+			describe(`document name: ${document} has an up-to-date`, () => {
 				let paths: TestPaths;
 				let operations: Operation[];
 				before(() => {
 					paths = getDocumentPaths(document);
 					operations = readJson(paths.operations);
 				});
-	
+
 				for (const { filename, factory } of dataGenerators) {
-					it(`Snapshot at ${filename}`, async () => {
+					it(`snapshot at ${filename}`, async () => {
 						const expected = readJson(path.join(paths.directory, filename));
 						const actual = await summaryFromState(factory(operations));
 						assert.deepEqual(actual, expected);
@@ -474,255 +551,126 @@ describe("SharedString Attribution", () => {
 				}
 			});
 		}
-	
-		// Note: to see output, FLUID_TEST_VERBOSE needs to be enabled. Using the `test:mocha:verbose` script is sufficient
-		// to do so.
+
+		// Note: to see output, FLUID_TEST_VERBOSE needs to be enabled. Using the `test:mocha:verbose` script is
+		// sufficient to do so.
 		it("generate snapshot size impact report", async () => {
-			const namePaddingLength = Math.max(...documents.map((docName) => docName.length)) + 1;
-			const fieldPaddingLength = 12;
-			console.log(
-				[
-					`${"Name".padEnd(namePaddingLength)}`,
-					...dataGenerators.map(({ name }) => `${name} `.padStart(fieldPaddingLength))
-				].join("|")
-			);
-	
-			const logRow = ({
-				docName,
-				data
-			}: { docName: string; data: ISummaryTree[] }) => {
-				const getLength = (summary: ISummaryTree) => formatNumber(JSON.stringify(summary).length);
-				console.log(`${
-					docName.padEnd(namePaddingLength)
-				}|${
-					data
-						.map((summary, i) => getLength(summary).padStart(
-							Math.max(fieldPaddingLength - 1, dataGenerators[i].name.length)
-						))
-						.join(' |')
-				}`);
-			};
-	
+			const table = new DataTable<ISummaryTree>(dataGenerators.map(({ name }) => name));
 			for (const docName of documents) {
 				const paths = getDocumentPaths(docName);
 				const operations: Operation[] = readJson(paths.operations);
 				const data = await Promise.all(
-					dataGenerators.map(({ factory }) => summaryFromState(factory(operations)))
+					dataGenerators.map(async ({ factory }) => summaryFromState(factory(operations))),
 				);
-				logRow({ docName, data });
+				table.addRow(docName, data);
 			}
+
+			table.log(getSummaryLength);
 		});
 	});
 
-	describe("using sample real documents", () => {
+	describe.skip("using sample real documents", () => {
+		// This prevents the mock logic which sets minimumSequenceNumber on the message, since it's
+		// intended to be used with real documents
 		class MockContainerRuntimeFactoryForReplay extends MockContainerRuntimeFactoryForReconnection {
 			public processOneMessage() {
 				if (this.messages.length === 0) {
 					throw new Error("Tried to process a message that did not exist");
 				}
-		
+
 				let msg = this.messages.shift();
 				// Explicitly JSON clone the value to match the behavior of going thru the wire.
 				msg = JSON.parse(JSON.stringify(msg)) as ISequencedDocumentMessage;
-		
+
 				for (const runtime of this.runtimes) {
 					runtime.process(msg);
 				}
-			}			
+			}
 		}
 
-		const messages: any[] = readJson(path.join(__dirname, "../../../src/test/attribution/messages.json"));
+		function makeReplayMessagesFactory(
+			tweakMessage: (message: ISequencedDocumentMessage) => ISequencedDocumentMessage = (x) => x,
+		) {
+			return (messages: ISequencedDocumentMessage[]) => {
+				const random = makeRandom(0);
+				const clientId = random.uuid4();
+				const containerRuntimeFactory = new MockContainerRuntimeFactoryForReplay();
+				const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
+				dataStoreRuntime.options.trackAttribution = true;
+				const sharedString = new SharedString(
+					dataStoreRuntime,
+					"mock observer client",
+					SharedStringFactory.Attributes,
+				);
+
+				const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+				const services: IChannelServices = {
+					deltaConnection: containerRuntime.createDeltaConnection(),
+					objectStorage: new MockStorage(),
+				};
+
+				sharedString.initializeLocal();
+				sharedString.connect(services);
+
+				for (const message of messages) {
+					const mergeTreeMessage = extractMergeTreeOp(message);
+					if (mergeTreeMessage) {
+						containerRuntimeFactory.pushMessage(tweakMessage(message));
+						containerRuntimeFactory.processOneMessage();
+					}
+				}
+
+				return { containerRuntimeFactory, clients: [{ sharedString, containerRuntime }], random };
+			};
+		}
+
 		const documents = ["fhl-demos"];
 		const dataGenerators: {
 			name: string;
 			factory: (messages: ISequencedDocumentMessage[]) => FuzzTestState;
 			filename: string;
 		}[] = [
-			{ 
+			{
 				name: "None",
-				factory: (messages: ISequencedDocumentMessage[]) => {
-					const random = makeRandom(0);
-					const clientId = random.uuid4();
-					const containerRuntimeFactory = new MockContainerRuntimeFactoryForReplay();
-					const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
-					// const { deltaManager } = dataStoreRuntime;
-					// deltaManager.inbound.processCallback = (op) => { deltaManager.emit("op", op); }
-					// if (index === 0) {
-					// 	attributor = makeAttributor?.(dataStoreRuntime);
-					// }
-					const sharedString = new SharedString(
-						dataStoreRuntime,
-						"mock observer client",
-						SharedStringFactory.Attributes,
-					);
-					// // DeltaManager mock doesn't have high fidelity but attribution requires DataStoreRuntime implements
-					// // audience / op emission.
-					// sharedString.on("op", (message) => {
-					// 	if (message.timestamp === undefined) {
-					// 		// TODO: Make this apples-to-apples comparison of timestamps.
-					// 		message.timestamp = Date.now();
-					// 	}
-					// 	deltaManager.emit("op", message)
-					// });
-					// dataStoreRuntime.getAudience = () => audience;
-					
-					const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-					const services: IChannelServices = {
-						deltaConnection: containerRuntime.createDeltaConnection(),
-						objectStorage: new MockStorage(),
-					};
-		
-					sharedString.initializeLocal();
-					sharedString.connect(services);
-
-					for (const message of messages) {
-						const mergeTreeMessage = extractMergeTreeOp(message);
-						if (mergeTreeMessage) {
-							containerRuntimeFactory.pushMessage(stripAttributionInfo(message));
-							containerRuntimeFactory.processOneMessage();
-						}
-					}
-
-					return { containerRuntimeFactory, clients: [{ sharedString, containerRuntime }], random };
-				},
-				filename: "no-attribution-snap.json"
+				factory: makeReplayMessagesFactory(stripAttributionInfo),
+				filename: "no-attribution-snap.json",
 			},
-			{ 
+			{
 				name: "Prop",
-				factory: (messages: ISequencedDocumentMessage[]) => {
-					const random = makeRandom(0);
-					const clientId = random.uuid4();
-					const containerRuntimeFactory = new MockContainerRuntimeFactoryForReplay();
-					const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
-					// const { deltaManager } = dataStoreRuntime;
-					// deltaManager.inbound.processCallback = (op) => { deltaManager.emit("op", op); }
-					// if (index === 0) {
-					// 	attributor = makeAttributor?.(dataStoreRuntime);
-					// }
-					const sharedString = new SharedString(
-						dataStoreRuntime,
-						"mock observer client",
-						SharedStringFactory.Attributes,
-					);
-					// // DeltaManager mock doesn't have high fidelity but attribution requires DataStoreRuntime implements
-					// // audience / op emission.
-					// sharedString.on("op", (message) => {
-					// 	if (message.timestamp === undefined) {
-					// 		// TODO: Make this apples-to-apples comparison of timestamps.
-					// 		message.timestamp = Date.now();
-					// 	}
-					// 	deltaManager.emit("op", message)
-					// });
-					// dataStoreRuntime.getAudience = () => audience;
-					
-					const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-					const services: IChannelServices = {
-						deltaConnection: containerRuntime.createDeltaConnection(),
-						objectStorage: new MockStorage(),
-					};
-		
-					sharedString.initializeLocal();
-					sharedString.connect(services);
+				factory: makeReplayMessagesFactory(),
+				filename: "prop-attribution-snap.json",
+			},
+		];
 
-					for (const message of messages) {
-						const mergeTreeMessage = extractMergeTreeOp(message);
-						if (mergeTreeMessage) {
-							containerRuntimeFactory.pushMessage(message);
-							containerRuntimeFactory.processOneMessage();
-						}
-					}
-	
-					// const initialState: FuzzTestState = {
-					// 	clients: clientIds.map((clientId, index) => {
-					// 		const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
-					// 		const { deltaManager } = dataStoreRuntime;
-					// 		deltaManager.inbound.processCallback = (op) => { deltaManager.emit("op", op); }
-					// 		// if (index === 0) {
-					// 		// 	attributor = makeAttributor?.(dataStoreRuntime);
-					// 		// }
-					// 		const sharedString = new SharedString(
-					// 			dataStoreRuntime,
-					// 			String.fromCharCode(index + 65),
-					// 			SharedStringFactory.Attributes,
-					// 		);
-					// 		// DeltaManager mock doesn't have high fidelity but attribution requires DataStoreRuntime implements
-					// 		// audience / op emission.
-					// 		sharedString.on("op", (message) => {
-					// 			if (message.timestamp === undefined) {
-					// 				// TODO: Make this apples-to-apples comparison of timestamps.
-					// 				message.timestamp = Date.now();
-					// 			}
-					// 			deltaManager.emit("op", message)
-					// 		});
-					// 		dataStoreRuntime.getAudience = () => audience;
-							
-					// 		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-					// 		const services: IChannelServices = {
-					// 			deltaConnection: containerRuntime.createDeltaConnection(),
-					// 			objectStorage: new MockStorage(),
-					// 		};
-				
-					// 		sharedString.initializeLocal();
-					// 		sharedString.connect(services);
-					// 		return { containerRuntime, sharedString };
-					// 	}),
-					// 	containerRuntimeFactory,
-					// 	random,
-					// };
-					// initialState.attributor = attributor;
-					return { containerRuntimeFactory, clients: [{ sharedString, containerRuntime }], random };
-				},
-				filename: "prop-attribution-snap.json"
-			}
-		]
-
-		// Note: to see output, FLUID_TEST_VERBOSE needs to be enabled. Using the `test:mocha:verbose` script is sufficient
-		// to do so.
+		// Note: to see output, FLUID_TEST_VERBOSE needs to be enabled. Using the `test:mocha:verbose`
+		// script is sufficient to do so.
 		it("generate snapshot size impact report", async () => {
-			const namePaddingLength = Math.max(...documents.map((docName) => docName.length)) + 1;
-			const fieldPaddingLength = 12;
-			console.log(
-				[
-					`${"Name".padEnd(namePaddingLength)}`,
-					...dataGenerators.map(({ name }) => `${name} `.padStart(fieldPaddingLength))
-				].join("|")
+			const table = new DataTable<ISummaryTree>(dataGenerators.map(({ name }) => name));
+			const messages: ISequencedDocumentMessage[] = readJson(
+				path.join(__dirname, "../../../src/test/attribution/messages.json"),
 			);
-	
-			const logRow = ({
-				docName,
-				data
-			}: { docName: string; data: ISummaryTree[] }) => {
-				const getLength = (summary: ISummaryTree) => formatNumber(JSON.stringify(summary).length);
-				console.log(`${
-					docName.padEnd(namePaddingLength)
-				}|${
-					data
-						.map((summary, i) => getLength(summary).padStart(
-							Math.max(fieldPaddingLength - 1, dataGenerators[i].name.length)
-						))
-						.join(' |')
-				}`);
-			};
-	
-			// TODO: This should look more like operations above. should be able to unify.
+
 			for (const docName of documents) {
 				const data = await Promise.all(
-					dataGenerators.map(({ factory }) => summaryFromState(factory(messages)))
+					dataGenerators.map(async ({ factory }) => summaryFromState(factory(messages))),
 				);
-				logRow({ docName, data });
+
+				table.addRow(docName, data);
 			}
+
+			table.log(getSummaryLength);
 		});
 	});
 });
 
 function extractMergeTreeOp(originalMessage: ISequencedDocumentMessage): ISequencedDocumentMessage | undefined {
-	const messageClone = JSON.parse(JSON.stringify(originalMessage));
-	let mergeTreeOpContents = messageClone;
-	while (mergeTreeOpContents && typeof mergeTreeOpContents.type !== 'number') {
+	const messageClone: ISequencedDocumentMessage = JSON.parse(JSON.stringify(originalMessage));
+	let mergeTreeOpContents: any = messageClone;
+	while (mergeTreeOpContents && typeof mergeTreeOpContents.type !== "number") {
 		mergeTreeOpContents = mergeTreeOpContents.contents ?? mergeTreeOpContents.content;
 	}
 
-	if (mergeTreeOpContents && typeof mergeTreeOpContents.type === 'number') {
+	if (mergeTreeOpContents && typeof mergeTreeOpContents.type === "number") {
 		messageClone.contents = mergeTreeOpContents;
 		return messageClone;
 	}
@@ -730,8 +678,8 @@ function extractMergeTreeOp(originalMessage: ISequencedDocumentMessage): ISequen
 	return undefined;
 }
 
-function stripAttributionInfo(originalMessage: any) {
-	const messageClone = JSON.parse(JSON.stringify(originalMessage));
+function stripAttributionInfo(originalMessage: any): any {
+	const messageClone: any = JSON.parse(JSON.stringify(originalMessage));
 	let mergeTreeOpContents = messageClone;
 	while (mergeTreeOpContents && mergeTreeOpContents.seg === undefined) {
 		mergeTreeOpContents = mergeTreeOpContents.contents ?? mergeTreeOpContents.content;

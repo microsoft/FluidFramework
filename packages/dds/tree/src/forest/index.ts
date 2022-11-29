@@ -10,10 +10,13 @@ export {
     isFieldLocation,
     ForestLocation,
     initializeForest,
+    afterChangeToken,
 } from "./editableForest";
 export {
     IForestSubscription,
     ITreeSubscriptionCursor,
     ITreeSubscriptionCursorState,
     TreeNavigationResult,
+    FieldAnchor,
+    moveToDetachedField,
 } from "./forest";

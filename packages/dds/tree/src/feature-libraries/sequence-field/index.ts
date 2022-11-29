@@ -14,6 +14,7 @@ export {
     HasOpId,
     HasLength,
     HasPlaceFields,
+    HasTiebreakPolicy,
     Insert,
     Mark,
     MarkList,
@@ -40,6 +41,7 @@ export {
     TreeForestPath,
     TreeRootPath,
     Skip,
+    LineageEvent,
 } from "./format";
 export {
     SequenceFieldChangeHandler,

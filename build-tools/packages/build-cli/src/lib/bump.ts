@@ -138,7 +138,7 @@ export async function bumpPackageDependencies(
  * Bumps a release group or standalone package by the bumpType.
  *
  * @param context - The {@link Context}.
- * @param bumpType - The bump type.
+ * @param bumpType - The bump type. Can be a SemVer object to set an exact version.
  * @param releaseGroupOrPackage - A release group repo or package to bump.
  * @param scheme - The version scheme to use.
  *
@@ -176,7 +176,7 @@ export async function bumpReleaseGroup(
 
     // the lerna version command sets the dependency range of managed packages to a caret (^) dependency range. However,
     // for the internal version scheme, the range needs to be a >= < range.
-    if (scheme === "internal") {
+    if (scheme === "internal" || scheme === "internalPrerelease") {
         const range = getVersionRange(translatedVersion, "^");
         if (releaseGroupOrPackage instanceof MonoRepo) {
             const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;

@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { MarkListFactory, Transposed as T } from "../../feature-libraries";
+// eslint-disable-next-line import/no-internal-modules
+import { MarkListFactory, Transposed as T } from "../../feature-libraries/sequence-change-family";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { brand } from "../../util";
 

@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    IChannel,
     IChannelAttributes,
     IChannelFactory,
     IChannelServices,
@@ -39,6 +38,7 @@ import {
     defaultChangeFamily,
     FieldChangeMap,
     DefaultEditBuilder,
+    IDefaultEditBuilder,
     UnwrappedEditableField,
     getEditableTreeContext,
     SchemaEditor,
@@ -52,7 +52,7 @@ import {
  *
  * See [the README](../../README.md) for details.
  */
-export interface ISharedTree extends ICheckout<DefaultEditBuilder>, ISharedObject, AnchorLocator {
+export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObject, AnchorLocator {
     /**
      * Root field of the tree.
      *
@@ -149,7 +149,7 @@ class SharedTree
             submitEdit: (edit) => this.submitEdit(edit),
         };
 
-        this.context = getEditableTreeContext(forest);
+        this.context = getEditableTreeContext(forest, this.transactionCheckout);
     }
 
     public locate(anchor: Anchor): UpPath | undefined {
@@ -204,7 +204,7 @@ export class SharedTreeFactory implements IChannelFactory {
         id: string,
         services: IChannelServices,
         channelAttributes: Readonly<IChannelAttributes>,
-    ): Promise<IChannel> {
+    ): Promise<ISharedTree> {
         const tree = new SharedTree(id, runtime, channelAttributes, "SharedTree");
         await tree.load(services);
         return tree;

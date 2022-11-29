@@ -8,6 +8,7 @@
 /* eslint-disable @typescript-eslint/prefer-optional-chain */
 
 import { assert } from "@fluidframework/common-utils";
+import { AttributionCollection } from "./attributionCollection";
 import {
     LocalClientId,
     UnassignedSequenceNumber,
@@ -142,6 +143,9 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     readonly type: string;
     readonly segmentGroups: SegmentGroupCollection;
     readonly trackingCollection: TrackingGroupCollection;
+
+    // TODO: typing
+    attribution?: AttributionCollection<unknown>;
     /**
      * Manages pending local state for properties on this segment.
      */
@@ -369,6 +373,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     public removedClientIds?: number[];
     public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
     public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
+    public attribution?: AttributionCollection<unknown>;
     public propertyManager?: PropertiesManager;
     public properties?: PropertySet;
     public localRefs?: LocalReferenceCollection;
@@ -410,6 +415,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         // TODO: copy removed client overlap and branch removal info
         b.removedSeq = this.removedSeq;
         b.seq = this.seq;
+        b.attribution = this.attribution?.clone();
     }
 
     public canAppend(segment: ISegment): boolean {
@@ -447,8 +453,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                     removalInfo.removedSeq = opArgs.sequencedMessage!.sequenceNumber;
                     return true;
                 }
-                return false;
 
+                return false;
             default:
                 throw new Error(`${opArgs.op.type} is in unrecognized operation type`);
         }
@@ -477,6 +483,9 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 if (this.localRefs) {
                     this.localRefs.split(pos, leafSegment);
                 }
+                if (this.attribution) {
+                    leafSegment.attribution = this.attribution.splitAt(pos);
+                }
             }
             return leafSegment;
         }
@@ -496,7 +505,21 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     }
 
     public abstract clone(): ISegment;
-    public abstract append(segment: ISegment): void;
+
+    public append(other: ISegment): void {
+        // Note: Must call 'appendLocalRefs' before modifying this segment's length as
+        //       'this.cachedLength' is used to adjust the offsets of the local refs.
+        LocalReferenceCollection.append(this, other);
+        if (this.attribution) {
+            assert(other.attribution !== undefined, "attribution should be set on appendee");
+            this.attribution.append(other.attribution);
+        } else {
+            assert(other.attribution === undefined, "attribution should not be set on appendee");
+        }
+
+        this.cachedLength += other.cachedLength;
+    }
+
     protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
 }
 

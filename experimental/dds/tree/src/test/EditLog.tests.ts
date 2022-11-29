@@ -4,71 +4,13 @@
  */
 
 import { expect } from 'chai';
-import { IsoBuffer } from '@fluidframework/common-utils';
 import { EditLog, separateEditAndId } from '../EditLog';
 import { EditId } from '../Identifiers';
 import { assertNotUndefined } from '../Common';
-import { Edit, EditChunkContents, EditWithoutId, FluidEditHandle } from '../persisted-types';
+import { Edit } from '../persisted-types';
 import { newEdit } from '../EditUtilities';
 
 type DummyChange = never;
-
-/**
- * Creates an edit log with the specified number of chunks, stored as handles instead of edits.
- * @param numberOfChunks - The number of chunks to add to the edit log.
- * @param editsPerChunk - The number of edits per chunk that gets added to the edit log.
- * @param editsPerChunkOnEditLog - The number of edits per chunk that gets set for future edits to the edit log.
- * @returns The edit log created with handles.
- */
-function createEditLogWithHandles(numberOfChunks = 2, editsPerChunk = 5): EditLog<DummyChange> {
-	const editIds: EditId[] = [];
-	const editChunks: EditWithoutId<DummyChange>[][] = [];
-
-	let inProgessChunk: EditWithoutId<DummyChange>[] = [];
-	for (let i = 0; i < numberOfChunks * editsPerChunk; i++) {
-		const { id, editWithoutId } = separateEditAndId(newEdit([]));
-		editIds.push(id);
-
-		inProgessChunk.push(editWithoutId);
-
-		if (inProgessChunk.length === editsPerChunk) {
-			editChunks.push(inProgessChunk.slice());
-			inProgessChunk = [];
-		}
-	}
-
-	const handles: FluidEditHandle[] = editChunks.map((chunk) => {
-		return {
-			absolutePath: 'test blob',
-			get: async () => {
-				return IsoBuffer.from(JSON.stringify({ edits: chunk }));
-			},
-		};
-	});
-
-	let startRevision = 0;
-	const handlesWithKeys = handles.map((baseHandle) => {
-		const handle = {
-			startRevision,
-			chunk: {
-				get: async () =>
-					(
-						JSON.parse(IsoBuffer.from(await baseHandle.get()).toString()) as Omit<
-							EditChunkContents,
-							'edits'
-						> & { edits: EditWithoutId<DummyChange>[] }
-					).edits,
-				baseHandle,
-			},
-		};
-		startRevision = startRevision + 5;
-		return handle;
-	});
-
-	const editLog = new EditLog({ editChunks: handlesWithKeys, editIds });
-
-	return editLog;
-}
 
 describe('EditLog', () => {
 	const edit0 = newEdit([]);
@@ -301,49 +243,5 @@ describe('EditLog', () => {
 		});
 
 		expect(log0.equals(differentLog)).to.be.false;
-	});
-
-	it('creates a new edit chunk once the previous one has been filled', () => {
-		const log = new EditLog();
-
-		for (let i = 0; i < log.editsPerChunk; i++) {
-			const edit = newEdit([]);
-			log.addSequencedEdit(edit, { sequenceNumber: i + 1, referenceSequenceNumber: i });
-			expect(log.getEditLogSummary().editChunks.length).to.be.equal(1);
-		}
-
-		const edit = newEdit([]);
-		log.addSequencedEdit(edit, {
-			sequenceNumber: log.editsPerChunk,
-			referenceSequenceNumber: log.editsPerChunk - 1,
-		});
-		expect(log.getEditLogSummary().editChunks.length).to.be.equal(2);
-	});
-
-	it('can load edits from a handle', async () => {
-		const log = createEditLogWithHandles();
-
-		// Check that each edit can be retrieved correctly
-		for (let i = 0; i < 10; i++) {
-			expect((await log.getEditAtIndex(i)).id).to.equal(log.editIds[i]);
-		}
-	});
-
-	it('can add edits to logs with varying edit chunk sizes', async () => {
-		const numberOfChunks = 2;
-		const editsPerChunk = 5;
-		const log = createEditLogWithHandles(numberOfChunks, editsPerChunk);
-
-		// Load the edits for the last edit chunk
-		await log.getEditAtIndex(numberOfChunks * editsPerChunk - 1);
-
-		// Add a sequenced edit and check it's been added
-		const edit = newEdit([]);
-		log.addSequencedEdit(edit, {
-			sequenceNumber: log.editsPerChunk,
-			referenceSequenceNumber: log.editsPerChunk - 1,
-		});
-
-		expect(log.getIdAtIndex(numberOfChunks * editsPerChunk)).to.equal(edit.id);
 	});
 });

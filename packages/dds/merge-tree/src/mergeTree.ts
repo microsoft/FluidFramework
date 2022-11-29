@@ -11,6 +11,9 @@
 import { assert } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import {
+    AttributionCollection,
+} from "./attributionCollection";
+import {
     Comparer,
     Heap,
     List,
@@ -51,7 +54,7 @@ import {
 	SegmentActions,
 	SegmentGroup,
 	toRemovalInfo,
- } from "./mergeTreeNodes";
+} from "./mergeTreeNodes";
 import {
     IMergeTreeDeltaOpArgs,
     IMergeTreeSegmentDelta,
@@ -381,6 +384,51 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
     clientId: string;
 }
 
+export interface IMergeTreeOptions {
+    catchUpBlobName?: string;
+    /**
+     * Whether to enable the length calculations implemented in
+     * https://github.com/microsoft/FluidFramework/pull/11678
+     * 
+     * These calculations resolve bugginess that causes eventual consistency issues in certain conflicting
+     * removal cases, but regress some index-based undo-redo implementations. The suggested path for
+     * consumers is to switch to LocalReference-based undo-redo implementation (see 
+     * https://github.com/microsoft/FluidFramework/pull/11899) and enable this feature flag.
+     * 
+     * default: false
+     */
+    mergeTreeUseNewLengthCalculations?: boolean;
+    mergeTreeSnapshotChunkSize?: number;
+    /**
+     * Whether to use the SnapshotV1 format over SnapshotLegacy.
+     * 
+     * SnapshotV1 stores a view of the merge-tree at the current sequence number, preserving merge metadata
+     * (e.g. clientId, seq, etc.) only for segment changes within the collab window.
+     * 
+     * SnapshotLegacy stores a view of the merge-tree at the minimum sequence number along with the ops between
+     * the minimum sequence number and the current sequence number.
+     * 
+     * Both formats merge segments where possible (see {@link ISegment.canAppend})
+     * 
+     * default: false
+     * 
+     * @remarks
+     * Despite the "legacy"/"V1" naming, both formats are actively used at the time of writing. SharedString
+     * uses legacy and Matrix uses V1.
+     */
+    newMergeTreeSnapshotFormat?: boolean;
+    /**
+     * If enabled, segments will store attribution keys which can be used with the runtime to determine
+     * attribution information (i.e. who created the content and when it was created).
+     * 
+     * This flag only applied to new documents: if a snapshot is loaded, whether or not attribution keys
+     * are tracked is determined by the presence of existing attribution keys in the snapshot.
+     * 
+     * default: false
+     */
+    trackAttribution?: boolean;
+}
+
 /**
  * @deprecated For internal use only. public export will be removed.
  * @internal
@@ -434,8 +482,7 @@ export class MergeTree {
     public mergeTreeDeltaCallback?: MergeTreeDeltaCallback;
     public mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
 
-    // TODO: make and use interface describing options
-    public constructor(public options?: PropertySet) {
+    public constructor(public options?: IMergeTreeOptions) {
         this.root = this.makeBlock(0);
     }
 
@@ -640,6 +687,7 @@ export class MergeTree {
                         }
                         prevSegment = undefined;
                     } else {
+                        assert(segment.seq !== UnassignedSequenceNumber, "dangerous");
                         if (segment.seq! <= this.collabWindow.minSeq) {
                             const canAppend = prevSegment
                                 && prevSegment.canAppend(segment)
@@ -1264,6 +1312,12 @@ export class MergeTree {
             const deltaSegments: IMergeTreeSegmentDelta[] = [];
             pendingSegmentGroup.segments.map((pendingSegment) => {
                 const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs);
+                if (opArgs.op.type === MergeTreeDeltaType.INSERT && this.options?.trackAttribution) {
+                    pendingSegment.attribution = new AttributionCollection(
+                        pendingSegment.seq,
+                        pendingSegment.cachedLength,
+                    );
+                }
                 overwrite = overlappingRemove || overwrite;
 
                 if (!overlappingRemove && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
@@ -1616,6 +1670,10 @@ export class MergeTree {
                 newSegment.seq = seq;
                 newSegment.localSeq = localSeq;
                 newSegment.clientId = clientId;
+                if (this.options?.trackAttribution) {
+                    newSegment.attribution ??= new AttributionCollection(newSegment.seq, newSegment.cachedLength);
+                }
+
                 if (Marker.is(newSegment)) {
                     const markerId = newSegment.getId();
                     if (markerId) {

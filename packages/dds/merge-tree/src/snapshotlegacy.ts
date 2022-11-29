@@ -13,13 +13,12 @@ import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { AttributionCollection } from "./attributionCollection";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
-import {
-    ISegment,
-} from "./mergeTreeNodes";
-import { IJSONSegment } from "./ops";
+import { ISegment } from "./mergeTreeNodes";
 import { matchProperties } from "./properties";
 import {
+    JsonSegmentSpecs,
     MergeTreeChunkLegacy,
     serializeAsMinSupportedVersion,
 } from "./snapshotChunks";
@@ -43,6 +42,7 @@ export class SnapshotLegacy {
     public static readonly header = "header";
     public static readonly body = "body";
     private static readonly catchupOps = "catchupOps";
+    public static readonly attribution = "attribution";
 
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
     // Please note that this number has no direct relationship to anything other than size of raw text (characters).
@@ -54,8 +54,7 @@ export class SnapshotLegacy {
 
     private header: SnapshotHeader | undefined;
     private seq: number | undefined;
-    private segments: IJSONSegment[] | undefined;
-    private segmentLengths: number[] | undefined;
+    private segments: ISegment[] | undefined;
     private readonly logger: ITelemetryLogger;
     private readonly chunkSize: number;
 
@@ -66,19 +65,24 @@ export class SnapshotLegacy {
     }
 
     private getSeqLengthSegs(
-        allSegments: IJSONSegment[],
-        allLengths: number[],
+        allSegments: ISegment[],
         approxSequenceLength: number,
         startIndex = 0): MergeTreeChunkLegacy {
-        const segs: IJSONSegment[] = [];
+        const segs: ISegment[] = [];
         let sequenceLength = 0;
         let segCount = 0;
+        let hasAttribution = false;
         while ((sequenceLength < approxSequenceLength) && ((startIndex + segCount) < allSegments.length)) {
             const pseg = allSegments[startIndex + segCount];
             segs.push(pseg);
-            sequenceLength += allLengths[startIndex + segCount];
+            if (pseg.attribution) {
+                // TODO: Validate this is all-or-nothing?
+                hasAttribution = true;
+            }
+            sequenceLength += pseg.cachedLength;
             segCount++;
         }
+
         return {
             version: undefined,
             chunkStartSegmentIndex: startIndex,
@@ -87,7 +91,8 @@ export class SnapshotLegacy {
             totalLengthChars: this.header!.segmentsTotalLength,
             totalSegmentCount: allSegments.length,
             chunkSequenceNumber: this.header!.seq,
-            segmentTexts: segs,
+            segmentTexts: segs.map((seg) => seg.toJSONObject() as JsonSegmentSpecs),
+            attribution: hasAttribution ? AttributionCollection.serializeAttributionCollections(segs) : undefined
         };
     }
 
@@ -100,7 +105,7 @@ export class SnapshotLegacy {
         serializer: IFluidSerializer,
         bind: IFluidHandle,
     ): ISummaryTreeWithStats {
-        const chunk1 = this.getSeqLengthSegs(this.segments!, this.segmentLengths!, this.chunkSize);
+        const chunk1 = this.getSeqLengthSegs(this.segments!, this.chunkSize);
         let length: number = chunk1.chunkLengthChars;
         let segments: number = chunk1.chunkSegmentCount;
         const builder = new SummaryTreeBuilder();
@@ -113,7 +118,7 @@ export class SnapshotLegacy {
             bind));
 
         if (chunk1.chunkSegmentCount < chunk1.totalSegmentCount!) {
-            const chunk2 = this.getSeqLengthSegs(this.segments!, this.segmentLengths!,
+            const chunk2 = this.getSeqLengthSegs(this.segments!,
                 this.header!.segmentsTotalLength, chunk1.chunkSegmentCount);
             length += chunk2.chunkLengthChars;
             segments += chunk2.chunkSegmentCount;
@@ -181,12 +186,10 @@ export class SnapshotLegacy {
         }
 
         this.segments = [];
-        this.segmentLengths = [];
         let totalLength: number = 0;
         segs.map((segment) => {
             totalLength += segment.cachedLength;
-            this.segments!.push(segment.toJSONObject());
-            this.segmentLengths!.push(segment.cachedLength);
+            this.segments!.push(segment);
         });
 
         // We observed this.header.segmentsTotalLength < totalLength to happen in some cases
