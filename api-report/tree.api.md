@@ -185,7 +185,7 @@ export interface Dependent extends NamedComputation {
 }
 
 // @public (undocumented)
-interface Detach extends HasOpId {
+interface Detach extends HasOpId, HasRevisionTag {
     // (undocumented)
     count: NodeCount;
     // (undocumented)
@@ -444,6 +444,11 @@ interface HasReattachFields extends HasOpId, HasPlaceFields {
 }
 
 // @public (undocumented)
+interface HasRevisionTag {
+    revision?: RevisionTag;
+}
+
+// @public (undocumented)
 interface HasTiebreakPolicy extends HasPlaceFields {
     tiebreak?: Tiebreak;
 }
@@ -497,7 +502,7 @@ interface Insert<TTree = ProtoNode> {
 }
 
 // @public (undocumented)
-interface Insert_2 extends HasOpId, HasTiebreakPolicy {
+interface Insert_2 extends HasOpId, HasTiebreakPolicy, HasRevisionTag {
     // (undocumented)
     content: ProtoNode_2[];
     // (undocumented)
@@ -719,7 +724,7 @@ interface Modify<TTree = ProtoNode> {
 }
 
 // @public (undocumented)
-interface Modify_2<TNodeChange = NodeChangeType> extends HasChanges<TNodeChange> {
+interface Modify_2<TNodeChange = NodeChangeType> extends HasChanges<TNodeChange>, HasRevisionTag {
     // (undocumented)
     tomb?: RevisionTag;
     // (undocumented)
@@ -746,7 +751,7 @@ interface ModifyAndMoveOut<TTree = ProtoNode> {
 }
 
 // @public (undocumented)
-interface ModifyDetach<TNodeChange = NodeChangeType> extends HasOpId, HasChanges<TNodeChange> {
+interface ModifyDetach<TNodeChange = NodeChangeType> extends HasOpId, HasRevisionTag, HasChanges<TNodeChange> {
     // (undocumented)
     tomb?: RevisionTag;
     // (undocumented)
@@ -754,7 +759,7 @@ interface ModifyDetach<TNodeChange = NodeChangeType> extends HasOpId, HasChanges
 }
 
 // @public (undocumented)
-interface ModifyInsert<TNodeChange = NodeChangeType> extends HasOpId, HasTiebreakPolicy, HasChanges<TNodeChange> {
+interface ModifyInsert<TNodeChange = NodeChangeType> extends HasOpId, HasTiebreakPolicy, HasRevisionTag, HasChanges<TNodeChange> {
     // (undocumented)
     content: ProtoNode_2;
     // (undocumented)
@@ -762,13 +767,13 @@ interface ModifyInsert<TNodeChange = NodeChangeType> extends HasOpId, HasTiebrea
 }
 
 // @public (undocumented)
-interface ModifyMoveIn<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFields, HasChanges<TNodeChange> {
+interface ModifyMoveIn<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFields, HasRevisionTag, HasChanges<TNodeChange> {
     // (undocumented)
     type: "MMoveIn";
 }
 
 // @public (undocumented)
-interface ModifyReattach<TNodeChange = NodeChangeType> extends HasReattachFields, HasChanges<TNodeChange> {
+interface ModifyReattach<TNodeChange = NodeChangeType> extends HasReattachFields, HasRevisionTag, HasChanges<TNodeChange> {
     // (undocumented)
     type: "MRevive" | "MReturn";
 }
@@ -818,7 +823,7 @@ interface MoveIn {
 }
 
 // @public (undocumented)
-interface MoveIn_2 extends HasOpId, HasPlaceFields {
+interface MoveIn_2 extends HasOpId, HasPlaceFields, HasRevisionTag {
     count: NodeCount;
     // (undocumented)
     type: "MoveIn";
@@ -1004,7 +1009,7 @@ export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode> {
 }
 
 // @public (undocumented)
-interface Reattach extends HasReattachFields {
+interface Reattach extends HasReattachFields, HasRevisionTag {
     // (undocumented)
     count: NodeCount;
     // (undocumented)
@@ -1071,6 +1076,7 @@ declare namespace SequenceField {
         HasOpId,
         HasLength,
         HasPlaceFields,
+        HasRevisionTag,
         HasTiebreakPolicy,
         Insert_2 as Insert,
         Mark_2 as Mark,
