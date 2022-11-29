@@ -9,7 +9,7 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 /**
  * string-parsed representation of task data, returned from {@link parseStringData}.
  */
-export interface ParsedTaskData {
+export interface IParsedTaskData {
     id: string;
     name: string;
     priority: number;
@@ -22,7 +22,7 @@ export interface ParsedTaskData {
  * @returns An array of objects, each representing a single task
  * TODO: See notes below about moving away from plain string to something more realistic.
  */
-export function parseStringData(stringData: string): ParsedTaskData[] {
+export function parseStringData(stringData: string): IParsedTaskData[] {
     const taskStrings = stringData.split("\n");
     return taskStrings.map((taskString) => {
         const [taskIdString, taskNameString, taskPriorityString] = taskString.split(":");
