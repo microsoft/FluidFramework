@@ -15,6 +15,7 @@ import {
     isRetryEnabled,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+import { convertNumberArrayToRanges } from "@fluidframework/server-services-utils";
 
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();
@@ -24,7 +25,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
     constructor(
         private readonly opCollection: ICollection<any>,
-        protected context: IContext) {
+        protected context: IContext,
+        private readonly providerConfig: Record<string, any> | undefined) {
         this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
     }
 
@@ -108,15 +110,18 @@ export class ScriptoriumLambda implements IPartitionLambda {
         const documentId = messages[0]?.documentId ?? "";
         const tenantId = messages[0]?.tenantId ?? "";
 
+        const sequenceNumbers = messages.map((message) => message.operation.sequenceNumber);
+        const sequenceNumberRanges = convertNumberArrayToRanges(sequenceNumbers);
+
         return runWithRetry({
             api: async () => this.opCollection.insertMany(dbOps, false),
             callName: "insertOpScriptorium",
             maxRetries: 3,
             retryAfterMs: 1000,
-            telemetryProperties: getLumberBaseProperties(documentId, tenantId),
+            telemetryProperties: { ...getLumberBaseProperties(documentId, tenantId), ...{ sequenceNumberRanges }},
             shouldIgnoreError: (error) => error.code === 11000,
             shouldRetry: (error) => !this.clientFacadeRetryEnabled,
-            telemetryEnabled: true,
+            telemetryEnabled: this.providerConfig?.enableRunWithRetryMetricTelemetry,
         });
     }
 }

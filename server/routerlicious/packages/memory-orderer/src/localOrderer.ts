@@ -241,7 +241,7 @@ export class LocalOrderer implements IOrderer {
             this.scriptoriumContext,
             async (lambdaSetup, context) => {
                 const deltasCollection = await lambdaSetup.deltaCollectionP();
-                return new ScriptoriumLambda(deltasCollection, context);
+                return new ScriptoriumLambda(deltasCollection, context, undefined);
             });
 
         this.broadcasterLambda = new LocalLambdaController(
