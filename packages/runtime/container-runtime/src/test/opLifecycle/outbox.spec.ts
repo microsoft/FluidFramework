@@ -22,6 +22,7 @@ describe("Outbox", () => {
         canSendOps: boolean;
         batchesSubmitted: IBatchMessage[][];
         batchesCompressed: IBatch[];
+        batchesSplit: IBatch[];
         individualOpsSubmitted: any[];
         pendingOpContents: any[];
         opsSubmitted: number;
@@ -32,6 +33,7 @@ describe("Outbox", () => {
         canSendOps: true,
         batchesSubmitted: [],
         batchesCompressed: [],
+        batchesSplit: [],
         individualOpsSubmitted: [],
         pendingOpContents: [],
         opsSubmitted: 0,
@@ -73,6 +75,13 @@ describe("Outbox", () => {
     });
 
     const getMockCompressor = (): IBatchProcessor => ({
+        processOutgoing: (batch: IBatch): IBatch => {
+            state.batchesCompressed.push(batch);
+            return batch;
+        },
+    });
+
+    const getMockSplitter = (): IBatchProcessor => ({
         processOutgoing: (batch: IBatch): IBatch => {
             state.batchesCompressed.push(batch);
             return batch;
@@ -132,6 +141,7 @@ describe("Outbox", () => {
         },
         {
             compressor: getMockCompressor(),
+            splitter: getMockSplitter(),
         },
     );
 

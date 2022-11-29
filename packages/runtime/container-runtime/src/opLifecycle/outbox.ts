@@ -110,7 +110,7 @@ export class Outbox {
 
         let processedBatch = this.batchProcessors.compressor.processOutgoing(batch);
         if (processedBatch.contentSizeInBytes >= this.options.maxBatchSizeInBytes) {
-            processedBatch = this.batchProcessors.splitter.processOutgoing(batch);
+            processedBatch = this.batchProcessors.splitter.processOutgoing(processedBatch);
         }
 
         return processedBatch;

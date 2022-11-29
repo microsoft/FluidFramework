@@ -2669,12 +2669,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // and trigger resubmission on it.
                 this.dataStores.resubmitDataStoreOp(content, localOpMetadata);
                 break;
+            case ContainerMessageType.ChunkedOp:
             case ContainerMessageType.Attach:
             case ContainerMessageType.Alias:
                 this.submit(type, content, localOpMetadata);
                 break;
-            case ContainerMessageType.ChunkedOp:
-                throw new Error(`chunkedOp not expected here`);
             case ContainerMessageType.BlobAttach:
                 this.blobManager.reSubmit(opMetadata);
                 break;

@@ -99,12 +99,14 @@ describeInstallVersions(
             // Ops larger than 16k will end up chunked in older versions of fluid
             const chunkableMessageSizeInBytes = 300 * 1024;
             const chunkableValue = generateStringOfSize(chunkableMessageSizeInBytes);
+            oldMap.set("key0", regularValue);
             oldMap.set("key1", chunkableValue);
             oldMap.set("key2", chunkableValue);
             oldMap.set("key3", regularValue);
             oldMap.set("key4", regularValue);
 
             await provider.ensureSynchronized();
+            assert.strictEqual(newMap.get("key0"), regularValue, "Wrong value found in the new map");
             assert.strictEqual(newMap.get("key1"), chunkableValue, "Wrong value found in the new map");
             assert.strictEqual(newMap.get("key2"), chunkableValue, "Wrong value found in the new map");
             assert.strictEqual(newMap.get("key3"), regularValue, "Wrong value found in the new map");

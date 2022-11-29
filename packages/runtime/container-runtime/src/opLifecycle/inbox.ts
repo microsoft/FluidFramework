@@ -41,14 +41,17 @@ export class Inbox {
         const decompressionResult = this.opDecompressor.processRemoteMessage(message);
         const unpackResult = this.opUnpacker.processRemoteMessage(decompressionResult.message);
 
-        const joinResult = this.opSplitter.processRemoteMessage(unpackResult.message);
-        if (joinResult.state === "NotReady") {
-            // If the op splitter detected a split message but didn't turn out the original message,
-            // there is no point in processing this further
-            return joinResult.message;
+        const unchunkResult = this.opSplitter.processRemoteMessage(unpackResult.message);
+        if (unchunkResult.state !== "Processed") {
+            return unchunkResult.message;
         }
 
-        return joinResult.message;
+        const maybeDecompressedResult = this.opDecompressor.processRemoteMessage(unchunkResult.message);
+        if (maybeDecompressedResult.state === "Skipped") {
+            return maybeDecompressedResult.message;
+        }
+
+        return this.opUnpacker.processRemoteMessage(maybeDecompressedResult.message).message;
     }
 
     private prepare(remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage {

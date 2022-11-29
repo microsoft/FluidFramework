@@ -10,7 +10,7 @@ import { ContainerMessageType, ContainerRuntimeMessage } from "../containerRunti
 import { BatchMessage, IBatch, IBatchProcessor, IChunkedOp } from "./definitions";
 import { IProcessingResult, IRemoteMessageProcessor } from "./inbox";
 
-const DefaultChunkSize = 700 * 1024; // 700kb
+const DefaultChunkSize = 500 * 1024; // 500kb
 
 /**
  * Responsible for creating and reconstructing chunked messages.
@@ -77,45 +77,59 @@ export class OpSplitter implements IRemoteMessageProcessor, IBatchProcessor {
         map.push(chunkedContent.contents);
     }
 
-    private splitOp(op: BatchMessage): number {
-        const contentToChunk = op.contents ?? "";
-        const contentLength = contentToChunk.length;
-        const chunkN = Math.floor((Math.max(contentLength, 1) - 1) / this.chunkSizeInBytes) + 1;
+    private splitOp(op: BatchMessage): IChunkedOp[] {
+        const chunks: IChunkedOp[] = [];
+        assert(op.contents !== undefined && op.contents !== null, "We should have something to chunk");
+
+        const contentLength = op.contents.length;
+        const chunkN = Math.floor((contentLength - 1) / this.chunkSizeInBytes) + 1;
         let offset = 0;
-        let clientSequenceNumber: number = 0;
         for (let i = 1; i <= chunkN; i++) {
-            const chunkedOp: IChunkedOp = {
+            chunks.push({
                 chunkId: i,
-                contents: contentToChunk.substr(offset, this.chunkSizeInBytes),
+                contents: op.contents.substr(offset, this.chunkSizeInBytes),
                 originalType: op.deserializedContent.type,
                 totalChunks: chunkN,
                 metadata: op.metadata,
                 compression: op.compression,
-            };
+            });
 
             offset += this.chunkSizeInBytes;
-
-            const payload: ContainerRuntimeMessage = { type: ContainerMessageType.ChunkedOp, contents: chunkedOp };
-            const messageToSend: BatchMessage = {
-                contents: JSON.stringify(payload),
-                deserializedContent: payload,
-                metadata: undefined,
-                localOpMetadata: undefined,
-                referenceSequenceNumber: op.referenceSequenceNumber,
-            };
-
-            clientSequenceNumber = this.submitBatchFn([messageToSend]);
         }
 
-        return clientSequenceNumber;
+        return chunks;
     }
 
-    public submitChunkedBatch(batch: BatchMessage[]): number {
-        // We're only interested in the last clientSequenceNumber
-        return batch.reduce((_sequenceNumber: number, op: BatchMessage) => this.splitOp(op), -1);
+    private chunkToBatchMessage(chunk: IChunkedOp, referenceSequenceNumber: number): BatchMessage {
+        const payload: ContainerRuntimeMessage = { type: ContainerMessageType.ChunkedOp, contents: chunk };
+        return {
+            contents: JSON.stringify(payload),
+            deserializedContent: payload,
+            metadata: undefined,
+            localOpMetadata: undefined,
+            referenceSequenceNumber,
+        };
     }
 
-    processOutgoing(batch: IBatch): IBatch {
+    public processOutgoing(batch: IBatch): IBatch {
+        const car = batch.content[0]; // we expect this to be the large compressed op, which needs to be split
+        const cdr = batch.content.slice(1); // we expect these to be empty ops, created to reserve sequence numbers
 
+        assert((car.contents?.length ?? 0) >= this.chunkSizeInBytes, "Batch needs to be chunkable");
+        const chunks = this.splitOp(car);
+
+        // Send the first N-1 chunks immediately
+        for (const chunk of chunks.slice(0, -1)) {
+            this.submitBatchFn([this.chunkToBatchMessage(chunk, car.referenceSequenceNumber)]);
+        }
+
+        const lastChunk = this.chunkToBatchMessage(chunks[chunks.length - 1], car.referenceSequenceNumber);
+        // The last chunk will be part of the new batch
+        const newBatch: IBatch = {
+            content: [lastChunk, ...cdr],
+            contentSizeInBytes: lastChunk.contents?.length ?? 0,
+        };
+
+        return newBatch;
     }
 }

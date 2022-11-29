@@ -194,8 +194,9 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
             const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
             const messageCount = 3;
+            // 3 x 15 MB
             setMapKeys(dataObject1map, messageCount, largeString);
-            await provider.ensureSynchronized();
+            await provider.ensureSynchronized(50000);
 
             assertMapValues(dataObject2map, messageCount, largeString);
         }).timeout(500000);
