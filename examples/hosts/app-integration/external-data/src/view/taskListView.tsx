@@ -34,8 +34,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
     }, [task]);
 
     const inputHandler = (e: React.FormEvent): void => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-        const newValue = Number.parseInt((e.target as any).value as string, 10);
+        const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
         task.priority = newValue;
     };
 
