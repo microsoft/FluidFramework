@@ -107,22 +107,33 @@ describe("SequenceField - Rebaser Axioms", () => {
 
     describe("A ○ A⁻¹ === ε", () => {
         for (const [name, mark] of testMarks) {
-            if (name === "Delete") {
-                it.skip(`${name} ○ ${name}⁻¹ === ε`, () => {
-                    /**
-                     * These cases are currently disabled because the inverse of Delete
-                     * does not capture which node it is reviving.
-                     */
-                });
-            } else {
-                it(`${name} ○ ${name}⁻¹ === ε`, () => {
-                    const change = [mark];
-                    const inv = SF.invert(makeAnonChange(change), TestChange.invert);
-                    const actual = SF.compose([change, inv], TestChange.compose);
-                    const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta, fakeRepair);
-                    assert.deepEqual(delta, []);
-                });
-            }
+            it(`${name} ○ ${name}⁻¹ === ε`, () => {
+                const change = [mark];
+                const taggedChange = tagChange(change, brand(1));
+                const inv = SF.invert(taggedChange, TestChange.invert);
+                const actual = SF.compose(
+                    [taggedChange, tagInverse(inv, taggedChange.revision)],
+                    TestChange.compose,
+                );
+                const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta, fakeRepair);
+                assert.deepEqual(delta, []);
+            });
+        }
+    });
+
+    describe("A⁻¹ ○ A === ε", () => {
+        for (const [name, mark] of testMarks) {
+            it(`${name}⁻¹ ○ ${name} === ε`, () => {
+                const change = [mark];
+                const taggedChange = tagChange(change, brand(1));
+                const inv = SF.invert(taggedChange, TestChange.invert);
+                const actual = SF.compose(
+                    [tagInverse(inv, taggedChange.revision), taggedChange],
+                    TestChange.compose,
+                );
+                const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta, fakeRepair);
+                assert.deepEqual(delta, []);
+            });
         }
     });
 });
