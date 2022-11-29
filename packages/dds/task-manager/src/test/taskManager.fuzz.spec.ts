@@ -221,7 +221,7 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
         assert(taskManager);
         if (loggingInfo.taskManagerNames.includes(taskManager.id)) {
             console.log(`TaskManager ${taskManager.id} (Connected: ${taskManager.connected}):`);
-            console.log(taskManager._getTaskQueues().get(loggingInfo.taskId));
+            console.log((taskManager as any).taskQueues.get(loggingInfo.taskId));
             console.log("\n");
         }
     }
@@ -251,7 +251,7 @@ function assertConsistent(clients: Client[]) {
     }
     const first = connectedClients[0].taskManager;
     for (const { taskManager: other } of connectedClients.slice(1)) {
-        assertEqualQueues(first._getTaskQueues(), other._getTaskQueues());
+        assertEqualQueues((first as any).taskQueues, (other as any).taskQueues);
     }
 }
 

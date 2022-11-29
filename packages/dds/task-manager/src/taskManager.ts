@@ -672,16 +672,8 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * Override resubmit core to avoid resubmission on reconnect.  On disconnect we accept our removal from the
      * queues, and leave it up to the user to decide whether they want to attempt to re-enter a queue on reconnect.
      * @internal
-     * @param content - The content of the original message.
-     * @param localOpMetadata - The local metadata associated with the original message.
      */
-    protected reSubmitCore(content: any, localOpMetadata: unknown) {
-        if (content.type === "volunteer") {
-            // Avoid resubmission on reconnect. Allow all other ops to be resubmitted.
-            return;
-        }
-        this.submitLocalMessage(content, localOpMetadata);
-    }
+    protected reSubmitCore() { }
 
     /**
      * Process a task manager operation
