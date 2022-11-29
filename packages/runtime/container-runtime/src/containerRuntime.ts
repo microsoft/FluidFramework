@@ -29,6 +29,7 @@ import {
 } from "@fluidframework/container-runtime-definitions";
 import {
     assert,
+    LazyPromise,
     Trace,
     TypedEventEmitter,
     unreachableCase,
@@ -106,6 +107,7 @@ import {
 } from "@fluidframework/runtime-utils";
 import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
+import { FluidObjectHandle } from "@fluidframework/datastore";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
@@ -655,7 +657,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         runtimeOptions: IContainerRuntimeOptions = {},
         containerScope: FluidObject = context.scope,
         existing?: boolean,
-        containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime
+        containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime,
+        initializeEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>,
     ): Promise<ContainerRuntime> {
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
@@ -769,6 +772,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             blobManagerSnapshot,
             storage,
             requestHandler,
+            undefined,
+            initializeEntryPoint,
         );
 
         if (pendingRuntimeState) {
@@ -1017,6 +1022,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // the runtime configuration overrides
             ...runtimeOptions.summaryOptions?.summaryConfigOverrides,
         },
+        initializeEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>,
     ) {
         super();
 
@@ -1345,6 +1351,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
         BindBatchTracker(this, this.logger);
+
+        if (initializeEntryPoint) {
+            const promise = new LazyPromise(async () => initializeEntryPoint(this));
+            this.entryPoint = new FluidObjectHandle<FluidObject>(promise, "", this.handleContext);
+        }
     }
 
     /**
