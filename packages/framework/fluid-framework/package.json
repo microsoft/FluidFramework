@@ -30,8 +30,8 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
-    "typetests:gen": "flub generate typetests --generate --dir .",
-    "typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+    "typetests:gen": "flub generate typetests --generate --dir . -s previousPatch",
+    "typetests:prepare": "flub generate typetests --prepare --dir . --pin -s previousPatch"
   },
   "dependencies": {
     "@fluidframework/container-definitions": ">=2.0.0-internal.2.1.2 <2.0.0-internal.3.0.0",
@@ -42,10 +42,10 @@
     "@fluidframework/sequence": ">=2.0.0-internal.2.1.2 <2.0.0-internal.3.0.0"
   },
   "devDependencies": {
-    "@fluid-tools/build-cli": "^0.5.0",
+    "@fluid-tools/build-cli": "^0.6.0",
     "@fluidframework/build-common": "^1.1.0",
-    "@fluidframework/build-tools": "^0.5.0",
-    "@fluidframework/eslint-config-fluid": "^1.1.0",
+    "@fluidframework/build-tools": "^0.6.0",
+    "@fluidframework/eslint-config-fluid": "^1.2.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/node": "^14.18.0",

@@ -30,8 +30,8 @@
     "test:mocha": "mocha --unhandled-rejections=strict  --recursive dist/test/*.spec.js --exit --project src/test/tsconfig.json -r node_modules/@fluidframework/mocha-test-setup",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
-    "typetests:gen": "flub generate typetests --generate --dir .",
-    "typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+    "typetests:gen": "flub generate typetests --generate --dir . -s previousPatch",
+    "typetests:prepare": "flub generate typetests --prepare --dir . --pin -s previousPatch"
   },
   "nyc": {
     "all": true,
@@ -83,11 +83,11 @@
     "semver": "^7.3.4"
   },
   "devDependencies": {
-    "@fluid-tools/build-cli": "^0.5.0",
+    "@fluid-tools/build-cli": "^0.6.0",
     "@fluidframework/build-common": "^1.1.0",
-    "@fluidframework/build-tools": "^0.6.0-109663",
+    "@fluidframework/build-tools": "^0.6.0",
     "@fluidframework/eslint-config-fluid": "^1.2.0",
-    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.1.2 <2.0.0-internal.3.0.0",
     "@fluidframework/test-version-utils-previous": "npm:@fluidframework/test-version-utils@2.0.0-internal.2.1.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
