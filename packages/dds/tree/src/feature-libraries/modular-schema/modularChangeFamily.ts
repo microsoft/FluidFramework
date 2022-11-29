@@ -17,8 +17,12 @@ import {
     UpPath,
     Value,
     TaggedChange,
+    ReadonlyRepairDataStore,
+    RevisionTag,
+    tagChange,
 } from "../../core";
-import { brand, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
+import { brand, clone, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
+import { dummyRepairDataStore } from "../fakeRepairDataStore";
 import {
     FieldChangeHandler,
     FieldChangeMap,
@@ -41,7 +45,7 @@ export class ModularChangeFamily
     implements ChangeFamily<ModularEditBuilder, FieldChangeMap>, ChangeRebaser<FieldChangeMap>
 {
     readonly encoder: ChangeEncoder<FieldChangeMap>;
-    private readonly childComposer = (childChanges: NodeChangeset[]) =>
+    private readonly childComposer = (childChanges: TaggedChange<NodeChangeset>[]) =>
         this.composeNodeChanges(childChanges);
 
     constructor(readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
@@ -89,44 +93,63 @@ export class ModularChangeFamily
         return { fieldKind, changesets: normalizedChanges };
     }
 
-    compose(changes: FieldChangeMap[]): FieldChangeMap {
-        if (changes.length === 1) {
-            return changes[0];
-        }
-
+    compose(changes: TaggedChange<FieldChangeMap>[]): FieldChangeMap {
         const fieldChanges = new Map<FieldKey, FieldChange[]>();
         for (const change of changes) {
-            for (const [key, fieldChange] of change) {
-                getOrAddEmptyToMap(fieldChanges, key).push(fieldChange);
+            for (const [key, fieldChange] of change.change) {
+                const fieldChangeToCompose =
+                    fieldChange.revision !== undefined || change.revision === undefined
+                        ? fieldChange
+                        : {
+                              ...fieldChange,
+                              revision: change.revision,
+                          };
+
+                getOrAddEmptyToMap(fieldChanges, key).push(fieldChangeToCompose);
             }
         }
 
         const composedFields: FieldChangeMap = new Map();
         for (const [field, changesForField] of fieldChanges) {
-            const { fieldKind, changesets } = this.normalizeFieldChanges(changesForField);
-            const composedField = fieldKind.changeHandler.rebaser.compose(
-                changesets,
-                this.childComposer,
-            );
+            let composedField: FieldChange;
+            if (changesForField.length === 1) {
+                composedField = changesForField[0];
+            } else {
+                const { fieldKind, changesets } = this.normalizeFieldChanges(changesForField);
+                assert(
+                    changesets.length === changesForField.length,
+                    "Number of changes should be constant when normalizing",
+                );
+                const taggedChangesets = changesets.map((change, i) =>
+                    tagChange(change, changesForField[i].revision),
+                );
+                const composedChange = fieldKind.changeHandler.rebaser.compose(
+                    taggedChangesets,
+                    this.childComposer,
+                );
+
+                composedField = {
+                    fieldKind: fieldKind.identifier,
+                    change: brand(composedChange),
+                };
+            }
 
             // TODO: Could optimize by checking that composedField is non-empty
-            composedFields.set(field, {
-                fieldKind: fieldKind.identifier,
-                change: brand(composedField),
-            });
+            composedFields.set(field, composedField);
         }
         return composedFields;
     }
 
-    private composeNodeChanges(changes: NodeChangeset[]): NodeChangeset {
-        const fieldChanges = [];
+    private composeNodeChanges(changes: TaggedChange<NodeChangeset>[]): NodeChangeset {
+        const fieldChanges: TaggedChange<FieldChangeMap>[] = [];
         let valueChange: ValueChange | undefined;
         for (const change of changes) {
-            if (change.valueChange !== undefined) {
-                valueChange = change.valueChange;
+            if (change.change.valueChange !== undefined) {
+                valueChange = clone(change.change.valueChange);
+                valueChange.revision ??= change.revision;
             }
-            if (change.fieldChanges !== undefined) {
-                fieldChanges.push(change.fieldChanges);
+            if (change.change.fieldChanges !== undefined) {
+                fieldChanges.push(tagChange(change.change.fieldChanges, change.revision));
             }
         }
 
@@ -147,15 +170,17 @@ export class ModularChangeFamily
         const invertedFields: FieldChangeMap = new Map();
 
         for (const [field, fieldChange] of changes.change) {
+            const { revision } = fieldChange.revision !== undefined ? fieldChange : changes;
+
             const invertedChange = getChangeHandler(
                 this.fieldKinds,
                 fieldChange.fieldKind,
-            ).rebaser.invert({ ...changes, change: fieldChange.change }, (childChanges) =>
-                this.invertNodeChange({ ...changes, change: childChanges }),
+            ).rebaser.invert({ revision, change: fieldChange.change }, (childChanges) =>
+                this.invertNodeChange({ revision, change: childChanges }),
             );
 
             invertedFields.set(field, {
-                fieldKind: fieldChange.fieldKind,
+                ...fieldChange,
                 change: brand(invertedChange),
             });
         }
@@ -164,12 +189,22 @@ export class ModularChangeFamily
     }
 
     private invertNodeChange(change: TaggedChange<NodeChangeset>): NodeChangeset {
-        // TODO: Correctly invert `change.valueChange`
-        if (change.change.fieldChanges === undefined) {
-            return {};
+        const inverse: NodeChangeset = {};
+
+        if (change.change.valueChange !== undefined) {
+            assert(
+                !("revert" in change.change.valueChange),
+                "Inverting inverse changes is currently not supported",
+            );
+            const revision = change.change.valueChange.revision ?? change.revision;
+            inverse.valueChange = { revert: revision };
         }
 
-        return { fieldChanges: this.invert({ ...change, change: change.change.fieldChanges }) };
+        if (change.change.fieldChanges !== undefined) {
+            inverse.fieldChanges = this.invert({ ...change, change: change.change.fieldChanges });
+        }
+
+        return inverse;
     }
 
     rebase(change: FieldChangeMap, over: TaggedChange<FieldChangeMap>): FieldChangeMap {
@@ -184,11 +219,13 @@ export class ModularChangeFamily
                     fieldKind,
                     changesets: [fieldChangeset, baseChangeset],
                 } = this.normalizeFieldChanges([fieldChange, baseChanges]);
+
+                const { revision } = fieldChange.revision !== undefined ? fieldChange : over;
                 const rebasedField = fieldKind.changeHandler.rebaser.rebase(
                     fieldChangeset,
-                    { ...over, change: baseChangeset },
+                    { revision, change: baseChangeset },
                     (child, baseChild) =>
-                        this.rebaseNodeChange(child, { ...over, change: baseChild }),
+                        this.rebaseNodeChange(child, { revision, change: baseChild }),
                 );
 
                 // TODO: Could optimize by skipping this assignment if `rebasedField` is empty
@@ -223,39 +260,77 @@ export class ModularChangeFamily
         anchors.applyDelta(this.intoDelta(over));
     }
 
-    intoDelta(change: FieldChangeMap): Delta.Root {
+    intoDelta(change: FieldChangeMap, repairStore?: ReadonlyRepairDataStore): Delta.Root {
+        return this.intoDeltaImpl(change, repairStore ?? dummyRepairDataStore, undefined);
+    }
+
+    /**
+     * @param change - The change to convert into a delta.
+     * @param repairStore - The store to query for repair data.
+     * @param path - The path of the node being altered by the change as defined by the input context.
+     * Undefined for the root and for nodes that do not exist in the input context.
+     */
+    private intoDeltaImpl(
+        change: FieldChangeMap,
+        repairStore: ReadonlyRepairDataStore,
+        path: UpPath | undefined,
+    ): Delta.Root {
         const delta: Delta.Root = new Map();
         for (const [field, fieldChange] of change) {
             const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
                 fieldChange.change,
-                (childChange) => this.deltaFromNodeChange(childChange),
+                (childChange, index): Delta.Modify =>
+                    this.deltaFromNodeChange(
+                        childChange,
+                        repairStore,
+                        index === undefined
+                            ? undefined
+                            : {
+                                  parent: path,
+                                  parentField: field,
+                                  parentIndex: index,
+                              },
+                    ),
+                (revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] =>
+                    repairStore.getNodes(revision, path, field, index, count),
             );
             delta.set(field, deltaField);
         }
         return delta;
     }
 
-    private deltaFromNodeChange(change: NodeChangeset): Delta.Modify {
+    private deltaFromNodeChange(
+        change: NodeChangeset,
+        repairStore: ReadonlyRepairDataStore,
+        path?: UpPath,
+    ): Delta.Modify {
         const modify: Delta.Modify = {
             type: Delta.MarkType.Modify,
         };
 
-        if (change.valueChange !== undefined) {
-            modify.setValue = change.valueChange.value;
+        const valueChange = change.valueChange;
+        if (valueChange !== undefined) {
+            if ("revert" in valueChange) {
+                assert(path !== undefined, "Only existing nodes can have their value restored");
+                assert(valueChange.revert !== undefined, "Unable to revert to undefined revision");
+                modify.setValue = repairStore.getValue(valueChange.revert, path);
+            } else {
+                modify.setValue = valueChange.value;
+            }
         }
 
         if (change.fieldChanges !== undefined) {
-            modify.fields = this.intoDelta(change.fieldChanges);
+            modify.fields = this.intoDeltaImpl(change.fieldChanges, repairStore, path);
         }
 
         return modify;
     }
 
     buildEditor(
-        deltaReceiver: (delta: Delta.Root) => void,
+        changeReceiver: (change: FieldChangeMap) => void,
         anchors: AnchorSet,
     ): ModularEditBuilder {
-        return new ModularEditBuilder(this, deltaReceiver, anchors);
+        return new ModularEditBuilder(this, changeReceiver, anchors);
     }
 }
 
@@ -301,10 +376,14 @@ export class ModularEditBuilder
 {
     constructor(
         family: ChangeFamily<unknown, FieldChangeMap>,
-        deltaReceiver: (delta: Delta.Root) => void,
+        changeReceiver: (change: FieldChangeMap) => void,
         anchors: AnchorSet,
     ) {
-        super(family, deltaReceiver, anchors);
+        super(family, changeReceiver, anchors);
+    }
+
+    public apply(change: FieldChangeMap): void {
+        this.applyChange(change);
     }
 
     /**

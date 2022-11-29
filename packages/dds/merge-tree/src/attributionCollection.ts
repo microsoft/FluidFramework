@@ -22,9 +22,9 @@ export class AttributionCollection<T> {
     }
 
     public getAtOffset(offset: number): T {
-        assert(offset >= 0 && offset < this._length, "Requested offset should be valid");
+        assert(offset >= 0 && offset < this._length, 0x443 /* Requested offset should be valid */);
         const node = this.entries.floor(offset);
-        assert(node !== undefined, "Collection should have at least one entry");
+        assert(node !== undefined, 0x444 /* Collection should have at least one entry */);
         return node.data;
     }
 
@@ -86,7 +86,9 @@ export class AttributionCollection<T> {
         summary: SerializedAttributionCollection,
     ): void {
         const { keys, posBreakpoints } = summary;
-        assert(keys.length === posBreakpoints.length && keys.length > 0, "Invalid attribution summary blob provided");
+        assert(
+            keys.length === posBreakpoints.length && keys.length > 0,
+            0x445 /* Invalid attribution summary blob provided */);
         let curIndex = 0;
         let cumulativeSegPos = 0;
         let currentInfo = keys[curIndex];
@@ -135,7 +137,7 @@ export class AttributionCollection<T> {
         }
 
         assert(segmentsWithAttribution === 0 || segmentsWithoutAttribution === 0,
-            "Expected either all segments or no segments to have attribution information.");
+            0x446 /* Expected either all segments or no segments to have attribution information. */);
 
         const blobContents: SerializedAttributionCollection = { keys, posBreakpoints, length: cumulativePos };
         return blobContents;

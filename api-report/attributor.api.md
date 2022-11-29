@@ -8,20 +8,17 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { Jsonable } from '@fluidframework/datastore-definitions';
 
-// @public (undocumented)
+// @public
 export interface AttributionInfo {
-    // (undocumented)
     timestamp: number;
-    // (undocumented)
     user: IUser;
 }
 
-// @public (undocumented)
+// @public
 export class Attributor implements IAttributor {
     constructor(initialEntries?: Iterable<[number, AttributionInfo]>);
     // (undocumented)
     entries(): IterableIterator<[number, AttributionInfo]>;
-    // (undocumented)
     getAttributionInfo(key: number): AttributionInfo;
     // (undocumented)
     protected readonly keyToInfo: Map<number, AttributionInfo>;
@@ -56,11 +53,10 @@ export interface Encoder<TDecoded, TEncoded> {
     encode(decoded: TDecoded): TEncoded;
 }
 
-// @public (undocumented)
+// @public
 export interface IAttributor {
     // (undocumented)
     entries(): IterableIterator<[number, AttributionInfo]>;
-    // (undocumented)
     getAttributionInfo(key: number): AttributionInfo;
     // (undocumented)
     tryGetAttributionInfo(key: number): AttributionInfo | undefined;
@@ -92,7 +88,7 @@ export class MutableStringInterner implements StringInterner {
     getString(internId: number): string;
 }
 
-// @public (undocumented)
+// @public
 export class OpStreamAttributor extends Attributor implements IAttributor {
     constructor(runtime: IFluidDataStoreRuntime, initialEntries?: Iterable<[number, AttributionInfo]>);
 }

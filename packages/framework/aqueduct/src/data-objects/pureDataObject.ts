@@ -14,7 +14,6 @@ import {
     IResponse,
     FluidObject,
 } from "@fluidframework/core-interfaces";
-import { FluidObjectHandle } from "@fluidframework/datastore";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IDirectory } from "@fluidframework/map";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
@@ -34,7 +33,7 @@ import { DataObjectTypes, IDataObjectProps } from "./types";
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
     extends EventForwarder<I["Events"] & IEvent>
     implements IFluidLoadable, IFluidRouter, IProvideFluidHandle {
-    private readonly innerHandle: IFluidHandle<this>;
+
     private _disposed = false;
 
     /**
@@ -65,18 +64,25 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     public get id() { return this.runtime.id; }
     public get IFluidRouter() { return this; }
     public get IFluidLoadable() { return this; }
-    public get IFluidHandle() { return this.innerHandle; }
+    public get IFluidHandle() {
+        return this.handle;
+    }
 
     /**
      * Handle to a data store
      */
-    public get handle(): IFluidHandle<this> { return this.innerHandle; }
+    public get handle(): IFluidHandle<this> {
+        // PureDataObjectFactory already provides an entryPoint initialization function to the data store runtime,
+        // so this object should always have access to a non-null entryPoint. Need to cast because PureDataObject
+        // tried to be too smart with its typing for handles :).
+        assert(this.runtime.entryPoint !== undefined, 0x46b /* EntryPoint was undefined */);
+        return this.runtime.entryPoint as IFluidHandle<this>;
+    }
 
     public static async getDataObject(runtime: IFluidDataStoreRuntime) {
-        const obj = (runtime as any)._dataObject as PureDataObject;
-        assert(obj !== undefined, 0x0bc /* "Runtime has no DataObject!" */);
-        await obj.finishInitialization(true);
-        return obj;
+        const obj = await runtime.entryPoint?.get();
+        assert(obj !== undefined, 0x0bc /* "The runtime's handle is not initialized yet!" */);
+        return obj as PureDataObject;
     }
 
     public constructor(props: IDataObjectProps<I>) {
@@ -88,11 +94,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 
         assert((this.runtime as any)._dataObject === undefined, 0x0bd /* "Object runtime already has DataObject!" */);
         (this.runtime as any)._dataObject = this;
-
-        // Create a FluidObjectHandle with empty string as `path`. This is because reaching this PureDataObject is the
-        // same as reaching its routeContext (FluidDataStoreRuntime) so the relative path to it from the
-        // routeContext is empty.
-        this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
 
         // Container event handlers
         this.runtime.once("dispose", () => {

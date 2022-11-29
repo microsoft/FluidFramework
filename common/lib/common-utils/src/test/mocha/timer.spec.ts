@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import process from "process";
-import { SinonFakeTimers, useFakeTimers } from "sinon";
+import { SinonFakeTimers, SinonSandbox, SinonSpy, useFakeTimers, createSandbox } from "sinon";
 import { PromiseTimer, Timer, IPromiseTimerResult } from "../..";
 
 const flushPromises = async (): Promise<void> =>
@@ -14,13 +14,21 @@ type PromiseTimerResultString = IPromiseTimerResult["timerResult"];
 
 describe("Timers", () => {
     let clock: SinonFakeTimers;
+    let sandbox: SinonSandbox;
+    let timeoutSpy: SinonSpy;
 
     before(() => {
         clock = useFakeTimers();
+        sandbox = createSandbox();
+    });
+
+    beforeEach(() => {
+        timeoutSpy = sandbox.spy(global, "setTimeout");
     });
 
     afterEach(() => {
         clock.reset();
+        sandbox.restore();
     });
 
     after(() => {
@@ -84,6 +92,63 @@ describe("Timers", () => {
             const overrideTimeout = defaultTimeout - 10;
             timer.start(overrideTimeout);
             testExactTimeout(overrideTimeout);
+        });
+
+        it("Should immediately execute with negative numbers if setTimeout is called", () => {
+            const initialRunCount = runCount;
+            timer.start(-10);
+
+            clock.tick(defaultTimeout);
+            timer.restart(-1);
+            clock.tick(defaultTimeout * 2);
+
+            assert.strictEqual(
+                runCount,
+                initialRunCount + 2,
+                "Should have executed immediately because the handler was late",
+            );
+
+            const calls = timeoutSpy.getCalls();
+            for (const call of calls) {
+                assert(
+                    call.args[1] >= 0,
+                    "setTimeout should have never been called with a negative number!",
+                );
+            }
+        });
+
+        it("Should immediately execute if the handler is late even accounting for the restart", () => {
+            const initialRunCount = runCount;
+            timer.start(defaultTimeout);
+
+            // Restart right before we execute the handler.
+            clock.tick(defaultTimeout - 1);
+            timer.restart();
+
+            // Advance the clock by a lot, that way, we ensure that the
+            // first time our timer executes its handler, it is late by design.
+            clock.tick(defaultTimeout * 2);
+
+            flushPromises().then(
+                () => {},
+                () => {
+                    assert.fail("Promise flushing failed");
+                },
+            );
+
+            assert.strictEqual(
+                runCount,
+                initialRunCount + 1,
+                "Should have executed immediately because the handler was late",
+            );
+
+            const calls = timeoutSpy.getCalls();
+            for (const call of calls) {
+                assert(
+                    call.args[1] >= 0,
+                    "SetLongTimeout should have never been called with a negative number!",
+                );
+            }
         });
 
         it("Should be reusable multiple times", () => {

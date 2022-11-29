@@ -67,7 +67,7 @@ export function create(
                 false,
                 undefined,
                 201);
-    });
+        });
 
     router.get("/repos/:ignored?/:tenantId/git/commits/:sha",
         utils.validateRequestParams("tenantId", "sha"),
@@ -80,7 +80,7 @@ export function create(
                 request.params.sha, useCache);
 
             utils.handleResponse(commitP, response, useCache);
-    });
+        });
 
     return router;
 }

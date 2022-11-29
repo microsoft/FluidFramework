@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { createRevertDriver, specToSegment, TestClient, TestClientRevertibleDriver } from "./testClient";
+export { createRevertDriver, getStats, specToSegment, TestClient, TestClientRevertibleDriver } from "./testClient";
 export { checkTextMatchRelative, TestServer } from "./testServer";
 export {
 	countOperations,

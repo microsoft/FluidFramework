@@ -5,14 +5,13 @@
 
 import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { TreeSchemaIdentifier } from "../../../schema-stored";
+import { Delta, RevisionTag, TaggedChange, TreeSchemaIdentifier } from "../../../core";
 import { TestChange } from "../../testChange";
-import { Delta, TaggedChange } from "../../../core";
-import { assertMarkListEqual, deepFreeze } from "../../utils";
+import { assertMarkListEqual, deepFreeze, fakeRepair } from "../../utils";
 import { tagChange } from "../../../rebase";
 
 const type: TreeSchemaIdentifier = brand("Node");
-const tomb = "Dummy Changeset Tag";
+const detachedBy: RevisionTag = brand(42);
 
 export type TestChangeset = SF.Changeset<TestChange>;
 
@@ -47,7 +46,7 @@ export const cases: {
         },
     ],
     delete: [1, { type: "Delete", id: 1, count: 3 }],
-    revive: [2, { type: "Revive", id: 1, count: 2, tomb }],
+    revive: [2, { type: "Revive", id: 1, count: 2, detachedBy, detachIndex: 0 }],
 };
 
 export function createInsertChangeset(index: number, size: number): TestChangeset {
@@ -103,5 +102,5 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 }
 
 function toDelta(change: TestChangeset): Delta.MarkList {
-    return SF.sequenceFieldToDelta(change, TestChange.toDelta);
+    return SF.sequenceFieldToDelta(change, TestChange.toDelta, fakeRepair);
 }

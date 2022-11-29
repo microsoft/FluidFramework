@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "console";
-import { Dependee, ObservingDependent } from "../dependency-tracking";
+import { assert } from "@fluidframework/common-utils";
+import { Dependee } from "../dependency-tracking";
 import { StoredSchemaRepository } from "../schema-stored";
 import {
     Anchor,
+    AnchorSet,
     DetachedField,
     detachedFieldAsKey,
     FieldKey,
     ITreeCursor,
     rootField,
 } from "../tree";
+import type { IEditableForest } from "./editableForest";
 
 /**
  * APIs for forest designed so the implementation can be copy on write,
@@ -31,10 +33,12 @@ import {
  * When invalidating, all outstanding cursors must be freed or cleared.
  */
 export interface IForestSubscription extends Dependee {
-    // We could provide access to this
-    // but then accessing it would reduce the ability to mutate in place as an optimization.
-    // Maybe add an explicit getter with a perf disclaimer? For now just expose subset of functionality:
-    // current(): IForestSnapshot;
+    /**
+     * Create an independent copy of this forest, that uses the provided schema and anchors.
+     *
+     * The new copy will not invalidate observers (dependents) of the old one.
+     */
+    clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
 
     /**
      * Schema used within this forest.
@@ -55,16 +59,12 @@ export interface IForestSubscription extends Dependee {
     forgetAnchor(anchor: Anchor): void;
 
     /**
-     * If observer is provided, it will be invalidated if the value returned from this changes
-     * (including from or to undefined).
-     *
      * It is an error not to free `cursorToMove` before the next edit.
      * Must provide a `cursorToMove` from this subscription (acquired via `allocateCursor`).
      */
     tryMoveCursorToNode(
         destination: Anchor,
         cursorToMove: ITreeSubscriptionCursor,
-        observer?: ObservingDependent,
     ): TreeNavigationResult;
 
     /**
@@ -122,25 +122,13 @@ export interface FieldAnchor {
  */
 export interface ITreeSubscriptionCursor extends ITreeCursor {
     /**
-     * Where observations get recorded for invalidation.
-     * When modified, future observations will count toward the new one.
-     *
-     * Observations made when in an OutOfDate state will never cause invalidation.
+     * @returns an independent copy of this cursor at the same location in the tree.
      */
-    observer?: ObservingDependent;
-
-    /**
-     * @param observer - sets the starting value for the observer.
-     * If undefined there is no observer for the returned ITreeSubscriptionCursor.
-     *
-     * Doing this has no impact on this.observer.
-     */
-    fork(observer?: ObservingDependent): ITreeSubscriptionCursor;
+    fork(): ITreeSubscriptionCursor;
 
     /**
      * Release any resources this cursor is holding onto.
      * After doing this, further use of this object other than reading `state` is forbidden (undefined behavior).
-     * Invalidation will still happen for the observer: it needs to unsubscribe separately if desired.
      */
     free(): void;
 
@@ -148,7 +136,6 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
      * Release any resources this cursor is holding onto.
      * After doing this, further use of this object other than reading `state` or passing to `tryGet`
      * or calling `free` is forbidden (undefined behavior).
-     * Invalidation will still happen for the observer: it needs to unsubscribe separately if desired.
      */
     clear(): void;
 
