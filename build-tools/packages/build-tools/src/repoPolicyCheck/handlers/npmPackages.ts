@@ -635,11 +635,11 @@ export const handlers: Handler[] = [
 
             const resolved = true;
 
-            const jsonCheckRoot = json.name;
-            const jsonDevDependencies = json.devDependencies;
-            const jsonScripts = json.scripts;
+            // const jsonCheckRoot = json.name;
+            // const jsonDevDependencies = json.devDependencies;
+            // const jsonScripts = json.scripts;
 
-            addPrettier(json, jsonCheckRoot, jsonDevDependencies, jsonScripts);
+            addPrettier(json);
 
             writeFile(file, JSON.stringify(sortPackageJson(json), undefined, 2) + newline);
 
@@ -648,12 +648,11 @@ export const handlers: Handler[] = [
     },
 ];
 
-function addPrettier(
-    json: Map<any, any>,
-    jsonCheckRoot: string,
-    jsonDevDependencies: Map<string, string>,
-    jsonScripts: Map<string, string>,
-) {
+function addPrettier(json: Record<string, any>) {
+    const jsonCheckRoot = json.name;
+    const jsonDevDependencies = json.devDependencies;
+    const jsonScripts = json.scripts;
+
     // if devDependencies does not exist in package.json
     if (jsonDevDependencies === undefined) {
         json["devDependencies"] = {};
@@ -665,16 +664,16 @@ function addPrettier(
     }
 
     // update devDependencies "prettier" to latest version, intentionally left empty
-    json["devDependencies"]["prettier"] = "";
+    jsonDevDependencies["prettier"] = "";
 
     // update scripts
-    json["scripts"]["format"] = "npm run prettier:fix";
-    jsonScripts["scripts"]["prettier"] = "prettier --check .";
-    jsonScripts["scripts"]["prettier:fix"] = "prettier --write .";
+    jsonScripts["format"] = "npm run prettier:fix";
+    jsonScripts["prettier"] = "prettier --check .";
+    jsonScripts["prettier:fix"] = "prettier --write .";
 
     // package.json in root of the release-group should have lerna script
     if (jsonCheckRoot === "root") {
-        json["scripts"]["format"] = "lerna run format --no-sort --stream -- -- -- --color";
+        jsonScripts["format"] = "lerna run format --no-sort --stream -- -- -- --color";
     }
 
     return undefined;
