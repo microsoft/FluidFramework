@@ -14,6 +14,7 @@ import {
     Mark,
     Modify,
     ModifyDetach,
+    ModifyingMark,
     ModifyReattach,
     MoveIn,
     ObjectMark,
@@ -25,6 +26,21 @@ import {
 
 export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<TNodeChange> {
     return isObjMark(mark) && mark.type === "Modify";
+}
+
+export function isModifyingMark<TNodeChange>(
+    mark: Mark<TNodeChange>,
+): mark is ModifyingMark<TNodeChange> {
+    return (
+        isObjMark(mark) &&
+        (mark.type === "Modify" ||
+            mark.type === "MInsert" ||
+            mark.type === "MRevive" ||
+            mark.type === "MMoveIn" ||
+            mark.type === "MReturn" ||
+            mark.type === "MDelete" ||
+            mark.type === "MMoveOut")
+    );
 }
 
 export function isAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is Attach<TNodeChange> {
@@ -312,7 +328,6 @@ export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boole
         case "Return": {
             const lhsReattach = lhs as Reattach;
             if (
-                rhs.id === lhsReattach.id &&
                 rhs.detachedBy === lhsReattach.detachedBy &&
                 lhsReattach.detachIndex + lhsReattach.count === rhs.detachIndex
             ) {
