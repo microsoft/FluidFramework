@@ -35,12 +35,13 @@ export interface AudienceViewProps extends HasClientDebugger {
  */
 export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	const { clientDebugger, onRenderAudienceMember } = props;
+	const { audience } = clientDebugger;
 
 	const myClientId = useMyClientId(clientDebugger);
 	const myClientConnection = useMyClientConnection(clientDebugger);
 
 	const [allAudienceMembers, setAllAudienceMembers] = React.useState<Map<string, IClient>>(
-		clientDebugger.getAudienceMembers(),
+		audience.getMembers(),
 	);
 	const [audienceHistory, setAudienceHistory] = React.useState<readonly AudienceChangeLogEntry[]>(
 		clientDebugger.getAudienceHistory(),
@@ -48,16 +49,18 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 
 	React.useEffect(() => {
 		function onAudienceMembersChanged(): void {
-			setAllAudienceMembers(clientDebugger.getAudienceMembers());
+			setAllAudienceMembers(audience.getMembers());
 			setAudienceHistory(clientDebugger.getAudienceHistory());
 		}
 
-		clientDebugger.on("audienceMemberChange", onAudienceMembersChanged);
+		audience.on("addMember", onAudienceMembersChanged);
+		audience.on("removeMember", onAudienceMembersChanged);
 
 		return (): void => {
-			clientDebugger.off("audienceMemberChange", onAudienceMembersChanged);
+			audience.off("addMember", onAudienceMembersChanged);
+			audience.off("removeMember", onAudienceMembersChanged);
 		};
-	}, [clientDebugger, setAllAudienceMembers, setAudienceHistory]);
+	}, [clientDebugger, audience, setAllAudienceMembers, setAudienceHistory]);
 
 	return (
 		<Stack

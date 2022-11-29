@@ -47,10 +47,10 @@ export function FluidClientDebugger(props: FluidClientDebuggerProps): React.Reac
 			setIsContainerDisposed(true);
 		}
 
-		clientDebugger?.on("debuggerDisposed", onDebuggerDisposed);
+		clientDebugger?.on("disposed", onDebuggerDisposed);
 
 		return (): void => {
-			clientDebugger?.off("debuggerDisposed", onDebuggerDisposed);
+			clientDebugger?.off("disposed", onDebuggerDisposed);
 		};
 	}, [clientDebugger, setIsContainerDisposed]);
 

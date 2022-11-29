@@ -5,7 +5,11 @@
 import { Stack, StackItem } from "@fluentui/react";
 import React from "react";
 
+import { AttachState } from "@fluidframework/container-definitions";
+import { ConnectionState } from "@fluidframework/container-loader";
+
 import { HasClientDebugger } from "../CommonProps";
+import { connectionStateToString } from "../Utilities";
 
 /**
  * {@link ContainerStateView} input props.
@@ -18,42 +22,41 @@ export type ContainerStateViewProps = HasClientDebugger;
  */
 export function ContainerStateView(props: ContainerStateViewProps): React.ReactElement {
 	const { clientDebugger } = props;
+	const { container } = clientDebugger;
 
-	const [isContainerAttached, setIsContainerAttached] = React.useState<boolean>(
-		clientDebugger.isContainerAttached(),
+	const [containerAttachState, setContainerAttachState] = React.useState<AttachState>(
+		container.attachState,
 	);
-	const [isContainerConnected, setIsContainerConnected] = React.useState<boolean>(
-		clientDebugger.isContainerConnected(),
+	const [containerConnectionState, setContainerConnectionState] = React.useState<ConnectionState>(
+		container.connectionState,
 	);
-	const [isContainerDisposed, setIsContainerDisposed] = React.useState<boolean>(
-		clientDebugger.disposed,
-	);
+	const [isContainerDisposed, setIsContainerDisposed] = React.useState<boolean>(container.closed);
 
 	React.useEffect(() => {
 		function onContainerAttached(): void {
-			setIsContainerAttached(true);
+			setContainerAttachState(container.attachState);
 		}
 
 		function onContainerConnectionChange(): void {
-			setIsContainerConnected(clientDebugger.isContainerConnected());
+			setContainerConnectionState(container.connectionState);
 		}
 
 		function onContainerDisposed(): void {
 			setIsContainerDisposed(true);
 		}
 
-		clientDebugger.on("containerAttached", onContainerAttached);
-		clientDebugger.on("containerConnected", onContainerConnectionChange);
-		clientDebugger.on("containerDisconnected", onContainerConnectionChange);
-		clientDebugger.on("containerClosed", onContainerDisposed);
+		container.on("attached", onContainerAttached);
+		container.on("connected", onContainerConnectionChange);
+		container.on("disconnected", onContainerConnectionChange);
+		container.on("closed", onContainerDisposed);
 
 		return (): void => {
-			clientDebugger.off("containerAttached", onContainerAttached);
-			clientDebugger.off("containerConnected", onContainerConnectionChange);
-			clientDebugger.off("containerDisconnected", onContainerConnectionChange);
-			clientDebugger.off("containerClosed", onContainerDisposed);
+			container.off("attached", onContainerAttached);
+			container.off("connected", onContainerConnectionChange);
+			container.off("disconnected", onContainerConnectionChange);
+			container.off("closed", onContainerDisposed);
 		};
-	}, [clientDebugger]);
+	}, [container]);
 
 	const children: React.ReactElement[] = [
 		<span>
@@ -63,10 +66,9 @@ export function ContainerStateView(props: ContainerStateViewProps): React.ReactE
 	if (isContainerDisposed) {
 		children.push(<span>Disposed</span>);
 	} else {
-		children.push(<span>{isContainerAttached ? "Attached" : "Detached"}</span>);
-
-		if (isContainerAttached) {
-			children.push(<span>{isContainerConnected ? "Connected" : "Disconnected"}</span>);
+		children.push(<span>{containerAttachState}</span>);
+		if (containerAttachState === AttachState.Attached) {
+			children.push(<span>{connectionStateToString(containerConnectionState)}</span>);
 		}
 	}
 
