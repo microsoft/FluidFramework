@@ -266,6 +266,7 @@ describe("BlobManager", () => {
         await runtime.attach();
         await runtime.connect();
 
+        assert.strictEqual(runtime.blobManager.hasPendingBlobs(), false);
         await createBlob(IsoBuffer.from("blob", "utf8"));
         await createBlob(IsoBuffer.from("blob2", "utf8"));
         assert.strictEqual(runtime.blobManager.hasPendingBlobs(), true);
@@ -273,6 +274,24 @@ describe("BlobManager", () => {
         assert.strictEqual(runtime.blobManager.hasPendingBlobs(), false);
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 2);
+        assert.strictEqual(summaryData.redirectTable, undefined);
+    });
+
+    it("NoPendingBlobs count", async () => {
+        await runtime.attach();
+        await runtime.connect();
+        let count = 0;
+        runtime.blobManager.on("noPendingBlobs", () => count++);
+
+        await createBlob(IsoBuffer.from("blob", "utf8"));
+        await runtime.processAll();
+        assert.strictEqual(count, 1);
+        await createBlob(IsoBuffer.from("blob2", "utf8"));
+        await createBlob(IsoBuffer.from("blob3", "utf8"));
+        await runtime.processAll();
+        assert.strictEqual(count, 2);
+        const summaryData = validateSummary(runtime);
+        assert.strictEqual(summaryData.ids.length, 3);
         assert.strictEqual(summaryData.redirectTable, undefined);
     });
 
