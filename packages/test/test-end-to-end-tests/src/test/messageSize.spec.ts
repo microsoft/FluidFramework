@@ -67,6 +67,9 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
 
+        await new Promise((resolve) => container1.on("connected", resolve));
+        await new Promise((resolve) => container2.on("connected", resolve));
+
         await provider.ensureSynchronized();
     };
 
@@ -179,12 +182,12 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         assertMapValues(dataObject2map, messageCount, largeString);
     });
 
-    itExpects.only(
+    itExpects(
         "Single large op passes when compression enabled, compressed content is over max op size",
         [
             { eventName: "fluid:telemetry:OpPerf:OpRoundtripTime" },
         ], async function() {
-            const maxMessageSizeInBytes = 15 * 1024 * 1024; // 15MB
+            const maxMessageSizeInBytes = 2 * 1024 * 1024; // 15MB
             await setupContainers({
                 ...testContainerConfig,
                 runtimeOptions: {

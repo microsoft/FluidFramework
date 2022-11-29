@@ -125,13 +125,11 @@ export class OpSplitter implements IRemoteMessageProcessor, IBatchProcessor {
             this.submitBatchFn([this.chunkToBatchMessage(chunk, car.referenceSequenceNumber)]);
         }
 
-        const lastChunk = this.chunkToBatchMessage(chunks[chunks.length - 1], car.referenceSequenceNumber);
         // The last chunk will be part of the new batch
-        const newBatch: IBatch = {
+        const lastChunk = this.chunkToBatchMessage(chunks[chunks.length - 1], car.referenceSequenceNumber);
+        return {
             content: [lastChunk, ...cdr],
             contentSizeInBytes: lastChunk.contents?.length ?? 0,
         };
-
-        return newBatch;
     }
 }

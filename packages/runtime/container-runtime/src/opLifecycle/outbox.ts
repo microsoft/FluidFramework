@@ -79,10 +79,13 @@ export class Outbox {
         this.flushInternal(this.mainBatch.popBatch());
     }
 
-    private flushInternal(batch: IBatch) {
-        const processedBatch = this.processBatch(batch);
+    private flushInternal(rawBatch: IBatch) {
+        const processedBatch = this.processBatch(rawBatch);
         this.addBatchMetadataToBatch(processedBatch);
-        this.flushBatch(processedBatch);
+        const clientSequenceNumber = this.flushBatch(processedBatch);
+
+        this.addBatchMetadataToBatch(rawBatch);
+        this.persistPendingBatch(clientSequenceNumber, rawBatch.content);
     }
 
     private addBatchMetadataToBatch(batch: IBatch): IBatch {
@@ -117,14 +120,13 @@ export class Outbox {
         return processedBatch;
     }
 
-    private flushBatch(batch: IBatch): void {
+    private flushBatch(batch: IBatch): number {
+        let clientSequenceNumber: number = -1;
         const length = batch.content.length;
 
         if (length === 0) {
-            return;
+            return clientSequenceNumber;
         }
-
-        let clientSequenceNumber: number = -1;
 
         // Did we disconnect in the middle of turn-based batch?
         // If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
@@ -136,7 +138,7 @@ export class Outbox {
             assert(clientSequenceNumber >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
         }
 
-        this.persistPendingBatch(clientSequenceNumber, batch.content);
+        return clientSequenceNumber;
     }
 
     private sendBatch(batch: BatchMessage[]): number {
