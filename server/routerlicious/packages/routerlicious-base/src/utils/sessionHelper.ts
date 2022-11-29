@@ -161,15 +161,15 @@ async function updateExistingSession(
         // from different clusters. Thus, let it get the truth from the cosmosdb with isSessionAlive as true.
         if (!result.existing) {
             Lumberjack.info(`The document with isSessionAlive as false does not exist`, lumberjackProperties);
-            const doc: IDocument = await runWithRetry({
-                api: async () => documentsCollection.findOne({ tenantId, documentId, "session.isSessionAlive": true,}),
-                callName: "getDocumentWithAlive",
-                maxRetries: 3,
-                retryAfterMs: 1000,
-                telemetryProperties: lumberjackProperties,
-                shouldIgnoreError: undefined,
-                shouldRetry: (error) => true,
-            });
+            const doc: IDocument = await runWithRetry(
+                async () => documentsCollection.findOne({ tenantId, documentId, "session.isSessionAlive": true,}),
+                "getDocumentWithAlive",
+                3 /* maxRetries */,
+                1000 /* retryAfterMs */,
+                lumberjackProperties,
+                undefined, /* shouldIgnoreError */
+                (error) => true, /* shouldRetry */
+            );
             if (!doc && !doc.session) {
                 Lumberjack.error(
                     `Error running getSession from document: ${JSON.stringify(doc)}`,

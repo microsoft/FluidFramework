@@ -113,15 +113,17 @@ export class ScriptoriumLambda implements IPartitionLambda {
         const sequenceNumbers = messages.map((message) => message.operation.sequenceNumber);
         const sequenceNumberRanges = convertNumberArrayToRanges(sequenceNumbers);
 
-        return runWithRetry({
-            api: async () => this.opCollection.insertMany(dbOps, false),
-            callName: "insertOpScriptorium",
-            maxRetries: 3,
-            retryAfterMs: 1000,
-            telemetryProperties: { ...getLumberBaseProperties(documentId, tenantId), ...{ sequenceNumberRanges }},
-            shouldIgnoreError: (error) => error.code === 11000,
-            shouldRetry: (error) => !this.clientFacadeRetryEnabled,
-            telemetryEnabled: this.providerConfig?.enableRunWithRetryMetricTelemetry,
-        });
+        return runWithRetry(
+            async () => this.opCollection.insertMany(dbOps, false),
+            "insertOpScriptorium",
+            3 /* maxRetries */,
+            1000 /* retryAfterMs */,
+            { ...getLumberBaseProperties(documentId, tenantId), ...{ sequenceNumberRanges }},
+            (error) => error.code === 11000,
+            (error) => !this.clientFacadeRetryEnabled /* shouldRetry */,
+            undefined /* calculateIntervalMs */,
+            undefined /* onErrorFn */,
+            this.providerConfig?.enableRunWithRetryMetricTelemetry,
+        );
     }
 }
