@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
 import { assert, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { getDocAttributesFromProtocolSummary, NonRetryableError } from "@fluidframework/driver-utils";
 import { getGitType } from "@fluidframework/protocol-base";
@@ -32,15 +31,14 @@ import {
     createCacheSnapshotKey,
     getWithRetryForTokenRefresh,
     INewFileInfo,
-    getOrigin,
-    maxUmpPostBodySize,
+    getOrigin
 } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { convertCreateNewSummaryTreeToTreeAndBlobs, CreateNewFileArgs } from "./createNewUtils";
+import { convertCreateNewSummaryTreeToTreeAndBlobs, CreateNewFileArgs, createNewFluidContainerCore } from "./createNewUtils";
 import { runWithRetry } from "./retryUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ClpCompliantAppHeader } from "./contractsPublic";
@@ -255,76 +253,16 @@ export async function createNewFluidFileFromSummary(
     const initialUrl =
         `${baseUrl}:/opStream/snapshots/snapshot${createShareLinkParam ? `?${createShareLinkParam}` : ""}`;
 
-    return getWithRetryForTokenRefresh(async (options) => {
-        const storageToken = await getStorageToken(options, "CreateNewFile");
-
-        return PerformanceEvent.timedExecAsync(
-            logger,
-            { eventName: "createNewFile" },
-            async (event) => {
-                const snapshotBody = JSON.stringify(containerSnapshot);
-                let url: string;
-                let headers: { [index: string]: string; };
-                let addInBody = false;
-                const formBoundary = uuid();
-                let postBody = `--${formBoundary}\r\n`;
-                postBody += `Authorization: Bearer ${storageToken}\r\n`;
-                postBody += `X-HTTP-Method-Override: POST\r\n`;
-                postBody += `Content-Type: application/json\r\n`;
-                postBody += `_post: 1\r\n`;
-                postBody += `\r\n${snapshotBody}\r\n`;
-                postBody += `\r\n--${formBoundary}--`;
-
-                if (postBody.length <= maxUmpPostBodySize) {
-                    const urlObj = new URL(initialUrl);
-                    urlObj.searchParams.set("ump", "1");
-                    url = urlObj.href;
-                    headers = {
-                        "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
-                    };
-                    addInBody = true;
-                } else {
-                    const parts = getUrlAndHeadersWithAuth(
-                        initialUrl, storageToken, forceAccessTokenViaAuthorizationHeader);
-                    url = parts.url;
-                    headers = {
-                        ...parts.headers,
-                        "Content-Type": "application/json",
-                    };
-                    postBody = snapshotBody;
-                }
-
-                const fetchResponse = await runWithRetry(
-                    async () => epochTracker.fetchAndParseAsJSON<ICreateFileResponse>(
-                        url,
-                        {
-                            body: postBody,
-                            headers,
-                            method: "POST",
-                        },
-                        "createFile",
-                        addInBody,
-                    ),
-                    "createFile",
-                    logger,
-                );
-
-                const content = fetchResponse.content;
-                if (!content || !content.itemId) {
-                    throw new NonRetryableError(
-                        "ODSP CreateFile call returned no item ID",
-                        DriverErrorType.incorrectServerResponse,
-                        { driverVersion });
-                }
-                event.end({
-                    headers: Object.keys(headers).length !== 0 ? true : undefined,
-                    attempts: options.refresh ? 2 : 1,
-                    ...fetchResponse.propsToLog,
-                });
-                return content;
-            },
-        );
-    });
+    return createNewFluidContainerCore(
+        containerSnapshot,
+        getStorageToken,
+        logger,
+        initialUrl,
+        forceAccessTokenViaAuthorizationHeader,
+        epochTracker,
+        "CreateNewFile",
+        "createFile"
+    );
 }
 
 function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {

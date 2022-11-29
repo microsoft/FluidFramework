@@ -11,9 +11,12 @@ import { getGitType } from "@fluidframework/protocol-base";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IFileEntry, InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import { IOdspSummaryPayload, IOdspSummaryTree, OdspSummaryTreeEntry, OdspSummaryTreeValue } from "./contracts";
-import { IExistingFileInfo, INewFileInfo } from "./odspUtils";
+import { getWithRetryForTokenRefresh, IExistingFileInfo, INewFileInfo, maxUmpPostBodySize } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
-import { EpochTracker } from "./epochTracker";
+import { EpochTracker, FetchType } from "./epochTracker";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
+import { runWithRetry } from "./retryUtils";
 
 type CreateNewArgs<T extends INewFileInfo | IExistingFileInfo> = [
     getStorageToken: InstrumentedStorageTokenFetcher,
@@ -26,13 +29,13 @@ type CreateNewArgs<T extends INewFileInfo | IExistingFileInfo> = [
     forceAccessTokenViaAuthorizationHeader: boolean,
     isClpCompliantApp?: boolean,
     enableSingleRequestForShareLinkWithCreate?: boolean,
-    enableShareLinkWithCreate?: boolean,  
+    enableShareLinkWithCreate?: boolean,
 ];
 
 export type CreateNewFileArgs = [
     ...createNewArgs: CreateNewArgs<INewFileInfo>,
     enableSingleRequestForShareLinkWithCreate?: boolean,
-    enableShareLinkWithCreate?: boolean,  
+    enableShareLinkWithCreate?: boolean,
 ];
 export type CreateNewContainerOnExistingFile = CreateNewArgs<IExistingFileInfo>;
 
@@ -180,4 +183,80 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
     }
 
     return snapshotTree;
+}
+
+export async function createNewFluidContainerCore<T>(
+    containerSnapshot: IOdspSummaryPayload,
+    getStorageToken: InstrumentedStorageTokenFetcher,
+    logger: ITelemetryLogger,
+    initialUrl: string,
+    forceAccessTokenViaAuthorizationHeader: boolean,
+    epochTracker: EpochTracker,
+    telemetryName: string,
+    fetchType: FetchType
+): Promise<T> {
+    return getWithRetryForTokenRefresh(async (options) => {
+        const storageToken = await getStorageToken(options, telemetryName);
+
+        return PerformanceEvent.timedExecAsync(
+            logger,
+            { eventName: telemetryName },
+            async (event) => {
+                const snapshotBody = JSON.stringify(containerSnapshot);
+                let url: string;
+                let headers: { [index: string]: string; };
+                let addInBody = false;
+                const formBoundary = uuid();
+                let postBody = `--${formBoundary}\r\n`;
+                postBody += `Authorization: Bearer ${storageToken}\r\n`;
+                postBody += `X-HTTP-Method-Override: POST\r\n`;
+                postBody += `Content-Type: application/json\r\n`;
+                postBody += `_post: 1\r\n`;
+                postBody += `\r\n${snapshotBody}\r\n`;
+                postBody += `\r\n--${formBoundary}--`;
+
+                if (postBody.length <= maxUmpPostBodySize) {
+                    const urlObj = new URL(initialUrl);
+                    urlObj.searchParams.set("ump", "1");
+                    url = urlObj.href;
+                    headers = {
+                        "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
+                    };
+                    addInBody = true;
+                } else {
+                    const parts = getUrlAndHeadersWithAuth(
+                        initialUrl, storageToken, forceAccessTokenViaAuthorizationHeader);
+                    url = parts.url;
+                    headers = {
+                        ...parts.headers,
+                        "Content-Type": "application/json",
+                    };
+                    postBody = snapshotBody;
+                }
+
+                const fetchResponse = await runWithRetry(
+                    async () => epochTracker.fetchAndParseAsJSON<T>(
+                        url,
+                        {
+                            body: postBody,
+                            headers,
+                            method: "POST",
+                        },
+                        fetchType,
+                        addInBody,
+                    ),
+                    telemetryName,
+                    logger,
+                );
+
+                event.end({
+                    headers: Object.keys(headers).length !== 0 ? true : undefined,
+                    attempts: options.refresh ? 2 : 1,
+                    ...fetchResponse.propsToLog,
+                });
+
+                return fetchResponse.content;
+            },
+        );
+    });
 }
