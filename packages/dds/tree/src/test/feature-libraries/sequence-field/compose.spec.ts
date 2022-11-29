@@ -11,14 +11,7 @@ import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
-import {
-    cases,
-    createDeleteChangeset,
-    createInsertChangeset,
-    createModifyChangeset,
-    createReviveChangeset,
-    TestChangeset,
-} from "./testEdits";
+import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = brand(1);
@@ -66,15 +59,15 @@ describe("SequenceField - Compose", () => {
     });
 
     it("Does not leave empty mark lists and fields", () => {
-        const insertion = createInsertChangeset(0, 1);
-        const deletion = createDeleteChangeset(0, 1);
+        const insertion = Change.insert(0, 1);
+        const deletion = Change.delete(0, 1);
         const actual = shallowCompose([makeAnonChange(insertion), makeAnonChange(deletion)]);
         assert.deepEqual(actual, cases.no_change);
     });
 
     it("insert ○ modify", () => {
-        const insert = createInsertChangeset(0, 2);
-        const modify = createModifyChangeset(0, TestChange.mint([], 42));
+        const insert = Change.insert(0, 2);
+        const modify = Change.modify(0, TestChange.mint([], 42));
         const expected: TestChangeset = [
             {
                 type: "MInsert",
@@ -103,7 +96,7 @@ describe("SequenceField - Compose", () => {
                 changes: childChangeA,
             },
         ];
-        const modify = createModifyChangeset(0, childChangeB);
+        const modify = Change.modify(0, childChangeB);
         const expected: TestChangeset = [
             {
                 type: "MInsert",
@@ -117,8 +110,8 @@ describe("SequenceField - Compose", () => {
     });
 
     it("delete ○ modify", () => {
-        const deletion = createDeleteChangeset(0, 3);
-        const modify = createModifyChangeset(0, { valueChange: { value: 2 } });
+        const deletion = Change.delete(0, 3);
+        const modify = Change.modify(0, { valueChange: { value: 2 } });
         const expected: SF.Changeset = [
             { type: "Delete", id: 0, count: 3 },
             {
@@ -131,8 +124,8 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ modify", () => {
-        const revive = createReviveChangeset(0, 3, 0, tag1);
-        const modify = createModifyChangeset(0, { valueChange: { value: 2 } });
+        const revive = Change.revive(0, 3, 0, tag1);
+        const modify = Change.modify(0, { valueChange: { value: 2 } });
         const expected: SF.Changeset = [
             {
                 type: "MRevive",
@@ -189,8 +182,8 @@ describe("SequenceField - Compose", () => {
             makeAnonChange(childChangeA),
             makeAnonChange(childChangeB),
         ]);
-        const modifyA = createModifyChangeset(0, childChangeA);
-        const modifyB = createModifyChangeset(0, childChangeB);
+        const modifyA = Change.modify(0, childChangeA);
+        const modifyB = Change.modify(0, childChangeB);
         const expected: TestChangeset = [
             {
                 type: "Modify",
@@ -202,8 +195,8 @@ describe("SequenceField - Compose", () => {
     });
 
     it("insert ○ delete (within insert)", () => {
-        const insert = createInsertChangeset(0, 3, 1);
-        const deletion = createDeleteChangeset(1, 1);
+        const insert = Change.insert(0, 3, 1);
+        const deletion = Change.delete(1, 1);
         const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(deletion)]);
         const expected: SF.Changeset = [
             {
@@ -245,7 +238,7 @@ describe("SequenceField - Compose", () => {
                 ],
             },
         ];
-        const deletion = createDeleteChangeset(1, 4);
+        const deletion = Change.delete(1, 4);
         const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(deletion)]);
         const expected: SF.Changeset = [
             { type: "Insert", id: 1, content: [{ type, value: 1 }] },
@@ -255,8 +248,8 @@ describe("SequenceField - Compose", () => {
     });
 
     it("modify ○ delete", () => {
-        const modify = createModifyChangeset(0, { valueChange: { value: 1 } });
-        const deletion = createDeleteChangeset(0, 1);
+        const modify = Change.modify(0, { valueChange: { value: 1 } });
+        const deletion = Change.delete(0, 1);
         const actual = shallowCompose([makeAnonChange(modify), makeAnonChange(deletion)]);
         assert.deepEqual(actual, deletion);
     });
@@ -288,7 +281,7 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ delete", () => {
-        const revive = createReviveChangeset(0, 5, 0, tag1);
+        const revive = Change.revive(0, 5, 0, tag1);
         const deletion: SF.Changeset = [
             1,
             { type: "Delete", id: 3, count: 1 },
@@ -321,8 +314,8 @@ describe("SequenceField - Compose", () => {
     });
 
     it("modify ○ insert", () => {
-        const modify = createModifyChangeset(0, { valueChange: { value: 1 } });
-        const insert = createInsertChangeset(0, 1, 2);
+        const modify = Change.modify(0, { valueChange: { value: 1 } });
+        const insert = Change.insert(0, 1, 2);
         const expected: SF.Changeset = [
             { type: "Insert", id: 0, content: [{ type, value: 2 }] },
             {
@@ -335,8 +328,8 @@ describe("SequenceField - Compose", () => {
     });
 
     it("delete ○ insert", () => {
-        const deletion = createDeleteChangeset(0, 3);
-        const insert = createInsertChangeset(0, 1, 2);
+        const deletion = Change.delete(0, 3);
+        const insert = Change.insert(0, 1, 2);
         // TODO: test with merge-right policy as well
         const expected: SF.Changeset = [
             { type: "Insert", id: 0, content: [{ type, value: 2 }] },
@@ -347,8 +340,8 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ insert", () => {
-        const revive = createReviveChangeset(0, 5, 0, tag1);
-        const insert = createInsertChangeset(0, 1, 2);
+        const revive = Change.revive(0, 5, 0, tag1);
+        const insert = Change.insert(0, 1, 2);
         // TODO: test with merge-right policy as well
         const expected: SF.Changeset = [
             { type: "Insert", id: 0, content: [{ type, value: 2 }] },
@@ -389,8 +382,8 @@ describe("SequenceField - Compose", () => {
     });
 
     it("modify ○ revive", () => {
-        const modify = createModifyChangeset(0, { valueChange: { value: 1 } });
-        const revive = createReviveChangeset(0, 2, 0, tag1);
+        const modify = Change.modify(0, { valueChange: { value: 1 } });
+        const revive = Change.revive(0, 2, 0, tag1);
         const expected: SF.Changeset = [
             { type: "Revive", id: 0, count: 2, detachedBy: tag1, detachIndex: 0 },
             {
@@ -403,8 +396,8 @@ describe("SequenceField - Compose", () => {
     });
 
     it("delete ○ revive", () => {
-        const deletion = createDeleteChangeset(0, 3);
-        const revive = createReviveChangeset(0, 2, 0, tag1);
+        const deletion = Change.delete(0, 3);
+        const revive = Change.revive(0, 2, 0, tag1);
         // TODO: test with merge-right policy as well
         const expected: SF.Changeset = [
             { type: "Revive", id: 0, count: 2, detachedBy: tag1, detachIndex: 0 },
@@ -415,8 +408,8 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ revive", () => {
-        const reviveA = createReviveChangeset(0, 2, 0, tag1);
-        const reviveB = createReviveChangeset(0, 3, 0, tag2);
+        const reviveA = Change.revive(0, 2, 0, tag1);
+        const reviveB = Change.revive(0, 3, 0, tag2);
         // TODO: test with merge-right policy as well
         const expected: SF.Changeset = [
             { type: "Revive", id: 0, count: 3, detachedBy: tag2, detachIndex: 0 },

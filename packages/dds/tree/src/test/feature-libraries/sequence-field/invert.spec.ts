@@ -10,13 +10,7 @@ import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import { composeAnonChanges } from "./utils";
-import {
-    createDeleteChangeset,
-    createInsertChangeset,
-    createModifyChangeset,
-    createReviveChangeset,
-    TestChangeset,
-} from "./testEdits";
+import { ChangeMaker as Change, TestChangeset } from "./testEdits";
 
 function invert(change: TestChangeset): TestChangeset {
     deepFreeze(change);
@@ -43,38 +37,38 @@ describe("SequenceField - Invert", () => {
     it("child changes", () => {
         const childChange = TestChange.mint([0], 1);
         const inverseChildChange = TestChange.invert(childChange);
-        const input = createModifyChangeset(0, childChange);
-        const expected = createModifyChangeset(0, inverseChildChange);
+        const input = Change.modify(0, childChange);
+        const expected = Change.modify(0, inverseChildChange);
         const actual = invert(input);
         assert.deepEqual(actual, expected);
     });
 
     it("insert => delete", () => {
-        const input = createInsertChangeset(0, 2);
-        const expected = createDeleteChangeset(0, 2);
+        const input = Change.insert(0, 2);
+        const expected = Change.delete(0, 2);
         const actual = shallowInvert(input);
         assert.deepEqual(actual, expected);
     });
 
     it("modified insert => delete", () => {
-        const insert = createInsertChangeset(0, 1);
-        const modify = createModifyChangeset(0, TestChange.mint([], 42));
+        const insert = Change.insert(0, 1);
+        const modify = Change.modify(0, TestChange.mint([], 42));
         const input = composeAnonChanges([insert, modify]);
-        const expected = createDeleteChangeset(0, 1);
+        const expected = Change.delete(0, 1);
         const actual = shallowInvert(input);
         assert.deepEqual(actual, expected);
     });
 
     it("delete => revive", () => {
-        const input = createDeleteChangeset(0, 2);
-        const expected = createReviveChangeset(0, 2, 0, tag);
+        const input = Change.delete(0, 2);
+        const expected = Change.revive(0, 2, 0, tag);
         const actual = shallowInvert(input);
         assert.deepEqual(actual, expected);
     });
 
     it("revive => delete", () => {
-        const input = createReviveChangeset(0, 2, 0, tag);
-        const expected = createDeleteChangeset(0, 2);
+        const input = Change.revive(0, 2, 0, tag);
+        const expected = Change.delete(0, 2);
         const actual = shallowInvert(input);
         assert.deepEqual(actual, expected);
     });

@@ -10,14 +10,7 @@ import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import { checkDeltaEquality, composeAnonChanges, rebaseTagged } from "./utils";
-import {
-    cases,
-    createDeleteChangeset,
-    createInsertChangeset,
-    createModifyChangeset,
-    createReviveChangeset,
-    TestChangeset,
-} from "./testEdits";
+import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
 
 const tag1: RevisionTag = brand(41);
 const tag2: RevisionTag = brand(42);
@@ -48,9 +41,9 @@ describe("SequenceField - Rebase", () => {
     });
 
     it("modify ↷ modify", () => {
-        const change1 = createModifyChangeset(0, TestChange.mint([0], 1));
-        const change2 = createModifyChangeset(0, TestChange.mint([0], 2));
-        const expected = createModifyChangeset(0, TestChange.mint([0, 1], 2));
+        const change1 = Change.modify(0, TestChange.mint([0], 1));
+        const change2 = Change.modify(0, TestChange.mint([0], 2));
+        const expected = Change.modify(0, TestChange.mint([0, 1], 2));
         const actual = rebase(change2, change1);
         assert.deepEqual(actual, expected);
     });
@@ -72,14 +65,14 @@ describe("SequenceField - Rebase", () => {
 
     it("revive ↷ modify", () => {
         const revive = composeAnonChanges([
-            createReviveChangeset(0, 2, 0, tag1),
-            createReviveChangeset(4, 2, 2, tag1),
-            createReviveChangeset(10, 2, 4, tag1),
+            Change.revive(0, 2, 0, tag1),
+            Change.revive(4, 2, 2, tag1),
+            Change.revive(10, 2, 4, tag1),
         ]);
         const mods = composeAnonChanges([
-            createModifyChangeset(0, TestChange.mint([0], 1)),
-            createModifyChangeset(3, TestChange.mint([0], 2)),
-            createModifyChangeset(8, TestChange.mint([0], 3)),
+            Change.modify(0, TestChange.mint([0], 1)),
+            Change.modify(3, TestChange.mint([0], 2)),
+            Change.modify(8, TestChange.mint([0], 3)),
         ]);
         const actual = rebase(revive, mods);
         assert.deepEqual(actual, revive);
@@ -87,106 +80,106 @@ describe("SequenceField - Rebase", () => {
 
     it("modify ↷ delete", () => {
         const mods = composeAnonChanges([
-            createModifyChangeset(0, TestChange.mint([0], 1)),
-            createModifyChangeset(3, TestChange.mint([0], 2)),
-            createModifyChangeset(8, TestChange.mint([0], 3)),
+            Change.modify(0, TestChange.mint([0], 1)),
+            Change.modify(3, TestChange.mint([0], 2)),
+            Change.modify(8, TestChange.mint([0], 3)),
         ]);
-        const deletion = createDeleteChangeset(1, 3);
+        const deletion = Change.delete(1, 3);
         const actual = rebase(mods, deletion);
         const expected = composeAnonChanges([
             // Modify at an earlier index is unaffected by a delete at a later index
-            createModifyChangeset(0, TestChange.mint([0], 1)),
+            Change.modify(0, TestChange.mint([0], 1)),
             // Modify as the same index as a delete is muted by the delete
             // Modify at a later index moves to an earlier index due to a delete at an earlier index
-            createModifyChangeset(5, TestChange.mint([0], 3)),
+            Change.modify(5, TestChange.mint([0], 3)),
         ]);
         assert.deepEqual(actual, expected);
     });
 
     it("insert ↷ delete", () => {
         const insert = composeAnonChanges([
-            createInsertChangeset(0, 1, 1),
-            createInsertChangeset(3, 1, 2),
-            createInsertChangeset(8, 1, 3),
+            Change.insert(0, 1, 1),
+            Change.insert(3, 1, 2),
+            Change.insert(8, 1, 3),
         ]);
-        const deletion = createDeleteChangeset(1, 3);
+        const deletion = Change.delete(1, 3);
         const actual = rebase(insert, deletion);
         const expected = composeAnonChanges([
             // Earlier insert is unaffected
-            createInsertChangeset(0, 1, 1),
+            Change.insert(0, 1, 1),
             // Overlapping insert has its index reduced
-            createInsertChangeset(2, 1, 2),
+            Change.insert(2, 1, 2),
             // Later insert has its index reduced
-            createInsertChangeset(5, 1, 3),
+            Change.insert(5, 1, 3),
         ]);
         assert.deepEqual(actual, expected);
     });
 
     it("revive ↷ delete", () => {
         const revive = composeAnonChanges([
-            createReviveChangeset(0, 1, 0, tag1),
-            createReviveChangeset(3, 1, 1, tag1),
-            createReviveChangeset(8, 1, 2, tag1),
+            Change.revive(0, 1, 0, tag1),
+            Change.revive(3, 1, 1, tag1),
+            Change.revive(8, 1, 2, tag1),
         ]);
-        const deletion = createDeleteChangeset(1, 3);
+        const deletion = Change.delete(1, 3);
         const actual = rebase(revive, deletion);
         const expected = composeAnonChanges([
             // Earlier revive is unaffected
-            createReviveChangeset(0, 1, 0, tag1),
+            Change.revive(0, 1, 0, tag1),
             // Overlapping revive has its index reduced
-            createReviveChangeset(2, 1, 1, tag1),
+            Change.revive(2, 1, 1, tag1),
             // Later revive has its index reduced
-            createReviveChangeset(5, 1, 2, tag1),
+            Change.revive(5, 1, 2, tag1),
         ]);
         assert.deepEqual(actual, expected);
     });
 
     it("delete ↷ overlapping delete", () => {
         // Deletes ---DEFGH--
-        const deleteA = createDeleteChangeset(3, 5);
+        const deleteA = Change.delete(3, 5);
         // Deletes --CD-F-HI
         const deleteB = composeAnonChanges([
-            createDeleteChangeset(2, 2),
-            createDeleteChangeset(3, 1),
-            createDeleteChangeset(4, 2),
+            Change.delete(2, 2),
+            Change.delete(3, 1),
+            Change.delete(4, 2),
         ]);
         const actual = rebase(deleteA, deleteB);
         // Deletes --E-G
-        const expected = createDeleteChangeset(2, 2);
+        const expected = Change.delete(2, 2);
         assert.deepEqual(actual, expected);
     });
 
     it("delete ↷ earlier delete", () => {
         // Deletes ---DE
-        const deleteA = createDeleteChangeset(3, 2);
+        const deleteA = Change.delete(3, 2);
         // Deletes AB--
-        const deleteB = createDeleteChangeset(0, 2);
+        const deleteB = Change.delete(0, 2);
         const actual = rebase(deleteA, deleteB);
         // Deletes -DE
-        const expected = createDeleteChangeset(1, 2);
+        const expected = Change.delete(1, 2);
         assert.deepEqual(actual, expected);
     });
 
     it("delete ↷ later delete", () => {
         // Deletes AB--
-        const deleteA = createDeleteChangeset(0, 2);
+        const deleteA = Change.delete(0, 2);
         // Deletes ---DE
-        const deleteB = createDeleteChangeset(2, 2);
+        const deleteB = Change.delete(2, 2);
         const actual = rebase(deleteA, deleteB);
         assert.deepEqual(actual, deleteA);
     });
 
     it("modify ↷ insert", () => {
         const mods = composeAnonChanges([
-            createModifyChangeset(0, TestChange.mint([0], 1)),
-            createModifyChangeset(3, TestChange.mint([0], 2)),
+            Change.modify(0, TestChange.mint([0], 1)),
+            Change.modify(3, TestChange.mint([0], 2)),
         ]);
-        const insert = createInsertChangeset(2, 1, 2);
+        const insert = Change.insert(2, 1, 2);
         const expected = composeAnonChanges([
             // Modify at earlier index is unaffected
-            createModifyChangeset(0, TestChange.mint([0], 1)),
+            Change.modify(0, TestChange.mint([0], 1)),
             // Modify at later index has its index increased
-            createModifyChangeset(4, TestChange.mint([0], 2)),
+            Change.modify(4, TestChange.mint([0], 2)),
         ]);
         const actual = rebase(mods, insert);
         assert.deepEqual(actual, expected);
@@ -195,67 +188,61 @@ describe("SequenceField - Rebase", () => {
     it("delete ↷ insert", () => {
         // Deletes A-CD-E
         const deletion = composeAnonChanges([
-            createDeleteChangeset(0, 1),
-            createDeleteChangeset(1, 2),
-            createDeleteChangeset(2, 1),
+            Change.delete(0, 1),
+            Change.delete(1, 2),
+            Change.delete(2, 1),
         ]);
         // Inserts between C and D
-        const insert = createInsertChangeset(3, 1, 2);
+        const insert = Change.insert(3, 1, 2);
         const expected = composeAnonChanges([
             // Delete with earlier index is unaffected
-            createDeleteChangeset(0, 1),
+            Change.delete(0, 1),
             // Delete at overlapping index is split
-            createDeleteChangeset(1, 1),
-            createDeleteChangeset(2, 1),
+            Change.delete(1, 1),
+            Change.delete(2, 1),
             // Delete at later index has its index increased
-            createDeleteChangeset(3, 1),
+            Change.delete(3, 1),
         ]);
         const actual = rebase(deletion, insert);
         assert.deepEqual(actual, expected);
     });
 
     it("insert ↷ insert", () => {
-        const insertA = composeAnonChanges([
-            createInsertChangeset(0, 1, 1),
-            createInsertChangeset(3, 1, 2),
-        ]);
-        const insertB = createInsertChangeset(1, 1, 3);
+        const insertA = composeAnonChanges([Change.insert(0, 1, 1), Change.insert(3, 1, 2)]);
+        const insertB = Change.insert(1, 1, 3);
         const actual = rebase(insertA, insertB);
-        const expected = composeAnonChanges([
-            createInsertChangeset(0, 1, 1),
-            createInsertChangeset(4, 1, 2),
-        ]);
+        const expected = composeAnonChanges([Change.insert(0, 1, 1), Change.insert(4, 1, 2)]);
         assert.deepEqual(actual, expected);
     });
 
     it("revive ↷ insert", () => {
         const revive = composeAnonChanges([
-            createReviveChangeset(0, 1, 0, tag1),
-            createReviveChangeset(3, 2, 1, tag1),
-            createReviveChangeset(7, 1, 3, tag1),
+            Change.revive(0, 1, 0, tag1),
+            Change.revive(3, 2, 1, tag1),
+            Change.revive(7, 1, 3, tag1),
         ]);
         // TODO: test both tiebreak policies
-        const insert = createInsertChangeset(2, 1);
+        const insert = Change.insert(2, 1);
         const actual = rebase(revive, insert);
         const expected = composeAnonChanges([
-            createReviveChangeset(0, 1, 0, tag1),
-            createReviveChangeset(3, 2, 1, tag1),
-            createReviveChangeset(8, 1, 3, tag1),
+            Change.revive(0, 1, 0, tag1),
+            Change.revive(3, 2, 1, tag1),
+            Change.revive(8, 1, 3, tag1),
         ]);
         assert.deepEqual(actual, expected);
     });
 
     it("modify ↷ revive", () => {
         const mods = composeAnonChanges([
-            createModifyChangeset(0, TestChange.mint([0], 1)),
-            createModifyChangeset(3, TestChange.mint([0], 2)),
+            Change.modify(0, TestChange.mint([0], 1)),
+            Change.modify(3, TestChange.mint([0], 2)),
         ]);
-        const revive = createReviveChangeset(2, 1, 0, tag1);
+        const revive = Change.revive(2, 1, 0, tag1);
         const expected = composeAnonChanges([
             // Modify at earlier index is unaffected
-            createModifyChangeset(0, TestChange.mint([0], 1)),
+            Change.modify(0, TestChange.mint([0], 1)),
             // Modify at later index has its index increased
-            createModifyChangeset(4, TestChange.mint([0], 2)),
+            Change.modify(4, TestChange.mint([0], 2)),
         ]);
         const actual = rebase(mods, revive);
         assert.deepEqual(actual, expected);
@@ -264,52 +251,46 @@ describe("SequenceField - Rebase", () => {
     it("delete ↷ revive", () => {
         // Deletes A-CD-E
         const deletion = composeAnonChanges([
-            createDeleteChangeset(0, 1),
-            createDeleteChangeset(1, 2),
-            createDeleteChangeset(2, 1),
+            Change.delete(0, 1),
+            Change.delete(1, 2),
+            Change.delete(2, 1),
         ]);
         // Revives content between C and D
-        const revive = createReviveChangeset(3, 1, 0, tag1);
+        const revive = Change.revive(3, 1, 0, tag1);
         const expected = composeAnonChanges([
             // Delete with earlier index is unaffected
-            createDeleteChangeset(0, 1),
+            Change.delete(0, 1),
             // Delete at overlapping index is split
-            createDeleteChangeset(1, 1),
-            createDeleteChangeset(2, 1),
+            Change.delete(1, 1),
+            Change.delete(2, 1),
             // Delete at later index has its index increased
-            createDeleteChangeset(3, 1),
+            Change.delete(3, 1),
         ]);
         const actual = rebase(deletion, revive);
         assert.deepEqual(actual, expected);
     });
 
     it("insert ↷ revive", () => {
-        const insert = composeAnonChanges([
-            createInsertChangeset(0, 1, 1),
-            createInsertChangeset(3, 1, 2),
-        ]);
-        const revive = createReviveChangeset(1, 1, 0, tag1);
+        const insert = composeAnonChanges([Change.insert(0, 1, 1), Change.insert(3, 1, 2)]);
+        const revive = Change.revive(1, 1, 0, tag1);
         const actual = rebase(insert, revive);
-        const expected = composeAnonChanges([
-            createInsertChangeset(0, 1, 1),
-            createInsertChangeset(4, 1, 2),
-        ]);
+        const expected = composeAnonChanges([Change.insert(0, 1, 1), Change.insert(4, 1, 2)]);
         assert.deepEqual(actual, expected);
     });
 
     it("revive ↷ different revive", () => {
         const reviveA = composeAnonChanges([
-            createReviveChangeset(0, 1, 0, tag1),
-            createReviveChangeset(3, 2, 1, tag1),
-            createReviveChangeset(7, 1, 3, tag1),
+            Change.revive(0, 1, 0, tag1),
+            Change.revive(3, 2, 1, tag1),
+            Change.revive(7, 1, 3, tag1),
         ]);
-        const reviveB = createReviveChangeset(2, 1, 0, tag2);
+        const reviveB = Change.revive(2, 1, 0, tag2);
         const actual = rebase(reviveA, reviveB);
         // TODO: test cases for both ordering of revived data
         const expected = composeAnonChanges([
-            createReviveChangeset(0, 1, 0, tag1),
-            createReviveChangeset(3, 2, 1, tag1),
-            createReviveChangeset(8, 1, 3, tag1),
+            Change.revive(0, 1, 0, tag1),
+            Change.revive(3, 2, 1, tag1),
+            Change.revive(8, 1, 3, tag1),
         ]);
         assert.deepEqual(actual, expected);
     });
@@ -317,40 +298,40 @@ describe("SequenceField - Rebase", () => {
     // TODO: update rebase to detect overlap of revives
     it.skip("revive ↷ same revive", () => {
         const reviveA = composeAnonChanges([
-            createReviveChangeset(0, 1, 0, tag1),
-            createReviveChangeset(2, 2, 1, tag1),
-            createReviveChangeset(4, 1, 3, tag1),
+            Change.revive(0, 1, 0, tag1),
+            Change.revive(2, 2, 1, tag1),
+            Change.revive(4, 1, 3, tag1),
         ]);
-        const reviveB = createReviveChangeset(2, 1, 1, tag1);
+        const reviveB = Change.revive(2, 1, 1, tag1);
         const actual = rebase(reviveA, reviveB);
         const expected = composeAnonChanges([
-            createReviveChangeset(0, 1, 0, tag1),
-            createReviveChangeset(2, 1, 2, tag1),
-            createReviveChangeset(5, 1, 3, tag1),
+            Change.revive(0, 1, 0, tag1),
+            Change.revive(2, 1, 2, tag1),
+            Change.revive(5, 1, 3, tag1),
         ]);
         assert.deepEqual(actual, expected);
     });
 
     it("concurrent inserts ↷ delete", () => {
-        const delA = tagChange(createDeleteChangeset(0, 1), brand(1));
-        const insertB = tagChange(createInsertChangeset(0, 1), brand(2));
-        const insertC = tagChange(createInsertChangeset(1, 1), brand(3));
+        const delA = tagChange(Change.delete(0, 1), brand(1));
+        const insertB = tagChange(Change.insert(0, 1), brand(2));
+        const insertC = tagChange(Change.insert(1, 1), brand(3));
         const insertB2 = rebaseTagged(insertB, delA);
         const insertC2 = rebaseTagged(insertC, delA, insertB2);
-        const expected = createInsertChangeset(1, 1);
+        const expected = Change.insert(1, 1);
         checkDeltaEquality(insertC2.change, expected);
     });
 
     it("concurrent inserts ↷ connected delete", () => {
-        const delA = tagChange(createDeleteChangeset(0, 1), brand(1));
-        const delB = tagChange(createDeleteChangeset(1, 1), brand(2));
-        const delC = tagChange(createDeleteChangeset(0, 1), brand(3));
+        const delA = tagChange(Change.delete(0, 1), brand(1));
+        const delB = tagChange(Change.delete(1, 1), brand(2));
+        const delC = tagChange(Change.delete(0, 1), brand(3));
 
-        const insertD = tagChange(createInsertChangeset(0, 1), brand(4));
-        const insertE = tagChange(createInsertChangeset(3, 1), brand(5));
+        const insertD = tagChange(Change.insert(0, 1), brand(4));
+        const insertE = tagChange(Change.insert(3, 1), brand(5));
         const insertD2 = rebaseTagged(insertD, delA, delB, delC);
         const insertE2 = rebaseTagged(insertE, delA, delB, delC, insertD2);
-        const expected = createInsertChangeset(1, 1);
+        const expected = Change.insert(1, 1);
         checkDeltaEquality(insertE2.change, expected);
     });
 });

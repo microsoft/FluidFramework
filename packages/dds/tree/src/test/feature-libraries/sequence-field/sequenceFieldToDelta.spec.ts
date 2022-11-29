@@ -18,13 +18,7 @@ import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand, brandOpaque, makeArray } from "../../../util";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze, noRepair } from "../../utils";
-import {
-    createDeleteChangeset,
-    createInsertChangeset,
-    createModifyChangeset,
-    createReviveChangeset,
-    TestChangeset,
-} from "./testEdits";
+import { ChangeMaker as Change, TestChangeset } from "./testEdits";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const nodeX = { type, value: 0 };
@@ -62,7 +56,7 @@ describe("SequenceField - toDelta", () => {
     });
 
     it("child change", () => {
-        const actual = toDelta(createModifyChangeset(0, TestChange.mint([0], 1)));
+        const actual = toDelta(Change.modify(0, TestChange.mint([0], 1)));
         const expected: Delta.MarkList = [
             {
                 type: Delta.MarkType.Modify,
@@ -85,13 +79,13 @@ describe("SequenceField - toDelta", () => {
     });
 
     it("empty child change", () => {
-        const actual = toDelta(createModifyChangeset(0, TestChange.emptyChange));
+        const actual = toDelta(Change.modify(0, TestChange.emptyChange));
         const expected: Delta.MarkList = [];
         assert.deepEqual(actual, expected);
     });
 
     it("insert", () => {
-        const changeset = createInsertChangeset(0, 1);
+        const changeset = Change.insert(0, 1);
         const mark: Delta.Insert = {
             type: Delta.MarkType.Insert,
             content: contentCursor,
@@ -102,7 +96,7 @@ describe("SequenceField - toDelta", () => {
     });
 
     it("revive => insert", () => {
-        const changeset = createReviveChangeset(0, 1, 0, tag);
+        const changeset = Change.revive(0, 1, 0, tag);
         function reviver(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] {
             assert.equal(revision, tag);
             assert.equal(index, 0);
@@ -154,7 +148,7 @@ describe("SequenceField - toDelta", () => {
     });
 
     it("delete", () => {
-        const changeset = createDeleteChangeset(0, 10);
+        const changeset = Change.delete(0, 10);
         const mark: Delta.Delete = {
             type: Delta.MarkType.Delete,
             count: 10,
@@ -196,9 +190,9 @@ describe("SequenceField - toDelta", () => {
     it("multiple changes", () => {
         const changeset = SF.sequenceFieldChangeRebaser.compose(
             [
-                makeAnonChange(createDeleteChangeset(0, 10)),
-                makeAnonChange(createInsertChangeset(3, 1)),
-                makeAnonChange(createModifyChangeset(5, TestChange.mint([0], 1))),
+                makeAnonChange(Change.delete(0, 10)),
+                makeAnonChange(Change.insert(3, 1)),
+                makeAnonChange(Change.modify(5, TestChange.mint([0], 1))),
             ],
             TestChange.compose,
         );
@@ -222,8 +216,8 @@ describe("SequenceField - toDelta", () => {
     it("insert and modify => insert", () => {
         const changeset = SF.sequenceFieldChangeRebaser.compose(
             [
-                makeAnonChange(createInsertChangeset(0, 1)),
-                makeAnonChange(createModifyChangeset(0, TestChange.mint([0], 1))),
+                makeAnonChange(Change.insert(0, 1)),
+                makeAnonChange(Change.modify(0, TestChange.mint([0], 1))),
             ],
             TestChange.compose,
         );
@@ -244,8 +238,8 @@ describe("SequenceField - toDelta", () => {
     it("modify and delete => delete", () => {
         const changeset = SF.sequenceFieldChangeRebaser.compose(
             [
-                makeAnonChange(createModifyChangeset(0, TestChange.mint([0], 1))),
-                makeAnonChange(createDeleteChangeset(0, 1)),
+                makeAnonChange(Change.modify(0, TestChange.mint([0], 1))),
+                makeAnonChange(Change.delete(0, 1)),
             ],
             TestChange.compose,
         );

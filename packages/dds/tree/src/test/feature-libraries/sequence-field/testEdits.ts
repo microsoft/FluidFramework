@@ -36,7 +36,7 @@ export const cases: {
     revive: createReviveChangeset(2, 2, 0, tag),
 };
 
-export function createInsertChangeset(
+function createInsertChangeset(
     index: number,
     size: number,
     startingValue: number = 0,
@@ -48,11 +48,11 @@ export function createInsertChangeset(
     return SF.sequenceFieldEditor.insert(index, content.map(singleTextCursor));
 }
 
-export function createDeleteChangeset(startIndex: number, size: number): SF.Changeset<never> {
+function createDeleteChangeset(startIndex: number, size: number): SF.Changeset<never> {
     return SF.sequenceFieldEditor.delete(startIndex, size);
 }
 
-export function createReviveChangeset(
+function createReviveChangeset(
     startIndex: number,
     count: number,
     detachIndex: number,
@@ -61,9 +61,16 @@ export function createReviveChangeset(
     return SF.sequenceFieldEditor.revive(startIndex, count, detachIndex, revision);
 }
 
-export function createModifyChangeset<TNodeChange>(
+function createModifyChangeset<TNodeChange>(
     index: number,
     change: TNodeChange,
 ): SF.Changeset<TNodeChange> {
     return SF.sequenceFieldEditor.buildChildChange(index, change);
 }
+
+export const ChangeMaker = {
+    insert: createInsertChangeset,
+    delete: createDeleteChangeset,
+    revive: createReviveChangeset,
+    modify: createModifyChangeset,
+};
