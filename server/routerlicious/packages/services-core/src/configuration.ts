@@ -61,6 +61,20 @@ export interface IDeliCheckpointHeuristicsServerConfiguration {
     maxMessages: number;
 }
 
+export interface IScribeCheckpointHeuristicsServerConfiguration {
+    // Enables checkpointing based on the heuristics
+    enable: boolean;
+
+    // Checkpoint after not processing any messages after this amount of time
+    idleTime: number;
+
+    // Checkpoint if there hasn't been a checkpoint for this amount of time
+    maxTime: number;
+
+    // Checkpoint after processing this amount of messages since the last checkpoint
+    maxMessages: number;
+}
+
 export interface IDeliOpEventServerConfiguration {
     // Enables emitting events based on the heuristics
     enable: boolean;
@@ -93,6 +107,9 @@ export interface IScribeServerConfiguration {
 
     // Enables writing a summary nack when an exception occurs during summary creation
     ignoreStorageException: boolean;
+
+    // Controls how often scribe should checkpoint
+    scribeCheckpointHeuristics: IScribeCheckpointHeuristicsServerConfiguration;
 }
 
 export interface IDeliSummaryNackMessagesServerConfiguration {
@@ -208,6 +225,12 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         enablePendingCheckpointMessages: true,
         clearCacheAfterServiceSummary: false,
         ignoreStorageException: false,
+        scribeCheckpointHeuristics: {
+            enable: false,
+            idleTime: 10 * 1000,
+            maxTime: 1 * 60 * 1000,
+            maxMessages: 500,
+        },
     },
     moira: {
         enable: false,
