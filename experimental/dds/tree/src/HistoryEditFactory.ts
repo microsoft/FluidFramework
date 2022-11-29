@@ -16,6 +16,7 @@ import {
 	BuildNodeInternal,
 	Side,
 	StableRangeInternal,
+	EditStatus,
 } from './persisted-types';
 import { TransactionInternal } from './TransactionInternal';
 import { RangeValidationResultKind, validateStableRange } from './EditUtilities';
@@ -168,8 +169,10 @@ export function revert(
 				fail('Revert does not support the change type.');
 		}
 
-		// Update the revision
-		editor.applyChange(change);
+		// Abort the entire revert if this change can't be applied successfully.
+		if (editor.applyChange(change).status !== EditStatus.Applied) {
+			return undefined;
+		}
 	}
 
 	editor.close();

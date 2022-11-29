@@ -32,7 +32,8 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
     static flags = {
         dir: Flags.directory({
             char: "d",
-            description: "Run on the package in this directory.",
+            description:
+                "Run on the package in this directory. Cannot be used with --releaseGroup or --packages.",
             exclusive: ["packages", "releaseGroup"],
         }),
         packages: Flags.boolean({
@@ -42,7 +43,8 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
             exclusive: ["dir", "releaseGroup"],
         }),
         releaseGroup: releaseGroupFlag({
-            description: "Run on all packages within this release group.",
+            description:
+                "Run on all packages within this release group. Cannot be used with --dir or --packages.",
             exclusive: ["dir", "packages"],
         }),
         prepare: Flags.boolean({
@@ -54,11 +56,18 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
             description: "Generates tests only. Doesn't prepare the package.json.",
             exclusive: ["prepare"],
         }),
+        reset: Flags.boolean({
+            description:
+                "Resets the broken type test settings in package.json. Only applies to the prepare phase.",
+            exclusive: ["generate"],
+        }),
         versionConstraint: Flags.string({
             char: "s",
-            description: `The type of version constraint to use for previous versions. Only applies to the prepare phase. This overrides the branch-specific configuration in package.json, which is used by default.
+            description: `The type of version constraint to use for previous versions. This overrides the branch-specific configuration in package.json, which is used by default.
 
-                For more information about the options, see https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/typetestDetails.md#configuring-a-branch-for-a-specific-baseline\n`,
+                For more information about the options, see https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/typetestDetails.md#configuring-a-branch-for-a-specific-baseline
+
+                Cannot be used with --dir or --packages.\n`,
             options: [
                 "^previousMajor",
                 "^previousMinor",
@@ -72,23 +81,25 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
                 "~baseMinor",
             ],
         }),
-        pin: Flags.boolean({
-            description: `Searches the release git tags in the repo and selects the baseline version as the maximum
-            eleased version that matches the range.
+        branch: Flags.string({
+            char: "b",
+            description: `Use the specified branch name to determine the version constraint to use for previous versions, rather than using the current branch name.
 
-            This effectively pins the version to a specific version while allowing it to be updated manually as
-            needed by running type test preparation again.`,
-            default: false,
+            The version constraint used will still be loaded from branch configuration; this flag only controls which branch's settings are used.`,
+            exclusive: ["versionConstraint"],
         }),
         exact: Flags.string({
             description:
                 "An exact string to use as the previous version constraint. The string will be used as-is. Only applies to the prepare phase.",
             exclusive: ["generate", "versionConstraint"],
         }),
-        reset: Flags.boolean({
-            description:
-                "Resets the broken type test settings in package.json. Only applies to the prepare phase.",
-            exclusive: ["generate"],
+        pin: Flags.boolean({
+            description: `Searches the release git tags in the repo and selects the baseline version as the maximum
+            released version that matches the range.
+
+            This effectively pins the version to a specific version while allowing it to be updated manually as
+            needed by running type test preparation again.`,
+            default: false,
         }),
         generateInName: Flags.boolean({
             description: "Includes .generated in the generated type test filenames.",
@@ -213,9 +224,11 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
                             packageDir,
                             /* writeUpdates */ runPrepare,
                             flags.versionConstraint as PreviousVersionStyle | undefined,
+                            flags.branch,
                             flags.exact,
                             flags.reset,
                             flags.pin,
+                            this.logger,
                         ).finally(() => output.push(`Loaded(${Date.now() - start}ms)`));
 
                         if (packageData.skipReason !== undefined) {

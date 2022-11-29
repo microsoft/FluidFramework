@@ -11,6 +11,7 @@ import {
     RevisionTag,
     TransactionResult,
     tagChange,
+    makeAnonChange,
 } from "../core";
 import { brand } from "../util";
 import { ForestRepairDataStore } from "./forestRepairDataStore";
@@ -57,7 +58,7 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
     }
 
     if (result === TransactionResult.Apply) {
-        const edit = changeFamily.rebaser.compose(changes);
+        const edit = changeFamily.rebaser.compose(changes.map((c) => makeAnonChange(c)));
         submitEdit(edit);
     }
 
