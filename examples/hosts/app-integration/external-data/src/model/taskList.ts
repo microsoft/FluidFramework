@@ -48,7 +48,7 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 /**
  * Persisted form of task data stored in root {@link @fluidframework/map#SharedDirectory}.
  */
-interface IPersistedTask {
+interface PersistedTask {
     id: string;
     name: IFluidHandle<SharedString>;
     priority: IFluidHandle<ISharedCell<number>>;
@@ -79,7 +79,7 @@ export class TaskList extends DataObject implements ITaskList {
         // To add a task, we update the root SharedDirectory.  This way the change is propagated to all collaborators
         // and persisted.  In turn, this will trigger the "valueChanged" event and handleTaskAdded which will update
         // the this.tasks collection.
-        const data: IPersistedTask = {
+        const data: PersistedTask = {
             id,
             name: nameString.handle as IFluidHandle<SharedString>,
             priority: priorityCell.handle as IFluidHandle<ISharedCell<number>>,
@@ -130,7 +130,7 @@ export class TaskList extends DataObject implements ITaskList {
     };
 
     private readonly handleTaskAdded = async (id: string): Promise<void> => {
-        const taskData = this.root.get(id) as IPersistedTask;
+        const taskData = this.root.get(id) as PersistedTask;
         if (taskData === undefined) {
             throw new Error("Newly added task is missing from map.");
         }
@@ -235,7 +235,7 @@ export class TaskList extends DataObject implements ITaskList {
         });
 
         for (const [id, taskData] of this.root) {
-            const typedTaskData = taskData as IPersistedTask;
+            const typedTaskData = taskData as PersistedTask;
             const [nameSharedString, prioritySharedCell] = await Promise.all([
                 typedTaskData.name.get(),
                 typedTaskData.priority.get(),
