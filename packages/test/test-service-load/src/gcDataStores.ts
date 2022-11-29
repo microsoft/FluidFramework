@@ -79,7 +79,7 @@ abstract class BaseDataObject extends DataObject {
 
 /**
  * Data object that should be the leaf in the data object hierarchy. It does not create any data stores but simply
- * sends ops at a regular interval by incementing a counter.
+ * sends ops at a regular interval by incrementing a counter.
  */
 export class DataObjectLeaf extends BaseDataObject implements IGCDataStore {
     public static get type(): string {
@@ -177,7 +177,6 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
 
     private readonly unreferencedChildrenDetails: IUnreferencedChildDetails[] = [];
     private readonly referencedChildrenDetails: IChildDetails[] = [];
-    private readonly inactiveChildrenDetails: IChildDetails[] = [];
 
     protected async initializingFirstTime(): Promise<void> {
         await super.initializingFirstTime();
@@ -189,6 +188,16 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
         const handle = this.root.get<IFluidHandle<SharedMap>>(this.childMapKey);
         assert(handle !== undefined, "The child map handle should exist on initialization");
         this._childMap = await handle.get();
+
+        // Initialize the referenced children list from the child map.
+        for (const childDetails of this._childMap) {
+            const childHandle = childDetails[1] as IFluidHandle<DataObjectLeaf>;
+            const child = await childHandle.get();
+            this.referencedChildrenDetails.push({
+                id: childDetails[0],
+                child,
+            });
+        }
     }
 
     public async run(config: IRunConfig, id?: string): Promise<boolean> {
@@ -230,7 +239,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
             // After every activityThresholdOpCount ops, perform an activity.
             if (localSendCount % activityThresholdOpCount === 0) {
                 console.log(
-                    `########## Child data store [${this.myId}]: ${localSendCount} / ${this.counter.value}`);
+                    `########## Child data store [${this.myId}]: ${localSendCount} / ${this.counter.value} / ${totalSendCount}`);
 
                 // We do no await for the activity because we want any child created to run asynchronously.
                 this.performActivity(config).then((done: boolean) => {
@@ -292,9 +301,9 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
                     break;
                 }
                 case GCActivityType.Revive: {
-                    const revivableChildDetails = this.getRevivableChild();
-                    if (revivableChildDetails !== undefined) {
-                        return this.reviveChild(revivableChildDetails);
+                    const nextUnreferencedChildDetails = this.unreferencedChildrenDetails.shift();
+                    if (nextUnreferencedChildDetails !== undefined) {
+                        return this.reviveChild(nextUnreferencedChildDetails);
                     }
                     break;
                 }
@@ -359,23 +368,6 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
         this.childMap.set(childDetails.id, childDetails.child.handle);
         this.referencedChildrenDetails.push(childDetails);
         return childDetails.child.run(this.childRunConfig, childDetails.id);
-    }
-
-    /**
-     * If there is a child that can be revived, returns its details. Otherwise, returns undefined.
-     * It also moves any expired child to the expired child list.
-     */
-    private getRevivableChild(): IUnreferencedChildDetails | undefined {
-        let childDetails = this.unreferencedChildrenDetails.shift();
-        while (childDetails !== undefined) {
-            if (Date.now() - childDetails.unreferencedTimestamp > (this.inactiveTimeoutMs)) {
-                this.inactiveChildrenDetails.push(childDetails);
-            } else {
-                break;
-            }
-            childDetails = this.unreferencedChildrenDetails.shift();
-        }
-        return childDetails;
     }
 }
 
