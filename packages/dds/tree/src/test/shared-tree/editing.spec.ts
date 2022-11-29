@@ -46,6 +46,37 @@ describe("Editing", () => {
 
             expectJsonTree([tree1, tree2], ["w", "x"]);
         });
+
+        it("does not interleave concurrent inserts", async () => {
+            const sequencer = new Sequencer();
+            const tree1 = TestTree.fromJson([]);
+            const tree2 = tree1.fork();
+            const tree3 = tree1.fork();
+            const tree4 = tree1.fork();
+
+            const a = insert(tree1, 0, "a");
+            const b = insert(tree1, 1, "b");
+            const c = insert(tree1, 2, "c");
+
+            const r = insert(tree2, 0, "r");
+            const s = insert(tree2, 1, "s");
+            const t = insert(tree2, 2, "t");
+
+            const x = insert(tree3, 0, "x");
+            const y = insert(tree3, 1, "y");
+            const z = insert(tree3, 2, "z");
+
+            const sequenced = sequencer.sequence([x, r, a, s, b, y, c, z, t]);
+            tree1.receive(sequenced);
+            tree2.receive(sequenced);
+            tree3.receive(sequenced);
+            tree4.receive(sequenced);
+
+            expectJsonTree(
+                [tree1, tree2, tree3, tree4],
+                ["a", "b", "c", "r", "s", "t", "x", "y", "z"],
+            );
+        });
     });
 });
 
