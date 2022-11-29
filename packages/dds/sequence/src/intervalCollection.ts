@@ -1734,7 +1734,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             throw new LoggingError("mergeTree client must exist");
         }
         const { clientId } = this.client.getCollabWindow();
-        const { segment, offset } = this.client.getContainingSegmentWithSeqNumber(pos, seqNumberFrom, clientId, localSeq);
+        const { segment, offset } = this.client.getContainingSegment(pos, undefined, localSeq, seqNumberFrom, clientId);
 
         // if segment is undefined, it slid off the string
         assert(segment !== undefined, "No segment found");

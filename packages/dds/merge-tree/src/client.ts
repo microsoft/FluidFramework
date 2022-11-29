@@ -1056,13 +1056,9 @@ export class Client {
         }
     }
 
-    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage, localSeq?: number, clientId?: number) {
+    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage, localSeq?: number, seqNumberFrom?: number, clientId?: number) {
         const args = this.getClientSequenceArgsForMessage(op);
-        return this._mergeTree.getContainingSegment<T>(pos, args.referenceSequenceNumber, clientId ?? args.clientId, localSeq);
-    }
-
-    getContainingSegmentWithSeqNumber<T extends ISegment>(pos: number, seqNumberFrom: number, clientId: number, localSeq: number) {
-        return this._mergeTree.getContainingSegment<T>(pos, seqNumberFrom, clientId, localSeq);
+        return this._mergeTree.getContainingSegment<T>(pos, seqNumberFrom ?? args.referenceSequenceNumber, clientId ?? args.clientId, localSeq);
     }
 
     /**
