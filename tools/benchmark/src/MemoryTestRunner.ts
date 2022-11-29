@@ -173,7 +173,7 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions {
 
 export function benchmarkMemory(testObject: IMemoryTestObject): Test {
     const options: Required<MemoryTestObjectProps> = {
-        maxBenchmarkDurationSeconds: testObject.maxBenchmarkDurationSeconds ?? 10,
+        maxBenchmarkDurationSeconds: testObject.maxBenchmarkDurationSeconds ?? 30,
         minSampleCount: testObject.minSampleCount ?? 50,
         maxRelativeMarginOfError: testObject.maxRelativeMarginOfError ?? 2.5,
         only: testObject.only ?? false,
