@@ -9,6 +9,7 @@ import merge from "lodash.merge";
 import { NpmPackageJsonLint } from "npm-package-json-lint";
 import { EOL as newline } from "os";
 import path from "path";
+import { stringify } from "querystring";
 import * as readline from "readline";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
@@ -597,11 +598,11 @@ export const handlers: Handler[] = [
                 return "Error parsing JSON file: " + file;
             }
 
-            const hasPrettierScript = Object.prototype.hasOwnProperty.call(json.scripts, "prettier");
-            const hasPrettierFixScript = Object.prototype.hasOwnProperty.call(
-                json,
-                "prettier:fix",
+            const hasPrettierScript = Object.prototype.hasOwnProperty.call(
+                json.scripts,
+                "prettier",
             );
+            const hasPrettierFixScript = Object.prototype.hasOwnProperty.call(json, "prettier:fix");
             const hasFormatScript = Object.prototype.hasOwnProperty.call(json, "format");
 
             if (!(hasPrettierScript && hasPrettierFixScript && hasFormatScript)) {
@@ -655,23 +656,21 @@ function addPrettier(
 ) {
     // if devDependencies does not exist in package.json
     if (jsonDevDependencies === undefined) {
-        json["devDependencies"] = {}
+        json["devDependencies"] = {};
     }
 
     // if scripts does not exist in package.json
     if (jsonScripts === undefined) {
-        json["scripts"] = {}
+        json["scripts"] = {};
     }
 
-
-    // update devDependencies "prettier" to latest version, intentionally left undefined
-    jsonDevDependencies["prettier"] = undefined;
+    // update devDependencies "prettier" to latest version, intentionally left empty
+    json["devDependencies"]["prettier"] = "";
 
     // update scripts
-    jsonScripts["format"] = "npm run prettier:fix";
-    jsonScripts["prettier"] = "prettier --check .";
-    jsonScripts["prettier:fix"] = "prettier --write .";
-
+    json["scripts"]["format"] = "npm run prettier:fix";
+    jsonScripts["scripts"]["prettier"] = "prettier --check .";
+    jsonScripts["scripts"]["prettier:fix"] = "prettier --write .";
 
     // package.json in root of the release-group should have lerna script
     if (jsonCheckRoot === "root") {
