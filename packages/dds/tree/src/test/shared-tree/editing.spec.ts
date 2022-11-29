@@ -47,7 +47,7 @@ describe("Editing", () => {
             expectJsonTree([tree1, tree2], ["w", "x"]);
         });
 
-        it("does not interleave concurrent inserts", async () => {
+        it("does not interleave concurrent left to right inserts", async () => {
             const sequencer = new Sequencer();
             const tree1 = TestTree.fromJson([]);
             const tree2 = tree1.fork();
@@ -67,6 +67,39 @@ describe("Editing", () => {
             const z = insert(tree3, 2, "z");
 
             const sequenced = sequencer.sequence([x, r, a, s, b, y, c, z, t]);
+            tree1.receive(sequenced);
+            tree2.receive(sequenced);
+            tree3.receive(sequenced);
+            tree4.receive(sequenced);
+
+            expectJsonTree(
+                [tree1, tree2, tree3, tree4],
+                ["a", "b", "c", "r", "s", "t", "x", "y", "z"],
+            );
+        });
+
+        // The current implementation orders the letters from inserted last to inserted first.
+        // TODO: address this scenario.
+        it.skip("does not interleave concurrent right to left inserts", async () => {
+            const sequencer = new Sequencer();
+            const tree1 = TestTree.fromJson([]);
+            const tree2 = tree1.fork();
+            const tree3 = tree1.fork();
+            const tree4 = tree1.fork();
+
+            const c = insert(tree1, 0, "c");
+            const b = insert(tree1, 0, "b");
+            const a = insert(tree1, 0, "a");
+
+            const t = insert(tree2, 0, "t");
+            const s = insert(tree2, 0, "s");
+            const r = insert(tree2, 0, "r");
+
+            const z = insert(tree3, 0, "z");
+            const y = insert(tree3, 0, "y");
+            const x = insert(tree3, 0, "x");
+
+            const sequenced = sequencer.sequence([z, t, c, s, b, y, a, x, r]);
             tree1.receive(sequenced);
             tree2.receive(sequenced);
             tree3.receive(sequenced);
