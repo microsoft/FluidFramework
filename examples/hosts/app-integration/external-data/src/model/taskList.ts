@@ -4,7 +4,7 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { SharedCell } from "@fluidframework/cell";
+import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
@@ -33,7 +33,7 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
     constructor(
         private readonly _id: string,
         private readonly _name: SharedString,
-        private readonly _priority: SharedCell<number>
+        private readonly _priority: ISharedCell<number>
     ) {
         super();
         this._name.on("sequenceDelta", () => {
@@ -51,7 +51,7 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 interface IPersistedTask {
     id: string;
     name: IFluidHandle<SharedString>;
-    priority: IFluidHandle<SharedCell<number>>;
+    priority: IFluidHandle<ISharedCell<number>>;
 }
 
 /**
@@ -73,7 +73,7 @@ export class TaskList extends DataObject implements ITaskList {
         }
         const nameString = SharedString.create(this.runtime);
         nameString.insertText(0, name);
-        const priorityCell = SharedCell.create(this.runtime) as SharedCell<number>;
+        const priorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
         priorityCell.set(priority);
 
         // To add a task, we update the root SharedDirectory.  This way the change is propagated to all collaborators
@@ -82,7 +82,7 @@ export class TaskList extends DataObject implements ITaskList {
         const data: IPersistedTask = {
             id,
             name: nameString.handle as IFluidHandle<SharedString>,
-            priority: priorityCell.handle as IFluidHandle<SharedCell<number>>,
+            priority: priorityCell.handle as IFluidHandle<ISharedCell<number>>,
         };
         this.root.set(id, data);
 
