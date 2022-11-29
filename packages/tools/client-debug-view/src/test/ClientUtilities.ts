@@ -138,6 +138,8 @@ export function initializeFluidClientDebugger(containerInfo: ContainerInfo): voi
 		container: containerInfo.container._getInternalContainer!(),
 		containerData: containerInfo.container.initialObjects,
 	});
+
+    return getFluidClientDebugger(containerInfo.containerId)!;
 	/* eslint-enable @typescript-eslint/no-non-null-assertion */
 }
 
