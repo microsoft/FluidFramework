@@ -13,6 +13,7 @@ import {
     TaggedChange,
     RevisionTag,
     ITreeCursorSynchronous,
+    tagChange,
 } from "../core";
 import { brand, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
@@ -99,7 +100,6 @@ export function lastWriteWinsRebaser<TChange>(data: {
 }): FieldChangeRebaser<TChange> {
     const compose = (changes: TChange[]) =>
         changes.length >= 0 ? changes[changes.length - 1] : data.noop;
-
     const rebase = (change: TChange, _over: TChange) => change;
     return referenceFreeFieldChangeRebaser({ ...data, compose, rebase });
 }
@@ -117,21 +117,17 @@ export type ReplaceOp<T> = Replacement<T> | 0;
  * Consistent if used on valid paths with correct old states.
  */
 export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
-    return {
-        rebase: (
-            change: ReplaceOp<T>,
-            over: TaggedChange<ReplaceOp<T>>,
-            rebaseChild: NodeChangeRebaser,
-        ) => {
+    return referenceFreeFieldChangeRebaser({
+        rebase: (change: ReplaceOp<T>, over: ReplaceOp<T>) => {
             if (change === 0) {
                 return 0;
             }
-            if (over.change === 0) {
+            if (over === 0) {
                 return change;
             }
-            return { old: over.change.new, new: change.new };
+            return { old: over.new, new: change.new };
         },
-        compose: (changes: ReplaceOp<T>[], composeChild: NodeChangeComposer) => {
+        compose: (changes: ReplaceOp<T>[]) => {
             const f = changes.filter((c): c is Replacement<T> => c !== 0);
             if (f.length === 0) {
                 return 0;
@@ -141,11 +137,10 @@ export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
             }
             return { old: f[0].old, new: f[f.length - 1].new };
         },
-        invert: (change: TaggedChange<ReplaceOp<T>>, invertChild: NodeChangeInverter) => {
-            const changes = change.change;
+        invert: (changes: ReplaceOp<T>) => {
             return changes === 0 ? 0 : { old: changes.new, new: changes.old };
         },
-    };
+    });
 }
 
 /**
@@ -153,9 +148,9 @@ export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
  */
 export const noChangeHandler: FieldChangeHandler<0> = {
     rebaser: referenceFreeFieldChangeRebaser({
-        compose: (changes: 0[], composeChild: NodeChangeComposer) => 0,
-        invert: (changes: 0, invertChild: NodeChangeInverter) => 0,
-        rebase: (change: 0, over: 0, rebaseChild: NodeChangeRebaser) => 0,
+        compose: (changes: 0[]) => 0,
+        invert: (changes: 0) => 0,
+        rebase: (change: 0, over: 0) => 0,
     }),
     encoder: new UnitEncoder(),
     editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
@@ -230,13 +225,16 @@ export interface ValueChangeset {
 }
 
 const valueRebaser: FieldChangeRebaser<ValueChangeset> = {
-    compose: (changes: ValueChangeset[], composeChildren: NodeChangeComposer): ValueChangeset => {
+    compose: (
+        changes: TaggedChange<ValueChangeset>[],
+        composeChildren: NodeChangeComposer,
+    ): ValueChangeset => {
         if (changes.length === 0) {
             return {};
         }
         let newValue: NodeUpdate | undefined;
-        const childChanges: NodeChangeset[] = [];
-        for (const change of changes) {
+        const childChanges: TaggedChange<NodeChangeset>[] = [];
+        for (const { change, revision } of changes) {
             if (change.value !== undefined) {
                 newValue = change.value;
 
@@ -246,7 +244,7 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = {
             }
 
             if (change.changes !== undefined) {
-                childChanges.push(change.changes);
+                childChanges.push(tagChange(change.changes, revision));
             }
         }
 
@@ -433,12 +431,12 @@ export interface OptionalChangeset {
 
 const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
     compose: (
-        changes: OptionalChangeset[],
+        changes: TaggedChange<OptionalChangeset>[],
         composeChild: NodeChangeComposer,
     ): OptionalChangeset => {
         let fieldChange: OptionalFieldChange | undefined;
-        const childChanges: NodeChangeset[] = [];
-        for (const change of changes) {
+        const childChanges: TaggedChange<NodeChangeset>[] = [];
+        for (const { change, revision } of changes) {
             if (change.fieldChange !== undefined) {
                 if (fieldChange === undefined) {
                     fieldChange = { wasEmpty: change.fieldChange.wasEmpty };
@@ -455,7 +453,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
                 childChanges.length = 0;
             }
             if (change.childChange !== undefined) {
-                childChanges.push(change.childChange);
+                childChanges.push(tagChange(change.childChange, revision));
             }
         }
 
