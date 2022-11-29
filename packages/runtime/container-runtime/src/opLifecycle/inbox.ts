@@ -51,7 +51,7 @@ export class Inbox {
             return maybeDecompressedResult.message;
         }
 
-        return this.opUnpacker.processRemoteMessage(maybeDecompressedResult.message).message;
+        return maybeDecompressedResult.message;
     }
 
     private prepare(remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage {

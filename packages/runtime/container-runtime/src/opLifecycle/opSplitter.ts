@@ -52,6 +52,8 @@ export class OpSplitter implements IRemoteMessageProcessor, IBatchProcessor {
                     ...message,
                     contents: serializedContent === "" ? undefined : JSON.parse(serializedContent),
                     type: chunkedContent.originalType,
+                    metadata: chunkedContent.metadata,
+                    compression: chunkedContent.compression,
                 },
                 state: "Processed",
             };

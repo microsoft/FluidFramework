@@ -92,12 +92,12 @@ describeInstallVersions(
 
         const generateStringOfSize = (sizeInBytes: number): string => new Array(sizeInBytes + 1).join("0");
 
-        it("If an old container sends a large chunked op, a new container is able to process it successfully", async () => {
+        it("If an old container sends chunked ops, a new container is able to process it successfully", async () => {
             await setupContainers();
             const regularMessageSizeInBytes = 15 * 1024;
-            const regularValue = generateStringOfSize(regularMessageSizeInBytes);
             // Ops larger than 16k will end up chunked in older versions of fluid
             const chunkableMessageSizeInBytes = 300 * 1024;
+            const regularValue = generateStringOfSize(regularMessageSizeInBytes);
             const chunkableValue = generateStringOfSize(chunkableMessageSizeInBytes);
             oldMap.set("key0", regularValue);
             oldMap.set("key1", chunkableValue);

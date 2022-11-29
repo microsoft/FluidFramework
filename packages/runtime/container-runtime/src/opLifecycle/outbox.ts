@@ -80,9 +80,9 @@ export class Outbox {
     }
 
     private flushInternal(batch: IBatch) {
-        this.flushBatch(
-            this.addBatchMetadataToBatch(
-                this.processBatch(batch)));
+        const processedBatch = this.processBatch(batch);
+        this.addBatchMetadataToBatch(processedBatch);
+        this.flushBatch(processedBatch);
     }
 
     private addBatchMetadataToBatch(batch: IBatch): IBatch {
@@ -101,6 +101,7 @@ export class Outbox {
     }
 
     private processBatch(batch: IBatch): IBatch {
+        this.addBatchMetadataToBatch(batch);
         if (batch.content.length === 0
             || this.options.compressionOptions === undefined
             || this.options.compressionOptions.minimumBatchSizeInBytes >= batch.contentSizeInBytes) {
