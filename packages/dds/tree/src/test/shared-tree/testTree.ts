@@ -129,7 +129,7 @@ export class TestTree {
     }
 
     public fork(sessionId?: string): TestTree {
-        const forest = this.forest.clone(this.forest.schema, new AnchorSet()) as IEditableForest;
+        const forest = this.forest.clone(this.forest.schema, new AnchorSet());
         return TestTree.fromForest(forest, {
             sessionId,
             schemaPolicy: this.schemaPolicy,
