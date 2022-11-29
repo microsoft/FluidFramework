@@ -7,7 +7,7 @@ import { delay } from "@fluidframework/common-utils";
 import { Lumber, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { NetworkError } from "@fluidframework/server-services-client";
 
-interface runWithRetryParams<T> {
+interface IRunWithRetryParams<T> {
     api: () => Promise<T>,
     callName: string,
     maxRetries: number,
@@ -45,7 +45,7 @@ export async function runWithRetry<T>({
     calculateIntervalMs = (error, numRetries, retryAfterInterval) => retryAfterInterval * 2 ** numRetries,
     onErrorFn,
     telemetryEnabled = false,
-} : runWithRetryParams<T>): Promise<T | undefined> {
+} : IRunWithRetryParams<T>): Promise<T | undefined> {
     let result: T | undefined;
     let retryCount = 0;
     let success = false;

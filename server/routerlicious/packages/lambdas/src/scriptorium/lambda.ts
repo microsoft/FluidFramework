@@ -105,8 +105,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
             mongoTimestamp: new Date(message.operation.timestamp),
         }));
 
-        const documentId = messages.length > 0 ? messages[0].documentId : "";
-        const tenantId = messages.length > 0 ? messages[0].tenantId : "";
+        const documentId = messages[0]?.documentId ?? "";
+        const tenantId = messages[0]?.tenantId ?? "";
 
         return runWithRetry({
             api: async () => this.opCollection.insertMany(dbOps, false),
