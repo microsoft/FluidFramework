@@ -106,6 +106,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             rateLimiter,
             this.driverPolicies.enableRestLess,
             resolvedUrl.endpoints.ordererUrl,
+            false // cacheToken
         );
 
         const res = await PerformanceEvent.timedExecAsync(

@@ -204,6 +204,7 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
         rateLimiter: RateLimiter,
         useRestLess: boolean,
         baseurl?: string,
+        cacheToken: boolean = true
     ): Promise<RouterliciousOrdererRestWrapper> {
         const getAuthorizationHeader: AuthorizationHeaderGetter = async (refreshToken?: boolean): Promise<string> => {
             return PerformanceEvent.timedExecAsync(
@@ -213,13 +214,16 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
                     docId: documentId,
                 },
                 async () => {
-                    console.log(`Fetching orderer token via RouterliciousOrdererRestWrapper.load()`);
-                    this.ordererToken = await tokenProvider.fetchOrdererToken(
+                    const ordererToken = await tokenProvider.fetchOrdererToken(
                         tenantId,
                         documentId,
                         refreshToken,
                     );
-                    return `Basic ${this.ordererToken.jwt}`;
+
+                    if (cacheToken) {
+                        this.ordererToken = ordererToken;
+                    }
+                    return `Basic ${ordererToken.jwt}`;
                 }
             );
         };
