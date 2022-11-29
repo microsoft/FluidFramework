@@ -9,7 +9,7 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 /**
  * string-parsed representation of task data, returned from {@link parseStringData}.
  */
-interface ParsedTaskData {
+export interface ParsedTaskData {
     id: string;
     name: string;
     priority: number;
