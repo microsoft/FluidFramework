@@ -37,7 +37,6 @@ export class Bubblebench extends DataObject {
     }
 
     protected async initializingFromExisting() {
-        // console.log("existing initialization");
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.maybeTree = await this.root
             .get<IFluidHandle<ISharedTree>>("unqiue-bubblebench-key-1337")!

@@ -28,9 +28,8 @@ export class Bubblebench extends DataObject {
         this.root.set("unique-bubblebench-key-1337", this.maybeTree.handle);
     }
 
-    // What is the replacement for this method?
     protected async initializingFromExisting() {
-        // console.log("existing initialization");
+        // console.log("existing initialization called, delaying tree connection for 3 seconds");
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.maybeTree = await this.root
             .get<IFluidHandle<ISharedTree>>("unique-bubblebench-key-1337")!

@@ -21,6 +21,7 @@ export class AppState implements IAppState {
     readonly clientsSequenceHelper: SharedTreeSequenceHelper;
     readonly editBuilderCallbacks: ((editor: IDefaultEditBuilder) => void)[] = [];
     readonly localClientNode: SharedTreeNodeHelper;
+    readonly localClientId: string;
 
     constructor(
         private readonly tree: ISharedTree,
@@ -41,13 +42,14 @@ export class AppState implements IAppState {
         cursor.free();
 
         // Create the initial JsonableTree for the new local client
-        const initialClientJsonTree = this.makeClientInitialJsonTree(numBubbles);
+        const initialClientJson = this.makeClientInitialJsonTree(numBubbles);
+        this.localClientId = initialClientJson.clientId;
 
         // Insert it the local client the shared tree
-        this.clientsSequenceHelper.push(initialClientJsonTree);
+        this.clientsSequenceHelper.push(initialClientJson.tree);
         // Keep a reference to the local client inserted into the shared tree
         const newClientIndex = this.clientsSequenceHelper.length() - 1;
-        console.log(`new client Index: ${newClientIndex}`);
+        // console.log(`new client Index: ${newClientIndex}`);
         this.localClientNode = new SharedTreeNodeHelper(
             tree,
             this.clientsSequenceHelper.getAnchor(newClientIndex),
@@ -57,7 +59,16 @@ export class AppState implements IAppState {
     }
 
     public get localClient() {
-        return new Client(this.tree, this.localClientNode.anchor, this.editBuilderCallbacks);
+        // return new Client(this.tree, this.localClientNode.anchor, this.editBuilderCallbacks);
+        const localClientNode = this.clientsSequenceHelper
+        .getAll()
+        .filter(treeNode => treeNode.getFieldValue(Client.clientIdFieldKey) === this.localClientId);
+
+        if (localClientNode.length < 1) {
+           throw new Error('Failed to retreieve local client node');
+        }
+
+        return new Client(this.tree, localClientNode[0].anchor, this.editBuilderCallbacks);
     }
 
     public applyEdits() {
@@ -70,12 +81,13 @@ export class AppState implements IAppState {
         this.editBuilderCallbacks.length = 0;
     }
 
-    makeClientInitialJsonTree(numBubbles: number): JsonableTree {
+    makeClientInitialJsonTree(numBubbles: number) {
+        const clientId = `${Math.random()}`;
         const clientInitialJsonTree: JsonableTree = {
             type: iClientSchema.name,
             fields: {
                 clientId: [
-                    { type: stringSchema.name, value: `${Math.random()}` },
+                    { type: stringSchema.name, value: clientId },
                 ],
                 color: [{ type: stringSchema.name, value: randomColor() }],
                 bubbles: [],
@@ -98,7 +110,10 @@ export class AppState implements IAppState {
             });
         }
 
-        return clientInitialJsonTree;
+        return {
+            tree: clientInitialJsonTree,
+            clientId
+        };
     }
 
     public get clients() {
