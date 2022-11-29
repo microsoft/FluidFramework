@@ -86,7 +86,7 @@
     "@fluid-tools/build-cli": "^0.6.0-109663",
     "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/build-tools": "^0.6.0-109663",
-    "@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@2.0.0-internal.2.1.0",
+    "@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@2.0.0-internal.2.1.1",
     "@fluidframework/eslint-config-fluid": "^1.2.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluidframework/test-runtime-utils": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
@@ -108,12 +108,13 @@
     "typescript": "~4.5.5"
   },
   "typeValidation": {
-    "version": "2.0.0-internal.2.2.0",
-    "baselineRange": ">=2.0.0-internal.2.1.0 <2.0.0-internal.2.2.0",
-    "baselineVersion": "2.0.0-internal.2.1.0",
+    "version": "2.0.0-internal.3.0.0",
+    "baselineRange": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
+    "baselineVersion": "2.0.0-internal.2.1.1",
     "broken": {
       "ClassDeclaration_ContainerRuntime": {
-        "forwardCompat": false
+        "forwardCompat": false,
+        "backCompat": false
       },
       "InterfaceDeclaration_ISummarizerRuntime": {
         "backCompat": false
@@ -125,10 +126,6 @@
       "InterfaceDeclaration_IContainerRuntimeOptions": {
         "backCompat": false,
         "forwardCompat": false
-      },
-      "ClassDeclaration_ContainerRuntime": {
-        "forwardCompat": false,
-        "backCompat": false
       }
     }
   }
