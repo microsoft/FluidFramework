@@ -25,7 +25,7 @@ import {
     afterChangeToken,
     TreeSchemaIdentifier,
 } from "../../core";
-import { Brand } from "../../util";
+import { brand, Brand, BrandedType } from "../../util";
 import { DefaultChangeset, DefaultEditBuilder } from "../defaultChangeFamily";
 import { runSynchronousTransaction } from "../defaultTransaction";
 import { Multiplicity } from "../modular-schema";
@@ -89,8 +89,16 @@ export interface EditableTreeContext {
     attachAfterChangeHandler(afterChangeHandler: (context: EditableTreeContext) => void): void;
 
     newDetachedNode<T extends Brand<any, string> | undefined>(
-        data: T,
         type: TreeSchemaIdentifier,
+        value: any,
+    ): T & EditableTree;
+    newDetachedNode<T extends Brand<any, string> | undefined>(
+        type: TreeSchemaIdentifier,
+        value: T extends BrandedType<infer ValueType, string>
+            ? ValueType
+            : T extends undefined
+            ? undefined
+            : never,
     ): T & EditableTree;
 }
 
@@ -259,13 +267,17 @@ export class ProxyContext implements EditableTreeContext {
     }
 
     public newDetachedNode<T extends Brand<any, string> | undefined>(
-        data: T,
         type: TreeSchemaIdentifier,
+        data: unknown,
     ): T & EditableTree {
         const schema = this.forest.schema;
         const cursor = cursorFromSchemaAndData(schema, type, data);
         const target = new NodeProxyTarget(this, cursor);
         return adaptWithProxy(target, nodeProxyHandler) as T & EditableTree;
+    }
+
+    newNode<T>(type: string, value: T): T & EditableTree {
+        return this.newDetachedNode(brand(type), value as any);
     }
 }
 

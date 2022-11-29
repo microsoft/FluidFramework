@@ -30,13 +30,11 @@ import { FieldKind, Multiplicity } from "../modular-schema";
 import { singleMapTreeCursor } from "../mapTreeCursor";
 import { CursorWithNode } from "../treeCursorUtils";
 import {
-    EditableTree,
     EditableTreeOrPrimitive,
     isUnwrappedNode,
     NodeProxyTarget,
     proxyTargetSymbol,
     typeNameSymbol,
-    typeSymbol,
     UnwrappedEditableField,
     valueSymbol,
 } from "./editableTree";
@@ -94,8 +92,8 @@ export function getPrimaryField(
     return { key: EmptyKey, schema: field };
 }
 
-export function hasPrimaryField(node: EditableTree): boolean {
-    const primaryField = getPrimaryField(node[typeSymbol]);
+export function hasPrimaryField(nodeSchema: TreeSchema): boolean {
+    const primaryField = getPrimaryField(nodeSchema);
     if (primaryField === undefined) {
         return false;
     }
@@ -250,7 +248,7 @@ export function cursorFromData(
 ): ITreeCursor {
     const node = isUnwrappedNode(data)
         ? data
-        : context.newDetachedNode(data, tryGetNodeType(fieldSchema));
+        : context.newDetachedNode(tryGetNodeType(fieldSchema), data);
     const nodeTarget = node[proxyTargetSymbol] as NodeProxyTarget;
     if (fieldSchema.types !== undefined) {
         assert(

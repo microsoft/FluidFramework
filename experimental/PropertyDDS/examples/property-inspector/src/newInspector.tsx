@@ -135,9 +135,9 @@ const tableProps: Partial<IInspectorTableProps> = {
         // i.e. to statically force boolean nodes to be valuated.
         const value = typeid === "Bool" ? false : undefined;
         if (isUnwrappedNode(rowData.parent)) {
-            rowData.parent[brand<FieldKey>(name)] = treeContext.newDetachedNode(value, brand(typeid));
+            rowData.parent[brand<FieldKey>(name)] = treeContext.newDetachedNode(brand(typeid), value);
         } else {
-            rowData.parent[Number(name)] = treeContext.newDetachedNode(value, brand(typeid));
+            rowData.parent[Number(name)] = treeContext.newDetachedNode(brand(typeid), value);
         }
     },
     dataCreationOptionGenerationHandler: handleDataCreationOptionGeneration,
@@ -204,8 +204,8 @@ function nodeToRows(
     const children = forEachField(nodeToRows, [], { data: node, treeContext }, id, addNewDataLine);
     // TODO: currently, the whole story around arrays is not well defined neither implemented.
     // Prevent to create fields under a node already having a primary field.
-    if (!(isPrimitive(node[typeSymbol]) || hasPrimaryField(node))
-        || node[typeSymbol].value === ValueSchema.Serializable) {
+    const nodeType = node[typeSymbol];
+    if (!(isPrimitive(nodeType) || hasPrimaryField(nodeType)) || nodeType.value === ValueSchema.Serializable) {
         addNewDataLine(children, node, id, treeContext);
     }
     rows.push({

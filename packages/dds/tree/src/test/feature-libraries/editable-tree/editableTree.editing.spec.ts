@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-types */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -34,7 +35,9 @@ import {
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
 import {
     addressSchema,
+    AddressType,
     complexPhoneSchema,
+    Float64,
     fullSchemaData,
     Int32,
     int32Schema,
@@ -44,7 +47,8 @@ import {
     PhonesType,
     schemaMap,
     simplePhonesSchema,
-    StRing,
+    SimplePhonesType,
+    String,
     stringSchema,
 } from "./mockData";
 
@@ -105,9 +109,7 @@ describe("editable-tree: editing", () => {
         {
             person.age = brand(32);
 
-            const phones: PhonesType = brand([
-                context.newDetachedNode(brand(12345), int32Schema.name),
-            ]);
+            const phones: PhonesType = brand([context.newDetachedNode(int32Schema.name, 12345)]);
             person.address = brand({
                 street: brand("foo"),
                 phones,
@@ -115,7 +117,8 @@ describe("editable-tree: editing", () => {
             });
             assert(person.address !== undefined);
 
-            const zip: Int32 = context.newDetachedNode(brand(123), int32Schema.name);
+            const zipNum: Float64 = brand(123);
+            const zip: Int32 = context.newDetachedNode<Int32>(int32Schema.name, zipNum);
             person.address.zip = zip;
 
             const clonedAddress = clone(person.address);
@@ -131,15 +134,13 @@ describe("editable-tree: editing", () => {
             });
 
             person.address.sequencePhones = brand([brand("111")]);
-            person.address.phones = brand([
-                context.newDetachedNode(brand("54321"), stringSchema.name),
-            ]);
+            person.address.phones = brand([context.newDetachedNode(stringSchema.name, "54321")]);
             assert(person.address.phones !== undefined);
-            person.address.phones[1] = context.newDetachedNode(
-                brand([context.newDetachedNode(brand<StRing>("555"), stringSchema.name)]),
+            person.address.phones[1] = context.newDetachedNode<SimplePhonesType>(
                 simplePhonesSchema.name,
+                [context.newDetachedNode<String>(stringSchema.name, "555")],
             );
-            person.address.phones[2] = context.newDetachedNode(brand(3), int32Schema.name);
+            person.address.phones[2] = context.newDetachedNode(int32Schema.name, 3);
             const clonedPerson = clone(person);
             assert.deepEqual(clonedPerson, {
                 name: "Adam",
@@ -163,12 +164,10 @@ describe("editable-tree: editing", () => {
                     },
                 },
             });
-            person.address.phones[1] = brand(
-                context.newDetachedNode(
-                    { number: brand("123"), prefix: brand("456") },
-                    complexPhoneSchema.name,
-                ),
-            );
+            person.address.phones[1] = context.newDetachedNode(complexPhoneSchema.name, {
+                number: "123",
+                prefix: "456",
+            });
             assert.deepEqual(clone(person.address.phones), {
                 "0": "54321",
                 "1": { number: "123", prefix: "456" },
@@ -177,23 +176,25 @@ describe("editable-tree: editing", () => {
         }
 
         {
-            const zip: StRing = context.newDetachedNode(brand("999"), stringSchema.name);
+            const zip: String = context.newDetachedNode<String>(
+                stringSchema.name,
+                brand<String>("999"),
+            );
             person.address = context.newDetachedNode(
-                brand({
+                addressSchema.name,
+                brand<AddressType>({
                     street: brand("foo"),
                     zip,
                 }),
-                addressSchema.name,
             );
             const cloned = clone(person.address);
             assert.deepEqual(cloned, { street: "foo", zip: "999" });
             assert(isUnwrappedNode(person.address));
-            person.address.phones = context.newDetachedNode(
-                brand([context.newDetachedNode(brand("999"), stringSchema.name)]),
-                phonesSchema.name,
-            );
+            person.address.phones = context.newDetachedNode<PhonesType>(phonesSchema.name, [
+                context.newDetachedNode<String>(stringSchema.name, "999"),
+            ]);
             person.address.sequencePhones = brand([
-                context.newDetachedNode(brand("12345"), stringSchema.name),
+                context.newDetachedNode(stringSchema.name, "12345"),
             ]);
         }
     });

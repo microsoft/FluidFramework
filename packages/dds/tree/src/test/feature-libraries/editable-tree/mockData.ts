@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-types */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -165,31 +166,31 @@ export const fullSchemaData: SchemaData = {
 
 export type Float64 = Brand<number, "editable-tree.Float64"> & EditableTree;
 export type Int32 = Brand<number, "editable-tree.Int32"> & EditableTree;
-export type StRing = Brand<string, "editable-tree.String"> & EditableTree;
+export type String = Brand<string, "editable-tree.String"> & EditableTree;
 
 export type ComplexPhoneType = EditableTree &
     Brand<
         {
-            number: StRing;
-            prefix: StRing;
+            number: String;
+            prefix: String;
         },
         "editable-tree.Test:Phone-1.0.0"
     >;
 
 export type SimplePhonesType = EditableField &
-    Brand<StRing[], "editable-tree.Test:SimplePhones-1.0.0">;
+    Brand<String[], "editable-tree.Test:SimplePhones-1.0.0">;
 
 export type PhonesType = EditableField &
     Brand<
-        (Int32 | StRing | ComplexPhoneType | SimplePhonesType)[],
+        (Int32 | String | ComplexPhoneType | SimplePhonesType)[],
         "editable-tree.Test:Phones-1.0.0"
     >;
 
 export type AddressType = EditableTree &
     Brand<
         {
-            street: StRing;
-            zip?: StRing | Int32;
+            street: String;
+            zip?: String | Int32;
             phones?: PhonesType;
             sequencePhones?: SimplePhonesType;
         },
@@ -202,7 +203,7 @@ export type FriendsType = EditableTree &
 export type PersonType = EditableTree &
     Brand<
         {
-            name: StRing;
+            name: String;
             age?: Int32;
             salary?: Float64 | Int32;
             friends?: FriendsType;

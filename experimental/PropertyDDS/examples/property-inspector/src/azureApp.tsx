@@ -84,7 +84,8 @@ async function start(): Promise<void> {
     const schema = convertPSetSchema(getRootFieldSchema(fieldKinds.optional));
     sharedTree.storedSchema.update(schema);
     if (!documentId) {
-        sharedTree.root = getPerson(sharedTree.context);
+        const person = getPerson(sharedTree.context);
+        sharedTree.root = person;
     }
 
     renderApp(sharedTree, document.getElementById("root")!);

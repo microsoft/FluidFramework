@@ -229,7 +229,9 @@ export interface EditableTreeContext {
     attachAfterChangeHandler(afterChangeHandler: (context: EditableTreeContext) => void): void;
     free(): void;
     // (undocumented)
-    newDetachedNode<T extends Brand<any, string> | undefined>(data: T, type: TreeSchemaIdentifier): T & EditableTree;
+    newDetachedNode<T extends Brand<any, string> | undefined>(type: TreeSchemaIdentifier, value: any): T & EditableTree;
+    // (undocumented)
+    newDetachedNode<T extends Brand<any, string> | undefined>(type: TreeSchemaIdentifier, value: T extends BrandedType<infer ValueType, string> ? ValueType : T extends undefined ? undefined : never): T & EditableTree;
     prepareForEdit(): void;
     root: EditableField;
     unwrappedRoot: UnwrappedEditableField;
@@ -436,7 +438,7 @@ interface HasPlaceFields {
 }
 
 // @public (undocumented)
-export function hasPrimaryField(node: EditableTree): boolean;
+export function hasPrimaryField(nodeSchema: TreeSchema): boolean;
 
 // @public (undocumented)
 interface HasReattachFields extends HasOpId, HasPlaceFields {
