@@ -202,17 +202,23 @@ export class Sequencer {
 
     /**
      * Sequences the given edit.
+     *
+     * Successive calls to `Sequencer.sequence` for a given `Sequencer` instance results in the given edits
+     * being sequenced in the order of the `Sequencer.sequence` calls.
      */
-    public order(edit: TestTreeEdit): CommittedTestTreeEdit;
+    public sequence(edit: TestTreeEdit): CommittedTestTreeEdit;
     /**
      * Sequences the given edits in the given order.
+     *
+     * Successive calls to `Sequencer.sequence` for a given `Sequencer` instance results in the given edits
+     * being sequenced in the order of the `Sequencer.sequence` calls.
      */
-    public order(edits: TestTreeEdit[]): CommittedTestTreeEdit[];
-    public order(
+    public sequence(edits: TestTreeEdit[]): CommittedTestTreeEdit[];
+    public sequence(
         edits: TestTreeEdit | TestTreeEdit[],
     ): CommittedTestTreeEdit | CommittedTestTreeEdit[] {
         if (Array.isArray(edits)) {
-            return edits.map((e) => this.order(e));
+            return edits.map((e) => this.sequence(e));
         }
         const edit: TestTreeEdit = edits;
         if (!this.clients.has(edit.sessionId)) {

@@ -21,7 +21,7 @@ describe("Editing", () => {
             const ac = insert(tree2, 1, "a", "c");
             const b = insert(tree2, 2, "b");
 
-            const sequenced = sequencer.order([x, ac, b]);
+            const sequenced = sequencer.sequence([x, ac, b]);
             tree1.receive(sequenced);
             tree2.receive(sequenced);
 
@@ -40,7 +40,7 @@ describe("Editing", () => {
 
             const addW = insert(tree2, 0, "w");
 
-            const sequenced = sequencer.order([addW, delY]);
+            const sequenced = sequencer.sequence([addW, delY]);
             tree1.receive(sequenced);
             tree2.receive(sequenced);
 
