@@ -29,6 +29,7 @@ import {
     DefaultChangeFamily,
     defaultChangeFamily,
     DefaultChangeset,
+    FieldChangeMap,
 } from "../../feature-libraries";
 import { EditManager } from "../../edit-manager";
 
@@ -135,6 +136,18 @@ describe("SharedTreeCore", () => {
             const tree = createTree([index]);
             tree.getGCData();
             assert(requestedGC, "Expected SharedTree to ask index for GC");
+        });
+
+        it("increases editManager trunk size as you submit more edits", () => {
+            const indexA = new MockIndex("Index A");
+            const indexB = new MockIndex("Index B");
+            const indexes = [indexA, indexB];
+            const tree = createTree(indexes);
+            const change: FieldChangeMap = new Map();
+            for (let i = 0; i < 100; i++) {
+                tree.submitEdit(change);
+                assert(i + 1 === tree.editManager.getTrunk().length);
+            }
         });
     });
 
