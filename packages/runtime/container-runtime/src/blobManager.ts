@@ -8,19 +8,17 @@ import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfac
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ICreateBlobResponse, ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, bufferToString, Deferred, stringToBuffer, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IContainerRuntime, IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
-import { ChildLogger, loggerToMonitoringContext,
-    MonitoringContext, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IGarbageCollectionData,
     ISummaryTreeWithStats,
     ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
-import { summarizerClientType } from "./summarizerClientElection";
-import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
 
 /**
  * This class represents blob (long string)
@@ -85,8 +83,7 @@ export interface IBlobManagerLoadInfo {
 // Restrict the IContainerRuntime interface to the subset required by BlobManager.  This helps to make
 // the contract explicit and reduces the amount of mocking required for tests.
 export type IBlobManagerRuntime =
-    Pick<IContainerRuntime, "attachState" | "connected" | "logger" | "clientDetails">
-    & TypedEventEmitter<IContainerRuntimeEvents>;
+    Pick<IContainerRuntime, "attachState" | "connected" | "logger"> & TypedEventEmitter<IContainerRuntimeEvents>;
 
 // Note that while offline we "submit" an op before uploading the blob, but we always
 // expect blobs to be uploaded before we actually see the op round-trip
@@ -110,11 +107,8 @@ export interface IPendingBlobs { [id: string]: { blob: string; }; }
 export class BlobManager {
     public static readonly basePath = "_blobs";
     private static readonly redirectTableBlobName = ".redirectTable";
-    // private readonly logger: ITelemetryLogger;
-    private readonly mc: MonitoringContext;
+    private readonly logger: ITelemetryLogger;
 
-    /** If true, throw an error when a tombstone data store is retrieved. */
-    private readonly throwOnTombstoneUsage: boolean;
     /**
      * Map of local (offline/detached) IDs to storage IDs. Contains identity entries
      * (id → id) for storage IDs, so all requested IDs should be a key in this map.
@@ -164,18 +158,10 @@ export class BlobManager {
         private readonly runtime: IBlobManagerRuntime,
         stashedBlobs: IPendingBlobs = {},
     ) {
-        this.mc = loggerToMonitoringContext(ChildLogger.create(this.runtime.logger, "BlobManager"));
-         // Read the feature flag that tells whether to throw when a tombstone blob is requested.
-         this.throwOnTombstoneUsage =
-         this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
-         this.runtime.clientDetails.type !== summarizerClientType;
-
+        this.logger = ChildLogger.create(this.runtime.logger, "BlobManager");
         this.runtime.on("disconnected", () => this.onDisconnected());
         this.redirectTable = this.load(snapshot);
 
-        if (this.throwOnTombstoneUsage) {
-            console.log("test");
-        }
         // Begin uploading stashed blobs from previous container instance
         Object.entries(stashedBlobs).forEach(([localId, entry]) => {
             const blob = stringToBuffer(entry.blob, "base64");
@@ -203,7 +189,7 @@ export class BlobManager {
     public async onConnected() {
         this.retryThrottler.cancel();
         const pendingUploads = this.pendingOfflineUploads.map(async (e) => e.uploadP);
-        await PerformanceEvent.timedExecAsync(this.mc.logger, {
+        await PerformanceEvent.timedExecAsync(this.logger, {
                 eventName: "BlobUploadOnConnected",
                 count: pendingUploads.length,
             }, async () => Promise.all(pendingUploads),
@@ -273,7 +259,7 @@ export class BlobManager {
         this.gcNodeUpdated(this.getBlobGCNodePath(blobId));
 
         return PerformanceEvent.timedExecAsync(
-            this.mc.logger,
+            this.logger,
             { eventName: "AttachmentReadBlob", id: storageId },
             async () => {
                 return this.getStorage().readBlob(storageId);
@@ -306,7 +292,7 @@ export class BlobManager {
         }
         if (this.runtime.attachState === AttachState.Attaching) {
             // blob upload is not supported in "Attaching" state
-            this.mc.logger.sendTelemetryEvent({ eventName: "CreateBlobWhileAttaching" });
+            this.logger.sendTelemetryEvent({ eventName: "CreateBlobWhileAttaching" });
             await new Promise<void>((resolve) => this.runtime.once("attached", resolve));
         }
         assert(this.runtime.attachState === AttachState.Attached,
@@ -328,7 +314,7 @@ export class BlobManager {
 
     private async uploadBlob(localId: string, blob: ArrayBufferLike): Promise<ICreateBlobResponse> {
         return PerformanceEvent.timedExecAsync(
-            this.mc.logger,
+            this.logger,
             { eventName: "createBlob" },
             async () => this.getStorage().createBlob(blob),
             { end: true, cancel: this.runtime.connected ? "error" : "generic" },
@@ -365,7 +351,7 @@ export class BlobManager {
             }
         } else {
             // connected to storage but not ordering service?
-            this.mc.logger.sendTelemetryEvent({ eventName: "BlobUploadSuccessWhileDisconnected" });
+            this.logger.sendTelemetryEvent({ eventName: "BlobUploadSuccessWhileDisconnected" });
             if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
                 this.transitionToOffline(localId);
             }
@@ -491,7 +477,7 @@ export class BlobManager {
      * Load a set of previously attached blob IDs and redirect table from a previous snapshot.
      */
     private load(snapshot: IBlobManagerLoadInfo): Map<string, string | undefined> {
-        this.mc.logger.sendTelemetryEvent({
+        this.logger.sendTelemetryEvent({
             eventName: "AttachmentBlobsLoaded",
             count: snapshot.ids?.length ?? 0,
             redirectTable: snapshot.redirectTable?.length,
