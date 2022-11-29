@@ -15,7 +15,7 @@ import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorage
 import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
 import { NullBlobStorageService } from "./nullBlobStorageService";
-import { ITokenProvider } from "./tokens";
+import { ITokenProvider, ITokenResponse } from "./tokens";
 import { RouterliciousOrdererRestWrapper, RouterliciousStorageRestWrapper } from "./restWrapper";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache } from "./cache";
@@ -37,10 +37,10 @@ const RediscoverAfterTimeSinceDiscoveryMs = 5 * 60000; // 5 minute
 export class DocumentService implements api.IDocumentService {
     private lastDiscoveredAt: number = Date.now();
     private discoverP: Promise<void> | undefined;
+    private ordererToken: ITokenResponse | undefined;
 
     private storageManager: GitManager | undefined;
     private noCacheStorageManager: GitManager | undefined;
-    private ordererRestWrapper: RestWrapper | undefined;
 
     public get resolvedUrl() {
         return this._resolvedUrl;
@@ -56,11 +56,13 @@ export class DocumentService implements api.IDocumentService {
         protected tokenProvider: ITokenProvider,
         protected tenantId: string,
         protected documentId: string,
+        protected ordererRestWrapper: RouterliciousOrdererRestWrapper | undefined,
         private readonly driverPolicies: IRouterliciousDriverPolicies,
         private readonly blobCache: ICache<ArrayBufferLike>,
         private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>,
         private readonly discoverFluidResolvedUrl: () => Promise<api.IFluidResolvedUrl>,
     ) {
+        this.ordererToken = RouterliciousOrdererRestWrapper.getOrdererToken();
     }
 
     private documentStorageService: DocumentStorageService | undefined;
@@ -161,6 +163,8 @@ export class DocumentService implements api.IDocumentService {
                     this.driverPolicies.enableRestLess,
                 );
             }
+
+            this.ordererToken = RouterliciousOrdererRestWrapper.getOrdererToken();
             return this.ordererRestWrapper;
         };
         const restWrapper = await getRestWrapper();
@@ -187,27 +191,34 @@ export class DocumentService implements api.IDocumentService {
      */
     public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
         const connect = async (refreshToken?: boolean) => {
+            let ordererToken = this.ordererToken;
             if (this.shouldUpdateDiscoveredSessionInfo()) {
                 await this.refreshDiscovery();
             }
 
-            const ordererToken = await PerformanceEvent.timedExecAsync(
-                this.logger,
-                {
-                    eventName: "GetDeltaStreamToken",
-                    docId: this.documentId,
-                    details: JSON.stringify({
-                        refreshToken,
-                    }),
-                },
-                async () => {
-                    return this.tokenProvider.fetchOrdererToken(
-                        this.tenantId,
-                        this.documentId,
-                        refreshToken,
-                    );
-                }
-            );
+            if (this.ordererToken && !refreshToken) {
+                ordererToken = this.ordererToken;
+            }
+
+            if (!ordererToken || refreshToken) {
+                ordererToken = await PerformanceEvent.timedExecAsync(
+                    this.logger,
+                    {
+                        eventName: "GetDeltaStreamToken",
+                        docId: this.documentId,
+                        details: JSON.stringify({
+                            refreshToken,
+                        }),
+                    },
+                    async () => {
+                        return this.tokenProvider.fetchOrdererToken(
+                            this.tenantId,
+                            this.documentId,
+                            refreshToken,
+                        );
+                    }
+                );
+            }
 
             return PerformanceEvent.timedExecAsync(
                 this.logger,
@@ -219,7 +230,7 @@ export class DocumentService implements api.IDocumentService {
                     return R11sDocumentDeltaConnection.create(
                         this.tenantId,
                         this.documentId,
-                        ordererToken.jwt,
+                        ordererToken?.jwt ?? null,
                         io,
                         client,
                         this.deltaStreamUrl,

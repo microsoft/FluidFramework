@@ -43,6 +43,7 @@ export class InsecureTokenProvider implements ITokenProvider {
      * {@inheritDoc @fluidframework/routerlicious-driver#ITokenProvider.fetchOrdererToken}
      */
     public async fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse> {
+        console.log(`InsecureTokenProvider.fetchOrdererToken() called with tenantId: ${tenantId} and documentId: ${documentId}`);
         return {
             fromCache: true,
             jwt: generateToken(

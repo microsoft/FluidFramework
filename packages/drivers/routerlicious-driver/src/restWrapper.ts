@@ -17,7 +17,7 @@ import type { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import safeStringify from "json-stringify-safe";
 import { v4 as uuid } from "uuid";
 import { throwR11sNetworkError } from "./errorUtils";
-import { ITokenProvider } from "./tokens";
+import { ITokenProvider, ITokenResponse } from "./tokens";
 import { pkgVersion as driverVersion } from "./packageVersion";
 
 type AuthorizationHeaderGetter = (refresh?: boolean) => Promise<string | undefined>;
@@ -183,6 +183,8 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 }
 
 export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
+    private static ordererToken: ITokenResponse | undefined;
+
     private constructor(
         logger: ITelemetryLogger,
         rateLimiter: RateLimiter,
@@ -211,12 +213,13 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
                     docId: documentId,
                 },
                 async () => {
-                    const ordererToken = await tokenProvider.fetchOrdererToken(
+                    console.log(`Fetching orderer token via RouterliciousOrdererRestWrapper.load()`);
+                    this.ordererToken = await tokenProvider.fetchOrdererToken(
                         tenantId,
                         documentId,
                         refreshToken,
                     );
-                    return `Basic ${ordererToken.jwt}`;
+                    return `Basic ${this.ordererToken.jwt}`;
                 }
             );
         };
@@ -232,5 +235,9 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
             await restWrapper.load();
         }
         return restWrapper;
+    }
+
+    public static getOrdererToken() {
+        return this.ordererToken;
     }
 }

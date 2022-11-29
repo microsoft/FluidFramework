@@ -210,6 +210,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 
+        let ordererRestWrapper: RouterliciousOrdererRestWrapper | undefined;
         const parsedUrl = parseFluidUrl(resolvedUrl.url);
         const [, tenantId, documentId] = parsedUrl.pathname.split("/");
         if (!documentId || !tenantId) {
@@ -223,14 +224,13 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 return resolvedUrl;
             }
             const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-            const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+            ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
                 tenantId,
                 documentId,
                 this.tokenProvider,
                 logger2,
                 rateLimiter,
                 this.driverPolicies.enableRestLess,
-                resolvedUrl.endpoints.ordererUrl,
             );
 
             const discoveredSession = await PerformanceEvent.timedExecAsync(
@@ -241,8 +241,11 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 },
                 async () => {
                     // The service responds with the current document session associated with the container.
+                    if (!ordererRestWrapper) {
+                        throw new Error("OrdererRestWrapper undefined");
+                    }
                     return ordererRestWrapper.get<ISession>(
-                        `/documents/${tenantId}/session/${documentId}`);
+                        `${resolvedUrl.endpoints.ordererUrl}/documents/${tenantId}/session/${documentId}`);
                 });
             return getDiscoveredFluidResolvedUrl(resolvedUrl, discoveredSession);
         };
@@ -269,6 +272,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             this.tokenProvider,
             tenantId,
             documentId,
+            ordererRestWrapper,
             this.driverPolicies,
             this.blobCache,
             this.snapshotTreeCache,
