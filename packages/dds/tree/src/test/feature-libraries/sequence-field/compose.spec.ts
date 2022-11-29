@@ -18,7 +18,7 @@ import {
     createModifyChangeset,
     createReviveChangeset,
     TestChangeset,
-} from "./utils";
+} from "./testEdits";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = brand(1);

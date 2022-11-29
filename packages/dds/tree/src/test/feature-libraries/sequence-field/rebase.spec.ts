@@ -9,17 +9,15 @@ import { makeAnonChange, RevisionTag, tagChange } from "../../../rebase";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
+import { checkDeltaEquality, composeAnonChanges, rebaseTagged } from "./utils";
 import {
     cases,
-    checkDeltaEquality,
-    composeAnonChanges,
     createDeleteChangeset,
     createInsertChangeset,
     createModifyChangeset,
     createReviveChangeset,
-    rebaseTagged,
     TestChangeset,
-} from "./utils";
+} from "./testEdits";
 
 const tag1: RevisionTag = brand(41);
 const tag2: RevisionTag = brand(42);

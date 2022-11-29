@@ -9,14 +9,14 @@ import { makeAnonChange, RevisionTag, tagChange } from "../../../rebase";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
+import { composeAnonChanges } from "./utils";
 import {
-    composeAnonChanges,
     createDeleteChangeset,
     createInsertChangeset,
     createModifyChangeset,
     createReviveChangeset,
     TestChangeset,
-} from "./utils";
+} from "./testEdits";
 
 function invert(change: TestChangeset): TestChangeset {
     deepFreeze(change);

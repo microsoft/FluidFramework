@@ -8,7 +8,7 @@ import { jsonString } from "../../../domains";
 import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import { TestChange, TestChangeEncoder } from "../../testChange";
 import { deepFreeze } from "../../utils";
-import { createDeleteChangeset, createModifyChangeset, TestChangeset } from "./utils";
+import { createDeleteChangeset, createModifyChangeset, TestChangeset } from "./testEdits";
 
 const nodeX = { type: jsonString.name, value: "X" };
 const nodeY = { type: jsonString.name, value: "Y" };

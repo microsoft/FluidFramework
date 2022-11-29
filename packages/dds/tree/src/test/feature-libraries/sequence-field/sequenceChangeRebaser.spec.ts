@@ -10,7 +10,8 @@ import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze, fakeRepair } from "../../utils";
-import { checkDeltaEquality, createInsertChangeset, rebaseTagged } from "./utils";
+import { checkDeltaEquality, rebaseTagged } from "./utils";
+import { createInsertChangeset } from "./testEdits";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const detachedBy: RevisionTag = brand(41);
