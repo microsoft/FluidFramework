@@ -107,7 +107,8 @@
     "ps-node": "^0.1.6",
     "random-js": "^1.0.8",
     "start-server-and-test": "^1.11.7",
-    "tinylicious": "^0.4.89251"
+    "tinylicious": "^0.4.89251",
+    "xml": "^1.0.0"
   },
   "devDependencies": {
     "@fluid-tools/build-cli": "^0.6.0-109663",

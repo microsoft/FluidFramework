@@ -7,6 +7,7 @@ import child_process from "child_process";
 import fs from "fs";
 import ps from "ps-node";
 import commander from "commander";
+import * as xml from "xml";
 import { TestDriverTypes, DriverEndpoint } from "@fluidframework/test-driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
@@ -170,7 +171,7 @@ async function orchestratorProcess(
 
     try {
         const usernames = profile.testUsers !== undefined ? Object.keys(profile.testUsers.credentials) : undefined;
-        await Promise.all(runnerArgs.map(async (childArgs, index) => {
+        const results = await Promise.all(runnerArgs.map(async (childArgs, index) => {
             const username = usernames !== undefined ? usernames[index % usernames.length] : undefined;
             const password = username !== undefined ? profile.testUsers?.credentials[username] : undefined;
             const envVar = { ...process.env };
@@ -194,8 +195,41 @@ async function orchestratorProcess(
                 setupTelemetry(runnerProcess, logger, index, username);
             }
 
-            return new Promise((resolve) => runnerProcess.once("close", resolve));
+            return new Promise<{ result: number | null, index: number}>((resolve) => runnerProcess.once(
+                "close",
+                (result, _x) => { resolve({ result, index }) },
+            ));
         }));
+        /**
+         * <testsuite name="Mocha Tests" tests="141" failures="0" errors="1" skipped="0" timestamp="Wed, 16 Nov 2022 18:15:06 GMT" time="0.055">
+                <testcase classname="EventEmitterWithErrorHandling" name="forwards events" time="0"/>
+                <testcase classname="TelemetryLogger Properties" name="fail" time="0.001"><failure>BOOM</failure></testcase>
+         */
+        const resultsForXml = results.map((({ result, index }) => {
+            const attributes = { classname: "StressRunner", name: `Runner_${index}` };
+            if (result === 0) {
+                //* Could add time if we measure it
+                return { testcase: [{ _attr: attributes }] };
+            }
+            return { testcase: [{ _attr: attributes },
+                { failure: "InactiveObject log hit!" },
+            ] };
+        }));
+        const _attr = {
+            name: "GC Stress Test",
+            tests: runnerArgs.length,
+            failures: 0,
+            errors: results.filter(({ result, index }) => result !== 0).length,
+            //* timestamp: ...
+        };
+        const output = {
+            testsuite: [{ _attr },
+                ...resultsForXml,
+            ],
+        };
+        const outputXml = xml(output, true);
+        //* TODO: Write this to a file
+        console.log(outputXml);
     } finally {
         const endTime = new Date();
         console.log(`Duration: ${new Date(endTime.valueOf() - startTime.valueOf()).toISOString().split(/T|Z/)[1]}`);
@@ -213,7 +247,8 @@ function setupTelemetry(
     process: child_process.ChildProcess,
     logger: ITelemetryLogger,
     runId: number,
-    username?: string) {
+    username?: string,
+) {
     logger.send({
         category: "metric",
         eventName: "Runner Started",
