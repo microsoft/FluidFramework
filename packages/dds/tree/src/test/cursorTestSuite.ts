@@ -217,10 +217,12 @@ const testKeys: readonly FieldKey[] = [
  * Prefer using `testGeneralPurposeTreeCursor` when possible:
  * `testTreeCursor` should only be used when testing a cursor that is not truly general purpose (can not be build from any arbitrary tree).
  *
+ * If neither `dataFromCursor` nor  `(data: JsonableTree) => TData` builders, no round trip testing will be performed.
+ *
  * @param cursorName - The name of the cursor used as part of the test suite name.
  * @param builders - `TData` builders. `(data: JsonableTree) => TData` is ideal and supports all tests.
  * @param cursorFactory - Creates the cursor to be tested from the provided `TData`.
- * @param dataFromCursor - Constructs a `TData` from the provided cursor (which might not be a `TCursor`).
+ * @param dataFromCursor - Constructs a `TData` from the provided cursor `TCursor`. This is tested by round tripping data.
  * @param testData - A collection of test cases to evaluate the cursor with. Actual content of the tree is only validated if a `reference` is provided:
  * otherwise only basic traversal and API consistency will be checked.
  * @param extraRoot - setting this to `true` makes the tests expect that `cursorFactory` includes a dummy node above the root,
@@ -233,7 +235,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
     cursorName: string;
     builders: SpecialCaseBuilder<TData> | ((data: JsonableTree) => TData);
     cursorFactory: (data: TData) => TCursor;
-    dataFromCursor: (cursor: ITreeCursor) => TData;
+    dataFromCursor?: (cursor: ITreeCursor) => TData;
     testData: readonly { name: string; data: TData; reference?: JsonableTree }[];
     extraRoot?: true;
 }): Mocha.Suite {
@@ -269,6 +271,19 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
         describe("test trees", () => {
             for (const { name, data, reference } of testData) {
                 describe(name, () => {
+                    it("jsonableTreeFromCursor", () => {
+                        const cursor = cursorFactory(data);
+                        const jsonableClone = jsonableTreeFromCursor(cursor);
+                        // Check jsonable objects are actually json compatible
+                        const text = JSON.stringify(jsonableClone);
+                        const parsed = JSON.parse(text);
+                        assert.deepEqual(parsed, jsonableClone);
+                    });
+
+                    it("traversal", () => {
+                        checkTraversal(cursorFactory(data));
+                    });
+
                     if (reference !== undefined) {
                         it("equals reference", () => {
                             if (dataFromJsonableTree !== undefined) {
@@ -282,25 +297,23 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
                         });
                     }
 
-                    it("roundtrip", () => {
-                        const cursor = cursorFactory(data);
-                        const cursorClonedData = dataFromCursor(cursor);
-                        // This assumes `T` works with deepEqual.
-                        assert.deepEqual(cursorClonedData, data);
-                        const jsonableClone = jsonableTreeFromCursor(cursor);
-                        if (dataFromJsonableTree !== undefined) {
+                    if (dataFromCursor !== undefined) {
+                        it("roundtrip with dataFromCursor", () => {
+                            const cursor = cursorFactory(data);
+                            const cursorClonedData = dataFromCursor(cursor);
+                            // This assumes `T` works with deepEqual.
+                            assert.deepEqual(cursorClonedData, data);
+                        });
+                    }
+
+                    if (dataFromJsonableTree !== undefined) {
+                        it("roundtrip with dataFromJsonableTree", () => {
+                            const cursor = cursorFactory(data);
+                            const jsonableClone = jsonableTreeFromCursor(cursor);
                             const dataClone = dataFromJsonableTree(jsonableClone);
                             assert.deepEqual(data, dataClone);
-                        }
-                        // Check jsonable objects are actually json compatible
-                        const text = JSON.stringify(jsonableClone);
-                        const parsed = JSON.parse(text);
-                        assert.deepEqual(parsed, jsonableClone);
-                    });
-
-                    it("traversal", () => {
-                        traverseNode(cursorFactory(data));
-                    });
+                        });
+                    }
                 });
             }
         });
@@ -459,7 +472,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
  *
  * TODO: add testing for paths to this, or a separate tests for it.
  */
-function traverseNode(cursor: ITreeCursor) {
+function checkTraversal(cursor: ITreeCursor) {
     assert.equal(cursor.mode, CursorLocationType.Nodes);
     assert.equal(cursor.pending, false);
     // Keep track of current node properties to check it during ascent
@@ -483,7 +496,7 @@ function traverseNode(cursor: ITreeCursor) {
             assert(cursor.chunkLength + cursor.chunkStart <= expectedFieldLength);
             assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
             actualChildNodesTraversed++;
-            traverseNode(cursor);
+            checkTraversal(cursor);
         }
 
         assert.equal(
