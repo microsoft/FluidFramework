@@ -196,10 +196,6 @@ export class DocumentService implements api.IDocumentService {
                 await this.refreshDiscovery();
             }
 
-            if (this.ordererToken && !refreshToken) {
-                ordererToken = this.ordererToken;
-            }
-
             if (!ordererToken || refreshToken) {
                 ordererToken = await PerformanceEvent.timedExecAsync(
                     this.logger,
@@ -211,11 +207,13 @@ export class DocumentService implements api.IDocumentService {
                         }),
                     },
                     async () => {
-                        return this.tokenProvider.fetchOrdererToken(
+                        this.ordererToken = await this.tokenProvider.fetchOrdererToken(
                             this.tenantId,
                             this.documentId,
                             refreshToken,
                         );
+
+                        return this.ordererToken;
                     }
                 );
             }
