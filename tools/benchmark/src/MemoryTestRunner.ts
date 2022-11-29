@@ -92,13 +92,13 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions {
      * The max time in seconds to run the benchmark.
      * This is not a guaranteed immediate stop time.
      * Elapsed time gets checked between iterations of the test that is being benchmarked.
-     * Defaults to 10 seconds.
+     * Defaults to 30 seconds.
      */
     maxBenchmarkDurationSeconds?: number;
 
     /**
      * The min sample count to reach.
-     * Defaults to 5.
+     * Defaults to 50.
      *
      * @remarks This takes precedence over {@link MemoryTestObjectProps.maxBenchmarkDurationSeconds}.
      */
@@ -128,7 +128,7 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions {
 
     /**
      * Percentage of samples (0.1 - 1) to use for calculating the statistics.
-     * Defaults to 1.
+     * Defaults to 0.95.
      * Use a lower number to drop the highest/lowest measurements.
      */
     samplePercentageToUse?: number;
