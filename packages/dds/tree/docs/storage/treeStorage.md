@@ -89,7 +89,7 @@ graph TD;
     A(Chunk A)-->B(Chunk B)-->C(Chunk C)
 ```
 
-The folowing sections will examine some of the general properties of this "chunk tree".
+The following sections will examine some of the general properties of this "chunk tree."
 
 ### Immutability
 
