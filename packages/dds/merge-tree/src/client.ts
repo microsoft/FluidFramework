@@ -1060,10 +1060,10 @@ export class Client {
         const args = this.getClientSequenceArgsForMessage(op);
         return this._mergeTree.getContainingSegment<T>(pos, args.referenceSequenceNumber, clientId ?? args.clientId, localSeq);
     }
-    /*
+
     getContainingSegmentWithSeqNumber<T extends ISegment>(pos: number, seqNumberFrom: number, clientId: number, localSeq: number) {
         return this._mergeTree.getContainingSegment<T>(pos, seqNumberFrom, clientId, localSeq);
-    } */
+    }
 
     /**
      * Returns the position to slide a reference to if a slide is required.
