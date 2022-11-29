@@ -6,7 +6,7 @@ The azure-client package provides a simple and powerful way to consume collabora
 
 See the [package README](./packages/azure-client/README.md) for more information.
 
-## @fluidframework/azure-local-services
+## @fluidframework/azure-local-service
 
 The azure-local-service package provides a minimal, self-contained, test implementation of the Azure Fluid Relay service that can be run locally and used for development/testing Fluid functionality in conjunction with the `AzureClient` in local mode.
 
