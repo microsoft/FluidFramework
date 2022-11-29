@@ -48,7 +48,7 @@ import {
     singleTextCursor,
 } from "../../feature-libraries";
 import { MockDependent } from "../utils";
-import { testJsonableTreeCursor } from "../cursorTestSuite";
+import { testGeneralPurposeTreeCursor } from "../cursorTestSuite";
 
 /**
  * Generic forest test suite
@@ -302,7 +302,7 @@ function testForest(
         });
     });
 
-    testJsonableTreeCursor(
+    testGeneralPurposeTreeCursor(
         "object-forest cursor",
         (data): ITreeCursor => {
             const forest = factory(

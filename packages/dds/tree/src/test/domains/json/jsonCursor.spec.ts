@@ -310,7 +310,7 @@ testTreeCursor({
     cursorFactory: singleJsonCursor,
     dataFromCursor: cursorToJsonObject,
     testData: cursors,
-    builder: {
+    builders: {
         withLocalKeys: (keys) => {
             const obj = {};
             for (const key of keys) {

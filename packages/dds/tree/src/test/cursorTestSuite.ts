@@ -21,7 +21,7 @@ import {
 } from "../tree";
 import { brand } from "../util";
 
-export const cursorTestCases: [string, JsonableTree][] = [
+export const testTrees: readonly (readonly [string, JsonableTree])[] = [
     ["minimal", { type: brand("Foo") }],
     ["true boolean", { type: brand("Foo"), value: true }],
     ["false boolean", { type: brand("Foo"), value: false }],
@@ -114,12 +114,21 @@ export const cursorTestCases: [string, JsonableTree][] = [
 ];
 
 /**
- * Tests the provided cursor factory with JsonableTree data. The cursor must be JSON compatible.
+ * Tests a cursor implementation.
+ * This test suite has a built in set of test cases (based on `testTrees`), so the provided cursor implementation must support all tree contents
+ * (not just some specific domain).
+ * More specialized cursor implementations should use `testTreeCursor` instead.
+ *
  * @param cursorName - The name of the cursor used as part of the test suite name.
- * @param factory - Creates the cursor to be tested with or without provided data.
- * @param dataFromCursor - Gets a JsonableTree from the provided cursor.
+ * @param cursorFactory - Creates the cursor to be tested from the provided `TData`.
+ * @param dataFromCursor - Constructs a `TData` from the provided cursor (which might not be a `TCursor`).
+ * @param extraRoot - setting this to `true` makes the tests expect that `cursorFactory` includes a dummy node above the root,
+ * with the data under {@link rootFieldKeySymbol}.
+ *
+ * @typeParam TData - Format which the cursor reads. Must be JSON compatible.
+ * @typeParam TCursor - Type of the cursor being tested.
  */
-export function testJsonableTreeCursor<TData, TCursor extends ITreeCursor>(
+export function testGeneralPurposeTreeCursor<TData, TCursor extends ITreeCursor>(
     cursorName: string,
     cursorFactory: (data: TData) => TCursor,
     dataFromCursor: (cursor: ITreeCursor) => TData,
@@ -133,9 +142,9 @@ export function testJsonableTreeCursor<TData, TCursor extends ITreeCursor>(
     testTreeCursor<TData, TCursor>({
         cursorName,
         cursorFactory,
-        builder: dataFromJsonableTree,
+        builders: dataFromJsonableTree,
         dataFromCursor,
-        testData: cursorTestCases.map(([name, data]) => ({
+        testData: testTrees.map(([name, data]) => ({
             name,
             data: dataFromJsonableTree(data),
             expected: data,
@@ -144,8 +153,19 @@ export function testJsonableTreeCursor<TData, TCursor extends ITreeCursor>(
     });
 }
 
-interface SpecialCaseBuilder<TData> {
+/**
+ * Collection of builders for special cases.
+ */
+export interface SpecialCaseBuilder<TData> {
+    /**
+     * Build data for a tree which has the provided keys on its root node.
+     * The content of the tree under these keys is arbitrary and up to the implementation.
+     */
     withLocalKeys?(keys: LocalFieldKey[]): TData;
+    /**
+     * Build data for a tree which has the provided keys on its root node.
+     * The content of the tree under these keys is arbitrary and up to the implementation.
+     */
     withKeys?(keys: FieldKey[]): TData;
 }
 
@@ -153,15 +173,39 @@ interface SpecialCaseBuilder<TData> {
  * Test suite for cursor implementations.
  * Much of this functionality depends on dataFromJsonableTree, but basic testing can function without it.
  */
+/**
+ * Tests a cursor implementation.
+ * Prefer using `testGeneralPurposeTreeCursor` when possible:
+ * `testTreeCursor` should only be used when testing a cursor that is not truly general purpose (can not be build from any arbitrary tree).
+ *
+ * @param cursorName - The name of the cursor used as part of the test suite name.
+ * @param builders - a collection of optional `TData` builders. The more of these are provided, the larger the test suite will be.
+ * @param cursorFactory - Creates the cursor to be tested from the provided `TData`.
+ * @param dataFromCursor - Constructs a `TData` from the provided cursor (which might not be a `TCursor`).
+ * @param testData - A collection of test cases to evaluate the cursor with. Actual content of the tree is only validated if a `reference` is provided:
+ * otherwise only basic traversal and API consistency will be checked.
+ * @param extraRoot - setting this to `true` makes the tests expect that `cursorFactory` includes a dummy node above the root,
+ * with the data under {@link rootFieldKeySymbol}.
+ *
+ * @typeParam TData - Format which the cursor reads. Must be JSON compatible.
+ * @typeParam TCursor - Type of the cursor being tested.
+ */
 export function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
     cursorName: string;
-    builder: SpecialCaseBuilder<TData> | ((data: JsonableTree) => TData);
+    builders: SpecialCaseBuilder<TData> | ((data: JsonableTree) => TData);
     cursorFactory: (data: TData) => TCursor;
     dataFromCursor: (cursor: ITreeCursor) => TData;
     testData: readonly { name: string; data: TData; reference?: JsonableTree }[];
     extraRoot?: true;
 }): Mocha.Suite {
-    const { cursorName, cursorFactory, dataFromCursor, testData, extraRoot, builder } = config;
+    const {
+        cursorName,
+        cursorFactory,
+        dataFromCursor,
+        testData,
+        extraRoot,
+        builders: builder,
+    } = config;
 
     const dataFromJsonableTree = typeof builder === "object" ? undefined : builder;
     const withKeys: undefined | ((keys: FieldKey[]) => TData) =
