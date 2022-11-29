@@ -21,6 +21,9 @@ export interface AudienceChangeLogEntry extends LogEntry {
     clientId: string;
 }
 
+// @internal
+export function clearDebuggerRegistry(): void;
+
 // @public
 export function closeFluidClientDebugger(containerId: string): void;
 
@@ -38,6 +41,9 @@ export interface FluidClientDebuggerProps {
 
 // @internal
 export function getFluidClientDebugger(containerId: string): IFluidClientDebugger | undefined;
+
+// @internal
+export function getFluidClientDebuggers(): IFluidClientDebugger[];
 
 // @internal
 export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents>, IDisposable {

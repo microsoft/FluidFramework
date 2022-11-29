@@ -6,8 +6,8 @@
 
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IFluidClientDebugger } from '@fluid-tools/client-debugger';
+import { ISharedObject } from '@fluidframework/shared-object-base';
 import { default as React_2 } from 'react';
-import { SharedObjectCore } from '@fluidframework/shared-object-base';
 
 // @public
 export interface AudienceMember {
@@ -26,6 +26,9 @@ export interface AudienceMemberViewProps {
 export function ClientDebugView(props: ClientDebugViewProps): React_2.ReactElement;
 
 // @public
+export const clientDebugViewClassName = "fluid-client-debug-view";
+
+// @public
 export interface ClientDebugViewProps extends HasClientDebugger, HasContainerId {
     renderOptions?: RenderOptions;
 }
@@ -35,6 +38,14 @@ export const defaultRenderOptions: Required<RenderOptions>;
 
 // @public
 export const defaultSharedObjectRenderers: SharedObjectRenderOptions;
+
+// @public
+export function FluidClientDebugger(props: FluidClientDebuggerProps): React_2.ReactElement;
+
+// @public
+export interface FluidClientDebuggerProps extends HasContainerId {
+    renderOptions?: RenderOptions;
+}
 
 // @public
 export function getRenderOptionsWithDefaults(userOptions: RenderOptions | undefined): Required<RenderOptions>;
@@ -62,7 +73,8 @@ export interface RenderOptions {
 }
 
 // @public
-export type RenderSharedObject = (sharedObject: SharedObjectCore, // TODO: is this the right type?
+export type RenderSharedObject = (
+sharedObject: ISharedObject,
 renderChild: RenderChild) => React_2.ReactElement;
 
 // @public

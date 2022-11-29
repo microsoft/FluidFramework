@@ -23,8 +23,10 @@ export {
 } from "./Logs";
 
 export {
+	clearDebuggerRegistry,
 	closeFluidClientDebugger,
 	FluidClientDebuggerProps,
 	getFluidClientDebugger,
+	getFluidClientDebuggers,
 	initializeFluidClientDebugger,
 } from "./Registry";

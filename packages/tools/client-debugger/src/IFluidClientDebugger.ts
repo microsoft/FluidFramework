@@ -157,8 +157,9 @@ export interface IFluidClientDebugger
 	/**
 	 * Data contents of the Container.
 	 *
-	 * @remarks This map is assumed to be immutable. The debugger will not make any modifications to
-	 * its contents.
+	 * @remarks
+	 *
+	 * This map is assumed to be immutable. The debugger will not make any modifications to its contents.
 	 */
 	readonly containerData: Record<string, IFluidLoadable>;
 
