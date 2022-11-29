@@ -1,3 +1,74 @@
+# Fluid Framework build-tools v0.6
+
+The 0.6 build-tools release includes several improvements to fluid-build and type test generation. These release notes
+cover the major changes in this release.
+
+This is a **major release** that includes some breaking changes in addition to useful new features and bug fixes:
+
+* [Type compatibility tests are configurable per-branch](#type-compatibility-tests-are-configurable-per-branch)
+* [Release groups can use yarn or pnpm](#release-groups-can-use-yarn-or-pnpm)
+
+## 💥 Breaking changes
+
+This release contains some breaking changes to the `generate typetests` and `release report` commands:
+
+* **generate:typetests:** `fluid-type-validator` is deprecated. Use `flub generate typetests` instead.
+* **release:report:** The `--all` and `--limit` flags have been removed from `flub release report`. Use [`flub release
+history`](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/release.md#flub-release-history)
+instead.
+
+## ✨ Features
+
+### Type compatibility tests are configurable per-branch
+
+Type tests can now be configured to use different baseline versions on a given branch depending on the type of release
+that the branch is designated for. For example, for the client release group, the _next_ branch is the _major version
+series branch_ and _main_ is the _minor version series branch_. This can be declared in the release group root
+package.json, in the `fluidBuild.branchReleaseTypes` section. For example, the following configuration designates the
+_main_ and _lts_ branches as minor version series branches, while the _next_ branch is designated for major releases.
+
+```json
+"fluidBuild": {
+  "branchReleaseTypes": {
+    "main": "minor",
+    "lts": "minor",
+    "release/**": "patch",
+    "next": "major"
+  }
+}
+```
+
+The type test generator takes this information into account when calculating the baseline version to use when it's run
+from a particular branch.
+
+### Release groups can use yarn or pnpm
+
+`fluid-build` can now use pnpm or yarn to install a release group's dependencies instead of npm. pnpm will only be used
+if there is a pnpm-workspace.yaml file in the root of the release group. yarn will only be used if there is a yarn.lock
+file in the root of the release group/package. Otherwise npm will be used.
+
+See [PR #12236](https://github.com/microsoft/FluidFramework/pull/12236) for an example of switching a release group to
+use pnpm.
+
+## 🐛 Bug fixes
+
+This list only includes notable bug fixes. See [the changelog](./CHANGELOG.md#060-2022-11-28) for a full list of fixes
+in this release.
+
+### `fluid-build` parses tasks from build-cli incorrectly
+
+[PR #12988](https://github.com/microsoft/FluidFramework/issues/12988)
+
+fluid-build now parses build commands with subcommands properly. Prior to this release, build commands like `flub
+generate typetests` were not parsed correctly into fluid-build's build graph.
+
+## List of packages released
+
+- @fluid-tools/build-cli
+- @fluidframework/build-tools
+- @fluidframework/bundle-size-tools
+- @fluid-tools/version-tools
+
 # Fluid Framework build-tools v0.5
 
 The 0.5 build-tools release includes several new commands and flags to improve the developer experience when using the
@@ -18,7 +89,7 @@ For a full list of changes in this release, see the [changelog](./CHANGELOG.md#0
 
 ## 💥 Breaking changes
 
-This release contains some breaking changes to the bump deps and check layers commands:
+This release contains some breaking changes to the `bump deps` and `check layers` commands:
 
 * **bump:deps:** The `-p` flag has been changed to specify a package
 name, which is consistent with
@@ -119,7 +190,8 @@ PR will add enforcement in CI.
 
 ## 🐛 Bug fixes
 
-This list only includes notable bug fixes. See [the changelog]() for a full list of fixes in this release.
+This list only includes notable bug fixes. See [the changelog](./CHANGELOG.md#050-2022-11-04) for a full list of fixes
+in this release.
 
 ### `bump deps` excludes independent packages when bumping release groups
 
@@ -131,6 +203,6 @@ that behavior so that only the release group specified will be updated.
 ## List of packages released
 
 - @fluid-tools/build-cli
-- @fluidframework/build-
+- @fluidframework/build-tools
 - @fluidframework/bundle-size-tools
 - @fluid-tools/version-tools
