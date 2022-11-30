@@ -1,3 +1,4 @@
+/* eslint-disable jsdoc/require-asterisk-prefix */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -195,15 +196,17 @@ async function orchestratorProcess(
                 setupTelemetry(runnerProcess, logger, index, username);
             }
 
-            return new Promise<{ result: number | null, index: number}>((resolve) => runnerProcess.once(
+            return new Promise<{ result: number | null; index: number; }>((resolve) => runnerProcess.once(
                 "close",
-                (result, _x) => { resolve({ result, index }) },
+                (result, _signals) => { resolve({ result, index }); },
             ));
         }));
-        /**
-         * <testsuite name="Mocha Tests" tests="141" failures="0" errors="1" skipped="0" timestamp="Wed, 16 Nov 2022 18:15:06 GMT" time="0.055">
+        // eslint-disable-next-line max-len
+        /** <testsuite name="Mocha Tests" tests="141" failures="0" errors="1" skipped="0" timestamp="Wed, 16 Nov 2022 18:15:06 GMT" time="0.055">
                 <testcase classname="EventEmitterWithErrorHandling" name="forwards events" time="0"/>
-                <testcase classname="TelemetryLogger Properties" name="fail" time="0.001"><failure>BOOM</failure></testcase>
+                <testcase classname="TelemetryLogger Properties" name="fail" time="0.001">
+                    <failure>BOOM</failure>
+                </testcase>
          */
         const resultsForXml = results.map((({ result, index }) => {
             const attributes = { classname: "StressRunner", name: `Runner_${index}` };
