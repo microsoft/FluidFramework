@@ -19,20 +19,25 @@ Like all indexes, the IdentifierIndex can be serialized and rehydrated. When a S
 
 ## API
 
-1. An API for querying a node by identifier, e.g. `find(id: CompressedNodeIdentifier): Cursor | undefined`. Higher level reading APIs (like EditableTree) would wrap this for their own purposes, although I don't think there is a way to guarantee the type of the resulting node at compile time, even in a context that is schema aware.
+1. An API for querying a node by identifier, e.g. `find(id: CompressedNodeIdentifier): Cursor | undefined`. Higher level reading APIs (like EditableTree) would wrap this for their own purposes, although I don't think there is a way to guarantee the type of the resulting node at compile time, even in a context that is schema aware. This API presents the IdentifierIndex as a covering index; it might be useful to also expose the inner `findPath(id: CompressedNodeIdentifier): UpPath | undefined` so it can be used as a non-covering index as well.
 2. APIs for updating the contents of the index, e.g. `set(id: CompressedNodeIdentifier, path: UpPath)` and `delete(id: CompressedNodeIdentifier)`
 3. `summarize` and `load`
+4. Events, e.g. `identifierRecorded` and `identifierDeleted`.
 
 API #1 would be exposed at a higher level by the SharedTree. APIs #2 would be used internally by SharedTree.
 
 ## Representation
 
-For many scenarios, it would be sufficient to implement the IdentifierIndex as a simple javascript map, e.g. `Map<CompressedNodeIdentifier, UpPath>` or `Map<CompressedNodeIdentifier, string>`. However, there are a couple constraints which make that insufficient.
+Looking up a node by identifier would be a two step process of first getting the path for that indentifier, and then using the path to query the forest for the node. For many scenarios, it would be sufficient to implement the IdentifierIndex as a simple javascript map, e.g. `Map<CompressedNodeIdentifier, UpPath>` or `Map<CompressedNodeIdentifier, string>`. However, there are a couple constraints which make that insufficient.
 
 * The index might grow very large, and need to be chunked and virtualized.
 * A user might want to query the index as it was at different revisions, e.g. because they have a snapshot-isolated transaction from which the current state of the tree has diverged, or they have history turned on.
 
 These requirements make a strong case for a virtualized b-tree. In the short time, before we provide support for larger-than-memory documents, we can use a copy-on-write B-tree.
+
+### Caching
+
+The index could employ an ephemeral, in-memory cache of `identifier -> node` to skip the cost of looking up paths in the forest for repeat reads. However, if `node` is a `Cursor`, as proposed above, then it's unclear how to manage the lifetime of cursors living in the cache.
 
 ## Compression
 
@@ -58,10 +63,6 @@ G    | `45`
 H    | none
 
 The presence of IDs could be represented as a binary number `11010010` and in hexadecimal as `D2`. So the whole range here could be encoded as `[42, D2]` rather than `[42, 43, null, 44, null, null, 45, null]`. This isn't necessarily an optimal encoding but demonstrates that compression is feasible and beneficial even with optional identifiers.
-
-## Caching
-
-
 
 ## Further Generalizations
 
