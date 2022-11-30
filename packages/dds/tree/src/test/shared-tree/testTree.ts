@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { Jsonable } from "@fluidframework/datastore-definitions";
 import { v4 as uuid } from "uuid";
 import {
     AnchorSet,
@@ -85,7 +84,10 @@ export class TestTree {
         return TestTree.fromForest(forest, options);
     }
 
-    static fromJson<T>(json: Jsonable<T>[] | Jsonable<T>, options: TestTreeOptions = {}): TestTree {
+    static fromJson<T>(
+        json: JsonCompatible[] | JsonCompatible,
+        options: TestTreeOptions = {},
+    ): TestTree {
         const cursors = Array.isArray(json) ? json.map(singleJsonCursor) : singleJsonCursor(json);
         return TestTree.fromCursor(cursors, { schemaData: jsonSchemaData, ...options });
     }
