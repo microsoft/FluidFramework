@@ -61,7 +61,6 @@
     "@fluidframework/server-services-client": "^0.1038.3000",
     "@fluidframework/server-services-core": "^0.1038.3000",
     "@fluidframework/server-services-telemetry": "^0.1038.3000",
-    "@fluidframework/server-services-utils": "^0.1038.3000",
     "@types/semver": "^6.0.1",
     "async": "^3.2.2",
     "axios": "^0.26.0",

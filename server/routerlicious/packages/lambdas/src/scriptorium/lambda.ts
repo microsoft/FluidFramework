@@ -15,7 +15,7 @@ import {
     isRetryEnabled,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { convertNumberArrayToRanges } from "@fluidframework/server-services-utils";
+import { convertNumberArrayToRanges } from "../utils";
 
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();

@@ -13,7 +13,7 @@ export {
 	validateTokenClaims,
 	verifyStorageToken,
 } from "./auth";
-export { parseBoolean, convertNumberArrayToRanges } from "./conversion";
+export { parseBoolean } from "./conversion";
 export { deleteSummarizedOps } from "./deleteSummarizedOps";
 export { getHostIp } from "./dns";
 export { FluidServiceError, FluidServiceErrorCode } from "./errorUtils";
