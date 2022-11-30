@@ -568,7 +568,7 @@ describe("TaskManager", () => {
                     await volunteerTaskP;
                     assert.ok(taskManager1.queued(taskId), "Should be queued");
                     assert.ok(taskManager1.assigned(taskId), "Should be assigned");
-                    assert.strictEqual(taskManager1._getTaskQueues().get(taskId)?.[0], placeholderClientId,
+                    assert.strictEqual((taskManager1 as any).taskQueues.get(taskId)?.[0], placeholderClientId,
                         "taskQueue should have placeholder clientId");
 
                     let taskManager1EventFired = false;
@@ -582,7 +582,7 @@ describe("TaskManager", () => {
                     assert.ok(!taskManager1.queued(taskId), "Should not be queued");
                     assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
                     assert.ok(taskManager1EventFired, "Should have raised lost event on taskManager1");
-                    assert.ok(taskManager1._getTaskQueues().size === 0, "taskQueue should be empty");
+                    assert.ok((taskManager1 as any).taskQueues.size === 0, "taskQueue should be empty");
                 });
             });
 
@@ -619,8 +619,8 @@ describe("TaskManager", () => {
                     assert.ok(taskManager1.assigned(taskId), "Task manager 1 should be assigned");
                     assert.ok(taskManager1.subscribed(taskId), "Task manager 1 should be subscribed");
 
-                    assert.ok(taskManager1._getTaskQueues().get(taskId)?.length !== 0, "taskQueue should not be empty");
-                    assert.notStrictEqual(taskManager1._getTaskQueues().get(taskId)?.[0], placeholderClientId,
+                    assert.ok((taskManager1 as any).taskQueues.get(taskId)?.length !== 0, "taskQueue should not be empty");
+                    assert.notStrictEqual((taskManager1 as any).taskQueues.get(taskId)?.[0], placeholderClientId,
                         "taskQueue should not have placeholder clientId");
                 });
 
@@ -755,13 +755,13 @@ describe("TaskManager", () => {
                     const clientId1 = containerRuntime1.clientId;
                     const clientId2 = containerRuntime2.clientId;
 
-                    assert.deepEqual(taskManager1._getTaskQueues().get(taskId), [clientId1, clientId2],
+                    assert.deepEqual((taskManager1 as any).taskQueues.get(taskId), [clientId1, clientId2],
                         "Task queue should have both clients");
 
                     containerRuntime2.connected = false;
                     containerRuntimeFactory.processAllMessages();
 
-                    assert.deepEqual(taskManager1._getTaskQueues().get(taskId), [clientId1],
+                    assert.deepEqual((taskManager1 as any).taskQueues.get(taskId), [clientId1],
                         "Task queue should only have client 1");
                 });
 

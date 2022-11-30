@@ -175,7 +175,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     // opWatcher emits for every op on this data store.  This is just a repackaging of processCore into events.
     private readonly opWatcher: EventEmitter = new EventEmitter();
     // queueWatcher emits an event whenever the consensus state of the task queues changes
-    // TODO currently could event even if the queue doesn't actually change
     private readonly queueWatcher: EventEmitter = new EventEmitter();
     // abandonWatcher emits an event whenever the local client calls abandon() on a task.
     private readonly abandonWatcher: EventEmitter = new EventEmitter();
@@ -253,7 +252,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             if (runtime.connected && local) {
                 const pendingOp = this.latestPendingOps.get(taskId);
                 assert(pendingOp !== undefined, 0x400 /* Unexpected op */);
-                // TODO: check below comment and stuff, see if applicable
                 // Need to check the id, since it's possible to complete multiple times before the acks
                 if (messageId === pendingOp.messageId) {
                     assert(pendingOp.type === "complete", 0x401 /* Unexpected op type */);
@@ -315,11 +313,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             // All of our outstanding ops will be for the old clientId even if they get ack'd
             this.latestPendingOps.clear();
         });
-    }
-
-    // TODO Remove or hide from interface, this is just for debugging
-    public _getTaskQueues() {
-        return this.taskQueues;
     }
 
     private submitVolunteerOp(taskId: string) {
@@ -633,7 +626,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             // a new clientId.
             this.removeClientFromAllQueues(placeholderClientId);
         }
-        // TODO filter out tasks with no clients, some are still getting in.
         const content = [...this.taskQueues.entries()];
         return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));
     }
@@ -647,7 +639,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         content.forEach(([taskId, clientIdQueue]) => {
             this.taskQueues.set(taskId, clientIdQueue);
         });
-        this.scrubClientsNotInQuorum();
     }
 
     /**
@@ -731,10 +722,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             const oldLockHolder = clientQueue[0];
             clientQueue.push(clientId);
             const newLockHolder = clientQueue[0];
-            this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
+            if (newLockHolder !== oldLockHolder) {
+                this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
+            }
 
-            // TODO remove, just for debugging
-            this.emit("changed");
         }
     }
 
@@ -754,10 +745,9 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             }
         }
         const newLockHolder = clientQueue[0];
-        this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
-
-        // TODO remove, just for debugging
-        this.emit("changed");
+        if (newLockHolder !== oldLockHolder) {
+            this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
+        }
     }
 
     private removeClientFromAllQueues(clientId: string) {
@@ -776,25 +766,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             const clientIdIndex = clientQueue.indexOf(placeholderClientId);
             if (clientIdIndex !== -1) {
                 clientQueue[clientIdIndex] = this.runtime.clientId;
-            }
-        }
-    }
-
-    // This seems like it should be unnecessary if we can trust to receive the join/leave messages and
-    // also have an accurate snapshot.
-    private scrubClientsNotInQuorum() {
-        const quorum = this.runtime.getQuorum();
-        for (const [taskId, clientQueue] of this.taskQueues) {
-            const filteredClientQueue = clientQueue.filter((clientId) => quorum.getMember(clientId) !== undefined);
-            if (clientQueue.length !== filteredClientQueue.length) {
-                if (filteredClientQueue.length === 0) {
-                    this.taskQueues.delete(taskId);
-                } else {
-                    this.taskQueues.set(taskId, filteredClientQueue);
-                }
-                // TODO remove, just for debugging
-                this.emit("changed");
-                this.queueWatcher.emit("queueChange", taskId);
             }
         }
     }
