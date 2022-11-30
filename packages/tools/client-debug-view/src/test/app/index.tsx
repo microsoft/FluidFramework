@@ -6,6 +6,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { App } from "./App";
+import { renderClientDebuggerView } from "../../RenderClientDebugger";
 
 console.log("Rendering app!");
 
