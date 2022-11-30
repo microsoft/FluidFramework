@@ -8,9 +8,9 @@ import { IEvent, TransformedEvent, IEventTransformer, IEventProvider } from "@fl
 // the event emitter polyfill and the node event emitter have different event types:
 // string | symbol vs. string | number
 // this allow us to correctly handle either type
-export type EventEmitterEventType = EventEmitter extends { on(event: infer E, listener: any); } ? E : never;
+export type EventEmitterEventType = EventEmitter extends { on(event: infer E, listener: any) } ? E : never;
 
-export type TypedEventTransform<TThis, TEvent> =
+export type TypedEventTransform<TThis, TEvent extends IEvent> =
     // Event emitter supports some special events for the emitter itself to use
     // this exposes those events for the TypedEventEmitter.
     // Since we know what the shape of these events are, we can describe them directly via a TransformedEvent
@@ -18,14 +18,14 @@ export type TypedEventTransform<TThis, TEvent> =
     // eslint-disable-next-line max-len
     TransformedEvent<TThis, "newListener" | "removeListener", Parameters<(event: string, listener: (...args: any[]) => void) => void>> &
     // Expose all the events provides by TEvent
-    IEventTransformer<TThis, TEvent & IEvent> &
+    IEventTransformer<TThis, TEvent> &
     // Add the default overload so this is covertable to EventEmitter regardless of environment
     TransformedEvent<TThis, EventEmitterEventType, any[]>;
 
 /**
  * Event Emitter helper class the supports emitting typed events
  */
-export class TypedEventEmitter<TEvent> extends EventEmitter implements IEventProvider<TEvent & IEvent> {
+export class TypedEventEmitter<TEvent extends IEvent> extends EventEmitter implements IEventProvider<TEvent> {
     constructor() {
         super();
         this.addListener = super.addListener.bind(this) as TypedEventTransform<this, TEvent>;
