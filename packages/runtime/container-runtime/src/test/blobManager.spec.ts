@@ -11,7 +11,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { IClientDetails, ISequencedDocumentMessage, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/protocol-definitions";
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager";
