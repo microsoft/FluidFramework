@@ -28,22 +28,25 @@ import {
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import { Timer } from "@fluidframework/common-utils";
 import {
-    defaultSessionExpiryDurationMs,
     GarbageCollector,
-    gcBlobPrefix,
     GCNodeType,
-    gcTreeKey,
     IGarbageCollectionRuntime,
     IGarbageCollector,
-    runSessionExpiryKey,
     IGarbageCollectorCreateParams,
+} from "../garbageCollection";
+import {
+    defaultSessionExpiryDurationMs,
+    gcBlobPrefix,
+    gcTreeKey,
+    runSessionExpiryKey,
     oneDayMs,
     runGCKey,
     runSweepKey,
     defaultInactiveTimeoutMs,
     gcTestModeKey,
     disableSweepLogKey,
-} from "../garbageCollection";
+} from "../garbageCollectionConstants";
+
 import { dataStoreAttributesBlobName, GCVersion, IContainerRuntimeMetadata, IGCMetadata } from "../summaryFormat";
 import { IGCRuntimeOptions } from "../containerRuntime";
 import { pkgVersion } from "../packageVersion";
