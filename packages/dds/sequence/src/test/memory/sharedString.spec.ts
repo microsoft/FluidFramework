@@ -40,6 +40,8 @@ describe("SharedString memory usage", () => {
 
     benchmarkMemory(new class implements IMemoryTestObject {
         title = "Create empty SharedString";
+        minSampleCount = 500;
+
         private sharedString = createLocalSharedString("testSharedString");
 
         async run() {
@@ -72,8 +74,6 @@ describe("SharedString memory usage", () => {
             private sharedString = createLocalSharedString("testSharedString");
 
             async run() {
-                this.sharedString = createLocalSharedString("testSharedString");
-                this.sharedString.insertText(0, "0000");
                 for (let i = 0; i < x; i++) {
                     this.sharedString.replaceText(0, 4, i.toString().padStart(4, "0"));
                 }
@@ -81,6 +81,7 @@ describe("SharedString memory usage", () => {
 
             beforeIteration() {
                 this.sharedString = createLocalSharedString("testestSharedString");
+                this.sharedString.insertText(0, "0000");
             }
         }());
 
@@ -91,18 +92,16 @@ describe("SharedString memory usage", () => {
             private styleProps = { style: "bold" };
 
             async run() {
-                this.sharedString = createLocalSharedString("testSharedString");
-                this.text = "hello world";
-                this.styleProps = { style: "bold" };
-                this.sharedString.insertText(0, this.text, this.styleProps);
-
                 for (let i = 0; i < x; i++) {
                     this.sharedString.getPropertiesAtPosition(i);
                 }
             }
 
             beforeIteration() {
-                this.sharedString = createLocalSharedString("testestSharedString");
+                this.sharedString = createLocalSharedString("testSharedString");
+                this.text = "hello world";
+                this.styleProps = { style: "bold" };
+                this.sharedString.insertText(0, this.text, this.styleProps);
             }
         }());
 
@@ -112,6 +111,12 @@ describe("SharedString memory usage", () => {
             private sharedString = createLocalSharedString("testSharedString");
 
             async run() {
+                for (let i = 0; i < x; i++) {
+                    this.sharedString.getMarkerFromId(this.markerId);
+                }
+            }
+
+            beforeIteration() {
                 this.markerId = "myMarkerId";
                 this.sharedString = createLocalSharedString("testSharedString");
                 this.sharedString.insertText(0, "my-test-text");
@@ -121,13 +126,6 @@ describe("SharedString memory usage", () => {
                     {
                         [reservedMarkerIdKey]: this.markerId,
                     });
-                for (let i = 0; i < x; i++) {
-                    this.sharedString.getMarkerFromId(this.markerId);
-                }
-            }
-
-            beforeIteration() {
-                this.sharedString = createLocalSharedString("testestSharedString");
             }
         }());
 
@@ -138,6 +136,12 @@ describe("SharedString memory usage", () => {
             private simpleMarker = this.sharedString.getMarkerFromId(this.markerId) as Marker;
 
             async run() {
+                for (let i = 0; i < x; i++) {
+                    this.sharedString.annotateMarker(this.simpleMarker, { color: "blue" });
+                }
+            }
+
+            beforeIteration() {
                 this.markerId = "myMarkerId";
                 this.sharedString = createLocalSharedString("testSharedString");
                 this.sharedString.insertText(0, "my-test-text");
@@ -150,13 +154,6 @@ describe("SharedString memory usage", () => {
                 );
 
                 this.simpleMarker = this.sharedString.getMarkerFromId(this.markerId) as Marker;
-                for (let i = 0; i < x; i++) {
-                    this.sharedString.annotateMarker(this.simpleMarker, { color: "blue" });
-                }
-            }
-
-            beforeIteration() {
-                this.sharedString = createLocalSharedString("testestSharedString");
             }
         }());
     });

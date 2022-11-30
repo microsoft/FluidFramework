@@ -25,6 +25,18 @@ describe("SharedSequence memory usage", () => {
         // See the comment at the top of the test suite for more details.
     });
 
+
+    benchmarkMemory(new class implements IMemoryTestObject {
+        title = "Create empty SharedSequence";
+        minSampleCount = 500;
+
+        private segment = new SubSequence<number>([]);
+
+        async run() {
+            this.segment = new SubSequence<number>([]);
+        }
+    }());
+
     const numbersOfEntriesForTests = [100, 1000, 10_000];
 
     numbersOfEntriesForTests.forEach((x) => {
@@ -33,11 +45,13 @@ describe("SharedSequence memory usage", () => {
             private segment = new SubSequence<number>([]);
 
             async run() {
-                this.segment = new SubSequence<number>([]);
                 for (let i = 0; i < x; i++) {
                     this.segment.append(new SubSequence<number>([i]));
                     this.segment.removeRange(0, 1);
                 }
+            }
+            beforeIteration() {
+                this.segment = new SubSequence<number>([]);
             }
         }());
 

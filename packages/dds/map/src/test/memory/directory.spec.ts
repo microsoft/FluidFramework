@@ -35,6 +35,8 @@ describe("SharedDirectory memory usage", () => {
 
     benchmarkMemory(new class implements IMemoryTestObject {
         title = "Create empty directory";
+        minSampleCount = 500;
+
         private dir: SharedDirectory = createLocalDirectory("testDirectory");
 
         async run () {
@@ -50,7 +52,6 @@ describe("SharedDirectory memory usage", () => {
             private dir: SharedDirectory = createLocalDirectory("testDirectory");
 
             async run () {
-                this.dir = createLocalDirectory("testDirectory");
                 for (let i = 0; i < x; i++) {
                     this.dir.set(i.toString().padStart(6, "0"), i);
                 }
@@ -66,7 +67,6 @@ describe("SharedDirectory memory usage", () => {
             private dir: SharedDirectory = createLocalDirectory("testDirectory");
 
             async run() {
-                this.dir = createLocalDirectory("testDirectory");
                 for (let i = 0; i < x; i++) {
                     this.dir.set(i.toString().padStart(6, "0"), i);
                 }

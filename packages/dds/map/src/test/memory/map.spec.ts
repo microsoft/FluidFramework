@@ -35,6 +35,8 @@ describe("SharedMap memory usage", () => {
 
     benchmarkMemory(new class implements IMemoryTestObject {
         title = "Create empty map";
+        minSampleCount = 500;
+
         private map: SharedMap = createLocalMap("testMap");
 
         async run() {
@@ -50,7 +52,6 @@ describe("SharedMap memory usage", () => {
             private map: SharedMap = createLocalMap("testMap");
 
             async run() {
-                this.map = createLocalMap("testMap");
                 for (let i = 0; i < x; i++) {
                     this.map.set(i.toString().padStart(6, "0"), i);
                 }
@@ -66,7 +67,6 @@ describe("SharedMap memory usage", () => {
             private map: SharedMap = createLocalMap("testMap");
 
             async run() {
-                this.map = createLocalMap("testMap");
                 for (let i = 0; i < x; i++) {
                     this.map.set(i.toString().padStart(6, "0"), i);
                 }
