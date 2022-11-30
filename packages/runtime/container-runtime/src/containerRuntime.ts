@@ -2669,11 +2669,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.blobManager.createBlob(blob);
     }
 
-    public hasPendingBlobs(): boolean {
-        this.verifyNotClosed();
-        return this.blobManager.hasPendingBlobs();
-    }
-
     private submit(
         type: ContainerMessageType,
         contents: any,

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import EventEmitter from "events";
 import { v4 as uuid } from "uuid";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -105,7 +104,13 @@ interface PendingBlob {
 
 export interface IPendingBlobs { [id: string]: { blob: string; }; }
 
-export class BlobManager extends EventEmitter {
+export interface IBlobManagerEvents {
+    (
+        event: "NoPendingBlobs",
+        listener: () => void);
+}
+
+export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     public static readonly basePath = "_blobs";
     private static readonly redirectTableBlobName = ".redirectTable";
     private readonly logger: ITelemetryLogger;
