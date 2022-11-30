@@ -70,7 +70,7 @@
     "underscore": "^1.12.1"
   },
   "devDependencies": {
-    "@fluid-experimental/property-properties-previous": "npm:@fluid-experimental/property-properties@2.0.0-internal.2.0.0",
+    "@fluid-experimental/property-properties-previous": "npm:@fluid-experimental/property-properties@2.0.0-internal.2.1.1",
     "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.1.2 <2.0.0-internal.3.0.0",
     "@types/mocha": "^9.1.1",
@@ -86,7 +86,9 @@
     "typescript": "~4.5.5"
   },
   "typeValidation": {
-    "version": "2.0.0-internal.2.1.0",
+    "disabled": true,
+    "version": "2.0.0-internal.2.1.2",
+    "baselineRange": "2.0.0-internal.2.1.1",
     "broken": {}
   }
 }
