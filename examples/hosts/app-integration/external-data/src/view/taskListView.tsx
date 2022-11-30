@@ -21,20 +21,20 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
     const { task, deleteTask } = props;
     const priorityRef = useRef<HTMLInputElement>(null);
     useEffect(() => {
-        const updateFromRemotePriority = () => {
+        const updateFromRemotePriority = (): void => {
             if (priorityRef.current !== null) {
                 priorityRef.current.value = task.priority.toString();
             }
         };
         task.on("priorityChanged", updateFromRemotePriority);
         updateFromRemotePriority();
-        return () => {
+        return (): void => {
             task.off("priorityChanged", updateFromRemotePriority);
         };
     }, [task]);
 
-    const inputHandler = (e) => {
-        const newValue = parseInt(e.target.value, 10);
+    const inputHandler = (e: React.FormEvent): void => {
+        const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
         task.priority = newValue;
     };
 
@@ -79,13 +79,13 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 
     const [tasks, setTasks] = useState<ITask[]>(taskList.getTasks());
     useEffect(() => {
-        const updateTasks = () => {
+        const updateTasks = (): void => {
             setTasks(taskList.getTasks());
         };
         taskList.on("taskAdded", updateTasks);
         taskList.on("taskDeleted", updateTasks);
 
-        return () => {
+        return (): void => {
             taskList.off("taskAdded", updateTasks);
             taskList.off("taskDeleted", updateTasks);
         };
@@ -95,7 +95,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
         <TaskRow
             key={ task.id }
             task={ task }
-            deleteTask={ () => taskList.deleteTask(task.id) }
+            deleteTask={ (): void => taskList.deleteTask(task.id) }
         />
     ));
 
