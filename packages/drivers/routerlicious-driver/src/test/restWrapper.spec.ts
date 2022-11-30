@@ -24,14 +24,15 @@ describe("RouterliciousDriverRestWrapper", () => {
     const token3 = "abc-auth-token-123";
     let tokenQueue: string[] = [];
 
-    // Pop a token off tokenQueue
-    const newToken: ITokenResponse = {
-        jwt: tokenQueue.shift() ?? "testtoken"
-    };
-
     const getToken: (refresh?: boolean) => Promise<ITokenResponse | undefined>
-        = async (refresh?: boolean) => new Promise(() => newToken);
-    const getAuthHeader: (token?: ITokenResponse) => string | undefined = (token) => `Bearer ${token ?? ""}`;
+        = async (refresh?: boolean) => new Promise((resolve) => {
+            // Pop a token off tokenQueue
+                const newToken: ITokenResponse = {
+                jwt: tokenQueue.shift() ?? "testtoken"
+            };
+            resolve(newToken);
+        });
+    const getAuthHeader: (token?: ITokenResponse) => string | undefined = (token) => `Bearer ${token?.jwt ?? ""}`;
 
     // Set up mock throttling
     let throttleDurationInMs: number;
