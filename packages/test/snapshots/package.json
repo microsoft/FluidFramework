@@ -24,17 +24,18 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+    "format": "npm run prettier:fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
+    "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
+    "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "test:mocha": "mocha --experimental-worker dist/test --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "test:new": "mocha --experimental-worker dist/test/generate/new.spec.js --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:update": "mocha --experimental-worker dist/test/generate/update.spec.js --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-    "tsc": "tsc",
-    "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsc": "tsc"
   },
   "nyc": {
     "all": true,
@@ -81,9 +82,9 @@
     "@fluidframework/test-utils": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0"
   },
   "devDependencies": {
-    "@fluid-tools/build-cli": "^0.5.0",
+    "@fluid-tools/build-cli": "^0.6.0-109663",
     "@fluidframework/build-common": "^1.1.0",
-    "@fluidframework/eslint-config-fluid": "^1.1.0",
+    "@fluidframework/eslint-config-fluid": "^1.2.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
@@ -93,8 +94,8 @@
     "eslint": "~8.6.0",
     "mocha": "^10.0.0",
     "nyc": "^15.0.0",
+    "prettier": "~2.6.2",
     "rimraf": "^2.6.2",
-    "typescript": "~4.5.5",
-    "typescript-formatter": "7.1.0"
+    "typescript": "~4.5.5"
   }
 }

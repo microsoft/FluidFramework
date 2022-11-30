@@ -325,10 +325,10 @@ export function toInstrumentedOdspTokenFetcher(
                 const tokenError = wrapError(
                     error,
                     (errorMessage) => new NetworkErrorBasic(
-                        `The Host-provided token fetcher threw an error: ${errorMessage}`,
+                        `The Host-provided token fetcher threw an error`,
                         OdspErrorType.fetchTokenError,
                         typeof rawCanRetry === "boolean" ? rawCanRetry : false /* canRetry */,
-                        { method: name, driverVersion }));
+                        { method: name, errorMessage, driverVersion }));
                 throw tokenError;
             }),
             { cancel: "generic" });
@@ -369,4 +369,18 @@ export function buildOdspShareLinkReqParams(shareLinkType: ShareLinkTypes | ISha
     const role = (shareLinkType as ISharingLinkKind).role;
     shareLinkRequestParams = role ? `${shareLinkRequestParams}&createLinkRole=${role}` : shareLinkRequestParams;
     return shareLinkRequestParams;
+}
+
+export function measure<T>(callback: () => T): [T, number] {
+    const start = performance.now();
+    const result = callback();
+    const time = performance.now() - start;
+    return [result, time];
+}
+
+export async function measureP<T>(callback: () => Promise<T>): Promise<[T, number]> {
+    const start = performance.now();
+    const result = await callback();
+    const time = performance.now() - start;
+    return [result, time];
 }

@@ -22,7 +22,7 @@ export {
 	IServerConfiguration,
 	IServiceConfiguration,
 } from "./configuration";
-export { ICollection, IDatabaseManager, IDb, IDbEvents, IDbFactory } from "./database";
+export { ICollection, IDatabaseManager, IDb, IDbEvents, IDbFactory, IRetryable, isRetryEnabled } from "./database";
 export { IDeltaService } from "./delta";
 export { IClientSequenceNumber, IDeliState, IDocument, IDocumentDetails, IDocumentStorage, IScribe } from "./document";
 export { EmptyTaskMessageSender } from "./emptyTaskMessageSender";

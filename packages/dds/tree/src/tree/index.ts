@@ -56,3 +56,5 @@ export { DeltaVisitor, visitDelta } from "./visitDelta";
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as Delta from "./delta";
 export { Delta };
+
+export { SparseNode, getDescendant } from "./sparseTree";

@@ -21,9 +21,10 @@ export async function deleteSummarizedOps(
             return Promise.reject(error);
         }
 
-        const uniqueDocuments = await documentsCollection.aggregate([
-            { $group: { _id: { documentId: "$documentId", tenantId: "$tenantId" } } },
-        ]).toArray();
+    const uniqueDocumentsCursor = await documentsCollection.aggregate([
+        { $group: { _id: { documentId: "$documentId", tenantId: "$tenantId" } } },
+    ]);
+    const uniqueDocuments = await uniqueDocumentsCursor.toArray();
 
         const currentEpochTime = new Date().getTime();
         const epochTimeBeforeOfflineWindow = currentEpochTime - offlineWindowMs;
