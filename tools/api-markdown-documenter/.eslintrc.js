@@ -24,5 +24,20 @@ module.exports = {
 
         "unicorn/prefer-module": "off",
         "unicorn/prefer-negative-index": "off",
+
+        // TODO: remove once dependency on base config has been updated.
+        "@typescript-eslint/explicit-member-accessibility": [
+            "error",
+            {
+                accessibility: "explicit",
+                overrides: {
+                    accessors: "explicit",
+                    constructors: "explicit",
+                    methods: "explicit",
+                    properties: "explicit",
+                    parameterProperties: "explicit",
+                },
+            },
+        ],
     },
 };
