@@ -151,11 +151,13 @@ import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import {
     GarbageCollector,
     GCNodeType,
-    gcTreeKey,
     IGarbageCollectionRuntime,
     IGarbageCollector,
     IGCStats,
 } from "./garbageCollection";
+import {
+    gcTreeKey,
+} from "./garbageCollectionConstants";
 import {
     channelToDataStore,
     IDataStoreAliasMessage,
@@ -2598,22 +2600,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Please note that this does not change file format, so it can be disabled in the future if this
             // optimization no longer makes sense (for example, batch compression may make it less appealing).
             if (this.currentlyBatching() && type === ContainerMessageType.Attach &&
-                this.mc.config.getBoolean("Fluid.ContainerRuntime.enableAttachOpReorder") === true) {
+                this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true) {
                 this.outbox.submitAttach(message);
             } else {
                 this.outbox.submit(message);
+            }
 
-                if (!this.currentlyBatching()) {
+            if (!this.currentlyBatching()) {
+                this.flush();
+            } else if (!this.flushMicroTaskExists) {
+                this.flushMicroTaskExists = true;
+                // Queue a microtask to detect the end of the turn and force a flush.
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                Promise.resolve().then(() => {
+                    this.flushMicroTaskExists = false;
                     this.flush();
-                } else if (!this.flushMicroTaskExists) {
-                    this.flushMicroTaskExists = true;
-                    // Queue a microtask to detect the end of the turn and force a flush.
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    Promise.resolve().then(() => {
-                        this.flushMicroTaskExists = false;
-                        this.flush();
-                    });
-                }
+                });
             }
         } catch (error) {
             this.closeFn(error as GenericError);

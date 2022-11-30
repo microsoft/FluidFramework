@@ -89,7 +89,7 @@ graph TD;
     A(Chunk A)-->B(Chunk B)-->C(Chunk C)
 ```
 
-The folowing sections will examine some of the general properties of this "chunk tree".
+The following sections will examine some of the general properties of this "chunk tree."
 
 ### Immutability
 
@@ -332,7 +332,7 @@ graph TD;
     style E fill:#844
 ```
 
-This tree might have the same number of nodes and chunks as the tree above, but it takes many more reuploads (five) to edit a the leaf simply because the logical tree has a deeper shape.
+This tree might have the same number of nodes and chunks as the tree above, but it takes many more reuploads (five) to edit a leaf simply because the logical tree has a deeper shape.
 
 There's also the problem in the other direction; trees which have extremely long sequences of children under the same parent (and are therefore very wide). Consider this logical tree with one million nodes under a single parent:
 
@@ -380,7 +380,7 @@ Clearly, the tree's shape alone can have a significant effect on both read and w
 
 ### Optimizing Tree Shapes
 
-So the worst case performance of both reads and writes, in terms of blob downloads and blob uploads, respectively, is `O(N)`. Given a decent chunking algorithm and trees that aren't pathologically shaped, most trees will do far better than incur an upload or download per node per operation, but the asymptotics are nonetheless unenticing. However, if the chunks in the tree can be re-organized into a different hierarchy, then the worst case can be much improved. It's possible to organize the chunks in such a way that both reads and writes can be bounded to `O(log(D))`/`O(log(N))` for any shape of tree. This can be accomplished by implementing a more intelligent chunk data structure. See [Appendix A](#appendix-a-chunk-data-structure-implementations) for an analysis of some different implementations of the chunk data structure.
+So the worst case performance of both reads and writes, in terms of blob downloads and blob uploads, respectively, is `O(N)`. Given a decent chunking algorithm and trees that aren't pathologically shaped, most trees will do far better than incur an upload or download per node per operation, but the asymptotics are nonetheless unenticing. However, if the chunks in the tree can be re-organized into a different hierarchy, then the worst case can be much improved. It's possible to organize the chunks in such a way that both reads and writes can be bounded to `O(log(N))` for any shape of tree. This can be accomplished by implementing a more intelligent chunk data structure. See [Appendix A](#appendix-a-chunk-data-structure-implementations) for an analysis of some different implementations of the chunk data structure.
 
 ## Generalization
 
