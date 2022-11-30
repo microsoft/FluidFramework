@@ -112,6 +112,24 @@
     "baselineRange": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
     "baselineVersion": "2.0.0-internal.2.1.1",
     "broken": {
+      "VariableDeclaration_DefaultSummaryConfiguration": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISummaryBaseConfiguration": {
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_ISummaryConfiguration": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISummaryConfigurationDisableHeuristics": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISummaryConfigurationHeuristics": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISummaryRuntimeOptions": {
+        "backCompat": false
+      },
       "ClassDeclaration_ContainerRuntime": {
         "forwardCompat": false,
         "backCompat": false

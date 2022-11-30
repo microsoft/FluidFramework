@@ -210,13 +210,6 @@ export interface ISummaryBaseConfiguration {
     initialSummarizerDelayMs: number;
 
     /**
-     * @deprecated
-     * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
-     * This defaults to false (disabled) and must be explicitly set to true to enable.
-     */
-    summarizerClientElection: boolean;
-
-    /**
      * Defines the maximum allowed time to wait for a pending summary ack.
      * The maximum amount of time client will wait for a summarize is the minimum of
      * maxSummarizeAckWaitTime (currently 10 * 60 * 1000) and maxAckWaitTime.
@@ -320,8 +313,6 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     maxOpsSinceLastSummary: 7000,
 
     initialSummarizerDelayMs: 5 * 1000, // 5 secs.
-
-    summarizerClientElection: false,
 
     nonRuntimeOpWeight: 0.1,
 
@@ -988,15 +979,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.summaryConfiguration.state === "disableHeuristics";
     }
 
-    private readonly summarizerClientElectionEnabled: boolean;
-    private isSummarizerClientElectionEnabled(): boolean {
-        if (this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection")) {
-            return this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection") ?? true;
-        }
-        return this.summaryConfiguration.state !== "disabled"
-            ? this.summaryConfiguration.summarizerClientElection === true
-            : false;
-    }
     private readonly maxOpsSinceLastSummary: number;
     private getMaxOpsSinceLastSummary(): number {
         return this.summaryConfiguration.state !== "disabled"
@@ -1086,7 +1068,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.summariesDisabled = this.isSummariesDisabled();
         this.heuristicsDisabled = this.isHeuristicsDisabled();
-        this.summarizerClientElectionEnabled = this.isSummarizerClientElectionEnabled();
         this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
         this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
 
@@ -1260,7 +1241,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.summaryCollection,
                 orderedClientElectionForSummarizer,
                 this.maxOpsSinceLastSummary,
-                this.summarizerClientElectionEnabled,
             );
 
             if (this.context.clientDetails.type === summarizerClientType) {
