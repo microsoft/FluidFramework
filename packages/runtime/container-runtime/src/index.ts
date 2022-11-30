@@ -16,7 +16,6 @@ export {
     IRootSummaryTreeWithStats,
     isRuntimeMessage,
     RuntimeMessage,
-    unpackRuntimeMessage,
     agentSchedulerId,
     ContainerRuntime,
     RuntimeHeaders,
@@ -83,4 +82,4 @@ export {
     SummaryCollection,
 } from "./summaryCollection";
 export { ICancellableSummarizerController, neverCancelledSummaryToken } from "./runWhileConnectedCoordinator";
-export { IChunkedOp } from "./opLifecycle";
+export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle";

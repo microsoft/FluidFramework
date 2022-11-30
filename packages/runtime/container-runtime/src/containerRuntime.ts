@@ -174,7 +174,6 @@ import {
     OpDecompressor,
     Outbox,
     OpSplitter,
-    OpUnpacker,
 } from "./opLifecycle";
 
 export enum ContainerMessageType {
@@ -585,36 +584,6 @@ export enum RuntimeMessage {
  */
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     return (Object.values(RuntimeMessage) as string[]).includes(message.type);
-}
-
-/**
- * Unpacks runtime messages. To be removed and replaced with `OpUnpacker` ADO:2465
- *
- * @remarks This API makes no promises regarding backward-compatibility. This is internal API.
- * @param message - message (as it observed in storage / service)
- * @returns unpacked runtime message
- *
- * @internal
- */
-export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
-    if (message.type === MessageType.Operation) {
-        // legacy op format?
-        if (message.contents.address !== undefined && message.contents.type === undefined) {
-            message.type = ContainerMessageType.FluidDataStoreOp;
-        } else {
-            // new format
-            const innerContents = message.contents as ContainerRuntimeMessage;
-            message.type = innerContents.type;
-            message.contents = innerContents.contents;
-        }
-        return true;
-    } else {
-        // Legacy format, but it's already "unpacked",
-        // i.e. message.type is actually ContainerMessageType.
-        // Or it's non-runtime message.
-        // Nothing to do in such case.
-        return false;
-    }
 }
 
 /**
@@ -1036,10 +1005,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this._connected = this.context.connected;
         const opSplitter = new OpSplitter(chunks, this.context.submitBatchFn);
-        this.inbox = new Inbox(
-            opSplitter,
-            new OpDecompressor(),
-            new OpUnpacker());
+        this.inbox = new Inbox(opSplitter, new OpDecompressor());
 
         this.handleContext = new ContainerFluidHandleContext("", this);
 

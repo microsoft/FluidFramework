@@ -12,11 +12,9 @@ export {
 } from "./definitions";
 export {
     Inbox,
-    IProcessingResult,
-    IRemoteMessageProcessor,
+    unpackRuntimeMessage,
 } from "./inbox";
 export { OpSplitter } from "./opSplitter";
-export { OpUnpacker } from "./opUnpacker";
 export { Outbox } from "./outbox";
 export { OpCompressor } from "./opCompressor";
 export { OpDecompressor } from "./opDecompressor";
