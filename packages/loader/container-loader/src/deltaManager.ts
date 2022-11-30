@@ -243,9 +243,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         this.messageBuffer.push(message);
         this.ops.push(message);
 
-        if (message.type === "noop") {
-            this.noOpCount++;
-        }
+        // if (message.type === "noop") {
+        //     this.noOpCount++;
+        // }
 
         this.emit("submitOp", message);
 
