@@ -18,7 +18,7 @@ const taskListId = "task-list";
  * {@inheritDoc ModelContainerRuntimeFactory}
  */
 export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
-    public constructor() {
+    constructor() {
         super(
             new Map([TaskListInstantiationFactory.registryEntry]), // registryEntries
         );
@@ -27,7 +27,7 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
     /**
      * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
      */
-    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+    protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
         const taskList = await runtime.createDataStore(TaskListInstantiationFactory.type);
         await taskList.trySetAlias(taskListId);
     }
@@ -35,7 +35,7 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
     /**
      * {@inheritDoc ModelContainerRuntimeFactory.containerHasInitialized}
      */
-    protected async containerHasInitialized(runtime: IContainerRuntime) {
+    protected async containerHasInitialized(runtime: IContainerRuntime): Promise<void> {
         runtime.on("signal", (message) => {
             // TODO: Check the message type? clientId?  And route to the TaskList for interpretation?
             // Interpretation of the message contents should probably live on the TaskList to encapsulate
@@ -46,7 +46,7 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
     /**
      * {@inheritDoc ModelContainerRuntimeFactory.createModel}
      */
-    protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+    protected async createModel(runtime: IContainerRuntime, container: IContainer): Promise<AppModel> {
         const taskList = await requestFluidObject<ITaskList>(
             await runtime.getRootDataStore(taskListId),
             "",
