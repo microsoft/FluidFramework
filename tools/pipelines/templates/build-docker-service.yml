@@ -218,6 +218,7 @@ stages:
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
           buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+          buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
           tagName: ${{ parameters.tagName }}
     - ${{ if eq(parameters.setVersion, false) }}:
       - task: Bash@3

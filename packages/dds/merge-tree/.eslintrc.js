@@ -16,5 +16,14 @@ module.exports = {
         "keyword-spacing": "off", // Off because it conflicts with typescript-formatter
         "no-case-declarations": "off",
         "prefer-arrow/prefer-arrow-functions": "off"
-    }
+    },
+    overrides: [
+        {
+            // Rules only for type validation files
+            files: ["**/types/*validate*Previous*.ts"],
+            rules: {
+                "@typescript-eslint/comma-spacing": "off",
+            },
+        },
+    ],
 }

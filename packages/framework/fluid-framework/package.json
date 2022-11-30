@@ -30,9 +30,8 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
-    "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace",
-    "typetests:gen": "fluid-type-validator -g -d ."
+    "typetests:gen": "flub generate typetests --generate --dir . --no-generateInName",
+    "typetests:prepare": "flub generate typetests --prepare --dir . --pin"
   },
   "dependencies": {
     "@fluidframework/container-definitions": "^1.4.0",
@@ -44,7 +43,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
-    "@fluidframework/build-tools": "^0.2.74327",
+    "@fluidframework/build-tools": "^0.6.0-110101",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
@@ -53,13 +52,15 @@
     "copyfiles": "^2.1.0",
     "cross-env": "^7.0.2",
     "eslint": "~8.6.0",
-    "fluid-framework-previous": "npm:fluid-framework@^1.2.0",
+    "fluid-framework-previous": "npm:fluid-framework@1.3.1",
     "rimraf": "^2.6.2",
     "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.3.0",
+    "version": "1.4.0",
+    "baselineRange": "~1.3.0",
+    "baselineVersion": "1.3.1",
     "broken": {}
   }
 }

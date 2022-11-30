@@ -12,5 +12,14 @@ module.exports = {
     },
     "rules": {
         "@typescript-eslint/strict-boolean-expressions": "off"
-    }
+    },
+    overrides: [
+        {
+            // Rules only for type validation files
+            files: ["**/types/*validate*Previous*.ts"],
+            rules: {
+                "@typescript-eslint/comma-spacing": "off",
+            },
+        },
+    ],
 }

@@ -94,5 +94,10 @@
         "library": "main"
       }
     }
+  },
+  "typeValidation": {
+    "disabled": true,
+    "version": "1.4.0",
+    "broken": {}
   }
 }

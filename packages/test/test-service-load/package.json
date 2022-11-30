@@ -48,7 +48,8 @@
     "test:realsvc:tinylicious": "cross-env fluid__test__driver=t9s start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
     "test:realsvc:tinylicious:run": "npm run test:realsvc:run",
     "tsc": "tsc",
-    "typetests:gen": "fluid-type-validator -g -d .",
+    "typetests:gen": "flub generate typetests --generate --dir . --no-generateInName",
+    "typetests:prepare": "flub generate typetests --prepare --dir . --pin",
     "usePrereleaseDeps": "node ./scripts/usePrereleaseDeps.js"
   },
   "nyc": {
@@ -101,7 +102,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
-    "@fluidframework/build-tools": "^0.2.74327",
+    "@fluidframework/build-tools": "^0.6.0-110101",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": "^1.4.0",
     "@rushstack/eslint-config": "^2.5.1",
