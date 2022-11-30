@@ -222,14 +222,8 @@ export class TenantManager {
             customData.externalStorageData.accessInfo = this.encryptAccessInfo(accessInfo);
         }
         await collection.update({ _id: tenantId }, { customData }, null);
-        const tenantDocument = await this.getTenantDocument(tenantId, true);
-        if (tenantDocument.disabled) {
-            Lumberjack.info(
-                "Updated custom data of a disabled tenant",
-                { [BaseTelemetryProperties.tenantId]: tenantId },
-            );
-        }
-        return tenantDocument.customData;
+
+        return (await this.getTenantDocument(tenantId)).customData;
     }
 
     /**
