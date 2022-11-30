@@ -216,7 +216,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get outbound() { return this.connectionManager.outbound; }
     public get readOnlyInfo() { return this.connectionManager.readOnlyInfo; }
     public get clientDetails() { return this.connectionManager.clientDetails; }
-    private readonly ops : any[] = [];
+
     public submit(type: MessageType, contents?: string, batch = false, metadata?: any, compression?: string) {
         const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
             contents,
@@ -241,11 +241,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         }
 
         this.messageBuffer.push(message);
-        this.ops.push(message);
-
-        // if (message.type === "noop") {
-        //     this.noOpCount++;
-        // }
 
         this.emit("submitOp", message);
 
@@ -765,7 +760,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             0x0ec /* "Unexpected value for previously processed message's sequence number" */);
 
         for (const message of messages) {
-            // this.ops.push(message);
             if (message.type === MessageType.NoOp){
                 this.noOpCount++;
             }
@@ -841,13 +835,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             message.contents = JSON.parse(message.contents);
         }
 
-        this.ops.push(message);
         // validate client sequence number has no gap. If there is gap, check if there were noops
         // if there were noops, decrement the gap by number of noops and continue
         if (this.lastClientSequenceNumber !== undefined && this.lastSubmittedClientId !== undefined && this.lastSubmittedClientId === message.clientId) {
-            // if(message.type === MessageType.NoOp){
-            //     this.noOpCount++;
-            // }
             const clientSeqNumGap = message.clientSequenceNumber - this.lastClientSequenceNumber - 1;
             if (clientSeqNumGap > 0) {
                 if (this.noOpCount > 0) {
