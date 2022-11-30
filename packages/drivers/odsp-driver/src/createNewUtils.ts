@@ -10,11 +10,11 @@ import { stringToBuffer, Uint8ArrayToString, unreachableCase } from "@fluidframe
 import { getGitType } from "@fluidframework/protocol-base";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IFileEntry, InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IOdspSummaryPayload, IOdspSummaryTree, OdspSummaryTreeEntry, OdspSummaryTreeValue } from "./contracts";
 import { getWithRetryForTokenRefresh, IExistingFileInfo, INewFileInfo, maxUmpPostBodySize } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { EpochTracker, FetchType } from "./epochTracker";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { runWithRetry } from "./retryUtils";
 
