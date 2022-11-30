@@ -21,19 +21,19 @@ import {
     Reducer,
     take,
 } from "@fluid-internal/stochastic-test-utils";
-import { IAttributor } from "@fluidframework/runtime-definitions";
 import {
     MockFluidDataStoreRuntime,
     MockStorage,
 	MockContainerRuntimeFactoryForReconnection,
 } from "@fluidframework/test-runtime-utils";
 import {
-	chain as chainEncoders,
-	OpStreamAttributor,
-	makeGzipEncoder,
 	AttributorSerializer,
-	Encoder,
+	chain as chainEncoders,
 	deltaEncoder,
+	Encoder,
+	IAttributor,
+	makeGzipEncoder,
+	OpStreamAttributor,
 } from "@fluid-internal/attributor";
 import { IChannelServices, IFluidDataStoreRuntime, Jsonable } from "@fluidframework/datastore-definitions";
 import { PropertySet } from "@fluidframework/merge-tree";
@@ -224,25 +224,25 @@ function createSharedString(
 			const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
 			dataStoreRuntime.options.trackAttribution = true;
 			const { deltaManager } = dataStoreRuntime;
-
-			if (index === 0 && makeSerializer !== undefined) {
-				attributor = new OpStreamAttributor(deltaManager, dataStoreRuntime.getAudience());
-				serializer = makeSerializer(dataStoreRuntime);
-			}
 			const sharedString = new SharedString(
 				dataStoreRuntime,
 				String.fromCharCode(index + 65),
 				SharedStringFactory.Attributes,
 			);
-			// DeltaManager mock doesn't have high fidelity but attribution requires DataStoreRuntime implements
-			// audience / op emission.
-			let opIndex = 0;
-			sharedString.on("op", (message) => {
-				opIndex++;
-				message.timestamp = getTimestamp(opIndex);
-				deltaManager.emit("op", message);
-			});
-			dataStoreRuntime.getAudience = () => audience;
+
+			if (index === 0 && makeSerializer !== undefined) {
+				attributor = new OpStreamAttributor(deltaManager, audience);
+				serializer = makeSerializer(dataStoreRuntime);
+				// DeltaManager mock doesn't have high fidelity but attribution requires DataStoreRuntime implements
+				// audience / op emission.
+				let opIndex = 0;
+				sharedString.on("op", (message) => {
+					opIndex++;
+					message.timestamp = getTimestamp(opIndex);
+					deltaManager.emit("op", message);
+				});
+				dataStoreRuntime.getAudience = () => audience;
+			}
 
 			const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services: IChannelServices = {
@@ -356,7 +356,7 @@ function embedAttributionInProps(operations: Operation[]): Operation[] {
 			return operation;
 		} else {
 			const name = operation.stringId.repeat(10);
-			const id = `${name}@microsoft.com`;
+			const id = `${name}@contoso.com`;
 			const email = id;
 			const props = {
 				attribution: {
@@ -514,7 +514,7 @@ describe("SharedString Attribution", () => {
 		];
 
 		it.skip("Generate a new document", async () => {
-			const paths = getDocumentPaths("basic");
+			const paths = getDocumentPaths("default");
 			const attributionlessGenerator = chain(
 				take(100, makeOperationGenerator({ validateInterval })),
 				generatorFromArray<Operation, FuzzTestState>([{ type: "synchronize" }]),
@@ -624,7 +624,7 @@ describe("SharedString Attribution", () => {
 			};
 		}
 
-		const documents = ["fhl-demos"];
+		const documents = [/* TODO: Insert document names here */];
 		const dataGenerators: {
 			name: string;
 			factory: (messages: ISequencedDocumentMessage[]) => FuzzTestState;

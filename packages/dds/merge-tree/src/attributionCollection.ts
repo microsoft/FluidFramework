@@ -94,10 +94,10 @@ export class AttributionCollection<T> {
         let currentInfo = keys[curIndex];
 
         for (const segment of segments) {
-            const attribution = new AttributionCollection(currentInfo, segment.cachedLength);
+            const attribution = new AttributionCollection(currentInfo as number, segment.cachedLength);
             while (posBreakpoints[curIndex] < cumulativeSegPos + segment.cachedLength) {
                 currentInfo = keys[curIndex];
-                attribution.entries.put(posBreakpoints[curIndex] - cumulativeSegPos, currentInfo);
+                attribution.entries.put(posBreakpoints[curIndex] - cumulativeSegPos, currentInfo as number);
                 curIndex++;
             }
 

@@ -42,7 +42,6 @@ export class SnapshotLegacy {
     public static readonly header = "header";
     public static readonly body = "body";
     private static readonly catchupOps = "catchupOps";
-    public static readonly attribution = "attribution";
 
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
     // Please note that this number has no direct relationship to anything other than size of raw text (characters).
@@ -71,17 +70,19 @@ export class SnapshotLegacy {
         const segs: ISegment[] = [];
         let sequenceLength = 0;
         let segCount = 0;
-        let hasAttribution = false;
+        let segsWithAttribution = 0;
         while ((sequenceLength < approxSequenceLength) && ((startIndex + segCount) < allSegments.length)) {
             const pseg = allSegments[startIndex + segCount];
             segs.push(pseg);
             if (pseg.attribution) {
-                // TODO: Validate this is all-or-nothing?
-                hasAttribution = true;
+                segsWithAttribution++;
             }
             sequenceLength += pseg.cachedLength;
             segCount++;
         }
+
+        assert(segsWithAttribution === 0 || segsWithAttribution === segCount,
+            "all or no segments should have attribution");
 
         return {
             version: undefined,
@@ -92,7 +93,8 @@ export class SnapshotLegacy {
             totalSegmentCount: allSegments.length,
             chunkSequenceNumber: this.header!.seq,
             segmentTexts: segs.map((seg) => seg.toJSONObject() as JsonSegmentSpecs),
-            attribution: hasAttribution ? AttributionCollection.serializeAttributionCollections(segs) : undefined
+            attribution: segsWithAttribution > 0 ?
+                AttributionCollection.serializeAttributionCollections(segs) : undefined
         };
     }
 

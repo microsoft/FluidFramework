@@ -86,7 +86,7 @@ describe("snapshot", () => {
     async function assertAttributionKeysMatch(client: TestClient, expected: number[] | undefined): Promise<void> {
         assert.deepEqual(client.getAllAttributionKeys(), expected, "Keys don't match before round-tripping");
         const serializer = new TestSerializer();
-        // This avoids necessitating catchup ops.
+        // This avoids necessitating handling catchup ops.
         client.mergeTree.setMinSeq(client.mergeTree.getCollabWindow().currentSeq);
         const snapshot = new SnapshotLegacy(client.mergeTree, client.logger);
         snapshot.extractSync();

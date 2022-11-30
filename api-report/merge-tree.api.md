@@ -54,7 +54,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     append(other: ISegment): void;
     // (undocumented)
-    attribution?: AttributionCollection<unknown>;
+    attribution?: AttributionCollection<number>;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     // (undocumented)
@@ -653,8 +653,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
     append(segment: ISegment): void;
-    // (undocumented)
-    attribution?: AttributionCollection<unknown>;
+    attribution?: AttributionCollection<number>;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     clientId: number;

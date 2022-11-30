@@ -11,13 +11,7 @@ Each subfolder currently contains:
 
 -   `operations.json`: A list of operations that can be used to recreate the document.
     These are the base operations which don't include any potential attribution strategy.
--   `no-attribution-snap.json`: A snapshot of the document after applying all operations as-is.
-    This is a reasonable baseline for comparison with storing no attribution information at all
-    (effectively, the minimum possible size for the document without changing unrelated aspects of
-    the snapshot format)
--   `prop-attribution-snap.json`: A snapshot of the document after applying the equivalent operations, but with
-    attribution information embedded in the `props` of text insertions. This is a sample strategy that partner
-    teams have used which generally has inefficiency issues.
+-   A number of other json files which store candidate serialized formats. See the test file for more details.
 
 `sharedString.attribution.spec.ts` does a basic snapshot comparison of the documents in CI in order to keep
 the tests functional and document snapshots updated.

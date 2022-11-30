@@ -166,39 +166,48 @@ export class SnapshotLoader {
     }
 
     private async loadBody(chunk1: MergeTreeChunkV1, services: IChannelStorageService): Promise<void> {
+        const headerMetadata  = chunk1.headerMetadata!;
         assert(
-            chunk1.length <= chunk1.headerMetadata!.totalLength,
+            chunk1.length <= headerMetadata.totalLength,
             0x061 /* "Mismatch in totalLength" */);
 
         assert(
-            chunk1.segmentCount <= chunk1.headerMetadata!.totalSegmentCount,
+            chunk1.segmentCount <= headerMetadata.totalSegmentCount,
             0x062 /* "Mismatch in totalSegmentCount" */);
 
-        if (chunk1.segmentCount === chunk1.headerMetadata!.totalSegmentCount) {
+        if (chunk1.segmentCount === headerMetadata.totalSegmentCount) {
             return;
         }
+
+        let chunksWithAttribution = chunk1.attribution !== undefined ? 1 : 0;
         const segs: ISegment[] = [];
         let lengthSofar = chunk1.length;
-        for (let chunkIndex = 1; chunkIndex < chunk1.headerMetadata!.orderedChunkMetadata.length; chunkIndex++) {
+        for (let chunkIndex = 1; chunkIndex < headerMetadata.orderedChunkMetadata.length; chunkIndex++) {
             const chunk = await SnapshotV1.loadChunk(
                 services,
-                chunk1.headerMetadata!.orderedChunkMetadata[chunkIndex].id,
+                headerMetadata.orderedChunkMetadata[chunkIndex].id,
                 this.logger,
                 this.mergeTree.options,
                 this.serializer);
             lengthSofar += chunk.length;
+            // Deserialize each chunk segment and append it to the end of the MergeTree.
             const newSegs = chunk.segments.map(this.specToSegment);
             this.extractAttribution(newSegs, chunk);
-
-            // Deserialize each chunk segment and append it to the end of the MergeTree.
+            chunksWithAttribution += chunk.attribution !== undefined ? 1 : 0;
             segs.push(...newSegs);
         }
+
         assert(
-            lengthSofar === chunk1.headerMetadata!.totalLength,
+            chunksWithAttribution === 0 || chunksWithAttribution === headerMetadata.orderedChunkMetadata.length,
+            "all or no chunks should have attribution information",
+        );
+
+        assert(
+            lengthSofar === headerMetadata.totalLength,
             0x063 /* "Mismatch in totalLength" */);
 
         assert(
-            chunk1.segmentCount + segs.length === chunk1.headerMetadata!.totalSegmentCount,
+            chunk1.segmentCount + segs.length === headerMetadata.totalSegmentCount,
             0x064 /* "Mismatch in totalSegmentCount" */);
 
         // Helper to insert segments at the end of the MergeTree.
@@ -236,15 +245,11 @@ export class SnapshotLoader {
         flushBatch();
     }
 
-    private someChunkHadAttribution = false;
     private extractAttribution(segments: Iterable<ISegment>, chunk: MergeTreeChunkV1): void {
         if (chunk.attribution) {
             this.mergeTree.options ??= {};
             this.mergeTree.options.trackAttribution = true;
-            this.someChunkHadAttribution = true;
             AttributionCollection.populateAttributionCollections(segments, chunk.attribution);
-        } else {
-            assert(!this.someChunkHadAttribution, "all or no chunks should have attribution information");
         }
     }
 

@@ -144,8 +144,18 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     readonly segmentGroups: SegmentGroupCollection;
     readonly trackingCollection: TrackingGroupCollection;
 
-    // TODO: typing
-    attribution?: AttributionCollection<unknown>;
+    /**
+     * Stores attribution keys associated with offsets of this segment.
+     * This data is only persisted if the `trackAttribution` flag is set to true.
+     * 
+     * Keys align with the `sequenceNumber` of the op that inserts a segment, thus they can be used with an
+     * `OpStreamAttributor` to recover timestamp/user information.
+     * 
+     * @remarks - There are plans to make the type of the attribution key an extensibility point to empower consumers
+     * with the ability to implement different attribution policies (ex: this would allow an application to track
+     * attribution information of property changes and segment inserts separately)
+     */
+    attribution?: AttributionCollection<number>;
     /**
      * Manages pending local state for properties on this segment.
      */
@@ -373,7 +383,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     public removedClientIds?: number[];
     public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
     public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
-    public attribution?: AttributionCollection<unknown>;
+    public attribution?: AttributionCollection<number>;
     public propertyManager?: PropertiesManager;
     public properties?: PropertySet;
     public localRefs?: LocalReferenceCollection;
@@ -453,8 +463,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                     removalInfo.removedSeq = opArgs.sequencedMessage!.sequenceNumber;
                     return true;
                 }
-
                 return false;
+
             default:
                 throw new Error(`${opArgs.op.type} is in unrecognized operation type`);
         }

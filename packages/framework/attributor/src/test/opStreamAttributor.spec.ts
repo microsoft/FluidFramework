@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IAudience } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import { OpStreamAttributor } from "../attributor";
 import { makeMockAudience } from "./utils";
 
@@ -26,12 +24,6 @@ class OpFactory {
 	}
 }
 
-function makeMockRuntime(clientId: string, audience: IAudience = defaultAudience): IFluidDataStoreRuntime {
-	const runtime = new MockFluidDataStoreRuntime({ clientId });
-	runtime.getAudience = () => audience;
-	return runtime;
-}
-
 describe("OpStreamAttributor", () => {
 	let opFactory: OpFactory;
 	beforeEach(() => {
@@ -39,15 +31,15 @@ describe("OpStreamAttributor", () => {
 	});
 
 	it("can retrieve user information from ops submitted during the current session", () => {
-        const runtime = makeMockRuntime(clientIds[0]);
-        const attributor = new OpStreamAttributor(runtime);
+		const deltaManager = new MockDeltaManager();
+        const attributor = new OpStreamAttributor(deltaManager, defaultAudience);
         const clientId = clientIds[1];
         const timestamp = 50;
         const op = opFactory.makeOp({ timestamp, clientId });
-        (runtime.deltaManager as any).emit("op", op);
+        deltaManager.emit("op", op);
         assert.deepEqual(
             attributor.getAttributionInfo(op.sequenceNumber),
-            { user: runtime.getAudience().getMember(clientId)?.user, timestamp },
+            { user: defaultAudience.getMember(clientId)?.user, timestamp },
         );
 	});
 });

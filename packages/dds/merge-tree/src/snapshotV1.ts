@@ -87,7 +87,6 @@ export class SnapshotV1 {
             const pseg = allSegments[startIndex + segmentCount];
             segments.push(pseg);
             length += allLengths[startIndex + segmentCount];
-            // TODO: pretty ugly--maybe better to move this.segments to just use ISegment like done for legacy snapshot
             if (attributionCollections[startIndex + segmentCount]) {
                 hasAttribution = true;
                 collections.push({

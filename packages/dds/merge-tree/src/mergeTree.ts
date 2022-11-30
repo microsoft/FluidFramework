@@ -686,7 +686,6 @@ export class MergeTree {
                         }
                         prevSegment = undefined;
                     } else {
-                        assert(segment.seq !== UnassignedSequenceNumber, "dangerous");
                         if (segment.seq! <= this.collabWindow.minSeq) {
                             const canAppend = prevSegment
                                 && prevSegment.canAppend(segment)
@@ -1267,7 +1266,7 @@ export class MergeTree {
                 const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs);
                 if (opArgs.op.type === MergeTreeDeltaType.INSERT && this.options?.trackAttribution) {
                     pendingSegment.attribution = new AttributionCollection(
-                        pendingSegment.seq,
+                        pendingSegment.seq!,
                         pendingSegment.cachedLength,
                     );
                 }
