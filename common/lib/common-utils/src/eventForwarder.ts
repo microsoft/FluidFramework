@@ -12,7 +12,7 @@ import { TypedEventEmitter } from "./typedEventEmitter";
  * This can be useful when all arbitrary listeners need to be removed,
  * but the primary source needs to stay intact.
  */
-export class EventForwarder<TEvent = IEvent>
+export class EventForwarder<TEvent extends IEvent = IEvent>
     extends TypedEventEmitter<TEvent> implements IDisposable {
     protected static isEmitterEvent(event: string): boolean {
         return event === EventForwarder.newListenerEvent || event === EventForwarder.removeListenerEvent;
@@ -24,10 +24,9 @@ export class EventForwarder<TEvent = IEvent>
     public get disposed() { return this.isDisposed; }
     private isDisposed: boolean = false;
 
-    private readonly forwardingEvents =
-        new Map<string, Map<EventEmitter | IEventProvider<TEvent & IEvent>, () => void>>();
+    private readonly forwardingEvents = new Map<string, Map<EventEmitter | IEventProvider<TEvent>, () => void>>();
 
-    constructor(source?: EventEmitter | IEventProvider<TEvent & IEvent>) {
+    constructor(source?: EventEmitter | IEventProvider<TEvent>) {
         super();
         if (source !== undefined) {
             // NewListener event is raised whenever someone starts listening to this events, so
@@ -55,7 +54,7 @@ export class EventForwarder<TEvent = IEvent>
         this.forwardingEvents.clear();
     }
 
-    protected forwardEvent(source: EventEmitter | IEventProvider<TEvent & IEvent>, ...events: string[]): void {
+    protected forwardEvent(source: EventEmitter | IEventProvider<TEvent>, ...events: string[]): void {
         for (const event of events) {
             if (source !== undefined && event !== undefined && !EventForwarder.isEmitterEvent(event)) {
                 let sources = this.forwardingEvents.get(event);
@@ -72,11 +71,11 @@ export class EventForwarder<TEvent = IEvent>
         }
     }
 
-    protected unforwardEvent(source: EventEmitter | IEventProvider<TEvent & IEvent>, ...events: string[]): void {
+    protected unforwardEvent(source: EventEmitter | IEventProvider<TEvent>, ...events: string[]): void {
         for (const event of events) {
             if (event !== undefined && !EventForwarder.isEmitterEvent(event)) {
                 const sources = this.forwardingEvents.get(event);
-                if ((sources?.has(source)) === true) {
+                if (sources?.has(source)) {
                     if (this.listenerCount(event) === 0) {
                         const listenerRemover = sources.get(source);
                         if (listenerRemover !== undefined) {

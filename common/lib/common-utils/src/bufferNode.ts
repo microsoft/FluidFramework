@@ -31,7 +31,11 @@ export type IsoBuffer = Buffer;
  */
 export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
     // Make this check because Buffer.from(arr) will always do a buffer copy
-    return Buffer.isBuffer(arr) ? arr.toString(encoding) : Buffer.from(arr).toString(encoding);
+    if (Buffer.isBuffer(arr)) {
+        return arr.toString(encoding);
+    } else {
+        return Buffer.from(arr).toString(encoding);
+    }
 }
 
 /**
