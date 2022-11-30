@@ -43,11 +43,7 @@ class NonDedupeStorage extends BaseMockBlobStorage {
 }
 
 class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements IBlobManagerRuntime {
-    constructor(
-        snapshot: IBlobManagerLoadInfo = {},
-        attached = false,
-        public readonly clientDetails: IClientDetails = { capabilities: { interactive: true } },
-    ) {
+    constructor(snapshot: IBlobManagerLoadInfo = {}, attached = false) {
         super();
         this.attachState = attached ? AttachState.Attached : AttachState.Detached;
         this.blobManager = new BlobManager(
