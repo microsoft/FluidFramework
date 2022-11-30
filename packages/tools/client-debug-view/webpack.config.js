@@ -6,7 +6,6 @@
 const path = require("path");
 
 const webpack = require("webpack");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { merge } = require("webpack-merge");
 
 const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
@@ -49,9 +48,6 @@ module.exports = (env) => {
 			plugins: [
 				new webpack.ProvidePlugin({
 					process: "process/browser",
-				}),
-				new HtmlWebpackPlugin({
-					template: path.join(testAppSrcPath, "index.html"),
 				}),
 			],
 			// This impacts which files are watched by the dev server (and likely by webpack if watch is true).
