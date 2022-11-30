@@ -127,6 +127,7 @@ export class ProxyContext implements EditableTreeContext {
         }
         assert(this.withCursors.size === 0, 0x3c1 /* free should remove all cursors */);
         assert(this.withAnchors.size === 0, 0x3c2 /* free should remove all anchors */);
+        this.forest.removeDependent(this.observer);
     }
 
     public get unwrappedRoot(): UnwrappedEditableField {
