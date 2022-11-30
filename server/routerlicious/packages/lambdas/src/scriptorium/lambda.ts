@@ -14,7 +14,7 @@ import {
     runWithRetry,
     isRetryEnabled,
 } from "@fluidframework/server-services-core";
-import { getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { convertNumberArrayToRanges } from "@fluidframework/server-services-utils";
 
 export class ScriptoriumLambda implements IPartitionLambda {
@@ -93,6 +93,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 this.sendPending();
             },
             (error) => {
+                Lumberjack.error("An error occured in scriptorium, going to restart", {}, error);
                 this.context.error(error, { restart: true });
             });
     }
