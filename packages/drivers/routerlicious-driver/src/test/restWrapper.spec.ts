@@ -8,6 +8,7 @@ import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { RateLimiter } from "@fluidframework/driver-utils";
 import nock from "nock";
+import { ITokenResponse } from "@fluidframework/routerlicious-driver-previous";
 import { RouterliciousRestWrapper } from "../restWrapper";
 import { R11sErrorType } from "../errorUtils";
 
@@ -22,8 +23,15 @@ describe("RouterliciousDriverRestWrapper", () => {
     const token2 = "9876-auth-token-zyxw";
     const token3 = "abc-auth-token-123";
     let tokenQueue: string[] = [];
-    // Pop a token off tokenQueue to generate an auth header
-    const getAuthHeader = async () => `Bearer ${tokenQueue.shift() ?? ""}`;
+
+    // Pop a token off tokenQueue
+    const newToken: ITokenResponse = {
+        jwt: tokenQueue.shift() ?? "testtoken"
+    };
+
+    const getToken: (refresh?: boolean) => Promise<ITokenResponse | undefined>
+        = async (refresh?: boolean) => new Promise(() => newToken);
+    const getAuthHeader: (token?: ITokenResponse) => string | undefined = (token) => `Bearer ${token ?? ""}`;
 
     // Set up mock throttling
     let throttleDurationInMs: number;
@@ -52,6 +60,7 @@ describe("RouterliciousDriverRestWrapper", () => {
         restWrapper = new RouterliciousRestWrapper(
             new TelemetryUTLogger(),
             rateLimiter,
+            getToken,
             getAuthHeader,
             false,
         );

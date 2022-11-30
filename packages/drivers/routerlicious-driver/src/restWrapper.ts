@@ -20,7 +20,8 @@ import { throwR11sNetworkError } from "./errorUtils";
 import { ITokenProvider, ITokenResponse } from "./tokens";
 import { pkgVersion as driverVersion } from "./packageVersion";
 
-type AuthorizationHeaderGetter = (refresh?: boolean) => Promise<string | undefined>;
+type AuthorizationHeaderGetter = (token?: ITokenResponse) => string | undefined;
+type TokenFetcher = (refresh?: boolean) => Promise<ITokenResponse | undefined>;
 
 const axiosRequestConfigToFetchRequestConfig = (requestConfig: AxiosRequestConfig): [RequestInfo, RequestInit] => {
     const requestInfo: string = requestConfig.baseURL !== undefined
@@ -38,11 +39,13 @@ const axiosRequestConfigToFetchRequestConfig = (requestConfig: AxiosRequestConfi
 
 export class RouterliciousRestWrapper extends RestWrapper {
     private authorizationHeader: string | undefined;
+    private token: ITokenResponse | undefined;
     private readonly restLess = new RestLessClient();
 
     constructor(
         logger: ITelemetryLogger,
         private readonly rateLimiter: RateLimiter,
+        private readonly fetchToken: TokenFetcher,
         private readonly getAuthorizationHeader: AuthorizationHeaderGetter,
         private readonly useRestLess: boolean,
         baseurl?: string,
@@ -52,7 +55,8 @@ export class RouterliciousRestWrapper extends RestWrapper {
     }
 
     public async load() {
-        this.authorizationHeader = await this.getAuthorizationHeader();
+        this.token = await this.fetchToken();
+        this.authorizationHeader = this.getAuthorizationHeader(this.token);
     }
 
     protected async request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry = true): Promise<T> {
@@ -84,7 +88,8 @@ export class RouterliciousRestWrapper extends RestWrapper {
         // Failure
         if (response.status === 401 && canRetry) {
             // Refresh Authorization header and retry once
-            this.authorizationHeader = await this.getAuthorizationHeader(true /* refreshToken */);
+            this.token = await this.fetchToken(true /* refreshToken */);
+            this.authorizationHeader = this.getAuthorizationHeader(this.token);
             return this.request<T>(config, statusCode, false);
         }
         if (response.status === 429 && responseBody?.retryAfter > 0) {
@@ -119,18 +124,28 @@ export class RouterliciousRestWrapper extends RestWrapper {
             "Authorization": this.authorizationHeader!,
         };
     }
+
+    public getToken(): ITokenResponse | undefined {
+        return this.token;
+    }
+
+    public setTokenAndUpdateAuthHeader(token: ITokenResponse) {
+        this.token = token;
+        this.authorizationHeader = this.getAuthorizationHeader(this.token);
+    }
 }
 
 export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
     private constructor(
         logger: ITelemetryLogger,
         rateLimiter: RateLimiter,
+        fetchToken: TokenFetcher,
         getAuthorizationHeader: AuthorizationHeaderGetter,
         useRestLess: boolean,
         baseurl?: string,
         defaultQueryString: querystring.ParsedUrlQueryInput = {},
     ) {
-        super(logger, rateLimiter, getAuthorizationHeader, useRestLess, baseurl, defaultQueryString);
+        super(logger, rateLimiter, fetchToken, getAuthorizationHeader, useRestLess, baseurl, defaultQueryString);
     }
 
     public static async load(
@@ -145,7 +160,8 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
         const defaultQueryString = {
             token: `${fromUtf8ToBase64(tenantId)}`,
         };
-        const getAuthorizationHeader: AuthorizationHeaderGetter = async (refreshToken?: boolean): Promise<string> => {
+
+        const fetchStorageToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {
             return PerformanceEvent.timedExecAsync(
                 logger,
                 {
@@ -159,17 +175,22 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
                         documentId,
                         refreshToken
                     );
-                    const credentials = {
-                        password: storageToken.jwt,
-                        user: tenantId,
-                    };
-                    return getAuthorizationTokenFromCredentials(credentials);
+
+                    return storageToken;
                 }
             );
         };
 
+        const getAuthorizationHeader: AuthorizationHeaderGetter = (token?: ITokenResponse): string => {
+            const credentials = {
+                password: token?.jwt ?? "",
+                user: tenantId,
+            };
+            return getAuthorizationTokenFromCredentials(credentials);
+        };
+
         const restWrapper = new RouterliciousStorageRestWrapper(
-            logger, rateLimiter, getAuthorizationHeader, useRestLess, baseurl, defaultQueryString);
+            logger, rateLimiter, fetchStorageToken, getAuthorizationHeader, useRestLess, baseurl, defaultQueryString);
         try {
             await restWrapper.load();
         } catch (e) {
@@ -183,17 +204,16 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 }
 
 export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
-    private static ordererToken: ITokenResponse | undefined;
-
     private constructor(
         logger: ITelemetryLogger,
         rateLimiter: RateLimiter,
+        fetchToken: TokenFetcher,
         getAuthorizationHeader: AuthorizationHeaderGetter,
         useRestLess: boolean,
         baseurl?: string,
         defaultQueryString: querystring.ParsedUrlQueryInput = {},
     ) {
-        super(logger, rateLimiter, getAuthorizationHeader, useRestLess, baseurl, defaultQueryString);
+        super(logger, rateLimiter, fetchToken, getAuthorizationHeader, useRestLess, baseurl, defaultQueryString);
     }
 
     public static async load(
@@ -204,9 +224,12 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
         rateLimiter: RateLimiter,
         useRestLess: boolean,
         baseurl?: string,
-        cacheToken: boolean = true
     ): Promise<RouterliciousOrdererRestWrapper> {
-        const getAuthorizationHeader: AuthorizationHeaderGetter = async (refreshToken?: boolean): Promise<string> => {
+        const getAuthorizationHeader: AuthorizationHeaderGetter = (token?: ITokenResponse): string => {
+            return `Basic ${token?.jwt}`;
+        };
+
+        const fetchOrdererToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {
             return PerformanceEvent.timedExecAsync(
                 logger,
                 {
@@ -220,16 +243,14 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
                         refreshToken,
                     );
 
-                    if (cacheToken) {
-                        this.ordererToken = ordererToken;
-                    }
-                    return `Basic ${ordererToken.jwt}`;
+                    return ordererToken;
                 }
             );
         };
 
         const restWrapper = new RouterliciousOrdererRestWrapper(
-            logger, rateLimiter, getAuthorizationHeader, useRestLess, baseurl);
+            logger, rateLimiter, fetchOrdererToken, getAuthorizationHeader, useRestLess, baseurl);
+
         try {
             await restWrapper.load();
         } catch (e) {
@@ -239,13 +260,5 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
             await restWrapper.load();
         }
         return restWrapper;
-    }
-
-    public static getOrdererToken() {
-        return this.ordererToken;
-    }
-
-    public static setOrdererToken(token: ITokenResponse) {
-        this.ordererToken = token;
     }
 }

@@ -187,7 +187,7 @@ export class DocumentService implements api.IDocumentService {
      */
     public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
         const connect = async (refreshToken?: boolean) => {
-            let ordererToken = RouterliciousOrdererRestWrapper.getOrdererToken();
+            let ordererToken = this.ordererRestWrapper?.getToken();
             if (this.shouldUpdateDiscoveredSessionInfo()) {
                 await this.refreshDiscovery();
             }
@@ -208,7 +208,7 @@ export class DocumentService implements api.IDocumentService {
                             this.documentId,
                             refreshToken,
                         );
-                        RouterliciousOrdererRestWrapper.setOrdererToken(newOrdererToken);
+                        this.ordererRestWrapper?.setTokenAndUpdateAuthHeader(newOrdererToken);
                         return newOrdererToken;
                     }
                 );
