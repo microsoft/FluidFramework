@@ -57,15 +57,24 @@ describe("Container copy scenarios", () => {
     });
 
     /**
-     * Scenario: test if Azure Client can handle bad version ID when versions are requested.
+     * Scenario: test if Azure Client can handle bad document ID when versions are requested.
      *
      * Expected behavior: Client should throw an error.
      */
-    it("can handle bad versions of current document", async () => {
+    it("can handle bad document id when requesting versions", async () => {
         const resources = client.getContainerVersions("badid");
+        const errorFn = (error: Error): boolean => {
+            assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
+            assert.strictEqual(
+                error.message,
+                "R11s fetch error: Document is deleted and cannot be accessed.",
+                `Unexpected error: ${error.message}`,
+            );
+            return true;
+        };
         await assert.rejects(
             resources,
-            () => true,
+            errorFn,
             "We should not be able to get container versions.",
         );
     });
@@ -179,6 +188,16 @@ describe("Container copy scenarios", () => {
      */
     it("can handle non-existing container", async () => {
         const resources = client.copyContainer("badidoncopy", schema);
-        await assert.rejects(resources, () => true, "We should not be able to copy container.");
+        const errorFn = (error: Error): boolean => {
+            assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
+            assert.strictEqual(
+                error.message,
+                "R11s fetch error: Document is deleted and cannot be accessed.",
+                `Unexpected error: ${error.message}`,
+            );
+            return true;
+        };
+
+        await assert.rejects(resources, errorFn, "We should not be able to copy container.");
     });
 });
