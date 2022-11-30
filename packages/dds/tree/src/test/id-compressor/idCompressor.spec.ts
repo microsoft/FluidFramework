@@ -769,16 +769,6 @@ describe("IdCompressor", () => {
                 ),
             );
         });
-
-        it("can serialize local state with attribution but no IDs", () => {
-            // This is a regression test for the scenario in which an ID compressor sends its first range, which
-            // includes its attribution ID, but has made no IDs. An incorrect optimization when serializing had
-            // omitted local state if no IDs had been allocated, but then also dropped the `sentAttribution` flag
-            const compressor = createCompressor(Client.Client1, undefined);
-            const range = compressor.takeNextCreationRange();
-            assert.equal(range.ids, undefined);
-            expectSerializes(compressor);
-        });
     });
 
     // No validation, as these leave the network in a broken state
