@@ -8,7 +8,6 @@ export {
     BatchMessage,
     IBatch,
     IBatchCheckpoint,
-    IBatchProcessor,
     IChunkedOp,
 } from "./definitions";
 export {

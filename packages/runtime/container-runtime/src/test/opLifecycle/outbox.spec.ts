@@ -7,13 +7,13 @@ import { strict as assert } from "assert";
 import { IBatchMessage, IContainerContext, IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { PendingStateManager } from "../../pendingStateManager";
+import { BatchMessage, IBatch, OpCompressor, OpSplitter, Outbox } from "../../opLifecycle";
 import {
     CompressionAlgorithms,
     ContainerMessageType,
     ContainerRuntimeMessage,
     ICompressionRuntimeOptions,
-} from "../..";
-import { BatchMessage, IBatch, IBatchProcessor, Outbox } from "../../opLifecycle";
+} from "../../containerRuntime";
 
 describe("Outbox", () => {
     const maxBatchSizeInBytes = 1024;
@@ -74,15 +74,15 @@ describe("Outbox", () => {
         connected: true,
     });
 
-    const getMockCompressor = (): IBatchProcessor => ({
-        processOutgoing: (batch: IBatch): IBatch => {
+    const getMockCompressor = (): Partial<OpCompressor> => ({
+        compressBatch: (batch: IBatch): IBatch => {
             state.batchesCompressed.push(batch);
             return batch;
         },
     });
 
-    const getMockSplitter = (): IBatchProcessor => ({
-        processOutgoing: (batch: IBatch): IBatch => {
+    const getMockSplitter = (): Partial<OpSplitter> => ({
+        splitCompressedBatch: (batch: IBatch): IBatch => {
             state.batchesSplit.push(batch);
             return batch;
         },
@@ -130,20 +130,17 @@ describe("Outbox", () => {
         context: IContainerContext,
         maxBatchSize: number = maxBatchSizeInBytes,
         compressionOptions?: ICompressionRuntimeOptions,
-    ) => new Outbox(
-        () => state.canSendOps,
-        getMockPendingStateManager() as PendingStateManager,
-        context,
-        {
-            enableOpReentryCheck: false,
+    ) => new Outbox({
+        shouldSend: () => state.canSendOps,
+        pendingStateManager: getMockPendingStateManager() as PendingStateManager,
+        containerContext: context,
+        compressor: getMockCompressor() as OpCompressor,
+        splitter: getMockSplitter() as OpSplitter,
+        config: {
             maxBatchSizeInBytes: maxBatchSize,
             compressionOptions,
-        },
-        {
-            compressor: getMockCompressor(),
-            splitter: getMockSplitter(),
-        },
-    );
+        }
+    });
 
     beforeEach(() => {
         state.deltaManagerFlushCalls = 0;

@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { BatchMessage, IBatch, IBatchCheckpoint, IBatchManagerOptions } from "./definitions";
+import { ICompressionRuntimeOptions } from "../containerRuntime";
+import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions";
+
+export interface IBatchManagerOptions {
+    readonly hardLimit: number;
+    readonly softLimit?: number;
+    readonly compressionOptions?: ICompressionRuntimeOptions;
+}
 
 /**
  * Helper class that manages partial batch & rollback.

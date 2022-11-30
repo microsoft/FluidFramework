@@ -5,28 +5,7 @@
 
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { CompressionAlgorithms, ContainerMessageType, ContainerRuntimeMessage, ICompressionRuntimeOptions } from "..";
-
-export interface IOutboxOptions {
-    readonly compressionOptions?: ICompressionRuntimeOptions;
-    readonly enableOpReentryCheck?: boolean;
-    readonly maxBatchSizeInBytes: number;
-};
-
-export interface IBatchProcessor {
-    processOutgoing(batch: IBatch): IBatch;
-}
-
-export interface IBatchProcessors {
-    readonly compressor: IBatchProcessor;
-    readonly splitter: IBatchProcessor;
-}
-
-export interface IBatchManagerOptions {
-    readonly hardLimit: number;
-    readonly softLimit?: number;
-    readonly compressionOptions?: ICompressionRuntimeOptions;
-}
+import { CompressionAlgorithms, ContainerMessageType, ContainerRuntimeMessage } from "..";
 
 /**
  * Batch message type used internally by the runtime

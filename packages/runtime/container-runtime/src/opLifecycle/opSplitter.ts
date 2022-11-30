@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ContainerMessageType, ContainerRuntimeMessage } from "../containerRuntime";
-import { BatchMessage, IBatch, IBatchProcessor, IChunkedOp } from "./definitions";
+import { BatchMessage, IBatch, IChunkedOp } from "./definitions";
 import { IProcessingResult, IRemoteMessageProcessor } from "./inbox";
 
 const DefaultChunkSize = 500 * 1024; // 500kb
@@ -15,7 +15,7 @@ const DefaultChunkSize = 500 * 1024; // 500kb
 /**
  * Responsible for creating and reconstructing chunked messages.
  */
-export class OpSplitter implements IRemoteMessageProcessor, IBatchProcessor {
+export class OpSplitter implements IRemoteMessageProcessor {
     // Local copy of incomplete received chunks.
     private readonly chunkMap: Map<string, string[]>;
 
@@ -102,18 +102,22 @@ export class OpSplitter implements IRemoteMessageProcessor, IBatchProcessor {
         return chunks;
     }
 
-    private chunkToBatchMessage(chunk: IChunkedOp, referenceSequenceNumber: number): BatchMessage {
+    private chunkToBatchMessage(
+        chunk: IChunkedOp,
+        referenceSequenceNumber: number,
+        metadata: Record<string, unknown> | undefined = undefined,
+    ): BatchMessage {
         const payload: ContainerRuntimeMessage = { type: ContainerMessageType.ChunkedOp, contents: chunk };
         return {
             contents: JSON.stringify(payload),
             deserializedContent: payload,
-            metadata: undefined,
+            metadata,
             localOpMetadata: undefined,
             referenceSequenceNumber,
         };
     }
 
-    public processOutgoing(batch: IBatch): IBatch {
+    public splitCompressedBatch(batch: IBatch): IBatch {
         const car = batch.content[0]; // we expect this to be the large compressed op, which needs to be split
         const cdr = batch.content.slice(1); // we expect these to be empty ops, created to reserve sequence numbers
 
@@ -125,8 +129,12 @@ export class OpSplitter implements IRemoteMessageProcessor, IBatchProcessor {
             this.submitBatchFn([this.chunkToBatchMessage(chunk, car.referenceSequenceNumber)]);
         }
 
-        // The last chunk will be part of the new batch
-        const lastChunk = this.chunkToBatchMessage(chunks[chunks.length - 1], car.referenceSequenceNumber);
+        // The last chunk will be part of the new batch and needs to
+        // preserve the batch metadata of the original batch
+        const lastChunk = this.chunkToBatchMessage(
+            chunks[chunks.length - 1],
+            car.referenceSequenceNumber,
+            { batch: car.metadata?.batch });
         return {
             content: [lastChunk, ...cdr],
             contentSizeInBytes: lastChunk.contents?.length ?? 0,

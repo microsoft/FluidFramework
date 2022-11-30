@@ -166,12 +166,12 @@ import {
 import { BindBatchTracker } from "./batchTracker";
 import { ISerializedBaseSnapshotBlobs, SerializedSnapshotStorage } from "./serializedSnapshotStorage";
 import { ScheduleManager } from "./scheduleManager";
-import { OpDecompressor } from "./opLifecycle/opDecompressor";
 import {
     BatchMessage,
     IBatchCheckpoint,
     Inbox,
     OpCompressor,
+    OpDecompressor,
     Outbox,
     OpSplitter,
     OpUnpacker,
@@ -1176,19 +1176,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
             pendingRuntimeState?.pending);
 
-        this.outbox = new Outbox(
-            () => this.canSendOps(),
-            this.pendingStateManager,
-            this.context,
-            {
+        this.outbox = new Outbox({
+            shouldSend: () => this.canSendOps(),
+            pendingStateManager: this.pendingStateManager,
+            containerContext: this.context,
+            compressor: new OpCompressor(this.mc.logger),
+            splitter: opSplitter,
+            config: {
                 compressionOptions: runtimeOptions.compressionOptions,
                 maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
             },
-            {
-                compressor: new OpCompressor(this.mc.logger),
-                splitter: opSplitter,
-            },
-        );
+        });
 
         this.context.quorum.on("removeMember", (clientId: string) => {
             this.inbox.clearPartialMessagesFor(clientId);

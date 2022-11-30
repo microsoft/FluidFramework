@@ -182,13 +182,13 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         assertMapValues(dataObject2map, messageCount, largeString);
     });
 
-    it("Single large op passes when compression enabled, compressed content is over max op size", async function() {
+    it("Large ops pass when compression enabled and compressed content is over max op size", async function() {
         // This is not supported by the local server. See ADO:2690
         if (provider.driver.type === "local") {
             this.skip();
         }
 
-        const maxMessageSizeInBytes = 2 * 1024 * 1024; // 15MB
+        const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
         await setupContainers({
             ...testContainerConfig,
             runtimeOptions: {
@@ -197,8 +197,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         }, {});
 
         const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
-        const messageCount = 2;
-        // 3 x 15 MB
+        const messageCount = 3; // Will result in a 15 MB payload
         setMapKeys(dataObject1map, messageCount, largeString);
         await provider.ensureSynchronized(50000);
 
