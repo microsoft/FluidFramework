@@ -4,11 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { benchmarkMemory } from "@fluid-tools/benchmark";
+import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
     LoaderHeader,
     IFluidCodeDetails,
+    ILoader,
+    IContainer,
 } from "@fluidframework/container-definitions";
 import {
     Container,
@@ -65,31 +67,50 @@ describeNoCompat("Container - memory usage benchmarks", (getTestObjectProvider) 
     });
 
 
-    benchmarkMemory({
-        title: "Create loader",
-        benchmarkFn: async () => {
-            createLoader();
-        }
-    });
+    benchmarkMemory(new class implements IMemoryTestObject {
+        title = "Create loader";
+        private loader: ILoader | undefined;
 
-    benchmarkMemory({
-        title: "Create detached container",
-        benchmarkFn: async () => {
-            await loader.createDetachedContainer(codeDetails);
+        beforeIteration() {
+            this.loader = undefined;
         }
-    });
 
-    benchmarkMemory({
-        title: "Create detached container and attach it",
-        benchmarkFn: async () => {
-            const container = await loader.createDetachedContainer(codeDetails);
-            await container.attach(provider.driver.createCreateNewRequest("containerTest"));
+        async run() {
+            this.loader = createLoader();
         }
-    });
+    }());
 
-    benchmarkMemory({
-        title: "Load existing container",
-        benchmarkFn: async () => {
+    benchmarkMemory(new class implements IMemoryTestObject {
+        title = "Create detached container";
+        private container: IContainer | undefined;
+
+        beforeIteration() {
+            this.container = undefined;
+        }
+
+        async run() {
+            this.container = await loader.createDetachedContainer(codeDetails);
+        }
+
+    }());
+
+    benchmarkMemory(new class implements IMemoryTestObject {
+        title = "Create detached container and attach it";
+        private container: IContainer | undefined;
+
+        beforeIteration() {
+            this.container = undefined;
+        }
+
+        async run() {
+            this.container = await loader.createDetachedContainer(codeDetails);
+            await this.container.attach(provider.driver.createCreateNewRequest("containerTest"));
+        }
+    }());
+
+    benchmarkMemory(new class implements IMemoryTestObject {
+        title = "Load existing container";
+        async run() {
             const testResolved = await loader.services.urlResolver.resolve(testRequest);
             ensureFluidResolvedUrl(testResolved);
             const container = await Container.load(
@@ -105,5 +126,5 @@ describeNoCompat("Container - memory usage benchmarks", (getTestObjectProvider) 
             assert.strictEqual(container.clientDetails.capabilities.interactive, true,
                 "Client details should be set with interactive as true");
         }
-    });
+    }());
 });

@@ -14,7 +14,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
-import { benchmarkMemory } from "@fluid-tools/benchmark";
+import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { bufferToString } from "@fluidframework/common-utils";
 
@@ -47,9 +47,9 @@ describeNoCompat("Summarization - runtime benchmarks", (getTestObjectProvider) =
         await mainContainer.attach(provider.driver.createCreateNewRequest());
     });
 
-    benchmarkMemory({
-        title: "Generate summary tree",
-        benchmarkFn: async () => {
+    benchmarkMemory(new class implements IMemoryTestObject {
+        title = "Generate summary tree";
+        async run() {
             const defaultDataStore = await requestFluidObject<ITestDataObject>(mainContainer, defaultDataStoreId);
             const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
 
@@ -99,5 +99,5 @@ describeNoCompat("Summarization - runtime benchmarks", (getTestObjectProvider) =
             assert(defaultDdsNode.tree[".attributes"]?.type === SummaryType.Blob,
                 "Expected .attributes blob in default root DDS summary tree.");
         }
-    });
+    }());
 });
