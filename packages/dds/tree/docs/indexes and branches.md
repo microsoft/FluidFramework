@@ -32,8 +32,8 @@ From the perspective of a single Fluid client, there can be several relevant bra
 -   The local branch: the sequenced branch, plus any local edits (ops for them have not yet been sequenced).
 
     In our `git` metaphor this is a feature branch in the local repository.
-    Every time `main` changes, it is rebased onto the new state of `main`
-    It is merged into main by making pull requests one commit at a time which are always merged using rebase.
+    Every time `main` changes, the local branch is rebased onto the new state of `main`
+    It is merged into main by "making pull requests one commit at a time", i.e. rebasing each local op as it is sequenced one at a time) which are always merged using rebase.
 
 -   The working copy: the local branch, plus the current state of an in progress transaction.
     If async transactions are supported with snapshot isolation, the version of the local branch that the transaction branches off from might not always be the latest.
