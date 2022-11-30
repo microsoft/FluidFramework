@@ -19,7 +19,7 @@ Like all indexes, the IdentifierIndex can be serialized and rehydrated. When a S
 
 ## API
 
-1. An API for querying a node by identifier, e.g. `find(id: CompressedNodeIdentifier): Cursor | undefined`. I don't think there is a way to guarantee the type of the resulting node at compile time.
+1. An API for querying a node by identifier, e.g. `find(id: CompressedNodeIdentifier): Cursor | undefined`. Higher level reading APIs (like EditableTree) would wrap this for their own purposes, although I don't think there is a way to guarantee the type of the resulting node at compile time, even in a context that is schema aware.
 2. APIs for updating the contents of the index, e.g. `set(id: CompressedNodeIdentifier, path: UpPath)` and `delete(id: CompressedNodeIdentifier)`
 3. `summarize` and `load`
 
@@ -36,13 +36,13 @@ These requirements make a strong case for a virtualized b-tree. In the short tim
 
 ## Compression
 
-## Field Compression
+### Field Compression
 
 When compressed chunks are designed and implemented for both memory and storage, the cost of storing the identifier as a field on each node should not be meaningfully greater than any other way of storing the identifiers. However, compressed chunks will likely not be completed by MParity. Documents with many identitifiers will incur a significant cost for having an extra node for every identifier. Therefore, a compromise in the meantime would be to hardcode an identifier property on each node object and ensure it is serialized along with the other node data (e.g. the type property). The API would remain the same, but there would be a temporary kludge which checks if the field being set matches the identifier key, and if so, puts this special property directly on the node. Likewise, when reading a field, the special inlined identifier property is returned if the key matches. When SharedTree's compression scheme is fully realized, it can switch to the non-kludge codepath for writing, but continue to read both schemes. This would allow for a fully backwards compatible rollout and even a forwards compatible rollout (if it's deemed acceptable for old clients to take the perf hit of identifiers from newer clients no longer being inlined).
 
 Identifiers might also eventually want to have their own field kind. This might make it easier to do some kinds of compression or analysis and it would implicitly prevent some silly situations like giving an identifier an identifier. Giving an identifier an identifier is cool, but it's not clear to me that it would actually be useful for anything and it might rather be a symptom of a bug (e.g. I tried to give all my nodes identifiers, but I forgot that some of them already had identifiers).
 
-## Elision
+### Elision
 
 Identifier elision is an important optimization for newly-inserted trees. It is common that all the (numeric and compressed) identifiers given to nodes in a new tree were generated sequentially and can therefore be expressed as a range rather than putting every identifier on every node. The best compression happens when every node in the inserted tree has an identifier (as was always the case in the legacy SharedTree), because a single range (or offset and count) is sufficient to communicate the identifier of every inserted node. When identifiers are optional, it's not quite as easy, but it is still much better than no compression. Consider a subtree tree with eight nodes which is inserted into the SharedTree. Half of the nodes have identifiers:
 
@@ -58,6 +58,10 @@ G    | `45`
 H    | none
 
 The presence of IDs could be represented as a binary number `11010010` and in hexadecimal as `D2`. So the whole range here could be encoded as `[42, D2]` rather than `[42, 43, null, 44, null, null, 45, null]`. This isn't necessarily an optimal encoding but demonstrates that compression is feasible and beneficial even with optional identifiers.
+
+## Caching
+
+
 
 ## Further Generalizations
 
