@@ -92,7 +92,7 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
  * React hook for asynchronously creating / loading the Fluid Container.
  */
 function useContainerInfo(): ContainerInfo | undefined {
-	const [containerInfo, setContainerInfo] = React.useState<ContainerInfo>();
+	const [containerInfo, setContainerInfo] = React.useState<ContainerInfo | undefined>();
 
 	// Get the Fluid Data data on app startup and store in the state
 	React.useEffect(() => {
