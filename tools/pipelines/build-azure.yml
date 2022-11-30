@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# build-build-tools pipeline
+# build-azure pipeline
 
 name: $(Build.BuildId)
 
@@ -12,6 +12,7 @@ parameters:
   default: none
   values:
     - none
+    - prerelease
     - release
 - name: publishOverride
   displayName: Publish Override (default = based on branch)
@@ -25,6 +26,10 @@ parameters:
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
   default: latest
+- name: nonScopedPackages
+  displayName: Non-scoped packages to publish
+  type: object
+  default: []
 
 trigger:
   branches:
@@ -32,10 +37,11 @@ trigger:
     - main
     - next
     - lts
+    - release/*
   paths:
     include:
-    - build-tools
-    - tools/pipelines/build-build-tools.yml
+    - azure
+    - tools/pipelines/build-azure.yml
     - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
@@ -43,6 +49,7 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
+    - tools/pipelines/templates/include-git-tag-steps.yml
 
 pr:
   branches:
@@ -53,26 +60,26 @@ pr:
     - release/*
   paths:
     include:
-    - build-tools
-    - tools/pipelines/build-build-tools.yml
+    - azure
+    - tools/pipelines/build-azure.yml
     - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-deployment.yml
+    - tools/pipelines/templates/include-publish-npm-package-steps.yml
+    - tools/pipelines/templates/include-git-tag-steps.yml
 
 extends:
   template: templates/build-npm-package.yml
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    nonScopedPackages: ${{ parameters.nonScopedPackages }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-    buildDirectory: build-tools
-    tagName:
-    taskBuild: build
-    taskBuildDocs: false
-    taskLint: true
-    taskTest: test
-    buildNumberInPatch: true
+    buildDirectory: azure
+    tagName: azure
     poolBuild: Large
     cgSubDirectory: packages
     checkoutSubmodules: true
@@ -87,23 +94,14 @@ extends:
       displayName: npm ci
       inputs:
         command: 'custom'
-        customCommand: 'ci'
+        customCommand: 'ci --ignore-scripts'
         customRegistry: 'useNpmrc'
-        workingDir: '$(Build.SourcesDirectory)/build-tools'
-    # Build the build-tools locally so it can be used to generate the monorepo package.json
-    - task: Npm@1
-      displayName: 'npm run build:compile'
-      inputs:
-        command: 'custom'
-        customCommand: 'run build:compile'
-        workingDir: '$(Build.SourcesDirectory)/build-tools'
     - task: Bash@3
       displayName: 'Generate Mono repo package json'
       inputs:
         targetType: 'inline'
         script: |
           # Generate the package/package lock for the lerna project so we would scan it.
-          cd build-tools
-          node packages/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --build-tools
-          cp repo-package.json packages/package.json
-          cp repo-package-lock.json packages/package-lock.json
+          node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --azure
+          cp azure/repo-package.json azure/packages/package.json
+          cp azure/repo-package-lock.json azure/packages/package-lock.json

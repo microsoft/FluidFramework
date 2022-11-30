@@ -14,35 +14,90 @@ resources:
     source: Build - client packages
     trigger:
       branches:
-      - releases/*
+      - release/*
       - main
+      - next
+      - lts
 
 variables:
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
 
+lockBehavior: sequential
 stages:
-    # Run Stress Tests
+  # stress tests odsp
   - stage:
-    displayName:  Stress tests
+    displayName:  Stress tests - Odsp
+    dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: stress-odsp-lock
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Large
+        testPackage: "@fluid-internal/test-service-load"
+        testWorkspace: ${{ variables.testWorkspace }}
+        timeoutInMinutes: 120
+        testCommand: start:odsp
+        env:
+          login__microsoft__clientId: $(login-microsoft-clientId)
+          login__microsoft__secret: $(login-microsoft-secret)
+          login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+
+  # stress tests odsp dogfood
+  - stage:
+    displayName:  Stress tests - Odspdf
+    dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: stress-odspdf-lock
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Large
+        testPackage: "@fluid-internal/test-service-load"
+        testWorkspace: ${{ variables.testWorkspace }}
+        timeoutInMinutes: 120
+        testCommand: start:odspdf
+        env:
+          login__microsoft__clientId: $(login-microsoft-clientId)
+          login__microsoft__secret: $(login-microsoft-secret)
+          login__odspdf__test__tenants: $(automation-stress-login-odspdf-test-tenants)
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+
+  # stress tests tinylicious
+  - stage:
+    displayName: Stress tests - tinylicious
     dependsOn: []
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Main
+        poolBuild: Large
         testPackage: "@fluid-internal/test-service-load"
         testWorkspace: ${{ variables.testWorkspace }}
-        testSteps:
-        - task: Npm@1
-          displayName: '[stress tests] npm run start'
-          timeoutInMinutes: 60
-          env:
-            login__microsoft__clientId: $(login-microsoft-clientId)
-            login__microsoft__secret: $(login-microsoft-secret)
-            login__odsp__test__accounts: $(automation-stress-login-odsp-test-accounts)
-            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-          inputs:
-            command: 'custom'
-            workingDir: ${{ variables.testWorkspace }}/node_modules/@fluid-internal/test-service-load
-            customCommand: 'run start'
+        timeoutInMinutes: 120
+        testCommand: start:t9s
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+
+  # stress tests frs
+  - stage:
+    displayName: Stress tests - frs
+    dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: stress-frs-lock
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Large
+        testPackage: "@fluid-internal/test-service-load"
+        testWorkspace: ${{ variables.testWorkspace }}
+        timeoutInMinutes: 120
+        testCommand: start:frs
+        env:
+          fluid__test__driver__frs: $(automation-fluid-test-driver-frs-stress-test)
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject

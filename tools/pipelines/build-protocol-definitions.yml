@@ -22,11 +22,17 @@ parameters:
     - default
     - skip
     - force
+- name: buildToolsVersionToInstall
+  displayName: Fluid build tools version (default = installs version in repo)
+  type: string
+  default: latest
 
 trigger:
   branches:
     include:
     - main
+    - next
+    - lts
     - release/*
   paths:
     include:
@@ -37,6 +43,7 @@ trigger:
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
 
@@ -44,6 +51,8 @@ pr:
   branches:
     include:
     - main
+    - next
+    - lts
     - release/*
   paths:
     include:
@@ -59,5 +68,7 @@ extends:
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: common/lib/protocol-definitions
     tagName: protocol-definitions
+    taskTest: false

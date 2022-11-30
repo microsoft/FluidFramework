@@ -31,11 +31,17 @@ parameters:
     - default
     - skip
     - force
+- name: buildToolsVersionToInstall
+  displayName: Fluid build tools version (default = installs version in repo)
+  type: string
+  default: latest
 
 trigger:
   branches:
     include:
     - main
+    - next
+    - lts
   paths:
     include:
     - server/historian
@@ -46,6 +52,7 @@ trigger:
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-publish-docker-service.yml
     - tools/pipelines/templates/include-publish-docker-service-steps.yml
@@ -55,6 +62,8 @@ pr:
   branches:
     include:
     - main
+    - next
+    - lts
     - release/*
   paths:
     include:
@@ -72,6 +81,7 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     releaseKind: ${{ parameters.releaseKind }}
+    buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: server/historian
     containerName: fluidframework/routerlicious/historian
     test: test

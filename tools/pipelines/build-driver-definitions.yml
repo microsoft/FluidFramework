@@ -22,12 +22,15 @@ parameters:
     - default
     - skip
     - force
+- name: buildToolsVersionToInstall
+  displayName: Fluid build tools version (default = installs version in repo)
+  type: string
+  default: latest
 
 trigger:
   branches:
     include:
-    - main
-    - release/*
+    - release/0.*
   paths:
     include:
     - common/lib/driver-definitions
@@ -37,14 +40,14 @@ trigger:
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
 
 pr:
   branches:
     include:
-    - main
-    - release/*
+    - release/0.*
   paths:
     include:
     - common/lib/driver-definitions
@@ -59,5 +62,7 @@ extends:
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: common/lib/driver-definitions
     tagName: driver-definitions
+    taskTest: false

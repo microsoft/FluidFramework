@@ -1,0 +1,29 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+parameters:
+- name: chartPath
+  type: string
+
+variables:
+  - name: skipComponentGovernanceDetection
+    value: true
+
+jobs:
+- job: Job_1
+  displayName: Agent job 1
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - checkout: self
+    clean: true
+    fetchDepth: 1
+  - task: ComponentGovernanceComponentDetection@0
+    displayName: Component Detection
+    inputs:
+      sourceScanPath: ${{ parameters.chartPath }}
+  - task: PublishPipelineArtifact@1
+    displayName: Publish Pipeline Artifact
+    inputs:
+      path: ${{ parameters.chartPath }}
+      artifactName: chart

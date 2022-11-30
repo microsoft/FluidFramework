@@ -12,6 +12,8 @@ pr:
   branches:
     include:
     - main
+    - next
+    - lts
     - release/*
   paths:
     include:
