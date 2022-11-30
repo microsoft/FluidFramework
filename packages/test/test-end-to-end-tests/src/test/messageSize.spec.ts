@@ -92,7 +92,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     const containerError = async (container: IContainer) =>
         new Promise<IErrorBase | undefined>((resolve) => container.once("closed", (error) => { resolve(error); }));
 
-    itExpects.skip("A large op will close the container", [
+    itExpects("A large op will close the container", [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
     ], async () => {
         const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
@@ -139,7 +139,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         assertMapValues(dataObject2map, messageCount, largeString);
     });
 
-    it.skip("Batched small ops pass when batch is larger than max op size", async function() {
+    it("Batched small ops pass when batch is larger than max op size", async function() {
         // flush mode is not applicable for the local driver
         if (provider.driver.type === "local") {
             this.skip();
@@ -153,7 +153,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         assertMapValues(dataObject2map, messageCount, largeString);
     });
 
-    it.skip("Single large op passes when compression enabled and over max op size", async () => {
+    it("Single large op passes when compression enabled and over max op size", async () => {
         const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
         await setupContainers({
             ...testContainerConfig,
@@ -167,7 +167,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         setMapKeys(dataObject1map, messageCount, largeString);
     });
 
-    it.skip("Batched small ops pass when compression enabled and batch is larger than max op size", async function() {
+    it("Batched small ops pass when compression enabled and batch is larger than max op size", async function() {
         await setupContainers({
             ...testContainerConfig,
             runtimeOptions: {
@@ -182,25 +182,26 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         assertMapValues(dataObject2map, messageCount, largeString);
     });
 
-    itExpects(
-        "Single large op passes when compression enabled, compressed content is over max op size",
-        [
-            { eventName: "fluid:telemetry:OpPerf:OpRoundtripTime" },
-        ], async function() {
-            const maxMessageSizeInBytes = 2 * 1024 * 1024; // 15MB
-            await setupContainers({
-                ...testContainerConfig,
-                runtimeOptions: {
-                    compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
-                },
-            }, {});
+    it("Single large op passes when compression enabled, compressed content is over max op size", async function() {
+        // This is not supported by the local server. See ADO:2690
+        if (provider.driver.type === "local") {
+            this.skip();
+        }
 
-            const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
-            const messageCount = 2;
-            // 3 x 15 MB
-            setMapKeys(dataObject1map, messageCount, largeString);
-            await provider.ensureSynchronized(50000);
+        const maxMessageSizeInBytes = 2 * 1024 * 1024; // 15MB
+        await setupContainers({
+            ...testContainerConfig,
+            runtimeOptions: {
+                compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
+            },
+        }, {});
 
-            assertMapValues(dataObject2map, messageCount, largeString);
-        }).timeout(500000);
+        const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
+        const messageCount = 2;
+        // 3 x 15 MB
+        setMapKeys(dataObject1map, messageCount, largeString);
+        await provider.ensureSynchronized(50000);
+
+        assertMapValues(dataObject2map, messageCount, largeString);
+    }).timeout(500000);
 });

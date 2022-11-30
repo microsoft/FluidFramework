@@ -83,7 +83,7 @@ describe("Outbox", () => {
 
     const getMockSplitter = (): IBatchProcessor => ({
         processOutgoing: (batch: IBatch): IBatch => {
-            state.batchesCompressed.push(batch);
+            state.batchesSplit.push(batch);
             return batch;
         },
     });
@@ -198,7 +198,7 @@ describe("Outbox", () => {
         const rawMessagesInFlushOrder = [
             messages[2], messages[3], messages[0], messages[1], messages[4],
         ];
-        assert.equal(state.pendingFlushCount, 3);
+        assert.equal(state.pendingFlushCount, 4);
         assert.deepEqual(state.pendingOpContents, rawMessagesInFlushOrder.map((message) => ({
             type: message.deserializedContent.type,
             content: message.deserializedContent.contents,
@@ -226,7 +226,7 @@ describe("Outbox", () => {
                 batchedMessage(messages[0]),
             ],
         ]);
-        assert.equal(state.pendingFlushCount, 2);
+        assert.equal(state.pendingFlushCount, 4);
         assert.deepEqual(state.pendingOpContents, messages.map((message) => ({
             type: message.deserializedContent.type,
             content: message.deserializedContent.contents,
