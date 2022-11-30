@@ -10,7 +10,6 @@ import {
     IConnected,
     IDocumentMessage,
     INack,
-    // ISignalClient,
     ISignalMessage,
     NackErrorType,
     ScopeType,

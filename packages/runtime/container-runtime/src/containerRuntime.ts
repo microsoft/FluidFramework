@@ -1817,6 +1817,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         console.log(`I am in container runtime`);
         console.log(message);
         const envelope = message.content as ISignalEnvelope; // can either reshape to look like isignalenvelope or if else logic to bypass this
+        // add one more envelope instead of striping it down
         const transformed: IInboundSignalMessage = {
             clientId: message.clientId,
             content: envelope.contents.content,

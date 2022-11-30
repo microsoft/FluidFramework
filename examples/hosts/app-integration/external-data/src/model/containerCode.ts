@@ -40,6 +40,10 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
             await runtime.getRootDataStore(taskListId),
             "",
         );
+        // CONSIDER FOR LATER: might want to peel off the top envelope and
+        // route to different task lists or other objects
+        // CONSIDER FOR LATER: might want to move to createModel because you might want
+        // everything laready instantiated
         console.log(taskList);
         runtime.on("signal", (message) => {
             // taskList.handleSignal(message);
@@ -47,7 +51,12 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
             console.log(message);
             console.log(runtime);
             console.log(taskList);
-            taskList.handleSignal(message);
+            if (message.type === "externalDataChanged") {
+                // can keep registry in here of how to handle different signals
+                // await this.importExternalData();
+                console.log("I am passing my message to taskList.handleSignal");
+                taskList.handleSignal(message.content);
+            }
             // TODO: Check the message type? clientId?  And route to the TaskList for interpretation?
             // Interpretation of the message contents should probably live on the TaskList to encapsulate
             // knowledge of the task-specific data.

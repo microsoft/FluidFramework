@@ -135,13 +135,9 @@ export class TaskList extends DataObject implements ITaskList {
         this.emit("taskDeleted", deletedTask);
     };
 
-    public handleSignal(message: any) {
+    public handleSignal(message: any) { // I am expecting exactly JIRA data
         console.log("I'm here in the handleSignal task list");
-            // cankeep registry in here of how to handle different signals
-            if (message.contents.type === "externalDataChanged") {
-                // await this.importExternalData();
-                console.log("yay I've been initizliaed and am here now");
-            }
+        console.log(message);
     };
 
     // TODO: Is it useful to block further changes during the sync'ing process?  Consider implementing a state to
