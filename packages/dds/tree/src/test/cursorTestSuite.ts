@@ -470,7 +470,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
  * This does NOT test that the data the cursor exposes is correct,
  * it simply checks that the traversal APIs function, and that a few aspects of them conform with the spec.
  *
- * TODO: add testing for paths to this, or a separate tests for it.
+ * TODO: add testing for paths to this, or separate tests for it.
  */
 function checkTraversal(cursor: ITreeCursor) {
     assert.equal(cursor.mode, CursorLocationType.Nodes);
