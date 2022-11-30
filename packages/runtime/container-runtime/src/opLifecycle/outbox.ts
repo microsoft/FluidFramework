@@ -92,7 +92,7 @@ export class Outbox {
 
     private flushInternal(rawBatch: IBatch) {
         const processedBatch = this.maybeCompressBatch(rawBatch);
-        const clientSequenceNumber = this.flushBatch(processedBatch);
+        const clientSequenceNumber = this.sendBatch(processedBatch);
         this.persistPendingBatch(clientSequenceNumber, rawBatch.content);
     }
 
@@ -113,7 +113,7 @@ export class Outbox {
         return this.params.splitter.splitCompressedBatch(compressedBatch);
     }
 
-    private flushBatch(batch: IBatch): number {
+    private sendBatch(batch: IBatch): number {
         let clientSequenceNumber: number = -1;
         const length = batch.content.length;
 
@@ -123,19 +123,10 @@ export class Outbox {
             return clientSequenceNumber;
         }
 
-        clientSequenceNumber = this.sendBatch(batch.content);
-        // Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
-        clientSequenceNumber -= length - 1;
-        assert(clientSequenceNumber >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
-        return clientSequenceNumber;
-    }
-
-    private sendBatch(batch: BatchMessage[]): number {
         if (this.params.containerContext.submitBatchFn === undefined) {
             // Legacy path - supporting old loader versions. Can be removed only when LTS moves above
             // version that has support for batches (submitBatchFn)
-            let clientSequenceNumber: number = -1;
-            for (const message of batch) {
+            for (const message of batch.content) {
                 // Legacy path doesn't support compressed payloads and will submit uncompressed payload anyways
                 if (message.metadata?.compressed) {
                     delete message.metadata.compressed;
@@ -149,12 +140,16 @@ export class Outbox {
             }
 
             this.params.containerContext.deltaManager.flush();
-            return clientSequenceNumber;
+        } else {
+            // returns clientSequenceNumber of last message in a batch
+            clientSequenceNumber = this.params.containerContext.submitBatchFn(
+                batch.content.map((message) => ({ contents: message.contents, metadata: message.metadata })));
         }
 
-        const batchToSend = batch.map((message) => ({ contents: message.contents, metadata: message.metadata }));
-        // returns clientSequenceNumber of last message in a batch
-        return this.params.containerContext.submitBatchFn(batchToSend);
+        // Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
+        clientSequenceNumber -= length - 1;
+        assert(clientSequenceNumber >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
+        return clientSequenceNumber;
     }
 
     private persistPendingBatch(initialClientSequenceNumber: number, batch: BatchMessage[]) {
