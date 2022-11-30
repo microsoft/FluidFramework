@@ -34,6 +34,8 @@ describe("Matrix memory usage", () => {
 
     benchmarkMemory(new class implements IMemoryTestObject {
         title = "Create empty Matrix";
+        minSampleCount = 500;
+
         private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
 
         async run() {
@@ -49,7 +51,6 @@ describe("Matrix memory usage", () => {
             private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
 
             async run() {
-                this.localMatrix = createLocalMatrix("testLocalMatrix");
                 for (let i = 0; i < x; i++) {
                     this.localMatrix.insertCols(0, 100);
                     this.localMatrix.removeCols(0, 100);
@@ -66,7 +67,6 @@ describe("Matrix memory usage", () => {
             private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
 
             async run() {
-                this.localMatrix = createLocalMatrix("testLocalMatrix");
                 for (let i = 0; i < x; i++) {
                     this.localMatrix.insertRows(0, 100);
                     this.localMatrix.removeRows(0, 100);
@@ -83,7 +83,6 @@ describe("Matrix memory usage", () => {
             private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
 
             async run() {
-                this.localMatrix = createLocalMatrix("testLocalMatrix");
                 for (let i = 0; i < x; i++) {
                     this.localMatrix.insertCols(0, 100);
                     this.localMatrix.insertRows(0, 100);
@@ -102,7 +101,6 @@ describe("Matrix memory usage", () => {
             private localMatrix = createLocalMatrix("testLocalMatrix");
 
             async run() {
-                this.localMatrix = createLocalMatrix("testLocalMatrix");
                 this.localMatrix.insertCols(0, x);
                 this.localMatrix.insertRows(0, x);
                 for (let i = 0; i < x; i++) {
