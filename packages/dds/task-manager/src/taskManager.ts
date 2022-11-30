@@ -629,6 +629,17 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     /**
+     * {@inheritDoc ITaskManager.canVolunteer}
+     */
+    public canVolunteer(): boolean {
+        // A client can volunteer for a task if its both connected to the delta stream and in write mode.
+        // this.connected reflects that condition, but is unintuitive and may be changed in the future. This API allows
+        // us to make changes to this.connected without affecting our guidance on how to check if a client is eligigble
+        // to volunteer for a task.
+        return this.connected;
+    }
+
+    /**
      * Create a summary for the task manager
      *
      * @returns the summary of the current state of the task manager
