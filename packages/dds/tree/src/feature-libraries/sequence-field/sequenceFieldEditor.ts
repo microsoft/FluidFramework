@@ -17,6 +17,14 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
         detachIndex: number,
         revision: RevisionTag,
     ): Changeset<never>;
+
+    /**
+     *
+     * @param sourceIndex - The index of the first node move
+     * @param count - The number of nodes to move
+     * @param destIndex - The index the nodes should be moved to, interpreted after removing the moving nodes
+     */
+    move(sourceIndex: number, count: number, destIndex: number): Changeset<never>;
 }
 
 export const sequenceFieldEditor = {
@@ -49,6 +57,28 @@ export const sequenceFieldEditor = {
                   detachedBy: revision,
                   detachIndex,
               }),
+    move(sourceIndex: number, count: number, destIndex: number): Changeset<never> {
+        if (count === 0 || sourceIndex === destIndex) {
+            // TODO: Should we allow creating a move which has no observable effect?
+            return [];
+        }
+
+        const moveOut: Mark<never> = {
+            type: "MoveOut",
+            id: 0,
+            count,
+        };
+
+        const moveIn: Mark<never> = {
+            type: "MoveIn",
+            id: 0,
+            count,
+        };
+
+        return sourceIndex < destIndex
+            ? [sourceIndex, moveOut, destIndex - sourceIndex, moveIn]
+            : [destIndex, moveIn, sourceIndex - destIndex, moveOut];
+    },
 };
 
 function markAtIndex<TNodeChange>(index: number, mark: Mark<TNodeChange>): Changeset<TNodeChange> {

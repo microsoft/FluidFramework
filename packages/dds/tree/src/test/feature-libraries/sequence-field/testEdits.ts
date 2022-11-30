@@ -61,6 +61,14 @@ function createReviveChangeset(
     return SF.sequenceFieldEditor.revive(startIndex, count, detachIndex, revision);
 }
 
+function createMoveChangeset(
+    sourceIndex: number,
+    count: number,
+    destIndex: number,
+): SF.Changeset<never> {
+    return SF.sequenceFieldEditor.move(sourceIndex, count, destIndex);
+}
+
 function createModifyChangeset<TNodeChange>(
     index: number,
     change: TNodeChange,
@@ -72,5 +80,6 @@ export const ChangeMaker = {
     insert: createInsertChangeset,
     delete: createDeleteChangeset,
     revive: createReviveChangeset,
+    move: createMoveChangeset,
     modify: createModifyChangeset,
 };

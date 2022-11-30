@@ -1157,6 +1157,8 @@ interface SequenceFieldEditor extends FieldEditor<Changeset> {
     // (undocumented)
     insert(index: number, cursor: ITreeCursor | ITreeCursor[]): Changeset<never>;
     // (undocumented)
+    move(sourceIndex: number, count: number, destIndex: number): Changeset<never>;
+    // (undocumented)
     revive(index: number, count: number, detachIndex: number, revision: RevisionTag): Changeset<never>;
 }
 
@@ -1166,6 +1168,7 @@ const sequenceFieldEditor: {
     insert: (index: number, cursors: ITreeCursor | ITreeCursor[]) => Changeset<never>;
     delete: (index: number, count: number) => Changeset<never>;
     revive: (index: number, count: number, detachIndex: number, revision: RevisionTag) => Changeset<never>;
+    move(sourceIndex: number, count: number, destIndex: number): Changeset<never>;
 };
 
 // @public (undocumented)
