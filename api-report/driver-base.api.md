@@ -65,6 +65,8 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     get maxMessageSize(): number;
     get mode(): ConnectionMode;
     // (undocumented)
+    processInboundMessages?(messages: ISequencedDocumentMessage[]): ISequencedDocumentMessage[];
+    // (undocumented)
     protected readonly queuedMessages: ISequencedDocumentMessage[];
     // (undocumented)
     protected readonly queuedSignals: ISignalMessage[];

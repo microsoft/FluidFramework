@@ -602,4 +602,8 @@ export class DocumentDeltaConnection
 
         return errorObj;
     }
+
+    public processInboundMessages?(messages: ISequencedDocumentMessage[]): ISequencedDocumentMessage[] {
+        return messages;
+    }
 }

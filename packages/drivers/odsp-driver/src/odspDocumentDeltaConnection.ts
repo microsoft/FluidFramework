@@ -12,6 +12,7 @@ import { IFluidErrorBase, loggerToMonitoringContext } from "@fluidframework/tele
 import {
     IClient,
     IConnect,
+    IDocumentMessage,
     INack,
     ISequencedDocumentMessage,
     ISignalMessage,
@@ -26,6 +27,7 @@ import { pkgVersion } from "./packageVersion";
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const feature_get_ops = "api_get_ops";
 const feature_flush_ops = "api_flush_ops";
+const feature_light_op_acks = "api_light_op_acks";
 
 export interface FlushResult {
     lastPersistedSequenceNumber?: number;
@@ -249,6 +251,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         connectMessage.supportedFeatures = { };
         if (mc.config.getBoolean("Fluid.Driver.Odsp.GetOpsEnabled") !== false) {
             connectMessage.supportedFeatures[feature_get_ops] = true;
+        }
+
+        if (mc.config.getBoolean("Fluid.Driver.Odsp.LightOpAcks") !== false) {
+            connectMessage.supportedFeatures[feature_light_op_acks] = true;
         }
 
         const deltaConnection = new OdspDocumentDeltaConnection(
@@ -621,5 +627,43 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         }
 
         socket.removeSocketIoReference();
+    }
+
+    /**
+     * Key: clientSequenceNumber
+     * Value: content
+     */
+    private readonly opContent = new Map<number, any>();
+
+    public submit(messages: IDocumentMessage[]): void {
+        if ((this.details as any).supportedFeatures?.[feature_light_op_acks] === true) {
+            messages.forEach((message) => this.opContent.set(message.clientSequenceNumber, message.contents));
+        }
+        super.submit(messages);
+    }
+
+    public processInboundMessages(messages: ISequencedDocumentMessage[]): ISequencedDocumentMessage[] {
+        if ((this.details as any).supportedFeatures?.[feature_light_op_acks] !== true) {
+            return messages;
+        }
+        return messages.map((message) => {
+            message.contents = this.opContent.get(message.clientSequenceNumber);
+            this.opContent.delete(message.clientSequenceNumber);
+            return message;
+        });
+    }
+
+    protected emitMessages(type: string, messages: IDocumentMessage[][]) {
+        if ((this.details as any).supportedFeatures?.[feature_light_op_acks] !== true) {
+            return super.emitMessages(type, messages);
+        }
+        if (!this.disposed) {
+            this.socket.emit(
+                type,
+                this.clientId,
+                true, // support light op acks
+                messages,
+            );
+        }
     }
 }

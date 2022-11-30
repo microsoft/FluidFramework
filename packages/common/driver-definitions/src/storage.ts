@@ -256,6 +256,11 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
      * Submit a new signal to the server
      */
     submitSignal(message: any): void;
+
+    /**
+     * TODO
+     */
+    processInboundMessages?(messages: ISequencedDocumentMessage[]): ISequencedDocumentMessage[];
 }
 
 export enum LoaderCachingPolicy {
