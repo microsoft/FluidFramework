@@ -57,11 +57,10 @@ describe("SharedString memory usage", () => {
             private sharedString = createLocalSharedString("testSharedString");
 
             async run() {
-                this.sharedString = createLocalSharedString("testSharedString");
-                    for (let i = 0; i < x; i++) {
-                        this.sharedString.insertText(0, "my-test-text");
-                        this.sharedString.removeText(0, 12);
-                    }
+                for (let i = 0; i < x; i++) {
+                    this.sharedString.insertText(0, "my-test-text");
+                    this.sharedString.removeText(0, 12);
+                }
             }
 
             beforeIteration() {
@@ -152,7 +151,6 @@ describe("SharedString memory usage", () => {
                         [reservedMarkerIdKey]: this.markerId,
                     },
                 );
-
                 this.simpleMarker = this.sharedString.getMarkerFromId(this.markerId) as Marker;
             }
         }());
