@@ -16,6 +16,7 @@ import { OpSplitter } from "./opSplitter";
 
 export interface IOutboxConfig {
     readonly compressionOptions?: ICompressionRuntimeOptions;
+    // The maximum size of a batch that we can send over the wire.
     readonly maxBatchSizeInBytes: number;
 };
 
@@ -93,7 +94,8 @@ export class Outbox {
     private flushInternal(rawBatch: IBatch) {
         const processedBatch = this.maybeCompressBatch(rawBatch);
         const clientSequenceNumber = this.sendBatch(processedBatch);
-        this.persistPendingBatch(clientSequenceNumber, rawBatch.content);
+
+        this.persistBatch(clientSequenceNumber, rawBatch.content);
     }
 
     private maybeCompressBatch(batch: IBatch): IBatch {
@@ -152,7 +154,7 @@ export class Outbox {
         return clientSequenceNumber;
     }
 
-    private persistPendingBatch(initialClientSequenceNumber: number, batch: BatchMessage[]) {
+    private persistBatch(initialClientSequenceNumber: number, batch: BatchMessage[]) {
         let clientSequenceNumber = initialClientSequenceNumber;
         // Let the PendingStateManager know that a message was submitted.
         // In future, need to shift toward keeping batch as a whole!
