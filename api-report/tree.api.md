@@ -1138,7 +1138,11 @@ type SequenceFieldChangeHandler = FieldChangeHandler<Changeset, SequenceFieldEdi
 const sequenceFieldChangeHandler: SequenceFieldChangeHandler;
 
 // @public (undocumented)
-const sequenceFieldChangeRebaser: SequenceChangeRebaser;
+const sequenceFieldChangeRebaser: {
+    compose: typeof compose;
+    invert: typeof invert;
+    rebase: typeof rebase;
+};
 
 // @public (undocumented)
 export interface SequenceFieldEditBuilder {
@@ -1149,13 +1153,20 @@ export interface SequenceFieldEditBuilder {
 // @public (undocumented)
 interface SequenceFieldEditor extends FieldEditor<Changeset> {
     // (undocumented)
-    delete(index: number, count: number): Changeset;
+    delete(index: number, count: number): Changeset<never>;
     // (undocumented)
-    insert(index: number, cursor: ITreeCursor | ITreeCursor[]): Changeset;
+    insert(index: number, cursor: ITreeCursor | ITreeCursor[]): Changeset<never>;
+    // (undocumented)
+    revive(index: number, count: number, detachIndex: number, revision: RevisionTag): Changeset<never>;
 }
 
 // @public (undocumented)
-const sequenceFieldEditor: SequenceFieldEditor;
+const sequenceFieldEditor: {
+    buildChildChange: <TNodeChange = NodeChangeset>(index: number, change: TNodeChange) => Changeset<TNodeChange>;
+    insert: (index: number, cursors: ITreeCursor | ITreeCursor[]) => Changeset<never>;
+    delete: (index: number, count: number) => Changeset<never>;
+    revive: (index: number, count: number, detachIndex: number, revision: RevisionTag) => Changeset<never>;
+};
 
 // @public (undocumented)
 function sequenceFieldToDelta<TNodeChange>(marks: MarkList_2<TNodeChange>, deltaFromChild: ToDelta_2<TNodeChange>, reviver: NodeReviver): Delta.MarkList;
