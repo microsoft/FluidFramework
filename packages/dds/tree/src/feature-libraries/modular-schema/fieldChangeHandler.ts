@@ -19,9 +19,6 @@ export interface FieldChangeHandler<
     encoder: FieldChangeEncoder<TChangeset>;
     editor: TEditor;
     intoDelta(change: TChangeset, deltaFromChild: ToDelta, reviver: NodeReviver): Delta.MarkList;
-
-    // TODO
-    // buildEditor(submitEdit: (change: TChangeset) => void): TEditor;
 }
 
 export interface FieldChangeRebaser<TChangeset> {
