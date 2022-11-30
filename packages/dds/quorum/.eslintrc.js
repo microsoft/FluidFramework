@@ -5,7 +5,7 @@
 
 module.exports = {
     "extends": [
-        "@fluidframework/eslint-config-fluid/strict",
+        require.resolve("@fluidframework/eslint-config-fluid/strict"),
         "prettier"
     ],
     "parserOptions": {
