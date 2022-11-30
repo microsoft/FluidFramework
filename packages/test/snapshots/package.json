@@ -34,7 +34,6 @@
     "test:mocha": "mocha --experimental-worker dist/test --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "test:new": "mocha --experimental-worker dist/test/generate/new.spec.js --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-    "test:newattribution": "mocha --experimental-worker dist/test/generate/newAttribution.spec.js --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:update": "mocha --experimental-worker dist/test/generate/update.spec.js --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "tsc": "tsc"
   },
