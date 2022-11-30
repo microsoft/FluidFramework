@@ -65,7 +65,7 @@ export class BatchManager {
         this.pendingBatch = [];
         this.batchContentSize = 0;
 
-        return batch;
+        return addBatchMetadata(batch);
     }
 
     /**
@@ -87,3 +87,18 @@ export class BatchManager {
         };
     }
 }
+
+const addBatchMetadata = (batch: IBatch): IBatch => {
+    if (batch.content.length > 1) {
+        batch.content[0].metadata = {
+            ...batch.content[0].metadata,
+            batch: true
+        };
+        batch.content[batch.content.length - 1].metadata = {
+            ...batch.content[batch.content.length - 1].metadata,
+            batch: false
+        };
+    }
+
+    return batch;
+};

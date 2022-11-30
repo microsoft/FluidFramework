@@ -16,7 +16,7 @@ describe("BatchManager", () => {
 
     const generateStringOfSize = (sizeInBytes: number): string => new Array(sizeInBytes + 1).join("0");
 
-    const smallMessage = { contents: generateStringOfSize(smallMessageSize) } as any as BatchMessage;
+    const smallMessage = (): BatchMessage => ({ contents: generateStringOfSize(smallMessageSize) } as any as BatchMessage);
 
     it("BatchManager's soft limit: a bunch of small messages", () => {
         const message = { contents: generateStringOfSize(softLimit / 2) } as any as BatchMessage;
@@ -31,7 +31,7 @@ describe("BatchManager", () => {
         assert.equal(batchManager.length, 1);
 
         // But can push one small message
-        assert.equal(batchManager.push(smallMessage), true);
+        assert.equal(batchManager.push(smallMessage()), true);
         assert.equal(batchManager.length, 2);
 
         // Pop and check batch
@@ -56,7 +56,7 @@ describe("BatchManager", () => {
         assert.equal(batchManager.length, 1);
 
         // Can't push another small message
-        assert.equal(batchManager.push(smallMessage), false);
+        assert.equal(batchManager.push(smallMessage()), false);
         assert.equal(batchManager.length, 1);
 
         // Pop and check batch
@@ -65,7 +65,7 @@ describe("BatchManager", () => {
         assert.equal(batch.contentSizeInBytes, softLimit * 2);
 
         // Validate that we can't push large message above soft limit if we have already at least one message.
-        assert.equal(batchManager.push(smallMessage), true);
+        assert.equal(batchManager.push(smallMessage()), true);
         assert.equal(batchManager.length, 1);
 
         assert.equal(batchManager.push(message), false);
@@ -100,7 +100,7 @@ describe("BatchManager", () => {
         assert.equal(batchManager.push(message), true);
         assert.equal(batchManager.length, 2);
 
-        assert.equal(batchManager.push(smallMessage), true);
+        assert.equal(batchManager.push(smallMessage()), true);
         assert.equal(batchManager.length, 3);
     });
 
@@ -127,13 +127,6 @@ describe("BatchManager", () => {
         assert.equal(batch.content.length, 1);
     });
 
-    it("Don't verify op ordering by default", () => {
-        const batchManager = new BatchManager({ hardLimit });
-        assert.equal(batchManager.push({ ...smallMessage, referenceSequenceNumber: 0 }), true);
-        assert.equal(batchManager.push({ ...smallMessage, referenceSequenceNumber: 0 }), true);
-        assert.equal(batchManager.push({ ...smallMessage, referenceSequenceNumber: 1 }), true);
-    });
-
     it("BatchManager: 'infinity' hard limit allows everything", () => {
         const message = { contents: generateStringOfSize(softLimit) } as any as BatchMessage;
         const batchManager = new BatchManager({ hardLimit: Infinity });
@@ -142,5 +135,21 @@ describe("BatchManager", () => {
             assert.equal(batchManager.push(message), true);
             assert.equal(batchManager.length, i);
         }
+    });
+
+    it("Batch metadata is set correctly", () => {
+        const batchManager = new BatchManager({ hardLimit });
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 2 }), true);
+
+        const batch = batchManager.popBatch();
+        assert.equal(batch.content[0].metadata?.batch, true);
+        assert.equal(batch.content[1].metadata?.batch, undefined);
+        assert.equal(batch.content[2].metadata?.batch, false);
+
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
+        const singleOpBatch = batchManager.popBatch();
+        assert.equal(singleOpBatch.content[0].metadata?.batch, undefined);
     });
 });

@@ -4,10 +4,10 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ContainerRuntimeMessage } from "../containerRuntime";
 import { OpDecompressor } from "./opDecompressor";
 import { OpUnpacker } from "./opUnpacker";
 import { OpSplitter } from "./opSplitter";
-import { ContainerRuntimeMessage } from "../containerRuntime";
 
 export interface IProcessingResult {
     readonly message: ISequencedDocumentMessage;

@@ -86,37 +86,17 @@ export class Outbox {
     }
 
     public flush() {
-        this.flushInternal(this.fetchBatch(this.attachFlowBatch));
-        this.flushInternal(this.fetchBatch(this.mainBatch));
-    }
-
-    private fetchBatch(batchManager: BatchManager): IBatch {
-        return this.addBatchMetadataToBatch(batchManager.popBatch());
+        this.flushInternal(this.attachFlowBatch.popBatch());
+        this.flushInternal(this.mainBatch.popBatch());
     }
 
     private flushInternal(rawBatch: IBatch) {
-        this.addBatchMetadataToBatch(rawBatch);
-        const processedBatch = this.processBatch(rawBatch);
+        const processedBatch = this.maybeCompressBatch(rawBatch);
         const clientSequenceNumber = this.flushBatch(processedBatch);
         this.persistPendingBatch(clientSequenceNumber, rawBatch.content);
     }
 
-    private addBatchMetadataToBatch(batch: IBatch): IBatch {
-        if (batch.content.length > 1) {
-            batch.content[0].metadata = {
-                ...batch.content[0].metadata,
-                batch: true
-            };
-            batch.content[batch.content.length - 1].metadata = {
-                ...batch.content[batch.content.length - 1].metadata,
-                batch: false
-            };
-        }
-
-        return batch;
-    }
-
-    private processBatch(batch: IBatch): IBatch {
+    private maybeCompressBatch(batch: IBatch): IBatch {
         if (batch.content.length === 0
             || this.params.config.compressionOptions === undefined
             || this.params.config.compressionOptions.minimumBatchSizeInBytes >= batch.contentSizeInBytes) {
@@ -137,20 +117,16 @@ export class Outbox {
         let clientSequenceNumber: number = -1;
         const length = batch.content.length;
 
-        if (length === 0) {
+        // Did we disconnect in the middle of turn-based batch?
+        // If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
+        if (length === 0 || !this.params.shouldSend()) {
             return clientSequenceNumber;
         }
 
-        // Did we disconnect in the middle of turn-based batch?
-        // If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
-        if (this.params.shouldSend()) {
-            clientSequenceNumber = this.sendBatch(batch.content);
-
-            // Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
-            clientSequenceNumber -= length - 1;
-            assert(clientSequenceNumber >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
-        }
-
+        clientSequenceNumber = this.sendBatch(batch.content);
+        // Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
+        clientSequenceNumber -= length - 1;
+        assert(clientSequenceNumber >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
         return clientSequenceNumber;
     }
 
