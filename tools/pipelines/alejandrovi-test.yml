@@ -62,7 +62,7 @@ stages:
             # We force the behavior by explicitly specifying:
             # - buildVersionToDownload: specific
             # - buildId: <the id of the triggering build>
-            # preferTriggeringPipeline: true
+            preferTriggeringPipeline: true
             source: specific
             project: internal
             pipeline: $(pipeline)
@@ -77,7 +77,7 @@ stages:
           displayName: Download test files with old parameters
           inputs:
             # It seems there's a bug and preferTriggeringPipeline is not respected.
-            # preferTriggeringPipeline: true
+            preferTriggeringPipeline: true
             source: specific
             project: internal
             pipeline: $(pipeline)
