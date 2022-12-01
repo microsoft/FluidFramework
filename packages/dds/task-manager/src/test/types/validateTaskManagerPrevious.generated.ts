@@ -85,4 +85,5 @@ declare function get_current_ClassDeclaration_TaskManager():
 declare function use_old_ClassDeclaration_TaskManager(
     use: TypeOnly<old.TaskManager>);
 use_old_ClassDeclaration_TaskManager(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_TaskManager());
