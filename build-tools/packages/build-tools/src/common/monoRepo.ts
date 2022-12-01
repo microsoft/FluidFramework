@@ -7,8 +7,9 @@ import * as path from "path";
 import YAML from "yaml";
 
 import { fatal } from "../bumpVersion/utils";
+import { IFluidBuildConfig } from "./fluidRepo";
 import { Logger, defaultLogger } from "./logging";
-import { Package, Packages } from "./npmPackage";
+import { Package, PackageJson, Packages } from "./npmPackage";
 import { execWithErrorAsync, existsSync, readJsonSync, rimrafWithErrorAsync } from "./utils";
 
 export type PackageManager = "npm" | "pnpm" | "yarn";
@@ -71,6 +72,7 @@ export class MonoRepo {
     public readonly version: string;
     public readonly workspaceGlobs: string[];
     public readonly packageManager: PackageManager;
+    private _packageJson: PackageJson;
 
     /**
      * Creates a new monorepo.
@@ -92,6 +94,12 @@ export class MonoRepo {
         const yarnLockPath = path.join(repoPath, "yarn.lock");
         const packagePath = path.join(repoPath, "package.json");
         let versionFromLerna = false;
+
+        if (!existsSync(packagePath)) {
+            throw new Error(`ERROR: package.json not found in ${repoPath}`);
+        }
+
+        this._packageJson = readJsonSync(packagePath);
 
         this.packageManager = existsSync(pnpmWorkspace)
             ? "pnpm"
@@ -127,21 +135,19 @@ export class MonoRepo {
             return;
         }
 
-        if (!existsSync(packagePath)) {
-            throw new Error(`ERROR: package.json not found in ${repoPath}`);
-        }
-        const pkgJson = readJsonSync(packagePath);
-        if (pkgJson.version === undefined && !versionFromLerna) {
-            this.version = pkgJson.version;
-            logger.verbose(`${kind}: Loading version (${pkgJson.version}) from ${packagePath}`);
+        if (this._packageJson.version === undefined && !versionFromLerna) {
+            this.version = this._packageJson.version;
+            logger.verbose(
+                `${kind}: Loading version (${this._packageJson.version}) from ${packagePath}`,
+            );
         }
 
-        if (pkgJson.workspaces !== undefined) {
+        if (this._packageJson.workspaces !== undefined) {
             logger.verbose(`${kind}: Loading packages from ${packagePath}`);
-            for (const dir of pkgJson.workspaces as string[]) {
+            for (const dir of this._packageJson.workspaces as string[]) {
                 this.packages.push(...Packages.loadGlob(dir, kind, ignoredDirs, this));
             }
-            this.workspaceGlobs = pkgJson.workspaces;
+            this.workspaceGlobs = this._packageJson.workspaces;
             return;
         }
         fatal(
@@ -159,6 +165,10 @@ export class MonoRepo {
             : this.packageManager === "yarn"
             ? "npm run install-strict"
             : "npm i --no-package-lock --no-shrinkwrap";
+    }
+
+    public get fluidBuildConfig(): IFluidBuildConfig | undefined {
+        return this._packageJson.fluidBuild;
     }
 
     public getNodeModulePath() {

@@ -46,7 +46,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
         }),
     };
 
-    protected parsedOutput?: ParserOutput<any, any>;
+    protected parsedOutput?: ParserOutput;
 
     /**
      * The processed arguments that were passed to the CLI.
@@ -74,8 +74,21 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
     private _context: Context | undefined;
     private _logger: CommandLogger | undefined;
 
+    /**
+     * Parses the command arguments and stores them in parsedOutput.
+     *
+     * @remarks
+     *
+     * This function does nothing if parsedOutput is already defined.
+     */
+    protected async parseCmdArgs() {
+        if (this.parsedOutput === undefined) {
+            this.parsedOutput = await this.parse(this.ctor);
+        }
+    }
+
     async init() {
-        this.parsedOutput = await this.parse(this.ctor);
+        await this.parseCmdArgs();
     }
 
     async catch(err: any) {
