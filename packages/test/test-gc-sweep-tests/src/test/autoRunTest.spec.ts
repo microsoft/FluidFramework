@@ -29,10 +29,9 @@ describeNoCompat("GC InactiveObjectX tests", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
 
     const summaryOptions = DefaultSummaryConfiguration as ISummaryConfigurationHeuristics;
-    summaryOptions.summarizerClientElection = true;
     // Summaries should run automatically
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions,
+        ...summaryOptions,
         gcOptions: {
             gcAllowed: true,
         },
