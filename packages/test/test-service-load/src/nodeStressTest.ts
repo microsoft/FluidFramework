@@ -8,7 +8,7 @@ import child_process from "child_process";
 import fs from "fs";
 import ps from "ps-node";
 import commander from "commander";
-import * as xml from "xml";
+import xml from "xml";
 import { TestDriverTypes, DriverEndpoint } from "@fluidframework/test-driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
@@ -224,8 +224,9 @@ async function orchestratorProcess(
             failures: 0,
             errors: results.filter(({ result, index }) => result !== 0).length,
             //* timestamp: ...
+            //* time: ...
         };
-        const output = {
+        const output: xml.XmlObject = {
             testsuite: [{ _attr },
                 ...resultsForXml,
             ],

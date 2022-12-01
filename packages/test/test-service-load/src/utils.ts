@@ -6,7 +6,7 @@
 import crypto from "crypto";
 import fs from "fs";
 import random from "random-js";
-import { IEvent, ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { IEvent, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container, IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
@@ -34,30 +34,8 @@ import { createGCFluidExport } from "./gcDataStores";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
-class ObservableLogger implements ITelemetryBufferedLogger {
-    public constructor(
-        private readonly onLogEvent: (event: ITelemetryBaseEvent) => void,
-        private readonly baseLogger?: ITelemetryBufferedLogger,
-    ) {
-    }
-
-    async flush(): Promise<void> {
-        return this.baseLogger?.flush();
-    }
-
-    supportsTags?: true | undefined = true;
-
-    send(event: ITelemetryBaseEvent): void {
-        this.onLogEvent({ ...event });
-        this.baseLogger?.send(event);
-    }
-}
-
 interface IObserverEvents extends IEvent {
     (event: "logEvent", listener: (logEvent: ITelemetryBaseEvent) => void): void;
-}
-
-class Observer extends TypedEventEmitter<IObserverEvents> {
 }
 
 class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
@@ -65,7 +43,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     private readonly schema = new Map<string, number>();
     private logs: ITelemetryBaseEvent[] = [];
 
-    readonly observer: Observer = new Observer();
+    readonly observer: TypedEventEmitter<IObserverEvents> = new TypedEventEmitter();
 
     public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
         super(undefined /* namespace */, { all: { testVersion: pkgVersion } });
@@ -123,14 +101,6 @@ async function findTestLogger() {
     const logger = getTestLogger?.();
     assert(logger !== undefined, "Expected getTestLogger to return something");
     return logger;
-}
-
-export async function getObservableLoggerP(onLogEvent: (event: ITelemetryBaseEvent) => void) {
-    return new LazyPromise<FileLogger>(async () => {
-        const testLogger = await findTestLogger();
-        const observableLogger = new ObservableLogger(onLogEvent, testLogger);
-        return new FileLogger(observableLogger);
-    });
 }
 
 export const loggerP = new LazyPromise<FileLogger>(async () => {
