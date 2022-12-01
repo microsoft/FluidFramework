@@ -5,17 +5,19 @@
  */
 
 import random from "random-js";
+import { v4 as uuid } from "uuid";
 import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { assert, delay } from "@fluidframework/common-utils";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { assert, delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedMap } from "@fluidframework/map";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { IRunConfig } from "./loadTestDataStore";
 
-export interface IGCDataStore {
-    readonly handle: IFluidHandle;
+/** An object (data store or attachment blob based) that can run / stop activity in the test. */
+export interface IGCActivityObject {
+    readonly handle: IFluidHandle<ArrayBufferLike | DataObject>;
     run: (config: IRunConfig, id?: string) => Promise<boolean>;
     stop: () => void;
 }
@@ -27,31 +29,61 @@ export interface IGCDataStore {
 const maxRunningLeafChildren = 3;
 
 /**
- * Activities that data stores perform.
+ * Activities that can be performed in the test.
  */
 const GCActivityType = {
-    /** Create a child data store and reference it. */
+    /** Create a child data object and reference it. */
     CreateAndReference: 0,
-    /** Unreference a referenced child data store. */
+    /** Unreference a referenced child data object. */
     Unreference: 1,
-    /** Revive an unreferenced child data store. */
+    /** Revive an unreferenced child data object. */
     Revive: 2,
 };
 type GCActivityType = typeof GCActivityType[keyof typeof GCActivityType];
 
 /**
- * The details of a child that is tracked by a data store.
+ * The details of an activity object that is tracked by a data store.
  */
-interface IChildDetails {
+interface IActivityObjectDetails {
     id: string;
-    child: IGCDataStore;
+    object: IGCActivityObject;
 }
 
 /**
- * The details of an unreferenced child. It includes the timestamp when the child was unreferenced.
+ * The activity object implementation for an attachment blob.
+ * On run, the attachment blob is retrieved on a regular interval.
  */
-interface IUnreferencedChildDetails extends IChildDetails {
-    unreferencedTimestamp: number;
+class AttachmentBlobObject implements IGCActivityObject {
+    private myId: string | undefined;
+    private shouldRun: boolean = false;
+
+    constructor(public handle: IFluidHandle<ArrayBufferLike>) {}
+
+    public async run(config: IRunConfig, id?: string): Promise<boolean> {
+        console.log(`~~~~~~~~~~~ Started attachment blob [${id}]`);
+        this.myId = id;
+        this.shouldRun = true;
+        let done = true;
+        const delayBetweenBlobGetMs = 60 * 1000 / config.testConfig.opRatePerMin;
+        while (this.shouldRun) {
+            try {
+                await this.handle.get();
+            } catch (error) {
+                done = false;
+                break;
+            }
+            // Random jitter of +- 50% of delayBetweenOpsMs so that all clients don't do this at the same time.
+            await delay(delayBetweenBlobGetMs + delayBetweenBlobGetMs * random.real(0, .5, true)(config.randEng));
+        }
+        return done;
+    }
+
+    public stop() {
+        if (this.shouldRun) {
+            console.log(`~~~~~~~~~~~ Stopped attachment blob [${this.myId}]`);
+            this.shouldRun = false;
+        }
+    }
 }
 
 /**
@@ -83,7 +115,7 @@ abstract class BaseDataObject extends DataObject {
  * Data object that should be the leaf in the data object hierarchy. It does not create any data stores but simply
  * sends ops at a regular interval by incrementing a counter.
  */
-export class DataObjectLeaf extends BaseDataObject implements IGCDataStore {
+export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject {
     public static get type(): string {
         return "DataObjectLeaf";
     }
@@ -113,8 +145,10 @@ export class DataObjectLeaf extends BaseDataObject implements IGCDataStore {
     }
 
     public stop() {
-        console.log(`+++++++++ Stopped leaf child (in stop) [${this.myId}]: ${this.counter.value}`);
-        this.shouldRun = false;
+        if (this.shouldRun) {
+            console.log(`+++++++++ Stopped leaf child (in stop) [${this.myId}]: ${this.counter.value}`);
+            this.shouldRun = false;
+        }
     }
 }
 
@@ -126,16 +160,17 @@ export const dataObjectFactoryLeaf = new DataObjectFactory(
 );
 
 /**
- * Data object that can create other data objects and run then. It does not however interact with the data objects
- * created by other clients (i.e., it's not collab). This emulates user scenarios where each user is working on
- * their own part of a document.
+ * Data object that can create other data objects or attachment blobs and run activity on them. It does not however
+ * interact with the data objects created by other clients (i.e., it's not collab). This emulates user scenarios
+ * where each user is working on their own part of a document.
  * This data object does the following:
  * - It sends ops at a regular interval. The interval is defined by the config passed to the run method.
  * - After every few ops, it does a random activity. Example of activities it can perform:
- *   - Create a child data store, reference it and asks it to run.
- *   - Ask a child data store to stop running and unreferenced it.
+ *   - Create a child data object, reference it and run activity on it.
+ *   - Ask a child data object to stop running and unreferenced it.
+ *   - Upload an attachment blob, reference it and start running activity on it.
  */
-export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore {
+export class DataObjectNonCollab extends BaseDataObject implements IGCActivityObject {
     public static get type(): string {
         return "DataObjectNonCollab";
     }
@@ -143,8 +178,13 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
     protected myId: string | undefined;
     private shouldRun: boolean = false;
 
-    /** The number of child data stores created. */
+    /** The number of child data objects created. */
     private childCount = 1;
+
+    /** The number of blobs uploaded. */
+    private blobCount = 1;
+    /** Unique id that is used to generate unique blob content. */
+    private readonly uniqueBlobContentId: string = uuid();
 
     /**
      * The config with which to run a child data object.
@@ -156,51 +196,92 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
         return this._childRunConfig;
     }
 
-    private readonly childMapKey = "childMap";
+    private readonly dataObjectMapKey = "dataObjectMap";
     /**
      * The map that stores the fluid handles to all child data objects.
      * Note: This should not be called before "run" is called which initializes it.
      */
-    private _childMap: SharedMap | undefined;
-    protected get childMap(): SharedMap {
-        assert(this._childMap !== undefined, "Child map cannot be retrieving before initialization");
-        return this._childMap;
+    private _dataObjectMap: SharedMap | undefined;
+    protected get dataObjectMap(): SharedMap {
+        assert(this._dataObjectMap !== undefined, "Child map cannot be retrieving before initialization");
+        return this._dataObjectMap;
     }
 
-    private readonly unreferencedChildrenDetails: IUnreferencedChildDetails[] = [];
-    private readonly referencedChildrenDetails: IChildDetails[] = [];
+    private readonly blobMapKey = "blobMap";
+    /**
+     * The map that stores the fluid handles to all attachment blobs.
+     * Note: This should not be called before "run" is called which initializes it.
+     */
+    private _blobMap: SharedMap | undefined;
+    protected get blobMap(): SharedMap {
+        assert(this._blobMap !== undefined, "Blob map cannot be retrieving before initialization");
+        return this._blobMap;
+    }
+
+    private readonly unreferencedChildDataObjects: IActivityObjectDetails[] = [];
+    private readonly referencedChildDataObjects: IActivityObjectDetails[] = [];
+
+    private readonly unreferencedAttachmentBlobs: IActivityObjectDetails[] = [];
+    private readonly referencedAttachmentBlobs: IActivityObjectDetails[] = [];
 
     protected async initializingFirstTime(): Promise<void> {
         await super.initializingFirstTime();
-        this.root.set<IFluidHandle>(this.childMapKey, SharedMap.create(this.runtime).handle);
+        this.root.set<IFluidHandle>(this.dataObjectMapKey, SharedMap.create(this.runtime).handle);
+        this.root.set<IFluidHandle>(this.blobMapKey, SharedMap.create(this.runtime).handle);
     }
 
     protected async hasInitialized(): Promise<void> {
         await super.hasInitialized();
-        const handle = this.root.get<IFluidHandle<SharedMap>>(this.childMapKey);
-        assert(handle !== undefined, "The child map handle should exist on initialization");
-        this._childMap = await handle.get();
+        const dataObjectMapHandle = this.root.get<IFluidHandle<SharedMap>>(this.dataObjectMapKey);
+        assert(dataObjectMapHandle !== undefined, "The child map handle should exist on initialization");
+        this._dataObjectMap = await dataObjectMapHandle.get();
 
-        // Initialize the referenced children list from the child map.
-        for (const childDetails of this._childMap) {
+        const blobMapHandle = this.root.get<IFluidHandle<SharedMap>>(this.blobMapKey);
+        assert(blobMapHandle !== undefined, "The blob map handle should exist on initialization");
+        this._blobMap = await blobMapHandle.get();
+    }
+
+    /**
+     * Runs activity on initial set of objects that are referenced, if any. When a container reloads because
+     * of error or session expiry, it can have referenced objects that should now run.
+     * @returns A set of promises of each object's run result.
+     */
+    private async runInitialActivity(): Promise<boolean[]> {
+        const runP: Promise<boolean>[] = [];
+        // Initialize the referenced data object list from the data object map.
+        for (const childDetails of this.dataObjectMap) {
+            const childId = childDetails[0];
             const childHandle = childDetails[1] as IFluidHandle<DataObjectLeaf>;
-            const child = await childHandle.get();
-            this.referencedChildrenDetails.push({
-                id: childDetails[0],
-                child,
+            const childObject = await childHandle.get();
+            this.referencedChildDataObjects.push({
+                id: childId,
+                object: childObject,
             });
+            runP.push(childObject.run(this.childRunConfig, childId));
         }
+
+        // Initialize the referenced blob list from the blob map.
+        for (const blobDetails of this.blobMap) {
+            const blobId = blobDetails[0];
+            const blobObject = new AttachmentBlobObject(blobDetails[1] as IFluidHandle<ArrayBufferLike>);
+            this.referencedAttachmentBlobs.push({
+                id: blobId,
+                object: blobObject,
+            });
+            runP.push(blobObject.run(this.childRunConfig, blobId));
+        }
+
+        return Promise.all(runP);
     }
 
     public async run(config: IRunConfig, id?: string): Promise<boolean> {
         console.log(`########## Started child [${id}]`);
         this.myId = id;
         this.shouldRun = true;
-
         /**
-         * Adjust the totalSendCount and opRatePerMin such that this data store and its children collectively send
-         * totalSendCount number of ops at opRatePerMin. There can be maximum of maxRunningLeafChildren children running
-         * at the same time. So maxDataStores = maxRunningLeafChildren + 1 (this data store).
+         * Adjust the totalSendCount and opRatePerMin such that this data store and its child data objects collectively
+         * send totalSendCount number of ops at opRatePerMin. There can be maximum of maxRunningLeafChildren children
+         * running at the same time. So maxDataStores = maxRunningLeafChildren + 1 (this data store).
          * - Ops per minute sent by this data store and its children is 1/maxDataStores times the opRatePerMin.
          * - totalSendCount of this data stores is 1/maxDataStores times the totalSendCount as its children are also
          *   sending ops at the same. What this boils down to is that totalSendCount is controlling how long the test
@@ -217,25 +298,46 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
                 totalSendCount,
             },
         };
-
         // Perform an activity every 1/6th minute = every 10 seconds.
         const activityThresholdOpCount = Math.ceil((opRatePerMin / 6));
-        let localSendCount = 0;
-        let childFailed = false;
         const delayBetweenOpsMs = 60 * 1000 / opRatePerMin;
-        while (this.shouldRun && this.counter.value < totalSendCount && !this.runtime.disposed && !childFailed) {
-            // After every activityThresholdOpCount ops, perform an activity.
+
+        let localSendCount = 0;
+        let activityFailed = false;
+
+        // Run activity on initial set of referenced objects, if any.
+        this.runInitialActivity().then((results: boolean[]) => {
+            for (const result of results) {
+                if (result === false) {
+                    activityFailed = true;
+                    break;
+                }
+            }
+        }).catch((error) => {
+            activityFailed = true;
+        });
+
+        while (this.shouldRun && this.counter.value < totalSendCount && !this.runtime.disposed && !activityFailed) {
+            // After every activityThresholdOpCount ops, perform activities.
             if (localSendCount % activityThresholdOpCount === 0) {
                 console.log(
-                    `########## Child data store [${this.myId}]: ${localSendCount} / ${this.counter.value} / ${totalSendCount}`);
+                    `########## child data object [${this.myId}]: ${localSendCount} / ${this.counter.value} / ${totalSendCount}`);
 
                 // We do no await for the activity because we want any child created to run asynchronously.
-                this.performActivity(config).then((done: boolean) => {
+                this.performDataStoreActivity(config).then((done: boolean) => {
                     if (!done) {
-                        childFailed = true;
+                        activityFailed = true;
                     }
                 }).catch((error) => {
-                    childFailed = true;
+                    activityFailed = true;
+                });
+
+                this.performBlobActivity(config).then((done: boolean) => {
+                    if (!done) {
+                        activityFailed = true;
+                    }
+                }).catch((error) => {
+                    activityFailed = true;
                 });
             }
 
@@ -248,24 +350,27 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
 
         console.log(`########## Stopped child [${this.myId}]: ${localSendCount} / ${this.counter.value}`);
         this.stop();
-        const notDone = this.runtime.disposed || childFailed;
+        const notDone = this.runtime.disposed || activityFailed;
         return !notDone;
     }
 
     public stop() {
         this.shouldRun = false;
-        this.referencedChildrenDetails.forEach((childDetails: IChildDetails) => {
-            childDetails.child.stop();
+        this.referencedChildDataObjects.forEach((childDetails: IActivityObjectDetails) => {
+            childDetails.object.stop();
+        });
+        this.referencedAttachmentBlobs.forEach((blobDetails: IActivityObjectDetails) => {
+            blobDetails.object.stop();
         });
     }
 
     /**
      * Performs one of the following activity at random:
-     * 1. CreateAndReference - Create a child data store, reference it and ask it to run.
+     * 1. CreateAndReference - Create a child data object, reference it and ask it to run.
      * 2. Unreference - Unreference the oldest referenced child and asks it to stop running.
      * 3. Revive - Re-reference the oldest unreferenced child and ask it to run.
      */
-    private async performActivity(config: IRunConfig): Promise<boolean> {
+    private async performDataStoreActivity(config: IRunConfig): Promise<boolean> {
         /**
          * Tracks if the random activity completed. Keeps trying to run an activity until one completes.
          * For Unreference and Revive activities to complete, there has to be referenced and unreferenced
@@ -282,14 +387,14 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
                     return this.createAndReferenceChild();
                 }
                 case GCActivityType.Unreference: {
-                    if (this.referencedChildrenDetails.length > 0) {
+                    if (this.referencedChildDataObjects.length > 0) {
                         this.unreferenceChild();
                         activityCompleted = true;
                     }
                     break;
                 }
                 case GCActivityType.Revive: {
-                    const nextUnreferencedChildDetails = this.unreferencedChildrenDetails.shift();
+                    const nextUnreferencedChildDetails = this.unreferencedChildDataObjects.shift();
                     if (nextUnreferencedChildDetails !== undefined) {
                         return this.reviveChild(nextUnreferencedChildDetails);
                     }
@@ -299,7 +404,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
                     break;
             }
         }
-        return true;
+        return activityCompleted;
     }
 
     /**
@@ -307,23 +412,23 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
      * of child than can be running in parallel to control the number of ops per minute.
      */
     private canRunNewChild() {
-        return this.referencedChildrenDetails.length < maxRunningLeafChildren;
+        return this.referencedChildDataObjects.length < maxRunningLeafChildren;
     }
 
     /**
-     * Creates a new child data store, reference it and ask it to run.
+     * Creates a new child data object, reference it and ask it to run.
      */
     private async createAndReferenceChild(): Promise<boolean> {
         // Give each child a unique id w.r.t. this data store's id.
-        const childId = `${this.myId}/${this.childCount.toString()}`;
+        const childId = `${this.myId}/ds-${this.childCount.toString()}`;
         console.log(`########## Creating child [${childId}]`);
         this.childCount++;
 
         const child = await dataObjectFactoryLeaf.createChildInstance(this.context);
-        this.childMap.set(childId, child.handle);
-        this.referencedChildrenDetails.push({
+        this.dataObjectMap.set(childId, child.handle);
+        this.referencedChildDataObjects.push({
             id: childId,
-            child,
+            object: child,
         });
         return child.run(this.childRunConfig, childId);
     }
@@ -332,30 +437,87 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
      * Retrieves the oldest referenced child, asks it to stop running and unreferences it.
      */
     private unreferenceChild() {
-        const childDetails = this.referencedChildrenDetails.shift();
+        const childDetails = this.referencedChildDataObjects.shift();
         assert(childDetails !== undefined, "Cannot find child to unreference");
         console.log(`########## Unreferencing child [${childDetails.id}]`);
 
-        const childHandle = this.childMap.get<IFluidHandle<IGCDataStore>>(childDetails.id);
+        const childHandle = this.dataObjectMap.get<IFluidHandle<IGCActivityObject>>(childDetails.id);
         assert(childHandle !== undefined, "Could not get handle for child");
 
-        childDetails.child.stop();
+        childDetails.object.stop();
 
-        this.childMap.delete(childDetails.id);
-        this.unreferencedChildrenDetails.push({
-            ...childDetails,
-            unreferencedTimestamp: Date.now(),
-        });
+        this.dataObjectMap.delete(childDetails.id);
+        this.unreferencedChildDataObjects.push(childDetails);
     }
 
     /**
      * Retrieves the oldest unreferenced child, references it and asks it to run.
      */
-    private async reviveChild(childDetails: IChildDetails): Promise<boolean> {
+    private async reviveChild(childDetails: IActivityObjectDetails): Promise<boolean> {
         console.log(`########## Reviving child [${childDetails.id}]`);
-        this.childMap.set(childDetails.id, childDetails.child.handle);
-        this.referencedChildrenDetails.push(childDetails);
-        return childDetails.child.run(this.childRunConfig, childDetails.id);
+        this.dataObjectMap.set(childDetails.id, childDetails.object.handle);
+        this.referencedChildDataObjects.push(childDetails);
+        return childDetails.object.run(this.childRunConfig, childDetails.id);
+    }
+
+    /**
+     * Performs one of the following activity at random:
+     * 1. CreateAndReference - Upload an attachment blob and reference it.
+     * 2. Unreference - Unreference the oldest referenced attachment blob.
+     * 3. Revive - Re-reference the oldest unreferenced attachment blob.
+     */
+    private async performBlobActivity(config: IRunConfig): Promise<boolean> {
+        let activityCompleted = false;
+        while (!activityCompleted) {
+            const blobAction = random.integer(0, 2)(config.randEng);
+            switch (blobAction) {
+                case GCActivityType.CreateAndReference: {
+                    // Give each blob a unique id w.r.t. this data store's id.
+                    const blobId = `${this.myId}/blob-${this.blobCount.toString()}`;
+                    console.log(`########## Creating blob [${blobId}]`);
+                    const blobContents = `Content - ${this.uniqueBlobContentId}-${this.blobCount}`;
+                    this.blobCount++;
+                    const blobHandle = await this.context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+                    this.blobMap.set(blobId, blobHandle);
+
+                    const blobObject = new AttachmentBlobObject(blobHandle);
+                    this.referencedAttachmentBlobs.push({
+                        id: blobId,
+                        object: blobObject,
+                    });
+                    return blobObject.run(this.childRunConfig, blobId);
+                }
+                case GCActivityType.Unreference: {
+                    if (this.referencedAttachmentBlobs.length > 0) {
+                        const blobDetails = this.referencedAttachmentBlobs.shift();
+                        assert(blobDetails !== undefined, "Cannot find blob to unreference");
+                        console.log(`########## Unreferencing blob [${blobDetails.id}]`);
+
+                        const blobHandle = this.blobMap.get<IFluidHandle<ArrayBufferLike>>(blobDetails.id);
+                        assert(blobHandle !== undefined, "Could not get handle for blob");
+
+                        blobDetails.object.stop();
+                        this.blobMap.delete(blobDetails.id);
+                        this.unreferencedAttachmentBlobs.push(blobDetails);
+                        activityCompleted = true;
+                    }
+                    break;
+                }
+                case GCActivityType.Revive: {
+                    const nextunreferencedAttachmentBlobs = this.unreferencedAttachmentBlobs.shift();
+                    if (nextunreferencedAttachmentBlobs !== undefined) {
+                        console.log(`########## Reviving blob [${nextunreferencedAttachmentBlobs.id}]`);
+                        this.blobMap.set(nextunreferencedAttachmentBlobs.id, nextunreferencedAttachmentBlobs.object.handle);
+                        this.referencedAttachmentBlobs.push(nextunreferencedAttachmentBlobs);
+                        return nextunreferencedAttachmentBlobs.object.run(this.childRunConfig, nextunreferencedAttachmentBlobs.id);
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+        return activityCompleted;
     }
 }
 
@@ -370,11 +532,11 @@ export const dataObjectFactoryNonCollab = new DataObjectFactory(
 );
 
 /**
- * Data object that does every thing DataObjectNotCollab does. In addition, it interacts with the data objects
- * created by other clients (i.e., it's collab). This emulates user scenarios where multiple users are working on
- * a common part of a document.
+ * Data object that does every thing DataObjectNotCollab does. In addition, it interacts with the objects created by
+ * other clients (i.e., it's collab). This emulates user scenarios where multiple users are working on common parts
+ * of a document.
  */
- export class DataObjectCollab extends DataObjectNonCollab implements IGCDataStore {
+ export class DataObjectCollab extends DataObjectNonCollab implements IGCActivityObject {
     public static get type(): string {
         return "DataObjectCollab";
     }
@@ -394,10 +556,10 @@ export const dataObjectFactoryNonCollab = new DataObjectFactory(
         console.log(`---------- Collab data store partners [${this.myId}]: ${partnerId1} / ${partnerId2}`);
 
         /**
-         * Set up an event handler that listens for changes in the child map meaning that a child data store
+         * Set up an event handler that listens for changes in the data object map meaning that a child data object
          * was referenced or unreferenced by a client.
          */
-        this.childMap.on("valueChanged", (changed, local) => {
+        this.dataObjectMap.on("valueChanged", (changed, local) => {
             if (local) {
                 return;
             }
@@ -416,15 +578,15 @@ export const dataObjectFactoryNonCollab = new DataObjectFactory(
              * TODO: Handle scenario where these children fail. Also, when we are asked to stop, we should stop these
              * children as well.
              */
-            if (this.childMap.has(changed.key)) {
-                const childHandle = this.childMap.get(changed.key) as IFluidHandle<IGCDataStore>;
-                childHandle.get().then((child: IGCDataStore) => {
+            if (this.dataObjectMap.has(changed.key)) {
+                const childHandle = this.dataObjectMap.get(changed.key) as IFluidHandle<IGCActivityObject>;
+                childHandle.get().then((child: IGCActivityObject) => {
                     console.log(`---------- Running remote child [${changed.key}]`);
                     child.run(this.childRunConfig, `${this.myId}/${changed.key}`).catch((error) => {});
                 }).catch((error) => {});
             } else {
-                const childHandle = changed.previousValue as IFluidHandle<IGCDataStore>;
-                childHandle.get().then((child: IGCDataStore) => {
+                const childHandle = changed.previousValue as IFluidHandle<IGCActivityObject>;
+                childHandle.get().then((child: IGCActivityObject) => {
                     console.log(`---------- Stopping remote child [${changed.key}]`);
                     child.stop();
                 }).catch((error) => {});
@@ -448,7 +610,7 @@ export const dataObjectFactoryCollab = new DataObjectFactory(
 /**
  * Root data object that creates a collab and a non-collab child and runs them.
  */
-export class RootDataObject extends DataObject implements IGCDataStore {
+export class RootDataObject extends DataObject implements IGCActivityObject {
     public static get type(): string {
         return "RootDataObject";
     }
@@ -456,8 +618,8 @@ export class RootDataObject extends DataObject implements IGCDataStore {
     private readonly dataObjectNonCollabKey = "nonCollabChild";
     private readonly dataObjectCollabKey = "collabChild";
 
-    private nonCollabChild: IGCDataStore | undefined;
-    private collabChild: IGCDataStore | undefined;
+    private nonCollabChild: IGCActivityObject | undefined;
+    private collabChild: IGCActivityObject | undefined;
 
     protected async initializingFirstTime(): Promise<void> {
         await super.initializingFirstTime();
@@ -470,11 +632,11 @@ export class RootDataObject extends DataObject implements IGCDataStore {
     }
 
     public async run(config: IRunConfig): Promise<boolean> {
-        const nonCollabChildHandle = this.root.get<IFluidHandle<IGCDataStore>>(this.dataObjectNonCollabKey);
+        const nonCollabChildHandle = this.root.get<IFluidHandle<IGCActivityObject>>(this.dataObjectNonCollabKey);
         assert(nonCollabChildHandle !== undefined, "Non collab data store not present");
         this.nonCollabChild = await nonCollabChildHandle.get();
 
-        const collabChildHandle = this.root.get<IFluidHandle<IGCDataStore>>(this.dataObjectCollabKey);
+        const collabChildHandle = this.root.get<IFluidHandle<IGCActivityObject>>(this.dataObjectCollabKey);
         assert(collabChildHandle !== undefined, "Collab data store not present");
         this.collabChild = await collabChildHandle.get();
 
