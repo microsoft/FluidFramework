@@ -25,6 +25,9 @@ module.exports = {
         "unicorn/prefer-module": "off",
         "unicorn/prefer-negative-index": "off",
 
+        // This package is exclusively used in a Node.js context
+        "import/no-nodejs-modules": "off",
+
         // TODO: remove once dependency on base config has been updated.
         "@typescript-eslint/explicit-member-accessibility": [
             "error",
