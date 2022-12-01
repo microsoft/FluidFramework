@@ -5,6 +5,17 @@
 
 name: $(Build.BuildId)
 
+schedules:
+  - cron: "0 4 * * *"
+    displayName: Daily 8pm (PST) builds
+    branches:
+      include:
+        - main
+        - next
+        - lts
+        - release/*
+    always: true
+
 trigger:
   branches:
     include:
