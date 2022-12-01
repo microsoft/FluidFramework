@@ -67,9 +67,6 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
 
-        await new Promise((resolve) => container1.on("connected", resolve));
-        await new Promise((resolve) => container2.on("connected", resolve));
-
         await provider.ensureSynchronized();
     };
 
