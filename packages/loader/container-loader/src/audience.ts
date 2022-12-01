@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { EventEmitter } from "events";
+import { assert } from "@fluidframework/common-utils";
 import { IAudienceOwner } from "@fluidframework/container-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 
