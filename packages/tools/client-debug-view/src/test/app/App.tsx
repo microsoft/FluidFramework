@@ -22,8 +22,7 @@ import { ITinyliciousAudience, TinyliciousClient } from "@fluidframework/tinylic
 import { CollaborativeTextView } from "@fluid-example/collaborative-textarea";
 import { closeFluidClientDebugger } from "@fluid-tools/client-debugger";
 
-import { HasClientDebugger } from "../../CommonProps";
-import { ClientDebugView, CounterWidget } from "../../components";
+import { CounterWidget } from "../../components";
 import {
 	ContainerInfo,
 	createFluidContainer,
@@ -92,7 +91,7 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
  * React hook for asynchronously creating / loading the Fluid Container.
  */
 function useContainerInfo(): ContainerInfo | undefined {
-	const [containerInfo, setContainerInfo] = React.useState<ContainerInfo>();
+	const [containerInfo, setContainerInfo] = React.useState<ContainerInfo | undefined>();
 
 	// Get the Fluid Data data on app startup and store in the state
 	React.useEffect(() => {
@@ -182,11 +181,6 @@ const appViewPaneStackStyles = mergeStyles({
 	flex: 1,
 });
 
-const debuggerViewPaneStackStyles = mergeStyles({
-	padding: "5px",
-	height: "100%",
-});
-
 export function App(): React.ReactElement {
 	// Load the collaborative SharedString object
 	const containerInfo = useContainerInfo();
@@ -218,7 +212,7 @@ interface AppViewProps {
  */
 function AppView(props: AppViewProps): React.ReactElement {
 	const { containerInfo } = props;
-	const { container, containerId, clientDebugger } = containerInfo;
+	const { container } = containerInfo;
 
 	const rootMap = container.initialObjects.rootMap as SharedMap;
 	if (rootMap === undefined) {
@@ -246,9 +240,6 @@ function AppView(props: AppViewProps): React.ReactElement {
 						<TextView sharedTextHandle={sharedTextHandle} />
 					</StackItem>
 				</Stack>
-			</StackItem>
-			<StackItem className={debuggerViewPaneStackStyles}>
-				<ClientDebugView containerId={containerId} clientDebugger={clientDebugger} />
 			</StackItem>
 		</Stack>
 	);

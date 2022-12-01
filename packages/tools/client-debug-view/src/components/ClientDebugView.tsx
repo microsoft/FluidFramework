@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import {
-	DefaultPalette,
 	IOverflowSetItemProps,
 	IconButton,
 	Link,
@@ -53,24 +52,23 @@ export interface ClientDebugViewProps extends HasClientDebugger, HasContainerId 
  */
 export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement {
 	const { clientDebugger, renderOptions: userRenderOptions } = props;
+	const { container } = clientDebugger;
 
 	const renderOptions: Required<RenderOptions> = getRenderOptionsWithDefaults(userRenderOptions);
 
-	const [isContainerClosed, setIsContainerClosed] = React.useState<boolean>(
-		clientDebugger.isContainerClosed(),
-	);
+	const [isContainerClosed, setIsContainerClosed] = React.useState<boolean>(container.closed);
 
 	React.useEffect(() => {
 		function onContainerClose(): void {
 			setIsContainerClosed(true);
 		}
 
-		clientDebugger.on("containerClosed", onContainerClose);
+		container.on("closed", onContainerClose);
 
 		return (): void => {
-			clientDebugger.off("containerClosed", onContainerClose);
+			container.off("closed", onContainerClose);
 		};
-	}, [clientDebugger, setIsContainerClosed]);
+	}, [container, setIsContainerClosed]);
 
 	// UI state
 	const [rootViewSelection, updateRootViewSelection] = React.useState<RootView>(
@@ -125,8 +123,6 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 			styles={{
 				root: {
 					height: "100%",
-					width: "400px",
-					background: DefaultPalette.neutralLighterAlt,
 				},
 			}}
 			className={clientDebugViewClassName}

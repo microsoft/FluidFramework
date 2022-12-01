@@ -5,14 +5,13 @@
 ```ts
 
 import { ConnectionState } from '@fluidframework/container-loader';
+import { IAudience } from '@fluidframework/container-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
-import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
 
 // @public
 export interface AudienceChangeLogEntry extends LogEntry {
@@ -47,34 +46,18 @@ export function getFluidClientDebuggers(): IFluidClientDebugger[];
 
 // @internal
 export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents>, IDisposable {
-    closeContainer(): void;
+    readonly audience: IAudience;
+    readonly container: IContainer;
     readonly containerData: Record<string, IFluidLoadable>;
     readonly containerId: string;
-    disconnectContainer(): void;
     dispose(): void;
     getAudienceHistory(): readonly AudienceChangeLogEntry[];
-    getAudienceMembers(): Map<string, IClient>;
-    getClientId(): string | undefined;
     getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];
-    getContainerContent(): Promise<String>;
-    getContainerResolvedUrl(): IResolvedUrl | undefined;
-    isContainerAttached(): boolean;
-    isContainerClosed(): boolean;
-    isContainerConnected(): boolean;
-    isContainerDirty(): boolean;
-    tryConnectContainer(): void;
 }
 
 // @internal
 export interface IFluidClientDebuggerEvents extends IEvent {
-    (event: "containerAttached", listener: () => void): void;
-    (event: "containerConnected", listener: (clientId: string) => void): void;
-    (event: "containerDisconnected", listener: () => void): void;
-    (event: "containerClosed", listener: (error?: ICriticalContainerError) => void): any;
-    (event: "containerDirty", listener: () => void): any;
-    (event: "containerSaved", listener: () => void): any;
-    (event: "audienceMemberChange", listener: (change: MemberChangeKind, clientId: string, client: IClient) => void): any;
-    (event: "debuggerDisposed", listener: () => void): any;
+    (event: "disposed", listener: () => void): any;
 }
 
 // @public

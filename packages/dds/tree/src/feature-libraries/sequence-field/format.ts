@@ -20,20 +20,16 @@ export type ObjectMark<TNodeChange = NodeChangeType> =
 export type SizedMark<TNodeChange = NodeChangeType> = Skip | SizedObjectMark<TNodeChange>;
 
 export type SizedObjectMark<TNodeChange = NodeChangeType> =
-    | Tomb
     | Modify<TNodeChange>
     | Detach
     | ModifyDetach<TNodeChange>;
 
-export interface Tomb {
-    type: "Tomb";
-    change: RevisionTag;
-    count: number;
-}
-
-export interface Modify<TNodeChange = NodeChangeType> {
+export interface Modify<TNodeChange = NodeChangeType> extends HasChanges<TNodeChange> {
     type: "Modify";
     tomb?: RevisionTag;
+}
+
+export interface HasChanges<TNodeChange> {
     changes: TNodeChange;
 }
 
@@ -87,10 +83,12 @@ export interface Insert extends HasOpId, HasTiebreakPolicy {
     content: ProtoNode[];
 }
 
-export interface ModifyInsert<TNodeChange = NodeChangeType> extends HasOpId, HasTiebreakPolicy {
+export interface ModifyInsert<TNodeChange = NodeChangeType>
+    extends HasOpId,
+        HasTiebreakPolicy,
+        HasChanges<TNodeChange> {
     type: "MInsert";
     content: ProtoNode;
-    changes: TNodeChange;
 }
 
 export interface MoveIn extends HasOpId, HasPlaceFields {
@@ -101,9 +99,11 @@ export interface MoveIn extends HasOpId, HasPlaceFields {
     count: NodeCount;
 }
 
-export interface ModifyMoveIn<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFields {
+export interface ModifyMoveIn<TNodeChange = NodeChangeType>
+    extends HasOpId,
+        HasPlaceFields,
+        HasChanges<TNodeChange> {
     type: "MMoveIn";
-    changes: TNodeChange;
 }
 
 export type Attach<TNodeChange = NodeChangeType> =
@@ -114,6 +114,13 @@ export type Attach<TNodeChange = NodeChangeType> =
     | Reattach
     | ModifyReattach<TNodeChange>;
 
+export type ModifyingMark<TNodeChange = NodeChangeType> =
+    | Modify<TNodeChange>
+    | ModifyInsert<TNodeChange>
+    | ModifyDetach<TNodeChange>
+    | ModifyMoveIn<TNodeChange>
+    | ModifyReattach<TNodeChange>;
+
 export type NodeMark = Detach;
 
 export interface Detach extends HasOpId {
@@ -122,10 +129,11 @@ export interface Detach extends HasOpId {
     count: NodeCount;
 }
 
-export interface ModifyDetach<TNodeChange = NodeChangeType> extends HasOpId {
+export interface ModifyDetach<TNodeChange = NodeChangeType>
+    extends HasOpId,
+        HasChanges<TNodeChange> {
     type: "MDelete" | "MMoveOut";
     tomb?: RevisionTag;
-    changes: TNodeChange;
 }
 
 export interface HasReattachFields extends HasOpId, HasPlaceFields {
@@ -147,9 +155,10 @@ export interface Reattach extends HasReattachFields {
     type: "Revive" | "Return";
     count: NodeCount;
 }
-export interface ModifyReattach<TNodeChange = NodeChangeType> extends HasReattachFields {
+export interface ModifyReattach<TNodeChange = NodeChangeType>
+    extends HasReattachFields,
+        HasChanges<TNodeChange> {
     type: "MRevive" | "MReturn";
-    changes: TNodeChange;
 }
 
 /**

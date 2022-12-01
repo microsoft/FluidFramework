@@ -18,23 +18,22 @@ import { IFluidClientDebugger } from "@fluid-tools/client-debugger";
  * @internal
  */
 export function useMyClientId(clientDebugger: IFluidClientDebugger): string | undefined {
-	const [myClientId, setMyClientId] = React.useState<string | undefined>(
-		clientDebugger.getClientId(),
-	);
+	const { container } = clientDebugger;
+	const [myClientId, setMyClientId] = React.useState<string | undefined>(container.clientId);
 
 	React.useEffect(() => {
 		function onContainerConnectionChange(): void {
-			setMyClientId(clientDebugger.getClientId());
+			setMyClientId(container.clientId);
 		}
 
-		clientDebugger.on("containerConnected", onContainerConnectionChange);
-		clientDebugger.on("containerDisconnected", onContainerConnectionChange);
+		container.on("connected", onContainerConnectionChange);
+		container.on("disconnected", onContainerConnectionChange);
 
 		return (): void => {
-			clientDebugger.off("containerConnected", onContainerConnectionChange);
-			clientDebugger.off("containerDisconnected", onContainerConnectionChange);
+			container.off("connected", onContainerConnectionChange);
+			container.off("disconnected", onContainerConnectionChange);
 		};
-	}, [clientDebugger, setMyClientId]);
+	}, [container, setMyClientId]);
 
 	return myClientId;
 }
@@ -45,23 +44,26 @@ export function useMyClientId(clientDebugger: IFluidClientDebugger): string | un
  * @internal
  */
 export function useAudience(clientDebugger: IFluidClientDebugger): Map<string, IClient> {
-	const [audience, setAudience] = React.useState<Map<string, IClient>>(
-		clientDebugger.getAudienceMembers(),
+	const { audience } = clientDebugger;
+	const [audienceData, setAudienceData] = React.useState<Map<string, IClient>>(
+		audience.getMembers(),
 	);
 
 	React.useEffect(() => {
 		function onAudienceMemberChange(): void {
-			setAudience(clientDebugger.getAudienceMembers());
+			setAudienceData(audience.getMembers());
 		}
 
-		clientDebugger.on("audienceMemberChange", onAudienceMemberChange);
+		audience.on("addMember", onAudienceMemberChange);
+		audience.on("removeMember", onAudienceMemberChange);
 
 		return (): void => {
-			clientDebugger.off("audienceMemberChange", onAudienceMemberChange);
+			audience.off("addMember", onAudienceMemberChange);
+			audience.off("removeMember", onAudienceMemberChange);
 		};
-	}, [clientDebugger, setAudience]);
+	}, [audience, setAudienceData]);
 
-	return audience;
+	return audienceData;
 }
 
 /**

@@ -6,9 +6,12 @@ import { IStackItemStyles, IconButton, Stack, StackItem, TooltipHost } from "@fl
 import { useId } from "@fluentui/react-hooks";
 import React from "react";
 
+import { AttachState } from "@fluidframework/container-definitions";
+import { ConnectionState } from "@fluidframework/container-loader";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 
 import { HasClientDebugger } from "../CommonProps";
+import { connectionStateToString } from "../Utilities";
 
 // TODOs:
 // - Container Read/Write permissions
@@ -28,50 +31,29 @@ export type ContainerDataViewProps = HasClientDebugger;
  */
 export function ContainerDataView(props: ContainerDataViewProps): React.ReactElement {
 	const { clientDebugger } = props;
-	const { containerId } = clientDebugger;
+	const { containerId, container } = clientDebugger;
 
 	// State bound to outer container
-	const [isContainerDirty, setIsContainerDirty] = React.useState<boolean>(
-		clientDebugger.isContainerDirty(),
+	const [isContainerDirty, setIsContainerDirty] = React.useState<boolean>(container.isDirty);
+	const [isContainerClosed, setIsContainerClosed] = React.useState<boolean>(container.closed);
+	const [containerAttachState, setContainerAttachState] = React.useState<AttachState>(
+		container.attachState,
 	);
-	const [isContainerClosed, setIsContainerClosed] = React.useState<boolean>(
-		clientDebugger.isContainerClosed(),
+	const [containerConnectionState, setContainerConnectionState] = React.useState<ConnectionState>(
+		container.connectionState,
 	);
-	const [isContainerAttached, setIsContainerAttached] = React.useState<boolean>(
-		clientDebugger.isContainerAttached(),
-	);
-	const [isContainerConnected, setIsContainerConnected] = React.useState<boolean>(
-		clientDebugger.isContainerConnected(),
-	);
-    const [containerContent, setContainerContent] = React.useState<string>(
-        // await clientDebugger.getContainerContent(),
-	);
-
-    React.useEffect( () => {
-        async function fetchData() {
-            try {
-                const res = await clientDebugger.getContainerContent();
-                setContainerContent(res);
-            } catch (err) {
-                console.log(err);
-            }
-        }
-        fetchData();
-    }, []);
-
 	const [containerResolvedUrl, setContainerResolvedUrl] = React.useState<
 		IResolvedUrl | undefined
-	>(clientDebugger.getContainerResolvedUrl());
+	>(container.resolvedUrl);
 
 	React.useEffect(() => {
 		function onContainerAttached(): void {
-			setIsContainerAttached(true);
-			setContainerResolvedUrl(clientDebugger.getContainerResolvedUrl());
+			setContainerAttachState(container.attachState);
+			setContainerResolvedUrl(container.resolvedUrl);
 		}
 
 		function onConnectionChange(): void {
-			setIsContainerConnected(clientDebugger.isContainerConnected());
-			setIsContainerDirty(clientDebugger.isContainerDirty());
+			setContainerConnectionState(container.connectionState);
 		}
 
 		function onContainerDirty(): void {
@@ -86,28 +68,27 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
 			setIsContainerClosed(true);
 		}
 
-		clientDebugger.on("containerAttached", onContainerAttached);
-		clientDebugger.on("containerConnected", onConnectionChange);
-		clientDebugger.on("containerDisconnected", onConnectionChange);
-		clientDebugger.on("containerDirty", onContainerDirty);
-		clientDebugger.on("containerSaved", onContainerSaved);
-		clientDebugger.on("containerClosed", onContainerClosed);
+		container.on("attached", onContainerAttached);
+		container.on("connected", onConnectionChange);
+		container.on("disconnected", onConnectionChange);
+		container.on("dirty", onContainerDirty);
+		container.on("saved", onContainerSaved);
+		container.on("closed", onContainerClosed);
 
 		return (): void => {
-			clientDebugger.off("containerAttached", onContainerAttached);
-			clientDebugger.off("containerConnected", onConnectionChange);
-			clientDebugger.off("containerDisconnected", onConnectionChange);
-			clientDebugger.off("containerDirty", onContainerDirty);
-			clientDebugger.off("containerSaved", onContainerSaved);
-			clientDebugger.off("containerClosed", onContainerClosed);
+			container.off("attached", onContainerAttached);
+			container.off("connected", onConnectionChange);
+			container.off("disconnected", onConnectionChange);
+			container.off("dirty", onContainerDirty);
+			container.off("saved", onContainerSaved);
+			container.off("closed", onContainerClosed);
 		};
 	}, [
-		clientDebugger,
-        setContainerContent,
+		container,
 		setIsContainerDirty,
 		setIsContainerClosed,
-		setIsContainerAttached,
-		setIsContainerConnected,
+		setContainerAttachState,
+		setContainerConnectionState,
 		setContainerResolvedUrl,
 	]);
 
@@ -125,7 +106,7 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
 			<Stack>
 				<StackItem>
 					<b>Attach state: </b>
-					{isContainerAttached ? "Attached" : "Detached"}
+					{containerAttachState}
 				</StackItem>
 				{containerResolvedUrl === undefined ? (
 					<></>
@@ -137,22 +118,20 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
 				)}
 				<StackItem>
 					<b>Connection state: </b>
-					{isContainerConnected ? "Connected" : "Disconnected"}
+					{connectionStateToString(containerConnectionState)}
 				</StackItem>
 				<StackItem>
 					<b>Local edit state: </b>
 					{isContainerDirty ? "Dirty" : "Saved"}
 				</StackItem>
-                <StackItem>
-                    <b>Entrypoint: </b>
-                    {containerContent}
-                </StackItem>
 				<StackItem align="end">
 					<ActionsBar
-						isContainerConnected={isContainerConnected}
-						tryConnect={(): void => clientDebugger.tryConnectContainer()}
-						forceDisconnect={(): void => clientDebugger.disconnectContainer()}
-						closeContainer={(): void => clientDebugger.closeContainer()}
+						isContainerConnected={
+							containerConnectionState === ConnectionState.Connected
+						}
+						tryConnect={(): void => container.connect()}
+						forceDisconnect={(): void => container.disconnect()}
+						closeContainer={(): void => container.close()}
 					/>
 				</StackItem>
 			</Stack>
