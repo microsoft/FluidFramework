@@ -753,12 +753,15 @@ interface ModifyAndMoveOut<TTree = ProtoNode> {
 }
 
 // @public (undocumented)
-interface ModifyDetach<TNodeChange = NodeChangeType> extends HasRevisionTag, HasChanges<TNodeChange> {
+interface ModifyDelete<TNodeChange = NodeChangeType> extends HasRevisionTag, HasChanges<TNodeChange> {
     // (undocumented)
     tomb?: RevisionTag;
     // (undocumented)
-    type: "MDelete" | "MMoveOut";
+    type: "MDelete";
 }
+
+// @public (undocumented)
+type ModifyDetach<TNodeChange> = ModifyDelete<TNodeChange> | ModifyMoveOut<TNodeChange>;
 
 // @public (undocumented)
 interface ModifyInsert<TNodeChange = NodeChangeType> extends HasTiebreakPolicy, HasRevisionTag, HasChanges<TNodeChange> {
@@ -769,9 +772,17 @@ interface ModifyInsert<TNodeChange = NodeChangeType> extends HasTiebreakPolicy, 
 }
 
 // @public (undocumented)
-interface ModifyMoveIn<TNodeChange = NodeChangeType> extends HasPlaceFields, HasRevisionTag, HasChanges<TNodeChange> {
+interface ModifyMoveIn<TNodeChange = NodeChangeType> extends HasMoveId, HasPlaceFields, HasRevisionTag, HasChanges<TNodeChange> {
     // (undocumented)
     type: "MMoveIn";
+}
+
+// @public (undocumented)
+interface ModifyMoveOut<TNodeChange = NodeChangeType> extends HasMoveId, HasRevisionTag, HasChanges<TNodeChange> {
+    // (undocumented)
+    tomb?: RevisionTag;
+    // (undocumented)
+    type: "MMoveOut";
 }
 
 // @public (undocumented)
@@ -1090,9 +1101,11 @@ declare namespace SequenceField {
         Mark_2 as Mark,
         MarkList_2 as MarkList,
         Modify_2 as Modify,
+        ModifyDelete,
         ModifyDetach,
         ModifyInsert,
         ModifyMoveIn,
+        ModifyMoveOut,
         ModifyReattach,
         MoveIn_2 as MoveIn,
         MoveOut_2 as MoveOut,

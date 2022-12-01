@@ -102,7 +102,8 @@ export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag {
 }
 
 export interface ModifyMoveIn<TNodeChange = NodeChangeType>
-    extends HasPlaceFields,
+    extends HasMoveId,
+        HasPlaceFields,
         HasRevisionTag,
         HasChanges<TNodeChange> {
     type: "MMoveIn";
@@ -124,6 +125,7 @@ export type ModifyingMark<TNodeChange = NodeChangeType> =
     | ModifyReattach<TNodeChange>;
 
 export type Detach = Delete | MoveOut;
+export type ModifyDetach<TNodeChange> = ModifyDelete<TNodeChange> | ModifyMoveOut<TNodeChange>;
 
 export interface Delete extends HasRevisionTag {
     type: "Delete";
@@ -137,10 +139,18 @@ export interface MoveOut extends HasRevisionTag, HasMoveId {
     tomb?: RevisionTag;
 }
 
-export interface ModifyDetach<TNodeChange = NodeChangeType>
+export interface ModifyDelete<TNodeChange = NodeChangeType>
     extends HasRevisionTag,
         HasChanges<TNodeChange> {
-    type: "MDelete" | "MMoveOut";
+    type: "MDelete";
+    tomb?: RevisionTag;
+}
+
+export interface ModifyMoveOut<TNodeChange = NodeChangeType>
+    extends HasMoveId,
+        HasRevisionTag,
+        HasChanges<TNodeChange> {
+    type: "MMoveOut";
     tomb?: RevisionTag;
 }
 
