@@ -22,7 +22,8 @@ export type BatchMessage = IBatchMessage & {
  */
 export interface IBatch {
     /**
-     * Sum of all content sizes of the messages in the batch
+     * Sum of the in-memory content sizes of all messages in the batch.
+     * If the batch is compressed, this number reflects the post-compression size.
      */
     readonly contentSizeInBytes: number;
     /**

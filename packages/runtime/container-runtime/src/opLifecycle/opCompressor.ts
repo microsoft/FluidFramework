@@ -37,7 +37,7 @@ export class OpCompressor {
         const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
         const duration = Date.now() - compressionStart;
 
-        if (batch.contentSizeInBytes > 200000 || this.compressedBatchCount % 100) {
+        if (batch.contentSizeInBytes > 200000 || this.compressedBatchCount % 25) {
             this.logger.sendPerformanceEvent({
                 eventName: "CompressedBatch",
                 duration,
