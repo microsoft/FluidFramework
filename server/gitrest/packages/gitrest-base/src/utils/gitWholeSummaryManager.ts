@@ -8,7 +8,6 @@ import {
     ICreateTreeEntry,
     ITree,
     IBlob,
-    ITreeEntry,
 } from "@fluidframework/gitresources";
 import { getGitMode, getGitType } from "@fluidframework/protocol-base";
 import { SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
@@ -37,10 +36,6 @@ interface ISummaryVersion {
     treeId: string;
 }
 
-interface IFullGitTree {
-    tree: ITree;
-    blobs: Record<string, IBlob>;
-}
 interface IFullSummaryTree {
     treeEntries: IWholeFlatSummaryTreeEntry[];
     blobs: IWholeFlatSummaryBlob[];
@@ -76,7 +71,7 @@ interface ISummaryWriteOptions {
 }
 
 const DefaultSummaryWriteOptions: ISummaryWriteOptions = {
-    enableLowIoWrite: false,
+    enableLowIoWrite: "initial",
 };
 
 function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry): SummaryObject {
@@ -103,6 +98,138 @@ function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry)
         };
     }
     throw new NetworkError(400, `Unknown entry type: ${entry.type}`);
+}
+
+interface IFullGitTree {
+    tree: ITree;
+    blobs: Record<string, IBlob>;
+}
+function containsFullGitTree(gitTree: ITree): boolean {
+    return gitTree.tree.length === 1
+        && gitTree.tree[0].type === "blob"
+        && gitTree.tree[0].path === fullTreePath;
+}
+async function buildFullGitTreeFromGitTree(
+    gitTree: ITree,
+    repoManager: IRepositoryManager,
+): Promise<IFullGitTree> {
+    const blobPs: Promise<IBlob>[] = [];
+    gitTree.tree.forEach((treeEntry) => {
+        if (treeEntry.type === "blob") {
+            blobPs.push(repoManager.getBlob(treeEntry.sha));
+        }
+    });
+    const blobs = await Promise.all(blobPs);
+    const blobMap = {};
+    blobs.forEach((blob) => blobMap[blob.sha] = blob);
+    return {
+        tree: gitTree,
+        blobs: blobMap,
+    };
+}
+async function parseGitTreeContainingFullGitTree(
+    gitTree: ITree,
+    repoManager: IRepositoryManager,
+): Promise<IFullGitTree> {
+    const fullGitTreeBlob = await repoManager.getBlob(
+        gitTree.tree[0].sha
+    );
+    return JSON.parse(Buffer.from(
+        fullGitTreeBlob.content,
+        fullGitTreeBlob.encoding === "base64" ? "base64" : "utf-8",
+    ).toString("utf-8")) as IFullGitTree;
+}
+function convertGitBlobToSummaryBlob(blob: IBlob): IWholeFlatSummaryBlob {
+    return {
+        content: blob.content,
+        encoding: blob.encoding === "base64" ? "base64" : "utf-8",
+        id: blob.sha,
+        size: blob.size,
+    };
+}
+function convertFullGitTreeToFullSummaryTree(
+    fullGitTree: IFullGitTree,
+): IFullSummaryTree {
+    const wholeFlatSummaryTreeEntries: IWholeFlatSummaryTreeEntry[] = [];
+    const wholeFlatSummaryBlobs: IWholeFlatSummaryBlob[] = [];
+    fullGitTree.tree.tree.forEach((treeEntry) => {
+        if (treeEntry.type === "blob") {
+            wholeFlatSummaryTreeEntries.push({
+                type: "blob",
+                id: treeEntry.sha,
+                path: treeEntry.path,
+            });
+            wholeFlatSummaryBlobs.push(
+                convertGitBlobToSummaryBlob(fullGitTree.blobs[treeEntry.sha]),
+            );
+        } else {
+            wholeFlatSummaryTreeEntries.push({
+                type: "tree",
+                path: treeEntry.path,
+            });
+        }
+    });
+    return {
+        treeEntries: wholeFlatSummaryTreeEntries,
+        blobs: wholeFlatSummaryBlobs,
+    };
+}
+function convertFullSummaryToWholeSummaryEntries(fullSummaryTree: IFullSummaryTree): WholeSummaryTreeEntry[] {
+    // Inspired by `buildHeirarchy` from services-client
+    const lookup: { [path: string]: IWholeSummaryTreeValueEntry & { value: IWholeSummaryTree; }; } = {};
+    const rootPath = ""; // This would normally be parentHandle, but only important when there are handles
+    const root: IWholeSummaryTreeValueEntry & { value: IWholeSummaryTree; } = {
+        type: "tree",
+        path: rootPath,
+        value: {
+            type: "tree",
+            entries: [],
+        },
+    };
+    lookup[rootPath] = root;
+    for (const entry of fullSummaryTree.treeEntries) {
+        const entryPath = entry.path;
+        const lastIndex = entryPath.lastIndexOf("/");
+        const entryPathDir = entryPath.slice(0, Math.max(0, lastIndex));
+        const entryPathBase = entryPath.slice(lastIndex + 1);
+
+        // The flat output is breadth-first so we can assume we see tree nodes prior to their contents
+        const node = lookup[entryPathDir];
+        if (!node.value.entries) {
+            node.value.entries = [];
+        }
+        // Add in either the blob or tree
+        if (entry.type === "tree") {
+            const newTree: IWholeSummaryTreeValueEntry & { value: IWholeSummaryTree; } = {
+                type: "tree",
+                path: entryPathBase,
+                value: {
+                    type: "tree",
+                    entries: [],
+                },
+            };
+            node.value.entries.push(newTree);
+            lookup[entryPath] = newTree;
+        } else if (entry.type === "blob") {
+            const fullSummaryBlob = fullSummaryTree.blobs[entry.id];
+            if (!fullSummaryBlob) {
+                throw new Error(`Could not find blob ${entry.id} in full summary`);
+            }
+            const newBlob: IWholeSummaryTreeValueEntry & { value: IWholeSummaryBlob; } = {
+                type: "blob",
+                path: entryPathBase,
+                value: {
+                    type: "blob",
+                    content: fullSummaryBlob.content,
+                    encoding: fullSummaryBlob.encoding,
+                },
+            };
+            node.value.entries.push(newBlob);
+        } else {
+            throw new Error(`Unknown entry type!!`);
+        }
+    }
+    return root.value.entries ?? [];
 }
 
 export const latestSummarySha = "latest";
@@ -171,97 +298,25 @@ export class GitWholeSummaryManager {
         repoManager: IRepositoryManager,
     ): Promise<IFullSummaryTree> {
         const rawTree = await repoManager.getTree(treeId, true /* recursive */);
-        return this.containsFullGitTree(rawTree)
+        return containsFullGitTree(rawTree)
             ? this.readWholeSummaryTree(rawTree, repoManager)
             : this.readShreddedSummaryTree(rawTree, repoManager);
-    }
-
-    private containsFullGitTree(gitTree: ITree): boolean {
-        return gitTree.tree.length === 1
-            && gitTree.tree[0].type === "blob"
-            && gitTree.tree[0].path === fullTreePath;
-    }
-
-    private convertFullGitTreeToFullSummaryTree(
-        fullGitTree: IFullGitTree,
-    ): IFullSummaryTree {
-        const wholeFlatSummaryTreeEntries: IWholeFlatSummaryTreeEntry[] = [];
-        const wholeFlatSummaryBlobs: IWholeFlatSummaryBlob[] = [];
-        fullGitTree.tree.tree.forEach((treeEntry) => {
-            if (treeEntry.type === "blob") {
-                wholeFlatSummaryTreeEntries.push({
-                    type: "blob",
-                    id: treeEntry.sha,
-                    path: treeEntry.path,
-                });
-                wholeFlatSummaryBlobs.push(
-                    this.convertGitBlobToSummaryBlob(fullGitTree.blobs[treeEntry.sha]),
-                );
-            } else {
-                wholeFlatSummaryTreeEntries.push({
-                    type: "tree",
-                    path: treeEntry.path,
-                });
-            }
-        });
-        return {
-            treeEntries: wholeFlatSummaryTreeEntries,
-            blobs: wholeFlatSummaryBlobs,
-        };
-    }
-
-    private async buildFullGitTreeFromGitTree(
-        gitTree: ITree,
-        repoManager: IRepositoryManager,
-    ): Promise<IFullGitTree> {
-        const blobPs: Promise<IBlob>[] = [];
-        gitTree.tree.forEach((treeEntry) => {
-            if (treeEntry.type === "blob") {
-                blobPs.push(repoManager.getBlob(treeEntry.sha));
-            }
-        });
-        const blobs = await Promise.all(blobPs);
-        const blobMap = {};
-        blobs.forEach((blob) => blobMap[blob.sha] = blob);
-        return {
-            tree: gitTree,
-            blobs: blobMap,
-        };
-    }
-
-    private async parseGitTreeContainingFullGitTree(
-        gitTree: ITree,
-        repoManager: IRepositoryManager,
-    ): Promise<IFullGitTree> {
-        const fullGitTreeBlob = await repoManager.getBlob(
-            gitTree.tree[0].sha
-        );
-        return JSON.parse(fullGitTreeBlob.content) as IFullGitTree;
     }
 
     private async readShreddedSummaryTree(
         rawTree: ITree,
         repoManager: IRepositoryManager,
     ): Promise<IFullSummaryTree> {
-        const fullGitTree = await this.buildFullGitTreeFromGitTree(rawTree, repoManager);
-        return this.convertFullGitTreeToFullSummaryTree(fullGitTree);
+        const fullGitTree = await buildFullGitTreeFromGitTree(rawTree, repoManager);
+        return convertFullGitTreeToFullSummaryTree(fullGitTree);
     }
 
     private async readWholeSummaryTree(
         rawTree: ITree,
         repoManager: IRepositoryManager,
     ): Promise<IFullSummaryTree> {
-        const fullGitTree = await this.parseGitTreeContainingFullGitTree(rawTree, repoManager);
-        return this.convertFullGitTreeToFullSummaryTree(fullGitTree);
-    }
-
-    private convertGitBlobToSummaryBlob(blob: IBlob): IWholeFlatSummaryBlob {
-        return {
-            content: blob.content,
-            encoding: blob.encoding === "base64" ? "base64" : "utf-8",
-            id: blob.sha,
-            size: blob.size,
-        };
+        const fullGitTree = await parseGitTreeContainingFullGitTree(rawTree, repoManager);
+        return convertFullGitTreeToFullSummaryTree(fullGitTree);
     }
 
     private async getLatestVersion(repoManager: IRepositoryManager): Promise<ISummaryVersion> {
@@ -393,9 +448,13 @@ export class GitWholeSummaryManager {
             );
         }
 
+        Lumberjack.info("Low-IO mode: Writing summary to memory");
         const inMemoryFsManagerFactory = new MemFsManagerFactory();
         const inMemoryRepoManagerFactory = new IsomorphicGitManagerFactory(
-            { useRepoOwner: false },
+            {
+                baseDir: "/usr/gitrest",
+                useRepoOwner: true,
+            },
             inMemoryFsManagerFactory,
             new NullExternalStorageManager(),
             true, /* repoPerDocEnabled */
@@ -403,8 +462,12 @@ export class GitWholeSummaryManager {
         );
         const inMemoryRepoManager = await inMemoryRepoManagerFactory.create(
             {
-                repoOwner: "internal",
+                repoOwner: "gitrest",
                 repoName: this.documentId,
+                storageRoutingId: {
+                    tenantId: "internal",
+                    documentId: this.documentId,
+                },
             }
         );
         const inMemorySummaryTreeHandle = await this.writeSummaryTreeCore(
@@ -412,10 +475,11 @@ export class GitWholeSummaryManager {
             inMemoryRepoManager,
         );
         const gitTree = await inMemoryRepoManager.getTree(inMemorySummaryTreeHandle, true /* recursive */);
-        const fullGitTree = await this.buildFullGitTreeFromGitTree(
+        const fullGitTree = await buildFullGitTreeFromGitTree(
             gitTree,
             inMemoryRepoManager,
         );
+        Lumberjack.info("Low-IO mode: Writing summary to storage");
         const summaryTreeHandle = this.writeSummaryTreeCore(
             [{
                 path: fullTreePath,
@@ -444,8 +508,8 @@ export class GitWholeSummaryManager {
             const pathHandle = await this.writeSummaryTreeObject(
                 entry,
                 summaryObject,
-                fullPath,
                 repoManager,
+                fullPath,
             );
             return {
                 mode: getGitMode(summaryObject),
@@ -464,8 +528,8 @@ export class GitWholeSummaryManager {
     private async writeSummaryTreeObject(
         wholeSummaryTreeEntry: WholeSummaryTreeEntry,
         summaryObject: SummaryObject,
-        currentPath: string,
         repoManager: IRepositoryManager,
+        currentPath: string,
     ): Promise<string> {
         switch (summaryObject.type) {
             case SummaryType.Blob:
@@ -482,6 +546,7 @@ export class GitWholeSummaryManager {
             case SummaryType.Handle:
                 return this.getShaFromTreeHandleEntry(
                     wholeSummaryTreeEntry as IWholeSummaryTreeHandleEntry,
+                    repoManager,
                 );
             default:
                 throw new NetworkError(501, "Not Implemented");
@@ -503,6 +568,7 @@ export class GitWholeSummaryManager {
 
     private async getShaFromTreeHandleEntry(
         entry: IWholeSummaryTreeHandleEntry,
+        repoManager: IRepositoryManager,
     ): Promise<string> {
         if (!entry.id) {
             throw new NetworkError(400, `Empty summary tree handle`);
@@ -517,19 +583,28 @@ export class GitWholeSummaryManager {
             return cachedSha;
         }
 
-        // The entry id is in the format { id: `<parent commit sha>/<tree path>`, path: `<tree path>` }
+        // The entry is in the format { id: `<parent commit sha>/<tree path>`, path: `<tree path>` }
         const parentHandle = entry.id.split("/")[0];
         const parentCommit = await this.repoManager.getCommit(parentHandle);
         const parentTree = await this.repoManager.getTree(parentCommit.tree.sha, true /* recursive */);
-        const treeEntries: ITreeEntry[] = this.containsFullGitTree(parentTree)
-            ? (await this.parseGitTreeContainingFullGitTree(parentTree, this.repoManager)).tree.tree
-            : parentTree.tree;
-        for (const treeEntry of treeEntries) {
+        const gitTree: IFullGitTree = containsFullGitTree(parentTree)
+            ? (await parseGitTreeContainingFullGitTree(parentTree, this.repoManager))
+            : { tree: parentTree, blobs: {} };
+        for (const treeEntry of gitTree.tree.tree) {
             this.entryHandleToObjectShaCache.set(`${parentHandle}/${treeEntry.path}`, treeEntry.sha);
         }
         const sha = this.entryHandleToObjectShaCache.get(entry.id);
         if (!sha) {
             throw new NetworkError(404, `Summary tree handle object not found: id: ${entry.id}, path: ${entry.path}`);
+        }
+        // Update the in-memory repoManager so that it has access to the blobs being referenced
+        if (repoManager !== this.repoManager) {
+            const fullGitTree = Object.values(gitTree.blobs).length === 0
+                ? await buildFullGitTreeFromGitTree(gitTree.tree, this.repoManager)
+                : gitTree;
+            const fullSummaryTree = convertFullGitTreeToFullSummaryTree(fullGitTree);
+            const wholeSummaryTreeEntries = convertFullSummaryToWholeSummaryEntries(fullSummaryTree);
+            await this.writeSummaryTreeCore(wholeSummaryTreeEntries, repoManager);
         }
         return sha;
     }
