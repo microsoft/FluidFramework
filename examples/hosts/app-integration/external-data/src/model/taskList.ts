@@ -201,8 +201,8 @@ export class TaskList extends DataObject implements ITaskList {
      * DataObject, by registering an event listener for changes to the task list.
      */
     protected async hasInitialized(): Promise<void> {
-        this._savedData = await this.root.get<SharedMap>("savedData")?.get();
-        this._draftData = await this.root.get<SharedMap>("draftData")?.get();
+        this._savedData = this.root.get<SharedMap>("savedData");
+        this._draftData = this.root.get<SharedMap>("draftData");
         this.root.on("valueChanged", (changed) => {
             if (changed.previousValue === undefined) {
                 // Must be from adding a new task
