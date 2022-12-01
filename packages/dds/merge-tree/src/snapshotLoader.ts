@@ -248,7 +248,8 @@ export class SnapshotLoader {
     private extractAttribution(segments: Iterable<ISegment>, chunk: MergeTreeChunkV1): void {
         if (chunk.attribution) {
             this.mergeTree.options ??= {};
-            this.mergeTree.options.trackAttribution = true;
+            this.mergeTree.options.attribution ??= {};
+            this.mergeTree.options.attribution.track = true;
             AttributionCollection.populateAttributionCollections(segments, chunk.attribution);
         }
     }

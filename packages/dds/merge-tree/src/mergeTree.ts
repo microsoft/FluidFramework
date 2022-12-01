@@ -416,6 +416,14 @@ export interface IMergeTreeOptions {
      * uses legacy and Matrix uses V1.
      */
     newMergeTreeSnapshotFormat?: boolean;
+
+    /**
+     * Options related to attribution
+     */
+    attribution?: IMergeTreeAttributionOptions;
+}
+
+export interface IMergeTreeAttributionOptions {
     /**
      * If enabled, segments will store attribution keys which can be used with the runtime to determine
      * attribution information (i.e. who created the content and when it was created).
@@ -425,7 +433,7 @@ export interface IMergeTreeOptions {
      * 
      * default: false
      */
-    trackAttribution?: boolean;
+    track?: boolean;
 }
 
 /**
@@ -1263,13 +1271,9 @@ export class MergeTree {
         if (pendingSegmentGroup !== undefined) {
             const deltaSegments: IMergeTreeSegmentDelta[] = [];
             pendingSegmentGroup.segments.map((pendingSegment) => {
-                const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs);
-                if (opArgs.op.type === MergeTreeDeltaType.INSERT && this.options?.trackAttribution) {
-                    pendingSegment.attribution = new AttributionCollection(
-                        pendingSegment.seq!,
-                        pendingSegment.cachedLength,
-                    );
-                }
+                const attributionKey = (opArgs.op.type === MergeTreeDeltaType.INSERT && this.options?.attribution?.track) ?
+                    seq : undefined;
+                const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs, attributionKey);
                 overwrite = overlappingRemove || overwrite;
 
                 if (!overlappingRemove && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
@@ -1622,7 +1626,7 @@ export class MergeTree {
                 newSegment.seq = seq;
                 newSegment.localSeq = localSeq;
                 newSegment.clientId = clientId;
-                if (this.options?.trackAttribution) {
+                if (this.options?.attribution?.track && seq !== UnassignedSequenceNumber) {
                     newSegment.attribution ??= new AttributionCollection(newSegment.seq, newSegment.cachedLength);
                 }
 

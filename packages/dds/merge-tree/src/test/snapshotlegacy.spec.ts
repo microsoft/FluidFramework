@@ -93,7 +93,7 @@ describe("snapshot", () => {
         const summaryTree = snapshot.emit([], serializer, undefined!);
         const services = MockStorage.createFromSummary(summaryTree.summary);
 
-        const roundTripClient = new TestClient({ trackAttribution: true });
+        const roundTripClient = new TestClient({ attribution: { track: true } });
         const runtime: Partial<IFluidDataStoreRuntime> = {
             logger: roundTripClient.logger,
             clientId: "round-trips summary",
@@ -105,7 +105,7 @@ describe("snapshot", () => {
     it("preserves attribution information", async () => {
         const clients = createClientsAtInitialState({
             initialState: "",
-            options: { trackAttribution: true }
+            options: { attribution: { track: true } }
         }, "A", "B");
 
         const ops: ISequencedDocumentMessage[] = [];
@@ -136,10 +136,10 @@ describe("snapshot", () => {
         await assertAttributionKeysMatch(clients.A, expectedAttribution);
     });
 
-    it("doesn't include attribution information when trackAttribution is false on doc creation", async () => {
+    it("doesn't include attribution information when attribution tracking is false on doc creation", async () => {
         const clients = createClientsAtInitialState({
             initialState: "",
-            options: { trackAttribution: false }
+            options: { attribution: { track: false } }
         }, "A");
 
         const ops: ISequencedDocumentMessage[] = [];

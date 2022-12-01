@@ -146,16 +146,18 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 
     /**
      * Stores attribution keys associated with offsets of this segment.
-     * This data is only persisted if the `trackAttribution` flag is set to true.
+     * This data is only persisted if MergeTree's `attributions.track` flag is set to true.
+     * Pending segments (i.e. ones that only exist locally and haven't been acked by the server) also have
+     * `attribution === undefined` until ack.
      * 
-     * Keys align with the `sequenceNumber` of the op that inserts a segment, thus they can be used with an
+     * Keys currently align with the `sequenceNumber` of the op that inserts a segment, thus they can be used with an
      * `OpStreamAttributor` to recover timestamp/user information.
      * 
      * @remarks - There are plans to make the type of the attribution key an extensibility point to empower consumers
      * with the ability to implement different attribution policies (ex: this would allow an application to track
      * attribution information of property changes and segment inserts separately)
      */
-    attribution?: AttributionCollection<number>;
+    attribution?: AttributionCollection<unknown>;
     /**
      * Manages pending local state for properties on this segment.
      */
@@ -205,16 +207,17 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     /**
      * Acks the current segment against the segment group, op, and merge tree.
      *
-     * Throws error if the segment state doesn't match segment group or op.
-     * E.g. Segment group not first is pending queue.
-     * Inserted segment does not have unassigned sequence number.
-     *
-     * Returns true if the op  modifies the segment, otherwise false.
+     * @param segmentGroup - Pending segment group associated with this op.
+     * @param opArgs - Information about the op that was acked
+     * @param attribution - If specified, any attribution data associated with this segment.
+     * @returns - true if the op modifies the segment, otherwise false.
      * The only current false case is overlapping remove, where a segment is removed
      * by a previously sequenced operation before the current operation is acked.
-     *
+     * @throws - error if the segment state doesn't match segment group or op.
+     * E.g. if the segment group is not first in the pending queue, or
+     * an inserted segment does not have unassigned sequence number.
      */
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, attribution?: unknown): boolean;
 }
 
 export interface IMarkerModifiedAction {
@@ -383,7 +386,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     public removedClientIds?: number[];
     public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
     public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
-    public attribution?: AttributionCollection<number>;
+    public attribution?: AttributionCollection<unknown>;
     public propertyManager?: PropertiesManager;
     public properties?: PropertySet;
     public localRefs?: LocalReferenceCollection;
@@ -440,8 +443,14 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
     public abstract toJSONObject(): any;
 
-    public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
+    public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, attributionKey?: number): boolean {
         const currentSegmentGroup = this.segmentGroups.dequeue();
+        if (attributionKey !== undefined) {
+            this.attribution = new AttributionCollection(
+                attributionKey,
+                this.cachedLength
+            );
+        }
         assert(currentSegmentGroup === segmentGroup, 0x043 /* "On ack, unexpected segmentGroup!" */);
         switch (opArgs.op.type) {
             case MergeTreeDeltaType.ANNOTATE:

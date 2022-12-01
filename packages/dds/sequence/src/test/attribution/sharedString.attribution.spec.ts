@@ -222,7 +222,7 @@ function createSharedString(
 	const initialState: FuzzTestState = {
 		clients: clientIds.map((clientId, index) => {
 			const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
-			dataStoreRuntime.options.trackAttribution = makeSerializer !== undefined;
+			dataStoreRuntime.options = { attribution: { track: makeSerializer !== undefined } };
 			const { deltaManager } = dataStoreRuntime;
 			const sharedString = new SharedString(
 				dataStoreRuntime,

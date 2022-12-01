@@ -46,7 +46,7 @@ export class AttributionCollection<T> {
 // @public (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, attributionKey?: number): boolean;
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
@@ -54,7 +54,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     append(other: ISegment): void;
     // (undocumented)
-    attribution?: AttributionCollection<number>;
+    attribution?: AttributionCollection<unknown>;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     // (undocumented)
@@ -648,12 +648,12 @@ export interface IRemovalInfo {
 
 // @public
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, attribution?: unknown): boolean;
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
     append(segment: ISegment): void;
-    attribution?: AttributionCollection<number>;
+    attribution?: AttributionCollection<unknown>;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     clientId: number;

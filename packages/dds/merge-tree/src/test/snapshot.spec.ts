@@ -218,22 +218,22 @@ function makeSnapshotSuite(options?: IMergeTreeOptions): void {
 
 describe("snapshot", () => {
     describe("with attribution", () => {
-        makeSnapshotSuite({ trackAttribution: true });
+        makeSnapshotSuite({ attribution: { track: true } });
     });
 
     describe("without attribution", () => {
-        makeSnapshotSuite({ trackAttribution: false });
+        makeSnapshotSuite({ attribution: { track: false } });
     });
 
     it("presence of attribution overrides merge-tree initialization value", async () => {
-        const str = new TestString("id", { trackAttribution: true });
+        const str = new TestString("id", { attribution: { track: true } });
         str.append("hello world", /* increaseMsn: */ true);
-        await str.checkSnapshot({ trackAttribution: false });
+        await str.checkSnapshot({ attribution: { track: false } });
     });
 
     it("lack of attribution overrides merge-tree initialization", async () => {
-        const str = new TestString("id", { trackAttribution: false });
+        const str = new TestString("id", { attribution: { track: false } });
         str.append("hello world", /* increaseMsn: */ true);
-        await str.checkSnapshot({ trackAttribution: true });
+        await str.checkSnapshot({ attribution: { track: true } });
     });
 });
