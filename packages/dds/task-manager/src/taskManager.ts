@@ -767,8 +767,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 } else {
                     this.taskQueues.set(taskId, filteredClientQueue);
                 }
-                // TODO remove, just for debugging
-                this.emit("changed");
                 this.queueWatcher.emit("queueChange", taskId);
             }
         }
