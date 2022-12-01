@@ -304,7 +304,6 @@ export class OdspDocumentService implements IDocumentService {
                         && error.errorType === DriverErrorType.authorizationError) {
                         this.cache.sessionJoinCache.remove(this.joinSessionKey);
                     }
-                    assert(connection.disposed, "Connection should be disposed by now");
                     this.currentConnection = undefined;
                 });
                 this.currentConnection = connection;

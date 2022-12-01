@@ -454,8 +454,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
     protected disconnectHandler = (error: IFluidErrorBase & OdspError, clientId?: string) => {
         if (clientId === undefined || clientId === this.clientId) {
-            this.disconnect(error);
             this.logger.sendTelemetryEvent({ eventName: "ServerDisconnect", clientId: this.hasDetails ? this.clientId : undefined }, error);
+            this.disconnect(error);
         }
     };
 
@@ -600,9 +600,13 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      * @param error - Error causing the socket to close.
      */
     protected closeSocket(error: IAnyDriverError) {
-        const socket = this.socketReference;
-        assert(socket !== undefined, 0x416 /* reentrancy not supported in close socket */);
-        socket.closeSocket(error);
+        // It is possible that we have already set this.socketReference to undefined in disconnectCore,
+        // due to client closing the connection and then later have some error/disconnect event on socket
+        // which will go through this closeSocket flow. So in that case we don't have to do anything.
+        if (this.socketReference !== undefined) {
+            super.closeSocket(error);
+            this.socketReference.closeSocket(error);
+        }
         assert(this.socketReference === undefined, 0x417 /* disconnect flow did not work correctly */);
     }
 
