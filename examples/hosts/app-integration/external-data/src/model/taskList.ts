@@ -7,6 +7,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { SharedString } from "@fluidframework/sequence";
+import { SharedMap } from "@fluidframework/map";
 
 import { externalDataSource, parseStringData } from "../externalData";
 import type { ITask, ITaskEvents, ITaskList } from "../modelInterfaces";
@@ -56,13 +57,8 @@ export class TaskList extends DataObject implements ITaskList {
      * collection pattern -- see the contact-collection example for more details on this pattern.
      */
     private readonly tasks = new Map<string, Task>();
-    private readonly draftData = new Map<string, Task>();
-    private readonly savedData = new Map<string,
-        {
-            id: string;
-            nameString: SharedString;
-            priorityCell: SharedCell<number>;
-        }>();
+    private _savedData: SharedMap | undefined;
+    private _draftData: SharedMap | undefined;
     public readonly addTask = (id: string, name: string, priority: number) => {
         if (this.tasks.get(id) !== undefined) {
             throw new Error("Task already exists");
@@ -75,10 +71,10 @@ export class TaskList extends DataObject implements ITaskList {
         // and persisted.  In turn, this will trigger the "valueChanged" event and handleTaskAdded which will update
         // the this.tasks collection.
         this.root.set(id, { id, name: nameString.handle, priority: priorityCell.handle });
-
         const task = new Task(id, nameString, priorityCell);
-        this.savedData.set(id, { id, nameString, priorityCell });
-        this.draftData.set(id, task);
+
+        this._savedData?.set(id, { id, nameString, priorityCell });
+        this._draftData?.set(id, { id, nameString, priorityCell });
     };
 
     public readonly deleteTask = (id: string) => {
@@ -167,6 +163,10 @@ export class TaskList extends DataObject implements ITaskList {
     };
 
     protected async initializingFirstTime(): Promise<void> {
+        const draftData = SharedMap.create(this.runtime);
+        const savedData = SharedMap.create(this.runtime);
+        this.root.set("draftData", draftData);
+        this.root.set("sharedData", savedData);
         // TODO: Probably don't need to await this once the sync'ing flow is solid, we can just trust it to sync
         // at some point in the future.
         await this.importExternalData();
@@ -177,6 +177,9 @@ export class TaskList extends DataObject implements ITaskList {
      * DataObject, by registering an event listener for changes to the task list.
      */
     protected async hasInitialized() {
+        this._savedData = await this.root.get("savedData")?.get();
+        this._draftData = await this.root.get("draftData")?.get();
+
         this.root.on("valueChanged", (changed) => {
             if (changed.previousValue === undefined) {
                 // Must be from adding a new task
@@ -214,6 +217,7 @@ export const TaskListInstantiationFactory = new DataObjectFactory<TaskList>(
     [
         SharedCell.getFactory(),
         SharedString.getFactory(),
+        SharedMap.getFactory(),
     ],
     {},
 );
