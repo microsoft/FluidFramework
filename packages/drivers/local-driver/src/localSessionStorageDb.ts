@@ -16,12 +16,6 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
      * @param collectionName - data type of the collection, e.g. blobs, deltas, trees, etc.
      */
     constructor(private readonly collectionName: string) { }
-    async findAndUpdate(query: any, value: T): Promise<{ value: T; existing: boolean; }> {
-        throw new Error("Method not implemented.");
-    }
-    createTTLIndex?(index: any, mongoExpireAfterSeconds?: number | undefined): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
 
     public aggregate(pipeline: any, options?: any): any {
         throw new Error("Method Not Implemented");
