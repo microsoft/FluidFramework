@@ -12,10 +12,9 @@ resources:
     source: Build - client packages
     trigger:
       branches:
-      - release/*
       - main
-      - next
-      - lts
+      - test/alejandrovi/fix-pipeline-artifacts
+
 
 parameters:
 - name: buildVersionToDownload
