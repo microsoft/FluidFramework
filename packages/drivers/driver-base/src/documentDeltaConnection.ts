@@ -478,15 +478,12 @@ export class DocumentDeltaConnection
             // had a chance to register its handlers.
             this.addTrackedListener("disconnect", (reason) => {
                 const err = this.createErrorObject("disconnect", reason);
-                this.emit("disconnect", err);
                 failAndCloseSocket(err);
             });
 
             this.addTrackedListener("error", ((error) => {
-                // First, raise an error event, to give clients a chance to observe error contents
                 // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
                 const err = this.createErrorObject("error", error, error !== "Invalid namespace");
-                this.emit("error", err);
                 // Disconnect socket - required if happened before initial handshake
                 failAndCloseSocket(err);
             }));
