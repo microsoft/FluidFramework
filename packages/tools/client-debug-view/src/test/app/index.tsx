@@ -5,8 +5,8 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { App } from "./App";
 import { renderClientDebuggerView } from "../../RenderClientDebugger";
+import { App } from "./App";
 
 console.log("Rendering app!");
 

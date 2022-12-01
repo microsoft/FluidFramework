@@ -26,28 +26,26 @@ export interface FluidClientDebuggerProps {
 
 /**
  * Renders the Client debug view by searching for an active debugger session associated with the provided
- * {@link HasContainerId.containerId}.
  *
- * @remarks If no debugger corresponding with the specified `containerId`
- * has been initialized, will display a note to the user and a refresh button to search again.
+ * @remarks If no debugger has been initialized, will display a note to the user and a refresh button to search again.
  */
 export function FluidClientDebugger(props: FluidClientDebuggerProps): React.ReactElement {
 	/**
-	 * Temporary hack until we support multiple containers / debuggers.
+	 * This function will retrieve all client debuggers and return the first one.
+	 * TODO: update it to check container id after support multi-containers app.
 	 */
-	function getFirstDebugger(): IFluidClientDebugger | undefined{
+	function getFirstDebugger(): IFluidClientDebugger | undefined {
 		const clientDebuggers = getFluidClientDebuggers();
 		return clientDebuggers.length === 0 ? undefined : clientDebuggers[0];
 	}
 
-    const [clientDebugger, setClientDebugger] = React.useState<IFluidClientDebugger | undefined>(
+	const [clientDebugger, setClientDebugger] = React.useState<IFluidClientDebugger | undefined>(
 		getFirstDebugger(),
 	);
 
 	const [isContainerDisposed, setIsContainerDisposed] = React.useState<boolean>(
 		clientDebugger?.disposed ?? false,
 	);
-
 
 	React.useEffect(() => {
 		function onDebuggerDisposed(): void {
@@ -60,7 +58,6 @@ export function FluidClientDebugger(props: FluidClientDebuggerProps): React.Reac
 			clientDebugger?.off("debuggerDisposed", onDebuggerDisposed);
 		};
 	}, [clientDebugger, setIsContainerDisposed]);
-
 
 	let view: React.ReactElement;
 	if (clientDebugger === undefined) {
@@ -78,22 +75,30 @@ export function FluidClientDebugger(props: FluidClientDebuggerProps): React.Reac
 			/>
 		);
 	} else {
-		view = <ClientDebugView containerId={clientDebugger.containerId} clientDebugger={clientDebugger} />;
+		view = (
+			<ClientDebugView
+				containerId={clientDebugger.containerId}
+				clientDebugger={clientDebugger}
+			/>
+		);
 	}
 
-	return <div
-    style={{
-        position: "fixed",
-        width: "400px",
-        height: "100%",
-        top: "0px",
-        right: "0px",
-        zIndex: "999999999",
-        backgroundColor: "lightgray", // TODO: remove
-    }}
-    className={"debugger-panel"}>
-    {view}
-</div>;
+	return (
+		<div
+			style={{
+				position: "fixed",
+				width: "400px",
+				height: "100%",
+				top: "0px",
+				right: "0px",
+				zIndex: "999999999",
+				backgroundColor: "lightgray", // TODO: remove
+			}}
+			className={"debugger-panel"}
+		>
+			{view}
+		</div>
+	);
 }
 
 /**
