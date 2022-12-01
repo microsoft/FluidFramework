@@ -32,7 +32,7 @@ import {
 	deltaEncoder,
 	Encoder,
 	IAttributor,
-	makeGzipEncoder,
+	makeLZ4Encoder,
 	OpStreamAttributor,
 } from "@fluid-internal/attributor";
 import { IChannelServices, IFluidDataStoreRuntime, Jsonable } from "@fluidframework/datastore-definitions";
@@ -222,7 +222,7 @@ function createSharedString(
 	const initialState: FuzzTestState = {
 		clients: clientIds.map((clientId, index) => {
 			const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
-			dataStoreRuntime.options.trackAttribution = true;
+			dataStoreRuntime.options.trackAttribution = makeSerializer !== undefined;
 			const { deltaManager } = dataStoreRuntime;
 			const sharedString = new SharedString(
 				dataStoreRuntime,
@@ -492,10 +492,10 @@ describe("SharedString Attribution", () => {
 							(entries) => new OpStreamAttributor(runtime.deltaManager, runtime.getAudience(), entries),
 							noopEncoder
 						),
-						makeGzipEncoder(),
+						makeLZ4Encoder(),
 					)
 				),
-				filename: "attributor-gzip-compression-snap.json",
+				filename: "attributor-lz4-compression-snap.json",
 			},
 			{
 				name: "OpStreamAttributor",
@@ -507,9 +507,10 @@ describe("SharedString Attribution", () => {
 							(entries) => new OpStreamAttributor(runtime.deltaManager, runtime.getAudience(), entries),
 							deltaEncoder
 						),
-						makeGzipEncoder(),
-					)				),
-				filename: "attributor-gzip-and-delta-snap.json",
+						makeLZ4Encoder(),
+					)
+				),
+				filename: "attributor-lz4-and-delta-snap.json",
 			},
 		];
 
