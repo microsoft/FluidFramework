@@ -356,7 +356,6 @@ export class DocumentDeltaConnection
             eventName: "AfterDisconnectEvent",
             driverVersion,
             details: JSON.stringify({
-                disposed: this._disposed,
                 socketConnected: this.socket.connected,
                 disconnectListenerCount: this.listenerCount("disconnect"),
             }),
