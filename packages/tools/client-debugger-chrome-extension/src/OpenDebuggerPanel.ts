@@ -5,8 +5,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { getFluidClientDebuggers } from "@fluid-tools/client-debugger";
-
 import { debuggerPanelId } from "./Constants";
 import { DebuggerView } from "./DebuggerView";
 import { isDebuggerPanelOpen } from "./Utilities";
@@ -28,21 +26,11 @@ export async function openDebuggerPanel(): Promise<boolean> {
 	element.id = debuggerPanelId;
 	document.body.append(element);
 
-	const clientDebuggers = getFluidClientDebuggers();
-
-	// TODO: once multi-debugger component is available, just use that.
-	const containerIdKLUDGE =
-		clientDebuggers.length === 0 ? "NO DEBUGGERS FOUND" : clientDebuggers[0].containerId;
-
 	return new Promise<boolean>((resolve) => {
 		try {
-			ReactDOM.render(
-				React.createElement(DebuggerView, { containerId: containerIdKLUDGE }),
-				element,
-				() => {
-					resolve(true);
-				},
-			);
+			ReactDOM.render(React.createElement(DebuggerView), element, () => {
+				resolve(true);
+			});
 		} catch (error) {
 			console.error(`Could not open the debugger view due to an error: ${error}.`);
 			return false;

@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import {
-	IAudience,
-	IContainer,
-} from "@fluidframework/container-definitions";
+import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IClient } from "@fluidframework/protocol-definitions";
@@ -38,7 +35,9 @@ export class FluidClientDebugger
 	/**
 	 * {@inheritDoc FluidClientDebuggerProps.audience}
 	 */
-     public get audience(): IAudience {return this.container.audience};
+	public get audience(): IAudience {
+		return this.container.audience;
+	}
 
 	/**
 	 * {@inheritDoc IFluidClientDebugger.containerData}
@@ -177,14 +176,4 @@ export class FluidClientDebugger
 	public get disposed(): boolean {
 		return this._disposed;
 	}
-
-    public async getRuntimeObjectFromContainer(): Promise<string> {
-        const response = await this.container.request({ url: "/", headers: { containerRef: this.container }});
-        console.log('response.value?.runtime?.entryPoint?.absolutePath');
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-        console.log(response.value?.runtime?.entryPoint?.absolutePath);
-        // return response.value?.runtime?.entrypoint;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-        return response.value?.runtime?.entryPoint?.absolutePath;
-    }
 }

@@ -43,7 +43,7 @@ export const defaultSharedObjectRenderers: SharedObjectRenderOptions;
 export function FluidClientDebugger(props: FluidClientDebuggerProps): React_2.ReactElement;
 
 // @public
-export interface FluidClientDebuggerProps extends HasContainerId {
+export interface FluidClientDebuggerProps {
     renderOptions?: RenderOptions;
 }
 
@@ -65,6 +65,9 @@ export interface HasContainerId {
 
 // @public
 export type RenderChild = (childObject: unknown) => React_2.ReactElement;
+
+// @public
+export function renderClientDebuggerView(targetElement: HTMLElement | null): Promise<boolean>;
 
 // @public
 export interface RenderOptions {

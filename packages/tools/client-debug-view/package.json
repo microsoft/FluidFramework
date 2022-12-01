@@ -63,6 +63,7 @@
 		"@fluidframework/sequence": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0",
 		"@fluidframework/shared-object-base": ">=2.0.0-internal.1.2.0 <2.0.0-internal.3.0.0",
 		"react": "^17.0.1",
+		"react-dom": "^17.0.1",
 		"react-json-view": "^1.21.3"
 	},
 	"devDependencies": {
@@ -90,7 +91,6 @@
 		"jest-puppeteer": "^4.3.0",
 		"prettier": "~2.3.1",
 		"puppeteer": "^1.20.0",
-		"react-dom": "^17.0.1",
 		"rimraf": "^2.6.2",
 		"start-server-and-test": "^1.11.7",
 		"style-loader": "^1.0.0",

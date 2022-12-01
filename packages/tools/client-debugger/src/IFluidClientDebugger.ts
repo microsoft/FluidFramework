@@ -40,15 +40,15 @@ export interface IFluidClientDebugger
 	 */
 	readonly containerId: string;
 
-    /**
-     * The Container session with which the debugger is associated.
-     */
-    readonly container: IContainer;
+	/**
+	 * The Container session with which the debugger is associated.
+	 */
+	readonly container: IContainer;
 
-    /**
-     * The Audience associated with the Container
-     */
-    readonly audience: IAudience;
+	/**
+	 * The Audience associated with the Container
+	 */
+	readonly audience: IAudience;
 
 	/**
 	 * Data contents of the Container.

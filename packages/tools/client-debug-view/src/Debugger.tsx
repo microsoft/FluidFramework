@@ -6,7 +6,7 @@ import { IconButton, Stack, StackItem, TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
 import React from "react";
 
-import { IFluidClientDebugger, getFluidClientDebugger } from "@fluid-tools/client-debugger";
+import { IFluidClientDebugger, getFluidClientDebuggers } from "@fluid-tools/client-debugger";
 
 import { HasContainerId } from "./CommonProps";
 import { RenderOptions } from "./RendererOptions";
@@ -15,7 +15,7 @@ import { ClientDebugView } from "./components";
 /**
  * {@link FluidClientDebugger} input props.
  */
-export interface FluidClientDebuggerProps extends HasContainerId {
+export interface FluidClientDebuggerProps {
 	/**
 	 * Rendering policies for different kinds of Fluid client and object data.
 	 *
@@ -25,17 +25,23 @@ export interface FluidClientDebuggerProps extends HasContainerId {
 }
 
 /**
- * Renders the Client debug view by searching for an active debugger session associated with the provided
- * {@link HasContainerId.containerId}.
+ * Renders the debug view for an active debugger session registered using
+ * {@link @fluid-tools/client-debugger#initializeFluidClientDebugger}.
  *
- * @remarks If no debugger corresponding with the specified `containerId`
- * has been initialized, will display a note to the user and a refresh button to search again.
+ * @remarks If no debugger has been initialized, will display a note to the user and a refresh button to search again.
  */
 export function FluidClientDebugger(props: FluidClientDebuggerProps): React.ReactElement {
-	const { containerId } = props;
+	/**
+	 * This function will retrieve all client debuggers and return the first one.
+	 * TODO: update it to check container id after support multi-containers app.
+	 */
+	function getFirstDebugger(): IFluidClientDebugger | undefined {
+		const clientDebuggers = getFluidClientDebuggers();
+		return clientDebuggers.length === 0 ? undefined : clientDebuggers[0];
+	}
 
 	const [clientDebugger, setClientDebugger] = React.useState<IFluidClientDebugger | undefined>(
-		getFluidClientDebugger(containerId),
+		getFirstDebugger(),
 	);
 
 	const [isContainerDisposed, setIsContainerDisposed] = React.useState<boolean>(
@@ -54,25 +60,46 @@ export function FluidClientDebugger(props: FluidClientDebuggerProps): React.Reac
 		};
 	}, [clientDebugger, setIsContainerDisposed]);
 
+	let view: React.ReactElement;
 	if (clientDebugger === undefined) {
-		return (
+		view = (
 			<NoDebuggerInstance
-				containerId={containerId}
-				onRetryDebugger={(): void => setClientDebugger(getFluidClientDebugger(containerId))}
+				containerId={"No container found"}
+				onRetryDebugger={(): void => setClientDebugger(getFirstDebugger())}
 			/>
 		);
-	}
-
-	if (isContainerDisposed) {
-		return (
+	} else if (isContainerDisposed) {
+		view = (
 			<DebuggerDisposed
-				containerId={containerId}
-				onRetryDebugger={(): void => setClientDebugger(getFluidClientDebugger(containerId))}
+				containerId={clientDebugger.containerId}
+				onRetryDebugger={(): void => setClientDebugger(getFirstDebugger())}
+			/>
+		);
+	} else {
+		view = (
+			<ClientDebugView
+				containerId={clientDebugger.containerId}
+				clientDebugger={clientDebugger}
 			/>
 		);
 	}
 
-	return <ClientDebugView containerId={containerId} clientDebugger={clientDebugger} />;
+	return (
+		<div
+			style={{
+				position: "fixed",
+				width: "400px",
+				height: "100%",
+				top: "0px",
+				right: "0px",
+				zIndex: "999999999",
+				backgroundColor: "lightgray", // TODO: remove
+			}}
+			className={"debugger-panel"}
+		>
+			{view}
+		</div>
+	);
 }
 
 /**

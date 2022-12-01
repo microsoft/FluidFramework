@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import {
-	DefaultPalette,
 	IOverflowSetItemProps,
 	IconButton,
 	Link,
@@ -124,8 +123,6 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 			styles={{
 				root: {
 					height: "100%",
-					width: "400px",
-					background: DefaultPalette.neutralLighterAlt,
 				},
 			}}
 			className={clientDebugViewClassName}
