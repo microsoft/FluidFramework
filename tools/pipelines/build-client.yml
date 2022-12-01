@@ -46,6 +46,7 @@ trigger:
     - next
     - lts
     - release/*
+    - test/gc-stress
   paths:
     include:
     - packages
@@ -71,6 +72,7 @@ pr:
     - next
     - lts
     - release/*
+    - test/gc-stress
   paths:
     include:
     - packages
