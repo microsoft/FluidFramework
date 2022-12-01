@@ -25,7 +25,7 @@ export interface FluidClientDebuggerProps {
 }
 
 /**
- * "Renders the debug view for an active debugger session registered using
+ * Renders the debug view for an active debugger session registered using
  * {@link @fluid-tools/client-debugger#initializeFluidClientDebugger}.
  *
  * @remarks If no debugger has been initialized, will display a note to the user and a refresh button to search again.
