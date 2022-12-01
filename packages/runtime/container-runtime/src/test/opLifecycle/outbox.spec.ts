@@ -256,7 +256,7 @@ describe("Outbox", () => {
     it("Compress only if compression is enabled", () => {
         const outbox = getOutbox(
             getMockContext() as IContainerContext,
-            /* maxBatchSize */ 1,
+            maxBatchSizeInBytes,
             {
                 minimumBatchSizeInBytes: 1,
                 compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -354,5 +354,29 @@ describe("Outbox", () => {
             referenceSequenceNumber: message.referenceSequenceNumber,
             opMetadata: message.metadata,
         })));
+    });
+
+    it("Throws when compression is enabled and the compressed batch is still larger than the threshold", () => {
+        const outbox = getOutbox(
+            getMockContext() as IContainerContext,
+            /* maxBatchSize */ 1,
+            {
+                minimumBatchSizeInBytes: 1,
+                compressionAlgorithm: CompressionAlgorithms.lz4,
+            });
+
+        const messages = [
+            createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+            createMessage(ContainerMessageType.Attach, "2"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
+        ];
+
+        outbox.submit(messages[0]);
+        outbox.submit(messages[1]);
+        outbox.submitAttach(messages[2]);
+        outbox.submit(messages[3]);
+
+        assert.throws(() => outbox.flush());
     });
 });
