@@ -187,7 +187,7 @@ export function testSpecializedCursor<TData, TCursor extends ITreeCursor>(config
     cursorName: string;
     builders: SpecialCaseBuilder<TData>;
     cursorFactory: (data: TData) => TCursor;
-    dataFromCursor: (cursor: ITreeCursor) => TData;
+    dataFromCursor?: (cursor: ITreeCursor) => TData;
     testData: readonly { name: string; data: TData; reference?: JsonableTree }[];
 }): Mocha.Suite {
     return testTreeCursor(config);
@@ -235,7 +235,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
     cursorName: string;
     builders: SpecialCaseBuilder<TData> | ((data: JsonableTree) => TData);
     cursorFactory: (data: TData) => TCursor;
-    dataFromCursor?: (cursor: ITreeCursor) => TData;
+    dataFromCursor?: (cursor: TCursor) => TData;
     testData: readonly { name: string; data: TData; reference?: JsonableTree }[];
     extraRoot?: true;
 }): Mocha.Suite {
@@ -251,7 +251,9 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
     const dataFromJsonableTree = typeof builder === "object" ? undefined : builder;
     const withKeys: undefined | ((keys: FieldKey[]) => TData) =
         typeof builder === "object"
-            ? builder.withKeys?.bind
+            ? builder.withKeys === undefined
+                ? undefined
+                : builder.withKeys.bind(builder.withKeys)
             : (keys: FieldKey[]) => {
                   const root: JsonableTree = {
                       type: brand("Foo"),
@@ -491,6 +493,7 @@ function checkTraversal(cursor: ITreeCursor) {
         assert(expectedFieldLength > 0, "only non empty fields should show up in field iteration");
         let actualChildNodesTraversed = 0;
         for (let inNode = cursor.firstNode(); inNode; inNode = cursor.nextNode()) {
+            assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
             assert(cursor.chunkStart <= actualChildNodesTraversed);
             assert(cursor.chunkLength > actualChildNodesTraversed - cursor.chunkStart);
             assert(cursor.chunkLength + cursor.chunkStart <= expectedFieldLength);
