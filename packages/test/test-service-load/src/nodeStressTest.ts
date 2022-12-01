@@ -210,6 +210,11 @@ async function orchestratorProcess(
          */
         const resultsForXml = results.map((({ result, index }) => {
             const attributes = { classname: "StressRunner", name: `Runner_${index}` };
+            if (index === 4) {
+                return { testcase: [{ _attr: attributes },
+                    { failure: "Forcing runner 4 to fail for testing purposes" },
+                ] };
+            }
             if (result === 0) {
                 //* Could add time if we measure it
                 return { testcase: [{ _attr: attributes }] };

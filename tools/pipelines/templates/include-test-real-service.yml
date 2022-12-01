@@ -298,6 +298,6 @@ jobs:
         inputs:
           testResultsFormat: 'JUnit'
           testResultsFiles: '**/*junit-report.xml'
-          searchFolder: ${{ parameters.buildDirectory }}
+          searchFolder: ${{ variables.testPackageDir }}
           mergeTestResults: false
         condition: succeededOrFailed()
