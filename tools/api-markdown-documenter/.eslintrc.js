@@ -24,5 +24,8 @@ module.exports = {
 
         "unicorn/prefer-module": "off",
         "unicorn/prefer-negative-index": "off",
+
+        // This package is exclusively used in a Node.js context
+        "import/no-nodejs-modules": "off",
     },
 };
