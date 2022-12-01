@@ -11,6 +11,7 @@ import {
     MockContainerRuntimeForReconnection,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
+import { ReadOnlyInfo } from "@fluidframework/container-definitions";
 import { TaskManager } from "../taskManager";
 import { TaskManagerFactory } from "../taskManagerFactory";
 import { ITaskManager } from "../interfaces";
@@ -445,6 +446,89 @@ describe("TaskManager", () => {
         });
     });
 
+    // Note: Since read/write modes are not yet implemented in mocks, tests are limited to simulate these secnarios.
+    describe("Read/Write Mode", () => {
+        let taskManager1: ITaskManager;
+        let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
+        let containerRuntime1: MockContainerRuntimeForReconnection;
+
+        const setReadOnlyInfo = (readOnlyInfo: ReadOnlyInfo) => {
+            (taskManager1 as any).runtime.deltaManager.readOnlyInfo = readOnlyInfo;
+            // Force connection to simulate read mode (TaskManager consideres the client disconnected in read mode)
+            containerRuntime1.connected = readOnlyInfo.readonly === false;
+        };
+
+        beforeEach(() => {
+            containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+            const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+            containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+            const services1 = {
+                deltaConnection: containerRuntime1.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+            taskManager1 = new TaskManager("task-manager-1", dataStoreRuntime1, TaskManagerFactory.Attributes);
+            taskManager1.connect(services1);
+        });
+
+        it("Immediately rejects attempts to volunteer in read mode", async () => {
+            const taskId = "taskId";
+            setReadOnlyInfo({ readonly: true, permissions: false, forced: false, storageOnly: false });
+
+            const volunteerTaskP = taskManager1.volunteerForTask(taskId);
+            assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+            assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+            await assert.rejects(volunteerTaskP);
+            containerRuntimeFactory.processAllMessages();
+            assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+            assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+        });
+
+        it("Immediately rejects attempts to volunteer with read-only permissions", async () => {
+            const taskId = "taskId";
+            setReadOnlyInfo({ readonly: true, permissions: true, forced: false, storageOnly: false });
+
+            const volunteerTaskP = taskManager1.volunteerForTask(taskId);
+            assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+            assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+            await assert.rejects(volunteerTaskP);
+            containerRuntimeFactory.processAllMessages();
+            assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+            assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+        });
+
+        it("Can subscribe while in read mode", async () => {
+            const taskId = "taskId";
+            setReadOnlyInfo({ readonly: true, permissions: false, forced: false, storageOnly: false });
+
+            taskManager1.subscribeToTask(taskId);
+            containerRuntimeFactory.processAllMessages();
+
+            assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+            assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+            assert.ok(taskManager1.subscribed(taskId), "Should be subscribed");
+
+            setReadOnlyInfo({ readonly: false });
+            containerRuntimeFactory.processAllMessages();
+
+            assert.ok(taskManager1.queued(taskId), "Should be queued");
+            assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+            assert.ok(taskManager1.subscribed(taskId), "Should be subscribed");
+        });
+
+        it("Immediately rejects attempts to subscribe with read-only permissions", async () => {
+            const taskId = "taskId";
+            setReadOnlyInfo({ readonly: true, permissions: true, forced: false, storageOnly: false });
+
+            assert.throws(() => { taskManager1.subscribeToTask(taskId); },
+                "Should throw error if subscribing with read-only permissions");
+            containerRuntimeFactory.processAllMessages();
+
+            assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+            assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+            assert.ok(!taskManager1.subscribed(taskId), "Should not be subscribed");
+        });
+    });
+
     describe("Detached/Attach", () => {
         let taskManager1: TaskManager;
         let attachTaskManager1: () => Promise<void>;
@@ -568,7 +652,7 @@ describe("TaskManager", () => {
                     await volunteerTaskP;
                     assert.ok(taskManager1.queued(taskId), "Should be queued");
                     assert.ok(taskManager1.assigned(taskId), "Should be assigned");
-                    assert.strictEqual(taskManager1._getTaskQueues().get(taskId)?.[0], placeholderClientId,
+                    assert.strictEqual((taskManager1 as any).taskQueues.get(taskId)?.[0], placeholderClientId,
                         "taskQueue should have placeholder clientId");
 
                     let taskManager1EventFired = false;
@@ -582,7 +666,7 @@ describe("TaskManager", () => {
                     assert.ok(!taskManager1.queued(taskId), "Should not be queued");
                     assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
                     assert.ok(taskManager1EventFired, "Should have raised lost event on taskManager1");
-                    assert.ok(taskManager1._getTaskQueues().size === 0, "taskQueue should be empty");
+                    assert.ok((taskManager1 as any).taskQueues.size === 0, "taskQueue should be empty");
                 });
             });
 
@@ -619,8 +703,8 @@ describe("TaskManager", () => {
                     assert.ok(taskManager1.assigned(taskId), "Task manager 1 should be assigned");
                     assert.ok(taskManager1.subscribed(taskId), "Task manager 1 should be subscribed");
 
-                    assert.ok(taskManager1._getTaskQueues().get(taskId)?.length !== 0, "taskQueue should not be empty");
-                    assert.notStrictEqual(taskManager1._getTaskQueues().get(taskId)?.[0], placeholderClientId,
+                    assert.ok((taskManager1 as any).taskQueues.get(taskId)?.length !== 0, "taskQueue should not be empty");
+                    assert.notStrictEqual((taskManager1 as any).taskQueues.get(taskId)?.[0], placeholderClientId,
                         "taskQueue should not have placeholder clientId");
                 });
 
@@ -681,7 +765,7 @@ describe("TaskManager", () => {
         beforeEach(async () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
-            // Create the first SharedMap.
+            // Create the first TaskManager.
             const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
             containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
             const services1 = {
@@ -755,13 +839,13 @@ describe("TaskManager", () => {
                     const clientId1 = containerRuntime1.clientId;
                     const clientId2 = containerRuntime2.clientId;
 
-                    assert.deepEqual(taskManager1._getTaskQueues().get(taskId), [clientId1, clientId2],
+                    assert.deepEqual((taskManager1 as any).taskQueues.get(taskId), [clientId1, clientId2],
                         "Task queue should have both clients");
 
                     containerRuntime2.connected = false;
                     containerRuntimeFactory.processAllMessages();
 
-                    assert.deepEqual(taskManager1._getTaskQueues().get(taskId), [clientId1],
+                    assert.deepEqual((taskManager1 as any).taskQueues.get(taskId), [clientId1],
                         "Task queue should only have client 1");
                 });
 
