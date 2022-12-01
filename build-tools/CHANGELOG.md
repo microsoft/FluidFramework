@@ -1,3 +1,31 @@
+## [0.6.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.5.0...build-tools_v0.6.0) (2022-11-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* **generate:typetests:** `fluid-type-validator` is deprecated. Use `flub
+generate typetests` instead.
+* **release:report:** The `--all` and `--limit` flags have been removed from
+`flub release report`. Use `flub release history` instead.
+
+### Features
+
+* **fluid-build:** Enable fluid-build to use pnpm and yarn ([#12874](https://github.com/microsoft/FluidFramework/issues/12874)) ([ee53e3b](https://github.com/microsoft/FluidFramework/commit/ee53e3be2708a1b37a7eac97d78ac25e18caa8e3)), closes [#12236](https://github.com/microsoft/FluidFramework/issues/12236)
+* **generate:typetests:** Add --branch flag to typetest generator ([#13018](https://github.com/microsoft/FluidFramework/issues/13018)) ([3a50b02](https://github.com/microsoft/FluidFramework/commit/3a50b022b6c1363eb5a3cbdb86261996bfaffefe))
+* **generate:typetests:** Make type tests configurable per-branch ([#12849](https://github.com/microsoft/FluidFramework/issues/12849)) ([8c29adc](https://github.com/microsoft/FluidFramework/commit/8c29adc6d23407700303a5f86b023ee1dd91d072))
+
+
+### Bug Fixes
+
+* **build-tools:** Add missing dependency ([#12979](https://github.com/microsoft/FluidFramework/issues/12979)) ([b9d33cf](https://github.com/microsoft/FluidFramework/commit/b9d33cfc59b5d00adbebb596da9852bb48cab0a2)), closes [#12849](https://github.com/microsoft/FluidFramework/issues/12849)
+* **build-tools:** Load workspaceGlobs from pnpm properly ([#13083](https://github.com/microsoft/FluidFramework/issues/13083)) ([2f162b6](https://github.com/microsoft/FluidFramework/commit/2f162b61705aa6395298a7adb32c86f4e5590d78))
+* **fluid-build:** Parse build-cli tasks properly in fluid-build ([#12988](https://github.com/microsoft/FluidFramework/issues/12988)) ([2217e3d](https://github.com/microsoft/FluidFramework/commit/2217e3d6ef2a9093cb77aa7486b613d5c0884ad1))
+
+
+### Code Refactoring
+
+* **release:report:** Split release report commands  ([#12850](https://github.com/microsoft/FluidFramework/issues/12850)) ([0678fd2](https://github.com/microsoft/FluidFramework/commit/0678fd29a4207f7090d8fe6301f5910597b3adde))
+
 ## [0.5.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.4.8000...build-tools_v0.5.0) (2022-11-04)
 
 
