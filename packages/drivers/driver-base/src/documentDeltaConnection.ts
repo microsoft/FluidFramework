@@ -323,6 +323,11 @@ export class DocumentDeltaConnection
      * multiplexing here, so we need to close the socket here.
      */
     public dispose() {
+        this.logger.sendTelemetryEvent({
+            eventName: "ClientClosingDeltaConnection",
+            driverVersion,
+            details: JSON.stringify({ disposed: this._disposed, socketConnected: this.socket.connected }),
+        });
         this.disconnect(createGenericNetworkError(
             // pre-0.58 error message: clientClosingConnection
             "Client closing delta connection", { canRetry: true }, { driverVersion }),
@@ -347,7 +352,15 @@ export class DocumentDeltaConnection
         // Let user of connection object know about disconnect. This has to happen in between setting _disposed and
         // removing all listeners!
         this.emit("disconnect", err);
-
+        this.logger.sendTelemetryEvent({
+            eventName: "AfterDisconnectEvent",
+            driverVersion,
+            details: JSON.stringify({
+                disposed: this._disposed,
+                socketConnected: this.socket.connected,
+                disconnectListenerCount: this.listenerCount("disconnect"),
+            }),
+        });
         // user of DeltaConnection should have processed "disconnect" event and removed all listeners. Not clear
         // if we want to enforce that, as some users (like LocalDocumentService) do not unregister any handlers
         // assert(this.listenerCount("disconnect") === 0, "'disconnect` events should be processed synchronously");

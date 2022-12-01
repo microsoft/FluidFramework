@@ -297,7 +297,7 @@ export class OdspDocumentService implements IDocumentService {
                 });
                 // On disconnect with 401/403 error code, we can just clear the joinSession cache as we will again
                 // get the auth error on reconnecting and face latency.
-                connection.on("disconnect", (error: any) => {
+                connection.once("disconnect", (error: any) => {
                     // Clear the join session refresh timer so that it can be restarted on reconnection.
                     this.clearJoinSessionTimer();
                     if (typeof error === "object" && error !== null
