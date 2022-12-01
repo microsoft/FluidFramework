@@ -11,7 +11,7 @@ import { Sequencer, TestTree, TestTreeEdit } from "./testTree";
 
 describe("Editing", () => {
     describe("Sequence Field", () => {
-        it("can rebase local dependent inserts", () => {
+        it.only("can rebase local dependent inserts", () => {
             const sequencer = new Sequencer();
             const tree1 = TestTree.fromJson("y");
             const tree2 = tree1.fork();

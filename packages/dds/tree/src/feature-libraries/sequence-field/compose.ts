@@ -8,13 +8,13 @@ import { RevisionTag, tagChange, TaggedChange } from "../../core";
 import { clone, fail, StackyIterator } from "../../util";
 import {
     Changeset,
+    HasRevisionTag,
     Mark,
     MarkList,
     Modify,
     ModifyingMark,
     ModifyInsert,
     ModifyReattach,
-    ObjectMark,
     SizedMark,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
@@ -71,6 +71,10 @@ function composeMarkLists<TNodeChange>(
             factory.push(composeMark(newMark, newRev, composeChild));
         } else if (isAttach(newMark)) {
             if (isDetachMark(baseMark) && newRev !== undefined && baseMark.revision === newRev) {
+                // TODO: Need to look ahead to find correct position in detach block with respect to newMark's lineage
+                // TODO: newMark might be the inverse of a detach other than the first in this block.
+                // The detach may even be split within the block.
+
                 // We assume that baseMark and newMark having the same revision means that they are inverses of each other,
                 // so neither has an effect in the composition.
                 assert(
@@ -138,7 +142,7 @@ function composeMarks<TNodeChange>(
     composeChild: NodeChangeComposer<TNodeChange>,
 ): Mark<TNodeChange> {
     if (isSkipMark(baseMark)) {
-        return clone(newMark);
+        return composeMark(newMark, newRev, composeChild);
     }
     if (isSkipMark(newMark)) {
         return baseMark;
@@ -155,9 +159,10 @@ function composeMarks<TNodeChange>(
             switch (newType) {
                 case "Modify": {
                     return {
-                        ...newMark,
+                        ...baseMark,
                         type: "MInsert",
                         content: baseMark.content[0],
+                        changes: newMark.changes,
                     };
                 }
                 case "Delete": {
@@ -247,8 +252,8 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
     }
 
     const cloned = clone(mark);
-    if (revision !== undefined) {
-        (cloned as ObjectMark<TNodeChange>).revision = revision;
+    if (revision !== undefined && mark.type !== "Modify") {
+        (cloned as HasRevisionTag).revision = revision;
     }
 
     if (isModifyingMark(mark)) {
