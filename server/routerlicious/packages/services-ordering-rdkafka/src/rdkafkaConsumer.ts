@@ -98,7 +98,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
             this.zooKeeperClient = new this.consumerOptions.zooKeeperClientConstructor(zooKeeperEndpoint);
         }
 
-        let consumer: kafkaTypes.KafkaConsumer | undefined;
+        let consumer: kafkaTypes.KafkaConsumer;
 
         const options: kafkaTypes.ConsumerGlobalConfig = {
             "metadata.broker.list": this.endpoints.kafka.join(","),
@@ -124,11 +124,11 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
         consumer.setDefaultConsumeLoopTimeoutDelay(this.consumerOptions.consumeLoopTimeoutDelay);
 
         consumer.on("ready", () => {
-            consumer!.subscribe([this.topic]);
+            consumer.subscribe([this.topic]);
 
             if (this.consumerOptions.automaticConsume) {
                 // start the consume loop
-                consumer!.consume();
+                consumer.consume();
             }
 
             this.emit("connected", consumer);
