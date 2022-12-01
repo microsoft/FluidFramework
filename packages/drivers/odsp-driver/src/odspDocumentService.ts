@@ -304,6 +304,8 @@ export class OdspDocumentService implements IDocumentService {
                         && error.errorType === DriverErrorType.authorizationError) {
                         this.cache.sessionJoinCache.remove(this.joinSessionKey);
                     }
+                    // If we hit this assert, it means that "disconnect" event is emitted before the connection went through
+                    // dispose flow which is not correct and could lead to a bunch of erros.
                     assert(connection.disposed, "Connection should be disposed by now");
                     this.currentConnection = undefined;
                 });
