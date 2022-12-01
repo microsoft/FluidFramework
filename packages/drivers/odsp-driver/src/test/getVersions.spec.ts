@@ -125,7 +125,7 @@ describe("Tests for snapshot fetch", () => {
                 fileName: "",
                 summarizer: false,
                 id: "id"
-            }  ;
+            } ;
 
             epochTracker = new EpochTracker(
                 localCache,
