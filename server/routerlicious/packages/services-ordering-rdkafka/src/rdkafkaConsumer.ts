@@ -98,6 +98,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
             this.zooKeeperClient = new this.consumerOptions.zooKeeperClientConstructor(zooKeeperEndpoint);
         }
 
+        // eslint-disable-next-line prefer-const
         let consumer: kafkaTypes.KafkaConsumer;
 
         const options: kafkaTypes.ConsumerGlobalConfig = {
