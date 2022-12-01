@@ -12,7 +12,7 @@ import xml from "xml";
 import { TestDriverTypes, DriverEndpoint } from "@fluidframework/test-driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
-import { createTestDriver, getProfile, initialize, loggerP, safeExit } from "./utils";
+import { createTestDriver, getProfile, initialize, loggerP, safeExit, writeToFile } from "./utils";
 
 interface ITestUserConfig {
     /* Credentials' key/value description:
@@ -234,6 +234,9 @@ async function orchestratorProcess(
         const outputXml = xml(output, true);
         //* TODO: Write this to a file
         console.log(outputXml);
+
+        //* Use hashed output dir like logs?
+        writeToFile(outputXml, "output", "junit-report.xml");
     } finally {
         const endTime = new Date();
         console.log(`Duration: ${new Date(endTime.valueOf() - startTime.valueOf()).toISOString().split(/T|Z/)[1]}`);

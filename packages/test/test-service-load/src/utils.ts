@@ -34,6 +34,18 @@ import { createGCFluidExport } from "./gcDataStores";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
+export function writeToFile(data: string, relativeDirPath: string, fileName: string) {
+    const outputDir = `${__dirname}/${relativeDirPath}`;
+    if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+    }
+    const filePath = `${outputDir}/${fileName}`
+    console.log(`~~~~~~~ OUTPUT FILE: ${filePath} ~~~~~~~`);
+    fs.writeFileSync(
+        filePath,
+        data);
+}
+
 interface IObserverEvents extends IEvent {
     (event: "logEvent", listener: (logEvent: ITelemetryBaseEvent) => void): void;
 }
@@ -54,19 +66,16 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 
         if (this.error && runInfo !== undefined) {
             const logs = this.logs;
-            const outputDir = `${__dirname}/output/${crypto.createHash("md5").update(runInfo.url).digest("hex")}`;
-            if (!fs.existsSync(outputDir)) {
-                fs.mkdirSync(outputDir, { recursive: true });
-            }
             // sort from most common column to least common
             const schema = [...this.schema].sort((a, b) => b[1] - a[1]).map((v) => v[0]);
             const data = logs.reduce(
                 (file, event) => `${file}\n${schema.reduce((line, k) => `${line}${event[k] ?? ""},`, "")}`,
                 schema.join(","));
-            const filePath = `${outputDir}/${runInfo.runId ?? "orchestrator"}_${Date.now()}.csv`;
-            fs.writeFileSync(
-                filePath,
-                data);
+
+            writeToFile(
+                data,
+                `output/${crypto.createHash("md5").update(runInfo.url).digest("hex")}`,
+                `${runInfo.runId ?? "orchestrator"}_${Date.now()}.csv`);
         }
         this.schema.clear();
         this.error = false;
