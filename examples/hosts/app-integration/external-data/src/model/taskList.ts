@@ -84,7 +84,6 @@ export class TaskList extends DataObject implements ITaskList {
         // and persisted.  In turn, this will trigger the "valueChanged" event and handleTaskAdded which will update
         // the this.tasks collection.
         this.root.set(id, { id, name: nameString.handle, priority: priorityCell.handle });
-        const task = new Task(id, nameString, priorityCell);
 
         this._savedData?.set(id, { id, nameString, priorityCell });
         this._draftData?.set(id, { id, nameString, priorityCell });
@@ -94,6 +93,7 @@ export class TaskList extends DataObject implements ITaskList {
             name: nameString.handle as IFluidHandle<SharedString>,
             priority: priorityCell.handle as IFluidHandle<ISharedCell<number>>,
         };
+        this.root.set(id, data);
     };
 
     public readonly deleteTask = (id: string): void => {
