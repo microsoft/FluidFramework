@@ -639,6 +639,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         content.forEach(([taskId, clientIdQueue]) => {
             this.taskQueues.set(taskId, clientIdQueue);
         });
+        this.scrubClientsNotInQuorum();
     }
 
     /**
@@ -756,6 +757,22 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         }
     }
 
+    private scrubClientsNotInQuorum() {
+        const quorum = this.runtime.getQuorum();
+        for (const [taskId, clientQueue] of this.taskQueues) {
+            const filteredClientQueue = clientQueue.filter((clientId) => quorum.getMember(clientId) !== undefined);
+            if (clientQueue.length !== filteredClientQueue.length) {
+                if (filteredClientQueue.length === 0) {
+                    this.taskQueues.delete(taskId);
+                } else {
+                    this.taskQueues.set(taskId, filteredClientQueue);
+                }
+                // TODO remove, just for debugging
+                this.emit("changed");
+                this.queueWatcher.emit("queueChange", taskId);
+            }
+        }
+    }
     /**
      * Will replace all instances of the placeholderClientId with the current clientId. This should only be called when
      * transitioning from detached to attached and this.runtime.clientId is defined.
