@@ -13,6 +13,12 @@ import { AppModel } from "./appModel";
 import { TaskListInstantiationFactory } from "./taskList";
 
 const taskListId = "task-list";
+
+/*
+* This is a server origin signal that lets the client know that the external source of truth
+* for the data has changed. On receiving this, the client should take some action, such as
+* fetching the new data. This is an enum as there may be more signals that need to be created.
+*/
 const SignalType = {
     ExternalDataChanged: "externalDataChange"
 };
