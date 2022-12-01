@@ -36,6 +36,7 @@ stages:
         variables:
           pipeline: $(resources.pipeline.client.pipelineName)
           buildId: $(resources.pipeline.client.runID)
+          pipelineResourceBranch: $(resources.pipeline.client.sourceBranch)
 
         steps:
         - checkout: none
@@ -50,6 +51,7 @@ stages:
                 buildVersionToDownload = ${{ parameters.buildVersionToDownload }}
                 pipeline = $(pipeline)
                 buildId = $(buildId)
+                pipelineResourceBranch = $(pipelineResourceBranch)
               Build Params
                 SourceBranch = $(Build.SourceBranch)
               "
