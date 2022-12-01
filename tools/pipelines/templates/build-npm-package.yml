@@ -85,6 +85,10 @@ parameters:
   type: string
   default: repo
 
+- name: packageManager
+  type: string
+  default: npm
+
 - name: packageManagerInstallCommand
   type: string
   default: 'npm ci --unsafe-perm'
@@ -97,6 +101,8 @@ variables:
   # basic ANSI color support though, so force that in the pipeline
   - name: FORCE_COLOR
     value: 1
+  - name: pnpmStorePath
+    value: $(Pipeline.Workspace)/.pnpm-store
   - template: include-vars.yml
     parameters:
       publishOverride: ${{ parameters.publishOverride }}
@@ -204,6 +210,23 @@ stages:
           displayName: Use Node 14.x
           inputs:
             version: 14.x
+
+        - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+          - task: Cache@2
+            displayName: Cache pnpm store
+            inputs:
+              key: '"pnpm-store" | "$(Agent.OS)" | "${{ parameters.tagName }}" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+              path: ${{ variables.pnpmStorePath }}
+
+          - task: Bash@3
+            displayName: Install and configure pnpm
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                npm i -g pnpm
+                pnpm config set store-dir $(pnpmStorePath)
+
         - task: Bash@3
           displayName: Install dependencies
           inputs:
@@ -415,12 +438,25 @@ stages:
               artifactName: '_api-extractor-temp'
               publishLocation: 'pipeline'
 
+        - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+          # Reset the pnpm-lock.yaml file since it's been modified by the versioning. But for dependency caching we want
+          # the cache key (which is based on the contents of the lockfile) to be the unmodified file. So we reset the
+          # lockfile as the last step so that when the dependency cache is uploaded, the cache key matches what it was
+          # at the beginning of the CI job.
+          - task: Bash@3
+            displayName: Reset lockfile
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                git checkout HEAD -- pnpm-lock.yaml
+
         - task: Bash@3
           displayName: Check for extraneous modified files
           inputs:
             targetType: 'inline'
             script: |
-              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|build-cli/README.md|build-tools/pnpm-lock.yaml|build-tools/.npmrc|version-tools/README.md|\(use.*' | grep '^\s' > git_status.log
+              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|build-cli/README.md|build-tools/.npmrc|version-tools/README.md|\(use.*' | grep '^\s' > git_status.log
               if [ `cat git_status.log | wc -l` != "0" ]; then
                 cat git_status.log
                 echo "##vso[task.logissue type=error]Build should not create extraneous files"

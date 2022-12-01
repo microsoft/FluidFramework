@@ -150,6 +150,7 @@ export {
     EditManager,
     MutableSummaryData,
     ReadonlySummaryData,
+    SeqNumber,
     SessionId,
 } from "../edit-manager";
 

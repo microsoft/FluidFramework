@@ -185,6 +185,21 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         );
     }
 
+    public async findAndUpdate(query: any, value: T): Promise<{ value: T; existing: boolean; }> {
+        const result = await this.collection.findOneAndUpdate(
+            query,
+            {
+                $set: value,
+            },
+            {
+                returnOriginal: true,
+            });
+
+        return result.value
+            ? { value: result.value, existing: true }
+            : { value, existing: false };
+    }
+
     private async updateCore(filter: any, set: any, addToSet: any, upsert: boolean): Promise<void> {
         const update: any = {};
         if (set) {
