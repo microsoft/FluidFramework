@@ -55,7 +55,7 @@ stages:
               "
 
         - task: DownloadPipelineArtifact@2
-          displayName: Download test files
+          displayName: Download test files with new parameters
           inputs:
             # It seems there's a bug and preferTriggeringPipeline is not respected.
             # We force the behavior by explicitly specifying:
@@ -65,9 +65,23 @@ stages:
             source: specific
             project: internal
             pipeline: $(pipeline)
-            buildVersionToDownload: ${{ parameters.buildVersionToDownload }}
-            buildId: $(buildId)
             artifact: test-files
             path: $(Pipeline.Workspace)/test-files/
+            buildVersionToDownload: ${{ parameters.buildVersionToDownload }}
+            buildId: $(buildId)
             branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
             allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
+
+        - task: DownloadPipelineArtifact@2
+          displayName: Download test files with old parameters
+          inputs:
+            # It seems there's a bug and preferTriggeringPipeline is not respected.
+            # preferTriggeringPipeline: true
+            source: specific
+            project: internal
+            pipeline: $(pipeline)
+            artifact: test-files
+            path: $(Pipeline.Workspace)/test-files/
+            buildVersionToDownload: latestFromBranch
+            branchName: $(Build.SourceBranch)
+            allowPartiallySucceededBuilds: true
