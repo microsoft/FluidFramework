@@ -12,7 +12,7 @@ export {
     Effects,
     GapCount,
     HasChanges,
-    HasMoveId as HasOpId,
+    HasMoveId,
     HasLength,
     HasPlaceFields,
     HasRevisionTag,

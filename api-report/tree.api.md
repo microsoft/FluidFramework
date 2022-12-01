@@ -1092,7 +1092,7 @@ declare namespace SequenceField {
         Effects,
         GapCount,
         HasChanges,
-        HasMoveId as HasOpId,
+        HasMoveId,
         HasLength,
         HasPlaceFields,
         HasRevisionTag,
