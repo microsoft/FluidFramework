@@ -127,12 +127,10 @@ describeNoCompat("GC tombstone blob tests", (getTestObjectProvider) => {
     };
 
     // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
-    itExpects("Handle request for tombstoned blobs fails in summarizing container loaded after sweep timeout",
+    itExpects("Handle request for tombstoned blobs fails in non summarizing container loaded after sweep timeout",
     [
         {
-            error: "GC_Tombstone_Blob_Requested",
             eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
-            viaHandle: true,
         },
     ],
     async () => {
@@ -160,9 +158,7 @@ describeNoCompat("GC tombstone blob tests", (getTestObjectProvider) => {
     itExpects("Handle request for tombstoned blobs only logs in summarizing container loaded after sweep timeout",
     [
         {
-            error: "GC_Tombstone_Blob_Requested",
             eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
-            viaHandle: true,
         },
         {
             error: "SweepReadyObject_Loaded",

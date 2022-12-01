@@ -129,9 +129,12 @@ export class BlobManager {
      */
     private readonly pendingBlobs: Map<string, PendingBlob> = new Map();
 
-    /** If true, throw an error when a tombstone data store is retrieved. */
+    /** If true, throw an error when a tombstone attachment blob is retrieved. */
     private readonly throwOnTombstoneUsage: boolean;
-    /** Tombstone is a temporary feature that imitates a blob getting swept by garbage collection. */
+    /**
+     * This stores ides of tombstoned blobs.
+     * Tombstone is a temporary feature that imitates a blob getting swept by garbage collection.
+     */
     private readonly tombstonedBlobs: Set<string> = new Set();
 
     /**
@@ -257,13 +260,13 @@ export class BlobManager {
         const request = { url: blobId };
         if (this.tombstonedBlobs.has(blobId) ) {
             // Note: if a user writes a request to look like it's viaHandle, we will also send this telemetry event
+            const error = responseToException(createResponseError(404, "Blob removed by gc", request), request);
             this.mc.logger.sendErrorEvent({
                 eventName: "GC_Tombstone_Blob_Requested",
                 url: request.url,
-                viaHandle: true,
-            });
+            }, error);
             if (this.throwOnTombstoneUsage) {
-                throw responseToException(createResponseError(404, "Blob removed by gc", request), request);
+                throw error;
             }
         }
 
@@ -552,8 +555,11 @@ export class BlobManager {
     }
 
     /**
-     * When running GC in test mode, this is called to delete blobs that are unused.
-     * @param unusedRoutes - These are the blob node ids that are unused and should be deleted.
+     * This is called to update objects whose routes are unused. The unused objects are either deleted or marked as
+     * tombstones.
+     * @param unusedRoutes - The routes of the blob nodes that are unused.
+     * @param tombstone - if true, the objects corresponding to unused routes are marked tombstones. Otherwise, they
+     * are deleted.
      */
     public updateUnusedRoutes(unusedRoutes: string[], tombstone: boolean): void {
         // The routes or blob node paths are in the same format as returned in getGCData -
@@ -570,12 +576,11 @@ export class BlobManager {
             if (tombstone) {
                 this.tombstonedBlobs.add(blobId);
                 continue;
-            } else if (this.redirectTable?.has(blobId)) {
-                // The unused blobId could be a localId. If so, remove it from the redirect table and continue. The
-                // corresponding storageId may still be used either directly or via other localIds.
-                this.redirectTable.delete(blobId);
-                continue;
             }
+
+            // The unused blobId could be a localId. If so, remove it from the redirect table and continue. The
+            // corresponding storageId may still be used either directly or via other localIds.
+            this.redirectTable.delete(blobId);
         }
     }
 
