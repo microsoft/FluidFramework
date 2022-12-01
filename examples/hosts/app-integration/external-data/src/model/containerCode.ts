@@ -36,37 +36,6 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
      * {@inheritDoc ModelContainerRuntimeFactory.containerHasInitialized}
      */
     protected async containerHasInitialized(runtime: IContainerRuntime): Promise<void> {
-        const taskList = await requestFluidObject<ITaskList>(
-            await runtime.getRootDataStore(taskListId),
-            "",
-        );
-        // CONSIDER FOR LATER: might want to peel off the top envelope and
-        // route to different task lists or other objects
-        // CONSIDER FOR LATER: might want to move to createModel because you might want
-        // everything laready instantiated
-        console.log(taskList);
-        runtime.on("signal", (message) => {
-            // taskList.handleSignal(message);
-            console.log("I am inside the example code and I am now receiving the message");
-            console.log(message);
-            console.log(runtime);
-            console.log(taskList);
-            if (message.type === "externalDataChanged") {
-                // can keep registry in here of how to handle different signals
-                // await this.importExternalData();
-                console.log("I am passing my message to taskList.handleSignal");
-                taskList.handleSignal(message.content);
-            }
-            // TODO: Check the message type? clientId?  And route to the TaskList for interpretation?
-            // Interpretation of the message contents should probably live on the TaskList to encapsulate
-            // knowledge of the task-specific data.
-            // this is just the signal to say go fetch external data
-            // explore how the signal from the outside trigger importExternalData
-            // 1. one option is to literally trigger importExternalData
-            // 2. or you can call handleExternalDataSignal and it does the work of figuring out what to do
-            // maintain a registry of signals coming in and what it means when it gets handed off to
-            // (envelope gets differently all over the code and will have interesting payload that is meaningful)
-        });
     }
 
     /**
@@ -77,6 +46,11 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
             await runtime.getRootDataStore(taskListId),
             "",
         );
+        runtime.on("signal", (message) => {
+            if (message.type === "externalDataChange") {
+                taskList.importExternalData();
+            }
+        });
         return new AppModel(taskList, container);
     }
 }

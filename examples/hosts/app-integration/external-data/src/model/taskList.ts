@@ -156,17 +156,13 @@ export class TaskList extends DataObject implements ITaskList {
         this.emit("taskDeleted", deletedTask);
     };
 
-    public handleSignal(message: any) { // I am expecting exactly JIRA data
-        console.log("I'm here in the handleSignal task list");
-        console.log(message);
-    };
-
     // TODO: Is it useful to block further changes during the sync'ing process?  Consider implementing a state to
     // put the data object in while import is occurring (e.g. to disable input, etc.).
     // TODO: Consider performing the update in 2 phases (fetch, merge) to enable some nice conflict UI
     // TODO: Guard against reentrancy
     // TODO: Use leader election to reduce noise from competing clients
     public async importExternalData(): Promise<void> {
+        console.log('Kicking off fetching external data from TaskList');
         const externalData = await externalDataSource.fetchData();
         const parsedTaskData = parseStringData(externalData);
         // TODO: Delete any items that are in the root but missing from the external data
