@@ -16,6 +16,7 @@ import {
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import { ReadOnlyInfo } from "@fluidframework/container-definitions";
 import { TaskManagerFactory } from "./taskManagerFactory";
 import { ITaskManager, ITaskManagerEvents } from "./interfaces";
 
@@ -207,6 +208,13 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     /**
+     * Returns a ReadOnlyInfo object to determine current read/write permissions.
+     */
+    private get readOnlyInfo(): ReadOnlyInfo {
+        return this.runtime.deltaManager.readOnlyInfo;
+    }
+
+    /**
      * Constructs a new task manager. If the object is non-local an id and service interfaces will
      * be provided
      *
@@ -370,6 +378,13 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             return true;
         }
 
+        if (this.readOnlyInfo.readonly === true) {
+            const error = this.readOnlyInfo.permissions === true ?
+                new Error(`Attempted to volunteer with read-only permissions: ${taskId}`) :
+                new Error(`Attempted to volunteer in read-only state: ${taskId}`);
+            throw error;
+        }
+
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenario
             assert(this.clientId !== undefined, "clientId should not be undefined");
@@ -450,6 +465,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     public subscribeToTask(taskId: string) {
         if (this.subscribed(taskId)) {
             return;
+        }
+
+        if (this.readOnlyInfo.readonly === true && this.readOnlyInfo.permissions === true) {
+            throw new Error(`Attempted to subscribe with read-only permissions: ${taskId}`);
         }
 
         const submitVolunteerOp = () => {
@@ -607,6 +626,17 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.taskQueues.delete(taskId);
         this.completedWatcher.emit("completed", taskId);
         this.emit("completed", taskId);
+    }
+
+    /**
+     * {@inheritDoc ITaskManager.canVolunteer}
+     */
+    public canVolunteer(): boolean {
+        // A client can volunteer for a task if it's both connected to the delta stream and in write mode.
+        // this.connected reflects that condition, but is unintuitive and may be changed in the future. This API allows
+        // us to make changes to this.connected without affecting our guidance on how to check if a client is eligible
+        // to volunteer for a task.
+        return this.connected;
     }
 
     /**
