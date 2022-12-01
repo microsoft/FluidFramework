@@ -8,7 +8,6 @@ export {
     BatchMessage,
     IBatch,
     IBatchCheckpoint,
-    IBatchProcessor,
 } from "./definitions";
 export { Outbox } from "./outbox";
 export { OpCompressor } from "./opCompressor";

@@ -1184,18 +1184,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
             pendingRuntimeState?.pending);
 
-        this.outbox = new Outbox(
-            () => this.canSendOps(),
-            this.pendingStateManager,
-            this.context,
-            {
+        this.outbox = new Outbox({
+            shouldSend: () => this.canSendOps(),
+            pendingStateManager: this.pendingStateManager,
+            containerContext: this.context,
+            compressor: new OpCompressor(this.mc.logger),
+            config: {
                 compressionOptions: runtimeOptions.compressionOptions,
                 maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
             },
-            {
-                compressor: new OpCompressor(this.mc.logger),
-            },
-        );
+        });
 
         this.context.quorum.on("removeMember", (clientId: string) => {
             this.clearPartialChunks(clientId);
@@ -2679,7 +2677,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 Promise.resolve().then(() => {
                     this.flushMicroTaskExists = false;
                     this.flush();
-                });
+                }).catch((error) => { this.closeFn(error as GenericError) });
             }
         } catch (error) {
             this.closeFn(error as GenericError);

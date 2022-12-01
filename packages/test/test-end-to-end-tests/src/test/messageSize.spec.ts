@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-nodejs-modules
+import * as crypto from "crypto";
 import { strict as assert } from "assert";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -65,9 +67,14 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
 
+        await new Promise((resolve) => container1.on("connected", resolve));
+        await new Promise((resolve) => container2.on("connected", resolve));
+
         await provider.ensureSynchronized();
     };
 
+    const generateRandomStringOfSize = (sizeInBytes: number): string =>
+        crypto.randomBytes(sizeInBytes / 2).toString("hex");
     const generateStringOfSize = (sizeInBytes: number): string => new Array(sizeInBytes + 1).join("0");
     const setMapKeys = (map: SharedMap, count: number, item: string): void => {
         for (let i = 0; i < count; i++) {
@@ -173,5 +180,22 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
 
         assertMapValues(dataObject2map, messageCount, largeString);
+    });
+
+    itExpects("Large ops fail when compression enabled and compressed content is over max op size", [
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
+    ], async function() {
+        const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
+        await setupContainers({
+            ...testContainerConfig,
+            runtimeOptions: {
+                compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
+            },
+        }, {});
+
+        const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
+        const messageCount = 3; // Will result in a 15 MB payload
+        setMapKeys(dataObject1map, messageCount, largeString);
+        await provider.ensureSynchronized();
     });
 });

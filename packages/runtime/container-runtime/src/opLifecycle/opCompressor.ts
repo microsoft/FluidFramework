@@ -8,14 +8,14 @@ import { IsoBuffer } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { compress } from "lz4js";
 import { CompressionAlgorithms, ContainerRuntimeMessage } from "../containerRuntime";
-import { IBatchProcessor, IBatch, BatchMessage } from "./definitions";
+import { IBatch, BatchMessage } from "./definitions";
 
 /**
  * Compresses batches of ops. It generates a single compressed op that contains
  * the contents of each op in the batch. It then submits empty ops for each original
  * op to reserve sequence numbers.
  */
-export class OpCompressor implements IBatchProcessor {
+export class OpCompressor {
     private readonly logger;
     private compressedBatchCount = 0;
 
@@ -23,7 +23,7 @@ export class OpCompressor implements IBatchProcessor {
         this.logger = ChildLogger.create(logger, "OpCompressor");
     }
 
-    public processOutgoing(batch: IBatch): IBatch {
+    public compressBatch(batch: IBatch): IBatch {
         const messages: BatchMessage[] = [];
         this.compressedBatchCount++;
         const contentToCompress: ContainerRuntimeMessage[] = [];
@@ -37,7 +37,7 @@ export class OpCompressor implements IBatchProcessor {
         const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
         const duration = Date.now() - compressionStart;
 
-        if (batch.contentSizeInBytes > 200000 || this.compressedBatchCount % 100) {
+        if (batch.contentSizeInBytes > 200000 || this.compressedBatchCount % 25) {
             this.logger.sendPerformanceEvent({
                 eventName: "CompressedBatch",
                 duration,

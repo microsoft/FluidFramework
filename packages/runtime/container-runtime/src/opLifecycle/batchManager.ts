@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { BatchMessage, IBatch, IBatchCheckpoint, IBatchManagerOptions } from "./definitions";
+import { ICompressionRuntimeOptions } from "../containerRuntime";
+import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions";
+
+export interface IBatchManagerOptions {
+    readonly hardLimit: number;
+    readonly softLimit?: number;
+    readonly compressionOptions?: ICompressionRuntimeOptions;
+}
 
 /**
  * Helper class that manages partial batch & rollback.
@@ -58,7 +65,7 @@ export class BatchManager {
         this.pendingBatch = [];
         this.batchContentSize = 0;
 
-        return batch;
+        return addBatchMetadata(batch);
     }
 
     /**
@@ -80,3 +87,18 @@ export class BatchManager {
         };
     }
 }
+
+const addBatchMetadata = (batch: IBatch): IBatch => {
+    if (batch.content.length > 1) {
+        batch.content[0].metadata = {
+            ...batch.content[0].metadata,
+            batch: true
+        };
+        batch.content[batch.content.length - 1].metadata = {
+            ...batch.content[batch.content.length - 1].metadata,
+            batch: false
+        };
+    }
+
+    return batch;
+};

@@ -7,26 +7,36 @@ import { assert } from "@fluidframework/common-utils";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { GenericError } from "@fluidframework/container-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
+import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
 import { BatchManager } from "./batchManager";
-import { IOutboxOptions, IBatchProcessors, BatchMessage, IBatch } from "./definitions";
+import { BatchMessage, IBatch } from "./definitions";
+import { OpCompressor } from "./opCompressor";
+
+export interface IOutboxConfig {
+    readonly compressionOptions?: ICompressionRuntimeOptions;
+    // The maximum size of a batch that we can send over the wire.
+    readonly maxBatchSizeInBytes: number;
+};
+
+export interface IOutboxParameters {
+    readonly shouldSend: () => boolean,
+    readonly pendingStateManager: PendingStateManager,
+    readonly containerContext: IContainerContext,
+    readonly config: IOutboxConfig,
+    readonly compressor: OpCompressor;
+}
 
 export class Outbox {
     private readonly attachFlowBatch: BatchManager;
     private readonly mainBatch: BatchManager;
     private readonly defaultAttachFlowSoftLimitInBytes = 64 * 1024;
 
-    constructor(
-        private readonly shouldSend: () => boolean,
-        private readonly pendingStateManager: PendingStateManager,
-        private readonly context: IContainerContext,
-        private readonly options: IOutboxOptions,
-        private readonly batchProcessors: IBatchProcessors,
-    ) {
+    constructor(private readonly params: IOutboxParameters) {
         // We need to allow infinite size batches if we enable compression
-        const hardLimit = this.options.compressionOptions?.minimumBatchSizeInBytes !== Infinity
-            ? Infinity : this.options.maxBatchSizeInBytes;
-        const softLimit = this.options.compressionOptions?.minimumBatchSizeInBytes !== Infinity
+        const hardLimit = this.params.config.compressionOptions?.minimumBatchSizeInBytes !== Infinity
+            ? Infinity : this.params.config.maxBatchSizeInBytes;
+        const softLimit = this.params.config.compressionOptions?.minimumBatchSizeInBytes !== Infinity
             ? Infinity : this.defaultAttachFlowSoftLimitInBytes;
 
         this.attachFlowBatch = new BatchManager({
@@ -79,95 +89,83 @@ export class Outbox {
         this.flushInternal(this.mainBatch.popBatch());
     }
 
-    private flushInternal(batch: IBatch) {
-        this.flushBatch(
-            this.addBatchMetadataToBatch(
-                this.processBatch(batch)));
+    private flushInternal(rawBatch: IBatch) {
+        const processedBatch = this.maybeCompressBatch(rawBatch);
+        const clientSequenceNumber = this.sendBatch(processedBatch);
+
+        this.persistBatch(clientSequenceNumber, rawBatch.content);
     }
 
-    private addBatchMetadataToBatch(batch: IBatch): IBatch {
-        if (batch.content.length > 1) {
-            batch.content[0].metadata = {
-                ...batch.content[0].metadata,
-                batch: true
-            };
-            batch.content[batch.content.length - 1].metadata = {
-                ...batch.content[batch.content.length - 1].metadata,
-                batch: false
-            };
-        }
-
-        return batch;
-    }
-
-    private processBatch(batch: IBatch): IBatch {
-        if (batch.content.length === 0 || this.options.compressionOptions === undefined) {
+    private maybeCompressBatch(batch: IBatch): IBatch {
+        if (batch.content.length === 0
+            || this.params.config.compressionOptions === undefined
+            || this.params.config.compressionOptions.minimumBatchSizeInBytes >= batch.contentSizeInBytes) {
+            // Nothing to do if the batch is empty or if compression is disabled or if we don't need to compress
             return batch;
         }
 
-        let processedBatch = batch;
-        if (this.options.compressionOptions.minimumBatchSizeInBytes < batch.contentSizeInBytes) {
-            processedBatch = this.batchProcessors.compressor.processOutgoing(batch);
+        const compressedBatch = this.params.compressor.compressBatch(batch);
+        if (compressedBatch.contentSizeInBytes < this.params.config.maxBatchSizeInBytes) {
+            // If we don't reach the maximum supported size of a batch, it safe to be sent as is
+            return compressedBatch;
         }
 
-        return processedBatch;
+        throw new GenericError(
+            "BatchTooLarge",
+                /* error */ undefined,
+            {
+                opSize: batch.contentSizeInBytes,
+                count: batch.content.length,
+                limit: this.params.config.maxBatchSizeInBytes,
+                compressed: true,
+            });
     }
 
-    private flushBatch(batch: IBatch): void {
-        const length = batch.content.length;
-
-        if (length === 0) {
-            return;
-        }
-
+    private sendBatch(batch: IBatch): number {
         let clientSequenceNumber: number = -1;
+        const length = batch.content.length;
 
         // Did we disconnect in the middle of turn-based batch?
         // If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
-        if (this.shouldSend()) {
-            clientSequenceNumber = this.sendBatch(batch.content);
-
-            // Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
-            clientSequenceNumber -= length - 1;
-            assert(clientSequenceNumber >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
+        if (length === 0 || !this.params.shouldSend()) {
+            return clientSequenceNumber;
         }
 
-        this.persistPendingBatch(clientSequenceNumber, batch.content);
-    }
-
-    private sendBatch(batch: BatchMessage[]): number {
-        if (this.context.submitBatchFn === undefined) {
+        if (this.params.containerContext.submitBatchFn === undefined) {
             // Legacy path - supporting old loader versions. Can be removed only when LTS moves above
             // version that has support for batches (submitBatchFn)
-            let clientSequenceNumber: number = -1;
-            for (const message of batch) {
+            for (const message of batch.content) {
                 // Legacy path doesn't support compressed payloads and will submit uncompressed payload anyways
                 if (message.metadata?.compressed) {
                     delete message.metadata.compressed;
                 }
 
-                clientSequenceNumber = this.context.submitFn(
+                clientSequenceNumber = this.params.containerContext.submitFn(
                     MessageType.Operation,
                     message.deserializedContent,
                     true, // batch
                     message.metadata);
             }
 
-            this.context.deltaManager.flush();
-            return clientSequenceNumber;
+            this.params.containerContext.deltaManager.flush();
+        } else {
+            // returns clientSequenceNumber of last message in a batch
+            clientSequenceNumber = this.params.containerContext.submitBatchFn(
+                batch.content.map((message) => ({ contents: message.contents, metadata: message.metadata })));
         }
 
-        const batchToSend = batch.map((message) => ({ contents: message.contents, metadata: message.metadata }));
-        // returns clientSequenceNumber of last message in a batch
-        return this.context.submitBatchFn(batchToSend);
+        // Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
+        clientSequenceNumber -= length - 1;
+        assert(clientSequenceNumber >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
+        return clientSequenceNumber;
     }
 
-    private persistPendingBatch(initialClientSequenceNumber: number, batch: BatchMessage[]) {
+    private persistBatch(initialClientSequenceNumber: number, batch: BatchMessage[]) {
         let clientSequenceNumber = initialClientSequenceNumber;
         // Let the PendingStateManager know that a message was submitted.
         // In future, need to shift toward keeping batch as a whole!
         for (const message of batch) {
-            this.pendingStateManager.onSubmitMessage(
+            this.params.pendingStateManager.onSubmitMessage(
                 message.deserializedContent.type,
                 clientSequenceNumber,
                 message.referenceSequenceNumber,
@@ -179,7 +177,7 @@ export class Outbox {
             clientSequenceNumber++;
         }
 
-        this.pendingStateManager.onFlush();
+        this.params.pendingStateManager.onFlush();
     }
 
     public checkpoint() {

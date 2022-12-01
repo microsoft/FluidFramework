@@ -7,13 +7,13 @@ import { strict as assert } from "assert";
 import { IBatchMessage, IContainerContext, IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { PendingStateManager } from "../../pendingStateManager";
+import { BatchMessage, IBatch, OpCompressor, Outbox } from "../../opLifecycle";
 import {
     CompressionAlgorithms,
     ContainerMessageType,
     ContainerRuntimeMessage,
     ICompressionRuntimeOptions,
-} from "../..";
-import { BatchMessage, IBatch, IBatchProcessor, Outbox } from "../../opLifecycle";
+} from "../../containerRuntime";
 
 describe("Outbox", () => {
     const maxBatchSizeInBytes = 1024;
@@ -72,8 +72,8 @@ describe("Outbox", () => {
         connected: true,
     });
 
-    const getMockCompressor = (): IBatchProcessor => ({
-        processOutgoing: (batch: IBatch): IBatch => {
+    const getMockCompressor = (): Partial<OpCompressor> => ({
+        compressBatch: (batch: IBatch): IBatch => {
             state.batchesCompressed.push(batch);
             return batch;
         },
@@ -121,19 +121,16 @@ describe("Outbox", () => {
         context: IContainerContext,
         maxBatchSize: number = maxBatchSizeInBytes,
         compressionOptions?: ICompressionRuntimeOptions,
-    ) => new Outbox(
-        () => state.canSendOps,
-        getMockPendingStateManager() as PendingStateManager,
-        context,
-        {
-            enableOpReentryCheck: false,
+    ) => new Outbox({
+        shouldSend: () => state.canSendOps,
+        pendingStateManager: getMockPendingStateManager() as PendingStateManager,
+        containerContext: context,
+        compressor: getMockCompressor() as OpCompressor,
+        config: {
             maxBatchSizeInBytes: maxBatchSize,
             compressionOptions,
-        },
-        {
-            compressor: getMockCompressor(),
-        },
-    );
+        }
+    });
 
     beforeEach(() => {
         state.deltaManagerFlushCalls = 0;
@@ -188,7 +185,7 @@ describe("Outbox", () => {
         const rawMessagesInFlushOrder = [
             messages[2], messages[3], messages[0], messages[1], messages[4],
         ];
-        assert.equal(state.pendingFlushCount, 3);
+        assert.equal(state.pendingFlushCount, 4);
         assert.deepEqual(state.pendingOpContents, rawMessagesInFlushOrder.map((message) => ({
             type: message.deserializedContent.type,
             content: message.deserializedContent.contents,
@@ -216,7 +213,7 @@ describe("Outbox", () => {
                 batchedMessage(messages[0]),
             ],
         ]);
-        assert.equal(state.pendingFlushCount, 2);
+        assert.equal(state.pendingFlushCount, 4);
         assert.deepEqual(state.pendingOpContents, messages.map((message) => ({
             type: message.deserializedContent.type,
             content: message.deserializedContent.contents,
