@@ -344,7 +344,7 @@ export class DocumentDeltaConnection
         // to prevent normal messages from being emitted.
         this._disposed = true;
 
-        // Let user of connection object know about disconnect. This has to happen in betwee setting _disposed and
+        // Let user of connection object know about disconnect. This has to happen in between setting _disposed and
         // removing all listeners!
         this.emit("disconnect", err);
 

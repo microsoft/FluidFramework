@@ -328,7 +328,6 @@ export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boole
         case "Return": {
             const lhsReattach = lhs as Reattach;
             if (
-                rhs.id === lhsReattach.id &&
                 rhs.detachedBy === lhsReattach.detachedBy &&
                 lhsReattach.detachIndex + lhsReattach.count === rhs.detachIndex
             ) {

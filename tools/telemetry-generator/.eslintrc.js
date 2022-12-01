@@ -13,5 +13,8 @@ module.exports = {
     "rules": {
         "@typescript-eslint/ban-ts-comment": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
+
+        // This package is exclusively used in a Node.js context
+        "import/no-nodejs-modules": "off",
     }
 };
