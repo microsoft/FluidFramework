@@ -41,7 +41,6 @@ export {
     ensureSessionUuid,
 } from "./numericUuid";
 export {
-    AttributionId,
     StableId,
     CompressedId,
     FinalCompressedId,
