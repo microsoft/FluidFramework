@@ -13,6 +13,9 @@ import { AppModel } from "./appModel";
 import { TaskListInstantiationFactory } from "./taskList";
 
 const taskListId = "task-list";
+const SignalType = {
+    ExternalDataChanged: "externalDataChange"
+};
 
 /**
  * {@inheritDoc ModelContainerRuntimeFactory}
@@ -51,6 +54,12 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
             await runtime.getRootDataStore(taskListId),
             "",
         );
+        // Register listener only once the model is fully loaded and ready
+        runtime.on("signal", (message) => {
+            if (message.type === SignalType.ExternalDataChanged) {
+                taskList.importExternalData();
+            }
+        });
         return new AppModel(taskList, container);
     }
 }
