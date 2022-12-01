@@ -132,8 +132,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private noOpCount: number = 0;
     /** Track clientSequenceNumber of the last op */
     private lastClientSequenceNumber: number | undefined;
-    /** track clientId used last time when we sent any ops */
-    private readonly lastSubmittedClientId: string | undefined;
 
     /**
      * Track down the ops size.
@@ -835,9 +833,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             message.contents = JSON.parse(message.contents);
         }
 
+        const lastSubmittedClientId = this.connectionManager.lastSubmittedClientId;
         // validate client sequence number has no gap. If there is gap, check if there were noops
         // if there were noops, decrement the gap by number of noops and continue
-        if (this.lastClientSequenceNumber !== undefined && this.lastSubmittedClientId !== undefined && this.lastSubmittedClientId === message.clientId) {
+        if (this.lastClientSequenceNumber !== undefined && lastSubmittedClientId !== undefined && lastSubmittedClientId === message.clientId) {
             const clientSeqNumGap = message.clientSequenceNumber - this.lastClientSequenceNumber - 1;
             if (clientSeqNumGap > 0) {
                 if (this.noOpCount > 0) {
