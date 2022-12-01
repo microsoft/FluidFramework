@@ -378,5 +378,7 @@ describe("Outbox", () => {
         outbox.submit(messages[3]);
 
         assert.throws(() => outbox.flush());
+        // The batch is not persisted
+        assert.deepEqual(state.pendingOpContents, []);
     });
 });
