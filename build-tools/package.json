@@ -34,8 +34,6 @@
     "preinstall": "npx only-allow pnpm",
     "postinstall": "npm run build:compile",
     "install:root": "pnpm install --ignore-scripts",
-    "layer-check": "node packages/build-tools/dist/layerCheck/layerCheck.js --root ..",
-    "layer-check:doc": "node packages/build-tools/dist/layerCheck/layerCheck.js --root .. --md",
     "lint": "lerna run lint --no-sort --stream",
     "lint:fix": "lerna run lint:fix --no-sort --stream",
     "policy-check": "node packages/build-cli/bin/dev check policy --exclusions packages/build-tools/data/exclusions.json",
