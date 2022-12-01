@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { Jsonable } from "@fluidframework/datastore-definitions";
 import {
     LocalFieldKey,
     ITreeCursor,
@@ -68,6 +67,10 @@ const adapter: CursorAdapter<JsonCompatible> = {
         }
     },
     getFieldFromNode: (node: JsonCompatible, key: FieldKey): readonly JsonCompatible[] => {
+        if (node === null) {
+            return [];
+        }
+
         if (Array.isArray(node)) {
             return key === EmptyKey ? node : [];
         }
@@ -90,8 +93,8 @@ const adapter: CursorAdapter<JsonCompatible> = {
  *
  * @returns an {@link ITreeCursorSynchronous} for a single {@link JsonCompatible}.
  */
-export function singleJsonCursor<T>(root: Jsonable<T>): ITreeCursorSynchronous {
-    return singleStackTreeCursor(root as JsonCompatible, adapter);
+export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous {
+    return singleStackTreeCursor(root, adapter);
 }
 
 /**
