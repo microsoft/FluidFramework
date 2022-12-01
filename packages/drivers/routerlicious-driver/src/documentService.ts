@@ -55,7 +55,7 @@ export class DocumentService implements api.IDocumentService {
         protected tokenProvider: ITokenProvider,
         protected tenantId: string,
         protected documentId: string,
-        protected ordererRestWrapper: RouterliciousOrdererRestWrapper | undefined,
+        protected ordererRestWrapper: RouterliciousOrdererRestWrapper,
         private readonly driverPolicies: IRouterliciousDriverPolicies,
         private readonly blobCache: ICache<ArrayBufferLike>,
         private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>,
@@ -150,7 +150,7 @@ export class DocumentService implements api.IDocumentService {
             if (shouldUpdateDiscoveredSessionInfo) {
                 await this.refreshDiscovery();
             }
-            if (!this.ordererRestWrapper || shouldUpdateDiscoveredSessionInfo) {
+            if (shouldUpdateDiscoveredSessionInfo) {
                 const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
                 this.ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
                     this.tenantId,
@@ -187,7 +187,7 @@ export class DocumentService implements api.IDocumentService {
      */
     public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
         const connect = async (refreshToken?: boolean) => {
-            let ordererToken = this.ordererRestWrapper?.getToken();
+            let ordererToken = this.ordererRestWrapper.getToken();
             if (this.shouldUpdateDiscoveredSessionInfo()) {
                 await this.refreshDiscovery();
             }
@@ -208,7 +208,7 @@ export class DocumentService implements api.IDocumentService {
                             this.documentId,
                             refreshToken,
                         );
-                        this.ordererRestWrapper?.setTokenAndUpdateAuthHeader(newOrdererToken);
+                        this.ordererRestWrapper.setToken(newOrdererToken);
                         return newOrdererToken;
                     }
                 );

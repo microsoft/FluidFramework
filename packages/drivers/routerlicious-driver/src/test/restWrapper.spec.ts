@@ -8,9 +8,9 @@ import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { RateLimiter } from "@fluidframework/driver-utils";
 import nock from "nock";
-import { ITokenResponse } from "@fluidframework/routerlicious-driver-previous";
 import { RouterliciousRestWrapper } from "../restWrapper";
 import { R11sErrorType } from "../errorUtils";
+import { ITokenResponse } from "../tokens";
 
 describe("RouterliciousDriverRestWrapper", () => {
     const rateLimiter = new RateLimiter(1);
@@ -24,15 +24,14 @@ describe("RouterliciousDriverRestWrapper", () => {
     const token3 = "abc-auth-token-123";
     let tokenQueue: string[] = [];
 
-    const getToken: (refresh?: boolean) => Promise<ITokenResponse | undefined>
-        = async (refresh?: boolean) => new Promise((resolve) => {
+    const getToken = async (refresh?: boolean): Promise<ITokenResponse | undefined> => {
             // Pop a token off tokenQueue
-                const newToken: ITokenResponse = {
-                jwt: tokenQueue.shift() ?? "testtoken"
-            };
-            resolve(newToken);
-        });
-    const getAuthHeader: (token?: ITokenResponse) => string | undefined = (token) => `Bearer ${token?.jwt ?? ""}`;
+            const newToken: ITokenResponse = {
+            jwt: tokenQueue.shift() ?? "testtoken"
+        };
+        return newToken;
+    };
+    const getAuthHeader = (token) => `Bearer ${token?.jwt ?? ""}`;
 
     // Set up mock throttling
     let throttleDurationInMs: number;

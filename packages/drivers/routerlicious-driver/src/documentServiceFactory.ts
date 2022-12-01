@@ -209,8 +209,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         session?: ISession,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
-
-        let ordererRestWrapper: RouterliciousOrdererRestWrapper | undefined;
         const parsedUrl = parseFluidUrl(resolvedUrl.url);
         const [, tenantId, documentId] = parsedUrl.pathname.split("/");
         if (!documentId || !tenantId) {
@@ -219,19 +217,20 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         }
         const logger2 = ChildLogger.create(logger, "RouterliciousDriver", { all: { driverVersion } });
 
+        const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
+        const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+            tenantId,
+            documentId,
+            this.tokenProvider,
+            logger2,
+            rateLimiter,
+            this.driverPolicies.enableRestLess,
+        );
+
         const discoverFluidResolvedUrl = async (): Promise<IFluidResolvedUrl> => {
             if (!this.driverPolicies.enableDiscovery) {
                 return resolvedUrl;
             }
-            const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-            ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
-                tenantId,
-                documentId,
-                this.tokenProvider,
-                logger2,
-                rateLimiter,
-                this.driverPolicies.enableRestLess,
-            );
 
             const discoveredSession = await PerformanceEvent.timedExecAsync(
                 logger2,
@@ -240,10 +239,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                     docId: documentId,
                 },
                 async () => {
-                    if (!ordererRestWrapper) {
-                        throw new Error("OrdererRestWrapper undefined");
-                    }
-
                     // The service responds with the current document session associated with the container.
                     return ordererRestWrapper.get<ISession>(
                         `${resolvedUrl.endpoints.ordererUrl}/documents/${tenantId}/session/${documentId}`);

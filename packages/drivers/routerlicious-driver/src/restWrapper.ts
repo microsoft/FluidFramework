@@ -20,7 +20,7 @@ import { throwR11sNetworkError } from "./errorUtils";
 import { ITokenProvider, ITokenResponse } from "./tokens";
 import { pkgVersion as driverVersion } from "./packageVersion";
 
-type AuthorizationHeaderGetter = (token?: ITokenResponse) => string | undefined;
+type AuthorizationHeaderGetter = (token?: ITokenResponse) => string;
 type TokenFetcher = (refresh?: boolean) => Promise<ITokenResponse | undefined>;
 
 const axiosRequestConfigToFetchRequestConfig = (requestConfig: AxiosRequestConfig): [RequestInfo, RequestInit] => {
@@ -38,7 +38,6 @@ const axiosRequestConfigToFetchRequestConfig = (requestConfig: AxiosRequestConfi
 };
 
 export class RouterliciousRestWrapper extends RestWrapper {
-    private authorizationHeader: string | undefined;
     private token: ITokenResponse | undefined;
     private readonly restLess = new RestLessClient();
 
@@ -56,7 +55,6 @@ export class RouterliciousRestWrapper extends RestWrapper {
 
     public async load() {
         this.token = await this.fetchToken();
-        this.authorizationHeader = this.getAuthorizationHeader(this.token);
     }
 
     protected async request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry = true): Promise<T> {
@@ -89,7 +87,6 @@ export class RouterliciousRestWrapper extends RestWrapper {
         if (response.status === 401 && canRetry) {
             // Refresh Authorization header and retry once
             this.token = await this.fetchToken(true /* refreshToken */);
-            this.authorizationHeader = this.getAuthorizationHeader(this.token);
             return this.request<T>(config, statusCode, false);
         }
         if (response.status === 429 && responseBody?.retryAfter > 0) {
@@ -121,7 +118,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
             "x-correlation-id": correlationId as string,
             "x-driver-version": driverVersion,
             // NOTE: If this.authorizationHeader is undefined, should "Authorization" be removed entirely?
-            "Authorization": this.authorizationHeader!,
+            "Authorization": this.getAuthorizationHeader(this.token),
         };
     }
 
@@ -129,9 +126,8 @@ export class RouterliciousRestWrapper extends RestWrapper {
         return this.token;
     }
 
-    public setTokenAndUpdateAuthHeader(token: ITokenResponse) {
+    public setToken(token: ITokenResponse) {
         this.token = token;
-        this.authorizationHeader = this.getAuthorizationHeader(this.token);
     }
 }
 
@@ -197,7 +193,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
             logger.sendErrorEvent({
                 eventName: "R11sRestWrapperLoadFailure",
             }, e);
-            await restWrapper.load();
+            throw e;
         }
         return restWrapper;
     }
