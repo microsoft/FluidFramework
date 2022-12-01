@@ -118,13 +118,13 @@ describe("Tests for snapshot fetch", () => {
                     snapshotStorageUrl: "fake",
                     attachmentPOSTStorageUrl: "",
                     attachmentGETStorageUrl: "",
-                    deltaStorageUrl: ""
+                    deltaStorageUrl: "",
                 },
                 tokens: {},
                 fileName: "",
                 summarizer: false,
-                id: "id"
-            } ;
+                id: "id",
+            };
 
             epochTracker = new EpochTracker(
                 localCache,
