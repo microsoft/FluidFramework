@@ -647,7 +647,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             return messages;
         }
         return messages.map((message) => {
-            if (this.opContent.has(message.clientSequenceNumber)) {
+            if (this.clientId === message.clientId && this.opContent.has(message.clientSequenceNumber)) {
                 message.contents = this.opContent.get(message.clientSequenceNumber);
                 this.opContent.delete(message.clientSequenceNumber);
             }
