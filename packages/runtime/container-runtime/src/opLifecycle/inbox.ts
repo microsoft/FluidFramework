@@ -47,9 +47,7 @@ export class Inbox {
             return message;
         }
 
-        const innerContents = message.contents as ContainerRuntimeMessage;
-        message.type = innerContents.type;
-        message.contents = innerContents.contents;
+        unpack(message);
         return message;
     }
 }
@@ -71,6 +69,15 @@ const copy = (remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessa
     return message;
 };
 
+/**
+ * For a given message, it moves the nested contents and type on level up.
+ *
+ */
+const unpack = (message: ISequencedDocumentMessage) => {
+    const innerContents = message.contents as ContainerRuntimeMessage;
+    message.type = innerContents.type;
+    message.contents = innerContents.contents;
+};
 
 /**
  * Unpacks runtime messages.
@@ -81,23 +88,22 @@ const copy = (remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessa
  *
  * @internal
  */
-export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
-    if (message.type === MessageType.Operation) {
-        // legacy op format?
-        if (message.contents.address !== undefined && message.contents.type === undefined) {
-            message.type = ContainerMessageType.FluidDataStoreOp;
-        } else {
-            // new format
-            const innerContents = message.contents as ContainerRuntimeMessage;
-            message.type = innerContents.type;
-            message.contents = innerContents.contents;
-        }
-        return true;
-    } else {
+export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean {
+    if (message.type !== MessageType.Operation) {
         // Legacy format, but it's already "unpacked",
         // i.e. message.type is actually ContainerMessageType.
         // Or it's non-runtime message.
         // Nothing to do in such case.
         return false;
     }
+
+    // legacy op format?
+    if (message.contents.address !== undefined && message.contents.type === undefined) {
+        message.type = ContainerMessageType.FluidDataStoreOp;
+    } else {
+        // new format
+        unpack(message);
+    }
+
+    return true;
 }
