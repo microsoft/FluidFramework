@@ -43,6 +43,8 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     complete(taskId: string): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): TaskManager;
     static getFactory(): IChannelFactory;
+    // (undocumented)
+    _getTaskQueues(): Map<string, string[]>;
     // @internal (undocumented)
     protected initializeLocalCore(): void;
     // @internal (undocumented)
