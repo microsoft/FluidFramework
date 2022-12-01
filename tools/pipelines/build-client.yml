@@ -72,7 +72,6 @@ pr:
     - next
     - lts
     - release/*
-    - test/gc-stress
   paths:
     include:
     - packages
