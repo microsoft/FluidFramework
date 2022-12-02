@@ -338,7 +338,7 @@ export function toInstrumentedOdspTokenFetcher(
 export function createCacheSnapshotKey(odspResolvedUrl: IOdspResolvedUrl): ICacheEntry {
     const cacheEntry: ICacheEntry = {
         type: snapshotKey,
-        key: "",
+        key: odspResolvedUrl.fileVersion ?? "",
         file: {
             resolvedUrl: odspResolvedUrl,
             docId: odspResolvedUrl.hashedDocumentId,
@@ -369,4 +369,18 @@ export function buildOdspShareLinkReqParams(shareLinkType: ShareLinkTypes | ISha
     const role = (shareLinkType as ISharingLinkKind).role;
     shareLinkRequestParams = role ? `${shareLinkRequestParams}&createLinkRole=${role}` : shareLinkRequestParams;
     return shareLinkRequestParams;
+}
+
+export function measure<T>(callback: () => T): [T, number] {
+    const start = performance.now();
+    const result = callback();
+    const time = performance.now() - start;
+    return [result, time];
+}
+
+export async function measureP<T>(callback: () => Promise<T>): Promise<[T, number]> {
+    const start = performance.now();
+    const result = await callback();
+    const time = performance.now() - start;
+    return [result, time];
 }

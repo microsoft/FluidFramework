@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-nodejs-modules
-import { fail } from "assert";
 import { assert } from "@fluidframework/common-utils";
 import {
     Value,
@@ -26,7 +24,7 @@ import {
     FieldAnchor,
     ITreeCursor,
 } from "../../core";
-import { brand } from "../../util";
+import { brand, fail } from "../../util";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import {
     AdaptingProxyHandler,

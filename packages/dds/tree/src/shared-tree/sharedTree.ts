@@ -31,7 +31,6 @@ import {
     defaultSchemaPolicy,
     EditableTreeContext,
     ForestIndex,
-    ObjectForest,
     SchemaIndex,
     DefaultChangeFamily,
     defaultChangeFamily,
@@ -44,6 +43,7 @@ import {
     DefaultChangeset,
     EditManagerIndex,
     runSynchronousTransaction,
+    buildForest,
 } from "../feature-libraries";
 
 /**
@@ -120,7 +120,7 @@ class SharedTree
     ) {
         const anchors = new AnchorSet();
         const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-        const forest = new ObjectForest(schema, anchors);
+        const forest = buildForest(schema, anchors);
         const editManager: EditManager<DefaultChangeset, DefaultChangeFamily> = new EditManager(
             defaultChangeFamily,
             anchors,

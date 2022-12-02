@@ -178,6 +178,35 @@ describe("Cell", () => {
                 assert.equal(cell1.get(), undefined, "Could not delete cell value");
                 assert.equal(cell2.get(), undefined, "Could not delete cell value from remote client");
             });
+
+            it("Shouldn't overwrite value if there is pending set", () => {
+                const value1 = "value1";
+                const pending1 = "pending1";
+                const pending2 = "pending2";
+                cell1.set(value1);
+                cell2.set(pending1);
+                cell2.set(pending2);
+
+                containerRuntimeFactory.processSomeMessages(1);
+
+                // Verify the SharedCell with processed message
+                assert.equal(cell1.empty(), false, "could not find the set value");
+                assert.equal(cell1.get(), value1, "could not get the set value");
+
+                // Verify the SharedCell with 2 pending messages
+                assert.equal(cell2.empty(), false, "could not find the set value in pending cell");
+                assert.equal(cell2.get(), pending2, "could not get the set value from pending cell");
+
+                containerRuntimeFactory.processSomeMessages(1);
+
+                // Verify the SharedCell gets updated from remote
+                assert.equal(cell1.empty(), false, "could not find the set value");
+                assert.equal(cell1.get(), pending1, "could not get the set value");
+
+                // Verify the SharedCell with 1 pending message
+                assert.equal(cell2.empty(), false, "could not find the set value in pending cell");
+                assert.equal(cell2.get(), pending2, "could not get the set value from pending cell");
+            });
         });
     });
 
