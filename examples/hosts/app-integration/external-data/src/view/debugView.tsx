@@ -28,14 +28,14 @@ interface IExternalDataViewProps {
 const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalDataViewProps) => {
     const [externalData, setExternalData] = useState<string | undefined>();
     useEffect(() => {
-        const fetchExternalData = () => {
+        const fetchExternalData = (): void => {
             externalDataSource.fetchData()
                 .then(setExternalData)
                 .catch(console.error);
         };
         externalDataSource.on("debugDataWritten", fetchExternalData);
         fetchExternalData();
-        return () => {
+        return (): void => {
             externalDataSource.off("debugDataWritten", fetchExternalData);
         };
     }, []);

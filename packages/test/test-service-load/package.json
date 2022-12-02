@@ -52,8 +52,7 @@
     "test:stress:tinylicious:run": "npm run test:stress:run",
     "tsc": "tsc",
     "typetests:gen": "flub generate typetests --generate --dir .",
-    "typetests:prepare": "flub generate typetests --prepare --dir . --pin"
-,
+    "typetests:prepare": "flub generate typetests --prepare --dir . --pin",
     "usePrereleaseDeps": "node ./scripts/usePrereleaseDeps.js"
   },
   "nyc": {
