@@ -29,7 +29,6 @@ import {
     DefaultChangeFamily,
     defaultChangeFamily,
     DefaultChangeset,
-    FieldChangeMap,
 } from "../../feature-libraries";
 import { EditManager } from "../../edit-manager";
 
