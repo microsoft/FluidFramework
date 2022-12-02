@@ -136,7 +136,7 @@ export class TestTreeProvider {
     /**
      * Create a new {@link TestTreeProvider} with a number of trees pre-initialized.
      * @param trees - the number of trees to initialize this provider with. This is the same as calling
-     * @param summarizeType - if `onDemand`, summaries will only be made when `TestTreeProvider.summarize` is called.
+     * @param summarizeType - enum to manually, automatically, or disable summarization
      * @param factory - The factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
      * {@link create} followed by {@link createTree} _trees_ times.
      *
