@@ -12,8 +12,15 @@ import {
     TreeSchemaIdentifier,
     SchemaData,
     GlobalFieldKey,
+    LocalFieldKey,
 } from "../../../schema-stored";
-import { EmptyKey, rootFieldKey, JsonableTree } from "../../../tree";
+import {
+    EmptyKey,
+    rootFieldKey,
+    JsonableTree,
+    symbolFromKey,
+    GlobalFieldKeySymbol,
+} from "../../../tree";
 import { brand, Brand } from "../../../util";
 
 // TODO: Use typed schema (ex: typedTreeSchema), here, and derive the types below from them programmatically.
@@ -67,8 +74,13 @@ export const phonesSchema = namedTreeSchema({
     extraLocalFields: emptyField,
 });
 
-const globalFieldKeySequencePhones: GlobalFieldKey = brand("sequencePhones");
-const globalFieldSchemaSequencePhones = fieldSchema(FieldKinds.sequence, [stringSchema.name]);
+export const globalFieldKeySequencePhones: GlobalFieldKey = brand("sequencePhones");
+export const globalFieldSymbolSequencePhones: GlobalFieldKeySymbol = symbolFromKey(
+    globalFieldKeySequencePhones,
+);
+export const globalFieldSchemaSequencePhones = fieldSchema(FieldKinds.sequence, [
+    stringSchema.name,
+]);
 
 export const addressSchema = namedTreeSchema({
     name: brand("Test:Address-1.0.0"),
@@ -84,7 +96,8 @@ export const addressSchema = namedTreeSchema({
 
 export const mapStringSchema = namedTreeSchema({
     name: brand("Map<String>"),
-    extraLocalFields: fieldSchema(FieldKinds.value, [stringSchema.name]),
+    extraLocalFields: fieldSchema(FieldKinds.optional, [stringSchema.name]),
+    // currently it has no effect since EditableTree does not support (de-)serialization of `object`s
     value: ValueSchema.Serializable,
 });
 
@@ -94,7 +107,7 @@ export const personSchema = namedTreeSchema({
         name: fieldSchema(FieldKinds.value, [stringSchema.name]),
         age: fieldSchema(FieldKinds.value, [int32Schema.name]),
         salary: fieldSchema(FieldKinds.value, [float32Schema.name]),
-        friends: fieldSchema(FieldKinds.value, [mapStringSchema.name]),
+        friends: fieldSchema(FieldKinds.optional, [mapStringSchema.name]),
         address: fieldSchema(FieldKinds.value, [addressSchema.name]),
     },
     extraLocalFields: emptyField,
@@ -168,11 +181,13 @@ export type AddressType = EditableTree & {
     sequencePhones?: SimplePhonesType;
 };
 
+export type FriendsType = EditableTree & Record<LocalFieldKey, string>;
+
 export type PersonType = EditableTree & {
     name: string;
     age: Int32;
     salary: number;
-    friends: Record<string, string>;
+    friends: FriendsType;
     address: AddressType;
 };
 

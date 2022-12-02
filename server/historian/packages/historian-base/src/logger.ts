@@ -21,19 +21,17 @@ export function configureHistorianLogging(configOrPath: Provider | string) {
         // to avoid adding duplicate transports to the global `winston` instance. This should just call
         // configureLogging() once global winston usage is removed in favor of Lumberjack.
         const config = typeof configOrPath === "string"
-        ? nconf.argv().env({ separator: "__", parseValues: true }).file(configOrPath).use("memory")
-        : configOrPath;
+            ? nconf.argv().env({ separator: "__", parseValues: true }).file(configOrPath).use("memory")
+            : configOrPath;
 
         const lumberjackConfig = config.get("lumberjack");
         const engineList =
-            lumberjackConfig && lumberjackConfig.engineList ?
-            lumberjackConfig.engineList as ILumberjackEngine[] :
+            (lumberjackConfig?.engineList as ILumberjackEngine[] | undefined) ??
             [new WinstonLumberjackEngine()];
 
         const schemaValidatorList =
-            lumberjackConfig && lumberjackConfig.schemaValidator ?
-            lumberjackConfig.schemaValidator as ILumberjackSchemaValidator[] :
-            undefined;
+            (lumberjackConfig?.schemaValidator as ILumberjackSchemaValidator[] | undefined);
+
 
         Lumberjack.setup(engineList, schemaValidatorList);
     }

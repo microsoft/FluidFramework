@@ -18,10 +18,10 @@ describe("Property Inspector", () => {
     });
 
     it("Inspector at root1 is rendered", async () => {
-        await page.waitForSelector("#root1 > :first-child");
+        await page.waitForSelector("#sbs-left > :first-child");
     });
 
     it("Inspector at root2 is rendered", async () => {
-        await page.waitForSelector("#root2 > :first-child");
+        await page.waitForSelector("#sbs-right > :first-child");
     });
 });
