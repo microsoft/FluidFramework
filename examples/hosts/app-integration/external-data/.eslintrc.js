@@ -5,7 +5,10 @@
 
 module.exports = {
     extends: [
-        require.resolve("@fluidframework/eslint-config-fluid", "prettier"),
+        require.resolve(
+            "@fluidframework/eslint-config-fluid/strict",
+            "prettier"
+        ),
     ],
     rules: {},
 };
