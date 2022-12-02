@@ -20,6 +20,7 @@ export class BatchManager {
     private batchContentSize = 0;
 
     public get length() { return this.pendingBatch.length; }
+    public get contentSizeInBytes() { return this.batchContentSize; }
 
     constructor(public readonly options: IBatchManagerOptions) { }
 

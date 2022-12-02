@@ -14,7 +14,7 @@ import { BatchMessage, IBatch } from "./definitions";
 import { OpCompressor } from "./opCompressor";
 
 export interface IOutboxConfig {
-    readonly compressionOptions?: ICompressionRuntimeOptions;
+    readonly compressionOptions: ICompressionRuntimeOptions;
     // The maximum size of a batch that we can send over the wire.
     readonly maxBatchSizeInBytes: number;
 };
@@ -33,11 +33,10 @@ export class Outbox {
     private readonly defaultAttachFlowSoftLimitInBytes = 64 * 1024;
 
     constructor(private readonly params: IOutboxParameters) {
+        const isCompressionEnabled = this.params.config.compressionOptions.minimumBatchSizeInBytes !== Number.POSITIVE_INFINITY;
         // We need to allow infinite size batches if we enable compression
-        const hardLimit = this.params.config.compressionOptions?.minimumBatchSizeInBytes !== Infinity
-            ? Infinity : this.params.config.maxBatchSizeInBytes;
-        const softLimit = this.params.config.compressionOptions?.minimumBatchSizeInBytes !== Infinity
-            ? Infinity : this.defaultAttachFlowSoftLimitInBytes;
+        const hardLimit = isCompressionEnabled ? Infinity : this.params.config.maxBatchSizeInBytes;
+        const softLimit = isCompressionEnabled ? Infinity : this.defaultAttachFlowSoftLimitInBytes;
 
         this.attachFlowBatch = new BatchManager({
             hardLimit,
@@ -81,6 +80,15 @@ export class Outbox {
                         limit: this.attachFlowBatch.options.hardLimit,
                     });
             }
+        }
+
+        // If compression is enabled, we will always successfully receive
+        // attach ops and compress then send them at the next JS turn, regardless
+        // of the overall size of the accumulated ops in the batch.
+        // However, it is more efficient to flush these ops faster, preferably
+        // after they reach a size which would benefit from compression.
+        if (this.attachFlowBatch.contentSizeInBytes >= this.params.config.compressionOptions.minimumBatchSizeInBytes) {
+            this.flushInternal(this.attachFlowBatch.popBatch());
         }
     }
 

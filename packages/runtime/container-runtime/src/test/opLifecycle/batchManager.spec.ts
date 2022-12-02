@@ -152,4 +152,18 @@ describe("BatchManager", () => {
         const singleOpBatch = batchManager.popBatch();
         assert.equal(singleOpBatch.content[0].metadata?.batch, undefined);
     });
+
+    it("Batch content size is tracked correctly", () => {
+        const batchManager = new BatchManager({ hardLimit });
+        assert.equal(batchManager.push(smallMessage()), true);
+        assert.equal(batchManager.contentSizeInBytes, smallMessageSize * batchManager.length);
+        assert.equal(batchManager.push(smallMessage()), true);
+        assert.equal(batchManager.contentSizeInBytes, smallMessageSize * batchManager.length);
+        assert.equal(batchManager.push(smallMessage()), true);
+        assert.equal(batchManager.contentSizeInBytes, smallMessageSize * batchManager.length);
+
+        const batchContentSizeInBytes = batchManager.contentSizeInBytes;
+        const batch = batchManager.popBatch();
+        assert.equal(batchContentSizeInBytes, batch.contentSizeInBytes);
+    });
 });
