@@ -119,6 +119,10 @@ export class TestTreeProvider {
                 new TestContainerRuntimeFactory(
                     "@fluid-example/test-dataStore",
                     new TestFluidObjectFactory(registry),
+                    // Before merging this in, make as separate PR that replaces the summarizeOnDemand flag
+                    // with an enum to choose whether to disable summaries, have automated summaries, or have
+                    // on-demand summaries.
+                    { summaryOptions: { disableSummaries: true } },
                 ),
         );
 

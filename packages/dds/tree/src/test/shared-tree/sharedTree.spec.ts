@@ -202,12 +202,18 @@ describe("SharedTree", () => {
         const provider = await TestTreeProvider.create(2);
         const [tree1, tree2] = provider.trees;
 
+        // Make some arbitrary number of edits
         for (let i = 0; i < 10; ++i) {
             insert(tree1, 0, "");
         }
 
         await provider.ensureSynchronized();
+
+        // These two edit will have ref numbers that correspond to the last of the above edits
+        insert(tree1, 0, "");
         insert(tree2, 0, "");
+
+        // This synchronization point should ensure that both trees see the edits with the higher ref numbers.
         await provider.ensureSynchronized();
 
         // It's not clear if we'll ever want to expose the EditManager to ISharedTree consumers or
