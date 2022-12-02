@@ -21,10 +21,6 @@ import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { LeaderElection } from "./leaderElection";
-import {
-    rootDataObjectFactory,
-    IGCDataStore,
-} from "./gcDataStores";
 
 export interface IRunConfig {
     runId: number;
@@ -45,7 +41,6 @@ const sharedMapKey = "sharedMap";
 const startTimeKey = "startTime";
 const taskTimeKey = "taskTime";
 const gcDataStoreKey = "dataStore";
-const gcDataStore2Key = "gcDataStore";
 const defaultBlobSize = 1024;
 
 /**
@@ -432,9 +427,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 
     protected async initializingFirstTime() {
         this.root.set(taskManagerKey, TaskManager.create(this.runtime).handle);
-
-        const gcDataStore = await rootDataObjectFactory.createInstance(this.context.containerRuntime);
-        this.root.set(gcDataStore2Key, gcDataStore.handle);
     }
 
     public async detached(config: Omit<IRunConfig, "runId">, logger) {
@@ -449,13 +441,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
     }
 
     public async run(config: IRunConfig, reset: boolean, logger: TelemetryLogger) {
-        const gcDataStoreHandle = this.root.get<IFluidHandle<IGCDataStore>>(gcDataStore2Key);
-        assert(gcDataStoreHandle !== undefined, "Could not find GC data store handle");
-        const gcDataStore = await gcDataStoreHandle.get();
-        return gcDataStore.run(config);
-    }
-
-    public async run_old(config: IRunConfig, reset: boolean, logger: TelemetryLogger) {
         const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
             config, reset, this.root, this.runtime, this.context.containerRuntime, logger);
 
@@ -499,11 +484,11 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
         const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
         const opsGapMs = cycleMs / opsPerCycle;
-        const opSizeinBytes = (typeof config.testConfig.opSizeinBytes === 'undefined') ? 
+        const opSizeinBytes = (typeof config.testConfig.opSizeinBytes === 'undefined') ?
         0 : config.testConfig.opSizeinBytes;
         assert(opSizeinBytes >= 0, "opSizeinBytes must be greater than or equal to zero.");
         const generateStringOfSize = (sizeInBytes: number): string => new Array(sizeInBytes + 1).join("0");
-        let opsSent = 0; 
+        let opsSent = 0;
         try {
             if (opSizeinBytes === 0) {
                 while (dataModel.counter.value < clientSendCount && !this.disposed) {
@@ -595,10 +580,8 @@ const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntime
 
 export const createFluidExport = (options: IContainerRuntimeOptions) =>
     new ContainerRuntimeFactoryWithDefaultDataStore(
-        rootDataObjectFactory,
-        [
-            [rootDataObjectFactory.type, Promise.resolve(rootDataObjectFactory)],
-        ],
+        LoadTestDataStoreInstantiationFactory,
+        new Map([[LoadTestDataStore.DataStoreName, Promise.resolve(LoadTestDataStoreInstantiationFactory)]]),
         undefined,
         [innerRequestHandler],
         options,

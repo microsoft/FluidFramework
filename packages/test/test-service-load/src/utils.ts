@@ -26,10 +26,11 @@ import {
     OdspTestDriver,
 } from "@fluidframework/test-drivers";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
-import { createFluidExport, ILoadTest } from "./loadTestDataStore";
+import { ILoadTest } from "./loadTestDataStore";
 import { generateConfigurations, generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
+import { createGCFluidExport } from "./gcDataStores";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
@@ -102,7 +103,7 @@ const codeDetails: IFluidCodeDetails = {
 
 export const createCodeLoader =
     (options: IContainerRuntimeOptions) =>
-        new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
+        new LocalCodeLoader([[codeDetails, createGCFluidExport(options)]]);
 
 class MockDetachedBlobStorage implements IDetachedBlobStorage {
     public readonly blobs = new Map<string, ArrayBufferLike>();
