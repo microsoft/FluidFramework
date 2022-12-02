@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Uint8ArrayToString } from "@fluidframework/common-utils";
-import { getDocAttributesFromProtocolSummary, NonRetryableError } from "@fluidframework/driver-utils";
-import { getGitType } from "@fluidframework/protocol-base";
-import { SummaryType, ISummaryTree, ISummaryBlob } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/common-utils";
+import { NonRetryableError } from "@fluidframework/driver-utils";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
@@ -19,11 +18,7 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
-    IOdspSummaryTree,
-    OdspSummaryTreeValue,
-    OdspSummaryTreeEntry,
     ICreateFileResponse,
-    IOdspSummaryPayload,
 } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
