@@ -116,10 +116,13 @@ export function decodeJsonFormat0(
     change: JsonCompatibleReadOnly,
 ): ModularChangeset {
     const encodedChange = change as unknown as EncodedModularChangeset;
-    return {
-        maxId: encodedChange.maxId,
+    const decoded: ModularChangeset = {
         changes: decodeFieldChangesFromJson(fieldKinds, encodedChange.changes),
     };
+    if (encodedChange.maxId !== undefined) {
+        decoded.maxId = encodedChange.maxId;
+    }
+    return decoded;
 }
 
 function decodeFieldChangesFromJson(

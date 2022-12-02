@@ -99,17 +99,14 @@ export class ModularChangeFamily
     }
 
     compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
-        let maxId = changes.reduce((max, change) => Math.max(change.change.maxId ?? 0, max), -1);
+        let maxId = changes.reduce((max, change) => Math.max(change.change.maxId ?? -1, max), -1);
         const genId: IdAllocator = () => brand(++maxId);
 
-        const fields = this.composeFieldMaps(
+        const composedFields = this.composeFieldMaps(
             changes.map((change) => tagChange(change.change.changes, change.revision)),
             genId,
         );
-        return {
-            maxId: brand(maxId),
-            changes: fields,
-        };
+        return makeModularChangeset(composedFields, maxId);
     }
 
     private composeFieldMaps(
@@ -196,16 +193,14 @@ export class ModularChangeFamily
     }
 
     invert(change: TaggedChange<ModularChangeset>): ModularChangeset {
-        let maxId = change.change.maxId ?? 0;
+        let maxId = change.change.maxId ?? -1;
         const genId: IdAllocator = () => brand(++maxId);
-        const changes = this.invertFieldMap(
+        const invertedFields = this.invertFieldMap(
             tagChange(change.change.changes, change.revision),
             genId,
         );
-        return {
-            maxId: brand(maxId),
-            changes,
-        };
+
+        return makeModularChangeset(invertedFields, maxId);
     }
 
     private invertFieldMap(
@@ -261,18 +256,15 @@ export class ModularChangeFamily
     }
 
     rebase(change: ModularChangeset, over: TaggedChange<ModularChangeset>): ModularChangeset {
-        let maxId = change.maxId ?? 0;
+        let maxId = change.maxId ?? -1;
         const genId: IdAllocator = () => brand(++maxId);
-        const changes = this.rebaseFieldMap(
+        const rebasedFields = this.rebaseFieldMap(
             change.changes,
             tagChange(over.change.changes, over.revision),
             genId,
         );
 
-        return {
-            maxId: brand(maxId),
-            changes,
-        };
+        return makeModularChangeset(rebasedFields, maxId);
     }
 
     private rebaseFieldMap(
@@ -431,6 +423,14 @@ export function getChangeHandler(
     return getFieldKind(fieldKinds, kind).changeHandler;
 }
 
+function makeModularChangeset(changes: FieldChangeMap, maxId: number): ModularChangeset {
+    const changeset: ModularChangeset = { changes };
+    if (maxId >= 0) {
+        changeset.maxId = brand(maxId);
+    }
+    return changeset;
+}
+
 class ModularChangeEncoder extends ChangeEncoder<ModularChangeset> {
     constructor(private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
         super();
@@ -497,7 +497,7 @@ export class ModularEditBuilder
             remainingPath = remainingPath.parent;
         }
 
-        this.applyChange({ maxId, changes: fieldChangeMap });
+        this.applyChange(makeModularChangeset(fieldChangeMap, maxId));
     }
 
     setValue(path: UpPath, value: Value): void {

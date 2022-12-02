@@ -171,7 +171,6 @@ const nodeChanges2: NodeChangeset = {
 };
 
 const rootChange1a: ModularChangeset = {
-    maxId: brand(-1),
     changes: new Map([
         [
             fieldA,
@@ -191,7 +190,6 @@ const rootChange1a: ModularChangeset = {
 };
 
 const rootChange1aGeneric: ModularChangeset = {
-    maxId: brand(-1),
     changes: new Map([
         [
             fieldA,
@@ -213,7 +211,6 @@ const rootChange1aGeneric: ModularChangeset = {
 };
 
 const rootChange1b: ModularChangeset = {
-    maxId: brand(-1),
     changes: new Map([
         [
             fieldA,
@@ -226,7 +223,6 @@ const rootChange1b: ModularChangeset = {
 };
 
 const rootChange1bGeneric: ModularChangeset = {
-    maxId: brand(-1),
     changes: new Map([
         [
             fieldA,
@@ -241,7 +237,6 @@ const rootChange1bGeneric: ModularChangeset = {
 };
 
 const rootChange2: ModularChangeset = {
-    maxId: brand(-1),
     changes: new Map([
         [
             fieldA,
@@ -254,7 +249,6 @@ const rootChange2: ModularChangeset = {
 };
 
 const rootChange2Generic: ModularChangeset = {
-    maxId: brand(-1),
     changes: new Map([
         [
             fieldA,
@@ -270,7 +264,6 @@ const rootChange2Generic: ModularChangeset = {
 
 const testValue = "Test Value";
 const nodeValueOverwrite: ModularChangeset = {
-    maxId: brand(-1),
     changes: new Map([
         [
             fieldA,
@@ -288,7 +281,6 @@ const nodeValueOverwrite: ModularChangeset = {
 
 const detachedBy: RevisionTag = brand(42);
 const nodeValueRevert: ModularChangeset = {
-    maxId: brand(-1),
     changes: new Map([
         [
             fieldA,
@@ -329,7 +321,6 @@ describe("ModularChangeFamily", () => {
 
         it("compose specific ○ specific", () => {
             const expectedCompose: ModularChangeset = {
-                maxId: brand(-1),
                 changes: new Map([
                     [
                         fieldA,
@@ -355,7 +346,6 @@ describe("ModularChangeFamily", () => {
 
         it("compose specific ○ generic", () => {
             const expectedCompose: ModularChangeset = {
-                maxId: brand(-1),
                 changes: new Map([
                     [
                         fieldA,
@@ -381,7 +371,6 @@ describe("ModularChangeFamily", () => {
 
         it("compose generic ○ specific", () => {
             const expectedCompose: ModularChangeset = {
-                maxId: brand(-1),
                 changes: new Map([
                     [
                         fieldA,
@@ -407,7 +396,6 @@ describe("ModularChangeFamily", () => {
 
         it("compose generic ○ generic", () => {
             const expectedCompose: ModularChangeset = {
-                maxId: brand(-1),
                 changes: new Map([
                     [
                         fieldA,
@@ -457,7 +445,6 @@ describe("ModularChangeFamily", () => {
 
             const change1: TaggedChange<ModularChangeset> = tagChange(
                 {
-                    maxId: brand(-1),
                     changes: new Map([
                         [fieldA, change1A],
                         [fieldB, change1B],
@@ -486,7 +473,6 @@ describe("ModularChangeFamily", () => {
             deepFreeze(change2B);
             const change2: TaggedChange<ModularChangeset> = tagChange(
                 {
-                    maxId: brand(-1),
                     changes: new Map([[fieldB, change2B]]),
                 },
                 brand(2),
@@ -511,7 +497,6 @@ describe("ModularChangeFamily", () => {
             };
 
             const expected: ModularChangeset = {
-                maxId: brand(-1),
                 changes: new Map([
                     [
                         fieldA,
@@ -586,7 +571,6 @@ describe("ModularChangeFamily", () => {
 
         it("specific", () => {
             const expectedInverse: ModularChangeset = {
-                maxId: brand(-1),
                 changes: new Map([
                     [fieldA, { fieldKind: singleNodeField.identifier, change: brand(nodeInverse) }],
                     [fieldB, { fieldKind: valueField.identifier, change: brand(valueInverse2) }],
@@ -602,7 +586,6 @@ describe("ModularChangeFamily", () => {
                 nodeInverse,
             );
             const expectedInverse: ModularChangeset = {
-                maxId: brand(-1),
                 changes: new Map([
                     [
                         fieldA,
@@ -792,7 +775,6 @@ describe("ModularChangeFamily", () => {
 
         const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(0, nodeChange);
         const expectedChange: ModularChangeset = {
-            maxId: brand(-1),
             changes: new Map([
                 [fieldA, { fieldKind: genericFieldKind.identifier, change: brand(fieldChange) }],
             ]),
