@@ -395,8 +395,6 @@ export async function getAndUpdatePackageDetails(
             ? "previousPatch"
             : undefined);
 
-    log.verbose(`${pkg.nameColored}: Using previousVersionStyle: ${previousVersionStyle}`);
-
     if (previousVersionStyle === undefined) {
         // Skip if there's no previous version style defined for the package.
         return {
