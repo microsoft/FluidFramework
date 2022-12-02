@@ -18,6 +18,7 @@ import {
     NodeChangeset,
     genericFieldKind,
     FieldChange,
+    ModularChangeset,
 } from "../../../feature-libraries";
 import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../../rebase";
 import { FieldKindIdentifier } from "../../../schema-stored";
@@ -140,109 +141,139 @@ const nodeChanges2: NodeChangeset = {
     ]),
 };
 
-const rootChange1a: FieldChangeMap = new Map([
-    [
-        fieldA,
-        {
-            fieldKind: singleNodeField.identifier,
-            change: brand(nodeChange1a),
-        },
-    ],
-    [
-        fieldB,
-        {
-            fieldKind: valueField.identifier,
-            change: brand(valueChange2),
-        },
-    ],
-]);
+const rootChange1a: ModularChangeset = {
+    maxId: brand(-1),
+    changes: new Map([
+        [
+            fieldA,
+            {
+                fieldKind: singleNodeField.identifier,
+                change: brand(nodeChange1a),
+            },
+        ],
+        [
+            fieldB,
+            {
+                fieldKind: valueField.identifier,
+                change: brand(valueChange2),
+            },
+        ],
+    ]),
+};
 
-const rootChange1aGeneric: FieldChangeMap = new Map([
-    [
-        fieldA,
-        {
-            fieldKind: genericFieldKind.identifier,
-            change: brand(genericFieldKind.changeHandler.editor.buildChildChange(0, nodeChange1a)),
-        },
-    ],
-    [
-        fieldB,
-        {
-            fieldKind: valueField.identifier,
-            change: brand(valueChange2),
-        },
-    ],
-]);
+const rootChange1aGeneric: ModularChangeset = {
+    maxId: brand(-1),
+    changes: new Map([
+        [
+            fieldA,
+            {
+                fieldKind: genericFieldKind.identifier,
+                change: brand(
+                    genericFieldKind.changeHandler.editor.buildChildChange(0, nodeChange1a),
+                ),
+            },
+        ],
+        [
+            fieldB,
+            {
+                fieldKind: valueField.identifier,
+                change: brand(valueChange2),
+            },
+        ],
+    ]),
+};
 
-const rootChange1b: FieldChangeMap = new Map([
-    [
-        fieldA,
-        {
-            fieldKind: singleNodeField.identifier,
-            change: brand(nodeChanges1b),
-        },
-    ],
-]);
+const rootChange1b: ModularChangeset = {
+    maxId: brand(-1),
+    changes: new Map([
+        [
+            fieldA,
+            {
+                fieldKind: singleNodeField.identifier,
+                change: brand(nodeChanges1b),
+            },
+        ],
+    ]),
+};
 
-const rootChange1bGeneric: FieldChangeMap = new Map([
-    [
-        fieldA,
-        {
-            fieldKind: genericFieldKind.identifier,
-            change: brand(genericFieldKind.changeHandler.editor.buildChildChange(0, nodeChanges1b)),
-        },
-    ],
-]);
+const rootChange1bGeneric: ModularChangeset = {
+    maxId: brand(-1),
+    changes: new Map([
+        [
+            fieldA,
+            {
+                fieldKind: genericFieldKind.identifier,
+                change: brand(
+                    genericFieldKind.changeHandler.editor.buildChildChange(0, nodeChanges1b),
+                ),
+            },
+        ],
+    ]),
+};
 
-const rootChange2: FieldChangeMap = new Map([
-    [
-        fieldA,
-        {
-            fieldKind: singleNodeField.identifier,
-            change: brand(nodeChanges2),
-        },
-    ],
-]);
+const rootChange2: ModularChangeset = {
+    maxId: brand(-1),
+    changes: new Map([
+        [
+            fieldA,
+            {
+                fieldKind: singleNodeField.identifier,
+                change: brand(nodeChanges2),
+            },
+        ],
+    ]),
+};
 
-const rootChange2Generic: FieldChangeMap = new Map([
-    [
-        fieldA,
-        {
-            fieldKind: genericFieldKind.identifier,
-            change: brand(genericFieldKind.changeHandler.editor.buildChildChange(0, nodeChanges2)),
-        },
-    ],
-]);
+const rootChange2Generic: ModularChangeset = {
+    maxId: brand(-1),
+    changes: new Map([
+        [
+            fieldA,
+            {
+                fieldKind: genericFieldKind.identifier,
+                change: brand(
+                    genericFieldKind.changeHandler.editor.buildChildChange(0, nodeChanges2),
+                ),
+            },
+        ],
+    ]),
+};
 
 const testValue = "Test Value";
-const nodeValueOverwrite: FieldChangeMap = new Map([
-    [
-        fieldA,
-        {
-            fieldKind: genericFieldKind.identifier,
-            change: brand(
-                genericFieldKind.changeHandler.editor.buildChildChange(0, {
-                    valueChange: { value: testValue },
-                }),
-            ),
-        },
-    ],
-]);
+const nodeValueOverwrite: ModularChangeset = {
+    maxId: brand(-1),
+    changes: new Map([
+        [
+            fieldA,
+            {
+                fieldKind: genericFieldKind.identifier,
+                change: brand(
+                    genericFieldKind.changeHandler.editor.buildChildChange(0, {
+                        valueChange: { value: testValue },
+                    }),
+                ),
+            },
+        ],
+    ]),
+};
 
 const detachedBy: RevisionTag = brand(42);
-const nodeValueRevert: FieldChangeMap = new Map([
-    [
-        fieldA,
-        {
-            fieldKind: genericFieldKind.identifier,
-            change: brand(
-                genericFieldKind.changeHandler.editor.buildChildChange(0, {
-                    valueChange: { revert: detachedBy },
-                }),
-            ),
-        },
-    ],
-]);
+const nodeValueRevert: ModularChangeset = {
+    maxId: brand(-1),
+    changes: new Map([
+        [
+            fieldA,
+            {
+                fieldKind: genericFieldKind.identifier,
+                change: brand(
+                    genericFieldKind.changeHandler.editor.buildChildChange(0, {
+                        valueChange: { revert: detachedBy },
+                    }),
+                ),
+            },
+        ],
+    ]),
+};
 
 describe("ModularChangeFamily", () => {
     describe("compose", () => {
@@ -383,11 +414,14 @@ describe("ModularChangeFamily", () => {
                 change: brand(nodeChange1),
             };
 
-            const change1: TaggedChange<FieldChangeMap> = tagChange(
-                new Map([
-                    [fieldA, change1A],
-                    [fieldB, change1B],
-                ]),
+            const change1: TaggedChange<ModularChangeset> = tagChange(
+                {
+                    maxId: brand(-1),
+                    changes: new Map([
+                        [fieldA, change1A],
+                        [fieldB, change1B],
+                    ]),
+                },
                 brand(1),
             );
 
@@ -409,8 +443,11 @@ describe("ModularChangeFamily", () => {
             };
 
             deepFreeze(change2B);
-            const change2: TaggedChange<FieldChangeMap> = tagChange(
-                new Map([[fieldB, change2B]]),
+            const change2: TaggedChange<ModularChangeset> = tagChange(
+                {
+                    maxId: brand(-1),
+                    changes: new Map([[fieldB, change2B]]),
+                },
                 brand(2),
             );
 

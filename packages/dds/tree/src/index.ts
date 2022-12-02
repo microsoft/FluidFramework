@@ -109,9 +109,12 @@ export {
 
 export {
     buildForest,
+    ChangesetLocalId,
     emptyField,
+    IdAllocator,
     neverTree,
     ModularChangeFamily,
+    ModularChangeset,
     ModularEditBuilder,
     FieldChangeHandler,
     FieldEditor,

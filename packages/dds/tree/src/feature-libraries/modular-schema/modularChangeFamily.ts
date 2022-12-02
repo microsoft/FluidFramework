@@ -30,6 +30,9 @@ import {
     FieldChangeset,
     NodeChangeset,
     ValueChange,
+    ModularChangeset,
+    ChangesetLocalId,
+    IdAllocator,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { convertGenericChange, GenericChangeset, genericFieldKind } from "./genericFieldKind";
@@ -42,17 +45,15 @@ import { decodeJsonFormat0, encodeForJsonFormat0 } from "./modularChangeEncoding
  * @sealed
  */
 export class ModularChangeFamily
-    implements ChangeFamily<ModularEditBuilder, FieldChangeMap>, ChangeRebaser<FieldChangeMap>
+    implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset>
 {
-    readonly encoder: ChangeEncoder<FieldChangeMap>;
-    private readonly childComposer = (childChanges: TaggedChange<NodeChangeset>[]) =>
-        this.composeNodeChanges(childChanges);
+    readonly encoder: ChangeEncoder<ModularChangeset>;
 
     constructor(readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
         this.encoder = new ModularChangeEncoder(this.fieldKinds);
     }
 
-    get rebaser(): ChangeRebaser<FieldChangeMap> {
+    get rebaser(): ChangeRebaser<ModularChangeset> {
         return this;
     }
 
@@ -63,7 +64,10 @@ export class ModularChangeFamily
      * target the same {@link FieldKind}, and the `FieldKind` that they target.
      * The returned `FieldChangeset`s may be a shallow copy of the input `FieldChange`s.
      */
-    private normalizeFieldChanges(changes: readonly FieldChange[]): {
+    private normalizeFieldChanges(
+        changes: readonly FieldChange[],
+        genId: IdAllocator,
+    ): {
         fieldKind: FieldKind;
         changesets: FieldChangeset[];
     } {
@@ -85,7 +89,8 @@ export class ModularChangeFamily
                 return convertGenericChange(
                     genericChange,
                     handler,
-                    this.childComposer,
+                    (children) => this.composeNodeChanges(children, genId),
+                    genId,
                 ) as FieldChangeset;
             }
             return change.change;
@@ -93,7 +98,28 @@ export class ModularChangeFamily
         return { fieldKind, changesets: normalizedChanges };
     }
 
-    compose(changes: TaggedChange<FieldChangeMap>[]): FieldChangeMap {
+    compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
+        let maxId = changes.reduce((max, change) => Math.max(change.change.maxId, max), -1);
+        const genId: IdAllocator = () => {
+            const id = maxId;
+            maxId += 1;
+            return brand(id);
+        };
+
+        const fields = this.composeFieldMaps(
+            changes.map((change) => tagChange(change.change.changes, change.revision)),
+            genId,
+        );
+        return {
+            maxId: brand(maxId),
+            changes: fields,
+        };
+    }
+
+    private composeFieldMaps(
+        changes: TaggedChange<FieldChangeMap>[],
+        genId: IdAllocator,
+    ): FieldChangeMap {
         const fieldChanges = new Map<FieldKey, FieldChange[]>();
         for (const change of changes) {
             for (const [key, fieldChange] of change.change) {
@@ -115,7 +141,10 @@ export class ModularChangeFamily
             if (changesForField.length === 1) {
                 composedField = changesForField[0];
             } else {
-                const { fieldKind, changesets } = this.normalizeFieldChanges(changesForField);
+                const { fieldKind, changesets } = this.normalizeFieldChanges(
+                    changesForField,
+                    genId,
+                );
                 assert(
                     changesets.length === changesForField.length,
                     "Number of changes should be constant when normalizing",
@@ -125,7 +154,8 @@ export class ModularChangeFamily
                 );
                 const composedChange = fieldKind.changeHandler.rebaser.compose(
                     taggedChangesets,
-                    this.childComposer,
+                    (children) => this.composeNodeChanges(children, genId),
+                    genId,
                 );
 
                 composedField = {
@@ -140,7 +170,10 @@ export class ModularChangeFamily
         return composedFields;
     }
 
-    private composeNodeChanges(changes: TaggedChange<NodeChangeset>[]): NodeChangeset {
+    private composeNodeChanges(
+        changes: TaggedChange<NodeChangeset>[],
+        genId: IdAllocator,
+    ): NodeChangeset {
         const fieldChanges: TaggedChange<FieldChangeMap>[] = [];
         let valueChange: ValueChange | undefined;
         for (const change of changes) {
@@ -153,7 +186,7 @@ export class ModularChangeFamily
             }
         }
 
-        const composedFieldChanges = this.compose(fieldChanges);
+        const composedFieldChanges = this.composeFieldMaps(fieldChanges, genId);
         const composedNodeChange: NodeChangeset = {};
         if (valueChange !== undefined) {
             composedNodeChange.valueChange = valueChange;
@@ -166,7 +199,24 @@ export class ModularChangeFamily
         return composedNodeChange;
     }
 
-    invert(changes: TaggedChange<FieldChangeMap>): FieldChangeMap {
+    invert(change: TaggedChange<ModularChangeset>): ModularChangeset {
+        let maxId = change.change.maxId as number;
+        const genId: IdAllocator = () => {
+            const id = maxId;
+            maxId += 1;
+            return brand(id);
+        };
+
+        return {
+            maxId: brand(maxId),
+            changes: this.invertFieldMap(tagChange(change.change.changes, change.revision), genId),
+        };
+    }
+
+    private invertFieldMap(
+        changes: TaggedChange<FieldChangeMap>,
+        genId: IdAllocator,
+    ): FieldChangeMap {
         const invertedFields: FieldChangeMap = new Map();
 
         for (const [field, fieldChange] of changes.change) {
@@ -175,8 +225,10 @@ export class ModularChangeFamily
             const invertedChange = getChangeHandler(
                 this.fieldKinds,
                 fieldChange.fieldKind,
-            ).rebaser.invert({ revision, change: fieldChange.change }, (childChanges) =>
-                this.invertNodeChange({ revision, change: childChanges }),
+            ).rebaser.invert(
+                { revision, change: fieldChange.change },
+                (childChanges) => this.invertNodeChange({ revision, change: childChanges }, genId),
+                genId,
             );
 
             invertedFields.set(field, {
@@ -188,7 +240,10 @@ export class ModularChangeFamily
         return invertedFields;
     }
 
-    private invertNodeChange(change: TaggedChange<NodeChangeset>): NodeChangeset {
+    private invertNodeChange(
+        change: TaggedChange<NodeChangeset>,
+        genId: IdAllocator,
+    ): NodeChangeset {
         const inverse: NodeChangeset = {};
 
         if (change.change.valueChange !== undefined) {
@@ -201,13 +256,38 @@ export class ModularChangeFamily
         }
 
         if (change.change.fieldChanges !== undefined) {
-            inverse.fieldChanges = this.invert({ ...change, change: change.change.fieldChanges });
+            inverse.fieldChanges = this.invertFieldMap(
+                { ...change, change: change.change.fieldChanges },
+                genId,
+            );
         }
 
         return inverse;
     }
 
-    rebase(change: FieldChangeMap, over: TaggedChange<FieldChangeMap>): FieldChangeMap {
+    rebase(change: ModularChangeset, over: TaggedChange<ModularChangeset>): ModularChangeset {
+        let maxId = change.maxId as number;
+        const genId: IdAllocator = () => {
+            const id = maxId;
+            maxId += 1;
+            return brand(id);
+        };
+
+        return {
+            maxId: brand(maxId),
+            changes: this.rebaseFieldMap(
+                change.changes,
+                tagChange(over.change.changes, over.revision),
+                genId,
+            ),
+        };
+    }
+
+    private rebaseFieldMap(
+        change: FieldChangeMap,
+        over: TaggedChange<FieldChangeMap>,
+        genId: IdAllocator,
+    ): FieldChangeMap {
         const rebasedFields: FieldChangeMap = new Map();
 
         for (const [field, fieldChange] of change) {
@@ -218,14 +298,15 @@ export class ModularChangeFamily
                 const {
                     fieldKind,
                     changesets: [fieldChangeset, baseChangeset],
-                } = this.normalizeFieldChanges([fieldChange, baseChanges]);
+                } = this.normalizeFieldChanges([fieldChange, baseChanges], genId);
 
                 const { revision } = fieldChange.revision !== undefined ? fieldChange : over;
                 const rebasedField = fieldKind.changeHandler.rebaser.rebase(
                     fieldChangeset,
                     { revision, change: baseChangeset },
                     (child, baseChild) =>
-                        this.rebaseNodeChange(child, { revision, change: baseChild }),
+                        this.rebaseNodeChange(child, { revision, change: baseChild }, genId),
+                    genId,
                 );
 
                 // TODO: Could optimize by skipping this assignment if `rebasedField` is empty
@@ -242,6 +323,7 @@ export class ModularChangeFamily
     private rebaseNodeChange(
         change: NodeChangeset,
         over: TaggedChange<NodeChangeset>,
+        genId: IdAllocator,
     ): NodeChangeset {
         if (change.fieldChanges === undefined || over.change.fieldChanges === undefined) {
             return change;
@@ -249,19 +331,23 @@ export class ModularChangeFamily
 
         return {
             ...change,
-            fieldChanges: this.rebase(change.fieldChanges, {
-                ...over,
-                change: over.change.fieldChanges,
-            }),
+            fieldChanges: this.rebaseFieldMap(
+                change.fieldChanges,
+                {
+                    ...over,
+                    change: over.change.fieldChanges,
+                },
+                genId,
+            ),
         };
     }
 
-    rebaseAnchors(anchors: AnchorSet, over: FieldChangeMap): void {
+    rebaseAnchors(anchors: AnchorSet, over: ModularChangeset): void {
         anchors.applyDelta(this.intoDelta(over));
     }
 
-    intoDelta(change: FieldChangeMap, repairStore?: ReadonlyRepairDataStore): Delta.Root {
-        return this.intoDeltaImpl(change, repairStore ?? dummyRepairDataStore, undefined);
+    intoDelta(change: ModularChangeset, repairStore?: ReadonlyRepairDataStore): Delta.Root {
+        return this.intoDeltaImpl(change.changes, repairStore ?? dummyRepairDataStore, undefined);
     }
 
     /**
@@ -327,7 +413,7 @@ export class ModularChangeFamily
     }
 
     buildEditor(
-        changeReceiver: (change: FieldChangeMap) => void,
+        changeReceiver: (change: ModularChangeset) => void,
         anchors: AnchorSet,
     ): ModularEditBuilder {
         return new ModularEditBuilder(this, changeReceiver, anchors);
@@ -353,16 +439,16 @@ export function getChangeHandler(
     return getFieldKind(fieldKinds, kind).changeHandler;
 }
 
-class ModularChangeEncoder extends ChangeEncoder<FieldChangeMap> {
+class ModularChangeEncoder extends ChangeEncoder<ModularChangeset> {
     constructor(private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
         super();
     }
 
-    encodeForJson(formatVersion: number, change: FieldChangeMap): JsonCompatibleReadOnly {
+    encodeForJson(formatVersion: number, change: ModularChangeset): JsonCompatibleReadOnly {
         return encodeForJsonFormat0(this.fieldKinds, change);
     }
 
-    decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): FieldChangeMap {
+    decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): ModularChangeset {
         return decodeJsonFormat0(this.fieldKinds, change);
     }
 }
@@ -371,18 +457,18 @@ class ModularChangeEncoder extends ChangeEncoder<FieldChangeMap> {
  * @sealed
  */
 export class ModularEditBuilder
-    extends ProgressiveEditBuilderBase<FieldChangeMap>
-    implements ProgressiveEditBuilder<FieldChangeMap>
+    extends ProgressiveEditBuilderBase<ModularChangeset>
+    implements ProgressiveEditBuilder<ModularChangeset>
 {
     constructor(
-        family: ChangeFamily<unknown, FieldChangeMap>,
-        changeReceiver: (change: FieldChangeMap) => void,
+        family: ChangeFamily<unknown, ModularChangeset>,
+        changeReceiver: (change: ModularChangeset) => void,
         anchors: AnchorSet,
     ) {
         super(family, changeReceiver, anchors);
     }
 
-    public apply(change: FieldChangeMap): void {
+    public apply(change: ModularChangeset): void {
         this.applyChange(change);
     }
 
@@ -392,12 +478,14 @@ export class ModularEditBuilder
      * @param field - the field which is being edited
      * @param fieldKind - the kind of the field
      * @param change - the change to the field
+     * @param maxId - the highest `ChangesetLocalId` used in this change
      */
     submitChange(
         path: UpPath | undefined,
         field: FieldKey,
         fieldKind: FieldKindIdentifier,
         change: FieldChangeset,
+        maxId: ChangesetLocalId = brand(-1),
     ): void {
         let fieldChangeMap: FieldChangeMap = new Map([[field, { fieldKind, change }]]);
 
@@ -417,7 +505,7 @@ export class ModularEditBuilder
             remainingPath = remainingPath.parent;
         }
 
-        this.applyChange(fieldChangeMap);
+        this.applyChange({ maxId, changes: fieldChangeMap });
     }
 
     setValue(path: UpPath, value: Value): void {

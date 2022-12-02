@@ -30,13 +30,21 @@ export interface FieldChangeRebaser<TChangeset> {
      * undefined revision if later passed as an argument to `composeChild`.
      * See {@link ChangeRebaser} for more details.
      */
-    compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer): TChangeset;
+    compose(
+        changes: TaggedChange<TChangeset>[],
+        composeChild: NodeChangeComposer,
+        genId: IdAllocator,
+    ): TChangeset;
 
     /**
      * @returns the inverse of `changes`.
      * See {@link ChangeRebaser} for details.
      */
-    invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter): TChangeset;
+    invert(
+        change: TaggedChange<TChangeset>,
+        invertChild: NodeChangeInverter,
+        genId: IdAllocator,
+    ): TChangeset;
 
     /**
      * Rebase `change` over `over`.
@@ -46,6 +54,7 @@ export interface FieldChangeRebaser<TChangeset> {
         change: TChangeset,
         over: TaggedChange<TChangeset>,
         rebaseChild: NodeChangeRebaser,
+        genId: IdAllocator,
     ): TChangeset;
 }
 
@@ -59,9 +68,9 @@ export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
     rebase: (change: TChangeset, over: TChangeset) => TChangeset;
 }): FieldChangeRebaser<TChangeset> {
     return {
-        compose: (changes, composeChild) => data.compose(changes.map((c) => c.change)),
-        invert: (change, invertChild) => data.invert(change.change),
-        rebase: (change, over, rebaseChild) => data.rebase(change, over.change),
+        compose: (changes, _composeChild, _genId) => data.compose(changes.map((c) => c.change)),
+        invert: (change, _invertChild, _genId) => data.invert(change.change),
+        rebase: (change, over, _rebaseChild, _genId) => data.rebase(change, over.change),
     };
 }
 
@@ -113,6 +122,9 @@ export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => Nod
 export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnly;
 export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
 
+export type IdAllocator = () => ChangesetLocalId;
+export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
+
 /**
  * Changeset for a subtree rooted at a specific node.
  */
@@ -149,6 +161,11 @@ export type ValueChange =
            */
           revert: RevisionTag | undefined;
       };
+
+export interface ModularChangeset {
+    maxId: ChangesetLocalId;
+    changes: FieldChangeMap;
+}
 
 export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
