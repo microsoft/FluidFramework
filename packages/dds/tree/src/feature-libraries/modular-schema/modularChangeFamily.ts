@@ -99,12 +99,8 @@ export class ModularChangeFamily
     }
 
     compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
-        let maxId = changes.reduce((max, change) => Math.max(change.change.maxId, max), -1);
-        const genId: IdAllocator = () => {
-            const id = maxId;
-            maxId += 1;
-            return brand(id);
-        };
+        let maxId = changes.reduce((max, change) => Math.max(change.change.maxId ?? 0, max), -1);
+        const genId: IdAllocator = () => brand(++maxId);
 
         const fields = this.composeFieldMaps(
             changes.map((change) => tagChange(change.change.changes, change.revision)),
@@ -200,16 +196,15 @@ export class ModularChangeFamily
     }
 
     invert(change: TaggedChange<ModularChangeset>): ModularChangeset {
-        let maxId = change.change.maxId as number;
-        const genId: IdAllocator = () => {
-            const id = maxId;
-            maxId += 1;
-            return brand(id);
-        };
-
+        let maxId = change.change.maxId ?? 0;
+        const genId: IdAllocator = () => brand(++maxId);
+        const changes = this.invertFieldMap(
+            tagChange(change.change.changes, change.revision),
+            genId,
+        );
         return {
             maxId: brand(maxId),
-            changes: this.invertFieldMap(tagChange(change.change.changes, change.revision), genId),
+            changes,
         };
     }
 
@@ -266,20 +261,17 @@ export class ModularChangeFamily
     }
 
     rebase(change: ModularChangeset, over: TaggedChange<ModularChangeset>): ModularChangeset {
-        let maxId = change.maxId as number;
-        const genId: IdAllocator = () => {
-            const id = maxId;
-            maxId += 1;
-            return brand(id);
-        };
+        let maxId = change.maxId ?? 0;
+        const genId: IdAllocator = () => brand(++maxId);
+        const changes = this.rebaseFieldMap(
+            change.changes,
+            tagChange(over.change.changes, over.revision),
+            genId,
+        );
 
         return {
             maxId: brand(maxId),
-            changes: this.rebaseFieldMap(
-                change.changes,
-                tagChange(over.change.changes, over.revision),
-                genId,
-            ),
+            changes,
         };
     }
 

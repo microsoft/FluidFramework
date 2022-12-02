@@ -18,6 +18,7 @@ import {
     genericFieldKind,
     FieldChange,
     ModularChangeset,
+    ChangesetLocalId,
 } from "../../../feature-libraries";
 import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../../rebase";
 import { FieldKindIdentifier } from "../../../schema-stored";
@@ -77,6 +78,32 @@ const singleNodeField = new FieldKind(
     new Set(),
 );
 
+type IdChangeset = ChangesetLocalId;
+
+const idFieldRebaser: FieldChangeRebaser<IdChangeset> = {
+    compose: (changes, composeChild, genId): IdChangeset => genId(),
+    invert: (change, invertChild, genId): IdChangeset => genId(),
+    rebase: (change, over, rebaseChild, genId): IdChangeset => genId(),
+};
+
+const idFieldHandler: FieldChangeHandler<IdChangeset> = {
+    rebaser: idFieldRebaser,
+    encoder: new FieldKinds.ValueEncoder<IdChangeset & JsonCompatibleReadOnly>(),
+    editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
+    intoDelta: (change, deltaFromChild) => [],
+};
+
+/**
+ * A field which just allocates a new `ChangesetLocalId` for every operation.
+ */
+const idField = new FieldKind(
+    brand("Id"),
+    Multiplicity.Value,
+    idFieldHandler,
+    (a, b) => false,
+    new Set(),
+);
+
 const noRepair: RepairDataStore = {
     capture: () => {},
     getNodes: () => assert.fail(),
@@ -84,10 +111,13 @@ const noRepair: RepairDataStore = {
 };
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
-    [singleNodeField, valueField].map((field) => [field.identifier, field]),
+    [singleNodeField, valueField, idField].map((field) => [field.identifier, field]),
 );
 
 const family = new ModularChangeFamily(fieldKinds);
+
+const tag1: RevisionTag = brand(1);
+const tag2: RevisionTag = brand(2);
 
 const fieldA: FieldKey = brand("a");
 const fieldB: FieldKey = brand("b");
@@ -433,7 +463,7 @@ describe("ModularChangeFamily", () => {
                         [fieldB, change1B],
                     ]),
                 },
-                brand(1),
+                tag1,
             );
 
             const nodeChange2: NodeChangeset = {
@@ -503,6 +533,39 @@ describe("ModularChangeFamily", () => {
 
             assert.deepEqual(composed, expected);
         });
+
+        it("generate IDs", () => {
+            const id0: ChangesetLocalId = brand(0);
+            const id1: ChangesetLocalId = brand(1);
+            const change1: ModularChangeset = {
+                maxId: id0,
+                changes: new Map([[fieldA, { fieldKind: idField.identifier, change: brand(id0) }]]),
+            };
+
+            const change2: ModularChangeset = {
+                maxId: id0,
+                changes: new Map([[fieldB, { fieldKind: idField.identifier, change: brand(id0) }]]),
+            };
+
+            const expected1: ModularChangeset = {
+                maxId: id0,
+                changes: new Map([
+                    [fieldA, { fieldKind: idField.identifier, revision: tag1, change: brand(id0) }],
+                    [fieldB, { fieldKind: idField.identifier, revision: tag2, change: brand(id0) }],
+                ]),
+            };
+
+            const composed1 = family.compose([tagChange(change1, tag1), tagChange(change2, tag2)]);
+            assert.deepEqual(composed1, expected1);
+
+            const expected2: ModularChangeset = {
+                maxId: id1,
+                changes: new Map([[fieldA, { fieldKind: idField.identifier, change: brand(id1) }]]),
+            };
+
+            const composed2 = family.compose([tagChange(change1, tag1), tagChange(change1, tag2)]);
+            assert.deepEqual(composed2, expected2);
+        });
     });
 
     describe("invert", () => {
@@ -551,6 +614,30 @@ describe("ModularChangeFamily", () => {
 
             assert.deepEqual(family.invert(makeAnonChange(rootChange1aGeneric)), expectedInverse);
         });
+
+        it("generate IDs", () => {
+            const id0: ChangesetLocalId = brand(0);
+            const id1: ChangesetLocalId = brand(1);
+            const id2: ChangesetLocalId = brand(2);
+            const id3: ChangesetLocalId = brand(3);
+            const change: ModularChangeset = {
+                maxId: id1,
+                changes: new Map([
+                    [fieldA, { fieldKind: idField.identifier, change: brand(id0) }],
+                    [fieldB, { fieldKind: idField.identifier, change: brand(id1) }],
+                ]),
+            };
+
+            const expected: ModularChangeset = {
+                maxId: id3,
+                changes: new Map([
+                    [fieldA, { fieldKind: idField.identifier, change: brand(id2) }],
+                    [fieldB, { fieldKind: idField.identifier, change: brand(id3) }],
+                ]),
+            };
+
+            assert.deepEqual(family.invert(makeAnonChange(change)), expected);
+        });
     });
 
     describe("rebase", () => {
@@ -580,6 +667,35 @@ describe("ModularChangeFamily", () => {
                 family.rebase(rootChange1bGeneric, makeAnonChange(rootChange1aGeneric)),
                 rootChange2Generic,
             );
+        });
+
+        it("generate IDs", () => {
+            const id0: ChangesetLocalId = brand(0);
+            const id1: ChangesetLocalId = brand(1);
+            const id2: ChangesetLocalId = brand(2);
+            const id3: ChangesetLocalId = brand(3);
+            const change: ModularChangeset = {
+                maxId: id1,
+                changes: new Map([
+                    [fieldA, { fieldKind: idField.identifier, change: brand(id0) }],
+                    [fieldB, { fieldKind: idField.identifier, change: brand(id1) }],
+                ]),
+            };
+
+            const base: ModularChangeset = {
+                maxId: id0,
+                changes: new Map([[fieldA, { fieldKind: idField.identifier, change: brand(id0) }]]),
+            };
+
+            const expected: ModularChangeset = {
+                maxId: id2,
+                changes: new Map([
+                    [fieldA, { fieldKind: idField.identifier, change: brand(id2) }],
+                    [fieldB, { fieldKind: idField.identifier, change: brand(id1) }],
+                ]),
+            };
+
+            assert.deepEqual(family.rebase(change, makeAnonChange(base)), expected);
         });
     });
 

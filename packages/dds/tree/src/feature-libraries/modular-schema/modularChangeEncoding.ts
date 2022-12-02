@@ -32,7 +32,7 @@ interface EncodedNodeChangeset {
 }
 
 interface EncodedModularChangeset {
-    maxId: ChangesetLocalId;
+    maxId?: ChangesetLocalId;
     changes: EncodedFieldChangeMap;
 }
 

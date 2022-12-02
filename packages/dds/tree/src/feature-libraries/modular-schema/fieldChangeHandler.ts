@@ -163,7 +163,11 @@ export type ValueChange =
       };
 
 export interface ModularChangeset {
-    maxId: ChangesetLocalId;
+    /**
+     * The numerically highest `ChangesetLocalId` used in this changeset.
+     * If undefined then this changeset contains no IDs.
+     */
+    maxId?: ChangesetLocalId;
     changes: FieldChangeMap;
 }
 

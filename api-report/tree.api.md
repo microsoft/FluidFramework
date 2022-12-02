@@ -824,8 +824,7 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Mod
 export interface ModularChangeset {
     // (undocumented)
     changes: FieldChangeMap;
-    // (undocumented)
-    maxId: ChangesetLocalId;
+    maxId?: ChangesetLocalId;
 }
 
 // @public @sealed (undocumented)
