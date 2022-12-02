@@ -28,7 +28,7 @@ async function createSharedTrees(
     return [provider, provider.trees];
 }
 
-describe.only("editable-tree context", () => {
+describe("editable-tree context", () => {
     it("can't synchronize trees after the context been freed", async () => {
         const [provider, [tree1, tree2]] = await createSharedTrees(fullSchemaData, [personData], 2);
         const person1 = tree1.root as PersonType;
