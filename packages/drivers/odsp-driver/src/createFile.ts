@@ -248,7 +248,7 @@ export async function createNewFluidFileFromSummary(
     const initialUrl =
         `${baseUrl}:/opStream/snapshots/snapshot${createShareLinkParam ? `?${createShareLinkParam}` : ""}`;
 
-    const content = await createNewFluidContainerCore<ICreateFileResponse>(
+    return createNewFluidContainerCore<ICreateFileResponse>(
         containerSnapshot,
         getStorageToken,
         logger,
@@ -266,6 +266,4 @@ export async function createNewFluidFileFromSummary(
             }
         }
     );
-
-    return content;
 }
