@@ -291,14 +291,14 @@ jobs:
           customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
 
        # filter report
-       - task: Bash@3
-          displayName: Filter skipped test from report
-          inputs:
-            workingDir: ${{ variables.testPackageDir }}/nyc
-            targetType: 'inline'
-            script: |
-              for i in `ls`; do cat $i | grep -v '<skipped' > $i ; done
-              
+      - task: Bash@3
+        displayName: Filter skipped test from report
+        inputs:
+          workingDir: ${{ variables.testPackageDir }}/nyc
+          targetType: 'inline'
+          script: |
+            for i in `ls`; do cat $i | grep -v '<skipped' > $i ; done
+
       # Upload results
       - task: PublishTestResults@2
         displayName: Publish Test Results
