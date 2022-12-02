@@ -189,8 +189,8 @@ export class TaskList extends DataObject implements ITaskList {
     protected async initializingFirstTime(): Promise<void> {
         const draftData = SharedMap.create(this.runtime);
         const savedData = SharedMap.create(this.runtime);
-        this.root.set("draftData", draftData);
-        this.root.set("sharedData", savedData);
+        this.root.set("draftData", draftData.handle);
+        this.root.set("sharedData", savedData.handle);
         // TODO: Probably don't need to await this once the sync'ing flow is solid, we can just trust it to sync
         // at some point in the future.
         await this.importExternalData();
@@ -201,8 +201,19 @@ export class TaskList extends DataObject implements ITaskList {
      * DataObject, by registering an event listener for changes to the task list.
      */
     protected async hasInitialized(): Promise<void> {
-        this._savedData = this.root.get<SharedMap>("savedData");
-        this._draftData = this.root.get<SharedMap>("draftData");
+        const saved = this.root.get<IFluidHandle<SharedMap>>("savedData");
+        if (!saved) {
+            throw new Error("savedData was not initialized");
+        } else {
+            this._savedData = await saved.get();
+        }
+        const draft = this.root.get<IFluidHandle<SharedMap>>("draftData");
+        if (!draft) {
+            throw new Error("draftData was not initialized");
+        } else {
+            this._draftData = await draft.get();
+        }
+        this._draftData = await draft?.get();
         this.root.on("valueChanged", (changed) => {
             if (changed.previousValue === undefined) {
                 // Must be from adding a new task
