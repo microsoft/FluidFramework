@@ -4,7 +4,7 @@
  */
 
 import { ISession, NetworkError } from "@fluidframework/server-services-client";
-import { IDocument, ICollection } from "@fluidframework/server-services-core";
+import { IDocument, ICollection, runWithRetry } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 const defaultSessionStickinessDurationMs = 60 * 60 * 1000; // 60 minutes
@@ -17,6 +17,7 @@ async function createNewSession(
     ordererUrl: string,
     historianUrl: string,
     deltaStreamUrl: string,
+    tenantId,
     documentId,
     documentsCollection: ICollection<IDocument>,
     lumberjackProperties: Record<string, any>,
@@ -31,6 +32,7 @@ async function createNewSession(
     try {
         await documentsCollection.upsert(
             {
+                tenantId,
                 documentId,
             },
             {
@@ -59,7 +61,8 @@ async function updateExistingSession(
     deltaStreamUrl: string,
     document: IDocument,
     existingSession: ISession,
-    documentId,
+    documentId: string,
+    tenantId: string,
     documentsCollection: ICollection<IDocument>,
     sessionStickinessDurationMs: number,
     lumberjackProperties: Record<string, any>,
@@ -88,7 +91,7 @@ async function updateExistingSession(
         documentLastAccessTime: document.lastAccessTime,
         sessionStickyCalculationTimestamp,
         sessionStickinessDurationMs,
-        });
+    });
     if (!isSessionSticky || !sessionHasLocation) {
         // Allow session location to be moved.
         if (
@@ -105,7 +108,7 @@ async function updateExistingSession(
                 // eslint-disable-next-line max-len
                 oldSessionLocation: { ordererUrl: existingSession.ordererUrl, historianUrl: existingSession.historianUrl, deltaStreamUrl: existingSession.deltaStreamUrl },
                 newSessionLocation: { ordererUrl, historianUrl, deltaStreamUrl },
-              });
+            });
             updatedOrdererUrl = ordererUrl;
             updatedHistorianUrl = historianUrl;
             updatedDeltaStreamUrl = deltaStreamUrl;
@@ -134,20 +137,53 @@ async function updateExistingSession(
         isSessionActive: false,
     };
     try {
-        await documentsCollection.upsert(
+        const result = await documentsCollection.findAndUpdate(
             {
+                tenantId,
                 documentId,
+                "session.isSessionAlive": false,
             },
             {
+                createTime: document.createTime,
                 deli: updatedDeli ?? document.deli,
-                scribe: updatedScribe ?? document.scribe,
+                documentId: document.documentId,
                 session: updatedSession,
-            },
-            null);
+                scribe: updatedScribe ?? document.scribe,
+                tenantId: document.tenantId,
+                version: document.version,
+            });
         Lumberjack.info(
-            `The Session ${JSON.stringify(updatedSession)} was updated into the document collection`,
+            `The original document in updateExistingSession: ${JSON.stringify(result)}`,
             lumberjackProperties,
         );
+        // There is no document with isSessionAlive as false. It means this session has been discovered by
+        // another call, and there is a race condition with different clients writing truth into the cosmosdb
+        // from different clusters. Thus, let it get the truth from the cosmosdb with isSessionAlive as true.
+        if (!result.existing) {
+            Lumberjack.info(`The document with isSessionAlive as false does not exist`, lumberjackProperties);
+            const doc: IDocument = await runWithRetry(
+                async () => documentsCollection.findOne({ tenantId, documentId, "session.isSessionAlive": true,}),
+                "getDocumentWithAlive",
+                3 /* maxRetries */,
+                1000 /* retryAfterMs */,
+                lumberjackProperties,
+                undefined, /* shouldIgnoreError */
+                (error) => true, /* shouldRetry */
+            );
+            if (!doc && !doc.session) {
+                Lumberjack.error(
+                    `Error running getSession from document: ${JSON.stringify(doc)}`,
+                    lumberjackProperties,
+                );
+                throw new NetworkError(500, "Error running getSession, please try again");
+            }
+            return doc.session;
+        } else {
+            Lumberjack.info(
+                `The Session ${JSON.stringify(updatedSession)} was updated into the documents collection`,
+                lumberjackProperties,
+            );
+        }
     } catch (error) {
         Lumberjack.error("Error persisting update to existing document session", lumberjackProperties, error);
         throw new NetworkError(500, "Failed to persist update to document session");
@@ -206,6 +242,7 @@ export async function getSession(
             ordererUrl,
             historianUrl,
             deltaStreamUrl,
+            tenantId,
             documentId,
             documentsCollection,
             lumberjackProperties,
@@ -226,6 +263,7 @@ export async function getSession(
         document,
         existingSession,
         documentId,
+        tenantId,
         documentsCollection,
         sessionStickinessDurationMs,
         lumberjackProperties,

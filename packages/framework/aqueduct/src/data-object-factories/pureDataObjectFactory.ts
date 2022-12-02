@@ -21,13 +21,14 @@ import {
     IFluidDataStoreContextDetached,
 } from "@fluidframework/runtime-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
     FluidObjectSymbolProvider,
     DependencyContainer,
     IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 
+import { assert } from "@fluidframework/common-utils";
 import {
     IDataObjectProps,
     PureDataObject,
@@ -59,16 +60,29 @@ async function createDataObject<TObj extends PureDataObject, I extends DataObjec
 
     // request mixin in
     runtimeClass = mixinRequestHandler(
-        async (request: IRequest, runtimeArg: FluidDataStoreRuntime) =>
-            (await PureDataObject.getDataObject(runtimeArg)).request(request),
-            runtimeClass);
+        async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
+            const maybeRouter: FluidObject<IFluidRouter> | undefined = await runtimeArg.entryPoint?.get();
+            assert(maybeRouter !== undefined, 0x468 /* entryPoint should have been initialized by now */);
+            assert(maybeRouter?.IFluidRouter !== undefined,
+                0x469 /* Data store runtime entryPoint is not an IFluidRouter */);
+            return maybeRouter?.IFluidRouter.request(request);
+        },
+        runtimeClass);
 
     // Create a new runtime for our data store
     // The runtime is what Fluid uses to create DDS' and route to your data store
-    const runtime = new runtimeClass(
+    const runtime: FluidDataStoreRuntime = new runtimeClass(
         context,
         sharedObjectRegistry,
         existing,
+        async (rt: IFluidDataStoreRuntime) => {
+            assert(instance !== undefined, 0x46a /* entryPoint is undefined */);
+            // Calling finishInitialization here like PureDataObject.getDataObject did, to keep the same behavior,
+            // since accessing the runtime's entryPoint is how we want the data object to be retrieved going forward.
+            // Without this I ran into issues with the load-existing flow not working correctly.
+            await instance.finishInitialization(true);
+            return instance;
+        },
     );
 
     // Create object right away.

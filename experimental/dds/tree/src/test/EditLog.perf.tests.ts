@@ -32,5 +32,18 @@ describe('EditLog Perf', () => {
 				});
 			},
 		});
+
+		const targetEditLogSize = Math.floor(numberOfInserts / 4);
+		benchmark({
+			type: BenchmarkType.Measurement,
+			title: `process ${numberOfInserts} sequenced inserts with a target edit log size of ${targetEditLogSize}`,
+			benchmarkFn: () => {
+				const log = new EditLog(undefined, undefined, undefined, targetEditLogSize);
+
+				edits.forEach((edit) => {
+					log.addSequencedEdit(edit, { sequenceNumber: 1, referenceSequenceNumber: 0 });
+				});
+			},
+		});
 	});
 });

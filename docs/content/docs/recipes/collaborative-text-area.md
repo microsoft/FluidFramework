@@ -1,20 +1,24 @@
 ---
-title: Building a collaborative TextArea
+title: Building a collaborative Text Area
 menuPosition: 4
 author: scottn12
 ---
 
-In this tutorial, you'll learn how to use the [SharedString]({{< relref "string.md" >}}) distributed data structure (DDS) with [React](https://reactjs.org/) to create a collaborative text area. SharedString is a DDS with specialized features and behaviors for working with text.
+Collaborating on text is one of the paradigmatic collaboration scenarios for information workers. In this tutorial, you'll learn how to create a collaborative text area. Fluid Framework provides a [distributed data structure (DDS)]({{< relref "dds.md" >}}) called [SharedString]({{< relref "string.md" >}}) for precisely this kind of scenario. It is a DDS with specialized features and behaviors for working with text. The UI of the app is based on [React](https://reactjs.org/).
 
-To jump ahead into the finished demo, check out the [SharedString example in our FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/collaborative-text-area).
+{{< callout note >}}
 
-The following image shows a textarea open in four browsers. The same text is in all four.
+You can see the completed app at [collaborative text area app](https://github.com/microsoft/FluidExamples/tree/main/collaborative-text-area).
 
-![Four browsers with the textarea open with the same text.](https://fluidframework.blob.core.windows.net/static/images/collaborative_text_area_1.png)
+{{< /callout >}}
+
+The following image shows a text area open in four browsers. The same text is in all four.
+
+![Four browsers with the text area open with the same text.](https://fluidframework.blob.core.windows.net/static/images/collaborative_text_area_1.png)
 
 The next image shows the same four clients after an edit was made in one of the browsers. Note that the text has updated in all four browsers.
 
-![Four browsers with the textarea open after an edit was made in one browser.](https://fluidframework.blob.core.windows.net/static/images/collaborative_text_area_2.png)
+![Four browsers with the text area open after an edit was made in one browser.](https://fluidframework.blob.core.windows.net/static/images/collaborative_text_area_2.png)
 
 {{< callout note >}}
 
@@ -31,7 +35,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     npx create-react-app collaborative-text-area-tutorial --template typescript
     ```
 
-1. The project is created in a subfolder named `collaborative-text-area-tutorial`. Navigate to it with the command `cd collaborative-text-area-tutorial`.
+1. Navigate to the root of the project with the command `cd collaborative-text-area-tutorial`.
 1. The project uses three Fluid libraries:
 
     |Library |Description |
@@ -47,53 +51,50 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     npm install @fluidframework/tinylicious-client @fluid-experimental/react-inputs fluid-framework
     ```
 
-{{< callout note >}}
-
-You may need to install an additional dependency to make this demo compatible with Webpack 5. If you receive a compilation error related to a "buffer" package, please run `npm install -D buffer` and try again. This will be resolved in a future release of Fluid Framework.
-
-{{< /callout >}}
-
 ## Code the project
 
-1. Open the file `\src\App.tsx` in your code editor. Delete all the default `import` statements except the one that imports `App.css`. Then delete all the markup from the `return` statement. The file should look like the following:
+1. Open the file `\src\App.tsx` in your code editor. Delete all the default `import` statements except the one that imports `App.css`. Then delete all the code in the `App()` function. The file should look like the following:
 
     ```ts
     import "./App.css";
 
     function App() {
-      return (
 
-      );
     }
 
     export default App;
     ```
 
-1. Add the following `import` statements. Note: `CollaborativeTextArea` will be defined later.
+1. Add the following `import` statements. About this code, note: 
+
+    - `TinyliciousClient` is a Fluid service that runs on the local development computer.
+    - `SharedString` is the DDS that holds the text the collaborators will be writing.
+    - `SharStringHelper` is a class that provides APIs to interact with the SharedString object. 
+    - `CollaborativeTextArea` is a React component that you will create in a later step.
 
     ```ts
-    import React from "react";
+    import { useState, useEffect } from "react";
     import { TinyliciousClient } from "@fluidframework/tinylicious-client";
-    import { SharedString } from "fluid-framework";
+    import { ConnectionState, ContainerSchema, IFluidContainer, SharedString } from "fluid-framework";
     import { CollaborativeTextArea } from "./CollaborativeTextArea";
     import { SharedStringHelper } from "@fluid-experimental/react-inputs";
     ```
 
 ### Get Fluid Data
 
-1. The Fluid runtime will bring changes made to the text from any client to the current client, but Fluid is agnostic about the UI framework. You can use a React hook to get the Fluid data from the SharedString object into the view layer (the React state). Add the following code below the `import` statements. This method is called when the application loads the first time, and the returned value is assigned to a React state property.
+1. The Fluid runtime will bring changes made to the text from any client to the current client, but Fluid is agnostic about the UI framework. Create a React hook, called `useSharedString` to get the Fluid data from the SharedString object into the view layer (the React state). Add the following code below the `import` statements. This method is called when the application loads the first time, and the returned value is assigned to a React state property.
 
     ```ts
     const useSharedString = (): SharedString => {
 
-      const [sharedString, setSharedString] = React.useState();
-      const getFluidData = async () => {
+    const [sharedString, setSharedString] = useState<SharedString>();
+    const getFluidData = async () => {
         // TODO 1: Configure the container.
         // TODO 2: Get the container from the Fluid service.
         // TODO 3: Return the Fluid SharedString object.
       }
 
-      // TODO 4: Get the Fluid Data data on app startup and store in the state
+      // TODO 4: Get the Fluid Data data on app startup and store in the state.
       // TODO 5: Return the SharedString Object
     }
     ```
@@ -104,7 +105,7 @@ You may need to install an additional dependency to make this demo compatible wi
       const client: TinyliciousClient = new TinyliciousClient();
       const containerSchema: ContainerSchema = {
         initialObjects: { sharedString: SharedString }
-      }
+      };
     ```
 
 1. Replace `TODO 2` with the following code. Note that `containerId` is being stored on the URL hash, and if there is no `containerId` a new container is created instead.
@@ -113,19 +114,20 @@ You may need to install an additional dependency to make this demo compatible wi
       let container: IFluidContainer;
       const containerId = window.location.hash.substring(1);
       if (!containerId) {
-        container = (await client.createContainer(containerSchema)).container;
-        const id = await container.attach();
-        window.location.hash = id;
+          ({ container } = await client.createContainer(containerSchema));
+          const id = await container.attach();
+          window.location.hash = id;
+          // Return the Fluid SharedString object.
+          return container.initialObjects.sharedString as SharedString;
       }
-      else {
-        container = (await client.getContainer(containerId, containerSchema)).container;
-        if (!container.connected) {
+
+      ({ container } = await client.getContainer(containerId, containerSchema));
+      if (container.connectionState !== ConnectionState.Connected) {
           await new Promise<void>((resolve) => {
-            container.once("connected", () => {
-              resolve();
-            });
+              container.once("connected", () => {
+                  resolve();
+              });
           });
-        }
       }
     ```
 
@@ -136,13 +138,13 @@ You may need to install an additional dependency to make this demo compatible wi
     ```
 
 1. Replace `TODO 4` with the following code. Note about this code:
-    - By setting an empty dependency array at the end of the `useEffect`, it is ensured that this function only gets called once.
-    - Since `setSharedString` is a state-changing method, it will cause the React `App` component to immediately rerender.
+    - Passing an empty dependency array as the last parameter of `useEffect` ensures that this function is called only once.
+    - The `setSharedString` method updates the view. Since it is a state-changing method, it will cause the React `App` component to immediately rerender.
 
     ```ts
-    React.useEffect(() => {
-      getFluidData()
-        .then(data => setSharedString(data));
+    useEffect(() => {
+        getFluidData()
+          .then((data) => setSharedString(data));
     }, []);
     ```
 
@@ -156,7 +158,7 @@ You may need to install an additional dependency to make this demo compatible wi
 
 Inside the `App()` function, add the following code. Note about this code:
 - The `sharedString` object returned from the code above is used to create a `SharedStringHelper` object, which is a class that provides helper APIs to interact with the `sharedString` object.
-- Next, the `SharedStringHelper` object is passed into the `CollaborativeTextArea` React component, which integrates `SharedString` with the default `textarea` HTML element to enable collaboration.
+- Next, the `SharedStringHelper` object is passed into the `CollaborativeTextArea` React component, which integrates `SharedString` with the default `<textarea>` HTML element to enable collaboration.
 
 ```ts
 const sharedString = useSharedString();
@@ -168,15 +170,15 @@ if (sharedString) {
     </div>
   );
 } else {
-  return <div />;
+    return <div />;
 }
 ```
 ### Create CollaborativeTextArea component
 
-`CollaborativeTextArea` is a React component which uses a `SharedStringHelper` object to control the text of an HTML `textarea` element. Follow the below steps to create this component.
+`CollaborativeTextArea` is a React component which uses a `SharedStringHelper` object to control the text of an HTML `<textarea>` element. Follow the below steps to create this component.
 
 1. Create a new file `CollaborativeTextArea.tsx` inside of the `\src` directory.
-1. Add the following import statements and declare the `CollaborativeTextArea` component:
+1. Add the following `import` statements and declare the `CollaborativeTextArea` component:
 
     ```ts
     import React from "react";
@@ -186,17 +188,17 @@ if (sharedString) {
       sharedStringHelper: SharedStringHelper;
     }
 
-    export const CollaborativeTextArea = (props) => {
-      // TODO 1: Setup React state and references
-      // TODO 2: Handle a change event in the textarea
-      // TODO 3: Set the selection in textarea element (update the UI)
-      // TODO 4: Store current selection from the textarea element in the React ref
-      // TODO 5: Detect changes in sharedStringHelper and update React/UI as necessary
-      // TODO 6: Create and configure a textarea element that will be used in App.tsx
+    export const CollaborativeTextArea = (props: ICollaborativeTextAreaProps) => {
+      // TODO 1: Setup React state and references.
+      // TODO 2: Handle a change event in the textarea.
+      // TODO 3: Set the selection in textarea element (update the UI).
+      // TODO 4: Store current selection from the textarea element in the React ref.
+      // TODO 5: Detect changes in sharedStringHelper and update React/UI as necessary.
+      // TODO 6: Create and configure a textarea element that will be used in App.tsx.
     }
     ```
 
-1. Replace `TODO 1` with the following code. To learn more about `useRef`, check out the [React documentation](https://reactjs.org/docs/hooks-reference.html#useref).
+1. Replace `TODO 1` with the following code. This code sets up the React state and gets a reference to the HTML `<textarea>` element. To learn more about `useRef`, check out the [React documentation](https://reactjs.org/docs/hooks-reference.html#useref).
 
     ```ts
     const sharedStringHelper = props.sharedStringHelper;
@@ -208,7 +210,7 @@ if (sharedString) {
     const [text, setText] = React.useState<string>(sharedStringHelper.getText());
     ```
 
-1. Replace `TODO 2` with the following code. This function will be called when a change is made to the `textarea` element.
+1. Replace `TODO 2` with the following code. This function will be called when a change is made to the `<textarea>` element. You will create the `storeSelectionInReact` in a later step.
 
     ```ts
     const handleChange = (ev: React.FormEvent<HTMLTextAreaElement>) => {
@@ -248,7 +250,7 @@ if (sharedString) {
     };
     ```
 
-1. Replace `TODO 3` with the following code. This function sets the selection directly in the `textarea` element.
+1. Replace `TODO 3` with the following code. This function sets the selection directly in the `<textarea>` element.
 
     ```ts
     const setTextareaSelection = (newStart: number, newEnd: number) => {
@@ -262,7 +264,7 @@ if (sharedString) {
     };
     ```
 
-1. Replace `TODO 4` with the following code. This function sets the selection from the `textarea` element and sets it in the React refs.
+1. Replace `TODO 4` with the following code. This function gets the selection from the `<textarea>` element and sets it in the React refs.
 
     ```ts
     const storeSelectionInReact = () => {
@@ -279,7 +281,7 @@ if (sharedString) {
     ```
 
 1. Replace `TODO 5` with the following code. Note about this code:
-    - By setting the dependency array at the end of `useEffect` to include `sharedStringHelper`, it is ensured that this function is called each time the `sharedStringHelper` object is changed.
+    - Setting the dependency array in the second parameter of `useEffect` to include `sharedStringHelper` ensures that this function is called each time the `sharedStringHelper` object is changed.
 
     ```ts
     React.useEffect(() => {
@@ -301,7 +303,7 @@ if (sharedString) {
     }, [sharedStringHelper]);
     ```
 
-1. Finally, replace `TODO 6` with the following code to create the `textarea` element.
+1. Finally, replace `TODO 6` with the following code to create the `<textarea>` element and register all the event handlers for it.
 
     ```ts
     return (
@@ -320,28 +322,35 @@ if (sharedString) {
 
 ## Start the Fluid server and run the application
 
-In the Command Prompt, run the following command to start the Fluid service. Note that `tinylicious` is the name of the Fluid service that runs on localhost.
+1. In the Command Prompt, run the following command to start the Fluid service. Note that `tinylicious` is the name of the Fluid service that runs on localhost.
 
-```dotnetcli
-npx tinylicious
-```
+    ```dotnetcli
+    npx tinylicious
+    ```
 
-Open a new Command Prompt and navigate to the root of the project; for example, `C:\My Fluid Projects\collaborative-text-area-tutorial`. Start the application server with the following command. The application opens in your browser. This may take a few minutes.
+    If tinylicious is not installed, you will be prompted to install it. When the Fluid service is running, you will see `info: Listening on port ...` in the Command Prompt.
 
-```dotnetcli
-npm run start
-```
+1. Open a new Command Prompt and navigate to the root of the project; for example, `C:\My Fluid Projects\collaborative-text-area-tutorial`. Start the application server with the following command. The application opens in your browser.
 
-Paste the URL of the application into the address bar of another tab or even another browser to have more than one client open at a time. Edit the text on any client and see the text change and synchronize on all the clients.
+    ```dotnetcli
+    npm run start
+    ```
+
+    {{< callout note >}}
+
+    If you receive a compilation error related to a "buffer" package, then you need to install an additional dependency to make this demo compatible with Webpack 5. Run `npm install -D buffer` and try again. This will be resolved in a future release of Fluid Framework.
+
+    {{< /callout >}}
+
+1. Paste the URL of the application into the address bar of another tab or even another browser to have more than one client open at a time. Edit the text on any client and see the text change and synchronize on all the clients.
 
 ## Next steps
 
-- Try extending the demo with more Fluid DDSes and a more complex UI.
 - Consider using the [Fluent UI React controls](https://aka.ms/fluentui/) to give the application the look and feel of Microsoft 365. To install them in your project run the following in the command prompt: `npm install @fluentui/react`.
-- For an example that will scale to larger applications and larger teams, check out the [React Starter Template in the FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/examples/react-starter-template).
+- For an example that will scale to larger applications and larger teams, check out the [React Starter Template in the FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/react-starter-template).
 
 {{< callout tip >}}
 
-When you make changes to the code the project will automatically rebuild and the application server will reload. However, if you make changes to the container schema, they will only take effect if you close and restart the application server. To do this, give focus to the Command Prompt and press <kbd>Ctrl-C</kbd> twice. Then run `npm run start` again.
+When you make changes to the code the project will automatically rebuild and the application server will reload. However, if you make changes to the container schema, they will only take effect if you close and restart the application server. Then run `npm run start` again.
 
 {{< /callout >}}

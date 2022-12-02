@@ -88,6 +88,9 @@ export abstract class SynchronousCursor {
  * A simple general purpose ITreeCursorSynchronous implementation.
  *
  * As this is a generic implementation, it's ability to optimize is limited.
+ *
+ * Note that TNode can be `null` (and we should support `undefined` as well),
+ * so be careful using types like `TNode | undefined` and expressions like `TNode ??`.
  */
 class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNode> {
     /**
@@ -98,7 +101,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
      * does not include current level (which is stored in `siblings`).
      * Even levels in the stack (starting from 0) are sequences of nodes and odd levels
      * are for fields keys on a node.
-     * @param indexStack - Stack of indices into the corosponding levels in `siblingStack`.
+     * @param indexStack - Stack of indices into the corresponding levels in `siblingStack`.
      * @param siblings - Siblings at the current level (not included in `siblingStack`).
      * @param index - Index into `siblings`.
      */
@@ -153,7 +156,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
     }
 
     public getFieldPath(): FieldUpPath {
-        assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
+        assert(this.mode === CursorLocationType.Fields, 0x449 /* must be in fields mode */);
         return {
             field: this.getFieldKey(),
             parent: this.getOffsetPath(1),
@@ -166,8 +169,8 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
             return undefined; // At root
         }
 
-        assert(length > 0, "invalid offset to above root");
-        assert(length % 2 === 0, "offset path must point to node not field");
+        assert(length > 0, 0x44a /* invalid offset to above root */);
+        assert(length % 2 === 0, 0x44b /* offset path must point to node not field */);
 
         // Perf Note:
         // This is O(depth) in tree.
@@ -299,14 +302,14 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
         return (this.siblings as TNode[])[this.index];
     }
 
-    private getParent(): TNode | undefined {
+    private getParent(): TNode {
         // assert(this.mode === CursorLocationType.Nodes, "can only get node when in node");
         return this.getStackedNode(this.indexStack.length - 1);
     }
 
     private getField(): readonly TNode[] {
         // assert(this.mode === CursorLocationType.Fields, "can only get field when in fields");
-        const parent = this.getParent() ?? fail("cannot getField when at root");
+        const parent = this.getParent();
         const key: FieldKey = this.getFieldKey();
         const field = this.adapter.getFieldFromNode(parent, key);
         return field;
