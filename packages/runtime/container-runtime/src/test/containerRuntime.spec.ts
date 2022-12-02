@@ -653,5 +653,29 @@ describe("Runtime", () => {
             assert.equal((runtime as unknown as { method1: () => any; }).method1(), "mixed in return");
             assert.equal((runtime as unknown as { method2: () => any; }).method2(), 42);
         });
+
+        it("entryPoint is initialized correctly", async () => {
+            const myObj: FluidObject = { fakeProp: "fakeValue" };
+            const mockContext: Partial<IContainerContext> = {
+                attachState: AttachState.Attached,
+                deltaManager: new MockDeltaManager(),
+                quorum: new MockQuorumClients(),
+                taggedLogger: new MockLogger(),
+                clientDetails: { capabilities: { interactive: true } },
+                closeFn: (_error?: ICriticalContainerError): void => { },
+                updateDirtyContainerState: (_dirty: boolean) => { },
+            };
+            const containerRuntime = await ContainerRuntime.load(
+                mockContext as IContainerContext,
+                [],
+                undefined, // requestHandler
+                {},        // runtimeOptions
+                undefined, // containerScope
+                false,     // existing
+                undefined, // containerRuntimeCtor
+                async (runtime) => myObj
+            );
+            assert((await containerRuntime.entryPoint?.get()) === myObj, "entryPoint was not initialized");
+        });
     });
 });
