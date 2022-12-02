@@ -436,7 +436,9 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 
     fork(): ITreeSubscriptionCursor {
         assert(this.innerCursor !== undefined, 0x460 /* Cursor must be current to be used */);
-        return new Cursor(this.forest, this.innerCursor.fork());
+        const forked = new Cursor(this.forest, this.innerCursor.fork());
+        this.forest.currentCursors.add(forked);
+        return forked;
     }
 
     free(): void {
