@@ -11,5 +11,8 @@ module.exports = {
     rules: {
         "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
+
+        // This package is exclusively used in a Node.js context
+        "import/no-nodejs-modules": "off",
     },
 };

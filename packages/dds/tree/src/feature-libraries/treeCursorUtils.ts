@@ -88,6 +88,9 @@ export abstract class SynchronousCursor {
  * A simple general purpose ITreeCursorSynchronous implementation.
  *
  * As this is a generic implementation, it's ability to optimize is limited.
+ *
+ * Note that TNode can be `null` (and we should support `undefined` as well),
+ * so be careful using types like `TNode | undefined` and expressions like `TNode ??`.
  */
 class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNode> {
     /**
@@ -299,14 +302,14 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
         return (this.siblings as TNode[])[this.index];
     }
 
-    private getParent(): TNode | undefined {
+    private getParent(): TNode {
         // assert(this.mode === CursorLocationType.Nodes, "can only get node when in node");
         return this.getStackedNode(this.indexStack.length - 1);
     }
 
     private getField(): readonly TNode[] {
         // assert(this.mode === CursorLocationType.Fields, "can only get field when in fields");
-        const parent = this.getParent() ?? fail("cannot getField when at root");
+        const parent = this.getParent();
         const key: FieldKey = this.getFieldKey();
         const field = this.adapter.getFieldFromNode(parent, key);
         return field;

@@ -290,7 +290,7 @@ jobs:
           workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
           customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
 
-       # filter report
+      # filter report
       - task: Bash@3
         displayName: Filter skipped test from report
         inputs:
