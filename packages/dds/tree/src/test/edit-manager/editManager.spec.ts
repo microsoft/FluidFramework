@@ -224,19 +224,20 @@ describe("EditManager", () => {
             { seq: 12, type: "Pull", ref: 1, from: peer2 },
         ]);
 
-        runUnitTestScenario(
-            "Removes commits with sequence number less than minimumSequenceNumber",
-            [
-                { seq: 2, type: "Pull", ref: 0, from: peer1 },
-                { seq: 4, type: "Pull", ref: 1, from: peer2 },
-                { seq: 6, type: "Pull", ref: 3, from: peer1 },
-                { seq: 8, type: "Pull", ref: 3, from: peer1 },
-                { seq: 10, type: "Pull", ref: 0, from: peer2 },
-                { seq: 12, type: "Pull", ref: 1, from: peer2 },
-            ],
-            undefined,
-            4,
-        );
+        it("Bounds memory growth when provided with a minimumSequenceNumber", () => {
+            const { manager } = editManagerFactory({});
+            for (let i = 0; i < 10; ++i) {
+                manager.addSequencedChange({
+                    changeset: TestChange.mint([], []),
+                    refNumber: brand(0),
+                    seqNumber: brand(i),
+                    sessionId: peer1,
+                });
+            }
+            assert.equal(manager.getTrunk().length, 10);
+            manager.setMinimumSequenceNumber(5);
+            assert(manager.getTrunk().length < 10);
+        });
     });
 
     describe("Avoids unnecessary rebases", () => {
@@ -356,7 +357,6 @@ function runUnitTestScenario(
     title: string | undefined,
     steps: readonly UnitTestScenarioStep[],
     rebaser?: ChangeRebaser<TestChange>,
-    minimumSequenceNumber?: number,
 ): void {
     const run = () => {
         const { manager, anchors } = editManagerFactory({ rebaser });
@@ -532,17 +532,6 @@ function runUnitTestScenario(
             // Verify that clients spun-up based on summaries are able to interpret new edits properly
             for (const j of joiners) {
                 checkChangeList(j, trunk);
-            }
-        }
-        if (minimumSequenceNumber) {
-            manager.setMinimumSequenceNumber(minimumSequenceNumber);
-            const currTrunk = manager.getTrunk();
-            for (const commit of currTrunk) {
-                const seqNumber = commit.seqNumber;
-                assert(
-                    seqNumber >= minimumSequenceNumber,
-                    "sequence number must be greater or equal to minimumSequenceNumber.",
-                );
             }
         }
     };
