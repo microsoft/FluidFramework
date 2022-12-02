@@ -124,9 +124,9 @@ export class Outbox {
     /**
      * Sends the batch object to the container context to be sent over the wire.
      *
-     * @param batch batch to be sent
+     * @param batch - batch to be sent
      * @returns the client sequence number of the last batched op which was sent and
-     *  -1 if there are no ops or the container cannot send ops.
+     * -1 if there are no ops or the container cannot send ops.
      */
     private sendBatch(batch: IBatch): number {
         let clientSequenceNumber: number = -1;
