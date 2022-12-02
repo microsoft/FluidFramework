@@ -73,7 +73,7 @@ export type InternedStringId = number & {
 };
 
 // @public (undocumented)
-export function makeGzipEncoder<T>(): Encoder<Jsonable<T>, string>;
+export function makeLZ4Encoder<T>(): Encoder<Jsonable<T>, string>;
 
 // @public
 export class MutableStringInterner implements StringInterner {
