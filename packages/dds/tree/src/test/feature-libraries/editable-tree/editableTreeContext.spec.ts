@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-nodejs-modules
 import { strict as assert } from "assert";
 import { FieldKey, JsonableTree, SchemaData } from "../../../core";
 import { createField, isUnwrappedNode, singleTextCursor } from "../../../feature-libraries";
@@ -12,7 +11,7 @@ import { brand } from "../../../util";
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { ProxyContext } from "../../../feature-libraries/editable-tree/editableTreeContext";
-import { fullSchemaData, Int32, int32Schema, personData, PersonType } from "./mockData";
+import { fullSchemaData, int32Schema, personData, PersonType } from "./mockData";
 
 async function createSharedTrees(
     schemaData: SchemaData,
@@ -29,17 +28,29 @@ async function createSharedTrees(
     return [provider, provider.trees];
 }
 
-describe("editable-tree context", () => {
-    it("can free and reuse context", async () => {
+describe.only("editable-tree context", () => {
+    it("can't synchronize trees after the context been freed", async () => {
+        const [provider, [tree1, tree2]] = await createSharedTrees(fullSchemaData, [personData], 2);
+        const person1 = tree1.root as PersonType;
+        const person2 = tree2.root as PersonType;
+        tree2.context.free();
+
+        assert.equal(person1.age, 35);
+        person1.age = brand(42);
+        assert.equal(person1.age, 42);
+        assert.equal(person2.age, 35);
+        await provider.ensureSynchronized();
+        assert.equal(person2.age, 35);
+    });
+
+    it("can clear and reuse context", async () => {
         const [provider, [tree1, tree2]] = await createSharedTrees(fullSchemaData, [personData], 2);
         const context2 = tree2.context;
         const person1 = tree1.root as PersonType;
-        const oldAge = person1.age;
-        const newAge: Int32 = brand(55);
 
         let person2 = tree2.root as PersonType;
         context2.attachAfterChangeHandler((context) => {
-            context.free();
+            context.clear();
             person2 = context.unwrappedRoot as PersonType;
         });
 
@@ -50,21 +61,9 @@ describe("editable-tree context", () => {
         const anchorsBefore = (context2 as ProxyContext).withAnchors.size;
 
         // update the tree
-        person1.age = newAge;
+        person1.age = brand(42);
         assert.notDeepEqual(person1, person2);
-        // this would leak anchors if we constantly re-read the tree in the afterHandler without freeing
-        await provider.ensureSynchronized();
-        // this works since synchronization happens before we remove the context from the forest dependents while freeing
-        assert.deepEqual(person1, person2);
-        // check anchors are not leaking
-        context2.prepareForEdit();
-        assert.equal((context2 as ProxyContext).withAnchors.size, anchorsBefore);
-
-        // update again
-        person1.age = oldAge;
-        assert.notDeepEqual(person1, person2);
-        // this won't synchronize if we remove the context from the forest dependents while freeing,
-        // as it would not cleanup cursors by invalidation of dependents and thus throw in `forest.beforeChange()`
+        // this would leak anchors if we constantly re-read the tree in the afterHandler without clear
         await provider.ensureSynchronized();
         assert.deepEqual(person1, person2);
         // check anchors are not leaking
@@ -72,12 +71,12 @@ describe("editable-tree context", () => {
         assert.equal((context2 as ProxyContext).withAnchors.size, anchorsBefore);
     });
 
-    it("can create fields while freeing the context in afterHandlers", async () => {
+    it("can create fields while clearing the context in afterHandlers", async () => {
         const ageField: FieldKey = brand("age");
-        const [provider, [tree]] = await createSharedTrees(fullSchemaData, [personData]);
+        const [, [tree]] = await createSharedTrees(fullSchemaData, [personData]);
 
         tree.context.attachAfterChangeHandler((context) => {
-            context.free();
+            context.clear();
         });
 
         assert.doesNotThrow(() => {

@@ -65,9 +65,16 @@ export interface EditableTreeContext {
 
     /**
      * Call to free resources.
-     * EditableTrees created in this context are invalid to use after this.
+     * It is invalid to use the context after this.
      */
     free(): void;
+
+    /**
+     * Release any cursors and anchors held by EditableTrees created in this context.
+     * The EditableTrees are invalid to use after this, but the context may still be used
+     * to create new trees starting from the root.
+     */
+    clear(): void;
 
     /**
      * Attaches the handler to be called after a transaction, initiated by
@@ -119,6 +126,11 @@ export class ProxyContext implements EditableTreeContext {
     }
 
     public free(): void {
+        this.clear();
+        this.forest.removeDependent(this.observer);
+    }
+
+    public clear(): void {
         for (const target of this.withCursors) {
             target.free();
         }
