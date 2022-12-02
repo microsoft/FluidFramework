@@ -92,6 +92,15 @@ export class DocumentDeltaConnection
     private readonly mc: MonitoringContext;
 
     /**
+     * Store op content when lightOpAcksEnabled is true
+     * This content will be used to repopulate when receiving ack for op
+     * Key: clientSequenceNumber
+     * Value: op contents
+     */
+    private readonly opContent = new Map<number, any>();
+    protected lightOpAcksEnabled = false;
+
+    /**
      * @deprecated Implementors should manage their own logger or monitoring context
      */
     protected get logger(): ITelemetryLogger {
@@ -129,7 +138,7 @@ export class DocumentDeltaConnection
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(logger, "DeltaConnection"));
 
-        this.on("newListener", (event, listener) => {
+        this.on("newListener", (event, _listener) => {
             assert(!this.disposed, 0x20a /* "register for event on disposed object" */);
 
             // Some events are already forwarded - see this.addTrackedListener() calls in initialize().
@@ -149,11 +158,31 @@ export class DocumentDeltaConnection
             // though some logic (naming assert in initialMessages getter) might need to be adjusted (it becomes noop)
             assert((this.listeners(event).length !== 0) === this.trackedListeners.has(event), 0x20b /* "mismatch" */);
             if (!this.trackedListeners.has(event)) {
-                this.addTrackedListener(
-                    event,
-                    (...args: any[]) => {
-                        this.emit(event, ...args);
-                    });
+                let listener: (...args: any[]) => void;
+                switch (event) {
+                    case "op": {
+                        listener = (docId: string, messages: ISequencedDocumentMessage[]) => {
+                            if (!this.lightOpAcksEnabled) {
+                                this.emit(event, docId, messages);
+                            } else {
+                                this.emit(event, docId, messages.map((message) => {
+                                    // Repopulate op contents if applicable
+                                    if (this.clientId === message.clientId && this.opContent.has(message.clientSequenceNumber)) {
+                                        message.contents = this.opContent.get(message.clientSequenceNumber);
+                                        this.opContent.delete(message.clientSequenceNumber);
+                                    }
+                                    return message;
+                                }));
+                            }
+                        };
+                        break;
+                    }
+                    default: {
+                        listener = (...args: any[]) => { this.emit(event, ...args); };
+                    }
+                }
+
+                this.addTrackedListener(event, listener);
             }
         });
     }
@@ -297,6 +326,9 @@ export class DocumentDeltaConnection
      */
     public submit(messages: IDocumentMessage[]): void {
         this.checkNotClosed();
+        if (this.lightOpAcksEnabled) {
+            messages.forEach((message) => this.opContent.set(message.clientSequenceNumber, message.contents));
+        }
         this.submitCore("submitOp", messages);
     }
 
@@ -601,9 +633,5 @@ export class DocumentDeltaConnection
         );
 
         return errorObj;
-    }
-
-    public processInboundMessages?(messages: ISequencedDocumentMessage[]): ISequencedDocumentMessage[] {
-        return messages;
     }
 }

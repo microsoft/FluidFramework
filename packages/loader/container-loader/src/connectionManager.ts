@@ -947,12 +947,7 @@ export class ConnectionManager implements IConnectionManager {
     }
 
     private readonly opHandler = (documentId: string, messagesArg: ISequencedDocumentMessage[]) => {
-        let messages = Array.isArray(messagesArg) ? messagesArg : [messagesArg];
-        // TODO: might call DeltaConnection here to add the content back into a message
-        if (this.connection?.processInboundMessages) {
-            messages = this.connection?.processInboundMessages(messages);
-        }
-
+        const messages = Array.isArray(messagesArg) ? messagesArg : [messagesArg];
         this.props.incomingOpHandler(messages, "opHandler");
     };
 

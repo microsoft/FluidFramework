@@ -12,7 +12,6 @@ import { IFluidErrorBase, loggerToMonitoringContext } from "@fluidframework/tele
 import {
     IClient,
     IConnect,
-    IDocumentMessage,
     INack,
     ISequencedDocumentMessage,
     ISignalMessage,
@@ -248,13 +247,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         };
 
         // Reference to this client supporting get_ops flow.
-        connectMessage.supportedFeatures = { };
+        connectMessage.supportedFeatures = { feature_light_op_acks: true };
         if (mc.config.getBoolean("Fluid.Driver.Odsp.GetOpsEnabled") !== false) {
             connectMessage.supportedFeatures[feature_get_ops] = true;
-        }
-
-        if (mc.config.getBoolean("Fluid.Driver.Odsp.LightOpAcks") !== false) {
-            connectMessage.supportedFeatures[feature_light_op_acks] = true;
         }
 
         const deltaConnection = new OdspDocumentDeltaConnection(
@@ -550,6 +545,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         });
 
         await super.initialize(connectMessage, timeout);
+        this.lightOpAcksEnabled = this.details.supportedFeatures?.[feature_light_op_acks] === true;
     }
 
     protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
@@ -627,45 +623,5 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         }
 
         socket.removeSocketIoReference();
-    }
-
-    /**
-     * Key: clientSequenceNumber
-     * Value: content
-     */
-    private readonly opContent = new Map<number, any>();
-
-    public submit(messages: IDocumentMessage[]): void {
-        if ((this.details as any).supportedFeatures?.[feature_light_op_acks] === true) {
-            messages.forEach((message) => this.opContent.set(message.clientSequenceNumber, message.contents));
-        }
-        super.submit(messages);
-    }
-
-    public processInboundMessages(messages: ISequencedDocumentMessage[]): ISequencedDocumentMessage[] {
-        if ((this.details as any).supportedFeatures?.[feature_light_op_acks] !== true) {
-            return messages;
-        }
-        return messages.map((message) => {
-            if (this.clientId === message.clientId && this.opContent.has(message.clientSequenceNumber)) {
-                message.contents = this.opContent.get(message.clientSequenceNumber);
-                this.opContent.delete(message.clientSequenceNumber);
-            }
-            return message;
-        });
-    }
-
-    protected emitMessages(type: string, messages: IDocumentMessage[][]) {
-        if ((this.details as any).supportedFeatures?.[feature_light_op_acks] !== true) {
-            return super.emitMessages(type, messages);
-        }
-        if (!this.disposed) {
-            this.socket.emit(
-                type,
-                this.clientId,
-                true, // support light op acks
-                messages,
-            );
-        }
     }
 }
