@@ -21,7 +21,7 @@ import {
     Value,
 } from "../../tree";
 import { moveToDetachedField } from "../../forest";
-import { SharedTreeTestFactory, TestTreeProvider } from "../utils";
+import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import { TransactionResult } from "../../checkout";
 import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData } from "../../schema-stored";
@@ -79,7 +79,7 @@ describe("SharedTree", () => {
     });
 
     it("can summarize and load", async () => {
-        const provider = await TestTreeProvider.create(1, true);
+        const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
         const [summarizingTree] = provider.trees;
         const value = 42;
         initializeTestTreeWithValue(summarizingTree, value);
@@ -91,7 +91,7 @@ describe("SharedTree", () => {
     });
 
     it("can process ops after loading from summary", async () => {
-        const provider = await TestTreeProvider.create(1, true);
+        const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
         const tree1 = provider.trees[0];
         const tree2 = await provider.createTree();
         const tree3 = await provider.createTree();
@@ -182,7 +182,7 @@ describe("SharedTree", () => {
         };
         const provider = await TestTreeProvider.create(
             1,
-            true,
+            SummarizeType.onDemand,
             new SharedTreeTestFactory(onCreate),
         );
         const [tree1] = provider.trees;
