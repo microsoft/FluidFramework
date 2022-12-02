@@ -5,11 +5,13 @@
  */
 
 import random from "random-js";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { assert, delay } from "@fluidframework/common-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedMap } from "@fluidframework/map";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { IRunConfig } from "./loadTestDataStore";
 
 export interface IGCDataStore {
@@ -145,16 +147,6 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
     private childCount = 1;
 
     /**
-     * The inactive timeout after which a child data object should not be revived.
-     * Note: This should not be called before "run" is called which initializes it.
-     */
-    private _inactiveTimeoutMs: number | undefined;
-    public get inactiveTimeoutMs(): number {
-        assert(this._inactiveTimeoutMs !== undefined, "inactive timeout is required for GC tests");
-        return this._inactiveTimeoutMs;
-    }
-
-    /**
      * The config with which to run a child data object.
      * Note: This should not be called before "run" is called which initializes it.
      */
@@ -202,12 +194,8 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore 
 
     public async run(config: IRunConfig, id?: string): Promise<boolean> {
         console.log(`########## Started child [${id}]`);
-        assert(config.testConfig.inactiveTimeoutMs !== undefined, "inactive timeout is required for GC tests");
-
         this.myId = id;
         this.shouldRun = true;
-        // Set the local inactive timeout 500 less than the actual to keep buffer when marking data stores as inactive.
-        this._inactiveTimeoutMs = config.testConfig.inactiveTimeoutMs - 500;
 
         /**
          * Adjust the totalSendCount and opRatePerMin such that this data store and its children collectively send
@@ -536,3 +524,17 @@ export const rootDataObjectFactory = new DataObjectFactory(
         [DataObjectCollab.type, Promise.resolve(dataObjectFactoryCollab)],
     ],
 );
+
+const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+    runtime.IFluidHandleContext.resolveHandle(request);
+
+export const createGCFluidExport = (options: IContainerRuntimeOptions) =>
+    new ContainerRuntimeFactoryWithDefaultDataStore(
+        rootDataObjectFactory,
+        [
+            [rootDataObjectFactory.type, Promise.resolve(rootDataObjectFactory)],
+        ],
+        undefined,
+        [innerRequestHandler],
+        options,
+    );

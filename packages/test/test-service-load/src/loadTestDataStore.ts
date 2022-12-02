@@ -22,10 +22,6 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { LeaderElection } from "./leaderElection";
-import {
-    rootDataObjectFactory,
-    IGCDataStore,
-} from "./gcDataStores";
 
 export interface IRunConfig {
 	runId: number;
@@ -48,7 +44,6 @@ const sharedMapKey = "sharedMap";
 const startTimeKey = "startTime";
 const taskTimeKey = "taskTime";
 const gcDataStoreKey = "dataStore";
-const gcDataStore2Key = "gcDataStore";
 const defaultBlobSize = 1024;
 
 /**

@@ -48,12 +48,6 @@ export interface ILoadTestConfig {
         };
     };
     /**
-     * Required for GC tests. The time after which unreferenced objects become inactive.
-     */
-    inactiveTimeoutMs?: number;
-    faultInjectionMaxMs?: number;
-    faultInjectionMinMs?: number;
-    /**
      * Number of "attachment" type blobs to upload over the course of the test run.
      */
     totalBlobCount?: number;

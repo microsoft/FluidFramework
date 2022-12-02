@@ -195,7 +195,6 @@
             "progressIntervalMs": 5000,
             "numClients": 5,
             "totalSendCount": 1200,
-            "inactiveTimeoutMs": [10000],
             "optionOverrides":{
                 "tinylicious":{
                     "comment": "SessionExpiry: 30 seconds. Inactive Timeout: 33 seconds. Sweep Timeout: 35 seconds.",
@@ -225,7 +224,6 @@
             "progressIntervalMs": 5000,
             "numClients": 10,
             "totalSendCount": 48000,
-            "inactiveTimeoutMs": [60000],
             "optionOverrides":{
                 "tinylicious":{
                     "comment": "SessionExpiry: 15 mins. Inactive Timeout: 16 mins. Sweep Timeout: 17 mins.",
@@ -255,9 +253,6 @@
             "progressIntervalMs": 5000,
             "numClients": 10,
             "totalSendCount": 1000,
-            "faultInjectionMinMs": 0,
-            "faultInjectionMaxMs": 50000,
-            "inactiveTimeoutMs": [10000],
             "optionOverrides":{
                 "tinylicious":{
                     "configurations":{
@@ -350,9 +345,9 @@
             }
         },
         "debug": {
-            "opRatePerMin": 120,
+            "opRatePerMin": 60,
             "progressIntervalMs": 5000,
-            "numClients": 2,
+            "numClients": 1,
             "totalSendCount": 30,
             "readWriteCycleMs": 10000,
             "faultInjectionMs": {
