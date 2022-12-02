@@ -128,10 +128,10 @@ describe("Container create scenarios", () => {
 
         const errorFn = (error: Error): boolean => {
             assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
-            assert.notStrictEqual(
-                error.message.startsWith("connect ECONNREFUSED"),
-                true,
-                "Connection not established.",
+            assert.strictEqual(
+                error.message,
+                "R11s fetch error: Document is deleted and cannot be accessed.",
+                `Unexpected error: ${error.message}`,
             );
             return true;
         };

@@ -28,11 +28,13 @@ export {
 } from "./containerRuntime";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
 export {
+    IGCStats,
+} from "./garbageCollection";
+export {
     gcBlobPrefix,
     gcTombstoneBlobKey,
     gcTreeKey,
-    IGCStats,
-} from "./garbageCollection";
+} from "./garbageCollectionConstants";
 export {
     IPendingFlush,
     IPendingLocalState,

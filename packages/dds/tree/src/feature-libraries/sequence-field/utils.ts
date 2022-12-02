@@ -295,7 +295,7 @@ export function isObjMark<TNodeChange>(
  * When `false` is returned, `lhs` is left untouched.
  */
 export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boolean {
-    if (rhs.type !== lhs.type) {
+    if (rhs.type !== lhs.type || rhs.revision !== lhs.revision) {
         return false;
     }
     const type = rhs.type;
@@ -303,7 +303,7 @@ export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boole
         case "Insert":
         case "MoveIn": {
             const lhsAttach = lhs as Insert | MoveIn;
-            if (rhs.id === lhsAttach.id ?? isEqualPlace(lhsAttach, rhs)) {
+            if (isEqualPlace(lhsAttach, rhs)) {
                 if (rhs.type === "Insert") {
                     const lhsInsert = lhsAttach as Insert;
                     lhsInsert.content.push(...rhs.content);
@@ -318,7 +318,7 @@ export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boole
         case "Delete":
         case "MoveOut": {
             const lhsDetach = lhs as Detach;
-            if (rhs.id === lhsDetach.id && rhs.tomb === lhsDetach.tomb) {
+            if (rhs.tomb === lhsDetach.tomb) {
                 lhsDetach.count += rhs.count;
                 return true;
             }
@@ -328,7 +328,6 @@ export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boole
         case "Return": {
             const lhsReattach = lhs as Reattach;
             if (
-                rhs.id === lhsReattach.id &&
                 rhs.detachedBy === lhsReattach.detachedBy &&
                 lhsReattach.detachIndex + lhsReattach.count === rhs.detachIndex
             ) {

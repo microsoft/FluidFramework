@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { RevisionTag, tagChange, TaggedChange } from "../../core";
 import { clone, fail, StackyIterator } from "../../util";
 import {
@@ -10,8 +11,10 @@ import {
     Mark,
     MarkList,
     Modify,
+    ModifyingMark,
     ModifyInsert,
     ModifyReattach,
+    ObjectMark,
     SizedMark,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
@@ -21,7 +24,6 @@ import {
     isAttach,
     isDetachMark,
     isModifyingMark,
-    isReattach,
     isSkipMark,
     splitMarkOnInput,
     splitMarkOnOutput,
@@ -68,21 +70,17 @@ function composeMarkLists<TNodeChange>(
             // We therefore adopt the new mark as is.
             factory.push(composeMark(newMark, newRev, composeChild));
         } else if (isAttach(newMark)) {
-            // Content that is being attached by the new changeset cannot interact with base changes.
-            // Note that attach marks from different changesets can only target the same gap if they are concurrent.
-            // This method assumes that `newMarkList` is based on `baseMarkList`, so they are not concurrent.
-            factory.pushContent(composeMark(newMark, newRev, composeChild));
-            baseIter.push(baseMark);
-        } else if (isReattach(newMark)) {
-            // Content that is being re-attached by the new changeset can interact with base changes.
-            // This can happen in two cases:
-            // - The base change contains the detach that the re-attach is the inverse of.
-            // - The base change contains a tombstone for the detach that the re-attach is the inverse of.
-            // We're ignoring these cases for now. The impact of ignoring them is that the relative order of
-            // reattached content and concurrently attached content is not preserved.
-            // TODO: properly compose reattach marks with their matching base marks if any.
-            factory.pushContent(composeMark(newMark, newRev, composeChild));
-            baseIter.push(baseMark);
+            if (isDetachMark(baseMark) && newRev !== undefined && baseMark.revision === newRev) {
+                // We assume that baseMark and newMark having the same revision means that they are inverses of each other,
+                // so neither has an effect in the composition.
+                assert(
+                    getInputLength(baseMark) === getOutputLength(newMark),
+                    "Inverse marks should be the same length",
+                );
+            } else {
+                factory.pushContent(composeMark(newMark, newRev, composeChild));
+                baseIter.push(baseMark);
+            }
         } else if (isDetachMark(baseMark)) {
             // Content that is being detached by the base changeset can interact with the new changes.
             // This can happen in two cases:
@@ -159,7 +157,6 @@ function composeMarks<TNodeChange>(
                     return {
                         ...newMark,
                         type: "MInsert",
-                        id: baseMark.id,
                         content: baseMark.content[0],
                     };
                 }
@@ -207,7 +204,6 @@ function composeMarks<TNodeChange>(
                 case "Modify": {
                     const modRevive: ModifyReattach<TNodeChange> = {
                         type: "MRevive",
-                        id: baseMark.id,
                         detachedBy: baseMark.detachedBy,
                         detachIndex: baseMark.detachIndex,
                         changes: newMark.changes,
@@ -250,11 +246,17 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
         return mark;
     }
 
+    const cloned = clone(mark);
+    if (revision !== undefined) {
+        (cloned as ObjectMark<TNodeChange>).revision = revision;
+    }
+
     if (isModifyingMark(mark)) {
-        const cloned = clone(mark);
-        cloned.changes = composeChild([tagChange(mark.changes, revision)]);
+        (cloned as ModifyingMark<TNodeChange>).changes = composeChild([
+            tagChange(mark.changes, revision),
+        ]);
         return cloned;
     }
 
-    return clone(mark);
+    return cloned;
 }
