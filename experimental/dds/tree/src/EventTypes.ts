@@ -10,6 +10,12 @@
  */
 export enum SharedTreeEvent {
 	/**
+	 * Note: It is _strongly_ recommended that you avoid this API and instead use the `viewChange` event
+	 * on a {@link Checkout}. See "Use a Checkout" in the README for an example of how to create a
+	 * checkout of a tree. The Checkout API is generally more user friendly and also avoids a class
+	 * of bugs involving the interleaving of remote and local edits that can arise when querying the
+	 * tree's {@link LogViewer} directly.
+	 *
 	 * An edit has been committed to the log.
 	 * This happens when either:
 	 *
@@ -23,6 +29,12 @@ export enum SharedTreeEvent {
 	EditCommitted = 'committedEdit',
 
 	/**
+	 * Note: It is _strongly_ recommended that you avoid this API and instead use the `viewChange` event
+	 * on a {@link Checkout}. See "Use a Checkout" in the README for an example of how to create a
+	 * checkout of a tree. The Checkout API is generally more user friendly and also avoids a class
+	 * of bugs involving the interleaving of remote and local edits that can arise when querying the
+	 * tree's {@link LogViewer} directly.
+	 *
 	 * A sequenced edit has been applied.
 	 * This includes local edits though the callback is only invoked once the sequenced version is received.
 	 * For edits that were local (see {@link SequencedEditAppliedEventArguments.wasLocal}, this callback will only

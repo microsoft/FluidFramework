@@ -66,7 +66,7 @@ export function create(
                 request.get("Authorization"),
                 request.params.sha, useCache);
             utils.handleResponse(headerP, response, useCache);
-    });
+        });
 
     router.get("/repos/:ignored?/:tenantId/tree/:sha",
         utils.validateRequestParams("tenantId", "sha"),
@@ -78,7 +78,7 @@ export function create(
                 request.get("Authorization"),
                 request.params.sha, useCache);
             utils.handleResponse(headerP, response, useCache);
-    });
+        });
 
     return router;
 }

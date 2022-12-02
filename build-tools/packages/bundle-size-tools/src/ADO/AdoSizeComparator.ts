@@ -151,7 +151,8 @@ export class ADOSizeComparator {
                 this.adoConstants.projectName,
                 baselineBuild.id,
                 this.adoConstants.bundleAnalysisArtifactName,
-            ).catch(() => {
+            ).catch((error) => {
+                console.log(JSON.stringify(error));
                 return undefined;
             });
 

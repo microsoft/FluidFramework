@@ -4,7 +4,7 @@
  */
 
 import { delay } from "@fluidframework/common-utils";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Lumber, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { NetworkError } from "@fluidframework/server-services-client";
 
 /**
@@ -19,6 +19,7 @@ import { NetworkError } from "@fluidframework/server-services-client";
  * @param calculateIntervalMs - function which calculates interval to wait before retrying based on error, retryAfterMs
  * and retries so far
  * @param onErrorFn - function allowing caller to define custom logic to run on error e.g. custom logs
+ * @param telemetryEnabled - whether to log telemetry metric, default is false
  */
 export async function runWithRetry<T>(
     api: () => Promise<T>,
@@ -30,47 +31,70 @@ export async function runWithRetry<T>(
     shouldRetry?: (error) => boolean,
     calculateIntervalMs = (error, numRetries, retryAfterInterval) => retryAfterInterval * 2 ** numRetries,
     onErrorFn?: (error) => void,
+    telemetryEnabled = false,
 ): Promise<T | undefined> {
     let result: T | undefined;
     let retryCount = 0;
     let success = false;
-    do {
-        try {
-            result = await api();
-            success = true;
-            if (retryCount >= 1) {
-                Lumberjack.info(`Succeeded in executing ${callName} with ${retryCount} retries`, telemetryProperties);
-            }
-        } catch (error) {
-            Lumberjack.error(`Error running ${callName}: retryCount ${retryCount}`, telemetryProperties, error);
-            if (onErrorFn !== undefined) {
-                onErrorFn(error);
-            }
-            if (shouldIgnoreError !== undefined && shouldIgnoreError(error) === true) {
-                Lumberjack.info(`Should ignore error for ${callName}`, telemetryProperties);
-                break;
-            } else if (shouldRetry !== undefined && shouldRetry(error) === false) {
-                Lumberjack.error(
-                    `Should not retry ${callName} for the current error, rejecting`,
-                    telemetryProperties,
-                    error);
-                return Promise.reject(error);
-            }
-            // if maxRetries is -1, we retry indefinitely
-            // unless shouldRetry returns false at some point.
-            if (maxRetries !== -1 && retryCount >= maxRetries) {
-                Lumberjack.error(`Error after retrying ${retryCount} times, rejecting`, telemetryProperties, error);
-                // Needs to be a full rejection here
-                return Promise.reject(error);
-            }
+    let metric: Lumber<LumberEventName.RunWithRetry>;
+    let metricError;
+    if (telemetryEnabled) {
+        metric = Lumberjack.newLumberMetric(
+            LumberEventName.RunWithRetry,
+            telemetryProperties);
+    }
+    try {
+        do {
+            try {
+                result = await api();
+                success = true;
+                if (retryCount >= 1) {
+                    Lumberjack.info(`Succeeded in executing ${callName} with ${retryCount} retries`, telemetryProperties);
+                }
+            } catch (error) {
+                metricError = error;
+                Lumberjack.error(`Error running ${callName}: retryCount ${retryCount}`, telemetryProperties, error);
+                if (onErrorFn !== undefined) {
+                    onErrorFn(error);
+                }
+                if (shouldIgnoreError !== undefined && shouldIgnoreError(error) === true) {
+                    Lumberjack.info(`Should ignore error for ${callName}`, telemetryProperties);
+                    break;
+                } else if (shouldRetry !== undefined && shouldRetry(error) === false) {
+                    Lumberjack.error(
+                        `Should not retry ${callName} for the current error, rejecting`,
+                        telemetryProperties,
+                        error);
+                    return Promise.reject(error);
+                }
+                // if maxRetries is -1, we retry indefinitely
+                // unless shouldRetry returns false at some point.
+                if (maxRetries !== -1 && retryCount >= maxRetries) {
+                    Lumberjack.error(`Error after retrying ${retryCount} times, rejecting`, telemetryProperties, error);
+                    // Needs to be a full rejection here
+                    return Promise.reject(error);
+                }
 
-            const intervalMs = calculateIntervalMs(error, retryCount, retryAfterMs);
-            await delay(intervalMs);
-            retryCount++;
+                const intervalMs = calculateIntervalMs(error, retryCount, retryAfterMs);
+                await delay(intervalMs);
+                retryCount++;
+            }
+        } while (!success);
+
+        return result;
+    } finally {
+        if (telemetryEnabled && metric) {
+            metric.setProperty("retryCount", retryCount);
+            metric.setProperty("callName", callName);
+            metric.setProperty("maxRetries", maxRetries);
+            metric.setProperty("retryAfterMs", retryAfterMs);
+            if (success) {
+                metric.success("runWithRetry succeeded");
+            } else {
+                metric.error("runWithRetry failed", metricError);
+            }
         }
-    } while (!success);
-
-    return result;
+    }
 }
 
 /**
@@ -91,8 +115,9 @@ export async function runWithRetry<T>(
  * @param calculateIntervalMs - function which calculates interval to wait before retrying based on error, retryAfterMs
  * and retries so far
  * @param onErrorFn - function allowing caller to define custom logic to run on error e.g. custom logs
+ * @param telemetryEnabled - whether to log telemetry metric, default is false
  */
- export async function requestWithRetry<T>(
+export async function requestWithRetry<T>(
     request: () => Promise<T>,
     callName: string,
     telemetryProperties?: Map<string, any> | Record<string, any>,
@@ -102,45 +127,68 @@ export async function runWithRetry<T>(
     calculateIntervalMs: (error: any, numRetries: number, retryAfterInterval: number) => number
         = calculateRetryIntervalForNetworkError,
     onErrorFn?: (error) => void,
+    telemetryEnabled = false,
 ): Promise<T> {
     let result: T;
     let retryCount = 0;
     let success = false;
-    do {
-        try {
-            result = await request();
-            success = true;
-            if (retryCount >= 1) {
-                Lumberjack.info(`Succeeded in executing ${callName} with ${retryCount} retries`, telemetryProperties);
-            }
-        } catch (error) {
-            Lumberjack.error(`Error running ${callName}: retryCount ${retryCount}`, telemetryProperties, error);
-            if (onErrorFn !== undefined) {
-                onErrorFn(error);
-            }
-            if (shouldRetry !== undefined && shouldRetry(error) === false) {
-                Lumberjack.error(
-                    `Should not retry ${callName} for the current error, rejecting`,
-                    telemetryProperties,
-                    error);
-                return Promise.reject(error);
-            }
-            // if maxRetries is -1, we retry indefinitely
-            // unless shouldRetry returns false at some point.
-            if (maxRetries !== -1 && retryCount >= maxRetries) {
-                Lumberjack.error(`Error after retrying ${retryCount} times, rejecting`, telemetryProperties, error);
-                // Needs to be a full rejection here
-                return Promise.reject(error);
-            }
+    let metric: Lumber<LumberEventName.RequestWithRetry>;
+    let metricError;
+    if (telemetryEnabled) {
+        metric = Lumberjack.newLumberMetric(
+            LumberEventName.RequestWithRetry,
+            telemetryProperties);
+    }
+    try {
+        do {
+            try {
+                result = await request();
+                success = true;
+                if (retryCount >= 1) {
+                    Lumberjack.info(`Succeeded in executing ${callName} with ${retryCount} retries`, telemetryProperties);
+                }
+            } catch (error) {
+                Lumberjack.error(`Error running ${callName}: retryCount ${retryCount}`, telemetryProperties, error);
+                if (onErrorFn !== undefined) {
+                    onErrorFn(error);
+                }
+                if (shouldRetry !== undefined && shouldRetry(error) === false) {
+                    Lumberjack.error(
+                        `Should not retry ${callName} for the current error, rejecting`,
+                        telemetryProperties,
+                        error);
+                    return Promise.reject(error);
+                }
+                // if maxRetries is -1, we retry indefinitely
+                // unless shouldRetry returns false at some point.
+                if (maxRetries !== -1 && retryCount >= maxRetries) {
+                    Lumberjack.error(`Error after retrying ${retryCount} times, rejecting`, telemetryProperties, error);
+                    // Needs to be a full rejection here
+                    return Promise.reject(error);
+                }
 
-            // TODO: if error is a NetworkError, we should respect NetworkError.retryAfter or NetworkError.retryAfterMs
-            const intervalMs = calculateIntervalMs(error, retryCount, retryAfterMs);
-            await delay(intervalMs);
-            retryCount++;
+                // TODO: if error is a NetworkError, we should respect NetworkError.retryAfter
+                // or NetworkError.retryAfterMs
+                const intervalMs = calculateIntervalMs(error, retryCount, retryAfterMs);
+                await delay(intervalMs);
+                retryCount++;
+            }
+        } while (!success);
+
+        return result;
+    } finally {
+        if (telemetryEnabled && metric) {
+            metric.setProperty("retryCount", retryCount);
+            metric.setProperty("callName", callName);
+            metric.setProperty("maxRetries", maxRetries);
+            metric.setProperty("retryAfterMs", retryAfterMs);
+            if (success) {
+                metric.success("requestWithRetry succeeded");
+            } else {
+                metric.error("requestWithRetry failed", metricError);
+            }
         }
-    } while (!success);
-
-    return result;
+    }
 }
 
 /**

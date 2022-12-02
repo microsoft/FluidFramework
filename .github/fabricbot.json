@@ -700,39 +700,23 @@
       "subCapability": "AutoMerge",
       "version": "1.0",
       "config": {
-        "taskName": "Automatically merge pull requests in next",
+        "taskName": "Automatically merge pull requests ",
         "label": "msftbot: merge-next",
         "silentMode": false,
         "minMinutesOpen": "5",
         "deleteBranches": true,
         "allowAutoMergeInstructionsWithoutLabel": true,
         "enforceDMPAsStatus": true,
-        "removeLabelOnPush": true,
+        "removeLabelOnPush": false,
         "usePrDescriptionAsCommitMessage": true,
         "requireAllStatuses": false,
         "conditionalMergeTypes": [
           {
-            "mergeType": "squash",
+            "mergeType": "merge",
             "condition": {
               "placeholder": "labels",
-              "operator": "notContains",
+              "operator": "contains",
               "label_name": "do-not-squash-merge"
-            }
-          },
-          {
-            "mergeType": "squash",
-            "condition": {
-              "placeholder": "labels",
-              "operator": "notContains",
-              "label_name": "main-next-integrate"
-            }
-          },
-          {
-            "mergeType": "squash",
-            "condition": {
-              "placeholder": "author",
-              "operator": "notEquals",
-              "value": "github-actions"
             }
           },
           {
@@ -744,7 +728,9 @@
             }
           }
         ],
-        "mergeType": "squash"
+        "mergeType": "squash",
+        "requireSpecificCheckRuns": false,
+        "requireSpecificCheckRunsList": []
       },
       "disabled": false
     },
@@ -1580,6 +1566,10 @@
             "parameters": {}
           },
           {
+            "name": "isIssue",
+            "parameters": {}
+          },
+          {
             "name": "noActivitySince",
             "parameters": {
               "days": 180
@@ -1632,63 +1622,139 @@
             "weekDay": 0,
             "hours": [
               0,
-              6,
-              12,
-              18
+              12
             ]
           },
           {
             "weekDay": 1,
             "hours": [
               0,
-              6,
-              12,
-              18
+              12
             ]
           },
           {
             "weekDay": 2,
             "hours": [
               0,
-              6,
-              12,
-              18
+              12
             ]
           },
           {
             "weekDay": 3,
             "hours": [
               0,
-              6,
-              12,
-              18
+              12
             ]
           },
           {
             "weekDay": 4,
             "hours": [
               0,
-              6,
-              12,
-              18
+              12
             ]
           },
           {
             "weekDay": 5,
             "hours": [
               0,
-              6,
-              12,
-              18
+              12
             ]
           },
           {
             "weekDay": 6,
             "hours": [
               0,
-              6,
-              12,
-              18
+              12
+            ]
+          }
+        ],
+        "searchTerms": [
+          {
+            "name": "isOpen",
+            "parameters": {}
+          },
+          {
+            "name": "isPr",
+            "parameters": {}
+          },
+          {
+            "name": "noActivitySince",
+            "parameters": {
+              "days": 60
+            }
+          }
+        ],
+        "taskName": "Mark old PR as stale",
+        "actions": [
+          {
+            "name": "addLabel",
+            "parameters": {
+              "label": "status: stale"
+            }
+          },
+          {
+            "name": "addReply",
+            "parameters": {
+              "comment": "This PR has been automatically marked as stale because it has had no activity for 60 days. It will be closed if no further activity occurs **within 8 days of this comment**. Thank you for your contributions to Fluid Framework!"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "taskType": "scheduled",
+      "capabilityId": "ScheduledSearch",
+      "subCapability": "ScheduledSearch",
+      "version": "1.1",
+      "config": {
+        "frequency": [
+          {
+            "weekDay": 0,
+            "hours": [
+              0,
+              12
+            ]
+          },
+          {
+            "weekDay": 1,
+            "hours": [
+              0,
+              12
+            ]
+          },
+          {
+            "weekDay": 2,
+            "hours": [
+              0,
+              12
+            ]
+          },
+          {
+            "weekDay": 3,
+            "hours": [
+              0,
+              12
+            ]
+          },
+          {
+            "weekDay": 4,
+            "hours": [
+              0,
+              12
+            ]
+          },
+          {
+            "weekDay": 5,
+            "hours": [
+              0,
+              12
+            ]
+          },
+          {
+            "weekDay": 6,
+            "hours": [
+              0,
+              12
             ]
           }
         ],
@@ -1710,11 +1776,99 @@
             }
           }
         ],
-        "taskName": "Close stale issues after 8 days ",
+        "taskName": "Close stale issues or PR after 8 days ",
         "actions": [
           {
             "name": "closeIssue",
             "parameters": {}
+          }
+        ]
+      }
+    },
+    {
+      "taskType": "trigger",
+      "capabilityId": "IssueResponder",
+      "subCapability": "PullRequestResponder",
+      "version": "1.0",
+      "config": {
+        "conditions": {
+          "operator": "and",
+          "operands": [
+            {
+              "operator": "not",
+              "operands": [
+                {
+                  "name": "isAction",
+                  "parameters": {
+                    "action": "closed"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "hasLabel",
+              "parameters": {
+                "label": "status: stale"
+              }
+            },
+            {
+              "operator": "not",
+              "operands": [
+                {
+                  "name": "labelAdded",
+                  "parameters": {
+                    "label": "status: stale"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "eventType": "pull_request",
+        "eventNames": [
+          "pull_request",
+          "issues",
+          "project_card"
+        ],
+        "taskName": "Remove stale label from PR when PR is updated",
+        "actions": [
+          {
+            "name": "removeLabel",
+            "parameters": {
+              "label": "status: stale"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "taskType": "trigger",
+      "capabilityId": "IssueResponder",
+      "subCapability": "PullRequestCommentResponder",
+      "version": "1.0",
+      "config": {
+        "conditions": {
+          "operator": "and",
+          "operands": [
+            {
+              "name": "hasLabel",
+              "parameters": {
+                "label": "status: stale"
+              }
+            }
+          ]
+        },
+        "eventType": "pull_request",
+        "eventNames": [
+          "issue_comment"
+        ],
+        "taskName": "Remove stale label from PR when PR is commented on",
+        "actions": [
+          {
+            "name": "removeLabel",
+            "parameters": {
+              "label": "status: stale"
+            }
           }
         ]
       }
@@ -1923,31 +2077,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "taskType": "trigger",
-      "capabilityId": "IssueResponder",
-      "subCapability": "PullRequestCommentResponder",
-      "version": "1.0",
-      "config": {
-        "conditions": {
-          "operator": "and",
-          "operands": []
-        },
-        "eventType": "pull_request",
-        "eventNames": [
-          "issue_comment"
-        ],
-        "actions": [
-          {
-            "name": "approvePullRequest",
-            "parameters": {
-              "comment": "#sign-off"
-            }
-          }
-        ],
-        "taskName": "Approve pull request by adding a comment"
       }
     }
   ],

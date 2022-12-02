@@ -3,20 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { ProgressiveEditBuilder } from "../../change-family";
-import { ITreeCursor } from "../../forest";
-import { AnchorSet, UpPath, Value, Delta, getDepth } from "../../tree";
+import {
+    ProgressiveEditBuilderBase,
+    ITreeCursor,
+    AnchorSet,
+    UpPath,
+    Value,
+    getDepth,
+} from "../../core";
 import { fail } from "../../util";
-import { jsonableTreeFromCursor } from "../treeTextCursorLegacy";
+import { jsonableTreeFromCursor } from "../treeTextCursor";
 import { Transposed as T } from "./changeset";
 import { sequenceChangeFamily } from "./sequenceChangeFamily";
 import { SequenceChangeset } from "./sequenceChangeset";
 
-export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangeset> {
+export class SequenceEditBuilder extends ProgressiveEditBuilderBase<SequenceChangeset> {
     private opId: number = 0;
 
-    constructor(deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet) {
-        super(sequenceChangeFamily, deltaReceiver, anchorSet);
+    constructor(changeReceiver: (change: SequenceChangeset) => void, anchorSet: AnchorSet) {
+        super(sequenceChangeFamily, changeReceiver, anchorSet);
     }
 
     public setValue(node: NodePath, value: Value) {

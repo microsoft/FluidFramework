@@ -29,12 +29,14 @@
     "clean:nyc": "rimraf nyc/**",
     "docker-build": "docker-compose build",
     "docker-clean": "docker-compose down --rmi local -v",
+    "format": "lerna run format --no-sort --stream -- -- -- --color",
     "postinstall": "npm run postinstall:lerna",
     "lint": "lerna run lint --no-sort --stream",
     "lint:fix": "lerna run lint:fix --no-sort --stream",
     "lint:strict": "lerna run lint --stream -- -- -- --report-unused-disable-directives",
-    "policy-check": "fluid-repo-policy-check",
-    "policy-check:fix": "fluid-repo-policy-check -r",
+    "policy-check": "cd ../.. && npm run policy-check",
+    "policy-check:asserts": "cd ../.. && npm run policy-check:asserts",
+    "policy-check:fix": "cd ../.. && npm run policy-check:fix",
     "post-lerna-install:default": "[ -f package-lock.json ] && mv package-lock.json lerna-package-lock.json; [ -f package-lock.json.bak ] && mv package-lock.json.bak package-lock.json; exit 0",
     "post-lerna-install:win32": "if exist package-lock.json move package-lock.json lerna-package-lock.json && if exist package-lock.json.bak move package-lock.json.bak package-lock.json",
     "postinstall:lerna": "run-script-os",
@@ -56,8 +58,6 @@
     "test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.js\" --exit",
     "test:report": "lerna run test --stream --no-bail --no-sort -- -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "tsc": "lerna run tsc --stream",
-    "tsfmt": "lerna run tsfmt:fix --no-sort --stream --no-bail",
-    "tsfmt:fix": "lerna run tsfmt:fix --no-sort --stream --no-bail",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\"",
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
     "watch:tsc": "lerna run --parallel tsc -- -- --watch"
@@ -80,12 +80,17 @@
     "@fluidframework/build-tools": "^0.4.4000",
     "@microsoft/api-documenter": "^7.17.9",
     "@microsoft/api-extractor": "^7.22.2",
-    "concurrently": "^6.2.0",
+    "concurrently": "^7.5.0",
     "copyfiles": "^2.4.1",
     "lerna": "^4.0.0",
-    "nyc": "^15.0.0",
-    "rimraf": "^2.6.2",
+    "node-rdkafka": "^2.14.0",
+    "nyc": "^15.1.0",
+    "rimraf": "^3.0.2",
     "run-script-os": "^1.1.5",
     "typescript": "~4.5.5"
+  },
+  "engines": {
+    "node": ">=14.13.0",
+    "npm": "^6"
   }
 }

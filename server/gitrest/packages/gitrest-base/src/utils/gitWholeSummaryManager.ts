@@ -22,7 +22,9 @@ import {
     NetworkError,
     WholeSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IRepositoryManager } from "./definitions";
+import { GitRestLumberEventName } from "./gitrestTelemetryDefinitions";
 
 interface ISummaryVersion {
     id: string;
@@ -37,7 +39,7 @@ interface IWriteSummaryInfo {
     /**
      * Response containing commit sha for "container" write or tree sha for "channel" write.
      */
-     writeSummaryResponse: IWriteSummaryResponse;
+    writeSummaryResponse: IWriteSummaryResponse;
 }
 
 function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry): SummaryObject {
@@ -77,52 +79,63 @@ export class GitWholeSummaryManager {
     constructor(
         private readonly documentId: string,
         private readonly repoManager: IRepositoryManager,
+        private readonly lumberjackProperties: Record<string, any>,
         private readonly externalStorageEnabled = true,
-    ) {}
+    ) { }
 
     public async readSummary(sha: string): Promise<IWholeFlatSummary> {
-        let version: ISummaryVersion;
-        if (sha === latestSummarySha) {
-            version = await this.getLatestVersion();
-        } else {
-            const commit = await this.repoManager.getCommit(sha);
-            version = { id: commit.sha, treeId: commit.tree.sha };
-        }
-        const rawTree = await this.repoManager.getTree(version.treeId, true /* recursive */);
-        const wholeFlatSummaryTreeEntries: IWholeFlatSummaryTreeEntry[] = [];
-        const wholeFlatSummaryBlobPs: Promise<IWholeFlatSummaryBlob>[] = [];
-        rawTree.tree.forEach((treeEntry) => {
-            if (treeEntry.type === "blob") {
-                wholeFlatSummaryTreeEntries.push({
-                    type: "blob",
-                    id: treeEntry.sha,
-                    path: treeEntry.path,
-                });
-                wholeFlatSummaryBlobPs.push(
-                    this.getBlob(
-                        treeEntry.sha,
-                    ),
-                );
+        const readSummaryMetric = Lumberjack.newLumberMetric(
+            GitRestLumberEventName.WholeSummaryManagerReadSummary,
+            this.lumberjackProperties);
+
+        try {
+            let version: ISummaryVersion;
+            if (sha === latestSummarySha) {
+                version = await this.getLatestVersion();
             } else {
-                wholeFlatSummaryTreeEntries.push({
-                    type: "tree",
-                    path: treeEntry.path,
-                });
+                const commit = await this.repoManager.getCommit(sha);
+                version = { id: commit.sha, treeId: commit.tree.sha };
             }
-        });
-        const wholeFlatSummaryBlobs = await Promise.all(wholeFlatSummaryBlobPs);
-        return {
-            id: version.id,
-            trees: [
-                {
-                    id: rawTree.sha,
-                    entries: wholeFlatSummaryTreeEntries,
-                    // We don't store sequence numbers in git
-                    sequenceNumber: undefined,
-                },
-            ],
-            blobs: wholeFlatSummaryBlobs,
-        };
+            const rawTree = await this.repoManager.getTree(version.treeId, true /* recursive */);
+            const wholeFlatSummaryTreeEntries: IWholeFlatSummaryTreeEntry[] = [];
+            const wholeFlatSummaryBlobPs: Promise<IWholeFlatSummaryBlob>[] = [];
+            rawTree.tree.forEach((treeEntry) => {
+                if (treeEntry.type === "blob") {
+                    wholeFlatSummaryTreeEntries.push({
+                        type: "blob",
+                        id: treeEntry.sha,
+                        path: treeEntry.path,
+                    });
+                    wholeFlatSummaryBlobPs.push(
+                        this.getBlob(
+                            treeEntry.sha,
+                        ),
+                    );
+                } else {
+                    wholeFlatSummaryTreeEntries.push({
+                        type: "tree",
+                        path: treeEntry.path,
+                    });
+                }
+            });
+            const wholeFlatSummaryBlobs = await Promise.all(wholeFlatSummaryBlobPs);
+            readSummaryMetric.success("GitWholeSummaryManager succeeded in reading summary");
+            return {
+                id: version.id,
+                trees: [
+                    {
+                        id: rawTree.sha,
+                        entries: wholeFlatSummaryTreeEntries,
+                        // We don't store sequence numbers in git
+                        sequenceNumber: undefined,
+                    },
+                ],
+                blobs: wholeFlatSummaryBlobs,
+            };
+        } catch (error: any) {
+            readSummaryMetric.error("GitWholeSummaryManager failed to read summary", error);
+            throw error;
+        }
     }
 
     private async getBlob(sha: string): Promise<IWholeFlatSummaryBlob> {
@@ -150,20 +163,30 @@ export class GitWholeSummaryManager {
     }
 
     public async writeSummary(payload: IWholeSummaryPayload): Promise<IWriteSummaryInfo> {
-        if (isChannelSummary(payload)) {
-            const summaryTreeHandle = await this.writeChannelSummary(payload);
-            return {
-                isNew: false,
-                writeSummaryResponse: {
-                    id: summaryTreeHandle,
-                },
-            };
+        const writeSummaryMetric = Lumberjack.newLumberMetric(
+            GitRestLumberEventName.WholeSummaryManagerWriteSummary,
+            this.lumberjackProperties);
+        try {
+            if (isChannelSummary(payload)) {
+                const summaryTreeHandle = await this.writeChannelSummary(payload);
+                writeSummaryMetric.success("GitWholeSummaryManager succeeded in writing channel summary");
+                return {
+                    isNew: false,
+                    writeSummaryResponse: {
+                        id: summaryTreeHandle,
+                    },
+                };
+            }
+            if (isContainerSummary(payload)) {
+                const writeSummaryInfo = await this.writeContainerSummary(payload);
+                writeSummaryMetric.success("GitWholeSummaryManager succeeded in writing container summary");
+                return writeSummaryInfo;
+            }
+            throw new NetworkError(400, `Unknown Summary Type: ${payload.type}`);
+        } catch (error: any) {
+            writeSummaryMetric.error("GitWholeSummaryManager failed to write summary", error);
+            throw error;
         }
-        if (isContainerSummary(payload)) {
-            const writeSummaryInfo = await this.writeContainerSummary(payload);
-            return writeSummaryInfo;
-        }
-        throw new NetworkError(400, `Unknown Summary Type: ${payload.type}`);
     }
 
     private async writeChannelSummary(payload: IWholeSummaryPayload): Promise<string> {
@@ -211,6 +234,7 @@ export class GitWholeSummaryManager {
             };
         }
         const commit = await this.repoManager.createCommit(commitParams);
+        // eslint-disable-next-line unicorn/prefer-ternary
         if (existingRef) {
             await this.repoManager.patchRef(
                 `refs/heads/${this.documentId}`,
@@ -271,7 +295,7 @@ export class GitWholeSummaryManager {
         summaryObject: SummaryObject,
         currentPath: string,
     ): Promise<string> {
-        switch(summaryObject.type) {
+        switch (summaryObject.type) {
             case SummaryType.Blob:
                 return this.writeSummaryBlob(
                     ((wholeSummaryTreeEntry as IWholeSummaryTreeValueEntry).value as IWholeSummaryBlob),

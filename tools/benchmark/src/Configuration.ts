@@ -120,8 +120,6 @@ export interface BenchmarkAsyncArguments extends BenchmarkOptions {
 	 */
 	title: string;
 
-    /* eslint-disable max-len */
-
 	/**
 	 * The asynchronous function to benchmark. The time measured includes all time spent until the returned promise is
      * resolved. This includes the event loop or processing other events. For example, a test which calls `setTimeout`
@@ -129,8 +127,6 @@ export interface BenchmarkAsyncArguments extends BenchmarkOptions {
 	 * https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setTimeout#Minimum_delay_and_timeout_nesting
 	 */
 	benchmarkFnAsync: () => Promise<unknown>;
-
-    /* eslint-enable max-len */
 }
 
 /**

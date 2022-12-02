@@ -17,7 +17,18 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 # 2.0.0-internal.2.1.0
 
-## 2.0.0-internal.2.1.0 Breaking Changes
+## 2.0.0-internal.2.1.0 Upcoming changes
+- [Deprecated ISummarizerRuntime batchEnd listener](#Deprecated-ISummarizerRuntime-batchEnd-listener)
+- [Deprecate ISummaryBaseConfiguration.summarizerClientElection](#Deprecate-ISummaryBaseConfigurationsummarizerClientElection)
+
+
+### Deprecated ISummarizerRuntime batchEnd listener
+The `"batchEnd"` listener in `ISummarizerRuntime` has been deprecated and will be removed in a future release. Please remove all usage and implementations of `ISummarizerRuntime.on("batchEnd", ...)` and `ISummarizerRuntime.removeListener("batchEnd", ...)`.
+If these methods are needed, please refer to the `IContainerRuntimeBase` interface.
+### Deprecate-ISummaryBaseConfigurationsummarizerClientElection
+`ISummaryBaseConfiguration.summarizerClientElection` has been deprecated and will be removed in a future release.
+There will be no replacement for this property.
+## 2.0.0-internal.2.1.0 Breaking changes
 - [Package @fluid-experimental/task-manager renamed to @fluidframework/task-manager](#Package-fluid-experimental/task-manager-renamed-to-fluidframework/task-manager)
 
 ### Package @fluid-experimental/task-manager renamed to @fluidframework/task-manager
@@ -26,10 +37,16 @@ The package `@fluid-experimental/task-manager` is no longer experimental and has
 # 2.0.0-internal.2.0.0
 
 ## 2.0.0-internal.2.0.0 Upcoming changes
+- [Deprecate existing flag in IContainerContext](#deprecate-existing-flag-in-runtime)
 - [Signature from ISummarizerInternalsProvider.refreshLatestSummaryAck interface has changed](#Change-ISummarizerInternalsProvider.refreshLatestSummaryAck-interface)
 - [Move TelemetryNullLogger and BaseTelemetryNullLogger to telemetry-utils package](#Move-`TelemetryNullLogger`-and-`BaseTelemetryNullLogger`-to-telemetry-utils-package)
 - [Minor event naming correction on IFluidContainerEvents](#IFluidContainerEvents-event-naming-correction)
 - [IDocumentStorageServicePolicies.maximumCacheDurationMs policy must be exactly 5 days if defined](#idocumentstorageservicepoliciesmaximumcachedurationms-policy-must-be-exactly-5-days-if-defined)
+- [Static `FluidDataStoreRuntime.load` method is now deprecated](#static-FluidDataStoreRuntime.load-method-is-now-deprecated)
+
+### Deprecate existing flag in runtime
+The `existing` flag in IContainerContext has been deprecated and will be removed in a future breaking change. Furthermore,
+in the same breaking change, in ContainerRuntime existing will be required and expected in instantiateRuntime().
 
 ### Signature from ISummarizerInternalsProvider.refreshLatestSummaryAck interface has changed
 `ISummarizerInternalsProvider.refreshLatestSummaryAck` interface has been updated to now accept `IRefreshSummaryAckOptions` property instead.
@@ -54,6 +71,11 @@ It's not a breaking change, but worth noting: we are now also exposing optional 
 Due to the dependency the Garbage Collection feature in the Runtime layer has on this policy, it must remain constant over time.
 So this has been codified in the type, switching from `number | undefined` to `FiveDaysMs | undefined` (with `type FiveDaysMs = 432000000`)
 
+### Static `FluidDataStoreRuntime.load` method is now deprecated
+
+Use `FluidDataStoreRuntime`'s constructor instead, and start providing the new `initializeEntrypoint` parameter
+to create the entrypoint / root object for the data store.
+
 ## 2.0.0-internal.2.0.0 Breaking changes
 - [Update to React 17](#Update-to-React-17)
 - [IntervalCollection event semantics changed](#IntervalCollection-event-semantics-changed)
@@ -70,6 +92,7 @@ So this has been codified in the type, switching from `number | undefined` to `F
 - [Remove ISummaryConfigurationHeuristics.idleTime](#Remove-ISummaryConfigurationHeuristicsidleTime)
 - [Remove IContainerRuntime.flush](#remove-icontainerruntimeflush)
 - [Remove ScheduleManager` and `DeltaScheduler](#remove-schedulemanager-and-deltascheduler)
+- [getMyself changed to return Myself object](#getMyself-changed-to-return-Myself-object)
 
 ### Update to React 17
 The following packages use React and thus were impacted:
@@ -143,6 +166,9 @@ Please move all usage to the new `minIdleTime` and `maxIdleTime` properties in `
 ### Remove ScheduleManager and DeltaScheduler
 `ScheduleManager` and `DeltaScheduler` have been removed from the `@fluidframework/container-runtime` package as they are Fluid internal classes which should not be used.
 
+### getMyself changed to return Myself object
+The `getMyself` method from the ServiceAudience class was updated to return a Myself object instead of an IMember. The Myself type extends the IMember interface to add a `currentConnection` string property.
+
 # 2.0.0-internal.1.3.0
 
 ## 2.0.0-internal.1.3.0 Upcoming changes
@@ -174,7 +200,7 @@ The iframe-driver is now deprecated and should not be used, it will be removed i
 This field has been deprecated and will be removed in a future breaking change. You should be able to get the kind of sharing link from `shareLinkInfo.createLink.link` property bag.
 
 ### Remove ShareLinkTypes interface
-`ShareLinkTypes` interface has been deprecated and will be removed in a future breaking change. Singnature of `createOdspCreateContainerRequest` has been updated to now accept `ISharingLinkKind` property instead.
+`ShareLinkTypes` interface has been deprecated and will be removed in a future breaking change. Signature of `createOdspCreateContainerRequest` has been updated to now accept `ISharingLinkKind` property instead.
 ```diff
     function createOdspCreateContainerRequest(
         siteUrl: string,
@@ -1520,6 +1546,18 @@ The `logger` property of `ContainerContext` has been marked deprecated. Loggers 
 
 ### ContainerErrorType.clientSessionExpiredError added
 We have session expiry for GC purposes. Once the session has expired, we want to throw this new clientSessionExpiredError to clear out any stale in-memory data that may still be on the container.
+
+### Tagged telemetry props will be sent to ITelemetryBaseLogger.send
+As of the 0.40 release, [telemetry properties on logging events may be tagged](#itelemetryproperties-may-be-tagged-for-privacy-purposes),
+meaning the property value may have the shape `{ value: foo, tag: someString }` instead of merely a primitive value.
+Unwrapped/untagged values are still supported.
+See the updated type definition of `ITelemetryProperties` in @fluidframework/common-definitions v0.21 (and v0.20.1).
+This was a breaking change that requires an update to `ITelemetryBaseLogger.send` to handle these tagged values.
+
+The 0.45 release introduces some cases where tagged properties are logged, so before integrating that release
+hosts should take care to properly handle tagged properties by inspecting the tag and logging, hashing, or redacting the value.
+See [this code](https://github.com/microsoft/FluidFramework/blob/main/packages/utils/telemetry-utils/src/logger.ts#L79-L107)
+for an example of how to handle tags.
 
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)

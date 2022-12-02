@@ -45,6 +45,7 @@ export const EmptyKey: LocalFieldKey = brand("");
  */
 export const rootFieldKey: GlobalFieldKey = brand("rootFieldKey");
 export const rootFieldKeySymbol: GlobalFieldKeySymbol = symbolFromKey(rootFieldKey);
+export const rootField = keyAsDetachedField(rootFieldKeySymbol);
 
 /**
  * Location of a tree relative to is parent container (which can be a tree or forest).
@@ -90,9 +91,12 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
  * Some code abstracts the root as a node with detached fields as its fields.
  * This maps detached field to field keys for thus use.
  *
- * @returns `field` as a {@link LocalFieldKey} usable on a special root node serving as a parent of detached fields.
+ * @returns `field` as a {@link FieldKey} usable on a special root node serving as a parent of detached fields.
  */
-export function detachedFieldAsKey(field: DetachedField): LocalFieldKey {
+export function detachedFieldAsKey(field: DetachedField): FieldKey {
+    if (field === rootField) {
+        return rootFieldKeySymbol;
+    }
     return brand(extractFromOpaque(field));
 }
 
@@ -146,12 +150,16 @@ export interface TreeValue extends Serializable {}
 export type Value = undefined | TreeValue;
 
 /**
- * The fields required by a node in a tree
+ * The fields required by a node in a tree.
  * @public
  */
 export interface NodeData {
     /**
-     * A payload of arbitrary serializable data
+     * A payload of arbitrary serializable data.
+     *
+     * TODO: clarify rules for mutating this value.
+     * For now, avoid mutating the TreeValue itself.
+     * For example, if its an object, make a modified copy of the object instead of mutating it.
      */
     value?: TreeValue;
 

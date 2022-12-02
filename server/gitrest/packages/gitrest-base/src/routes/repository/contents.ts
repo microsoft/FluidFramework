@@ -31,7 +31,7 @@ export function create(
                     request.query.ref as string,
                     request.params[0]);
             }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
-            handleResponse(resultP, response);
+        handleResponse(resultP, response);
     });
 
     return router;

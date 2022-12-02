@@ -16,33 +16,33 @@ import {
     IFileSystemManager,
     IFileSystemManagerFactory,
     IStorageDirectoryConfig,
-    BaseGitRestTelemetryProperties,
 } from "./definitions";
+import { BaseGitRestTelemetryProperties } from "./gitrestTelemetryDefinitions";
+import { RepositoryManagerBase } from "./repositoryManagerBase";
 import { RepositoryManagerFactoryBase } from "./repositoryManagerFactoryBase";
 
-export class IsomorphicGitRepositoryManager implements IRepositoryManager {
+export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
     constructor(
         private readonly fileSystemManager: IFileSystemManager,
         private readonly repoOwner: string,
         private readonly repoName: string,
-        private readonly directory: string,
-        private readonly lumberjackBaseProperties: Record<string, any>,
-    ) {}
-
-    public get path(): string {
-        return this.directory;
+        directory: string,
+        lumberjackBaseProperties: Record<string, any>,
+        enableRepositoryManagerMetrics: boolean = false,
+    ) {
+        super(directory, lumberjackBaseProperties, enableRepositoryManagerMetrics);
     }
 
-    public async getCommit(sha: string): Promise<resources.ICommit> {
+    protected async getCommitCore(sha: string): Promise<resources.ICommit> {
         const commit = await isomorphicGit.readCommit({
-                fs: this.fileSystemManager,
-                gitdir: this.directory,
-                oid: sha,
-            });
+            fs: this.fileSystemManager,
+            gitdir: this.directory,
+            oid: sha,
+        });
         return conversions.commitToICommit(commit);
     }
 
-    public async getCommits(
+    protected async getCommitsCore(
         sha: string,
         count: number,
         externalWriterConfig?: IExternalWriterConfig,
@@ -144,33 +144,34 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
         };
     }
 
-    public async getTree(rootSha: string, recursive: boolean): Promise<resources.ITree> {
+    protected async getTreeCore(rootSha: string, recursive: boolean): Promise<resources.ITree> {
         if (recursive) {
             return this.getTreeInternalRecursive(rootSha);
         }
         return this.getTreeInternal(rootSha);
     }
 
-    public async getBlob(sha: string): Promise<resources.IBlob> {
+    protected async getBlobCore(sha: string): Promise<resources.IBlob> {
         const blob = await isomorphicGit.readBlob({
-                fs: this.fileSystemManager,
-                gitdir: this.directory,
-                oid: sha,
-            });
+            fs: this.fileSystemManager,
+            gitdir: this.directory,
+            oid: sha,
+        });
         return conversions.blobToIBlob(blob, this.repoOwner, this.repoName);
     }
 
-    public async getContent(commit: string, contentPath: string): Promise<resources.IBlob> {
+    protected async getContentCore(commit: string, contentPath: string): Promise<resources.IBlob> {
         const blob = await isomorphicGit.readBlob({
-                fs: this.fileSystemManager,
-                gitdir: this.directory,
-                oid: commit,
-                filepath: contentPath,
-            });
+            fs: this.fileSystemManager,
+            gitdir: this.directory,
+            oid: commit,
+            filepath: contentPath,
+        });
         return conversions.blobToIBlob(blob, this.repoOwner, this.repoName);
     }
 
-    public async createBlob(createBlobParams: resources.ICreateBlobParams): Promise<resources.ICreateBlobResponse> {
+    protected async createBlobCore(
+        createBlobParams: resources.ICreateBlobParams): Promise<resources.ICreateBlobResponse> {
         if (!helpers.validateBlobContent(createBlobParams.content) ||
             !helpers.validateBlobEncoding(createBlobParams.encoding)) {
             throw new NetworkError(400, "Invalid blob");
@@ -187,7 +188,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
         };
     }
 
-    public async createTree(params: resources.ICreateTreeParams): Promise<resources.ITree> {
+    protected async createTreeCore(params: resources.ICreateTreeParams): Promise<resources.ITree> {
         const isoGitTreeObject: isomorphicGit.TreeObject = [];
 
         // build up the tree
@@ -203,7 +204,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
         return this.getTreeInternal(id);
     }
 
-    public async createCommit(commit: resources.ICreateCommitParams): Promise<resources.ICommit> {
+    protected async createCommitCore(commit: resources.ICreateCommitParams): Promise<resources.ICommit> {
         const commitObject = conversions.iCreateCommitParamsToCommitObject(commit);
         const commitOid = await isomorphicGit.writeCommit({
             fs: this.fileSystemManager,
@@ -225,7 +226,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
         };
     }
 
-    public async getRefs(): Promise<resources.IRef[]> {
+    protected async getRefsCore(): Promise<resources.IRef[]> {
         const refIds: string[] = [];
         const [branches, tags] = await Promise.all([
             isomorphicGit.listBranches({
@@ -268,7 +269,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
                     resolvedAndExpandedRef.expandedRef));
     }
 
-    public async getRef(refId: string, externalWriterConfig?: IExternalWriterConfig): Promise<resources.IRef> {
+    protected async getRefCore(refId: string, externalWriterConfig?: IExternalWriterConfig): Promise<resources.IRef> {
         try {
             const [resolvedRef, expandedRef] = await Promise.all([
                 isomorphicGit.resolveRef({
@@ -297,7 +298,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
         }
     }
 
-    public async createRef(
+    protected async createRefCore(
         createRefParams: resources.ICreateRefParams,
         externalWriterConfig?: IExternalWriterConfig,
     ): Promise<resources.IRef> {
@@ -310,7 +311,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
         return conversions.refToIRef(createRefParams.sha, createRefParams.ref);
     }
 
-    public async patchRef(
+    protected async patchRefCore(
         refId: string,
         patchRefParams: resources.IPatchRefParams,
         externalWriterConfig?: IExternalWriterConfig,
@@ -325,7 +326,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
         return conversions.refToIRef(patchRefParams.sha, refId);
     }
 
-    public async deleteRef(refId: string): Promise<void> {
+    protected async deleteRefCore(refId: string): Promise<void> {
         try {
             await isomorphicGit.deleteRef({
                 fs: this.fileSystemManager,
@@ -337,7 +338,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
         }
     }
 
-    public async getTag(tagId: string): Promise<resources.ITag> {
+    protected async getTagCore(tagId: string): Promise<resources.ITag> {
         const readTagResult = await isomorphicGit.readTag({
             fs: this.fileSystemManager,
             gitdir: this.directory,
@@ -346,7 +347,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
         return conversions.tagToITag(readTagResult);
     }
 
-    public async createTag(tagParams: resources.ICreateTagParams): Promise<resources.ITag> {
+    protected async createTagCore(tagParams: resources.ICreateTagParams): Promise<resources.ITag> {
         const tagObject = conversions.iCreateTagParamsToTagObject(tagParams);
         const tagOid = await isomorphicGit.writeTag({
             fs: this.fileSystemManager,
@@ -363,8 +364,14 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
         fileSystemManagerFactory: IFileSystemManagerFactory,
         externalStorageManager: IExternalStorageManager,
         repoPerDocEnabled: boolean,
+        enableRepositoryManagerMetrics: boolean = false,
     ) {
-        super(storageDirectoryConfig, fileSystemManagerFactory, externalStorageManager, repoPerDocEnabled);
+        super(
+            storageDirectoryConfig,
+            fileSystemManagerFactory,
+            externalStorageManager,
+            repoPerDocEnabled,
+            enableRepositoryManagerMetrics);
     }
 
     protected async initGitRepo(fs: IFileSystemManager, gitdir: string): Promise<void> {
@@ -386,12 +393,14 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
         repo: void,
         gitdir: string,
         externalStorageManager: IExternalStorageManager,
-        lumberjackBaseProperties: Record<string, any>): IRepositoryManager {
+        lumberjackBaseProperties: Record<string, any>,
+        enableRepositoryManagerMetrics: boolean): IRepositoryManager {
             return new IsomorphicGitRepositoryManager(
                 fileSystemManager,
                 repoOwner,
                 repoName,
                 gitdir,
-                lumberjackBaseProperties);
+                lumberjackBaseProperties,
+                enableRepositoryManagerMetrics);
     }
 }
