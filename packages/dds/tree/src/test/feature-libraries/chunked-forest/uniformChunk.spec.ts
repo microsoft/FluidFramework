@@ -7,8 +7,8 @@ import { strict as assert } from "assert";
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import {
     uniformChunk,
-    Shape,
     TreeChunk,
+    TreeShape,
     // eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk";
 import { testSpecializedCursor } from "../../cursorTestSuite";
@@ -29,26 +29,28 @@ import {
     singleTextCursor,
 } from "../../../feature-libraries";
 
-const numberShape = new Shape(jsonNumber.name, 1, true, []);
-const number3Shape = new Shape(jsonNumber.name, 3, true, []);
-const withChildShape = new Shape(jsonObject.name, 1, false, [[brand("x"), numberShape]]);
-const pointShape = new Shape(jsonObject.name, 1, false, [
-    [brand("x"), numberShape],
-    [brand("y"), numberShape],
+const numberShape = new TreeShape(jsonNumber.name, true, []);
+const withChildShape = new TreeShape(jsonObject.name, false, [[brand("x"), numberShape, 1]]);
+const pointShape = new TreeShape(jsonObject.name, false, [
+    [brand("x"), numberShape, 1],
+    [brand("y"), numberShape, 1],
 ]);
-const emptyShape = new Shape(jsonNull.name, 1, false, []);
+const emptyShape = new TreeShape(jsonNull.name, false, []);
 
 const sides = 100;
+const polygon = new TreeShape(jsonArray.name, false, [
+    [EmptyKey, pointShape, sides],
+]).withTopLevelLength(1);
 
 const testTrees = [
     {
         name: "number",
-        data: uniformChunk(numberShape, [5]),
+        data: uniformChunk(numberShape.withTopLevelLength(1), [5]),
         reference: [{ type: jsonNumber.name, value: 5 }],
     },
     {
         name: "root sequence",
-        data: uniformChunk(number3Shape, [1, 2, 3]),
+        data: uniformChunk(numberShape.withTopLevelLength(3), [1, 2, 3]),
         reference: [
             { type: jsonNumber.name, value: 1 },
             { type: jsonNumber.name, value: 2 },
@@ -58,7 +60,9 @@ const testTrees = [
     {
         name: "child sequence",
         data: uniformChunk(
-            new Shape(jsonArray.name, 1, false, [[EmptyKey, number3Shape]]),
+            new TreeShape(jsonArray.name, false, [[EmptyKey, numberShape, 3]]).withTopLevelLength(
+                1,
+            ),
             [1, 2, 3],
         ),
         reference: [
@@ -76,7 +80,7 @@ const testTrees = [
     },
     {
         name: "withChild",
-        data: uniformChunk(withChildShape, [1]),
+        data: uniformChunk(withChildShape.withTopLevelLength(1), [1]),
         reference: [
             {
                 type: jsonObject.name,
@@ -88,7 +92,7 @@ const testTrees = [
     },
     {
         name: "point",
-        data: uniformChunk(pointShape, [1, 2]),
+        data: uniformChunk(pointShape.withTopLevelLength(1), [1, 2]),
         reference: [
             {
                 type: jsonObject.name,
@@ -101,12 +105,7 @@ const testTrees = [
     },
     {
         name: "polygon",
-        data: uniformChunk(
-            new Shape(jsonArray.name, 1, false, [
-                [EmptyKey, pointShape.withNewTopLevelLength(sides)],
-            ]),
-            new Array(sides * 2).fill(1),
-        ),
+        data: uniformChunk(polygon, new Array(sides * 2).fill(1)),
         reference: [
             {
                 type: jsonArray.name,
@@ -140,7 +139,18 @@ const testData: { name: string; data: [number, TreeChunk]; reference: JsonableTr
 
 describe("uniformChunk", () => {
     it("shape", () => {
-        assert.equal(withChildShape.atPosition(1).shape, numberShape);
+        assert.equal(withChildShape.positions[1].shape, numberShape);
+        const p = polygon;
+        assert.equal(p.atPosition(0).indexOfParentField, undefined);
+        assert.equal(p.atPosition(0).parentIndex, 0);
+        // assert.equal(p.length, sides * 3 + 1);
+        // Second point node
+        assert.equal(p.atPosition(4).shape, pointShape);
+        assert.equal(p.atPosition(4).parentIndex, 1);
+        assert.equal(p.atPosition(4).shape.positions.length, 3);
+
+        // Seconds x
+        assert.equal(p.atPosition(5).indexOfParentPosition, 4);
     });
 
     describe("jsonable bench", () => {
@@ -223,13 +233,12 @@ describe("uniformChunk", () => {
         builders: {
             withKeys: (keys) => {
                 const schema: TreeSchemaIdentifier = brand("fakeSchema");
-                const withKeysShape = new Shape(
+                const withKeysShape = new TreeShape(
                     schema,
-                    1,
                     false,
-                    keys.map((key) => [key, emptyShape]),
+                    keys.map((key) => [key, emptyShape, 1] as const),
                 );
-                return [0, uniformChunk(withKeysShape, [])];
+                return [0, uniformChunk(withKeysShape.withTopLevelLength(1), [])];
             },
         },
         cursorFactory: (data: [number, TreeChunk]): ITreeCursorSynchronous => {

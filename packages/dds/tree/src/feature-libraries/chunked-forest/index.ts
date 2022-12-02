@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { uniformChunk, Shape } from "./uniformChunk";
+export { uniformChunk, ChunkShape } from "./uniformChunk";

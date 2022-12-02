@@ -37,7 +37,7 @@ export interface TreeChunk {
  * @param shape - describes the semantics and layout of `values`.
  * @param values - provides exclusive ownership of this array to this object (which might mutate it in the future).
  */
-export function uniformChunk(shape: Shape, values: TreeValue[]): TreeChunk {
+export function uniformChunk(shape: ChunkShape, values: TreeValue[]): TreeChunk {
     return new UniformChunk(shape, values);
 }
 
@@ -49,9 +49,9 @@ class UniformChunk implements ReferenceCounted {
      * @param shape - describes the semantics and layout of `values`.
      * @param values - provides exclusive ownership of this array to this object (which might mutate it in the future).
      */
-    public constructor(public shape: Shape, public values: TreeValue[]) {
+    public constructor(public shape: ChunkShape, public values: TreeValue[]) {
         assert(
-            shape.valuesPerTopLevelNode * shape.topLevelLength === values.length,
+            shape.treeShape.valuesPerTopLevelNode * shape.topLevelLength === values.length,
             "invalid number of values for shape",
         );
     }
@@ -82,75 +82,107 @@ const dummyRoot: GlobalFieldKeySymbol = symbolFromKey(
     brand("a1499167-8421-4639-90a6-4e543b113b06: dummyRoot"),
 );
 
-// TODO: consider storing shape information in WASM
-export class Shape {
+export class TreeShape {
     public readonly fields: ReadonlyMap<FieldKey, OffsetShape>;
     public readonly valuesPerTopLevelNode: number;
+
     // TODO: this is only needed at chunk roots. Optimize it base on that.
     public readonly positions: readonly NodePositionInfo[];
-    public readonly numberOfNodesPerTopLevelNode: number;
-    public readonly numberOfTransitiveNodes: number;
 
     public constructor(
         public readonly type: TreeSchemaIdentifier,
-        public readonly topLevelLength: number,
         public readonly hasValue: boolean,
-        public readonly fieldsArray: readonly (readonly [FieldKey, Shape])[],
+        public readonly fieldsArray: readonly (readonly [FieldKey, TreeShape, number])[],
     ) {
-        assert(topLevelLength > 0, "topLevelLength must be greater than 0");
         const fields: Map<FieldKey, OffsetShape> = new Map();
         let numberOfValues = hasValue ? 1 : 0;
-        let numberOfNodes = 1;
         const infos: NodePositionInfo[] = [
-            new NodePositionInfo(undefined, dummyRoot, 0, undefined, undefined, this, 0),
+            new NodePositionInfo(undefined, dummyRoot, 0, undefined, undefined, this, 1, 0),
         ];
         let fieldIndex = 0;
-        for (const [k, f] of fieldsArray) {
+        for (const [k, f, length] of fieldsArray) {
             assert(!fields.has(k), "no duplicate keys");
-            fields.set(k, new OffsetShape(f, numberOfNodes, k, fieldIndex));
-            let innerCount = 0;
-            for (const inner of f.positions) {
-                infos.push(
-                    new NodePositionInfo(
-                        inner.parent ?? infos[0],
-                        inner.parentField === dummyRoot ? k : inner.parentField,
-                        inner.parentIndex,
-                        inner.indexOfParentField ?? fieldIndex, // TODO: maybe this is not needed
+            const offset = new OffsetShape(f, length, infos.length, k, fieldIndex);
+            fields.set(k, offset);
+            for (let index = 0; index < length; index++) {
+                for (const inner of f.positions) {
+                    infos.push(
+                        new NodePositionInfo(
+                            inner.parent ?? infos[0], // TODO: Incorrect.
+                            inner.parentField === dummyRoot ? k : inner.parentField,
+                            inner.indexOfParentPosition === undefined ? index : inner.parentIndex,
+                            inner.indexOfParentField ?? fieldIndex, // TODO: maybe this is not needed
 
-                        inner.parentNode === undefined
-                            ? 0 // Parent is new root
-                            : // index of new info - offset from inner to its parent
-                              infos.length - (innerCount - inner.parentNode),
-                        inner.shape,
-                        inner.valueOffset + numberOfValues,
-                    ),
-                );
-                innerCount++;
+                            inner.indexOfParentPosition === undefined
+                                ? 0
+                                : inner.indexOfParentPosition +
+                                  index * f.positions.length +
+                                  offset.offset,
+                            inner.shape,
+                            inner.indexOfParentPosition === undefined
+                                ? length
+                                : inner.topLevelLength,
+                            inner.valueOffset + numberOfValues,
+                        ),
+                    );
+                }
+                numberOfValues += f.valuesPerTopLevelNode;
             }
             fieldIndex++;
-            numberOfValues += f.valuesPerTopLevelNode * f.topLevelLength;
-            numberOfNodes += f.numberOfTransitiveNodes;
         }
         this.fields = fields;
         this.valuesPerTopLevelNode = numberOfValues;
-        this.numberOfNodesPerTopLevelNode = numberOfNodes;
-        this.numberOfTransitiveNodes = numberOfNodes * topLevelLength;
+        this.positions = infos;
+    }
+
+    equals(other: TreeShape): boolean {
+        // TODO: either dedup instances and/or store a collision resistant hash for fast compare.
+
+        if (
+            !compareArrays(
+                this.fieldsArray,
+                other.fieldsArray,
+                ([k, f, l], [k2, f2, l2]) => k === k2 && l === l2 && f.equals(f2),
+            )
+        ) {
+            return false;
+        }
+        return this.type === other.type && this.hasValue === other.hasValue;
+    }
+
+    withTopLevelLength(topLevelLength: number): ChunkShape {
+        return new ChunkShape(this, topLevelLength);
+    }
+}
+
+// TODO: consider storing shape information in WASM
+export class ChunkShape {
+    public readonly positions: readonly NodePositionInfo[];
+
+    public constructor(
+        public readonly treeShape: TreeShape,
+        public readonly topLevelLength: number,
+    ) {
+        assert(topLevelLength > 0, "topLevelLength must be greater than 0");
 
         // TODO: avoid duplication from inner loop
         const positions: NodePositionInfo[] = [];
         for (let index = 0; index < topLevelLength; index++) {
-            for (const inner of infos) {
+            for (const inner of treeShape.positions) {
                 positions.push(
                     new NodePositionInfo(
-                        inner.parent,
+                        inner.parent, // TODO: Incorrect.
                         inner.parentField,
-                        inner.parentNode === undefined ? index : inner.parentIndex,
+                        inner.indexOfParentPosition === undefined ? index : inner.parentIndex,
                         inner.indexOfParentField,
-                        inner.parentNode === undefined
+                        inner.indexOfParentPosition === undefined
                             ? undefined
-                            : inner.parentNode + index * this.numberOfNodesPerTopLevelNode,
+                            : inner.indexOfParentPosition + index * this.treeShape.positions.length,
                         inner.shape,
-                        inner.valueOffset + index * this.valuesPerTopLevelNode,
+                        inner.indexOfParentPosition === undefined
+                            ? topLevelLength
+                            : inner.topLevelLength,
+                        inner.valueOffset + index * this.treeShape.valuesPerTopLevelNode,
                     ),
                 );
             }
@@ -158,48 +190,53 @@ export class Shape {
         this.positions = positions;
     }
 
-    equals(other: Shape): boolean {
+    equals(other: ChunkShape): boolean {
         // TODO: either dedup instances and/or store a collision resistant hash for fast compare.
-
-        if (
-            !compareArrays(
-                this.fieldsArray,
-                other.fieldsArray,
-                ([k, f], [k2, f2]) => k === k2 && f.equals(f2),
-            )
-        ) {
-            return false;
-        }
-        return (
-            this.type === other.type &&
-            this.topLevelLength === other.topLevelLength &&
-            this.hasValue === other.hasValue
-        );
-    }
-
-    withNewTopLevelLength(topLevelLength: number): Shape {
-        return new Shape(this.type, topLevelLength, this.hasValue, this.fieldsArray);
+        return this.topLevelLength === other.topLevelLength && this.treeShape === other.treeShape;
     }
 
     atPosition(index: number): NodePositionInfo {
-        assert(
-            index < this.numberOfTransitiveNodes,
-            "index must not be greater than the number of nodes",
-        );
+        assert(index < this.positions.length, "index must not be greater than the number of nodes");
         return this.positions[index]; // TODO % this.numberOfNodesPerTopLevelNode and fixup returned indexes as needed to reduce size of positions array.
+
+        // const topIndex = Math.trunc(index / this.treeShape.positions.length);
+        // const indexWithinSubTree = index % this.treeShape.positions.length;
+        // assert(
+        //     topIndex < this.topLevelLength,
+        //     "index must not be greater than the number of nodes",
+        // );
+        // const info = this.treeShape.positions[indexWithinSubTree];
+        // if (indexWithinSubTree > 1) {
+        //     return new NodePositionInfo(
+        //         info.parent,
+        //         info.parentField,
+        //         info.indexOfParentPosition === undefined ? topIndex : info.parentIndex,
+        //         info.indexOfParentField,
+        //         info.indexOfParentPosition === undefined
+        //             ? undefined
+        //             : info.indexOfParentPosition + topIndex * this.treeShape.positions.length,
+        //         info.shape,
+        //         info.indexOfParentPosition === undefined
+        //             ? this.topLevelLength
+        //             : info.topLevelLength,
+        //         info.valueOffset + topIndex * this.treeShape.valuesPerTopLevelNode,
+        //     );
+        // }
+        // return info;
     }
 }
 
 class OffsetShape {
     /**
-     *
-     * @param shape - the shape
+     * @param shape - the shape of each child in this field
+     * @param topLevelLength - number of top level nodes in this sequence chunk (either field withing a chunk, or top level chunk)
      * @param offset - number of nodes before this in the parent's subtree
      * @param key - field key
      * @param indexOfParentField - index of node with this shape
      */
     public constructor(
-        public readonly shape: Shape,
+        public readonly shape: TreeShape,
+        public readonly topLevelLength: number,
         public readonly offset: number,
         public readonly key: FieldKey,
         public readonly indexOfParentField: number | undefined,
@@ -212,8 +249,8 @@ class NodePositionInfo implements UpPath {
      * @param parent - TODO
      * @param parentField - TODO
      * @param parentIndex - indexWithinParentField
-     * @param indexOfParentField - TODO
-     * @param parentNode - TODO
+     * @param indexOfParentField - which field of the parent `parentIndex` is indexing into to locate this.
+     * @param indexOfParentPosition - Index of parent NodePositionInfo in positions array. TODO: use offsets to avoid copying at top level?
      * @param shape - Shape of the top level sequence this node is part of
      * @param valueOffset - TODO
      */
@@ -222,14 +259,14 @@ class NodePositionInfo implements UpPath {
         public readonly parentField: FieldKey,
         public readonly parentIndex: number,
         public readonly indexOfParentField: number | undefined,
-        public readonly parentNode: number | undefined,
-        public readonly shape: Shape, // Shape of sequence that contains this node (top level is parent of this node)
+        public readonly indexOfParentPosition: number | undefined,
+        public readonly shape: TreeShape, // Shape of sequence that contains this node (top level is parent of this node)
+        public readonly topLevelLength: number,
         public readonly valueOffset: number,
     ) {}
 }
 
 class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
-    public readonly positions: readonly NodePositionInfo[];
     private positionIndex: number = 0; // When in fields mode, this points to the parent node.
 
     mode: CursorLocationType = CursorLocationType.Nodes;
@@ -244,12 +281,11 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     // TODO: support prefix (path above root, including index offset of chunk in its containing field)
     public constructor(private readonly chunk: UniformChunk) {
         super();
-        this.positions = chunk.shape.positions;
     }
 
     nextField(): boolean {
         this.indexOfField++;
-        const fields = this.positions[this.positionIndex].shape.fieldsArray;
+        const fields = this.chunk.shape.atPosition(this.positionIndex).shape.fieldsArray;
         if (this.indexOfField < fields.length) {
             this.fieldKey = fields[this.indexOfField][0];
             return true;
@@ -275,7 +311,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
         if (fieldInfo === undefined) {
             return 0;
         }
-        return fieldInfo[1].topLevelLength;
+        return fieldInfo[2];
     }
     firstNode(): boolean {
         const info = this.nodeInfo(CursorLocationType.Fields);
@@ -290,11 +326,11 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
         const info = this.nodeInfo(CursorLocationType.Fields);
         const f = info.shape.fields.get(this.getFieldKey()) ?? fail("missing field"); // TODO: faster way to get from field indexOfField to offsetShape (store offsetShape in array)
         assert(childIndex >= 0, "index past end of field");
-        assert(childIndex < f.shape.topLevelLength, "index past end of field");
+        assert(childIndex < f.topLevelLength, "index past end of field");
         this.mode = CursorLocationType.Nodes;
-        this.positionIndex += f.offset + childIndex * f.shape.numberOfNodesPerTopLevelNode;
+        this.positionIndex += f.offset + childIndex * f.shape.positions.length;
         assert(this.positionIndex >= 0, "valid positionIndex");
-        assert(this.positionIndex < this.positions.length, "valid positionIndex");
+        // assert(this.positionIndex < this.positions.length, "valid positionIndex");
         assert(this.fieldIndex === childIndex, "should be at selected child");
     }
     getFieldPath(): FieldUpPath {
@@ -324,10 +360,10 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     seekNodes(offset: number): boolean {
         const info = this.nodeInfo(CursorLocationType.Nodes);
         const index = offset + info.parentIndex;
-        if (index >= 0 && index < info.shape.topLevelLength) {
-            this.positionIndex += offset * info.shape.numberOfNodesPerTopLevelNode;
+        if (index >= 0 && index < info.topLevelLength) {
+            this.positionIndex += offset * info.shape.positions.length;
             assert(this.positionIndex >= 0, "valid positionIndex");
-            assert(this.positionIndex < this.positions.length, "valid positionIndex");
+            // assert(this.positionIndex < this.positions.length, "valid positionIndex");
             assert(
                 this.fieldIndex === info.parentIndex + offset,
                 "at correct new index within field",
@@ -348,7 +384,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
         this.indexOfField =
             info.indexOfParentField ?? fail("navigation up to root field not yet supported"); // TODO;
         this.positionIndex =
-            info.parentNode ?? fail("navigation up to root field not yet supported"); // TODO
+            info.indexOfParentPosition ?? fail("navigation up to root field not yet supported"); // TODO
         this.fieldKey = info.parentField;
         this.mode = CursorLocationType.Fields;
     }
@@ -375,7 +411,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     }
     nodeInfo(requiredMode = CursorLocationType.Nodes): NodePositionInfo {
         this.assertMode(requiredMode);
-        return this.positions[this.positionIndex] ?? fail("invalid position index");
+        return this.chunk.shape.atPosition(this.positionIndex);
     }
     assertMode(requiredMode: CursorLocationType): void {
         assert(this.mode === requiredMode, "tried to access cursor when in wrong mode");
