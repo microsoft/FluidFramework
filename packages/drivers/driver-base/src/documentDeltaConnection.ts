@@ -98,6 +98,7 @@ export class DocumentDeltaConnection
      * Value: op contents
      */
     private readonly opContent = new Map<number, any>();
+    /** Can ordering service send back op ack with empty contents? */
     protected lightOpAcksEnabled = false;
 
     /**
