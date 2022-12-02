@@ -37,7 +37,7 @@ export type CreateNewFileArgs = [
     enableSingleRequestForShareLinkWithCreate?: boolean,
     enableShareLinkWithCreate?: boolean,
 ];
-export type CreateNewContainerOnExistingFile = CreateNewArgs<IExistingFileInfo>;
+export type CreateNewContainerOnExistingFileArgs = CreateNewArgs<IExistingFileInfo>;
 
 /**
  * Converts a summary(ISummaryTree) taken in detached container to snapshot tree and blobs

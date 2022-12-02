@@ -21,14 +21,14 @@ import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { convertCreateNewSummaryTreeToTreeAndBlobs, convertSummaryIntoContainerSnapshot, CreateNewContainerOnExistingFile, createNewFluidContainerCore } from "./createNewUtils";
+import { convertCreateNewSummaryTreeToTreeAndBlobs, convertSummaryIntoContainerSnapshot, CreateNewContainerOnExistingFileArgs, createNewFluidContainerCore } from "./createNewUtils";
 import { ClpCompliantAppHeader } from "./contractsPublic";
 
 /**
  * Creates a new Fluid container on an existing file.
  */
 export async function createNewContainerOnExistingFile(
-  ...args: CreateNewContainerOnExistingFile
+  ...args: CreateNewContainerOnExistingFileArgs
 ): Promise<IOdspResolvedUrl> {
   const [
     getStorageToken,

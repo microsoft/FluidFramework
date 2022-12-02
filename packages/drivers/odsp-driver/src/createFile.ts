@@ -38,7 +38,7 @@ import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { convertCreateNewSummaryTreeToTreeAndBlobs, CreateNewFileArgs, createNewFluidContainerCore } from "./createNewUtils";
+import { convertCreateNewSummaryTreeToTreeAndBlobs, convertSummaryIntoContainerSnapshot, CreateNewFileArgs, createNewFluidContainerCore } from "./createNewUtils";
 import { runWithRetry } from "./retryUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ClpCompliantAppHeader } from "./contractsPublic";
@@ -273,90 +273,4 @@ export async function createNewFluidFileFromSummary(
     );
 
     return content;
-}
-
-function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
-    const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
-    const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
-    if (!(appSummary && protocolSummary)) {
-        throw new Error("App and protocol summary required for create new path!!");
-    }
-    const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
-    const attributesSummaryBlob: ISummaryBlob = {
-        type: SummaryType.Blob,
-        content: JSON.stringify(documentAttributes),
-    };
-    protocolSummary.tree.attributes = attributesSummaryBlob;
-    const convertedCreateNewSummary: ISummaryTree = {
-        type: SummaryType.Tree,
-        tree: {
-            ".protocol": protocolSummary,
-            ".app": appSummary,
-        },
-    };
-    const snapshotTree = convertSummaryToSnapshotTreeForCreateNew(convertedCreateNewSummary);
-    const snapshot: IOdspSummaryPayload = {
-        entries: snapshotTree.entries ?? [],
-        message: "app",
-        sequenceNumber: documentAttributes.sequenceNumber,
-        type: "container",
-    };
-    return snapshot;
-}
-
-/**
- * Converts a summary tree to ODSP tree
- */
-export function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspSummaryTree {
-    const snapshotTree: IOdspSummaryTree = {
-        type: "tree",
-        entries: [],
-    };
-
-    const keys = Object.keys(summary.tree);
-    for (const key of keys) {
-        const summaryObject = summary.tree[key];
-
-        let value: OdspSummaryTreeValue;
-        // Tracks if an entry is unreferenced. Currently, only tree entries can be marked as unreferenced. If the
-        // property is not present, the tree entry is considered referenced. If the property is present and is true,
-        // the tree entry is considered unreferenced.
-        let unreferenced: true | undefined;
-
-        switch (summaryObject.type) {
-            case SummaryType.Tree: {
-                value = convertSummaryToSnapshotTreeForCreateNew(summaryObject);
-                unreferenced = summaryObject.unreferenced;
-                break;
-            }
-            case SummaryType.Blob: {
-                const content = typeof summaryObject.content === "string" ?
-                    summaryObject.content : Uint8ArrayToString(summaryObject.content, "base64");
-                const encoding = typeof summaryObject.content === "string" ? "utf-8" : "base64";
-
-                value = {
-                    type: "blob",
-                    content,
-                    encoding,
-                };
-                break;
-            }
-            case SummaryType.Handle: {
-                throw new Error("No handle should be present for first summary!!");
-            }
-            default: {
-                throw new Error(`Unknown tree type ${summaryObject.type}`);
-            }
-        }
-
-        const entry: OdspSummaryTreeEntry = {
-            path: encodeURIComponent(key),
-            type: getGitType(summaryObject),
-            value,
-            unreferenced,
-        };
-        snapshotTree.entries?.push(entry);
-    }
-
-    return snapshotTree;
 }
