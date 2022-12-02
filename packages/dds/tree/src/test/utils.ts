@@ -166,7 +166,7 @@ export class TestTreeProvider {
                 "@fluid-example/test-dataStore",
                 new TestFluidObjectFactory(registry),
                 { summaryOptions: { disableSummaries: summarizeType === SummarizeType.disabled } },
-            )
+            );
 
         const objProvider = new TestObjectProvider(Loader, driver, containerRuntimeFactory);
 
