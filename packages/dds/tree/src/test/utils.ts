@@ -161,19 +161,12 @@ export class TestTreeProvider {
 
         const registry = [[TestTreeProvider.treeId, factory]] as ChannelFactoryRegistry;
         const driver = new LocalServerTestDriver();
-        const containerRuntimeFactory =
-            summarizeType === SummarizeType.disabled
-                ? () =>
-                      new TestContainerRuntimeFactory(
-                          "@fluid-example/test-dataStore",
-                          new TestFluidObjectFactory(registry),
-                          { summaryOptions: { disableSummaries: true } },
-                      )
-                : () =>
-                      new TestContainerRuntimeFactory(
-                          "@fluid-example/test-dataStore",
-                          new TestFluidObjectFactory(registry),
-                      );
+        const containerRuntimeFactory = () =>
+            new TestContainerRuntimeFactory(
+                "@fluid-example/test-dataStore",
+                new TestFluidObjectFactory(registry),
+                { summaryOptions: { disableSummaries: summarizeType === SummarizeType.disabled } },
+            )
 
         const objProvider = new TestObjectProvider(Loader, driver, containerRuntimeFactory);
 
