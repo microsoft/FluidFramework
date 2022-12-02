@@ -89,7 +89,7 @@ graph TD;
     A(Chunk A)-->B(Chunk B)-->C(Chunk C)
 ```
 
-The folowing sections will examine some of the general properties of this "chunk tree".
+The following sections will examine some of the general properties of this "chunk tree."
 
 ### Immutability
 
@@ -258,7 +258,7 @@ In the table above, a flush happens every five edits. A client that joins a sess
 
 > In practice, flushes can happen much less frequently than every five edits. A client can choose a frequency that gives ideal performance for its usage patterns. The flushes can be done in the background so a client is not blocked on a flush as it continues to receive local or incoming edits.
 
-> This is quite similar to the existing summarization model in the Fluid framework. A DDS has a log of operations which represent edits to its data, and every so often a client using that DDS uploads a summary which represents the cumulative state after applying all operations up to that point. A client only needs to know the latest summary and the list of operations that happened after that summary in order to know the current state of the DDS. Ideally the DDS would leverage summarization directly, writing its chunk data structure as the contents of the summary. There are a few limitations that currently prevent this from being possible:
+> This is quite similar to the existing summarization model in the Fluid Framework. A DDS has a log of operations which represent edits to its data, and every so often a client using that DDS uploads a summary which represents the cumulative state after applying all operations up to that point. A client only needs to know the latest summary and the list of operations that happened after that summary in order to know the current state of the DDS. Ideally the DDS would leverage summarization directly, writing its chunk data structure as the contents of the summary. There are a few limitations that currently prevent this from being possible:
 >
 > -   Summary trees do not support virtualization. A client cannot have a partial checkout of the tree; it must download all chunks when it connects. However, summary virtualization is a feature in development and once completed could allow a DDS to download only the chunks that it wants, provided it is able to conform its chunk data structure to the shape of the summary tree.
 > -   Summary trees allow incrementality, but the API to do so is not yet exposed. Summary trees can contain references to blobs in a previous summary, called blob handles. This allows handles to represent data that has not been changed and does not need to be reuploaded. However, handles cannot currently be constructed by a DDS without sniffing implementation details of the runtime. There is also an ongoing development effort to automatically divide summaries into blobs and upload them in pieces, however, this doesn't give the DDS fine-grained control over how/where the summary is divided into chunks.
@@ -332,7 +332,7 @@ graph TD;
     style E fill:#844
 ```
 
-This tree might have the same number of nodes and chunks as the tree above, but it takes many more reuploads (five) to edit a the leaf simply because the logical tree has a deeper shape.
+This tree might have the same number of nodes and chunks as the tree above, but it takes many more reuploads (five) to edit a leaf simply because the logical tree has a deeper shape.
 
 There's also the problem in the other direction; trees which have extremely long sequences of children under the same parent (and are therefore very wide). Consider this logical tree with one million nodes under a single parent:
 
@@ -380,11 +380,11 @@ Clearly, the tree's shape alone can have a significant effect on both read and w
 
 ### Optimizing Tree Shapes
 
-So the worst case performance of both reads and writes, in terms of blob downloads and blob uploads, respectively, is `O(N)`. Given a decent chunking algorithm and trees that aren't pathologically shaped, most trees will do far better than incur an upload or download per node per operation, but the asymptotics are nonetheless unenticing. However, if the chunks in the tree can be re-organized into a different hierarchy, then the worst case can be much improved. It's possible to organize the chunks in such a way that both reads and writes can be bounded to `O(log(D))`/`O(log(N))` for any shape of tree. This can be accomplished by implementing a more intelligent chunk data structure. See [Appendix A](#appendix-a-chunk-data-structure-implementations) for an analysis of some different implementations of the chunk data structure.
+So the worst case performance of both reads and writes, in terms of blob downloads and blob uploads, respectively, is `O(N)`. Given a decent chunking algorithm and trees that aren't pathologically shaped, most trees will do far better than incur an upload or download per node per operation, but the asymptotics are nonetheless unenticing. However, if the chunks in the tree can be re-organized into a different hierarchy, then the worst case can be much improved. It's possible to organize the chunks in such a way that both reads and writes can be bounded to `O(log(N))` for any shape of tree. This can be accomplished by implementing a more intelligent chunk data structure. See [Appendix A](#appendix-a-chunk-data-structure-implementations) for an analysis of some different implementations of the chunk data structure.
 
 ## Generalization
 
-One open question regarding this architecture is if it should be part of a specialized DDS, or if it should be part of the Fluid framework as a container-level service available to all DDSs. Ideally, any DDS would be able to leverage the virtualized and incremental scalability described in this document. Such a service would provide:
+One open question regarding this architecture is if it should be part of a specialized DDS, or if it should be part of the Fluid Framework as a container-level service available to all DDSs. Ideally, any DDS would be able to leverage the virtualized and incremental scalability described in this document. Such a service would provide:
 
 -   A tree-like storage service that is accessible at any time and provides virtualized download of nodes in the tree. It would also expose a user-friendly mutation interface that handles incremental updates of the store as the client modifies the tree.
 -   A way to configure the chunking strategy for the stored tree. Different DDSs might want regions of data to be downloaded together or separately depending on their data model and access patterns. Note that this requires using either a Simple Chunk Tree or a SPICE Tree (as described [Appendix A](#appendix-a-chunk-data-structure-implementations)) in order to give the necessary flexibility for custom chunking.

@@ -54,7 +54,9 @@ import {
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
-import { throwOnTombstoneUsageKey, GCNodeType } from "./garbageCollection";
+import { GCNodeType } from "./garbageCollection";
+import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
+import { summarizerClientType } from "./summarizerClientElection";
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -114,8 +116,10 @@ export class DataStores implements IDisposable {
             const baseGCDetails = await baseGCDetailsP;
             return baseGCDetails.get(dataStoreId);
         };
-        // Read the feature flag that tells whether to throw when a tombstone data store is used.
-        this.throwOnTombstoneUsage = this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true;
+        // Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
+        this.throwOnTombstoneUsage =
+            this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
+            this.runtime.clientDetails.type !== summarizerClientType;
 
         // Extract stores stored inside the snapshot
         const fluidDataStores = new Map<string, ISnapshotTree>();
@@ -434,6 +438,7 @@ export class DataStores implements IDisposable {
         }
 
         if (context.tombstoned) {
+            // The requested data store is removed by gc. Create a 404 gc response exception.
             const error = responseToException(createResponseError(404, "Datastore removed by gc", request), request);
             // Note: if a user writes a request to look like it's viaHandle, we will also send this telemetry event
             this.mc.logger.sendErrorEvent({
@@ -442,7 +447,6 @@ export class DataStores implements IDisposable {
                 pkg: packagePathToTelemetryProperty(context.isLoaded ? context.packagePath : undefined),
                 viaHandle,
             }, error);
-
             // Always log an error when tombstoned data store is used. However, throw an error only if
             // throwOnTombstoneUsage is set.
             if (this.throwOnTombstoneUsage) {

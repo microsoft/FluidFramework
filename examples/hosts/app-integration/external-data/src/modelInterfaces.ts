@@ -85,6 +85,12 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
      */
     readonly saveChanges: () => Promise<void>;
 
+    /**
+     * Kick off fetching external data directly from the TaskList.
+     * Triggered on receipt of ExternalDataChanged signal from container.
+     */
+    readonly importExternalData: () => Promise<void>;
+
     // TODO: Should there be an imperative API to trigger importing changes from the external source?
     // Even if we don't want this to be how the signal gets routed, we might want a "fetch latest changes" button
     // in the UI.

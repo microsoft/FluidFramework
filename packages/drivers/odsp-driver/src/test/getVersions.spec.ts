@@ -9,6 +9,7 @@ import {
     ICacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { delay } from "@fluidframework/common-utils";
 import { EpochTracker, defaultCacheExpiryTimeoutMs } from "../epochTracker";
 import {
     IOdspSnapshot,
@@ -100,6 +101,100 @@ describe("Tests for snapshot fetch", () => {
 
     before(async () => {
         hashedDocumentId = await getHashedDocumentId(driveId, itemId);
+    });
+
+    describe("Tests for caching of different file versions", () => {
+        beforeEach(async () => {
+            localCache = createUtLocalCache();
+            const resolvedUrlWithFileVersion: IOdspResolvedUrl = {
+                siteUrl,
+                driveId,
+                itemId,
+                odspResolvedUrl: true,
+                fileVersion: "2",
+                type: "fluid",
+                url: "",
+                hashedDocumentId,
+                endpoints: {
+                    snapshotStorageUrl: "fake",
+                    attachmentPOSTStorageUrl: "",
+                    attachmentGETStorageUrl: "",
+                    deltaStorageUrl: ""
+                },
+                tokens: {},
+                fileName: "",
+                summarizer: false,
+                id: "id"
+            }  ;
+
+            epochTracker = new EpochTracker(
+                localCache,
+                {
+                    docId: hashedDocumentId,
+                    resolvedUrl,
+                },
+                new TelemetryNullLogger(),
+            );
+
+            service = new OdspDocumentStorageService(
+                resolvedUrlWithFileVersion,
+                async (_options) => "token",
+                logger,
+                true,
+                { ...nonPersistentCache, persistedCache: epochTracker },
+                GetHostStoragePolicyInternal(),
+                epochTracker,
+                async () => { return {}; },
+                () => "tenantid/id",
+                undefined,
+            );
+        });
+
+        afterEach(async () => {
+            await epochTracker.removeEntries().catch(() => { });
+        });
+
+        it("should not fetch from cache with the same snapshot", async () => {
+            const latestContent: ISnapshotContents = {
+                snapshotTree: {
+                    id: "WrongId",
+                    blobs: {},
+                    trees: {},
+                },
+                blobs: new Map(),
+                ops: [],
+                sequenceNumber: 0,
+                latestSequenceNumber: 0,
+            };
+
+            const latestValue: IVersionedValueWithEpoch = {
+                value: { ...latestContent, cacheEntryTime: Date.now() },
+                fluidEpoch: "epoch1",
+                version: persistedCacheValueVersion,
+            };
+
+            const cacheEntry: ICacheEntry = {
+                key: "",
+                type: "snapshot",
+                file: { docId: hashedDocumentId, resolvedUrl },
+            };
+
+            await localCache.put(cacheEntry, latestValue);
+
+            const version = await mockFetchSingle(
+                async () => service.getVersions(null, 1),
+                async () => {
+                    await delay(50); // insure cache response is faster
+                    return createResponse(
+                        { "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+                        odspSnapshot,
+                        200,
+                    );
+                },
+            );
+
+            assert.deepStrictEqual(version, expectedVersion, "incorrect version");
+        });
     });
 
     describe("Tests for regular snapshot fetch", () => {
