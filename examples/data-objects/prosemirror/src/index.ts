@@ -7,6 +7,7 @@ import { mountableViewRequestHandler } from "@fluidframework/aqueduct";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { FluidObject, IProvideFluidRouter } from "@fluidframework/core-interfaces";
 import { buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject, RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
@@ -20,13 +21,25 @@ const defaultComponentId = "default";
 const smde = new ProseMirrorFactory();
 
 const viewRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
+    const entryPoint: FluidObject<IProvideFluidRouter> | undefined = await runtime.entryPoint?.get();
+
+    // We know that the ProseMirrorRuntimeFactory below sets the entryPoint of the ContainerRuntime,
+    // and furthermore that it sets it to an object that implements IFluidRouter, but best practice is
+    // to check explicitly anyway.
+    if (entryPoint === undefined) {
+        throw new Error("entryPoint for the Container Runtime was not set");
+    }
+    if (entryPoint.IFluidRouter === undefined) {
+        throw new Error("entryPoint for the Container Runtime does not implement IFluidRouter");
+    }
+
     if (request.pathParts.length === 0) {
         const objectRequest = RequestParser.create({
             url: ``,
             headers: request.headers,
         });
         const proseMirror = await requestFluidObject<ProseMirror>(
-            await runtime.getRootDataStore(defaultComponentId),
+            entryPoint.IFluidRouter,
             objectRequest);
         return { status: 200, mimeType: "fluid/view", value: new ProseMirrorView(proseMirror.collabManager) };
     }
@@ -55,6 +68,8 @@ class ProseMirrorRuntimeFactory extends RuntimeFactoryHelper {
             undefined, // runtimeOptions
             undefined, // containerScope
             existing,
+            undefined, // containerRuntimeCtor
+            async (containerRuntime: IContainerRuntime) => containerRuntime.getRootDataStore(defaultComponentId),
         );
 
         return runtime;
