@@ -253,7 +253,7 @@ export async function createNewFluidFileFromSummary(
     const initialUrl =
         `${baseUrl}:/opStream/snapshots/snapshot${createShareLinkParam ? `?${createShareLinkParam}` : ""}`;
 
-    return createNewFluidContainerCore(
+    const content = await createNewFluidContainerCore<ICreateFileResponse>(
         containerSnapshot,
         getStorageToken,
         logger,
@@ -261,8 +261,18 @@ export async function createNewFluidFileFromSummary(
         forceAccessTokenViaAuthorizationHeader,
         epochTracker,
         "CreateNewFile",
-        "createFile"
+        "createFile",
+        content => {
+            if (!content || !content.itemId) {
+                throw new NonRetryableError(
+                    "ODSP CreateFile call returned no item ID",
+                    DriverErrorType.incorrectServerResponse,
+                    { driverVersion });
+            }
+        }
     );
+
+    return content;
 }
 
 function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {

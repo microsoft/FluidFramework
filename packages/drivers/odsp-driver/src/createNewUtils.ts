@@ -193,7 +193,8 @@ export async function createNewFluidContainerCore<T>(
     forceAccessTokenViaAuthorizationHeader: boolean,
     epochTracker: EpochTracker,
     telemetryName: string,
-    fetchType: FetchType
+    fetchType: FetchType,
+    validateResponseCallback?: (content: T) => void
 ): Promise<T> {
     return getWithRetryForTokenRefresh(async (options) => {
         const storageToken = await getStorageToken(options, telemetryName);
@@ -248,6 +249,8 @@ export async function createNewFluidContainerCore<T>(
                     telemetryName,
                     logger,
                 );
+
+                validateResponseCallback?.(fetchResponse.content);
 
                 event.end({
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
