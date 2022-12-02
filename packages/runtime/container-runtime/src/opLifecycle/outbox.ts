@@ -90,37 +90,44 @@ export class Outbox {
     }
 
     private flushInternal(rawBatch: IBatch) {
-        const processedBatch = this.maybeCompressBatch(rawBatch);
+        const processedBatch = this.compressBatch(rawBatch);
         const clientSequenceNumber = this.sendBatch(processedBatch);
 
         this.persistBatch(clientSequenceNumber, rawBatch.content);
     }
 
-    private maybeCompressBatch(batch: IBatch): IBatch {
+    private compressBatch(batch: IBatch): IBatch {
         if (batch.content.length === 0
             || this.params.config.compressionOptions === undefined
-            || this.params.config.compressionOptions.minimumBatchSizeInBytes >= batch.contentSizeInBytes) {
+            || this.params.config.compressionOptions.minimumBatchSizeInBytes > batch.contentSizeInBytes) {
             // Nothing to do if the batch is empty or if compression is disabled or if we don't need to compress
             return batch;
         }
 
         const compressedBatch = this.params.compressor.compressBatch(batch);
-        if (compressedBatch.contentSizeInBytes < this.params.config.maxBatchSizeInBytes) {
-            // If we don't reach the maximum supported size of a batch, it safe to be sent as is
-            return compressedBatch;
+        if (compressedBatch.contentSizeInBytes > this.params.config.maxBatchSizeInBytes) {
+            throw new GenericError(
+                "BatchTooLarge",
+                    /* error */ undefined,
+                {
+                    opSize: batch.contentSizeInBytes,
+                    count: batch.content.length,
+                    limit: this.params.config.maxBatchSizeInBytes,
+                    compressed: true,
+                });
         }
 
-        throw new GenericError(
-            "BatchTooLarge",
-                /* error */ undefined,
-            {
-                opSize: batch.contentSizeInBytes,
-                count: batch.content.length,
-                limit: this.params.config.maxBatchSizeInBytes,
-                compressed: true,
-            });
+        // If we don't reach the maximum supported size of a batch, it safe to be sent as is
+        return compressedBatch;
     }
 
+    /**
+     * Sends the batch object to the container context to be sent over the wire.
+     *
+     * @param batch batch to be sent
+     * @returns the client sequence number of the last batched op which was sent and
+     *  -1 if there are no ops or the container cannot send ops.
+     */
     private sendBatch(batch: IBatch): number {
         let clientSequenceNumber: number = -1;
         const length = batch.content.length;
