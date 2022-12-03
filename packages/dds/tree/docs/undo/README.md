@@ -17,7 +17,7 @@ and which part should happen on peers upon receiving the undo (i.e, post broadca
 
 This choice is subject to many tradeoffs:
 
--   Access to historical data (original change, [repair data](#repair-data), [interim changes](#interim-change))
+-   Access to historical data (original change, [repair data](../repair-data/README.md), [interim changes](#interim-change))
     -   Pre-broadcast computation puts the burden of providing historical data on the issuing client.
     -   Post-broadcast computation puts the burden of providing historical data on all peers
         (which means that data must be included in summaries).
@@ -86,7 +86,8 @@ the edit to be undone will commonly lie outside of the undo window.
 Two options:
 
 1. Do the same as within the undo window but send along the relevant historical data.
-2. Compute the net change to the tip state and send that, as though it was a normal edit.
+2. Compute the net change to the tip state and send that, as though it was a normal edit. (normal rebasing only on peer side)
+3. Compute the net change to the tip state and send that, but mark it as "to be postbased" so the peer can finish the postbasing if needed.
 
 ## Partial Undo
 
@@ -94,7 +95,5 @@ Include in the undo message a characterization of the region of the document to 
 This is likely best characterized as a combination of input context regions and output context regions.
 
 ## Glossary
-
-### Repair Data
 
 ### Interim Change
