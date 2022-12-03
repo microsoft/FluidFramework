@@ -608,25 +608,23 @@ export const handlers: Handler[] = [
             );
             const hasFormatScript = Object.prototype.hasOwnProperty.call(json.scripts, "format");
 
-            if (!(hasPrettierScript && hasPrettierFixScript && hasFormatScript)) {
-                const missingScripts: string[] = [];
+            const missingScripts: string[] = [];
 
-                if (!hasPrettierScript) {
-                    missingScripts.push(`prettier`);
-                }
-
-                if (!hasPrettierFixScript) {
-                    missingScripts.push(`prettier:fix`);
-                }
-
-                if (!hasFormatScript) {
-                    missingScripts.push(`format`);
-                }
-
-                return `${file} is missing the following scripts: ${missingScripts.join("\n\t")}`;
+            if (!hasPrettierScript) {
+                missingScripts.push(`prettier`);
             }
 
-            return undefined;
+            if (!hasPrettierFixScript) {
+                missingScripts.push(`prettier:fix`);
+            }
+
+            if (!hasFormatScript) {
+                missingScripts.push(`format`);
+            }
+
+            return missingScripts.length > 0
+                ? `${file} is missing the following scripts: ${missingScripts.join("\n\t")}`
+                : undefined;
         },
         resolver: (file) => {
             let json;
@@ -637,9 +635,7 @@ export const handlers: Handler[] = [
             }
 
             const resolved = true;
-
             addPrettier(json);
-
             writeFile(file, JSON.stringify(sortPackageJson(json), undefined, 2) + newline);
 
             return { resolved: resolved };
@@ -648,38 +644,33 @@ export const handlers: Handler[] = [
 ];
 
 function addPrettier(json: Record<string, any>) {
-    const jsonCheckRoot = json.name;
-    let jsonDevDependencies = json.devDependencies;
-    let jsonScripts = json.scripts;
+    // if the json file contains scripts field
+    console.log(1);
 
-    // if devDependencies does not exist in package.json
-    if (jsonDevDependencies === undefined) {
-        json["devDependencies"] = {};
-        jsonDevDependencies = json["devDependencies"];
+    const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+
+    if (hasScriptsField) {
+        const hasPrettierScriptResolver = Object.prototype.hasOwnProperty.call(
+            json.scripts,
+            "prettier",
+        );
+
+        const hasPrettierFixScriptResolver = Object.prototype.hasOwnProperty.call(
+            json.scripts,
+            "prettier:fix",
+        );
+
+        const hasFormatScriptResolver = Object.prototype.hasOwnProperty.call(
+            json.scripts,
+            "format",
+        );
+
+        if (hasPrettierScriptResolver || hasPrettierFixScriptResolver || hasFormatScriptResolver) {
+            json["scripts"]["format"] = "npm run prettier:fix";
+            json["scripts"]["prettier"] = "prettier --check .";
+            json["scripts"]["prettier:"] = "prettier --write .";
+        }
     }
-
-    // if scripts does not exist in package.json
-    if (jsonScripts === undefined) {
-        json["scripts"] = {};
-        jsonScripts = json["scripts"];
-    }
-
-    // update devDependencies "prettier" to latest version, intentionally left empty
-    jsonDevDependencies["prettier"] = "";
-
-    // update scripts
-    jsonScripts["format"] = "npm run prettier:fix";
-
-    jsonScripts["prettier"] = "prettier --check .";
-
-    jsonScripts["prettier:fix"] = "prettier --write .";
-
-    // package.json in root of the release-group should have lerna script
-    if (jsonCheckRoot === "root") {
-        jsonScripts["format"] = "lerna run format --no-sort --stream -- -- -- --color";
-    }
-
-    return undefined;
 }
 
 function runNpmJsonLint(json: any, file: string) {
