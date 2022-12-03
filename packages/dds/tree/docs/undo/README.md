@@ -2,35 +2,99 @@
 
 This document offers a high-level description of the undo system.
 
-## Abstract Undo Messages
+## Abstract vs. Concrete Undo Messages
 
 Conceptually, an undo edit starts as a very abstract and succinct intention:
-"undo changes from prior change _\<revision-tag\>_".
+"Undo changes from prior change _\<revision-tag\>_".
 It ultimately needs to be converted into a more concrete and verbose description of what changes the undo entails
 (e.g., "delete the node at this path").
 This concrete form is the one that the application code (commonly the Forest code) is able to process.
 
 One key design question is:
 what form should the undo edit be in when it is sent by the issuing client to the sequencing service?
-We can think of this as asking which part of the concretization process we want to happen on the client that is issuing the undo,
-and which part we want to happen on every peer receiving the undo.
+We can think of this as asking which part of the concretization process should happen on the client that is issuing the undo (i.e., pre broadcast),
+and which part should happen on peers upon receiving the undo (i.e, post broadcast).
 
-This choice is subject to many asymmetries:
+This choice is subject to many tradeoffs:
 
--   Access to historical data
-    -   Computation that is done before sending puts the burden of providing repair data solely on the issuing client.
-    -   Computation that is done after receiving puts the burden of providing repair data on all peers.
+-   Access to historical data (original change, [repair data](#repair-data), [interim changes](#interim-change))
+    -   Pre-broadcast computation puts the burden of providing historical data on the issuing client.
+    -   Post-broadcast computation puts the burden of providing historical data on all peers
+        (which means that data must be included in summaries).
 -   Access to sequencing information for the undone edit
-    -   ... before sending may occur before the undone edit is sequenced.
-    -   ... after receiving will occur after the undone edit is sequenced.
+    -   Pre-broadcast computation may occur before the undone edit is sequenced.
+    -   Post-broadcast computation will occur after the undone edit is sequenced.
 -   Access to sequencing information for the undo edit
-    -   ... before sending may occur before the undo edit is sequenced.
-    -   ... after receiving will occur after the undo edit is sequenced.
+    -   Pre-broadcast computation will occur before the undo edit is sequenced.
+    -   Post-broadcast computation will occur after the undo edit is sequenced.
 -   Computational load
-    -   ... before sending only consumes computational resources on the issuing client.
-    -   ... after receiving consumes computational resources on all peers.
+    -   Pre-broadcast computation only consumes computational resources on the issuing client.
+    -   Post-broadcast computation consumes computational resources on all peers.
 
-Additionally, the more abstract the undo message, the smaller it will tend to be,
-which reduces the network and service loads.
+Note that larger summary sizes and larger message sizes both increase the network/server load and make (down)loading documents slower.
 
-We opt to make the undo message sent over the wire as abstract as possible.
+Because the above choice has such a performance impact,
+we give applications some agency in choosing the tradeoff that works for them.
+We accomplish that by introducing the concept of an "undo window".
+
+## The Undo Window
+
+The undo window defines how far back, in terms of the edit history,
+peers are expected to retain information about past edits and their associated repair data.
+
+For this data to be retained, it must first be obtained.
+This happens in two ways:
+
+-   When a peer joins a session, the relevant historical information is included in the summary.\*
+-   As the peer receives a new edit from the sequencing service,
+    it computes the corresponding repair data and stores it alongside the edit.
+
+\* Technically, the historical data needed for undo could loaded separately in an effort to reduce startup time.
+
+As older edits fall outside of the undo window, the edit information, including its repair data,
+are deleted from the peer.
+
+When issuing an undo,
+a client will therefore proceed differently depending on whether the change to be undone lies outside of the undo window.
+
+## Undo Edits Within The Undo Window
+
+Note that this includes cases where the client issuing the undo is also the issuer of the change to be undone,
+and that client has yet to receive the change to be undone back from the sequencing service.
+This can happen when a client wants to issue an undo very soon after issuing the change to be undone.
+It can also happen whenever a client has been offline for some period of time.
+
+```typescript
+{
+    originalChange: RevisionTag;
+}
+```
+
+Note that the issuer of an undo may attempt to undo a change that is within the undo window,
+send the adequate undo message,
+and find out that by the time the undo message was sequenced,
+the edit to be undone had fallen out of the undo window.
+In such circumstances, the undo fails (all peers ignore it).
+The issuer of the undo can either give up on undoing the change,
+or try again in the new context (i.e., undoing an edit outside the undo window).
+
+## Undo Edits Outside The Undo Window
+
+In a low-frequency (i.e. non-live) collaboration environment,
+the edit to be undone will commonly lie outside of the undo window.
+
+Two options:
+
+1. Do the same as within the undo window but send along the relevant historical data.
+2. Compute the net change to the tip state and send that, as though it was a normal edit.
+
+## Partial Undo
+
+Include in the undo message a characterization of the region of the document to be affected by the undo.
+This is likely best characterized as a combination of input context regions and output context regions.
+
+## Glossary
+
+### Repair Data
+
+### Interim Change
