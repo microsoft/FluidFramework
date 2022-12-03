@@ -45,6 +45,21 @@ import {
 
 import { IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
+import {
+    defaultInactiveTimeoutMs,
+    defaultSessionExpiryDurationMs,
+    disableSweepLogKey,
+    disableTombstoneKey,
+    gcBlobPrefix,
+    gcTestModeKey,
+    gcTombstoneBlobKey,
+    gcTreeKey,
+    oneDayMs,
+    runGCKey,
+    runSessionExpiryKey,
+    runSweepKey,
+    trackGCStateKey
+} from "./garbageCollectionConstants";
 import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
 import {
     getGCVersion,
@@ -59,34 +74,6 @@ import {
 
 /** This is the current version of garbage collection. */
 const GCVersion = 1;
-
-// The key for the GC tree in summary.
-export const gcTreeKey = "gc";
-// They prefix for GC blobs in the GC tree in summary.
-export const gcBlobPrefix = "__gc";
-// The key for tombstone blob in the GC tree in summary.
-export const gcTombstoneBlobKey = "__tombstones";
-
-// Feature gate key to turn GC on / off.
-export const runGCKey = "Fluid.GarbageCollection.RunGC";
-// Feature gate key to turn GC sweep on / off.
-export const runSweepKey = "Fluid.GarbageCollection.RunSweep";
-// Feature gate key to turn GC test mode on / off.
-export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
-// Feature gate key to expire a session after a set period of time.
-export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
-// Feature gate key to write the gc blob as a handle if the data is the same.
-export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
-// Feature gate key to turn GC sweep log off.
-export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
-// Feature gate key to tombstone datastores.
-export const testTombstoneKey = "Fluid.GarbageCollection.Test.Tombstone";
-
-// One day in milliseconds.
-export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
-
-export const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
-export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
 
 /** The statistics of the system state after a garbage collection run. */
 export interface IGCStats {
@@ -640,7 +627,8 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
         this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? this.gcOptions.runGCInTestMode === true;
-        this.tombstoneMode = this.mc.config.getBoolean(testTombstoneKey) ?? false;
+        // Whether we are running in tombstone mode. This is true by default unless disabled via feature flags.
+        this.tombstoneMode = this.mc.config.getBoolean(disableTombstoneKey) !== true;
 
         // The GC state needs to be reset if the base snapshot contains GC tree and GC is disabled or it doesn't
         // contain GC tree and GC is enabled.
@@ -986,7 +974,9 @@ export class GarbageCollector implements IGarbageCollector {
         }
 
         const serializedGCState = JSON.stringify(generateSortedGCState(gcState));
-        const serializedTombstones = this.tombstones.length > 0 ? JSON.stringify(this.tombstones.sort()) : undefined;
+        const serializedTombstones = this.tombstoneMode
+            ? (this.tombstones.length > 0 ? JSON.stringify(this.tombstones.sort()) : undefined)
+            : undefined;
 
         /**
          * Incremental summary of GC data - If any of the GC state or tombstone state hasn't changed since the last

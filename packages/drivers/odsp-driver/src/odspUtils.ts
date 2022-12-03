@@ -339,7 +339,7 @@ export function toInstrumentedOdspTokenFetcher(
 export function createCacheSnapshotKey(odspResolvedUrl: IOdspResolvedUrl): ICacheEntry {
     const cacheEntry: ICacheEntry = {
         type: snapshotKey,
-        key: "",
+        key: odspResolvedUrl.fileVersion ?? "",
         file: {
             resolvedUrl: odspResolvedUrl,
             docId: odspResolvedUrl.hashedDocumentId,
