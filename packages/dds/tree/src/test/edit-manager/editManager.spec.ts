@@ -235,7 +235,7 @@ describe("EditManager", () => {
                 });
             }
             assert.equal(manager.getTrunk().length, 10);
-            manager.setMinimumSequenceNumber(5);
+            manager.advanceMinimumSequenceNumber(5);
             assert(manager.getTrunk().length < 10);
         });
     });

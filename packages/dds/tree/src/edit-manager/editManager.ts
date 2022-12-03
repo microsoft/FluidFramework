@@ -63,7 +63,7 @@ export class EditManager<
         super();
     }
 
-    public setMinimumSequenceNumber(minimumSequenceNumber: number): void {
+    public advanceMinimumSequenceNumber(minimumSequenceNumber: number): void {
         assert(
             minimumSequenceNumber >= this.minimumSequenceNumber,
             "number must be larger or equal to current minimumSequenceNumber.",
