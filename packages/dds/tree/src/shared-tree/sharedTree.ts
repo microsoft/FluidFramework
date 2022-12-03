@@ -34,7 +34,6 @@ import {
     SchemaIndex,
     DefaultChangeFamily,
     defaultChangeFamily,
-    FieldChangeMap,
     DefaultEditBuilder,
     IDefaultEditBuilder,
     UnwrappedEditableField,
@@ -100,7 +99,7 @@ export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObje
  * TODO: expose or implement Checkout.
  */
 class SharedTree
-    extends SharedTreeCore<FieldChangeMap, DefaultChangeFamily>
+    extends SharedTreeCore<DefaultChangeset, DefaultChangeFamily>
     implements ISharedTree
 {
     public readonly context: EditableTreeContext;
