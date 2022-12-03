@@ -85,6 +85,7 @@ export const dummyRoot: GlobalFieldKeySymbol = symbolFromKey(
 export type FieldShape = readonly [FieldKey, TreeShape, number];
 export class TreeShape {
     public readonly fields: ReadonlyMap<FieldKey, OffsetShape>;
+    public readonly fieldsOffsetArray: readonly OffsetShape[];
     public readonly valuesPerTopLevelNode: number;
 
     // TODO: this is only needed at chunk roots. Optimize it base on that.
@@ -112,6 +113,8 @@ export class TreeShape {
         this.fields = fields;
         this.valuesPerTopLevelNode = numberOfValues;
         this.positions = infos;
+
+        this.fieldsOffsetArray = [...fields.values()];
     }
 
     equals(other: TreeShape): boolean {
@@ -257,7 +260,8 @@ class NodePositionInfo implements UpPath {
 }
 
 class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
-    private positionIndex: number = 0; // When in fields mode, this points to the parent node.
+    private positionIndex!: number; // When in fields mode, this points to the parent node.
+    private nodePositionInfo!: NodePositionInfo;
 
     // Cached constants for faster access
     private readonly shape: ChunkShape;
@@ -277,6 +281,12 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
         super();
         this.shape = this.chunk.shape;
         this.positions = this.shape.positions;
+        this.moveToPosition(0);
+    }
+
+    private moveToPosition(positionIndex: number): void {
+        this.nodePositionInfo = this.positions[positionIndex];
+        this.positionIndex = positionIndex;
     }
 
     nextField(): boolean {
@@ -308,6 +318,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
         }
         return fieldInfo[2];
     }
+
     firstNode(): boolean {
         const info = this.nodeInfo(CursorLocationType.Fields);
         const fields = info.shape.fieldsArray;
@@ -317,21 +328,24 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
         this.enterNode(0); // TODO: perf: this redoes some lookups
         return true;
     }
+
     enterNode(childIndex: number): void {
         const info = this.nodeInfo(CursorLocationType.Fields);
-        const f = info.shape.fields.get(this.getFieldKey()) ?? fail("missing field"); // TODO: faster way to get from field indexOfField to offsetShape (store offsetShape in array)
+        const f = info.shape.fieldsOffsetArray[this.indexOfField];
         assert(childIndex >= 0, "index past end of field");
         assert(childIndex < f.topLevelLength, "index past end of field");
         this.mode = CursorLocationType.Nodes;
-        this.positionIndex += f.offset + childIndex * f.shape.positions.length;
+        this.moveToPosition(this.positionIndex + f.offset + childIndex * f.shape.positions.length);
         assert(this.fieldIndex === childIndex, "should be at selected child");
     }
+
     getFieldPath(): FieldUpPath {
         return {
             field: this.getFieldKey(),
             parent: this.nodeInfo(CursorLocationType.Fields),
         };
     }
+
     getPath(): UpPath | undefined {
         return this.nodeInfo();
     }
@@ -354,7 +368,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
         const info = this.nodeInfo(CursorLocationType.Nodes);
         const index = offset + info.parentIndex;
         if (index >= 0 && index < info.topLevelLength) {
-            this.positionIndex += offset * info.shape.positions.length;
+            this.moveToPosition(this.positionIndex + offset * info.shape.positions.length);
             return true;
         }
         if (offset === 0) {
@@ -363,18 +377,22 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
         this.exitNode();
         return false;
     }
+
     nextNode(): boolean {
         return this.seekNodes(1);
     }
+
     exitNode(): void {
         const info = this.nodeInfo();
         this.indexOfField =
             info.indexOfParentField ?? fail("navigation up to root field not yet supported"); // TODO;
-        this.positionIndex =
-            info.indexOfParentPosition ?? fail("navigation up to root field not yet supported"); // TODO
+        this.moveToPosition(
+            info.indexOfParentPosition ?? fail("navigation up to root field not yet supported"),
+        ); // TODO
         this.fieldKey = info.parentField;
         this.mode = CursorLocationType.Fields;
     }
+
     firstField(): boolean {
         const fieldsArray = this.nodeInfo().shape.fieldsArray;
         if (fieldsArray.length === 0) {
@@ -385,6 +403,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
         this.fieldKey = fieldsArray[0][0];
         return true;
     }
+
     enterField(key: FieldKey): void {
         const fieldMap = this.nodeInfo().shape.fields;
         const fieldInfo = fieldMap.get(key);
@@ -395,13 +414,16 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
         this.fieldKey = key;
         this.mode = CursorLocationType.Fields;
     }
+
     nodeInfo(requiredMode = CursorLocationType.Nodes): NodePositionInfo {
         assert(this.mode === requiredMode, "tried to access cursor when in wrong mode");
-        return this.positions[this.positionIndex];
+        return this.nodePositionInfo;
     }
+
     get type(): TreeSchemaIdentifier {
         return this.nodeInfo().shape.type;
     }
+
     get value(): Value {
         const info = this.nodeInfo();
         return info.shape.hasValue ? this.chunk.values[info.valueOffset] : undefined;
