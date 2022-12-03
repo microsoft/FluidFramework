@@ -7,10 +7,11 @@ import child_process from "child_process";
 import fs from "fs";
 import ps from "ps-node";
 import commander from "commander";
+import xml from "xml";
 import { TestDriverTypes, DriverEndpoint } from "@fluidframework/test-driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
-import { createTestDriver, getProfile, initialize, loggerP, safeExit } from "./utils";
+import { createTestDriver, getProfile, initialize, loggerP, safeExit, writeToFile } from "./utils";
 
 interface ITestUserConfig {
     /* Credentials' key/value description:
@@ -82,6 +83,17 @@ async function main() {
         endpoint,
         { ...profile, name: profileArg, testUsers },
         { testId, debug, verbose, seed, browserAuth, enableMetrics, createTestId });
+}
+
+function msSinceTime(time: Date) {
+    return (new Date()).valueOf() - time.valueOf()
+}
+
+interface RunnerResult {
+    // eslint-disable-next-line @rushstack/no-new-null
+    returnCode: number | null;
+    durationMs: number;
+    index: number;
 }
 
 /**
@@ -168,9 +180,10 @@ async function orchestratorProcess(
         }, 20000);
     }
 
+    let runnerResults: RunnerResult[] | undefined;
     try {
         const usernames = profile.testUsers !== undefined ? Object.keys(profile.testUsers.credentials) : undefined;
-        await Promise.all(runnerArgs.map(async (childArgs, index) => {
+        runnerResults = await Promise.all(runnerArgs.map(async (childArgs, index) => {
             const username = usernames !== undefined ? usernames[index % usernames.length] : undefined;
             const password = username !== undefined ? profile.testUsers?.credentials[username] : undefined;
             const envVar = { ...process.env };
@@ -181,6 +194,7 @@ async function orchestratorProcess(
                     envVar.login__odspdf__test__accounts = createLoginEnv(username, password);
                 }
             }
+            const runnerStartTime = new Date();
             const runnerProcess = child_process.spawn(
                 "node",
                 childArgs,
@@ -194,16 +208,64 @@ async function orchestratorProcess(
                 setupTelemetry(runnerProcess, logger, index, username);
             }
 
-            return new Promise((resolve) => runnerProcess.once("close", resolve));
+            return new Promise<RunnerResult>((resolve) => runnerProcess.once(
+                "close",
+                (returnCode, _signals) => { resolve({ returnCode, index, durationMs: msSinceTime(runnerStartTime) }); },
+            ));
         }));
     } finally {
-        const endTime = new Date();
-        console.log(`Duration: ${new Date(endTime.valueOf() - startTime.valueOf()).toISOString().split(/T|Z/)[1]}`);
+        const durationMs = msSinceTime(startTime);
+        console.log(`Duration: ${new Date(durationMs).toISOString().split(/T|Z/)[1]}`);
+
+        if (runnerResults === undefined) {
+            console.error("NO TEST RESULTS FOUND TO OUTPUT");
+        }
+        else {
+            writeTestResultXmlFile(runnerResults, durationMs / 1000 /* durationSec */);
+        }
+
         if (logger !== undefined) {
             await logger.flush();
         }
         await safeExit(0, url);
     }
+}
+
+/** Format the runner results into the JUnit XML format expected by ADO and write to a file */
+function writeTestResultXmlFile(results: RunnerResult[], durationSec: number) {
+    const resultsForXml = results.map((({ returnCode, index, durationMs }) => {
+        const _attr = {
+            classname: "StressRunner",
+            name: `Runner_${index}`,
+            time: durationMs / 1000,
+        };
+        if (returnCode === 0) {
+            // Success
+            return { testcase: [{ _attr }] };
+        }
+        return { testcase: [{ _attr },
+            // Failure
+            { failure: "Test Runner failed! Check pipeline logs to find the error" },
+        ] };
+    }));
+    const suiteAttributes = {
+        name: "GC Stress Test",
+        tests: results.length,
+        failures: 0,
+        errors: results.filter(({ returnCode }) => returnCode !== 0).length,
+        time: durationSec,
+        // timestamp: e.g. Wed, 16 Nov 2022 18:15:06 GMT
+    };
+    const outputObj: xml.XmlObject = {
+        testsuite: [{ _attr: suiteAttributes },
+            ...resultsForXml,
+        ],
+    };
+    const outputXml = xml(outputObj, true);
+    console.log(outputXml);
+
+    const timestamp = (new Date()).toISOString();
+    writeToFile(outputXml, "output", `${timestamp}-junit-report.xml`);
 }
 
 /**

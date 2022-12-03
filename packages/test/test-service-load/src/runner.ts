@@ -17,7 +17,7 @@ import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore";
@@ -141,6 +141,7 @@ async function runnerProcess(
 ): Promise<number> {
     // Assigning no-op value due to linter.
     let metricsCleanup: () => void = () => {};
+    let testFailed: boolean = false;
 
     try {
         const optionsOverride = `${driver}${endpoint !== undefined ? `-${endpoint}` : ""}`;
@@ -160,8 +161,18 @@ async function runnerProcess(
                     runId: runConfig.runId,
                     driverType: testDriver.type,
                     driverEndpointName: testDriver.endpointName,
+                    userIndex: testDriver.userIndex,
                 },
             });
+
+        // Check for InactiveObject or SweepReadyObject logs
+        baseLogger.observer.on("logEvent", (logEvent: ITelemetryBaseEvent) => {
+            if (logEvent.eventName.includes("InactiveObject") || logEvent.eventName.includes("SweepReadyObject")) {
+                testFailed = true;
+                console.error(`xxxxxxxxx ${JSON.stringify(logEvent)}`);
+            }
+        });
+
         process.on("unhandledRejection", (reason, promise) => {
             try {
                 logger.sendErrorEvent({ eventName: "UnhandledPromiseRejection" }, reason);
@@ -254,7 +265,7 @@ async function runnerProcess(
                 await baseLogger.flush({ url, runId: runConfig.runId });
             }
         }
-        return 0;
+        return testFailed ? -1 : 0;
     } catch (e) {
         printStatus(runConfig, `error: loading test`);
         console.error(e);
