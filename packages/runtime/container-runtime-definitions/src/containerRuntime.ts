@@ -87,14 +87,17 @@ export interface IContainerRuntime extends
     readonly attachState: AttachState;
 
     /**
-     * Exposes a handle to the root object / entryPoint of the default datastore in the container. Use this as the
-     * primary way of interacting with it. If this property is undefined (meaning that exposing the entryPoint hasn't
-     * been implemented in a particular scenario) fall back to the current approach of requesting the object through
-     * the request pattern.
+     * Exposes a handle to the root object / entryPoint of the container.
+     * Use this as the primary way of getting access to the user-defined logic within the container.
+     * If this property is undefined (meaning that exposing the entryPoint hasn't been implemented in a particular
+     * scenario) fall back to the current approach of requesting the root object of the container through the request
+     * pattern.
      *
-     * @remarks The plan is that eventually the container will no longer have a resolveHandle() method, this property
+     * See {@link @fluidframework/common-definitions#IContainer.entryPoint}
+     *
+     * @remarks The plan is that eventually IContainerRuntime will no longer have a resolveHandle() method, this property
      * will become non-optional and return an IFluidHandle (no undefined), and it will become the only way to access
-     * the handle to the default data store's root object.
+     * the handle to the entryPoint for the container.
      */
     readonly entryPoint?: IFluidHandle<FluidObject>;
 
