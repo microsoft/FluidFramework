@@ -16,7 +16,7 @@ import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore";
@@ -175,8 +175,9 @@ async function runnerProcess(
 	seed: number,
 	enableOpsMetrics: boolean,
 ): Promise<number> {
-	// Assigning no-op value due to linter.
-	let metricsCleanup: () => void = () => {};
+    // Assigning no-op value due to linter.
+    let metricsCleanup: () => void = () => {};
+    let testFailed: boolean = false;
 
 	const optionsOverride = `${driver}${endpoint !== undefined ? `-${endpoint}` : ""}`;
 	const loaderOptions = generateLoaderOptions(
@@ -189,30 +190,35 @@ async function runnerProcess(
 		runConfig.testConfig?.optionOverrides?.[optionsOverride]?.container,
 	);
 
-	const configurations = generateConfigurations(
-		seed,
-		runConfig.testConfig?.optionOverrides?.[optionsOverride]?.configurations,
-	);
-	const testDriver: ITestDriver = await createTestDriver(driver, endpoint, seed, runConfig.runId);
+        const configurations = generateConfigurations(
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.configurations);
+        const testDriver: ITestDriver = await createTestDriver(driver, endpoint, seed, runConfig.runId);
+        const baseLogger = await loggerP;
+        const logger = ChildLogger.create(baseLogger, undefined,
+            {
+                all: {
+                    runId: runConfig.runId,
+                    driverType: testDriver.type,
+                    driverEndpointName: testDriver.endpointName,
+                    userIndex: testDriver.userIndex,
+                },
+            });
 
-	// Cycle between creating new factory vs. reusing factory.
-	// Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
-	// At the same time we want to test newly created factory.
-	const iterator = factoryPermutations(
-		() => new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory()),
-	);
+        // Check for InactiveObject or SweepReadyObject logs
+        baseLogger.observer.on("logEvent", (logEvent: ITelemetryBaseEvent) => {
+            if (logEvent.eventName.includes("InactiveObject") || logEvent.eventName.includes("SweepReadyObject")) {
+                testFailed = true;
+                console.error(`xxxxxxxxx ${JSON.stringify(logEvent)}`);
+            }
+        });
 
-	let done = false;
-	// Reset the workload once, on the first iteration
-	let reset = true;
-	while (!done) {
-		let container: IContainer | undefined;
-		try {
-			const nextFactoryPermutation = iterator.next();
-			if (nextFactoryPermutation.done === true) {
-				throw new Error("Factory permutation iterator is expected to cycle forever");
-			}
-			const { documentServiceFactory, headers } = nextFactoryPermutation.value;
+        process.on("unhandledRejection", (reason, promise) => {
+            try {
+                logger.sendErrorEvent({ eventName: "UnhandledPromiseRejection" }, reason);
+            } catch (e) {
+                console.error("Error during logging unhandled promise rejection: ", e);
+            }
+        });
 
 			// Construct the loader
 			const loader = new Loader({
@@ -234,67 +240,70 @@ async function runnerProcess(
 			container.connect();
 			const test = await requestFluidObject<ILoadTest>(container, "/");
 
-			if (enableOpsMetrics) {
-				const testRuntime = await test.getRuntime();
-				metricsCleanup = await setupOpsMetrics(
-					container,
-					runConfig.logger,
-					runConfig.testConfig.progressIntervalMs,
-					testRuntime,
-				);
-			}
+				if (enableOpsMetrics) {
+					const testRuntime = await test.getRuntime();
+					metricsCleanup = await setupOpsMetrics(
+						container,
+						logger,
+						runConfig.testConfig.progressIntervalMs,
+						testRuntime,
+					);
+				}
 
-			// Control fault injection period through config.
-			// If undefined then no fault injection.
-			const faultInjection = runConfig.testConfig.faultInjectionMs;
-			if (faultInjection) {
-				scheduleContainerClose(
-					container,
-					runConfig,
-					faultInjection.min,
-					faultInjection.max,
-				);
-				scheduleFaultInjection(
-					documentServiceFactory,
-					container,
-					runConfig,
-					faultInjection.min,
-					faultInjection.max,
-				);
-			}
-			const offline = runConfig.testConfig.offline;
-			if (offline) {
-				scheduleOffline(
-					documentServiceFactory,
-					container,
-					runConfig,
-					offline.delayMs.min,
-					offline.delayMs.max,
-					offline.durationMs.min,
-					offline.durationMs.max,
-				);
-			}
+				// Control fault injection period through config.
+				// If undefined then no fault injection.
+				const faultInjection = runConfig.testConfig.faultInjectionMs;
+				if (faultInjection) {
+					scheduleContainerClose(
+						container,
+						runConfig,
+						faultInjection.min,
+						faultInjection.max,
+					);
+					scheduleFaultInjection(
+						documentServiceFactory,
+						container,
+						runConfig,
+						faultInjection.min,
+						faultInjection.max,
+					);
+				}
+				const offline = runConfig.testConfig.offline;
+				if (offline) {
+					scheduleOffline(
+						documentServiceFactory,
+						container,
+						runConfig,
+						offline.delayMs.min,
+						offline.delayMs.max,
+						offline.durationMs.min,
+						offline.durationMs.max,
+					);
+				}
 
-			printStatus(runConfig, `running`);
-			done = await test.run(runConfig, reset);
-			reset = false;
-			printStatus(runConfig, done ? `finished` : "closed");
-		} catch (error) {
-			runConfig.logger.sendErrorEvent(
-				{
-					eventName: "RunnerFailed",
-					testHarnessEvent: true,
-				},
-				error,
-			);
-		} finally {
-			if (container?.closed === false) {
-				container?.close();
-			}
-			metricsCleanup();
-		}
-	}
-	return 0;
+                printStatus(runConfig, `running`);
+                done = await test.run(runConfig, reset, logger);
+                reset = false;
+                printStatus(runConfig, done ? `finished` : "closed");
+            } catch (error) {
+                logger.sendErrorEvent({
+                    eventName: "RunnerFailed",
+                    testHarnessEvent: true,
+                }, error);
+            } finally {
+                if (container?.closed === false) {
+                    container?.close();
+                }
+                metricsCleanup();
+                await baseLogger.flush({ url, runId: runConfig.runId });
+            }
+        }
+        return testFailed ? -1 : 0;
+    } catch (e) {
+        printStatus(runConfig, `error: loading test`);
+        console.error(e);
+        return -1;
+    }
 }
 
 function scheduleFaultInjection(

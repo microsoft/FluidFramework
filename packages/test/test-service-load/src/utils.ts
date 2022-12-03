@@ -6,8 +6,8 @@
 import crypto from "crypto";
 import fs from "fs";
 import random from "random-js";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { assert, LazyPromise } from "@fluidframework/common-utils";
+import { IEvent, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { assert, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container, IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -33,6 +33,20 @@ import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
 import { createGCFluidExport } from "./gcDataStores";
 
 const packageName = `${pkgName}@${pkgVersion}`;
+
+export function writeToFile(data: string, relativeDirPath: string, fileName: string) {
+    const outputDir = `${__dirname}/${relativeDirPath}`;
+    if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+    }
+    const filePath = `${outputDir}/${fileName}`
+    console.log(`Writing to file: ${filePath}`);
+    fs.writeFileSync(filePath, data);
+}
+
+interface IObservableLoggerEvents extends IEvent {
+    (event: "logEvent", listener: (logEvent: ITelemetryBaseEvent) => void): void;
+}
 
 class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 	private static readonly loggerP = new LazyPromise<FileLogger>(async () => {
@@ -65,56 +79,50 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 	private readonly schema = new Map<string, number>();
 	private logs: ITelemetryBaseEvent[] = [];
 
-	private constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
-		super(undefined /* namespace */, { all: { testVersion: pkgVersion } });
-	}
+    readonly observer: TypedEventEmitter<IObservableLoggerEvents> = new TypedEventEmitter();
+
+    public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
+        super(undefined /* namespace */, { all: { testVersion: pkgVersion } });
+    }
 
 	async flush(runInfo?: { url: string; runId?: number }): Promise<void> {
 		const baseFlushP = this.baseLogger?.flush();
 
-		if (this.error && runInfo !== undefined) {
-			const logs = this.logs;
-			const outputDir = `${__dirname}/output/${crypto
-				.createHash("md5")
-				.update(runInfo.url)
-				.digest("hex")}`;
-			if (!fs.existsSync(outputDir)) {
-				fs.mkdirSync(outputDir, { recursive: true });
-			}
-			// sort from most common column to least common
-			const schema = [...this.schema].sort((a, b) => b[1] - a[1]).map((v) => v[0]);
-			const data = logs.reduce(
-				(file, event) =>
-					`${file}\n${schema.reduce((line, k) => `${line}${event[k] ?? ""},`, "")}`,
-				schema.join(","),
-			);
-			const filePath = `${outputDir}/${runInfo.runId ?? "orchestrator"}_${Date.now()}.csv`;
-			fs.writeFileSync(filePath, data);
-		}
-		this.schema.clear();
-		this.error = false;
-		this.logs = [];
-		return baseFlushP;
-	}
-	send(event: ITelemetryBaseEvent): void {
-		if (typeof event.testCategoryOverride === "string") {
-			event.category = event.testCategoryOverride;
-		} else if (
-			typeof event.message === "string" &&
-			event.message.includes("FaultInjectionNack")
-		) {
-			event.category = "generic";
-		}
-		this.baseLogger?.send({ ...event, hostName: pkgName });
+        if (this.error && runInfo !== undefined) {
+            const logs = this.logs;
+            // sort from most common column to least common
+            const schema = [...this.schema].sort((a, b) => b[1] - a[1]).map((v) => v[0]);
+            const data = logs.reduce(
+                (file, event) => `${file}\n${schema.reduce((line, k) => `${line}${event[k] ?? ""},`, "")}`,
+                schema.join(","));
 
-		event.Event_Time = Date.now();
-		// keep track of the frequency of every log event, as we'll sort by most common on write
-		Object.keys(event).forEach((k) => this.schema.set(k, (this.schema.get(k) ?? 0) + 1));
-		if (event.category === "error") {
-			this.error = true;
-		}
-		this.logs.push(event);
-	}
+            writeToFile(
+                data,
+                `output/${crypto.createHash("md5").update(runInfo.url).digest("hex")}`,
+                `${runInfo.runId ?? "orchestrator"}_${Date.now()}.csv`);
+        }
+        this.schema.clear();
+        this.error = false;
+        this.logs = [];
+        return baseFlushP;
+    }
+    send(event: ITelemetryBaseEvent): void {
+        if (typeof event.testCategoryOverride === "string") {
+            event.category = event.testCategoryOverride;
+        } else if (typeof event.message === "string" && event.message.includes("FaultInjectionNack")) {
+            event.category = "generic";
+        }
+        this.baseLogger?.send({ ...event, hostName: pkgName });
+
+        event.Event_Time = Date.now();
+        // keep track of the frequency of every log event, as we'll sort by most common on write
+        Object.keys(event).forEach((k) => this.schema.set(k, (this.schema.get(k) ?? 0) + 1));
+        if (event.category === "error") {
+            this.error = true;
+        }
+        this.logs.push(event);
+        this.observer.emit("logEvent", event);
+    }
 }
 
 export const createLogger = FileLogger.createLogger.bind(FileLogger);

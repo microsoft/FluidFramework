@@ -4,10 +4,9 @@
  */
 
 import {
-	CompressionAlgorithms,
-	IContainerRuntimeOptions,
-	IGCRuntimeOptions,
-	ISummaryRuntimeOptions,
+    IContainerRuntimeOptions,
+    IGCRuntimeOptions,
+    ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import {
 	booleanCases,

@@ -153,6 +153,7 @@ jobs:
 
             Pipeline Variables:
               testWorkspace=${{ parameters.testWorkspace }}
+              testPackageDir=${{ variables.testPackageDir }}
               testPackageFilePattern=${{ variables.testPackageFilePattern }}
               feed=${{ variables.feed }}
               testCommand=${{ parameters.testCommand }}
@@ -342,7 +343,7 @@ jobs:
         inputs:
           testResultsFormat: 'JUnit'
           testResultsFiles: '**/*junit-report.xml'
-          searchFolder: ${{ variables.testPackageDir }}/nyc
+          searchFolder: ${{ variables.testPackageDir }}
           mergeTestResults: false
         condition: succeededOrFailed()
 
