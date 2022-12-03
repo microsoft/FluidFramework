@@ -153,7 +153,7 @@ export function clonePositions(
                     parentPositionIndex === undefined ? undefined : outputInto[parentPositionIndex],
                     inner.parentField === dummyRoot ? key : inner.parentField,
                     wasRoot ? index : inner.parentIndex,
-                    inner.indexOfParentField ?? indexOfParentField, // TODO: maybe this is not needed
+                    inner.indexOfParentField ?? indexOfParentField,
                     parentPositionIndex,
                     inner.shape,
                     wasRoot ? copies : inner.topLevelLength,
@@ -187,7 +187,7 @@ export class ChunkShape {
 
     atPosition(index: number): NodePositionInfo {
         assert(index < this.positions.length, "index must not be greater than the number of nodes");
-        return this.positions[index]; // TODO % this.numberOfNodesPerTopLevelNode and fixup returned indexes as needed to reduce size of positions array.
+        return this.positions[index]; // TODO % this.numberOfNodesPerTopLevelNode and fixup returned indexes as needed to reduce size of positions array?
 
         // const topIndex = Math.trunc(index / this.treeShape.positions.length);
         // const indexWithinSubTree = index % this.treeShape.positions.length;
@@ -259,9 +259,13 @@ class NodePositionInfo implements UpPath {
 class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     private positionIndex: number = 0; // When in fields mode, this points to the parent node.
 
+    // Cached constants for faster access
+    private readonly shape: ChunkShape;
+    private readonly positions: readonly NodePositionInfo[];
+
     mode: CursorLocationType = CursorLocationType.Nodes;
 
-    // Valid only in fields mode.
+    // Undefined when not in fields mode.
     private fieldKey?: FieldKey;
 
     // Valid only in fields mode. Can be past end for empty fields.
@@ -271,11 +275,13 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     // TODO: support prefix (path above root, including index offset of chunk in its containing field)
     public constructor(private readonly chunk: UniformChunk) {
         super();
+        this.shape = this.chunk.shape;
+        this.positions = this.shape.positions;
     }
 
     nextField(): boolean {
         this.indexOfField++;
-        const fields = this.chunk.shape.atPosition(this.positionIndex).shape.fieldsArray;
+        const fields = this.nodeInfo(CursorLocationType.Fields).shape.fieldsArray;
         if (this.indexOfField < fields.length) {
             this.fieldKey = fields[this.indexOfField][0];
             return true;
@@ -285,7 +291,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     }
 
     exitField(): void {
-        this.assertFields();
+        assert(this.mode === CursorLocationType.Fields, "exitField when in wrong mode");
         this.fieldKey = undefined;
         this.mode = CursorLocationType.Nodes;
     }
@@ -295,7 +301,6 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     }
 
     getFieldLength(): number {
-        this.assertFields();
         const info = this.nodeInfo(CursorLocationType.Fields);
         const fieldInfo = info.shape.fieldsArray[this.indexOfField];
         if (fieldInfo === undefined) {
@@ -319,8 +324,6 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
         assert(childIndex < f.topLevelLength, "index past end of field");
         this.mode = CursorLocationType.Nodes;
         this.positionIndex += f.offset + childIndex * f.shape.positions.length;
-        assert(this.positionIndex >= 0, "valid positionIndex");
-        // assert(this.positionIndex < this.positions.length, "valid positionIndex");
         assert(this.fieldIndex === childIndex, "should be at selected child");
     }
     getFieldPath(): FieldUpPath {
@@ -352,12 +355,6 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
         const index = offset + info.parentIndex;
         if (index >= 0 && index < info.topLevelLength) {
             this.positionIndex += offset * info.shape.positions.length;
-            assert(this.positionIndex >= 0, "valid positionIndex");
-            // assert(this.positionIndex < this.positions.length, "valid positionIndex");
-            assert(
-                this.fieldIndex === info.parentIndex + offset,
-                "at correct new index within field",
-            );
             return true;
         }
         if (offset === 0) {
@@ -379,17 +376,16 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
         this.mode = CursorLocationType.Fields;
     }
     firstField(): boolean {
-        const info = this.nodeInfo();
-        if (info.shape.fieldsArray.length === 0) {
+        const fieldsArray = this.nodeInfo().shape.fieldsArray;
+        if (fieldsArray.length === 0) {
             return false;
         }
         this.indexOfField = 0;
         this.mode = CursorLocationType.Fields;
-        this.fieldKey = info.shape.fieldsArray[0][0];
+        this.fieldKey = fieldsArray[0][0];
         return true;
     }
     enterField(key: FieldKey): void {
-        this.assertMode(CursorLocationType.Nodes);
         const fieldMap = this.nodeInfo().shape.fields;
         const fieldInfo = fieldMap.get(key);
         this.indexOfField =
@@ -400,17 +396,8 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
         this.mode = CursorLocationType.Fields;
     }
     nodeInfo(requiredMode = CursorLocationType.Nodes): NodePositionInfo {
-        this.assertMode(requiredMode);
-        return this.chunk.shape.atPosition(this.positionIndex);
-    }
-    assertMode(requiredMode: CursorLocationType): void {
         assert(this.mode === requiredMode, "tried to access cursor when in wrong mode");
-    }
-    assertFields(): void {
-        assert(
-            this.mode === CursorLocationType.Fields,
-            "tried to access field when cursor not in fields mode",
-        );
+        return this.positions[this.positionIndex];
     }
     get type(): TreeSchemaIdentifier {
         return this.nodeInfo().shape.type;

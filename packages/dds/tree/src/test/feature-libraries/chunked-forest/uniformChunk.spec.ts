@@ -15,13 +15,19 @@ import {
     // eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk";
 import { testSpecializedCursor, TestTree } from "../../cursorTestSuite";
-import { jsonArray, jsonNull, jsonNumber, jsonObject } from "../../../domains";
+import {
+    cursorToJsonObject,
+    jsonArray,
+    jsonNull,
+    jsonNumber,
+    jsonObject,
+    singleJsonCursor,
+} from "../../../domains";
 import { brand, makeArray } from "../../../util";
 import { EmptyKey, ITreeCursorSynchronous, TreeSchemaIdentifier } from "../../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { sum } from "../../domains/json/benchmarks";
 import {
-    jsonableTreeFromCursor,
     mapTreeFromCursor,
     singleMapTreeCursor,
     singleTextCursor,
@@ -35,7 +41,7 @@ const pointShape = new TreeShape(jsonObject.name, false, [
 ]);
 const emptyShape = new TreeShape(jsonNull.name, false, []);
 
-const sides = 100;
+const sides = 100000;
 const polygon = new TreeShape(jsonArray.name, false, [
     [EmptyKey, pointShape, sides],
 ]).withTopLevelLength(1);
@@ -138,6 +144,7 @@ function validateShape(shape: ChunkShape): void {
                 // TODO: if we keep all the duplicated position info, inline positionIndex into field offsets to save the addition.
                 const offset = v.offset + index * v.shape.positions.length;
                 const element = shape.positions[offset + positionIndex];
+                assert.equal(element.parentIndex, index);
                 assert.equal(element.parentField, k);
                 assert.equal(element.parent, info);
             }
@@ -168,81 +175,6 @@ describe("uniformChunk", () => {
         }
     });
 
-    describe("jsonable bench", () => {
-        for (const { name, data, reference } of testTrees) {
-            let cursor: ITreeCursorSynchronous;
-            benchmark({
-                type: BenchmarkType.Measurement,
-                title: `Sum: '${name}'`,
-                before: () => {
-                    cursor = singleTextCursor(reference[0]);
-                },
-                benchmarkFn: () => {
-                    sum(cursor);
-                },
-            });
-        }
-    });
-
-    describe("mapTree bench", () => {
-        for (const { name, data, reference } of testTrees) {
-            let cursor: ITreeCursorSynchronous;
-            benchmark({
-                type: BenchmarkType.Measurement,
-                title: `Sum: '${name}'`,
-                before: () => {
-                    cursor = singleMapTreeCursor(mapTreeFromCursor(singleTextCursor(reference[0])));
-                },
-                benchmarkFn: () => {
-                    sum(cursor);
-                },
-            });
-        }
-    });
-
-    describe("mapTree bench2", () => {
-        for (const { name, data, reference } of testTrees) {
-            it(`equal: '${name}'`, () => {
-                const cursor1 = singleMapTreeCursor(
-                    mapTreeFromCursor(singleTextCursor(reference[0])),
-                );
-                const cursor2 = singleMapTreeCursor(mapTreeFromCursor(data.cursor()));
-                const t1 = jsonableTreeFromCursor(cursor1);
-                const t2 = jsonableTreeFromCursor(cursor2);
-                assert.deepEqual(t1, reference[0]);
-                assert.deepEqual(t2, reference[0]);
-            });
-
-            let cursor: ITreeCursorSynchronous;
-            benchmark({
-                type: BenchmarkType.Measurement,
-                title: `Sum: '${name}'`,
-                before: () => {
-                    cursor = singleMapTreeCursor(mapTreeFromCursor(data.cursor()));
-                },
-                benchmarkFn: () => {
-                    sum(cursor);
-                },
-            });
-        }
-    });
-
-    describe("uniformChunk bench", () => {
-        for (const { name, data, reference } of testTrees) {
-            let cursor: ITreeCursorSynchronous;
-            benchmark({
-                type: BenchmarkType.Measurement,
-                title: `Sum: '${name}'`,
-                before: () => {
-                    cursor = data.cursor();
-                },
-                benchmarkFn: () => {
-                    sum(cursor);
-                },
-            });
-        }
-    });
-
     testSpecializedCursor<[number, TreeChunk], ITreeCursorSynchronous>({
         cursorName: "uniformChunkCursor",
         builders: {
@@ -262,5 +194,69 @@ describe("uniformChunk", () => {
             return cursor;
         },
         testData,
+    });
+
+    describe("uniformChunk bench", () => {
+        for (const { name, data, reference } of testTrees) {
+            let cursor: ITreeCursorSynchronous;
+            benchmark({
+                type: BenchmarkType.Measurement,
+                title: `Sum: '${name}'`,
+                before: () => {
+                    cursor = data.cursor();
+                },
+                benchmarkFn: () => {
+                    sum(cursor);
+                },
+            });
+        }
+    });
+
+    describe("jsonable bench", () => {
+        for (const { name, data, reference } of testTrees) {
+            let cursor: ITreeCursorSynchronous;
+            benchmark({
+                type: BenchmarkType.Perspective,
+                title: `Sum: '${name}'`,
+                before: () => {
+                    cursor = singleTextCursor(reference[0]);
+                },
+                benchmarkFn: () => {
+                    sum(cursor);
+                },
+            });
+        }
+    });
+
+    describe("mapTree bench", () => {
+        for (const { name, data, reference } of testTrees) {
+            let cursor: ITreeCursorSynchronous;
+            benchmark({
+                type: BenchmarkType.Perspective,
+                title: `Sum: '${name}'`,
+                before: () => {
+                    cursor = singleMapTreeCursor(mapTreeFromCursor(singleTextCursor(reference[0])));
+                },
+                benchmarkFn: () => {
+                    sum(cursor);
+                },
+            });
+        }
+    });
+
+    describe("json bench", () => {
+        for (const { name, data, reference } of testTrees) {
+            let cursor: ITreeCursorSynchronous;
+            benchmark({
+                type: BenchmarkType.Perspective,
+                title: `Sum: '${name}'`,
+                before: () => {
+                    cursor = singleJsonCursor(cursorToJsonObject(singleTextCursor(reference[0])));
+                },
+                benchmarkFn: () => {
+                    sum(cursor);
+                },
+            });
+        }
     });
 });
