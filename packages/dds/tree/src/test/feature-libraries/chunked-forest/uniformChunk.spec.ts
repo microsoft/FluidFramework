@@ -24,20 +24,24 @@ import {
     singleJsonCursor,
 } from "../../../domains";
 import { brand, makeArray } from "../../../util";
-import { EmptyKey, ITreeCursorSynchronous, TreeSchemaIdentifier } from "../../../core";
+import { EmptyKey, FieldKey, ITreeCursorSynchronous, TreeSchemaIdentifier } from "../../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { sum } from "../../domains/json/benchmarks";
 import {
+    jsonableTreeFromCursor,
     mapTreeFromCursor,
     singleMapTreeCursor,
     singleTextCursor,
 } from "../../../feature-libraries";
 
+const xField: FieldKey = brand("x");
+const yField: FieldKey = brand("y");
+
 const numberShape = new TreeShape(jsonNumber.name, true, []);
-const withChildShape = new TreeShape(jsonObject.name, false, [[brand("x"), numberShape, 1]]);
+const withChildShape = new TreeShape(jsonObject.name, false, [[xField, numberShape, 1]]);
 const pointShape = new TreeShape(jsonObject.name, false, [
-    [brand("x"), numberShape, 1],
-    [brand("y"), numberShape, 1],
+    [xField, numberShape, 1],
+    [yField, numberShape, 1],
 ]);
 const emptyShape = new TreeShape(jsonNull.name, false, []);
 
@@ -45,6 +49,26 @@ const sides = 100000;
 const polygon = new TreeShape(jsonArray.name, false, [
     [EmptyKey, pointShape, sides],
 ]).withTopLevelLength(1);
+
+const polygonTree: TestTree<TreeChunk> = {
+    name: "polygon",
+    data: uniformChunk(
+        polygon,
+        makeArray(sides * 2, (index) => index),
+    ),
+    reference: {
+        type: jsonArray.name,
+        fields: {
+            [EmptyKey]: makeArray(sides, (index) => ({
+                type: jsonObject.name,
+                fields: {
+                    x: [{ type: jsonNumber.name, value: index * 2 }],
+                    y: [{ type: jsonNumber.name, value: index * 2 + 1 }],
+                },
+            })),
+        },
+    },
+};
 
 const testTrees = [
     {
@@ -108,25 +132,8 @@ const testTrees = [
         ],
     },
     {
-        name: "polygon",
-        data: uniformChunk(
-            polygon,
-            makeArray(sides * 2, (index) => index),
-        ),
-        reference: [
-            {
-                type: jsonArray.name,
-                fields: {
-                    [EmptyKey]: makeArray(sides, (index) => ({
-                        type: jsonObject.name,
-                        fields: {
-                            x: [{ type: jsonNumber.name, value: index * 2 }],
-                            y: [{ type: jsonNumber.name, value: index * 2 + 1 }],
-                        },
-                    })),
-                },
-            },
-        ],
+        ...polygonTree,
+        reference: [polygonTree.reference],
     },
 ];
 
@@ -166,7 +173,7 @@ const testData: TestTree<[number, TreeChunk]>[] = testTrees.flatMap(({ name, dat
     return out;
 });
 
-describe("uniformChunk", () => {
+describe.only("uniformChunk", () => {
     describe("shapes", () => {
         for (const tree of testTrees) {
             it(`validate shape for ${tree.name}`, () => {
@@ -196,67 +203,64 @@ describe("uniformChunk", () => {
         testData,
     });
 
-    describe("uniformChunk bench", () => {
-        for (const { name, data, reference } of testTrees) {
+    const cursorSources = [
+        { name: "uniformChunk", factory: (data: TreeChunk) => data.cursor() },
+        {
+            name: "jsonable",
+            factory: (data: TreeChunk) => singleTextCursor(jsonableTreeFromCursor(data.cursor())),
+        },
+        {
+            name: "mapTree",
+            factory: (data: TreeChunk) => singleMapTreeCursor(mapTreeFromCursor(data.cursor())),
+        },
+        {
+            name: "json",
+            factory: (data: TreeChunk) => singleJsonCursor(cursorToJsonObject(data.cursor())),
+        },
+    ];
+
+    for (const { name: cursorName, factory } of cursorSources) {
+        describe(`${cursorName} bench`, () => {
             let cursor: ITreeCursorSynchronous;
+            for (const { name, data } of testTrees) {
+                benchmark({
+                    type: BenchmarkType.Measurement,
+                    title: `Sum: '${name}'`,
+                    before: () => {
+                        cursor = factory(data);
+                    },
+                    benchmarkFn: () => {
+                        sum(cursor);
+                    },
+                });
+            }
+
             benchmark({
                 type: BenchmarkType.Measurement,
-                title: `Sum: '${name}'`,
+                title: "Polygon access",
                 before: () => {
-                    cursor = data.cursor();
+                    cursor = polygonTree.data.cursor();
                 },
                 benchmarkFn: () => {
-                    sum(cursor);
+                    let x = 0;
+                    let y = 0;
+                    cursor.enterField(EmptyKey);
+                    for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
+                        cursor.enterField(xField);
+                        cursor.enterNode(0);
+                        x += cursor.value as number;
+                        cursor.exitNode();
+                        cursor.exitField();
+                        cursor.enterField(yField);
+                        cursor.enterNode(0);
+                        y += cursor.value as number;
+                        cursor.exitNode();
+                        cursor.exitField();
+                    }
+                    cursor.exitField();
+                    const _result = x + y;
                 },
             });
-        }
-    });
-
-    describe("jsonable bench", () => {
-        for (const { name, data, reference } of testTrees) {
-            let cursor: ITreeCursorSynchronous;
-            benchmark({
-                type: BenchmarkType.Perspective,
-                title: `Sum: '${name}'`,
-                before: () => {
-                    cursor = singleTextCursor(reference[0]);
-                },
-                benchmarkFn: () => {
-                    sum(cursor);
-                },
-            });
-        }
-    });
-
-    describe("mapTree bench", () => {
-        for (const { name, data, reference } of testTrees) {
-            let cursor: ITreeCursorSynchronous;
-            benchmark({
-                type: BenchmarkType.Perspective,
-                title: `Sum: '${name}'`,
-                before: () => {
-                    cursor = singleMapTreeCursor(mapTreeFromCursor(singleTextCursor(reference[0])));
-                },
-                benchmarkFn: () => {
-                    sum(cursor);
-                },
-            });
-        }
-    });
-
-    describe("json bench", () => {
-        for (const { name, data, reference } of testTrees) {
-            let cursor: ITreeCursorSynchronous;
-            benchmark({
-                type: BenchmarkType.Perspective,
-                title: `Sum: '${name}'`,
-                before: () => {
-                    cursor = singleJsonCursor(cursorToJsonObject(singleTextCursor(reference[0])));
-                },
-                benchmarkFn: () => {
-                    sum(cursor);
-                },
-            });
-        }
-    });
+        });
+    }
 });
