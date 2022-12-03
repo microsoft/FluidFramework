@@ -60,7 +60,6 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     protected initialize(connectMessage: IConnect, timeout: number): Promise<void>;
     get initialMessages(): ISequencedDocumentMessage[];
     get initialSignals(): ISignalMessage[];
-    // (undocumented)
     protected lightOpAcksEnabled: boolean;
     // @deprecated (undocumented)
     protected get logger(): ITelemetryLogger;
