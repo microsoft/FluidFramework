@@ -7,6 +7,8 @@ import {
     IRequest,
     IResponse,
     IFluidRouter,
+    IFluidHandle,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
     IClientDetails,
@@ -463,6 +465,19 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
      * @alpha
      */
     forceReadonly?(readonly: boolean);
+
+    /**
+     * Exposes a handle to the root object / entryPoint of the container.
+     * Use this as the primary way of getting access to the user-defined logic within the container.
+     * If this property is undefined (meaning that exposing the entryPoint hasn't been implemented in a particular
+     * scenario) fall back to the current approach of requesting the root object of the container through the request
+     * pattern.
+     *
+     * @remarks The plan is that eventually IContainer will no longer have a request() method, this property
+     * will become non-optional and return an IFluidHandle (no undefined), and it will become the only way to access
+     * the handle to the entryPoint for the container.
+     */
+    readonly entryPoint?: IFluidHandle<FluidObject>;
 }
 
 /**
