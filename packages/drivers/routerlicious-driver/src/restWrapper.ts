@@ -122,7 +122,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
         };
     }
 
-    public getToken(): ITokenResponse | undefined {
+    public getToken(): ITokenResponse {
         return this.token;
     }
 
@@ -227,7 +227,7 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
         baseurl?: string,
     ): Promise<RouterliciousOrdererRestWrapper> {
         const getAuthorizationHeader: AuthorizationHeaderGetter = (token: ITokenResponse): string => {
-            return `Basic ${token?.jwt}`;
+            return `Basic ${token.jwt}`;
         };
 
         const fetchOrdererToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {

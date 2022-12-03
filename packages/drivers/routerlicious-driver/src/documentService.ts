@@ -192,7 +192,7 @@ export class DocumentService implements api.IDocumentService {
                 await this.refreshDiscovery();
             }
 
-            if (!ordererToken || refreshToken) {
+            if (refreshToken) {
                 ordererToken = await PerformanceEvent.timedExecAsync(
                     this.logger,
                     {
@@ -224,7 +224,7 @@ export class DocumentService implements api.IDocumentService {
                     return R11sDocumentDeltaConnection.create(
                         this.tenantId,
                         this.documentId,
-                        ordererToken?.jwt ?? null,
+                        ordererToken.jwt,
                         io,
                         client,
                         this.deltaStreamUrl,

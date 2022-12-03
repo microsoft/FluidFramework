@@ -31,7 +31,7 @@ describe("RouterliciousDriverRestWrapper", () => {
         };
         return newToken;
     };
-    const getAuthHeader = (token) => `Bearer ${token?.jwt ?? ""}`;
+    const getAuthHeader = (token) => `Bearer ${token.jwt}`;
 
     // Set up mock throttling
     let throttleDurationInMs: number;
