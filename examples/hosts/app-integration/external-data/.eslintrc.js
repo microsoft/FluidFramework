@@ -5,8 +5,10 @@
 
 module.exports = {
     extends: [
-        require.resolve("@fluidframework/eslint-config-fluid/strict"),
-        "prettier",
+        require.resolve(
+            "@fluidframework/eslint-config-fluid/strict",
+            "prettier"
+        ),
     ],
     rules: {
         // TODO: remove once dependency on base config has been updated.
