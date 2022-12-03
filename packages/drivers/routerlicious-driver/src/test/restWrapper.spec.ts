@@ -24,7 +24,7 @@ describe("RouterliciousDriverRestWrapper", () => {
     const token3 = "abc-auth-token-123";
     let tokenQueue: string[] = [];
 
-    const getToken = async (refresh?: boolean): Promise<ITokenResponse | undefined> => {
+    const getToken = async (refresh?: boolean): Promise<ITokenResponse> => {
             // Pop a token off tokenQueue
             const newToken: ITokenResponse = {
             jwt: tokenQueue.shift() ?? "testtoken"
@@ -60,6 +60,7 @@ describe("RouterliciousDriverRestWrapper", () => {
         restWrapper = new RouterliciousRestWrapper(
             new TelemetryUTLogger(),
             rateLimiter,
+            { jwt: "dummytoken" },
             getToken,
             getAuthHeader,
             false,
