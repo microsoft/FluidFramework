@@ -9,17 +9,15 @@ import {
     uniformChunk,
     TreeChunk,
     TreeShape,
+    dummyRoot,
+    ChunkShape,
+    UniformChunk,
     // eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk";
-import { testSpecializedCursor } from "../../cursorTestSuite";
+import { testSpecializedCursor, TestTree } from "../../cursorTestSuite";
 import { jsonArray, jsonNull, jsonNumber, jsonObject } from "../../../domains";
-import { brand } from "../../../util";
-import {
-    EmptyKey,
-    ITreeCursorSynchronous,
-    JsonableTree,
-    TreeSchemaIdentifier,
-} from "../../../core";
+import { brand, makeArray } from "../../../util";
+import { EmptyKey, ITreeCursorSynchronous, TreeSchemaIdentifier } from "../../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { sum } from "../../domains/json/benchmarks";
 import {
@@ -105,52 +103,69 @@ const testTrees = [
     },
     {
         name: "polygon",
-        data: uniformChunk(polygon, new Array(sides * 2).fill(1)),
+        data: uniformChunk(
+            polygon,
+            makeArray(sides * 2, (index) => index),
+        ),
         reference: [
             {
                 type: jsonArray.name,
                 fields: {
-                    [EmptyKey]: new Array(sides).fill({
+                    [EmptyKey]: makeArray(sides, (index) => ({
                         type: jsonObject.name,
                         fields: {
-                            x: [{ type: jsonNumber.name, value: 1 }],
-                            y: [{ type: jsonNumber.name, value: 1 }],
+                            x: [{ type: jsonNumber.name, value: index * 2 }],
+                            y: [{ type: jsonNumber.name, value: index * 2 + 1 }],
                         },
-                    }),
+                    })),
                 },
             },
         ],
     },
 ];
 
-// testing is per node, and our data can have multiple nodes at the root, so split tests as needed:
-const testData: { name: string; data: [number, TreeChunk]; reference: JsonableTree }[] =
-    testTrees.flatMap(({ name, data, reference }) => {
-        const out: { name: string; data: [number, TreeChunk]; reference: JsonableTree }[] = [];
-        for (let index = 0; index < reference.length; index++) {
-            out.push({
-                name: reference.length > 1 ? `${name} part ${index + 1}` : name,
-                data: [index, data],
-                reference: reference[index],
-            });
+// Validate a few aspects of shapes that are easier to verify here than via checking the cursor.
+function validateShape(shape: ChunkShape): void {
+    shape.positions.forEach((info, positionIndex) => {
+        assert.equal(
+            info.parent,
+            info.indexOfParentPosition === undefined
+                ? undefined
+                : shape.positions[info.indexOfParentPosition],
+        );
+        for (const [k, v] of info.shape.fields) {
+            for (let index = 0; index < v.topLevelLength; index++) {
+                // TODO: if we keep all the duplicated position info, inline positionIndex into field offsets to save the addition.
+                const offset = v.offset + index * v.shape.positions.length;
+                const element = shape.positions[offset + positionIndex];
+                assert.equal(element.parentField, k);
+                assert.equal(element.parent, info);
+            }
         }
-        return out;
     });
+}
+
+// testing is per node, and our data can have multiple nodes at the root, so split tests as needed:
+const testData: TestTree<[number, TreeChunk]>[] = testTrees.flatMap(({ name, data, reference }) => {
+    const out: TestTree<[number, TreeChunk]>[] = [];
+    for (let index = 0; index < reference.length; index++) {
+        out.push({
+            name: reference.length > 1 ? `${name} part ${index + 1}` : name,
+            data: [index, data],
+            reference: reference[index],
+            path: { parent: undefined, parentIndex: index, parentField: dummyRoot },
+        });
+    }
+    return out;
+});
 
 describe("uniformChunk", () => {
-    it("shape", () => {
-        assert.equal(withChildShape.positions[1].shape, numberShape);
-        const p = polygon;
-        assert.equal(p.atPosition(0).indexOfParentField, undefined);
-        assert.equal(p.atPosition(0).parentIndex, 0);
-        // assert.equal(p.length, sides * 3 + 1);
-        // Second point node
-        assert.equal(p.atPosition(4).shape, pointShape);
-        assert.equal(p.atPosition(4).parentIndex, 1);
-        assert.equal(p.atPosition(4).shape.positions.length, 3);
-
-        // Seconds x
-        assert.equal(p.atPosition(5).indexOfParentPosition, 4);
+    describe("shapes", () => {
+        for (const tree of testTrees) {
+            it(`validate shape for ${tree.name}`, () => {
+                validateShape((tree.data as UniformChunk).shape);
+            });
+        }
     });
 
     describe("jsonable bench", () => {

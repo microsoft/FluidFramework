@@ -41,7 +41,7 @@ export function uniformChunk(shape: ChunkShape, values: TreeValue[]): TreeChunk 
     return new UniformChunk(shape, values);
 }
 
-class UniformChunk implements ReferenceCounted {
+export class UniformChunk implements ReferenceCounted {
     private refCount: number = 1;
     /**
      * Create a tree chunk with ref count 1.
@@ -78,10 +78,11 @@ class UniformChunk implements ReferenceCounted {
     }
 }
 
-const dummyRoot: GlobalFieldKeySymbol = symbolFromKey(
+export const dummyRoot: GlobalFieldKeySymbol = symbolFromKey(
     brand("a1499167-8421-4639-90a6-4e543b113b06: dummyRoot"),
 );
 
+export type FieldShape = readonly [FieldKey, TreeShape, number];
 export class TreeShape {
     public readonly fields: ReadonlyMap<FieldKey, OffsetShape>;
     public readonly valuesPerTopLevelNode: number;
@@ -92,7 +93,7 @@ export class TreeShape {
     public constructor(
         public readonly type: TreeSchemaIdentifier,
         public readonly hasValue: boolean,
-        public readonly fieldsArray: readonly (readonly [FieldKey, TreeShape, number])[],
+        public readonly fieldsArray: readonly FieldShape[],
     ) {
         const fields: Map<FieldKey, OffsetShape> = new Map();
         let numberOfValues = hasValue ? 1 : 0;
@@ -104,30 +105,8 @@ export class TreeShape {
             assert(!fields.has(k), "no duplicate keys");
             const offset = new OffsetShape(f, length, infos.length, k, fieldIndex);
             fields.set(k, offset);
-            for (let index = 0; index < length; index++) {
-                for (const inner of f.positions) {
-                    infos.push(
-                        new NodePositionInfo(
-                            inner.parent ?? infos[0], // TODO: Incorrect.
-                            inner.parentField === dummyRoot ? k : inner.parentField,
-                            inner.indexOfParentPosition === undefined ? index : inner.parentIndex,
-                            inner.indexOfParentField ?? fieldIndex, // TODO: maybe this is not needed
-
-                            inner.indexOfParentPosition === undefined
-                                ? 0
-                                : inner.indexOfParentPosition +
-                                  index * f.positions.length +
-                                  offset.offset,
-                            inner.shape,
-                            inner.indexOfParentPosition === undefined
-                                ? length
-                                : inner.topLevelLength,
-                            inner.valueOffset + numberOfValues,
-                        ),
-                    );
-                }
-                numberOfValues += f.valuesPerTopLevelNode;
-            }
+            clonePositions(0, [k, f, length], fieldIndex, numberOfValues, infos);
+            numberOfValues += f.valuesPerTopLevelNode * length;
             fieldIndex++;
         }
         this.fields = fields;
@@ -155,6 +134,36 @@ export class TreeShape {
     }
 }
 
+export function clonePositions(
+    indexOfParentInOutput: number | undefined,
+    [key, shape, copies]: FieldShape,
+    indexOfParentField: number,
+    valueOffset: number,
+    outputInto: NodePositionInfo[],
+): void {
+    const offset = outputInto.length;
+    for (let index = 0; index < copies; index++) {
+        for (const inner of shape.positions) {
+            const wasRoot = inner.indexOfParentPosition === undefined;
+            const parentPositionIndex = wasRoot
+                ? indexOfParentInOutput
+                : inner.indexOfParentPosition + index * shape.positions.length + offset;
+            outputInto.push(
+                new NodePositionInfo(
+                    parentPositionIndex === undefined ? undefined : outputInto[parentPositionIndex],
+                    inner.parentField === dummyRoot ? key : inner.parentField,
+                    wasRoot ? index : inner.parentIndex,
+                    inner.indexOfParentField ?? indexOfParentField, // TODO: maybe this is not needed
+                    parentPositionIndex,
+                    inner.shape,
+                    wasRoot ? copies : inner.topLevelLength,
+                    inner.valueOffset + valueOffset + shape.valuesPerTopLevelNode * index,
+                ),
+            );
+        }
+    }
+}
+
 // TODO: consider storing shape information in WASM
 export class ChunkShape {
     public readonly positions: readonly NodePositionInfo[];
@@ -167,26 +176,7 @@ export class ChunkShape {
 
         // TODO: avoid duplication from inner loop
         const positions: NodePositionInfo[] = [];
-        for (let index = 0; index < topLevelLength; index++) {
-            for (const inner of treeShape.positions) {
-                positions.push(
-                    new NodePositionInfo(
-                        inner.parent, // TODO: Incorrect.
-                        inner.parentField,
-                        inner.indexOfParentPosition === undefined ? index : inner.parentIndex,
-                        inner.indexOfParentField,
-                        inner.indexOfParentPosition === undefined
-                            ? undefined
-                            : inner.indexOfParentPosition + index * this.treeShape.positions.length,
-                        inner.shape,
-                        inner.indexOfParentPosition === undefined
-                            ? topLevelLength
-                            : inner.topLevelLength,
-                        inner.valueOffset + index * this.treeShape.valuesPerTopLevelNode,
-                    ),
-                );
-            }
-        }
+        clonePositions(undefined, [dummyRoot, treeShape, topLevelLength], 0, 0, positions);
         this.positions = positions;
     }
 
