@@ -585,7 +585,7 @@
             1
         ],
         "import/no-nodejs-modules": [
-            "warn"
+            "error"
         ],
         "import/no-unassigned-import": [
             "error"

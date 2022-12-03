@@ -324,7 +324,7 @@ module.exports = {
          * By default libraries should not take dependencies on node libraries. This rule can be disabled at the project
          * level for libraries that are intended to be used only in node.
          */
-        "import/no-nodejs-modules": "warn",
+        "import/no-nodejs-modules": "error",
     },
     overrides: [
         {
