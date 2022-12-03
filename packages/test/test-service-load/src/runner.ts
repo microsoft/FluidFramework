@@ -167,8 +167,9 @@ async function runnerProcess(
 
         // Check for InactiveObject or SweepReadyObject logs
         baseLogger.observer.on("logEvent", (logEvent: ITelemetryBaseEvent) => {
-            if (logEvent.eventName.includes("InactiveObject")) {
+            if (logEvent.eventName.includes("InactiveObject") || logEvent.eventName.includes("SweepReadyObject")) {
                 testFailed = true;
+                console.error(`xxxxxxxxx ${JSON.stringify(logEvent)}`);
             }
         });
 
