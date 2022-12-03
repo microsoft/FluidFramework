@@ -316,7 +316,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     }
 
     /**
-     * {@inheritDoc IFluidContainer._getInternalContainer}
+     * {@inheritDoc IFluidContainer.getInternalContainer}
      */
     public getInternalContainer?: () => IContainer = () => {
         return this.container;

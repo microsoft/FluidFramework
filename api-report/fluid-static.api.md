@@ -49,6 +49,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     disconnect(): Promise<void>;
     dispose(): void;
     get disposed(): boolean;
+    getInternalContainer?: () => IContainer;
     get initialObjects(): LoadableObjectRecord;
     get isDirty(): boolean;
 }
@@ -69,6 +70,8 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     disconnect(): void;
     dispose(): void;
     readonly disposed: boolean;
+    // @internal
+    getInternalContainer?: () => IContainer;
     readonly initialObjects: LoadableObjectRecord;
     readonly isDirty: boolean;
 }
