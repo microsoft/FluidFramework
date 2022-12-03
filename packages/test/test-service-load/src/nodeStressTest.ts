@@ -245,7 +245,7 @@ function writeTestResultXmlFile(results: RunnerResult[], durationSec: number) {
         }
         return { testcase: [{ _attr },
             // Failure
-            { failure: "Unexpected GC error log hit! Check pipeline logs to find the error" },
+            { failure: "Test Runner failed! Check pipeline logs to find the error" },
         ] };
     }));
     const suiteAttributes = {
@@ -275,8 +275,7 @@ function setupTelemetry(
     process: child_process.ChildProcess,
     logger: ITelemetryLogger,
     runId: number,
-    username?: string,
-) {
+    username?: string) {
     logger.send({
         category: "metric",
         eventName: "Runner Started",

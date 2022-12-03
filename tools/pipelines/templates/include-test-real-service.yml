@@ -136,7 +136,6 @@ jobs:
             Pipeline Parameters:
               poolBuild=${{ parameters.poolBuild }}
               testPackage=${{ parameters.testPackage }}
-              buildDirectory=${{ parameters.buildDirectory }}
 
             Pipeline Variables:
               testWorkspace=${{ parameters.testWorkspace }}

@@ -78,7 +78,7 @@ export function generateRuntimeOptions(
         loadSequenceNumberVerification: [undefined],
         enableOfflineLoad: [undefined],
         flushMode: [undefined],
-        // REVERT BACK TO USING CompressionAlgorithms.lz4 BEFORE MERGING TO MAIN
+        // REVERT BACK TO USING CompressionAlgorithms.lz4 ENUM BEFORE MERGING TO MAIN
         compressionOptions: [{ minimumBatchSizeInBytes: 500, compressionAlgorithm: "lz4" as any }],
         maxBatchSizeInBytes: [undefined],
     };

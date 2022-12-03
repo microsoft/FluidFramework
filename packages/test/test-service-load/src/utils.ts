@@ -40,13 +40,11 @@ export function writeToFile(data: string, relativeDirPath: string, fileName: str
         fs.mkdirSync(outputDir, { recursive: true });
     }
     const filePath = `${outputDir}/${fileName}`
-    console.log(`~~~~~~~ OUTPUT FILE: ${filePath} ~~~~~~~`);
-    fs.writeFileSync(
-        filePath,
-        data);
+    console.log(`Writing to file: ${filePath}`);
+    fs.writeFileSync(filePath, data);
 }
 
-interface IObserverEvents extends IEvent {
+interface IObservableLoggerEvents extends IEvent {
     (event: "logEvent", listener: (logEvent: ITelemetryBaseEvent) => void): void;
 }
 
@@ -55,7 +53,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     private readonly schema = new Map<string, number>();
     private logs: ITelemetryBaseEvent[] = [];
 
-    readonly observer: TypedEventEmitter<IObserverEvents> = new TypedEventEmitter();
+    readonly observer: TypedEventEmitter<IObservableLoggerEvents> = new TypedEventEmitter();
 
     public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
         super(undefined /* namespace */, { all: { testVersion: pkgVersion } });
@@ -101,20 +99,15 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     }
 }
 
-async function findTestLogger() {
-    if (process.env.FLUID_TEST_LOGGER_PKG_PATH === undefined) {
-        return undefined;
-    }
-
-    await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
-    const logger = getTestLogger?.();
-    assert(logger !== undefined, "Expected getTestLogger to return something");
-    return logger;
-}
-
 export const loggerP = new LazyPromise<FileLogger>(async () => {
-    const testLogger = await findTestLogger();
-    return new FileLogger(testLogger);
+    if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
+        await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+        const logger = getTestLogger?.();
+        assert(logger !== undefined, "Expected getTestLogger to return something");
+        return new FileLogger(logger);
+    } else {
+        return new FileLogger();
+    }
 });
 
 const codeDetails: IFluidCodeDetails = {
