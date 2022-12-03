@@ -7,7 +7,6 @@ import { SharedCell } from "@fluidframework/cell";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { Ink } from "@fluidframework/ink";
@@ -26,7 +25,7 @@ import {
     IFluidDataStoreRegistry,
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { create404Response, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import {
     SharedIntervalCollection,
     SharedString,
@@ -38,12 +37,6 @@ import {
     SparseMatrix,
 } from "@fluid-experimental/sequence-deprecated";
 import { UnknownChannelFactory } from "./unknownChannel";
-
-async function runtimeRequestHandler(request: IRequest, runtime: IContainerRuntime) {
-    return request.url === "/containerRuntime"
-        ? { mimeType: "fluid/object", status: 200, value: runtime }
-        : create404Response(request);
-}
 
 /** Simple runtime factory that creates a container runtime */
 export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
@@ -63,11 +56,12 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
             this.registries,
             buildRuntimeRequestHandler(
                 ...this.requestHandlers,
-                runtimeRequestHandler,
             ),
             this.runtimeOptions,
             undefined, // containerScope
             existing,
+            undefined, // containerRuntimeCtor
+            async (runtime: IContainerRuntime) => runtime
         );
     }
 }
