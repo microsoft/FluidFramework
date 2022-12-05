@@ -259,12 +259,6 @@ const editNodesWithSingleTransaction =
         await provider.ensureSynchronized();
     }
 
-
-
-
-// pulled from packages/runtime/container-runtime/src/containerRuntime.ts
-const defaultMaxBatchSizeInBytes = 950 * 1024;
-
 const childrenFieldKey: FieldKey = brand('children');
 
 const INSERT_BENCHMARK_PERCENTILES = {
