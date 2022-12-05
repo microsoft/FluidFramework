@@ -5,7 +5,6 @@
 ```ts
 
 import { IClient } from '@fluidframework/protocol-definitions';
-import { IFluidClientDebugger } from '@fluid-tools/client-debugger';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { default as React_2 } from 'react';
 
@@ -23,17 +22,6 @@ export interface AudienceMemberViewProps {
 }
 
 // @public
-export function ClientDebugView(props: ClientDebugViewProps): React_2.ReactElement;
-
-// @public
-export const clientDebugViewClassName = "fluid-client-debug-view";
-
-// @public
-export interface ClientDebugViewProps extends HasClientDebugger, HasContainerId {
-    renderOptions?: RenderOptions;
-}
-
-// @public
 export const defaultRenderOptions: Required<RenderOptions>;
 
 // @public
@@ -45,22 +33,6 @@ export function FluidClientDebugger(props: FluidClientDebuggerProps): React_2.Re
 // @public
 export interface FluidClientDebuggerProps {
     renderOptions?: RenderOptions;
-}
-
-// @public
-export function getRenderOptionsWithDefaults(userOptions: RenderOptions | undefined): Required<RenderOptions>;
-
-// @public
-export function getSharedObjectRendererOptionsWithDefaults(userOptions: SharedObjectRenderOptions | undefined): SharedObjectRenderOptions;
-
-// @public
-export interface HasClientDebugger {
-    clientDebugger: IFluidClientDebugger;
-}
-
-// @public
-export interface HasContainerId {
-    containerId: string;
 }
 
 // @public

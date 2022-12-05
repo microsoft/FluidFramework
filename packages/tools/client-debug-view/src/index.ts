@@ -15,20 +15,12 @@
  * @packageDocumentation
  */
 
-export {
-	AudienceMemberViewProps,
-	ClientDebugView,
-	clientDebugViewClassName,
-	ClientDebugViewProps,
-} from "./components";
+export { AudienceMemberViewProps } from "./components";
 
 export { AudienceMember } from "./Audience";
-export { HasClientDebugger, HasContainerId } from "./CommonProps";
 export { FluidClientDebugger, FluidClientDebuggerProps } from "./Debugger";
 export { renderClientDebuggerView } from "./RenderClientDebugger";
 export {
-	getRenderOptionsWithDefaults,
-	getSharedObjectRendererOptionsWithDefaults,
 	defaultRenderOptions,
 	defaultSharedObjectRenderers,
 	RenderChild,
