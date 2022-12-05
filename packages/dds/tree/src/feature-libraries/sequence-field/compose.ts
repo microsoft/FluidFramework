@@ -157,7 +157,6 @@ function composeMarks<TNodeChange>(
                     return {
                         ...newMark,
                         type: "MInsert",
-                        id: baseMark.id,
                         content: baseMark.content[0],
                     };
                 }
@@ -205,7 +204,6 @@ function composeMarks<TNodeChange>(
                 case "Modify": {
                     const modRevive: ModifyReattach<TNodeChange> = {
                         type: "MRevive",
-                        id: baseMark.id,
                         detachedBy: baseMark.detachedBy,
                         detachIndex: baseMark.detachIndex,
                         changes: newMark.changes,

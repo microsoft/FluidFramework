@@ -9,7 +9,7 @@ import { SequenceField as SF } from "../../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 
-const dummyMark: SF.Detach = { type: "Delete", id: 0, count: 1 };
+const dummyMark: SF.Detach = { type: "Delete", count: 1 };
 const type: TreeSchemaIdentifier = brand("Node");
 const detachedBy: RevisionTag = brand(42);
 
@@ -46,14 +46,13 @@ describe("SequenceField - MarkListFactory", () => {
 
     it("Can merge consecutive inserts", () => {
         const factory = new SF.MarkListFactory();
-        const insert1: SF.Insert = { type: "Insert", id: 0, content: [{ type, value: 1 }] };
-        const insert2: SF.Insert = { type: "Insert", id: 0, content: [{ type, value: 2 }] };
+        const insert1: SF.Insert = { type: "Insert", content: [{ type, value: 1 }] };
+        const insert2: SF.Insert = { type: "Insert", content: [{ type, value: 2 }] };
         factory.pushContent(insert1);
         factory.pushContent(insert2);
         assert.deepStrictEqual(factory.list, [
             {
                 type: "Insert",
-                id: 0,
                 content: [
                     { type, value: 1 },
                     { type, value: 2 },
@@ -73,11 +72,11 @@ describe("SequenceField - MarkListFactory", () => {
 
     it("Can merge consecutive deletes", () => {
         const factory = new SF.MarkListFactory();
-        const delete1: SF.Detach = { type: "Delete", id: 0, count: 1 };
-        const delete2: SF.Detach = { type: "Delete", id: 0, count: 1 };
+        const delete1: SF.Detach = { type: "Delete", count: 1 };
+        const delete2: SF.Detach = { type: "Delete", count: 1 };
         factory.pushContent(delete1);
         factory.pushContent(delete2);
-        assert.deepStrictEqual(factory.list, [{ type: "Delete", id: 0, count: 2 }]);
+        assert.deepStrictEqual(factory.list, [{ type: "Delete", count: 2 }]);
     });
 
     it("Can merge consecutive move-outs", () => {
@@ -93,14 +92,12 @@ describe("SequenceField - MarkListFactory", () => {
         const factory = new SF.MarkListFactory();
         const revive1: SF.Reattach = {
             type: "Revive",
-            id: 0,
             detachedBy,
             detachIndex: 0,
             count: 1,
         };
         const revive2: SF.Reattach = {
             type: "Revive",
-            id: 0,
             detachedBy,
             detachIndex: 1,
             count: 1,
@@ -109,7 +106,6 @@ describe("SequenceField - MarkListFactory", () => {
         factory.pushContent(revive2);
         const expected: SF.Reattach = {
             type: "Revive",
-            id: 0,
             detachedBy,
             detachIndex: 0,
             count: 2,
@@ -121,14 +117,12 @@ describe("SequenceField - MarkListFactory", () => {
         const factory = new SF.MarkListFactory();
         const revive1: SF.Reattach = {
             type: "Revive",
-            id: 0,
             detachedBy,
             detachIndex: 0,
             count: 1,
         };
         const revive2: SF.Reattach = {
             type: "Revive",
-            id: 0,
             detachedBy,
             detachIndex: 2,
             count: 1,
@@ -142,14 +136,12 @@ describe("SequenceField - MarkListFactory", () => {
         const factory = new SF.MarkListFactory();
         const return1: SF.Reattach = {
             type: "Return",
-            id: 0,
             detachedBy,
             detachIndex: 0,
             count: 1,
         };
         const return2: SF.Reattach = {
             type: "Return",
-            id: 0,
             detachedBy,
             detachIndex: 1,
             count: 1,
@@ -158,7 +150,6 @@ describe("SequenceField - MarkListFactory", () => {
         factory.pushContent(return2);
         const expected: SF.Reattach = {
             type: "Return",
-            id: 0,
             detachedBy,
             detachIndex: 0,
             count: 2,
