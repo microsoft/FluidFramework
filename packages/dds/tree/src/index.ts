@@ -77,6 +77,8 @@ export {
     namedTreeSchema,
     TreeSchemaBuilder,
     fieldSchema,
+    RepairDataStore,
+    ReadonlyRepairDataStore,
 } from "./core";
 
 export {
@@ -113,9 +115,12 @@ export {
 
 export {
     buildForest,
+    ChangesetLocalId,
     emptyField,
+    IdAllocator,
     neverTree,
     ModularChangeFamily,
+    ModularChangeset,
     ModularEditBuilder,
     FieldChangeHandler,
     FieldEditor,
@@ -127,6 +132,7 @@ export {
     FieldChangeset,
     FieldChange,
     ToDelta,
+    NodeReviver,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,

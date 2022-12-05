@@ -36,14 +36,14 @@ For more about containers see [Containers](./containers.md).
 
 ### Shared objects
 
-A *shared object* is any object type that supports collaboration (simultaneous editing). Fluid Framework contains two
-types of shared objects:
+A *shared object* is any object type that supports collaboration (simultaneous editing). 
+The fundamental type of shared object that is provided by Fluid Framework is called a **Distributed Data Structure (DDS)**. A DDS holds shared data that the collaborators are working with.
 
-- **Distributed data structures (DDSes):** A DDS holds shared data that the collaborators are working with.
-- **Data Objects:** A Data Object contains one or more DDSes that are organized to enable a particular collaborative use case.
-
-DDSes are low-level data structures, while Data Objects are composed of DDSes and other shared objects. Data Objects are
-used to organize DDSes into semantically meaningful groupings for your scenario, as well as providing an API surface to your app's data.
+Fluid Framework supports a second type of shared object called **Data Object**. 
+*This type of object is in beta and should not be used in a production application.* 
+A Data Object contains one or more DDSes that are organized to enable a particular collaborative use case. 
+DDSes are low-level data structures, while Data Objects are composed of DDSes and other shared objects. 
+Data Objects are used to organize DDSes into semantically meaningful groupings for your scenario, as well as providing an API surface to your app's data.
 
 For more information about these types and the differences between them, see [Data modeling]({{< relref "data-modeling.md" >}}) and [Introducing distributed data structures]({{< relref "dds.md" >}}).
 

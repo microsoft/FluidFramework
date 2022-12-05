@@ -62,6 +62,9 @@ export {
     setGenericTreeField,
     rootFieldKeySymbol,
     rootField,
+    DeltaVisitor,
+    SparseNode,
+    getDescendant,
 } from "../tree";
 
 export {
@@ -118,6 +121,8 @@ export {
     RevisionTag,
     TaggedChange,
     ChangesetFromChangeRebaser,
+    makeAnonChange,
+    tagChange,
 } from "../rebase";
 
 export { ICheckout, TransactionResult } from "../checkout";
@@ -146,5 +151,8 @@ export {
     EditManager,
     MutableSummaryData,
     ReadonlySummaryData,
+    SeqNumber,
     SessionId,
 } from "../edit-manager";
+
+export { RepairDataStore, ReadonlyRepairDataStore } from "../repair";

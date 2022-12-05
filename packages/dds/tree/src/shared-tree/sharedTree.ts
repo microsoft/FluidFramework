@@ -31,11 +31,9 @@ import {
     defaultSchemaPolicy,
     EditableTreeContext,
     ForestIndex,
-    ObjectForest,
     SchemaIndex,
     DefaultChangeFamily,
     defaultChangeFamily,
-    FieldChangeMap,
     DefaultEditBuilder,
     IDefaultEditBuilder,
     UnwrappedEditableField,
@@ -44,6 +42,7 @@ import {
     DefaultChangeset,
     EditManagerIndex,
     runSynchronousTransaction,
+    buildForest,
 } from "../feature-libraries";
 
 /**
@@ -100,7 +99,7 @@ export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObje
  * TODO: expose or implement Checkout.
  */
 class SharedTree
-    extends SharedTreeCore<FieldChangeMap, DefaultChangeFamily>
+    extends SharedTreeCore<DefaultChangeset, DefaultChangeFamily>
     implements ISharedTree
 {
     public readonly context: EditableTreeContext;
@@ -120,7 +119,7 @@ class SharedTree
     ) {
         const anchors = new AnchorSet();
         const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-        const forest = new ObjectForest(schema, anchors);
+        const forest = buildForest(schema, anchors);
         const editManager: EditManager<DefaultChangeset, DefaultChangeFamily> = new EditManager(
             defaultChangeFamily,
             anchors,

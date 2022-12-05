@@ -26,19 +26,14 @@ import {
     getWithRetryForTokenRefresh,
     getWithRetryForTokenRefreshRepeat,
     IOdspResponse,
+    measure,
+    measureP,
 } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser";
 import { currentReadVersion, ISnapshotContentsWithProps, parseCompactSnapshotResponse } from "./compactSnapshotParser";
 import { EpochTracker } from "./epochTracker";
 import { pkgVersion } from "./packageVersion";
-
-async function measure<T>(callback: () => T | Promise<T>): Promise<[T, number]> {
-    const start = performance.now();
-    const result = await callback();
-    const time = performance.now() - start;
-    return [result, time];
-}
 
 /**
  * Enum to support different types of snapshot formats.
@@ -238,7 +233,7 @@ async function fetchLatestSnapshotCore(
                     );
                 }
 
-                const [response, fetchTime] = await measure(async () => snapshotDownloader(
+                const [response, fetchTime] = await measureP(async () => snapshotDownloader(
                     odspResolvedUrl,
                     storageToken,
                     snapshotOptions,
@@ -275,35 +270,43 @@ async function fetchLatestSnapshotCore(
                     switch (contentTypeToRead) {
                         case "application/json": {
                             let text: string;
-                            [text, receiveContentTime] = await measure(async () => odspResponse.content.text());
+                            [text, receiveContentTime] = await measureP(async () => odspResponse.content.text());
                             propsToLog.bodySize = text.length;
                             let content: IOdspSnapshot;
-                            [content, parseTime] = await measure( () => JSON.parse(text) as IOdspSnapshot);
+                            [content, parseTime] = measure( () => JSON.parse(text) as IOdspSnapshot);
                             validateBlobsAndTrees(content);
                             const snapshotContents: ISnapshotContents =
                                 convertOdspSnapshotToSnapshotTreeAndBlobs(content);
-                            parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
+                            parsedSnapshotContents = {
+                                ...odspResponse,
+                                content: {
+                                    ...snapshotContents,
+                                    telemetryProps: {},
+                                },
+                            };
                             break;
                         }
                         case "application/ms-fluid": {
                             let content: ArrayBuffer;
                             [content, receiveContentTime] =
-                                await measure(async () => odspResponse.content.arrayBuffer());
+                                await measureP(async () => odspResponse.content.arrayBuffer());
                             propsToLog.bodySize = content.byteLength;
                             let snapshotContents: ISnapshotContentsWithProps;
-                            [snapshotContents, parseTime] = await measure(() => parseCompactSnapshotResponse(
+                            [snapshotContents, parseTime] = measure(() => parseCompactSnapshotResponse(
                                 new Uint8Array(content),
                                 logger));
                             if (snapshotContents.snapshotTree.trees === undefined ||
-                                snapshotContents.snapshotTree.blobs === undefined) {
-                                    throw new NonRetryableError(
-                                        "Returned odsp snapshot is malformed. No trees or blobs!",
-                                        DriverErrorType.incorrectServerResponse,
-                                        propsToLog,
-                                    );
-                                }
-                            const slowTreeParseCodePaths = snapshotContents.slowTreeStructureCount ?? 0;
-                            const slowBlobParseCodePaths = snapshotContents.slowBlobStructureCount ?? 0;
+                                    snapshotContents.snapshotTree.blobs === undefined) {
+                                throw new NonRetryableError(
+                                    "Returned odsp snapshot is malformed. No trees or blobs!",
+                                    DriverErrorType.incorrectServerResponse,
+                                    propsToLog,
+                                );
+                            }
+
+                            const props = snapshotContents.telemetryProps;
+                            const slowTreeParseCodePaths = props.slowTreeStructureCount ?? 0;
+                            const slowBlobParseCodePaths = props.slowBlobStructureCount ?? 0;
                             if (slowTreeParseCodePaths > 10 || slowBlobParseCodePaths > 10) {
                                 logger.sendErrorEvent({
                                     eventName: "SlowSnapshotParseCodePaths",
@@ -426,8 +429,6 @@ async function fetchLatestSnapshotCore(
                     encodedBlobsSize,
                     sequenceNumber,
                     ops: snapshot.ops?.length ?? 0,
-                    slowTreeStructureCount: snapshot.slowTreeStructureCount ?? 0,
-                    slowBlobStructureCount: snapshot.slowBlobStructureCount ?? 0,
                     userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
                     headers: Object.keys(response.requestHeaders).length !== 0 ? true : undefined,
                     // Interval between the first fetch until the last byte of the last redirect.
@@ -468,6 +469,10 @@ async function fetchLatestSnapshotCore(
                     sltelemetry: odspResponse.headers.get("x-fluid-sltelemetry"),
                     // All other props
                     ...propsToLog,
+                    // Various perf counters and measures collected by binary parsing code:
+                    // slowTreeStructureCount, slowBlobStructureCount, durationStructure, durationStrings,
+                    // durationSnapshotTree, durationBlobs, etc.
+                    ...parsedSnapshotContents.content.telemetryProps,
                 });
                 return snapshot;
             },
