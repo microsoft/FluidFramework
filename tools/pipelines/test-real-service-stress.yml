@@ -12,7 +12,7 @@ schedules:
   displayName: Garbage Collection Daily Test Run
   branches:
     include:
-    - test/gc-stress
+    - gc/gc-stress
   always: true
 
 resources:
@@ -25,7 +25,7 @@ resources:
       - main
       - next
       - lts
-      - test/gc-stress
+      - gc/gc-stress
 
 variables:
 - group: prague-key-vault
