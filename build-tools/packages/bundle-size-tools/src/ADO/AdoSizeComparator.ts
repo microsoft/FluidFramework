@@ -159,7 +159,7 @@ export class ADOSizeComparator {
                 return undefined;
             });
 
-            console.log(`Baseline Zip: ${JSON.stringify(baselineZip)}`);
+            console.log(`Baseline Zip === undefined: ${baselineZip === undefined}`);
 
             // Successful baseline build does not have the needed build artifacts
             if (baselineZip === undefined) {
