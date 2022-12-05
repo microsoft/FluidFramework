@@ -63,7 +63,7 @@ export interface IExternalDataSourceEvents extends IEvent {
  * on the server-side bot approach.  But using localStorage is probably good enough for the broadcast signal portion.
  */
 export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEvents> {
-    constructor() {
+    public constructor() {
         super();
         if (window.localStorage.getItem(localStorageKey) === null) {
             this.debugResetData();
