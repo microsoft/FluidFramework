@@ -154,11 +154,13 @@ import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import {
     GarbageCollector,
     GCNodeType,
-    gcTreeKey,
     IGarbageCollectionRuntime,
     IGarbageCollector,
     IGCStats,
 } from "./garbageCollection";
+import {
+    gcTreeKey,
+} from "./garbageCollectionConstants";
 import {
     channelToDataStore,
     IDataStoreAliasMessage,
@@ -277,6 +279,17 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
      * For example: (multiplier) * (number of non-runtime ops) = weighted number of non-runtime ops
      */
     nonRuntimeOpWeight: number;
+
+    /**
+     * Number of ops since last summary needed before a non-runtime op can trigger running summary heuristics.
+     *
+     * Note: Any runtime ops sent before the threshold is reached will trigger heuristics normally.
+     * This threshold ONLY applies to non-runtime ops triggering summaries.
+     *
+     * For example: Say the threshold is 20. Sending 19 non-runtime ops will not trigger any heuristic checks.
+     * Sending the 20th non-runtime op will trigger the heuristic checks for summarizing.
+     */
+    nonRuntimeHeuristicThreshold?: number;
 }
 
 export interface ISummaryConfigurationDisableSummarizer {
@@ -316,6 +329,8 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     nonRuntimeOpWeight: 0.1,
 
     runtimeOpWeight: 1.0,
+
+    nonRuntimeHeuristicThreshold: 20,
 };
 
 export interface IGCRuntimeOptions {
@@ -648,6 +663,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param requestHandler - Request handlers for the container runtime
      * @param runtimeOptions - Additional options to be passed to the runtime
      * @param existing - (optional) When loading from an existing snapshot. Precedes context.existing if provided
+     * @param containerRuntimeCtor - (optional) Constructor to use to create the ContainerRuntime instance. This
+     * allows mixin classes to leverage this method to define their own async initializer.
      */
     public static async load(
         context: IContainerContext,
@@ -656,6 +673,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         runtimeOptions: IContainerRuntimeOptions = {},
         containerScope: FluidObject = context.scope,
         existing?: boolean,
+        containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime
     ): Promise<ContainerRuntime> {
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
@@ -674,8 +692,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             loadSequenceNumberVerification = "close",
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
-            compressionOptions = { minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-                                   compressionAlgorithm: CompressionAlgorithms.lz4 },
+            compressionOptions = {
+                minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+                compressionAlgorithm: CompressionAlgorithms.lz4
+            },
             maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
         } = runtimeOptions;
 
@@ -739,7 +759,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
-        const runtime = new ContainerRuntime(
+        const runtime = new containerRuntimeCtor(
             context,
             registry,
             metadata,
@@ -986,7 +1006,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private nextSummaryNumber: number;
 
-    private constructor(
+    /**
+     * @internal
+     */
+    protected constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
         metadata: IContainerRuntimeMetadata | undefined,
@@ -1488,7 +1511,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
     }
 
-    private addContainerStateToSummary(
+    protected addContainerStateToSummary(
         summaryTree: ISummaryTreeWithStats,
         fullTree: boolean,
         trackState: boolean,
@@ -2728,7 +2751,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Please note that this does not change file format, so it can be disabled in the future if this
             // optimization no longer makes sense (for example, batch compression may make it less appealing).
             if (this.currentlyBatching() && type === ContainerMessageType.Attach &&
-                this.mc.config.getBoolean("Fluid.ContainerRuntime.enableAttachOpReorder") === true) {
+                this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true) {
                 if (!this.pendingAttachBatch.push(message)) {
                     // BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
                     // when queue is not empty.
@@ -2745,28 +2768,27 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                             });
                     }
                 }
-            } else {
-                if (!this.pendingBatch.push(message)) {
-                    throw new GenericError(
-                        "BatchTooLarge",
+            } else if (!this.pendingBatch.push(message)) {
+                throw new GenericError(
+                    "BatchTooLarge",
                         /* error */ undefined,
-                        {
-                            opSize: (message.contents?.length) ?? 0,
-                            count: this.pendingBatch.length,
-                            limit: this.pendingBatch.options.hardLimit,
-                        });
-                }
-                if (!this.currentlyBatching()) {
-                    this.flush();
-                } else if (!this.flushMicroTaskExists) {
-                    this.flushMicroTaskExists = true;
-                    // Queue a microtask to detect the end of the turn and force a flush.
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    Promise.resolve().then(() => {
-                        this.flushMicroTaskExists = false;
-                        this.flush();
+                    {
+                        opSize: (message.contents?.length) ?? 0,
+                        count: this.pendingBatch.length,
+                        limit: this.pendingBatch.options.hardLimit,
                     });
-                }
+            }
+
+            if (!this.currentlyBatching()) {
+                this.flush();
+            } else if (!this.flushMicroTaskExists) {
+                this.flushMicroTaskExists = true;
+                // Queue a microtask to detect the end of the turn and force a flush.
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                Promise.resolve().then(() => {
+                    this.flushMicroTaskExists = false;
+                    this.flush();
+                });
             }
         } catch (error) {
             this.closeFn(error as GenericError);
@@ -2895,12 +2917,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             const latestSnapshotRefSeq = await seqFromTree(fetchResult.snapshotTree, readAndParseBlob);
             summaryLogger.sendTelemetryEvent(
-            {
-                eventName: "LatestSummaryRetrieved",
-                ackHandle,
-                lastSequenceNumber: latestSnapshotRefSeq,
-                targetSequenceNumber: summaryRefSeq,
-            });
+                {
+                    eventName: "LatestSummaryRetrieved",
+                    ackHandle,
+                    lastSequenceNumber: latestSnapshotRefSeq,
+                    targetSequenceNumber: summaryRefSeq,
+                });
 
             // In case we had to retrieve the latest snapshot and it is different than summaryRefSeq,
             // wait for the delta manager to catch up before refreshing the latest Summary.

@@ -50,6 +50,7 @@ export {
     NodeData,
     rootFieldKeySymbol,
     rootField,
+    isLocalKey,
 } from "./types";
 export { DeltaVisitor, visitDelta } from "./visitDelta";
 

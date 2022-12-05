@@ -19,8 +19,8 @@
 <!-- n0 -->
 <g id="node1" class="node">
 <title>n0</title>
-<polygon fill="#ffffff" stroke="#000000" points="1065.0996,-1548 1011.0996,-1548 1011.0996,-1512 1065.0996,-1512 1065.0996,-1548"/>
-<text text-anchor="middle" x="1038.0996" y="-1525.8" font-family="Times New Roman" font-size="14.00" fill="#000000">Init</text>
+<polygon fill="#104e8b" stroke="#000000" points="1065.0996,-1548 1011.0996,-1548 1011.0996,-1512 1065.0996,-1512 1065.0996,-1548"/>
+<text text-anchor="middle" x="1038.0996" y="-1525.8" font-family="Times New Roman" font-size="14.00" fill="#ffffff">Init</text>
 </g>
 <!-- n1 -->
 <g id="node2" class="node">
@@ -38,8 +38,8 @@
 <!-- n9 -->
 <g id="node10" class="node">
 <title>n9</title>
-<polygon fill="#ddddff" stroke="#000000" points="1364.0996,-612 1310.0996,-612 1310.0996,-576 1364.0996,-576 1364.0996,-612"/>
-<text text-anchor="middle" x="1337.0996" y="-589.8" font-family="Times New Roman" font-size="14.00" fill="#000000">Failed</text>
+<polygon fill="#dc143c" stroke="#000000" points="1364.0996,-612 1310.0996,-612 1310.0996,-576 1364.0996,-576 1364.0996,-612"/>
+<text text-anchor="middle" x="1337.0996" y="-589.8" font-family="Times New Roman" font-size="14.00" fill="#ffffff">Failed</text>
 </g>
 <!-- n0&#45;&gt;n9 -->
 <g id="edge2" class="edge">
@@ -255,8 +255,8 @@
 <!-- n14 -->
 <g id="node15" class="node">
 <title>n14</title>
-<polygon fill="#ddddff" stroke="#000000" points="584.6726,-900 439.5266,-900 439.5266,-864 584.6726,-864 584.6726,-900"/>
-<text text-anchor="middle" x="512.0996" y="-877.8" font-family="Times New Roman" font-size="14.00" fill="#000000">PromptToReleaseDeps</text>
+<polygon fill="#dc143c" stroke="#000000" points="584.6726,-900 439.5266,-900 439.5266,-864 584.6726,-864 584.6726,-900"/>
+<text text-anchor="middle" x="512.0996" y="-877.8" font-family="Times New Roman" font-size="14.00" fill="#ffffff">PromptToReleaseDeps</text>
 </g>
 <!-- n10&#45;&gt;n14 -->
 <g id="edge21" class="edge">
@@ -268,8 +268,8 @@
 <!-- n12 -->
 <g id="node13" class="node">
 <title>n12</title>
-<polygon fill="#ddddff" stroke="#000000" points="790.2621,-828 671.9371,-828 671.9371,-792 790.2621,-792 790.2621,-828"/>
-<text text-anchor="middle" x="731.0996" y="-805.8" font-family="Times New Roman" font-size="14.00" fill="#000000">PromptToPRDeps</text>
+<polygon fill="#dc143c" stroke="#000000" points="790.2621,-828 671.9371,-828 671.9371,-792 790.2621,-792 790.2621,-828"/>
+<text text-anchor="middle" x="731.0996" y="-805.8" font-family="Times New Roman" font-size="14.00" fill="#ffffff">PromptToPRDeps</text>
 </g>
 <!-- n11&#45;&gt;n12 -->
 <g id="edge22" class="edge">
@@ -281,8 +281,8 @@
 <!-- n18 -->
 <g id="node19" class="node">
 <title>n18</title>
-<polygon fill="#ddddff" stroke="#000000" points="654.0421,-828 506.1571,-828 506.1571,-792 654.0421,-792 654.0421,-828"/>
-<text text-anchor="middle" x="580.0996" y="-805.8" font-family="Times New Roman" font-size="14.00" fill="#000000">PromptToCommitDeps</text>
+<polygon fill="#dc143c" stroke="#000000" points="654.0421,-828 506.1571,-828 506.1571,-792 654.0421,-792 654.0421,-828"/>
+<text text-anchor="middle" x="580.0996" y="-805.8" font-family="Times New Roman" font-size="14.00" fill="#ffffff">PromptToCommitDeps</text>
 </g>
 <!-- n11&#45;&gt;n18 -->
 <g id="edge23" class="edge">
@@ -314,8 +314,8 @@
 <!-- n16 -->
 <g id="node17" class="node">
 <title>n16</title>
-<polygon fill="#ddddff" stroke="#000000" points="454.0194,-828 250.1798,-828 250.1798,-792 454.0194,-792 454.0194,-828"/>
-<text text-anchor="middle" x="352.0996" y="-805.8" font-family="Times New Roman" font-size="14.00" fill="#000000">PromptToPRReleasedDepsBump</text>
+<polygon fill="#dc143c" stroke="#000000" points="454.0194,-828 250.1798,-828 250.1798,-792 454.0194,-792 454.0194,-828"/>
+<text text-anchor="middle" x="352.0996" y="-805.8" font-family="Times New Roman" font-size="14.00" fill="#ffffff">PromptToPRReleasedDepsBump</text>
 </g>
 <!-- n15&#45;&gt;n16 -->
 <g id="edge26" class="edge">
@@ -327,8 +327,8 @@
 <!-- n17 -->
 <g id="node18" class="node">
 <title>n17</title>
-<polygon fill="#ddddff" stroke="#000000" points="232.2989,-828 -.0997,-828 -.0997,-792 232.2989,-792 232.2989,-828"/>
-<text text-anchor="middle" x="116.0996" y="-805.8" font-family="Times New Roman" font-size="14.00" fill="#000000">PromptToCommitReleasedDepsBump</text>
+<polygon fill="#dc143c" stroke="#000000" points="232.2989,-828 -.0997,-828 -.0997,-792 232.2989,-792 232.2989,-828"/>
+<text text-anchor="middle" x="116.0996" y="-805.8" font-family="Times New Roman" font-size="14.00" fill="#ffffff">PromptToCommitReleasedDepsBump</text>
 </g>
 <!-- n15&#45;&gt;n17 -->
 <g id="edge27" class="edge">
@@ -359,8 +359,8 @@
 <!-- n21 -->
 <g id="node22" class="node">
 <title>n21</title>
-<polygon fill="#ddddff" stroke="#000000" points="633.2231,-36 508.9761,-36 508.9761,0 633.2231,0 633.2231,-36"/>
-<text text-anchor="middle" x="571.0996" y="-13.8" font-family="Times New Roman" font-size="14.00" fill="#000000">PromptToPRBump</text>
+<polygon fill="#dc143c" stroke="#000000" points="633.2231,-36 508.9761,-36 508.9761,0 633.2231,0 633.2231,-36"/>
+<text text-anchor="middle" x="571.0996" y="-13.8" font-family="Times New Roman" font-size="14.00" fill="#ffffff">PromptToPRBump</text>
 </g>
 <!-- n20&#45;&gt;n21 -->
 <g id="edge29" class="edge">
@@ -372,8 +372,8 @@
 <!-- n22 -->
 <g id="node23" class="node">
 <title>n22</title>
-<polygon fill="#ddddff" stroke="#000000" points="804.5028,-36 651.6964,-36 651.6964,0 804.5028,0 804.5028,-36"/>
-<text text-anchor="middle" x="728.0996" y="-13.8" font-family="Times New Roman" font-size="14.00" fill="#000000">PromptToCommitBump</text>
+<polygon fill="#dc143c" stroke="#000000" points="804.5028,-36 651.6964,-36 651.6964,0 804.5028,0 804.5028,-36"/>
+<text text-anchor="middle" x="728.0996" y="-13.8" font-family="Times New Roman" font-size="14.00" fill="#ffffff">PromptToCommitBump</text>
 </g>
 <!-- n20&#45;&gt;n22 -->
 <g id="edge30" class="edge">
@@ -451,8 +451,8 @@
 <!-- n31 -->
 <g id="node32" class="node">
 <title>n31</title>
-<polygon fill="#ddddff" stroke="#000000" points="1178.4072,-252 1061.792,-252 1061.792,-216 1178.4072,-216 1178.4072,-252"/>
-<text text-anchor="middle" x="1120.0996" y="-229.8" font-family="Times New Roman" font-size="14.00" fill="#000000">PromptToRelease</text>
+<polygon fill="#dc143c" stroke="#000000" points="1178.4072,-252 1061.792,-252 1061.792,-216 1178.4072,-216 1178.4072,-252"/>
+<text text-anchor="middle" x="1120.0996" y="-229.8" font-family="Times New Roman" font-size="14.00" fill="#ffffff">PromptToRelease</text>
 </g>
 <!-- n26&#45;&gt;n31 -->
 <g id="edge37" class="edge">
@@ -497,8 +497,8 @@
 <!-- n32 -->
 <g id="node33" class="node">
 <title>n32</title>
-<polygon fill="#ddddff" stroke="#000000" points="1113.528,-36 958.6712,-36 958.6712,0 1113.528,0 1113.528,-36"/>
-<text text-anchor="middle" x="1036.0996" y="-13.8" font-family="Times New Roman" font-size="14.00" fill="#000000">PromptToRunTypeTests</text>
+<polygon fill="#dc143c" stroke="#000000" points="1113.528,-36 958.6712,-36 958.6712,0 1113.528,0 1113.528,-36"/>
+<text text-anchor="middle" x="1036.0996" y="-13.8" font-family="Times New Roman" font-size="14.00" fill="#ffffff">PromptToRunTypeTests</text>
 </g>
 <!-- n28&#45;&gt;n32 -->
 <g id="edge41" class="edge">
@@ -710,8 +710,8 @@
 <!-- n43 -->
 <g id="node44" class="node">
 <title>n43</title>
-<polygon fill="#ddddff" stroke="#000000" points="763.865,-324 570.3342,-324 570.3342,-288 763.865,-288 763.865,-324"/>
-<text text-anchor="middle" x="667.0996" y="-301.8" font-family="Times New Roman" font-size="14.00" fill="#000000">PromptToCreateReleaseBranch</text>
+<polygon fill="#dc143c" stroke="#000000" points="763.865,-324 570.3342,-324 570.3342,-288 763.865,-288 763.865,-324"/>
+<text text-anchor="middle" x="667.0996" y="-301.8" font-family="Times New Roman" font-size="14.00" fill="#ffffff">PromptToCreateReleaseBranch</text>
 </g>
 <!-- n42&#45;&gt;n43 -->
 <g id="edge62" class="edge">
@@ -823,8 +823,8 @@
 <!-- n50 -->
 <g id="node51" class="node">
 <title>n50</title>
-<polygon fill="#ddddff" stroke="#000000" points="1291.8348,-612 1142.3644,-612 1142.3644,-576 1291.8348,-576 1291.8348,-612"/>
-<text text-anchor="middle" x="1217.0996" y="-589.8" font-family="Times New Roman" font-size="14.00" fill="#000000">PromptToIntegrateNext</text>
+<polygon fill="#dc143c" stroke="#000000" points="1291.8348,-612 1142.3644,-612 1142.3644,-576 1291.8348,-576 1291.8348,-612"/>
+<text text-anchor="middle" x="1217.0996" y="-589.8" font-family="Times New Roman" font-size="14.00" fill="#ffffff">PromptToIntegrateNext</text>
 </g>
 <!-- n49&#45;&gt;n50 -->
 <g id="edge72" class="edge">
