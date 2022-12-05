@@ -39,6 +39,7 @@ export class LocalOdspDeltaStorageService implements IDocumentDeltaStorageServic
         }
         this.snapshotOps = this.snapshotOps.filter((op) => to !== undefined && op.sequenceNumber >= to);
 
+        queue.pushValue(messages);
         queue.pushDone();
         return queue;
     }
