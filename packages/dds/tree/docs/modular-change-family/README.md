@@ -8,7 +8,7 @@ A `ModularChangeFamily` instance is parameterized with a set of `FieldKind` impl
 
 The purpose of `ModularChangeFamily` is twofold:
 
-1. Encapsulate the data and logic associated with the tree-ness of documents so that it can be used no matter what kind of field is present in the document.
+1. Encapsulates the logic for handling changes to nodes.
 2. Allow collaborative editing of documents with fields of different kinds.
 
 ## Revision Info
@@ -21,7 +21,7 @@ Some `FieldKind` implementations need to know which revision a given change is a
 First, it's helpful to consider how revision info is maintained in changeset structures.
 Here "at rest" is in opposition to "during rebase/invert/compose".
 
-`ModularChangeFamily` maintain revision info such that for each portion of the changeset that is associated with a specific `RevisionTag`,
+`ModularChangeFamily` maintains revision info such that for each portion of the changeset that is associated with a specific `RevisionTag`,
 `ModularChangeFamily` is able to recover the `RevisionTag` for that portion.
 The only exception is the case where changes for a single field are contributed by multiple revisions:
 the `ModularChangeFamily` keeps track of the revision info associated with the changes made to the individual subtrees rooted in that field,
@@ -102,7 +102,7 @@ This is accomplished in the same way as it is for the `invert` implementation.
 
 In the `compose` case, `ModularChangeFamily` does plumb revision info through for all changes.
 This creates a complication when the `FieldKind`'s `compose` implementation calls `NodeChangeComposer`, and `ModularChangeFamily` needs to look up the revision info for the field changes that contain a given `NodeChangeset` passed to `NodeChangeComposer`.
-The complication stems from the fact that `ModularChangeFamily` has no way of determining how of the `NodeChangeset`s passed to `NodeChangeComposer` correspond to the field changesets it had passed to the `FieldKind`'s `rebase` implementation.
+The complication stems from the fact that `ModularChangeFamily` has no way of determining how the `NodeChangeset`s passed to `NodeChangeComposer` correspond to the field changesets it had passed to the `FieldKind`'s `rebase` implementation.
 For example, if `ModularChangeFamily` calls the `FieldKind`'s `compose` implementation and passes it changesets associated with revisions foo, bar, and baz,
 and the `FieldKind`'s `compose` implementation then invokes the `NodeChangeComposer` with `NodeChangeset`s from the two of the changesets it was given,
 then there's no way for the `ModularChangeFamily` to know whether these two `NodeChangeset`s came from foo and bar, foo and baz, or bar and baz respectively.
