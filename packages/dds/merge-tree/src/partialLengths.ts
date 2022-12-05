@@ -154,6 +154,8 @@ export interface PartialSequenceLength {
      *     whose length totalled 10
      */
     overlapRemoveClients?: RedBlackTree<number, IOverlapClient>;
+
+    overlapObliterateClients?: RedBlackTree<number, IOverlapClient>;
 }
 
 interface UnsequencedPartialLengthInfo {
@@ -373,7 +375,7 @@ export class PartialSequenceLengths {
                 const removalInfo = toRemovalInfo(segment);
                 const moveInfo = toMoveInfo(segment);
                 if (seqLTE(removalInfo?.removedSeq, collabWindow.minSeq)
-                || seqLTE(moveInfo?.movedSeq, collabWindow.minSeq)) {
+                    || seqLTE(moveInfo?.movedSeq, collabWindow.minSeq)) {
                     combinedPartialLengths.minLength -= segment.cachedLength;
                 } else if (removalInfo !== undefined || moveInfo !== undefined) {
                     PartialSequenceLengths.insertSegment(
@@ -394,6 +396,7 @@ export class PartialSequenceLengths {
         for (const partial of seqPartials.items) {
             partial.len = prevLen + partial.seglen;
             prevLen = partial.len;
+            // two guys obliterated it, but only the first one gets it added to client seq number
             combinedPartialLengths.addClientSeqNumberFromPartial(partial);
         }
         prevLen = 0;
@@ -439,6 +442,26 @@ export class PartialSequenceLengths {
         }
     }
 
+    private static accumulateMoveClientOverlap(
+        partialLength: PartialSequenceLength,
+        overlapMoveClientIds: number[],
+        seglen: number,
+    ) {
+        if (partialLength.overlapObliterateClients) {
+            for (const clientId of overlapMoveClientIds) {
+                const overlapClientNode = partialLength.overlapObliterateClients.get(clientId);
+                if (!overlapClientNode) {
+                    partialLength.overlapObliterateClients.put(clientId, { clientId, seglen });
+                } else {
+                    overlapClientNode.data.seglen += seglen;
+                }
+            }
+        } else {
+            partialLength.overlapObliterateClients =
+                PartialSequenceLengths.getOverlapClients(overlapMoveClientIds, seglen);
+        }
+    }
+
     /**
      * Inserts length information about the insertion of `segment` into `combinedPartialLengths.partialLengths`.
      * Does not update the clientSeqNumbers field to account for this segment.
@@ -465,6 +488,7 @@ export class PartialSequenceLengths {
         let segmentLen = segment.cachedLength;
         let clientId = segment.clientId;
         let removeClientOverlap: number[] | undefined;
+        let moveClientOverlap: number[] | undefined;
         let remoteObliteratedLen: number | undefined;
 
         if (removalInfo && moveInfo) {
@@ -486,6 +510,8 @@ export class PartialSequenceLengths {
 
                 seqOrLocalSeq = moveInfo.movedSeq;
                 segmentLen = -segmentLen;
+                const hasOverlap = moveInfo.movedClientIds.length > 1;
+                moveClientOverlap = hasOverlap ? moveInfo.movedClientIds : undefined;
             } else {
                 seqOrLocalSeq = removalInfo.removedSeq;
                 segmentLen = -segmentLen;
@@ -535,9 +561,8 @@ export class PartialSequenceLengths {
                 remoteObliteratedLen = 0;
             }
 
-            // TODO: overlap?
-            // const hasOverlap = removalInfo.removedClientIds.length > 1;
-            // removeClientOverlap = hasOverlap ? removalInfo.removedClientIds : undefined;
+            const hasOverlap = moveInfo.movedClientIds.length > 1;
+            moveClientOverlap = hasOverlap ? moveInfo.movedClientIds : undefined;
         }
 
         const partials = isLocal
@@ -565,6 +590,12 @@ export class PartialSequenceLengths {
                     removeClientOverlap,
                     segmentLen);
             }
+            if (moveClientOverlap) {
+                PartialSequenceLengths.accumulateMoveClientOverlap(
+                    firstGte,
+                    moveClientOverlap,
+                    segmentLen);
+            }
         } else {
             partialLengthEntry = {
                 seq: seqOrLocalSeq,
@@ -575,11 +606,15 @@ export class PartialSequenceLengths {
                 overlapRemoveClients: removeClientOverlap
                     ? PartialSequenceLengths.getOverlapClients(removeClientOverlap, segmentLen)
                     : undefined,
+                overlapObliterateClients: moveClientOverlap
+                    ? PartialSequenceLengths.getOverlapClients(moveClientOverlap, segmentLen)
+                    : undefined,
             };
 
             partials.addOrUpdate(partialLengthEntry);
         }
 
+        // todo: hmmm
         const { unsequencedRecords } = combinedPartialLengths;
         if (unsequencedRecords && removeClientOverlap && segment.localRemovedSeq !== undefined) {
             const localSeq = segment.localRemovedSeq;
@@ -687,14 +722,14 @@ export class PartialSequenceLengths {
         */
         public minSeq: number,
         computeLocalPartials: boolean) {
-            if (computeLocalPartials) {
-                this.unsequencedRecords = {
-                    partialLengths: new PartialSequenceLengthsSet(),
-                    overlappingRemoves: [],
-                    cachedOverlappingByRefSeq: new Map(),
-                };
-            }
+        if (computeLocalPartials) {
+            this.unsequencedRecords = {
+                partialLengths: new PartialSequenceLengthsSet(),
+                overlappingRemoves: [],
+                cachedOverlappingByRefSeq: new Map(),
+            };
         }
+    }
 
     // Assume: seq is latest sequence number; no structural change to sub-tree, but a segment
     // with sequence number seq has been added within the sub-tree (and `update` has been called
@@ -745,10 +780,10 @@ export class PartialSequenceLengths {
                         segment.clientId !== clientId
                         && obliterateRefSeq !== undefined
                         && segment.seq !== undefined
-                        && obliterateRefSeq < segment.seq
-                        ) {
-                            remoteObliteratedLen += segment.cachedLength;
-                      }
+                        && (obliterateRefSeq < segment.seq || segment.seq === UnassignedSequenceNumber)
+                    ) {
+                        remoteObliteratedLen += segment.cachedLength;
+                    }
                 }
                 segCount++;
             }
@@ -918,6 +953,15 @@ export class PartialSequenceLengths {
                 return true;
             });
         }
+        if (partialLength.overlapObliterateClients) {
+            partialLength.overlapObliterateClients.map((oc: Property<number, IOverlapClient>) => {
+                // Original client entry was handled above
+                if (partialLength.clientId !== oc.data.clientId) {
+                    this.addClientSeqNumber(oc.data.clientId, partialLength.seq, oc.data.seglen);
+                }
+                return true;
+            });
+        }
     }
 
     private cliLatestLEQ(clientId: number, refSeq: number): PartialSequenceLength | undefined {
@@ -977,6 +1021,7 @@ function verifyPartialLengths(
             }
         }
 
+        // todo: probably need to check not remove and not obliterate
         if (partialLength.overlapRemoveClients) {
             // Only the flat partialLengths can have overlapRemoveClients, the per client view shouldn't
             assert(!clientPartials, 0x058 /* "Both overlapRemoveClients and clientPartials are set!" */);
@@ -1050,6 +1095,23 @@ export function combineOverlapClients(a: PartialSequenceLength, b: PartialSequen
     } else {
         a.overlapRemoveClients = cloneOverlapRemoveClients(b.overlapRemoveClients);
     }
+
+    const overlapObliterateClientsA = a.overlapObliterateClients;
+    if (overlapObliterateClientsA) {
+        if (b.overlapObliterateClients) {
+            b.overlapObliterateClients.map((bProp: Property<number, IOverlapClient>) => {
+                const aProp = overlapObliterateClientsA.get(bProp.key);
+                if (aProp) {
+                    aProp.data.seglen += bProp.data.seglen;
+                } else {
+                    overlapObliterateClientsA.put(bProp.data.clientId, { ...bProp.data });
+                }
+                return true;
+            });
+        }
+    } else {
+        a.overlapObliterateClients = cloneOverlapRemoveClients(b.overlapObliterateClients);
+    }
 }
 
 /**
@@ -1074,6 +1136,7 @@ function mergePartialLengths(
         mergedLengths.addOrUpdate({
             ...partialLength,
             overlapRemoveClients: cloneOverlapRemoveClients(partialLength.overlapRemoveClients),
+            overlapObliterateClients: cloneOverlapRemoveClients(partialLength.overlapObliterateClients),
         });
     }
     return mergedLengths;
