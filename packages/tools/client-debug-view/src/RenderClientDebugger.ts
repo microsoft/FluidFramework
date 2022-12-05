@@ -34,7 +34,7 @@ export async function renderClientDebuggerView(
 			});
 		} catch (error) {
 			console.error(`Could not open the client debugger view due to an error: ${error}.`);
-			return false;
+			resolve(false);
 		}
 	});
 }
