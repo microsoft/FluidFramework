@@ -299,10 +299,12 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
         private innerCursor?: CursorWithNode<MapTree>,
     ) {
         super();
-        this.state =
-            innerCursor === undefined
-                ? ITreeSubscriptionCursorState.Cleared
-                : ITreeSubscriptionCursorState.Current;
+        if (innerCursor === undefined) {
+            this.state = ITreeSubscriptionCursorState.Cleared;
+        } else {
+            this.state = ITreeSubscriptionCursorState.Current;
+            this.forest.currentCursors.add(this);
+        }
     }
 
     buildFieldAnchor(): FieldAnchor {
