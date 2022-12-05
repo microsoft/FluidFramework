@@ -51,8 +51,8 @@ export function sumDirect(jsonObj: Jsonable): number {
 }
 
 /**
- * Benchmarking "consumer" that caculates two averages of two values, it takes a callback which enables this benchmark
- * to be used with any shape of tree since the callback defines the tree nagivation.
+ * Benchmarking "consumer" that calculates two averages of two values, it takes a callback which enables this benchmark
+ * to be used with any shape of tree since the callback defines the tree navigation.
  * @param cursor - a Shared Tree cursor
  * @param dataConsumer - Function that should use the given cursor to retrieve data and call calculate().
  * @returns a set of two average values.
