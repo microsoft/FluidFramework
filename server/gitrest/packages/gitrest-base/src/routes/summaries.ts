@@ -116,6 +116,7 @@ async function createSummary(
     repoManagerParams: IRepoManagerParams,
     externalWriterConfig?: IExternalWriterConfig,
     persistLatestFullSummary = false,
+    enableLowIoWrite: "initial" | false = false
 ): Promise<IWriteSummaryResponse | IWholeFlatSummary> {
     const lumberjackProperties = {
         ...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
@@ -131,7 +132,7 @@ async function createSummary(
 
     Lumberjack.info("Creating summary", lumberjackProperties);
 
-    const { isNew, writeSummaryResponse } = await wholeSummaryManager.writeSummary(payload);
+    const { isNew, writeSummaryResponse } = await wholeSummaryManager.writeSummary(payload, { enableLowIoWrite });
 
     // Waiting to pre-compute and persist latest summary would slow down document creation,
     // so skip this step if it is a new document.
@@ -231,6 +232,7 @@ export function create(
 ): Router {
     const router: Router = Router();
     const persistLatestFullSummary: boolean = store.get("git:persistLatestFullSummary") ?? false;
+    const enableLowIoWrite: "initial" | false = store.get("git:enableLowIoWrite") ?? false;
     const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
 
     /**
@@ -284,7 +286,9 @@ export function create(
                     wholeSummaryPayload,
                     repoManagerParams,
                     getExternalWriterParams(request.query?.config as string | undefined),
-                    persistLatestFullSummary);
+                    persistLatestFullSummary,
+                    enableLowIoWrite,
+                );
             }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response, undefined, undefined, 201);
     });

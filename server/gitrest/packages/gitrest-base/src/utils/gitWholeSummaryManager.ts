@@ -64,15 +64,15 @@ interface ISummaryWriteOptions {
      * format can be very slow due to I/O overhead. Enabling low I/O summary writing moves the majority
      * of storage read/writes into memory and stores the resulting summary tree as a single blob in storage.
      * 
-     * true: All summary writes will use low I/O mode
+     * true (Not currently supported): All summary writes will use low I/O mode
      * false (default): No summary writes will use low I/O mode
      * "initial": First summary write for a document will use low I/O mode
      */
-    enableLowIoWrite: "initial" | boolean;
+    enableLowIoWrite: "initial" | false;
 }
 
 const DefaultSummaryWriteOptions: ISummaryWriteOptions = {
-    enableLowIoWrite: true,
+    enableLowIoWrite: false,
 };
 
 function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry): SummaryObject {
@@ -174,68 +174,6 @@ function convertFullGitTreeToFullSummaryTree(
         treeEntries: wholeFlatSummaryTreeEntries,
         blobs: wholeFlatSummaryBlobs,
     };
-}
-function convertFullSummaryToWholeSummaryEntries(fullSummaryTree: IFullSummaryTree): WholeSummaryTreeEntry[] {
-    const fullSummaryBlobMap = new Map<string, IWholeFlatSummaryBlob>();
-    fullSummaryTree.blobs.forEach((fullSummaryBlob) => {
-        fullSummaryBlobMap.set(fullSummaryBlob.id, fullSummaryBlob);
-    });
-
-    // Inspired by `buildHeirarchy` from services-client
-    const lookup: { [path: string]: IWholeSummaryTreeValueEntry & { value: IWholeSummaryTree; }; } = {};
-    const rootPath = ""; // This would normally be parentHandle, but only important when there are handles
-    const root: IWholeSummaryTreeValueEntry & { value: IWholeSummaryTree; } = {
-        type: "tree",
-        path: rootPath,
-        value: {
-            type: "tree",
-            entries: [],
-        },
-    };
-    lookup[rootPath] = root;
-    for (const entry of fullSummaryTree.treeEntries) {
-        const entryPath = entry.path;
-        const lastIndex = entryPath.lastIndexOf("/");
-        const entryPathDir = entryPath.slice(0, Math.max(0, lastIndex));
-        const entryPathBase = entryPath.slice(lastIndex + 1);
-
-        // The flat output is breadth-first so we can assume we see tree nodes prior to their contents
-        const node = lookup[entryPathDir];
-        if (!node.value.entries) {
-            node.value.entries = [];
-        }
-        // Add in either the blob or tree
-        if (entry.type === "tree") {
-            const newTree: IWholeSummaryTreeValueEntry & { value: IWholeSummaryTree; } = {
-                type: "tree",
-                path: entryPathBase,
-                value: {
-                    type: "tree",
-                    entries: [],
-                },
-            };
-            node.value.entries.push(newTree);
-            lookup[entryPath] = newTree;
-        } else if (entry.type === "blob") {
-            const fullSummaryBlob = fullSummaryBlobMap.get(entry.id);
-            if (!fullSummaryBlob) {
-                throw new Error(`Could not find blob ${entry.id} in full summary`);
-            }
-            const newBlob: IWholeSummaryTreeValueEntry & { value: IWholeSummaryBlob; } = {
-                type: "blob",
-                path: entryPathBase,
-                value: {
-                    type: "blob",
-                    content: fullSummaryBlob.content,
-                    encoding: fullSummaryBlob.encoding,
-                },
-            };
-            node.value.entries.push(newBlob);
-        } else {
-            throw new Error(`Unknown entry type!!`);
-        }
-    }
-    return root.value.entries ?? [];
 }
 
 export const latestSummarySha = "latest";
@@ -350,7 +288,7 @@ export class GitWholeSummaryManager {
         };
         try {
             if (isChannelSummary(payload)) {
-                const summaryTreeHandle = await this.writeChannelSummary(payload, writeOptions);
+                const summaryTreeHandle = await this.writeChannelSummary(payload);
                 writeSummaryMetric.success("GitWholeSummaryManager succeeded in writing channel summary");
                 return {
                     isNew: false,
@@ -381,16 +319,9 @@ export class GitWholeSummaryManager {
 
     private async writeChannelSummary(
         payload: IWholeSummaryPayload,
-        options: ISummaryWriteOptions,
     ): Promise<string> {
-        // const useLowIoWrite = options.enableLowIoWrite === true;
-        // const existingRef: IRef | undefined = useLowIoWrite
-        //     ? await this.getDocRef()
-        //     : undefined;
         return this.writeSummaryTree(
             payload.entries,
-            // existingRef,
-            // useLowIoWrite,
         );
     }
 
@@ -401,11 +332,10 @@ export class GitWholeSummaryManager {
         const existingRef = await this.getDocRef();
 
         const isNewDocument = !existingRef && payload.sequenceNumber === 0;
-        const useLowIoWrite = options.enableLowIoWrite === true || (isNewDocument && options.enableLowIoWrite === "initial");
+        const useLowIoWrite = isNewDocument && options.enableLowIoWrite === "initial";
 
         const treeHandle = await this.writeSummaryTree(
             payload.entries,
-            existingRef,
             useLowIoWrite,
         );
 
@@ -456,7 +386,6 @@ export class GitWholeSummaryManager {
 
     private async writeSummaryTree(
         wholeSummaryTreeEntries: WholeSummaryTreeEntry[],
-        existingRef?: IRef,
         useLowIoWrite: boolean = false,
     ): Promise<string> {
         if (!useLowIoWrite) {
@@ -465,7 +394,6 @@ export class GitWholeSummaryManager {
                 this.repoManager,
             );
         }
-
 
         Lumberjack.info("Low-IO mode: Initializing In-memory Filesystem");
         const inMemoryFsManagerFactory = new MemFsManagerFactory();
@@ -489,91 +417,13 @@ export class GitWholeSummaryManager {
                 },
             }
         );
-        if (existingRef) {
-            // Update in-memory repo manager with previous summary for handle references.
-            Lumberjack.info("Low-IO mode: Writing previous summary to memory");
-            const previousSummary = await this.readSummary(existingRef.object.sha);
-            const fullSummaryPayload = convertFullSummaryToWholeSummaryEntries({
-                treeEntries: previousSummary.trees[0].entries,
-                blobs: previousSummary.blobs ?? [],
-            });
-            const previousSummaryMemoryHandle = await this.writeSummaryTreeCore(
-                fullSummaryPayload,
-                inMemoryRepoManager,
-            );
-            const previousSummaryMemoryGitTree = await this.repoManager.getTree(
-                previousSummaryMemoryHandle,
-                true /* recursive */
-            );
-            const previousSummaryMemoryFullGitTree: IFullGitTree = containsFullGitTree(previousSummaryMemoryGitTree)
-                ? (await parseGitTreeContainingFullGitTree(previousSummaryMemoryGitTree, this.repoManager))
-                : { tree: previousSummaryMemoryGitTree, blobs: {} };
-            for (const treeEntry of previousSummaryMemoryFullGitTree.tree.tree) {
-                this.entryHandleToObjectShaCache.set(`${existingRef.object.sha}/${treeEntry.path}`, treeEntry.sha);
-            }
-        }
         Lumberjack.info("Low-IO mode: Writing summary to memory");
         const inMemorySummaryTreeHandle = await this.writeSummaryTreeCore(
             wholeSummaryTreeEntries,
             inMemoryRepoManager,
         );
         Lumberjack.info("Low-IO mode: Reading summary from memory");
-        const gitTree = await inMemoryRepoManager
-            .getTree(inMemorySummaryTreeHandle, true /* recursive */)
-            .catch(async (error) => {
-                if (error.code === "NotFoundError" && typeof error.data.what === "string") {
-                    Lumberjack.info("Encountered NotFoundError when reading git tree. Attempting recovery.");
-                    // It is likely that this is caused by the previous Channel summary tree not
-                    // being available in the in-memory filesystem. Attempt to retrieve it, update the local FS, then
-                    // try again.
-                    try {
-                        Lumberjack.info(`Reading missing tree element: ${error.data.what}`);
-                        const missingTreeElement = await this.repoManager.getTree(
-                            error.data.what,
-                            true, /* recursive */
-                        );
-                        Lumberjack.info(`Building full tree from missing tree element`, { missingTreeElement });
-                        const fullMissingGitTree: IFullGitTree = /* containsFullGitTree(missingTreeElement)
-                            ? await parseGitTreeContainingFullGitTree(missingTreeElement, this.repoManager)
-                            : */
-                            await buildFullGitTreeFromGitTree(
-                                missingTreeElement,
-                                this.repoManager,
-                            );
-
-                        Lumberjack.info(`Converting fullGitTree to fullSummaryTree`, { fullMissingGitTree });
-                        const fullMissingSummaryTree = convertFullGitTreeToFullSummaryTree(
-                            fullMissingGitTree,
-                        );
-                        const wholeMissingSummaryTreeEntries = convertFullSummaryToWholeSummaryEntries(
-                            fullMissingSummaryTree,
-                        );
-                        Lumberjack.info(`Writing summary tree to memory`, { wholeMissingSummaryTreeEntries });
-                        const missingMemoryTreeHandle = await this.writeSummaryTreeCore(
-                            wholeMissingSummaryTreeEntries,
-                            inMemoryRepoManager,
-                        );
-                        Lumberjack.info(`DEBUG: retrieving new full tree from memory`);
-                        const debuggingWrittenElement = await inMemoryRepoManager.getTree(
-                            missingMemoryTreeHandle,
-                            true, /* recursive */
-                        );
-                        Lumberjack.info(`DEBUG: building new full tree from memory`, { debuggingWrittenElement });
-                        const debuggingFullGitTree: IFullGitTree = containsFullGitTree(debuggingWrittenElement)
-                            ? await parseGitTreeContainingFullGitTree(debuggingWrittenElement, inMemoryRepoManager)
-                            : await buildFullGitTreeFromGitTree(
-                                debuggingWrittenElement,
-                                inMemoryRepoManager,
-                            );
-                        Lumberjack.info(`DEBUG: retrieved full tree from memory`, debuggingFullGitTree);
-                        Lumberjack.info(`Wrote tree ${missingMemoryTreeHandle}. Retrying reading tree`);
-                        return inMemoryRepoManager.getTree(inMemorySummaryTreeHandle, true /* recursive */);
-                    } catch (e) {
-                        Lumberjack.error("Failed to recover from missing git object", undefined, e);
-                    }
-                }
-                throw error;
-            });
+        const gitTree = await inMemoryRepoManager.getTree(inMemorySummaryTreeHandle, true /* recursive */);
         const fullGitTree = await buildFullGitTreeFromGitTree(
             gitTree,
             inMemoryRepoManager,
@@ -689,25 +539,12 @@ export class GitWholeSummaryManager {
         const gitTree: IFullGitTree = containsFullGitTree(parentTree)
             ? (await parseGitTreeContainingFullGitTree(parentTree, this.repoManager))
             : { tree: parentTree, blobs: {} };
-        const DEBUGMAP = {};
         for (const treeEntry of gitTree.tree.tree) {
-            DEBUGMAP[`${parentHandle}/${treeEntry.path}`] = treeEntry.sha;
             this.entryHandleToObjectShaCache.set(`${parentHandle}/${treeEntry.path}`, treeEntry.sha);
         }
         const sha = this.entryHandleToObjectShaCache.get(entry.id);
         if (!sha) {
-            Lumberjack.info(`DEBUG: ${JSON.stringify(DEBUGMAP)}`, { entry, parentTree });
             throw new NetworkError(404, `Summary tree handle object not found: id: ${entry.id}, path: ${entry.path}`);
-        }
-        if (repoManager !== this.repoManager) {
-            Lumberjack.info("Low-IO mode: Updating in-memory FS with parent object");
-            // Update the in-memory repoManager so that it has access to the blobs being referenced
-            const fullGitTree = Object.values(gitTree.blobs).length === 0
-                ? await buildFullGitTreeFromGitTree(gitTree.tree, this.repoManager)
-                : gitTree;
-            const fullSummaryTree = convertFullGitTreeToFullSummaryTree(fullGitTree);
-            const wholeSummaryTreeEntries = convertFullSummaryToWholeSummaryEntries(fullSummaryTree);
-            await this.writeSummaryTreeCore(wholeSummaryTreeEntries, repoManager);
         }
         return sha;
     }
