@@ -89,6 +89,9 @@ export interface ChangeRebaser<TChangeset> {
 // @public (undocumented)
 type Changeset<TNodeChange = NodeChangeType> = MarkList_2<TNodeChange>;
 
+// @public (undocumented)
+export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
+
 // @public
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 

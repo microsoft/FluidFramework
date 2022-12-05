@@ -11,11 +11,11 @@ Generate a report from input bundle stats collected through the collect bundleSt
 
 ```
 USAGE
-  $ flub run bundleStats [-v] [--dirname <value>]
+  $ flub run bundleStats [-v] [--dangerfile <value>]
 
 FLAGS
-  -v, --verbose      Verbose logging.
-  --dirname=<value>  [default: current directory] Directory containing bundle stats input
+  -v, --verbose         Verbose logging.
+  --dangerfile=<value>  Path to dangerfile
 
 DESCRIPTION
   Generate a report from input bundle stats collected through the collect bundleStats command.
