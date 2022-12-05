@@ -16,6 +16,7 @@ import {
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import { ReadOnlyInfo } from "@fluidframework/container-definitions";
 import { TaskManagerFactory } from "./taskManagerFactory";
 import { ITaskManager, ITaskManagerEvents } from "./interfaces";
 
@@ -207,6 +208,13 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     /**
+     * Returns a ReadOnlyInfo object to determine current read/write permissions.
+     */
+    private get readOnlyInfo(): ReadOnlyInfo {
+        return this.runtime.deltaManager.readOnlyInfo;
+    }
+
+    /**
      * Constructs a new task manager. If the object is non-local an id and service interfaces will
      * be provided
      *
@@ -370,6 +378,13 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             return true;
         }
 
+        if (this.readOnlyInfo.readonly === true) {
+            const error = this.readOnlyInfo.permissions === true ?
+                new Error(`Attempted to volunteer with read-only permissions: ${taskId}`) :
+                new Error(`Attempted to volunteer in read-only state: ${taskId}`);
+            throw error;
+        }
+
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenario
             assert(this.clientId !== undefined, "clientId should not be undefined");
@@ -450,6 +465,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     public subscribeToTask(taskId: string) {
         if (this.subscribed(taskId)) {
             return;
+        }
+
+        if (this.readOnlyInfo.readonly === true && this.readOnlyInfo.permissions === true) {
+            throw new Error(`Attempted to subscribe with read-only permissions: ${taskId}`);
         }
 
         const submitVolunteerOp = () => {
@@ -610,6 +629,17 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     /**
+     * {@inheritDoc ITaskManager.canVolunteer}
+     */
+    public canVolunteer(): boolean {
+        // A client can volunteer for a task if it's both connected to the delta stream and in write mode.
+        // this.connected reflects that condition, but is unintuitive and may be changed in the future. This API allows
+        // us to make changes to this.connected without affecting our guidance on how to check if a client is eligible
+        // to volunteer for a task.
+        return this.connected;
+    }
+
+    /**
      * Create a summary for the task manager
      *
      * @returns the summary of the current state of the task manager
@@ -626,7 +656,15 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             // a new clientId.
             this.removeClientFromAllQueues(placeholderClientId);
         }
-        const content = [...this.taskQueues.entries()];
+
+        // Only include tasks if there are clients in the queue.
+        const filteredMap = new Map<string, string[]>();
+        this.taskQueues.forEach((queue: string[], taskId: string) => {
+            if (queue.length > 0) {
+                filteredMap.set(taskId, queue);
+            }
+        });
+        const content = [...filteredMap.entries()];
         return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));
     }
 
@@ -639,6 +677,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         content.forEach(([taskId, clientIdQueue]) => {
             this.taskQueues.set(taskId, clientIdQueue);
         });
+        this.scrubClientsNotInQuorum();
     }
 
     /**
@@ -766,6 +805,23 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             const clientIdIndex = clientQueue.indexOf(placeholderClientId);
             if (clientIdIndex !== -1) {
                 clientQueue[clientIdIndex] = this.runtime.clientId;
+            }
+        }
+    }
+
+    // This seems like it should be unnecessary if we can trust to receive the join/leave messages and
+    // also have an accurate snapshot.
+    private scrubClientsNotInQuorum() {
+        const quorum = this.runtime.getQuorum();
+        for (const [taskId, clientQueue] of this.taskQueues) {
+            const filteredClientQueue = clientQueue.filter((clientId) => quorum.getMember(clientId) !== undefined);
+            if (clientQueue.length !== filteredClientQueue.length) {
+                if (filteredClientQueue.length === 0) {
+                    this.taskQueues.delete(taskId);
+                } else {
+                    this.taskQueues.set(taskId, filteredClientQueue);
+                }
+                this.queueWatcher.emit("queueChange", taskId);
             }
         }
     }

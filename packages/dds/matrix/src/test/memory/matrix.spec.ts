@@ -6,7 +6,7 @@
 import {
     MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils";
-import { benchmarkMemory } from "@fluid-tools/benchmark";
+import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { SharedMatrix, SharedMatrixFactory } from "../..";
 
 function createLocalMatrix(id: string) {
@@ -32,62 +32,85 @@ describe("Matrix memory usage", () => {
         // See the comment at the top of the test suite for more details.
     });
 
-    benchmarkMemory({
-        title: "Create empty Matrix",
-        minSampleCount: 1000,
-        benchmarkFn: async () => {
-            createLocalMatrix("testMatrix");
-        },
-    });
+    benchmarkMemory(new class implements IMemoryTestObject {
+        title = "Create empty Matrix";
+        minSampleCount = 500;
+
+        private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
+
+        async run() {
+            this.localMatrix = createLocalMatrix("testLocalMatrix");
+        }
+    }());
 
     const numbersOfEntriesForTests = [100, 1000, 10_000];
 
     numbersOfEntriesForTests.forEach((x) => {
-        benchmarkMemory({
-            title: `Insert and remove ${x} columns`,
-            benchmarkFn: async () => {
-                const localMatrix = createLocalMatrix("testLocalMatrix");
-                for (let i = 0; i < x; i++) {
-                    localMatrix.insertCols(0, 100);
-                    localMatrix.removeCols(0, 100);
-                }
-            },
-        });
+        benchmarkMemory(new class implements IMemoryTestObject {
+            title = `Insert and remove ${x} columns`;
+            private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
 
-        benchmarkMemory({
-            title: `Insert and remove ${x} rows`,
-            benchmarkFn: async () => {
-                const localMatrix = createLocalMatrix("testLocalMatrix");
+            async run() {
                 for (let i = 0; i < x; i++) {
-                    localMatrix.insertRows(0, 100);
-                    localMatrix.removeRows(0, 100);
+                    this.localMatrix.insertCols(0, 100);
+                    this.localMatrix.removeCols(0, 100);
                 }
-            },
-        });
+            }
 
-        benchmarkMemory({
-            title: `Insert and remove ${x} rows and columns`,
-            benchmarkFn: async () => {
-                const localMatrix = createLocalMatrix("testLocalMatrix");
-                for (let i = 0; i < x; i++) {
-                    localMatrix.insertCols(0, 100);
-                    localMatrix.insertRows(0, 100);
-                    localMatrix.removeCols(0, 100);
-                    localMatrix.removeRows(0, 100);
-                }
-            },
-        });
+            beforeIteration() {
+                this.localMatrix = createLocalMatrix("testLocalMatrix");
+            }
+        }());
 
-        benchmarkMemory({
-            title: `Set ${x} cells`,
-            benchmarkFn: async () => {
-                const localMatrix = createLocalMatrix("testLocalMatrix");
-                localMatrix.insertCols(0, x);
-                localMatrix.insertRows(0, x);
+        benchmarkMemory(new class implements IMemoryTestObject {
+            title = `Insert and remove ${x} rows`;
+            private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
+
+            async run() {
                 for (let i = 0; i < x; i++) {
-                    localMatrix.setCell(0, i, "a");
+                    this.localMatrix.insertRows(0, 100);
+                    this.localMatrix.removeRows(0, 100);
                 }
-            },
-        });
+            }
+
+            beforeIteration() {
+                this.localMatrix = createLocalMatrix("testLocalMatrix");
+            }
+        }());
+
+        benchmarkMemory(new class implements IMemoryTestObject {
+            title = `Insert and remove ${x} rows and columns`;
+            private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
+
+            async run() {
+                for (let i = 0; i < x; i++) {
+                    this.localMatrix.insertCols(0, 100);
+                    this.localMatrix.insertRows(0, 100);
+                    this.localMatrix.removeCols(0, 100);
+                    this.localMatrix.removeRows(0, 100);
+                }
+            }
+
+            beforeIteration() {
+                this.localMatrix = createLocalMatrix("testLocalMatrix");
+            }
+        }());
+
+        benchmarkMemory(new class implements IMemoryTestObject {
+            title = `Set ${x} cells`;
+            private localMatrix = createLocalMatrix("testLocalMatrix");
+
+            async run() {
+                this.localMatrix.insertCols(0, x);
+                this.localMatrix.insertRows(0, x);
+                for (let i = 0; i < x; i++) {
+                    this.localMatrix.setCell(0, i, "a");
+                }
+            }
+
+            beforeIteration() {
+                this.localMatrix = createLocalMatrix("testLocalMatrix");
+            }
+        }());
     });
 });

@@ -19,6 +19,7 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
     abandon(taskId: string): void;
     assigned(taskId: string): boolean;
+    canVolunteer(): boolean;
     complete(taskId: string): void;
     queued(taskId: string): boolean;
     subscribed(taskId: string): boolean;
@@ -38,6 +39,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     // (undocumented)
     applyStashedOp(): void;
     assigned(taskId: string): boolean;
+    canVolunteer(): boolean;
     complete(taskId: string): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): TaskManager;
     static getFactory(): IChannelFactory;
