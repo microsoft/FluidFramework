@@ -18,7 +18,7 @@ import {
  * providers that fulfill the {@link @fluidframework/routerlicious-driver#ITokenProvider} interface.
  */
 export class AzureUrlResolver implements IUrlResolver {
-    constructor() {}
+    public constructor() {}
 
     public async resolve(request: IRequest): Promise<IFluidResolvedUrl> {
         const { ordererUrl, storageUrl, tenantId, containerId } = decodeAzureUrl(request.url);
