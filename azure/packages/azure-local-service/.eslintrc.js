@@ -11,6 +11,7 @@ module.exports = {
     },
     rules: {
         // Require jsdoc/tsdoc comments on public/exported API items.
+        // TODO: remove once dependency on base config has been updated.
         "jsdoc/require-jsdoc": [
             "error",
             {

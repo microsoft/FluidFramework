@@ -668,6 +668,32 @@
         "jsdoc/require-hyphen-before-param-description": [
             "error"
         ],
+        "jsdoc/require-jsdoc": [
+            "error",
+            {
+                "checkConstructors": true,
+                "checkGetters": true,
+                "checkSetters": true,
+                "contexts": [
+                    "TSEnumDeclaration",
+                    "TSInterfaceDeclaration",
+                    "TSTypeAliasDeclaration"
+                ],
+                "enableFixer": false,
+                "exemptEmptyConstructors": false,
+                "exemptEmptyFunctions": false,
+                "fixerMessage": "",
+                "publicOnly": true,
+                "require": {
+                    "ArrowFunctionExpression": false,
+                    "ClassDeclaration": true,
+                    "ClassExpression": false,
+                    "FunctionDeclaration": true,
+                    "FunctionExpression": false,
+                    "MethodDefinition": false
+                }
+            }
+        ],
         "jsdoc/require-param-description": [
             "error"
         ],
