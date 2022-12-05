@@ -140,7 +140,7 @@ export function convertSummaryTreeToWholeSummaryTree(
  * @param treePrefixToRemove - tree prefix to strip
  * @returns the heirarchical tree
  */
-export function buildHierarchy(
+function buildHierarchy(
     flatTree: IWholeFlatSummaryTree,
     treePrefixToRemove: string,
 ): ISnapshotTree {
