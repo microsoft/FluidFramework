@@ -111,7 +111,10 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
      * @param apiModel - See {@link MarkdownEmitter.apiModel}.
      * @param generateFrontMatter - See {@link MarkdownEmitter.generateFrontMatter}.
      */
-    constructor(apiModel: ApiModel, generateFrontMatter?: (contextApiItem: ApiItem) => string) {
+    public constructor(
+        apiModel: ApiModel,
+        generateFrontMatter?: (contextApiItem: ApiItem) => string,
+    ) {
         super();
         this.apiModel = apiModel;
         this.generateFrontMatter = generateFrontMatter;

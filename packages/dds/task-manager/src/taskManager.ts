@@ -656,7 +656,15 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             // a new clientId.
             this.removeClientFromAllQueues(placeholderClientId);
         }
-        const content = [...this.taskQueues.entries()];
+
+        // Only include tasks if there are clients in the queue.
+        const filteredMap = new Map<string, string[]>();
+        this.taskQueues.forEach((queue: string[], taskId: string) => {
+            if (queue.length > 0) {
+                filteredMap.set(taskId, queue);
+            }
+        });
+        const content = [...filteredMap.entries()];
         return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));
     }
 
@@ -669,6 +677,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         content.forEach(([taskId, clientIdQueue]) => {
             this.taskQueues.set(taskId, clientIdQueue);
         });
+        this.scrubClientsNotInQuorum();
     }
 
     /**
@@ -796,6 +805,23 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             const clientIdIndex = clientQueue.indexOf(placeholderClientId);
             if (clientIdIndex !== -1) {
                 clientQueue[clientIdIndex] = this.runtime.clientId;
+            }
+        }
+    }
+
+    // This seems like it should be unnecessary if we can trust to receive the join/leave messages and
+    // also have an accurate snapshot.
+    private scrubClientsNotInQuorum() {
+        const quorum = this.runtime.getQuorum();
+        for (const [taskId, clientQueue] of this.taskQueues) {
+            const filteredClientQueue = clientQueue.filter((clientId) => quorum.getMember(clientId) !== undefined);
+            if (clientQueue.length !== filteredClientQueue.length) {
+                if (filteredClientQueue.length === 0) {
+                    this.taskQueues.delete(taskId);
+                } else {
+                    this.taskQueues.set(taskId, filteredClientQueue);
+                }
+                this.queueWatcher.emit("queueChange", taskId);
             }
         }
     }

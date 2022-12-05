@@ -27,13 +27,12 @@ export const sequenceFieldEditor = {
     insert: (index: number, cursors: ITreeCursor | ITreeCursor[]): Changeset<never> =>
         markAtIndex(index, {
             type: "Insert",
-            id: 0,
             content: Array.isArray(cursors)
                 ? cursors.map(jsonableTreeFromCursor)
                 : [jsonableTreeFromCursor(cursors)],
         }),
     delete: (index: number, count: number): Changeset<never> =>
-        count === 0 ? [] : markAtIndex(index, { type: "Delete", id: 0, count }),
+        count === 0 ? [] : markAtIndex(index, { type: "Delete", count }),
     revive: (
         index: number,
         count: number,
@@ -44,7 +43,6 @@ export const sequenceFieldEditor = {
             ? []
             : markAtIndex(index, {
                   type: "Revive",
-                  id: 0,
                   count,
                   detachedBy: revision,
                   detachIndex,
