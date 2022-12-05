@@ -297,7 +297,7 @@ jobs:
           workingDir: ${{ variables.testPackageDir }}/nyc
           targetType: 'inline'
           script: |
-            for i in `ls`; do cat $i | grep -v '<skipped' > $i ; done
+            for i in `ls`; do sed -i '/<skipped/d' $i ; done
 
       # Upload results
       - task: PublishTestResults@2
