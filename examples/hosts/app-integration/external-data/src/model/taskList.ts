@@ -85,8 +85,8 @@ export class TaskList extends DataObject implements ITaskList {
         // the this.tasks collection.
         this.root.set(id, { id, name: nameString.handle, priority: priorityCell.handle });
 
-        this._savedData?.set(id, { id, nameString, priorityCell });
-        this._draftData?.set(id, { id, nameString, priorityCell });
+        this._savedData?.set(id, { id, name: nameString.handle, priority: priorityCell.handle });
+        this._draftData?.set(id, { id, name: nameString.handle, priority: priorityCell.handle });
 
         const data: PersistedTask = {
             id,
@@ -190,7 +190,7 @@ export class TaskList extends DataObject implements ITaskList {
         const draftData = SharedMap.create(this.runtime);
         const savedData = SharedMap.create(this.runtime);
         this.root.set("draftData", draftData.handle);
-        this.root.set("sharedData", savedData.handle);
+        this.root.set("savedData", savedData.handle);
         // TODO: Probably don't need to await this once the sync'ing flow is solid, we can just trust it to sync
         // at some point in the future.
         await this.importExternalData();
@@ -207,13 +207,14 @@ export class TaskList extends DataObject implements ITaskList {
         } else {
             this._savedData = await saved.get();
         }
+
         const draft = this.root.get<IFluidHandle<SharedMap>>("draftData");
         if (!draft) {
             throw new Error("draftData was not initialized");
         } else {
             this._draftData = await draft.get();
         }
-        this._draftData = await draft?.get();
+
         this.root.on("valueChanged", (changed) => {
             if (changed.previousValue === undefined) {
                 // Must be from adding a new task
@@ -230,8 +231,9 @@ export class TaskList extends DataObject implements ITaskList {
             }
         });
 
-        for (const [id, taskData] of this.root) {
-            const typedTaskData = taskData as PersistedTask;
+        for (const [id, task] of this._draftData.entries()) {
+            const typedTaskData = task as PersistedTask;
+            console.log(typedTaskData);
             const [nameSharedString, prioritySharedCell] = await Promise.all([
                 typedTaskData.name.get(),
                 typedTaskData.priority.get(),
