@@ -10,7 +10,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { validateMessages } from "../odspUtils";
 
 /**
- * Implementation of IDocumentDeltaStorageService that will always return an empty message queue when fetching messages
+ * Implementation of IDocumentDeltaStorageService that will return snapshot ops when fetching messages
  */
 export class LocalOdspDeltaStorageService implements IDocumentDeltaStorageService {
     constructor(
