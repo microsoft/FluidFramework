@@ -47,15 +47,9 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
         vim
 
-# Install GitHub CLI
-# (See https://github.com/cli/cli/blob/trunk/docs/install_linux.md)
-RUN export DEBIAN_FRONTEND=noninteractive \
-    && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
-    && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-    && apt-get update \
-    && apt-get -y install --no-install-recommends \
-        gh
+# Note: To minimize security risk, please do not install Azure CLI and Github CLI in Github Codespaces.
+#       Do feel free to manually install 'gh' and 'az' in local dev containers (see "features" section
+#       in devcontainer.json).
 
 # Clean up
 RUN apt-get autoremove -y \
