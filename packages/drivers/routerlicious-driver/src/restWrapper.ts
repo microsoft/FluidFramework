@@ -2,6 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+// eslint-disable-next-line import/no-nodejs-modules
 import * as querystring from "querystring";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
