@@ -13,7 +13,7 @@ import {
     mapCursorFields,
     ITreeCursorSynchronous,
 } from "../../core";
-import { JsonCompatible, JsonCompatibleObject } from "../../util";
+import { JsonCompatible } from "../../util";
 import { CursorAdapter, isPrimitiveValue, singleStackTreeCursor } from "../../feature-libraries";
 import {
     jsonArray,
@@ -67,6 +67,12 @@ const adapter: CursorAdapter<JsonCompatible> = {
         }
     },
     getFieldFromNode: (node: JsonCompatible, key: FieldKey): readonly JsonCompatible[] => {
+        // Object.prototype.hasOwnProperty can return true for strings (ex: with key "0"), so we have to filter them out.
+        // Rather than just special casing strings, we can handle them with an early return for all primitives.
+        if (typeof node !== "object") {
+            return [];
+        }
+
         if (node === null) {
             return [];
         }
@@ -76,7 +82,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
         }
 
         if (Object.prototype.hasOwnProperty.call(node, key)) {
-            const field = (node as JsonCompatibleObject)[key as LocalFieldKey];
+            const field = node[key as LocalFieldKey];
             assert(
                 field !== undefined,
                 0x41e /* explicit undefined fields should not be preserved in JSON */,
