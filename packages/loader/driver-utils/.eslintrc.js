@@ -12,7 +12,8 @@ module.exports = {
     },
     "rules": {
         "import/no-nodejs-modules": ["error", {"allow": ["url"]}],
-    }, "overrides": [
+    },
+    "overrides": [
         {
             // Rules only for test files
             files: ["*.spec.ts", "src/test/**"],
