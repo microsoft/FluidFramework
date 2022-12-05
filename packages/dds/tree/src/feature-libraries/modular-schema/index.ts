@@ -13,6 +13,8 @@ export {
 } from "./comparison";
 export { FieldKind, FullSchemaPolicy, Multiplicity } from "./fieldKind";
 export {
+    ChangesetLocalId,
+    IdAllocator,
     FieldChange,
     FieldChangeEncoder,
     FieldChangeHandler,
@@ -20,6 +22,7 @@ export {
     FieldChangeRebaser,
     FieldChangeset,
     FieldEditor,
+    ModularChangeset,
     NodeChangeComposer,
     NodeChangeDecoder,
     NodeChangeEncoder,
