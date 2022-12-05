@@ -8,9 +8,11 @@ import {
     singleTextCursor,
     getSchemaString,
     jsonableTreeFromCursor,
+    emptyField,
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import {
+    EmptyKey,
     FieldKey,
     JsonableTree,
     mapCursorField,
@@ -21,7 +23,12 @@ import {
     Value,
 } from "../../tree";
 import { moveToDetachedField } from "../../forest";
-import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
+import {
+    ITestTreeProvider,
+    SharedTreeTestFactory,
+    SummarizeType,
+    TestTreeProvider,
+} from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import { TransactionResult } from "../../checkout";
 import {
