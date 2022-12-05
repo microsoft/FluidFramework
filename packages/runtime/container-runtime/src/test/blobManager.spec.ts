@@ -262,16 +262,16 @@ describe("BlobManager", () => {
         assert.strictEqual(summaryData.redirectTable, undefined);
     });
 
-    it("hasPendingBlobs()", async () => {
+    it("hasPendingBlobs", async () => {
         await runtime.attach();
         await runtime.connect();
 
-        assert.strictEqual(runtime.blobManager.hasPendingBlobs(), false);
+        assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
         await createBlob(IsoBuffer.from("blob", "utf8"));
         await createBlob(IsoBuffer.from("blob2", "utf8"));
-        assert.strictEqual(runtime.blobManager.hasPendingBlobs(), true);
+        assert.strictEqual(runtime.blobManager.hasPendingBlobs, true);
         await runtime.processAll();
-        assert.strictEqual(runtime.blobManager.hasPendingBlobs(), false);
+        assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 2);
         assert.strictEqual(summaryData.redirectTable, undefined);

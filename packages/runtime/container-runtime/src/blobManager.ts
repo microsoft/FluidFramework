@@ -188,6 +188,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         return this.pendingOfflineUploads.length > 0;
     }
 
+
+    public get hasPendingBlobs(): boolean {
+        return this.pendingBlobs.size > 0;
+    }
+
     /**
      * Upload blobs added while offline. This must be completed before connecting and resubmitting ops.
      */
@@ -329,6 +334,13 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         );
     }
 
+    private deleteAndEmitsIfEmpty(id: string) {
+        this.pendingBlobs.delete(id);
+        if (!this.hasPendingBlobs) {
+            this.emit("noPendingBlobs");
+        }
+    }
+
     private onUploadResolve(localId: string, response: ICreateBlobResponse) {
         const entry = this.pendingBlobs.get(localId);
         assert(entry?.status === PendingBlobStatus.OnlinePendingUpload ||
@@ -341,10 +353,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
                     // Storage may dedupe blobs and give us an ID we already know
                     // no need to submit BlobAttach op in this case
                     entry.handleP.resolve(this.getBlobHandle(response.id));
-                    this.pendingBlobs.delete(localId);
-                    if (!this.hasPendingBlobs()) {
-                        this.emit("noPendingBlobs");
-                    }
+                    this.deleteAndEmitsIfEmpty(localId);
                 } else {
                     // Check for still-pending duplicates too; if an op is already in flight we can wait for that one
                     if (!this.opsInFlight.has(response.id)) {
@@ -446,20 +455,14 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
                     // It's possible we transitioned to offline flow while waiting for this op.
                     if (pendingBlobEntry.status === PendingBlobStatus.OnlinePendingOp) {
                         pendingBlobEntry.handleP.resolve(this.getBlobHandle(message.metadata.blobId));
-                        this.pendingBlobs.delete(localId);
-                        if (!this.hasPendingBlobs()) {
-                            this.emit("noPendingBlobs");
-                        }
+                        this.deleteAndEmitsIfEmpty(localId);
                     }
                 });
             } else {
                 // Each local ID is unique; get the pending blob entry and delete it
                 assert(this.pendingBlobs.get(message.metadata.localId)?.status === PendingBlobStatus.OfflinePendingOp,
                     0x1f8 /* "local BlobAttach op with no pending blob" */);
-                this.pendingBlobs.delete(message.metadata.localId);
-                if (!this.hasPendingBlobs()) {
-                    this.emit("noPendingBlobs");
-                }
+                this.deleteAndEmitsIfEmpty(message.metadata.localId);
             }
         }
     }
@@ -603,7 +606,4 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         return blobs;
     }
 
-    public hasPendingBlobs(): boolean {
-        return this.pendingBlobs.size > 0;
-    }
 }
