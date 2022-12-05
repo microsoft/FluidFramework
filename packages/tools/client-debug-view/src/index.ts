@@ -8,16 +8,27 @@
  *
  * @remarks
  *
- * The primary entry-point to this package is {@link ClientDebugView}.
+ * This package has 2 primary entry-points:
  *
- * Rendering options can be configured using {@link ClientDebugViewProps.renderOptions}.
+ * - {@link renderClientDebuggerView}: A general-purpose rendering utility for displaying debug information.
+ *
+ * - {@link FluidClientDebugger}: A {@link https://reactjs.org/ | React} component for displaying debug information,
+ * which can be added to your Fluid-backed React app.
+ *
+ * @privateRemarks TODO: Add examples once the API surface has solidified.
  *
  * @packageDocumentation
  */
 
-export { AudienceMemberViewProps } from "./components";
+export {
+	AudienceMemberViewProps,
+	ClientDebugView,
+	clientDebugViewClassName,
+	ClientDebugViewProps,
+} from "./components";
 
 export { AudienceMember } from "./Audience";
+export { HasClientDebugger, HasContainerId } from "./CommonProps";
 export { FluidClientDebugger, FluidClientDebuggerProps } from "./Debugger";
 export { renderClientDebuggerView } from "./RenderClientDebugger";
 export {

@@ -11,6 +11,8 @@ import { IFluidClientDebugger } from "@fluid-tools/client-debugger";
 
 /**
  * Base interface for component props that observe data and updates coming from the Client debugger.
+ *
+ * @internal
  */
 export interface HasClientDebugger {
 	/**
@@ -21,6 +23,8 @@ export interface HasClientDebugger {
 
 /**
  * Base interface for component props that include the ID of a Fluid Container.
+ *
+ * @internal
  */
 export interface HasContainerId {
 	/**

@@ -30,11 +30,15 @@ initializeIcons();
 
 /**
  * `className` used by {@link ClientDebugView}.
+ *
+ * @internal
  */
 export const clientDebugViewClassName = `fluid-client-debug-view`;
 
 /**
  * {@link ClientDebugView} input props.
+ *
+ * @internal
  */
 export interface ClientDebugViewProps extends HasClientDebugger, HasContainerId {
 	/**
@@ -49,6 +53,8 @@ export interface ClientDebugViewProps extends HasClientDebugger, HasContainerId 
 
 /**
  * Displays information about the provided container and its audience.
+ *
+ * @internal
  */
 export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement {
 	const { clientDebugger, renderOptions: userRenderOptions } = props;
