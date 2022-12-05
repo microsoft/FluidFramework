@@ -30,7 +30,7 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
     public set priority(newValue: number) {
         this._priority.set(newValue);
     }
-    constructor(
+    public constructor(
         private readonly _id: string,
         private readonly _name: SharedString,
         private readonly _priority: ISharedCell<number>

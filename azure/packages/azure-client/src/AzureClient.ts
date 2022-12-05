@@ -56,7 +56,7 @@ export class AzureClient {
      * Creates a new client instance using configuration parameters.
      * @param props - Properties for initializing a new AzureClient instance
      */
-    constructor(private readonly props: AzureClientProps) {
+    public constructor(private readonly props: AzureClientProps) {
         // remove trailing slash from URL if any
         props.connection.endpoint = props.connection.endpoint.replace(/\/$/, "");
         this.urlResolver = new AzureUrlResolver();
