@@ -13,7 +13,7 @@ import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 
-// @public
+// @internal
 export interface AudienceChangeLogEntry extends LogEntry {
     changeKind: "added" | "removed";
     client: IClient;
@@ -26,7 +26,7 @@ export function clearDebuggerRegistry(): void;
 // @public
 export function closeFluidClientDebugger(containerId: string): void;
 
-// @public
+// @internal
 export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ConnectionState> {
     clientId: string | undefined;
 }
@@ -63,18 +63,18 @@ export interface IFluidClientDebuggerEvents extends IEvent {
 // @public
 export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): void;
 
-// @public
+// @internal
 export interface LogEntry {
     timestamp: number;
 }
 
-// @public
+// @internal
 export enum MemberChangeKind {
     Added = "Added",
     Removed = "Removed"
 }
 
-// @public
+// @internal
 export interface StateChangeLogEntry<TState> extends LogEntry {
     newState: TState;
 }

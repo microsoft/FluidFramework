@@ -10,6 +10,8 @@ import { IFluidClientDebugger } from "./IFluidClientDebugger";
 
 /**
  * Properties for configuring a {@link IFluidClientDebugger}.
+ *
+ * @public
  */
 export interface FluidClientDebuggerProps {
 	/**
@@ -37,6 +39,8 @@ export interface FluidClientDebuggerProps {
  *
  * If there is an existing debugger session associated with the provided {@link FluidClientDebuggerProps.containerId},
  * the existing debugger session will be closed, and a new one will be generated from the provided props.
+ *
+ * @public
  */
 export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): void {
 	const { containerId, container, containerData } = props;
@@ -59,6 +63,8 @@ export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): 
 /**
  * Closes ({@link IFluidClientDebugger.dispose | disposes}) a registered client debugger associated with the
  * provided Container ID.
+ *
+ * @public
  */
 export function closeFluidClientDebugger(containerId: string): void {
 	const debuggerRegistry = getDebuggerRegistry();

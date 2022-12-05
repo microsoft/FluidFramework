@@ -7,6 +7,8 @@ import { IClient } from "@fluidframework/protocol-definitions";
 
 /**
  * Base interface for data logs, associating data with a timestamp at which the data was recorded by the debugger.
+ *
+ * @internal
  */
 export interface LogEntry {
 	/**
@@ -19,6 +21,8 @@ export interface LogEntry {
  * Represents a change in some state, coupled with a timestamp.
  *
  * @typeParam TState - The type of state being tracked.
+ *
+ * @internal
  */
 export interface StateChangeLogEntry<TState> extends LogEntry {
 	/**
@@ -29,6 +33,8 @@ export interface StateChangeLogEntry<TState> extends LogEntry {
 
 /**
  * Represents a {@link @fluidframework/container-loader#ConnectionState} change.
+ *
+ * @internal
  */
 export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ConnectionState> {
 	/**
@@ -47,6 +53,8 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conne
  *
  * TODOs:
  * - Annotate when the client is me, even though "me" can change. This is useful context when viewing the history.
+ *
+ * @internal
  */
 export interface AudienceChangeLogEntry extends LogEntry {
 	/**

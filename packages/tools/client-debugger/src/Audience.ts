@@ -5,6 +5,8 @@
 
 /**
  * Kind of audience member change.
+ *
+ * @internal
  */
 export enum MemberChangeKind {
 	/**
