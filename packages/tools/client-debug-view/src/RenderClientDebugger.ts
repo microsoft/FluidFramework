@@ -8,10 +8,12 @@ import ReactDOM from "react-dom";
 import { FluidClientDebugger } from "./Debugger";
 
 /**
- * Renders Fluid client debug view by appending it to the provided DOM element. Will fast return false
- * if the input is null.
+ * Renders Fluid client debug view by appending it to the provided DOM element.
+ * Will fast return false if the input is `null`.
+ *
  * @param targetElement - The HTML element takes the client debugger view.
- * @returns true if succeeded, otherwise false.
+ *
+ * @returns `true` if the debug view was succesfully rendered, otherwise `false`.
  */
 export async function renderClientDebuggerView(
 	// eslint-disable-next-line @rushstack/no-new-null
