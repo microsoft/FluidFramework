@@ -162,6 +162,7 @@ export class TaskList extends DataObject implements ITaskList {
     // TODO: Guard against reentrancy
     // TODO: Use leader election to reduce noise from competing clients
     public async importExternalData(): Promise<void> {
+        console.log('Kicking off fetching external data from TaskList');
         const externalData = await externalDataSource.fetchData();
         const parsedTaskData = parseStringData(externalData);
         // TODO: Delete any items that are in the root but missing from the external data
