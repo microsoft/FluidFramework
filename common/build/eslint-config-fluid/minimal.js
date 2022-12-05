@@ -15,7 +15,7 @@ module.exports = {
         "plugin:import/errors",
         "plugin:import/warnings",
         "plugin:import/typescript",
-        "prettier"
+        "prettier",
     ],
     globals: {
         Atomics: "readonly",
@@ -324,7 +324,7 @@ module.exports = {
          * By default libraries should not take dependencies on node libraries. This rule can be disabled at the project
          * level for libraries that are intended to be used only in node.
          */
-        "import/no-nodejs-modules": "error",
+        "import/no-nodejs-modules": ["error", { allow: ["events"] }],
     },
     overrides: [
         {
