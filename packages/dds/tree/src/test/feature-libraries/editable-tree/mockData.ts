@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// Allow defining a custom "String" type:
+/* eslint-disable @typescript-eslint/ban-types */
+
 import { emptyField, FieldKinds, EditableTree, EditableField } from "../../../feature-libraries";
 import {
     namedTreeSchema,
@@ -37,10 +40,24 @@ export const int32Schema = namedTreeSchema({
     value: ValueSchema.Number,
 });
 
-export const float32Schema = namedTreeSchema({
-    name: brand("Float32"),
+export const float64Schema = namedTreeSchema({
+    name: brand("Float64"),
     extraLocalFields: emptyField,
     value: ValueSchema.Number,
+});
+
+export const boolSchema = namedTreeSchema({
+    name: brand("Bool"),
+    extraLocalFields: emptyField,
+    value: ValueSchema.Boolean,
+});
+
+export const simplePhonesSchema = namedTreeSchema({
+    name: brand("Test:SimplePhones-1.0.0"),
+    localFields: {
+        [EmptyKey]: fieldSchema(FieldKinds.sequence, [stringSchema.name]),
+    },
+    extraLocalFields: emptyField,
 });
 
 export const complexPhoneSchema = namedTreeSchema({
@@ -48,14 +65,7 @@ export const complexPhoneSchema = namedTreeSchema({
     localFields: {
         number: fieldSchema(FieldKinds.value, [stringSchema.name]),
         prefix: fieldSchema(FieldKinds.value, [stringSchema.name]),
-    },
-    extraLocalFields: emptyField,
-});
-
-export const simplePhonesSchema = namedTreeSchema({
-    name: brand("Test:SimplePhones-1.0.0"),
-    localFields: {
-        [EmptyKey]: fieldSchema(FieldKinds.sequence, [stringSchema.name]),
+        extraPhones: fieldSchema(FieldKinds.optional, [simplePhonesSchema.name]),
     },
     extraLocalFields: emptyField,
 });
@@ -85,8 +95,10 @@ export const globalFieldSchemaSequencePhones = fieldSchema(FieldKinds.sequence, 
 export const addressSchema = namedTreeSchema({
     name: brand("Test:Address-1.0.0"),
     localFields: {
-        street: fieldSchema(FieldKinds.value, [stringSchema.name]),
-        zip: fieldSchema(FieldKinds.optional, [stringSchema.name, int32Schema.name]),
+        zip: fieldSchema(FieldKinds.value, [stringSchema.name, int32Schema.name]),
+        street: fieldSchema(FieldKinds.optional, [stringSchema.name]),
+        city: fieldSchema(FieldKinds.optional, [stringSchema.name]),
+        country: fieldSchema(FieldKinds.optional, [stringSchema.name]),
         phones: fieldSchema(FieldKinds.optional, [phonesSchema.name]),
         sequencePhones: fieldSchema(FieldKinds.sequence, [stringSchema.name]),
     },
@@ -106,9 +118,10 @@ export const personSchema = namedTreeSchema({
     localFields: {
         name: fieldSchema(FieldKinds.value, [stringSchema.name]),
         age: fieldSchema(FieldKinds.optional, [int32Schema.name]),
-        salary: fieldSchema(FieldKinds.value, [float32Schema.name]),
+        adult: fieldSchema(FieldKinds.optional, [boolSchema.name]),
+        salary: fieldSchema(FieldKinds.optional, [float64Schema.name, int32Schema.name]),
         friends: fieldSchema(FieldKinds.optional, [mapStringSchema.name]),
-        address: fieldSchema(FieldKinds.value, [addressSchema.name]),
+        address: fieldSchema(FieldKinds.optional, [addressSchema.name]),
     },
     extraLocalFields: emptyField,
 });
@@ -136,8 +149,9 @@ export const schemaTypes: Set<NamedTreeSchema> = new Set([
     arraySchema,
     optionalChildSchema,
     stringSchema,
-    float32Schema,
+    float64Schema,
     int32Schema,
+    boolSchema,
     complexPhoneSchema,
     phonesSchema,
     simplePhonesSchema,
@@ -163,40 +177,62 @@ export const fullSchemaData: SchemaData = {
 
 // TODO: derive types like these from those schema, which subset EditableTree
 
-export type Int32 = Brand<number, "Int32">;
+export type Float64 = Brand<number, "editable-tree.Float64"> & EditableTree;
+export type Int32 = Brand<number, "editable-tree.Int32"> & EditableTree;
+export type String = Brand<string, "editable-tree.String"> & EditableTree;
+export type Bool = Brand<boolean, "editable-tree.Bool"> & EditableTree;
 
-export type ComplexPhoneType = EditableTree & {
-    number: string;
-    prefix: string;
-};
+export type ComplexPhone = EditableTree &
+    Brand<
+        {
+            number: String;
+            prefix: String;
+            extraPhones?: SimplePhones;
+        },
+        "editable-tree.Test:Phone-1.0.0"
+    >;
 
-export type SimplePhonesType = EditableField & string[];
+export type SimplePhones = EditableField & Brand<String[], "editable-tree.Test:SimplePhones-1.0.0">;
 
-export type PhonesType = EditableField & (number | string | ComplexPhoneType | SimplePhonesType)[];
+export type Phones = EditableField &
+    Brand<(Int32 | String | ComplexPhone | SimplePhones)[], "editable-tree.Test:Phones-1.0.0">;
 
-export type AddressType = EditableTree & {
-    street: string;
-    zip?: string;
-    phones?: PhonesType;
-    sequencePhones?: SimplePhonesType;
-};
+export type Address = EditableTree &
+    Brand<
+        {
+            zip: String | Int32;
+            street?: String;
+            city?: String;
+            country?: String;
+            phones?: Phones;
+            sequencePhones?: SimplePhones;
+        },
+        "editable-tree.Test:Address-1.0.0"
+    >;
 
-export type FriendsType = EditableTree & Record<LocalFieldKey, string>;
+export type Friends = EditableTree &
+    Brand<Record<LocalFieldKey, String>, "editable-tree.Map<String>">;
 
-export type PersonType = EditableTree & {
-    name: string;
-    age?: Int32;
-    salary: number;
-    friends: FriendsType;
-    address: AddressType;
-};
+export type Person = EditableTree &
+    Brand<
+        {
+            name: String;
+            age?: Int32;
+            adult?: Bool;
+            salary?: Float64 | Int32;
+            friends?: Friends;
+            address?: Address;
+        },
+        "editable-tree.Test:Person-1.0.0"
+    >;
 
 export const personData: JsonableTree = {
     type: personSchema.name,
     fields: {
         name: [{ value: "Adam", type: stringSchema.name }],
         age: [{ value: 35, type: int32Schema.name }],
-        salary: [{ value: 10420.2, type: float32Schema.name }],
+        adult: [{ value: true, type: boolSchema.name }],
+        salary: [{ value: 10420.2, type: float64Schema.name }],
         friends: [
             {
                 fields: {
