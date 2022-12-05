@@ -146,15 +146,20 @@ export class ADOSizeComparator {
 
             // Baseline build succeeded
             console.log(`Found baseline build with id: ${baselineBuild.id}`);
+            console.log(`projectName: ${this.adoConstants.projectName}`);
+            console.log(`bundleAnalysisArtifactName: ${this.adoConstants.bundleAnalysisArtifactName}`);
+
             baselineZip = await getZipObjectFromArtifact(
                 this.adoConnection,
                 this.adoConstants.projectName,
                 baselineBuild.id,
                 this.adoConstants.bundleAnalysisArtifactName,
             ).catch((error) => {
-                console.log(JSON.stringify(error));
+                console.log(`Error unzipping object from artifact: ${JSON.stringify(error)}`);
                 return undefined;
             });
+
+            console.log(`Baseline Zip: ${JSON.stringify(baselineZip)}`);
 
             // Successful baseline build does not have the needed build artifacts
             if (baselineZip === undefined) {
