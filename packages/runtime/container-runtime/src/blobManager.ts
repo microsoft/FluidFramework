@@ -591,17 +591,13 @@ export class BlobManager {
             );
             const blobId = pathParts[2];
 
-            // GC tombstones these blobs
             if (tombstone) {
+                // If tombstone is set, add this blob to the tombstone list.
                 this.tombstonedBlobs.add(blobId);
-                continue;
-            }
-
-            // The unused blobId could be a localId. If so, remove it from the redirect table and continue. The
-            // corresponding storageId may still be used either directly or via other localIds.
-            if (this.redirectTable?.has(blobId)) {
+            } else {
+                // The unused blobId could be a localId. If so, remove it from the redirect table and continue. The
+                // corresponding storageId may still be used either directly or via other localIds.
                 this.redirectTable.delete(blobId);
-                continue;
             }
         }
     }
