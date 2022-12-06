@@ -62,6 +62,6 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
                 taskList.importExternalData();
             }
         });
-        return new AppModel(taskList, container);
+        return new AppModel(taskList, container, runtime);
     }
 }

@@ -17,6 +17,11 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
      * A task tracker list.
      */
     readonly taskList: ITaskList;
+
+    /**
+    * Trigger custom signals for external data change and for sending the data
+    */
+    readonly debugSendCustomSignal: () => void;
 }
 
 export interface ITaskEvents extends IEvent {
