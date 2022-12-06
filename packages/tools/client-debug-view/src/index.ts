@@ -4,7 +4,7 @@
  */
 
 /**
- * Contains an externsible debug visualizer / editor for the Fluid client.
+ * Contains an extensible debug visualizer / editor for the Fluid client.
  *
  * @remarks
  *
@@ -12,7 +12,7 @@
  *
  * - {@link renderClientDebuggerView}: A general-purpose rendering utility for displaying debug information.
  *
- * - {@link FluidClientDebugger}: A {@link https://reactjs.org/ | React} component for displaying debug information,
+ * - {@link FluidClientDebugger}: A {@link https://reactjs.org/docs/react-component.html | React Component} for displaying debug information,
  * which can be added to your Fluid-backed React app.
  *
  * @privateRemarks TODO: Add examples once the API surface has solidified.
