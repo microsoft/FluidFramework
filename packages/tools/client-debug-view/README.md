@@ -15,6 +15,7 @@ The library is intended to be extensible and customizable.
 Visualizers for new or custom forms of Fluid data (in particular, [DDS](https://fluidframework.com/docs/build/dds/)es) may be provided, and some pre-packed visualization defaults may be overridden.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
+
 ## Installation
 
 To get started, install the package by running the following command:
@@ -22,6 +23,7 @@ To get started, install the package by running the following command:
 ```bash
 npm i @fluid-tools/client-debug-view -D
 ```
+
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Usage
@@ -30,6 +32,19 @@ This library is intended to be consumed as a component in an existing React app.
 The suggested use pattern is to hide the `ClientDebugView` component behind some dev/debug-only flag, and allow developers to toggle it on as needed to analyze / adjust local state.
 
 ## Working in the package
+
+### Build
+
+To build the package locally, first ensure you have run `npm install` from the root of the mono-repo.
+Next, to build the code, run `npm run build` from the root of the mono-repo, or use [fluid-build](https://github.com/microsoft/FluidFramework/tree/main/build-tools/packages/build-tools#running-fluid-build-command-line) via `fluid-build -s build`.
+
+-   Note: Once you have run a build from the root, assuming no other changes outside of this package, you may run `npm run build` directly within this directory for a faster build.
+    If you make changes to any of this package's local dependencies, you will need to run a build again from the root before building again from directly within this package.
+
+### Test
+
+To run the tests, first ensure you have followed the [build](#build) steps above.
+Next, run `npm run test` from a terminal within this directory.
 
 ### Test Sandbox App
 
@@ -77,17 +92,21 @@ To run the app, navigate to the root of this package and run `npm run start:test
 -   Add a way to view the history of changes.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) -->
+
 ## API Documentation
 
 API documentation for **@fluid-tools/client-debug-view** is available at <https://fluidframework.com/docs/apis/client-debug-view>.
+
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+
 ## Trademark
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- Links -->
