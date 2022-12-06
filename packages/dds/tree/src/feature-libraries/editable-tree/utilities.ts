@@ -65,6 +65,11 @@ export function assertPrimitiveValueType(nodeValue: Value, schema: TreeSchema): 
     }
 }
 
+/**
+ * Returns the key and the schema of the primary field out of the given tree schema.
+ *
+ * See note on {@link EmptyKey} for what is a primary field.
+ */
 export function getPrimaryField(
     schema: TreeSchema,
 ): { key: LocalFieldKey; schema: FieldSchema } | undefined {
