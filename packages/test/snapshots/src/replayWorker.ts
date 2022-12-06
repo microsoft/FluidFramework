@@ -12,7 +12,7 @@ processOneNode(data)
     .catch((error) => {
         if (typeof error === "object" && error !== null && (error as Error).message !== undefined) {
             const typedError = error as Error;
-            threads.parentPort.postMessage(`${typedError.message}\n${typedError.stack}`);
+            threads.parentPort.postMessage(`${typedError.stack}`);
         } else {
             threads.parentPort.postMessage(`Error AAA processing ${data.folder}`);
         }
