@@ -4,6 +4,14 @@ TODO
 
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
 
+## Installation
+
+To get started, install the package by running the following command:
+
+```bash
+npm i @fluid-tools/client-debugger -D
+```
+
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Usage
