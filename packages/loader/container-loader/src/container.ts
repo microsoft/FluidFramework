@@ -1765,7 +1765,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // No clientId indicates a system signal message.
         console.log("here I am in processSignal -- how can I find a way to differentiate between protocol signals and non-protocol ones?");
         console.log(message);
-        if (message.clientId === null && message.content.type === SignalType.ExternalDataChange) {
+        if (message.clientId === null && message.content.type === SignalType.RuntimeMessage) {
             console.log('I am correctly processing this signal');
             const local = this.clientId === message.clientId;
             this.context.processSignal(message, local); // what is local??

@@ -638,17 +638,17 @@ export function configureWebSocketServices(
                         }
                     });
                     // Only for debugging purposes
-                    const signalMessageExternalDataChange: ISignalMessage = {
+                    const signalMessageRuntimeMessage : ISignalMessage = {
                         clientId: null, // system signal
                         content: JSON.stringify({
-                            type: SignalType.ExternalDataChange,
+                            type: SignalType.RuntimeMessage ,
                             contents: {
                                 content: contentBatches,
-                                type: SignalType.ExternalDataChange
+                                type: SignalType.RuntimeMessage
                             }
                         })
                     }
-                    socket.emitToRoom(getRoomId(room), "signal", signalMessageExternalDataChange);
+                    socket.emitToRoom(getRoomId(room), "signal", signalMessageRuntimeMessage );
                 }
             });
 

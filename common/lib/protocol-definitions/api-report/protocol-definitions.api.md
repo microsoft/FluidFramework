@@ -567,7 +567,7 @@ export enum ScopeType {
 export enum SignalType {
     ClientJoin = "join",
     ClientLeave = "leave",
-    ExternalDataChange = "externalDataChange"
+    RuntimeMessage = "RuntimeMessage"
 }
 
 // @public

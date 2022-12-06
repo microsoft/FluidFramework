@@ -90,9 +90,9 @@ export enum SignalType {
     ClientLeave = "leave",
 
     /**
-     * System signal sent to indicate that the external source of truth for the data in the collaboration has changed.
+     * System signal used to transmit runtime messages to clients.
      */
-    ExternalDataChange = "externalDataChange",
+    RuntimeMessage = "RuntimeMessage",
 }
 
 /**
