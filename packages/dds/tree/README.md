@@ -58,6 +58,21 @@ which could make their way back into the framework, enabling some features speci
 From this perspective, this tree serves as a proof of concept for abstractions and features which could benefit the framework, but are easier to implement within a DDS initially.
 This tree serves to get these feature into the hands of users much faster than could be done at the framework level.
 
+## Recommend Developer Workflow
+
+This package can be developed using any of the regular workflows for working on Fluid Framework and/or its Client release group of packages, but for work only touching the tree package, there is an optional workflow that might be more ergonomic:
+
+-   Open the [.vscode/Tree.code-workspace](.vscode/Tree.code-workspace) in VS Code.
+    This will recommend a test runner extension, which should be installed.
+-   Build the Client release group as normal (for example: `npm i && npm run build:fast` in the repository root).
+-   After editing the tree project, run `npm run build` in its directory.
+-   Run tests using the "Testing" side panel in VS Code, or using the inline `Run | Debug` buttons which should show up above tests in the source:
+    both of these are provided by the mocha testing extension thats recommended by the workspace.
+    Note that this does not build the tests, so always be sure to build first.
+
+This package uses [`good-fences`](https://github.com/smikula/good-fences) to manage intra-package dependencies in `fence.json` files.
+If modifying such dependencies, learn how `good-fences` works, and review (and update if needed) the "Architecture" section below.
+
 ## Architecture
 
 This section covers the internal structure of the Tree DDS.
