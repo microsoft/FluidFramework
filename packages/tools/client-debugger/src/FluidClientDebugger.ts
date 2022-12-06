@@ -42,7 +42,12 @@ export class FluidClientDebugger
 	/**
 	 * {@inheritDoc IFluidClientDebugger.containerData}
 	 */
-	public readonly containerData: Record<string, IFluidLoadable>;
+	public readonly containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
+
+	/**
+	 * {@inheritDoc IFluidClientDebugger.containerNickname}
+	 */
+	public readonly containerNickname?: string;
 
 	// #region Accumulated log state
 
@@ -114,13 +119,15 @@ export class FluidClientDebugger
 	constructor(
 		containerId: string,
 		container: IContainer,
-		containerData: Record<string, IFluidLoadable>,
+		containerData?: IFluidLoadable | Record<string, IFluidLoadable>,
+		containerNickname?: string,
 	) {
 		super();
 
 		this.containerId = containerId;
 		this.containerData = containerData;
 		this.container = container;
+		this.containerNickname = containerNickname;
 
 		// TODO: would it be useful to log the states (and timestamps) at time of debugger intialize?
 		this._connectionStateLog = [];

@@ -34,8 +34,9 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conne
 // @public
 export interface FluidClientDebuggerProps {
     container: IContainer;
-    containerData: Record<string, IFluidLoadable>;
+    containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
     containerId: string;
+    containerNickname?: string;
 }
 
 // @internal
@@ -48,8 +49,9 @@ export function getFluidClientDebuggers(): IFluidClientDebugger[];
 export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents>, IDisposable {
     readonly audience: IAudience;
     readonly container: IContainer;
-    readonly containerData: Record<string, IFluidLoadable>;
+    readonly containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
     readonly containerId: string;
+    readonly containerNickname?: string;
     dispose(): void;
     getAudienceHistory(): readonly AudienceChangeLogEntry[];
     getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];

@@ -57,7 +57,20 @@ export interface IFluidClientDebugger
 	 *
 	 * This map is assumed to be immutable. The debugger will not make any modifications to its contents.
 	 */
-	readonly containerData: Record<string, IFluidLoadable>;
+	readonly containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
+
+	/**
+	 * Optional: Nickname to assign to the debugger instance.
+	 *
+	 * @remarks
+	 *
+	 * Associated tooling may take advantage of this to differentiate between debugger instances using
+	 * semantically meaningful information.
+	 *
+	 * If not provided, the {@link FluidClientDebuggerProps.containerId} will be used for the purpose of distinguising
+	 * debugger instances.
+	 */
+	readonly containerNickname?: string;
 
 	/**
 	 * Gets the history of all ConnectionState changes since the debugger session was initialized.

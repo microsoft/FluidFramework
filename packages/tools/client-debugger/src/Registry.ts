@@ -15,21 +15,34 @@ import { IFluidClientDebugger } from "./IFluidClientDebugger";
  */
 export interface FluidClientDebuggerProps {
 	/**
-	 * The ID of the Container with which the debugger will be associated.
-	 */
-	containerId: string;
-
-	/**
 	 * The Container with which the debugger will be associated.
 	 */
 	container: IContainer;
 
 	/**
-	 * Data belonging to the Container.
+	 * The ID of {@link FluidClientDebuggerProps.container | the Container}.
+	 */
+	containerId: string;
+
+	/**
+	 * Optional: Data belonging to {@link FluidClientDebuggerProps.container | the Container}.
 	 *
 	 * @remarks The debugger will not mutate this data.
 	 */
-	containerData: Record<string, IFluidLoadable>;
+	containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
+
+	/**
+	 * Optional: Nickname for {@link FluidClientDebuggerProps.container | the Container} / debugger instance.
+	 *
+	 * @remarks
+	 *
+	 * Associated tooling may take advantage of this to differentiate between debugger instances using
+	 * semantically meaningful information.
+	 *
+	 * If not provided, the {@link FluidClientDebuggerProps.containerId} will be used for the purpose of distinguising
+	 * debugger instances.
+	 */
+	containerNickname?: string;
 }
 
 /**
@@ -43,7 +56,7 @@ export interface FluidClientDebuggerProps {
  * @public
  */
 export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): void {
-	const { containerId, container, containerData } = props;
+	const { containerId, container, containerData, containerNickname } = props;
 
 	const debuggerRegistry = getDebuggerRegistry();
 
@@ -56,7 +69,7 @@ export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): 
 	}
 	debuggerRegistry.set(
 		containerId,
-		new FluidClientDebugger(containerId, container, containerData),
+		new FluidClientDebugger(containerId, container, containerData, containerNickname),
 	);
 }
 
