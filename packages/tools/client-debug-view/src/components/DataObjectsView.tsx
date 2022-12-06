@@ -6,8 +6,7 @@ import React from "react";
 
 import { HasClientDebugger } from "../CommonProps";
 import { SharedObjectRenderOptions } from "../RendererOptions";
-import { FluidObjectView } from "./data-object-views";
-import { Accordion } from "./utility-components";
+import { DynamicDataView } from "./data-object-views";
 
 /**
  * {@link DataObjectsView} input props.
@@ -31,24 +30,14 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 
 	const { containerData } = clientDebugger;
 
-	const objects = Object.entries(containerData).map(([key, value]) => ({
-		name: key,
-		loadableObject: value,
-	}));
-
-	const children = objects.map((object) => (
-		<Accordion header={<b>{object.name}</b>}>
-			<FluidObjectView
-				fluidObjectHandle={object.loadableObject.handle}
-				renderOptions={renderOptions}
-			/>
-		</Accordion>
-	));
-
 	return (
 		<div className="data-objects-view">
 			<h3>Container Data</h3>
-			{children}
+			{containerData === undefined ? (
+				<div>No Container data provided at debugger initialization.</div>
+			) : (
+				<DynamicDataView data={containerData} renderOptions={renderOptions} />
+			)}
 		</div>
 	);
 }

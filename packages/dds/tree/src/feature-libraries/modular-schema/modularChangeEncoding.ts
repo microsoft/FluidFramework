@@ -13,7 +13,13 @@ import {
     symbolFromKey,
 } from "../../core";
 import { brand, JsonCompatibleReadOnly } from "../../util";
-import { FieldChangeMap, NodeChangeset, ValueChange } from "./fieldChangeHandler";
+import {
+    ChangesetLocalId,
+    FieldChangeMap,
+    ModularChangeset,
+    NodeChangeset,
+    ValueChange,
+} from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { getChangeHandler } from "./modularChangeFamily";
 
@@ -23,6 +29,11 @@ import { getChangeHandler } from "./modularChangeFamily";
 interface EncodedNodeChangeset {
     valueChange?: ValueChange;
     fieldChanges?: EncodedFieldChangeMap;
+}
+
+interface EncodedModularChangeset {
+    maxId?: ChangesetLocalId;
+    changes: EncodedFieldChangeMap;
 }
 
 /**
@@ -47,8 +58,18 @@ interface EncodedFieldChange {
 
 export function encodeForJsonFormat0(
     fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+    change: ModularChangeset,
+): EncodedModularChangeset & JsonCompatibleReadOnly {
+    return {
+        maxId: change.maxId,
+        changes: encodeFieldChangesForJson(fieldKinds, change.changes),
+    };
+}
+
+function encodeFieldChangesForJson(
+    fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
     change: FieldChangeMap,
-): JsonCompatibleReadOnly {
+): EncodedFieldChangeMap & JsonCompatibleReadOnly {
     const encodedFields: EncodedFieldChangeMap & JsonCompatibleReadOnly = [];
     for (const [field, fieldChange] of change) {
         const encodedChange = getChangeHandler(
@@ -76,25 +97,38 @@ export function encodeForJsonFormat0(
 function encodeNodeChangesForJson(
     fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
     change: NodeChangeset,
-): JsonCompatibleReadOnly {
-    const encodedChange: EncodedNodeChangeset = {};
+): EncodedNodeChangeset & JsonCompatibleReadOnly {
+    const encodedChange: EncodedNodeChangeset & JsonCompatibleReadOnly = {};
     if (change.valueChange !== undefined) {
         encodedChange.valueChange = change.valueChange;
     }
 
     if (change.fieldChanges !== undefined) {
-        const encodedFieldChanges = encodeForJsonFormat0(fieldKinds, change.fieldChanges);
+        const encodedFieldChanges = encodeFieldChangesForJson(fieldKinds, change.fieldChanges);
         encodedChange.fieldChanges = encodedFieldChanges as unknown as EncodedFieldChangeMap;
     }
 
-    return encodedChange as JsonCompatibleReadOnly;
+    return encodedChange;
 }
 
 export function decodeJsonFormat0(
     fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
     change: JsonCompatibleReadOnly,
+): ModularChangeset {
+    const encodedChange = change as unknown as EncodedModularChangeset;
+    const decoded: ModularChangeset = {
+        changes: decodeFieldChangesFromJson(fieldKinds, encodedChange.changes),
+    };
+    if (encodedChange.maxId !== undefined) {
+        decoded.maxId = encodedChange.maxId;
+    }
+    return decoded;
+}
+
+function decodeFieldChangesFromJson(
+    fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+    encodedChange: EncodedFieldChangeMap,
 ): FieldChangeMap {
-    const encodedChange = change as unknown as EncodedFieldChangeMap;
     const decodedFields: FieldChangeMap = new Map();
     for (const field of encodedChange) {
         const fieldChangeset = getChangeHandler(fieldKinds, field.fieldKind).encoder.decodeJson(
@@ -127,9 +161,9 @@ function decodeNodeChangesetFromJson(
     }
 
     if (encodedChange.fieldChanges !== undefined) {
-        decodedChange.fieldChanges = decodeJsonFormat0(
+        decodedChange.fieldChanges = decodeFieldChangesFromJson(
             fieldKinds,
-            encodedChange.fieldChanges as unknown as JsonCompatibleReadOnly,
+            encodedChange.fieldChanges,
         );
     }
 

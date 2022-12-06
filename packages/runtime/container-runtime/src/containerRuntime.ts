@@ -16,14 +16,12 @@ import {
     IFluidTokenProvider,
     IContainerContext,
     IDeltaManager,
-    IDeltaSender,
     IRuntime,
     ICriticalContainerError,
     AttachState,
     ILoaderOptions,
     LoaderHeader,
     ISnapshotTreeWithBlobContents,
-    IBatchMessage,
 } from "@fluidframework/container-definitions";
 import {
     IContainerRuntime,
@@ -119,7 +117,6 @@ import {
     IPendingLocalState,
     PendingStateManager,
 } from "./pendingStateManager";
-import { BatchManager, BatchMessage } from "./batchManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager";
 import { DataStores, getSummaryForDatastores } from "./dataStores";
@@ -170,6 +167,7 @@ import { BindBatchTracker } from "./batchTracker";
 import { ISerializedBaseSnapshotBlobs, SerializedSnapshotStorage } from "./serializedSnapshotStorage";
 import { ScheduleManager } from "./scheduleManager";
 import { OpDecompressor } from "./opDecompressor";
+import { BatchMessage, IBatchCheckpoint, OpCompressor, Outbox } from "./opLifecycle";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -915,12 +913,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * It is created only by summarizing container (i.e. one with clientType === "summarizer")
      */
     private readonly _summarizer?: Summarizer;
-    private readonly deltaSender: IDeltaSender;
     private readonly scheduleManager: ScheduleManager;
     private readonly blobManager: BlobManager;
     private readonly pendingStateManager: PendingStateManager;
-    private readonly pendingAttachBatch: BatchManager;
-    private readonly pendingBatch: BatchManager;
+    private readonly outbox: Outbox;
 
     private readonly garbageCollector: IGarbageCollector;
 
@@ -931,10 +927,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     /** The last message processed at the time of the last summary. */
     private messageAtLastSummary: ISummaryMetadataMessage | undefined;
-
-    private get emptyBatch() {
-        return this.pendingBatch.empty && this.pendingAttachBatch.empty;
-    }
 
     private get summarizer(): Summarizer {
         assert(this._summarizer !== undefined, 0x257 /* "This is not summarizing container" */);
@@ -1077,21 +1069,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this._flushMode = runtimeOptions.flushMode;
 
-        // Provide lower soft limit - we want to have some number of ops to get efficiency in compression
-        // & bandwidth usage, but at the same time we want to send these ops sooner, to reduce overall
-        // latency of processing a batch.
-        // So there is some ballance here, that depends on compression algorithm and its efficiency working with smaller
-        // payloads. That number represents final (compressed) bits (once compression is implemented).
-        this.pendingAttachBatch = new BatchManager(this.mc.logger, {
-            hardLimit: runtimeOptions.maxBatchSizeInBytes,
-            softLimit: 64 * 1024,
-            compressionOptions: runtimeOptions.compressionOptions
-        });
-        this.pendingBatch = new BatchManager(this.mc.logger, {
-            hardLimit: runtimeOptions.maxBatchSizeInBytes,
-            compressionOptions: runtimeOptions.compressionOptions
-        });
-
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
@@ -1194,8 +1171,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             ChildLogger.create(this.logger, "ScheduleManager"),
         );
 
-        this.deltaSender = this.deltaManager;
-
         this.pendingStateManager = new PendingStateManager(
             {
                 applyStashedOp: this.applyStashedOp.bind(this),
@@ -1208,6 +1183,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 orderSequentially: this.orderSequentially.bind(this),
             },
             pendingRuntimeState?.pending);
+
+        this.outbox = new Outbox({
+            shouldSend: () => this.canSendOps(),
+            pendingStateManager: this.pendingStateManager,
+            containerContext: this.context,
+            compressor: new OpCompressor(this.mc.logger),
+            config: {
+                compressionOptions: runtimeOptions.compressionOptions,
+                maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
+            },
+        });
 
         this.context.quorum.on("removeMember", (clientId: string) => {
             this.clearPartialChunks(clientId);
@@ -1880,93 +1866,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(this._orderSequentiallyCalls === 0,
             0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */);
 
-        this.flushBatch(this.pendingAttachBatch.popBatch());
-        this.flushBatch(this.pendingBatch.popBatch());
-
-        assert(this.emptyBatch, 0x3cf /* reentrancy */);
-    }
-
-    protected flushBatch(batch: BatchMessage[]): void {
-        const length = batch.length;
-
-        if (length > 1) {
-            batch[0].metadata = { ...batch[0].metadata, batch: true };
-            batch[length - 1].metadata = { ...batch[length - 1].metadata, batch: false };
-
-            // This assert fires for the following reason (there might be more cases like that):
-            // AgentScheduler will send ops in response to ConsensusRegisterCollection's "atomicChanged" event handler,
-            // i.e. in the middle of op processing!
-            // Sending ops while processing ops is not good idea - it's not defined when
-            // referenceSequenceNumber changes in op processing sequence (at the beginning or end of op processing),
-            // If we send ops in response to processing multiple ops, then we for sure hit this assert!
-            // Tracked via ADO #1834
-            // assert(batch[0].referenceSequenceNumber === batch[length - 1].referenceSequenceNumber,
-            //    "Batch should be generated synchronously, without processing ops in the middle!");
-        }
-
-        let clientSequenceNumber: number = -1;
-
-        // Did we disconnect in the middle of turn-based batch?
-        // If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
-        if (this.canSendOps()) {
-            if (this.context.submitBatchFn !== undefined) {
-                const batchToSend: IBatchMessage[] = [];
-
-                for (const message of batch) {
-                    batchToSend.push({ contents: message.contents, metadata: message.metadata });
-                }
-
-                // returns clientSequenceNumber of last message in a batch
-                clientSequenceNumber = this.context.submitBatchFn(batchToSend);
-            } else {
-                // Legacy path - supporting old loader versions. Can be removed only when LTS moves above
-                // version that has support for batches (submitBatchFn)
-                for (const message of batch) {
-                    // Legacy path doesn't support compressed payloads and will submit uncompressed payload anyways
-                    if (message.metadata?.compressed) {
-                        delete message.metadata.compressed;
-                    }
-
-                    clientSequenceNumber = this.context.submitFn(
-                        MessageType.Operation,
-                        message.deserializedContent,
-                        true, // batch
-                        message.metadata);
-                }
-
-                this.deltaSender.flush();
-            }
-
-            // Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
-            clientSequenceNumber -= batch.length - 1;
-            assert(clientSequenceNumber >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
-        }
-
-        // Let the PendingStateManager know that a message was submitted.
-        // In future, need to shift toward keeping batch as a whole!
-        for (const message of batch) {
-            this.pendingStateManager.onSubmitMessage(
-                message.deserializedContent.type,
-                clientSequenceNumber,
-                message.referenceSequenceNumber,
-                message.deserializedContent.contents,
-                message.localOpMetadata,
-                message.metadata,
-            );
-            clientSequenceNumber++;
-        }
-
-        this.pendingStateManager.onFlush();
+        this.outbox.flush();
+        assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
     }
 
     public orderSequentially(callback: () => void): void {
-        let checkpoint: { rollback: (action: (message: BatchMessage) => void) => void; } | undefined;
+        let checkpoint: IBatchCheckpoint | undefined;
 
         if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
             // Note: we are not touching this.pendingAttachBatch here, for two reasons:
             // 1. It would not help, as we flush attach ops as they become available.
             // 2. There is no way to undo process of data store creation.
-            checkpoint = this.pendingBatch.checkpoint();
+            checkpoint = this.outbox.checkpoint().mainBatch;
         }
         try {
             this._orderSequentiallyCalls++;
@@ -2407,7 +2318,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
         );
 
-        assert(this.emptyBatch, 0x3d1 /* Can't trigger summary in the middle of a batch */);
+        assert(this.outbox.isEmpty, 0x3d1 /* Can't trigger summary in the middle of a batch */);
 
         let latestSnapshotVersionId: string | undefined;
         if (refreshLatestAck) {
@@ -2655,7 +2566,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private hasPendingMessages() {
-        return this.pendingStateManager.hasPendingMessages() || !this.emptyBatch;
+        return this.pendingStateManager.hasPendingMessages() || !this.outbox.isEmpty;
     }
 
     private updateDocumentDirtyState(dirty: boolean) {
@@ -2752,31 +2663,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // optimization no longer makes sense (for example, batch compression may make it less appealing).
             if (this.currentlyBatching() && type === ContainerMessageType.Attach &&
                 this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true) {
-                if (!this.pendingAttachBatch.push(message)) {
-                    // BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
-                    // when queue is not empty.
-                    // Flush queue & retry. Failure on retry would mean - single message is bigger than hard limit
-                    this.flushBatch(this.pendingAttachBatch.popBatch());
-                    if (!this.pendingAttachBatch.push(message)) {
-                        throw new GenericError(
-                            "BatchTooLarge",
-                            /* error */ undefined,
-                            {
-                                opSize: (message.contents?.length) ?? 0,
-                                count: this.pendingAttachBatch.length,
-                                limit: this.pendingAttachBatch.options.hardLimit,
-                            });
-                    }
-                }
-            } else if (!this.pendingBatch.push(message)) {
-                throw new GenericError(
-                    "BatchTooLarge",
-                        /* error */ undefined,
-                    {
-                        opSize: (message.contents?.length) ?? 0,
-                        count: this.pendingBatch.length,
-                        limit: this.pendingBatch.options.hardLimit,
-                    });
+                this.outbox.submitAttach(message);
+            } else {
+                this.outbox.submit(message);
             }
 
             if (!this.currentlyBatching()) {
@@ -2788,7 +2677,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 Promise.resolve().then(() => {
                     this.flushMicroTaskExists = false;
                     this.flush();
-                });
+                }).catch((error) => { this.closeFn(error as GenericError) });
             }
         } catch (error) {
             this.closeFn(error as GenericError);
@@ -2805,7 +2694,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(this.connected, 0x133 /* "Container disconnected when trying to submit system message" */);
 
         // System message should not be sent in the middle of the batch.
-        assert(this.emptyBatch, 0x3d4 /* System op in the middle of a batch */);
+        assert(this.outbox.isEmpty, 0x3d4 /* System op in the middle of a batch */);
 
         // back-compat: ADO #1385: Make this call unconditional in the future
         return this.context.submitSummaryFn !== undefined
