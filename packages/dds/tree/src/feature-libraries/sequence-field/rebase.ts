@@ -14,6 +14,7 @@ import {
     isModify,
     isSkipMark,
     splitMarkOnInput,
+    splitMarkOnOutput,
 } from "./utils";
 import { Attach, Changeset, LineageEvent, Mark, MarkList, SizedMark } from "./format";
 import { MarkListFactory } from "./markListFactory";
@@ -62,6 +63,7 @@ function rebaseMarkList<TNodeChange>(
     // marks which should have their lineage updated if we encounter a detach.
     const lineageRequests: LineageRequest<TNodeChange>[] = [];
     let baseDetachOffset = 0;
+    let baseReattachOffset = 0;
     while (!baseIter.done || !currIter.done) {
         let currMark: Mark<TNodeChange> | undefined = currIter.peek();
         let baseMark: Mark<TNodeChange> | undefined = baseIter.peek();
@@ -69,7 +71,7 @@ function rebaseMarkList<TNodeChange>(
         if (baseMark === undefined) {
             assert(
                 currMark !== undefined,
-                "Loop condition should prevent both iterators from being empty",
+                0x461 /* Loop condition should prevent both iterators from being empty */,
             );
             if (baseDetachOffset > 0 && isAttach(currMark)) {
                 currIter.pop();
@@ -80,7 +82,7 @@ function rebaseMarkList<TNodeChange>(
         } else if (currMark === undefined) {
             assert(
                 baseMark !== undefined,
-                "Loop condition should prevent both iterators from being empty",
+                0x462 /* Loop condition should prevent both iterators from being empty */,
             );
             baseIter.pop();
             if (isDetachMark(baseMark)) {
@@ -89,9 +91,43 @@ function rebaseMarkList<TNodeChange>(
                 break;
             }
         } else if (isAttach(currMark)) {
-            if (isAttach(baseMark) && isAttachAfterBaseAttach(currMark, baseMark)) {
-                baseIter.pop();
-                factory.pushOffset(getOutputLength(baseMark));
+            if (isAttach(baseMark)) {
+                const reattachOffset = getOffsetInReattach(currMark.lineage, baseRevision);
+                if (reattachOffset !== undefined) {
+                    const offset = reattachOffset - baseReattachOffset;
+                    baseReattachOffset = reattachOffset;
+                    const reattachLength = getOutputLength(baseMark);
+
+                    if (offset >= reattachLength) {
+                        assert(
+                            offset === reattachLength,
+                            0x463 /* Reattach is shorter than recorded detach */,
+                        );
+                        baseIter.pop();
+                        factory.pushOffset(reattachLength);
+                    } else if (offset > 0) {
+                        baseIter.pop();
+                        const [baseMarkBefore, baseMarkAfter] = splitMarkOnOutput(baseMark, offset);
+                        baseIter.push(baseMarkAfter);
+                        factory.pushOffset(getOutputLength(baseMarkBefore));
+                    }
+
+                    if (offset < reattachLength) {
+                        currIter.pop();
+                        const rebasedMark = clone(currMark);
+
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        removeLineageEvent(rebasedMark, baseRevision!);
+                        factory.pushContent(rebasedMark);
+                        lineageRequests.push({ mark: rebasedMark, offset });
+                    }
+                } else if (isAttachAfterBaseAttach(currMark, baseMark)) {
+                    baseIter.pop();
+                    factory.pushOffset(getOutputLength(baseMark));
+                } else {
+                    currIter.pop();
+                    handleCurrAttach(currMark, factory, lineageRequests, baseDetachOffset);
+                }
             } else {
                 currIter.pop();
                 handleCurrAttach(currMark, factory, lineageRequests, baseDetachOffset);
@@ -107,6 +143,7 @@ function rebaseMarkList<TNodeChange>(
             // We perform any necessary splitting in order to end up with a pair of marks that do have the same length.
             currIter.pop();
             baseIter.pop();
+            baseReattachOffset = 0;
             const currMarkLength = getInputLength(currMark);
             const baseMarkLength = getInputLength(baseMark);
             if (currMarkLength < baseMarkLength) {
@@ -203,6 +240,23 @@ function isAttachAfterBaseAttach<T>(currMark: Attach<T>, baseMark: Attach<T>): b
     return false;
 }
 
+function getOffsetInReattach(
+    lineage: LineageEvent[] | undefined,
+    reattachRevision: RevisionTag | undefined,
+): number | undefined {
+    if (lineage === undefined || reattachRevision === undefined) {
+        return undefined;
+    }
+
+    for (const event of lineage) {
+        if (event.revision === reattachRevision) {
+            return event.offset;
+        }
+    }
+
+    return undefined;
+}
+
 function compareLineages(
     lineage1: LineageEvent[] | undefined,
     lineage2: LineageEvent[] | undefined,
@@ -244,5 +298,15 @@ function updateLineage<T>(requests: LineageRequest<T>[], revision: RevisionTag) 
         }
 
         mark.lineage.push({ revision, offset: request.offset });
+    }
+}
+
+function removeLineageEvent<T>(mark: Attach<T>, revisionToRemove: RevisionTag) {
+    assert(mark.lineage !== undefined, 0x464 /* Cannot remove event from empty lineage */);
+    const index = mark.lineage.findIndex((event) => event.revision === revisionToRemove);
+    assert(index >= 0, 0x465 /* Lineage event not found */);
+    mark.lineage.splice(index, 1);
+    if (mark.lineage.length === 0) {
+        delete mark.lineage;
     }
 }

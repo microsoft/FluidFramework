@@ -44,9 +44,9 @@
     "lerna": "lerna",
     "lint": "lerna run lint --no-sort --stream -- -- -- --color",
     "lint:fix": "lerna run lint:fix --no-sort --stream -- -- -- --color",
-    "policy-check": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json -D assert-short-codes",
-    "policy-check:asserts": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json -d assert-short-codes --fix",
-    "policy-check:fix": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json -D assert-short-codes --fix",
+    "policy-check": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json",
+    "policy-check:asserts": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json --handler assert-short-codes --fix",
+    "policy-check:fix": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json --excludeHandler assert-short-codes --fix",
     "post-lerna-install:default": "[ -f package-lock.json ] && mv package-lock.json lerna-package-lock.json; [ -f package-lock.json.bak ] && mv package-lock.json.bak package-lock.json; exit 0",
     "post-lerna-install:win32": "if exist package-lock.json move package-lock.json lerna-package-lock.json && if exist package-lock.json.bak move package-lock.json.bak package-lock.json",
     "postinstall:lerna": "run-script-os",
@@ -77,10 +77,8 @@
     "test:stress": "lerna run test:stress --stream --no-bail --no-sort",
     "tsc": "lerna run tsc --stream",
     "tsc:fast": "fluid-build  --root . -s tsc",
-    "tsfmt": "lerna run tsfmt:fix --no-sort --stream --no-bail",
-    "tsfmt:fix": "lerna run tsfmt:fix --no-sort --stream --no-bail",
-    "typetests:gen": "fluid-type-validator -m packages -v",
-    "typetests:prepare": "npm run typetests:gen -- -p",
+    "typetests:gen": "flub generate typetests --generate --releaseGroup client",
+    "typetests:prepare": "flub generate typetests --prepare --releaseGroup client --pin",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
     "watch:tsc": "lerna run --parallel tsc -- -- --watch",
@@ -121,8 +119,8 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluid-tools/build-cli": "^0.5.0-103719",
-    "@fluidframework/build-tools": "^0.5.0-103719",
+    "@fluid-tools/build-cli": "^0.6.0-109663",
+    "@fluidframework/build-tools": "^0.6.0-109663",
     "@fluidframework/test-tools": "^0.2.3074",
     "@microsoft/api-documenter": "^7.17.9",
     "@microsoft/api-extractor": "^7.22.2",
@@ -133,6 +131,10 @@
     "rimraf": "^2.6.2",
     "run-script-os": "^1.1.6",
     "typescript": "~4.5.5"
+  },
+  "engines": {
+    "node": ">=14.13.0",
+    "npm": "^6"
   },
   "fluidBuild": {
     "repoPackages": {
@@ -186,6 +188,12 @@
         "server/historian",
         "tools/telemetry-generator"
       ]
+    },
+    "branchReleaseTypes": {
+      "main": "minor",
+      "lts": "minor",
+      "release/**": "patch",
+      "next": "major"
     }
   }
 }

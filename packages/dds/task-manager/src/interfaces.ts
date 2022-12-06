@@ -66,4 +66,9 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
      * @param taskId - Identifier for the task
      */
     complete(taskId: string): void;
+
+    /**
+     * Check whether this client can currently volunteer for a task.
+     */
+    canVolunteer(): boolean;
 }

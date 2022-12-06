@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-nodejs-modules
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { SchemaDataAndPolicy } from "../../../schema-stored";
@@ -23,6 +22,7 @@ import {
     isPrimitive,
     getField,
     isUnwrappedNode,
+    indexSymbol,
 } from "../../../feature-libraries";
 import {
     getPrimaryField,
@@ -135,7 +135,9 @@ export function expectFieldEquals(
         );
     }
     for (let index = 0; index < field.length; index++) {
-        expectNodeEquals(schemaData, field.getNode(index), expected[index]);
+        const node = field.getNode(index);
+        assert.equal(node[indexSymbol], index);
+        expectNodeEquals(schemaData, node, expected[index]);
     }
 }
 

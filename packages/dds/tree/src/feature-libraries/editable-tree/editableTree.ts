@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-nodejs-modules
-import { fail } from "assert";
 import { assert } from "@fluidframework/common-utils";
 import {
     Value,
@@ -26,7 +24,7 @@ import {
     FieldAnchor,
     ITreeCursor,
 } from "../../core";
-import { brand } from "../../util";
+import { brand, fail } from "../../util";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import {
     AdaptingProxyHandler,
@@ -68,6 +66,12 @@ export const typeNameSymbol: unique symbol = Symbol("editable-tree:typeName");
 export const valueSymbol: unique symbol = Symbol("editable-tree:value");
 
 /**
+ * A symbol to get the index of {@link EditableTree} within its parent field
+ * in contexts where string keys are already in use for fields.
+ */
+export const indexSymbol: unique symbol = Symbol("editable-tree:index");
+
+/**
  * A symbol to get the function, which returns the field of {@link EditableTree} without unwrapping,
  * in contexts where string keys are already in use for fields.
  */
@@ -104,6 +108,16 @@ export interface EditableTree extends Iterable<EditableField> {
      * Concurrently setting the value will follow the "last-write-wins" semantics.
      */
     [valueSymbol]: Value;
+
+    /**
+     * Index of this node within its parent field.
+     */
+    // TODO: this is a temporary solution.
+    // It should be replaced with a more general location symbol like
+    // `readonly [location]: EditableTreeUpPath`
+    // to cover all the cases, where the code may be lacking information about an origin of the node.
+    // See proposed API: https://github.com/microsoft/FluidFramework/pull/12810#issuecomment-1303949419
+    readonly [indexSymbol]: number;
 
     /**
      * Stores the target for the proxy which implements reading and writing for this node.
@@ -153,10 +167,7 @@ export interface EditableTree extends Iterable<EditableField> {
      * `optional` fields will be created following the "last-write-wins" semantics,
      * and for `sequence` fields the content ends up in order of "sequenced-last" to "sequenced-first".
      */
-    [createField](
-        fieldKey: FieldKey,
-        newContent: ITreeCursor | ITreeCursor[],
-    ): EditableField | undefined;
+    [createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
 }
 
 /**
@@ -325,7 +336,7 @@ function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target i
  */
 export class NodeProxyTarget extends ProxyTarget<Anchor> {
     constructor(context: ProxyContext, cursor: ITreeSubscriptionCursor) {
-        assert(cursor.mode === CursorLocationType.Nodes, "must be in nodes mode");
+        assert(cursor.mode === CursorLocationType.Nodes, 0x44c /* must be in nodes mode */);
         super(context, cursor);
     }
 
@@ -354,11 +365,15 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
     }
 
     set value(value: Value) {
-        assert(isPrimitive(this.type), "Cannot set a value of a non-primitive field");
+        assert(isPrimitive(this.type), 0x44d /* Cannot set a value of a non-primitive field */);
         assertPrimitiveValueType(value, this.type);
         const path = this.cursor.getPath();
-        assert(path !== undefined, "Cannot locate a path to set a value of the node");
+        assert(path !== undefined, 0x44e /* Cannot locate a path to set a value of the node */);
         this.context.setNodeValue(path, value);
+    }
+
+    get currentIndex(): number {
+        return this.cursor.fieldIndex;
     }
 
     public lookupFieldKind(field: FieldKey): FieldKind {
@@ -414,25 +429,22 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
             .values();
     }
 
-    public createField(
-        fieldKey: FieldKey,
-        newContent: ITreeCursor | ITreeCursor[],
-    ): EditableField | undefined {
-        assert(!this.has(fieldKey), "The field already exists.");
+    public createField(fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void {
+        assert(!this.has(fieldKey), 0x44f /* The field already exists. */);
         const fieldKind = this.lookupFieldKind(fieldKey);
         const path = this.cursor.getPath();
         switch (fieldKind.multiplicity) {
             case Multiplicity.Optional: {
                 assert(
                     !Array.isArray(newContent),
-                    "Use single cursor to create the optional field",
+                    0x450 /* Use single cursor to create the optional field */,
                 );
-                if (this.context.setOptionalField(path, fieldKey, newContent, true))
-                    return this.proxifyField(fieldKey, false);
+                this.context.setOptionalField(path, fieldKey, newContent, true);
+                break;
             }
             case Multiplicity.Sequence: {
-                if (this.context.insertNodes(path, fieldKey, 0, newContent))
-                    return this.proxifyField(fieldKey, false);
+                this.context.insertNodes(path, fieldKey, 0, newContent);
+                break;
             }
             case Multiplicity.Value:
                 fail("It is invalid to create fields of kind `value` as they should always exist.");
@@ -449,10 +461,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
         this.cursor.exitField();
         switch (fieldKind.multiplicity) {
             case Multiplicity.Optional: {
-                // TODO: `set` an existing optional field to `undefined` is not working
-                // since currently `ModularChangeFamily` does not support invert op for optional fields
-                this.context.deleteNodes(path, fieldKey, 0, length);
-                // this.context.setOptionalField(path, fieldKey, undefined, false);
+                this.context.setOptionalField(path, fieldKey, undefined, false);
                 break;
             }
             case Multiplicity.Sequence: {
@@ -485,6 +494,8 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
                 return target.typeName;
             case valueSymbol:
                 return target.value;
+            case indexSymbol:
+                return target.currentIndex;
             case proxyTargetSymbol:
                 return target;
             case Symbol.iterator:
@@ -508,11 +519,11 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
             const fieldKind = target.lookupFieldKind(fieldKey);
             assert(
                 fieldKind.multiplicity !== Multiplicity.Sequence,
-                "Cannot set a value of a sequence field.",
+                0x451 /* Cannot set a value of a sequence field. */,
             );
             assert(
                 target.has(fieldKey),
-                "The field does not exist. Create the field first using `newFieldSymbol`.",
+                0x452 /* The field does not exist. Create the field first using `newFieldSymbol`. */,
             );
             const field = target.proxifyField(fieldKey, false);
             field.getNode(0)[valueSymbol] = value;
@@ -542,6 +553,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
             case proxyTargetSymbol:
             case typeSymbol:
             case typeNameSymbol:
+            case indexSymbol:
             case Symbol.iterator:
             case getField:
                 return true;
@@ -599,6 +611,13 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
                     value: target.value,
                     writable: false,
                 };
+            case indexSymbol:
+                return {
+                    configurable: true,
+                    enumerable: false,
+                    value: target.currentIndex,
+                    writable: false,
+                };
             case Symbol.iterator:
                 return {
                     configurable: true,
@@ -634,7 +653,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
         cursor: ITreeSubscriptionCursor,
         primaryType?: TreeSchemaIdentifier,
     ) {
-        assert(cursor.mode === CursorLocationType.Fields, "must be in fields mode");
+        assert(cursor.mode === CursorLocationType.Fields, 0x453 /* must be in fields mode */);
         super(context, cursor);
         this.fieldKey = cursor.getFieldKey();
         this.primaryType = primaryType;
@@ -685,7 +704,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
     public getNode(index: number): EditableTree {
         assert(
             keyIsValidIndex(index, this.length),
-            "A child node must exist at index to get it without unwrapping.",
+            0x454 /* A child node must exist at index to get it without unwrapping. */,
         );
         return this.proxifyNode(index, false);
     }
@@ -709,11 +728,14 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
         // Uncomment the next line and remove non-sequence related code when the editor will become more schema-aware.
         // assert(fieldKind.multiplicity === Multiplicity.Sequence, "The field must be of a sequence kind.");
         if (fieldKind.multiplicity !== Multiplicity.Sequence) {
-            assert(this.length === 0, "A non-sequence field cannot have more than one node.");
+            assert(
+                this.length === 0,
+                0x455 /* A non-sequence field cannot have more than one node. */,
+            );
         }
         assert(
             keyIsValidIndex(index, this.length + 1),
-            "Index must be less than or equal to length.",
+            0x456 /* Index must be less than or equal to length. */,
         );
         const fieldPath = this.cursor.getFieldPath();
         this.context.insertNodes(fieldPath.parent, fieldPath.field, index, newContent);
@@ -726,9 +748,9 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
         // assert(fieldKind.multiplicity === Multiplicity.Sequence, "The field must be of a sequence kind.");
         assert(
             this.length === 0 || keyIsValidIndex(index, this.length),
-            "Index must be less than length.",
+            0x457 /* Index must be less than length. */,
         );
-        if (count !== undefined) assert(count >= 0, "Count must be non-negative.");
+        if (count !== undefined) assert(count >= 0, 0x458 /* Count must be non-negative. */);
         const maxCount = this.length - index;
         const _count = count === undefined || count > maxCount ? maxCount : count;
         const fieldPath = this.cursor.getFieldPath();
@@ -784,7 +806,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
         return undefined;
     },
     set: (target: FieldProxyTarget, key: string, value: unknown, receiver: unknown): boolean => {
-        assert(keyIsValidIndex(key, target.length), "The node does not exist.");
+        assert(keyIsValidIndex(key, target.length), 0x459 /* The node does not exist. */);
         const node = target.proxifyNode(Number(key), false);
         node[valueSymbol] = value;
         return true;
