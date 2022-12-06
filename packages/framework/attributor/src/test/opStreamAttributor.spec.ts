@@ -42,4 +42,10 @@ describe("OpStreamAttributor", () => {
             { user: defaultAudience.getMember(clientId)?.user, timestamp },
         );
 	});
+
+	it("implements .type", () => {
+		const deltaManager = new MockDeltaManager();
+        const attributor = new OpStreamAttributor(deltaManager, defaultAudience);
+		assert.equal(attributor.type, "op");
+	})
 });

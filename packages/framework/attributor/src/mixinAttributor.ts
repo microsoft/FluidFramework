@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IDocumentMessage, ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { IAudience, IContainerContext, IDeltaManager } from "@fluidframework/container-definitions";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { AttributionInfo, AttributionKey, IAttributor } from "./attributor";
@@ -14,41 +14,40 @@ import { AttributorSerializer, chain, deltaEncoder, Encoder } from "./encoders";
 import { makeLZ4Encoder } from "./lz4Encoder";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { assert, bufferToString, unreachableCase } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
-
-export interface IProvideAttributorProvider {
-	IAttributorProvider: IAttributorProvider;
-}
-
-export interface IAttributorProvider extends IProvideAttributorProvider {
-	initialize(
-        storage: Pick<IDocumentStorageService, "readBlob">,
-		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		audience: IAudience,
-		summary?: ISnapshotTree
-	): Promise<IAttributor & { summarize: () => ISummaryTreeWithStats; }>;
-}
-
-export interface IAttributorWithSummarization extends IAttributor {
-    summarize: () => ISummaryTreeWithStats;
-}
 
 // The key for the attributor tree in summary.
 // Note this is currently used for the overlal attribution path as well as each attributor's blob name.
 const attributorKey = "attributor";
 
+export type NamedAttributorRegistryEntry = [string, (runtime: IContainerRuntime, entries: Iterable<[number, AttributionInfo]>) => IAttributor];
+
+export const IRuntimeAttribution: keyof IProvideRuntimeAttribution = "IRuntimeAttribution";
+
+export interface IProvideRuntimeAttribution {
+    readonly IRuntimeAttribution: IRuntimeAttribution;
+}
+
+/**
+ * Provides access to attribution information stored on the container runtime.
+ */
+export interface IRuntimeAttribution extends IProvideRuntimeAttribution {
+    getAttributionInfo(key: AttributionKey): AttributionInfo;
+}
+
 /**
  * Mixin class that adds await for DataObject to finish initialization before we proceed to summary.
  * @param registry - Registry of constructable attributor types. Keys in this registry correspond to
  * `IAttributor.type` fields.
- * @param Base - base class, inherits from FluidDataStoreRuntime
+ * @param Base - base class, inherits from FluidAttributorRuntime
  */
 export const mixinAttributor = (
-    registry: Map<string, (entries: Iterable<[number, AttributionInfo]>) => IAttributor>,
+    registry: Iterable<NamedAttributorRegistryEntry>,
     Base: typeof ContainerRuntime = ContainerRuntime,
-) => class ContainerRuntimeWithAttributor extends Base {
+) => class ContainerRuntimeWithAttributor extends Base implements IRuntimeAttribution {
+        public get IRuntimeAttribution(): IRuntimeAttribution { return this; }
+
         public static async load(
             context: IContainerContext,
             registryEntries: NamedFluidDataStoreRegistryEntries,
@@ -73,9 +72,13 @@ export const mixinAttributor = (
             const { audience, deltaManager } = context;
             assert(audience !== undefined, "Audience must exist when instantiating attribution-providing runtime");
 
+            const serializerRegistry = new Map<string, (entries: Iterable<[number, AttributionInfo]>) => IAttributor>();
+            for (const [key, factory] of registry) {
+                serializerRegistry.set(key, (entries) => factory(runtime, entries));
+            }
             runtime.encoder = chain(
                 new AttributorSerializer(
-                    registry,
+                    serializerRegistry,
                     deltaEncoder
                 ),
                 makeLZ4Encoder(),
@@ -87,7 +90,7 @@ export const mixinAttributor = (
                     const blobContents = await runtime.storage.readBlob(value.blobs[attributorKey])
                     const attributorSnapshot = bufferToString(blobContents, "utf8");
                     const attributor = runtime.encoder.decode(attributorSnapshot);
-                    // TODO: Need to distinguish between registry type (what is actually being referenced here currently)
+                    // TODO: need to distinguish between registry type (what is actually being referenced here currently)
                     // and some sort of runtime id/name for attributor (which is what should be used here)
                     runtime.attributors.set(key, attributor);
                 }));
