@@ -2290,7 +2290,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * This is called to update objects whose routes are unused. The unused objects are either deleted or marked as
      * tombstones.
-     * @param unusedRoutes - The routes that are unused in all data stores in this Container.
+     * @param unusedRoutes - The routes that are unused in all data stores and attachment blobs in this Container.
      * @param tombstone - if true, the objects corresponding to unused routes are marked tombstones. Otherwise, they
      * are deleted.
      */
@@ -2305,10 +2305,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
-        // Todo: Add tombstone for attachment blobs. For now, we ignore attachment blobs that should be tombstoned.
-        if (!tombstone) {
-            this.blobManager.deleteUnusedRoutes(blobManagerUnusedRoutes);
-        }
+        this.blobManager.updateUnusedRoutes(blobManagerUnusedRoutes, tombstone);
         this.dataStores.updateUnusedRoutes(dataStoreUnusedRoutes, tombstone);
     }
 
