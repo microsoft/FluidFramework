@@ -70,6 +70,20 @@ export class TaskList extends DataObject implements ITaskList {
     private _savedData: SharedMap | undefined;
     private _draftData: SharedMap | undefined;
 
+    private get savedData(): SharedMap {
+        if (this._savedData === undefined) {
+            throw new Error("The savedData SharedMap was not initialized correctly");
+        }
+        return this._savedData;
+    }
+
+    private get draftData(): SharedMap {
+        if (this._draftData === undefined) {
+            throw new Error("The draftData SharedMap was not initialized correctly");
+        }
+        return this._draftData;
+    }
+
     public readonly addTask = (id: string, name: string, priority: number): void => {
 
         if (this.tasks.get(id) !== undefined) {
@@ -83,17 +97,15 @@ export class TaskList extends DataObject implements ITaskList {
         // To add a task, we update the root SharedDirectory.  This way the change is propagated to all collaborators
         // and persisted.  In turn, this will trigger the "valueChanged" event and handleTaskAdded which will update
         // the this.tasks collection.
-        this.root.set(id, { id, name: nameString.handle, priority: priorityCell.handle });
 
-        this._savedData?.set(id, { id, name: nameString.handle, priority: priorityCell.handle });
-        this._draftData?.set(id, { id, name: nameString.handle, priority: priorityCell.handle });
+        this.savedData.set(id, { id, name: nameString.handle, priority: priorityCell.handle });
 
         const data: PersistedTask = {
             id,
             name: nameString.handle as IFluidHandle<SharedString>,
             priority: priorityCell.handle as IFluidHandle<ISharedCell<number>>,
         };
-        this.root.set(id, data);
+        this.draftData.set(id, data);
     };
 
     public readonly deleteTask = (id: string): void => {
@@ -115,8 +127,8 @@ export class TaskList extends DataObject implements ITaskList {
         }
 
         const [nameSharedString, prioritySharedCell] = await Promise.all([
-            taskData.name.get(),
-            taskData.priority.get(),
+            taskData.name?.get(),
+            taskData.priority?.get(),
         ]);
         // It's possible the task was deleted while getting the name/priority, in which case quietly exit.
         if (this.root.get(id) === undefined) {
@@ -187,10 +199,10 @@ export class TaskList extends DataObject implements ITaskList {
     };
 
     protected async initializingFirstTime(): Promise<void> {
-        const draftData = SharedMap.create(this.runtime);
-        const savedData = SharedMap.create(this.runtime);
-        this.root.set("draftData", draftData.handle);
-        this.root.set("savedData", savedData.handle);
+        this._draftData = SharedMap.create(this.runtime);
+        this._savedData = SharedMap.create(this.runtime);
+        this.root.set("draftData", this._draftData.handle);
+        this.root.set("savedData", this._savedData.handle);
         // TODO: Probably don't need to await this once the sync'ing flow is solid, we can just trust it to sync
         // at some point in the future.
         await this.importExternalData();
@@ -233,7 +245,6 @@ export class TaskList extends DataObject implements ITaskList {
 
         for (const [id, task] of this._draftData.entries()) {
             const typedTaskData = task as PersistedTask;
-            console.log(typedTaskData);
             const [nameSharedString, prioritySharedCell] = await Promise.all([
                 typedTaskData.name.get(),
                 typedTaskData.priority.get(),
