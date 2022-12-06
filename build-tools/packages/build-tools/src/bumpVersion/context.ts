@@ -2,14 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { PackageName } from "@rushstack/node-core-library";
 import { strict as assert } from "assert";
 
 import { commonOptions } from "../common/commonOptions";
-import { FluidRepo, IPackageManifest } from "../common/fluidRepo";
-import { getPackageManifest } from "../common/fluidUtils";
+import { FluidRepo, IFluidBuildConfig, VersionDetails } from "../common/fluidRepo";
+import { getFluidBuildConfig } from "../common/fluidUtils";
 import { Logger, defaultLogger } from "../common/logging";
 import { MonoRepo, MonoRepoKind, isMonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
+import { getVersionFromTag } from "../common/tags";
 import { Timer } from "../common/timer";
 import { GitRepo } from "./gitRepo";
 import { fatal, prereleaseSatisfies } from "./utils";
@@ -21,9 +23,9 @@ import { ReferenceVersionBag, VersionBag } from "./versionBag";
 export class Context {
     public readonly repo: FluidRepo;
     public readonly fullPackageMap: Map<string, Package>;
+    public readonly rootFluidBuildConfig: IFluidBuildConfig;
 
     private readonly timer: Timer;
-    private readonly packageManifest: IPackageManifest;
     private readonly newBranches: string[] = [];
     private readonly newTags: string[] = [];
 
@@ -40,7 +42,7 @@ export class Context {
         this.timer.time("Package scan completed");
 
         this.fullPackageMap = this.repo.createPackageMap();
-        this.packageManifest = getPackageManifest(this.repo.resolvedRoot);
+        this.rootFluidBuildConfig = getFluidBuildConfig(this.repo.resolvedRoot);
     }
 
     private reloadPackageJson() {
@@ -277,5 +279,96 @@ export class Context {
             }
         }
         return ver;
+    }
+
+    private _tags: Map<MonoRepoKind | string, string[]> = new Map();
+
+    /**
+     * Returns an array of all the git tags associated with a release group.
+     *
+     * @param releaseGroupOrPackage - The release group or independent package to get tags for.
+     * @returns An array of all all the tags for the release group or package.
+     *
+     * @internal
+     */
+    public async getTagsForReleaseGroup(
+        releaseGroupOrPackage: MonoRepoKind | string,
+    ): Promise<string[]> {
+        const prefix = isMonoRepoKind(releaseGroupOrPackage)
+            ? releaseGroupOrPackage.toLowerCase()
+            : PackageName.getUnscopedName(releaseGroupOrPackage);
+        const cacheEntry = this._tags.get(prefix);
+        if (cacheEntry !== undefined) {
+            return cacheEntry;
+        }
+
+        const tagList = await this.gitRepo.getAllTags(`${prefix}_v*`);
+        return tagList;
+    }
+
+    private _loaded = false;
+
+    /**
+     * Loads release data for all packages and release groups in the repo into memory.
+     */
+    public async loadReleases(): Promise<void> {
+        if (this._loaded) {
+            return;
+        }
+
+        const releasePromises: Promise<VersionDetails[] | undefined>[] = [];
+        for (const [kind] of this.repo.releaseGroups) {
+            releasePromises.push(this.getAllVersions(kind));
+        }
+        for (const p of this.independentPackages) {
+            releasePromises.push(this.getAllVersions(p.name));
+        }
+
+        await Promise.all(releasePromises);
+        this._loaded = true;
+    }
+
+    private _versions: Map<MonoRepoKind | string, VersionDetails[]> = new Map();
+
+    /**
+     * Gets all the versions for a release group or independent package. This function only considers the tags in the
+     * repo to determine releases and dates.
+     *
+     * @param releaseGroupOrPackage - The release group or independent package to get versions for.
+     * @returns An array of {@link ReleaseDetails} containing the version and date for each version.
+     *
+     * @internal
+     */
+    public async getAllVersions(
+        releaseGroupOrPackage: MonoRepoKind | string,
+    ): Promise<VersionDetails[] | undefined> {
+        const cacheEntry = this._versions.get(releaseGroupOrPackage);
+        if (cacheEntry !== undefined) {
+            return cacheEntry;
+        }
+
+        const versions = new Map<string, Date>();
+        const tags = await this.getTagsForReleaseGroup(releaseGroupOrPackage);
+
+        for (const tag of tags) {
+            const ver = getVersionFromTag(tag);
+            if (ver !== undefined && ver !== "" && ver !== null) {
+                // eslint-disable-next-line no-await-in-loop
+                const date = await this.gitRepo.getCommitDate(tag);
+                versions.set(ver, date);
+            }
+        }
+
+        if (versions.size === 0) {
+            return undefined;
+        }
+
+        const toReturn: VersionDetails[] = [];
+        for (const [version, date] of versions) {
+            toReturn.push({ version, date });
+        }
+
+        this._versions.set(releaseGroupOrPackage, toReturn);
+        return toReturn;
     }
 }

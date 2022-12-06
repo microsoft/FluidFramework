@@ -33,6 +33,7 @@ const RediscoverAfterTimeSinceDiscoveryMs = 5 * 60000; // 5 minute
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients.
  */
+// eslint-disable-next-line import/namespace
 export class DocumentService implements api.IDocumentService {
     private lastDiscoveredAt: number = Date.now();
     private discoverP: Promise<void> | undefined;
@@ -175,6 +176,7 @@ export class DocumentService implements api.IDocumentService {
             this.documentId,
             deltaStorageService,
             this.documentStorageService,
+            this.logger,
         );
     }
 
@@ -188,20 +190,42 @@ export class DocumentService implements api.IDocumentService {
             if (this.shouldUpdateDiscoveredSessionInfo()) {
                 await this.refreshDiscovery();
             }
-            const ordererToken = await this.tokenProvider.fetchOrdererToken(
-                this.tenantId,
-                this.documentId,
-                refreshToken,
+
+            const ordererToken = await PerformanceEvent.timedExecAsync(
+                this.logger,
+                {
+                    eventName: "GetDeltaStreamToken",
+                    docId: this.documentId,
+                    details: JSON.stringify({
+                        refreshToken,
+                    }),
+                },
+                async () => {
+                    return this.tokenProvider.fetchOrdererToken(
+                        this.tenantId,
+                        this.documentId,
+                        refreshToken,
+                    );
+                }
             );
 
-            return R11sDocumentDeltaConnection.create(
-                this.tenantId,
-                this.documentId,
-                ordererToken.jwt,
-                io,
-                client,
-                this.deltaStreamUrl,
+            return PerformanceEvent.timedExecAsync(
                 this.logger,
+                {
+                    eventName: "ConnectToDeltaStream",
+                    docId: this.documentId,
+                },
+                async () => {
+                    return R11sDocumentDeltaConnection.create(
+                        this.tenantId,
+                        this.documentId,
+                        ordererToken.jwt,
+                        io,
+                        client,
+                        this.deltaStreamUrl,
+                        this.logger,
+                    );
+                }
             );
         };
 
@@ -228,7 +252,7 @@ export class DocumentService implements api.IDocumentService {
             this.discoverP = PerformanceEvent.timedExecAsync(
                 this.logger,
                 {
-                    eventName: "refreshSessionDiscovery",
+                    eventName: "RefreshDiscovery",
                 },
                 async () => this.refreshDiscoveryCore(),
             );
@@ -243,7 +267,6 @@ export class DocumentService implements api.IDocumentService {
         this.ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
         this.deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
         this.deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl || this.ordererUrl;
-        this.lastDiscoveredAt = Date.now();
     }
 
     /**
@@ -259,6 +282,15 @@ export class DocumentService implements api.IDocumentService {
         // Disconnect event is not so reliable in local testing. To ensure re-discovery when necessary,
         // re-discover if enough time has passed since last discovery.
         const pastLastDiscoveryTimeThreshold = (now - this.lastDiscoveredAt) > RediscoverAfterTimeSinceDiscoveryMs;
+        if (pastLastDiscoveryTimeThreshold) {
+            // Reset discover promise and refresh discovery.
+            this.lastDiscoveredAt = Date.now();
+            this.discoverP = undefined;
+            this.refreshDiscovery().catch(() => {
+                // Undo discovery time set on failure, so that next check refreshes.
+                this.lastDiscoveredAt = 0;
+            });
+        }
         return pastLastDiscoveryTimeThreshold;
     }
 }

@@ -99,6 +99,9 @@ export async function createContainerAndExecute(
     const container = await loader.resolve({ url: "/fakeUrl/", headers: {
         [LoaderHeader.loadMode]: { opsBeforeReturn: "cached" } } });
 
-    return PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () =>
-        fluidFileConverter.execute(container, options));
+    return PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
+        const result = await fluidFileConverter.execute(container, options);
+        container.close();
+        return result;
+    });
 }

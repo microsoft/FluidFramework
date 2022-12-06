@@ -28,24 +28,28 @@ import {
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import { Timer } from "@fluidframework/common-utils";
 import {
-    defaultSessionExpiryDurationMs,
     GarbageCollector,
-    gcBlobPrefix,
     GCNodeType,
-    gcTreeKey,
     IGarbageCollectionRuntime,
     IGarbageCollector,
-    runSessionExpiryKey,
     IGarbageCollectorCreateParams,
+} from "../garbageCollection";
+import {
+    defaultSessionExpiryDurationMs,
+    gcBlobPrefix,
+    gcTreeKey,
+    runSessionExpiryKey,
     oneDayMs,
     runGCKey,
     runSweepKey,
     defaultInactiveTimeoutMs,
     gcTestModeKey,
     disableSweepLogKey,
-} from "../garbageCollection";
+} from "../garbageCollectionConstants";
+
 import { dataStoreAttributesBlobName, GCVersion, IContainerRuntimeMetadata, IGCMetadata } from "../summaryFormat";
 import { IGCRuntimeOptions } from "../containerRuntime";
+import { pkgVersion } from "../packageVersion";
 
 /** @see - sweepReadyUsageDetectionSetting */
 const SweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
@@ -105,7 +109,7 @@ describe("Garbage Collection Tests", () => {
             updateStateBeforeGC: async () => {},
             getGCData: async (fullGC?: boolean) => defaultGCData,
             updateUsedRoutes: (usedRoutes: string[]) => { return { totalNodeCount: 0, unusedNodeCount: 0 }; },
-            deleteUnusedRoutes: (unusedRoutes: string[]) => {},
+            updateUnusedRoutes: (unusedRoutes: string[], tombstone: boolean) => {},
             getNodeType,
             getCurrentReferenceTimestampMs: () => Date.now(),
             closeFn,
@@ -119,6 +123,10 @@ describe("Garbage Collection Tests", () => {
             baseLogger: mockLogger,
             existing: createParams.metadata !== undefined /* existing */,
             metadata: createParams.metadata,
+            createContainerMetadata: {
+                createContainerRuntimeVersion: pkgVersion,
+                createContainerTimestamp: Date.now(),
+            },
             isSummarizerClient,
             readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
             getNodePackagePath: async (nodeId: string) => testPkgPath,
@@ -612,10 +620,10 @@ describe("Garbage Collection Tests", () => {
                     assert(!mockLogger.events.some((event) => event.eventName === deleteEventName), "Should not have any delete events logged");
                 }
                 expectedEvents.push(
-                    { eventName: changedEventName, timeout, id: nodes[2], pkg: eventPkg },
-                    { eventName: loadedEventName, timeout, id: nodes[2], pkg: eventPkg },
-                    { eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg },
-                    { eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg },
+                    { eventName: changedEventName, timeout, id: nodes[2], pkg: eventPkg, createContainerRuntimeVersion: pkgVersion },
+                    { eventName: loadedEventName, timeout, id: nodes[2], pkg: eventPkg, createContainerRuntimeVersion: pkgVersion },
+                    { eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg, createContainerRuntimeVersion: pkgVersion },
+                    { eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg, createContainerRuntimeVersion: pkgVersion },
                 );
                 mockLogger.assertMatch(expectedEvents, "all events not generated as expected");
 
@@ -991,8 +999,8 @@ describe("Garbage Collection Tests", () => {
                     false /* isSummarizerClient */,
                 );
 
-                // Trigger loading GC data from base snapshot - but don't call GC since that's not what happens in real flow
-                await (garbageCollector as any).initializeBaseStateP;
+                // Trigger loading GC state from base snapshot - but don't call GC since that's not what happens in real flow
+                await (garbageCollector as any).initializeGCStateFromBaseSnapshotP;
 
                 // Update nodes and validate that all events for node 3 are logged.
                 updateAllNodes(garbageCollector);

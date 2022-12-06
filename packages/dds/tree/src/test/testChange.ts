@@ -5,7 +5,7 @@
 
 import { fail, strict as assert } from "assert";
 import { ChangeEncoder, ChangeFamily } from "../change-family";
-import { ChangeRebaser } from "../rebase";
+import { ChangeRebaser, TaggedChange } from "../rebase";
 import { AnchorSet, Delta } from "../tree";
 import { JsonCompatible, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
 import { deepFreeze } from "./utils";
@@ -69,11 +69,11 @@ function composeIntentions(base: readonly number[], extras: readonly number[]): 
     return composed;
 }
 
-function compose(changes: TestChange[], verify: boolean = true): TestChange {
+function compose(changes: TaggedChange<TestChange>[], verify: boolean = true): TestChange {
     let inputContext: number[] | undefined;
     let outputContext: number[] | undefined;
     let intentions: number[] = [];
-    for (const change of changes) {
+    for (const { change } of changes) {
         if (isNonEmptyChange(change)) {
             inputContext ??= change.inputContext;
             if (verify && outputContext !== undefined) {
@@ -203,16 +203,16 @@ export const TestChange = {
 deepFreeze(TestChange);
 
 export class TestChangeRebaser implements ChangeRebaser<TestChange> {
-    public compose(changes: TestChange[]): TestChange {
+    public compose(changes: TaggedChange<TestChange>[]): TestChange {
         return compose(changes);
     }
 
-    public invert(change: TestChange): TestChange {
-        return invert(change);
+    public invert(change: TaggedChange<TestChange>): TestChange {
+        return invert(change.change);
     }
 
-    public rebase(change: TestChange, over: TestChange): TestChange {
-        return rebase(change, over);
+    public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+        return rebase(change, over.change);
     }
 
     public rebaseAnchors(anchors: AnchorSet, over: TestChange): void {
@@ -221,7 +221,7 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 }
 
 export class UnrebasableTestChangeRebaser extends TestChangeRebaser {
-    public rebase(change: TestChange, over: TestChange): TestChange {
+    public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
         assert.fail("Unexpected call to rebase");
     }
 }

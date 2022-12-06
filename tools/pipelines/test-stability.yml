@@ -1,0 +1,168 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# test-stability pipeline (for the purpose of detecting intermittent and flaky failures)
+
+name: $(Build.BuildId)
+
+trigger: none
+pr: none
+
+parameters:
+- name: poolBuild
+  type: object
+  default: Large
+
+- name: stageNames
+  type: object
+  default:
+  - Test1
+  - Test2
+  - Test3
+  - Test4
+  - Test5
+  - Test6
+  - Test7
+  - Test8
+  - Test9
+  - Test10
+  - Test11
+  - Test12
+  - Test13
+  - Test14
+  - Test15
+  - Test16
+  - Test17
+  - Test18
+  - Test19
+  - Test20
+  - Test21
+  - Test22
+  - Test23
+  - Test24
+  - Test25
+  - Test26
+  - Test27
+  - Test28
+  - Test29
+  - Test30
+  - Test31
+  - Test32
+  - Test33
+  - Test34
+  - Test35
+  - Test36
+  - Test37
+  - Test38
+  - Test39
+  - Test40
+  - Test41
+  - Test42
+  - Test43
+  - Test44
+  - Test45
+  - Test46
+  - Test47
+  - Test48
+  - Test49
+  - Test50
+  - Test51
+  - Test52
+  - Test53
+  - Test54
+  - Test55
+  - Test56
+  - Test57
+  - Test58
+  - Test59
+  - Test60
+  - Test61
+  - Test62
+  - Test63
+  - Test64
+  - Test65
+  - Test66
+  - Test67
+  - Test68
+  - Test69
+  - Test70
+  - Test71
+  - Test72
+  - Test73
+  - Test74
+  - Test75
+  - Test76
+  - Test77
+  - Test78
+  - Test79
+  - Test80
+  - Test81
+  - Test82
+  - Test83
+  - Test84
+  - Test85
+  - Test86
+  - Test87
+  - Test88
+  - Test89
+  - Test90
+  - Test91
+  - Test92
+  - Test93
+  - Test94
+  - Test95
+  - Test96
+  - Test97
+  - Test98
+  - Test99
+  - Test100
+
+- name: taskBuild
+  type: string
+  default: ci:build
+
+- name: taskTest
+  type: object
+  default:
+  - ci:test:mocha
+  - ci:test:jest
+  - ci:test:realsvc:local
+  - ci:test:realsvc:tinylicious
+  - ci:test:stress:tinylicious
+  - test:copyresults
+
+- name: checkoutSubmodules
+  type: boolean
+  default: true
+
+schedules:
+  - cron: "00 03 * * SUN"
+    displayName: Scheduled Tests weekly at Saturday night
+    branches:
+      include:
+      - main
+      - next
+    always: true
+
+variables:
+- group: prague-key-vault
+  # We use 'chalk' to colorize output, which auto-detects color support in the
+  # running terminal.  The log output shown in Azure DevOps job runs only has
+  # basic ANSI color support though, so force that in the pipeline
+- name: FORCE_COLOR
+  value: 1
+
+stages:
+  - ${{ each stageName in parameters.stageNames }}:
+    - stage:
+      displayName: ${{ stageName }}
+      dependsOn: []
+      jobs:
+      - template: templates/include-test-stability.yml
+        parameters:
+          buildDirectory: .
+          poolBuild: ${{ parameters.poolBuild }}
+          checkoutSubmodules: ${{ parameters.checkoutSubmodules }}
+          timeoutInMinutes: 360
+          taskBuild : ${{ parameters.taskBuild }}
+          taskTest: ${{ parameters.taskTest }}

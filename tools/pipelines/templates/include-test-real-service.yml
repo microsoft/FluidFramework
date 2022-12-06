@@ -40,10 +40,6 @@ parameters:
   type: string
   default: null
 
-- name: extraDependencies
-  type: string
-  default: null
-
 - name: downloadAzureTestArtifacts
   type: boolean
   default: false
@@ -54,11 +50,20 @@ parameters:
   type: string
   default: ""
 
+- name: condition
+  type: string
+  default: true
+
+- name: loggerPackage
+  type: string
+  default: '@ff-internal/aria-logger'
+
 jobs:
   - ${{ each variant in parameters.splitTestVariants }}:
     - job:
       displayName: Run ${{ variant.name }}
       pool: ${{ parameters.poolBuild }}
+      condition: ${{ parameters.condition }}
       timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
       variables:
       # We use 'chalk' to colorize output, which auto-detects color support in the
@@ -69,7 +74,7 @@ jobs:
       - name: testPackageDir
         value: '${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}'
       - name: testPackageFilePattern
-        value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
+        value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-[0-9]*.tgz
       - name: testPackagePathPattern
         value: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
       - name: skipComponentGovernanceDetection
@@ -80,6 +85,12 @@ jobs:
       - ${{ if not(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}:
         - name: feed
           value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+      - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
+        - name: devFeed
+          value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
+      - ${{ if not(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}:
+        - name: devFeed
+          value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
       - ${{ if eq(parameters.downloadAzureTestArtifacts, true) }}:
         - name: artifactPipeline
           value: Build - azure
@@ -134,7 +145,6 @@ jobs:
               continueOnError=${{ parameters.continueOnError }}
               variant.flag=${{ variant.flags }}
               testFileTarName=${{ parameters.testFileTarName }}
-              extraDependencies=${{ parameters.extraDependencies }}
             "
 
       # Install
@@ -181,7 +191,7 @@ jobs:
 
             echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
             echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
-            echo "@fluid-internal:registry=${{ variables.feed }}" >> ./.npmrc
+            echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
             echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
             echo "@microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
             echo "always-auth=true" >> ./.npmrc
@@ -191,7 +201,8 @@ jobs:
               echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls ${{ variables.testPackagePathPattern }}`"
             else
               ls -1 ${{ variables.testPackagePathPattern }}
-              echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more then one found"
+              echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more than one found"
+              exit -1
             fi
 
       # Auth to internal feed
@@ -213,7 +224,7 @@ jobs:
         inputs:
           command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}
-          customCommand: 'install $(Initialize.testPackageTgz) @ff-internal/aria-logger'
+          customCommand: 'install $(Initialize.testPackageTgz) ${{ parameters.loggerPackage }}'
           customRegistry: 'useNpmrc'
 
       # Download Test Files & Install Extra Dependencies
@@ -243,17 +254,30 @@ jobs:
             script: |
               mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
               tar -xvf $(Pipeline.Workspace)/test-files/${{ parameters.testFileTarName }}.test-files.tar -C $(Pipeline.Workspace)/test-files
-              mv $(Pipeline.Workspace)/test-files/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
+              mv $(Pipeline.Workspace)/test-files/dist/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
-        - ${{ if ne(parameters.extraDependencies, 'null') }}:
-          # Install extra dependencies for test files
-          - task: Npm@1
-            displayName: 'npm install - extra dependencies for test files'
-            inputs:
-              command: 'custom'
-              workingDir: ${{ parameters.testWorkspace }}
-              customCommand: 'install ${{ parameters.extraDependencies }}'
-              customRegistry: 'useNpmrc'
+        - task: Bash@3
+          displayName: Copy devDependencies
+          inputs:
+            workingDir: ${{ parameters.testWorkspace }}
+            targetType: 'inline'
+            script: |
+              testPkgJsonPath=${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/package.json
+              pkgJsonPath=${{ parameters.testWorkspace }}/package.json
+              node -e "
+                const { devDependencies } = require('$testPkgJsonPath');
+                const pkg = require('$pkgJsonPath');
+                pkg.devDependencies=devDependencies;
+                require('fs').writeFileSync('$pkgJsonPath', JSON.stringify(pkg));
+              "
+
+        - task: Npm@1
+          displayName: 'npm install - extra dependencies for test files'
+          inputs:
+            command: 'custom'
+            workingDir: ${{ parameters.testWorkspace }}
+            customCommand: 'install'
+            customRegistry: 'useNpmrc'
 
       # run the test
       - task: Npm@1

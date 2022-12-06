@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { Jsonable } from "@fluidframework/datastore-definitions";
 import {
     LocalFieldKey,
     ITreeCursor,
@@ -14,7 +13,7 @@ import {
     mapCursorFields,
     ITreeCursorSynchronous,
 } from "../../core";
-import { JsonCompatible, JsonCompatibleObject } from "../../util";
+import { JsonCompatible } from "../../util";
 import { CursorAdapter, isPrimitiveValue, singleStackTreeCursor } from "../../feature-libraries";
 import {
     jsonArray,
@@ -68,12 +67,22 @@ const adapter: CursorAdapter<JsonCompatible> = {
         }
     },
     getFieldFromNode: (node: JsonCompatible, key: FieldKey): readonly JsonCompatible[] => {
+        // Object.prototype.hasOwnProperty can return true for strings (ex: with key "0"), so we have to filter them out.
+        // Rather than just special casing strings, we can handle them with an early return for all primitives.
+        if (typeof node !== "object") {
+            return [];
+        }
+
+        if (node === null) {
+            return [];
+        }
+
         if (Array.isArray(node)) {
             return key === EmptyKey ? node : [];
         }
 
         if (Object.prototype.hasOwnProperty.call(node, key)) {
-            const field = (node as JsonCompatibleObject)[key as LocalFieldKey];
+            const field = node[key as LocalFieldKey];
             assert(
                 field !== undefined,
                 0x41e /* explicit undefined fields should not be preserved in JSON */,
@@ -90,8 +99,8 @@ const adapter: CursorAdapter<JsonCompatible> = {
  *
  * @returns an {@link ITreeCursorSynchronous} for a single {@link JsonCompatible}.
  */
-export function singleJsonCursor<T>(root: Jsonable<T>): ITreeCursorSynchronous {
-    return singleStackTreeCursor(root as JsonCompatible, adapter);
+export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous {
+    return singleStackTreeCursor(root, adapter);
 }
 
 /**
@@ -118,7 +127,13 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
             mapCursorFields(reader, (cursor) => {
                 const key = cursor.getFieldKey() as LocalFieldKey;
                 assert(cursor.firstNode(), 0x420 /* expected non-empty field */);
-                result[key] = cursorToJsonObject(reader);
+                // like `result[key] = cursorToJsonObject(reader);` except safe when keyString == "__proto__".
+                Object.defineProperty(result, key, {
+                    enumerable: true,
+                    configurable: true,
+                    writable: true,
+                    value: cursorToJsonObject(reader),
+                });
                 assert(!cursor.nextNode(), 0x421 /* expected exactly one node */);
             });
             return result;

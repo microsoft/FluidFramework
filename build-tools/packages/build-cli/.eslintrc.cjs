@@ -16,6 +16,9 @@ module.exports = {
         "@typescript-eslint/no-unused-vars": "warn",
         "unused-imports/no-unused-imports": "warn",
 
+        // This package is exclusively used in a Node.js context
+        "import/no-nodejs-modules": "off",
+
         // oclif uses default exports for commands
         "import/no-default-export": "off",
 

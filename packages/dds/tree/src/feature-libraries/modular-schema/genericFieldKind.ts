@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Delta } from "../../core";
+import { Delta, makeAnonChange, tagChange, TaggedChange } from "../../core";
 import { brand, JsonCompatibleReadOnly } from "../../util";
 import {
     FieldChangeHandler,
@@ -14,6 +14,7 @@ import {
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
+    IdAllocator,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
 
@@ -56,7 +57,7 @@ export type EncodedGenericChangeset = EncodedGenericChange[];
 export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
     rebaser: {
         compose: (
-            changes: GenericChangeset[],
+            changes: TaggedChange<GenericChangeset>[],
             composeChildren: NodeChangeComposer,
         ): GenericChangeset => {
             if (changes.length === 0) {
@@ -65,26 +66,39 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
             const composed: GenericChangeset = [];
             for (const change of changes) {
                 let listIndex = 0;
-                for (const { index, nodeChange } of change) {
+                for (const { index, nodeChange } of change.change) {
+                    const taggedChange = tagChange(nodeChange, change.revision);
                     while (listIndex < composed.length && composed[listIndex].index < index) {
                         listIndex += 1;
                     }
                     const match: GenericChange | undefined = composed[listIndex];
                     if (match === undefined) {
-                        composed.push({ index, nodeChange });
+                        composed.push({ index, nodeChange: composeChildren([taggedChange]) });
                     } else if (match.index > index) {
-                        composed.splice(listIndex, 0, { index, nodeChange });
+                        composed.splice(listIndex, 0, {
+                            index,
+                            nodeChange: composeChildren([taggedChange]),
+                        });
                     } else {
                         composed.splice(listIndex, 1, {
                             index,
-                            nodeChange: composeChildren([match.nodeChange, nodeChange]),
+                            nodeChange: composeChildren([
+                                // `match.nodeChange` was the result of a call to `composeChildren`,
+                                // so it does not need a revision tag.
+                                // See the contract of `FieldChangeHandler.compose`.
+                                makeAnonChange(match.nodeChange),
+                                taggedChange,
+                            ]),
                         });
                     }
                 }
             }
             return composed;
         },
-        invert: (change: GenericChangeset, invertChild: NodeChangeInverter): GenericChangeset => {
+        invert: (
+            { change }: TaggedChange<GenericChangeset>,
+            invertChild: NodeChangeInverter,
+        ): GenericChangeset => {
             return change.map(
                 ({ index, nodeChange }: GenericChange): GenericChange => ({
                     index,
@@ -94,7 +108,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
         },
         rebase: (
             change: GenericChangeset,
-            over: GenericChangeset,
+            { change: over }: TaggedChange<GenericChangeset>,
             rebaseChild: NodeChangeRebaser,
         ): GenericChangeset => {
             const rebased: GenericChangeset = [];
@@ -160,7 +174,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
                 delta.push(offset);
                 nodeIndex = index;
             }
-            delta.push(deltaFromChild(nodeChange));
+            delta.push(deltaFromChild(nodeChange, index));
             nodeIndex += 1;
         }
         return delta;
@@ -189,9 +203,10 @@ export function convertGenericChange<TChange>(
     changeset: GenericChangeset,
     target: FieldChangeHandler<TChange>,
     composeChild: NodeChangeComposer,
+    genId: IdAllocator,
 ): TChange {
-    const perIndex: TChange[] = changeset.map(({ index, nodeChange }) =>
-        target.editor.buildChildChange(index, nodeChange),
+    const perIndex: TaggedChange<TChange>[] = changeset.map(({ index, nodeChange }) =>
+        makeAnonChange(target.editor.buildChildChange(index, nodeChange)),
     );
-    return target.rebaser.compose(perIndex, composeChild);
+    return target.rebaser.compose(perIndex, composeChild, genId);
 }

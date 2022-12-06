@@ -8,16 +8,29 @@ import {
     IEditableForest,
     lookupGlobalFieldSchema,
     rootFieldKey,
-    symbolFromKey,
-    mapCursorField,
     moveToDetachedField,
+    FieldAnchor,
+    Anchor,
+    Value,
+    ITreeCursor,
+    IForestSubscription,
+    TransactionResult,
+    Checkout as TransactionCheckout,
+    UpPath,
+    FieldKey,
+    SimpleObservingDependent,
+    InvalidationToken,
+    Delta,
+    Dependent,
+    afterChangeToken,
 } from "../../core";
-import { EditableField, proxifyField, ProxyTarget, UnwrappedEditableField } from "./editableTree";
+import { DefaultChangeset, DefaultEditBuilder } from "../defaultChangeFamily";
+import { runSynchronousTransaction } from "../defaultTransaction";
+import { ProxyTarget, EditableField, proxifyField, UnwrappedEditableField } from "./editableTree";
 
 /**
  * A common context of a "forest" of EditableTrees.
  * It handles group operations like transforming cursors into anchors for edits.
- * TODO: add test coverage.
  */
 export interface EditableTreeContext {
     /**
@@ -52,16 +65,58 @@ export interface EditableTreeContext {
 
     /**
      * Call to free resources.
-     * EditableTrees created in this context are invalid to use after this.
+     * It is invalid to use the context after this.
      */
     free(): void;
+
+    /**
+     * Release any cursors and anchors held by EditableTrees created in this context.
+     * The EditableTrees are invalid to use after this, but the context may still be used
+     * to create new trees starting from the root.
+     */
+    clear(): void;
+
+    /**
+     * Attaches the handler to be called after a transaction, initiated by
+     * either this context or any other context or client using this document,
+     * is committed successfully.
+     */
+    attachAfterChangeHandler(afterChangeHandler: (context: EditableTreeContext) => void): void;
 }
 
+/**
+ * Implementation of `EditableTreeContext`.
+ *
+ * `transactionCheckout` is required to edit the EditableTrees.
+ */
 export class ProxyContext implements EditableTreeContext {
-    public readonly withCursors: Set<ProxyTarget> = new Set();
-    public readonly withAnchors: Set<ProxyTarget> = new Set();
+    public readonly withCursors: Set<ProxyTarget<Anchor | FieldAnchor>> = new Set();
+    public readonly withAnchors: Set<ProxyTarget<Anchor | FieldAnchor>> = new Set();
+    private readonly observer: Dependent;
+    private readonly afterChangeHandlers: Set<(context: EditableTreeContext) => void> = new Set();
 
-    constructor(public readonly forest: IEditableForest) {}
+    /**
+     * @param forest - the Forest
+     * @param transactionCheckout - the Checkout applied to a transaction, not required in read-only usecases.
+     */
+    constructor(
+        public readonly forest: IEditableForest,
+        private readonly transactionCheckout?: TransactionCheckout<
+            DefaultEditBuilder,
+            DefaultChangeset
+        >,
+    ) {
+        this.observer = new SimpleObservingDependent(
+            (token?: InvalidationToken, delta?: Delta.Root): void => {
+                if (token === afterChangeToken) {
+                    this.handleAfterChange();
+                } else {
+                    this.prepareForEdit();
+                }
+            },
+        );
+        this.forest.registerDependent(this.observer);
+    }
 
     public prepareForEdit(): void {
         for (const target of this.withCursors) {
@@ -71,6 +126,11 @@ export class ProxyContext implements EditableTreeContext {
     }
 
     public free(): void {
+        this.clear();
+        this.forest.removeDependent(this.observer);
+    }
+
+    public clear(): void {
         for (const target of this.withCursors) {
             target.free();
         }
@@ -82,19 +142,103 @@ export class ProxyContext implements EditableTreeContext {
     }
 
     public get unwrappedRoot(): UnwrappedEditableField {
-        return this.getRoot(true) as UnwrappedEditableField;
+        return this.getRoot(true);
     }
 
     public get root(): EditableField {
-        return this.getRoot(false) as EditableField;
+        return this.getRoot(false);
     }
 
-    private getRoot(unwrap: boolean) {
+    private getRoot(unwrap: false): EditableField;
+    private getRoot(unwrap: true): UnwrappedEditableField;
+    private getRoot(unwrap: boolean): UnwrappedEditableField | EditableField {
         const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
         const cursor = this.forest.allocateCursor();
         moveToDetachedField(this.forest, cursor);
-        const targets: ProxyTarget[] = mapCursorField(cursor, (c) => new ProxyTarget(this, c));
+        const proxifiedField = proxifyField(this, rootSchema, cursor, unwrap);
         cursor.free();
-        return proxifyField(rootSchema, symbolFromKey(rootFieldKey), targets, unwrap);
+        return proxifiedField;
     }
+
+    public attachAfterChangeHandler(
+        afterChangeHandler: (context: EditableTreeContext) => void,
+    ): void {
+        this.afterChangeHandlers.add(afterChangeHandler);
+    }
+
+    private handleAfterChange(): void {
+        for (const afterChangeHandler of this.afterChangeHandlers) {
+            afterChangeHandler(this);
+        }
+    }
+
+    public setNodeValue(path: UpPath, value: Value): boolean {
+        return this.runTransaction((editor) => editor.setValue(path, value));
+    }
+
+    public setOptionalField(
+        path: UpPath | undefined,
+        fieldKey: FieldKey,
+        newContent: ITreeCursor | undefined,
+        wasEmpty: boolean,
+    ): boolean {
+        return this.runTransaction((editor) => {
+            const field = editor.optionalField(path, fieldKey);
+            field.set(newContent, wasEmpty);
+        });
+    }
+
+    public insertNodes(
+        path: UpPath | undefined,
+        fieldKey: FieldKey,
+        index: number,
+        newContent: ITreeCursor | ITreeCursor[],
+    ): boolean {
+        return this.runTransaction((editor) => {
+            const field = editor.sequenceField(path, fieldKey);
+            field.insert(index, newContent);
+        });
+    }
+
+    public deleteNodes(
+        path: UpPath | undefined,
+        fieldKey: FieldKey,
+        index: number,
+        count: number,
+    ): boolean {
+        return this.runTransaction((editor) => {
+            const field = editor.sequenceField(path, fieldKey);
+            field.delete(index, count);
+        });
+    }
+
+    private runTransaction(transaction: (editor: DefaultEditBuilder) => void): boolean {
+        assert(
+            this.transactionCheckout !== undefined,
+            0x45a /* `transactionCheckout` is required to edit the EditableTree */,
+        );
+        const result = runSynchronousTransaction(
+            this.transactionCheckout,
+            (forest: IForestSubscription, editor: DefaultEditBuilder) => {
+                transaction(editor);
+                return TransactionResult.Apply;
+            },
+        );
+        return result === TransactionResult.Apply;
+    }
+}
+
+/**
+ * A simple API for a Forest to interact with the tree.
+ *
+ * @param forest - the Forest
+ * @param transactionCheckout - the Checkout applied to a transaction, not required in read-only usecases.
+ * @returns {@link EditableTreeContext} which is used to manage the cursors and anchors within the EditableTrees:
+ * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
+ */
+export function getEditableTreeContext(
+    forest: IEditableForest,
+    transactionCheckout?: TransactionCheckout<DefaultEditBuilder, DefaultChangeset>,
+): EditableTreeContext {
+    return new ProxyContext(forest, transactionCheckout);
 }

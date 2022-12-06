@@ -4,7 +4,7 @@
  */
 
 import * as path from "path";
-import { existsSync, mkdirSync, readFileSync } from "fs";
+import { mkdirSync, readFileSync } from "fs";
 import { strict as assert } from "assert";
 import {
     AcceptanceCondition,
@@ -416,9 +416,7 @@ const describeFuzz = createFuzzDescribe({ defaultTestCount: 10 });
 
 describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
     before(() => {
-        if (!existsSync(directory)) {
-            mkdirSync(directory);
-        }
+        mkdirSync(directory, { recursive: true });
     });
 
     function runTests(seed: number, generator: Generator<Operation, FuzzTestState>, loggingInfo?: LoggingInfo): void {
