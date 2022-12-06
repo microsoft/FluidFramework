@@ -17,6 +17,7 @@ import {
 import {
      LocalReferenceCollection,
 } from "./localReference";
+import { OpAttribution } from "./mergeTree";
 import {
     IMergeTreeDeltaOpArgs,
 } from "./mergeTreeDeltaCallback";
@@ -217,7 +218,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
      * E.g. if the segment group is not first in the pending queue, or
      * an inserted segment does not have unassigned sequence number.
      */
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, attribution?: unknown): boolean;
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, attribution?: OpAttribution): boolean;
 }
 
 export interface IMarkerModifiedAction {

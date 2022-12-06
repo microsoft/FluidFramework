@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { AttributionInfo, Attributor, IAttributor } from "../attributor";
+import { AttributionInfo, Attributor as BaseAttributor, IAttributor } from "../attributor";
 import { AttributorSerializer, chain, Encoder, SerializedAttributor } from "../encoders";
 
 function makeNoopEncoder<T>(): Encoder<T, T> {
@@ -13,7 +13,12 @@ function makeNoopEncoder<T>(): Encoder<T, T> {
     };
 }
 
+class Attributor extends BaseAttributor {
+    public get type(): string { return "basic"; };
+}
+
 describe("AttributorSerializer", () => {
+    const registry = new Map([["basic", (entries) => new Attributor(entries)]]);
     it("uses its timestamp encoder", () => {
         it("on encode", () => {
             const attributor = new Attributor([
@@ -21,7 +26,7 @@ describe("AttributorSerializer", () => {
                 [2, { user: { id: "a" }, timestamp: 6001 }],
             ]);
             const calls: any[] = [];
-            const serializer = new AttributorSerializer((entries) => new Attributor(entries), {
+            const serializer = new AttributorSerializer(registry, {
                 encode: (x) => {
                     calls.push(x);
                     return x;
@@ -36,7 +41,7 @@ describe("AttributorSerializer", () => {
 
         it("on decode", () => {
             const calls: any[] = [];
-            const serializer = new AttributorSerializer((entries) => new Attributor(entries), {
+            const serializer = new AttributorSerializer(registry, {
                 encode: (x) => x,
                 decode: (x) => {
                     calls.push(x);
@@ -47,7 +52,8 @@ describe("AttributorSerializer", () => {
                 interner: ["a"],
                 keys: [1, 2],
                 timestamps: [501, 604],
-                attributionRefs: [0, 0] as any[]
+                attributionRefs: [0, 0] as any[],
+                type: "basic",
             };
 
             assert.equal(calls.length, 0);
@@ -88,11 +94,14 @@ describe("AttributorSerializer", () => {
                 const calls: any[] = [];
                 let retVal: IAttributor | undefined;
                 const serializer = new AttributorSerializer(
-                    (providedEntries) => {
-                        calls.push(providedEntries);
-                        retVal = new Attributor(providedEntries);
-                        return retVal;
-                    },
+                    new Map([[
+                        "basic",
+                        (providedEntries) => {
+                            calls.push(providedEntries);
+                            retVal = new Attributor(providedEntries);
+                            return retVal;
+                        },
+                    ]]),
                     makeNoopEncoder(),
                 );
                 const attributor = new Attributor(entries);

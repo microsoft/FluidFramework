@@ -21,6 +21,12 @@ export interface AttributionInfo {
 	timestamp: number;
 }
 
+export interface AttributionKey {
+	type: string;
+
+	key: number | string;
+}
+
 /**
  * Provides lookup between attribution keys and their associated attribution information.
  */
@@ -30,18 +36,24 @@ export interface IAttributor {
 	 * @param key - Attribution key to look up.
 	 * @throws If no attribution information is recorded for that key.
 	 */
-	getAttributionInfo(key: number): AttributionInfo;
+	getAttributionInfo(key: number | string): AttributionInfo;
 
 	/**
 	 * @param key - Attribution key to look up.
 	 * @returns the attribution information associated with the provided key, or undefined if no information exists.
 	 */
-	tryGetAttributionInfo(key: number): AttributionInfo | undefined;
+	tryGetAttributionInfo(key: number | string): AttributionInfo | undefined;
 
 	/**
 	 * @returns an iterable of (attribution key, attribution info) pairs for each stored key.
 	 */
-	entries(): IterableIterator<[number, AttributionInfo]>;
+	entries(): IterableIterator<[number | string, AttributionInfo]>;
+
+	/**
+	 * Runtime type information of the attributor. This is required for the runtime to reconstruct custom attributors
+	 * from snapshots.
+	 */
+	readonly type: string;
 
 	// TODO:
 	// - GC
@@ -50,14 +62,14 @@ export interface IAttributor {
 /**
  * {@inheritdoc IAttributor}
  */
-export class Attributor implements IAttributor {
-	protected readonly keyToInfo: Map<number, AttributionInfo>;
+export abstract class Attributor implements IAttributor {
+	protected readonly keyToInfo: Map<number | string, AttributionInfo>;
 
 	/**
 	 * @param initialEntries - Any entries which should be populated on instantiation.
 	 */
 	constructor(
-		initialEntries?: Iterable<[number, AttributionInfo]>,
+		initialEntries?: Iterable<[number | string, AttributionInfo]>,
 	) {
 		this.keyToInfo = new Map(initialEntries ?? []);
 	}
@@ -65,7 +77,7 @@ export class Attributor implements IAttributor {
 	/**
 	 * {@inheritdoc IAttributor.getAttributionInfo}
 	 */
-	public getAttributionInfo(key: number): AttributionInfo {
+	public getAttributionInfo(key: number | string): AttributionInfo {
 		const result = this.tryGetAttributionInfo(key);
 		if (!result) {
 			throw new UsageError(`Requested attribution information for unstored key: ${key}.`);
@@ -76,16 +88,21 @@ export class Attributor implements IAttributor {
 	/**
 	 * {@inheritdoc IAttributor.tryGetAttributionInfo}
 	 */
-	public tryGetAttributionInfo(key: number): AttributionInfo | undefined {
+	public tryGetAttributionInfo(key: number | string): AttributionInfo | undefined {
 		return this.keyToInfo.get(key);
 	}
 
 	/**
 	 * {@inheritdoc IAttributor.entries}
 	 */
-	public entries(): IterableIterator<[number, AttributionInfo]> {
+	public entries(): IterableIterator<[number | string, AttributionInfo]> {
 		return this.keyToInfo.entries();
 	}
+
+	/**
+	 * {@inheritdoc IAttributor.type}
+	 */
+	abstract get type(): string;
 }
 
 /**
@@ -106,4 +123,6 @@ export class OpStreamAttributor extends Attributor implements IAttributor {
 			this.keyToInfo.set(message.sequenceNumber, { user: client.user, timestamp: message.timestamp });
 		});
 	}
+
+	public get type(): string { return "op"; }
 }

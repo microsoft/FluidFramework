@@ -4,12 +4,18 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { UsageError } from "@fluidframework/container-utils";
 import { RedBlackTree } from "./collections";
 import { compareNumbers, ISegment } from "./mergeTreeNodes";
 
-export interface SerializedAttributionCollection {
+export interface SerializedAttributionChannel {
     keys: unknown[];
     posBreakpoints: number[];
+}
+
+export interface SerializedAttributionCollection extends SerializedAttributionChannel {
+    /** Channel-specific attribution data. */
+    channels?: { [channelName: string]: SerializedAttributionChannel };
     /* Total length; only necessary for validation */
     length: number;
 }
@@ -17,11 +23,13 @@ export interface SerializedAttributionCollection {
 export class AttributionCollection<T> {
     private readonly entries: RedBlackTree<number, T> = new RedBlackTree(compareNumbers);
 
+    // Lazily-initialized to 
+    private channels?: Map<string, RedBlackTree<number, T>>;
     public constructor(baseEntry: T, private _length: number) {
         this.entries.put(0, baseEntry);
     }
 
-    public getAtOffset(offset: number): T {
+    public getAtOffset(offset: number, channel?: string): T {
         assert(offset >= 0 && offset < this._length, 0x443 /* Requested offset should be valid */);
         const node = this.entries.floor(offset);
         assert(node !== undefined, 0x444 /* Collection should have at least one entry */);
@@ -60,8 +68,12 @@ export class AttributionCollection<T> {
         this._length += other.length;
     }
 
-    public getAll(): { offset: number; key: T; }[] {
+    public getAll(channel?: string): { offset: number; key: T; }[] {
         const results: { offset: number; key: T; }[] = [];
+        const tree = channel ? this.channels?.get(channel) : this.entries;
+        if (!tree) {
+            throw new UsageError(`No `)
+        }
         this.entries.map(({ key, data }) => {
             results.push({ offset: key, key: data });
             return true;
@@ -76,6 +88,17 @@ export class AttributionCollection<T> {
             return true;
         });
         return copy;
+    }
+
+    public addOrModifyChannel(channel: string, entry: T): void {
+        // TODO: Test all of this added code
+        if (!this.channels) {
+            this.channels = new Map();
+        }
+
+        const entries = new RedBlackTree<number, T>(compareNumbers);
+        entries.put(0, entry);
+        this.channels.set(channel, entries);
     }
 
     /**

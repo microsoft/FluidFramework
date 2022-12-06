@@ -46,21 +46,23 @@ export type IAttributorSerializer = Encoder<IAttributor, SerializedAttributor>;
  * @internal
  */
 export interface SerializedAttributor {
+	/** Serialized type information */
+	type: string;
 	interner: readonly string[]; /* result of calling getSerializable() on a StringInterner */
-	keys: number[];
+	keys: (number | string)[];
 	timestamps: number[];
 	attributionRefs: InternedStringId[];
 }
 
 export class AttributorSerializer implements IAttributorSerializer {
 	constructor(
-		private readonly makeAttributor: (entries: Iterable<[number, AttributionInfo]>) => IAttributor,
+		private readonly registry: Map<string, (entries: Iterable<[number, AttributionInfo]>) => IAttributor>,
 		private readonly timestampEncoder: TimestampEncoder,
 	) { }
 
 	public encode(attributor: IAttributor): SerializedAttributor {
 		const interner = new MutableStringInterner();
-		const keys: number[] = [];
+		const keys: (number | string)[] = [];
 		const timestamps: number[] = [];
 		const attributionRefs: InternedStringId[] = [];
 		for (const [key, { user, timestamp }] of attributor.entries()) {
@@ -71,6 +73,7 @@ export class AttributorSerializer implements IAttributorSerializer {
 		}
 
 		const serialized: SerializedAttributor = {
+			type: attributor.type,
 			interner: interner.getSerializable(),
 			keys,
 			timestamps: this.timestampEncoder.encode(timestamps),
@@ -82,10 +85,12 @@ export class AttributorSerializer implements IAttributorSerializer {
 
 	public decode(encoded: SerializedAttributor): IAttributor {
 		const interner = new MutableStringInterner(encoded.interner);
-		const { keys, timestamps: encodedTimestamps, attributionRefs } = encoded;
+		const { keys, timestamps: encodedTimestamps, attributionRefs, type } = encoded;
 		const timestamps = this.timestampEncoder.decode(encodedTimestamps);
 		assert(keys.length === timestamps.length && timestamps.length === attributionRefs.length,
 			"serialized attribution columns should have the same length");
+		const factory = this.registry.get(type);
+		assert(factory !== undefined, `Snapshot loaded with attributor type ${type} which is missing in the registry.`);
 		const entries = new Array(keys.length);
 		for (let i = 0; i < keys.length; i++) {
 			const key = keys[i];
@@ -94,7 +99,7 @@ export class AttributorSerializer implements IAttributorSerializer {
 			const user: IUser = JSON.parse(interner.getString(ref));
 			entries[i] = [key, { user, timestamp }];
 		}
-		return this.makeAttributor(entries);
+		return factory(entries);
 	}
 }
 

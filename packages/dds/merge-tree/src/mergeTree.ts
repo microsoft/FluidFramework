@@ -1271,9 +1271,7 @@ export class MergeTree {
         if (pendingSegmentGroup !== undefined) {
             const deltaSegments: IMergeTreeSegmentDelta[] = [];
             pendingSegmentGroup.segments.map((pendingSegment) => {
-                const attributionKey = (opArgs.op.type === MergeTreeDeltaType.INSERT && this.options?.attribution?.track) ?
-                    seq : undefined;
-                const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs, attributionKey);
+                const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs, attributeOp(opArgs));
                 overwrite = overlappingRemove || overwrite;
 
                 if (!overlappingRemove && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
@@ -2301,4 +2299,18 @@ export class MergeTree {
                 : (block) => post(block, pos, refSeq, clientId, start - pos, endPos - pos, accum),
         );
     }
+}
+
+export interface OpAttribution {
+    /**
+     * TODO: Does this need to maybe be strings?
+     */
+    channel?: string;
+
+    attributionKey: unknown;
+}
+
+function attributeOp(opArgs: IMergeTreeDeltaOpArgs): OpAttribution | undefined {
+    const attributionKey = opArgs.op.type === MergeTreeDeltaType.INSERT ? opArgs.sequencedMessage?.sequenceNumber : undefined;
+    return attributionKey ? { attributionKey } : undefined;
 }
