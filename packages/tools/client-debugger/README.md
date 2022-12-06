@@ -22,25 +22,9 @@ Initialization and cleanup of debugger sessions can fit cleanly into your applic
 
 To initialize a debugger session for your container, see [initializeFluidClientDebugger](https://fluidframework.com/docs/apis/client-debugger#initializefluidclientdebugger-function).
 
-#### Initialization Example
-
-TODO
-
-```typescript
-TODO;
-```
-
 ### Clean-up
 
 To clean up a debugger session during your application's tear-down, or when closing an individual [Container][], see [closeFluidClientDebugger](https://fluidframework.com/docs/apis/client-debugger#closefluidclientdebugger-function)
-
-#### Clean-up Example
-
-TODO
-
-```typescript
-TODO;
-```
 
 ## Related Tooling
 
@@ -48,11 +32,26 @@ TODO: link to other tools (visualizer library, chrome extension) once they have 
 
 ## Working in the package
 
-TODO
+### Build
+
+To build the package locally, first ensure you have run `npm install` from the root of the mono-repo.
+Next, run `npm run build` from a terminal within this directory.
+
+### Test
+
+To run the tests, first ensure you have followed the [build](#build) steps above.
+Next, run `npm run test` from a terminal within this directory.
 
 ## Library TODOs
 
-TODO
+The following are TODO items to enhance the functionality of this library.
+
+- Accept a "nickname" for the container when registering.
+  - This will allow consumers to differentiate their debugger / container instances in a meaningful way, such that finding them is easier in visual tooling, etc.
+
+### Ideas
+- Accept renderer hook options?
+  - This seems like a violation of
 
 <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) -->
 
