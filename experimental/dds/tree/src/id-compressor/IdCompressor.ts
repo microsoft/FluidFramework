@@ -1624,6 +1624,13 @@ export class IdCompressor {
 			return serializedWithSession;
 		}
 
+		this.logger?.sendTelemetryEvent({
+			eventName: 'SharedTreeIdCompressor:SerializedIdCompressorSize',
+			size: JSON.stringify(serializedIdCompressor).length,
+			clusterCount: serializedIdCompressor.clusters.length,
+			sessionCount: serializedIdCompressor.sessions.length,
+		});
+
 		return serializedIdCompressor as SerializedIdCompressor;
 	}
 
