@@ -64,6 +64,7 @@ export class OpSplitter {
             map = [];
             this.chunkMap.set(clientId, map);
         }
+
         assert(chunkedContent.chunkId === map.length + 1,
             0x131 /* "Mismatch between new chunkId and expected chunkMap" */); // 1-based indexing
         map.push(chunkedContent.contents);

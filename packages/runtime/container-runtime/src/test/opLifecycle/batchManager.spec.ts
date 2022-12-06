@@ -7,9 +7,6 @@ import { strict as assert } from "assert";
 import { BatchManager, BatchMessage } from "../../opLifecycle";
 
 describe("BatchManager", () => {
-    beforeEach(() => {
-    });
-
     const softLimit = 1024;
     const hardLimit = 950 * 1024;
     const smallMessageSize = 10;
@@ -165,21 +162,5 @@ describe("BatchManager", () => {
         const batchContentSizeInBytes = batchManager.contentSizeInBytes;
         const batch = batchManager.popBatch();
         assert.equal(batchContentSizeInBytes, batch.contentSizeInBytes);
-    });
-
-    it("Batch metadata is set correctly", () => {
-        const batchManager = new BatchManager({ hardLimit });
-        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
-        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
-        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 2 }), true);
-
-        const batch = batchManager.popBatch();
-        assert.equal(batch.content[0].metadata?.batch, true);
-        assert.equal(batch.content[1].metadata?.batch, undefined);
-        assert.equal(batch.content[2].metadata?.batch, false);
-
-        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
-        const singleOpBatch = batchManager.popBatch();
-        assert.equal(singleOpBatch.content[0].metadata?.batch, undefined);
     });
 });
