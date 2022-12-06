@@ -4,13 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { SinonFakeTimers, useFakeTimers } from "sinon";
+import { SinonFakeTimers, useFakeTimers, fake, match } from "sinon";
 import * as idleTask from "../../idleTaskScheduler";
 
 describe("Idle task scheduler", () => {
     let clock: SinonFakeTimers;
 
-    before(() => {
+    beforeEach(() => {
         clock = useFakeTimers();
     });
 
@@ -27,22 +27,17 @@ describe("Idle task scheduler", () => {
     }
 
     it("Should schedule and run a synchronous task during idle time", async () => {
-        let success = false;
-        (globalThis as any).requestIdleCallback = idleTask.scheduleIdleTask;
-        await new Promise((resolve, reject) => {
-            try {
-                resolve(async () => {
-                    requestIdleCallback(() => {
-                        someTask(5);
-                    });
-                });
-            } catch (e) {
-                reject(e);
-            }
-        }).then(() => {
-            success = true;
+        const requestIdleCallbackMock = fake((callback, timeout) => {
+            callback(timeout);
         });
-        assert(success);
+        (globalThis as any).requestIdleCallback = requestIdleCallbackMock;
+
+        await idleTask.scheduleIdleTask(() => {
+            someTask(5);
+        }, 1000);
+
+        assert(requestIdleCallbackMock.calledOnce);
+        assert(requestIdleCallbackMock.calledWith(match.func, { timeout: 1000 }));
     });
 
     it("Should fall back to setTimeout when idle Task API is not available", async () => {
@@ -53,7 +48,6 @@ describe("Idle task scheduler", () => {
                     await idleTask.scheduleIdleTask(() => {
                         someTask(5);
                     }, 1000);
-                    clock.tick(1100);
                 });
             } catch (e) {
                 reject(e);
@@ -61,6 +55,7 @@ describe("Idle task scheduler", () => {
         }).then(() => {
             success = true;
         });
+        clock.tick(1100);
         assert(success);
     });
 });
