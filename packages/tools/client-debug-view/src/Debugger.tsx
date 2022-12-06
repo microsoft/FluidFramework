@@ -4,6 +4,7 @@
  */
 import { IconButton, Stack, StackItem, TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
+import { Resizable } from "re-resizable";
 import React from "react";
 
 import { IFluidClientDebugger, getFluidClientDebuggers } from "@fluid-tools/client-debugger";
@@ -85,7 +86,7 @@ export function FluidClientDebugger(props: FluidClientDebuggerProps): React.Reac
 	}
 
 	return (
-		<div
+		<Resizable
 			style={{
 				position: "fixed",
 				width: "400px",
@@ -98,7 +99,7 @@ export function FluidClientDebugger(props: FluidClientDebuggerProps): React.Reac
 			className={"debugger-panel"}
 		>
 			{view}
-		</div>
+		</Resizable>
 	);
 }
 
