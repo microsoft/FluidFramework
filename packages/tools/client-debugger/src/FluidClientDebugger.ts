@@ -10,6 +10,7 @@ import { IClient } from "@fluidframework/protocol-definitions";
 
 import { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
+import { FluidClientDebuggerProps } from "./Registry";
 
 /**
  * {@link IFluidClientDebugger} implementation.
@@ -116,18 +117,13 @@ export class FluidClientDebugger
 	 */
 	private _disposed: boolean;
 
-	constructor(
-		containerId: string,
-		container: IContainer,
-		containerData?: IFluidLoadable | Record<string, IFluidLoadable>,
-		containerNickname?: string,
-	) {
+	constructor(props: FluidClientDebuggerProps) {
 		super();
 
-		this.containerId = containerId;
-		this.containerData = containerData;
-		this.container = container;
-		this.containerNickname = containerNickname;
+		this.containerId = props.containerId;
+		this.containerData = props.containerData;
+		this.container = props.container;
+		this.containerNickname = props.containerNickname;
 
 		// TODO: would it be useful to log the states (and timestamps) at time of debugger intialize?
 		this._connectionStateLog = [];

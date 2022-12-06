@@ -56,7 +56,7 @@ export interface FluidClientDebuggerProps {
  * @public
  */
 export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): void {
-	const { containerId, container, containerData, containerNickname } = props;
+	const { containerId } = props;
 
 	const debuggerRegistry = getDebuggerRegistry();
 
@@ -67,10 +67,7 @@ export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): 
 		);
 		existingDebugger.dispose();
 	}
-	debuggerRegistry.set(
-		containerId,
-		new FluidClientDebugger(containerId, container, containerData, containerNickname),
-	);
+	debuggerRegistry.set(containerId, new FluidClientDebugger(props));
 }
 
 /**
