@@ -18,7 +18,7 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
      * @param azFunctionUrl - URL to Azure Function endpoint
      * @param user - User object
      */
-    constructor(
+    public constructor(
         private readonly azFunctionUrl: string,
         private readonly user?: Pick<AzureMember, "userId" | "userName" | "additionalDetails">,
     ) {}
