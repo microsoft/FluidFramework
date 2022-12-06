@@ -637,6 +637,7 @@ export function configureWebSocketServices(
                             socket.emitToRoom(getRoomId(room), "signal", signalMessage);
                         }
                     });
+                    // Only for debugging purposes
                     const signalMessageExternalDataChange: ISignalMessage = {
                         clientId: null, // system signal
                         content: JSON.stringify({
