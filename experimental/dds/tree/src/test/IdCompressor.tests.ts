@@ -1166,7 +1166,7 @@ describe('IdCompressor', () => {
 				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 				mockLogger.assertMatchAny([
 					{
-						eventName: 'IdCompressor:IdCompressorStatus',
+						eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
 						eagerFinalIdCount: 0,
 						localIdCount: 1,
 						overridesCount: 0,
@@ -1181,7 +1181,7 @@ describe('IdCompressor', () => {
 				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 				mockLogger.assertMatchAny([
 					{
-						eventName: 'IdCompressor:IdCompressorStatus',
+						eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
 						eagerFinalIdCount: 2,
 						localIdCount: 0,
 						overridesCount: 0,
@@ -1199,7 +1199,7 @@ describe('IdCompressor', () => {
 				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 				mockLogger.assertMatchAny([
 					{
-						eventName: 'IdCompressor:IdCompressorStatus',
+						eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
 						eagerFinalIdCount: 0,
 						localIdCount: 1,
 						overridesCount: 0,
@@ -1215,7 +1215,7 @@ describe('IdCompressor', () => {
 				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 				mockLogger.assertMatchAny([
 					{
-						eventName: 'IdCompressor:IdCompressorStatus',
+						eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
 						eagerFinalIdCount: 4,
 						localIdCount: 0,
 						overridesCount: 0,
@@ -1231,14 +1231,14 @@ describe('IdCompressor', () => {
 				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 				mockLogger.assertMatch([
 					{
-						eventName: 'IdCompressor:ClusterExpansion',
+						eventName: 'SharedTreeIdCompressor:ClusterExpansion',
 						sessionId: '88888888-8888-4888-b088-888888888888',
 						previousCapacity: 5,
 						newCapacity: 12,
 						overflow: 2,
 					},
 					{
-						eventName: 'IdCompressor:IdCompressorStatus',
+						eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
 						eagerFinalIdCount: 2,
 						localIdCount: 0,
 						overridesCount: 0,
