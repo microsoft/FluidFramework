@@ -4,10 +4,12 @@
  */
 
 /**
- * Contains APIs for debugging Fluid Client sessions.
+ * Contains a simple API for initializing debug sessions for recording and propogating information
+ * about a given {@link @fluidframework/container-definitions#IContainer | Fluid Container} and its
+ * {@link @fluidframework/container-definitions#Audience}.
  *
- * Debugger instances are created per {@link @fluidframework/container-definitions#IContainer} instance and are bound
- * to the `globalThis` context to be accessible to related tools.
+ * Debugger instances are created per `Container` instance and are bound to the `globalThis` context
+ * to be accessible to related tools.
  *
  * - See the package README for more details on related tools that are enabled via these debugger instances.
  *
