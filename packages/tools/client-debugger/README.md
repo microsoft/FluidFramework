@@ -46,12 +46,13 @@ Next, run `npm run test` from a terminal within this directory.
 
 The following are TODO items to enhance the functionality of this library.
 
-- Accept a "nickname" for the container when registering.
-  - This will allow consumers to differentiate their debugger / container instances in a meaningful way, such that finding them is easier in visual tooling, etc.
+-   Accept a "nickname" for the container when registering.
+    -   This will allow consumers to differentiate their debugger / container instances in a meaningful way, such that finding them is easier in visual tooling, etc.
 
 ### Ideas
-- Accept renderer hook options?
-  - This seems like a violation of
+
+-   Accept renderer hook options?
+    -   This seems like a violation of
 
 <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) -->
 
