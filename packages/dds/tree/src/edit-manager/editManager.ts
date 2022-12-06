@@ -72,6 +72,15 @@ export class EditManager<
         while (this.trunk[0].seqNumber < this.minimumSequenceNumber) {
             this.trunk.shift();
         }
+        let count = 0;
+        for (let i = 0; i < 10000; i++) {
+            if (this.trunk[i].seqNumber < minimumSequenceNumber) {
+                count += 1;
+            } else {
+                break;
+            }
+        }
+        this.trunk.splice(0, count);
     }
 
     /**
