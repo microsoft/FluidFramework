@@ -147,7 +147,9 @@ export class ADOSizeComparator {
             // Baseline build succeeded
             console.log(`Found baseline build with id: ${baselineBuild.id}`);
             console.log(`projectName: ${this.adoConstants.projectName}`);
-            console.log(`bundleAnalysisArtifactName: ${this.adoConstants.bundleAnalysisArtifactName}`);
+            console.log(
+                `bundleAnalysisArtifactName: ${this.adoConstants.bundleAnalysisArtifactName}`,
+            );
 
             baselineZip = await getZipObjectFromArtifact(
                 this.adoConnection,
@@ -155,7 +157,8 @@ export class ADOSizeComparator {
                 baselineBuild.id,
                 this.adoConstants.bundleAnalysisArtifactName,
             ).catch((error) => {
-                console.log(`Error unzipping object from artifact: ${JSON.stringify(error)}`);
+                console.log(`Error unzipping object from artifact: ${error.message}`);
+                console.log(`Error stack: ${error.stack}`);
                 return undefined;
             });
 
