@@ -555,13 +555,32 @@ export class BlobManager {
     }
 
     /**
-     * This is called to update objects whose routes are unused. The unused objects are either deleted or marked as
+     * This is called to update blobs whose routes are used. The used blobs are removed from the tombstone list.
+     * @param usedRoutes - The routes of the blob nodes that are used.
+     */
+    public updateUsedRoutes(usedRoutes: string[]) {
+        // The routes or blob node paths are in the same format as returned in getGCData -
+        // `/<BlobManager.basePath>/<blobId>`.
+        for (const route of usedRoutes) {
+            const pathParts = route.split("/");
+            assert(
+                pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
+                "Invalid blob node id in used routes.",
+            );
+            const blobId = pathParts[2];
+            // Un-tombstone the blob if it was marked tombstone.
+            this.tombstonedBlobs.delete(blobId);
+        }
+    }
+
+    /**
+     * This is called to update blobs whose routes are unused. The unused blobs are either deleted or marked as
      * tombstones.
      * @param unusedRoutes - The routes of the blob nodes that are unused.
      * @param tombstone - if true, the objects corresponding to unused routes are marked tombstones. Otherwise, they
      * are deleted.
      */
-     public updateUnusedRoutes(unusedRoutes: string[], tombstone: boolean): void {
+    public updateUnusedRoutes(unusedRoutes: string[], tombstone: boolean): void {
         // The routes or blob node paths are in the same format as returned in getGCData -
         // `/<BlobManager.basePath>/<blobId>`.
         for (const route of unusedRoutes) {

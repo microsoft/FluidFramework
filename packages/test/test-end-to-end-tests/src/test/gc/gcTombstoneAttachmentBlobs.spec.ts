@@ -102,14 +102,14 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             await provider.ensureSynchronized();
             await summarizeNow(summarizer);
 
-            // Wait for sweep timeout so that the data stores are tombstoned.
+            // Wait for sweep timeout so that the blobs are tombstoned.
             await delay(sweepTimeoutMs + 10);
 
             // Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
             mainDataStore._root.set("key", "value");
             await provider.ensureSynchronized();
 
-            // Summarize. The tombstoned data stores should now be part of the summary.
+            // Summarize so that the tombstoned blobs are now part of the summary.
             const summary2 = await summarizeNow(summarizer);
             const container2 = await loadContainer(summary2.summaryVersion);
 
@@ -148,19 +148,19 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             await provider.ensureSynchronized();
             await summarizeNow(summarizer);
 
-            // Wait for sweep timeout so that the data stores are tombstoned.
+            // Wait for sweep timeout so that the blobs are tombstoned.
             await delay(sweepTimeoutMs + 10);
 
             // Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
             mainDataStore._root.set("key", "value");
             await provider.ensureSynchronized();
 
-            // Summarize. The tombstoned data stores should now be part of the summary.
+            // Summarize so that te tombstoned blobs are now part of the summary.
             const summary2 = await summarizeNow(summarizer);
-            const container2 = await loadContainer(summary2.summaryVersion);
 
-            // Retrieving the blob via any of the handles should fail. Note that the blob is requested via its url since
-            // this container does not have access to the blob's handle.
+            // Load a container from the above summary. Retrieving the blob via any of the handles should fail. Note
+            // that the blob is requested via its url since this container does not have access to the blob's handle.
+            const container2 = await loadContainer(summary2.summaryVersion);
             const response1 = await container2.request({ url: blobHandle1.absolutePath });
             assert.strictEqual(response1?.status, 404, `Expecting a 404 response for blob handle 1`);
             assert(response1.value.startsWith("Blob removed by gc:"), `Unexpected response value for blob handle 1`);
@@ -168,6 +168,61 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             const response2 = await container2.request({ url: blobHandle2.absolutePath });
             assert.strictEqual(response2?.status, 404, `Expecting a 404 response for blob handle 2`);
             assert(response2.value.startsWith("Blob removed by gc:"), `Unexpected response value for blob handle 2`);
+        });
+
+        itExpects.only("Can un-tombstone attachment blob by storing a handle",
+        [
+            {
+                eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+            },
+            { eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived" },
+        ],
+        async () => {
+            await createMainContainerAndSummarizer();
+
+            // Upload an attachment blob.
+            const blobContents = "Blob contents";
+            const blobHandle1 = await mainDataStore._runtime.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+
+            // Reference and then unreference the blob so that it's unreferenced in next summary.
+            mainDataStore._root.set("blob1", blobHandle1);
+            mainDataStore._root.delete("blob1");
+
+            // Summarize so that the above attachment blob is marked unreferenced.
+            await provider.ensureSynchronized();
+            await summarizeNow(summarizer);
+
+            // Wait for sweep timeout so that the blob is tombstoned.
+            await delay(sweepTimeoutMs + 10);
+
+            // Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
+            mainDataStore._root.set("key", "value");
+            await provider.ensureSynchronized();
+
+            // Summarize so that the tombstoned blob is now part of the summary.
+            const summary2 = await summarizeNow(summarizer);
+
+            // Load a container from the above summary. Retrieving the blob should fail. Note that the blob is requested
+            // via its url since this container does not have access to the blob's handle.
+            const container2 = await loadContainer(summary2.summaryVersion);
+            const response1 = await container2.request({ url: blobHandle1.absolutePath });
+            assert.strictEqual(response1?.status, 404, `Expecting a 404 response for blob handle 1`);
+            assert(response1.value.startsWith("Blob removed by gc:"), `Unexpected response value for blob handle 1`);
+            container2.close();
+
+            // Reference the blob in the main container where it's not a tombstone yet. This should un-tombstone the
+            // blob. It will result in a SweepReadyObject_Revived error log.
+            mainDataStore._root.set("blob1", blobHandle1);
+
+            // Summarize so that the blob is not a tombstone in the summary.
+            await provider.ensureSynchronized();
+            const summary3 = await summarizeNow(summarizer);
+
+            // Load a container from the above summary. Retrieving the blob should now pass. Note that the blob is
+            // requested via its url since this container does not have access to the blob's handle.
+            const container3 = await loadContainer(summary3.summaryVersion);
+            const response2 = await container3.request({ url: blobHandle1.absolutePath });
+            assert.strictEqual(response2?.status, 200, `Expecting a 200 response for blob handle 1`);
         });
 
         itExpects("logs error on retrieval of tombstones attachment blobs when ThrowOnTombstoneUsage is not enabled",
@@ -198,14 +253,14 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             await provider.ensureSynchronized();
             await summarizeNow(summarizer);
 
-            // Wait for sweep timeout so that the data stores are tombstoned.
+            // Wait for sweep timeout so that the blobs are tombstoned.
             await delay(sweepTimeoutMs + 10);
 
             // Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
             mainDataStore._root.set("key", "value");
             await provider.ensureSynchronized();
 
-            // Summarize. The tombstoned data stores should now be part of the summary.
+            // Summarize so that the tombstoned blobs are now part of the summary.
             const summary2 = await summarizeNow(summarizer);
             const container2 = await loadContainer(summary2.summaryVersion);
 
@@ -277,7 +332,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             mainDataStore._root.set("key", "value");
             await provider.ensureSynchronized();
 
-            // Summarize. The tombstoned blob should now be part of the summary.
+            // Summarize so that the tombstoned blob should are now part of the summary.
             const summary2 = await summarizeNow(summarizer);
 
             // Load a new container from the above summary which should have the blob tombstoned.
@@ -347,7 +402,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             mainDataStore._root.set("key", "value");
             await provider.ensureSynchronized();
 
-            // Summarize. The tombstoned blob should now be part of the summary.
+            // Summarize so that the tombstoned blob is now  part of the summary.
             const summary2 = await summarizeNow(summarizer);
 
             // Load a new container from the above summary which should have the blob tombstoned.
@@ -428,7 +483,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             mainDataStore._root.set("key", "value");
             await provider.ensureSynchronized();
 
-            // Summarize. The tombstoned blobs should now be part of the summary.
+            // Summarize so that the tombstoned blobs are now part of the summary.
             const summary2 = await summarizeNow(summarizer);
 
             // Load a new container from the above summary which should have the blobs tombstoned.

@@ -2277,14 +2277,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // always referenced, so the used routes is only self-route (empty string).
         this.summarizerNode.updateUsedRoutes([""]);
 
+        const blobManagerUsedRoutes: string[] = [];
         const dataStoreUsedRoutes: string[] = [];
         for (const route of usedRoutes) {
-            if (route.split("/")[1] !== BlobManager.basePath) {
+            if (this.isBlobPath(route)) {
+                blobManagerUsedRoutes.push(route);
+            } else {
                 dataStoreUsedRoutes.push(route);
             }
         }
 
-        return this.dataStores.updateUsedRoutes(dataStoreUsedRoutes);
+        this.blobManager.updateUsedRoutes(blobManagerUsedRoutes);
+        this.dataStores.updateUsedRoutes(dataStoreUsedRoutes);
     }
 
     /**
