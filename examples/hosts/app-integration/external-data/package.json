@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "@fluid-example/example-utils": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
+    "@fluid-experimental/get-container": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@fluid-experimental/quorum": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@fluid-experimental/react-inputs": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@fluid-experimental/task-manager": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",

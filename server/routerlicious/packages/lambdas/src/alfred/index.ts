@@ -492,28 +492,6 @@ export function configureWebSocketServices(
                         [CommonProperties.clientType]: message.details.details?.type,
                     });
                     connectMetric.success(`Connect document successful`);
-
-                    if (room) {
-                        setTimeout(() => {
-                            console.log("postpone sending signalMessageExternalDataChange for one second");
-                        }, 10000);
-                        console.log("we should see signalMessageExternalDataChange")
-                        // const content: ISignalClient = {
-                        //         clientId: "null",
-                        //         client: message.details,
-                        // }
-                        const signalMessageExternalDataChange: ISignalMessage = {
-                            clientId: null, // system signal
-                            content: JSON.stringify({
-                                type: SignalType.ExternalDataChange,
-                                contents: {
-                                    content: "External data has changed upstream. Please import new data.",
-                                    type: SignalType.ExternalDataChange
-                                }
-                            })
-                        }
-                        socket.emitToRoom(getRoomId(room), "signal", signalMessageExternalDataChange);
-                    }
                 },
                 (error) => {
                     socket.emit("connect_document_error", error);
@@ -659,6 +637,17 @@ export function configureWebSocketServices(
                             socket.emitToRoom(getRoomId(room), "signal", signalMessage);
                         }
                     });
+                    const signalMessageExternalDataChange: ISignalMessage = {
+                        clientId: null, // system signal
+                        content: JSON.stringify({
+                            type: SignalType.ExternalDataChange,
+                            contents: {
+                                content: contentBatches,
+                                type: SignalType.ExternalDataChange
+                            }
+                        })
+                    }
+                    socket.emitToRoom(getRoomId(room), "signal", signalMessageExternalDataChange);
                 }
             });
 

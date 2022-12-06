@@ -1855,7 +1855,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         if (envelope.address === undefined) { // this is what we want
-            console.log("I am a container signal sending a transformed message");
+            console.log("I am a containerRuntime sending a transformed message");
             // No address indicates a container signal message.
             this.emit("signal", transformed, local);
             return;
