@@ -1,6 +1,6 @@
 # @fluid-tools/client-debugger
 
-TODO
+The Fluid Client Debugger library contains a simple API for initializing debug sessions for recording and propogating information about a given Fluid [Container][] and its [Audience][].
 
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
 
@@ -16,6 +16,36 @@ npm i @fluid-tools/client-debugger -D
 
 ## Usage
 
+Initialization and cleanup of debugger sessions can fit cleanly into your application's Fluid setup and teardown process easily.
+
+### Initialization
+
+To initialize a debugger session for your container, see [initializeFluidClientDebugger](https://fluidframework.com/docs/apis/client-debugger#initializefluidclientdebugger-function).
+
+#### Initialization Example
+
+TODO
+
+```typescript
+TODO;
+```
+
+### Clean-up
+
+To clean up a debugger session during your application's tear-down, or when closing an individual [Container][], see [closeFluidClientDebugger](https://fluidframework.com/docs/apis/client-debugger#closefluidclientdebugger-function)
+
+#### Clean-up Example
+
+TODO
+
+```typescript
+TODO;
+```
+
+## Related Tooling
+
+TODO: link to other tools (visualizer library, chrome extension) once they have been published.
+
 ## Working in the package
 
 TODO
@@ -23,6 +53,14 @@ TODO
 ## Library TODOs
 
 TODO
+
+<!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) -->
+
+## API Documentation
+
+API documentation for **@fluid-tools/client-debugger** is available at <https://fluidframework.com/docs/apis/client-debugger>.
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
 
@@ -35,3 +73,6 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- Links -->
+
+[audience]: https://fluidframework.com/docs/build/audience
+[container]: https://fluidframework.com/docs/build/containers
