@@ -169,11 +169,11 @@ import { ScheduleManager } from "./scheduleManager";
 import {
     BatchMessage,
     IBatchCheckpoint,
-    Inbox,
     OpCompressor,
     OpDecompressor,
     Outbox,
     OpSplitter,
+    RemoteMessageProcessor,
 } from "./opLifecycle";
 
 export enum ContainerMessageType {
@@ -886,7 +886,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly garbageCollector: IGarbageCollector;
 
     private readonly dataStores: DataStores;
-    private readonly inbox: Inbox;
+    private readonly remoteMessageProcessor: RemoteMessageProcessor;
 
     /** The last message processed at the time of the last summary. */
     private messageAtLastSummary: ISummaryMetadataMessage | undefined;
@@ -1011,7 +1011,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this._connected = this.context.connected;
         const opSplitter = new OpSplitter(chunks, this.context.submitBatchFn);
-        this.inbox = new Inbox(opSplitter, new OpDecompressor());
+        this.remoteMessageProcessor = new Inbox(opSplitter, new OpDecompressor());
 
         this.handleContext = new ContainerFluidHandleContext("", this);
 
@@ -1161,7 +1161,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
 
         this.context.quorum.on("removeMember", (clientId: string) => {
-            this.inbox.clearPartialMessagesFor(clientId);
+            this.remoteMessageProcessor.clearPartialMessagesFor(clientId);
         });
 
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
@@ -1470,8 +1470,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ) {
         this.addMetadataToSummary(summaryTree);
 
-        if (this.inbox.hasPartialMessages) {
-            const content = JSON.stringify([...this.inbox.partialMessages]);
+        if (this.remoteMessageProcessor.hasPartialMessages) {
+            const content = JSON.stringify([...this.remoteMessageProcessor.partialMessages]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
         }
 
@@ -1671,7 +1671,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         const runtimeMessage = messageArg.type === MessageType.Operation;
-        const message = this.inbox.process(messageArg);
+        const message = this.remoteMessageProcessor.process(messageArg);
 
         // Surround the actual processing of the operation with messages to the schedule manager indicating
         // the beginning and end. This allows it to emit appropriate events and/or pause the processing of new

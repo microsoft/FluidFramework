@@ -8,7 +8,7 @@ import { ContainerMessageType, ContainerRuntimeMessage } from "../containerRunti
 import { OpDecompressor } from "./opDecompressor";
 import { OpSplitter } from "./opSplitter";
 
-export class Inbox {
+export class RemoteMessageProcessor {
     constructor(
         private readonly opSplitter: OpSplitter,
         private readonly opDecompressor: OpDecompressor,

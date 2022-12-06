@@ -273,11 +273,7 @@ describe("Outbox", () => {
     it("Compress only if compression is enabled", () => {
         const outbox = getOutbox(
             getMockContext() as IContainerContext,
-<<<<<<< HEAD
-            /* maxBatchSize */ 1,
-=======
             maxBatchSizeInBytes,
->>>>>>> main
             {
                 minimumBatchSizeInBytes: 1,
                 compressionAlgorithm: CompressionAlgorithms.lz4,
