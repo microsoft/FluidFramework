@@ -19,31 +19,6 @@ export function addProperties(oldProps: PropertySet | undefined, newProps: Prope
 export function appendToMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @public (undocumented)
-export class AttributionCollection<T> {
-    constructor(baseEntry: T, _length: number);
-    // (undocumented)
-    append(other: AttributionCollection<T>): void;
-    // (undocumented)
-    clone(): AttributionCollection<T>;
-    // (undocumented)
-    getAll(): {
-        offset: number;
-        key: T;
-    }[];
-    // (undocumented)
-    getAtOffset(offset: number): T;
-    // (undocumented)
-    get length(): number;
-    // Warning: (ae-forgotten-export) The symbol "SerializedAttributionCollection" needs to be exported by the entry point index.d.ts
-    static populateAttributionCollections(segments: Iterable<ISegment>, summary: SerializedAttributionCollection): void;
-    static serializeAttributionCollections<T>(segments: Iterable<{
-        attribution?: AttributionCollection<T>;
-        cachedLength: number;
-    }>): SerializedAttributionCollection;
-    splitAt(pos: number): AttributionCollection<T>;
-}
-
-// @public (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, attributionKey?: number): boolean;
@@ -54,7 +29,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     append(other: ISegment): void;
     // (undocumented)
-    attribution?: AttributionCollection<unknown>;
+    attribution?: IAttributionCollection<unknown>;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     // (undocumented)
@@ -325,6 +300,22 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, c
 
 // @public (undocumented)
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T>;
+
+// @public (undocumented)
+export interface IAttributionCollection<T> {
+    // @internal (undocumented)
+    append(other: IAttributionCollection<T>): void;
+    // @internal (undocumented)
+    clone(): IAttributionCollection<T>;
+    getAll(): Iterable<{
+        offset: number;
+        key: T;
+    }>;
+    getAtOffset(offset: number): T;
+    readonly length: number;
+    // @internal (undocumented)
+    splitAt(pos: number): IAttributionCollection<T>;
+}
 
 // @public (undocumented)
 export interface ICombiningOp {
@@ -653,7 +644,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
     append(segment: ISegment): void;
-    attribution?: AttributionCollection<unknown>;
+    attribution?: IAttributionCollection<unknown>;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     clientId: number;

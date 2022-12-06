@@ -14,7 +14,36 @@ export interface SerializedAttributionCollection {
     length: number;
 }
 
-export class AttributionCollection<T> {
+export interface IAttributionCollection<T> {
+    /**
+     * Retrieves the attribution key associated with the provided offset.
+     */
+    getAtOffset(offset: number): T;
+
+    /**
+     * Retrieve all key/offset pairs stored on this segment. Entries should be ordered by offset, such that
+     * the `i`th result's attribution key applies to offsets in the open range between the `i`th offset and the
+     * `i+1`th offset.
+     * The last entry's key applies to the open interval from the last entry's offset to this collection's length.
+     */
+    getAll(): Iterable<{ offset: number; key: T; }>;
+
+    /**
+     * Total length of all attribution keys in this collection.
+     */
+    readonly length: number;
+
+    /** @internal */
+    splitAt(pos: number): IAttributionCollection<T>;
+
+    /** @internal */
+    append(other: IAttributionCollection<T>): void;
+
+    /** @internal */
+    clone(): IAttributionCollection<T>;
+}
+
+export class AttributionCollection<T> implements IAttributionCollection<T> {
     private readonly entries: RedBlackTree<number, T> = new RedBlackTree(compareNumbers);
 
     public constructor(baseEntry: T, private _length: number) {
@@ -110,7 +139,7 @@ export class AttributionCollection<T> {
      * Condenses attribution information on consecutive segments into a `SerializedAttributionCollection`
      */
     public static serializeAttributionCollections<T>(
-        segments: Iterable<{ attribution?: AttributionCollection<T>; cachedLength: number; }>,
+        segments: Iterable<{ attribution?: IAttributionCollection<T>; cachedLength: number; }>,
     ): SerializedAttributionCollection {
         const posBreakpoints: number[] = [];
         const keys: unknown[] = [];
@@ -122,7 +151,7 @@ export class AttributionCollection<T> {
         for (const segment of segments) {
             if (segment.attribution) {
                 segmentsWithAttribution++;
-                for (const { offset, key: info } of segment.attribution.getAll() ?? []) {
+                for (const { offset, key: info } of segment.attribution?.getAll() ?? []) {
                     if (info !== mostRecentAttributionKey) {
                         posBreakpoints.push(offset + cumulativePos);
                         keys.push(info);

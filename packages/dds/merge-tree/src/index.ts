@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { AttributionCollection } from "./attributionCollection";
+export { IAttributionCollection } from "./attributionCollection";
 export { IIntegerRange } from "./base";
 export { Client } from "./client";
 export 	{

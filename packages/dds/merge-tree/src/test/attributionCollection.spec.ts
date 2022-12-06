@@ -170,7 +170,7 @@ describe("AttributionCollection", () => {
             const segments = [
                 { attribution: new AttributionCollection(0, 4), cachedLength: 4 },
                 { attribution: new AttributionCollection(0, 5), cachedLength: 5 },
-            ] as ISegment[];
+            ] as unknown as ISegment[];
             const blob = AttributionCollection.serializeAttributionCollections(segments);
             assert.deepEqual(blob, {
                 posBreakpoints: [0],

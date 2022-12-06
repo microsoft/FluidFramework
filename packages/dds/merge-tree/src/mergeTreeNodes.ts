@@ -8,7 +8,7 @@
 /* eslint-disable @typescript-eslint/prefer-optional-chain */
 
 import { assert } from "@fluidframework/common-utils";
-import { AttributionCollection } from "./attributionCollection";
+import { IAttributionCollection, AttributionCollection } from "./attributionCollection";
 import {
     LocalClientId,
     UnassignedSequenceNumber,
@@ -157,7 +157,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
      * with the ability to implement different attribution policies (ex: this would allow an application to track
      * attribution information of property changes and segment inserts separately)
      */
-    attribution?: AttributionCollection<unknown>;
+    attribution?: IAttributionCollection<unknown>;
     /**
      * Manages pending local state for properties on this segment.
      */
@@ -386,7 +386,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     public removedClientIds?: number[];
     public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
     public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
-    public attribution?: AttributionCollection<unknown>;
+    public attribution?: IAttributionCollection<unknown>;
     public propertyManager?: PropertiesManager;
     public properties?: PropertySet;
     public localRefs?: LocalReferenceCollection;

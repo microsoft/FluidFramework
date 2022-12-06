@@ -30,7 +30,7 @@ import {
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { MergeTree } from "./mergeTree";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk";
-import { AttributionCollection } from "./attributionCollection";
+import { IAttributionCollection, AttributionCollection } from "./attributionCollection";
 
 export class SnapshotV1 {
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
@@ -44,7 +44,7 @@ export class SnapshotV1 {
     private readonly header: MergeTreeHeaderMetadata;
     private readonly segments: JsonSegmentSpecs[];
     private readonly segmentLengths: number[];
-    private readonly attributionCollections: AttributionCollection<unknown>[];
+    private readonly attributionCollections: IAttributionCollection<unknown>[];
     private readonly logger: ITelemetryLogger;
     private readonly chunkSize: number;
 
@@ -75,11 +75,11 @@ export class SnapshotV1 {
     private getSeqLengthSegs(
         allSegments: JsonSegmentSpecs[],
         allLengths: number[],
-        attributionCollections: AttributionCollection<unknown>[],
+        attributionCollections: IAttributionCollection<unknown>[],
         approxSequenceLength: number,
         startIndex = 0): MergeTreeChunkV1 {
         const segments: JsonSegmentSpecs[] = [];
-        const collections: { attribution: AttributionCollection<unknown>; cachedLength: number; }[] = [];
+        const collections: { attribution: IAttributionCollection<unknown>; cachedLength: number; }[] = [];
         let length = 0;
         let segmentCount = 0;
         let hasAttribution = false;
@@ -171,7 +171,7 @@ export class SnapshotV1 {
         const pushSegRaw = (
             json: JsonSegmentSpecs,
             length: number,
-            attribution: AttributionCollection<unknown> | undefined,
+            attribution: IAttributionCollection<unknown> | undefined,
         ) => {
             this.segments.push(json);
             this.segmentLengths.push(length);
