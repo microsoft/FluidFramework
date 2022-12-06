@@ -1,6 +1,6 @@
 # @fluid-internal/tree
 
-This DDS is not yet ready for public consumption. See (#8273)[https://github.com/microsoft/FluidFramework/issues/8273].
+This DDS is not yet ready for public consumption. See [roadmap.md](docs/roadmap.md).
 
 ## Motivation
 
@@ -60,7 +60,7 @@ This tree serves to get these feature into the hands of users much faster than c
 
 ## Recommend Developer Workflow
 
-This package can be developed using any of the regular workflows for working on Fluid Framework and/or its Client release group of packages, but for work only touching the tree package, there is an optional workflow that might be more ergonomic:
+This package can be developed using any of the [regular workflows for working on Fluid Framework](../../../README.md) and/or its Client release group of packages, but for work only touching the tree package, there is an optional workflow that might be more ergonomic:
 
 -   Open the [.vscode/Tree.code-workspace](.vscode/Tree.code-workspace) in VS Code.
     This will recommend a test runner extension, which should be installed.
