@@ -1429,7 +1429,7 @@ export class MergeTree {
             }
             const clientId = this.collabWindow.clientId;
             for (const node of nodesToUpdate) {
-                this.blockUpdatePathLengths(node, seq, clientId, overwrite);
+                this.blockUpdatePathLengths(node, seq, clientId, overwrite, opArgs.sequencedMessage!.referenceSequenceNumber);
                 // NodeUpdatePathLengths(node, seq, clientId, true);
             }
         }
