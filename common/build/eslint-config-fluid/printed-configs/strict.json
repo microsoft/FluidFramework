@@ -106,7 +106,7 @@
                 "accessibility": "explicit",
                 "overrides": {
                     "accessors": "explicit",
-                    "constructors": "no-public",
+                    "constructors": "explicit",
                     "methods": "explicit",
                     "parameterProperties": "explicit",
                     "properties": "explicit"

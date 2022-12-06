@@ -20,7 +20,6 @@ export interface FieldChangeHandler<
     editor: TEditor;
     intoDelta(change: TChangeset, deltaFromChild: ToDelta, reviver: NodeReviver): Delta.MarkList;
 }
-
 export interface FieldChangeRebaser<TChangeset> {
     /**
      * Compose a collection of changesets into a single one.
@@ -123,6 +122,12 @@ export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnl
 export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
 
 export type IdAllocator = () => ChangesetLocalId;
+
+/**
+ * An ID which is unique within a revision of a `ModularChangeset`.
+ * A `ModularChangeset` which is a composition of multiple revisions may contain duplicate `ChangesetLocalId`s,
+ * but they are unique when qualified by the revision of the change they are used in.
+ */
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
 /**
