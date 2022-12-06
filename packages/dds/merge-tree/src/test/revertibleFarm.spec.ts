@@ -23,11 +23,26 @@ import {
 import { createRevertDriver } from "./testClient";
 import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
 
- const defaultOptions = {
+//  const defaultOptions = {
+//     initialOps: 5,
+//     minLength: { min: 2, max: 2, growthFunc: (i) => i * i },
+//     concurrentOpsWithRevert: { min: 1, max: 1 },
+//     revertOps: { min: 32, max: 32 },
+//     ackBeforeRevert: [
+//         // "None",
+//         // "Some",
+//         "All",
+//     ] as ("None" | "Some" | "All")[],
+//     rounds: 10,
+//     operations: [removeRange, annotateRange],
+//     growthFunc: (i) => i * 2,
+// };
+
+const defaultOptions = {
     initialOps: 5,
-    minLength: { min: 2, max: 2, growthFunc: (i) => i * i },
-    concurrentOpsWithRevert: { min: 1, max: 1 },
-    revertOps: { min: 32, max: 32 },
+    minLength: { min: 1, max: 256, growthFunc: (i) => i * i },
+    concurrentOpsWithRevert: { min: 0, max: 8 },
+    revertOps: { min: 1, max: 16 },
     ackBeforeRevert: [
         "None",
         "Some",
@@ -44,7 +59,7 @@ describe("MergeTree.Client", () => {
             doOverRange(defaultOptions.revertOps, defaultOptions.growthFunc, (revertOps) => {
                 for (const ackBeforeRevert of defaultOptions.ackBeforeRevert) {
                     // eslint-disable-next-line max-len
-                    it.only(`InitialOps: ${defaultOptions.initialOps} MinLen: ${minLen}  ConcurrentOpsWithRevert: ${opsWithRevert} RevertOps: ${revertOps} AckBeforeRevert: ${ackBeforeRevert}`, async () => {
+                    it(`InitialOps: ${defaultOptions.initialOps} MinLen: ${minLen}  ConcurrentOpsWithRevert: ${opsWithRevert} RevertOps: ${revertOps} AckBeforeRevert: ${ackBeforeRevert}`, async () => {
                         const mt = random.engines.mt19937();
                         mt.seedWithArray([
                             0xDEADBEEF,

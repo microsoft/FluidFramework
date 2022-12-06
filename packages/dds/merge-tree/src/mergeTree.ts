@@ -693,6 +693,7 @@ export class MergeTree {
             // Will replace this block with a packed block
             childBlock.parent = undefined;
         }
+        if (holdNodes.length > 0) {
         const totalNodeCount = holdNodes.length;
         const halfCount = MaxNodesInBlock / 2;
         let childCount = Math.min(MaxNodesInBlock - 1, Math.floor(totalNodeCount / halfCount));
@@ -705,6 +706,11 @@ export class MergeTree {
         let readCount = 0;
         for (let nodeIndex = 0; nodeIndex < childCount; nodeIndex++) {
             let nodeCount = baseCount;
+            console.log("nodecount: ", nodeCount);
+            // this doesnt work, and neither does returning instead of continuing
+            // if (nodeCount === 0) {
+            //     continue;
+            // }
             if (extraCount > 0) {
                 nodeCount++;
                 extraCount--;
@@ -722,7 +728,13 @@ export class MergeTree {
         for (let j = 0; j < childCount; j++) {
             parent.assignChild(packedBlocks[j], j, false);
         }
+
         parent.childCount = childCount;
+    } else {
+        console.log("hold nodes is 0");
+        parent.children = [];
+        parent.childCount = 0;
+    }
         if (this.underflow(parent) && (parent.parent)) {
             this.packParent(parent.parent);
         } else {
@@ -730,7 +742,16 @@ export class MergeTree {
             this.blockUpdatePathLengths(parent, UnassignedSequenceNumber, -1, true);
         }
     }
-
+    /*
+        a
+        block
+        of
+        comments
+        so i
+        can
+        find
+        zamboni
+    */
     private zamboniSegments(zamboniSegmentsMaxCount = MergeTree.zamboniSegmentsMaxCount) {
         if (!this.collabWindow.collaborating) {
             return;
@@ -966,16 +987,25 @@ export class MergeTree {
             if (node.isLeaf()) {
                 return this.localNetLength(node, refSeq, localSeq);
             } else if (localSeq === undefined) {
+                // assert(node.partialLengths!.getPartialLength(refSeq, clientId, localSeq) === node.cachedLength,
+                //     `partial length ${node.partialLengths!.getPartialLength(refSeq, clientId, localSeq)}
+                //      != cached length ${node.cachedLength}; current seq = ${this.getCollabWindow().currentSeq},
+                //      localSeq = ${this.getCollabWindow().localSeq}`);
                 // Local client sees all segments, even when collaborating
                 return node.cachedLength;
             } else {
                 this.computeLocalPartials(refSeq);
+                // assert(node.partialLengths!.getPartialLength(refSeq, clientId, localSeq) === node.cachedLength,
+                //     "partial length != cached length");
                 // Local client should see all segments except those after localSeq.
                 return node.partialLengths!.getPartialLength(refSeq, clientId, localSeq);
             }
         } else {
             // Sequence number within window
             if (!node.isLeaf()) {
+                // assert(node.partialLengths!.getPartialLength(refSeq, clientId, localSeq) === node.cachedLength,
+                //     `partial length ${node.partialLengths!.getPartialLength(refSeq, clientId, localSeq)}
+                //      != cached length ${node.cachedLength}`);
                 return node.partialLengths!.getPartialLength(refSeq, clientId);
             } else {
                 const segment = node;

@@ -106,7 +106,9 @@
     "broken": {
       "ClassDeclaration_Client": {
         "forwardCompat": false
-      }
+      },
+      "InterfaceDeclaration_MergeTreeRevertibleDriver":
+      {"forwardCompat": false}
     }
   }
 }

@@ -108,6 +108,8 @@ export class Client {
     applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
     // (undocumented)
     cloneFromSegments(): Client;
+    // (undocumented)
+    createEndOfTreeSegment(): ISegment;
     createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
@@ -868,6 +870,8 @@ export type MergeTreeMaintenanceType = typeof MergeTreeMaintenanceType[keyof typ
 export interface MergeTreeRevertibleDriver {
     // (undocumented)
     annotateRange(start: number, end: number, props: PropertySet): any;
+    // (undocumented)
+    createEndOfTreeSegment(): ISegment;
     // (undocumented)
     createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // (undocumented)

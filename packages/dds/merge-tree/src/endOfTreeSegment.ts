@@ -4,10 +4,10 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
 import { LocalClientId } from "./constants";
 import { LocalReferenceCollection } from "./localReference";
-import { ISegment, IRemovalInfo, IMergeNode, IMergeBlock } from "./mergeTreeNodes";
+import { MergeTree } from "./mergeTree";
+import { ISegment, IRemovalInfo } from "./mergeTreeNodes";
 import { depthFirstNodeWalk, NodeAction } from "./mergeTreeNodeWalk";
 
 /**
@@ -24,18 +24,18 @@ import { depthFirstNodeWalk, NodeAction } from "./mergeTreeNodeWalk";
  */
 export class EndOfTreeSegment implements ISegment, IRemovalInfo {
     type: string = "EndOfTreeSegment";
-    private readonly root: IMergeBlock;
-    constructor(segmentOrNode: IMergeNode) {
-        let maybeRoot: IMergeBlock | undefined = segmentOrNode.isLeaf()
-            ? segmentOrNode.parent
-            : segmentOrNode;
-        while (maybeRoot?.parent !== undefined) {
-            maybeRoot = maybeRoot.parent;
-        }
-        if (maybeRoot === undefined) {
-            throw new UsageError("segmentOrNode must be in rooted tree");
-        }
-        this.root = maybeRoot;
+    // private readonly segment: ISegment;
+    constructor(private readonly mergeTree: MergeTree) {
+        // let maybeRoot: IMergeBlock | undefined = segmentOrNode.isLeaf()
+        //     ? segmentOrNode.parent
+        //     : segmentOrNode;
+        // while (maybeRoot?.parent !== undefined) {
+        //     maybeRoot = maybeRoot.parent;
+        // }
+        // if (maybeRoot === undefined) {
+        //     throw new UsageError("segmentOrNode must be in rooted tree");
+        // }
+        // this.root = maybeRoot;
     }
     /*
      * segments must be of at least length one, but
@@ -65,9 +65,21 @@ export class EndOfTreeSegment implements ISegment, IRemovalInfo {
     private getEndSegProps() {
         let lastSegment: ISegment | undefined;
         let depth = 1;
+        // const segmentOrNode = this.reference.getSegment() as ISegment;
+        // let maybeRoot: IMergeBlock | undefined = segmentOrNode.isLeaf()
+        //     ? segmentOrNode.parent
+        //     : segmentOrNode;
+        // while (maybeRoot?.parent !== undefined) {
+        //     maybeRoot = maybeRoot.parent;
+        // }
+        // if (maybeRoot === undefined) {
+        //     throw new UsageError("segmentOrNode must be in rooted tree");
+        // }
+        const root = this.mergeTree.root;
+
         depthFirstNodeWalk(
-            this.root,
-            this.root.children[this.root.childCount - 1],
+            root,
+            root.children[root.childCount - 1],
             (node) => {
                 depth++;
                 if (node?.isLeaf()) {
@@ -79,7 +91,7 @@ export class EndOfTreeSegment implements ISegment, IRemovalInfo {
             undefined,
             false,
         );
-        const parent = lastSegment?.parent ?? this.root;
+        const parent = lastSegment?.parent ?? root;
         const index = parent.childCount;
         return {
             parent,

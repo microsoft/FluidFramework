@@ -78,6 +78,7 @@ export interface MergeTreeRevertibleDriver{
     localReferencePositionToPosition(lref: LocalReferencePosition): number;
     getPosition(segment: ISegment): number;
     getContainingSegment(pos: number): { segment: ISegment | undefined; offset: number | undefined; };
+    createEndOfTreeSegment(): ISegment;
 }
 
 /**
@@ -135,7 +136,8 @@ function appendLocalRemoveToRevertibles(
             afterSlide: (r: LocalReferencePosition) => {
                 if (driver.localReferencePositionToPosition(r) === DetachedReferencePosition) {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    const detached = driverRevertibleProps.detachedReferences ??= new EndOfTreeSegment(r.getSegment()!);
+                    const detached = driverRevertibleProps.detachedReferences
+                        ??= (driver.createEndOfTreeSegment() as EndOfTreeSegment);
                     const refs = detached.localRefs ??= new LocalReferenceCollection(detached);
                     refs.addAfterTombstones([r]);
                 }
