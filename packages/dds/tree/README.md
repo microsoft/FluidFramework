@@ -58,7 +58,7 @@ which could make their way back into the framework, enabling some features speci
 From this perspective, this tree serves as a proof of concept for abstractions and features which could benefit the framework, but are easier to implement within a DDS initially.
 This tree serves to get these feature into the hands of users much faster than could be done at the framework level.
 
-## Recommend Developer Workflow
+## Recommended Developer Workflow
 
 This package can be developed using any of the regular workflows for working on Fluid Framework and/or its Client release group of packages, but for work only touching the tree package, there is an optional workflow that might be more ergonomic:
 
