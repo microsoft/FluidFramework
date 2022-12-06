@@ -295,11 +295,7 @@ export interface IChunkedOp {
     // (undocumented)
     chunkId: number;
     // (undocumented)
-    compression?: string;
-    // (undocumented)
     contents: string;
-    // (undocumented)
-    metadata?: Record<string, unknown>;
     // (undocumented)
     originalType: MessageType | ContainerMessageType;
     // (undocumented)

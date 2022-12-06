@@ -47,8 +47,6 @@ export class OpSplitter {
         this.clearPartialChunks(clientId);
         message.contents = serializedContent === "" ? undefined : JSON.parse(serializedContent);
         message.type = chunkedContent.originalType;
-        message.metadata = chunkedContent.metadata;
-        message.compression = chunkedContent.compression;
         return true;
     }
 

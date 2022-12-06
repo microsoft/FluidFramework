@@ -41,6 +41,4 @@ export interface IChunkedOp {
     totalChunks: number;
     contents: string;
     originalType: MessageType | ContainerMessageType;
-    metadata?: Record<string, unknown>;
-    compression?: string;
 }

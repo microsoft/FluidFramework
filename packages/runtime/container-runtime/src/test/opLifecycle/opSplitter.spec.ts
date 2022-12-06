@@ -73,8 +73,6 @@ describe("OpSplitter", () => {
     const assertSameMessage = (result: ISequencedDocumentMessage, original: BatchMessage) => {
         assert.deepStrictEqual(result.contents, original.deserializedContent.contents);
         assert.strictEqual(result.type, original.deserializedContent.type);
-        assert.strictEqual(result.metadata, original.metadata);
-        assert.strictEqual(result.compression, original.compression);
     };
 
     const generateChunkableOp = (contentSizeInBytes: number): BatchMessage => {
@@ -116,8 +114,6 @@ describe("OpSplitter", () => {
                 contents: op.contents.substr(offset, chunkSizeInBytes),
                 originalType: op.deserializedContent.type,
                 totalChunks: chunkN,
-                metadata: op.metadata,
-                compression: op.compression,
             });
 
             offset += chunkSizeInBytes;
