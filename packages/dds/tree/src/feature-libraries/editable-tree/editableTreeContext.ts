@@ -31,7 +31,6 @@ import { ProxyTarget, EditableField, proxifyField, UnwrappedEditableField } from
 /**
  * A common context of a "forest" of EditableTrees.
  * It handles group operations like transforming cursors into anchors for edits.
- * TODO: add test coverage.
  */
 export interface EditableTreeContext {
     /**
@@ -66,9 +65,16 @@ export interface EditableTreeContext {
 
     /**
      * Call to free resources.
-     * EditableTrees created in this context are invalid to use after this.
+     * It is invalid to use the context after this.
      */
     free(): void;
+
+    /**
+     * Release any cursors and anchors held by EditableTrees created in this context.
+     * The EditableTrees are invalid to use after this, but the context may still be used
+     * to create new trees starting from the root.
+     */
+    clear(): void;
 
     /**
      * Attaches the handler to be called after a transaction, initiated by
@@ -120,6 +126,11 @@ export class ProxyContext implements EditableTreeContext {
     }
 
     public free(): void {
+        this.clear();
+        this.forest.removeDependent(this.observer);
+    }
+
+    public clear(): void {
         for (const target of this.withCursors) {
             target.free();
         }
@@ -128,8 +139,6 @@ export class ProxyContext implements EditableTreeContext {
         }
         assert(this.withCursors.size === 0, 0x3c1 /* free should remove all cursors */);
         assert(this.withAnchors.size === 0, 0x3c2 /* free should remove all anchors */);
-        this.forest.removeDependent(this.observer);
-        this.afterChangeHandlers.clear();
     }
 
     public get unwrappedRoot(): UnwrappedEditableField {
@@ -208,7 +217,6 @@ export class ProxyContext implements EditableTreeContext {
             this.transactionCheckout !== undefined,
             0x45a /* `transactionCheckout` is required to edit the EditableTree */,
         );
-        this.prepareForEdit();
         const result = runSynchronousTransaction(
             this.transactionCheckout,
             (forest: IForestSubscription, editor: DefaultEditBuilder) => {
