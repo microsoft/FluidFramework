@@ -4,12 +4,9 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IBatchMessage } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ContainerMessageType } from "../containerRuntime";
 import { IChunkedOp } from "./definitions";
-
-const DefaultChunkSize = 500 * 1024; // 500kb
 
 /**
  * Responsible for creating and reconstructing chunked messages.
@@ -18,11 +15,7 @@ export class OpSplitter {
     // Local copy of incomplete received chunks.
     private readonly chunkMap: Map<string, string[]>;
 
-    constructor(
-        chunks: [string, string[]][],
-        private readonly submitBatchFn: (batch: IBatchMessage[]) => number,
-        public readonly chunkSizeInBytes: number = DefaultChunkSize,
-    ) {
+    constructor(chunks: [string, string[]][]) {
         this.chunkMap = new Map<string, string[]>(chunks);
     }
 

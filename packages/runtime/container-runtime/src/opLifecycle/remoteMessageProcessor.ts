@@ -30,24 +30,7 @@ export class RemoteMessageProcessor {
         const message = copy(remoteMessage);
         this.opDecompressor.processMessage(message);
         unpackRuntimeMessage(message);
-
-        if (message.type !== ContainerMessageType.ChunkedOp) {
-            // If the op is not chunked, we can return early
-            return message;
-        }
-
-        if (!this.opSplitter.processRemoteMessage(message)) {
-            // If we're still building a chunked message and we haven't received all the chunks yet
-            // there is no point in continuing further
-            return message;
-        }
-
-        if (!this.opDecompressor.processMessage(message)) {
-            // After chunking, the op may be compressed. If it is not, we can return it
-            return message;
-        }
-
-        unpack(message);
+        this.opSplitter.processRemoteMessage(message);
         return message;
     }
 }

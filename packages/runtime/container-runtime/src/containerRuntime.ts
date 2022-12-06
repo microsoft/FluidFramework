@@ -1010,8 +1010,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.messageAtLastSummary = metadata?.message;
 
         this._connected = this.context.connected;
-        const opSplitter = new OpSplitter(chunks, this.context.submitBatchFn);
-        this.remoteMessageProcessor = new Inbox(opSplitter, new OpDecompressor());
+        this.remoteMessageProcessor = new RemoteMessageProcessor(new OpSplitter(chunks), new OpDecompressor());
 
         this.handleContext = new ContainerFluidHandleContext("", this);
 
@@ -1153,7 +1152,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             pendingStateManager: this.pendingStateManager,
             containerContext: this.context,
             compressor: new OpCompressor(this.mc.logger),
-            splitter: opSplitter,
             config: {
                 compressionOptions: runtimeOptions.compressionOptions,
                 maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
