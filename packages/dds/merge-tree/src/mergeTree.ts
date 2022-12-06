@@ -112,7 +112,7 @@ function wasRemovedAfter(seg: ISegment, seq: number): boolean {
 
 function markSegmentMoved(seg: ISegment, moveInfo: IMoveInfo): void {
     seg.moveDst = moveInfo.moveDst;
-    seg.movedClientIds = moveInfo.movedClientIds;
+    seg.movedClientIds = moveInfo.movedClientIds.slice();
     seg.movedSeq = moveInfo.movedSeq;
     seg.localMovedSeq = moveInfo.localMovedSeq;
 }
