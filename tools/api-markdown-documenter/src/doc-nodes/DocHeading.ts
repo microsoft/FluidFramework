@@ -34,7 +34,7 @@ export class DocHeading extends DocNode {
      */
     public readonly id?: string;
 
-    constructor(parameters: IDocHeadingParameters) {
+    public constructor(parameters: IDocHeadingParameters) {
         super(parameters);
 
         this.title = parameters.title;

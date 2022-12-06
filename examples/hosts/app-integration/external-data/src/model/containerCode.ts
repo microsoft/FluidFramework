@@ -27,7 +27,7 @@ const SignalType = {
  * {@inheritDoc ModelContainerRuntimeFactory}
  */
 export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
-    constructor() {
+    public constructor() {
         super(
             new Map([TaskListInstantiationFactory.registryEntry]), // registryEntries
         );

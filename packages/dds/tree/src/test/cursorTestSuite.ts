@@ -510,7 +510,7 @@ function checkTraversal(cursor: ITreeCursor, expectedPath: UpPath | undefined) {
         assert(expectedFieldLength > 0, "only non empty fields should show up in field iteration");
         assert(compareFieldUpPaths(cursor.getFieldPath(), { field: key, parent: path }));
 
-        // Check that iterating nodes withing field works as expected.
+        // Check that iterating nodes of this field works as expected.
         let actualChildNodesTraversed = 0;
         for (let inNode = cursor.firstNode(); inNode; inNode = cursor.nextNode()) {
             assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
@@ -539,7 +539,7 @@ function checkTraversal(cursor: ITreeCursor, expectedPath: UpPath | undefined) {
             "Did not traverse expected number of children",
         );
 
-        // Cheek node access by index
+        // Check node access by index
         for (let index = 0; index < expectedFieldLength; index++) {
             assert.equal(cursor.mode, CursorLocationType.Fields);
             cursor.enterNode(index);
