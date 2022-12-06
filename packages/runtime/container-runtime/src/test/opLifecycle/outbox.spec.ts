@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { IBatchMessage, IContainerContext, IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { PendingStateManager } from "../../pendingStateManager";
-import { BatchMessage, IBatch, OpCompressor, OpSplitter, Outbox } from "../../opLifecycle";
+import { BatchMessage, IBatch, OpCompressor, Outbox } from "../../opLifecycle";
 import {
     CompressionAlgorithms,
     ContainerMessageType,
@@ -22,7 +22,6 @@ describe("Outbox", () => {
         canSendOps: boolean;
         batchesSubmitted: IBatchMessage[][];
         batchesCompressed: IBatch[];
-        batchesSplit: IBatch[];
         individualOpsSubmitted: any[];
         pendingOpContents: any[];
         opsSubmitted: number;
@@ -33,7 +32,6 @@ describe("Outbox", () => {
         canSendOps: true,
         batchesSubmitted: [],
         batchesCompressed: [],
-        batchesSplit: [],
         individualOpsSubmitted: [],
         pendingOpContents: [],
         opsSubmitted: 0,
@@ -81,13 +79,6 @@ describe("Outbox", () => {
         },
     });
 
-    const getMockSplitter = (): Partial<OpSplitter> => ({
-        splitCompressedBatch: (batch: IBatch): IBatch => {
-            state.batchesSplit.push(batch);
-            return batch;
-        },
-    });
-
     const getMockPendingStateManager = (): Partial<PendingStateManager> => ({
         onSubmitMessage: (
             type: ContainerMessageType,
@@ -115,27 +106,43 @@ describe("Outbox", () => {
         };
     };
 
-    const batchedMessage = (message: BatchMessage, batchMarker: boolean | undefined = undefined) => {
-        return batchMarker === undefined ?
-            { contents: message.contents, metadata: message.metadata } :
-            { contents: message.contents, metadata: { ...message.metadata, batch: batchMarker } };
-    };
+    const batchedMessage = (message: BatchMessage, batchMarker: boolean | undefined = undefined) => batchMarker === undefined ?
+        { contents: message.contents, metadata: message.metadata } :
+        { contents: message.contents, metadata: { ...message.metadata, batch: batchMarker } };
 
+    const addBatchMetadata = (messages: BatchMessage[]): BatchMessage[] => {
+        if (messages.length > 1) {
+            messages[0].metadata = {
+                ...messages[0].metadata,
+                batch: true
+            };
+            messages[messages.length - 1].metadata = {
+                ...messages[messages.length - 1].metadata,
+                batch: false
+            };
+        }
+
+        return messages;
+    };
     const toBatch = (messages: BatchMessage[]): IBatch => ({
-        content: messages,
+        content: addBatchMetadata(messages),
         contentSizeInBytes: messages.map((message) => message.contents?.length ?? 0).reduce((a, b) => a + b, 0),
     });
+
+    const DefaultCompressionOptions = {
+        minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+        compressionAlgorithm: CompressionAlgorithms.lz4
+    };
 
     const getOutbox = (
         context: IContainerContext,
         maxBatchSize: number = maxBatchSizeInBytes,
-        compressionOptions?: ICompressionRuntimeOptions,
+        compressionOptions: ICompressionRuntimeOptions = DefaultCompressionOptions,
     ) => new Outbox({
         shouldSend: () => state.canSendOps,
         pendingStateManager: getMockPendingStateManager() as PendingStateManager,
         containerContext: context,
         compressor: getMockCompressor() as OpCompressor,
-        splitter: getMockSplitter() as OpSplitter,
         config: {
             maxBatchSizeInBytes: maxBatchSize,
             compressionOptions,
@@ -266,7 +273,11 @@ describe("Outbox", () => {
     it("Compress only if compression is enabled", () => {
         const outbox = getOutbox(
             getMockContext() as IContainerContext,
+<<<<<<< HEAD
             /* maxBatchSize */ 1,
+=======
+            maxBatchSizeInBytes,
+>>>>>>> main
             {
                 minimumBatchSizeInBytes: 1,
                 compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -364,5 +375,108 @@ describe("Outbox", () => {
             referenceSequenceNumber: message.referenceSequenceNumber,
             opMetadata: message.metadata,
         })));
+    });
+
+    it("Compress and send (only) attachment ops if compression is enabled and their size exceed the compression threshold", () => {
+        const messages = [
+            createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+            createMessage(ContainerMessageType.Attach, "2"),
+            createMessage(ContainerMessageType.Attach, "3"),
+            createMessage(ContainerMessageType.Attach, "4"),
+            createMessage(ContainerMessageType.Attach, "5"),
+            createMessage(ContainerMessageType.Attach, "6"),
+            createMessage(ContainerMessageType.Attach, "7"),
+        ];
+
+        const attachMessages = messages.filter((x) => x.deserializedContent.type === ContainerMessageType.Attach);
+        assert.ok(attachMessages.length > 0 && attachMessages[0].contents !== undefined);
+        const outbox = getOutbox(
+            getMockContext() as IContainerContext,
+            maxBatchSizeInBytes,
+            {
+                minimumBatchSizeInBytes: attachMessages[0].contents.length * 3,
+                compressionAlgorithm: CompressionAlgorithms.lz4,
+            });
+
+        for (const message of messages) {
+            if (message.deserializedContent.type === ContainerMessageType.Attach) {
+                outbox.submitAttach(message);
+            } else {
+                outbox.submit(message);
+            }
+        }
+
+        // Although there was no explicit flush, the attach messages will get flushed
+        // as their size have exceeded the compression threshold.
+        assert.equal(state.opsSubmitted, attachMessages.length);
+        assert.equal(state.batchesSubmitted.length, 2); // 6 messages in 2 batches
+        assert.equal(state.individualOpsSubmitted.length, 0);
+        assert.equal(state.deltaManagerFlushCalls, 0);
+        assert.deepEqual(state.batchesCompressed, [
+            toBatch(attachMessages.slice(0, 3)),
+            toBatch(attachMessages.slice(3)),
+        ]);
+        assert.deepEqual(state.batchesSubmitted, [
+            toBatch(attachMessages.slice(0, 3)).content.map((x) => batchedMessage(x)),
+            toBatch(attachMessages.slice(3)).content.map((x) => batchedMessage(x)),
+        ]);
+
+        assert.deepEqual(state.pendingOpContents, attachMessages.map((message) => ({
+            type: message.deserializedContent.type,
+            content: message.deserializedContent.contents,
+            referenceSequenceNumber: message.referenceSequenceNumber,
+            opMetadata: message.metadata,
+        })));
+    });
+
+    it("Throws at flush, when compression is enabled and the compressed batch is still larger than the threshold", () => {
+        const outbox = getOutbox(
+            getMockContext() as IContainerContext,
+            /* maxBatchSize */ 1,
+            {
+                minimumBatchSizeInBytes: 1,
+                compressionAlgorithm: CompressionAlgorithms.lz4,
+            });
+
+        const messages = [
+            createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "2"),
+        ];
+
+        outbox.submit(messages[0]);
+        outbox.submit(messages[1]);
+        outbox.submit(messages[2]);
+
+        assert.throws(() => outbox.flush());
+        // The batch is compressed
+        assert.deepEqual(state.batchesCompressed, [toBatch(messages)]);
+        // The batch is not persisted
+        assert.deepEqual(state.pendingOpContents, []);
+    });
+
+    it("Throws at submit, when compression is enabled and the attached compressed batch is still larger than the threshold", () => {
+        const outbox = getOutbox(
+            getMockContext() as IContainerContext,
+            /* maxBatchSize */ 1,
+            {
+                minimumBatchSizeInBytes: 1,
+                compressionAlgorithm: CompressionAlgorithms.lz4,
+            });
+
+        const messages = [
+            createMessage(ContainerMessageType.Attach, "0"),
+        ];
+
+        assert.throws(() => outbox.submitAttach(messages[0]));
+        // The batch is compressed
+        assert.deepEqual(state.batchesCompressed, [toBatch(messages)]);
+        // The batch is not persisted
+        assert.deepEqual(state.pendingOpContents, []);
     });
 });

@@ -2585,7 +2585,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 Promise.resolve().then(() => {
                     this.flushMicroTaskExists = false;
                     this.flush();
-                });
+                }).catch((error) => { this.closeFn(error as GenericError) });
             }
         } catch (error) {
             this.closeFn(error as GenericError);

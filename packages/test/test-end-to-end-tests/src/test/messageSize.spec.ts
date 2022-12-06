@@ -182,12 +182,9 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         assertMapValues(dataObject2map, messageCount, largeString);
     });
 
-    it("Large ops pass when compression enabled and compressed content is over max op size", async function() {
-        // This is not supported by the local server. See ADO:2690
-        if (provider.driver.type === "local") {
-            this.skip();
-        }
-
+    itExpects("Large ops fail when compression enabled and compressed content is over max op size", [
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
+    ], async function() {
         const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
         await setupContainers({
             ...testContainerConfig,
@@ -199,8 +196,6 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
         const messageCount = 3; // Will result in a 15 MB payload
         setMapKeys(dataObject1map, messageCount, largeString);
-        await provider.ensureSynchronized(50000);
-
-        assertMapValues(dataObject2map, messageCount, largeString);
-    }).timeout(500000);
+        await provider.ensureSynchronized();
+    });
 });

@@ -12,7 +12,7 @@ import { FieldKinds, singleTextCursor } from "../../feature-libraries";
 import { ISharedTree } from "../../shared-tree";
 import { rootFieldKey, rootFieldKeySymbol, TreeValue } from "../../tree";
 import { brand } from "../../util";
-import { TestTreeProvider } from "../utils";
+import { SummarizeType, TestTreeProvider } from "../utils";
 import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData } from "../../schema-stored";
 // eslint-disable-next-line import/no-internal-modules
 import { PlacePath } from "../../feature-libraries/sequence-change-family";
@@ -27,7 +27,7 @@ enum TreeShape {
 // TODO: report these sizes as benchmark output which can be tracked over time.
 describe("Summary size benchmark", () => {
     it("for an empty tree.", async () => {
-        const provider = await TestTreeProvider.create(1, true);
+        const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
         const tree = provider.trees[0];
         const { summary } = tree.getAttachSummary();
         const summaryString = JSON.stringify(summary);
@@ -120,7 +120,7 @@ export async function getInsertsSummaryTree(
     numberOfNodes: number,
     shape: TreeShape,
 ): Promise<ISummaryTree> {
-    const provider = await TestTreeProvider.create(1, true);
+    const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
     const tree = provider.trees[0];
     initializeTestTreeWithValue(tree, 1);
 

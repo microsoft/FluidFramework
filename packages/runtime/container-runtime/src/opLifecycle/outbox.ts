@@ -12,10 +12,16 @@ import { PendingStateManager } from "../pendingStateManager";
 import { BatchManager } from "./batchManager";
 import { BatchMessage, IBatch } from "./definitions";
 import { OpCompressor } from "./opCompressor";
+<<<<<<< HEAD
 import { OpSplitter } from "./opSplitter";
 
 export interface IOutboxConfig {
     readonly compressionOptions?: ICompressionRuntimeOptions;
+=======
+
+export interface IOutboxConfig {
+    readonly compressionOptions: ICompressionRuntimeOptions;
+>>>>>>> main
     // The maximum size of a batch that we can send over the wire.
     readonly maxBatchSizeInBytes: number;
 };
@@ -26,7 +32,10 @@ export interface IOutboxParameters {
     readonly containerContext: IContainerContext,
     readonly config: IOutboxConfig,
     readonly compressor: OpCompressor;
+<<<<<<< HEAD
     readonly splitter: OpSplitter;
+=======
+>>>>>>> main
 }
 
 export class Outbox {
@@ -35,11 +44,18 @@ export class Outbox {
     private readonly defaultAttachFlowSoftLimitInBytes = 64 * 1024;
 
     constructor(private readonly params: IOutboxParameters) {
+<<<<<<< HEAD
         // We need to allow infinite size batches if we enable compression
         const hardLimit = this.params.config.compressionOptions?.minimumBatchSizeInBytes !== Infinity
             ? Infinity : this.params.config.maxBatchSizeInBytes;
         const softLimit = this.params.config.compressionOptions?.minimumBatchSizeInBytes !== Infinity
             ? Infinity : this.defaultAttachFlowSoftLimitInBytes;
+=======
+        const isCompressionEnabled = this.params.config.compressionOptions.minimumBatchSizeInBytes !== Number.POSITIVE_INFINITY;
+        // We need to allow infinite size batches if we enable compression
+        const hardLimit = isCompressionEnabled ? Infinity : this.params.config.maxBatchSizeInBytes;
+        const softLimit = isCompressionEnabled ? Infinity : this.defaultAttachFlowSoftLimitInBytes;
+>>>>>>> main
 
         this.attachFlowBatch = new BatchManager({
             hardLimit,
@@ -84,6 +100,18 @@ export class Outbox {
                     });
             }
         }
+<<<<<<< HEAD
+=======
+
+        // If compression is enabled, we will always successfully receive
+        // attach ops and compress then send them at the next JS turn, regardless
+        // of the overall size of the accumulated ops in the batch.
+        // However, it is more efficient to flush these ops faster, preferably
+        // after they reach a size which would benefit from compression.
+        if (this.attachFlowBatch.contentSizeInBytes >= this.params.config.compressionOptions.minimumBatchSizeInBytes) {
+            this.flushInternal(this.attachFlowBatch.popBatch());
+        }
+>>>>>>> main
     }
 
     public flush() {
@@ -92,21 +120,33 @@ export class Outbox {
     }
 
     private flushInternal(rawBatch: IBatch) {
+<<<<<<< HEAD
         const processedBatch = this.maybeCompressBatch(rawBatch);
+=======
+        const processedBatch = this.compressBatch(rawBatch);
+>>>>>>> main
         const clientSequenceNumber = this.sendBatch(processedBatch);
 
         this.persistBatch(clientSequenceNumber, rawBatch.content);
     }
 
+<<<<<<< HEAD
     private maybeCompressBatch(batch: IBatch): IBatch {
         if (batch.content.length === 0
             || this.params.config.compressionOptions === undefined
             || this.params.config.compressionOptions.minimumBatchSizeInBytes >= batch.contentSizeInBytes) {
+=======
+    private compressBatch(batch: IBatch): IBatch {
+        if (batch.content.length === 0
+            || this.params.config.compressionOptions === undefined
+            || this.params.config.compressionOptions.minimumBatchSizeInBytes > batch.contentSizeInBytes) {
+>>>>>>> main
             // Nothing to do if the batch is empty or if compression is disabled or if we don't need to compress
             return batch;
         }
 
         const compressedBatch = this.params.compressor.compressBatch(batch);
+<<<<<<< HEAD
         if (compressedBatch.contentSizeInBytes < this.params.config.maxBatchSizeInBytes) {
             // If we don't reach the maximum supported size of a batch, it safe to be sent as is
             return compressedBatch;
@@ -115,6 +155,31 @@ export class Outbox {
         return this.params.splitter.splitCompressedBatch(compressedBatch);
     }
 
+=======
+        if (compressedBatch.contentSizeInBytes > this.params.config.maxBatchSizeInBytes) {
+            throw new GenericError(
+                "BatchTooLarge",
+                    /* error */ undefined,
+                {
+                    opSize: batch.contentSizeInBytes,
+                    count: batch.content.length,
+                    limit: this.params.config.maxBatchSizeInBytes,
+                    compressed: true,
+                });
+        }
+
+        // If we don't reach the maximum supported size of a batch, it safe to be sent as is
+        return compressedBatch;
+    }
+
+    /**
+     * Sends the batch object to the container context to be sent over the wire.
+     *
+     * @param batch - batch to be sent
+     * @returns the client sequence number of the last batched op which was sent and
+     * -1 if there are no ops or the container cannot send ops.
+     */
+>>>>>>> main
     private sendBatch(batch: IBatch): number {
         let clientSequenceNumber: number = -1;
         const length = batch.content.length;
