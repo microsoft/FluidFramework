@@ -300,7 +300,8 @@ flowchart
             dependency-tracking
             forest-->tree
         end
-        core-->util
+        core-->events
+        events-->util
         feature-->core
         shared-tree-->feature
         subgraph feature ["feature-libraries"]

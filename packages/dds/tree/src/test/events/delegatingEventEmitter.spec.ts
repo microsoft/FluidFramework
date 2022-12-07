@@ -16,6 +16,7 @@ describe("DelegatingEventEmitter", () => {
         const emitter = DelegatingEventEmitter.create<TestEvents>();
         let opened = false;
         emitter.on("open", () => {
+            assert(!opened, "Event should only be fired once");
             opened = true;
         });
         emitter.emit("open");

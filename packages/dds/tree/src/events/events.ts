@@ -6,7 +6,7 @@
 import { UnionToIntersection } from "../util";
 
 /**
- * `true` if the given type is an acceptable shape for an event, otherwwise `false`;
+ * `true` if the given type is an acceptable shape for an event, otherwise `false`;
  */
 export type IsEvent<Event> = Event extends (...args: any[]) => void ? true : false;
 
@@ -35,7 +35,7 @@ export type EventFilter<Events> = {
  * ```
  */
 export type TransformEvents<Events extends EventFilter<Events>> = {
-    [P in keyof Events]: (event: P, listener: Events[P]) => void;
+    [P in keyof EventFilter<Events>]: (event: P, listener: Events[P]) => void;
 } extends Record<any, infer Z>
     ? UnionToIntersection<Z>
     : never;

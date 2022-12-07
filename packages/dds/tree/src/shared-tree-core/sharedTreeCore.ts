@@ -50,8 +50,11 @@ export interface IndexEvents<TChangeset> {
      * @param derivedFromLocal - iff provided, change was a local change (from this session)
      * which is now sequenced (and thus no longer local).
      */
-    sequencedChange: (change: TChangeset, derivedFromLocal?: TChangeset) => void;
+    newSequencedChange: (change: TChangeset, derivedFromLocal?: TChangeset) => void;
 
+    /**
+     * @param change - change that was just applied locally.
+     */
     newLocalChange: (change: TChangeset) => void;
 
     /**
@@ -224,7 +227,7 @@ export class SharedTreeCore<
 
         const delta = this.editManager.addSequencedChange(commit);
         const sequencedChange = this.editManager.getLastSequencedChange();
-        this.indexEventEmitter.emit("sequencedChange", sequencedChange);
+        this.indexEventEmitter.emit("newSequencedChange", sequencedChange);
         this.indexEventEmitter.emit("newLocalState", delta);
     }
 
