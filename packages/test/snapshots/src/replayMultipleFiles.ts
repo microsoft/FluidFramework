@@ -377,7 +377,7 @@ async function processNode(
                 + `Check README.md for more details.`;
                 reject(new Error(`${JSON.stringify(workerData)}\n${message}\n\n${extra}`));
             } else {
-                reject(new Error(`${JSON.stringify(workerData)}\nmessage`));
+                reject(new Error(`${JSON.stringify(workerData)}\n${message}`));
             }
         });
 
