@@ -5,6 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "command": "npx danger pr https://github.com/microsoft/FluidFramework/pull/{A-RECENT-PR-HERE} -d {WORKSPACE WITH /'s}/build-tools/packages/build-tools/dist/bundleSizeAnalysis/dangerfile.js",
+            "name": "bundleSizeAnalysis", // Don't forget to run `npm run bundle-analysis:collect`
+            "request": "launch", // Reminder, update the command values
+            "type": "node-terminal",
+            "env": {
+                "ADO_API_TOKEN": "", // Your ADO PAT (Personal Access Token)
+                "DANGER_GITHUB_API_TOKEN": "", // Your Github PAT (Personal Access Token)
+                "TARGET_BRANCH_NAME": "main" // Update /build-tools/packages/bundle-size-tools/src/utilities/gitCommands.ts to your remote (i.e. upstream instead of main)
+            }
+        },
+        {
             "name": "npm test build-cli",
             "cwd": "${workspaceFolder}/build-tools/packages/build-cli",
             "request": "launch",
