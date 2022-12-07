@@ -99,12 +99,17 @@ export class SharedTreeCore<
     private readonly indexEventEmitter = DelegatingEventEmitter.create<IndexEvents<TChange>>();
 
     /**
+     * @param indexes - A list of indexes, either as an array or as a factory function
+     * @param changeFamily - The change family
+     * @param editManager - The edit manager
+     * @param anchors - The anchor set
      * @param id - The id of the shared object
      * @param runtime - The IFluidDataStoreRuntime which contains the shared object
      * @param attributes - Attributes of the shared object
+     * @param telemetryContextPrefix - the context for any telemetry logs/errors emitted
      */
     public constructor(
-        indexFactory: (events: IEventEmitter<IndexEvents<TChange>>) => Index[],
+        indexes: Index[] | ((events: IEventEmitter<IndexEvents<TChange>>) => Index[]),
         public readonly changeFamily: TChangeFamily,
         public readonly editManager: EditManager<TChange, TChangeFamily>,
         anchors: AnchorSet,
@@ -119,8 +124,7 @@ export class SharedTreeCore<
 
         this.stableId = uuid();
         editManager.initSessionId(this.stableId);
-        const indexes = indexFactory(this.indexEventEmitter);
-        this.summaryElements = indexes
+        this.summaryElements = (Array.isArray(indexes) ? indexes : indexes(this.indexEventEmitter))
             .map((i) => i.summaryElement)
             .filter((e): e is SummaryElement => e !== undefined);
         assert(
