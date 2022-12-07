@@ -2633,7 +2633,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const serializedContent = JSON.stringify(deserializedContent);
 
         if (this.deltaManager.readOnlyInfo.readonly) {
-            this.logger.sendErrorEvent({ eventName: "SubmitOpInReadonly" });
+            this.logger.sendTelemetryEvent({ eventName: "SubmitOpInReadonly", connected: this.connected });
         }
 
         const message: BatchMessage = {
