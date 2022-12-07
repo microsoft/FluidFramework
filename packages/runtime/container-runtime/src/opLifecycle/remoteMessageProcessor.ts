@@ -14,10 +14,6 @@ export class RemoteMessageProcessor {
         private readonly opDecompressor: OpDecompressor,
     ) { }
 
-    public get hasPartialMessages(): boolean {
-        return this.opSplitter.hasChunks;
-    }
-
     public get partialMessages(): ReadonlyMap<string, string[]> {
         return this.opSplitter.chunks;
     }

@@ -21,6 +21,17 @@ export class OpDecompressor {
     private rootMessageContents: any | undefined;
     private processedCount = 0;
 
+    /**
+     * Processes remote messages and decompresses them as needed, per the
+     * internal state of the decompression state machine. Messages without
+     * compression will be ignored.
+     *
+     * If the message is decompressed, the method will change its original content with
+     * the decompressed content.
+     *
+     * @param message - The message to process
+     * @returns true if the message has been decompressed (and mutated), false otherwise
+     */
     public processMessage(message: ISequencedDocumentMessage): boolean {
         // We're checking for compression = true or top level compression property so
         // that we can enable compression without waiting on all ordering services

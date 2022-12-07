@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { DataCorruptionError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ContainerMessageType } from "../containerRuntime";
 import { IChunkedOp } from "./definitions";
@@ -19,10 +19,6 @@ export class OpSplitter {
         this.chunkMap = new Map<string, string[]>(chunks);
     }
 
-    public get hasChunks(): boolean {
-        return this.chunkMap.size > 0;
-    }
-
     public get chunks(): ReadonlyMap<string, string[]> {
         return this.chunkMap;
     }
@@ -34,7 +30,7 @@ export class OpSplitter {
 
         const clientId = message.clientId;
         const chunkedContent = message.contents as IChunkedOp;
-        this.addChunk(clientId, chunkedContent);
+        this.addChunk(clientId, chunkedContent, message);
 
         if (chunkedContent.chunkId < chunkedContent.totalChunks) {
             // We are processing the op in chunks but haven't reached
@@ -56,15 +52,25 @@ export class OpSplitter {
         }
     }
 
-    private addChunk(clientId: string, chunkedContent: IChunkedOp) {
+    private addChunk(clientId: string, chunkedContent: IChunkedOp, originalMessage: ISequencedDocumentMessage) {
         let map = this.chunkMap.get(clientId);
         if (map === undefined) {
             map = [];
             this.chunkMap.set(clientId, map);
         }
 
-        assert(chunkedContent.chunkId === map.length + 1,
-            0x131 /* "Mismatch between new chunkId and expected chunkMap" */); // 1-based indexing
+        if (chunkedContent.chunkId !== map.length + 1) {
+            // We are expecting the chunks to be processed sequentially, in the same order as they are sent.
+            // Therefore, the chunkId of the incoming op needs to match the length of the array (1-based indexing)
+            // holding the existing chunks for that particular clientId.
+            throw new DataCorruptionError("Chunk Id mismatch", {
+                ...extractSafePropertiesFromMessage(originalMessage),
+                chunkMapLength: map.length,
+                chunkId: chunkedContent.chunkId,
+                totalChunks: chunkedContent.totalChunks,
+            });
+        }
+
         map.push(chunkedContent.contents);
     }
 }

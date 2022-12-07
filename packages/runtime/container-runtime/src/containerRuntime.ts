@@ -1468,7 +1468,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ) {
         this.addMetadataToSummary(summaryTree);
 
-        if (this.remoteMessageProcessor.hasPartialMessages) {
+        if (this.remoteMessageProcessor.partialMessages.size > 0) {
             const content = JSON.stringify([...this.remoteMessageProcessor.partialMessages]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
         }
@@ -1668,8 +1668,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.savedOps.push(messageArg);
         }
 
+
+        // Whether or not the message is actually a runtime message.
+        // It may be a legacy runtime message (ie already unpacked and ContainerMessageType)
+        // or something different, like a system message.
         const runtimeMessage = messageArg.type === MessageType.Operation;
-        const message = this.remoteMessageProcessor.process(messageArg);
+
+        // Do shallow copy of message, as the processing flow will modify it.
+        const messageCopy = { ...messageArg };
+        const message = this.remoteMessageProcessor.process(messageCopy);
 
         // Surround the actual processing of the operation with messages to the schedule manager indicating
         // the beginning and end. This allows it to emit appropriate events and/or pause the processing of new

@@ -26,13 +26,13 @@ describe("OpSplitter", () => {
 
         assert.equal(opSplitter.processRemoteMessage(chunks1[2]), true);
         assertSameMessage(chunks1[2], op1);
-        assert.ok(opSplitter.hasChunks);
+        assert.equal(opSplitter.chunks.size, 1);
 
         assert.equal(opSplitter.processRemoteMessage(chunks2[2]), false);
         assert.equal(opSplitter.processRemoteMessage(chunks2[3]), true);
         assertSameMessage(chunks2[3], op2);
 
-        assert.ok(!opSplitter.hasChunks);
+        assert.equal(opSplitter.chunks.size, 0);
     });
 
     it("Reconstruct original chunked op with initial chunks", () => {
@@ -55,11 +55,11 @@ describe("OpSplitter", () => {
         const opSplitter = new OpSplitter([]);
         opSplitter.processRemoteMessage(chunks[0]);
 
-        assert.ok(opSplitter.hasChunks);
+        assert.equal(opSplitter.chunks.size, 1);
         opSplitter.clearPartialChunks("noClient");
-        assert.ok(opSplitter.hasChunks);
+        assert.equal(opSplitter.chunks.size, 1);
         opSplitter.clearPartialChunks("testClient");
-        assert.ok(!opSplitter.hasChunks);
+        assert.equal(opSplitter.chunks.size, 0);
     });
 
     it("Throw when processing out-of-order chunks", () => {
