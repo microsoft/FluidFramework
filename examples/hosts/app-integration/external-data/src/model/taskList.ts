@@ -67,19 +67,27 @@ export class TaskList extends DataObject implements ITaskList {
      * collection pattern -- see the contact-collection example for more details on this pattern.
      */
     private readonly tasks = new Map<string, Task>();
+    /*
+    * savedData stores data retrieved from the external source.
+    */
     private _savedData: SharedMap | undefined;
+    /*
+    * draftData is used for storage of the draft Fluid data. It's used with savedData
+    * to resolve & synchronize the data.
+    * TODO: Update^ when the sync mechanism is appropriately defined.
+    */
     private _draftData: SharedMap | undefined;
 
     private get savedData(): SharedMap {
         if (this._savedData === undefined) {
-            throw new Error("The savedData SharedMap was not initialized correctly");
+            throw new Error("The savedData SharedMap has not yet been initialized.");
         }
         return this._savedData;
     }
 
     private get draftData(): SharedMap {
         if (this._draftData === undefined) {
-            throw new Error("The draftData SharedMap was not initialized correctly");
+            throw new Error("The draftData SharedMap has not yet been initialized.");
         }
         return this._draftData;
     }
@@ -89,19 +97,15 @@ export class TaskList extends DataObject implements ITaskList {
         if (this.tasks.get(id) !== undefined) {
             throw new Error("Task already exists");
         }
-        const nameString = SharedString.create(this.runtime);
         const savedNameString = SharedString.create(this.runtime);
         const draftNameString = SharedString.create(this.runtime);
 
-        nameString.insertText(0, name);
         savedNameString.insertText(0, name);
         draftNameString.insertText(0, name);
 
-        const priorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
         const savedPriorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
         const draftPriorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
 
-        priorityCell.set(priority);
         savedPriorityCell.set(priority);
         draftPriorityCell.set(priority);
 
@@ -117,8 +121,8 @@ export class TaskList extends DataObject implements ITaskList {
 
         const draftDataPT: PersistedTask = {
             id,
-            name: nameString.handle as IFluidHandle<SharedString>,
-            priority: priorityCell.handle as IFluidHandle<ISharedCell<number>>,
+            name: draftNameString.handle as IFluidHandle<SharedString>,
+            priority: draftPriorityCell.handle as IFluidHandle<ISharedCell<number>>,
         };
         this.draftData.set(id, draftDataPT);
     };
