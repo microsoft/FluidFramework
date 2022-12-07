@@ -229,6 +229,7 @@ export class SharedTreeCore<
         const sequencedChange = this.editManager.getLastSequencedChange();
         this.indexEventEmitter.emit("newSequencedChange", sequencedChange);
         this.indexEventEmitter.emit("newLocalState", delta);
+        this.editManager.advanceMinimumSequenceNumber(message.minimumSequenceNumber);n
     }
 
     protected onDisconnect() {}
