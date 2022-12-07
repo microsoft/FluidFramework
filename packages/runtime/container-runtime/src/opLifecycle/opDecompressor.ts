@@ -21,18 +21,7 @@ export class OpDecompressor {
     private rootMessageContents: any | undefined;
     private processedCount = 0;
 
-    /**
-     * Processes remote messages and decompresses them as needed, per the
-     * internal state of the decompression state machine. Messages without
-     * compression will be ignored.
-     *
-     * If the message is decompressed, the method will change its original content with
-     * the decompressed content.
-     *
-     * @param message - The message to process
-     * @returns true if the message has been decompressed (and mutated), false otherwise
-     */
-    public processMessage(message: ISequencedDocumentMessage): boolean {
+    public processMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage {
         // We're checking for compression = true or top level compression property so
         // that we can enable compression without waiting on all ordering services
         // to pick up protocol change. Eventually only the top level property should
@@ -54,25 +43,26 @@ export class OpDecompressor {
             const intoString = Uint8ArrayToString(decompressedMessage);
             const asObj = JSON.parse(intoString);
             this.rootMessageContents = asObj;
-            message.contents = this.rootMessageContents[this.processedCount++];
-            return true;
+            return { ...message, contents: this.rootMessageContents[this.processedCount++] };
         }
 
         if (this.rootMessageContents !== undefined && message.metadata?.batch === undefined && this.activeBatch) {
             // Continuation of compressed batch
-            message.contents = this.rootMessageContents[this.processedCount++];
-            return true;
+            return { ...message, contents: this.rootMessageContents[this.processedCount++] };
         }
 
         if (this.rootMessageContents !== undefined && message.metadata?.batch === false) {
             // End of compressed batch
-            message.contents = this.rootMessageContents[this.processedCount++];
+            const returnMessage = {
+                ...message,
+                contents: this.rootMessageContents[this.processedCount++]
+            };
 
             this.activeBatch = false;
             this.rootMessageContents = undefined;
             this.processedCount = 0;
 
-            return true;
+            return returnMessage;
         }
 
         if (message.metadata?.batch === undefined &&
@@ -83,10 +73,11 @@ export class OpDecompressor {
             const contents = IsoBuffer.from(message.contents.packedContents, "base64");
             const decompressedMessage = decompress(contents);
             const intoString = new TextDecoder().decode(decompressedMessage);
-            message.contents = JSON.parse(intoString)[0];
-            return true;
+            const asObj = JSON.parse(intoString);
+
+            return { ...message, contents: asObj[0] };
         }
 
-        return false;
+        return message;
     }
 }

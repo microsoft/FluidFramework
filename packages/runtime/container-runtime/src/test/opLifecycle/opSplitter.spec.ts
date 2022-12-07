@@ -18,19 +18,20 @@ describe("OpSplitter", () => {
         const chunks2 = wrapChunkedOps(splitOp(op2), "testClient2");
         const opSplitter = new OpSplitter([]);
 
-        assert.equal(opSplitter.processRemoteMessage(chunks1[0]), false);
-        assert.equal(opSplitter.processRemoteMessage(chunks2[0]), false);
+        opSplitter.processRemoteMessage(chunks1[0]);
+        opSplitter.processRemoteMessage(chunks2[0]);
 
-        assert.equal(opSplitter.processRemoteMessage(chunks1[1]), false);
-        assert.equal(opSplitter.processRemoteMessage(chunks2[1]), false);
+        opSplitter.processRemoteMessage(chunks1[1]);
+        opSplitter.processRemoteMessage(chunks2[1]);
 
-        assert.equal(opSplitter.processRemoteMessage(chunks1[2]), true);
-        assertSameMessage(chunks1[2], op1);
+        // The last chunk will reconstruct the original message
+        assertSameMessage(opSplitter.processRemoteMessage(chunks1[2]), op1);
         assert.equal(opSplitter.chunks.size, 1);
 
-        assert.equal(opSplitter.processRemoteMessage(chunks2[2]), false);
-        assert.equal(opSplitter.processRemoteMessage(chunks2[3]), true);
-        assertSameMessage(chunks2[3], op2);
+        opSplitter.processRemoteMessage(chunks2[2]);
+
+        // The last chunk will reconstruct the original message
+        assertSameMessage(opSplitter.processRemoteMessage(chunks2[3]), op2);
 
         assert.equal(opSplitter.chunks.size, 0);
     });
@@ -39,15 +40,14 @@ describe("OpSplitter", () => {
         const op = generateChunkableOp(chunkSizeInBytes * 3);
         const chunks = wrapChunkedOps(splitOp(op), "testClient");
         const opSplitter = new OpSplitter([]);
-        assert.equal(opSplitter.processRemoteMessage(chunks[0]), false);
-        assert.equal(opSplitter.processRemoteMessage(chunks[1]), false);
+        opSplitter.processRemoteMessage(chunks[0]);
+        opSplitter.processRemoteMessage(chunks[1]);
 
         const otherOpSplitter = new OpSplitter(Array.from(opSplitter.chunks));
         opSplitter.clearPartialChunks("testClient");
 
-        assert.equal(otherOpSplitter.processRemoteMessage(chunks[2]), false);
-        assert.equal(otherOpSplitter.processRemoteMessage(chunks[3]), true);
-        assertSameMessage(chunks[3], op);
+        otherOpSplitter.processRemoteMessage(chunks[2]);;
+        assertSameMessage(otherOpSplitter.processRemoteMessage(chunks[3]), op);
     });
 
     it("Clear chunks", () => {

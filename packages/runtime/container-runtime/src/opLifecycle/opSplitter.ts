@@ -23,9 +23,9 @@ export class OpSplitter {
         return this.chunkMap;
     }
 
-    public processRemoteMessage(message: ISequencedDocumentMessage): boolean {
+    public processRemoteMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage {
         if (message.type !== ContainerMessageType.ChunkedOp) {
-            return false;
+            return message;
         }
 
         const clientId = message.clientId;
@@ -35,15 +35,17 @@ export class OpSplitter {
         if (chunkedContent.chunkId < chunkedContent.totalChunks) {
             // We are processing the op in chunks but haven't reached
             // the last chunk yet in order to reconstruct the original op
-            return false;
+            return message;
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const serializedContent = this.chunkMap.get(clientId)!.join("");
         this.clearPartialChunks(clientId);
-        message.contents = serializedContent === "" ? undefined : JSON.parse(serializedContent);
-        message.type = chunkedContent.originalType;
-        return true;
+
+        const newMessage = { ...message };
+        newMessage.contents = serializedContent === "" ? undefined : JSON.parse(serializedContent);
+        newMessage.type = chunkedContent.originalType;
+        return newMessage;
     }
 
     public clearPartialChunks(clientId: string) {

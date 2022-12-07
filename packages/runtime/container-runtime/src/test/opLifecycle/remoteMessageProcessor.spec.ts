@@ -9,23 +9,23 @@ import { OpDecompressor, OpSplitter, RemoteMessageProcessor } from "../../opLife
 import { ContainerMessageType } from "../..";
 
 describe("RemoteMessageProcessor", () => {
-    const stamp = (message: ISequencedDocumentMessage, value: string) => {
-        message.metadata = message.metadata === undefined ? {} : message.metadata;
-        message.metadata.history = message.metadata.history === undefined ? [] : message.metadata.history;
-        message.metadata.history.push(value);
+    const stamp = (message: ISequencedDocumentMessage, value: string): ISequencedDocumentMessage => {
+        const newMessage = { ...message };
+        newMessage.metadata = message.metadata === undefined ? {} : message.metadata;
+        newMessage.metadata.history = message.metadata.history === undefined ? [] : message.metadata.history;
+        newMessage.metadata.history.push(value);
+        return newMessage;
     };
 
     const getMockDecompressor = (): Partial<OpDecompressor> => ({
-        processMessage(message: ISequencedDocumentMessage): boolean {
-            stamp(message, "decompress");
-            return true;
+        processMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage {
+            return stamp(message, "decompress");
         },
     });
 
     const getMockSplitter = (): Partial<OpSplitter> => ({
-        processRemoteMessage(message: ISequencedDocumentMessage): boolean {
-            stamp(message, "reconstruct");
-            return true;
+        processRemoteMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage {
+            return stamp(message, "reconstruct");;
         },
     });
 

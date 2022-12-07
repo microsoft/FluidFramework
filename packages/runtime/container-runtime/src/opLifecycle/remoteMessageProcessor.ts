@@ -23,11 +23,11 @@ export class RemoteMessageProcessor {
     }
 
     public process(remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage {
-        const message = copy(remoteMessage);
+        let message = copy(remoteMessage);
 
-        this.opDecompressor.processMessage(message);
+        message = this.opDecompressor.processMessage(message);
         unpackRuntimeMessage(message);
-        this.opSplitter.processRemoteMessage(message);
+        message = this.opSplitter.processRemoteMessage(message);
 
         return message;
     }
