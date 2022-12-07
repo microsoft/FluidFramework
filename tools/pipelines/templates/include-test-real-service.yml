@@ -46,7 +46,7 @@ parameters:
 
 # Id of the pipeline run that contains the artifacts to download.
 # Needed to workaround a bug in the DownloadPipelineArtifact task that might cause artifacts to be downloaded from the
-# incorrect pipeline run.
+# incorrect pipeline run (see https://github.com/microsoft/azure-pipelines-tasks/issues/13518).
 # Make sure that the value provided corresponds to a run of the 'Build - azure' pipeline if downloadAzureTestArtifacts=true
 # or a run of the 'Build - client packages' otherwise.
 - name: artifactBuildId
