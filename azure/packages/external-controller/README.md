@@ -10,10 +10,6 @@ This implementation demonstrates plugging that Container into a standalone appli
 [Tinylicious](/server/tinylicious), so there are a few extra steps to get started. We bring our own view that we will
 bind to the data in the container.
 
-<!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
-<!-- This section is automatically generated.
-To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
-
 ## Getting Started
 
 You can run this example using the following steps:
@@ -21,10 +17,10 @@ You can run this example using the following steps:
 1. Run `npm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
       `npm run build:fast -- --nolint @fluid-example/app-integration-external-controller`
-1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](../../../server/tinylicious).
-1. Run `npm run start` from this directory (azure/packages/external-controller) and open <http://localhost:8080> in a web browser to see the app running.
-
-<!-- AUTO-GENERATED-CONTENT:END -->
+1. This example can be run against the `tinylicious` service, or the `azure` service.
+    - To run against `tinylicious`, run `npm start` from this directory (examples/hosts/app-integration/external-data) and open <http://localhost:8080> in a web browser to see the app running.
+    - To run against `azure`, run `npm run start:azure`.
+        - Note: this option requires additional steps outlined [below](#backed-locally-and-running-with-live-azure-fluid-relay-service-instance).
 
 ## Testing
 
@@ -57,7 +53,7 @@ To run the the `AzureClient` against our local Tinylicious instance, we set the 
 since we are running it locally, and an object identifying the current user. For running the instance locally,
 the endpoint URL would point to the Tinylicious instance on the default values of `http://localhost:7070`.
 
-To launch the local Tinylicious service instance, run `npx tinylicious` from your terminal window.
+To launch the local Tinylicious service instance, run `npm run start:tinylicious` from your terminal window.
 
 When running the live Azure Fluid Relay Instance, we would require the tenant ID and service discovery endpoint URL. We make use of
 `AzureFunctionTokenProvider` which takes in the Azure function URL and an object identifying the current user, thereby

@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/aqueduct";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
-import { ITaskManager, TaskManager } from "@fluid-experimental/task-manager";
+import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
 import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import random from "random-js";
@@ -484,11 +484,11 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
         const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
         const opsGapMs = cycleMs / opsPerCycle;
-        const opSizeinBytes = (typeof config.testConfig.opSizeinBytes === 'undefined') ? 
+        const opSizeinBytes = (typeof config.testConfig.opSizeinBytes === 'undefined') ?
         0 : config.testConfig.opSizeinBytes;
         assert(opSizeinBytes >= 0, "opSizeinBytes must be greater than or equal to zero.");
         const generateStringOfSize = (sizeInBytes: number): string => new Array(sizeInBytes + 1).join("0");
-        let opsSent = 0; 
+        let opsSent = 0;
         try {
             if (opSizeinBytes === 0) {
                 while (dataModel.counter.value < clientSendCount && !this.disposed) {

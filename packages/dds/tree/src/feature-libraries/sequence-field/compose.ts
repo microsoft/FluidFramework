@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "console";
+import { assert } from "@fluidframework/common-utils";
 import { RevisionTag, tagChange, TaggedChange } from "../../core";
 import { clone, fail, StackyIterator } from "../../util";
 import {
@@ -157,7 +157,6 @@ function composeMarks<TNodeChange>(
                     return {
                         ...newMark,
                         type: "MInsert",
-                        id: baseMark.id,
                         content: baseMark.content[0],
                     };
                 }
@@ -205,7 +204,6 @@ function composeMarks<TNodeChange>(
                 case "Modify": {
                     const modRevive: ModifyReattach<TNodeChange> = {
                         type: "MRevive",
-                        id: baseMark.id,
                         detachedBy: baseMark.detachedBy,
                         detachIndex: baseMark.detachIndex,
                         changes: newMark.changes,

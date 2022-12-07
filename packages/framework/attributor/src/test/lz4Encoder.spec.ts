@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { makeGzipEncoder } from "../gzipEncoder";
+import { makeLZ4Encoder } from "../lz4Encoder";
 
-describe("gzipEncoder", () => {
+describe("lz4Encoder", () => {
 	const cases: { name: string; data: any; }[] = [
 		{ name: "empty string", data: "" },
         { name: "numbers", data: 0 },
@@ -18,7 +18,7 @@ describe("gzipEncoder", () => {
 	describe("correctly round-trips", () => {
 		for (const { name, data } of cases) {
 			it(name, () => {
-                const encoder = makeGzipEncoder<any>();
+                const encoder = makeLZ4Encoder<any>();
 				const actual = encoder.decode(encoder.encode(data));
 				assert.deepEqual(actual, data);
 			});

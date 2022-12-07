@@ -106,7 +106,7 @@
                 "accessibility": "explicit",
                 "overrides": {
                     "accessors": "explicit",
-                    "constructors": "no-public",
+                    "constructors": "explicit",
                     "methods": "explicit",
                     "parameterProperties": "explicit",
                     "properties": "explicit"
@@ -603,7 +603,12 @@
             1
         ],
         "import/no-nodejs-modules": [
-            "warn"
+            "error",
+            {
+                "allow": [
+                    "events"
+                ]
+            }
         ],
         "import/no-unassigned-import": [
             "error"
