@@ -439,7 +439,7 @@ describe("SharedTree", () => {
     });
 
     describe("Anchors", () => {
-        it("Anchors can be created an dereferenced", async () => {
+        it("Anchors can be created and dereferenced", async () => {
             const provider = await TestTreeProvider.create(1);
             const tree = provider.trees[0];
 
