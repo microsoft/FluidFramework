@@ -1429,7 +1429,7 @@ export class MergeTree {
             }
             const clientId = this.collabWindow.clientId;
             for (const node of nodesToUpdate) {
-                this.blockUpdatePathLengths(node, seq, clientId, overwrite, opArgs.sequencedMessage!.referenceSequenceNumber);
+                this.blockUpdatePathLengths(node, seq, clientId, overwrite, opArgs.op.type === MergeTreeDeltaType.OBLITERATE ? opArgs.sequencedMessage!.referenceSequenceNumber : undefined);
                 // NodeUpdatePathLengths(node, seq, clientId, true);
             }
         }
@@ -2786,7 +2786,7 @@ export class MergeTree {
                 const isUnackedAndInObliterate =
                     node.isLeaf() && node.seq === UnassignedSequenceNumber && lenSeq !== refSeq;
 
-                if ((len === undefined && !lenAtRefSeq) || (len === 0 && !isUnackedAndInObliterate)) {
+                if ((len === undefined && !lenAtRefSeq) || (len === 0 && !isUnackedAndInObliterate && !lenAtRefSeq)) {
                     return NodeAction.Skip;
                 }
 
