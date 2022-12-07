@@ -619,7 +619,7 @@ export class ScribeLambda implements IPartitionLambda {
     // Determines checkpoint reason based on some Heuristics
 
     private getCheckpointReason(): CheckpointReason | undefined {
-        const checkpointHeuristics = this.serviceConfiguration.scribe.scribeCheckpointHeuristics;
+        const checkpointHeuristics = this.serviceConfiguration.scribe.checkpointHeuristics;
 
         if (!checkpointHeuristics.enable) {
             // always checkpoint since heuristics are disabled
@@ -677,6 +677,6 @@ export class ScribeLambda implements IPartitionLambda {
                     Lumberjack.info(checkpointResult, lumberjackProperties);
                 }
             }
-        }, this.serviceConfiguration.scribe.scribeCheckpointHeuristics.idleTime);
+        }, this.serviceConfiguration.scribe.checkpointHeuristics.idleTime);
     }
 }
