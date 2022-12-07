@@ -10,14 +10,16 @@ import { EventEmitter, EventFilter } from "./events";
 /**
  * Used by a {@link DelegatingEventEmitter} to store the underlying built-in event emitter
  */
- export const wrappedEmitter = Symbol("The underlying event emitter");
+export const wrappedEmitter = Symbol("The underlying event emitter");
 
 /**
  * An {@link IEventEmitter} which delegates eventing to a built-in event emitter.
  * Use the {@link wrappedEmitter} property to access the underlying emitter.
  * This class may be extended
  */
- export class DelegatingEventEmitter<Events extends EventFilter<Events>> extends EventEmitter<Events> {
+export class DelegatingEventEmitter<
+    Events extends EventFilter<Events>,
+> extends EventEmitter<Events> {
     /**
      * The event emitter provided during construction to which all operations in this class are delegated
      */
@@ -27,9 +29,13 @@ import { EventEmitter, EventFilter } from "./events";
      * Create a {@link DelegatingEventEmitter} that forwards event registration and emission to the given emitter
      * @param emitter - the inner event emitter which will be wrapped by this emitter. Defaults to a new `EventEmitter`.
      */
-    public static create<Events extends EventFilter<Events>>(emitter: NodeEventEmitter = new NodeEventEmitter()) {
+    public static create<Events extends EventFilter<Events>>(
+        emitter: NodeEventEmitter = new NodeEventEmitter(),
+    ) {
         // Expose the `emit` method so that it may be called by the creator.
-        return new DelegatingEventEmitter(emitter) as DelegatingEventEmitter<Events> & { emit: DelegatingEventEmitter<Events>["emit"] };
+        return new DelegatingEventEmitter(emitter) as DelegatingEventEmitter<Events> & {
+            emit: DelegatingEventEmitter<Events>["emit"];
+        };
     }
 
     /**
@@ -46,8 +52,12 @@ import { EventEmitter, EventFilter } from "./events";
      * @param eventName - the name of the event to fire
      * @param args - the arguments passed to the event listener functions
      */
-    protected emit<K extends (string | symbol) & keyof EventFilter<Events>>(eventName: K, ...args: Parameters<Events[K]>): void {
-        this[wrappedEmitter].emit(eventName, args);
+    protected emit<K extends (string | symbol) & keyof EventFilter<Events>>(
+        eventName: K,
+        ...args: Parameters<Events[K]>
+    ): void {
+        const argArray: unknown[] = args; // TODO: TS 4.5.5 cannot spread `args`, but future versions (e.g. 4.8.4) can.
+        this[wrappedEmitter].emit(eventName, ...argArray);
     }
 
     /**
@@ -58,7 +68,12 @@ import { EventEmitter, EventFilter } from "./events";
      * @param position - whether the listener should be appended to the beginning or the end of the list of existing listeners. Listeners are fired in the order of the list.
      * @returns a function which will deregister the listener when run
      */
-    public on<K extends (string | symbol) & keyof EventFilter<Events>>(eventName: K, listener: Events[K], once = false, position: "prepend" | "append" = "append"): () => void {
+    public on<K extends (string | symbol) & keyof EventFilter<Events>>(
+        eventName: K,
+        listener: Events[K],
+        once = false,
+        position: "prepend" | "append" = "append",
+    ): () => void {
         if (once) {
             if (position === "prepend") {
                 this[wrappedEmitter].prependOnceListener(eventName, listener);

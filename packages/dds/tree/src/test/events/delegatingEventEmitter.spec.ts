@@ -58,15 +58,19 @@ describe("DelegatingEventEmitter", () => {
         });
         deregister();
         emitter.emit("close", true);
-        assert.strictEqual(error, true);
+        assert.strictEqual(error, false);
     });
 
     it("emits events more than once", () => {
         const emitter = DelegatingEventEmitter.create<TestEvents>();
         let error = false;
-        emitter.on("close", (e: boolean) => {
-            error = e;
-        }, false);
+        emitter.on(
+            "close",
+            (e: boolean) => {
+                error = e;
+            },
+            false,
+        );
         emitter.emit("close", true);
         assert.strictEqual(error, true);
         emitter.emit("close", false);
@@ -88,9 +92,13 @@ describe("DelegatingEventEmitter", () => {
     it("emits events only once", () => {
         const emitter = DelegatingEventEmitter.create<TestEvents>();
         let error = false;
-        emitter.on("close", (e: boolean) => {
-            error = e;
-        }, true);
+        emitter.on(
+            "close",
+            (e: boolean) => {
+                error = e;
+            },
+            true,
+        );
         emitter.emit("close", true);
         assert.strictEqual(error, true);
         emitter.emit("close", false);
@@ -103,9 +111,14 @@ describe("DelegatingEventEmitter", () => {
         emitter.on("open", () => {
             listener = 0;
         });
-        emitter.on("open", () => {
-            listener = 1;
-        }, undefined, "append");
+        emitter.on(
+            "open",
+            () => {
+                listener = 1;
+            },
+            undefined,
+            "append",
+        );
         emitter.emit("open");
         assert.strictEqual(listener, 1);
     });
@@ -129,9 +142,14 @@ describe("DelegatingEventEmitter", () => {
         emitter.on("open", () => {
             listener = 0;
         });
-        emitter.on("open", () => {
-            listener = 1;
-        }, undefined, "prepend");
+        emitter.on(
+            "open",
+            () => {
+                listener = 1;
+            },
+            undefined,
+            "prepend",
+        );
         emitter.emit("open");
         assert.strictEqual(listener, 0);
     });

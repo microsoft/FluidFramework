@@ -29,8 +29,8 @@ import { v4 as uuid } from "uuid";
 import { ChangeFamily } from "../change-family";
 import { Commit, EditManager, SeqNumber } from "../edit-manager";
 import { AnchorSet, Delta } from "../tree";
-import { brand, EventEmitter, JsonCompatibleReadOnly } from "../util";
-import { DelegatingEventEmitter } from "../events/events";
+import { brand, JsonCompatibleReadOnly } from "../util";
+import { DelegatingEventEmitter, IEventEmitter } from "../events";
 
 /**
  * The events emitted by a {@link SharedTreeCore}
@@ -104,7 +104,7 @@ export class SharedTreeCore<
      * @param attributes - Attributes of the shared object
      */
     public constructor(
-        private readonly indexes: Index[],
+        indexFactory: (events: IEventEmitter<IndexEvents<TChange>>) => Index[],
         public readonly changeFamily: TChangeFamily,
         public readonly editManager: EditManager<TChange, TChangeFamily>,
         anchors: AnchorSet,
@@ -119,6 +119,7 @@ export class SharedTreeCore<
 
         this.stableId = uuid();
         editManager.initSessionId(this.stableId);
+        const indexes = indexFactory(this.indexEventEmitter);
         this.summaryElements = indexes
             .map((i) => i.summaryElement)
             .filter((e): e is SummaryElement => e !== undefined);
@@ -274,27 +275,6 @@ export interface Index {
      * If provided, records data into summaries.
      */
     readonly summaryElement?: SummaryElement;
-}
-
-export class IndexEventEmitter<TChangeset> extends EventEmitter<{
-    /**
-     * @param change - change that was just sequenced.
-     * @param derivedFromLocal - iff provided, change was a local change (from this session)
-     * which is now sequenced (and thus no longer local).
-     */
-    sequencedChange: (change: TChangeset, derivedFromLocal?: TChangeset) => void;
-
-    newLocalChange: (change: TChangeset) => void;
-
-    /**
-     * @param changeDelta - composed changeset from previous local state
-     * (state after all sequenced then local changes are accounted for) to current local state.
-     * May involve effects of a new sequenced change (including rebasing of local changes onto it),
-     * or a new local change. Called after either sequencedChange or newLocalChange.
-     */
-    newLocalState: (changeDelta: Delta.Root) => void;
-}> {
-
 }
 
 /**

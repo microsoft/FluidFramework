@@ -19,7 +19,11 @@ export type RecursiveReadonly<T> = {
  * type T = UnionToIntersection<number | string> // `number & string`
  * ```
  */
-export type UnionToIntersection<T> = (T extends any ? (k: T) => void : never) extends ((k: infer U) => void) ? U : never;
+export type UnionToIntersection<T> = (T extends any ? (k: T) => void : never) extends (
+    k: infer U,
+) => void
+    ? U
+    : never;
 
 /**
  * Remove `readonly` from all fields.

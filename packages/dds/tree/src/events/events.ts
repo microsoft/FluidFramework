@@ -14,8 +14,10 @@ export type IsEvent<Event> = Event extends (...args: any[]) => void ? true : fal
  * Returns a type which contains only the event-like properties of `Events` (i.e. they satisfy {@link IsEvent}).
  */
 export type EventFilter<Events> = {
-    [P in (string | symbol) & keyof Events as IsEvent<Events[P]> extends true ? P : never]: Events[P];
-}
+    [P in (string | symbol) & keyof Events as IsEvent<Events[P]> extends true
+        ? P
+        : never]: Events[P];
+};
 
 /**
  * Converts an `Events` object (i.e. the event registry for an {@link IEventEmitter}) into a type consumable
@@ -34,7 +36,9 @@ export type EventFilter<Events> = {
  */
 export type TransformEvents<Events extends EventFilter<Events>> = {
     [P in keyof Events]: (event: P, listener: Events[P]) => void;
-} extends Record<any, infer Z> ? UnionToIntersection<Z> : never;
+} extends Record<any, infer Z>
+    ? UnionToIntersection<Z>
+    : never;
 
 /**
  * An object which allows the registration of listeners so that subscribers can be notified when an event happens
@@ -54,19 +58,27 @@ export interface IEventEmitter<Events extends EventFilter<Events>> {
      * @param listener - the handler to run when the event is fired by the emitter
      * @returns a function which will deregister the listener when run
      */
-    on<K extends (string | symbol) & keyof EventFilter<Events>>(eventName: K, listener: Events[K]): () => void;
+    on<K extends (string | symbol) & keyof EventFilter<Events>>(
+        eventName: K,
+        listener: Events[K],
+    ): () => void;
 }
 
 /**
  * A class specifying the minimal operations required to implement an {@link IEventEmitter}
  */
-export abstract class EventEmitter<Events extends EventFilter<Events>> implements IEventEmitter<Events> {
+export abstract class EventEmitter<Events extends EventFilter<Events>>
+    implements IEventEmitter<Events>
+{
     /**
      * Fire the given event, notifying all suscribers by calling their registered listener functions
      * @param eventName - the name of the event to fire
      * @param args - the arguments passed to the event listener functions
      */
-    protected abstract emit<K extends (string | symbol) & keyof EventFilter<Events>>(eventName: K, ...args: Parameters<Events[K]>): void;
+    protected abstract emit<K extends (string | symbol) & keyof EventFilter<Events>>(
+        eventName: K,
+        ...args: Parameters<Events[K]>
+    ): void;
 
     /**
      * Register an event listener
@@ -76,7 +88,10 @@ export abstract class EventEmitter<Events extends EventFilter<Events>> implement
      * @param position - whether the listener should be appended to the beginning or the end of the list of existing listeners. Listeners are fired in the order of the list.
      * @returns a function which will deregister the listener when run
      */
-    public abstract on<K extends (string | symbol) & keyof EventFilter<Events>>(eventName: K, listener: Events[K]): () => void;
+    public abstract on<K extends (string | symbol) & keyof EventFilter<Events>>(
+        eventName: K,
+        listener: Events[K],
+    ): () => void;
 }
 
 /**
