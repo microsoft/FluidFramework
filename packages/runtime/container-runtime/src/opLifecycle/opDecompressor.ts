@@ -43,6 +43,7 @@ export class OpDecompressor {
             const intoString = Uint8ArrayToString(decompressedMessage);
             const asObj = JSON.parse(intoString);
             this.rootMessageContents = asObj;
+
             return { ...message, contents: this.rootMessageContents[this.processedCount++] };
         }
 
