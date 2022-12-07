@@ -315,7 +315,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
      *
      * @internal
      */
-    public INTERNAL_CONTAINER_DO_NOT_USE?: () => IContainer = () => {
+    public readonly INTERNAL_CONTAINER_DO_NOT_USE?: () => IContainer = () => {
         return this.container;
     }
 }
