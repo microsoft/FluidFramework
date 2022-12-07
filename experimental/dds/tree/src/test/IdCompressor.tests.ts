@@ -1157,6 +1157,34 @@ describe('IdCompressor', () => {
 		});
 
 		describe('Telemetry', () => {
+			it('emits first cluster and new cluster telemetry events', () => {
+				const mockLogger = new MockLogger();
+				const compressor = createCompressor(Client.Client1, 5, undefined, mockLogger);
+				const localId1 = compressor.generateCompressedId();
+				expect(isLocalId(localId1)).to.be.true;
+				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+
+				mockLogger.assertMatch([
+					{
+						eventName: 'SharedTreeIdCompressor:FirstCluster',
+						sessionId: '88888888-8888-4888-b088-888888888888',
+					},
+					{
+						eventName: 'SharedTreeIdCompressor:NewCluster',
+						sessionId: '88888888-8888-4888-b088-888888888888',
+						clusterCapacity: 5,
+						clusterCount: 1,
+					},
+					{
+						eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
+						sessionId: '88888888-8888-4888-b088-888888888888',
+						eagerFinalIdCount: 0,
+						overridesCount: 0,
+						localIdCount: 1,
+					},
+				]);
+			});
+
 			it('correctly logs telemetry events for eager final id allocations', () => {
 				const mockLogger = new MockLogger();
 				const compressor = createCompressor(Client.Client1, 5, undefined, mockLogger);
@@ -1243,6 +1271,59 @@ describe('IdCompressor', () => {
 						localIdCount: 0,
 						overridesCount: 0,
 						sessionId: '88888888-8888-4888-b088-888888888888',
+					},
+				]);
+			});
+
+			it('emits correct telemetry status with overrides', () => {
+				const mockLogger = new MockLogger();
+				const compressor = createCompressor(Client.Client1, 5, undefined, mockLogger);
+				const localId1 = compressor.generateCompressedId();
+				expect(isLocalId(localId1)).to.be.true;
+
+				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+				mockLogger.assertMatchAny([
+					{
+						eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
+						eagerFinalIdCount: 0,
+						localIdCount: 1,
+						overridesCount: 0,
+						sessionId: '88888888-8888-4888-b088-888888888888',
+					},
+				]);
+
+				const finalId2 = compressor.generateCompressedId();
+				const overrideId3 = compressor.generateCompressedId('override');
+				expect(isFinalId(finalId2)).to.be.true;
+				expect(isLocalId(overrideId3)).to.be.true;
+
+				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+				mockLogger.assertMatchAny([
+					{
+						eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
+						eagerFinalIdCount: 1,
+						localIdCount: 1,
+						overridesCount: 1,
+						sessionId: '88888888-8888-4888-b088-888888888888',
+					},
+				]);
+			});
+
+			it('emits telemetry when serialized', () => {
+				const mockLogger = new MockLogger();
+				const compressor = createCompressor(Client.Client1, 5, undefined, mockLogger);
+				const localId1 = compressor.generateCompressedId();
+				expect(isLocalId(localId1)).to.be.true;
+
+				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+				compressor.serialize(false);
+
+				mockLogger.assertMatchAny([
+					{
+						eventName: 'SharedTreeIdCompressor:SerializedIdCompressorSize',
+						size: 137,
+						clusterCount: 1,
+						sessionCount: 1,
 					},
 				]);
 			});

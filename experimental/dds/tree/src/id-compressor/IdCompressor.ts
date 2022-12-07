@@ -745,6 +745,7 @@ export class IdCompressor {
 		// If there are overrides, we must determine which cluster object (current or overflow) each belongs to and add it.
 		const overrides = ids.overrides;
 		if (overrides !== undefined) {
+			eagerFinalIdCount -= overrides.length;
 			for (let i = 0; i < overrides.length; i++) {
 				const [overriddenLocal, override] = overrides[i];
 				// Note: recall that local IDs are negative
@@ -844,7 +845,7 @@ export class IdCompressor {
 			this.logger?.sendTelemetryEvent({
 				eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
 				eagerFinalIdCount,
-				localIdCount: remainingCount,
+				localIdCount: overrides !== undefined ? remainingCount + overrides.length : remainingCount,
 				overridesCount: overrides?.length ?? 0,
 				sessionId: this.localSessionId,
 			});
