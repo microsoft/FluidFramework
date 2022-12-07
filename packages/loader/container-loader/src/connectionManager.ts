@@ -507,6 +507,8 @@ export class ConnectionManager implements IConnectionManager {
                     // Nobody observed this connection, so drop it on the floor and retry.
                     this.logger.sendTelemetryEvent({ eventName: "ReceivedClosedConnection" });
                     connection = undefined;
+                } else if (connection.mode !== requestedMode) {
+                    this.logger.sendTelemetryEvent({ eventName: "ConnectionModeMismatch", requestedMode, mode: connection.mode });
                 }
             } catch (origError: any) {
                 if (typeof origError === "object" && origError !== null &&
