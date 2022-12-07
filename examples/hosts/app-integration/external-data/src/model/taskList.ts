@@ -90,22 +90,37 @@ export class TaskList extends DataObject implements ITaskList {
             throw new Error("Task already exists");
         }
         const nameString = SharedString.create(this.runtime);
+        const savedNameString = SharedString.create(this.runtime);
+        const draftNameString = SharedString.create(this.runtime);
+
         nameString.insertText(0, name);
+        savedNameString.insertText(0, name);
+        draftNameString.insertText(0, name);
+
         const priorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
+        const savedPriorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
+        const draftPriorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
+
         priorityCell.set(priority);
+        savedPriorityCell.set(priority);
+        draftPriorityCell.set(priority);
 
         // To add a task, we update the root SharedDirectory.  This way the change is propagated to all collaborators
         // and persisted.  In turn, this will trigger the "valueChanged" event and handleTaskAdded which will update
         // the this.tasks collection.
+        const savedDataPT: PersistedTask = {
+            id,
+            name: savedNameString.handle as IFluidHandle<SharedString>,
+            priority: savedPriorityCell.handle as IFluidHandle<ISharedCell<number>>,
+        };
+        this.savedData.set(id, savedDataPT);
 
-        this.savedData.set(id, { id, name: nameString.handle, priority: priorityCell.handle });
-
-        const data: PersistedTask = {
+        const draftDataPT: PersistedTask = {
             id,
             name: nameString.handle as IFluidHandle<SharedString>,
             priority: priorityCell.handle as IFluidHandle<ISharedCell<number>>,
         };
-        this.draftData.set(id, data);
+        this.draftData.set(id, draftDataPT);
     };
 
     public readonly deleteTask = (id: string): void => {
@@ -214,18 +229,16 @@ export class TaskList extends DataObject implements ITaskList {
      */
     protected async hasInitialized(): Promise<void> {
         const saved = this.root.get<IFluidHandle<SharedMap>>("savedData");
-        if (!saved) {
+        if (saved === undefined) {
             throw new Error("savedData was not initialized");
-        } else {
-            this._savedData = await saved.get();
         }
+        this._savedData = await saved.get();
 
         const draft = this.root.get<IFluidHandle<SharedMap>>("draftData");
-        if (!draft) {
+        if (draft === undefined) {
             throw new Error("draftData was not initialized");
-        } else {
-            this._draftData = await draft.get();
         }
+        this._draftData = await draft.get();
 
         this.root.on("valueChanged", (changed) => {
             if (changed.previousValue === undefined) {
@@ -243,7 +256,7 @@ export class TaskList extends DataObject implements ITaskList {
             }
         });
 
-        for (const [id, task] of this._draftData.entries()) {
+        for (const [id, task] of this.draftData) {
             const typedTaskData = task as PersistedTask;
             const [nameSharedString, prioritySharedCell] = await Promise.all([
                 typedTaskData.name.get(),
