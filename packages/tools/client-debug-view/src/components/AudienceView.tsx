@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Stack, StackItem } from "@fluentui/react";
+import { Stack, StackItem, IconButton } from "@fluentui/react";
 import React from "react";
 
 import { IClient } from "@fluidframework/protocol-definitions";
@@ -167,15 +167,26 @@ function HistoryView(props: HistoryViewProps): React.ReactElement {
 		const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
 
 		historyViews.push(
-			<li key={`${changeEntry.clientId}-${changeEntry.changeKind}`}>
-				<b>Client ID: </b>
-				{changeEntry.clientId}
-				<br />
-				<b>Time: </b>{" "}
-				{wasChangeToday ? changeTimeStamp.toTimeString() : changeTimeStamp.toDateString()}
-				<br />
-				<b>Type: </b> {changeEntry.changeKind}
-			</li>,
+            <div className="ms-Grid" dir="ltr">
+                <div className="ms-Grid-col">
+                    <div className="audienceIconBox" background-color={changeEntry.changeKind === "added" ? "00FF00" : "Ff0000"}>
+                        <IconButton
+                            iconProps={{
+                                iconName: changeEntry.changeKind === "added" ? "CalculatorAddition" : "CalculatorSubtract"
+                            }}
+                        />
+                    </div>
+                    <li key={`${changeEntry.clientId}-${changeEntry.changeKind}`}>
+                        <b>Client ID: </b>
+                        {changeEntry.clientId}
+                        <br />
+                        <b>Time: </b>{" "}
+                        {wasChangeToday ? changeTimeStamp.toTimeString() : changeTimeStamp.toDateString()}
+                        <br />
+                        <b>Type: </b> {changeEntry.changeKind}
+                    </li>,
+                </div>
+            </div>
 		);
 	}
 
