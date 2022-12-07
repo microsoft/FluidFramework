@@ -24,6 +24,7 @@ import {
     isAttach,
     isDetachMark,
     isModifyingMark,
+    isReattach,
     isSkipMark,
     splitMarkOnInput,
     splitMarkOnOutput,
@@ -70,11 +71,12 @@ function composeMarkLists<TNodeChange>(
             // We therefore adopt the new mark as is.
             factory.push(composeMark(newMark, newRev, composeChild));
         } else if (isAttach(newMark)) {
-            if (isDetachMark(baseMark) && newRev !== undefined && baseMark.revision === newRev) {
-                // TODO: Need to look ahead to find correct position in detach block with respect to newMark's lineage
-                // TODO: newMark might be the inverse of a detach other than the first in this block.
-                // The detach may even be split within the block.
-
+            if (
+                isReattach(newMark) &&
+                isDetachMark(baseMark) &&
+                newRev !== undefined &&
+                baseMark.revision === newRev
+            ) {
                 // We assume that baseMark and newMark having the same revision means that they are inverses of each other,
                 // so neither has an effect in the composition.
                 assert(
@@ -86,13 +88,6 @@ function composeMarkLists<TNodeChange>(
                 baseIter.push(baseMark);
             }
         } else if (isDetachMark(baseMark)) {
-            // Content that is being detached by the base changeset can interact with the new changes.
-            // This can happen in two cases:
-            // - The new change contains reattach marks for this detach. (see above)
-            // - The new change contains tombs for this detach.
-            // We're ignoring these cases for now. The impact of ignoring them is that the relative order of
-            // reattached content and concurrently attached content is not preserved.
-            // TODO: properly compose detach marks with their matching new marks if any.
             factory.pushContent(baseMark);
             newIter.push(newMark);
         } else {
