@@ -167,10 +167,7 @@ export interface EditableTree extends Iterable<EditableField> {
      * `optional` fields will be created following the "last-write-wins" semantics,
      * and for `sequence` fields the content ends up in order of "sequenced-last" to "sequenced-first".
      */
-    [createField](
-        fieldKey: FieldKey,
-        newContent: ITreeCursor | ITreeCursor[],
-    ): EditableField | undefined;
+    [createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
 }
 
 /**
@@ -333,6 +330,10 @@ function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target i
     return target instanceof FieldProxyTarget;
 }
 
+function isNodeProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target is NodeProxyTarget {
+    return target instanceof NodeProxyTarget;
+}
+
 /**
  * A Proxy target, which together with a `nodeProxyHandler` implements a basic access to
  * the fields of {@link EditableTree} by means of the cursors.
@@ -360,7 +361,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
     }
 
     get type(): TreeSchema {
-        return lookupTreeSchema(this.context.forest.schema, this.typeName);
+        return lookupTreeSchema(this.context.schema, this.typeName);
     }
 
     get value(): Value {
@@ -380,7 +381,11 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
     }
 
     public lookupFieldKind(field: FieldKey): FieldKind {
-        return getFieldKind(getFieldSchema(field, this.context.forest.schema, this.type));
+        return getFieldKind(this.getFieldSchema(field));
+    }
+
+    public getFieldSchema(field: FieldKey): FieldSchema {
+        return getFieldSchema(field, this.context.schema, this.type);
     }
 
     public getFieldKeys(): FieldKey[] {
@@ -415,7 +420,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
     public proxifyField(field: FieldKey, unwrap: false): EditableField;
     public proxifyField(field: FieldKey, unwrap?: true): UnwrappedEditableField;
     public proxifyField(field: FieldKey, unwrap = true): UnwrappedEditableField | EditableField {
-        const fieldSchema = getFieldSchema(field, this.context.forest.schema, this.type);
+        const fieldSchema = this.getFieldSchema(field);
         this.cursor.enterField(field);
         const proxifiedField = proxifyField(this.context, fieldSchema, this.cursor, unwrap);
         this.cursor.exitField();
@@ -432,10 +437,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
             .values();
     }
 
-    public createField(
-        fieldKey: FieldKey,
-        newContent: ITreeCursor | ITreeCursor[],
-    ): EditableField | undefined {
+    public createField(fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void {
         assert(!this.has(fieldKey), 0x44f /* The field already exists. */);
         const fieldKind = this.lookupFieldKind(fieldKey);
         const path = this.cursor.getPath();
@@ -445,12 +447,12 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
                     !Array.isArray(newContent),
                     0x450 /* Use single cursor to create the optional field */,
                 );
-                if (this.context.setOptionalField(path, fieldKey, newContent, true))
-                    return this.proxifyField(fieldKey, false);
+                this.context.setOptionalField(path, fieldKey, newContent, true);
+                break;
             }
             case Multiplicity.Sequence: {
-                if (this.context.insertNodes(path, fieldKey, 0, newContent))
-                    return this.proxifyField(fieldKey, false);
+                this.context.insertNodes(path, fieldKey, 0, newContent);
+                break;
             }
             case Multiplicity.Value:
                 fail("It is invalid to create fields of kind `value` as they should always exist.");
@@ -462,15 +464,15 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
     public deleteField(fieldKey: FieldKey): void {
         const fieldKind = this.lookupFieldKind(fieldKey);
         const path = this.cursor.getPath();
-        this.cursor.enterField(fieldKey);
-        const length = this.cursor.getFieldLength();
-        this.cursor.exitField();
         switch (fieldKind.multiplicity) {
             case Multiplicity.Optional: {
                 this.context.setOptionalField(path, fieldKey, undefined, false);
                 break;
             }
             case Multiplicity.Sequence: {
+                this.cursor.enterField(fieldKey);
+                const length = this.cursor.getFieldLength();
+                this.cursor.exitField();
                 this.context.deleteNodes(path, fieldKey, 0, length);
                 break;
             }
@@ -986,7 +988,10 @@ export function proxifyField(
  * Checks the type of an UnwrappedEditableField.
  */
 export function isUnwrappedNode(field: UnwrappedEditableField): field is EditableTree {
-    return typeof field === "object" && !isEditableField(field);
+    return (
+        typeof field === "object" &&
+        isNodeProxyTarget(field[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
+    );
 }
 
 /**

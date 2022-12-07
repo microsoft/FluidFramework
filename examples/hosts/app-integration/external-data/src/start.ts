@@ -12,7 +12,7 @@ import type { IAppModel } from "./modelInterfaces";
 import { DebugView, AppView } from "./view";
 import { TaskListContainerRuntimeFactory } from "./model";
 
-const updateTabForId = (id: string) => {
+const updateTabForId = (id: string): void => {
     // Update the URL with the actual ID
     location.hash = id;
 
@@ -20,8 +20,8 @@ const updateTabForId = (id: string) => {
     document.title = id;
 };
 
-const render = (model: IAppModel) => {
-    const appDiv = document.getElementById("app") as HTMLDivElement;
+const render = (model: IAppModel): void => {
+    const appDiv = document.querySelector("#app") as HTMLDivElement;
     ReactDOM.unmountComponentAtNode(appDiv);
     ReactDOM.render(
         React.createElement(AppView, { model }),
@@ -30,10 +30,10 @@ const render = (model: IAppModel) => {
 
     // The DebugView is just for demo purposes, to offer manual controls and inspectability for things that normally
     // would be some external system or arbitrarily occurring.
-    const debugDiv = document.getElementById("debug") as HTMLDivElement;
+    const debugDiv = document.querySelector("#debug") as HTMLDivElement;
     ReactDOM.unmountComponentAtNode(debugDiv);
     ReactDOM.render(
-        React.createElement(DebugView, { }),
+        React.createElement(DebugView, { model }),
         debugDiv,
     );
 };
@@ -55,7 +55,7 @@ async function start(): Promise<void> {
 
         id = await createResponse.attach();
     } else {
-        id = location.hash.substring(1);
+        id = location.hash.slice(1);
         model = await tinyliciousModelLoader.loadExisting(id);
     }
 
