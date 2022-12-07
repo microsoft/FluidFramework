@@ -1185,6 +1185,42 @@ describe('IdCompressor', () => {
 				]);
 			});
 
+			it('does not emit first cluster event on second cluster', () => {
+				// Fill the first cluster
+				const mockLogger = new MockLogger();
+				const compressor = createCompressor(Client.Client1, 5, undefined, mockLogger);
+				for (let i = 0; i < 5; i++) {
+					compressor.generateCompressedId();
+				}
+				const range = compressor.takeNextCreationRange();
+				compressor.finalizeCreationRange(range);
+
+				// Create another cluster with a different client so that expansion doesn't happen
+				const mockLogger2 = new MockLogger();
+				const compressor2 = createCompressor(Client.Client2, 5, undefined, mockLogger2);
+				compressor2.finalizeCreationRange(range);
+				compressor2.generateCompressedId();
+				const range2 = compressor2.takeNextCreationRange();
+				compressor2.finalizeCreationRange(range2);
+				compressor.finalizeCreationRange(range2);
+				// Make sure we emitted the FirstCluster event
+				mockLogger.assertMatchAny([
+					{
+						eventName: 'SharedTreeIdCompressor:FirstCluster',
+					},
+				]);
+				mockLogger.clear();
+
+				// Trigger a new cluster creation and make sure FirstCluster isn't emitted
+				compressor.generateCompressedId();
+				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+				mockLogger.assertMatchNone([
+					{
+						eventName: 'SharedTreeIdCompressor:FirstCluster',
+					},
+				]);
+			});
+
 			it('correctly logs telemetry events for eager final id allocations', () => {
 				const mockLogger = new MockLogger();
 				const compressor = createCompressor(Client.Client1, 5, undefined, mockLogger);
@@ -1201,6 +1237,7 @@ describe('IdCompressor', () => {
 						sessionId: '88888888-8888-4888-b088-888888888888',
 					},
 				]);
+				mockLogger.clear();
 				const finalId1 = compressor.generateCompressedId();
 				const finalId2 = compressor.generateCompressedId();
 				expect(isFinalId(finalId1)).to.be.true;
@@ -1234,6 +1271,7 @@ describe('IdCompressor', () => {
 						sessionId: '88888888-8888-4888-b088-888888888888',
 					},
 				]);
+				mockLogger.clear();
 
 				for (let i = 0; i < 4; i++) {
 					const id = compressor.generateCompressedId();
@@ -1250,6 +1288,7 @@ describe('IdCompressor', () => {
 						sessionId: '88888888-8888-4888-b088-888888888888',
 					},
 				]);
+				mockLogger.clear();
 
 				const expansionId1 = compressor.generateCompressedId();
 				const expansionId2 = compressor.generateCompressedId();
@@ -1291,6 +1330,7 @@ describe('IdCompressor', () => {
 						sessionId: '88888888-8888-4888-b088-888888888888',
 					},
 				]);
+				mockLogger.clear();
 
 				const finalId2 = compressor.generateCompressedId();
 				const overrideId3 = compressor.generateCompressedId('override');
