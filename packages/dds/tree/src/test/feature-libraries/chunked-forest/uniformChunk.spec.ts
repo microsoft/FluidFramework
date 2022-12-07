@@ -173,7 +173,7 @@ const testData: TestTree<[number, TreeChunk]>[] = testTrees.flatMap(({ name, dat
     return out;
 });
 
-describe.only("uniformChunk", () => {
+describe("uniformChunk", () => {
     describe("shapes", () => {
         for (const tree of testTrees) {
             it(`validate shape for ${tree.name}`, () => {
