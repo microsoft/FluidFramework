@@ -52,5 +52,6 @@ export {
     Mutable,
     RecursiveReadonly,
     setPropertyIfDefined,
+    UnionToIntersection,
     unreachableCase,
 } from "./utils";

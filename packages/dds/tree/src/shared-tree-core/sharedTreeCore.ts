@@ -29,7 +29,8 @@ import { v4 as uuid } from "uuid";
 import { ChangeFamily } from "../change-family";
 import { Commit, EditManager, SeqNumber } from "../edit-manager";
 import { AnchorSet, Delta } from "../tree";
-import { brand, JsonCompatibleReadOnly } from "../util";
+import { brand, EventEmitter, JsonCompatibleReadOnly } from "../util";
+import { DelegatingEventEmitter } from "../events/events";
 
 /**
  * The events emitted by a {@link SharedTreeCore}
@@ -42,6 +43,25 @@ export interface ISharedTreeCoreEvents extends ISharedObjectEvents {
 
 // TODO: How should the format version be determined?
 const formatVersion = 0;
+
+export interface IndexEvents<TChangeset> {
+    /**
+     * @param change - change that was just sequenced.
+     * @param derivedFromLocal - iff provided, change was a local change (from this session)
+     * which is now sequenced (and thus no longer local).
+     */
+    sequencedChange: (change: TChangeset, derivedFromLocal?: TChangeset) => void;
+
+    newLocalChange: (change: TChangeset) => void;
+
+    /**
+     * @param changeDelta - composed changeset from previous local state
+     * (state after all sequenced then local changes are accounted for) to current local state.
+     * May involve effects of a new sequenced change (including rebasing of local changes onto it),
+     * or a new local change. Called after either sequencedChange or newLocalChange.
+     */
+    newLocalState: (changeDelta: Delta.Root) => void;
+}
 
 /**
  * Generic shared tree, which needs to be configured with indexes, field kinds and a history policy to be used.
@@ -74,12 +94,17 @@ export class SharedTreeCore<
     private detachedRevision: SeqNumber | undefined = brand(Number.MIN_SAFE_INTEGER);
 
     /**
+     * Provides events that indexes can subscribe to
+     */
+    private readonly indexEventEmitter = DelegatingEventEmitter.create<IndexEvents<TChange>>();
+
+    /**
      * @param id - The id of the shared object
      * @param runtime - The IFluidDataStoreRuntime which contains the shared object
      * @param attributes - Attributes of the shared object
      */
     public constructor(
-        private readonly indexes: Index<TChange>[],
+        private readonly indexes: Index[],
         public readonly changeFamily: TChangeFamily,
         public readonly editManager: EditManager<TChange, TChangeFamily>,
         anchors: AnchorSet,
@@ -169,11 +194,8 @@ export class SharedTreeCore<
             this.detachedRevision = newRevision;
             this.editManager.addSequencedChange(commit);
         }
-        for (const index of this.indexes) {
-            index.newLocalChange?.(edit);
-            index.newLocalState?.(delta);
-        }
-
+        this.indexEventEmitter.emit("newLocalChange", edit);
+        this.indexEventEmitter.emit("newLocalState", delta);
         const message: Message = {
             originatorId: this.stableId,
             changeset: this.changeFamily.encoder.encodeForJson(formatVersion, edit),
@@ -197,10 +219,8 @@ export class SharedTreeCore<
 
         const delta = this.editManager.addSequencedChange(commit);
         const sequencedChange = this.editManager.getLastSequencedChange();
-        for (const index of this.indexes) {
-            index.sequencedChange?.(sequencedChange);
-            index.newLocalState?.(delta);
-        }
+        this.indexEventEmitter.emit("sequencedChange", sequencedChange);
+        this.indexEventEmitter.emit("newLocalState", delta);
     }
 
     protected onDisconnect() {}
@@ -249,15 +269,22 @@ interface Message {
 /**
  * Observes Changesets (after rebase), after writes data into summaries when requested.
  */
-export interface Index<TChangeset> {
+export interface Index {
+    /**
+     * If provided, records data into summaries.
+     */
+    readonly summaryElement?: SummaryElement;
+}
+
+export class IndexEventEmitter<TChangeset> extends EventEmitter<{
     /**
      * @param change - change that was just sequenced.
      * @param derivedFromLocal - iff provided, change was a local change (from this session)
      * which is now sequenced (and thus no longer local).
      */
-    sequencedChange?(change: TChangeset, derivedFromLocal?: TChangeset): void;
+    sequencedChange: (change: TChangeset, derivedFromLocal?: TChangeset) => void;
 
-    newLocalChange?(change: TChangeset): void;
+    newLocalChange: (change: TChangeset) => void;
 
     /**
      * @param changeDelta - composed changeset from previous local state
@@ -265,12 +292,9 @@ export interface Index<TChangeset> {
      * May involve effects of a new sequenced change (including rebasing of local changes onto it),
      * or a new local change. Called after either sequencedChange or newLocalChange.
      */
-    newLocalState?(changeDelta: Delta.Root): void;
+    newLocalState: (changeDelta: Delta.Root) => void;
+}> {
 
-    /**
-     * If provided, records data into summaries.
-     */
-    readonly summaryElement?: SummaryElement;
 }
 
 /**
