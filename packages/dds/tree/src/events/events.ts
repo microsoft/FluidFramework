@@ -29,7 +29,7 @@ export type EventFilter<Events> = {
  *   error: (errorCode: number) => void;
  * }
  *
- * class MySharedObject extends SharedObject<TransformEvents<MyEvents>> {
+ * class MySharedObject extends SharedObject<TransformEvents<MyEvents> & ISharedObjectEvents> {
  *    // ...
  * }
  * ```

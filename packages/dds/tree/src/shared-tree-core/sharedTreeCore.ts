@@ -30,15 +30,15 @@ import { ChangeFamily } from "../change-family";
 import { Commit, EditManager, SeqNumber } from "../edit-manager";
 import { AnchorSet, Delta } from "../tree";
 import { brand, JsonCompatibleReadOnly } from "../util";
-import { DelegatingEventEmitter, IEventEmitter } from "../events";
+import { DelegatingEventEmitter, IEventEmitter, TransformEvents } from "../events";
 
 /**
  * The events emitted by a {@link SharedTreeCore}
  *
  * TODO: Add/remove events
  */
-export interface ISharedTreeCoreEvents extends ISharedObjectEvents {
-    (event: "updated", listener: () => void): unknown;
+export interface ISharedTreeCoreEvents {
+    updated: () => void;
 }
 
 // TODO: How should the format version be determined?
@@ -72,7 +72,7 @@ export interface IndexEvents<TChangeset> {
 export class SharedTreeCore<
     TChange,
     TChangeFamily extends ChangeFamily<any, TChange>,
-> extends SharedObject<ISharedTreeCoreEvents> {
+> extends SharedObject<TransformEvents<ISharedTreeCoreEvents> & ISharedObjectEvents> {
     /**
      * A random ID that uniquely identifies this client in the collab session.
      * This is sent alongside every op to identify which client the op originated from.
