@@ -621,7 +621,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
              * 3. Summary 2 at t2. V = [A*, B, C]. E = [B -> C]. C has unreferenced time t2.
              * Validates that the unreferenced time for C is t2 which is > t1.
              */
-            it(`Scenario 1 - Reference added to an unreferenced node`, async () => {
+            it(`Scenario 5 - Reference added to unreferenced node`, async () => {
                 const summarizer = await createSummarizer(provider, mainContainer);
 
                 // Create data stores B and C and mark them referenced as follows by storing their handles as follows:
@@ -649,7 +649,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
                 // 2. Add reference from B to C. E = [B -> C].
                 dataStoreB._root.set("dataStoreC", dataStoreC.handle);
 
-                // 3. Get summary 2 and validate that both C's unreferenced timestamp has updated. E = [B -> C].
+                // 3. Get summary 2 and validate that C's unreferenced timestamp has updated. E = [B -> C].
                 await provider.ensureSynchronized();
                 const summaryResult2 = await summarizeNow(summarizer);
                 const timestamps2 = await getUnreferencedTimestamps(summaryResult2.summaryTree);
