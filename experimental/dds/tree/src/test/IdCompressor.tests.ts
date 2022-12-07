@@ -1185,7 +1185,7 @@ describe('IdCompressor', () => {
 				]);
 			});
 
-			it('does not emit first cluster event on second cluster', () => {
+			it('emits new cluster event on second cluster', () => {
 				// Fill the first cluster
 				const mockLogger = new MockLogger();
 				const compressor = createCompressor(Client.Client1, 5, undefined, mockLogger);
@@ -1214,6 +1214,11 @@ describe('IdCompressor', () => {
 				// Trigger a new cluster creation and make sure FirstCluster isn't emitted
 				compressor.generateCompressedId();
 				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+				mockLogger.assertMatchAny([
+					{
+						eventName: 'SharedTreeIdCompressor:NewCluster',
+					},
+				]);
 				mockLogger.assertMatchNone([
 					{
 						eventName: 'SharedTreeIdCompressor:FirstCluster',
