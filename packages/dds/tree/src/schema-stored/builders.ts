@@ -79,15 +79,3 @@ export function treeSchema(data: TreeSchemaBuilder): TreeSchema {
         value: data.value ?? ValueSchema.Nothing,
     };
 }
-
-/**
- * Helper for building {@link NamedTreeSchema}.
- */
-export function namedTreeSchema(
-    data: TreeSchemaBuilder & Named<TreeSchemaIdentifier>,
-): NamedTreeSchema {
-    return {
-        name: data.name,
-        ...treeSchema(data),
-    };
-}

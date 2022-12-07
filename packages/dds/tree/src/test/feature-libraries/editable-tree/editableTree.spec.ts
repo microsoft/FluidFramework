@@ -6,24 +6,22 @@
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
-    fieldSchema,
-    SchemaData,
-    InMemoryStoredSchemaRepository,
-    SchemaDataAndPolicy,
-    GlobalFieldKey,
-    namedTreeSchema,
-    ValueSchema,
-    LocalFieldKey,
-} from "../../../schema-stored";
-import { IEditableForest, initializeForest } from "../../../forest";
-import {
     JsonableTree,
     EmptyKey,
     Value,
     rootFieldKey,
     symbolFromKey,
     FieldKey,
-} from "../../../tree";
+    IEditableForest,
+    initializeForest,
+    fieldSchema,
+    SchemaData,
+    InMemoryStoredSchemaRepository,
+    SchemaDataAndPolicy,
+    GlobalFieldKey,
+    ValueSchema,
+    LocalFieldKey,
+} from "../../../core";
 import { brand, clone } from "../../../util";
 import {
     defaultSchemaPolicy,
@@ -46,6 +44,7 @@ import {
     getField,
     indexSymbol,
     getPrimaryField,
+    namedTreeSchema,
 } from "../../../feature-libraries";
 
 import {

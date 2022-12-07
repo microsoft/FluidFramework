@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { emptyField, FieldKinds, EditableTree, EditableField } from "../../../feature-libraries";
 import {
+    FieldKinds,
+    EditableTree,
+    EditableField,
     namedTreeSchema,
+} from "../../../feature-libraries";
+import {
     ValueSchema,
     fieldSchema,
     NamedTreeSchema,
@@ -13,39 +17,33 @@ import {
     SchemaData,
     GlobalFieldKey,
     LocalFieldKey,
-} from "../../../schema-stored";
-import {
     EmptyKey,
     rootFieldKey,
     JsonableTree,
     symbolFromKey,
     GlobalFieldKeySymbol,
-} from "../../../tree";
+} from "../../../core";
 import { brand, Brand } from "../../../util";
 
 // TODO: Use typed schema (ex: typedTreeSchema), here, and derive the types below from them programmatically.
 
 export const stringSchema = namedTreeSchema({
     name: brand("String"),
-    extraLocalFields: emptyField,
     value: ValueSchema.String,
 });
 
 export const int32Schema = namedTreeSchema({
     name: brand("Int32"),
-    extraLocalFields: emptyField,
     value: ValueSchema.Number,
 });
 
 export const float64Schema = namedTreeSchema({
     name: brand("Float64"),
-    extraLocalFields: emptyField,
     value: ValueSchema.Number,
 });
 
 export const boolSchema = namedTreeSchema({
     name: brand("Bool"),
-    extraLocalFields: emptyField,
     value: ValueSchema.Boolean,
 });
 
@@ -54,7 +52,6 @@ export const simplePhonesSchema = namedTreeSchema({
     localFields: {
         [EmptyKey]: fieldSchema(FieldKinds.sequence, [stringSchema.name]),
     },
-    extraLocalFields: emptyField,
 });
 
 export const complexPhoneSchema = namedTreeSchema({
@@ -64,7 +61,6 @@ export const complexPhoneSchema = namedTreeSchema({
         prefix: fieldSchema(FieldKinds.value, [stringSchema.name]),
         extraPhones: fieldSchema(FieldKinds.optional, [simplePhonesSchema.name]),
     },
-    extraLocalFields: emptyField,
 });
 
 export const phonesSchema = namedTreeSchema({
@@ -78,7 +74,6 @@ export const phonesSchema = namedTreeSchema({
             simplePhonesSchema.name,
         ]),
     },
-    extraLocalFields: emptyField,
 });
 
 export const globalFieldKeySequencePhones: GlobalFieldKey = brand("sequencePhones");
@@ -100,7 +95,6 @@ export const addressSchema = namedTreeSchema({
         sequencePhones: fieldSchema(FieldKinds.sequence, [stringSchema.name]),
     },
     globalFields: [globalFieldKeySequencePhones],
-    extraLocalFields: emptyField,
 });
 
 export const mapStringSchema = namedTreeSchema({
@@ -120,7 +114,6 @@ export const personSchema = namedTreeSchema({
         friends: fieldSchema(FieldKinds.optional, [mapStringSchema.name]),
         address: fieldSchema(FieldKinds.optional, [addressSchema.name]),
     },
-    extraLocalFields: emptyField,
 });
 
 export const optionalChildSchema = namedTreeSchema({
@@ -129,7 +122,6 @@ export const optionalChildSchema = namedTreeSchema({
         child: fieldSchema(FieldKinds.optional),
     },
     value: ValueSchema.Serializable,
-    extraLocalFields: emptyField,
 });
 
 export const arraySchema = namedTreeSchema({
@@ -137,7 +129,6 @@ export const arraySchema = namedTreeSchema({
     localFields: {
         [EmptyKey]: fieldSchema(FieldKinds.sequence, [stringSchema.name, int32Schema.name]),
     },
-    extraLocalFields: emptyField,
 });
 
 export const emptyNode: JsonableTree = { type: optionalChildSchema.name };
