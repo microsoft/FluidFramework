@@ -633,7 +633,9 @@ function convertToBasePropertyType(
                 return JSON.stringify(x);
             }
             return {
-                value: JSON.stringify(x.value),
+                value: JSON.stringify(
+                    convertToBasePropertyType(x.value)
+                ),
                 tag: x.tag,
             };
         default:
