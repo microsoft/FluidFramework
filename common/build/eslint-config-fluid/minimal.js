@@ -329,7 +329,7 @@ module.exports = {
          * Note: "events" has been allow-listed here due to the sheer number of uses across the codebase.
          * We may wish to address this in the future.
          */
-        "import/no-nodejs-modules": ["error", { allow: ["events"] }],
+        "import/no-nodejs-modules": ["error", { allow: ["events", "node:events"] }],
     },
     overrides: [
         {
