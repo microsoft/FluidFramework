@@ -145,7 +145,7 @@
                 "max": 1800000
             }
         },
-        "custom_profile_6":  {
+        "scale_with_signals_concurrent":  {
             "opRatePerMin":  7,
             "signalsPerMin":  46,
             "totalSignalsSendCount":  420000,

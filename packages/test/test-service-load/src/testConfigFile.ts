@@ -27,7 +27,7 @@ export interface ILoadTestConfig {
         min: number;
         max: number;
     };
-    opsSendType?: string;
+    opsSendType?: "allClientsConcurrentReadWrite" | "staggeredReadWrite";
     /**
      * Simulate clients going offline
      */

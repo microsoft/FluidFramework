@@ -482,90 +482,71 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
     async sendOps(dataModel: LoadTestDataStoreModel, config: IRunConfig) {
         const cycleMs = config.testConfig.readWriteCycleMs;
         const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
-        const opsSendType = (typeof config.testConfig.opsSendType === "undefined") ?
-        "staggeredReadWrite" : config.testConfig.opsSendType;
+        const opsSendType = config.testConfig.opsSendType ?? "staggeredReadWrite"
         const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
         const opsGapMs = cycleMs / opsPerCycle;
-        const opSizeinBytes = (typeof config.testConfig.opSizeinBytes === 'undefined') ? 
+        const opSizeinBytes = (typeof config.testConfig.opSizeinBytes === 'undefined') ?
         0 : config.testConfig.opSizeinBytes;
         assert(opSizeinBytes >= 0, "opSizeinBytes must be greater than or equal to zero.");
         const generateStringOfSize = (sizeInBytes: number): string => new Array(sizeInBytes + 1).join("0");
         let opsSent = 0; 
-        if (opsSendType === "staggeredReadWrite") {
-            try {
-                if (opSizeinBytes === 0) {
-                    while (dataModel.counter.value < clientSendCount && !this.disposed) {
-                        // this enables a quick ramp down. due to restart, some clients can lag
-                        // leading to a slow ramp down. so if there are less than half the clients
-                        // and it's partner is done, return true to complete the runner.
-                        if (this.runtime.getAudience().getMembers().size < config.testConfig.numClients / 2
-                            && ((await dataModel.getPartnerCounter())?.value ?? 0) >= clientSendCount) {
-                            return true;
-                        }
-                        if (dataModel.assigned()) {
-                            dataModel.counter.increment(1);
-                            opsSent = dataModel.counter.value;
-                            if (opsSent % opsPerCycle === 0) {
-                                await dataModel.blobFinish();
-                                dataModel.abandonTask();
-                                // give our partner a half cycle to get the task
-                                await delay(cycleMs / 2);
-                            } else {
-                                // Random jitter of +- 50% of opWaitMs
-                                await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng));
-                            }
-                        } else {
-                            await dataModel.volunteerForTask();
-                        }
-                    }
-                } else {
-                    while (opsSent < clientSendCount && !this.disposed) {
-                        if (dataModel.assigned()) {
-                            const opPayload = generateStringOfSize(opSizeinBytes);
-                            const opKey = Math.random().toString();
-                            dataModel.sharedmap.set(opKey, opPayload);
-                            opsSent++;
-                            if (opsSent % opsPerCycle === 0) {
-                                dataModel.abandonTask();
-                                await delay(cycleMs / 2);
-                            } else {
-                                await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng));
-                            }
-                        } else {
-                            await dataModel.volunteerForTask();
-                        }
-                    }
-                }
-                return !this.runtime.disposed;
-                } finally {
-                    dataModel.printStatus();
-                }
-        } else if (opsSendType === "allClientsConcurrentReadWrite") {
-            try {
-                if (opSizeinBytes === 0) {
-                    while (dataModel.counter.value < clientSendCount && !this.disposed) {
-                        dataModel.counter.increment(1);
-                        // Random jitter of +- 50% of opWaitMs
-                        await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng));
-                    }
-                }
-                else {
-                    while (opsSent < clientSendCount && !this.disposed) {
-                        const opPayload = generateStringOfSize(opSizeinBytes);
-                        const opKey = Math.random().toString()
-                        dataModel.sharedmap.set(opKey, opPayload);
-                        opsSent++;
-                        await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng));
-                    }
-                }
-                return !this.runtime.disposed;
-            } finally {
-                dataModel.printStatus();
-            }
-        } else {
-            console.log(`${opsSendType} is not a supported opsSendType`);
-            return false;
+
+        const sendSingleOp = opSizeinBytes === 0 ? () => {
+            dataModel.counter.increment(1);
+        } : () => {
+            const opPayload = generateStringOfSize(opSizeinBytes);
+            const opKey = Math.random().toString();
+            dataModel.sharedmap.set(opKey, opPayload);
         }
+
+        const updateOpsSent =  opSizeinBytes === 0 ? () => {
+            opsSent = dataModel.counter.value;
+        } : () => {
+            opsSent++;
+        }
+
+        const enableQuickRampDown = () => {
+            return (opsSendType === "staggeredReadWrite" && opSizeinBytes === 0)? true : false;
+        }
+
+        const sendSingleOpAndThenWait = opsSendType === "staggeredReadWrite" ? async () => {
+            if (dataModel.assigned()) {
+                sendSingleOp();
+                updateOpsSent();
+                if (opsSent % opsPerCycle === 0) {
+                    dataModel.abandonTask();
+                    await delay(cycleMs / 2);
+                } else {
+                    await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng));
+                }
+            } else {
+                await dataModel.volunteerForTask();
+            }
+      } : async () => {
+        sendSingleOp();
+        updateOpsSent();
+        await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng))
+      }
+
+      try
+      {
+        while(opsSent < clientSendCount && !this.disposed)
+        {
+            // this enables a quick ramp down. due to restart, some clients can lag
+            // leading to a slow ramp down. so if there are less than half the clients
+            // and it's partner is done, return true to complete the runner.
+            if (enableQuickRampDown()) {
+                if (this.runtime.getAudience().getMembers().size < config.testConfig.numClients / 2
+                    && ((await dataModel.getPartnerCounter())?.value ?? 0) >= clientSendCount) {
+                        return true;
+                        }
+            }
+            await sendSingleOpAndThenWait();
+        }
+        return !this.runtime.disposed;
+      } finally {
+        dataModel.printStatus();
+      }
     }
 
     async sendSignals(config: IRunConfig) {
