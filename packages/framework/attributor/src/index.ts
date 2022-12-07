@@ -4,6 +4,7 @@
  */
 export {
 	Attributor,
+	AttributionKey,
 	AttributionInfo,
 	OpStreamAttributor,
 	IAttributor,

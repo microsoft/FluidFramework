@@ -17,6 +17,14 @@ export interface AttributionInfo {
     user: IUser;
 }
 
+// @public (undocumented)
+export interface AttributionKey {
+    // (undocumented)
+    key: number | string;
+    // (undocumented)
+    type: string;
+}
+
 // @public
 export class Attributor implements IAttributor {
     constructor(initialEntries?: Iterable<[number, AttributionInfo]>);

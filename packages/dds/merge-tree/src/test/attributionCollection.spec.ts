@@ -18,11 +18,11 @@ import { BaseSegment, ISegment } from "../mergeTreeNodes";
 describe("AttributionCollection", () => {
     describe(".getAtOffset", () => {
         describe("on a collection with a single entry", () => {
-            const collection = new AttributionCollection<string>("foo", 5);
+            const collection = new AttributionCollection("foo", 5);
 
             it("returns the entry for offsets within the length range", () => {
                 for (let i = 0; i < 5; i++) {
-                    assert.equal(collection.getAtOffset(i), "foo");
+                    assert.deepEqual(collection.getAtOffset(i), { type: "op", key: "foo" });
                 }
             });
 
@@ -37,11 +37,11 @@ describe("AttributionCollection", () => {
             collection.append(new AttributionCollection("bar", 5));
             it("returns the correct entries", () => {
                 for (let i = 0; i < 3; i++) {
-                    assert.equal(collection.getAtOffset(i), "foo");
+                    assert.deepEqual(collection.getAtOffset(i), { type: "op", key: "foo" });
                 }
 
                 for (let i = 3; i < 8; i++) {
-                    assert.equal(collection.getAtOffset(i), "bar");
+                    assert.deepEqual(collection.getAtOffset(i), { type: "op", key: "bar" });
                 }
             });
         });
@@ -49,7 +49,7 @@ describe("AttributionCollection", () => {
 
     describe(".splitAt", () => {
         describe("on a collection with 3 entries", () => {
-            let collection: AttributionCollection<string>;
+            let collection: AttributionCollection;
             beforeEach(() => {
                 collection = new AttributionCollection("base", 3);
                 collection.append(new AttributionCollection("val1", 2));
@@ -59,13 +59,13 @@ describe("AttributionCollection", () => {
             it("can split on non-breakpoints", () => {
                 const splitCollection = collection.splitAt(4);
                 assert.deepEqual(collection.getAll(), [
-                    { offset: 0, key: "base" },
-                    { offset: 3, key: "val1" },
+                    { offset: 0, key: { type: "op", key: "base" } },
+                    { offset: 3, key: { type: "op", key: "val1" } },
                 ]);
                 assert.equal(collection.length, 4);
                 assert.deepEqual(splitCollection.getAll(), [
-                    { offset: 0, key: "val1" },
-                    { offset: 1, key: "val2" },
+                    { offset: 0, key: { type: "op", key: "val1" } },
+                    { offset: 1, key: { type: "op", key: "val2" } },
                 ]);
                 assert.equal(splitCollection.length, 2);
             });
@@ -73,12 +73,12 @@ describe("AttributionCollection", () => {
             it("can split on breakpoints", () => {
                 const splitCollection = collection.splitAt(5);
                 assert.deepEqual(collection.getAll(), [
-                    { offset: 0, key: "base" },
-                    { offset: 3, key: "val1" },
+                    { offset: 0, key: { type: "op", key: "base" } },
+                    { offset: 3, key: { type: "op", key: "val1" } },
                 ]);
                 assert.equal(collection.length, 5);
                 assert.deepEqual(splitCollection.getAll(), [
-                    { offset: 0, key: "val2" },
+                    { offset: 0, key: { type: "op", key: "val2" } },
                 ]);
                 assert.equal(splitCollection.length, 1);
             });
@@ -89,31 +89,34 @@ describe("AttributionCollection", () => {
             const splitCollection = collection.splitAt(3);
             assert.equal(collection.length, 3);
             assert.equal(splitCollection.length, 2);
-            assert.deepEqual(collection.getAll(), [{ offset: 0, key: "val" }]);
-            assert.deepEqual(splitCollection.getAll(), [{ offset: 0, key: "val" }]);
+            assert.deepEqual(collection.getAll(), [{ offset: 0, key: { type: "op", key: "val" } }]);
+            assert.deepEqual(splitCollection.getAll(), [{ offset: 0, key: { type: "op", key: "val" } }]);
         });
     });
 
     describe(".append", () => {
         it("modifies the receiving collection", () => {
             const collection = new AttributionCollection("foo", 2);
-            assert.deepEqual(collection.getAll(), [{ offset: 0, key: "foo" }]);
+            assert.deepEqual(collection.getAll(), [{ offset: 0, key: { type: "op", key: "foo" } }]);
             collection.append(new AttributionCollection("bar", 1));
-            assert.deepEqual(collection.getAll(), [{ offset: 0, key: "foo" }, { offset: 2, key: "bar" }]);
+            assert.deepEqual(collection.getAll(), [
+                { offset: 0, key: { type: "op", key: "foo" } },
+                { offset: 2, key: { type: "op", key: "bar" } }
+            ]);
         });
 
         it("does not modify the argument collection", () => {
             const collection = new AttributionCollection("foo", 2);
             const appendedCollection = new AttributionCollection("bar", 1);
-            assert.deepEqual(appendedCollection.getAll(), [{ offset: 0, key: "bar" }]);
+            assert.deepEqual(appendedCollection.getAll(), [{ offset: 0, key: { type: "op", key: "bar" } }]);
             collection.append(appendedCollection);
-            assert.deepEqual(appendedCollection.getAll(), [{ offset: 0, key: "bar" }]);
+            assert.deepEqual(appendedCollection.getAll(), [{ offset: 0, key: { type: "op", key: "bar" } }]);
         });
 
         it("coalesces referentially equal values at the join point", () => {
             const collection = new AttributionCollection("foo", 2);
             collection.append(new AttributionCollection("foo", 7));
-            assert.deepEqual(collection.getAll(), [{ offset: 0, key: "foo" }]);
+            assert.deepEqual(collection.getAll(), [{ offset: 0, key: { type: "op", key: "foo" } }]);
             assert.equal(collection.length, 9);
         });
     });
@@ -127,13 +130,13 @@ describe("AttributionCollection", () => {
                 keys: [0, 2, 5, 7].map((key) => `val${key}`),
             });
             assert.deepEqual(segments[0].attribution?.getAll(), [
-                { offset: 0, key: "val0" },
-                { offset: 2, key: "val2" },
+                { offset: 0, key: { type: "op", key: "val0" } },
+                { offset: 2, key: { type: "op", key: "val2" } },
             ]);
 
             assert.deepEqual(segments[1].attribution?.getAll(), [
-                { offset: 0, key: "val5" },
-                { offset: 2, key: "val7" },
+                { offset: 0, key: { type: "op", key: "val5" } },
+                { offset: 2, key: { type: "op", key: "val7" } },
             ]);
 
             for (const segment of segments) {
@@ -149,14 +152,14 @@ describe("AttributionCollection", () => {
                 keys: [0, 2, 5, 7].map((key) => `val${key}`),
             });
             assert.deepEqual(segments[0].attribution?.getAll(), [
-                { offset: 0, key: "val0" },
-                { offset: 2, key: "val2" },
+                { offset: 0, key: { type: "op", key: "val0" } },
+                { offset: 2, key: { type: "op", key: "val2" } },
             ]);
 
             assert.deepEqual(segments[1].attribution?.getAll(), [
-                { offset: 0, key: "val2" },
-                { offset: 1, key: "val5" },
-                { offset: 3, key: "val7" },
+                { offset: 0, key: { type: "op", key: "val2" } },
+                { offset: 1, key: { type: "op", key: "val5" } },
+                { offset: 3, key: { type: "op", key: "val7" } },
             ]);
 
             for (const segment of segments) {
@@ -247,8 +250,11 @@ describe("AttributionCollection", () => {
             const appendedCollection = new AttributionCollection("bar", 1);
             const copy = collection.clone();
             collection.append(appendedCollection);
-            assert.deepEqual(collection.getAll(), [{ offset: 0, key: "foo" }, { offset: 2, key: "bar" }]);
-            assert.deepEqual(copy.getAll(), [{ offset: 0, key: "foo" }]);
+            assert.deepEqual(collection.getAll(), [
+                { offset: 0, key: { type: "op", key: "foo" } },
+                { offset: 2, key: { type: "op", key: "bar" } }
+            ]);
+            assert.deepEqual(copy.getAll(), [{ offset: 0, key: { type: "op", key: "foo" } }]);
         });
     });
 

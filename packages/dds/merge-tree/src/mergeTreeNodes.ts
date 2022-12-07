@@ -8,7 +8,7 @@
 /* eslint-disable @typescript-eslint/prefer-optional-chain */
 
 import { assert } from "@fluidframework/common-utils";
-import { IAttributionCollection, AttributionCollection } from "./attributionCollection";
+import { IAttributionCollection } from "./attributionCollection";
 import {
     LocalClientId,
     UnassignedSequenceNumber,
@@ -45,6 +45,22 @@ import {
  } from "./referencePositions";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager";
+
+// TODO: Once @fluid-internal/attributor is made public, this package should reference that type.
+export interface AttributionKey {
+    /**
+     * The type of the attributor this key corresponds to.
+     * 
+     * Keys currently all represent op-based attribution, so have the form `{ type: "op", key: sequenceNumber }`.
+     * Thus, they can be used with an `OpStreamAttributor` to recover timestamp/user information.
+     * 
+     * @remarks - There are plans to make the `type` field of an attribution key an extensibility point to empower
+     * consumers with the ability to implement different attribution policies.
+    */
+    type: string;
+
+    key: number | string;
+}
 
 /**
  * Common properties for a node in a merge tree.
@@ -150,14 +166,18 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
      * Pending segments (i.e. ones that only exist locally and haven't been acked by the server) also have
      * `attribution === undefined` until ack.
      * 
-     * Keys currently align with the `sequenceNumber` of the op that inserts a segment, thus they can be used with an
-     * `OpStreamAttributor` to recover timestamp/user information.
+     * Keys can be used opaquely with an IAttributor or a container runtime that provides attribution.
      * 
-     * @remarks - There are plans to make the type of the attribution key an extensibility point to empower consumers
-     * with the ability to implement different attribution policies (ex: this would allow an application to track
-     * attribution information of property changes and segment inserts separately)
+     * @remarks - There are plans to make the shape of the data stored extensible in a couple ways:
+     * 
+     * 1. Injection of custom attribution information associated with the segment (ex: copy-paste of
+     * content but keeping the old attribution information). This would leverage the `type` field of
+     * the returned AttributionKey (since the information is no longer op-based)
+     * 2. Storage of multiple "channels" of information (ex: track property changes separately from insertion,
+     * or only attribute certain property modifications, etc.)
      */
-    attribution?: IAttributionCollection<unknown>;
+    attribution?: IAttributionCollection<AttributionKey>;
+
     /**
      * Manages pending local state for properties on this segment.
      */
@@ -386,7 +406,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     public removedClientIds?: number[];
     public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
     public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
-    public attribution?: IAttributionCollection<unknown>;
+    public attribution?: IAttributionCollection<AttributionKey>;
     public propertyManager?: PropertiesManager;
     public properties?: PropertySet;
     public localRefs?: LocalReferenceCollection;
@@ -443,14 +463,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
     public abstract toJSONObject(): any;
 
-    public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, attributionKey?: number): boolean {
+    public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
         const currentSegmentGroup = this.segmentGroups.dequeue();
-        if (attributionKey !== undefined) {
-            this.attribution = new AttributionCollection(
-                attributionKey,
-                this.cachedLength
-            );
-        }
         assert(currentSegmentGroup === segmentGroup, 0x043 /* "On ack, unexpected segmentGroup!" */);
         switch (opArgs.op.type) {
             case MergeTreeDeltaType.ANNOTATE:

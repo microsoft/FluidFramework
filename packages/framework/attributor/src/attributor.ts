@@ -7,6 +7,12 @@ import { IDocumentMessage, ISequencedDocumentMessage, IUser } from "@fluidframew
 import { UsageError } from "@fluidframework/container-utils";
 import { IAudience, IDeltaManager } from "@fluidframework/container-definitions";
 
+export interface AttributionKey {
+    type: string;
+
+    key: number | string;
+}
+
 /**
  * Attribution information associated with a change.
  */

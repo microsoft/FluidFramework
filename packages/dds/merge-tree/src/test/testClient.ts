@@ -409,7 +409,7 @@ export class TestClient extends Client {
             if (segment.attribution) {
                 segmentsWithAttribution++;
                 for (let i = 0; i < segment.cachedLength; i++) {
-                    keys.push(segment.attribution.getAtOffset(i));
+                    keys.push(segment.attribution.getAtOffset(i).key);
                 }
             } else {
                 segmentsWithoutAttribution++;

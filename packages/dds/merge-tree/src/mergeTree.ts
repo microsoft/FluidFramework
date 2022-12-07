@@ -1274,6 +1274,13 @@ export class MergeTree {
                 const attributionKey = (opArgs.op.type === MergeTreeDeltaType.INSERT && this.options?.attribution?.track) ?
                     seq : undefined;
                 const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs, attributionKey);
+                if (opArgs.op.type === MergeTreeDeltaType.INSERT && this.options?.attribution?.track) {
+                    pendingSegment.attribution = new AttributionCollection(
+                        seq,
+                        pendingSegment.cachedLength
+                    );
+                }
+    
                 overwrite = overlappingRemove || overwrite;
 
                 if (!overlappingRemove && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
@@ -1627,7 +1634,10 @@ export class MergeTree {
                 newSegment.localSeq = localSeq;
                 newSegment.clientId = clientId;
                 if (this.options?.attribution?.track && seq !== UnassignedSequenceNumber) {
-                    newSegment.attribution ??= new AttributionCollection(newSegment.seq, newSegment.cachedLength);
+                    newSegment.attribution ??= new AttributionCollection(
+                        newSegment.seq,
+                        newSegment.cachedLength
+                    );
                 }
 
                 if (Marker.is(newSegment)) {
