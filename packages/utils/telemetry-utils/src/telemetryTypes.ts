@@ -38,24 +38,9 @@ export interface ITelemetryPropertiesExt {
  * @param category - category of the event, like "error", "performance", "generic", etc.
  * @param eventName - name of the event.
  */
- export interface ITelemetryEvent extends ITelemetryPropertiesExt {
+ export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
     category: string;
     eventName: string;
-}
-
-/**
- * Interface to output telemetry events.
- * Implemented by hosting app / loader
- */
- export interface ITelemetryBaseLoggerExt {
-    /**
-     * An optional boolean which indicates to the user of this interface that tags (i.e. `ITaggedTelemetryPropertyType`
-     * objects) are in use. Eventually this will be a required property, but this is a stopgap that allows older hosts
-     * to continue to pass through telemetry without trouble (this property will simply show up undefined), while our
-     * current logger implementation in `telmetry-utils` handles tags in a separate manner.
-     */
-    supportsTags?: true;
-    send(event: ITelemetryEvent): void;
 }
 
 /**

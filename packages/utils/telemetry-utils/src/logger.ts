@@ -27,10 +27,12 @@ import {
     generateStack,
 } from "./errorLogging";
 import {
-    ITelemetryEvent,
+    ITaggedTelemetryPropertyTypeExt,
+    ITelemetryEventExt,
     ITelemetryGenericEventExt,
     ITelemetryLoggerExt,
     ITelemetryPerformanceEventExt,
+    TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes";
 
 /**
@@ -91,7 +93,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
      * @param error - Error to extract info from
      * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
      */
-    public static prepareErrorObject(event: ITelemetryEvent, error: any, fetchStack: boolean) {
+    public static prepareErrorObject(event: ITelemetryEventExt, error: any, fetchStack: boolean) {
         const { message, errorType, stack } = extractLogSafeErrorProperties(error, true /* sanitizeStack */);
         // First, copy over error message, stack, and errorType directly (overwrite if present on event)
         event.stack = stack;
@@ -126,7 +128,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
      *
      * @param event - the event to send
      */
-    public abstract send(event: ITelemetryEvent): void;
+    public abstract send(event: ITelemetryBaseEvent): void;
 
     /**
      * Send a telemetry event with the logger
@@ -598,17 +600,12 @@ export class TelemetryNullLogger implements ITelemetryLogger {
  * Take in a event object, stringify any fields that are non-primitives, and return the new event object.
  * @param event - Event with fields you want to stringify.
  */
- function convertToBaseEvent(event: ITelemetryGenericEventExt): ITelemetryBaseEvent {
-    const newEvent = {
-        ...event
-    };
-    for (const key of Object.keys(event)) {
-        const filteredEventVal = convertToBasePropertyType(event[key], key);
-        if (filteredEventVal !== null) {
-            newEvent[key] = filteredEventVal;
-        }
+ function convertToBaseEvent({ category, eventName, ...props }: ITelemetryEventExt): ITelemetryBaseEvent {
+    const newEvent: ITelemetryBaseEvent = { category, eventName };
+    for (const key of Object.keys(props)) {
+        newEvent[key] = convertToBasePropertyType(props[key]);
     }
-    return newEvent as ITelemetryBaseEvent;
+    return newEvent;
 }
 
 /**
@@ -616,22 +613,27 @@ export class TelemetryNullLogger implements ITelemetryLogger {
  * If parameter is an array, stringify then return the result.
  * @param x - parameter passed to validate/filter
  */
-function convertToBasePropertyType(x: any, key: string): TelemetryEventPropertyType | null {
+function convertToBasePropertyType(
+    x: TelemetryEventPropertyTypeExt | ITaggedTelemetryPropertyTypeExt,
+): TelemetryEventPropertyType | ITaggedTelemetryPropertyType {
     switch (typeof x) {
         case "string":
         case "number":
         case "boolean":
         case "undefined":
             return x;
-        default:
-            if (!Array.isArray(x)) {
-                return null;
-            }
-            if (x.every((val) => typeof val === "boolean" || typeof val === "string" || typeof val === "number")) {
+        case "object":
+            if (Array.isArray(x)) {
+                // We know that the array type is
                 return JSON.stringify(x);
             }
-            // We don't support logging arbitrary objects
-            console.error(`UnSupported Format of Logging Property for key ${key}:`, x);
-            return "INVALID PROPERTY (arbitrary object)";
+            return {
+                value: JSON.stringify(x.value),
+                tag: x.tag,
+            };
+        default:
+            // should never reach this case.
+            console.error("");
+            return `INVALID PROPERTY (typed as ${typeof x})`;
     }
 }
