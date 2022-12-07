@@ -1525,7 +1525,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         deltaManager.inboundSignal.pause();
 
         deltaManager.on("connect", (details: IConnectionDetails, _opsBehind?: number) => {
-            assert(this.connectionMode === details.mode, "mismatch");
+            assert(this.connectionMode === details.mode, 0x4b7 /* mismatch */);
             this.connectionStateHandler.receivedConnectEvent(
                 details,
             );

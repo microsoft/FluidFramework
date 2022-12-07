@@ -251,7 +251,7 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document delta stream service for onedrive/sharepoint driver.
      */
     public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
-        assert(this.currentConnection === undefined, "Should not be called when connection is already present!");
+        assert(this.currentConnection === undefined, 0x4ad /* Should not be called when connection is already present! */);
         // Attempt to connect twice, in case we used expired token.
         return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (options) => {
             // Presence of getWebsocketToken callback dictates whether callback is used for fetching
@@ -306,7 +306,7 @@ export class OdspDocumentService implements IDocumentService {
                     }
                     // If we hit this assert, it means that "disconnect" event is emitted before the connection went through
                     // dispose flow which is not correct and could lead to a bunch of erros.
-                    assert(connection.disposed, "Connection should be disposed by now");
+                    assert(connection.disposed, 0x4ae /* Connection should be disposed by now */);
                     this.currentConnection = undefined;
                 });
                 this.currentConnection = connection;
