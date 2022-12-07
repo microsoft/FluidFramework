@@ -597,7 +597,8 @@ export class TelemetryNullLogger implements ITelemetryLogger {
 }
 
 /**
- * Take in a event object, stringify any fields that are non-primitives, and return the new event object.
+ * Takes in an event object, and converts all of its values to a basePropertyType.
+ * In the case of an invalid property type, the value will be converted to an error string.
  * @param event - Event with fields you want to stringify.
  */
 function convertToBaseEvent({ category, eventName, ...props }: ITelemetryEventExt): ITelemetryBaseEvent {
@@ -609,9 +610,13 @@ function convertToBaseEvent({ category, eventName, ...props }: ITelemetryEventEx
 }
 
 /**
- * Takes in parameter, if parameter is of primitive type, return the original value.
- * If parameter is an array, stringify then return the result.
- * @param x - parameter passed to validate/filter
+ * Takes in value, and does one of 4 things.
+ * if value is of primitive type - returns the original value.
+ * If the value is an array of primitives - returns a stringified version of the array.
+ * If the value is an object of type ITaggedTelemetryPropertyType - returns the object
+ * with its values recursively converted to base property Type.
+ * If none of these cases are reached - returns an error string
+ * @param x - value passed in to convert to a base property type
  */
 function convertToBasePropertyType(
     x: TelemetryEventPropertyTypeExt | ITaggedTelemetryPropertyTypeExt,

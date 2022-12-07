@@ -68,6 +68,11 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
     duration?: number; // Duration of event (optional)
 }
 
+/**
+ * An extended TelemetryLogger interface which allows for more lenient event types.
+ * This interface is meant to be used internally within the Fluid Framework,
+ * and ITelemetryBaseLogger should be used when loggers are passed between layers.
+ */
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
     /**
      * Send information telemetry event
