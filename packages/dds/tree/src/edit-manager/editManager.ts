@@ -73,9 +73,6 @@ export class EditManager<
             "number must be larger or equal to current minimumSequenceNumber.",
         );
         this.minimumSequenceNumber = minimumSequenceNumber;
-        while (this.trunk[0].seqNumber < this.minimumSequenceNumber) {
-            this.trunk.shift();
-        }
         let commitsToRemove = 0;
         while (
             commitsToRemove < this.trunk.length &&
