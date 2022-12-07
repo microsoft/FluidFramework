@@ -24,6 +24,7 @@ export {
     isEditableField,
     isPrimitive,
     isPrimitiveValue,
+    getPrimaryField,
     isUnwrappedNode,
     PrimitiveValue,
     proxyTargetSymbol,
@@ -47,6 +48,7 @@ export { SequenceField };
 export { defaultSchemaPolicy, emptyField, neverField, neverTree } from "./defaultSchema";
 
 export {
+    ChangesetLocalId,
     isNeverField,
     ModularChangeFamily,
     ModularEditBuilder,
@@ -60,6 +62,8 @@ export {
     FieldChange,
     FieldChangeset,
     ToDelta,
+    ModularChangeset,
+    IdAllocator,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,

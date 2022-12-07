@@ -299,10 +299,12 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
         private innerCursor?: CursorWithNode<MapTree>,
     ) {
         super();
-        this.state =
-            innerCursor === undefined
-                ? ITreeSubscriptionCursorState.Cleared
-                : ITreeSubscriptionCursorState.Current;
+        if (innerCursor === undefined) {
+            this.state = ITreeSubscriptionCursorState.Cleared;
+        } else {
+            this.state = ITreeSubscriptionCursorState.Current;
+            this.forest.currentCursors.add(this);
+        }
     }
 
     buildFieldAnchor(): FieldAnchor {
@@ -464,7 +466,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
  * @returns an implementation of {@link IEditableForest} with no data or schema.
  */
 export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest {
-    return new ObjectForest(schema);
+    return new ObjectForest(schema, anchors);
 }
 
 // This must be used only in forestIndex and should never be exported elsewhere.

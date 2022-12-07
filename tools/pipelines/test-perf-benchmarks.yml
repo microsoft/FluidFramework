@@ -47,7 +47,10 @@ variables:
     value: $(Pipeline.Workspace)/test
     readonly: true
   - name: artifactPipeline
-    value: Build - client packages
+    value: $(resources.pipeline.client.pipelineName)
+    readonly: true
+  - name: artifactBuildId
+    value: $(resources.pipeline.client.runID)
     readonly: true
   - name: toolAbsolutePath
     value: $(Build.SourcesDirectory)/tools/telemetry-generator
@@ -73,15 +76,20 @@ stages:
         - task: DownloadPipelineArtifact@2
           displayName: Download test files
           inputs:
+            # It seems there's a bug and preferTriggeringPipeline is not respected.
+            # We force the behavior by explicitly specifying:
+            # - buildVersionToDownload: specific
+            # - buildId: <the id of the triggering build>
+            # preferTriggeringPipeline: true
             source: specific
             project: internal
             pipeline: ${{ variables.artifactPipeline }}
-            preferTriggeringPipeline: true
-            allowPartiallySucceededBuilds: true
-            runVersion: latestFromBranch
-            runBranch: $(Build.SourceBranch)
+            buildVersionToDownload: specific
+            buildId: ${{ variables.artifactBuildId }}
             artifact: test-files
             path: $(Pipeline.Workspace)/test-files/
+            # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
+            # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
 
         # Run tests for each package that has them
         - ${{ each testPackage in parameters.executionTestPackages }}:
@@ -90,16 +98,21 @@ stages:
           - task: DownloadPipelineArtifact@2
             displayName: Download test package
             inputs:
+              # It seems there's a bug and preferTriggeringPipeline is not respected.
+              # We force the behavior by explicitly specifying:
+              # - buildVersionToDownload: specific
+              # - buildId: <the id of the triggering build>
+              # preferTriggeringPipeline: true
               source: specific
               project: internal
               pipeline: ${{ variables.artifactPipeline }}
-              preferTriggeringPipeline: true
-              allowPartiallySucceededBuilds: true
-              runVersion: latestFromBranch
-              runBranch: $(Build.SourceBranch)
+              buildVersionToDownload: specific
+              buildId: ${{ variables.artifactBuildId }}
               artifact: pack
               patterns: "**/${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-?.?.?-*.tgz"
               path: $(Pipeline.Workspace)/client/pack
+              # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
+              # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
 
           # Install package to be tested
           - task: Bash@3
@@ -208,15 +221,20 @@ stages:
         - task: DownloadPipelineArtifact@2
           displayName: Download test files
           inputs:
+            # It seems there's a bug and preferTriggeringPipeline is not respected.
+            # We force the behavior by explicitly specifying:
+            # - buildVersionToDownload: specific
+            # - buildId: <the id of the triggering build>
+            # preferTriggeringPipeline: true
             source: specific
             project: internal
             pipeline: ${{ variables.artifactPipeline }}
-            preferTriggeringPipeline: true
-            allowPartiallySucceededBuilds: true
-            runVersion: latestFromBranch
-            runBranch: $(Build.SourceBranch)
+            buildVersionToDownload: specific
+            buildId: ${{ variables.artifactBuildId }}
             artifact: test-files
             path: $(Pipeline.Workspace)/test-files/
+            # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
+            # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
 
         # Run tests for each package that has them
         - ${{ each testPackage in parameters.memoryTestPackages }}:
@@ -225,16 +243,21 @@ stages:
           - task: DownloadPipelineArtifact@2
             displayName: Download test package
             inputs:
+              # It seems there's a bug and preferTriggeringPipeline is not respected.
+              # We force the behavior by explicitly specifying:
+              # - buildVersionToDownload: specific
+              # - buildId: <the id of the triggering build>
+              # preferTriggeringPipeline: true
               source: specific
               project: internal
               pipeline: ${{ variables.artifactPipeline }}
-              preferTriggeringPipeline: true
-              allowPartiallySucceededBuilds: true
-              runVersion: latestFromBranch
-              runBranch: $(Build.SourceBranch)
+              buildVersionToDownload: specific
+              buildId: ${{ variables.artifactBuildId }}
               artifact: pack
               patterns: "**/${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-?.?.?-*.tgz"
               path: $(Pipeline.Workspace)/client/pack
+              # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
+              # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
 
           # Install test package
           - task: Bash@3
@@ -353,16 +376,21 @@ stages:
         - task: DownloadPipelineArtifact@2
           displayName: Download test package
           inputs:
+            # It seems there's a bug and preferTriggeringPipeline is not respected.
+            # We force the behavior by explicitly specifying:
+            # - buildVersionToDownload: specific
+            # - buildId: <the id of the triggering build>
+            # preferTriggeringPipeline: true
             source: specific
             project: internal
             pipeline: ${{ variables.artifactPipeline }}
-            preferTriggeringPipeline: true
-            allowPartiallySucceededBuilds: true
-            runVersion: latestFromBranch
-            runBranch: $(Build.SourceBranch)
+            buildVersionToDownload: specific
+            buildId: ${{ variables.artifactBuildId }}
             artifact: pack
             patterns: "**/${{ variables.escapedTestPackage }}-?.?.?-*.tgz"
             path: $(Pipeline.Workspace)/client/pack
+            # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
+            # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
 
         # Install e2e test package
         - task: Bash@3
