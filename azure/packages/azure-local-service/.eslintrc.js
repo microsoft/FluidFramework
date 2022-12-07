@@ -31,6 +31,21 @@ module.exports = {
         // Ensure jsdoc/tsdoc comments contain a main description component
         // (disallows empty comments / only tags).
         "jsdoc/require-description": ["error", { checkConstructors: false }],
+
+        // TODO: remove once dependency on base config has been updated.
+        "@typescript-eslint/explicit-member-accessibility": [
+            "error",
+            {
+                accessibility: "explicit",
+                overrides: {
+                    accessors: "explicit",
+                    constructors: "explicit",
+                    methods: "explicit",
+                    properties: "explicit",
+                    parameterProperties: "explicit",
+                },
+            },
+        ],
     },
     overrides: [
         {
