@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IGCRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
+import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import {
     requestFluidObject } from "@fluidframework/runtime-utils";
 import {
@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, itExpects } from "@fluidframework/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { LoaderHeader } from "@fluidframework/container-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { getUrlFromItemId, MockDetachedBlobStorage } from "../mockDetachedBlobStorage";
 
@@ -42,8 +42,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
     };
 
     let provider: ITestObjectProvider;
-    let mainContainer: IContainer;
-    let mainDataStore: ITestDataObject;
 
     async function loadContainer(summaryVersion: string) {
         return provider.loadTestContainer(
@@ -53,7 +51,24 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
     }
 
     describe("Attachment blobs in attached container", () => {
-        let summarizer: ISummarizer;
+        async function createDataStoreAndSummarizer() {
+            const container = await provider.makeTestContainer(testContainerConfig);
+            const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+
+            // Send an op to transition the container to write mode.
+            dataStore._root.set("transition to write", "true");
+            await waitForContainerConnection(container);
+
+            const summarizer = await createSummarizer(
+                provider,
+                container,
+                undefined /* summaryVersion */,
+                gcOptions,
+                mockConfigProvider(settings),
+            );
+
+            return { dataStore, summarizer };
+        }
 
         beforeEach(async function() {
             provider = getTestObjectProvider({ syncSummarizer: true });
@@ -65,30 +80,13 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
         });
 
-        async function createMainContainerAndSummarizer() {
-            mainContainer = await provider.makeTestContainer(testContainerConfig);
-            mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
-
-            // Send an op to transition the container to write mode.
-            mainDataStore._root.set("transition to write", "true");
-            await waitForContainerConnection(mainContainer);
-
-            summarizer = await createSummarizer(
-                provider,
-                mainContainer,
-                undefined /* summaryVersion */,
-                gcOptions,
-                mockConfigProvider(settings),
-            );
-        }
-
         itExpects("fails retrieval of tombstones attachment blobs",
         [
             {
                 eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
             },
         ], async () => {
-            await createMainContainerAndSummarizer();
+            const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
 
             // Upload an attachment blob.
             const blobContents = "Blob contents";
@@ -130,7 +128,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
                 eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
             },
         ], async () => {
-            await createMainContainerAndSummarizer();
+            const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
 
             // Upload an attachment blob.
             const blobContents = "Blob contents";
@@ -178,7 +176,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             { eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived" },
         ],
         async () => {
-            await createMainContainerAndSummarizer();
+            const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
 
             // Upload an attachment blob.
             const blobContents = "Blob contents";
@@ -239,7 +237,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             // Turn ThrowOnTombstoneUsage setting off.
             settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
 
-            await createMainContainerAndSummarizer();
+            const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
 
             // Upload an attachment blob.
             const blobContents = "Blob contents";
@@ -273,6 +271,17 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
     });
 
     describe("Attachment blobs in detached container", () => {
+        async function createContainerAndDataStore() {
+            const detachedBlobStorage = new MockDetachedBlobStorage();
+            const loader = provider.makeTestLoader({
+                ...testContainerConfig,
+                loaderProps: { ...testContainerConfig.loaderProps, detachedBlobStorage },
+            });
+            const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+            const dataStore = await requestFluidObject<ITestDataObject>(container, "/");
+            return { container, dataStore };
+        }
+
         beforeEach(async function() {
             provider = getTestObjectProvider();
             if (provider.driver.type !== "odsp") {
@@ -281,14 +290,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
             settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
             settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
-
-            const detachedBlobStorage = new MockDetachedBlobStorage();
-            const loader = provider.makeTestLoader({
-                ...testContainerConfig,
-                loaderProps: { ...testContainerConfig.loaderProps, detachedBlobStorage },
-            });
-            mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
-            mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "/");
         });
 
         itExpects("tombstones blobs uploaded in detached container",
@@ -298,6 +299,8 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             },
         ],
         async () => {
+            const { container: mainContainer, dataStore: mainDataStore } = await createContainerAndDataStore();
+
             // Upload an attachment blob and mark it referenced by storing its handle in a DDS.
             const blobContents = "Blob contents";
             const blobHandle = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
@@ -360,6 +363,8 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             }
         ],
         async () => {
+            const { container: mainContainer, dataStore: mainDataStore } = await createContainerAndDataStore();
+
             // Upload an attachment blob. We should get a handle with a localId for the blob. Mark it referenced by
             // storing its handle in a DDS.
             const blobContents = "Blob contents";
@@ -437,6 +442,8 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             }
         ],
         async () => {
+            const { container: mainContainer, dataStore: mainDataStore } = await createContainerAndDataStore();
+
             // Upload couple of attachment blobs with the same content. When these blobs are uploaded to the server,
             // they will be de-duped and redirect to the same storageId.
             const blobContents = "Blob contents";
