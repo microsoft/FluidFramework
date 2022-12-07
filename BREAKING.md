@@ -19,9 +19,14 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
 - [Deprecated IPendingFlush](#Deprecated-IPendingFlush)
+- ["connected" event](#Connected-event)
 
 ### Deprecated IPendingFlush
 `IPendingFlush` has been deprecated. Use batch metadata on `IPendingMessage` instead to indicate the end of a batch.
+
+### Connected event
+Ther is change in behavior - "connected" event will fire when client is mostly up-to-date. This means that "connected" event will fire later than it used to be.
+There is no way to gurantee for client to be fully up-to-date, and behavior depends on particular service providing details to client at the time of connection on how far the client is behind. ODSP service provides relativly up-to-date information.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 - [Existing flag is now required in IRuntimeFactory](#existing-parameter-is-now-required-in-iruntimefactory)
