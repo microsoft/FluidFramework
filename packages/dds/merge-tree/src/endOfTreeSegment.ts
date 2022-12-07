@@ -54,7 +54,6 @@ export class EndOfTreeSegment implements ISegment, IRemovalInfo {
         let lastSegment: ISegment | undefined;
         let depth = 1;
         const root = this.mergeTree.root;
-
         depthFirstNodeWalk(
             root,
             root.children[root.childCount - 1],

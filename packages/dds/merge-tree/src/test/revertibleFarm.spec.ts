@@ -23,7 +23,7 @@ import {
 import { createRevertDriver } from "./testClient";
 import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
 
-const defaultOptions = {
+ const defaultOptions = {
     initialOps: 5,
     minLength: { min: 1, max: 256, growthFunc: (i) => i * i },
     concurrentOpsWithRevert: { min: 0, max: 8 },
