@@ -71,6 +71,8 @@ export {
     FieldAnchor,
     RevisionTag,
     TaggedChange,
+    RepairDataStore,
+    ReadonlyRepairDataStore,
 } from "./core";
 
 export {
@@ -107,9 +109,12 @@ export {
 
 export {
     buildForest,
+    ChangesetLocalId,
     emptyField,
+    IdAllocator,
     neverTree,
     ModularChangeFamily,
+    ModularChangeset,
     ModularEditBuilder,
     FieldChangeHandler,
     FieldEditor,
@@ -121,6 +126,7 @@ export {
     FieldChangeset,
     FieldChange,
     ToDelta,
+    NodeReviver,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
@@ -140,6 +146,7 @@ export {
     EditableField,
     isPrimitiveValue,
     isPrimitive,
+    getPrimaryField,
     typeSymbol,
     typeNameSymbol,
     valueSymbol,

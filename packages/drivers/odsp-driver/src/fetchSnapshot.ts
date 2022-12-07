@@ -26,6 +26,8 @@ import {
     getWithRetryForTokenRefresh,
     getWithRetryForTokenRefreshRepeat,
     IOdspResponse,
+    measure,
+    measureP,
 } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser";
@@ -231,20 +233,18 @@ async function fetchLatestSnapshotCore(
                     );
                 }
 
-                const start = performance.now();
-                const response = await snapshotDownloader(
+                const [response, fetchTime] = await measureP(async () => snapshotDownloader(
                     odspResolvedUrl,
                     storageToken,
                     snapshotOptions,
                     controller,
-                ).finally(() => {
+                )).finally(() => {
                     // Clear the fetchTimeout once the response is fetched.
                     if (fetchTimeout !== undefined) {
                         clearTimeout(fetchTimeout);
                         fetchTimeout = undefined;
                     }
                 });
-                const fetchTime = performance.now() - start;
 
                 const odspResponse = response.odspResponse;
                 const contentType = odspResponse.headers.get("content-type");
@@ -256,12 +256,6 @@ async function fetchLatestSnapshotCore(
                     driverVersion: pkgVersion,
                 };
 
-                // Measure how much time we spend processing payload
-                const snapshotParseEvent = PerformanceEvent.start(logger, {
-                    eventName: "SnapshotParse",
-                    ...propsToLog,
-                });
-
                 let parsedSnapshotContents: IOdspResponse<ISnapshotContentsWithProps> | undefined;
                 let contentTypeToRead: string | undefined;
                 if (contentType?.includes("application/ms-fluid")) {
@@ -270,34 +264,49 @@ async function fetchLatestSnapshotCore(
                     contentTypeToRead = "application/json";
                 }
 
+                let parseTime: number;
+                let receiveContentTime: number;
                 try {
                     switch (contentTypeToRead) {
                         case "application/json": {
-                            const text = await odspResponse.content.text();
+                            let text: string;
+                            [text, receiveContentTime] = await measureP(async () => odspResponse.content.text());
                             propsToLog.bodySize = text.length;
-                            const content: IOdspSnapshot = JSON.parse(text);
+                            let content: IOdspSnapshot;
+                            [content, parseTime] = measure( () => JSON.parse(text) as IOdspSnapshot);
                             validateBlobsAndTrees(content);
                             const snapshotContents: ISnapshotContents =
                                 convertOdspSnapshotToSnapshotTreeAndBlobs(content);
-                            parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
+                            parsedSnapshotContents = {
+                                ...odspResponse,
+                                content: {
+                                    ...snapshotContents,
+                                    telemetryProps: {},
+                                },
+                            };
                             break;
                         }
                         case "application/ms-fluid": {
-                            const content = await odspResponse.content.arrayBuffer();
+                            let content: ArrayBuffer;
+                            [content, receiveContentTime] =
+                                await measureP(async () => odspResponse.content.arrayBuffer());
                             propsToLog.bodySize = content.byteLength;
-                            const snapshotContents: ISnapshotContentsWithProps = parseCompactSnapshotResponse(
+                            let snapshotContents: ISnapshotContentsWithProps;
+                            [snapshotContents, parseTime] = measure(() => parseCompactSnapshotResponse(
                                 new Uint8Array(content),
-                                logger);
+                                logger));
                             if (snapshotContents.snapshotTree.trees === undefined ||
-                                snapshotContents.snapshotTree.blobs === undefined) {
-                                    throw new NonRetryableError(
-                                        "Returned odsp snapshot is malformed. No trees or blobs!",
-                                        DriverErrorType.incorrectServerResponse,
-                                        propsToLog,
-                                    );
-                                }
-                            const slowTreeParseCodePaths = snapshotContents.slowTreeStructureCount ?? 0;
-                            const slowBlobParseCodePaths = snapshotContents.slowBlobStructureCount ?? 0;
+                                    snapshotContents.snapshotTree.blobs === undefined) {
+                                throw new NonRetryableError(
+                                    "Returned odsp snapshot is malformed. No trees or blobs!",
+                                    DriverErrorType.incorrectServerResponse,
+                                    propsToLog,
+                                );
+                            }
+
+                            const props = snapshotContents.telemetryProps;
+                            const slowTreeParseCodePaths = props.slowTreeStructureCount ?? 0;
+                            const slowBlobParseCodePaths = props.slowBlobStructureCount ?? 0;
                             if (slowTreeParseCodePaths > 10 || slowBlobParseCodePaths > 10) {
                                 logger.sendErrorEvent({
                                     eventName: "SlowSnapshotParseCodePaths",
@@ -376,8 +385,7 @@ async function fetchLatestSnapshotCore(
                             (indResTime.responseEnd - indResTime.fetchStart) : undefined;
                         reqStartToResponseEndTime = (indResTime.requestStart > 0) ?
                             (indResTime.responseEnd - indResTime.requestStart) : undefined;
-                        networkTime = (indResTime.startTime > 0) ?
-                            (indResTime.responseEnd - indResTime.fetchStart) : undefined;
+                        networkTime = fetchStartToResponseEndTime;
                         if (spReqDuration !== undefined && networkTime !== undefined) {
                             networkTime = networkTime - parseInt(spReqDuration, 10);
                         }
@@ -414,9 +422,6 @@ async function fetchLatestSnapshotCore(
                     putInCache(valueWithEpoch);
                 }
 
-                const parseTime = snapshotParseEvent.duration;
-                snapshotParseEvent.end();
-
                 event.end({
                     trees,
                     blobs: snapshot.blobs?.size ?? 0,
@@ -424,8 +429,6 @@ async function fetchLatestSnapshotCore(
                     encodedBlobsSize,
                     sequenceNumber,
                     ops: snapshot.ops?.length ?? 0,
-                    slowTreeStructureCount: snapshot.slowTreeStructureCount ?? 0,
-                    slowBlobStructureCount: snapshot.slowBlobStructureCount ?? 0,
                     userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
                     headers: Object.keys(response.requestHeaders).length !== 0 ? true : undefined,
                     // Interval between the first fetch until the last byte of the last redirect.
@@ -439,23 +442,37 @@ async function fetchLatestSnapshotCore(
                     // Time from the end of the connection until the inital handshake process to secure the connection.
                     secureConnectionTime,
                     // Interval between the initial fetch until the last byte is received.
+                    // Likely same as fetchTime + receiveContentTime.
                     fetchStartToResponseEndTime,
+                    // reqStartToResponseEndTime = fetchStartToResponseEndTime - <initial TCP handshake>
                     // Interval between starting the request for the resource until receiving the last byte.
                     reqStartToResponseEndTime,
+                    // networkTime = fetchStartToResponseEndTime - sprequestduration
                     // Interval between starting the request for the resource until receiving the last byte but
-                    // excluding the Snaphot request duration indicated on the snapshot response header.
+                    // excluding the snaphot request duration indicated on the snapshot response header.
                     networkTime,
-                    // Measures total time to make fetch call. Should be similar to networkTime + sprequestduration.
+                    // Measures time to make fetch call. Should be similar to
+                    // fetchStartToResponseEndTime - receiveContentTime, i.e. it looks like it's time till first byte /
+                    // end of response headers
                     fetchTime,
+                    // time it takes client to parse payload. Same payload as in "SnapshotParse" event, here for
+                    // easier analyzes.
+                    parseTime,
+                    // Time it takes to receive content (text of buffer) from Response object.
+                    // This time likely is very closely correlated with networkTime, i.e. time it takes to receive
+                    // actual content (starting measuring from first bite / end of response header)
+                    receiveContentTime,
                     // Sharing link telemetry regarding sharing link redeem status and performance. Ex: FRL; dur=100,
                     // Azure Fluid Relay service; desc=S, FRP; desc=False. Here, FRL is the duration taken for redeem,
                     // Azure Fluid Relay service is the redeem status (S means success), and FRP is a flag to indicate
                     // if the permission has changed.
                     sltelemetry: odspResponse.headers.get("x-fluid-sltelemetry"),
-                    // time it takes client to parse payload. Same payload as in "SnapshotParse" event, here for
-                    // easier analyzes.
-                    parseTime,
+                    // All other props
                     ...propsToLog,
+                    // Various perf counters and measures collected by binary parsing code:
+                    // slowTreeStructureCount, slowBlobStructureCount, durationStructure, durationStrings,
+                    // durationSnapshotTree, durationBlobs, etc.
+                    ...parsedSnapshotContents.content.telemetryProps,
                 });
                 return snapshot;
             },

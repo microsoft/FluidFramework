@@ -23,8 +23,11 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+    "format": "npm run prettier:fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
+    "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
+    "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
     "start:eastus": "node ./dist/orchestratorRunner.js --config eastus",
     "start:server": "node ./dist/server.js",
     "start:westeurope": "node ./dist/orchestratorRunner.js --config westeurope",
@@ -86,12 +89,12 @@
     "mocha": "^10.0.0",
     "sinon": "^7.4.2",
     "start-server-and-test": "^1.11.7",
-    "tinylicious": "^0.4.89251",
+    "tinylicious": "0.4.89251",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.1.0",
-    "@fluidframework/eslint-config-fluid": "^1.1.0",
+    "@fluidframework/eslint-config-fluid": "^1.2.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/js-yaml": "^4.0.5",
     "@types/mocha": "^9.1.1",
@@ -102,6 +105,7 @@
     "eslint": "~8.6.0",
     "nock": "^10.0.1",
     "nyc": "^15.0.0",
+    "prettier": "~2.6.2",
     "rimraf": "^2.6.2",
     "typescript": "~4.5.5"
   }

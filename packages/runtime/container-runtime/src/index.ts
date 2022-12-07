@@ -24,14 +24,17 @@ export {
     ISummaryConfiguration,
     DefaultSummaryConfiguration,
     ICompressionRuntimeOptions,
+    CompressionAlgorithms,
 } from "./containerRuntime";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
 export {
-    gcBlobPrefix,
-    gcTreeKey,
-    IGarbageCollectionRuntime,
     IGCStats,
 } from "./garbageCollection";
+export {
+    gcBlobPrefix,
+    gcTombstoneBlobKey,
+    gcTreeKey,
+} from "./garbageCollectionConstants";
 export {
     IPendingFlush,
     IPendingLocalState,

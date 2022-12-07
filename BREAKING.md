@@ -19,12 +19,20 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ## 2.0.0-internal.2.1.0 Upcoming changes
 - [Deprecated ISummarizerRuntime batchEnd listener](#Deprecated-ISummarizerRuntime-batchEnd-listener)
+- [Deprecate ISummaryBaseConfiguration.summarizerClientElection](#Deprecate-ISummaryBaseConfigurationsummarizerClientElection)
+
 
 ### Deprecated ISummarizerRuntime batchEnd listener
 The `"batchEnd"` listener in `ISummarizerRuntime` has been deprecated and will be removed in a future release. Please remove all usage and implementations of `ISummarizerRuntime.on("batchEnd", ...)` and `ISummarizerRuntime.removeListener("batchEnd", ...)`.
 If these methods are needed, please refer to the `IContainerRuntimeBase` interface.
-
+### Deprecate-ISummaryBaseConfigurationsummarizerClientElection
+`ISummaryBaseConfiguration.summarizerClientElection` has been deprecated and will be removed in a future release.
+There will be no replacement for this property.
 ## 2.0.0-internal.2.1.0 Breaking changes
+- [Package @fluid-experimental/task-manager renamed to @fluidframework/task-manager](#Package-fluid-experimental/task-manager-renamed-to-fluidframework/task-manager)
+
+### Package @fluid-experimental/task-manager renamed to @fluidframework/task-manager
+The package `@fluid-experimental/task-manager` is no longer experimental and has therefore been renamed to `@fluidframework/task-manager`. Update all imports to the new package name to accommodate this change.
 
 # 2.0.0-internal.2.0.0
 
