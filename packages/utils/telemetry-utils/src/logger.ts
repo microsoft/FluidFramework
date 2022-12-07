@@ -12,8 +12,8 @@ import {
     ITelemetryPerformanceEvent,
     ITelemetryProperties,
     TelemetryEventPropertyType,
-    TelemetryEventCategory,
     ITaggedTelemetryPropertyType,
+    TelemetryEventCategory,
 } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
 import {
