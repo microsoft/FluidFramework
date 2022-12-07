@@ -45,7 +45,7 @@ Here's the list of Lerna managed release groups:
 -   historian (Rooted in [./server/historian](./server/historian). Configured by [./server/historian/lerna.json](./server/historian/lerna.json))
     -   [Packages](./server/historian/packages) (Published in the `@fluidframework/` namespace)
 -   build-tools (Rooted in [./build-tools](./build-tools). Configured by [./build-tools/lerna.json](./build-tools/lerna.json))
-    -   [Packages](./build-tools/packages) (Published in a mix of `@fluidframework/` any `@fluid-tools/` namespaces)
+    -   [Packages](./build-tools/packages) (Published in a mix of `@fluidframework/` and `@fluid-tools/` namespaces)
 
 Here's a list of other sets of other packages (each package within these groups is versioned independently,
 forming its own release group):
