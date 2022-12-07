@@ -8,7 +8,10 @@
  */
 
 module.exports = {
-	extends: ["@fluidframework/eslint-config-fluid"],
+    extends: [
+        require.resolve("@fluidframework/eslint-config-fluid"),
+        "prettier"
+    ],
     "parserOptions": {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },

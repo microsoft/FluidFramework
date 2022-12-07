@@ -24,6 +24,7 @@ export {
     isEditableField,
     isPrimitive,
     isPrimitiveValue,
+    getPrimaryField,
     isUnwrappedNode,
     PrimitiveValue,
     proxyTargetSymbol,

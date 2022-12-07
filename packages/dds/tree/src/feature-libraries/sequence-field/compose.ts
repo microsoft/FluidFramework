@@ -10,6 +10,7 @@ import { IdAllocator } from "../modular-schema";
 import {
     Attach,
     Changeset,
+    HasRevisionTag,
     Mark,
     MarkList,
     Modify,
@@ -21,7 +22,6 @@ import {
     MoveId,
     MoveIn,
     MoveOut,
-    ObjectMark,
     SizedMark,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
@@ -42,6 +42,7 @@ import {
     newMoveEffectTable,
     replaceMoveId,
     changeSrcMoveId,
+    isReattach,
 } from "./utils";
 
 export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
@@ -98,7 +99,12 @@ function composeMarkLists<TNodeChange>(
             // We therefore adopt the new mark as is.
             factory.push(composeMark(newMark, newRev, composeChild, genId, moveEffects));
         } else if (isAttach(newMark)) {
-            if (isDetachMark(baseMark) && newRev !== undefined && baseMark.revision === newRev) {
+            if (
+                isReattach(newMark) &&
+                isDetachMark(baseMark) &&
+                newRev !== undefined &&
+                baseMark.revision === newRev
+            ) {
                 // We assume that baseMark and newMark having the same revision means that they are inverses of each other,
                 // so neither has an effect in the composition.
                 assert(
@@ -110,13 +116,6 @@ function composeMarkLists<TNodeChange>(
                 baseIter.push(baseMark);
             }
         } else if (isDetachMark(baseMark)) {
-            // Content that is being detached by the base changeset can interact with the new changes.
-            // This can happen in two cases:
-            // - The new change contains reattach marks for this detach. (see above)
-            // - The new change contains tombs for this detach.
-            // We're ignoring these cases for now. The impact of ignoring them is that the relative order of
-            // reattached content and concurrently attached content is not preserved.
-            // TODO: properly compose detach marks with their matching new marks if any.
             factory.pushContent(baseMark);
             newIter.push(newMark);
         } else {
@@ -414,8 +413,8 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
     }
 
     const cloned = clone(mark);
-    if (revision !== undefined) {
-        (cloned as ObjectMark<TNodeChange>).revision = revision;
+    if (revision !== undefined && mark.type !== "Modify") {
+        (cloned as HasRevisionTag).revision = revision;
     }
 
     switch (mark.type) {

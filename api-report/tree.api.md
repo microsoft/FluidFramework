@@ -89,7 +89,7 @@ export interface ChangeRebaser<TChangeset> {
 // @public (undocumented)
 type Changeset<TNodeChange = NodeChangeType> = MarkList_2<TNodeChange>;
 
-// @public (undocumented)
+// @public
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
 // @public
@@ -218,7 +218,7 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
 
 // @public
 export interface EditableTree extends Iterable<EditableField> {
-    [createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): EditableField | undefined;
+    [createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
     [getField](fieldKey: FieldKey): EditableField;
     readonly [indexSymbol]: number;
     readonly [proxyTargetSymbol]: object;
@@ -232,9 +232,11 @@ export interface EditableTree extends Iterable<EditableField> {
 // @public
 export interface EditableTreeContext {
     attachAfterChangeHandler(afterChangeHandler: (context: EditableTreeContext) => void): void;
+    clear(): void;
     free(): void;
     prepareForEdit(): void;
     readonly root: EditableField;
+    readonly schema: SchemaDataAndPolicy;
     readonly unwrappedRoot: UnwrappedEditableField;
 }
 
@@ -413,6 +415,12 @@ export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, Node
 
 // @public
 export const getField: unique symbol;
+
+// @public (undocumented)
+export function getPrimaryField(schema: TreeSchema): {
+    key: LocalFieldKey;
+    schema: FieldSchema;
+} | undefined;
 
 // @public
 export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
@@ -735,7 +743,7 @@ interface Modify<TTree = ProtoNode> {
 }
 
 // @public (undocumented)
-interface Modify_2<TNodeChange = NodeChangeType> extends HasChanges<TNodeChange>, HasRevisionTag {
+interface Modify_2<TNodeChange = NodeChangeType> extends HasChanges<TNodeChange> {
     // (undocumented)
     tomb?: RevisionTag;
     // (undocumented)

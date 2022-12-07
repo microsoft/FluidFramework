@@ -9,6 +9,7 @@ import { IdAllocator } from "../modular-schema";
 import {
     Attach,
     Detach,
+    HasRevisionTag,
     HasTiebreakPolicy,
     Insert,
     LineageEvent,
@@ -318,10 +319,14 @@ export function isObjMark<TNodeChange>(
  * When `false` is returned, `lhs` is left untouched.
  */
 export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boolean {
-    if (rhs.type !== lhs.type || rhs.revision !== lhs.revision) {
+    if (rhs.type !== lhs.type) {
         return false;
     }
     const type = rhs.type;
+    if (type !== "Modify" && rhs.revision !== (lhs as HasRevisionTag).revision) {
+        return false;
+    }
+
     switch (type) {
         case "Insert": {
             const lhsInsert = lhs as Insert;
