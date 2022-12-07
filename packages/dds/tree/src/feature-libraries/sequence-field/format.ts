@@ -4,7 +4,7 @@
  */
 
 import { JsonableTree, RevisionTag } from "../../core";
-import { NodeChangeset } from "../modular-schema";
+import { ChangesetLocalId, NodeChangeset } from "../modular-schema";
 
 export type NodeChangeType = NodeChangeset;
 export type Changeset<TNodeChange = NodeChangeType> = MarkList<TNodeChange>;
@@ -231,7 +231,7 @@ export interface HasRevisionTag {
  *
  * The uniqueness of IDs is leveraged to uniquely identify the matching move-out for a move-in/return and vice-versa.
  */
-export type MoveId = number;
+export type MoveId = ChangesetLocalId;
 
 export interface HasMoveId {
     /**

@@ -12,6 +12,7 @@ import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
+import { getMaxIdTagged } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag0: RevisionTag = brand(0);
@@ -23,20 +24,32 @@ const tag5: RevisionTag = brand(5);
 
 function compose(changes: TaggedChange<TestChangeset>[]): TestChangeset {
     changes.forEach(deepFreeze);
-    return SF.compose(changes, TestChange.compose);
+    return SF.compose(
+        changes,
+        TestChange.compose,
+        TestChange.newIdAllocator(getMaxIdTagged(changes)),
+    );
 }
 
 function composeNoVerify(changes: TaggedChange<TestChangeset>[]): TestChangeset {
     changes.forEach(deepFreeze);
-    return SF.compose(changes, (cs: TaggedChange<TestChange>[]) => TestChange.compose(cs, false));
+    return SF.compose(
+        changes,
+        (cs: TaggedChange<TestChange>[]) => TestChange.compose(cs, false),
+        TestChange.newIdAllocator(getMaxIdTagged(changes)),
+    );
 }
 
 function shallowCompose(changes: TaggedChange<SF.Changeset>[]): SF.Changeset {
     changes.forEach(deepFreeze);
-    return SF.sequenceFieldChangeRebaser.compose(changes, (children) => {
-        assert(children.length === 1, "Should only have one child to compose");
-        return children[0].change;
-    });
+    return SF.sequenceFieldChangeRebaser.compose(
+        changes,
+        (children) => {
+            assert(children.length === 1, "Should only have one child to compose");
+            return children[0].change;
+        },
+        TestChange.newIdAllocator(getMaxIdTagged(changes)),
+    );
 }
 
 describe("SequenceField - Compose", () => {
@@ -50,6 +63,8 @@ describe("SequenceField - Compose", () => {
                         const left = composeNoVerify([makeAnonChange(ab), makeAnonChange(c[1])]);
                         const bc = composeNoVerify([makeAnonChange(b[1]), makeAnonChange(c[1])]);
                         const right = composeNoVerify([makeAnonChange(a[1]), makeAnonChange(bc)]);
+
+                        // TODO: Should instead check that move IDs are isomorphic
                         assert.deepEqual(left, right);
                     });
                 }

@@ -9,7 +9,7 @@ import { makeAnonChange, RevisionTag, tagChange } from "../../../rebase";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
-import { checkDeltaEquality, composeAnonChanges, rebaseTagged } from "./utils";
+import { checkDeltaEquality, composeAnonChanges, getMaxId, rebaseTagged } from "./utils";
 import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
 
 const tag1: RevisionTag = brand(41);
@@ -18,7 +18,12 @@ const tag2: RevisionTag = brand(42);
 function rebase(change: TestChangeset, base: TestChangeset): TestChangeset {
     deepFreeze(change);
     deepFreeze(base);
-    return SF.rebase(change, makeAnonChange(base), TestChange.rebase);
+    return SF.rebase(
+        change,
+        makeAnonChange(base),
+        TestChange.rebase,
+        TestChange.newIdAllocator(getMaxId(change)),
+    );
 }
 
 describe("SequenceField - Rebase", () => {

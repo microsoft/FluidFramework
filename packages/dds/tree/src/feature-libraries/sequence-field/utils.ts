@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { fail } from "../../util";
+import { IdAllocator } from "../modular-schema";
 import {
     Attach,
     Detach,
@@ -16,7 +17,9 @@ import {
     ModifyDetach,
     ModifyingMark,
     ModifyReattach,
+    MoveId,
     MoveIn,
+    MoveOut,
     ObjectMark,
     Reattach,
     SizedMark,
@@ -186,6 +189,8 @@ export function isSkipMark(mark: Mark<unknown>): mark is Skip {
 export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
     mark: TMark,
     length: number,
+    genId: IdAllocator,
+    moveEffects: MoveEffectTable<unknown>,
 ): [TMark, TMark] {
     const markLength = getInputLength(mark);
     const remainder = markLength - length;
@@ -205,11 +210,21 @@ export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
         case "MMoveOut":
             fail(`Unable to split ${type} mark of length 1`);
         case "Delete":
-        case "MoveOut":
             return [
                 { ...markObj, count: length },
                 { ...markObj, count: remainder },
             ] as [TMark, TMark];
+        case "MoveOut": {
+            const newId = genId();
+            splitMoveDest(moveEffects, mark.id, [
+                { id: mark.id, count: length },
+                { id: newId, count: remainder },
+            ]);
+            return [
+                { ...markObj, count: length },
+                { ...markObj, id: newId, count: remainder },
+            ] as [TMark, TMark];
+        }
         default:
             unreachableCase(type);
     }
@@ -225,6 +240,8 @@ export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
 export function splitMarkOnOutput<TMark extends Mark<unknown>>(
     mark: TMark,
     length: number,
+    genId: IdAllocator,
+    moveEffects: MoveEffectTable<unknown>,
 ): [TMark, TMark] {
     const markLength = getOutputLength(mark);
     const remainder = markLength - length;
@@ -255,11 +272,17 @@ export function splitMarkOnOutput<TMark extends Mark<unknown>>(
                 { ...markObj, content: markObj.content.slice(0, length) },
                 { ...markObj, content: markObj.content.slice(length) },
             ] as [TMark, TMark];
-        case "MoveIn":
+        case "MoveIn": {
+            const newId = genId();
+            splitMoveSrc(moveEffects, markObj.id, [
+                { id: markObj.id, count: length },
+                { id: newId, count: remainder },
+            ]);
             return [
                 { ...markObj, count: length },
-                { ...markObj, count: remainder },
+                { ...markObj, id: newId, count: remainder },
             ] as [TMark, TMark];
+        }
         case "Return":
         case "Revive":
             return [
@@ -300,26 +323,35 @@ export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boole
     }
     const type = rhs.type;
     switch (type) {
-        case "Insert":
-        case "MoveIn": {
-            const lhsAttach = lhs as Insert | MoveIn;
-            if (isEqualPlace(lhsAttach, rhs)) {
-                if (rhs.type === "Insert") {
-                    const lhsInsert = lhsAttach as Insert;
-                    lhsInsert.content.push(...rhs.content);
-                } else {
-                    const lhsMoveIn = lhsAttach as MoveIn;
-                    lhsMoveIn.count += rhs.count;
-                }
+        case "Insert": {
+            const lhsInsert = lhs as Insert;
+            if (isEqualPlace(lhsInsert, rhs)) {
+                lhsInsert.content.push(...rhs.content);
                 return true;
             }
             break;
         }
-        case "Delete":
-        case "MoveOut": {
+        case "MoveIn": {
+            // TODO: Attempt to merge even if IDs are not equal
+            const lhsMoveIn = lhs as MoveIn;
+            if (rhs.id === lhsMoveIn.id && isEqualPlace(lhsMoveIn, rhs)) {
+                lhsMoveIn.count += rhs.count;
+                return true;
+            }
+            break;
+        }
+        case "Delete": {
             const lhsDetach = lhs as Detach;
             if (rhs.tomb === lhsDetach.tomb) {
                 lhsDetach.count += rhs.count;
+                return true;
+            }
+            break;
+        }
+        case "MoveOut": {
+            const lhsMoveOut = lhs as MoveOut;
+            if (rhs.tomb === lhsMoveOut.tomb && rhs.id === lhsMoveOut.id) {
+                lhsMoveOut.count += rhs.count;
                 return true;
             }
             break;
@@ -340,4 +372,123 @@ export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boole
             break;
     }
     return false;
+}
+
+export interface MoveEffectTable<T> {
+    srcEffects: Map<MoveId, MoveSrcEffect<T>>;
+    dstEffects: Map<MoveId, MoveDestEffect<T>>;
+    splitIdToOrigId: Map<MoveId, MoveId>;
+    idRemappings: Map<MoveId, MoveId>;
+
+    /**
+     * Set of marks with validated MoveIds. Used to avoid remapping IDs on marks generated by splits.
+     */
+    validatedMarks: Set<Mark<T>>;
+}
+
+export function newMoveEffectTable<T>(): MoveEffectTable<T> {
+    return {
+        srcEffects: new Map(),
+        dstEffects: new Map(),
+        splitIdToOrigId: new Map(),
+        idRemappings: new Map(),
+        validatedMarks: new Set(),
+    };
+}
+
+type MoveSrcEffect<T> = MovePartition<T>[];
+type MoveDestEffect<T> = MovePartition<T>[];
+
+export interface MovePartition<T> {
+    id: MoveId;
+
+    // Undefined means the partition is the same size as the input.
+    count?: number;
+    replaceWith?: Attach<T>[];
+}
+
+export function splitMoveSrc<T>(
+    table: MoveEffectTable<T>,
+    id: MoveId,
+    parts: MovePartition<T>[],
+): void {
+    // TODO: Do we need a separate splitIdToOrigId for src and dst? Or do we need to eagerly apply splits when processing?
+    const origId = table.splitIdToOrigId.get(id);
+    if (origId !== undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const effect = table.srcEffects.get(id)!;
+        const index = effect.findIndex((p) => p.id === id);
+
+        // TODO: Assert that the sums of the partition sizes match
+        effect.splice(index, 1, ...parts);
+    } else {
+        assert(
+            !table.srcEffects.has(id),
+            "There should be an entry in splitIdToOrigId for this ID",
+        );
+        table.srcEffects.set(id, parts);
+        for (const { id: newId } of parts) {
+            table.splitIdToOrigId.set(newId, id);
+        }
+    }
+}
+
+export function splitMoveDest<T>(
+    table: MoveEffectTable<T>,
+    id: MoveId,
+    parts: MovePartition<T>[],
+): void {
+    // TODO: What if source has been deleted?
+    const origId = table.splitIdToOrigId.get(id);
+    if (origId !== undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const effect = table.dstEffects.get(origId)!;
+        const index = effect.findIndex((p) => p.id === id);
+
+        // TODO: Assert that the sums of the partition sizes match
+        effect.splice(index, 1, ...parts);
+    } else {
+        assert(
+            !table.dstEffects.has(id),
+            "There should be an entry in splitIdToOrigId for this ID",
+        );
+        table.dstEffects.set(id, parts);
+        for (const { id: newId } of parts) {
+            table.splitIdToOrigId.set(newId, id);
+        }
+    }
+}
+
+export function replaceMoveDest<T>(table: MoveEffectTable<T>, id: MoveId, mark: Attach<T>): void {
+    const origId = table.splitIdToOrigId.get(id);
+    if (origId === undefined) {
+        assert(!table.dstEffects.has(id), "This MoveId cannot be replaced");
+        table.dstEffects.set(id, [{ id, replaceWith: [mark] }]);
+    } else {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const effect = table.dstEffects.get(origId)!;
+        const index = effect.findIndex((p) => p.id === id);
+        effect[index].replaceWith = [mark];
+    }
+}
+
+export function deleteMoveSource(table: MoveEffectTable<unknown>, id: MoveId): void {
+    table.srcEffects.set(id, []);
+}
+
+export function replaceMoveId<T>(table: MoveEffectTable<T>, id: MoveId, newId: MoveId): void {
+    assert(!table.idRemappings.has(id), "Cannot remap ID which has already been remapped");
+    table.idRemappings.set(id, newId);
+}
+
+export function changeSrcMoveId<T>(table: MoveEffectTable<T>, id: MoveId, newId: MoveId): void {
+    const origId = table.splitIdToOrigId.get(id);
+    if (origId !== undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const effect = table.srcEffects.get(origId)!;
+        const index = effect.findIndex((p) => p.id === id);
+        effect[index].id = newId;
+    } else {
+        table.srcEffects.set(id, [{ id: newId }]);
+    }
 }

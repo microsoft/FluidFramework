@@ -107,7 +107,7 @@ export interface ChildLocation {
 type ClientId = number;
 
 // @public
-function compose<TNodeChange>(changes: TaggedChange<Changeset<TNodeChange>>[], composeChild: NodeChangeComposer_2<TNodeChange>): Changeset<TNodeChange>;
+function compose<TNodeChange>(changes: TaggedChange<Changeset<TNodeChange>>[], composeChild: NodeChangeComposer_2<TNodeChange>, genId: IdAllocator): Changeset<TNodeChange>;
 
 // @public
 export interface Contravariant<T> {
@@ -562,6 +562,9 @@ export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObje
 export function isNeverField(policy: FullSchemaPolicy, originalData: SchemaData, field: FieldSchema): boolean;
 
 // @public (undocumented)
+function isObjMark<TNodeChange>(mark: Mark_2<TNodeChange> | undefined): mark is ObjectMark<TNodeChange>;
+
+// @public (undocumented)
 export function isPrimitive(schema: TreeSchema): boolean;
 
 // @public (undocumented)
@@ -842,7 +845,7 @@ interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {
 }
 
 // @public
-type MoveId_2 = number;
+type MoveId_2 = ChangesetLocalId;
 
 // @public
 interface MoveIn {
@@ -1048,7 +1051,7 @@ interface Reattach extends HasReattachFields, HasRevisionTag {
 }
 
 // @public
-function rebase<TNodeChange>(change: Changeset<TNodeChange>, base: TaggedChange<Changeset<TNodeChange>>, rebaseChild: NodeChangeRebaser_2<TNodeChange>): Changeset<TNodeChange>;
+function rebase<TNodeChange>(change: Changeset<TNodeChange>, base: TaggedChange<Changeset<TNodeChange>>, rebaseChild: NodeChangeRebaser_2<TNodeChange>, genId: IdAllocator): Changeset<TNodeChange>;
 
 // @public
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
@@ -1158,7 +1161,8 @@ declare namespace SequenceField {
         invert,
         NodeChangeInverter_2 as NodeChangeInverter,
         compose,
-        NodeChangeComposer_2 as NodeChangeComposer
+        NodeChangeComposer_2 as NodeChangeComposer,
+        isObjMark
     }
 }
 export { SequenceField }
@@ -1183,6 +1187,7 @@ const sequenceFieldChangeRebaser: {
 export interface SequenceFieldEditBuilder {
     delete(index: number, count: number): void;
     insert(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
+    move(sourceIndex: number, count: number, destIndex: number): void;
 }
 
 // @public (undocumented)

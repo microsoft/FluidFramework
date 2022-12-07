@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { clone, fail, StackyIterator } from "../../util";
 import { RevisionTag, TaggedChange } from "../../core";
+import { IdAllocator } from "../modular-schema";
 import {
     getInputLength,
     getOutputLength,
@@ -13,6 +14,8 @@ import {
     isDetachMark,
     isModify,
     isSkipMark,
+    MoveEffectTable,
+    newMoveEffectTable,
     splitMarkOnInput,
     splitMarkOnOutput,
 } from "./utils";
@@ -38,8 +41,9 @@ export function rebase<TNodeChange>(
     change: Changeset<TNodeChange>,
     base: TaggedChange<Changeset<TNodeChange>>,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
+    genId: IdAllocator,
 ): Changeset<TNodeChange> {
-    return rebaseMarkList(change, base.change, base.revision, rebaseChild);
+    return rebaseMarkList(change, base.change, base.revision, rebaseChild, genId);
 }
 
 export type NodeChangeRebaser<TNodeChange> = (
@@ -52,6 +56,7 @@ function rebaseMarkList<TNodeChange>(
     baseMarkList: MarkList<TNodeChange>,
     baseRevision: RevisionTag | undefined,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
+    genId: IdAllocator,
 ): MarkList<TNodeChange> {
     const factory = new MarkListFactory<TNodeChange>();
     const baseIter = new StackyIterator(baseMarkList);
@@ -64,6 +69,9 @@ function rebaseMarkList<TNodeChange>(
     const lineageRequests: LineageRequest<TNodeChange>[] = [];
     let baseDetachOffset = 0;
     let baseReattachOffset = 0;
+
+    const moveEffects: MoveEffectTable<TNodeChange> = newMoveEffectTable();
+
     while (!baseIter.done || !currIter.done) {
         let currMark: Mark<TNodeChange> | undefined = currIter.peek();
         let baseMark: Mark<TNodeChange> | undefined = baseIter.peek();
@@ -107,7 +115,12 @@ function rebaseMarkList<TNodeChange>(
                         factory.pushOffset(reattachLength);
                     } else if (offset > 0) {
                         baseIter.pop();
-                        const [baseMarkBefore, baseMarkAfter] = splitMarkOnOutput(baseMark, offset);
+                        const [baseMarkBefore, baseMarkAfter] = splitMarkOnOutput(
+                            baseMark,
+                            offset,
+                            genId,
+                            moveEffects,
+                        );
                         baseIter.push(baseMarkAfter);
                         factory.pushOffset(getOutputLength(baseMarkBefore));
                     }
@@ -148,11 +161,21 @@ function rebaseMarkList<TNodeChange>(
             const baseMarkLength = getInputLength(baseMark);
             if (currMarkLength < baseMarkLength) {
                 let nextBaseMark;
-                [baseMark, nextBaseMark] = splitMarkOnInput(baseMark, currMarkLength);
+                [baseMark, nextBaseMark] = splitMarkOnInput(
+                    baseMark,
+                    currMarkLength,
+                    genId,
+                    moveEffects,
+                );
                 baseIter.push(nextBaseMark);
             } else if (currMarkLength > baseMarkLength) {
                 let nextCurrMark;
-                [currMark, nextCurrMark] = splitMarkOnInput(currMark, baseMarkLength);
+                [currMark, nextCurrMark] = splitMarkOnInput(
+                    currMark,
+                    baseMarkLength,
+                    genId,
+                    moveEffects,
+                );
                 currIter.push(nextCurrMark);
             }
             // Past this point, we are guaranteed that `baseMark` and `currMark` have the same length and

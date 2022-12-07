@@ -21,6 +21,7 @@ export const cases: {
     modify_insert: TestChangeset;
     delete: TestChangeset;
     revive: TestChangeset;
+    move: TestChangeset;
 } = {
     no_change: [],
     insert: createInsertChangeset(1, 2, 1),
@@ -31,9 +32,11 @@ export const cases: {
             makeAnonChange(createModifyChangeset(1, TestChange.mint([], 2))),
         ],
         TestChange.compose,
+        TestChange.newIdAllocator(),
     ),
     delete: createDeleteChangeset(1, 3),
     revive: createReviveChangeset(2, 2, 0, tag),
+    move: createMoveChangeset(1, 2, 2),
 };
 
 function createInsertChangeset(

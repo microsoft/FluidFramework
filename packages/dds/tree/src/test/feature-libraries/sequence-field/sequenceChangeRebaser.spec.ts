@@ -10,7 +10,7 @@ import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze, fakeRepair } from "../../utils";
-import { checkDeltaEquality, rebaseTagged } from "./utils";
+import { checkDeltaEquality, getMaxId, getMaxIdTagged, rebaseTagged } from "./utils";
 import { ChangeMaker as Change } from "./testEdits";
 
 const type: TreeSchemaIdentifier = brand("Node");
@@ -91,9 +91,20 @@ describe("SequenceField - Rebaser Axioms", () => {
                                 change1,
                                 makeAnonChange(change2),
                                 TestChange.rebase,
+                                TestChange.newIdAllocator(getMaxId(change1)),
                             );
-                            const r2 = SF.rebase(r1, makeAnonChange(inverse2), TestChange.rebase);
-                            const r3 = SF.rebase(r2, makeAnonChange(change2), TestChange.rebase);
+                            const r2 = SF.rebase(
+                                r1,
+                                makeAnonChange(inverse2),
+                                TestChange.rebase,
+                                TestChange.newIdAllocator(getMaxId(r1)),
+                            );
+                            const r3 = SF.rebase(
+                                r2,
+                                makeAnonChange(change2),
+                                TestChange.rebase,
+                                TestChange.newIdAllocator(getMaxId(r2)),
+                            );
                             assert.deepEqual(r3, r1);
                         }
                     }
@@ -108,9 +119,11 @@ describe("SequenceField - Rebaser Axioms", () => {
                 const change = [mark];
                 const taggedChange = tagChange(change, brand(1));
                 const inv = SF.invert(taggedChange, TestChange.invert);
+                const changes = [taggedChange, tagInverse(inv, taggedChange.revision)];
                 const actual = SF.compose(
-                    [taggedChange, tagInverse(inv, taggedChange.revision)],
+                    changes,
                     TestChange.compose,
+                    TestChange.newIdAllocator(getMaxIdTagged(changes)),
                 );
                 const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta, fakeRepair);
                 assert.deepEqual(delta, []);
@@ -124,9 +137,11 @@ describe("SequenceField - Rebaser Axioms", () => {
                 const change = [mark];
                 const taggedChange = tagChange(change, brand(1));
                 const inv = SF.invert(taggedChange, TestChange.invert);
+                const changes = [tagInverse(inv, taggedChange.revision), taggedChange];
                 const actual = SF.compose(
-                    [tagInverse(inv, taggedChange.revision), taggedChange],
+                    changes,
                     TestChange.compose,
+                    TestChange.newIdAllocator(getMaxIdTagged(changes)),
                 );
                 const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta, fakeRepair);
                 assert.deepEqual(delta, []);

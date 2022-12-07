@@ -63,8 +63,8 @@ describe("SequenceField - MarkListFactory", () => {
 
     it("Can merge consecutive move-ins", () => {
         const factory = new SF.MarkListFactory();
-        const move1: SF.MoveIn = { type: "MoveIn", id: 0, count: 1 };
-        const move2: SF.MoveIn = { type: "MoveIn", id: 0, count: 1 };
+        const move1: SF.MoveIn = { type: "MoveIn", id: brand(0), count: 1 };
+        const move2: SF.MoveIn = { type: "MoveIn", id: brand(0), count: 1 };
         factory.pushContent(move1);
         factory.pushContent(move2);
         assert.deepStrictEqual(factory.list, [{ type: "MoveIn", id: 0, count: 2 }]);
@@ -81,8 +81,8 @@ describe("SequenceField - MarkListFactory", () => {
 
     it("Can merge consecutive move-outs", () => {
         const factory = new SF.MarkListFactory();
-        const move1: SF.Detach = { type: "MoveOut", id: 0, count: 1 };
-        const move2: SF.Detach = { type: "MoveOut", id: 0, count: 1 };
+        const move1: SF.Detach = { type: "MoveOut", id: brand(0), count: 1 };
+        const move2: SF.Detach = { type: "MoveOut", id: brand(0), count: 1 };
         factory.pushContent(move1);
         factory.pushContent(move2);
         assert.deepStrictEqual(factory.list, [{ type: "MoveOut", id: 0, count: 2 }]);

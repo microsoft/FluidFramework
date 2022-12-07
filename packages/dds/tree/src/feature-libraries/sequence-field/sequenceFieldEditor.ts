@@ -6,6 +6,7 @@
 import { jsonableTreeFromCursor } from "../treeTextCursor";
 import { ITreeCursor, RevisionTag } from "../../core";
 import { FieldEditor } from "../modular-schema";
+import { brand } from "../../util";
 import { Changeset, Mark, NodeChangeType } from "./format";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
@@ -63,13 +64,13 @@ export const sequenceFieldEditor = {
 
         const moveOut: Mark<never> = {
             type: "MoveOut",
-            id: 0,
+            id: brand(0),
             count,
         };
 
         const moveIn: Mark<never> = {
             type: "MoveIn",
-            id: 0,
+            id: brand(0),
             count,
         };
 
