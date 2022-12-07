@@ -3,16 +3,13 @@
  * Licensed under the MIT License.
  */
 module.exports = {
-    "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid"),
-        "prettier",
-    ],
-    "rules": {
+    extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+    rules: {
         "prefer-arrow-callback": "off",
         "@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
+        "import/no-nodejs-modules": "off",
     },
-    "parserOptions": {
-        "project": [ "./src/test/tsconfig.json" ]
-    }
-}
-
+    parserOptions: {
+        project: ["./src/test/tsconfig.json"],
+    },
+};
