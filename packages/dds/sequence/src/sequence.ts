@@ -233,6 +233,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         );
     }
 
+    public createEndOfTreeSegment(): ISegment {
+        return this.client.createEndOfTreeSegment();
+    }
+
     /**
      * @param start - The inclusive start of the range to remove
      * @param end - The exclusive end of the range to remove
