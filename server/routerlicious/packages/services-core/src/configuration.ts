@@ -38,7 +38,7 @@ export interface IDeliServerConfiguration {
     noOpConsolidationTimeout: number;
 
     // Controller how often deli should checkpoint
-    checkpointHeuristics: IDeliCheckpointHeuristicsServerConfiguration;
+    checkpointHeuristics: ICheckpointHeuristicsServerConfiguration;
 
     // Controls how deli should track of certain op events
     opEvent: IDeliOpEventServerConfiguration;
@@ -47,7 +47,7 @@ export interface IDeliServerConfiguration {
     summaryNackMessages: IDeliSummaryNackMessagesServerConfiguration;
 }
 
-export interface IDeliCheckpointHeuristicsServerConfiguration {
+export interface ICheckpointHeuristicsServerConfiguration {
     // Enables checkpointing based on the heuristics
     enable: boolean;
 
@@ -93,6 +93,9 @@ export interface IScribeServerConfiguration {
 
     // Enables writing a summary nack when an exception occurs during summary creation
     ignoreStorageException: boolean;
+
+    // Controls how often scribe should checkpoint
+    checkpointHeuristics: ICheckpointHeuristicsServerConfiguration;
 }
 
 export interface IDeliSummaryNackMessagesServerConfiguration {
@@ -208,6 +211,12 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         enablePendingCheckpointMessages: true,
         clearCacheAfterServiceSummary: false,
         ignoreStorageException: false,
+        checkpointHeuristics: {
+            enable: false,
+            idleTime: 10 * 1000,
+            maxTime: 1 * 60 * 1000,
+            maxMessages: 500,
+        },
     },
     moira: {
         enable: false,
