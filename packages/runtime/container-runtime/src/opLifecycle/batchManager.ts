@@ -3,20 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IBatchMessage } from "@fluidframework/container-definitions";
 import { GenericError } from "@fluidframework/container-utils";
-import { ContainerRuntimeMessage, ICompressionRuntimeOptions } from "./containerRuntime";
-import { OpCompressor } from "./opCompressor";
-
-/**
- * Message type used by BatchManager
- */
-export type BatchMessage = IBatchMessage & {
-    localOpMetadata: unknown;
-    deserializedContent: ContainerRuntimeMessage;
-    referenceSequenceNumber: number;
-};
+import { ICompressionRuntimeOptions } from "../containerRuntime";
+import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions";
 
 export interface IBatchManagerOptions {
     readonly enableOpReentryCheck?: boolean;
@@ -29,16 +18,13 @@ export interface IBatchManagerOptions {
  * Helper class that manages partial batch & rollback.
  */
 export class BatchManager {
-    private readonly opCompressor: OpCompressor;
-    private pendingBatch: BatchMessage [] = [];
+    private pendingBatch: BatchMessage[] = [];
     private batchContentSize = 0;
 
-    public get empty() { return this.pendingBatch.length === 0; }
     public get length() { return this.pendingBatch.length; }
+    public get contentSizeInBytes() { return this.batchContentSize; }
 
-    constructor(public readonly logger: ITelemetryLogger, public readonly options: IBatchManagerOptions) {
-        this.opCompressor = new OpCompressor(logger);
-    }
+    constructor(public readonly options: IBatchManagerOptions) { }
 
     public push(message: BatchMessage): boolean {
         this.checkReferenceSequenceNumber(message);
@@ -60,13 +46,11 @@ export class BatchManager {
         // Cases where the message is still too large will be handled by the maxConsecutiveReconnects path.
         if (this.options.softLimit !== undefined
             && this.length > 0
-            && socketMessageSize >= this.options.softLimit
-            && Infinity === (this.options.compressionOptions?.minimumBatchSizeInBytes ?? Infinity)) {
+            && socketMessageSize >= this.options.softLimit) {
             return false;
         }
 
-        if (socketMessageSize >= this.options.hardLimit
-            && Infinity === (this.options.compressionOptions?.minimumBatchSizeInBytes ?? Infinity)) {
+        if (socketMessageSize >= this.options.hardLimit) {
             return false;
         }
 
@@ -75,25 +59,24 @@ export class BatchManager {
         return true;
     }
 
-    public popBatch() {
-        const batch = this.pendingBatch;
-        const size = this.batchContentSize;
+    public get empty() { return this.pendingBatch.length === 0; }
+
+    public popBatch(): IBatch {
+        const batch: IBatch = {
+            content: this.pendingBatch,
+            contentSizeInBytes: this.batchContentSize,
+        };
+
         this.pendingBatch = [];
         this.batchContentSize = 0;
 
-        if (batch.length > 0
-            && this.options.compressionOptions !== undefined
-            && this.options.compressionOptions.minimumBatchSizeInBytes < size) {
-            return this.opCompressor.compressBatch(batch, size);
-        }
-
-        return batch;
+        return addBatchMetadata(batch);
     }
 
     /**
      * Capture the pending state at this point
      */
-    public checkpoint() {
+    public checkpoint(): IBatchCheckpoint {
         const startPoint = this.pendingBatch.length;
         return {
             rollback: (process: (message: BatchMessage) => void) => {
@@ -123,3 +106,18 @@ export class BatchManager {
         }
     }
 }
+
+const addBatchMetadata = (batch: IBatch): IBatch => {
+    if (batch.content.length > 1) {
+        batch.content[0].metadata = {
+            ...batch.content[0].metadata,
+            batch: true
+        };
+        batch.content[batch.content.length - 1].metadata = {
+            ...batch.content[batch.content.length - 1].metadata,
+            batch: false
+        };
+    }
+
+    return batch;
+};
