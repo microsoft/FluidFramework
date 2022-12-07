@@ -577,7 +577,6 @@ export class IdCompressor {
 		const finalizeCount = normalizedLastFinalizedLocal - newLastFinalizedLocal;
 		assert(finalizeCount >= 1, 'Cannot finalize an empty range.');
 
-		// This is the count of eager finals (excluding overrides)
 		let eagerFinalIdCount = 0;
 		let initialClusterCount = 0;
 		let remainingCount = finalizeCount;
@@ -746,7 +745,6 @@ export class IdCompressor {
 		// If there are overrides, we must determine which cluster object (current or overflow) each belongs to and add it.
 		const overrides = ids.overrides;
 		if (overrides !== undefined) {
-			eagerFinalIdCount -= overrides.length;
 			for (let i = 0; i < overrides.length; i++) {
 				const [overriddenLocal, override] = overrides[i];
 				// Note: recall that local IDs are negative
@@ -845,7 +843,7 @@ export class IdCompressor {
 		if (isLocal) {
 			this.logger?.sendTelemetryEvent({
 				eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
-				eagerFinalIdCount,
+				eagerFinalIdCount: eagerFinalIdCount - (overrides?.length ?? 0),
 				localIdCount: remainingCount + (overrides?.length ?? 0),
 				overridesCount: overrides?.length ?? 0,
 				sessionId: this.localSessionId,
