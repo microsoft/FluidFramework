@@ -17,6 +17,9 @@ import {
     symbolFromKey,
     setGenericTreeField,
     isLocalKey,
+    UpPath,
+    compareUpPaths,
+    compareFieldUpPaths,
 } from "../tree";
 import { brand } from "../util";
 
@@ -267,6 +270,14 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
     const withLocalKeys =
         withKeys ?? (typeof builder === "object" ? builder.withLocalKeys : undefined);
 
+    const parent = !extraRoot
+        ? undefined
+        : {
+              parent: undefined,
+              parentField: rootFieldKeySymbol,
+              parentIndex: 0,
+          };
+
     return describe(`${cursorName} cursor implementation`, () => {
         describe("test trees", () => {
             for (const { name, data, reference } of testData) {
@@ -281,7 +292,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
                     });
 
                     it("traversal", () => {
-                        checkTraversal(cursorFactory(data));
+                        checkTraversal(cursorFactory(data), parent);
                     });
 
                     if (reference !== undefined) {
@@ -334,14 +345,6 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
                 });
             }
             describe("getPath() and getFieldPath()", () => {
-                const parent = !extraRoot
-                    ? undefined
-                    : {
-                          parent: undefined,
-                          parentField: rootFieldKeySymbol,
-                          parentIndex: 0,
-                      };
-
                 it("at root", () => {
                     const cursor = factory({
                         type: brand("Foo"),
@@ -469,15 +472,16 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
  * Test that cursor works as a cursor.
  * This does NOT test that the data the cursor exposes is correct,
  * it simply checks that the traversal APIs function, and that a few aspects of them conform with the spec.
- *
- * TODO: add testing for paths to this, or separate tests for it.
  */
-function checkTraversal(cursor: ITreeCursor) {
+function checkTraversal(cursor: ITreeCursor, expectedPath: UpPath | undefined) {
     assert.equal(cursor.mode, CursorLocationType.Nodes);
     assert.equal(cursor.pending, false);
     // Keep track of current node properties to check it during ascent
     const originalNodeValue = cursor.value;
     const originalNodeType = cursor.type;
+
+    const path = cursor.getPath();
+    assert(compareUpPaths(path, expectedPath));
 
     const fieldLengths: Map<FieldKey, number> = new Map();
 
@@ -489,14 +493,28 @@ function checkTraversal(cursor: ITreeCursor) {
         assert(!fieldLengths.has(key), "no duplicate keys");
         fieldLengths.set(cursor.getFieldKey(), expectedFieldLength);
         assert(expectedFieldLength > 0, "only non empty fields should show up in field iteration");
+        assert(compareFieldUpPaths(cursor.getFieldPath(), { field: key, parent: path }));
+
+        // Check that iterating nodes of this field works as expected.
         let actualChildNodesTraversed = 0;
         for (let inNode = cursor.firstNode(); inNode; inNode = cursor.nextNode()) {
             assert(cursor.chunkStart <= actualChildNodesTraversed);
             assert(cursor.chunkLength > actualChildNodesTraversed - cursor.chunkStart);
             assert(cursor.chunkLength + cursor.chunkStart <= expectedFieldLength);
+
+            // Make sure down+up navigation gets back to where it started.
+            // Testing this explicitly here before recursing makes debugging issues with this easier.
+            assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
+            cursor.enterField(EmptyKey);
+            cursor.exitField();
+            assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
+            if (cursor.firstField()) {
+                cursor.enterNode(0);
+                cursor.exitNode();
+                cursor.exitField();
+            }
             assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
             actualChildNodesTraversed++;
-            checkTraversal(cursor);
         }
 
         assert.equal(
@@ -505,7 +523,7 @@ function checkTraversal(cursor: ITreeCursor) {
             "Did not traverse expected number of children",
         );
 
-        // Cheek field access by index
+        // Check node access by index
         for (let index = 0; index < expectedFieldLength; index++) {
             assert.equal(cursor.mode, CursorLocationType.Fields);
             cursor.enterNode(index);
@@ -546,6 +564,19 @@ function checkTraversal(cursor: ITreeCursor) {
         // skipPendingFields should have no effect since not pending
         assert(cursor.skipPendingFields());
         assert.equal(cursor.getFieldKey(), key);
+
+        // Recursively validate.
+        actualChildNodesTraversed = 0;
+        for (let inNode = cursor.firstNode(); inNode; inNode = cursor.nextNode()) {
+            assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
+            checkTraversal(cursor, {
+                parent: path,
+                parentField: key,
+                parentIndex: actualChildNodesTraversed,
+            });
+            assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
+            actualChildNodesTraversed++;
+        }
     }
 
     // Add some fields which should be empty to check:
