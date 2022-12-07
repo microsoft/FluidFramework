@@ -20,6 +20,7 @@ import {
     initializeForest,
     ITreeSubscriptionCursor,
     Index,
+    IndexEvents,
     SummaryElement,
     SummaryElementParser,
     SummaryElementStringifier,
@@ -30,7 +31,6 @@ import {
     mapCursorField,
     moveToDetachedField,
 } from "../core";
-import { IndexEvents } from "../shared-tree-core";
 import { IEventEmitter } from "../events";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 import { afterChangeForest } from "./object-forest";

@@ -18,6 +18,7 @@ import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     Index,
+    IndexEvents,
     SummaryElement,
     SummaryElementParser,
     SummaryElementStringifier,
@@ -42,7 +43,6 @@ import {
 } from "../core";
 import { brand, isJsonObject, JsonCompatibleReadOnly } from "../util";
 import { IEventEmitter } from "../events";
-import { IndexEvents } from "../shared-tree-core";
 
 /**
  * The storage key for the blob in the summary containing schema data
