@@ -515,7 +515,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
             case Multiplicity.Optional: {
                 assert(
                     !Array.isArray(newContent),
-                    "It is invalid to set the optional field using the array data.",
+                    "It is invalid to replace the optional field using the array data.",
                 );
                 this.context.setOptionalField(path, fieldKey, newContent, !this.has(fieldKey));
                 break;
@@ -530,7 +530,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
             case Multiplicity.Value: {
                 assert(
                     !Array.isArray(newContent),
-                    "It is invalid to set the value field using the array data.",
+                    "It is invalid to replace the value field using the array data.",
                 );
                 this.context.setValueField(path, fieldKey, newContent);
                 break;
@@ -863,8 +863,8 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
                 "A non-sequence field cannot have more than one node.",
             );
         }
-        assert(keyIsValidIndex(index, this.length), 0x457 /* Index must be less than length. */);
-        if (count !== undefined) assert(count >= 0, 0x458 /* Count must be non-negative. */);
+        assert(keyIsValidIndex(index, this.length), "Index must be less than length.");
+        if (count !== undefined) assert(count >= 0, "Count must be non-negative.");
         const maxCount = this.length - index;
         const _count = count === undefined || count > maxCount ? maxCount : count;
         const fieldPath = this.cursor.getFieldPath();
