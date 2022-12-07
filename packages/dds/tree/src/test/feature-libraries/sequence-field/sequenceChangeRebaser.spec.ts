@@ -123,8 +123,7 @@ describe("SequenceField - Rebaser Axioms", () => {
             if (name === "Insert" || name === "MInsert") {
                 // A⁻¹ ○ A === ε cannot be true for Insert/MInsert:
                 // Re-inserting nodes after deleting them is different from not having deleted them in the first place.
-                // We may reconsider this in the future in order to minimize the deltas produced when sequencing peer
-                // change in the presence of local changes.
+                // We may reconsider this in the future in order to minimize the deltas produced when rebasing local changes.
             } else {
                 it(`${name}⁻¹ ○ ${name} === ε`, () => {
                     const change = [mark];
