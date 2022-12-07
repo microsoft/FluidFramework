@@ -5,10 +5,11 @@
 
 module.exports = {
     "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid")
+        require.resolve("@fluidframework/eslint-config-fluid"), "prettier"
     ],
     "rules": {
         "@typescript-eslint/strict-boolean-expressions": "off",
+        "import/no-nodejs-modules": "off",
         "no-case-declarations": "off"
     }
 }

@@ -5,7 +5,9 @@
 
 module.exports = {
     "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid")
+        require.resolve("@fluidframework/eslint-config-fluid"), "prettier"
     ],
-    "rules": {}
+    "rules": {
+        "import/no-nodejs-modules": "off",
+    }
 }

@@ -176,6 +176,7 @@ export class DocumentService implements api.IDocumentService {
             this.documentId,
             deltaStorageService,
             this.documentStorageService,
+            this.logger,
         );
     }
 

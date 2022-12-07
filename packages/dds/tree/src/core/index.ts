@@ -120,6 +120,7 @@ export {
     RevisionTag,
     TaggedChange,
     ChangesetFromChangeRebaser,
+    makeAnonChange,
     tagChange,
 } from "../rebase";
 
@@ -149,6 +150,7 @@ export {
     EditManager,
     MutableSummaryData,
     ReadonlySummaryData,
+    SeqNumber,
     SessionId,
 } from "../edit-manager";
 
