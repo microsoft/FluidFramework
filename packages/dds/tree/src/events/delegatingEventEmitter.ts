@@ -68,7 +68,7 @@ export class DelegatingEventEmitter<
     }
 
     /**
-     * Fire the given event, notifying all suscribers by calling their registered listener functions
+     * Fire the given event, notifying all subcribers by calling their registered listener functions
      * @param eventName - the name of the event to fire
      * @param args - the arguments passed to the event listener functions
      */
