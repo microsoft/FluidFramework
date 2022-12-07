@@ -19,7 +19,7 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
     readonly taskList: ITaskList;
 
     /**
-    * Trigger custom signals for external data change and for sending the data
+    * Trigger custom signals for external data change and for fetching the data
     */
     readonly debugSendCustomSignal: () => void;
 }

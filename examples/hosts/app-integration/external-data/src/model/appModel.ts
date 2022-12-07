@@ -25,6 +25,6 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
      * {@inheritDoc IAppModel.debugSendCustomSignal}
      */
     public readonly debugSendCustomSignal = (): void => {
-        this.runtime.submitSignal('debugSignal', {message: "externalDataChanged"});
+        this.runtime.submitSignal("debugSignal", {message: "externalDataChanged"});
     }
 }
