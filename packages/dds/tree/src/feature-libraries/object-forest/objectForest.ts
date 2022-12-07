@@ -447,6 +447,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
             0x33f /* Cursor must not be double freed */,
         );
         this.forest.currentCursors.delete(this);
+        this.innerCursor = undefined;
         this.state = ITreeSubscriptionCursorState.Freed;
     }
 
