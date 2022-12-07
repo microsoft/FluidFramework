@@ -15,7 +15,27 @@ export const wrappedEmitter = Symbol("The underlying event emitter");
 /**
  * An {@link IEventEmitter} which delegates eventing to a built-in event emitter.
  * Use the {@link wrappedEmitter} property to access the underlying emitter.
- * This class may be extended
+ * Classes wishing to emit events may extend this class:
+ * @example
+ * ```typescript
+ * class MyClass extends DelegatingEventEmitter<MyEvents> {
+ *   // ...
+ * }
+ * ```
+ * Or, compose over it:
+ * @example
+ * ```typescript
+ * class MyClass extends IEventEmitter<MyEvents> {
+ *   private readonly events = DelegatingEventEmitter.create<MyEvents>();
+ *
+ *   public on<K extends (string | symbol) & keyof MyEvents>(
+ *     eventName: K,
+ *     listener: MyEvents[K],
+ *   ): () => void {
+ *     return events.on(eventName, listener);
+ *   }
+ * }
+ * ```
  */
 export class DelegatingEventEmitter<
     Events extends EventFilter<Events>,

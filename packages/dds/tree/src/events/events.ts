@@ -65,7 +65,7 @@ export interface IEventEmitter<Events extends EventFilter<Events>> {
 }
 
 /**
- * A class specifying the minimal operations required to implement an {@link IEventEmitter}
+ * A class specifying the minimal operations required to implement an {@link IEventEmitter}.
  */
 export abstract class EventEmitter<Events extends EventFilter<Events>>
     implements IEventEmitter<Events>
