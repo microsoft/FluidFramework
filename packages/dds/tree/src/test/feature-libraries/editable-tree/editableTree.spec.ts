@@ -632,6 +632,9 @@ describe("editable-tree: read-only", () => {
             {
                 number: "012345",
                 prefix: "0123",
+                extraPhones: {
+                    "0": "91919191",
+                },
             },
             ["112", "113"],
         ];

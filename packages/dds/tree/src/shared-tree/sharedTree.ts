@@ -63,7 +63,7 @@ export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObje
      * `context.prepareForEdit()` before editing can occur.
      * TODO: Make this happen automatically.
      */
-    readonly root: UnwrappedEditableField;
+    root: UnwrappedEditableField;
 
     /**
      * Context for controlling the EditableTree nodes produced from {@link ISharedTree.root}.
@@ -158,6 +158,10 @@ class SharedTree
 
     public get root(): UnwrappedEditableField {
         return this.context.unwrappedRoot;
+    }
+
+    public set root(data: UnwrappedEditableField) {
+        this.context.unwrappedRoot = data;
     }
 
     public runTransaction(

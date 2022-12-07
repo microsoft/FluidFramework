@@ -20,7 +20,7 @@ import {
     ValueSchema,
 } from "../../../core";
 import { ISharedTree } from "../../../shared-tree";
-import { brand } from "../../../util";
+import { brand, clone } from "../../../util";
 import {
     singleTextCursor,
     isUnwrappedNode,
@@ -30,9 +30,26 @@ import {
     FieldKinds,
     emptyField,
     valueSymbol,
+    replaceField,
 } from "../../../feature-libraries";
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
-import { fullSchemaData, personData, Person, schemaMap, stringSchema } from "./mockData";
+import {
+    fullSchemaData,
+    personData,
+    Person,
+    schemaMap,
+    stringSchema,
+    ComplexPhone,
+    complexPhoneSchema,
+    Float64,
+    Int32,
+    int32Schema,
+    Phones,
+    SimplePhones,
+    simplePhonesSchema,
+    getPerson,
+    globalFieldSymbolSequencePhones,
+} from "./mockData";
 
 const globalFieldKey: GlobalFieldKey = brand("foo");
 const globalFieldSymbol = symbolFromKey(globalFieldKey);
@@ -62,7 +79,7 @@ function getTestSchema(fieldKind: { identifier: FieldKindIdentifier }): SchemaDa
 
 async function createSharedTrees(
     schemaData: SchemaData,
-    data: JsonableTree[],
+    data?: JsonableTree[],
     numberOfTrees = 1,
 ): Promise<readonly [ITestTreeProvider, readonly ISharedTree[]]> {
     const provider = await TestTreeProvider.create(numberOfTrees);
@@ -70,7 +87,9 @@ async function createSharedTrees(
         assert(tree.isAttached());
     }
     provider.trees[0].storedSchema.update(schemaData);
-    provider.trees[0].context.root.insertNodes(0, data.map(singleTextCursor));
+    if (data !== undefined) {
+        provider.trees[0].context.root.insertNodes(0, data.map(singleTextCursor));
+    }
     await provider.ensureSynchronized();
     return [provider, provider.trees];
 }
@@ -81,6 +100,139 @@ const testCases: (readonly [string, FieldKey])[] = [
 ];
 
 describe("editable-tree: editing", () => {
+    it("create using assignment", async () => {
+        const [, trees] = await createSharedTrees(fullSchemaData);
+
+        const context = trees[0].context;
+        trees[0].root = getPerson(context);
+        const person = trees[0].root as Person;
+
+        // check initial data
+        {
+            // explicitly check the global field as `clone` does not support symbols as field keys
+            assert.deepEqual(clone(person.address?.[globalFieldSymbolSequencePhones]), {
+                "0": "115",
+                "1": "116",
+            });
+            delete person.address?.[globalFieldSymbolSequencePhones];
+            const clonedPerson = clone(person);
+            assert.deepEqual(clonedPerson, {
+                name: "Adam",
+                age: 35,
+                adult: true,
+                salary: 10420.2,
+                friends: {
+                    Mat: "Mat",
+                },
+                address: {
+                    zip: "99999",
+                    street: "treeStreet",
+                    phones: {
+                        "0": "+49123456778",
+                        "1": 123456879,
+                        "2": {
+                            prefix: "0123",
+                            number: "012345",
+                            extraPhones: { "0": "91919191" },
+                        },
+                        "3": {
+                            "0": "112",
+                            "1": "113",
+                        },
+                    },
+                    sequencePhones: { "0": "113", "1": "114" },
+                },
+            });
+        }
+
+        {
+            delete person.age;
+            // create optional field
+            person.age = brand(32);
+
+            const phones: Phones = brand([context.newDetachedNode(int32Schema.name, 12345)]);
+            // replace optional field
+            person.address = brand({
+                zip: context.newDetachedNode(stringSchema.name, "99999"),
+                street: "foo",
+                phones,
+            });
+            assert(person.address !== undefined);
+
+            // create sequence field
+            person.address.sequencePhones = brand(["999"]);
+
+            // TODO: this is to reveal the issue in `newDetachedNode` API
+            const zipNum: Float64 = brand(123);
+            const zip: Int32 = context.newDetachedNode(int32Schema.name, zipNum);
+            // replace value field
+            person.address.zip = zip;
+
+            const clonedAddress = clone(person.address);
+            assert.deepEqual(clonedAddress, {
+                street: "foo",
+                zip: 123,
+                phones: {
+                    "0": 12345,
+                },
+                sequencePhones: {
+                    "0": "999",
+                },
+            });
+
+            // replace sequence field
+            person.address.sequencePhones = brand(["111"]);
+            // replace array (optional field with primary sequence field)
+            person.address.phones = brand([context.newDetachedNode(stringSchema.name, "54321")]);
+            assert(person.address.phones !== undefined);
+            const simplePhones: SimplePhones = context.newDetachedNode(simplePhonesSchema.name, [
+                "555",
+            ]);
+            // create node as array (node has a primary field)
+            person.address.phones[1] = simplePhones;
+            // create primitive node
+            person.address.phones[2] = context.newDetachedNode(int32Schema.name, 3);
+            const clonedPerson = clone(person);
+            assert.deepEqual(clonedPerson, {
+                name: "Adam",
+                age: 32,
+                adult: true,
+                salary: 10420.2,
+                friends: {
+                    Mat: "Mat",
+                },
+                address: {
+                    street: "foo",
+                    zip: 123,
+                    phones: {
+                        "0": "54321",
+                        "1": {
+                            "0": "555",
+                        },
+                        "2": 3,
+                    },
+                    sequencePhones: {
+                        "0": "111",
+                    },
+                },
+            });
+            // replace node
+            person.address.phones[1] = context.newDetachedNode<ComplexPhone>(
+                complexPhoneSchema.name,
+                {
+                    number: "123",
+                    prefix: "456",
+                    extraPhones: ["1234567"],
+                },
+            );
+            assert.deepEqual(clone(person.address.phones), {
+                "0": "54321",
+                "1": { number: "123", prefix: "456", extraPhones: { "0": "1234567" } },
+                "2": 3,
+            });
+        }
+    });
+
     it("assert set primitive value using assignment", async () => {
         const [, trees] = await createSharedTrees(fullSchemaData, [personData]);
         const person = trees[0].root as Person;
@@ -189,6 +341,21 @@ describe("editable-tree: editing", () => {
                 await provider.ensureSynchronized();
                 assert.deepEqual(field_0, field_1);
 
+                // edit using `replaceNodes()`
+                assert.throws(
+                    () => field_0.replaceNodes(5, singleTextCursor({ type: stringSchema.name })),
+                    (e) => validateAssertionError(e, "Index must be less than length."),
+                    "Expected exception was not thrown",
+                );
+                field_0.replaceNodes(
+                    1,
+                    singleTextCursor({ type: stringSchema.name, value: "changed" }),
+                    1,
+                );
+                assert.equal(field_0[1], "changed");
+                await provider.ensureSynchronized();
+                assert.deepEqual(field_0, field_1);
+
                 // delete using `deleteNodes()`
                 field_0.deleteNodes(1, 1);
                 assert.throws(
@@ -253,6 +420,14 @@ describe("editable-tree: editing", () => {
                 await provider.ensureSynchronized();
                 assert.equal(trees[1].root[fieldKey], "via symbol");
 
+                // edit using `replaceField()`
+                trees[0].root[replaceField](
+                    fieldKey,
+                    singleTextCursor({ type: stringSchema.name, value: "replaced" }),
+                );
+                await provider.ensureSynchronized();
+                assert.equal(trees[1].root[fieldKey], "replaced");
+
                 // delete
                 // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                 delete trees[0].root[fieldKey];
@@ -305,6 +480,14 @@ describe("editable-tree: editing", () => {
                 trees[0].root[getField](fieldKey).getNode(0)[valueSymbol] = "via symbol";
                 await provider.ensureSynchronized();
                 assert.equal(trees[1].root[fieldKey], "via symbol");
+
+                // edit using `replaceField()`
+                trees[0].root[replaceField](
+                    fieldKey,
+                    singleTextCursor({ type: stringSchema.name, value: "replaced" }),
+                );
+                await provider.ensureSynchronized();
+                assert.equal(trees[1].root[fieldKey], "replaced");
 
                 // delete
                 assert.throws(

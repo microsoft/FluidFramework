@@ -214,6 +214,7 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
     getNode(index: number): EditableTree;
     insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
     readonly primaryType?: TreeSchemaIdentifier;
+    replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
 }
 
 // @public
@@ -222,6 +223,7 @@ export interface EditableTree extends Iterable<EditableField> {
     [getField](fieldKey: FieldKey): EditableField;
     readonly [indexSymbol]: number;
     readonly [proxyTargetSymbol]: object;
+    [replaceField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
     [Symbol.iterator](): IterableIterator<EditableField>;
     readonly [typeNameSymbol]: TreeSchemaIdentifier;
     readonly [typeSymbol]: TreeSchema;
@@ -234,10 +236,13 @@ export interface EditableTreeContext {
     attachAfterChangeHandler(afterChangeHandler: (context: EditableTreeContext) => void): void;
     clear(): void;
     free(): void;
+    newDetachedNode<T extends Brand<any, string>>(type: TreeSchemaIdentifier, data: T extends BrandedType<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never): T;
+    newDetachedNode<T extends Brand<any, string>>(type: TreeSchemaIdentifier, data: T extends BrandedType<infer ValueType, string> ? ValueType : never): T;
+    newDetachedNode<T extends Brand<any, string>>(type: TreeSchemaIdentifier, data: unknown): T;
     prepareForEdit(): void;
-    readonly root: EditableField;
+    root: EditableField;
     readonly schema: SchemaDataAndPolicy;
-    readonly unwrappedRoot: UnwrappedEditableField;
+    unwrappedRoot: UnwrappedEditableField;
 }
 
 // @public
@@ -562,7 +567,7 @@ export function isEditableField(field: UnwrappedEditableField): field is Editabl
 // @public
 export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObject, AnchorLocator {
     readonly context: EditableTreeContext;
-    readonly root: UnwrappedEditableField;
+    root: UnwrappedEditableField;
     readonly storedSchema: StoredSchemaRepository;
 }
 
@@ -1065,6 +1070,9 @@ export function recordDependency(dependent: ObservingDependent | undefined, depe
 export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepairDataStore<TTree> {
     capture(change: Delta.Root, revision: RevisionTag): void;
 }
+
+// @public
+export const replaceField: unique symbol;
 
 // @public
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;

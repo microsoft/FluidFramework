@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { emptyField, FieldKinds, EditableTree, EditableField } from "../../../feature-libraries";
+import {
+    emptyField,
+    FieldKinds,
+    EditableTree,
+    EditableField,
+    EditableTreeContext,
+} from "../../../feature-libraries";
 import {
     namedTreeSchema,
     ValueSchema,
@@ -254,6 +260,19 @@ export const personData: JsonableTree = {
                                         fields: {
                                             number: [{ value: "012345", type: stringSchema.name }],
                                             prefix: [{ value: "0123", type: stringSchema.name }],
+                                            extraPhones: [
+                                                {
+                                                    type: simplePhonesSchema.name,
+                                                    fields: {
+                                                        [EmptyKey]: [
+                                                            {
+                                                                type: stringSchema.name,
+                                                                value: "91919191",
+                                                            },
+                                                        ],
+                                                    },
+                                                },
+                                            ],
                                         },
                                     },
                                     {
@@ -285,3 +304,57 @@ export const personData: JsonableTree = {
         ],
     },
 };
+
+function getHandles(context: EditableTreeContext): {
+    Person: (value: object) => Person;
+    Float64: (value: number) => Float64;
+    Int32: (value: number) => Int32;
+    ComplexPhone: (value: object) => ComplexPhone;
+    SimplePhones: (value: string[]) => SimplePhones;
+} {
+    return {
+        Person: (value: object) => context.newDetachedNode<Person>(personSchema.name, value),
+        Float64: (value: number) => context.newDetachedNode<Float64>(float64Schema.name, value),
+        Int32: (value: number) => context.newDetachedNode<Int32>(int32Schema.name, value),
+        ComplexPhone: (value: object) =>
+            context.newDetachedNode<ComplexPhone>(complexPhoneSchema.name, value),
+        SimplePhones: (value: string[]) =>
+            context.newDetachedNode<SimplePhones>(simplePhonesSchema.name, value),
+    };
+}
+
+export function getPerson(context: EditableTreeContext): Person {
+    const age: Int32 = brand(35);
+    const { Person, Float64, Int32, ComplexPhone, SimplePhones } = getHandles(context);
+    return Person({
+        // typed with built-in primitive type
+        name: "Adam",
+        // explicitly typed
+        age,
+        // inline typed
+        adult: brand<Bool>(true),
+        // Float64 | Int32
+        salary: Float64(10420.2),
+        friends: {
+            Mat: "Mat",
+        },
+        address: {
+            // string | Int32
+            zip: context.newDetachedNode(stringSchema.name, "99999"),
+            street: "treeStreet",
+            // (Int32 | string | ComplexPhone | SimplePhones)[]
+            phones: [
+                context.newDetachedNode(stringSchema.name, "+49123456778"),
+                Int32(123456879),
+                ComplexPhone({
+                    prefix: "0123",
+                    number: "012345",
+                    extraPhones: ["91919191"],
+                }),
+                SimplePhones(["112", "113"]),
+            ],
+            sequencePhones: ["113", "114"],
+            [globalFieldSymbolSequencePhones]: ["115", "116"],
+        },
+    });
+}

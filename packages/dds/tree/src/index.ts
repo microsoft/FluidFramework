@@ -154,6 +154,7 @@ export {
     proxyTargetSymbol,
     getField,
     createField,
+    replaceField,
     defaultSchemaPolicy,
     jsonableTreeFromCursor,
     PrimitiveValue,
