@@ -693,47 +693,42 @@ export class MergeTree {
             childBlock.parent = undefined;
         }
         if (holdNodes.length > 0) {
-        const totalNodeCount = holdNodes.length;
-        const halfCount = MaxNodesInBlock / 2;
-        let childCount = Math.min(MaxNodesInBlock - 1, Math.floor(totalNodeCount / halfCount));
-        if (childCount < 1) {
-            childCount = 1;
-        }
-        const baseCount = Math.floor(totalNodeCount / childCount);
-        let extraCount = totalNodeCount % childCount;
-        const packedBlocks = new Array<IMergeBlock>(MaxNodesInBlock);
-        let readCount = 0;
-        for (let nodeIndex = 0; nodeIndex < childCount; nodeIndex++) {
-            let nodeCount = baseCount;
-            console.log("nodecount: ", nodeCount);
-            // this doesnt work, and neither does returning instead of continuing
-            // if (nodeCount === 0) {
-            //     continue;
-            // }
-            if (extraCount > 0) {
-                nodeCount++;
-                extraCount--;
+            const totalNodeCount = holdNodes.length;
+            const halfOfMaxNodeCount = MaxNodesInBlock / 2;
+            let childCount = Math.min(MaxNodesInBlock - 1, Math.floor(totalNodeCount / halfOfMaxNodeCount));
+            if (childCount < 1) {
+                childCount = 1;
             }
-            const packedBlock = this.makeBlock(nodeCount);
-            for (let packedNodeIndex = 0; packedNodeIndex < nodeCount; packedNodeIndex++) {
-                const nodeToPack = holdNodes[readCount++];
-                packedBlock.assignChild(nodeToPack, packedNodeIndex, false);
+            const baseNodesInBlockCount = Math.floor(totalNodeCount / childCount);
+            let remainderCount = totalNodeCount % childCount;
+            const packedBlocks = new Array<IMergeBlock>(MaxNodesInBlock);
+            let childrenPackedCount = 0;
+            for (let nodeIndex = 0; nodeIndex < childCount; nodeIndex++) {
+                let nodeCount = baseNodesInBlockCount;
+                if (remainderCount > 0) {
+                    nodeCount++;
+                    remainderCount--;
+                }
+                const packedBlock = this.makeBlock(nodeCount);
+                for (let packedNodeIndex = 0; packedNodeIndex < nodeCount; packedNodeIndex++) {
+                    const nodeToPack = holdNodes[childrenPackedCount++];
+                    packedBlock.assignChild(nodeToPack, packedNodeIndex, false);
+                }
+                packedBlock.parent = parent;
+                packedBlocks[nodeIndex] = packedBlock;
+                this.nodeUpdateLengthNewStructure(packedBlock);
             }
-            packedBlock.parent = parent;
-            packedBlocks[nodeIndex] = packedBlock;
-            this.nodeUpdateLengthNewStructure(packedBlock);
-        }
-        parent.children = packedBlocks;
-        for (let j = 0; j < childCount; j++) {
-            parent.assignChild(packedBlocks[j], j, false);
-        }
+            parent.children = packedBlocks;
+            for (let j = 0; j < childCount; j++) {
+                parent.assignChild(packedBlocks[j], j, false);
+            }
 
-        parent.childCount = childCount;
-    } else {
-        console.log("hold nodes is 0");
-        parent.children = [];
-        parent.childCount = 0;
-    }
+            parent.childCount = childCount;
+        } else {
+            console.log("hold nodes is 0");
+            parent.children = [];
+            parent.childCount = 0;
+        }
         if (this.underflow(parent) && (parent.parent)) {
             this.packParent(parent.parent);
         } else {
@@ -741,16 +736,7 @@ export class MergeTree {
             this.blockUpdatePathLengths(parent, UnassignedSequenceNumber, -1, true);
         }
     }
-    /*
-        a
-        block
-        of
-        comments
-        so i
-        can
-        find
-        zamboni
-    */
+
     private zamboniSegments(zamboniSegmentsMaxCount = MergeTree.zamboniSegmentsMaxCount) {
         if (!this.collabWindow.collaborating) {
             return;
@@ -940,25 +926,16 @@ export class MergeTree {
             if (node.isLeaf()) {
                 return this.localNetLength(node, refSeq, localSeq);
             } else if (localSeq === undefined) {
-                // assert(node.partialLengths!.getPartialLength(refSeq, clientId, localSeq) === node.cachedLength,
-                //     `partial length ${node.partialLengths!.getPartialLength(refSeq, clientId, localSeq)}
-                //      != cached length ${node.cachedLength}; current seq = ${this.getCollabWindow().currentSeq},
-                //      localSeq = ${this.getCollabWindow().localSeq}`);
                 // Local client sees all segments, even when collaborating
                 return node.cachedLength;
             } else {
                 this.computeLocalPartials(refSeq);
-                // assert(node.partialLengths!.getPartialLength(refSeq, clientId, localSeq) === node.cachedLength,
-                //     "partial length != cached length");
                 // Local client should see all segments except those after localSeq.
                 return node.partialLengths!.getPartialLength(refSeq, clientId, localSeq);
             }
         } else {
             // Sequence number within window
             if (!node.isLeaf()) {
-                // assert(node.partialLengths!.getPartialLength(refSeq, clientId, localSeq) === node.cachedLength,
-                //     `partial length ${node.partialLengths!.getPartialLength(refSeq, clientId, localSeq)}
-                //      != cached length ${node.cachedLength}`);
                 return node.partialLengths!.getPartialLength(refSeq, clientId);
             } else {
                 const segment = node;

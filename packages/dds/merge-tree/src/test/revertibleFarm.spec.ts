@@ -23,21 +23,6 @@ import {
 import { createRevertDriver } from "./testClient";
 import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
 
-//  const defaultOptions = {
-//     initialOps: 5,
-//     minLength: { min: 2, max: 2, growthFunc: (i) => i * i },
-//     concurrentOpsWithRevert: { min: 1, max: 1 },
-//     revertOps: { min: 32, max: 32 },
-//     ackBeforeRevert: [
-//         // "None",
-//         // "Some",
-//         "All",
-//     ] as ("None" | "Some" | "All")[],
-//     rounds: 10,
-//     operations: [removeRange, annotateRange],
-//     growthFunc: (i) => i * 2,
-// };
-
 const defaultOptions = {
     initialOps: 5,
     minLength: { min: 1, max: 256, growthFunc: (i) => i * i },

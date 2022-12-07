@@ -24,19 +24,7 @@ import { depthFirstNodeWalk, NodeAction } from "./mergeTreeNodeWalk";
  */
 export class EndOfTreeSegment implements ISegment, IRemovalInfo {
     type: string = "EndOfTreeSegment";
-    // private readonly segment: ISegment;
-    constructor(private readonly mergeTree: MergeTree) {
-        // let maybeRoot: IMergeBlock | undefined = segmentOrNode.isLeaf()
-        //     ? segmentOrNode.parent
-        //     : segmentOrNode;
-        // while (maybeRoot?.parent !== undefined) {
-        //     maybeRoot = maybeRoot.parent;
-        // }
-        // if (maybeRoot === undefined) {
-        //     throw new UsageError("segmentOrNode must be in rooted tree");
-        // }
-        // this.root = maybeRoot;
-    }
+    constructor(private readonly mergeTree: MergeTree) {}
     /*
      * segments must be of at least length one, but
      * removed segments will have a calculated length
@@ -65,16 +53,6 @@ export class EndOfTreeSegment implements ISegment, IRemovalInfo {
     private getEndSegProps() {
         let lastSegment: ISegment | undefined;
         let depth = 1;
-        // const segmentOrNode = this.reference.getSegment() as ISegment;
-        // let maybeRoot: IMergeBlock | undefined = segmentOrNode.isLeaf()
-        //     ? segmentOrNode.parent
-        //     : segmentOrNode;
-        // while (maybeRoot?.parent !== undefined) {
-        //     maybeRoot = maybeRoot.parent;
-        // }
-        // if (maybeRoot === undefined) {
-        //     throw new UsageError("segmentOrNode must be in rooted tree");
-        // }
         const root = this.mergeTree.root;
 
         depthFirstNodeWalk(
