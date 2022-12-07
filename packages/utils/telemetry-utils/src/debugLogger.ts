@@ -6,11 +6,11 @@
 import {
     ITelemetryBaseEvent,
     ITelemetryBaseLogger,
+    ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
 import { debug as registerDebug, IDebugger } from "debug";
 import { TelemetryLogger, MultiSinkLogger, ChildLogger, ITelemetryLoggerPropertyBags } from "./logger";
-import { ITelemetryPropertiesExt } from "./telemetryTypes";
 
 /**
  * Implementation of debug logger
@@ -81,7 +81,7 @@ export class DebugLogger extends TelemetryLogger {
      * @param event - the event to send
      */
     public send(event: ITelemetryBaseEvent): void {
-        const newEvent: ITelemetryPropertiesExt = this.prepareEvent(event);
+        const newEvent: ITelemetryProperties = this.prepareEvent(event);
         const isError = newEvent.category === "error";
         let logger = isError ? this.debugErr : this.debug;
 

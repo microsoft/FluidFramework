@@ -17,7 +17,6 @@ import {
     isFluidError,
     isValidLegacyError,
 } from "./fluidErrorBase";
-import { ITelemetryPropertiesExt } from "./telemetryTypes";
 
 /** @returns true if value is an object but neither null nor an array */
 const isRegularObject = (value: any): boolean => {
@@ -66,7 +65,7 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
 export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
 
 /** Copy props from source onto target, but do not overwrite an existing prop that matches */
-function copyProps(target: ITelemetryPropertiesExt | LoggingError, source: ITelemetryPropertiesExt) {
+function copyProps(target: ITelemetryProperties | LoggingError, source: ITelemetryProperties) {
     for (const key of Object.keys(source)) {
         if (target[key] === undefined) {
             target[key] = source[key];
@@ -406,7 +405,7 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
     /**
      * Add additional properties to be logged
      */
-    public addTelemetryProperties(props: ITelemetryPropertiesExt) {
+    public addTelemetryProperties(props: ITelemetryProperties) {
         copyProps(this, props);
     }
 

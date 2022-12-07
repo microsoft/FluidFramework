@@ -213,7 +213,7 @@ export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITele
 // @public
 export class LoggingError extends Error implements ILoggingError, Omit<IFluidErrorBase, "errorType"> {
     constructor(message: string, props?: ITelemetryProperties, omitPropsFromLogging?: Set<string>);
-    addTelemetryProperties(props: ITelemetryPropertiesExt): void;
+    addTelemetryProperties(props: ITelemetryProperties): void;
     // (undocumented)
     get errorInstanceId(): string;
     getTelemetryProperties(): ITelemetryProperties;
