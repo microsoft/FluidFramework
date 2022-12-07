@@ -600,7 +600,7 @@ export class TelemetryNullLogger implements ITelemetryLogger {
  * Take in a event object, stringify any fields that are non-primitives, and return the new event object.
  * @param event - Event with fields you want to stringify.
  */
- function convertToBaseEvent({ category, eventName, ...props }: ITelemetryEventExt): ITelemetryBaseEvent {
+function convertToBaseEvent({ category, eventName, ...props }: ITelemetryEventExt): ITelemetryBaseEvent {
     const newEvent: ITelemetryBaseEvent = { category, eventName };
     for (const key of Object.keys(props)) {
         newEvent[key] = convertToBasePropertyType(props[key]);
