@@ -93,12 +93,3 @@ export abstract class EventEmitter<Events extends EventFilter<Events>>
         listener: Events[K],
     ): () => void;
 }
-
-/**
- * Advantages over TypedEventEmitter:
- * - Syntactically simpler to make events (object notation vs function interface)
- * - emit is strongly typed
- * - Allows easy deregistration
- * - Less code
- * - Interface only demands a single method, which handles both registration and deregistration. This encourages composition over inheritance since composition is easy.
- */
