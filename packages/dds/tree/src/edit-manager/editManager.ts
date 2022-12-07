@@ -63,6 +63,10 @@ export class EditManager<
         super();
     }
 
+    /**
+     * Advances the minimum sequence number, and removes all commits from the trunk which lie outside the collaboration window.
+     * @param minimumSequenceNumber - the minimum sequence number for all of the connected clients
+     */
     public advanceMinimumSequenceNumber(minimumSequenceNumber: number): void {
         assert(
             minimumSequenceNumber >= this.minimumSequenceNumber,
@@ -73,12 +77,11 @@ export class EditManager<
             this.trunk.shift();
         }
         let commitsToRemove = 0;
-        for (let i = 0; i < 10000; i++) {
-            if (this.trunk[i].seqNumber < minimumSequenceNumber) {
-                commitsToRemove += 1;
-            } else {
-                break;
-            }
+        while (
+            commitsToRemove < this.trunk.length &&
+            this.trunk[commitsToRemove].seqNumber < minimumSequenceNumber
+        ) {
+            commitsToRemove += 1;
         }
         this.trunk.splice(0, commitsToRemove);
     }
