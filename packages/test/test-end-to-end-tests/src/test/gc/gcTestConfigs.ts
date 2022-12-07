@@ -11,7 +11,6 @@ import { ITestContainerConfig, mockConfigProvider } from "@fluidframework/test-u
 export const defaultGCConfig: ITestContainerConfig = {
     runtimeOptions: {
         summaryOptions: {
-            disableSummaries: true,
             summaryConfigOverrides: { state: "disabled" },
         },
         gcOptions: { gcAllowed: true },

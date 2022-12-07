@@ -25,7 +25,6 @@ describe("Outbox", () => {
         individualOpsSubmitted: any[];
         pendingOpContents: any[];
         opsSubmitted: number;
-        pendingFlushCount: number;
     };
     const state: State = {
         deltaManagerFlushCalls: 0,
@@ -35,7 +34,6 @@ describe("Outbox", () => {
         individualOpsSubmitted: [],
         pendingOpContents: [],
         opsSubmitted: 0,
-        pendingFlushCount: 0,
     };
 
     const getMockDeltaManager = (): Partial<IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>> => ({
@@ -89,9 +87,6 @@ describe("Outbox", () => {
             opMetadata: Record<string, unknown> | undefined,
         ): void => {
             state.pendingOpContents.push({ type, content, referenceSequenceNumber, opMetadata });
-        },
-        onFlush: (): void => {
-            state.pendingFlushCount++;
         },
     });
 
@@ -157,7 +152,6 @@ describe("Outbox", () => {
         state.individualOpsSubmitted.splice(0);
         state.pendingOpContents.splice(0);
         state.opsSubmitted = 0;
-        state.pendingFlushCount = 0;
     });
 
     it("Sending batches", () => {
@@ -202,7 +196,6 @@ describe("Outbox", () => {
         const rawMessagesInFlushOrder = [
             messages[2], messages[3], messages[0], messages[1], messages[4],
         ];
-        assert.equal(state.pendingFlushCount, 4);
         assert.deepEqual(state.pendingOpContents, rawMessagesInFlushOrder.map((message) => ({
             type: message.deserializedContent.type,
             content: message.deserializedContent.contents,
@@ -230,7 +223,6 @@ describe("Outbox", () => {
                 batchedMessage(messages[0]),
             ],
         ]);
-        assert.equal(state.pendingFlushCount, 4);
         assert.deepEqual(state.pendingOpContents, messages.map((message) => ({
             type: message.deserializedContent.type,
             content: message.deserializedContent.contents,
