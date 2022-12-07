@@ -8,8 +8,6 @@ import {
     FieldKindIdentifier,
     FieldSchema,
     GlobalFieldKey,
-    Named,
-    NamedTreeSchema,
     TreeSchema,
     TreeSchemaIdentifier,
     ValueSchema,

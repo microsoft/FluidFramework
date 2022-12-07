@@ -99,7 +99,6 @@ export {
     InMemoryStoredSchemaRepository,
     schemaDataIsEmpty,
     fieldSchema,
-    namedTreeSchema,
     lookupTreeSchema,
     lookupGlobalFieldSchema,
     TreeSchemaBuilder,
