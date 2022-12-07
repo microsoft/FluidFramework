@@ -180,8 +180,8 @@ export interface EditableTree extends Iterable<EditableField> {
      * Replaces the field of this node.
      *
      * The content of the field must follow the {@link Multiplicity} of the {@link FieldKind}:
-     * - use a single cursor when creating an `optional` or a `value` field;
-     * - use array of cursors when creating a `sequence` field;
+     * - use a single cursor when replacing an `optional` or a `value` field;
+     * - use array of cursors when replacing a `sequence` field;
      */
     [replaceField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
 }
