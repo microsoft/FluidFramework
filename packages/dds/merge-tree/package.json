@@ -109,7 +109,8 @@
     "baselineVersion": "2.0.0-internal.2.1.0",
     "broken": {
       "ClassDeclaration_Client": {
-        "forwardCompat": false
+        "forwardCompat": false,
+        "backCompat": false
       }
     }
   }
