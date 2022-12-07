@@ -94,7 +94,8 @@ function decodeAzureUrl(urlString: string): {
 }
 
 /**
- * Creates a request for creation of a new Fluid Container.
+ * Creates a request object that can be passed to {@link @fluidframework/fluid-static#IFluidContainer.attach} to
+ * request creation of a new Fluid Container on the Azure service.
  *
  * @param endpointUrl - URI to the Azure Fluid Relay service discovery endpoint.
  * @param tenantId - Unique tenant identifier.
