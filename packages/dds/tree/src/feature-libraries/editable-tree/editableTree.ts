@@ -361,7 +361,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
     }
 
     get type(): TreeSchema {
-        return lookupTreeSchema(this.context.forest.schema, this.typeName);
+        return lookupTreeSchema(this.context.schema, this.typeName);
     }
 
     get value(): Value {
@@ -385,7 +385,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
     }
 
     public getFieldSchema(field: FieldKey): FieldSchema {
-        return getFieldSchema(field, this.context.forest.schema, this.type);
+        return getFieldSchema(field, this.context.schema, this.type);
     }
 
     public getFieldKeys(): FieldKey[] {

@@ -336,7 +336,7 @@ describe("editable-tree: read-only", () => {
         assert.equal(EmptyKey in personProxy, false);
         assert.equal("child" in personProxy, false);
         assert(personProxy.address !== undefined);
-        assert.equal("zip" in personProxy.address, false);
+        assert.equal("city" in personProxy.address, false);
         // Value does not show up when empty:
         assert.equal(valueSymbol in personProxy, false);
 
@@ -606,15 +606,16 @@ describe("editable-tree: read-only", () => {
         const cloned = clone(proxy.friends);
         assert.deepEqual(cloned, { Mat: "Mat" });
         assert(proxy.address !== undefined);
-        assert.deepEqual(Object.keys(proxy.address), ["street", "phones", "sequencePhones"]);
+        assert.deepEqual(Object.keys(proxy.address), ["zip", "street", "phones", "sequencePhones"]);
         assert.equal(proxy.address.street, "treeStreet");
-        assert.equal(proxy.address.zip, undefined);
+        assert.equal(proxy.address.city, undefined);
     });
 
     it("read upwards", () => {
         const [, proxy] = buildTestPerson();
         assert(proxy.address !== undefined);
-        assert.deepEqual(Object.keys(proxy.address), ["street", "phones", "sequencePhones"]);
+        assert.deepEqual(Object.keys(proxy.address), ["zip", "street", "phones", "sequencePhones"]);
+        assert.equal(proxy.address.city, undefined);
         assert.equal(proxy.address.street, "treeStreet");
         assert.equal(proxy.name, "Adam");
     });

@@ -236,6 +236,7 @@ export interface EditableTreeContext {
     free(): void;
     prepareForEdit(): void;
     readonly root: EditableField;
+    readonly schema: SchemaDataAndPolicy;
     readonly unwrappedRoot: UnwrappedEditableField;
 }
 

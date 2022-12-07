@@ -240,6 +240,7 @@ export const personData: JsonableTree = {
         address: [
             {
                 fields: {
+                    zip: [{ value: "99999", type: stringSchema.name }],
                     street: [{ value: "treeStreet", type: stringSchema.name }],
                     phones: [
                         {
@@ -275,8 +276,8 @@ export const personData: JsonableTree = {
                 },
                 globalFields: {
                     [globalFieldKeySequencePhones]: [
-                        { type: stringSchema.name, value: "113" },
-                        { type: stringSchema.name, value: "114" },
+                        { type: stringSchema.name, value: "115" },
+                        { type: stringSchema.name, value: "116" },
                     ],
                 },
                 type: addressSchema.name,

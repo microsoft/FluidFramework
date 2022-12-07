@@ -23,6 +23,7 @@ import {
     Delta,
     Dependent,
     afterChangeToken,
+    SchemaDataAndPolicy,
 } from "../../core";
 import { DefaultChangeset, DefaultEditBuilder } from "../defaultChangeFamily";
 import { runSynchronousTransaction } from "../defaultTransaction";
@@ -53,6 +54,14 @@ export interface EditableTreeContext {
      * See ${@link UnwrappedEditableField} for what is unwrapped.
      */
     readonly unwrappedRoot: UnwrappedEditableField;
+
+    /**
+     * Schema used within this context.
+     * All data must conform to these schema.
+     *
+     * The root's schema is tracked under {@link rootFieldKey}.
+     */
+    readonly schema: SchemaDataAndPolicy;
 
     /**
      * Call before editing.
@@ -152,12 +161,16 @@ export class ProxyContext implements EditableTreeContext {
     private getRoot(unwrap: false): EditableField;
     private getRoot(unwrap: true): UnwrappedEditableField;
     private getRoot(unwrap: boolean): UnwrappedEditableField | EditableField {
-        const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
+        const rootSchema = lookupGlobalFieldSchema(this.schema, rootFieldKey);
         const cursor = this.forest.allocateCursor();
         moveToDetachedField(this.forest, cursor);
         const proxifiedField = proxifyField(this, rootSchema, cursor, unwrap);
         cursor.free();
         return proxifiedField;
+    }
+
+    public get schema(): SchemaDataAndPolicy {
+        return this.forest.schema;
     }
 
     public attachAfterChangeHandler(
