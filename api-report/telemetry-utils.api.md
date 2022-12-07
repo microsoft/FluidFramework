@@ -174,7 +174,7 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
     eventName: string;
 }
 
-// @public (undocumented)
+// @public
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
     sendErrorEvent(event: ITelemetryErrorEventExt, error?: any): void;
     sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: any): void;
@@ -336,7 +336,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
     // (undocumented)
     protected readonly namespace?: string | undefined;
     static numberFromString(str: string | null | undefined): string | number | undefined;
-    static prepareErrorObject(event: ITelemetryEventExt, error: any, fetchStack: boolean): void;
+    static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean): void;
     // (undocumented)
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent;
     // (undocumented)
