@@ -51,7 +51,6 @@ parameters:
 # or a run of the 'Build - client packages' otherwise.
 - name: artifactBuildId
   type: string
-  default: ""
 
 # Name of the Secure File that contains the self-signed cert for the R11s deployment.
 # If not blank, the pipeline will try to install it to the local cert store.
