@@ -170,7 +170,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             assert(response2.value.startsWith("Blob removed by gc:"), `Unexpected response value for blob handle 2`);
         });
 
-        itExpects.only("Can un-tombstone attachment blob by storing a handle",
+        itExpects("Can un-tombstone attachment blob by storing a handle",
         [
             {
                 eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
