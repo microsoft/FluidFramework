@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 
 import {
     IEditableForest,
@@ -148,6 +149,11 @@ export function testForest(
             assert.deepEqual(reader.getPath(), reader3.getPath());
             reader.free();
             reader2.free();
+            assert.throws(
+                () => reader.type,
+                (e) => validateAssertionError(e, "Cursor must be current to be used"),
+                "Expected exception was not thrown",
+            );
         });
 
         it("moving a cursor to the root of an empty forest fails", () => {
