@@ -49,7 +49,9 @@ import {
     simplePhonesSchema,
     getPerson,
     globalFieldSymbolSequencePhones,
+    Address,
 } from "./mockData";
+import { ContextuallyTypedNodeData } from "../../../feature-libraries/editable-tree/utilities";
 
 const globalFieldKey: GlobalFieldKey = brand("foo");
 const globalFieldSymbol = symbolFromKey(globalFieldKey);
@@ -150,13 +152,12 @@ describe("editable-tree: editing", () => {
             // create optional field
             person.age = brand(32);
 
-            const phones: Phones = brand([context.newDetachedNode(int32Schema.name, 12345)]);
             // replace optional field
-            person.address = brand({
-                zip: context.newDetachedNode(stringSchema.name, "99999"),
+            person.address = {
+                zip: "99999",
                 street: "foo",
-                phones,
-            });
+                phones: 12345,
+            } as unknown as Address; // TODO: either fix up these strong types to reflect unwrapping, or use untyped API to remove these `as` casts.
             assert(person.address !== undefined);
 
             // create sequence field
