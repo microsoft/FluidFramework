@@ -24,7 +24,7 @@ parameters:
 
 # Id of the run of the 'Build - client packages' pipeline which contains the artifacts to download.
 # Needed to workaround a bug in the DownloadPipelineArtifact task that might cause artifacts to be downloaded from the
-# incorrect pipeline run.
+# incorrect pipeline run (see https://github.com/microsoft/azure-pipelines-tasks/issues/13518).
 - name: artifactBuildId
   type: string
 
