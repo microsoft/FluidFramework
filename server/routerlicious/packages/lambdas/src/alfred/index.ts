@@ -646,7 +646,7 @@ export function configureWebSocketServices(
                                     contents: {
                                         content: {
                                             type: "ExternalDataChanged",
-                                            content: ""
+                                            content: "Data has changed upstream. Please import new data."
                                         },
                                         type: SignalType.RuntimeMessage
                                     }
