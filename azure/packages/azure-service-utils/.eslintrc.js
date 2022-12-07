@@ -22,13 +22,21 @@ module.exports = {
                 publicOnly: true,
                 enableFixer: false, // Prevents eslint from adding empty comment blocks when run with `--fix`
                 require: {
+                    ArrowFunctionExpression: true,
                     ClassDeclaration: true,
+                    ClassExpression: true,
                     FunctionDeclaration: true,
+                    FunctionExpression: true,
 
                     // Will report for *any* methods on exported classes, regardless of whether or not they are public
                     MethodDefinition: false,
                 },
-                contexts: ["TSEnumDeclaration", "TSInterfaceDeclaration", "TSTypeAliasDeclaration"],
+                contexts: [
+                    "TSEnumDeclaration",
+                    "TSInterfaceDeclaration",
+                    "TSTypeAliasDeclaration",
+                    "VariableDeclaration",
+                ],
             },
         ],
 

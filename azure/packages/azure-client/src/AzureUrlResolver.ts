@@ -93,6 +93,12 @@ function decodeAzureUrl(urlString: string): {
     };
 }
 
+/**
+ * Creates a request for creation of a new Fluid Container.
+ *
+ * @param endpointUrl - URI to the Azure Fluid Relay service discovery endpoint.
+ * @param tenantId - Unique tenant identifier.
+ */
 export const createAzureCreateNewRequest = (endpointUrl: string, tenantId: string): IRequest => {
     const url = new URL(endpointUrl);
     url.searchParams.append("storage", encodeURIComponent(endpointUrl));

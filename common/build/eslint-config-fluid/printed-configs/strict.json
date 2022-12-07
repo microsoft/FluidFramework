@@ -682,7 +682,8 @@
                 "contexts": [
                     "TSEnumDeclaration",
                     "TSInterfaceDeclaration",
-                    "TSTypeAliasDeclaration"
+                    "TSTypeAliasDeclaration",
+                    "VariableDeclaration"
                 ],
                 "enableFixer": false,
                 "exemptEmptyConstructors": false,
@@ -690,11 +691,11 @@
                 "fixerMessage": "",
                 "publicOnly": true,
                 "require": {
-                    "ArrowFunctionExpression": false,
+                    "ArrowFunctionExpression": true,
                     "ClassDeclaration": true,
-                    "ClassExpression": false,
+                    "ClassExpression": true,
                     "FunctionDeclaration": true,
-                    "FunctionExpression": false,
+                    "FunctionExpression": true,
                     "MethodDefinition": false
                 }
             }
