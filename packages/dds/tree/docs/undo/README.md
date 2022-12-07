@@ -7,9 +7,9 @@ It should be updated once more progress is made on the implementation.
 
 Conceptually, an undo edit starts as a very abstract and succinct intention:
 "Undo changes from prior change _\<revision-tag\>_".
-It ultimately needs to be converted into a more concrete and verbose description of what changes the undo entails
+It ultimately needs to be converted into a concrete description of how the undo changes the current state of the document
 (e.g., "delete the node at this path").
-This concrete form is the one that the application code (commonly the Forest code) is able to process.
+The application (typically through Forest) is able to process this concrete form, represented as a delta.
 
 One key design question is:
 what form should the undo edit be in when it is sent by the issuing client to the sequencing service?
@@ -42,8 +42,11 @@ We accomplish that by introducing the concept of an "undo window".
 
 The undo window defines how far back, in terms of the edit history,
 peers are expected to retain information about past edits and their associated repair data.
+Applications can decide to support an undo window of arbitrary size.
+The longer the undo window, the more edits are undone using the post-broadcast approach.
+The shorter the undo window, the more edits are undone using the pre-broadcast approach.
 
-For this data to be retained, it must first be obtained.
+For the relevant data to be retained, it must first be obtained.
 This happens in two ways:
 
 -   When a peer joins a session, the relevant historical information is included in the summary.\*
@@ -95,6 +98,9 @@ There are several approaches we could consider:
 ## Partial Undo
 
 Longer term, we may support a more localized undo that only reverts changes within a specific region of the document.
+For example, a user may wish to undo all the changes they made to a specific region of the document even though the edit that included those changes also included changes to other regions of the document.
+Partial undo would allow such a user to only undo the changes within the region of interest.
+
 This could be achieved by including in the undo message a characterization of the region of the document to be affected by the undo.
 This may need to be characterized as a combination of input context regions and output context regions.
 

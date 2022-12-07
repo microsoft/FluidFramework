@@ -22,7 +22,7 @@ because document changes can be destructive:
 -   Deleting a subtree erases information about the contents of that subtree.
 
 Such data cannot be derived solely from the original changeset to be undone.
-We refer to the information that is needed in addition the original changeset as "repair data".
+We refer to the information that is needed in addition to the original changeset as "repair data".
 
 ## Three Contexts
 
@@ -52,11 +52,17 @@ When that happens,
 the local client needs to update the document state to reflect not only the impact of the edit from the peer,
 but also the impact that the peer edit has on the local edit.
 
-For example,
-if a the local edit was deletion of two nodes A and B,
-with a constraint that both nodes must exist,
-and the peer change had deleted node A,
-then the net impact of the peer change is that node B ought to be revived.
+Consider the following example:
+
+-   Local edit: Delete nodes A and B iff A and B exist.
+-   Peer edit: Delete node A.
+
+If the peer edit is sequenced before the local edit,
+the rebased version of the local edit will have its constraint violated.
+This ought to leave the document in a state where A was deleted but B was not deleted.
+In order to arrive at such a state from the local tip state
+(where both A and B were deleted)
+it is necessary to revive node B.
 
 ### User Undo
 
@@ -92,8 +98,9 @@ The repair data for the local changes is discarded when the local changes are se
 
 ### User Undo
 
-The trunk state manager uses a repair data store to keep track of the data destroyed by sequenced edits.
-This data is then pulled from the store when an undo edit is applied.
+The `EditManager`, whose responsibilities include producing deltas in response to sequenced changes,
+needs to use a repair data store to keep track of the data destroyed by sequenced edits.
+This data is then pulled from the store to produce a delta when an undo edit is applied.
 
 The repair data for an individual edit in the trunk is discarded when the corresponding edit falls outside of the [undo window](../undo/README.md).
 
@@ -192,7 +199,7 @@ This leads to a delta that is minimal
 (e.g., it doesn't involve inserting then deleting the same node).
 Applications tend to prefer such minimal updates as it reduces the amount of update work that they need to perform.
 
-Ensuring that we send minimal deltas to applications may seem at odds we the requirements outlined in
+Ensuring that we send minimal deltas to applications may seem at odds with the requirements outlined in
 [Computing Repair Data Per Individual Edit](#computing-repair-data-per-individual-edit).
 It need not be.
 We can decouple the computation of the repair data from the computation of the delta,
@@ -216,12 +223,12 @@ the token can be cheaply copied and it does not allow for the repair data to be 
 ### Deleting Revived Data
 
 It's possible for an edit to revive some subtree and delete a part of that same subtree.
-When that occurs, it necessary for the repair data associated with that changeset to include the deleted portion of the revived tree.
+When that occurs, it is necessary for the repair data associated with that changeset to include the deleted portion of the revived tree.
 
-In such as scenario, we must be careful about how we characterize the repair data.
+In such a scenario, we must be careful about how we characterize the repair data.
 A naive approach may lead to the same path used to characterize different repair data.
 
-For example, if a document contains a sequenced of Point subtrees,
+For example, if a document contains a sequence of Point subtrees,
 and an edit revives the Point at the start of the sequence,
 then deletes the X node under the revived Point,
 while also deleting the X node under the first Point in the sequence,
