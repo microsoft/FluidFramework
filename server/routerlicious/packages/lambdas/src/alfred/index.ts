@@ -635,20 +635,28 @@ export function configureWebSocketServices(
                             };
 
                             socket.emitToRoom(getRoomId(room), "signal", signalMessage);
+
+                            console.log("\ncontentBatches\n");
+                            console.log(contentBatches);
+                            // Only for debugging purposes
+                            const signalMessageRuntimeMessage : ISignalMessage = {
+                                clientId: null, // system signal
+                                content: JSON.stringify({
+                                    type: SignalType.RuntimeMessage,
+                                    contents: {
+                                        content: {
+                                            type: "ExternalDataChanged",
+                                            content: ""
+                                        },
+                                        type: SignalType.RuntimeMessage
+                                    }
+                                })
+                            }
+                            console.log("\nsignalMessageRuntimeMessage\n");
+                            console.log(signalMessageRuntimeMessage);
+                            socket.emitToRoom(getRoomId(room), "signal", signalMessageRuntimeMessage );
                         }
                     });
-                    // Only for debugging purposes
-                    const signalMessageRuntimeMessage : ISignalMessage = {
-                        clientId: null, // system signal
-                        content: JSON.stringify({
-                            type: SignalType.RuntimeMessage ,
-                            contents: {
-                                content: contentBatches,
-                                type: SignalType.RuntimeMessage
-                            }
-                        })
-                    }
-                    socket.emitToRoom(getRoomId(room), "signal", signalMessageRuntimeMessage );
                 }
             });
 
