@@ -577,6 +577,7 @@ export class IdCompressor {
 		const finalizeCount = normalizedLastFinalizedLocal - newLastFinalizedLocal;
 		assert(finalizeCount >= 1, 'Cannot finalize an empty range.');
 
+		// This is the count of eager finals (excluding overrides)
 		let eagerFinalIdCount = 0;
 		let initialClusterCount = 0;
 		let remainingCount = finalizeCount;
@@ -845,7 +846,7 @@ export class IdCompressor {
 			this.logger?.sendTelemetryEvent({
 				eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
 				eagerFinalIdCount,
-				localIdCount: overrides !== undefined ? remainingCount + overrides.length : remainingCount,
+				localIdCount: remainingCount + (overrides?.length ?? 0),
 				overridesCount: overrides?.length ?? 0,
 				sessionId: this.localSessionId,
 			});
