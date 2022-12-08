@@ -434,6 +434,9 @@ describe("SharedTree Op Size Benchmarks", () => {
                 initializeTestTree(provider.trees[0]);
                 const jsonNode = getJsonNode(INSERT_BENCHMARK_PERCENTILES.singleTransaction.nodeCounts[`${BASE_BENCHMARK_NODE_COUNT}`].percentiles["1%"].byteSize);
                 await insertNodesWithSingleTransaction(provider.trees[0], provider, jsonNode, BASE_BENCHMARK_NODE_COUNT);
+                // provider.containers[0].deltaManager.on('op' => {
+
+                // })
                 assertChildNodeCount(provider.trees[0], BASE_BENCHMARK_NODE_COUNT);
             });
 
