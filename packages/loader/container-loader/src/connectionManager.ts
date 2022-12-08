@@ -665,6 +665,9 @@ export class ConnectionManager implements IConnectionManager {
         // But if we ask read, server can still give us write.
         const readonly = !connection.claims.scopes.includes(ScopeType.DocWrite);
 
+        if (connection.mode !== requestedMode) {
+            this.logger.sendTelemetryEvent({ eventName: "ConnectionModeMismatch", requestedMode, mode: connection.mode });
+        }
         // This connection mode validation logic is moving to the driver layer in 0.44.  These two asserts can be
         // removed after those packages have released and become ubiquitous.
         assert(requestedMode === "read" || readonly === (this.connectionMode === "read"),

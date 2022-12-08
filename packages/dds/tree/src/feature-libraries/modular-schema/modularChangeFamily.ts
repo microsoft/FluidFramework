@@ -140,7 +140,7 @@ export class ModularChangeFamily
                 );
                 assert(
                     changesets.length === changesForField.length,
-                    "Number of changes should be constant when normalizing",
+                    0x4a8 /* Number of changes should be constant when normalizing */,
                 );
                 const taggedChangesets = changesets.map((change, i) =>
                     tagChange(change, changesForField[i].revision),
@@ -239,7 +239,7 @@ export class ModularChangeFamily
         if (change.change.valueChange !== undefined) {
             assert(
                 !("revert" in change.change.valueChange),
-                "Inverting inverse changes is currently not supported",
+                0x4a9 /* Inverting inverse changes is currently not supported */,
             );
             const revision = change.change.valueChange.revision ?? change.revision;
             inverse.valueChange = { revert: revision };
@@ -381,8 +381,14 @@ export class ModularChangeFamily
         const valueChange = change.valueChange;
         if (valueChange !== undefined) {
             if ("revert" in valueChange) {
-                assert(path !== undefined, "Only existing nodes can have their value restored");
-                assert(valueChange.revert !== undefined, "Unable to revert to undefined revision");
+                assert(
+                    path !== undefined,
+                    0x4aa /* Only existing nodes can have their value restored */,
+                );
+                assert(
+                    valueChange.revert !== undefined,
+                    0x4ab /* Unable to revert to undefined revision */,
+                );
                 modify.setValue = repairStore.getValue(valueChange.revert, path);
             } else {
                 modify.setValue = valueChange.value;
