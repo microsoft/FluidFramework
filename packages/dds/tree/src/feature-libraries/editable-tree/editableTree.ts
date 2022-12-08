@@ -295,16 +295,9 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree> {
     [index: number]: UnwrappedEditableTree;
 }
 
-export function check(): any[] {
-    const A: ContextuallyTypedNodeDataObject = {};
-    const foo: EditableTree = {} as any as EditableTree;
-    const B: EditableTree = { foo } as any as EditableTree;
-    B.foo = A;
-
+// TODO: this is only a compile-time helper, maybe remove at some point?
+export function dummy(): any[] {
     type _checkTree = requireTrue<isAssignableTo<EditableTree, ContextuallyTypedNodeDataObject>>;
-    // type _checkTypedTree = requireTrue<
-    //     isAssignableTo<ContextuallyTypedNodeDataObject, EditableTree>
-    // >;
     type _checkUnwrappedTree = requireTrue<
         isAssignableTo<UnwrappedEditableTree, ContextuallyTypedNodeData>
     >;

@@ -46,6 +46,7 @@ import {
     SimplePhones,
     complexPhoneSchema,
     ComplexPhone,
+    Address,
 } from "./mockData";
 
 const globalFieldKey: GlobalFieldKey = brand("foo");
@@ -100,8 +101,7 @@ describe("editable-tree: editing", () => {
     it("create using assignment", async () => {
         const [, trees] = await createSharedTrees(fullSchemaData);
 
-        const context = trees[0].context;
-        trees[0].root = getPerson(context);
+        trees[0].root = getPerson();
         const person = trees[0].root as Person;
 
         // check initial data
@@ -148,11 +148,11 @@ describe("editable-tree: editing", () => {
             person.age = brand(32);
 
             // replace optional field
-            person.address = brand({
+            person.address = {
                 zip: "99999",
                 street: "foo",
-                phones: brand([brand(12345)]),
-            }); // TODO: either fix up these strong types to reflect unwrapping, or use untyped API to remove these `as` casts.
+                phones: [12345],
+            } as unknown as Address; // TODO: fix up these strong types to reflect unwrapping
             assert(person.address !== undefined);
 
             // create sequence field
@@ -209,13 +209,12 @@ describe("editable-tree: editing", () => {
                 },
             });
             // replace node
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             person.address.phones[1] = {
                 [typeNameSymbol]: complexPhoneSchema.name,
                 number: "123",
                 prefix: "456",
-                extraPhones: brand(["1234567"]),
-            } as ComplexPhone;
+                extraPhones: ["1234567"],
+            } as unknown as ComplexPhone; // TODO: fix up these strong types to reflect unwrapping
             assert.deepEqual(clone(person.address.phones), {
                 "0": "54321",
                 "1": { number: "123", prefix: "456", extraPhones: { "0": "1234567" } },

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -8,7 +7,6 @@ import {
     emptyField,
     FieldKinds,
     EditableTree,
-    EditableTreeContext,
     ContextuallyTypedNodeDataObject,
     EditableField,
     ContextuallyTypedNodeData,
@@ -319,37 +317,9 @@ export const personData: JsonableTree = {
     },
 };
 
-export function getTypeHandles(context: EditableTreeContext): {
-    Person: (value: ContextuallyTypedNodeDataObject) => Person;
-    // Float64: (value: number) => Float64;
-    // Int32: (value: number) => Int32;
-    // ComplexPhone: (value: ContextuallyTypedNodeDataObject) => ComplexPhone;
-    // SimplePhones: (value: string[]) => SimplePhones;
-    // String: (value: string) => string;
-} {
-    return {
-        Person: (value: ContextuallyTypedNodeDataObject) => value as Person,
-        // Float64: (value: number) => {
-        //     const float64: Float64 = {
-        //         [typeNameSymbol]: float64Schema.name,
-        //         [valueSymbol]: value
-        //     };
-        //     return float64;
-        // },
-        // Int32: (value: number) => context.applyType(int32Schema.name, value) as Int32,
-        // ComplexPhone: (value: ContextuallyTypedNodeDataObject) =>
-        //     context.applyType(complexPhoneSchema.name, value) as ComplexPhone,
-        // SimplePhones: (value: string[]) =>
-        //     brand(value.map((v) => context.applyType(stringSchema.name, v) as string)),
-
-        // String: (value: string) => context.applyType(stringSchema.name, value) as string,
-    };
-}
-
-export function getPerson(context: EditableTreeContext): Person {
+export function getPerson(): Person {
     const age: Int32 = brand(35);
-    const { Person } = getTypeHandles(context);
-    const person = {
+    return {
         [typeNameSymbol]: personSchema.name,
         // typed with built-in primitive type
         name: "Adam",
@@ -384,6 +354,5 @@ export function getPerson(context: EditableTreeContext): Person {
             sequencePhones: ["113", "114"],
             [globalFieldSymbolSequencePhones]: ["115", "116"],
         },
-    };
-    return Person(person);
+    } as unknown as Person; // TODO: fix up these strong types to reflect unwrapping
 }
