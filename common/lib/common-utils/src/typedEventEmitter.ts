@@ -72,40 +72,51 @@ export class TypedEventEmitter<TEvent>
 
 (new TypedEventEmitter()).on("newListener", (event: string, listener: (...args: any[]) => void) => {});
 
-interface IBaseEventSignatures {
-    newListener: [event: string, listener: (...args: any[]) => void];
-    removeListener: [event: string, listener: (...args: any[]) => void];
+interface IBaseEventSpec {
+    newListener: (event: string, listener: (...args: any[]) => void) => void;
+    removeListener: (event: string, listener: (...args: any[]) => void) => void;
 }
 
-type SignatureKeys<TSig> =
-    keyof TSig extends string ?
-        TSig[keyof TSig] extends any[] ?
-            keyof TSig
+type SampleKeys = EventKeys<ISampleEventSpec>;
+type SampleListener = ListenerSignature<ISampleEventSpec, "foo">;
+type SampleEventsType = IEvents<ISampleEventSpec>;
+
+declare const e: SampleEventsType;
+e("foo", (x, y) => { });
+
+type EventKeys<TEventSpec> =
+    keyof TEventSpec extends string ?
+        TEventSpec[keyof TEventSpec] extends (...args: any[]) => void ?
+            keyof TEventSpec
 : never : never;
 
-type SignatureArgs<TSig, TEvent extends SignatureKeys<TSig> = SignatureKeys<TSig>> =
-    keyof TSig extends string ?
-        TSig[TEvent] extends any[] ?
-            TSig[TEvent]
+type ListenerSignature<TEventSpec, TEventKey extends EventKeys<TEventSpec>> =
+    keyof TEventSpec extends string ?
+        TEventSpec[TEventKey] extends (...args: any[]) => void ?
+            TEventSpec[TEventKey]
 : never : never;
 
-export interface IEvents<TSig> {
-    <TEvent extends SignatureKeys<TSig>>(event: TEvent, listener: (...args: SignatureArgs<TSig, TEvent>) => void);
+// Compatibility with existing IEvent shape
+export interface IEvents<TEventSpec> {
+    <TEventKey extends EventKeys<TEventSpec>>(
+        event: TEventKey,
+        listener: ListenerSignature<TEventSpec, TEventKey>,
+    );
 }
 
 // Dropped extending TypedEventEmitter because I don't know how to incorporate the TypedEventTransform stuff
-class TypedEventEmitter2<TSignatures extends IBaseEventSignatures> extends EventEmitter {
-    emit<TEvent extends SignatureKeys<TSignatures>>(
-        event: TEvent,
-        ...args: SignatureArgs<TSignatures, TEvent>
+class TypedEventEmitter2<TEventSpec extends IBaseEventSpec> extends EventEmitter {
+    emit<TEventKey extends EventKeys<TEventSpec>>(
+        event: TEventKey,
+        ...args: Parameters<ListenerSignature<TEventSpec, TEventKey>>
     ): boolean {
         // Would want to incorporate this class directly in TypedEventEmitter rather than subclassing and calling super.emit
         return super.emit(event, ...args);
     }
 
-    on<TEvent extends SignatureKeys<TSignatures>>(
-        event: TEvent,
-        listener: (...args: SignatureArgs<TSignatures, TEvent>) => void,
+    on<TEventKey extends EventKeys<TEventSpec>>(
+        event: TEventKey,
+        listener: ListenerSignature<TEventSpec, TEventKey>,
     ): this {
         // Would want to incorporate this class directly in TypedEventEmitter rather than subclassing and calling super.on
         // Have to cast to Listener because it's expecting something that can take ...args: any[].  Alternative is to constrain Signatures to extend Record<string, any[]> and support arbitrary events
@@ -114,16 +125,13 @@ class TypedEventEmitter2<TSignatures extends IBaseEventSignatures> extends Event
 }
 
 // extend Record<string, any[]> if you want to allow any undeclared event (why?) - also this will allow numerical keys
-export interface ISampleEventSignatures extends IBaseEventSignatures{
-    foo: [x: number, y: string];
-    bar: [];
-    baz: [options: { a: string; b: boolean; }];
+export interface ISampleEventSpec extends IBaseEventSpec {
+    foo: (x: number, y: string) => void;
+    bar: () => void;
+    baz: (options: { a: string; b: boolean; }) => void;
     // BOOM: number;
 }
-const sample = new TypedEventEmitter2<ISampleEventSignatures>();
-
-type SK = SignatureKeys<ISampleEventSignatures>;
-type SA = SignatureArgs<ISampleEventSignatures>;
+const sample = new TypedEventEmitter2<ISampleEventSpec>();
 
 // These are strongly typed
 sample.emit("foo", 3, "asdf");
