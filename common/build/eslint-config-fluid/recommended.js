@@ -34,7 +34,7 @@ module.exports = {
 
         /**
          * "node:" imports are not supported prior to Node.js v16.
-         * TODO: re-enable this (remove override) once the repo has been migrated.
+         * TODO: re-enable this (remove override) once the repo has been updated to v16.
          */
         "unicorn/prefer-node-protocol": "off",
 
