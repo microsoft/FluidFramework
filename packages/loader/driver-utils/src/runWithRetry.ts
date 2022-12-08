@@ -35,6 +35,7 @@ export interface IProgress {
      * Called whenever api returns cancellable error and the call is going to be retried.
      * Any exception thrown from this call back result in cancellation of operation
      * and propagation of thrown exception.
+     * TODO: we abort the above signal instead
      * @param delayInMs - delay before next retry. This value will depend on internal back-off logic,
      * as well as information provided by service (like 429 error asking to wait for some time before retry)
      * @param error - error object returned from the call.
@@ -42,6 +43,7 @@ export interface IProgress {
     onRetry?(delayInMs: number, error: any): void;
 }
 
+/** @deprecated - TODO */
 export async function runWithRetry<T>(
     api: (cancel?: AbortSignal) => Promise<T>,
     fetchCallName: string,
@@ -106,4 +108,89 @@ export async function runWithRetry<T>(
     }
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return result!;
+}
+
+export type RunResult<T> = {
+    status: "succeeded";
+    result: T;
+} | {
+    status: "failed";
+    error: unknown;
+} | {
+    status: "aborted";
+};
+
+export async function runWithRetry2<T>(
+    api: (cancel?: AbortSignal) => Promise<T>,
+    fetchCallName: string,
+    logger: ITelemetryLogger,
+    progress: IProgress,
+): Promise<RunResult<T>> {
+    let successResult: RunResult<T> | undefined;
+    let retryAfterMs = 1000; // has to be positive!
+    let numRetries = 0;
+    const startTime = performance.now();
+    let lastError: any;
+    do {
+        try {
+            const result = await api(progress.cancel);
+            successResult = {
+                status: "succeeded",
+                result,
+            };
+        } catch (error) {
+            const isCancelled = progress.cancel?.aborted; // ! Needed because of build error when running check again
+            if (isCancelled === true) {
+                logger.sendTelemetryEvent({
+                    eventName: `${fetchCallName}_runWithRetryAborted`,
+                    retry: numRetries,
+                    duration: performance.now() - startTime,
+                    fetchCallName,
+                }, error);
+
+                return {
+                    status: "aborted",
+                };
+            }
+
+            // If it is not retriable, then just throw the error.
+            if (!canRetryOnError(error)) {
+                logger.sendTelemetryEvent({
+                    eventName: `${fetchCallName}_cancel`,
+                    retry: numRetries,
+                    duration: performance.now() - startTime,
+                    fetchCallName,
+                }, error);
+                return {
+                    status: "failed",
+                    error,
+                };
+            }
+
+            numRetries++;
+            lastError = error;
+            // If the error is throttling error, then wait for the specified time before retrying.
+            // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
+            retryAfterMs = getRetryDelayFromError(error) ?? Math.min(retryAfterMs * 2, 8000);
+            if (progress.onRetry) {
+                progress.onRetry(retryAfterMs, error);
+                if (progress.cancel?.aborted === true) { // onRetry could have aborted
+                    return {
+                        status: "aborted",
+                    };
+                }
+            }
+            await delay(retryAfterMs);
+        }
+    } while (successResult === undefined);
+    if (numRetries > 0) {
+        logger.sendTelemetryEvent({
+            eventName: `${fetchCallName}_lastError`,
+            retry: numRetries,
+            duration: performance.now() - startTime,
+            fetchCallName,
+        },
+        lastError);
+    }
+    return successResult;
 }

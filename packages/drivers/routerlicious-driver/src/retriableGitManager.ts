@@ -11,7 +11,7 @@ import {
     IWholeSummaryPayload,
     IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
-import { runWithRetry } from "@fluidframework/driver-utils";
+import { runWithRetry2 } from "@fluidframework/driver-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 
 export class RetriableGitManager implements IGitManager {
@@ -155,11 +155,21 @@ export class RetriableGitManager implements IGitManager {
     }
 
     private async runWithRetry<T>(api: () => Promise<T>, callName: string): Promise<T> {
-        return runWithRetry(
+        const runResult = await runWithRetry2(
             api,
             callName,
             this.logger,
             {}, // progress
         );
+
+        switch (runResult.status) {
+            case "succeeded":
+                return runResult.result;
+            case "failed":
+                throw runResult.error;
+            case "aborted":
+            default:
+                throw new Error("Unreachable Case");
+        }
     }
 }

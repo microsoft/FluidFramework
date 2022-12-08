@@ -47,7 +47,7 @@ import {
     isOnline,
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
-    runWithRetry,
+    runWithRetry2,
     isFluidResolvedUrl,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
@@ -888,7 +888,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 if (this.service === undefined) {
                     assert(this.client.details.type !== summarizerClientType,
                         0x2c4 /* "client should not be summarizer before container is created" */);
-                    this.service = await runWithRetry(
+
+                    const runResult = await runWithRetry2(
                         async () => this.serviceFactory.createContainer(
                             summary,
                             createNewResolvedUrl,
@@ -901,6 +902,21 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                             cancel: this.closeSignal,
                         }, // progress
                     );
+
+                    switch (runResult.status) {
+                        case "succeeded":
+                            this.service = runResult.result;
+                            break;
+                        case "failed":
+                            throw runResult.error;
+                        case "aborted":
+                            throw new GenericError(
+                                // We know the reason since we use closeSignal above but don't pass an onRetry callback
+                                "Container.attach() was aborted because the container was closed",
+                            );
+                        default:
+                            unreachableCase(runResult);
+                    }
                 }
                 const resolvedUrl = this.service.resolvedUrl;
                 ensureFluidResolvedUrl(resolvedUrl);

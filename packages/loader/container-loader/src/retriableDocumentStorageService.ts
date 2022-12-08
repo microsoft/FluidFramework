@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { GenericError } from "@fluidframework/container-utils";
 import {
     FetchSource,
@@ -19,7 +19,7 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { runWithRetry } from "@fluidframework/driver-utils";
+import { runWithRetry2 } from "@fluidframework/driver-utils";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
     private _disposed = false;
@@ -104,26 +104,37 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         );
     }
 
-    private checkStorageDisposed(callName: string, error: unknown) {
-        if (this._disposed) {
-            this.logger.sendTelemetryEvent({
-                eventName: `${callName}_abortedStorageDisposed`,
-                fetchCallName: callName, // fetchCallName matches logs in runWithRetry.ts
-            }, error);
-            // pre-0.58 error message: storageServiceDisposedCannotRetry
-            throw new GenericError("Storage Service is disposed. Cannot retry", { canRetry: false });
-        }
-        return;
-    }
-
     private async runWithRetry<T>(api: () => Promise<T>, callName: string): Promise<T> {
-        return runWithRetry(
+        const disposedAbort = new AbortController();
+        const runResult = await runWithRetry2(
             api,
             callName,
             this.logger,
             {
-                onRetry: (_delayInMs: number, error: unknown) => this.checkStorageDisposed(callName, error),
+                cancel: disposedAbort.signal,
+                onRetry: (_delayInMs: number, _error: any) => {
+                    if (this._disposed) {
+                        disposedAbort.abort();
+                    }
+                },
             },
         );
+
+        switch (runResult.status) {
+            case "succeeded":
+                return runResult.result;
+            case "failed":
+                throw runResult.error;
+            case "aborted": {
+                this.logger.sendTelemetryEvent({
+                    eventName: `${callName}_abortedStorageDisposed`,
+                    fetchCallName: callName, // fetchCallName matches logs in runWithRetry.ts
+                });
+                // pre-0.58 error message: storageServiceDisposedCannotRetry
+                throw new GenericError("Storage Service is disposed. Cannot retry", { canRetry: false });
+            }
+            default:
+                unreachableCase(runResult);
+        }
     }
 }

@@ -399,7 +399,21 @@ export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
 }
 
 // @public (undocumented)
+export type RunResult<T> = {
+    status: "succeeded";
+    result: T;
+} | {
+    status: "failed";
+    error: unknown;
+} | {
+    status: "aborted";
+};
+
+// @public @deprecated (undocumented)
 export function runWithRetry<T>(api: (cancel?: AbortSignal) => Promise<T>, fetchCallName: string, logger: ITelemetryLogger, progress: IProgress): Promise<T>;
+
+// @public (undocumented)
+export function runWithRetry2<T>(api: (cancel?: AbortSignal) => Promise<T>, fetchCallName: string, logger: ITelemetryLogger, progress: IProgress): Promise<RunResult<T>>;
 
 // @public (undocumented)
 export abstract class SnapshotExtractor {
