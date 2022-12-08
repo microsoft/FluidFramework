@@ -238,7 +238,6 @@ class OffsetShape {
 
 class NodePositionInfo implements UpPath {
     /**
-     *
      * @param parent - TODO
      * @param parentField - TODO
      * @param parentIndex - indexWithinParentField
