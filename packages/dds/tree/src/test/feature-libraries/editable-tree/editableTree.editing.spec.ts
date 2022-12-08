@@ -12,7 +12,6 @@ import {
     GlobalFieldKey,
     JsonableTree,
     LocalFieldKey,
-    namedTreeSchema,
     rootFieldKey,
     SchemaData,
     symbolFromKey,
@@ -28,8 +27,8 @@ import {
     getField,
     isEditableField,
     FieldKinds,
-    emptyField,
     valueSymbol,
+    namedTreeSchema,
 } from "../../../feature-libraries";
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
 import { fullSchemaData, personData, Person, schemaMap, stringSchema } from "./mockData";
@@ -48,7 +47,6 @@ function getTestSchema(fieldKind: { identifier: FieldKindIdentifier }): SchemaDa
         },
         globalFields: [globalFieldKey],
         value: ValueSchema.Serializable,
-        extraLocalFields: emptyField,
     });
     schemaMap.set(rootSchemaName, rootNodeSchema);
     return {
