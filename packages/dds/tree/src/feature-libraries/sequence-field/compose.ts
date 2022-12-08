@@ -370,7 +370,6 @@ function composeMarks<TNodeChange>(
         case "MoveIn": {
             switch (newType) {
                 case "Delete": {
-                    // TODO: Replace Move source with the delete
                     replaceMoveSrc(moveEffects, baseMark.id, newMark);
                     return 0;
                 }
