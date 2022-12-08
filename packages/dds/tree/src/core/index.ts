@@ -64,6 +64,7 @@ export {
     DeltaVisitor,
     SparseNode,
     getDescendant,
+    compareUpPaths,
 } from "../tree";
 
 export {
