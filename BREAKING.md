@@ -15,16 +15,9 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - Avoid using code formatting in the title (it's fine to use in the body).
 - To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
-# 2.0.0-internal.2.1.0
+# 2.0.0-internal.2.2.0
 
-## 2.0.0-internal.2.1.0 Upcoming changes
-- [Deprecated ISummarizerRuntime batchEnd listener](#Deprecated-ISummarizerRuntime-batchEnd-listener)
-- [Deprecate ISummaryBaseConfiguration.summarizerClientElection](#Deprecate-ISummaryBaseConfigurationsummarizerClientElection)
-
-
-### Deprecated ISummarizerRuntime batchEnd listener
-The `"batchEnd"` listener in `ISummarizerRuntime` has been deprecated and will be removed in a future release. Please remove all usage and implementations of `ISummarizerRuntime.on("batchEnd", ...)` and `ISummarizerRuntime.removeListener("batchEnd", ...)`.
-If these methods are needed, please refer to the `IContainerRuntimeBase` interface.
+## 2.0.0-internal.2.2.0 Upcoming changes
 
 ### Deprecated events and event parameters on IContainer and IDeltaManager
 
@@ -54,6 +47,17 @@ The following legacy events and event parameters have been marked as deprecated 
     - "pong": Event deprecated in its entirety.
         - This event has been unused and unsupported for some time.
           No replacement API recommended.
+
+# 2.0.0-internal.2.1.0
+
+## 2.0.0-internal.2.1.0 Upcoming changes
+
+- [Deprecated ISummarizerRuntime batchEnd listener](#Deprecated-ISummarizerRuntime-batchEnd-listener)
+- [Deprecate ISummaryBaseConfiguration.summarizerClientElection](#Deprecate-ISummaryBaseConfigurationsummarizerClientElection)
+
+### Deprecated ISummarizerRuntime batchEnd listener
+The `"batchEnd"` listener in `ISummarizerRuntime` has been deprecated and will be removed in a future release. Please remove all usage and implementations of `ISummarizerRuntime.on("batchEnd", ...)` and `ISummarizerRuntime.removeListener("batchEnd", ...)`.
+If these methods are needed, please refer to the `IContainerRuntimeBase` interface.
 
 ### Deprecate-ISummaryBaseConfigurationsummarizerClientElection
 `ISummaryBaseConfiguration.summarizerClientElection` has been deprecated and will be removed in a future release.
