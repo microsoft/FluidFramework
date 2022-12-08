@@ -116,7 +116,7 @@ async function createSummary(
     repoManagerParams: IRepoManagerParams,
     externalWriterConfig?: IExternalWriterConfig,
     persistLatestFullSummary = false,
-    enableLowIoWrite: "initial" | false = false
+    enableLowIoWrite: "initial" | boolean = false
 ): Promise<IWriteSummaryResponse | IWholeFlatSummary> {
     const lumberjackProperties = {
         ...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
@@ -232,7 +232,7 @@ export function create(
 ): Router {
     const router: Router = Router();
     const persistLatestFullSummary: boolean = store.get("git:persistLatestFullSummary") ?? false;
-    const enableLowIoWrite: "initial" | false = store.get("git:enableLowIoWrite") ?? false;
+    const enableLowIoWrite: "initial" | boolean = store.get("git:enableLowIoWrite") ?? false;
     const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
 
     /**
