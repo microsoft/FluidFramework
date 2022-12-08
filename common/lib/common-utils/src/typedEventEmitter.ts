@@ -70,16 +70,16 @@ export class TypedEventEmitter<TEvent>
     readonly off: TypedEventTransform<this, TEvent>;
 }
 
-// Allow keyof TSig extends string | number since keyof any extending Record<string, any> is string | number (surprise!)
+// Maybe allow keyof TSig extends string | number -- since keyof any extending Record<string, any> is string | number (surprise!)
 
 type SignatureKeys<TSig> =
-    keyof TSig extends string | number ?
+    keyof TSig extends string ?
         TSig[keyof TSig] extends any[] ?
             keyof TSig
 : never : never;
 
 type SignatureArgs<TSig, TEvent extends SignatureKeys<TSig> = SignatureKeys<TSig>> =
-    keyof TSig extends string | number ?
+    keyof TSig extends string ?
         TSig[TEvent] extends any[] ?
             TSig[TEvent]
 : never : never;
@@ -93,7 +93,7 @@ class TypedEventEmitter2<TSignatures> extends EventEmitter {
     emit<TEvent extends SignatureKeys<TSignatures>>(
         event: TEvent,
         ...args: SignatureArgs<TSignatures, TEvent>
-    ) {
+    ): boolean {
         // Would want to incorporate this class directly in TypedEventEmitter rather than subclassing and calling super.emit
         return super.emit(event, ...args);
     }
@@ -101,37 +101,35 @@ class TypedEventEmitter2<TSignatures> extends EventEmitter {
     on<TEvent extends SignatureKeys<TSignatures>>(
         event: TEvent,
         listener: (...args: SignatureArgs<TSignatures, TEvent>) => void,
-    ) {
+    ): this {
         // Would want to incorporate this class directly in TypedEventEmitter rather than subclassing and calling super.on
         // Have to cast to Listener because it's expecting something that can take ...args: any[].  Alternative is to constrain Signatures to extend Record<string, any[]> and support arbitrary events
         return super.on(event, listener as Listener);
     }
 }
 
-export interface ISampleEventSignatures extends Record<string, any[]> {
+// extend Record<string, any[]> if you want to allow any undeclared event (why?) - also this will allow numerical keys
+export interface ISampleEventSignatures {
     foo: [x: number, y: string];
     bar: [];
     baz: [options: { a: string; b: boolean; }];
-//    [key: string]: any[];
-//    45: number;
 }
 const sample = new TypedEventEmitter2<ISampleEventSignatures>();
 
-type SignatureKeys2<TSig> =
-    keyof TSig extends string | number ?
-        TSig[keyof TSig] extends any[] ?
-            keyof TSig
-: never : never;
+type SK = SignatureKeys<ISampleEventSignatures>;
+type SA = SignatureArgs<ISampleEventSignatures>;
 
-type SignatureArgs2<TSig, TEvent extends SignatureKeys2<TSig> = SignatureKeys2<TSig>> =
-    keyof TSig extends string | number ?
-        TSig[TEvent] extends any[] ?
-            TSig[TEvent]
-: never : never;
+// These are strongly typed
+sample.emit("foo", 3, "asdf");
+sample.emit("bar");
+sample.emit("baz", { a: "hello", b: true });
 
+sample.emit("unspecified", 123);
 
-type SK = SignatureKeys2<ISampleEventSignatures>;
-type SA = SignatureArgs2<ISampleEventSignatures>;
+sample.on("foo", (x: number, y: string) => {});
+
+// //////////////////// //
+// Learning about stuff //
 
 type StringKey<T> = keyof T extends string ? keyof T : never;
 type IK = StringKey<{ [key: string]: any; }>;
@@ -142,12 +140,3 @@ type RKey = keyof ERecord;
 
 interface ERecord extends Record<string, any> {}
 
-// These are strongly typed (assuming you spell the type parameter correctly)
-sample.emit("foo", 3, "asdf");
-sample.emit("bar");
-sample.emit("baz", { a: "hello", b: true });
-
-// Now this is supported. But we lose suggestions on event names (but if you get the name right you still get the specific signature in intellisense)
-sample.emit("unspecified", 123);
-
-sample.on("foo", (x: number, y: string) => {});
