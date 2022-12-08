@@ -974,5 +974,6 @@ export const shortCodeMap = {
     "0x4b7": "mismatch",
     "0x4b8": "shouldn't have multiple active batches",
     "0x4b9": "lz4 is currently the only supported compression algorithm",
-    "0x4ba": "shouldn't receive compressed message in middle of a batch"
+    "0x4ba": "shouldn't receive compressed message in middle of a batch",
+    "0x4bb": "Invalid blob node id in used routes."
 };
