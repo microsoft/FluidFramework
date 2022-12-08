@@ -11,7 +11,6 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PropertySet } from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { IJSONSegment } from "./ops";
-import { SerializedAttributionCollection } from "./attributionCollection";
 
 export interface VersionedMergeTreeChunk {
     version: undefined | "1";
@@ -30,7 +29,6 @@ export interface MergeTreeChunkLegacy extends VersionedMergeTreeChunk {
     chunkMinSequenceNumber?: number;
     segmentTexts: JsonSegmentSpecs[];
     headerMetadata?: MergeTreeHeaderMetadata;
-    attribution?: SerializedAttributionCollection;
 }
 
 export interface MergeTreeHeaderChunkMetadata {
@@ -52,7 +50,6 @@ export interface MergeTreeChunkV1 extends VersionedMergeTreeChunk {
     length: number;
     segments: JsonSegmentSpecs[];
     headerMetadata: MergeTreeHeaderMetadata | undefined;
-    attribution?: SerializedAttributionCollection;
 }
 
 /**
@@ -154,7 +151,6 @@ export function toLatestVersion(
                 headerMetadata: buildHeaderMetadataForLegacyChunk(path, chunkLegacy, options),
                 segments: chunkLegacy.segmentTexts,
                 startIndex: chunkLegacy.chunkStartSegmentIndex,
-                attribution: chunkLegacy.attribution,
             };
         }
         case "1":

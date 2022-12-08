@@ -13,7 +13,12 @@ import {
     take,
 } from "@fluid-internal/stochastic-test-utils";
 import { AttributionCollection, SerializedAttributionCollection } from "../attributionCollection";
-import { BaseSegment, ISegment } from "../mergeTreeNodes";
+import { BaseSegment, ISegment as ISegmentCurrent } from "../mergeTreeNodes";
+
+// TODO: Once integrated into merge-tree, this interface can be removed.
+interface ISegment extends ISegmentCurrent {
+    attribution?: AttributionCollection<unknown>;
+}
 
 describe("AttributionCollection", () => {
     describe(".getAtOffset", () => {
@@ -275,7 +280,10 @@ describe("AttributionCollection", () => {
             segIndex: number;
         }
 
-        class Segment extends BaseSegment {
+        // TODO: Once integrated into merge-tree, much of the interactions with attribution on this segment
+        // can be removed, as they'll be handled in base classes
+        class Segment extends BaseSegment implements ISegment {
+            public attribution?: AttributionCollection<unknown>;
             public readonly type = "testSeg";
             public constructor(length: number) {
                 super();
@@ -289,15 +297,27 @@ describe("AttributionCollection", () => {
             public clone(): ISegment {
                 const seg = new Segment(this.cachedLength);
                 this.cloneInto(seg);
+                // TODO: Remove
+                seg.attribution = this.attribution?.clone();
                 return seg;
             }
 
             protected createSplitSegmentAt(pos: number): BaseSegment | undefined {
                 if (pos > 0) {
                     const leafSegment = new Segment(this.cachedLength - pos);
+                    // TODO: Remove
+                    leafSegment.attribution = this.attribution?.splitAt(pos);
                     this.cachedLength = pos;
                     return leafSegment;
                 }
+            }
+
+            // TODO: Remove
+            public append(segment: ISegment): void {
+                if (segment.attribution) {
+                    this.attribution?.append(segment.attribution);
+                }
+                super.append(segment);
             }
         }
 

@@ -4,18 +4,17 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
 import { RedBlackTree } from "./collections";
-import { compareNumbers, ISegment } from "./mergeTreeNodes";
+import { compareNumbers, ISegment as ISegmentCurrent } from "./mergeTreeNodes";
 
-export interface SerializedAttributionChannel {
-    keys: unknown[];
-    posBreakpoints: number[];
+// TODO: Once integrated into merge-tree, this interface can be removed
+interface ISegment extends ISegmentCurrent {
+    attribution?: AttributionCollection<unknown>;
 }
 
-export interface SerializedAttributionCollection extends SerializedAttributionChannel {
-    /** Channel-specific attribution data. */
-    channels?: { [channelName: string]: SerializedAttributionChannel };
+export interface SerializedAttributionCollection {
+    keys: unknown[];
+    posBreakpoints: number[];
     /* Total length; only necessary for validation */
     length: number;
 }
@@ -23,13 +22,11 @@ export interface SerializedAttributionCollection extends SerializedAttributionCh
 export class AttributionCollection<T> {
     private readonly entries: RedBlackTree<number, T> = new RedBlackTree(compareNumbers);
 
-    // Lazily-initialized to 
-    private channels?: Map<string, RedBlackTree<number, T>>;
     public constructor(baseEntry: T, private _length: number) {
         this.entries.put(0, baseEntry);
     }
 
-    public getAtOffset(offset: number, channel?: string): T {
+    public getAtOffset(offset: number): T {
         assert(offset >= 0 && offset < this._length, 0x443 /* Requested offset should be valid */);
         const node = this.entries.floor(offset);
         assert(node !== undefined, 0x444 /* Collection should have at least one entry */);
@@ -68,12 +65,8 @@ export class AttributionCollection<T> {
         this._length += other.length;
     }
 
-    public getAll(channel?: string): { offset: number; key: T; }[] {
+    public getAll(): { offset: number; key: T; }[] {
         const results: { offset: number; key: T; }[] = [];
-        const tree = channel ? this.channels?.get(channel) : this.entries;
-        if (!tree) {
-            throw new UsageError(`No `)
-        }
         this.entries.map(({ key, data }) => {
             results.push({ offset: key, key: data });
             return true;
@@ -88,17 +81,6 @@ export class AttributionCollection<T> {
             return true;
         });
         return copy;
-    }
-
-    public addOrModifyChannel(channel: string, entry: T): void {
-        // TODO: Test all of this added code
-        if (!this.channels) {
-            this.channels = new Map();
-        }
-
-        const entries = new RedBlackTree<number, T>(compareNumbers);
-        entries.put(0, entry);
-        this.channels.set(channel, entries);
     }
 
     /**
@@ -117,10 +99,10 @@ export class AttributionCollection<T> {
         let currentInfo = keys[curIndex];
 
         for (const segment of segments) {
-            const attribution = new AttributionCollection(currentInfo as number, segment.cachedLength);
+            const attribution = new AttributionCollection(currentInfo, segment.cachedLength);
             while (posBreakpoints[curIndex] < cumulativeSegPos + segment.cachedLength) {
                 currentInfo = keys[curIndex];
-                attribution.entries.put(posBreakpoints[curIndex] - cumulativeSegPos, currentInfo as number);
+                attribution.entries.put(posBreakpoints[curIndex] - cumulativeSegPos, currentInfo);
                 curIndex++;
             }
 
@@ -132,8 +114,8 @@ export class AttributionCollection<T> {
     /**
      * Condenses attribution information on consecutive segments into a `SerializedAttributionCollection`
      */
-    public static serializeAttributionCollections<T>(
-        segments: Iterable<{ attribution?: AttributionCollection<T>; cachedLength: number; }>,
+    public static serializeAttributionCollections(
+        segments: Iterable<ISegment>,
     ): SerializedAttributionCollection {
         const posBreakpoints: number[] = [];
         const keys: unknown[] = [];

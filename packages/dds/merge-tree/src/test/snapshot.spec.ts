@@ -11,14 +11,13 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { IMergeTreeOp } from "../ops";
 import { SnapshotV1 } from "../snapshotV1";
-import { IMergeTreeOptions } from "../mergeTree";
 import { TestSerializer } from "./testSerializer";
 import { TestClient } from ".";
 
 // Reconstitutes a MergeTree client from a summary
-async function loadSnapshot(summary: ISummaryTree, options?: IMergeTreeOptions) {
+async function loadSnapshot(summary: ISummaryTree) {
     const services = MockStorage.createFromSummary(summary);
-    const client2 = new TestClient(options);
+    const client2 = new TestClient(undefined);
     const runtime: Partial<IFluidDataStoreRuntime> = {
         logger: client2.logger,
         clientId: "1",
@@ -31,13 +30,12 @@ async function loadSnapshot(summary: ISummaryTree, options?: IMergeTreeOptions) 
 
 // Wrapper around MergeTree client that provides a convenient SharedString-like API for tests.
 class TestString {
-    private client: TestClient;
+    private client = new TestClient();
     private readonly pending: ISequencedDocumentMessage[] = [];
     private seq = 0;
     private minSeq = 0;
 
-    constructor(id: string, options?: IMergeTreeOptions) {
-        this.client = new TestClient(options);
+    constructor(id: string) {
         this.client.startOrUpdateCollaboration(id);
     }
 
@@ -64,11 +62,10 @@ class TestString {
     }
 
     // Ensures the MergeTree client's contents successfully roundtrip through a snapshot.
-    public async checkSnapshot(options?: IMergeTreeOptions) {
+    public async checkSnapshot() {
         this.applyPending();
-        const expectedAttributionKeys = this.client.getAllAttributionKeys();
-        const summary = this.getSummary();
-        const client2 = await loadSnapshot(summary, options);
+        const tree = this.getSummary();
+        const client2 = await loadSnapshot(tree);
 
         assert.equal(this.client.getText(), client2.getText(),
             "Snapshot must produce a MergeTree with the same text as the original");
@@ -76,10 +73,6 @@ class TestString {
         // Also check the length as weak test for non-TextSegments.
         assert.equal(this.client.getLength(), client2.getLength(),
             "Snapshot must produce a MergeTree with the same length as the original");
-
-        const actualAttributionKeys = client2.getAllAttributionKeys();
-        assert.deepEqual(actualAttributionKeys, expectedAttributionKeys,
-            "Snapshot must produce a MergeTree with identical attribution as the original");
 
         // Replace our client with the one loaded by the snapshot.
         this.client = client2;
@@ -120,11 +113,11 @@ class TestString {
     }
 }
 
-function makeSnapshotSuite(options?: IMergeTreeOptions): void {
+describe("snapshot", () => {
     let str: TestString;
 
     beforeEach(() => {
-        str = new TestString("fakeId", options);
+        str = new TestString("fakeId");
     });
 
     afterEach(async () => {
@@ -213,27 +206,5 @@ function makeSnapshotSuite(options?: IMergeTreeOptions): void {
         }
 
         await str.checkSnapshot();
-    });
-}
-
-describe("snapshot", () => {
-    describe("with attribution", () => {
-        makeSnapshotSuite({ attribution: { track: true } });
-    });
-
-    describe("without attribution", () => {
-        makeSnapshotSuite({ attribution: { track: false } });
-    });
-
-    it("presence of attribution overrides merge-tree initialization value", async () => {
-        const str = new TestString("id", { attribution: { track: true } });
-        str.append("hello world", /* increaseMsn: */ true);
-        await str.checkSnapshot({ attribution: { track: false } });
-    });
-
-    it("lack of attribution overrides merge-tree initialization", async () => {
-        const str = new TestString("id", { attribution: { track: false } });
-        str.append("hello world", /* increaseMsn: */ true);
-        await str.checkSnapshot({ attribution: { track: true } });
     });
 });

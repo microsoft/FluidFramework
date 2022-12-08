@@ -46,7 +46,6 @@ import {
 import { reservedRangeLabelsKey, reservedTileLabelsKey } from "../referencePositions";
 import { MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
-import { JsonSegmentSpecs } from "../snapshotChunks";
 import { getStats, specToSegment, TestClient } from "./testClient";
 import { TestServer } from "./testServer";
 import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils";
@@ -1228,7 +1227,7 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        const segs = <SharedStringJSONSegment[]> new SnapshotLegacy(cli.mergeTree, DebugLogger.create("fluid:snapshot")).extractSync().map((seg) => seg.toJSONObject() as JsonSegmentSpecs);
+        const segs = <SharedStringJSONSegment[]> new SnapshotLegacy(cli.mergeTree, DebugLogger.create("fluid:snapshot")).extractSync();
         if (verbose) {
             for (const seg of segs) {
                 log(`${specToSegment(seg)}`);
