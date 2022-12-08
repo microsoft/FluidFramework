@@ -40,7 +40,7 @@ The following legacy events and event parameters have been marked as deprecated 
           No replacement API recommended.
     - "allSentOpsAckd": Event deprecated in its entirety.
         - This event has been unused and unsupported for some time.
-          Use "saved" event instead - it indicates the same state transition, and can be used as a 1:1 replacement.
+          No replacement API recommended.
     - "processTime": Event deprecated in its entirety.
         - This event has been unused and unsupported for some time.
           No replacement API recommended.
