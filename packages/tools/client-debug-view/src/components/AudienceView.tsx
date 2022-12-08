@@ -187,7 +187,7 @@ function HistoryView(props: HistoryViewProps): React.ReactElement {
             <div>
                 <Stack horizontal={true} styles={accordianBackgroundColor}>
                     <StackItem styles={iconStyle}>
-                        <Icon iconName={changeEntry.changeKind === "added" ? "CirclePlus" : "SkypeCircleMinus"}/>
+                        <Icon iconName={changeEntry.changeKind === "added" ? "CirclePlus" : "SkypeCircleMinus"} title={changeEntry.changeKind === "added" ? "Client Added" : "Client Removed"}/>
                     </StackItem>
                     <StackItem>
                         <div key={`${changeEntry.clientId}-${changeEntry.changeKind}`}>
