@@ -19,16 +19,16 @@ import {
     lookupGlobalFieldSchema,
     TreeSchemaIdentifier,
     lookupTreeSchema,
-    TreeValue,
+    TreeTypeSet,
     MapTree,
-    ITreeCursor,
+    symbolIsFieldKey,
 } from "../../core";
 // TODO:
 // This module currently is assuming use of defaultFieldKinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
 import { fieldKinds } from "../defaultFieldKinds";
 import { FieldKind, Multiplicity } from "../modular-schema";
-import { singleMapTreeCursor } from "../mapTreeCursor";
+import { typeNameSymbol, valueSymbol } from "./editableTree";
 
 /**
  * @returns true iff `schema` trees should default to being viewed as just their value when possible.
@@ -54,21 +54,44 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue 
     return nodeValue !== undefined && typeof nodeValue !== "object";
 }
 
-export function assertPrimitiveValueType(nodeValue: Value, schema: TreeSchema): void {
-    assert(isPrimitiveValue(nodeValue), 0x45b /* The value is not primitive */);
+export function allowsValue(schema: ValueSchema, nodeValue: Value): boolean {
+    switch (schema) {
+        case ValueSchema.String:
+            return typeof nodeValue === "string";
+        case ValueSchema.Number:
+            return typeof nodeValue === "number";
+        case ValueSchema.Boolean:
+            return typeof nodeValue === "boolean";
+        case ValueSchema.Nothing:
+            return typeof nodeValue === undefined;
+        case ValueSchema.Serializable:
+            return true;
+        default:
+            fail("invalid value schema");
+    }
+}
+
+export function allowsPrimitiveValueType(nodeValue: Value, schema: TreeSchema): boolean {
+    if (!isPrimitiveValue(nodeValue)) {
+        return false;
+    }
     switch (schema.value) {
         case ValueSchema.String:
-            assert(typeof nodeValue === "string", 0x45c /* Expected string */);
-            break;
+            return typeof nodeValue === "string";
         case ValueSchema.Number:
-            assert(typeof nodeValue === "number", 0x45d /* Expected number */);
-            break;
+            return typeof nodeValue === "number";
         case ValueSchema.Boolean:
-            assert(typeof nodeValue === "boolean", 0x45e /* Expected boolean */);
-            break;
+            return typeof nodeValue === "boolean";
         default:
-            fail("wrong value schema");
+            fail("invalid value schema");
     }
+}
+
+export function assertPrimitiveValueType(nodeValue: Value, schema: TreeSchema): void {
+    assert(
+        allowsPrimitiveValueType(nodeValue, schema),
+        "unsupported schema for provided primitive",
+    );
 }
 
 /**
@@ -111,14 +134,14 @@ export function getFieldKind(fieldSchema: FieldSchema): FieldKind {
 }
 
 /**
- * Asserts that the field is not polymorphic i.e. mono-typed and returns this single type.
+ * @returns all allowed child types for `typeSet`.
  */
-export function tryGetNodeType(fieldSchema: FieldSchema): TreeSchemaIdentifier {
-    if (fieldSchema.types === undefined) debugger;
-    const types = fieldSchema.types ?? fail("missing field types");
-    assert(types.size === 1, "cannot resolve the type");
-    const type = [...types][0];
-    return type;
+export function getAllowedTypes(
+    schema: SchemaDataAndPolicy,
+    typeSet: TreeTypeSet,
+): ReadonlySet<TreeSchemaIdentifier> {
+    // TODO: Performance: avoid the `undefined` case being frequent, possibly with caching in the caller of `getPossibleChildTypes`.
+    return typeSet ?? new Set(schema.treeSchema.keys());
 }
 
 /**
@@ -160,98 +183,169 @@ export function keyIsValidIndex(key: string | number, length: number): boolean {
     return Number.isInteger(index) && 0 <= index && index < length;
 }
 
+export const arrayLikeMarkerSymbol: unique symbol = Symbol("editable-tree:arrayLikeMarker");
+
 /**
- * Attempts to wrap an arbitrary data into a cursor, trying to resolve data types according to the given schema.
- *
- * Note that the name of this function as well as its return type do not specify the tree format on purpose
- * to encourage a development of support for pluggable formats/cursors in the EditableTree API.
+ * Can be used to mark a type which works like an array, but is not compatible with Array.isArray.
  */
-export function tryGetCursorFor(
-    schema: SchemaDataAndPolicy,
-    fieldSchema: FieldSchema,
-    data: unknown,
-): ITreeCursor {
-    const node = DetachedNode.create(schema, fieldSchema, data);
-    return singleMapTreeCursor(node);
+export interface MarkedArrayLike<T> extends ArrayLike<T> {
+    readonly [arrayLikeMarkerSymbol]: true;
 }
 
 /**
- * This implementation of the MapTree is written to wrap an arbitrary data with respect to the tree schema.
+ * Content of a tree which needs external schema information to interpret.
  *
- * It is used as an intermediate storage for the user data,
- * whenever a user utilizes simple assignments to change an EditableTree,
- * as methods of the EditableTree accept only cursors as an input data.
+ * This format is intended for concise authoring of tree literals when the schema is statically known.
+ *
+ * Once schema aware APIs are implemented, they can be used to provide schema specific subsets of this type.
  */
-export class DetachedNode implements MapTree {
-    public readonly value?: TreeValue;
-    private readonly data?: object;
+export type ContextuallyTypedNodeData =
+    | ContextuallyTypedNodeDataObject
+    | PrimitiveValue
+    | readonly ContextuallyTypedNodeData[]
+    | MarkedArrayLike<ContextuallyTypedNodeData>;
 
-    constructor(
-        public readonly schema: SchemaDataAndPolicy,
-        public readonly type: TreeSchemaIdentifier,
-        data: unknown,
-    ) {
-        if (isPrimitiveValue(data)) {
-            assertPrimitiveValueType(data, lookupTreeSchema(this.schema, this.type));
-            this.value = data;
-        } else {
-            assert(typeof data === "object" && data !== null, "Data should not be null.");
-            this.data = data;
+export function isArrayLike(
+    data: ContextuallyTypedNodeData | undefined,
+): data is readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData> {
+    if (typeof data !== "object") {
+        return false;
+    }
+    return (
+        Array.isArray(data) ||
+        (data as Partial<MarkedArrayLike<ContextuallyTypedNodeData>>)[arrayLikeMarkerSymbol] ===
+            true
+    );
+}
+
+/**
+ * Object case of {@link ContextuallyTypedNodeData}.
+ */
+export interface ContextuallyTypedNodeDataObject {
+    readonly [valueSymbol]?: Value;
+    readonly [typeNameSymbol]?: TreeSchemaIdentifier;
+    // Allow explicit undefined for compatibility with EditableTree, and type-safety on read.
+    // TODO: make sure explicit undefined is actually handled correctly.
+    readonly [key: FieldKey]: ContextuallyTypedNodeData | undefined;
+    // Allow unbranded local field keys and a convenience for literals.
+    readonly [key: string]: ContextuallyTypedNodeData | undefined;
+}
+
+/**
+ * @returns false if `data` is incompatible compatible with `type` based on a cheap/shallow check.
+ *
+ * Note that this may return true for cases where data is incompatible, but it must not return false in cases where the data is compatible.
+ */
+function shallowCompatibilityTest(
+    schemaData: SchemaDataAndPolicy,
+    type: TreeSchemaIdentifier,
+    data: ContextuallyTypedNodeData,
+): boolean {
+    const schema = lookupTreeSchema(schemaData, type);
+    if (isPrimitiveValue(data)) {
+        return allowsPrimitiveValueType(data, schema);
+    }
+    if (isArrayLike(data)) {
+        const primary = getPrimaryField(schema);
+        return (
+            primary !== undefined &&
+            getFieldKind(primary.schema).multiplicity === Multiplicity.Sequence
+        );
+    }
+    if (data[typeNameSymbol] !== undefined) {
+        return data[typeNameSymbol] === type;
+    }
+    // For now, consider all not explicitly typed objects shallow compatible.
+    // This will require explicit differentiation in polymorphic cases rather than automatic structural differentiation.
+    return true;
+}
+
+/**
+ * Construct a MapTree from ContextuallyTypedNodeData.
+ *
+ * TODO: this should probably be refactors into a `try` function which either returns a MapTree or a SchemaError with a path to the error.
+ */
+export function applyTypesFromContext(
+    schemaData: SchemaDataAndPolicy,
+    typeSet: TreeTypeSet,
+    data: ContextuallyTypedNodeData,
+): MapTree {
+    // All types allowed by schema
+    const allowedTypes = getAllowedTypes(schemaData, typeSet);
+
+    const possibleTypes: TreeSchemaIdentifier[] = [];
+    for (const allowed of allowedTypes) {
+        if (shallowCompatibilityTest(schemaData, allowed, data)) {
+            possibleTypes.push(allowed);
         }
     }
 
-    /**
-     * Gets the fields of this node.
-     */
-    get fields(): Map<FieldKey, DetachedNode[]> {
-        const fields: Map<FieldKey, DetachedNode[]> = new Map();
-        if (this.data === undefined) return fields;
-        const nodeSchema = lookupTreeSchema(this.schema, this.type);
-        const primary = getPrimaryField(nodeSchema);
-        if (Array.isArray(this.data) || primary !== undefined) {
-            assert(primary !== undefined, "expected primary field");
-            fields.set(primary.key, this.createField(primary.schema, this.data));
-        } else {
-            for (const propertyKey of Reflect.ownKeys(this.data)) {
-                const childFieldKey: FieldKey = brand(propertyKey);
-                const childValue = Reflect.get(this.data, propertyKey);
-                const fieldSchema = getFieldSchema(childFieldKey, this.schema, nodeSchema);
-                fields.set(childFieldKey, this.createField(fieldSchema, childValue));
-            }
-        }
-        return fields;
+    assert(possibleTypes.length !== 0, "data incompatible with all types allowed by schema");
+    assert(possibleTypes.length === 1, "data compatible with more than one type allowed by schema");
+
+    const type = possibleTypes[0];
+    const schema = lookupTreeSchema(schemaData, type);
+    if (isPrimitiveValue(data)) {
+        assertPrimitiveValueType(data, schema);
+        return { value: data, type, fields: new Map() };
+    }
+    if (isArrayLike(data)) {
+        const primary = getPrimaryField(schema);
+        assert(
+            primary !== undefined,
+            "array data reported comparable with schema without primary field",
+        );
+        const children = applyFieldTypesFromContext(schemaData, primary.schema, data);
+        return { value: data, type, fields: new Map([[primary.key, children]]) };
     }
 
-    /**
-     * Creates the field of this node.
-     */
-    private createField(fieldSchema: FieldSchema, data: unknown): DetachedNode[] {
-        const fieldKind = getFieldKind(fieldSchema);
-        if (fieldKind.multiplicity === Multiplicity.Sequence) {
-            assert(Array.isArray(data), "expected array");
-            return data.map((v) => DetachedNode.create(this.schema, fieldSchema, v));
-        } else {
-            return [DetachedNode.create(this.schema, fieldSchema, data)];
-        }
-    }
+    const fields: Map<FieldKey, MapTree[]> = new Map(
+        Object.keys(data)
+            .filter((key) => typeof key === "string" || symbolIsFieldKey(key))
+            .map((key) => [
+                brand(key),
+                applyFieldTypesFromContext(
+                    schemaData,
+                    getFieldSchema(brand(key), schemaData, schema),
+                    data,
+                ),
+            ]),
+    );
 
-    /**
-     * A helper function to create new nodes in cases, when the node type is unknown upfront.
-     */
-    static create(
-        schema: SchemaDataAndPolicy,
-        fieldSchema: FieldSchema,
-        data: unknown,
-    ): DetachedNode {
-        if (data instanceof DetachedNode) {
-            if (fieldSchema.types !== undefined) {
-                assert(
-                    fieldSchema.types.has(data.type),
-                    "The data type does not match the field schema.",
-                );
-            }
-            return data;
-        }
-        return new DetachedNode(schema, tryGetNodeType(fieldSchema), data);
+    const value = data[valueSymbol];
+    assert(allowsValue(schema.value, value), "provided value not permitted by schema");
+
+    return { value, type, fields };
+}
+
+/**
+ * Construct a MapTree from ContextuallyTypedNodeData.
+ *
+ * TODO: this should probably be refactors into a `try` function which either returns a MapTree or a SchemaError with a path to the error.
+ */
+export function applyFieldTypesFromContext(
+    schemaData: SchemaDataAndPolicy,
+    field: FieldSchema,
+    data: ContextuallyTypedNodeData | undefined,
+): MapTree[] {
+    const multiplicity = getFieldKind(field).multiplicity;
+    if (data === undefined) {
+        assert(
+            multiplicity === Multiplicity.Forbidden || multiplicity === Multiplicity.Optional,
+            "undefined provided for field that does not support undefined",
+        );
+        return [];
     }
+    if (isArrayLike(data)) {
+        assert(multiplicity === Multiplicity.Sequence, "got array for non sequence field");
+        const children = Array.from(data, (child) =>
+            applyTypesFromContext(schemaData, field.types, child),
+        );
+        return children;
+    }
+    assert(
+        multiplicity === Multiplicity.Value || multiplicity === Multiplicity.Optional,
+        "Single value provided for unsupported field",
+    );
+    return [applyTypesFromContext(schemaData, field.types, data)];
 }

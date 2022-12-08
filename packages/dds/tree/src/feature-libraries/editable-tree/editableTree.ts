@@ -24,8 +24,9 @@ import {
     FieldAnchor,
     ITreeCursor,
 } from "../../core";
-import { brand, fail } from "../../util";
+import { brand, fail, isAssignableTo, requireTrue } from "../../util";
 import { FieldKind, Multiplicity } from "../modular-schema";
+import { singleMapTreeCursor } from "../mapTreeCursor";
 import {
     AdaptingProxyHandler,
     adaptWithProxy,
@@ -38,7 +39,12 @@ import {
     keyIsValidIndex,
     getOwnArrayKeys,
     assertPrimitiveValueType,
-    tryGetCursorFor,
+    ContextuallyTypedNodeData,
+    MarkedArrayLike,
+    arrayLikeMarkerSymbol,
+    ContextuallyTypedNodeDataObject,
+    applyFieldTypesFromContext,
+    applyTypesFromContext,
 } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 
@@ -96,7 +102,7 @@ export const replaceField: unique symbol = Symbol("editable-tree:replaceField()"
  * When iterating, only visits non-empty fields.
  * To discover empty fields, inspect the schema using {@link typeSymbol}.
  */
-export interface EditableTree extends Iterable<EditableField> {
+export interface EditableTree extends Iterable<EditableField>, ContextuallyTypedNodeDataObject {
     /**
      * The name of the node type.
      */
@@ -207,7 +213,7 @@ export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableField;
  * When iterating, the nodes are read at once. Use index access to read the nodes "lazily".
  * Use `getNode` to get a node without unwrapping.
  */
-export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
+export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree> {
     /**
      * The `FieldSchema` of this field.
      */
@@ -288,6 +294,26 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
  * See {@link UnwrappedEditableTree} for how the children themselves are unwrapped.
  */
 export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EditableField;
+
+{
+    type _checkTree = requireTrue<isAssignableTo<EditableTree, ContextuallyTypedNodeDataObject>>;
+    type _checkUnwrappedTree = requireTrue<
+        isAssignableTo<UnwrappedEditableTree, ContextuallyTypedNodeData>
+    >;
+    type _checkField = requireTrue<
+        isAssignableTo<UnwrappedEditableField, ContextuallyTypedNodeData | undefined>
+    >;
+    const x: ContextuallyTypedNodeDataObject = 0 as any as EditableTree;
+    const xx: MarkedArrayLike<ContextuallyTypedNodeData> = 0 as any as EditableField;
+
+    // TODO: there seems to be a bug in TypeCheck library, since
+    // this should fail, but its does not (undefined should break it).
+    type _checkFail = requireTrue<
+        isAssignableTo<UnwrappedEditableField, ContextuallyTypedNodeData>
+    >;
+    // This does fail: but it should check the same as the above:
+    // const _dummyValue: ContextuallyTypedNodeData = 0 as any as UnwrappedEditableField;
+}
 
 /**
  * This is a base class for `NodeProxyTarget` and `FieldProxyTarget`, which uniformly handles cursors and anchors.
@@ -578,29 +604,18 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
     set: (
         target: NodeProxyTarget,
         key: string | symbol,
-        value: unknown,
+        value: ContextuallyTypedNodeData,
         receiver: NodeProxyTarget,
     ): boolean => {
         if (typeof key === "string" || symbolIsFieldKey(key)) {
             const fieldKey: FieldKey = brand(key);
-            const fieldKind = target.lookupFieldKind(fieldKey);
-            if (target.has(fieldKey) && isPrimitiveValue(value)) {
-                const field = target.proxifyField(fieldKey, false);
-                field.getNode(0)[valueSymbol] = value;
-                return true;
-            }
             const fieldSchema = target.getFieldSchema(fieldKey);
-            let content: ITreeCursor | ITreeCursor[];
-            if (fieldKind.multiplicity === Multiplicity.Sequence) {
-                assert(Array.isArray(value), "expected array");
-                content = value.map((v) => tryGetCursorFor(target.context.schema, fieldSchema, v));
-            } else {
-                content = tryGetCursorFor(target.context.schema, fieldSchema, value);
-            }
+            const content = applyFieldTypesFromContext(target.context.schema, fieldSchema, value);
+            const cursors = content.map(singleMapTreeCursor);
             if (target.has(fieldKey)) {
-                target.replaceField(fieldKey, content);
+                target.replaceField(fieldKey, cursors);
             } else {
-                target.createField(fieldKey, content);
+                target.createField(fieldKey, cursors);
             }
             return true;
         }
@@ -737,6 +752,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
     public readonly fieldKey: FieldKey;
     public readonly fieldSchema: FieldSchema;
     public readonly primaryType?: TreeSchemaIdentifier;
+    public readonly [arrayLikeMarkerSymbol] = true;
 
     constructor(
         context: ProxyContext,
@@ -915,21 +931,24 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
                 return target;
             case Symbol.iterator:
                 return target[Symbol.iterator].bind(target);
+            case arrayLikeMarkerSymbol:
+                return true;
             default:
         }
         return undefined;
     },
-    set: (target: FieldProxyTarget, key: string, value: unknown, receiver: unknown): boolean => {
+    set: (
+        target: FieldProxyTarget,
+        key: string,
+        value: ContextuallyTypedNodeData,
+        receiver: unknown,
+    ): boolean => {
+        const cursor = singleMapTreeCursor(
+            applyTypesFromContext(target.context.schema, target.fieldSchema.types, value),
+        );
         if (keyIsValidIndex(key, target.length)) {
-            if (isPrimitiveValue(value)) {
-                const node = target.proxifyNode(Number(key), false);
-                node[valueSymbol] = value;
-            } else {
-                const cursor = tryGetCursorFor(target.context.schema, target.fieldSchema, value);
-                target.replaceNodes(Number(key), cursor, 1);
-            }
+            target.replaceNodes(Number(key), cursor, 1);
         } else {
-            const cursor = tryGetCursorFor(target.context.schema, target.fieldSchema, value);
             target.insertNodes(Number(key), cursor);
         }
         return true;
@@ -943,6 +962,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
             switch (key) {
                 case Symbol.iterator:
                 case proxyTargetSymbol:
+                case arrayLikeMarkerSymbol:
                     return true;
                 default:
             }

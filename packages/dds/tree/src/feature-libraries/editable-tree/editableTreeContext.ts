@@ -23,21 +23,13 @@ import {
     Delta,
     Dependent,
     afterChangeToken,
-    TreeSchemaIdentifier,
     SchemaDataAndPolicy,
 } from "../../core";
-import { Brand, BrandedType } from "../../util";
 import { DefaultChangeset, DefaultEditBuilder } from "../defaultChangeFamily";
 import { runSynchronousTransaction } from "../defaultTransaction";
-import { Multiplicity } from "../modular-schema";
-import {
-    ProxyTarget,
-    EditableField,
-    proxifyField,
-    UnwrappedEditableField,
-    EditableTree,
-} from "./editableTree";
-import { tryGetCursorFor, DetachedNode, getFieldKind } from "./utilities";
+import { singleMapTreeCursor } from "../mapTreeCursor";
+import { ProxyTarget, EditableField, proxifyField, UnwrappedEditableField } from "./editableTree";
+import { applyFieldTypesFromContext, ContextuallyTypedNodeData, isArrayLike } from "./utilities";
 
 /**
  * A common context of a "forest" of EditableTrees.
@@ -99,39 +91,6 @@ export interface EditableTreeContext {
      * is committed successfully.
      */
     attachAfterChangeHandler(afterChangeHandler: (context: EditableTreeContext) => void): void;
-
-    /**
-     * Types an arbitrary data with the given `TreeSchemaIdentifier` and wraps it into a format,
-     * which can be accepted by the EditableTree when using simple assignments.
-     *
-     * Use it whenever the field is polymorphic, to explicitly define the type of your data.
-     */
-    newDetachedNode<T extends Brand<any, string>>(
-        type: TreeSchemaIdentifier,
-        data: T extends BrandedType<infer ValueType, infer Name>
-            ? BrandedType<ValueType, Name>
-            : never,
-    ): T;
-    /**
-     * Types an arbitrary data with the given `TreeSchemaIdentifier` and wraps it into a format,
-     * which can be accepted by the EditableTree when using simple assignments.
-     *
-     * Use it whenever the field is polymorphic, to explicitly define the type of your data.
-     */
-    newDetachedNode<T extends Brand<any, string>>(
-        type: TreeSchemaIdentifier,
-        data: T extends BrandedType<infer ValueType, string> ? ValueType : never,
-    ): T;
-    /**
-     * _Type-unsafe overload of the method allowing to change EditableTrees using simple assignments in contexts,
-     * where proper typing is not possible or not important._
-     *
-     * Types an arbitrary data with the given `TreeSchemaIdentifier` and wraps it into a format,
-     * which can be accepted by the EditableTree when using simple assignments.
-     *
-     * Use it whenever the field is polymorphic, to explicitly define the type of your data.
-     */
-    newDetachedNode<T extends Brand<any, string>>(type: TreeSchemaIdentifier, data: unknown): T;
 }
 
 /**
@@ -195,17 +154,10 @@ export class ProxyContext implements EditableTreeContext {
         return this.getRoot(true);
     }
 
-    public set unwrappedRoot(value: UnwrappedEditableField) {
+    public set unwrappedRoot(value: ContextuallyTypedNodeData | undefined) {
         const rootField = this.getRoot(false);
-        const cursors: ITreeCursor[] = [];
-        if (getFieldKind(rootField.fieldSchema).multiplicity === Multiplicity.Sequence) {
-            assert(Array.isArray(value), "The sequence root expects array data.");
-            for (const node of value) {
-                cursors.push(tryGetCursorFor(this.schema, rootField.fieldSchema, node));
-            }
-        } else {
-            cursors.push(tryGetCursorFor(this.schema, rootField.fieldSchema, value));
-        }
+        const mapTrees = applyFieldTypesFromContext(this.schema, rootField.fieldSchema, value);
+        const cursors = mapTrees.map(singleMapTreeCursor);
         if (rootField.length > 0) {
             rootField.replaceNodes(0, cursors);
         } else {
@@ -217,18 +169,9 @@ export class ProxyContext implements EditableTreeContext {
         return this.getRoot(false);
     }
 
-    public set root(value: EditableField) {
-        const rootField = this.getRoot(false);
-        assert(Array.isArray(value), "expected array data");
-        const cursors: ITreeCursor[] = [];
-        for (const node of value) {
-            cursors.push(tryGetCursorFor(this.schema, rootField.fieldSchema, node));
-        }
-        if (rootField.length > 0) {
-            rootField.replaceNodes(0, cursors);
-        } else {
-            rootField.insertNodes(0, cursors);
-        }
+    public set root(value: ContextuallyTypedNodeData | undefined) {
+        assert(isArrayLike(value), "expected array data");
+        this.unwrappedRoot = value;
     }
 
     private getRoot(unwrap: false): EditableField;
@@ -336,13 +279,6 @@ export class ProxyContext implements EditableTreeContext {
             },
         );
         return result === TransactionResult.Apply;
-    }
-
-    public newDetachedNode<T extends Brand<any, string> | undefined>(
-        type: TreeSchemaIdentifier,
-        data: unknown,
-    ): T & EditableTree {
-        return new DetachedNode(this.schema, type, data) as unknown as T & EditableTree;
     }
 }
 
