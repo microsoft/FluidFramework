@@ -31,6 +31,7 @@ import {
     emptyField,
     valueSymbol,
     replaceField,
+    typeNameSymbol,
 } from "../../../feature-libraries";
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
 import {
@@ -39,16 +40,12 @@ import {
     Person,
     schemaMap,
     stringSchema,
-    ComplexPhone,
-    complexPhoneSchema,
-    Float64,
     Int32,
-    int32Schema,
-    SimplePhones,
-    simplePhonesSchema,
     getPerson,
     globalFieldSymbolSequencePhones,
-    Address,
+    SimplePhones,
+    complexPhoneSchema,
+    ComplexPhone,
 } from "./mockData";
 
 const globalFieldKey: GlobalFieldKey = brand("foo");
@@ -151,19 +148,17 @@ describe("editable-tree: editing", () => {
             person.age = brand(32);
 
             // replace optional field
-            person.address = {
+            person.address = brand({
                 zip: "99999",
                 street: "foo",
-                phones: 12345,
-            } as unknown as Address; // TODO: either fix up these strong types to reflect unwrapping, or use untyped API to remove these `as` casts.
+                phones: brand([brand(12345)]),
+            }); // TODO: either fix up these strong types to reflect unwrapping, or use untyped API to remove these `as` casts.
             assert(person.address !== undefined);
 
             // create sequence field
             person.address.sequencePhones = brand(["999"]);
 
-            // TODO: this is to reveal the issue in `newDetachedNode` API
-            const zipNum: Float64 = brand(123);
-            const zip: Int32 = context.newDetachedNode(int32Schema.name, zipNum);
+            const zip: Int32 = brand(123);
             // replace value field
             person.address.zip = zip;
 
@@ -182,15 +177,13 @@ describe("editable-tree: editing", () => {
             // replace sequence field
             person.address.sequencePhones = brand(["111"]);
             // replace array (optional field with primary sequence field)
-            person.address.phones = brand([context.newDetachedNode(stringSchema.name, "54321")]);
+            person.address.phones = brand(["54321"]);
             assert(person.address.phones !== undefined);
-            const simplePhones: SimplePhones = context.newDetachedNode(simplePhonesSchema.name, [
-                "555",
-            ]);
+            const simplePhones: SimplePhones = brand(["555"]);
             // create node as array (node has a primary field)
             person.address.phones[1] = simplePhones;
             // create primitive node
-            person.address.phones[2] = context.newDetachedNode(int32Schema.name, 3);
+            person.address.phones[2] = brand(3);
             const clonedPerson = clone(person);
             assert.deepEqual(clonedPerson, {
                 name: "Adam",
@@ -216,14 +209,13 @@ describe("editable-tree: editing", () => {
                 },
             });
             // replace node
-            person.address.phones[1] = context.newDetachedNode<ComplexPhone>(
-                complexPhoneSchema.name,
-                {
-                    number: "123",
-                    prefix: "456",
-                    extraPhones: ["1234567"],
-                },
-            );
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            person.address.phones[1] = {
+                [typeNameSymbol]: complexPhoneSchema.name,
+                number: "123",
+                prefix: "456",
+                extraPhones: brand(["1234567"]),
+            } as ComplexPhone;
             assert.deepEqual(clone(person.address.phones), {
                 "0": "54321",
                 "1": { number: "123", prefix: "456", extraPhones: { "0": "1234567" } },
@@ -243,7 +235,7 @@ describe("editable-tree: editing", () => {
                 assert(person.friends !== undefined);
                 person.friends[valueSymbol] = { kate: "kate" };
             },
-            (e) => validateAssertionError(e, "The value is not primitive"),
+            (e) => validateAssertionError(e, "unsupported schema for provided primitive"),
             "Expected exception was not thrown",
         );
         assert.throws(
@@ -258,14 +250,14 @@ describe("editable-tree: editing", () => {
             () => {
                 nameNode[valueSymbol] = 1;
             },
-            (e) => validateAssertionError(e, "Expected string"),
+            (e) => validateAssertionError(e, "unsupported schema for provided primitive"),
             "Expected exception was not thrown",
         );
         assert.throws(
             () => {
                 ageNode[valueSymbol] = "some";
             },
-            (e) => validateAssertionError(e, "Expected number"),
+            (e) => validateAssertionError(e, "unsupported schema for provided primitive"),
             "Expected exception was not thrown",
         );
         trees[0].context.free();

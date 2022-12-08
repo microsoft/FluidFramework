@@ -63,7 +63,7 @@ export function allowsValue(schema: ValueSchema, nodeValue: Value): boolean {
         case ValueSchema.Boolean:
             return typeof nodeValue === "boolean";
         case ValueSchema.Nothing:
-            return typeof nodeValue === undefined;
+            return typeof nodeValue === "undefined";
         case ValueSchema.Serializable:
             return true;
         default:
@@ -83,7 +83,7 @@ export function allowsPrimitiveValueType(nodeValue: Value, schema: TreeSchema): 
         case ValueSchema.Boolean:
             return typeof nodeValue === "boolean";
         default:
-            fail("invalid value schema");
+            return false;
     }
 }
 
@@ -222,13 +222,13 @@ export function isArrayLike(
  * Object case of {@link ContextuallyTypedNodeData}.
  */
 export interface ContextuallyTypedNodeDataObject {
-    readonly [valueSymbol]?: Value;
+    [valueSymbol]?: Value;
     readonly [typeNameSymbol]?: TreeSchemaIdentifier;
     // Allow explicit undefined for compatibility with EditableTree, and type-safety on read.
     // TODO: make sure explicit undefined is actually handled correctly.
-    readonly [key: FieldKey]: ContextuallyTypedNodeData | undefined;
+    [key: FieldKey]: ContextuallyTypedNodeData | undefined;
     // Allow unbranded local field keys and a convenience for literals.
-    readonly [key: string]: ContextuallyTypedNodeData | undefined;
+    [key: string]: ContextuallyTypedNodeData | undefined;
 }
 
 /**
@@ -300,16 +300,16 @@ export function applyTypesFromContext(
     }
 
     const fields: Map<FieldKey, MapTree[]> = new Map(
-        Object.keys(data)
+        Reflect.ownKeys(data)
             .filter((key) => typeof key === "string" || symbolIsFieldKey(key))
-            .map((key) => [
-                brand(key),
-                applyFieldTypesFromContext(
-                    schemaData,
-                    getFieldSchema(brand(key), schemaData, schema),
-                    data,
-                ),
-            ]),
+            .map((key) => {
+                const fieldKey: FieldKey = brand(key);
+                const fieldSchema = getFieldSchema(fieldKey, schemaData, schema);
+                return [
+                    fieldKey,
+                    applyFieldTypesFromContext(schemaData, fieldSchema, data[fieldKey]),
+                ];
+            }),
     );
 
     const value = data[valueSymbol];
@@ -336,8 +336,8 @@ export function applyFieldTypesFromContext(
         );
         return [];
     }
-    if (isArrayLike(data)) {
-        assert(multiplicity === Multiplicity.Sequence, "got array for non sequence field");
+    if (multiplicity === Multiplicity.Sequence) {
+        assert(isArrayLike(data), "expected array for sequence field");
         const children = Array.from(data, (child) =>
             applyTypesFromContext(schemaData, field.types, child),
         );

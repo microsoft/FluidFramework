@@ -34,6 +34,9 @@ export {
     getField,
     createField,
     replaceField,
+    ContextuallyTypedNodeDataObject,
+    ContextuallyTypedNodeData,
+    MarkedArrayLike,
 } from "./editable-tree";
 export { ForestIndex } from "./forestIndex";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";

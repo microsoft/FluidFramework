@@ -51,9 +51,11 @@ export interface EditableTreeContext {
 
     /**
      * Same as `root`, but with unwrapped fields.
-     * See ${@link UnwrappedEditableField} for what is unwrapped.
+     * See {@link UnwrappedEditableField} for what is unwrapped.
      */
-    unwrappedRoot: UnwrappedEditableField;
+    get unwrappedRoot(): UnwrappedEditableField;
+
+    set unwrappedRoot(data: ContextuallyTypedNodeData | undefined);
 
     /**
      * Schema used within this context.

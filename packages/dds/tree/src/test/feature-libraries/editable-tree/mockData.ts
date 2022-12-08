@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -7,8 +8,12 @@ import {
     emptyField,
     FieldKinds,
     EditableTree,
-    EditableField,
     EditableTreeContext,
+    ContextuallyTypedNodeDataObject,
+    EditableField,
+    ContextuallyTypedNodeData,
+    typeNameSymbol,
+    valueSymbol,
 } from "../../../feature-libraries";
 import {
     namedTreeSchema,
@@ -27,7 +32,7 @@ import {
     symbolFromKey,
     GlobalFieldKeySymbol,
 } from "../../../tree";
-import { brand, Brand } from "../../../util";
+import { brand, Brand, Opaque } from "../../../util";
 
 // TODO: Use typed schema (ex: typedTreeSchema), here, and derive the types below from them programmatically.
 
@@ -211,7 +216,6 @@ export type Address = EditableTree &
         },
         "editable-tree.Test:Address-1.0.0"
     >;
-
 export type Friends = EditableTree &
     Brand<Record<LocalFieldKey, string>, "editable-tree.Map<String>">;
 
@@ -227,6 +231,16 @@ export type Person = EditableTree &
         },
         "editable-tree.Test:Person-1.0.0"
     >;
+
+export interface IAddress extends Opaque<Address> {
+    get phones(): Phones | undefined;
+    set phones(data: ContextuallyTypedNodeData[] | undefined);
+}
+
+export interface IPerson extends Opaque<Person & ContextuallyTypedNodeDataObject> {
+    get name(): string;
+    set name(data: string);
+}
 
 export const personData: JsonableTree = {
     type: personSchema.name,
@@ -305,28 +319,38 @@ export const personData: JsonableTree = {
     },
 };
 
-function getHandles(context: EditableTreeContext): {
-    Person: (value: object) => Person;
-    Float64: (value: number) => Float64;
-    Int32: (value: number) => Int32;
-    ComplexPhone: (value: object) => ComplexPhone;
-    SimplePhones: (value: string[]) => SimplePhones;
+export function getTypeHandles(context: EditableTreeContext): {
+    Person: (value: ContextuallyTypedNodeDataObject) => Person;
+    // Float64: (value: number) => Float64;
+    // Int32: (value: number) => Int32;
+    // ComplexPhone: (value: ContextuallyTypedNodeDataObject) => ComplexPhone;
+    // SimplePhones: (value: string[]) => SimplePhones;
+    // String: (value: string) => string;
 } {
     return {
-        Person: (value: object) => context.newDetachedNode<Person>(personSchema.name, value),
-        Float64: (value: number) => context.newDetachedNode<Float64>(float64Schema.name, value),
-        Int32: (value: number) => context.newDetachedNode<Int32>(int32Schema.name, value),
-        ComplexPhone: (value: object) =>
-            context.newDetachedNode<ComplexPhone>(complexPhoneSchema.name, value),
-        SimplePhones: (value: string[]) =>
-            context.newDetachedNode<SimplePhones>(simplePhonesSchema.name, value),
+        Person: (value: ContextuallyTypedNodeDataObject) => value as Person,
+        // Float64: (value: number) => {
+        //     const float64: Float64 = {
+        //         [typeNameSymbol]: float64Schema.name,
+        //         [valueSymbol]: value
+        //     };
+        //     return float64;
+        // },
+        // Int32: (value: number) => context.applyType(int32Schema.name, value) as Int32,
+        // ComplexPhone: (value: ContextuallyTypedNodeDataObject) =>
+        //     context.applyType(complexPhoneSchema.name, value) as ComplexPhone,
+        // SimplePhones: (value: string[]) =>
+        //     brand(value.map((v) => context.applyType(stringSchema.name, v) as string)),
+
+        // String: (value: string) => context.applyType(stringSchema.name, value) as string,
     };
 }
 
 export function getPerson(context: EditableTreeContext): Person {
     const age: Int32 = brand(35);
-    const { Person, Float64, Int32, ComplexPhone, SimplePhones } = getHandles(context);
-    return Person({
+    const { Person } = getTypeHandles(context);
+    const person = {
+        [typeNameSymbol]: personSchema.name,
         // typed with built-in primitive type
         name: "Adam",
         // explicitly typed
@@ -334,27 +358,32 @@ export function getPerson(context: EditableTreeContext): Person {
         // inline typed
         adult: brand<Bool>(true),
         // Float64 | Int32
-        salary: Float64(10420.2),
+        salary: {
+            [valueSymbol]: 10420.2,
+            [typeNameSymbol]: float64Schema.name,
+        },
         friends: {
             Mat: "Mat",
         },
         address: {
             // string | Int32
-            zip: context.newDetachedNode(stringSchema.name, "99999"),
+            zip: "99999",
             street: "treeStreet",
             // (Int32 | string | ComplexPhone | SimplePhones)[]
             phones: [
-                context.newDetachedNode(stringSchema.name, "+49123456778"),
-                Int32(123456879),
-                ComplexPhone({
+                "+49123456778",
+                123456879,
+                {
+                    [typeNameSymbol]: complexPhoneSchema.name,
                     prefix: "0123",
                     number: "012345",
                     extraPhones: ["91919191"],
-                }),
-                SimplePhones(["112", "113"]),
+                },
+                ["112", "113"],
             ],
             sequencePhones: ["113", "114"],
             [globalFieldSymbolSequencePhones]: ["115", "116"],
         },
-    });
+    };
+    return Person(person);
 }

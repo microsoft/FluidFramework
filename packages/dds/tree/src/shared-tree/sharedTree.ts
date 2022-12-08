@@ -43,6 +43,7 @@ import {
     EditManagerIndex,
     runSynchronousTransaction,
     buildForest,
+    ContextuallyTypedNodeData,
 } from "../feature-libraries";
 
 /**
@@ -63,7 +64,9 @@ export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObje
      * `context.prepareForEdit()` before editing can occur.
      * TODO: Make this happen automatically.
      */
-    root: UnwrappedEditableField;
+    get root(): UnwrappedEditableField;
+
+    set root(data: ContextuallyTypedNodeData | undefined);
 
     /**
      * Context for controlling the EditableTree nodes produced from {@link ISharedTree.root}.
@@ -160,7 +163,7 @@ class SharedTree
         return this.context.unwrappedRoot;
     }
 
-    public set root(data: UnwrappedEditableField) {
+    public set root(data: ContextuallyTypedNodeData | undefined) {
         this.context.unwrappedRoot = data;
     }
 

@@ -23,4 +23,12 @@ export {
 
 export { EditableTreeContext, getEditableTreeContext } from "./editableTreeContext";
 
-export { PrimitiveValue, isPrimitiveValue, isPrimitive, getPrimaryField } from "./utilities";
+export {
+    PrimitiveValue,
+    isPrimitiveValue,
+    isPrimitive,
+    getPrimaryField,
+    ContextuallyTypedNodeDataObject,
+    ContextuallyTypedNodeData,
+    MarkedArrayLike,
+} from "./utilities";

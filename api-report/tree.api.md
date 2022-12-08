@@ -110,6 +110,21 @@ type ClientId = number;
 function compose<TNodeChange>(changes: TaggedChange<Changeset<TNodeChange>>[], composeChild: NodeChangeComposer_2<TNodeChange>): Changeset<TNodeChange>;
 
 // @public
+export type ContextuallyTypedNodeData = ContextuallyTypedNodeDataObject | PrimitiveValue | readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData>;
+
+// @public
+export interface ContextuallyTypedNodeDataObject {
+    // (undocumented)
+    readonly [typeNameSymbol]?: TreeSchemaIdentifier;
+    // (undocumented)
+    [valueSymbol]?: Value;
+    // (undocumented)
+    [key: FieldKey]: ContextuallyTypedNodeData | undefined;
+    // (undocumented)
+    [key: string]: ContextuallyTypedNodeData | undefined;
+}
+
+// @public
 export interface Contravariant<T> {
     // (undocumented)
     _removeCovariance?: (_: T) => void;
@@ -204,7 +219,7 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 }
 
 // @public
-export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
+export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree> {
     readonly [proxyTargetSymbol]: object;
     [Symbol.iterator](): IterableIterator<UnwrappedEditableTree>;
     [index: number]: UnwrappedEditableTree;
@@ -218,7 +233,7 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
 }
 
 // @public
-export interface EditableTree extends Iterable<EditableField> {
+export interface EditableTree extends Iterable<EditableField>, ContextuallyTypedNodeDataObject {
     [createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
     [getField](fieldKey: FieldKey): EditableField;
     readonly [indexSymbol]: number;
@@ -236,13 +251,11 @@ export interface EditableTreeContext {
     attachAfterChangeHandler(afterChangeHandler: (context: EditableTreeContext) => void): void;
     clear(): void;
     free(): void;
-    newDetachedNode<T extends Brand<any, string>>(type: TreeSchemaIdentifier, data: T extends BrandedType<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never): T;
-    newDetachedNode<T extends Brand<any, string>>(type: TreeSchemaIdentifier, data: T extends BrandedType<infer ValueType, string> ? ValueType : never): T;
-    newDetachedNode<T extends Brand<any, string>>(type: TreeSchemaIdentifier, data: unknown): T;
     prepareForEdit(): void;
     root: EditableField;
     readonly schema: SchemaDataAndPolicy;
-    unwrappedRoot: UnwrappedEditableField;
+    get unwrappedRoot(): UnwrappedEditableField;
+    set unwrappedRoot(data: ContextuallyTypedNodeData | undefined);
 }
 
 // @public
@@ -567,7 +580,8 @@ export function isEditableField(field: UnwrappedEditableField): field is Editabl
 // @public
 export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObject, AnchorLocator {
     readonly context: EditableTreeContext;
-    root: UnwrappedEditableField;
+    get root(): UnwrappedEditableField;
+    set root(data: ContextuallyTypedNodeData | undefined);
     readonly storedSchema: StoredSchemaRepository;
 }
 
@@ -702,6 +716,12 @@ type Mark<TTree = ProtoNode> = Skip | Modify<TTree> | Delete | MoveOut | MoveIn 
 
 // @public (undocumented)
 type Mark_2<TNodeChange = NodeChangeType> = SizedMark<TNodeChange> | Attach<TNodeChange>;
+
+// @public
+export interface MarkedArrayLike<T> extends ArrayLike<T> {
+    // (undocumented)
+    readonly [arrayLikeMarkerSymbol]: true;
+}
 
 // @public
 type MarkList<TTree = ProtoNode> = Mark<TTree>[];

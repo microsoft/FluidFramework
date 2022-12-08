@@ -207,6 +207,14 @@ export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
 export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableField;
 
 /**
+ * Unwrapped field.
+ * Non-sequence multiplicities are unwrapped to the child tree or `undefined` if there is none.
+ * Sequence multiplicities are handled with {@link EditableField}.
+ * See {@link UnwrappedEditableTree} for how the children themselves are unwrapped.
+ */
+export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EditableField;
+
+/**
  * A field of an {@link EditableTree} as an array-like sequence of unwrapped nodes (see {@link UnwrappedEditableTree}).
  *
  * The number of nodes depends on a field's multiplicity.
@@ -287,21 +295,21 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree> {
     [index: number]: UnwrappedEditableTree;
 }
 
-/**
- * Unwrapped field.
- * Non-sequence multiplicities are unwrapped to the child tree or `undefined` if there is none.
- * Sequence multiplicities are handled with {@link EditableField}.
- * See {@link UnwrappedEditableTree} for how the children themselves are unwrapped.
- */
-export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EditableField;
+export function check(): any[] {
+    const A: ContextuallyTypedNodeDataObject = {};
+    const foo: EditableTree = {} as any as EditableTree;
+    const B: EditableTree = { foo } as any as EditableTree;
+    B.foo = A;
 
-{
     type _checkTree = requireTrue<isAssignableTo<EditableTree, ContextuallyTypedNodeDataObject>>;
+    // type _checkTypedTree = requireTrue<
+    //     isAssignableTo<ContextuallyTypedNodeDataObject, EditableTree>
+    // >;
     type _checkUnwrappedTree = requireTrue<
         isAssignableTo<UnwrappedEditableTree, ContextuallyTypedNodeData>
     >;
     type _checkField = requireTrue<
-        isAssignableTo<UnwrappedEditableField, ContextuallyTypedNodeData | undefined>
+        isAssignableTo<ContextuallyTypedNodeData | undefined, UnwrappedEditableField>
     >;
     const x: ContextuallyTypedNodeDataObject = 0 as any as EditableTree;
     const xx: MarkedArrayLike<ContextuallyTypedNodeData> = 0 as any as EditableField;
@@ -313,6 +321,14 @@ export type UnwrappedEditableField = UnwrappedEditableTree | undefined | Editabl
     >;
     // This does fail: but it should check the same as the above:
     // const _dummyValue: ContextuallyTypedNodeData = 0 as any as UnwrappedEditableField;
+
+    // dummy usage of aboves
+    const t: _checkTree = true;
+    const u: _checkUnwrappedTree = true;
+    const f: _checkField = true;
+    const a: _checkFail = true;
+    // const tt: _checkTypedTree = true;
+    return [t, u, f, a, x, xx];
 }
 
 /**
@@ -610,12 +626,25 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
         if (typeof key === "string" || symbolIsFieldKey(key)) {
             const fieldKey: FieldKey = brand(key);
             const fieldSchema = target.getFieldSchema(fieldKey);
+            const multiplicity = target.lookupFieldKind(fieldKey).multiplicity;
             const content = applyFieldTypesFromContext(target.context.schema, fieldSchema, value);
             const cursors = content.map(singleMapTreeCursor);
             if (target.has(fieldKey)) {
-                target.replaceField(fieldKey, cursors);
+                if (cursors.length === 0) {
+                    target.deleteField(fieldKey);
+                } else {
+                    if (multiplicity !== Multiplicity.Sequence) {
+                        target.replaceField(fieldKey, cursors[0]);
+                    } else {
+                        target.replaceField(fieldKey, cursors);
+                    }
+                }
             } else {
-                target.createField(fieldKey, cursors);
+                if (multiplicity !== Multiplicity.Sequence) {
+                    target.createField(fieldKey, cursors[0]);
+                } else {
+                    target.createField(fieldKey, cursors);
+                }
             }
             return true;
         }
@@ -752,7 +781,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
     public readonly fieldKey: FieldKey;
     public readonly fieldSchema: FieldSchema;
     public readonly primaryType?: TreeSchemaIdentifier;
-    public readonly [arrayLikeMarkerSymbol] = true;
+    public readonly [arrayLikeMarkerSymbol]: true;
 
     constructor(
         context: ProxyContext,
@@ -765,6 +794,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
         this.fieldKey = cursor.getFieldKey();
         this.primaryType = primaryType;
         this.fieldSchema = fieldSchema;
+        this[arrayLikeMarkerSymbol] = true;
     }
 
     get [proxyTargetSymbol](): FieldProxyTarget {
