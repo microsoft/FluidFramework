@@ -7,9 +7,7 @@ import {
     emptyField,
     FieldKinds,
     EditableTree,
-    ContextuallyTypedNodeDataObject,
     EditableField,
-    ContextuallyTypedNodeData,
     typeNameSymbol,
     valueSymbol,
 } from "../../../feature-libraries";
@@ -30,7 +28,7 @@ import {
     symbolFromKey,
     GlobalFieldKeySymbol,
 } from "../../../tree";
-import { brand, Brand, Opaque } from "../../../util";
+import { brand, Brand } from "../../../util";
 
 // TODO: Use typed schema (ex: typedTreeSchema), here, and derive the types below from them programmatically.
 
@@ -183,6 +181,8 @@ export const fullSchemaData: SchemaData = {
 
 // TODO: derive types like these from those schema, which subset EditableTree
 
+// TODO: provide relaxed types like these based on ContextuallyTyped setters
+
 export type Float64 = Brand<number, "editable-tree.Float64"> & EditableTree;
 export type Int32 = Brand<number, "editable-tree.Int32"> & EditableTree;
 export type Bool = Brand<boolean, "editable-tree.Bool"> & EditableTree;
@@ -229,16 +229,6 @@ export type Person = EditableTree &
         },
         "editable-tree.Test:Person-1.0.0"
     >;
-
-export interface IAddress extends Opaque<Address> {
-    get phones(): Phones | undefined;
-    set phones(data: ContextuallyTypedNodeData[] | undefined);
-}
-
-export interface IPerson extends Opaque<Person & ContextuallyTypedNodeDataObject> {
-    get name(): string;
-    set name(data: string);
-}
 
 export const personData: JsonableTree = {
     type: personSchema.name,
