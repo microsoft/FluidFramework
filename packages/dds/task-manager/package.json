@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-experimental/task-manager",
+  "name": "@fluidframework/task-manager",
   "version": "2.0.0-internal.2.2.0",
   "description": "Distributed data structure for queueing exclusive tasks",
   "homepage": "https://fluidframework.com",
@@ -99,6 +99,7 @@
     "typescript": "~4.5.5"
   },
   "typeValidation": {
+    "disabled": true,
     "version": "2.0.0-internal.2.2.0",
     "baselineRange": ">=2.0.0-internal.2.1.0 <2.0.0-internal.2.2.0",
     "baselineVersion": "2.0.0-internal.2.1.0",

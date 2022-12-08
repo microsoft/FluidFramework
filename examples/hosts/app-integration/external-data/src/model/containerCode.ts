@@ -14,11 +14,20 @@ import { TaskListInstantiationFactory } from "./taskList";
 
 const taskListId = "task-list";
 
+/*
+* This is a server origin signal that lets the client know that the external source of truth
+* for the data has changed. On receiving this, the client should take some action, such as
+* fetching the new data. This is an enum as there may be more signals that need to be created.
+*/
+const SignalType = {
+    ExternalDataChanged: "externalDataChange"
+};
+
 /**
  * {@inheritDoc ModelContainerRuntimeFactory}
  */
 export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
-    constructor() {
+    public constructor() {
         super(
             new Map([TaskListInstantiationFactory.registryEntry]), // registryEntries
         );
@@ -51,6 +60,13 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
             await runtime.getRootDataStore(taskListId),
             "",
         );
-        return new AppModel(taskList, container);
+        // Register listener only once the model is fully loaded and ready
+        runtime.on("signal", (message) => {
+            if (message.type === SignalType.ExternalDataChanged) {
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                taskList.importExternalData();
+            }
+        });
+        return new AppModel(taskList, container, runtime);
     }
 }
