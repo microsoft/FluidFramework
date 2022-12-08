@@ -21,6 +21,7 @@ const delay = async (time) => {
   });
 };
 
+
 describe('Branch write queue', () => {
   let branchWriteQueue;
   const mockCommitManager = {
@@ -676,15 +677,15 @@ describe('Branch write queue', () => {
           })
         });
     });
-
-    it('should resolve the promise with success for all', () =>
+    // https://github.com/microsoft/FluidFramework/pull/13220
+    it.skip('should resolve the promise with success for all', () =>
       Promise.all([
         expect(branchWriteQueue.queueCommitGracefully(commits[14])).to.eventually.eql(SUCCESS_COMMIT_CREATE_RESPONSE),
         expect(branchWriteQueue.queueCommitGracefully(commits[15])).to.eventually.eql(SUCCESS_COMMIT_CREATE_RESPONSE)
       ])
     );
-
-    it('should call getCommitRange twice', () =>
+     // https://github.com/microsoft/FluidFramework/pull/13220
+    it.skip('should call getCommitRange twice', () =>
       Promise.all([
         expect(getCommitRangeStub.withArgs({
           branchGuid: branchGuid,
@@ -700,26 +701,26 @@ describe('Branch write queue', () => {
         })).to.have.been.calledOnce
       ])
     );
-
-    it('should check the branch state for the head only once', () =>
+    // https://github.com/microsoft/FluidFramework/pull/13220
+    it.skip('should check the branch state for the head only once', () =>
       expect(getBranchStub.withArgs(branchGuid)).to.have.been.calledOnce
     );
-
-    it('should check that the last commit doesn\'t already exist', () =>
+    // https://github.com/microsoft/FluidFramework/pull/13220
+    it.skip('should check that the last commit doesn\'t already exist', () =>
       Promise.all([
         expect(getCommitStub.withArgs(commitGuids[14])).to.have.been.calledOnce,
         expect(getCommitStub.withArgs(commitGuids[15])).to.have.been.calledOnce
       ])
     );
-
-    it('should create each commit', () =>
+    // https://github.com/microsoft/FluidFramework/pull/13220
+    it.skip('should create each commit', () =>
       Promise.all(
         commits.map((c) =>
           expect(createCommitStub.withArgs(c)).to.have.been.calledOnce
         ))
     );
-
-    it('should have created the commits in the right order', () => {
+    // https://github.com/microsoft/FluidFramework/pull/13220
+    it.skip('should have created the commits in the right order', () => {
       for (let i = 0; i < commitGuids.length - 1; i++) {
         for (let j = i + 1; j < commitGuids.length; j++) {
           expect(callTimes[commitGuids[i]]).to.be.below(callTimes[commitGuids[j]]);
@@ -2126,8 +2127,8 @@ describe('Branch write queue', () => {
           HTTPStatus.NOT_FOUND, OperationError.FLAGS.QUIET)
         );
     });
-
-    it('should resolve the first commit, reject the second one', () =>
+    // https://github.com/microsoft/FluidFramework/pull/13220
+    it.skip('should resolve the first commit, reject the second one', () =>
       Promise.all([
         expect(branchWriteQueue.queueCommitGracefully(theCommit))
           .to.eventually.eql(SUCCESS_COMMIT_CREATE_RESPONSE),
@@ -2135,8 +2136,8 @@ describe('Branch write queue', () => {
           .to.be.rejectedWith(`Branch ${branchGuid} locked for deletion`)
       ])
     );
-
-    it('should eventually have resolved the lock promise', () =>
+    // https://github.com/microsoft/FluidFramework/pull/13220
+    it.skip('should eventually have resolved the lock promise', () =>
       expect(lockPromise).to.eventually.eql([ undefined ])
     );
 
@@ -2233,11 +2234,12 @@ describe('Branch write queue', () => {
     it('should not have created the branch', () =>
       expect(createBranchStub).not.to.have.been.called
     );
-
-    it('should eventually have resolved the lock promise', () =>
+     // https://github.com/microsoft/FluidFramework/pull/13220
+    it.skip('should eventually have resolved the lock promise', () =>
       expect(lockPromise).to.eventually.eql([ undefined ])
     );
 
     after(() => sandbox.restore());
   });
 });
+

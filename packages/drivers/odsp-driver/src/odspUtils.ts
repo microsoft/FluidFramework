@@ -34,6 +34,7 @@ import {
     InstrumentedStorageTokenFetcher,
     IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { fetch } from "./fetch";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { IOdspSnapshot } from "./contracts";
@@ -383,4 +384,26 @@ export async function measureP<T>(callback: () => Promise<T>): Promise<[T, numbe
     const result = await callback();
     const time = performance.now() - start;
     return [result, time];
+}
+
+export function validateMessages(
+    reason: string,
+    messages: ISequencedDocumentMessage[],
+    from: number,
+    logger: ITelemetryLogger,
+) {
+    if (messages.length !== 0) {
+        const start = messages[0].sequenceNumber;
+        const length = messages.length;
+        const last = messages[length - 1].sequenceNumber;
+        if (start !== from) {
+            logger.sendErrorEvent({ eventName: "OpsFetchViolation", reason, from, start, last, length });
+            messages.length = 0;
+        }
+        if (last + 1 !== from + length) {
+            logger.sendErrorEvent({ eventName: "OpsFetchViolation", reason, from, start, last, length });
+            // we can do better here by finding consecutive sub-block and return it
+            messages.length = 0;
+        }
+    }
 }

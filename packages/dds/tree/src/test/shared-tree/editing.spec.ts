@@ -47,8 +47,7 @@ describe("Editing", () => {
             expectJsonTree([tree1, tree2], ["w", "x"]);
         });
 
-        // TODO: investigate. It seems PR13079 may have broken this.
-        it.skip("does not interleave concurrent left to right inserts", () => {
+        it("does not interleave concurrent left to right inserts", () => {
             const sequencer = new Sequencer();
             const tree1 = TestTree.fromJson([]);
             const tree2 = tree1.fork();
