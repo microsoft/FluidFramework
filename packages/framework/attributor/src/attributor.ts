@@ -21,9 +21,31 @@ export interface AttributionInfo {
 	timestamp: number;
 }
 
+/**
+ * Can be indexed into the ContainerRuntime in order to retrieve {@link AttributionInfo}.
+ * 
+ * @remarks - These keys contain information about the type of attribution the information corresponds to, as
+ * well as the key which should be used to index into that information.
+ * 
+ * For example, `{ type: "op", key: 205 }` is the AttributionKey which provides the user/timestamp information
+ * for whoever actually performed the op with sequenceNumber 205.
+ * If that op happened to be a copy-paste of content from an external document, the application might want to
+ * preserve some information about who originally wrote that content (note: there are privacy considerations
+ * in this realm).
+ * The application could do so by injecting a second IAttributor into their runtime and transferring whatever
+ * information they know to that attributor. Then, when later querying their content for any AttributionKeys,
+ * they would discover both `{ type: "op", key: 205 }` and `{ type: "externalPaste", key: "<whatever key they used>" }`.
+ */
 export interface AttributionKey {
+	/**
+	 * The type of attribution that this key corresponds to.
+	 * This aligns with the id/name of the attributor injected into the runtime that stores this key.
+	 */
 	type: string;
 
+	/**
+	 * The key associated with that attributor.
+	 */
 	key: number | string;
 }
 
@@ -99,9 +121,6 @@ export abstract class Attributor implements IAttributor {
 		return this.keyToInfo.entries();
 	}
 
-	/**
-	 * {@inheritdoc IAttributor.type}
-	 */
 	abstract get type(): string;
 }
 

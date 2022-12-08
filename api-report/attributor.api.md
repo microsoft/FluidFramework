@@ -18,20 +18,28 @@ export interface AttributionInfo {
 }
 
 // @public
-export class Attributor implements IAttributor {
-    constructor(initialEntries?: Iterable<[number, AttributionInfo]>);
+export interface AttributionKey {
+    key: number | string;
+    type: string;
+}
+
+// @public
+export abstract class Attributor implements IAttributor {
+    constructor(initialEntries?: Iterable<[number | string, AttributionInfo]>);
     // (undocumented)
-    entries(): IterableIterator<[number, AttributionInfo]>;
-    getAttributionInfo(key: number): AttributionInfo;
+    entries(): IterableIterator<[number | string, AttributionInfo]>;
+    getAttributionInfo(key: number | string): AttributionInfo;
     // (undocumented)
-    protected readonly keyToInfo: Map<number, AttributionInfo>;
+    protected readonly keyToInfo: Map<number | string, AttributionInfo>;
     // (undocumented)
-    tryGetAttributionInfo(key: number): AttributionInfo | undefined;
+    tryGetAttributionInfo(key: number | string): AttributionInfo | undefined;
+    // (undocumented)
+    abstract get type(): string;
 }
 
 // @public (undocumented)
 export class AttributorSerializer implements IAttributorSerializer {
-    constructor(makeAttributor: (entries: Iterable<[number, AttributionInfo]>) => IAttributor, timestampEncoder: TimestampEncoder);
+    constructor(registry: Map<string, (entries: Iterable<[number, AttributionInfo]>) => IAttributor>, timestampEncoder: TimestampEncoder);
     // Warning: (ae-incompatible-release-tags) The symbol "decode" is marked as @public, but its signature references "SerializedAttributor" which is marked as @internal
     //
     // (undocumented)
@@ -59,10 +67,11 @@ export interface Encoder<TDecoded, TEncoded> {
 // @public
 export interface IAttributor {
     // (undocumented)
-    entries(): IterableIterator<[number, AttributionInfo]>;
-    getAttributionInfo(key: number): AttributionInfo;
+    entries(): IterableIterator<[number | string, AttributionInfo]>;
+    getAttributionInfo(key: number | string): AttributionInfo;
     // (undocumented)
-    tryGetAttributionInfo(key: number): AttributionInfo | undefined;
+    tryGetAttributionInfo(key: number | string): AttributionInfo | undefined;
+    readonly type: string;
 }
 
 // Warning: (ae-incompatible-release-tags) The symbol "IAttributorSerializer" is marked as @public, but its signature references "SerializedAttributor" which is marked as @internal
@@ -94,6 +103,8 @@ export class MutableStringInterner implements StringInterner {
 // @public
 export class OpStreamAttributor extends Attributor implements IAttributor {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, audience: IAudience, initialEntries?: Iterable<[number, AttributionInfo]>);
+    // (undocumented)
+    get type(): string;
 }
 
 // @internal (undocumented)
@@ -103,9 +114,10 @@ export interface SerializedAttributor {
     // (undocumented)
     interner: readonly string[];
     // (undocumented)
-    keys: number[];
+    keys: (number | string)[];
     // (undocumented)
     timestamps: number[];
+    type: string;
 }
 
 // @public

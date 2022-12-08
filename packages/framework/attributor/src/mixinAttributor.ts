@@ -21,6 +21,11 @@ import { UsageError } from "@fluidframework/container-utils";
 // Note this is currently used for the overlal attribution path as well as each attributor's blob name.
 const attributorKey = "attributor";
 
+/**
+ * Key-value pairs of known IAttributor implementations.
+ * Keys in this registry correspond to `IAttributor.type` fields.
+ * Values in this registry are factory functions to construct the corresponding attributor.
+ */
 export type NamedAttributorRegistryEntry = [string, (runtime: IContainerRuntime, entries: Iterable<[number, AttributionInfo]>) => IAttributor];
 
 export const IRuntimeAttribution: keyof IProvideRuntimeAttribution = "IRuntimeAttribution";
@@ -37,10 +42,14 @@ export interface IRuntimeAttribution extends IProvideRuntimeAttribution {
 }
 
 /**
- * Mixin class that adds await for DataObject to finish initialization before we proceed to summary.
- * @param registry - Registry of constructable attributor types. Keys in this registry correspond to
- * `IAttributor.type` fields.
+ * Mixin class that adds runtime-based attribution functionality.
+ * @param registry - Registry of constructable attributor types.
  * @param Base - base class, inherits from FluidAttributorRuntime
+ * 
+ * @remarks - Currently, though a registry can be provided, the only attributor that gets instantiated
+ * is the op stream based one. Future changes will support using the registry to inject other attributors,
+ * however, which is the plan for features like non-op-stream-based cut+paste attribution as well as
+ * data migration for existing documents that store attribution information in some format.
  */
 export const mixinAttributor = (
     registry: Iterable<NamedAttributorRegistryEntry>,
@@ -90,8 +99,6 @@ export const mixinAttributor = (
                     const blobContents = await runtime.storage.readBlob(value.blobs[attributorKey])
                     const attributorSnapshot = bufferToString(blobContents, "utf8");
                     const attributor = runtime.encoder.decode(attributorSnapshot);
-                    // TODO: need to distinguish between registry type (what is actually being referenced here currently)
-                    // and some sort of runtime id/name for attributor (which is what should be used here)
                     runtime.attributors.set(key, attributor);
                 }));
             } else {
@@ -108,6 +115,12 @@ export const mixinAttributor = (
             decode: unreachableCase
         };
 
+        /**
+         * Note: keys in this map will eventually correspond to names/ids of the injected attributors.
+         * Currently there is no API on this mixin class which causes creation of any attributors besides OpStreamAttributor
+         * (as it's the only thing created on new document creation, and snapshot load only grabs previously serialized
+         * content).
+         */
         private attributors = new Map<string, IAttributor>();
 
         public getAttributionInfo(key: AttributionKey): AttributionInfo {
@@ -127,8 +140,8 @@ export const mixinAttributor = (
             super.addContainerStateToSummary(summaryTree, fullTree, trackState, telemetryContext);
             if (this.attributors.size > 0) {
                 const builder = new SummaryTreeBuilder();
-                for (const [type, attributor] of this.attributors.entries()) {
-                    builder.addWithStats(type, this.summarizeAttributor(attributor));
+                for (const [attributorId, attributor] of this.attributors.entries()) {
+                    builder.addWithStats(attributorId, this.summarizeAttributor(attributor));
                 }
     
                 addSummarizeResultToSummary(summaryTree, attributorKey, builder.getSummaryTree());
