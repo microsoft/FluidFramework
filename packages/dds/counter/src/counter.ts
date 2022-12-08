@@ -200,9 +200,9 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * {@inheritdoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
      * @internal
      */
-    protected applyStashedOp(op: unknown) {
+    protected applyStashedOp(op: unknown): void {
         const counterOp = op as IIncrementOperation;
-        assert(counterOp.type === "increment", 0x3ec /* Op type is not increment */);
+        assert(counterOp.type === "increment", 0x3_ec /* Op type is not increment */);
         this.incrementCore(counterOp.incrementAmount);
     }
 }

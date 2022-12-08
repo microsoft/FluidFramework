@@ -114,12 +114,21 @@ export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
  * Base interface for all errors and warnings
  */
 export interface IDriverErrorBase {
-    /** Classification of what type of error this is, used programmatically by consumers to interpret the error */
+    /**
+     * Classification of what type of error this is, used programmatically by consumers to interpret the error
+     */
     readonly errorType: DriverErrorType;
-    /** Free-form error message */
+
+    /**
+     * Free-form error message
+     */
     readonly message: string;
-    /** True indicates the caller may retry the failed action. False indicates it's a fatal error */
+
+    /**
+     * True indicates the caller may retry the failed action. False indicates it's a fatal error
+     */
     canRetry: boolean;
+
     /**
      * Best guess as to network conditions (online/offline) when the error arose.
      * See OnlineStatus enum in driver-utils package for expected values.

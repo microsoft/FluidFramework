@@ -93,7 +93,7 @@ export interface IDocumentDeltaStorageService {
 }
 
 // DO NOT INCREASE THIS TYPE'S VALUE - If a driver started using a larger value, GC would likely start closing sessions
-export type FiveDaysMs = 432000000; /* 5 days in milliseconds */
+export type FiveDaysMs = 432_000_000; /* 5 days in milliseconds */
 
 export interface IDocumentStorageServicePolicies {
     readonly caching?: LoaderCachingPolicy;
@@ -130,6 +130,8 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
      * @param scenarioName - scenario in which this api is called. This will be recorded by server and would help
      * in debugging purposes to see why this call was made.
      */
+    // TODO: use `undefined` instead.
+    // eslint-disable-next-line @rushstack/no-new-null
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
 
     /**
@@ -144,6 +146,8 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
      * from storage.
      */
     getVersions(
+        // TODO: use `undefined` instead.
+        // eslint-disable-next-line @rushstack/no-new-null
         versionId: string | null,
         count: number,
         scenarioName?: string,
@@ -181,6 +185,8 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void);
     (event: "signal", listener: (message: ISignalMessage) => void);
     (event: "pong", listener: (latency: number) => void);
+    // TODO: Use something other than `any`.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (event: "error", listener: (error: any) => void);
 }
 
@@ -255,6 +261,8 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
     /**
      * Submit a new signal to the server
      */
+    // TODO: Use something other than `any`.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     submitSignal(message: any): void;
 }
 
@@ -311,6 +319,8 @@ export interface IDocumentService {
      * in storage, but client having stale local cache.
      * If driver implements any kind of local caching, such caches needs to be cleared on on critical errors.
      */
+    // TODO: Use something other than `any`.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     dispose(error?: any): void;
 }
 

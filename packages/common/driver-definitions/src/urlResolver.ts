@@ -86,6 +86,8 @@ export enum DriverHeader {
 
 export interface IDriverHeader {
     [DriverHeader.summarizingClient]: boolean;
+    // TODO: Use something other than `any`.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [DriverHeader.createNew]: any;
 }
 

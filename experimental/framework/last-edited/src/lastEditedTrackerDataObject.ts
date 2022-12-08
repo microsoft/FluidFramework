@@ -30,7 +30,7 @@ export class LastEditedTrackerDataObject extends DataObject
     private readonly sharedSummaryBlockId = "shared-summary-block-id";
     private _lastEditedTracker: LastEditedTracker | undefined;
 
-    private get lastEditedTracker() {
+    private get lastEditedTracker(): LastEditedTracker {
         if (this._lastEditedTracker === undefined) {
             throw new Error("Last Edited tracker was not initialized properly");
         }
@@ -38,14 +38,14 @@ export class LastEditedTrackerDataObject extends DataObject
         return this._lastEditedTracker;
     }
 
-    public get IFluidLastEditedTracker() { return this.lastEditedTracker; }
+    public get IFluidLastEditedTracker(): LastEditedTracker { return this.lastEditedTracker; }
 
-    protected async initializingFirstTime() {
+    protected async initializingFirstTime(): Promise<void> {
         const sharedSummaryBlock = SharedSummaryBlock.create(this.runtime);
         this.root.set(this.sharedSummaryBlockId, sharedSummaryBlock.handle);
     }
 
-    protected async hasInitialized() { // hasInitialized
+    protected async hasInitialized(): Promise<void> {
         const sharedSummaryBlock =
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             await this.root.get<IFluidHandle<SharedSummaryBlock>>(this.sharedSummaryBlockId)!.get();

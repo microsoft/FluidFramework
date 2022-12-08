@@ -20,7 +20,7 @@ export class LastEditedTracker implements IFluidLastEditedTracker {
      */
     constructor(private readonly sharedSummaryBlock: SharedSummaryBlock) { }
 
-    public get IFluidLastEditedTracker() {
+    public get IFluidLastEditedTracker(): LastEditedTracker {
         return this;
     }
 
@@ -34,7 +34,7 @@ export class LastEditedTracker implements IFluidLastEditedTracker {
     /**
      * {@inheritDoc (IFluidLastEditedTracker:interface).updateLastEditDetails}
      */
-    public updateLastEditDetails(lastEditDetails: ILastEditDetails) {
+    public updateLastEditDetails(lastEditDetails: ILastEditDetails): void {
         this.sharedSummaryBlock.set(this.lastEditedDetailsKey, lastEditDetails);
     }
 }

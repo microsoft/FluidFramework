@@ -15,7 +15,7 @@ import { ILastEditDetails, IFluidLastEditedTracker } from "./interfaces";
  * {@link @fluidframework/container-runtime#ContainerMessageType.FluidDataStoreOp} type messages should be
  * discarded.
  */
-const shouldDiscardMessageDefault = (message: ISequencedDocumentMessage) =>
+const shouldDiscardMessageDefault = (message: ISequencedDocumentMessage): boolean =>
     message.type !== ContainerMessageType.Attach &&
     message.type !== ContainerMessageType.FluidDataStoreOp &&
     message.type !== ContainerMessageType.Alias;
@@ -59,7 +59,7 @@ export function setupLastEditedTrackerForContainer(
     lastEditedTracker: IFluidLastEditedTracker,
     runtime: IContainerRuntime,
     shouldDiscardMessageFn: (message: ISequencedDocumentMessage) => boolean = shouldDiscardMessageDefault,
-) {
+): void {
     // Register an op listener on the runtime. If the lastEditedTracker has loaded,
     // it passes the last edited information to its
     // last edited tracker. If the lastEditedTracker hasn't loaded, store the last edited information temporarily.
