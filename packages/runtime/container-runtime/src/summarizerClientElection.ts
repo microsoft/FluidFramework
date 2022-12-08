@@ -54,7 +54,6 @@ export class SummarizerClientElection
         private readonly summaryCollection: IEventProvider<ISummaryCollectionOpEvents>,
         public readonly clientElection: IOrderedClientElection,
         private readonly maxOpsSinceLastSummary: number,
-        private readonly electionEnabled: boolean,
     ) {
         super();
         // On every inbound op, if enough ops pass without seeing a summary ack (per elected client),
@@ -71,7 +70,7 @@ export class SummarizerClientElection
                 }
                 return;
             }
-            let electionSequenceNumber = this.clientElection.electionSequenceNumber;
+            const electionSequenceNumber = this.clientElection.electionSequenceNumber;
             const opsWithoutSummary = sequenceNumber - (this.lastSummaryAckSeqForClient ?? electionSequenceNumber);
             if (opsWithoutSummary > this.maxOpsSinceLastSummary) {
                 // Log and elect a new summarizer client.
@@ -83,36 +82,8 @@ export class SummarizerClientElection
                         lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,
                         electionSequenceNumber,
                         nextElectedClientId: this.clientElection.peekNextElectedClient()?.clientId,
-                        electionEnabled: this.electionEnabled,
                     });
                     this.lastReportedSeq = sequenceNumber;
-                }
-
-                if (this.electionEnabled) {
-                    const previousParentId = this.electedParentId;
-                    this.clientElection.incrementElectedClient(sequenceNumber);
-
-                    // Verify that state incremented as expected. This should be reliable,
-                    // since all of OrderedClientElection is synchronous.
-                    electionSequenceNumber = this.clientElection.electionSequenceNumber;
-                    if (sequenceNumber > (this.lastSummaryAckSeqForClient ?? electionSequenceNumber)) {
-                        if (opsSinceLastReport > this.maxOpsSinceLastSummary) {
-                            this.logger.sendErrorEvent({
-                                eventName: "UnexpectedElectionSequenceNumber",
-                                // Expected to be undefined
-                                lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,
-                                // Expected to be same as op sequenceNumber
-                                electionSequenceNumber,
-                                sequenceNumber,
-                                previousClientId: electedClientId,
-                                previousParentId,
-                                electedParentId: this.electedParentId,
-                                electedClientId: this.electedClientId,
-                                opsSinceLastReport,
-                                maxOpsSinceLastSummary,
-                            });
-                        }
-                    }
                 }
             }
         });
