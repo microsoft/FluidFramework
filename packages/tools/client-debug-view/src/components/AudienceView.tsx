@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Stack, StackItem } from "@fluentui/react";
+import { Stack, StackItem, IconButton, IStackItemStyles } from "@fluentui/react";
 import React from "react";
 
 import { IClient } from "@fluidframework/protocol-definitions";
@@ -166,16 +166,34 @@ function HistoryView(props: HistoryViewProps): React.ReactElement {
 		const changeTimeStamp = new Date(changeEntry.timestamp);
 		const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
 
+        const accordianBackgroundColor: IStackItemStyles = {
+            root: {
+                background: changeEntry.changeKind === "added" ? "lightgreen" : "orange",
+                padding: 3
+            }
+        }
+
 		historyViews.push(
-			<li key={`${changeEntry.clientId}-${changeEntry.changeKind}`}>
-				<b>Client ID: </b>
-				{changeEntry.clientId}
-				<br />
-				<b>Time: </b>{" "}
-				{wasChangeToday ? changeTimeStamp.toTimeString() : changeTimeStamp.toDateString()}
-				<br />
-				<b>Type: </b> {changeEntry.changeKind}
-			</li>,
+            <Stack horizontal={true} styles={accordianBackgroundColor}>
+                <StackItem>
+                    <IconButton
+                        iconProps={{
+                            iconName: changeEntry.changeKind === "added" ? "CirclePlus" : "SkypeCircleMinus"
+                        }}
+                    />
+                </StackItem>
+                <StackItem>
+                    <div key={`${changeEntry.clientId}-${changeEntry.changeKind}`}>
+                        <b>Client ID: </b>
+                        {changeEntry.clientId}
+                        <br />
+                        <b>Time: </b>{" "}
+                        {wasChangeToday ? changeTimeStamp.toTimeString() : changeTimeStamp.toDateString()}
+                        <br />
+                        <b>Type: </b> {changeEntry.changeKind}
+                    </div>
+                </StackItem>
+            </Stack>
 		);
 	}
 
@@ -187,7 +205,7 @@ function HistoryView(props: HistoryViewProps): React.ReactElement {
 				},
 			}}
 		>
-			<ul>{historyViews}</ul>
+            {historyViews}
 		</Stack>
 	);
 }
