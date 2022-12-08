@@ -567,10 +567,10 @@ export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObje
 }
 
 // @public (undocumented)
-export function isNeverField(policy: FullSchemaPolicy, originalData: SchemaData, field: FieldSchema): boolean;
+function isMoveMark<T>(mark: Mark_2<T>): mark is MoveMark<T>;
 
 // @public (undocumented)
-function isObjMark<TNodeChange>(mark: Mark_2<TNodeChange> | undefined): mark is ObjectMark<TNodeChange>;
+export function isNeverField(policy: FullSchemaPolicy, originalData: SchemaData, field: FieldSchema): boolean;
 
 // @public (undocumented)
 export function isPrimitive(schema: TreeSchema): boolean;
@@ -878,6 +878,9 @@ interface MoveInAndModify<TTree = ProtoNode> {
     type: typeof MarkType.MoveInAndModify;
 }
 
+// @public (undocumented)
+type MoveMark<T> = MoveOut_2 | ModifyMoveOut<T> | MoveIn_2 | ModifyMoveIn<T>;
+
 // @public
 interface MoveOut {
     // (undocumented)
@@ -1170,7 +1173,8 @@ declare namespace SequenceField {
         NodeChangeInverter_2 as NodeChangeInverter,
         compose,
         NodeChangeComposer_2 as NodeChangeComposer,
-        isObjMark
+        isMoveMark,
+        MoveMark
     }
 }
 export { SequenceField }

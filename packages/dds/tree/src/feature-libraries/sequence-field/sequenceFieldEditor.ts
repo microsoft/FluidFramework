@@ -8,6 +8,7 @@ import { ITreeCursor, RevisionTag } from "../../core";
 import { FieldEditor } from "../modular-schema";
 import { brand } from "../../util";
 import { Changeset, Mark, NodeChangeType } from "./format";
+import { MarkListFactory } from "./markListFactory";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
     insert(index: number, cursor: ITreeCursor | ITreeCursor[]): Changeset<never>;
@@ -74,9 +75,19 @@ export const sequenceFieldEditor = {
             count,
         };
 
-        return sourceIndex < destIndex
-            ? [sourceIndex, moveOut, destIndex - sourceIndex, moveIn]
-            : [destIndex, moveIn, sourceIndex - destIndex, moveOut];
+        const factory = new MarkListFactory<never>();
+        if (sourceIndex < destIndex) {
+            factory.pushOffset(sourceIndex);
+            factory.pushContent(moveOut);
+            factory.pushOffset(destIndex - sourceIndex);
+            factory.pushContent(moveIn);
+        } else {
+            factory.pushOffset(destIndex);
+            factory.pushContent(moveIn);
+            factory.pushOffset(sourceIndex - destIndex);
+            factory.pushContent(moveOut);
+        }
+        return factory.list;
     },
 };
 

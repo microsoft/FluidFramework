@@ -50,7 +50,25 @@ function shallowCompose(changes: TaggedChange<SF.Changeset>[]): SF.Changeset {
     );
 }
 
+function normalizeMoveIds(change: SF.Changeset<unknown>): void {
+    let nextId = 0;
+    const mappings = new Map<SF.MoveId, SF.MoveId>();
+    for (const mark of change) {
+        if (SF.isMoveMark(mark)) {
+            let newId = mappings.get(mark.id);
+            if (newId === undefined) {
+                newId = brand(nextId++);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                mappings.set(mark.id, newId!);
+            }
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            mark.id = newId!;
+        }
+    }
+}
+
 describe("SequenceField - Compose", () => {
+    // TODO: Should tolerate alternate equivalent assignments of `MoveId`s.
     describe("associativity of triplets", () => {
         const entries = Object.entries(cases);
         for (const a of entries) {
@@ -62,7 +80,8 @@ describe("SequenceField - Compose", () => {
                         const bc = composeNoVerify([makeAnonChange(b[1]), makeAnonChange(c[1])]);
                         const right = composeNoVerify([makeAnonChange(a[1]), makeAnonChange(bc)]);
 
-                        // TODO: Should instead check that move IDs are isomorphic
+                        normalizeMoveIds(left);
+                        normalizeMoveIds(right);
                         assert.deepEqual(left, right);
                     });
                 }
@@ -223,6 +242,23 @@ describe("SequenceField - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
+    it("insert ○ move (within insert)", () => {
+        const insert = Change.insert(0, 3, 1);
+        const move = Change.move(1, 1, 0);
+        const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(move)]);
+        const expected: SF.Changeset = [
+            {
+                type: "Insert",
+                content: [
+                    { type, value: 2 },
+                    { type, value: 1 },
+                    { type, value: 3 },
+                ],
+            },
+        ];
+        assert.deepEqual(actual, expected);
+    });
+
     it("insert ○ delete (across inserts)", () => {
         const insert: SF.Changeset = [
             {
@@ -262,6 +298,63 @@ describe("SequenceField - Compose", () => {
                 ],
             },
         ];
+        assert.deepEqual(actual, expected);
+    });
+
+    it("insert ○ move (across inserts)", () => {
+        const insert: SF.Changeset = [
+            {
+                type: "Insert",
+                revision: tag1,
+                content: [
+                    { type, value: 1 },
+                    { type, value: 2 },
+                ],
+            },
+            {
+                type: "Insert",
+                revision: tag2,
+                content: [
+                    { type, value: 3 },
+                    { type, value: 4 },
+                ],
+            },
+            {
+                type: "Insert",
+                revision: tag1,
+                content: [
+                    { type, value: 5 },
+                    { type, value: 6 },
+                ],
+            },
+        ];
+        const move = Change.move(1, 4, 0);
+        const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(move)]);
+        const expected: SF.Changeset = [
+            {
+                type: "Insert",
+                revision: tag1,
+                content: [{ type, value: 2 }],
+            },
+            {
+                type: "Insert",
+                revision: tag2,
+                content: [
+                    { type, value: 3 },
+                    { type, value: 4 },
+                ],
+            },
+            {
+                type: "Insert",
+                revision: tag1,
+                content: [
+                    { type, value: 5 },
+                    { type, value: 1 },
+                    { type, value: 6 },
+                ],
+            },
+        ];
+        console.debug(actual);
         assert.deepEqual(actual, expected);
     });
 
@@ -464,6 +557,14 @@ describe("SequenceField - Compose", () => {
             { type: "Revive", revision: tag4, count: 1, detachedBy: tag1, detachIndex: 0 },
             { type: "Insert", revision: tag2, content: [{ type, value: 3 }] },
         ];
+        assert.deepEqual(actual, expected);
+    });
+
+    it("move ○ delete", () => {
+        const move = Change.move(1, 1, 3);
+        const deletion = Change.delete(3, 1);
+        const expected = Change.delete(1, 1);
+        const actual = shallowCompose([makeAnonChange(move), makeAnonChange(deletion)]);
         assert.deepEqual(actual, expected);
     });
 });

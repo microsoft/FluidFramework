@@ -53,17 +53,8 @@ function toDelta(change: TestChangeset): Delta.MarkList {
 export function getMaxId(change: SF.Changeset<unknown>): ChangesetLocalId | undefined {
     let max: ChangesetLocalId | undefined;
     for (const mark of change) {
-        if (SF.isObjMark(mark)) {
-            switch (mark.type) {
-                case "MoveIn":
-                case "MMoveIn":
-                case "MoveOut":
-                case "MMoveOut":
-                    max = max === undefined ? mark.id : brand(Math.max(max, mark.id));
-                    break;
-                default:
-                    break;
-            }
+        if (SF.isMoveMark(mark)) {
+            max = max === undefined ? mark.id : brand(Math.max(max, mark.id));
         }
     }
 

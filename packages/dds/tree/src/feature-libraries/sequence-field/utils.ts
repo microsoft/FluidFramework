@@ -17,6 +17,8 @@ import {
     Modify,
     ModifyDetach,
     ModifyingMark,
+    ModifyMoveIn,
+    ModifyMoveOut,
     ModifyReattach,
     MoveId,
     MoveIn,
@@ -380,8 +382,8 @@ export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boole
 }
 
 export interface MoveEffectTable<T> {
-    srcEffects: Map<MoveId, MoveSrcEffect<T>>;
-    dstEffects: Map<MoveId, MoveDestEffect<T>>;
+    srcEffects: Map<MoveId, MoveSrcPartition<T>[]>;
+    dstEffects: Map<MoveId, MoveDstPartition<T>[]>;
     splitIdToOrigId: Map<MoveId, MoveId>;
     idRemappings: Map<MoveId, MoveId>;
 
@@ -401,21 +403,21 @@ export function newMoveEffectTable<T>(): MoveEffectTable<T> {
     };
 }
 
-type MoveSrcEffect<T> = MovePartition<T>[];
-type MoveDestEffect<T> = MovePartition<T>[];
+export type MoveSrcPartition<T> = MovePartition<SizedObjectMark<T>>;
+export type MoveDstPartition<T> = MovePartition<Attach<T>>;
 
-export interface MovePartition<T> {
+interface MovePartition<T> {
     id: MoveId;
 
     // Undefined means the partition is the same size as the input.
     count?: number;
-    replaceWith?: Attach<T>[];
+    replaceWith?: T[];
 }
 
 export function splitMoveSrc<T>(
     table: MoveEffectTable<T>,
     id: MoveId,
-    parts: MovePartition<T>[],
+    parts: MoveSrcPartition<T>[],
 ): void {
     // TODO: Do we need a separate splitIdToOrigId for src and dst? Or do we need to eagerly apply splits when processing?
     const origId = table.splitIdToOrigId.get(id);
@@ -441,7 +443,7 @@ export function splitMoveSrc<T>(
 export function splitMoveDest<T>(
     table: MoveEffectTable<T>,
     id: MoveId,
-    parts: MovePartition<T>[],
+    parts: MoveDstPartition<T>[],
 ): void {
     // TODO: What if source has been deleted?
     const origId = table.splitIdToOrigId.get(id);
@@ -452,6 +454,9 @@ export function splitMoveDest<T>(
 
         // TODO: Assert that the sums of the partition sizes match
         effect.splice(index, 1, ...parts);
+        for (const { id: newId } of parts) {
+            table.splitIdToOrigId.set(newId, origId);
+        }
     } else {
         assert(
             !table.dstEffects.has(id),
@@ -473,12 +478,26 @@ export function replaceMoveDest<T>(table: MoveEffectTable<T>, id: MoveId, mark: 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const effect = table.dstEffects.get(origId)!;
         const index = effect.findIndex((p) => p.id === id);
+        assert(effect[index].replaceWith === undefined, "Move dest already replaced");
         effect[index].replaceWith = [mark];
     }
 }
 
-export function deleteMoveSource(table: MoveEffectTable<unknown>, id: MoveId): void {
-    table.srcEffects.set(id, []);
+export function replaceMoveSrc<T>(
+    table: MoveEffectTable<T>,
+    id: MoveId,
+    mark: SizedObjectMark<T>,
+): void {
+    const origId = table.splitIdToOrigId.get(id);
+    if (origId !== undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const effect = table.srcEffects.get(origId)!;
+        const index = effect.findIndex((p) => p.id === id);
+        assert(effect[index].replaceWith === undefined, "Move source already replaced");
+        effect[index].replaceWith = [mark];
+    } else {
+        table.srcEffects.set(id, [{ id, replaceWith: [mark] }]);
+    }
 }
 
 export function replaceMoveId<T>(table: MoveEffectTable<T>, id: MoveId, newId: MoveId): void {
@@ -495,5 +514,21 @@ export function changeSrcMoveId<T>(table: MoveEffectTable<T>, id: MoveId, newId:
         effect[index].id = newId;
     } else {
         table.srcEffects.set(id, [{ id: newId }]);
+    }
+}
+
+export type MoveMark<T> = MoveOut | ModifyMoveOut<T> | MoveIn | ModifyMoveIn<T>;
+export function isMoveMark<T>(mark: Mark<T>): mark is MoveMark<T> {
+    if (isSkipMark(mark)) {
+        return false;
+    }
+    switch (mark.type) {
+        case "MoveIn":
+        case "MMoveIn":
+        case "MoveOut":
+        case "MMoveOut":
+            return true;
+        default:
+            return false;
     }
 }
