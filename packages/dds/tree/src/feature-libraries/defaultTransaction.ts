@@ -27,7 +27,7 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
     const repairStore = new ForestRepairDataStore((revision: RevisionTag) => {
         assert(
             revision === currentRevision,
-            "The repair data store should only ask for the current forest state",
+            0x479 /* The repair data store should only ask for the current forest state */,
         );
         return forest;
     });
