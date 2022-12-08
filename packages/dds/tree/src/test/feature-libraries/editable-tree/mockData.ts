@@ -105,7 +105,7 @@ export const personSchema = namedTreeSchema({
     name: brand("Test:Person-1.0.0"),
     localFields: {
         name: fieldSchema(FieldKinds.value, [stringSchema.name]),
-        age: fieldSchema(FieldKinds.value, [int32Schema.name]),
+        age: fieldSchema(FieldKinds.optional, [int32Schema.name]),
         salary: fieldSchema(FieldKinds.value, [float32Schema.name]),
         friends: fieldSchema(FieldKinds.optional, [mapStringSchema.name]),
         address: fieldSchema(FieldKinds.value, [addressSchema.name]),
@@ -185,7 +185,7 @@ export type FriendsType = EditableTree & Record<LocalFieldKey, string>;
 
 export type PersonType = EditableTree & {
     name: string;
-    age: Int32;
+    age?: Int32;
     salary: number;
     friends: FriendsType;
     address: AddressType;
