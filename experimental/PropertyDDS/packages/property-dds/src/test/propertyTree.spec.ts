@@ -31,9 +31,11 @@ import { DeflatedPropertyTree, LZ4PropertyTree } from "../propertyTreeExt";
 import { SharedPropertyTree } from "../propertyTree";
 import { PropertyTreeFactory } from "../propertyTreeFactory";
 
+
 interface Result {
     container: IContainer;
     client: SharedPropertyTree;
+    dataObject: ITestFluidObject;
 }
 
 interface withSummarizer extends Result {
@@ -56,6 +58,7 @@ describe("PropertyDDS summarizer", () => {
         const res: withSummarizer = {
             summarizer,
             client,
+            dataObject,
             container
         };
         return res;
@@ -103,7 +106,7 @@ describe("PropertyDDS summarizer", () => {
         this.timeout(30000);
 
         // 1- U1 joins together with summarizer
-        const { client: u1, summarizer, container } = await getClient(true);
+        const { client: u1, summarizer, dataObject: dataObject1, container: container1 } = await getClient(true);
         await objProvider.ensureSynchronized();
 
         // Test debugging code
@@ -128,15 +131,31 @@ describe("PropertyDDS summarizer", () => {
 
         await objProvider.ensureSynchronized();
 
-        // Wait enough time to send noop
-        // @TODO is there a way to make sure all clients sent the "noop" without waiting ?
-        // This is required to make sure all clients has the same referenceSequenceNumber
-        await new Promise((resolve) => setTimeout(() => {
-            resolve(undefined);
-        }, 20000));
-
-        const { client: u2 } = await getClient(false, true);
+        const { client: u2, dataObject: dataObject2, container: container2 } = await getClient(false, true);
         await objProvider.ensureSynchronized();
+
+
+        // We do two changes to a different DDS (the root map), to make sure, that
+        // updates are triggered that do not affect the propertyDDS
+        dataObject1.root.set('c2', 'aaa');
+        dataObject2.root.set('c2', 'aaa');
+
+        // Now we wait until the msn has sufficiently advanced that the pruning below
+        // will remove all remoteChanges
+        const expectedSequenceNumber = container2.deltaManager.lastSequenceNumber;
+        await new Promise( (resolve) => {
+            const waitForMSN = () => {
+                if (container1.deltaManager.minimumSequenceNumber >= expectedSequenceNumber &&
+                    container2.deltaManager.minimumSequenceNumber >= expectedSequenceNumber) {
+                    resolve(undefined);
+                }
+
+                void objProvider.ensureSynchronized().then((x) => {
+                    setTimeout(waitForMSN, 5);
+                });
+            };
+            waitForMSN();
+        });
 
         // Summarize
         await summarizeNow(summarizer);
