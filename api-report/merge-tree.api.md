@@ -19,42 +19,15 @@ export function addProperties(oldProps: PropertySet | undefined, newProps: Prope
 export function appendToMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @public (undocumented)
-export class AttributionCollection<T> {
-    constructor(baseEntry: T, _length: number);
-    // (undocumented)
-    append(other: AttributionCollection<T>): void;
-    // (undocumented)
-    clone(): AttributionCollection<T>;
-    // (undocumented)
-    getAll(): {
-        offset: number;
-        key: T;
-    }[];
-    // (undocumented)
-    getAtOffset(offset: number): T;
-    // (undocumented)
-    get length(): number;
-    // Warning: (ae-forgotten-export) The symbol "SerializedAttributionCollection" needs to be exported by the entry point index.d.ts
-    static populateAttributionCollections(segments: Iterable<ISegment>, summary: SerializedAttributionCollection): void;
-    static serializeAttributionCollections<T>(segments: Iterable<{
-        attribution?: AttributionCollection<T>;
-        cachedLength: number;
-    }>): SerializedAttributionCollection;
-    splitAt(pos: number): AttributionCollection<T>;
-}
-
-// @public (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, attributionKey?: number): boolean;
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
     protected addSerializedProps(jseg: IJSONSegment): void;
     // (undocumented)
-    append(other: ISegment): void;
-    // (undocumented)
-    attribution?: AttributionCollection<unknown>;
+    append(segment: ISegment): void;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     // (undocumented)
@@ -648,12 +621,11 @@ export interface IRemovalInfo {
 
 // @public
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, attribution?: unknown): boolean;
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
     append(segment: ISegment): void;
-    attribution?: AttributionCollection<unknown>;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     clientId: number;
