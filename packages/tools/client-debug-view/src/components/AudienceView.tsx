@@ -208,13 +208,16 @@ function HistoryView(props: HistoryViewProps): React.ReactElement {
 		<Stack
 			styles={{
 				root: {
-					overflowY: "auto"
+					overflowY: "auto",
+                    height: "300px"
 				},
 			}}
 		>
-			<div>
+			<div style={{ overflowY: "scroll" }}>
 				{historyViews}
 			</div>
 		</Stack>
 	);
 }
+
+
