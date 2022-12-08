@@ -109,7 +109,7 @@ interface IFullGitTree {
 async function buildFullGitTreeFromGitTree(
     gitTree: ITree,
     repoManager: IRepositoryManager,
-    parseInnerFullGitTrees = true, // TODO: set to false when recovering missing tree element?
+    parseInnerFullGitTrees = true,
     retrieveBlobs = true,
     depth = 0,
 ): Promise<IFullGitTree> {
@@ -121,13 +121,11 @@ async function buildFullGitTreeFromGitTree(
     for (const treeEntry of gitTree.tree) {
         if (treeEntry.type === "blob") {
             if (treeEntry.path.endsWith(fullTreePath) && parseInnerFullGitTrees) {
-                Lumberjack.info(`DEBUG: encountered fulltree reading git tree at path: ${treeEntry.path}`);
                 const fullTreeBlob = await repoManager.getBlob(treeEntry.sha);
                 const fullTree = JSON.parse(Buffer.from(
                     fullTreeBlob.content,
                     fullTreeBlob.encoding === "base64" ? "base64" : "utf-8",
                 ).toString("utf-8")) as IFullGitTree;
-                Lumberjack.info(`DEBUG: read full tree blob`, { fullTree });
                 const builtFullGitTree = await buildFullGitTreeFromGitTree(
                     fullTree.tree,
                     repoManager,
@@ -562,21 +560,18 @@ export class GitWholeSummaryManager {
                         missingElementSha,
                         true, /* recursive */
                     );
-                    Lumberjack.info(`DEBUG: Building full tree from missing tree element`, { missingTreeElement });
                     const fullMissingGitTree: IFullGitTree = await buildFullGitTreeFromGitTree(
                         missingTreeElement,
                         this.repoManager,
                         false, /* parseInnerFullGitTrees */
                     );
 
-                    Lumberjack.info(`DEBUG: Converting fullGitTree to fullSummaryTree`, { fullMissingGitTree });
                     const fullMissingSummaryTree = convertFullGitTreeToFullSummaryTree(
                         fullMissingGitTree,
                     );
                     const wholeMissingSummaryTreeEntries = convertFullSummaryToWholeSummaryEntries(
                         fullMissingSummaryTree,
                     );
-                    Lumberjack.info(`DEBUG: Writing summary tree to memory`, { wholeMissingSummaryTreeEntries });
                     const inMemoryTreeHandle = await this.writeSummaryTreeCore(
                         wholeMissingSummaryTreeEntries,
                         inMemoryRepoManager,
@@ -708,7 +703,6 @@ export class GitWholeSummaryManager {
         const gitTree: IFullGitTree = await buildFullGitTreeFromGitTree(
             parentTree,
             this.repoManager,
-            // TODO: If a tree points at a full git tree, we just want to point at the fullGitTree?
             true, /* parseInnerFullGitTrees */
             // We only need shas
             false, /* retrieveBlobs */
