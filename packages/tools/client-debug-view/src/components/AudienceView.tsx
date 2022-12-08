@@ -169,7 +169,7 @@ function HistoryView(props: HistoryViewProps): React.ReactElement {
 
         const accordianBackgroundColor: IStackItemStyles = {
             root: {
-                background: changeEntry.changeKind === "added" ? "#90ee90" : "#ed1d24",
+                background: changeEntry.changeKind === "added" ? "#90ee90" : "#FF7377",
                 borderStyle: "solid",
                 borderWidth: 1,
                 borderColor: DefaultPalette.neutralTertiary,
@@ -187,7 +187,7 @@ function HistoryView(props: HistoryViewProps): React.ReactElement {
             <div>
                 <Stack horizontal={true} styles={accordianBackgroundColor}>
                     <StackItem styles={iconStyle}>
-                        <Icon iconName={changeEntry.changeKind === "added" ? "CirclePlus" : "SkypeCircleMinus"} title={changeEntry.changeKind === "added" ? "Client Added" : "Client Removed"}/>
+                        <Icon iconName={changeEntry.changeKind === "added" ? "AddFriend" : "UserRemove"} title={changeEntry.changeKind === "added" ? "Member Joined" : "Member Left"}/>
                     </StackItem>
                     <StackItem>
                         <div key={`${changeEntry.clientId}-${changeEntry.changeKind}`}>
@@ -208,11 +208,13 @@ function HistoryView(props: HistoryViewProps): React.ReactElement {
 		<Stack
 			styles={{
 				root: {
-					overflowY: "scroll"
+					overflowY: "auto"
 				},
 			}}
 		>
-            {historyViews}
+			<div>
+				{historyViews}
+			</div>
 		</Stack>
 	);
 }
