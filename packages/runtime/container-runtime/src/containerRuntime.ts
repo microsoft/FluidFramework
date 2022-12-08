@@ -673,6 +673,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 compressionAlgorithm: CompressionAlgorithms.lz4
             },
             maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
+            chunkSizeInBytes = Number.POSITIVE_INFINITY,
         } = runtimeOptions;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -750,6 +751,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 enableOfflineLoad,
                 compressionOptions,
                 maxBatchSizeInBytes,
+                chunkSizeInBytes,
             },
             containerScope,
             logger,

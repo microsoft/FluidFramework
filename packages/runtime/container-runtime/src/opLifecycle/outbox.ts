@@ -19,7 +19,6 @@ export interface IOutboxConfig {
 
     // The maximum size of a batch that we can send over the wire.
     readonly maxBatchSizeInBytes: number;
-    readonly chunkSizeInBytes: number;
 };
 
 export interface IOutboxParameters {
@@ -122,12 +121,11 @@ export class Outbox {
             return compressedBatch;
         }
 
-        if (this.params.config.chunkSizeInBytes < Number.POSITIVE_INFINITY) {
-            // Chunking compressed batches is enabled
+        if (this.params.splitter.isBatchChunkingEnabled) {
             return this.params.splitter.splitCompressedBatch(compressedBatch);
         }
 
-        // If we've reached this point, the batch is compressed and larger than the maximum size
+        // If we've reached this point, the runtime would attempt to send a batch larger than the allowed size
         throw new GenericError(
             "BatchTooLarge",
             /* error */ undefined,

@@ -27,7 +27,7 @@ export class RemoteMessageProcessor {
 
         message = this.opDecompressor.processMessage(message);
         unpackRuntimeMessage(message);
-        message = this.opSplitter.processRemoteMessage(message);
+        message = this.opSplitter.processRemoteMessage(message).message;
 
         return message;
     }

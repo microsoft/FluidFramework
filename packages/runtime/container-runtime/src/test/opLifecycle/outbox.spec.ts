@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { IBatchMessage, IContainerContext, IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { PendingStateManager } from "../../pendingStateManager";
-import { BatchMessage, IBatch, OpCompressor, Outbox } from "../../opLifecycle";
+import { BatchMessage, IBatch, OpCompressor, OpSplitter, Outbox } from "../../opLifecycle";
 import {
     CompressionAlgorithms,
     ContainerMessageType,
@@ -79,6 +79,10 @@ describe("Outbox", () => {
         },
     });
 
+    const getMockSplitter = (): Partial<OpSplitter> => ({
+
+    });
+
     const getMockPendingStateManager = (): Partial<PendingStateManager> => ({
         onSubmitMessage: (
             type: ContainerMessageType,
@@ -143,6 +147,7 @@ describe("Outbox", () => {
         pendingStateManager: getMockPendingStateManager() as PendingStateManager,
         containerContext: context,
         compressor: getMockCompressor() as OpCompressor,
+        splitter: getMockSplitter() as OpSplitter,
         config: {
             maxBatchSizeInBytes: maxBatchSize,
             compressionOptions,

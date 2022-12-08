@@ -179,6 +179,18 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         assertMapValues(dataObject2map, messageCount, largeString);
     });
 
+    itExpects("Large ops fail when compression is disabled and the content is over max op size", [
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
+    ], async function() {
+        const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
+        await setupContainers(testContainerConfig, {}); // Compression is disabled by default
+
+        const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
+        const messageCount = 3; // Will result in a 15 MB payload
+        setMapKeys(dataObject1map, messageCount, largeString);
+        await provider.ensureSynchronized();
+    });
+
     itExpects("Large ops fail when compression enabled and compressed content is over max op size", [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
     ], async function() {
@@ -187,6 +199,24 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
             ...testContainerConfig,
             runtimeOptions: {
                 compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
+            },
+        }, {});
+
+        const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
+        const messageCount = 3; // Will result in a 15 MB payload
+        setMapKeys(dataObject1map, messageCount, largeString);
+        await provider.ensureSynchronized();
+    });
+
+    itExpects("Large ops fail when compression enabled, compressed content is over max op size and chunking is enabled", [
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
+    ], async function() {
+        const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
+        await setupContainers({
+            ...testContainerConfig,
+            runtimeOptions: {
+                compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
+                chunkSizeInBytes: 200 * 1024,
             },
         }, {});
 

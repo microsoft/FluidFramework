@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { OpDecompressor, OpSplitter, RemoteMessageProcessor } from "../../opLifecycle";
+import { IMessageProcessingResult, OpDecompressor, OpSplitter, RemoteMessageProcessor } from "../../opLifecycle";
 import { ContainerMessageType } from "../..";
 
 describe("RemoteMessageProcessor", () => {
@@ -24,8 +24,11 @@ describe("RemoteMessageProcessor", () => {
     });
 
     const getMockSplitter = (): Partial<OpSplitter> => ({
-        processRemoteMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage {
-            return stamp(message, "reconstruct");;
+        processRemoteMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
+            return {
+                message: stamp(message, "reconstruct"),
+                state: "Processed",
+            }
         },
     });
 

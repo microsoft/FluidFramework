@@ -4,7 +4,7 @@
  */
 
 import { IBatchMessage } from "@fluidframework/container-definitions";
-import { MessageType } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { CompressionAlgorithms, ContainerMessageType, ContainerRuntimeMessage } from "..";
 
 /**
@@ -43,4 +43,11 @@ export interface IChunkedOp {
     originalType: MessageType | ContainerMessageType;
     metadata?: Record<string, unknown>;
     compression?: string;
+}
+
+type ProcessingState = "Processed" | "Skipped" | "Accepted";
+
+export interface IMessageProcessingResult {
+    readonly message: ISequencedDocumentMessage;
+    readonly state: ProcessingState;
 }
