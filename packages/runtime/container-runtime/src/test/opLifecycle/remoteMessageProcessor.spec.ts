@@ -18,8 +18,11 @@ describe("RemoteMessageProcessor", () => {
     };
 
     const getMockDecompressor = (): Partial<OpDecompressor> => ({
-        processMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage {
-            return stamp(message, "decompress");
+        processMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
+            return {
+                message: stamp(message, "decompress"),
+                state: "Processed",
+            }
         },
     });
 

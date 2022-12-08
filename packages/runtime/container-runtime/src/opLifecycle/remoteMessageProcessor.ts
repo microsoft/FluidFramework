@@ -25,7 +25,7 @@ export class RemoteMessageProcessor {
     public process(remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage {
         let message = copy(remoteMessage);
 
-        message = this.opDecompressor.processMessage(message);
+        message = this.opDecompressor.processMessage(message).message;
         unpackRuntimeMessage(message);
         message = this.opSplitter.processRemoteMessage(message).message;
 

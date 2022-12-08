@@ -187,7 +187,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
         const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
         const messageCount = 3; // Will result in a 15 MB payload
-        setMapKeys(dataObject1map, messageCount, largeString);
+        assert.throws(() => setMapKeys(dataObject1map, messageCount, largeString));
         await provider.ensureSynchronized();
     });
 
@@ -216,7 +216,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
             ...testContainerConfig,
             runtimeOptions: {
                 compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
-                chunkSizeInBytes: 200 * 1024,
+                // chunkSizeInBytes: 200 * 1024,
             },
         }, {});
 
