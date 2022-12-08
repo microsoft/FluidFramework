@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { strict as assert } from "assert";
 import {
     AttachState,
@@ -19,9 +20,9 @@ import { FluidObject } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { IProvideRuntimeAttribution, mixinAttributor } from "../mixinAttributor";
 import { Attributor as BaseAttributor, OpStreamAttributor } from "../attributor";
-import { makeMockAudience } from "./utils";
-import { AttributorSerializer, chain, deltaEncoder } from "../encoders";
 import { makeLZ4Encoder } from "../lz4Encoder";
+import { AttributorSerializer, chain, deltaEncoder } from "../encoders";
+import { makeMockAudience } from "./utils";
 
 type Mutable<T> = {
     -readonly[P in keyof T]: T[P]
@@ -42,6 +43,7 @@ describe("mixinAttributor", () => {
             quorum: new MockQuorumClients(),
             taggedLogger: new MockLogger(),
             clientDetails: { capabilities: { interactive: true } },
+            // eslint-disable-next-line @typescript-eslint/no-throw-literal
             closeFn: (error?: ICriticalContainerError): void => { if (error) { throw error; } },
             updateDirtyContainerState: (_dirty: boolean) => { },
         };
@@ -150,7 +152,7 @@ describe("mixinAttributor", () => {
         );
         const context = getMockContext() as Mutable<IContainerContext>;
         const sampleAttributor = new Attributor([
-            [op.sequenceNumber!, { timestamp: op.timestamp!, user: context.audience?.getMember(op.clientId!)?.user! }]
+            [op.sequenceNumber!, { timestamp: op.timestamp!, user: context.audience!.getMember(op.clientId!)!.user }]
         ]);
 
         const opAttributorBlobId = "mock attributor blob id";
@@ -195,3 +197,5 @@ describe("mixinAttributor", () => {
         );
     });
 });
+
+/* eslint-enable @typescript-eslint/no-non-null-assertion */

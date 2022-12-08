@@ -6,16 +6,15 @@ import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { AttributionInfo, AttributionKey, IAttributor } from "./attributor";
 import { ISummaryTreeWithStats, ITelemetryContext, NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 import { addSummarizeResultToSummary, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { OpStreamAttributor } from "./attributor";
-import { AttributorSerializer, chain, deltaEncoder, Encoder } from "./encoders";
-import { makeLZ4Encoder } from "./lz4Encoder";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import { assert, bufferToString, unreachableCase } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
+import { AttributionInfo, AttributionKey, IAttributor, OpStreamAttributor } from "./attributor";
+import { AttributorSerializer, chain, deltaEncoder, Encoder } from "./encoders";
+import { makeLZ4Encoder } from "./lz4Encoder";
 
 // The key for the attributor tree in summary.
 // Note this is currently used for the overlal attribution path as well as each attributor's blob name.
@@ -62,7 +61,7 @@ export const mixinAttributor = (
             registryEntries: NamedFluidDataStoreRegistryEntries,
             requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined,
             runtimeOptions: IContainerRuntimeOptions | undefined = {},
-            containerScope: FluidObject<unknown> | undefined = context.scope,
+            containerScope: FluidObject | undefined = context.scope,
             existing?: boolean | undefined,
             ctor: typeof ContainerRuntime = ContainerRuntimeWithAttributor as unknown as typeof ContainerRuntime
         ): Promise<ContainerRuntime> {
@@ -121,7 +120,7 @@ export const mixinAttributor = (
          * (as it's the only thing created on new document creation, and snapshot load only grabs previously serialized
          * content).
          */
-        private attributors = new Map<string, IAttributor>();
+        private readonly attributors = new Map<string, IAttributor>();
 
         public getAttributionInfo(key: AttributionKey): AttributionInfo {
             const attributor = this.attributors.get(key.type);
