@@ -70,7 +70,12 @@ export class TypedEventEmitter<TEvent>
     readonly off: TypedEventTransform<this, TEvent>;
 }
 
-// Maybe allow keyof TSig extends string | number -- since keyof any extending Record<string, any> is string | number (surprise!)
+(new TypedEventEmitter()).on("newListener", (event: string, listener: (...args: any[]) => void) => {});
+
+interface IBaseEventSignatures {
+    newListener: [event: string, listener: (...args: any[]) => void];
+    removeListener: [event: string, listener: (...args: any[]) => void];
+}
 
 type SignatureKeys<TSig> =
     keyof TSig extends string ?
@@ -89,7 +94,7 @@ export interface IEvents<TSig> {
 }
 
 // Dropped extending TypedEventEmitter because I don't know how to incorporate the TypedEventTransform stuff
-class TypedEventEmitter2<TSignatures> extends EventEmitter {
+class TypedEventEmitter2<TSignatures extends IBaseEventSignatures> extends EventEmitter {
     emit<TEvent extends SignatureKeys<TSignatures>>(
         event: TEvent,
         ...args: SignatureArgs<TSignatures, TEvent>
@@ -109,10 +114,11 @@ class TypedEventEmitter2<TSignatures> extends EventEmitter {
 }
 
 // extend Record<string, any[]> if you want to allow any undeclared event (why?) - also this will allow numerical keys
-export interface ISampleEventSignatures {
+export interface ISampleEventSignatures extends IBaseEventSignatures{
     foo: [x: number, y: string];
     bar: [];
     baz: [options: { a: string; b: boolean; }];
+    // BOOM: number;
 }
 const sample = new TypedEventEmitter2<ISampleEventSignatures>();
 
@@ -124,19 +130,11 @@ sample.emit("foo", 3, "asdf");
 sample.emit("bar");
 sample.emit("baz", { a: "hello", b: true });
 
-sample.emit("unspecified", 123);
-
 sample.on("foo", (x: number, y: string) => {});
+sample.on("bar", () => {});
+sample.on("baz", ({ a, b }) => {});
 
-// //////////////////// //
-// Learning about stuff //
 
-type StringKey<T> = keyof T extends string ? keyof T : never;
-type IK = StringKey<{ [key: string]: any; }>;
-type RK = StringKey<Record<string, any>>;
-
-type IKey = keyof { [key: string]: any; };
-type RKey = keyof ERecord;
-
-interface ERecord extends Record<string, any> {}
-
+// Not supported
+sample.emit("unspecified", 123);
+sample.on("unspecified", () => {});
