@@ -25,7 +25,7 @@ export function getIds(
         last ??= overrides.overrides[overrides.overrides.length - 1][0];
     }
 
-    assert(first !== undefined && last !== undefined, "malformed IdCreationRange");
+    assert(first !== undefined && last !== undefined, 0x49b /* malformed IdCreationRange */);
 
     return {
         first,
