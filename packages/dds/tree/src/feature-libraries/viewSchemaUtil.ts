@@ -4,8 +4,13 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { TreeSchemaIdentifier, NamedTreeSchema, TreeSchemaBuilder, Named } from "../core";
-import { treeSchema } from "../schema-stored";
+import {
+    TreeSchemaIdentifier,
+    NamedTreeSchema,
+    TreeSchemaBuilder,
+    Named,
+    treeSchema,
+} from "../core";
 import { emptyField } from "./defaultSchema";
 
 /**

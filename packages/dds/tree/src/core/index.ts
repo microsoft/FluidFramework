@@ -105,6 +105,7 @@ export {
     TreeSchemaBuilder,
     emptyMap,
     emptySet,
+    treeSchema,
 } from "../schema-stored";
 
 export {
