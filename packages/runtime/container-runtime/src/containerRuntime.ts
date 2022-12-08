@@ -482,6 +482,17 @@ export interface IContainerRuntimeOptions {
      * @experimental This config should be driven by the connection with the service and will be moved in the future.
      */
     readonly maxBatchSizeInBytes?: number;
+
+    /**
+     * If the op payload needs to be chunked in order to work around the maximum size of the batch, this value represents
+     * how large the individual chunks will be. This is only supported when compression is enabled.
+     *
+     * If unspecified, if a batch exceeds `maxBatchSizeInBytes` after compression, the container will close with an instance
+     * of `GenericError` with the `BatchTooLarge` message.
+     *
+     * @experimental Not ready for use.
+     */
+    readonly chunkSizeInBytes?: number;
 }
 
 /**
@@ -1010,7 +1021,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.messageAtLastSummary = metadata?.message;
 
         this._connected = this.context.connected;
-        this.remoteMessageProcessor = new RemoteMessageProcessor(new OpSplitter(chunks), new OpDecompressor());
+        const opSplitter = new OpSplitter(chunks, this.context.submitBatchFn, runtimeOptions.chunkSizeInBytes);
+        this.remoteMessageProcessor = new RemoteMessageProcessor(opSplitter, new OpDecompressor());
 
         this.handleContext = new ContainerFluidHandleContext("", this);
 
@@ -1152,6 +1164,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             pendingStateManager: this.pendingStateManager,
             containerContext: this.context,
             compressor: new OpCompressor(this.mc.logger),
+            splitter: opSplitter,
             config: {
                 compressionOptions: runtimeOptions.compressionOptions,
                 maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,

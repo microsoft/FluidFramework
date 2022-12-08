@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
+import { IBatchMessage } from "@fluidframework/container-definitions";
 import { DataCorruptionError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ContainerMessageType } from "../containerRuntime";
-import { IChunkedOp } from "./definitions";
+import { ContainerMessageType, ContainerRuntimeMessage } from "../containerRuntime";
+import { BatchMessage, IBatch, IChunkedOp } from "./definitions";
 
 /**
  * Responsible for creating and reconstructing chunked messages.
@@ -15,7 +17,11 @@ export class OpSplitter {
     // Local copy of incomplete received chunks.
     private readonly chunkMap: Map<string, string[]>;
 
-    constructor(chunks: [string, string[]][]) {
+    constructor(
+        chunks: [string, string[]][],
+        private readonly submitBatchFn: (batch: IBatchMessage[]) => number,
+        public readonly chunkSizeInBytes: number,
+    ) {
         this.chunkMap = new Map<string, string[]>(chunks);
     }
 
@@ -75,4 +81,67 @@ export class OpSplitter {
 
         map.push(chunkedContent.contents);
     }
+
+    private splitOp(op: BatchMessage): IChunkedOp[] {
+        const chunks: IChunkedOp[] = [];
+        assert(op.contents !== undefined && op.contents !== null, "We should have something to chunk");
+
+        const contentLength = op.contents.length;
+        const chunkN = Math.floor((contentLength - 1) / this.chunkSizeInBytes) + 1;
+        let offset = 0;
+        for (let i = 1; i <= chunkN; i++) {
+            chunks.push({
+                chunkId: i,
+                contents: op.contents.substr(offset, this.chunkSizeInBytes),
+                originalType: op.deserializedContent.type,
+                totalChunks: chunkN,
+                metadata: op.metadata,
+                compression: op.compression,
+            });
+
+            offset += this.chunkSizeInBytes;
+        }
+
+        return chunks;
+    }
+
+    public splitCompressedBatch(batch: IBatch): IBatch {
+        const car = batch.content[0]; // we expect this to be the large compressed op, which needs to be split
+        const cdr = batch.content.slice(1); // we expect these to be empty ops, created to reserve sequence numbers
+
+        assert(this.chunkSizeInBytes !== 0, "Chunk size needs to be non-zero");
+        assert((car.contents?.length ?? 0) >= this.chunkSizeInBytes, "Batch needs to be chunkable");
+        const chunks = this.splitOp(car);
+
+        // Send the first N-1 chunks immediately
+        for (const chunk of chunks.slice(0, -1)) {
+            this.submitBatchFn([chunkToBatchMessage(chunk, car.referenceSequenceNumber)]);
+        }
+
+        // The last chunk will be part of the new batch and needs to
+        // preserve the batch metadata of the original batch
+        const lastChunk = chunkToBatchMessage(
+            chunks[chunks.length - 1],
+            car.referenceSequenceNumber,
+            { batch: car.metadata?.batch });
+        return {
+            content: [lastChunk, ...cdr],
+            contentSizeInBytes: lastChunk.contents?.length ?? 0,
+        };
+    }
+}
+
+const chunkToBatchMessage = (
+    chunk: IChunkedOp,
+    referenceSequenceNumber: number,
+    metadata: Record<string, unknown> | undefined = undefined,
+): BatchMessage => {
+    const payload: ContainerRuntimeMessage = { type: ContainerMessageType.ChunkedOp, contents: chunk };
+    return {
+        contents: JSON.stringify(payload),
+        deserializedContent: payload,
+        metadata,
+        localOpMetadata: undefined,
+        referenceSequenceNumber,
+    };
 }

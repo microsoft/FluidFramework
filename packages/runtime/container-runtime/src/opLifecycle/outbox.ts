@@ -12,11 +12,14 @@ import { PendingStateManager } from "../pendingStateManager";
 import { BatchManager } from "./batchManager";
 import { BatchMessage, IBatch } from "./definitions";
 import { OpCompressor } from "./opCompressor";
+import { OpSplitter } from "./opSplitter";
 
 export interface IOutboxConfig {
     readonly compressionOptions: ICompressionRuntimeOptions;
+
     // The maximum size of a batch that we can send over the wire.
     readonly maxBatchSizeInBytes: number;
+    readonly chunkSizeInBytes: number;
 };
 
 export interface IOutboxParameters {
@@ -25,6 +28,7 @@ export interface IOutboxParameters {
     readonly containerContext: IContainerContext,
     readonly config: IOutboxConfig,
     readonly compressor: OpCompressor;
+    readonly splitter: OpSplitter;
 }
 
 export class Outbox {
@@ -113,20 +117,26 @@ export class Outbox {
         }
 
         const compressedBatch = this.params.compressor.compressBatch(batch);
-        if (compressedBatch.contentSizeInBytes > this.params.config.maxBatchSizeInBytes) {
-            throw new GenericError(
-                "BatchTooLarge",
-                    /* error */ undefined,
-                {
-                    opSize: batch.contentSizeInBytes,
-                    count: batch.content.length,
-                    limit: this.params.config.maxBatchSizeInBytes,
-                    compressed: true,
-                });
+        if (compressedBatch.contentSizeInBytes <= this.params.config.maxBatchSizeInBytes) {
+            // If we don't reach the maximum supported size of a batch, it safe to be sent as is
+            return compressedBatch;
         }
 
-        // If we don't reach the maximum supported size of a batch, it safe to be sent as is
-        return compressedBatch;
+        if (this.params.config.chunkSizeInBytes < Number.POSITIVE_INFINITY) {
+            // Chunking compressed batches is enabled
+            return this.params.splitter.splitCompressedBatch(compressedBatch);
+        }
+
+        // If we've reached this point, the batch is compressed and larger than the maximum size
+        throw new GenericError(
+            "BatchTooLarge",
+            /* error */ undefined,
+            {
+                opSize: batch.contentSizeInBytes,
+                count: batch.content.length,
+                limit: this.params.config.maxBatchSizeInBytes,
+                compressed: true,
+            });
     }
 
     /**
