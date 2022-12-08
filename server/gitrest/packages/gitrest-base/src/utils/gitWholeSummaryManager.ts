@@ -703,6 +703,13 @@ export class GitWholeSummaryManager {
         const gitTree: IFullGitTree = await buildFullGitTreeFromGitTree(
             parentTree,
             this.repoManager,
+            /** TODO: current problem: when uploading channel in high-io mode
+             * referencing summary version from low-io mode, the sha for the path does not exist
+             * in storage, because it is hidden within a low-io tree blob.
+             * 
+             * potential solution: When in high-io mode, and detecting a low-io summary, write low-io tree to storage
+             * similar to writing into memory?
+             */
             true, /* parseInnerFullGitTrees */
             // We only need shas
             false, /* retrieveBlobs */
