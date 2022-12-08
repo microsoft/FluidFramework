@@ -12,17 +12,17 @@ export class Stats {
     private currentFrameStart = 0;
     private _lastFrameElapsed = 0;
 
-    public endFrame() {
+    public endFrame(): void {
         this.frameCount++;
 
         const nextFrameStart = this.now();
         this._lastFrameElapsed = nextFrameStart - this.currentFrameStart;
         this.currentFrameStart = nextFrameStart;
 
-        const frameFps = 1000.0 / this._lastFrameElapsed;
+        const frameFps = 1000 / this._lastFrameElapsed;
 
         // Note: frameFps can be infinite if the delta from the previous frame is 0 ms.
-        if (isFinite(frameFps)) {
+        if (Number.isFinite(frameFps)) {
             if (frameFps < 18) {
                 this._glitchCount++;
             }
@@ -32,15 +32,15 @@ export class Stats {
         }
     }
 
-    public get smoothFps() { return this._smoothFps; }
+    public get smoothFps(): number { return this._smoothFps; }
 
-    public get totalFps() {
-        return this.frameCount / ((this.now() - this.startTime) / 1000.0);
+    public get totalFps(): number {
+        return this.frameCount / ((this.now() - this.startTime) / 1000);
     }
 
-    public get lastFrameElapsed() { return this._lastFrameElapsed; }
+    public get lastFrameElapsed(): number { return this._lastFrameElapsed; }
 
-    public get glitchCount() { return this._glitchCount; }
+    public get glitchCount(): number { return this._glitchCount; }
 
-    public now() { return Date.now(); }
+    public now(): number { return Date.now(); }
 }

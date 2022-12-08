@@ -24,7 +24,7 @@ export class MonacoRunner extends DataObject {
      * Creates the SharedString and inserts some sample text. create() is called only once
      * per component.
      */
-    protected async initializingFirstTime() {
+    protected async initializingFirstTime(): Promise<void> {
         const codeString = SharedString.create(this.runtime);
         codeString.insertText(0, 'console.log("Hello, world!");');
         this.root.set("text", codeString.handle);

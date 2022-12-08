@@ -4,7 +4,7 @@
  */
 module.exports = {
     "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid"),
+        require.resolve("@fluidframework/eslint-config-fluid/minimal"),
         "prettier",
     ],
     "rules": {

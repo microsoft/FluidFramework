@@ -17,9 +17,9 @@ const yKey = "y";
  * The Coordinate is our implementation of the ICoordinate interface.
  */
 export class Coordinate extends DataObject implements ICoordinate {
-    public static get ComponentName() { return "@fluid-example/coordinate"; }
+    public static get ComponentName(): string { return "@fluid-example/coordinate"; }
 
-    public static getFactory() {
+    public static getFactory(): DataObjectFactory<Coordinate> {
         return Coordinate.factory;
     }
 
@@ -30,12 +30,12 @@ export class Coordinate extends DataObject implements ICoordinate {
         {},
     );
 
-    protected async initializingFirstTime() {
+    protected async initializingFirstTime(): Promise<void> {
         this.root.set(xKey, 0);
         this.root.set(yKey, 0);
     }
 
-    protected async hasInitialized() {
+    protected async hasInitialized(): Promise<void> {
         this.root.on("valueChanged", (changed: IValueChanged) => {
             if (changed.key === xKey || changed.key === yKey) {
                 this.emit("coordinateChanged");
@@ -43,7 +43,7 @@ export class Coordinate extends DataObject implements ICoordinate {
         });
     }
 
-    public get x() {
+    public get x(): number {
         return this.root.get(xKey) ?? 0;
     }
 
@@ -51,7 +51,7 @@ export class Coordinate extends DataObject implements ICoordinate {
         this.root.set(xKey, newX);
     }
 
-    public get y() {
+    public get y(): number {
         return this.root.get(yKey) ?? 0;
     }
 

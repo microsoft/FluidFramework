@@ -22,7 +22,7 @@ const constellationName = "@fluid-example/constellation";
 export class Constellation extends DataObject implements IConstellation {
     private _stars: ICoordinate[] = [];
 
-    public static getFactory() {
+    public static getFactory(): DataObjectFactory<Constellation> {
         return Constellation.factory;
     }
 
@@ -36,11 +36,11 @@ export class Constellation extends DataObject implements IConstellation {
         ]),
     );
 
-    protected async initializingFirstTime() {
+    protected async initializingFirstTime(): Promise<void> {
         this.root.set(starListKey, []);
     }
 
-    protected async hasInitialized() {
+    protected async hasInitialized(): Promise<void> {
         await this.updateStarsFromRoot();
         this.root.on("valueChanged", (changed: IValueChanged) => {
             if (changed.key === starListKey) {
@@ -51,11 +51,11 @@ export class Constellation extends DataObject implements IConstellation {
         });
     }
 
-    public get stars() {
+    public get stars(): ICoordinate[] {
         return this._stars;
     }
 
-    private async updateStarsFromRoot() {
+    private async updateStarsFromRoot(): Promise<void> {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const starHandles = this.root.get<IFluidHandle<ICoordinate>[]>(starListKey)!;
         this._stars = await Promise.all(starHandles.map(async (starHandle) => starHandle.get()));

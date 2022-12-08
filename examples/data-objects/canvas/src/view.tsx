@@ -81,7 +81,7 @@ const ColorPicker: React.FC<IColorPickerProps> = (props: IColorPickerProps) => {
         <div className={`ink-color-picker${show ? " show" : ""}`}>
             {
                 colorPickerColors.map((color, index) => {
-                    const pickColor = () => {
+                    const pickColor = (): void => {
                         choose(color);
                     };
                     return <ColorOption key={index} color={color} choose={pickColor} />;
@@ -97,7 +97,7 @@ interface ICanvasViewProps {
 
 export const CanvasView: React.FC<ICanvasViewProps> = (props: ICanvasViewProps) => {
     const { canvas } = props;
-    const [inkCanvas, setInkCanvas] = useState<InkCanvas | undefined>(undefined);
+    const [inkCanvas, setInkCanvas] = useState<InkCanvas | undefined>();
     const [showColorPicker, setShowColorPicker] = useState<boolean>(false);
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -109,23 +109,23 @@ export const CanvasView: React.FC<ICanvasViewProps> = (props: ICanvasViewProps) 
 
     useEffect(() => {
         if (inkCanvas !== undefined) {
-            const resizeHandler = () => {
+            const resizeHandler = (): void => {
                 inkCanvas.sizeCanvasBackingStore();
             };
             window.addEventListener("resize", resizeHandler);
             inkCanvas.sizeCanvasBackingStore();
-            return () => {
+            return (): void => {
                 window.removeEventListener("resize", resizeHandler);
             };
         }
     }, [inkCanvas]);
 
-    const toggleColorPicker = () => {
+    const toggleColorPicker = (): void => {
         setShowColorPicker(!showColorPicker);
     };
-    const replayInk = inkCanvas?.replay.bind(inkCanvas) ?? (() => {});
-    const clearInk = inkCanvas?.clear.bind(inkCanvas) ?? (() => {});
-    const chooseColor = (color: IColor) => {
+    const replayInk = inkCanvas?.replay.bind(inkCanvas) ?? ((): void => {});
+    const clearInk = inkCanvas?.clear.bind(inkCanvas) ?? ((): void => {});
+    const chooseColor = (color: IColor): void => {
         inkCanvas?.setPenColor(color);
         setShowColorPicker(false);
     };

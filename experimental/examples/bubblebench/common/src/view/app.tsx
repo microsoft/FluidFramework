@@ -9,12 +9,12 @@ import { Stats } from "../stats";
 import { IAppState, IBubble } from "../types";
 import { StageView } from "./stage";
 
-const formatFloat = (n: number) => Math.round(n * 10) / 10;
+const formatFloat = (n: number): number => Math.round(n * 10) / 10;
 interface IAppProps {
     app: IAppState;
 }
 
-function move(bubble: IBubble, width: number, height: number) {
+function move(bubble: IBubble, width: number, height: number): void {
     let { x, y } = bubble;
     const { vx, vy, r } = bubble;
 
