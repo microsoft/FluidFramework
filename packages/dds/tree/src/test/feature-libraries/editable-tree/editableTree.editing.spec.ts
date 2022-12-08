@@ -44,14 +44,12 @@ import {
     Float64,
     Int32,
     int32Schema,
-    Phones,
     SimplePhones,
     simplePhonesSchema,
     getPerson,
     globalFieldSymbolSequencePhones,
     Address,
 } from "./mockData";
-import { ContextuallyTypedNodeData } from "../../../feature-libraries/editable-tree/utilities";
 
 const globalFieldKey: GlobalFieldKey = brand("foo");
 const globalFieldSymbol = symbolFromKey(globalFieldKey);

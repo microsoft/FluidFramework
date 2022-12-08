@@ -29,7 +29,7 @@ import { DefaultChangeset, DefaultEditBuilder } from "../defaultChangeFamily";
 import { runSynchronousTransaction } from "../defaultTransaction";
 import { singleMapTreeCursor } from "../mapTreeCursor";
 import { ProxyTarget, EditableField, proxifyField, UnwrappedEditableField } from "./editableTree";
-import { applyFieldTypesFromContext, ContextuallyTypedNodeData } from "./utilities";
+import { applyFieldTypesFromContext, ContextuallyTypedNodeData, isArrayLike } from "./utilities";
 
 /**
  * A common context of a "forest" of EditableTrees.
@@ -154,33 +154,24 @@ export class ProxyContext implements EditableTreeContext {
         return this.getRoot(true);
     }
 
-    // TODO: remove or fix this.
-    // public set unwrappedRoot(value: ContextuallyTypedNodeData) {
-    //     const rootField = this.getRoot(false);
-    //     const mapTrees = applyFieldTypesFromContext(this.schema, rootField.fieldSchema, value);
-    //     const cursors = mapTrees.map(singleMapTreeCursor);
-    //     if (rootField.length > 0) {
-    //         rootField.replaceNodes(0, cursors);
-    //     } else {
-    //         rootField.insertNodes(0, cursors);
-    //     }
-    // }
-
-    public get root(): EditableField {
-        return this.getRoot(false);
-    }
-
-    public set root(value: ContextuallyTypedNodeData | EditableField) {
+    public set unwrappedRoot(value: ContextuallyTypedNodeData | undefined) {
         const rootField = this.getRoot(false);
-        assert(Array.isArray(value), "expected array data");
         const mapTrees = applyFieldTypesFromContext(this.schema, rootField.fieldSchema, value);
         const cursors = mapTrees.map(singleMapTreeCursor);
-
         if (rootField.length > 0) {
             rootField.replaceNodes(0, cursors);
         } else {
             rootField.insertNodes(0, cursors);
         }
+    }
+
+    public get root(): EditableField {
+        return this.getRoot(false);
+    }
+
+    public set root(value: ContextuallyTypedNodeData | undefined) {
+        assert(isArrayLike(value), "expected array data");
+        this.unwrappedRoot = value;
     }
 
     private getRoot(unwrap: false): EditableField;

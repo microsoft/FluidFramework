@@ -19,8 +19,6 @@ import {
     lookupGlobalFieldSchema,
     TreeSchemaIdentifier,
     lookupTreeSchema,
-    TreeValue,
-    GlobalFieldKeySymbol,
     TreeTypeSet,
     MapTree,
     symbolIsFieldKey,
@@ -185,6 +183,15 @@ export function keyIsValidIndex(key: string | number, length: number): boolean {
     return Number.isInteger(index) && 0 <= index && index < length;
 }
 
+export const arrayLikeMarkerSymbol: unique symbol = Symbol("editable-tree:arrayLikeMarker");
+
+/**
+ * Can be used to mark a type which works like an array, but is not compatible with Array.isArray.
+ */
+export interface MarkedArrayLike<T> extends ArrayLike<T> {
+    readonly [arrayLikeMarkerSymbol]: true;
+}
+
 /**
  * Content of a tree which needs external schema information to interpret.
  *
@@ -195,16 +202,33 @@ export function keyIsValidIndex(key: string | number, length: number): boolean {
 export type ContextuallyTypedNodeData =
     | ContextuallyTypedNodeDataObject
     | PrimitiveValue
-    // TODO: this should be made compatible with EditableField (use ArrayLike), but that would break Array.isArray checking.
-    | ContextuallyTypedNodeData[];
+    | readonly ContextuallyTypedNodeData[]
+    | MarkedArrayLike<ContextuallyTypedNodeData>;
+
+export function isArrayLike(
+    data: ContextuallyTypedNodeData | undefined,
+): data is readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData> {
+    if (typeof data !== "object") {
+        return false;
+    }
+    return (
+        Array.isArray(data) ||
+        (data as Partial<MarkedArrayLike<ContextuallyTypedNodeData>>)[arrayLikeMarkerSymbol] ===
+            true
+    );
+}
 
 /**
  * Object case of {@link ContextuallyTypedNodeData}.
  */
 export interface ContextuallyTypedNodeDataObject {
-    readonly [valueSymbol]?: TreeValue;
+    readonly [valueSymbol]?: Value;
     readonly [typeNameSymbol]?: TreeSchemaIdentifier;
-    readonly [key: string | GlobalFieldKeySymbol]: ContextuallyTypedNodeData;
+    // Allow explicit undefined for compatibility with EditableTree, and type-safety on read.
+    // TODO: make sure explicit undefined is actually handled correctly.
+    readonly [key: FieldKey]: ContextuallyTypedNodeData | undefined;
+    // Allow unbranded local field keys and a convenience for literals.
+    readonly [key: string]: ContextuallyTypedNodeData | undefined;
 }
 
 /**
@@ -221,7 +245,7 @@ function shallowCompatibilityTest(
     if (isPrimitiveValue(data)) {
         return allowsPrimitiveValueType(data, schema);
     }
-    if (Array.isArray(data)) {
+    if (isArrayLike(data)) {
         const primary = getPrimaryField(schema);
         return (
             primary !== undefined &&
@@ -265,7 +289,7 @@ export function applyTypesFromContext(
         assertPrimitiveValueType(data, schema);
         return { value: data, type, fields: new Map() };
     }
-    if (Array.isArray(data)) {
+    if (isArrayLike(data)) {
         const primary = getPrimaryField(schema);
         assert(
             primary !== undefined,
@@ -302,12 +326,21 @@ export function applyTypesFromContext(
 export function applyFieldTypesFromContext(
     schemaData: SchemaDataAndPolicy,
     field: FieldSchema,
-    data: ContextuallyTypedNodeData,
+    data: ContextuallyTypedNodeData | undefined,
 ): MapTree[] {
     const multiplicity = getFieldKind(field).multiplicity;
-    if (Array.isArray(data)) {
+    if (data === undefined) {
+        assert(
+            multiplicity === Multiplicity.Forbidden || multiplicity === Multiplicity.Optional,
+            "undefined provided for field that does not support undefined",
+        );
+        return [];
+    }
+    if (isArrayLike(data)) {
         assert(multiplicity === Multiplicity.Sequence, "got array for non sequence field");
-        const children = data.map((child) => applyTypesFromContext(schemaData, field.types, child));
+        const children = Array.from(data, (child) =>
+            applyTypesFromContext(schemaData, field.types, child),
+        );
         return children;
     }
     assert(
