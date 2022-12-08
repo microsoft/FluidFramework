@@ -605,15 +605,6 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         });
 
         describe("References to unreferenced nodes from another unreferenced node", () => {
-            /**
-             * Function that asserts the given value is not true. Used in these tests to demonstrate that because of
-             * a bug we are not getting the expected results. Once the bug is fixed, these asserts should start working
-             * as expected.
-             */
-            function assertNotTrue(value: boolean, message: string) {
-                assert(!value, message);
-            }
-
             /*
              * Validates that we can detect references that are added from an unreferenced node to another.
              * 1. Summary 1 at t1. V = [A*, B, C]. E = []. B and C have unreferenced time t1.
@@ -621,7 +612,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
              * 3. Summary 2 at t2. V = [A*, B, C]. E = [B -> C]. C has unreferenced time t2.
              * Validates that the unreferenced time for C is t2 which is > t1.
              */
-            it(`Scenario 5 - Reference added to unreferenced node`, async () => {
+            it(`Scenario 1 - Reference added to unreferenced node`, async () => {
                 const summarizer = await createSummarizer(provider, mainContainer);
 
                 // Create data stores B and C and mark them referenced as follows by storing their handles as follows:
@@ -658,7 +649,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
                 assert(dsBTime2 === dsBTime1, `B's timestamp should be the same`);
 
                 // The following assert is currently not true due to a bug. Will be updated when the bug is fixed.
-                assertNotTrue(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
+                assert(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
             });
 
             /*
@@ -712,8 +703,8 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
                 assert(dsBTime2 === dsBTime1, `B's timestamp should be the same`);
 
                 // The following asserts are currently not true due to a bug. Will be updated when the bug is fixed.
-                assertNotTrue(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
-                assertNotTrue(dsDTime2 !== undefined && dsDTime2 > dsDTime1, `D's timestamp should have updated`);
+                assert(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
+                assert(dsDTime2 !== undefined && dsDTime2 > dsDTime1, `D's timestamp should have updated`);
             });
 
             /*
@@ -726,7 +717,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
              * 4. Summary 2 at t2. V = [A*, B, C]. E = [B -> C]. C and D have unreferenced time t2.
              * Validates that the unreferenced time for C and D is t2 which is > t1.
              */
-            it(`Scenario 2 - Reference added to a list of unreferenced nodes and a reference is removed`, async () => {
+            it(`Scenario 3 - Reference added to a list of unreferenced nodes and a reference is removed`, async () => {
                 const summarizer = await createSummarizer(provider, mainContainer);
 
                 // Create data stores B, C and D mark them referenced as follows by storing their handles as follows:
@@ -772,8 +763,8 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
                 assert(dsBTime2 === dsBTime1, `B's timestamp should be the same`);
 
                 // The following asserts are currently not true due to a bug. Will be updated when the bug is fixed.
-                assertNotTrue(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
-                assertNotTrue(dsDTime2 !== undefined && dsDTime2 > dsDTime1, `D's timestamp should have updated`);
+                assert(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
+                assert(dsDTime2 !== undefined && dsDTime2 > dsDTime1, `D's timestamp should have updated`);
             });
         });
     });
