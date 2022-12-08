@@ -18,8 +18,8 @@ export {
 	TimestampEncoder,
 } from "./encoders";
 export {
-	makeGzipEncoder,
-} from "./gzipEncoder";
+	makeLZ4Encoder,
+} from "./lz4Encoder";
 export {
 	InternedStringId,
 	MutableStringInterner,

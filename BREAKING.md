@@ -60,6 +60,10 @@ The following legacy events and event parameters have been marked as deprecated 
 There will be no replacement for this property.
 
 ## 2.0.0-internal.2.1.0 Breaking changes
+- [Package @fluid-experimental/task-manager renamed to @fluidframework/task-manager](#Package-fluid-experimental/task-manager-renamed-to-fluidframework/task-manager)
+
+### Package @fluid-experimental/task-manager renamed to @fluidframework/task-manager
+The package `@fluid-experimental/task-manager` is no longer experimental and has therefore been renamed to `@fluidframework/task-manager`. Update all imports to the new package name to accommodate this change.
 
 # 2.0.0-internal.2.0.0
 

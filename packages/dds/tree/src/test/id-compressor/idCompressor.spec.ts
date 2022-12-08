@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { v4, v5 } from "uuid";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { take } from "@fluid-internal/stochastic-test-utils";
 import {
     IdCompressor,
@@ -23,7 +24,6 @@ import {
     stableIdFromNumericUuid,
     getIds,
     assertIsStableId,
-    generateStableId,
     isStableId,
 } from "../../id-compressor";
 import type { IdCreationRange, UnackedLocalId } from "../../id-compressor";
@@ -40,7 +40,6 @@ import {
     roundtrip,
     sessionNumericUuids,
     makeOpGenerator,
-    attributionIds,
     generateCompressedIds,
 } from "./idCompressorTestUtilities";
 import { expectDefined } from "./testCommon";
@@ -50,15 +49,15 @@ describe("IdCompressor", () => {
         const compressor = createCompressor(Client.Client1, 1);
         assert.throws(
             () => (compressor.clusterCapacity = -1),
-            Error("Clusters must have a positive capacity"),
+            (e) => validateAssertionError(e, "Clusters must have a positive capacity"),
         );
         assert.throws(
             () => (compressor.clusterCapacity = 0),
-            Error("Clusters must have a positive capacity"),
+            (e) => validateAssertionError(e, "Clusters must have a positive capacity"),
         );
         assert.throws(
             () => (compressor.clusterCapacity = IdCompressor.maxClusterSize + 1),
-            Error("Clusters must not exceed max cluster size"),
+            (e) => validateAssertionError(e, "Clusters must not exceed max cluster size"),
         );
     });
 
@@ -112,11 +111,11 @@ describe("IdCompressor", () => {
             const compressor = createCompressor(Client.Client1);
             assert.throws(
                 () => compressor.decompress(-1 as LocalCompressedId),
-                Error(errorMessage),
+                (e) => validateAssertionError(e, errorMessage),
             );
             assert.throws(
                 () => compressor.decompress(compressor.reservedIdCount as FinalCompressedId),
-                Error(errorMessage),
+                (e) => validateAssertionError(e, errorMessage),
             );
         });
 
@@ -306,71 +305,6 @@ describe("IdCompressor", () => {
         });
     });
 
-    it("has default attribution ID", () => {
-        const compressor = createCompressor(Client.Client1);
-        expectDefined(compressor.attributionId);
-    });
-
-    it("correctly uses explicit attribution ID", () => {
-        const attributionId = generateStableId();
-        const compressor = createCompressor(Client.Client1, 5, attributionId);
-        assert.equal(compressor.attributionId, attributionId);
-        const range1 = compressor.takeNextCreationRange();
-        assert.equal(compressor.attributionId, attributionId);
-        assert.equal(range1.attributionId, attributionId);
-    });
-
-    it("only sends attribution ID until the first ID is allocated", () => {
-        const compressor = createCompressor(Client.Client1, 5, generateStableId());
-        let range = compressor.takeNextCreationRange();
-        expectDefined(range.attributionId);
-        range = compressor.takeNextCreationRange();
-        expectDefined(range.attributionId);
-        compressor.generateCompressedId();
-        range = compressor.takeNextCreationRange();
-        expectDefined(range.attributionId);
-        range = compressor.takeNextCreationRange();
-        assert.equal(range.attributionId, undefined);
-    });
-
-    it("does not send default attribution ID", () => {
-        const compressor = createCompressor(Client.Client1);
-        const range = compressor.takeNextCreationRange();
-        assert.equal(range.attributionId, undefined);
-    });
-
-    it("attributes correctly after unification", () => {
-        const compressor1 = createCompressor(
-            Client.Client1,
-            undefined,
-            attributionIds.get(Client.Client1),
-        );
-        const compressor2 = createCompressor(
-            Client.Client2,
-            undefined,
-            attributionIds.get(Client.Client2),
-        );
-        const id1 = compressor1.generateCompressedId("override");
-        const id2 = compressor2.generateCompressedId("override");
-        const range1 = compressor1.takeNextCreationRange();
-        const range2 = compressor2.takeNextCreationRange();
-        compressor1.finalizeCreationRange(range2); // 2 gets sequenced first
-        compressor2.finalizeCreationRange(range2);
-        compressor1.finalizeCreationRange(range1);
-        compressor2.finalizeCreationRange(range1);
-        assert.equal(compressor1.normalizeToOpSpace(id1), compressor2.normalizeToOpSpace(id2));
-        assert.equal(compressor1.attributeId(id1), attributionIds.get(Client.Client2));
-        assert.equal(
-            compressor1.attributeId(compressor1.recompress(compressor2.decompress(id2))),
-            attributionIds.get(Client.Client2),
-        );
-        assert.equal(
-            compressor2.attributeId(compressor2.recompress(compressor1.decompress(id1))),
-            attributionIds.get(Client.Client2),
-        );
-        assert.equal(compressor2.attributeId(id2), attributionIds.get(Client.Client2));
-    });
-
     describe("can produce a creation range", () => {
         const tests: {
             title: string;
@@ -487,7 +421,7 @@ describe("IdCompressor", () => {
             rangeCompressor.finalizeCreationRange(batchRange);
             assert.throws(
                 () => rangeCompressor.finalizeCreationRange(batchRange),
-                Error("Ranges finalized out of order."),
+                (e) => validateAssertionError(e, "Ranges finalized out of order."),
             );
 
             // Make a new compressor, as the first one will be left in a bad state
@@ -498,7 +432,7 @@ describe("IdCompressor", () => {
             explicitCompressor.finalizeCreationRange(explicitRange);
             assert.throws(
                 () => explicitCompressor.finalizeCreationRange(explicitRange),
-                Error("Ranges finalized out of order."),
+                (e) => validateAssertionError(e, "Ranges finalized out of order."),
             );
         });
 
@@ -510,7 +444,7 @@ describe("IdCompressor", () => {
             const secondRange = compressor.takeNextCreationRange();
             assert.throws(
                 () => compressor.finalizeCreationRange(secondRange),
-                Error("Ranges finalized out of order."),
+                (e) => validateAssertionError(e, "Ranges finalized out of order."),
             );
         });
 
@@ -532,9 +466,11 @@ describe("IdCompressor", () => {
             };
             assert.throws(
                 () => compressor1.finalizeCreationRange(largeRange2),
-                Error(
-                    "The number of allocated final IDs must not exceed the JS maximum safe integer.",
-                ),
+                (e) =>
+                    validateAssertionError(
+                        e,
+                        "The number of allocated final IDs must not exceed the JS maximum safe integer.",
+                    ),
             );
         });
     });
@@ -641,10 +577,13 @@ describe("IdCompressor", () => {
                 assert.equal(finalIdForReserved, reservedId);
             }
             const outOfBoundsError = "Reserved Id index out of bounds";
-            assert.throws(() => compressor.getReservedId(-1), Error(outOfBoundsError));
+            assert.throws(
+                () => compressor.getReservedId(-1),
+                (e) => validateAssertionError(e, outOfBoundsError),
+            );
             assert.throws(
                 () => compressor.getReservedId(compressor.reservedIdCount),
-                Error(outOfBoundsError),
+                (e) => validateAssertionError(e, outOfBoundsError),
             );
         });
 
@@ -751,7 +690,11 @@ describe("IdCompressor", () => {
             const normalized = compressor1.normalizeToOpSpace(compressor1.generateCompressedId());
             assert.throws(
                 () => compressor2.normalizeToSessionSpace(normalized, compressor1.localSessionId),
-                Error("No IDs have ever been finalized by the supplied session."),
+                (e) =>
+                    validateAssertionError(
+                        e,
+                        "No IDs have ever been finalized by the supplied session.",
+                    ),
             );
         });
 
@@ -817,16 +760,8 @@ describe("IdCompressor", () => {
         });
 
         it("correctly deserializes and resumes a session", () => {
-            const compressor1 = createCompressor(
-                Client.Client1,
-                undefined,
-                attributionIds.get(Client.Client1),
-            );
-            const compressor2 = createCompressor(
-                Client.Client2,
-                undefined,
-                attributionIds.get(Client.Client2),
-            );
+            const compressor1 = createCompressor(Client.Client1, undefined);
+            const compressor2 = createCompressor(Client.Client2, undefined);
             compressor1.generateCompressedId();
             const creationRange = compressor1.takeNextCreationRange();
             compressor1.finalizeCreationRange(creationRange);
@@ -843,21 +778,6 @@ describe("IdCompressor", () => {
                     false, // don't compare local state
                 ),
             );
-        });
-
-        it("can serialize local state with attribution but no IDs", () => {
-            // This is a regression test for the scenario in which an ID compressor sends its first range, which
-            // includes its attribution ID, but has made no IDs. An incorrect optimization when serializing had
-            // omitted local state if no IDs had been allocated, but then also dropped the `sentAttribution` flag
-            const compressor = createCompressor(
-                Client.Client1,
-                undefined,
-                attributionIds.get(Client.Client1),
-            );
-            const range = compressor.takeNextCreationRange();
-            assert.equal(range.ids, undefined);
-            assert.equal(range.attributionId, attributionIds.get(Client.Client1));
-            expectSerializes(compressor);
         });
     });
 
@@ -897,7 +817,11 @@ describe("IdCompressor", () => {
                 network.allocateAndSendIds(Client.Client1, 1); // new cluster
                 assert.throws(
                     () => network.deliverOperations(Client.Client1),
-                    Error(`Override '${nextUuid}' collides with another allocated UUID.`),
+                    (e) =>
+                        validateAssertionError(
+                            e,
+                            `Override '${nextUuid}' collides with another allocated UUID.`,
+                        ),
                 );
             },
         );
@@ -914,77 +838,16 @@ describe("IdCompressor", () => {
             network.allocateAndSendIds(Client.Client1, expansion, { 0: nextUuid });
             assert.throws(
                 () => network.deliverOperations(DestinationClient.All),
-                Error(`Override '${nextUuid}' collides with another allocated UUID.`),
+                (e) =>
+                    validateAssertionError(
+                        e,
+                        `Override '${nextUuid}' collides with another allocated UUID.`,
+                    ),
             );
         });
     });
 
     describeNetwork("Networked", (itNetwork) => {
-        describe("can attribute", () => {
-            itNetwork("local IDs before and after being finalized", (network) => {
-                const compressor = network.getCompressor(Client.Client1);
-                network.allocateAndSendIds(Client.Client1, 1);
-                const id = network.getIdLog(Client.Client1)[0].id;
-                assert.equal(compressor.attributeId(id), attributionIds.get(Client.Client1));
-                network.deliverOperations(Client.Client1);
-                assert.equal(compressor.attributeId(id), attributionIds.get(Client.Client1));
-            });
-
-            itNetwork("final IDs from a remote session", (network) => {
-                const compressor = network.getCompressor(Client.Client1);
-                network.allocateAndSendIds(Client.Client2, 1);
-                network.deliverOperations(DestinationClient.All);
-                const id = network.getSequencedIdLog(Client.Client1)[0].id;
-                assert.equal(compressor.attributeId(id), attributionIds.get(Client.Client2));
-            });
-
-            itNetwork("final IDs from multiple remote sessions", 1, (network) => {
-                const compressor = network.getCompressor(Client.Client1);
-                // Ensure multiple clusters are made by each client. Cluster size === 1.
-                network.allocateAndSendIds(Client.Client1, compressor.clusterCapacity);
-                network.allocateAndSendIds(Client.Client2, compressor.clusterCapacity);
-                network.allocateAndSendIds(Client.Client3, compressor.clusterCapacity);
-                network.allocateAndSendIds(Client.Client1, compressor.clusterCapacity);
-                network.allocateAndSendIds(Client.Client2, compressor.clusterCapacity);
-                network.allocateAndSendIds(Client.Client3, compressor.clusterCapacity);
-                network.deliverOperations(DestinationClient.All);
-                const log = network.getSequencedIdLog(Client.Client1);
-                assert.equal(compressor.attributeId(log[0].id), attributionIds.get(Client.Client1));
-                assert.equal(compressor.attributeId(log[1].id), attributionIds.get(Client.Client2));
-                assert.equal(compressor.attributeId(log[2].id), attributionIds.get(Client.Client3));
-                assert.equal(compressor.attributeId(log[3].id), attributionIds.get(Client.Client1));
-                assert.equal(compressor.attributeId(log[4].id), attributionIds.get(Client.Client2));
-                assert.equal(compressor.attributeId(log[5].id), attributionIds.get(Client.Client3));
-            });
-
-            itNetwork("unified IDs", (network) => {
-                const override = "override";
-                const allTargets = network.getTargetCompressors(DestinationClient.All);
-                for (const [client, compressor] of allTargets) {
-                    network.allocateAndSendIds(client, 1, { 0: override });
-                    for (const { id } of network.getIdLog(client)) {
-                        assert.equal(compressor.attributeId(id), attributionIds.get(client));
-                    }
-                }
-                network.deliverOperations(DestinationClient.All);
-                const firstTarget = allTargets[0][0];
-                for (const [client, compressor] of allTargets) {
-                    for (const { id } of network.getIdLog(client)) {
-                        assert.equal(compressor.attributeId(id), attributionIds.get(firstTarget));
-                    }
-                }
-            });
-
-            itNetwork("eagerly generated final IDs that are not finalized", (network) => {
-                const compressor = network.getCompressor(Client.Client1);
-                network.allocateAndSendIds(Client.Client1, 1);
-                network.deliverOperations(DestinationClient.All);
-                const ids = network.allocateAndSendIds(Client.Client1, 1);
-                const id = compressor.normalizeToSessionSpace(ids[0], compressor.localSessionId);
-                assert.equal(compressor.attributeId(id), attributionIds.get(Client.Client1));
-            });
-        });
-
         itNetwork(
             "upholds the invariant that IDs always decompress to the same UUID",
             2,
@@ -1079,9 +942,11 @@ describe("IdCompressor", () => {
                 const id = opSpaceIds[0];
                 const getSessionNormalizedId = () =>
                     compressor2.normalizeToSessionSpace(id, compressor1.localSessionId);
-                assert.throws(
-                    getSessionNormalizedId,
-                    Error("No IDs have ever been finalized by the supplied session."),
+                assert.throws(getSessionNormalizedId, (e) =>
+                    validateAssertionError(
+                        e,
+                        "No IDs have ever been finalized by the supplied session.",
+                    ),
                 );
                 network.deliverOperations(Client.Client2);
                 assert(isFinalId(getSessionNormalizedId()));
@@ -1325,7 +1190,8 @@ describe("IdCompressor", () => {
             const emptyId = (id + 1) as FinalCompressedId;
             assert.throws(
                 () => network.getCompressor(Client.Client2).decompress(emptyId),
-                Error("Compressed ID was not generated by this compressor"),
+                (e) =>
+                    validateAssertionError(e, "Compressed ID was not generated by this compressor"),
             );
         });
 
@@ -1517,7 +1383,7 @@ describe("IdCompressor", () => {
                                 serializedWithoutLocalState,
                                 sessionIds.get(Client.Client2),
                             ),
-                        Error("Cannot resume existing session."),
+                        (e) => validateAssertionError(e, "Cannot resume existing session."),
                     );
                 },
             );

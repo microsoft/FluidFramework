@@ -22,4 +22,4 @@ export {
 
 export { EditableTreeContext, getEditableTreeContext } from "./editableTreeContext";
 
-export { PrimitiveValue, isPrimitiveValue, isPrimitive } from "./utilities";
+export { PrimitiveValue, isPrimitiveValue, isPrimitive, getPrimaryField } from "./utilities";
