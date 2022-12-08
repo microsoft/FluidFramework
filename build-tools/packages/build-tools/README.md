@@ -31,7 +31,7 @@ To run that version, just do one of:
 -   `npm i` in the root, and use the npm scripts that call it (ex: `build:fast`)
 -   globally install that specific version of `@fluidframework/build-tools` and call its binaries directly (ex `fluid-build`)
 
-There are several also ways to use the local version of `@fluidframework/build-tools` from within the repo.
+There are also several ways to use the local version of `@fluidframework/build-tools` from within the repo.
 Just build it (as in "Setup") then do one of:
 
 -   Use [npm link](https://docs.npmjs.com/cli/v8/commands/npm-link) with this package to override the version of it used in the root package (which is the `client` lerna package, but often used to build other as well). This will make scripts like `build:fast` use the linked version.
