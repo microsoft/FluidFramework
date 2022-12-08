@@ -160,27 +160,22 @@ export class DocumentDeltaConnection
             assert((this.listeners(event).length !== 0) === this.trackedListeners.has(event), 0x20b /* "mismatch" */);
             if (!this.trackedListeners.has(event)) {
                 let listener: (...args: any[]) => void;
-                switch (event) {
-                    case "op": {
-                        listener = (docId: string, messages: ISequencedDocumentMessage[]) => {
-                            if (!this.lightOpAcksEnabled) {
-                                this.emit(event, docId, messages);
-                            } else {
-                                this.emit(event, docId, messages.map((message) => {
-                                    // Repopulate op contents if applicable
-                                    if (this.clientId === message.clientId && this.opContent.has(message.clientSequenceNumber)) {
-                                        message.contents = this.opContent.get(message.clientSequenceNumber);
-                                        this.opContent.delete(message.clientSequenceNumber);
-                                    }
-                                    return message;
-                                }));
+
+                // eslint-disable-next-line unicorn/prefer-ternary
+                if (event === "op" && this.lightOpAcksEnabled) {
+                    listener = (docId: string, messages: ISequencedDocumentMessage[]) => {
+                        this.emit(event, docId, messages.map((message) => {
+                            // Repopulate op contents if applicable
+                            if (this.clientId === message.clientId) {
+                                assert(this.opContent.has(message.clientSequenceNumber), "Message contents not saved");
+                                message.contents = this.opContent.get(message.clientSequenceNumber);
+                                this.opContent.delete(message.clientSequenceNumber);
                             }
-                        };
-                        break;
-                    }
-                    default: {
-                        listener = (...args: any[]) => { this.emit(event, ...args); };
-                    }
+                            return message;
+                        }));
+                    };
+                } else {
+                    listener = (...args: any[]) => { this.emit(event, ...args); };
                 }
 
                 this.addTrackedListener(event, listener);
