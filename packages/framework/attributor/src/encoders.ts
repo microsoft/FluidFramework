@@ -90,7 +90,7 @@ export class AttributorSerializer implements IAttributorSerializer {
 		assert(keys.length === timestamps.length && timestamps.length === attributionRefs.length,
 			0x4b1 /* serialized attribution columns should have the same length */);
 		const factory = this.registry.get(type);
-		assert(factory !== undefined, `Snapshot loaded with attributor type ${type} which is missing in the registry.`);
+		assert(factory !== undefined, `Snapshot loaded with attributor type which is missing in the registry.`);
 		const entries = new Array(keys.length);
 		for (let i = 0; i < keys.length; i++) {
 			const key = keys[i];
