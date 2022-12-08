@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Stack, StackItem, IconButton, IStackItemStyles } from "@fluentui/react";
+import { DefaultPalette, Stack, StackItem, Icon, IStackItemStyles } from "@fluentui/react";
 import React from "react";
 
 import { IClient } from "@fluidframework/protocol-definitions";
@@ -162,38 +162,45 @@ function HistoryView(props: HistoryViewProps): React.ReactElement {
 	const reversedHistoryLog = [...history].reverse();
 
 	const historyViews: React.ReactElement[] = [];
+
 	for (const changeEntry of reversedHistoryLog) {
 		const changeTimeStamp = new Date(changeEntry.timestamp);
 		const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
 
         const accordianBackgroundColor: IStackItemStyles = {
             root: {
-                background: changeEntry.changeKind === "added" ? "lightgreen" : "orange",
+                background: changeEntry.changeKind === "added" ? "#90ee90" : "#ed1d24",
+                borderStyle: "solid",
+                borderWidth: 1,
+                borderColor: DefaultPalette.neutralTertiary,
                 padding: 3
             }
         }
 
+        const iconStyle: IStackItemStyles = {
+            root: {
+                padding: 10
+            }
+        }
+
 		historyViews.push(
-            <Stack horizontal={true} styles={accordianBackgroundColor}>
-                <StackItem>
-                    <IconButton
-                        iconProps={{
-                            iconName: changeEntry.changeKind === "added" ? "CirclePlus" : "SkypeCircleMinus"
-                        }}
-                    />
-                </StackItem>
-                <StackItem>
-                    <div key={`${changeEntry.clientId}-${changeEntry.changeKind}`}>
-                        <b>Client ID: </b>
-                        {changeEntry.clientId}
-                        <br />
-                        <b>Time: </b>{" "}
-                        {wasChangeToday ? changeTimeStamp.toTimeString() : changeTimeStamp.toDateString()}
-                        <br />
-                        <b>Type: </b> {changeEntry.changeKind}
-                    </div>
-                </StackItem>
-            </Stack>
+            <div>
+                <Stack horizontal={true} styles={accordianBackgroundColor}>
+                    <StackItem styles={iconStyle}>
+                        <Icon iconName={changeEntry.changeKind === "added" ? "CirclePlus" : "SkypeCircleMinus"}/>
+                    </StackItem>
+                    <StackItem>
+                        <div key={`${changeEntry.clientId}-${changeEntry.changeKind}`}>
+                            <b>Client ID: </b>
+                            {changeEntry.clientId}
+                            <br />
+                            <b>Time: </b>{" "}
+                            {wasChangeToday ? changeTimeStamp.toTimeString() : changeTimeStamp.toDateString()}
+                            <br />
+                        </div>
+                    </StackItem>
+                </Stack>
+            </div>
 		);
 	}
 
