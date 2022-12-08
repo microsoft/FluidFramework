@@ -358,7 +358,7 @@ export class TestClient extends Client {
         return fastPathResult;
     }
 
-    protected findReconnectionPosition(segment: ISegment, localSeq: number): number {
+    public findReconnectionPosition(segment: ISegment, localSeq: number): number {
         this.findReconnectionPositionSegment = segment;
         const fasterComputedPosition = super.findReconnectionPosition(segment, localSeq);
 

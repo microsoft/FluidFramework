@@ -21,7 +21,6 @@ import {
     CollaborationWindow,
     compareStrings,
     IConsensusInfo,
-    IMergeNode,
     ISegment,
     ISegmentAction,
     Marker,
@@ -716,7 +715,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
      * @param segment - The segment to find the position for
      * @param localSeq - The localSeq to find the position of the segment at
      */
-    protected findReconnectionPosition(segment: ISegment, localSeq: number) {
+    public findReconnectionPosition(segment: ISegment, localSeq: number) {
         assert(localSeq <= this._mergeTree.collabWindow.localSeq, 0x032 /* "localSeq greater than collab window" */);
         const { currentSeq, clientId } = this.getCollabWindow();
         return this._mergeTree.getPosition(segment, currentSeq, clientId, localSeq);
@@ -729,7 +728,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
      * If the position refers to a segment/offset that was removed by some operation between `seqNumberFrom` and
      * the current sequence number, returns undefined.
      */
-    public rebasePositionWithoutSegmentSlide(
+    public rebasePosition(
         pos: number,
         seqNumberFrom: number,
         localSeq: number,
@@ -746,53 +745,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
         assert(offset !== undefined && 0 <= offset && offset < segment.cachedLength, 0x426 /* Invalid offset */);
         return this.findReconnectionPosition(segment, localSeq) + offset;
-    }
-
-    /**
-     * Rebases a (local) position from the perspective `{ seq: seqNumberFrom, localSeq }` to the perspective
-     * of the current sequence number. This is desirable when rebasing operations for reconnection.
-     *
-     * If the position refers to a segment/offset that was removed by some operation between `seqNumberFrom` and
-     * the current sequence number, the returned position will align with the position of a reference given
-     * `SlideOnRemove` semantics.
-     *
-     * If a reference was initially given `StayOnRemove` semantics, with intent to later change to `SlideOnRemove`,
-     * that isn't equivalent, and so local bookkeeping needs to be updated.
-     *
-     * If the position has slid off and there is no nearest position (i.e. the
-     * tree is empty), returns `DetachedReferencePosition`
-     */
-    public rebasePosition(
-        pos: number,
-        seqNumberFrom: number,
-        localSeq: number,
-    ): number {
-        assert(localSeq <= this._mergeTree.collabWindow.localSeq, 0x300 /* localSeq greater than collab window */);
-        const { clientId } = this.getCollabWindow();
-        let { segment, offset } = this._mergeTree.getContainingSegment(pos, seqNumberFrom, clientId, localSeq);
-        if (segment === undefined && offset === undefined) {
-            // getContainingSegment will only return non-removed segments. This means the position was past
-            // all non-removed segments in the tree, so we take the last one instead as an approximation.
-            let finalSegment: IMergeNode = this._mergeTree.root;
-            while (!finalSegment.isLeaf()) {
-                finalSegment = finalSegment.children[finalSegment.childCount - 1];
-            }
-            segment = finalSegment;
-            offset = 0;
-        }
-
-        // if segment is undefined, it slid off the string
-        assert(segment !== undefined, 0x302 /* No segment found */);
-
-        const segoff = this.getSlideToSegment({ segment, offset }) ?? segment;
-
-        // case happens when rebasing op, but concurrently entire string has been deleted
-        if (segoff.segment === undefined || segoff.offset === undefined) {
-            return DetachedReferencePosition;
-        }
-
-        assert(offset !== undefined && 0 <= offset && offset < segment.cachedLength, 0x303 /* Invalid offset */);
-        return this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
     }
 
     private resetPendingDeltaToOps(
@@ -1126,9 +1078,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         }
     }
 
-    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage, localSeq?: number) {
+    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage, localSeq?: number, seqNumberFrom?: number, clientId?: number) {
         const args = this.getClientSequenceArgsForMessage(op);
-        return this._mergeTree.getContainingSegment<T>(pos, args.referenceSequenceNumber, args.clientId, localSeq);
+        return this._mergeTree.getContainingSegment<T>(pos, seqNumberFrom ?? args.referenceSequenceNumber, clientId ?? args.clientId, localSeq);
     }
 
     /**
