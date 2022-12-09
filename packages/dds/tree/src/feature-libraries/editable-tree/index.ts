@@ -31,4 +31,7 @@ export {
     ContextuallyTypedNodeDataObject,
     ContextuallyTypedNodeData,
     MarkedArrayLike,
+    isArrayLike,
+    isWritableArrayLike,
+    isContextuallyTypedNodeDataObject,
 } from "./utilities";

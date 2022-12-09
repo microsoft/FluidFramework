@@ -296,7 +296,7 @@ export const personData: JsonableTree = {
 export function getPerson(): Person {
     const age: Int32 = brand(35);
     return {
-        [typeNameSymbol]: personSchema.name,
+        // [typeNameSymbol]: personSchema.name,
         // typed with built-in primitive type
         name: "Adam",
         // explicitly typed

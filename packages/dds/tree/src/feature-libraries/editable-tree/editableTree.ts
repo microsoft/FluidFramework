@@ -24,7 +24,7 @@ import {
     FieldAnchor,
     ITreeCursor,
 } from "../../core";
-import { brand, fail, isAssignableTo, requireTrue } from "../../util";
+import { brand, fail } from "../../util";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import { singleMapTreeCursor } from "../mapTreeCursor";
 import {
@@ -293,35 +293,6 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree> {
      * It is forbidden to delete the node using the `delete` operator, use the `deleteNodes()` method instead.
      */
     [index: number]: UnwrappedEditableTree;
-}
-
-// TODO: this is only a compile-time helper, maybe remove at some point?
-export function dummy(): any[] {
-    type _checkTree = requireTrue<isAssignableTo<EditableTree, ContextuallyTypedNodeDataObject>>;
-    type _checkUnwrappedTree = requireTrue<
-        isAssignableTo<UnwrappedEditableTree, ContextuallyTypedNodeData>
-    >;
-    type _checkField = requireTrue<
-        isAssignableTo<ContextuallyTypedNodeData | undefined, UnwrappedEditableField>
-    >;
-    const x: ContextuallyTypedNodeDataObject = 0 as any as EditableTree;
-    const xx: MarkedArrayLike<ContextuallyTypedNodeData> = 0 as any as EditableField;
-
-    // TODO: there seems to be a bug in TypeCheck library, since
-    // this should fail, but its does not (undefined should break it).
-    type _checkFail = requireTrue<
-        isAssignableTo<UnwrappedEditableField, ContextuallyTypedNodeData>
-    >;
-    // This does fail: but it should check the same as the above:
-    // const _dummyValue: ContextuallyTypedNodeData = 0 as any as UnwrappedEditableField;
-
-    // dummy usage of aboves
-    const t: _checkTree = true;
-    const u: _checkUnwrappedTree = true;
-    const f: _checkField = true;
-    const a: _checkFail = true;
-    // const tt: _checkTypedTree = true;
-    return [t, u, f, a, x, xx];
 }
 
 /**

@@ -114,13 +114,9 @@ export type ContextuallyTypedNodeData = ContextuallyTypedNodeDataObject | Primit
 
 // @public
 export interface ContextuallyTypedNodeDataObject {
-    // (undocumented)
     readonly [typeNameSymbol]?: TreeSchemaIdentifier;
-    // (undocumented)
-    [valueSymbol]?: Value;
-    // (undocumented)
+    readonly [valueSymbol]?: Value;
     [key: FieldKey]: ContextuallyTypedNodeData | undefined;
-    // (undocumented)
     [key: string]: ContextuallyTypedNodeData | undefined;
 }
 
@@ -575,6 +571,12 @@ function invert<TNodeChange>(change: TaggedChange<Changeset<TNodeChange>>, inver
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
 
 // @public
+export function isArrayLike(data: ContextuallyTypedNodeData | undefined): data is readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData>;
+
+// @public
+export function isContextuallyTypedNodeDataObject(data: ContextuallyTypedNodeData | undefined): data is ContextuallyTypedNodeDataObject;
+
+// @public
 export function isEditableField(field: UnwrappedEditableField): field is EditableField;
 
 // @public
@@ -599,6 +601,9 @@ function isSkipMark(mark: Mark<unknown>): mark is Skip;
 
 // @public
 export function isUnwrappedNode(field: UnwrappedEditableField): field is EditableTree;
+
+// @public
+export function isWritableArrayLike(data: ContextuallyTypedNodeData | undefined): data is MarkedArrayLike<ContextuallyTypedNodeData>;
 
 // @public
 export interface ITreeCursor {
@@ -721,6 +726,7 @@ type Mark_2<TNodeChange = NodeChangeType> = SizedMark<TNodeChange> | Attach<TNod
 export interface MarkedArrayLike<T> extends ArrayLike<T> {
     // (undocumented)
     readonly [arrayLikeMarkerSymbol]: true;
+    [n: number]: T;
 }
 
 // @public

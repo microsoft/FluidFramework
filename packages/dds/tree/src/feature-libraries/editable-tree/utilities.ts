@@ -189,6 +189,10 @@ export const arrayLikeMarkerSymbol: unique symbol = Symbol("editable-tree:arrayL
  * Can be used to mark a type which works like an array, but is not compatible with Array.isArray.
  */
 export interface MarkedArrayLike<T> extends ArrayLike<T> {
+    /**
+     * ArrayLike numeric indexed access, but writable.
+     */
+    [n: number]: T;
     readonly [arrayLikeMarkerSymbol]: true;
 }
 
@@ -205,29 +209,64 @@ export type ContextuallyTypedNodeData =
     | readonly ContextuallyTypedNodeData[]
     | MarkedArrayLike<ContextuallyTypedNodeData>;
 
+/**
+ * Checks the type of a `ContextuallyTypedNodeData`.
+ */
 export function isArrayLike(
     data: ContextuallyTypedNodeData | undefined,
 ): data is readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData> {
+    return isWritableArrayLike(data) || Array.isArray(data);
+}
+
+/**
+ * Checks the type of a `ContextuallyTypedNodeData`.
+ */
+export function isWritableArrayLike(
+    data: ContextuallyTypedNodeData | undefined,
+): data is MarkedArrayLike<ContextuallyTypedNodeData> {
     if (typeof data !== "object") {
         return false;
     }
     return (
-        Array.isArray(data) ||
         (data as Partial<MarkedArrayLike<ContextuallyTypedNodeData>>)[arrayLikeMarkerSymbol] ===
-            true
+        true
     );
+}
+
+/**
+ * Checks the type of a `ContextuallyTypedNodeData`.
+ */
+export function isContextuallyTypedNodeDataObject(
+    data: ContextuallyTypedNodeData | undefined,
+): data is ContextuallyTypedNodeDataObject {
+    return !(isPrimitiveValue(data) || isArrayLike(data) || data === null);
 }
 
 /**
  * Object case of {@link ContextuallyTypedNodeData}.
  */
 export interface ContextuallyTypedNodeDataObject {
-    [valueSymbol]?: Value;
+    /**
+     * Value stored on this node.
+     */
+    readonly [valueSymbol]?: Value;
+    /**
+     * The type of the node.
+     * If this node is well-formed, it must follow this schema.
+     */
     readonly [typeNameSymbol]?: TreeSchemaIdentifier;
-    // Allow explicit undefined for compatibility with EditableTree, and type-safety on read.
+    /**
+     * Fields of this node, indexed by their field keys.
+     *
+     * Allow explicit undefined for compatibility with EditableTree, and type-safety on read.
+     */
     // TODO: make sure explicit undefined is actually handled correctly.
     [key: FieldKey]: ContextuallyTypedNodeData | undefined;
-    // Allow unbranded local field keys and a convenience for literals.
+    /**
+     * Fields of this node, indexed by their field keys as strings.
+     *
+     * Allow unbranded local field keys and a convenience for literals.
+     */
     [key: string]: ContextuallyTypedNodeData | undefined;
 }
 

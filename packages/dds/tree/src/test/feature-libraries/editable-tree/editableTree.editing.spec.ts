@@ -31,6 +31,9 @@ import {
     replaceField,
     typeNameSymbol,
     namedTreeSchema,
+    ContextuallyTypedNodeDataObject,
+    isArrayLike,
+    isWritableArrayLike,
 } from "../../../feature-libraries";
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
 import {
@@ -46,6 +49,8 @@ import {
     complexPhoneSchema,
     ComplexPhone,
     Address,
+    float64Schema,
+    Phones,
 } from "./mockData";
 
 const globalFieldKey: GlobalFieldKey = brand("foo");
@@ -96,7 +101,92 @@ const testCases: (readonly [string, FieldKey])[] = [
 ];
 
 describe("editable-tree: editing", () => {
-    it("create using assignment", async () => {
+    it("edit using contextually typed API", async () => {
+        const [, trees] = await createSharedTrees(fullSchemaData);
+
+        trees[0].root = { name: "Mike" };
+
+        trees[0].root = { name: "Peter", adult: true };
+
+        assert(isUnwrappedNode(trees[0].root));
+        const maybePerson: ContextuallyTypedNodeDataObject = trees[0].root;
+        maybePerson.age = 150;
+
+        // polymorphic field (uses Float64 and Int32 schemas)
+        maybePerson.salary = {
+            [valueSymbol]: 99.99,
+            [typeNameSymbol]: float64Schema.name,
+        };
+
+        maybePerson.friends = { Anna: "Anna" };
+        maybePerson.friends.John = "John";
+
+        maybePerson.address = {
+            zip: 345,
+            city: "Bonn",
+            // polymorphic field (uses Int32, string, ComplexPhone and SimplePhones schemas)
+            phones: [
+                "+491234567890",
+                {
+                    [typeNameSymbol]: complexPhoneSchema.name,
+                    prefix: "+49",
+                    number: "1234567",
+                },
+            ],
+        };
+        maybePerson.address.street = "unknown";
+
+        // can use strict types to access the data
+        assert.equal((maybePerson.address.phones as Phones)[0], "+491234567890");
+
+        assert(isArrayLike(maybePerson.address.phones));
+        assert.equal(maybePerson.address.phones[0], "+491234567890");
+        assert.equal(Array.isArray(maybePerson.address.phones), false);
+        assert(isWritableArrayLike(maybePerson.address.phones));
+        maybePerson.address.phones[0] = "+1234567890";
+
+        const globalField: FieldKey = globalFieldSymbolSequencePhones;
+        maybePerson.address[globalField] = ["111"];
+        // assert(isWritableArrayLike(maybePerson.address[globalField]));
+        // maybePerson.address[globalField][1] = "888";
+        const globalPhones: string[] = maybePerson.address[globalField] as string[];
+        globalPhones[0] = "222";
+        globalPhones[1] = "333";
+
+        // explicitly check the global field as `clone` does not support symbols as field keys
+        assert.deepEqual(clone(maybePerson.address[globalField]), {
+            "0": "222",
+            "1": "333",
+        });
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        delete maybePerson.address[globalField];
+
+        const clonedPerson = clone(maybePerson);
+        assert.deepEqual(clonedPerson, {
+            name: "Peter",
+            age: 150,
+            adult: true,
+            salary: 99.99,
+            friends: {
+                Anna: "Anna",
+                John: "John",
+            },
+            address: {
+                zip: 345,
+                city: "Bonn",
+                street: "unknown",
+                phones: {
+                    "0": "+1234567890",
+                    "1": {
+                        prefix: "+49",
+                        number: "1234567",
+                    },
+                },
+            },
+        });
+    });
+
+    it("edit using typed data model", async () => {
         const [, trees] = await createSharedTrees(fullSchemaData);
 
         trees[0].root = getPerson();
