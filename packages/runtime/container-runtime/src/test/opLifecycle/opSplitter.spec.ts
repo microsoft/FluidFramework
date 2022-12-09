@@ -8,9 +8,9 @@ import { strict as assert } from "assert";
 import { ContainerMessageType } from "@fluidframework/container-runtime-previous";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IBatchMessage } from "@fluidframework/container-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { BatchMessage, IChunkedOp, OpSplitter, splitOp } from "../../opLifecycle";
 import { CompressionAlgorithms } from "../../containerRuntime";
-import { MockLogger } from "@fluidframework/telemetry-utils";
 
 describe("OpSplitter", () => {
     const batchesSubmitted: IBatchMessage[][] = [];
@@ -142,10 +142,11 @@ describe("OpSplitter", () => {
         }));
 
         // Not enabled
-        assert.throws(() => new OpSplitter([], mockSubmitBatchFn, Number.POSITIVE_INFINITY, maxBatchSizeInBytes, mockLogger).splitCompressedBatch({
-            content: [compressedMessage],
-            contentSizeInBytes: 3,
-        }));
+        assert.throws(() => new OpSplitter([], mockSubmitBatchFn, Number.POSITIVE_INFINITY, maxBatchSizeInBytes, mockLogger)
+            .splitCompressedBatch({
+                content: [compressedMessage],
+                contentSizeInBytes: 3,
+            }));
     });
 
     it("Split compressed batch with multiple messages", () => {
