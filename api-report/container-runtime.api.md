@@ -295,7 +295,11 @@ export interface IChunkedOp {
     // (undocumented)
     chunkId: number;
     // (undocumented)
+    compression?: string;
+    // (undocumented)
     contents: string;
+    // (undocumented)
+    metadata?: Record<string, unknown>;
     // (undocumented)
     originalType: MessageType | ContainerMessageType;
     // (undocumented)
@@ -332,6 +336,7 @@ export interface IConnectableRuntime {
 
 // @public
 export interface IContainerRuntimeOptions {
+    readonly chunkSizeInBytes?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
     readonly enableOfflineLoad?: boolean;
     readonly flushMode?: FlushMode;
