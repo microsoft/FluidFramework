@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/unbound-method */
-
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
 require("jsdom-global")("", { url: "http://localhost" });
 window.performance.mark ??= (() => undefined as PerformanceMark);

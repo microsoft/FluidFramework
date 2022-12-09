@@ -30,7 +30,6 @@ export interface ISharedObjectEvents extends IErrorEvent {
      *
      * @eventProperty
      */
-    // eslint-disable-next-line @typescript-eslint/unified-signatures
     (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void);
 }
 

@@ -18,7 +18,6 @@ describe("Spo Url Resolver", () => {
         assert.equal(resolved.endpoints.snapshotStorageUrl,
             `${url}/opStream/snapshots`, "SnashotStorageUrl does not match");
         assert.equal(resolved.url,
-            // eslint-disable-next-line max-len
             `fluid-odsp://placeholder/placeholder/${resolved.hashedDocumentId}/?driveId=${resolved.driveId}&itemId=${resolved.itemId}&path=`, "fluid url does not match");
     });
 
@@ -32,7 +31,6 @@ describe("Spo Url Resolver", () => {
         assert.equal(resolved.endpoints.snapshotStorageUrl,
             `${url}/opStream/snapshots`, "SnashotStorageUrl does not match");
         assert.equal(resolved.url,
-            // eslint-disable-next-line max-len
             `fluid-odsp://placeholder/placeholder/${resolved.hashedDocumentId}/?driveId=${resolved.driveId}&itemId=${resolved.itemId}&path=`, "fluid url does not match");
     });
 });

@@ -12,7 +12,7 @@ import {
     FluidDriverCacheDBName,
     getKeyForCacheEntry,
 } from "../FluidCacheIndexedDb";
-// eslint-disable-next-line max-len
+
 // eslint-disable-next-line import/no-unassigned-import, @typescript-eslint/no-require-imports, import/no-internal-modules
 require("fake-indexeddb/auto");
 
@@ -75,7 +75,6 @@ function getMockCacheEntry(
 describe("Fluid Cache tests", () => {
     beforeEach(() => {
         // Reset the indexed db before each test so that it starts off in an empty state
-        // eslint-disable-next-line max-len
         // eslint-disable-next-line import/no-internal-modules, @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
         const FDBFactory = require("fake-indexeddb/lib/FDBFactory");
         (window.indexedDB as any) = new FDBFactory();
