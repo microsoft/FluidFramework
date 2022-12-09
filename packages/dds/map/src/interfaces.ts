@@ -243,6 +243,17 @@ export interface IDirectoryEvents extends IEvent {
     (event: "disposed", listener: (
         target: IEventThisPlaceHolder,
     ) => void);
+
+    /**
+     * Emitted when this sub directory is undeleted.
+     *
+     * @remarks Listener parameters:
+     *
+     * - `target` - The {@link IDirectory} itself.
+     */
+    (event: "undisposed", listener: (
+        target: IEventThisPlaceHolder,
+    ) => void);
 }
 
 /**

@@ -1022,6 +1022,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      */
     private undispose(): void {
         this._deleted = false;
+        this.emit("undisposed", this);
     }
 
     public get disposed(): boolean {
