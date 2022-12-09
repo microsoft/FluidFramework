@@ -215,7 +215,10 @@ export class AppendOnlySortedMap<K, V> {
         let prev: readonly [K, unknown] | undefined;
         for (const kv of this.entries()) {
             if (prev !== undefined) {
-                assert(this.comparator(kv[0], prev[0]) > 0, "Keys in map must be sorted.");
+                assert(
+                    this.comparator(kv[0], prev[0]) > 0,
+                    0x47f /* Keys in map must be sorted. */,
+                );
             }
             prev = kv;
         }
@@ -415,7 +418,7 @@ export class AppendOnlyDoublySortedMap<K, V, S> extends AppendOnlySortedMap<K, V
                         this.extractSearchValue(kv[1]),
                         this.extractSearchValue(prev[1]),
                     ) > 0,
-                    "Values in map must be sorted.",
+                    0x480 /* Values in map must be sorted. */,
                 );
             }
             prev = kv;
