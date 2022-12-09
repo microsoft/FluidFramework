@@ -139,7 +139,7 @@ describe("editable-tree: editing", () => {
             assert(person);
             assert(isUnwrappedNode(person.address));
             const phones = person.address[getField](brand("phones"));
-            assert(phones.getNode(0)[valueSymbol], undefined);
+            assert.equal(phones.getNode(0)[valueSymbol], undefined);
         }
         maybePerson.address.street = "unknown";
 
