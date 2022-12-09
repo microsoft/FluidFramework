@@ -33,11 +33,10 @@ export class EndOfTreeSegment implements ISegment, IRemovalInfo {
         while(maybeRoot?.parent !== undefined) {
             maybeRoot = maybeRoot.parent;
         }
-        if (maybeRoot === undefined) {
+        if (maybeRoot === undefined || maybeRoot.mergeTree === undefined) {
             throw new UsageError("segmentOrNode must be in rooted tree");
         }
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.mergeTree = maybeRoot.mergeTree!;
+        this.mergeTree = maybeRoot.mergeTree;
     }
     /*
      * segments must be of at least length one, but

@@ -393,10 +393,8 @@ export interface IMergeBlock extends IMergeNodeCommon {
     setOrdinal(child: IMergeNode, index: number): void;
 }
 
-// Warning: (ae-forgotten-export) The symbol "IRootMergeBlock" needs to be exported by the entry point index.d.ts
-//
 // @public (undocumented)
-export type IMergeNode = IMergeBlock | IRootMergeBlock | ISegment;
+export type IMergeNode = IMergeBlock | ISegment;
 
 // @public
 export interface IMergeNodeCommon {

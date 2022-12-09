@@ -16,7 +16,6 @@ import {
 import {
      LocalReferenceCollection,
 } from "./localReference";
-import { IRootMergeBlock } from "./mergeTree";
 import {
     IMergeTreeDeltaOpArgs,
 } from "./mergeTreeDeltaCallback";
@@ -67,7 +66,7 @@ export interface IMergeNodeCommon {
     isLeaf(): this is ISegment;
 }
 
-export type IMergeNode = IMergeBlock | IRootMergeBlock | ISegment;
+export type IMergeNode = IMergeBlock | ISegment;
 
 /**
  * Internal (i.e. non-leaf) node in a merge tree.
