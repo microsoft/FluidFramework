@@ -38,9 +38,3 @@ export async function renderClientDebuggerView(
 		}
 	});
 }
-
-// #2: Render "debugger frame" - user passes in element, we wrap that element in a frame containing the debug view
-//    + UI for showing / hiding the "debugger panel".
-//   renderWithClientDebugger(appElement);
-//   const parent = appElement.parent;
-//   render app and frame
