@@ -212,10 +212,9 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         });
 
         const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
-        const messageCount = 3; // Will result in a 15 MB payload
-        setMapKeys(dataObject1map, messageCount, largeString);
-        await provider.ensureSynchronized();
 
-        assertMapValues(dataObject2map, messageCount, largeString);
+        setMapKeys(dataObject1map, 3, largeString); // 15 MB payload
+        await provider.ensureSynchronized();
+        assertMapValues(dataObject2map, 3, largeString);
     }).timeout(200000);
 });

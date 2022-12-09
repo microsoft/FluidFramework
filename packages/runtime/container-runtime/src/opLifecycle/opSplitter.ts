@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import { DataCorruptionError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ContainerMessageType, ContainerRuntimeMessage } from "../containerRuntime";
 import { BatchMessage, IBatch, IChunkedOp, IMessageProcessingResult } from "./definitions";
 
@@ -16,13 +18,16 @@ import { BatchMessage, IBatch, IChunkedOp, IMessageProcessingResult } from "./de
 export class OpSplitter {
     // Local copy of incomplete received chunks.
     private readonly chunkMap: Map<string, string[]>;
+    private readonly logger;
 
     constructor(
         chunks: [string, string[]][],
         private readonly submitBatchFn: (batch: IBatchMessage[]) => number,
         private readonly chunkSizeInBytes: number,
+        logger: ITelemetryLogger,
     ) {
         this.chunkMap = new Map<string, string[]>(chunks);
+        this.logger = ChildLogger.create(logger, "OpSplitter");
     }
 
     public get isBatchChunkingEnabled(): boolean {
@@ -97,6 +102,28 @@ export class OpSplitter {
         map.push(chunkedContent.contents);
     }
 
+    /**
+     * Splits the first op of a compressed batch in chunks, sends the chunks separately and
+     * returns a new batch composed of the last chunk and the rest of the ops in the original batch.
+     *
+     * A compressed batch is formed by one large op at the first position, followed by a series of placeholder ops
+     * which are used in order to reserve the sequence numbers for when the first op gets unrolled into the original
+     * uncompressed ops at ingestion in the runtime.
+     *
+     * If the first op is too large, it can be chunked (split into smaller op) which can be sent individually over the wire
+     * and accumulate at ingestion, until the last op in the chunk is processed, when the original op is unrolled.
+     *
+     * This method will send the first N - 1 chunks separately and use the last chunk as the first message in the result batch
+     * and then appends the original placeholder ops. This will ensure that the batch semantics of the original (non-compressed) batch
+     * are preserved, as the original chunked op will be unrolled by the runtime when the first message in the batch is processed
+     * (as it is the last chunk).
+     *
+     * To illustrate, if the input is `[largeOp, emptyOp, emptyOp]`, `largeOp` will be split into `[chunk1, chunk2, chunk3, chunk4]`.
+     * `chunk1`, `chunk2` and `chunk3` will be sent individually and `[chunk4, emptyOp, emptyOp]` will be returned.
+     *
+     * @param batch - the compressed batch which needs to be processed
+     * @returns A new adjusted batch which can be sent over the wire
+     */
     public splitCompressedBatch(batch: IBatch): IBatch {
         assert(this.isBatchChunkingEnabled, "Chunking needs to be enabled");
         assert(batch.contentSizeInBytes > 0 && batch.content.length > 0, "Batch needs to be non-empty");
@@ -121,6 +148,15 @@ export class OpSplitter {
             chunks[chunks.length - 1],
             firstMessage.referenceSequenceNumber,
             { batch: firstMessage.metadata?.batch });
+
+        this.logger.sendPerformanceEvent({
+            eventName: "Chunked compressed batch",
+            length: batch.content.length,
+            sizeInBytes: batch.contentSizeInBytes,
+            chunks: chunks.length,
+            chunkSizeInBytes: this.chunkSizeInBytes,
+        });
+
         return {
             content: [lastChunk, ...restOfMessages],
             contentSizeInBytes: lastChunk.contents?.length ?? 0,

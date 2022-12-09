@@ -158,7 +158,7 @@ describe("Outbox", () => {
         state.deltaManagerFlushCalls = 0;
         state.canSendOps = true;
         state.batchesSubmitted.splice(0);
-        state.batchesCompressed = [];
+        state.batchesCompressed.splice(0);
         state.individualOpsSubmitted.splice(0);
         state.pendingOpContents.splice(0);
         state.opsSubmitted = 0;

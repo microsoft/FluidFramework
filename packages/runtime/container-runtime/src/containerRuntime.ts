@@ -1023,13 +1023,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.messageAtLastSummary = metadata?.message;
 
         this._connected = this.context.connected;
-        const opSplitter = new OpSplitter(chunks, this.context.submitBatchFn, runtimeOptions.chunkSizeInBytes);
+
+        this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "ContainerRuntime"));
+
+        const opSplitter = new OpSplitter(
+            chunks,
+            this.context.submitBatchFn,
+            runtimeOptions.chunkSizeInBytes,
+            this.mc.logger);
         this.remoteMessageProcessor = new RemoteMessageProcessor(opSplitter, new OpDecompressor());
 
         this.handleContext = new ContainerFluidHandleContext("", this);
-
-        this.mc = loggerToMonitoringContext(
-            ChildLogger.create(this.logger, "ContainerRuntime"));
 
         if (this.summaryConfiguration.state === "enabled") {
             this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
