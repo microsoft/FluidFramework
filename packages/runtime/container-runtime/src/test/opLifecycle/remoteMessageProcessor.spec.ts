@@ -21,7 +21,7 @@ describe("RemoteMessageProcessor", () => {
         processMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
             return {
                 message: stamp(message, "decompress"),
-                state: "Processed",
+                state: "Skipped",
             }
         },
     });
@@ -30,7 +30,7 @@ describe("RemoteMessageProcessor", () => {
         processRemoteMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
             return {
                 message: stamp(message, "reconstruct"),
-                state: "Processed",
+                state: "Skipped",
             }
         },
     });
@@ -56,7 +56,6 @@ describe("RemoteMessageProcessor", () => {
         delete documentMessage.metadata;
         assert.ok(result.metadata);
 
-        documentMessage.contents.key = "value2";
         assert.strictEqual(result.contents, contents.contents);
         assert.strictEqual(result.type, contents.type);
     });
