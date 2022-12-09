@@ -216,6 +216,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
                         runtimeOptions: {
                             compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
                             chunkSizeInBytes: 200 * 1024,
+                            summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
                         },
                     });
 
