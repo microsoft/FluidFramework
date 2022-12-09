@@ -71,6 +71,11 @@ scriptorium:
 scribe:
   name: scribe
   replicas: 8
+  checkpointHeuristics:
+    enable: false
+    idleTime: 10000
+    maxTime: 60000
+    maxMessages: 500
 
 foreman:
   name: foreman

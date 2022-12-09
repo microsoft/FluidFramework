@@ -139,7 +139,13 @@
         }
     },
     "scribe": {
-        "kafkaClientId": "scribe"
+        "kafkaClientId": "scribe",
+        "checkpointHeuristics": {
+            "enable": false,
+            "idleTime": 10000,
+            "maxTime": 60000,
+            "maxMessages": 500
+        }
     },
     "system": {
         "httpServer": {
@@ -189,7 +195,8 @@
         "kafkaClientId": "scriptorium",
         "groupId": "scriptorium",
         "checkpointBatchSize": 1,
-        "checkpointTimeIntervalMsec": 1000
+        "checkpointTimeIntervalMsec": 1000,
+        "enableRunWithRetryMetricTelemetry": true
     },
     "copier": {
         "topic": "rawdeltas",
