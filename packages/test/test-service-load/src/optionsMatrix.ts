@@ -4,7 +4,6 @@
  */
 
 import {
-    CompressionAlgorithms,
     IContainerRuntimeOptions,
     IGCRuntimeOptions,
     ISummaryRuntimeOptions,
@@ -79,7 +78,7 @@ export function generateRuntimeOptions(
         loadSequenceNumberVerification: [undefined],
         enableOfflineLoad: [undefined],
         flushMode: [undefined],
-        compressionOptions: [{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 }],
+        compressionOptions: [{ minimumBatchSizeInBytes: 500, compressionAlgorithm: "lz4" as any }],
         maxBatchSizeInBytes: [undefined],
     };
 

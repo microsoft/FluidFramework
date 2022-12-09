@@ -115,6 +115,16 @@
             "readWriteCycleMs": 30000
         },
         "blobs": {
+            "offline": {
+                "delayMs": {
+                    "min": 0,
+                    "max": 150000
+                },
+                "durationMs": {
+                    "min": 5000,
+                    "max": 15000
+                }
+            },
             "opRatePerMin": 60,
             "progressIntervalMs": 5000,
             "numClients": 4,
