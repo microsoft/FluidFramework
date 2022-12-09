@@ -40,6 +40,34 @@ export type TypedEventTransform<TThis, TEvent> =
         // Add the default overload so this is covertable to EventEmitter regardless of environment
         TransformedEvent<TThis, EventEmitterEventType, any[]>;
 
+/** Converting from IEvent shape to EventSpec shape. Might allow for easier transition to EventSpec */
+export type ToEventSpec<TEvent extends IEvent> =
+    // ...Start with all 15 like IEventTransformer
+    // I think we would drop all mention of the (event: string, ...) signature
+    TEvent extends
+    {
+        (event: infer E0, listener: (...args: infer A0) => void),
+        (event: infer E1, listener: (...args: infer A1) => void),
+        (event: string, listener: (...args: any[]) => void),
+    }
+    ? EventSpecEntry<E0, A0> & EventSpecEntry<E1, A1>
+    : TEvent extends
+    {
+        (event: infer E0, listener: (...args: infer A0) => void),
+        (event: string, listener: (...args: any[]) => void),
+    }
+    ? EventSpecEntry<E0, A0>
+    : EventSpecEntry<string, any[]>
+    ;
+
+export type EventSpecEntry<TEventKey, TListenerArgs extends any[]> =
+    TEventKey extends string ?
+    {
+        [TK in TEventKey]: (...args: TListenerArgs) => void;
+    }
+    : never;
+
+
 /** These events are always supported due to base EventEmitter implementation */
 export interface IBaseEventSpec {
     newListener: (event: string, listener: (...args: any[]) => void) => void;
@@ -164,6 +192,11 @@ sample.on("useThis", (x: MyTee) => {});
 // Not supported
 sample.emit("unspecified", 123);
 sample.on("unspecified", () => {});
+
+export interface INewEvents {
+    something: (x: number) => void;
+    useThis1: (y: IEventThisPlaceHolder) => void;
+}
 
 export interface IOldEvents extends IEvent {
     (event: "something", listener: (x: number) => void);
