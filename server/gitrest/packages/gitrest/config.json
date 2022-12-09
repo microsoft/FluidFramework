@@ -20,7 +20,7 @@
             "name": "nodegit"
         },
         "persistLatestFullSummary": false,
-        "enableLowIoWrite": "initial",
+        "enableLowIoWrite": false,
         "repoPerDocEnabled": false
     }
 }
