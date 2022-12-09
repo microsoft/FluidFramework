@@ -128,11 +128,12 @@ async function createSummary(
         repoManager,
         lumberjackProperties,
         externalWriterConfig?.enabled ?? false,
+        { enableLowIoWrite },
     );
 
     Lumberjack.info("Creating summary", lumberjackProperties);
 
-    const { isNew, writeSummaryResponse } = await wholeSummaryManager.writeSummary(payload, { enableLowIoWrite });
+    const { isNew, writeSummaryResponse } = await wholeSummaryManager.writeSummary(payload);
 
     // Waiting to pre-compute and persist latest summary would slow down document creation,
     // so skip this step if it is a new document.

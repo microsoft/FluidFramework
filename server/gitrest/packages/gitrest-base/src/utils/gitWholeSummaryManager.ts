@@ -105,6 +105,7 @@ function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry)
 interface IFullGitTree {
     tree: ITree;
     blobs: Record<string, IBlob>;
+    parsedFullTreeBlobs: boolean;
 }
 async function buildFullGitTreeFromGitTree(
     gitTree: ITree,
@@ -116,11 +117,13 @@ async function buildFullGitTreeFromGitTree(
     if (depth > 10) {
         throw new Error("Encountered depth > 10 in buildFullGitTreeFromGitTree. Exiting to avoid infinite loop.");
     }
+    let parsedFullTreeBlobs = false;
     const blobPs: Promise<IBlob>[] = [];
     const treeEntries: ITreeEntry[] = [];
     for (const treeEntry of gitTree.tree) {
         if (treeEntry.type === "blob") {
             if (treeEntry.path.endsWith(fullTreePath) && parseInnerFullGitTrees) {
+                parsedFullTreeBlobs = true;
                 const fullTreeBlob = await repoManager.getBlob(treeEntry.sha);
                 const fullTree = JSON.parse(Buffer.from(
                     fullTreeBlob.content,
@@ -162,6 +165,7 @@ async function buildFullGitTreeFromGitTree(
             tree: treeEntries,
         },
         blobs: blobMap,
+        parsedFullTreeBlobs,
     };
 }
 function convertGitBlobToSummaryBlob(blob: IBlob): IWholeFlatSummaryBlob {
@@ -280,13 +284,21 @@ const fullTreePath = ".fullTree";
  */
 export class GitWholeSummaryManager {
     private readonly entryHandleToObjectShaCache: Map<string, string> = new Map();
+    private readonly writeOptions: ISummaryWriteOptions;
+
 
     constructor(
         private readonly documentId: string,
         private readonly repoManager: IRepositoryManager,
         private readonly lumberjackProperties: Record<string, any>,
         private readonly externalStorageEnabled = true,
-    ) { }
+        writeOptions?: Partial<ISummaryWriteOptions>,
+    ) {
+        this.writeOptions = {
+            ...DefaultSummaryWriteOptions,
+            ...writeOptions,
+        };
+    }
 
     public async readSummary(sha: string): Promise<IWholeFlatSummary> {
         const readSummaryMetric = Lumberjack.newLumberMetric(
@@ -296,7 +308,7 @@ export class GitWholeSummaryManager {
         try {
             let version: ISummaryVersion;
             if (sha === latestSummarySha) {
-                version = await this.getLatestVersion(this.repoManager);
+                version = await this.getLatestVersion();
             } else {
                 const commit = await this.repoManager.getCommit(sha);
                 version = { id: commit.sha, treeId: commit.tree.sha };
@@ -338,8 +350,8 @@ export class GitWholeSummaryManager {
         return convertFullGitTreeToFullSummaryTree(fullGitTree);
     }
 
-    private async getLatestVersion(repoManager: IRepositoryManager): Promise<ISummaryVersion> {
-        const commitDetails = await repoManager.getCommits(
+    private async getLatestVersion(): Promise<ISummaryVersion> {
+        const commitDetails = await this.repoManager.getCommits(
             this.documentId,
             1,
             { enabled: this.externalStorageEnabled },
@@ -352,19 +364,14 @@ export class GitWholeSummaryManager {
 
     public async writeSummary(
         payload: IWholeSummaryPayload,
-        options?: Partial<ISummaryWriteOptions>,
     ): Promise<IWriteSummaryInfo> {
         const writeSummaryMetric = Lumberjack.newLumberMetric(
             GitRestLumberEventName.WholeSummaryManagerWriteSummary,
             this.lumberjackProperties);
-        const writeOptions: ISummaryWriteOptions = {
-            ...DefaultSummaryWriteOptions,
-            ...options,
-        };
-        writeSummaryMetric.setProperty("enableLowIoWrite", options.enableLowIoWrite);
+        writeSummaryMetric.setProperty("enableLowIoWrite", this.writeOptions.enableLowIoWrite);
         try {
             if (isChannelSummary(payload)) {
-                const summaryTreeHandle = await this.writeChannelSummary(payload, writeOptions);
+                const summaryTreeHandle = await this.writeChannelSummary(payload);
                 writeSummaryMetric.setProperty("summaryType", "channel");
                 writeSummaryMetric.success("GitWholeSummaryManager succeeded in writing channel summary");
                 return {
@@ -375,7 +382,7 @@ export class GitWholeSummaryManager {
                 };
             }
             if (isContainerSummary(payload)) {
-                const writeSummaryInfo = await this.writeContainerSummary(payload, writeOptions);
+                const writeSummaryInfo = await this.writeContainerSummary(payload);
                 writeSummaryMetric.setProperty("summaryType", "container");
                 writeSummaryMetric.success("GitWholeSummaryManager succeeded in writing container summary");
                 return writeSummaryInfo;
@@ -397,9 +404,8 @@ export class GitWholeSummaryManager {
 
     private async writeChannelSummary(
         payload: IWholeSummaryPayload,
-        options: ISummaryWriteOptions
     ): Promise<string> {
-        const useLowIoWrite = options.enableLowIoWrite === true;
+        const useLowIoWrite = this.writeOptions.enableLowIoWrite === true;
         const existingRef: IRef | undefined = useLowIoWrite
             ? await this.getDocRef()
             : undefined;
@@ -412,12 +418,12 @@ export class GitWholeSummaryManager {
 
     private async writeContainerSummary(
         payload: IWholeSummaryPayload,
-        options: ISummaryWriteOptions,
     ): Promise<IWriteSummaryInfo> {
         const existingRef = await this.getDocRef();
 
         const isNewDocument = !existingRef && payload.sequenceNumber === 0;
-        const useLowIoWrite = options.enableLowIoWrite === true || (isNewDocument && options.enableLowIoWrite === "initial");
+        const useLowIoWrite = this.writeOptions.enableLowIoWrite === true
+            || (isNewDocument && this.writeOptions.enableLowIoWrite === "initial");
 
         const treeHandle = await this.writeSummaryTree(
             payload.entries,
@@ -553,6 +559,8 @@ export class GitWholeSummaryManager {
                 return tree;
             } catch (error: any) {
                 if (error.code === "NotFoundError" && typeof error.data.what === "string") {
+                    // Likely, In-memory RepoManager is missing a previous channel summary.
+                    // We can attempt to recover by retrieving it from storage and writing it back into memory.
                     Lumberjack.info("Encountered NotFoundError when reading git tree. Attempting recovery.", { error });
                     const missingElementSha = error.data.what;
                     Lumberjack.info(`Retrieving missing element ${missingElementSha} from storage`);
@@ -563,19 +571,17 @@ export class GitWholeSummaryManager {
                     const fullMissingGitTree: IFullGitTree = await buildFullGitTreeFromGitTree(
                         missingTreeElement,
                         this.repoManager,
+                        // We do not want to parse into embedded full git tree blobs here.
+                        // It is important that the sha for the tree remains the same. The hidden blobs
+                        // in the full git tree blob are handled elsewhere.
                         false, /* parseInnerFullGitTrees */
                     );
 
-                    const fullMissingSummaryTree = convertFullGitTreeToFullSummaryTree(
+                    const inMemoryTreeHandle = await this.writeFullGitTreeAsSummaryTree(
                         fullMissingGitTree,
-                    );
-                    const wholeMissingSummaryTreeEntries = convertFullSummaryToWholeSummaryEntries(
-                        fullMissingSummaryTree,
-                    );
-                    const inMemoryTreeHandle = await this.writeSummaryTreeCore(
-                        wholeMissingSummaryTreeEntries,
                         inMemoryRepoManager,
                     );
+
                     Lumberjack.info(`Wrote tree ${inMemoryTreeHandle}. Retrying reading tree`);
                     if (inMemoryTreeHandle !== missingElementSha) {
                         throw new Error(`Written tree sha (${inMemoryTreeHandle}) did not match missing tree sha (${missingElementSha})`);
@@ -678,6 +684,22 @@ export class GitWholeSummaryManager {
         return blobResponse.sha;
     }
 
+    private async writeFullGitTreeAsSummaryTree(
+        fullGitTree: IFullGitTree,
+        repoManager: IRepositoryManager,
+    ): Promise<string> {
+        const fullSummaryTree = convertFullGitTreeToFullSummaryTree(
+            fullGitTree,
+        );
+        const wholeSummaryTreeEntries = convertFullSummaryToWholeSummaryEntries(
+            fullSummaryTree,
+        );
+        return this.writeSummaryTreeCore(
+            wholeSummaryTreeEntries,
+            repoManager,
+        );
+    }
+
     private async getShaFromTreeHandleEntry(
         entry: IWholeSummaryTreeHandleEntry,
         repoManager: IRepositoryManager,
@@ -711,9 +733,15 @@ export class GitWholeSummaryManager {
              * similar to writing into memory?
              */
             true, /* parseInnerFullGitTrees */
-            // We only need shas
+            // We only need shas here, so don't waste resources retrieving blobs that are not included in fullGitTrees.
             false, /* retrieveBlobs */
         );
+        if (gitTree.parsedFullTreeBlobs && this.writeOptions.enableLowIoWrite !== true) {
+            // If the git tree/blob shas being referenced by a shredded summary write (high-io write) with handles
+            // are hidden within a fullGitTree blob, we need to write those hidden blobs as individual trees/blobs 
+            // into storage so that they can be appropriately referenced by the uploaded summary tree.
+            await this.writeFullGitTreeAsSummaryTree(gitTree, this.repoManager);
+        }
         for (const treeEntry of gitTree.tree.tree) {
             this.entryHandleToObjectShaCache.set(`${parentHandle}/${treeEntry.path}`, treeEntry.sha);
         }
