@@ -1460,15 +1460,6 @@ describe("Garbage Collection Tests", () => {
 
         describe("References to unreferenced nodes", () => {
             /**
-             * Function that asserts the given value is not true. Used in these tests to demonstrate that because of
-             * a bug we are not getting the expected results. Once the bug is fixed, these asserts should start working
-             * as expected.
-             */
-            function assertNotTrue(value: boolean, message: string) {
-                assert(!value, message);
-            }
-
-            /**
              * Validates that we can detect references that are added from an unreferenced node to another.
              * 1. Summary 1 at t1. V = [A*, B, C]. E = []. B and C have unreferenced time t1.
              * 2. Reference from B to C. E = [B -\> C].
@@ -1502,7 +1493,7 @@ describe("Garbage Collection Tests", () => {
                 const nodeBTime2 = timestamps2.get(nodeB);
                 const nodeCTime2 = timestamps2.get(nodeC);
                 assert(nodeBTime2 === nodeBTime1, "B's timestamp should be unchanged");
-                assertNotTrue(nodeCTime2 !== undefined && nodeCTime2 > nodeCTime1, "C's timestamp should have updated");
+                assert(nodeCTime2 !== undefined && nodeCTime2 > nodeCTime1, "C's timestamp should have updated");
             });
 
             /*
@@ -1544,8 +1535,8 @@ describe("Garbage Collection Tests", () => {
                 const nodeCTime2 = timestamps2.get(nodeC);
                 const nodeDTime2 = timestamps2.get(nodeD);
                 assert(nodeBTime2 === nodeBTime1, "B's timestamp should be unchanged");
-                assertNotTrue(nodeCTime2 !== undefined && nodeCTime2 > nodeCTime1, "C's timestamp should have updated");
-                assertNotTrue(nodeDTime2 !== undefined && nodeDTime2 > nodeDTime1, "D's timestamp should have updated");
+                assert(nodeCTime2 !== undefined && nodeCTime2 > nodeCTime1, "C's timestamp should have updated");
+                assert(nodeDTime2 !== undefined && nodeDTime2 > nodeDTime1, "D's timestamp should have updated");
             });
 
             /*
@@ -1558,7 +1549,7 @@ describe("Garbage Collection Tests", () => {
              * 4. Summary 2 at t2. V = [A*, B, C]. E = [B -> C]. C and D have unreferenced time t2.
              * Validates that the unreferenced time for C and D is t2 which is > t1.
              */
-            it(`Scenario 2 - Reference added to a list of unreferenced nodes and a reference is removed`, async () => {
+            it(`Scenario 3 - Reference added to a list of unreferenced nodes and a reference is removed`, async () => {
                 // Initialize nodes A, B and C.
                 defaultGCData.gcNodes["/"] = [nodeA];
                 defaultGCData.gcNodes[nodeA] = [];
@@ -1592,8 +1583,8 @@ describe("Garbage Collection Tests", () => {
                 const nodeCTime2 = timestamps2.get(nodeC);
                 const nodeDTime2 = timestamps2.get(nodeD);
                 assert(nodeBTime2 === nodeBTime1, "B's timestamp should be unchanged");
-                assertNotTrue(nodeCTime2 !== undefined && nodeCTime2 > nodeCTime1, "C's timestamp should have updated");
-                assertNotTrue(nodeDTime2 !== undefined && nodeDTime2 > nodeDTime1, "D's timestamp should have updated");
+                assert(nodeCTime2 !== undefined && nodeCTime2 > nodeCTime1, "C's timestamp should have updated");
+                assert(nodeDTime2 !== undefined && nodeDTime2 > nodeDTime1, "D's timestamp should have updated");
             });
         });
     });
