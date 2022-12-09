@@ -33,7 +33,7 @@ export class EndOfTreeSegment implements ISegment, IRemovalInfo {
         while(maybeRoot?.parent !== undefined) {
             maybeRoot = maybeRoot.parent;
         }
-        if (maybeRoot === undefined || maybeRoot.mergeTree === undefined) {
+        if (maybeRoot?.mergeTree === undefined) {
             throw new UsageError("segmentOrNode must be in rooted tree");
         }
         this.mergeTree = maybeRoot.mergeTree;
