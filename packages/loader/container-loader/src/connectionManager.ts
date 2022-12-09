@@ -267,7 +267,7 @@ export class ConnectionManager implements IConnectionManager {
      * It is undefined if we have not yet established websocket connection
      * and do not know if user has write access to a file.
      */
-    private get readonly() {
+    private get readonly(): boolean | undefined {
         if (this._forceReadonly) {
             return true;
         }
@@ -665,6 +665,9 @@ export class ConnectionManager implements IConnectionManager {
         // But if we ask read, server can still give us write.
         const readonly = !connection.claims.scopes.includes(ScopeType.DocWrite);
 
+        if (connection.mode !== requestedMode) {
+            this.logger.sendTelemetryEvent({ eventName: "ConnectionModeMismatch", requestedMode, mode: connection.mode });
+        }
         // This connection mode validation logic is moving to the driver layer in 0.44.  These two asserts can be
         // removed after those packages have released and become ubiquitous.
         assert(requestedMode === "read" || readonly === (this.connectionMode === "read"),

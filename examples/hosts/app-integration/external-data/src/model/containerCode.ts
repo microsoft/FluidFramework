@@ -27,7 +27,7 @@ const SignalType = {
  * {@inheritDoc ModelContainerRuntimeFactory}
  */
 export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
-    constructor() {
+    public constructor() {
         super(
             new Map([TaskListInstantiationFactory.registryEntry]), // registryEntries
         );
@@ -67,6 +67,6 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
                 taskList.importExternalData();
             }
         });
-        return new AppModel(taskList, container);
+        return new AppModel(taskList, container, runtime);
     }
 }

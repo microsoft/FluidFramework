@@ -309,7 +309,7 @@ export class OdspTestDriver implements ITestDriver {
             const driveItem = await getDriveItemByRootFileName(
                 this.config.siteUrl,
                 undefined,
-                `/${this.config.directory}/${testId}.fluid`,
+                `/${this.config.directory}/${testId}.tstFluid`,
                 {
                     accessToken: await this.getStorageToken({ siteUrl, refresh: false }),
                     refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: false }),
@@ -347,7 +347,7 @@ export class OdspTestDriver implements ITestDriver {
             this.config.siteUrl,
             this.config.driveId,
             this.config.directory,
-            `${testId}.fluid`,
+            `${testId}.tstFluid`,
         );
     }
 

@@ -585,7 +585,12 @@
             1
         ],
         "import/no-nodejs-modules": [
-            "warn"
+            "error",
+            {
+                "allow": [
+                    "events"
+                ]
+            }
         ],
         "import/no-unassigned-import": [
             "error"
@@ -1435,7 +1440,7 @@
             "error"
         ],
         "unicorn/prefer-node-protocol": [
-            "error"
+            "off"
         ],
         "unicorn/prefer-number-properties": [
             "error"
