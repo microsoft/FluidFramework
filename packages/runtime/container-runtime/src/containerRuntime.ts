@@ -1030,6 +1030,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             chunks,
             this.context.submitBatchFn,
             runtimeOptions.chunkSizeInBytes,
+            runtimeOptions.maxBatchSizeInBytes,
             this.mc.logger);
         this.remoteMessageProcessor = new RemoteMessageProcessor(opSplitter, new OpDecompressor());
 

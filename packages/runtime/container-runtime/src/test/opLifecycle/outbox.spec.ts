@@ -22,6 +22,7 @@ describe("Outbox", () => {
         canSendOps: boolean;
         batchesSubmitted: IBatchMessage[][];
         batchesCompressed: IBatch[];
+        batchesSplit: IBatch[];
         individualOpsSubmitted: any[];
         pendingOpContents: any[];
         opsSubmitted: number;
@@ -32,6 +33,7 @@ describe("Outbox", () => {
         canSendOps: true,
         batchesSubmitted: [],
         batchesCompressed: [],
+        batchesSplit: [],
         individualOpsSubmitted: [],
         pendingOpContents: [],
         opsSubmitted: 0,
@@ -79,8 +81,12 @@ describe("Outbox", () => {
         },
     });
 
-    const getMockSplitter = (): Partial<OpSplitter> => ({
-
+    const getMockSplitter = (enabled: boolean): Partial<OpSplitter> => ({
+        isBatchChunkingEnabled: enabled,
+        splitCompressedBatch: (batch: IBatch): IBatch => {
+            state.batchesSplit.push(batch);
+            return batch;
+        },
     });
 
     const getMockPendingStateManager = (): Partial<PendingStateManager> => ({
@@ -142,12 +148,13 @@ describe("Outbox", () => {
         context: IContainerContext,
         maxBatchSize: number = maxBatchSizeInBytes,
         compressionOptions: ICompressionRuntimeOptions = DefaultCompressionOptions,
+        enableChunking: boolean = false,
     ) => new Outbox({
         shouldSend: () => state.canSendOps,
         pendingStateManager: getMockPendingStateManager() as PendingStateManager,
         containerContext: context,
         compressor: getMockCompressor() as OpCompressor,
-        splitter: getMockSplitter() as OpSplitter,
+        splitter: getMockSplitter(enableChunking) as OpSplitter,
         config: {
             maxBatchSizeInBytes: maxBatchSize,
             compressionOptions,
@@ -159,6 +166,7 @@ describe("Outbox", () => {
         state.canSendOps = true;
         state.batchesSubmitted.splice(0);
         state.batchesCompressed.splice(0);
+        state.batchesSplit.splice(0);
         state.individualOpsSubmitted.splice(0);
         state.pendingOpContents.splice(0);
         state.opsSubmitted = 0;
@@ -459,6 +467,59 @@ describe("Outbox", () => {
         assert.deepEqual(state.batchesCompressed, [toBatch(messages)]);
         // The batch is not persisted
         assert.deepEqual(state.pendingOpContents, []);
+    });
+
+    it("Chunks when compression is enabled, compressed batch is larger than the threshold and chunking is enabled", () => {
+        const outbox = getOutbox(
+            getMockContext() as IContainerContext,
+            /* maxBatchSize */ 1,
+            {
+                minimumBatchSizeInBytes: 1,
+                compressionAlgorithm: CompressionAlgorithms.lz4,
+            },
+            /* enableChunking */ true);
+
+        const messages = [
+            createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+            createMessage(ContainerMessageType.Attach, "2"),
+            createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
+        ];
+
+        outbox.submit(messages[0]);
+        outbox.submit(messages[1]);
+        outbox.submitAttach(messages[2]);
+        outbox.submit(messages[3]);
+
+        outbox.flush()
+        assert.deepEqual(state.batchesCompressed, [
+            toBatch([messages[2]]),
+            toBatch([messages[0], messages[1], messages[3]]),
+        ]);
+        assert.deepEqual(state.batchesSplit, [
+            toBatch([messages[2]]),
+            toBatch([messages[0], messages[1], messages[3]]),
+        ]);
+        assert.deepEqual(state.batchesSubmitted, [
+            [
+                batchedMessage(messages[2]),
+            ],
+            [
+                batchedMessage(messages[0], true),
+                batchedMessage(messages[1]),
+                batchedMessage(messages[3], false),
+            ],
+        ]);
+
+        const rawMessagesInFlushOrder = [
+            messages[2], messages[0], messages[1], messages[3],
+        ];
+        assert.deepEqual(state.pendingOpContents, rawMessagesInFlushOrder.map((message) => ({
+            type: message.deserializedContent.type,
+            content: message.deserializedContent.contents,
+            referenceSequenceNumber: message.referenceSequenceNumber,
+            opMetadata: message.metadata,
+        })));
     });
 
     it("Throws at submit, when compression is enabled and the attached compressed batch is still larger than the threshold", () => {

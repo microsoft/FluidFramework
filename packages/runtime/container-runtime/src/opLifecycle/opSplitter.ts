@@ -24,6 +24,7 @@ export class OpSplitter {
         chunks: [string, string[]][],
         private readonly submitBatchFn: (batch: IBatchMessage[]) => number,
         private readonly chunkSizeInBytes: number,
+        private readonly maxBatchSizeInBytes: number,
         logger: ITelemetryLogger,
     ) {
         this.chunkMap = new Map<string, string[]>(chunks);
@@ -128,6 +129,7 @@ export class OpSplitter {
         assert(this.isBatchChunkingEnabled, "Chunking needs to be enabled");
         assert(batch.contentSizeInBytes > 0 && batch.content.length > 0, "Batch needs to be non-empty");
         assert(this.chunkSizeInBytes !== 0, "Chunk size needs to be non-zero");
+        assert(this.chunkSizeInBytes < this.maxBatchSizeInBytes, "Chunk size needs to be smaller than the max batch size");
 
         const firstMessage = batch.content[0]; // we expect this to be the large compressed op, which needs to be split
         assert(firstMessage.metadata?.compressed === true || firstMessage.compression !== undefined, "Batch needs to be compressed");
