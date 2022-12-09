@@ -63,7 +63,7 @@ function rebaseMarkList<TNodeChange>(
     const lineageRequests: LineageRequest<TNodeChange>[] = [];
     let baseDetachOffset = 0;
     while (!manager.isEmpty()) {
-        const { baseMark, newMark: currMark, inverseRevision } = manager.pop();
+        const { baseMark, newMark: currMark } = manager.pop();
         if (baseMark === undefined) {
             assert(
                 currMark !== undefined,
@@ -75,7 +75,7 @@ function rebaseMarkList<TNodeChange>(
                     factory,
                     lineageRequests,
                     baseDetachOffset,
-                    inverseRevision,
+                    baseRevision,
                 );
             } else {
                 factory.push(currMark);
@@ -121,7 +121,6 @@ function rebaseMarkList<TNodeChange>(
 
 class RebaseQueue<T> {
     private reattachOffset: number = 0;
-    private reattachRevision: RevisionTag | undefined;
     private readonly baseMarks: StackyIterator<Mark<T>>;
     private readonly newMarks: StackyIterator<Mark<T>>;
 
@@ -146,7 +145,6 @@ class RebaseQueue<T> {
             return {
                 baseMark: this.baseMarks.pop(),
                 newMark: this.newMarks.pop(),
-                inverseRevision: this.reattachRevision,
             };
         } else if (isAttach(baseMark) && isAttach(newMark)) {
             const revision = baseMark.revision ?? this.baseRevision;
@@ -154,9 +152,8 @@ class RebaseQueue<T> {
             if (reattachOffset !== undefined) {
                 const offset = reattachOffset - this.reattachOffset;
                 this.reattachOffset = reattachOffset;
-                this.reattachRevision = revision;
                 if (offset === 0) {
-                    return { newMark: this.newMarks.pop(), inverseRevision: this.reattachRevision };
+                    return { newMark: this.newMarks.pop() };
                 } else if (offset >= getOutputLength(baseMark)) {
                     return { baseMark: this.baseMarks.pop() };
                 } else {
@@ -167,15 +164,14 @@ class RebaseQueue<T> {
             } else if (isAttachAfterBaseAttach(newMark, baseMark)) {
                 return { baseMark: this.baseMarks.pop() };
             } else {
-                return { newMark: this.newMarks.pop(), inverseRevision: this.reattachRevision };
+                return { newMark: this.newMarks.pop() };
             }
         } else if (isAttach(newMark)) {
-            return { newMark: this.newMarks.pop(), inverseRevision: this.reattachRevision };
+            return { newMark: this.newMarks.pop() };
         }
 
-        // TODO: Handle case where base has adjacent or nested inverse reattaches from multiple revisions
+        // TODO: Handle case where `baseMarks` has adjacent or nested inverse reattaches from multiple revisions
         this.reattachOffset = 0;
-        this.reattachRevision = undefined;
         if (isAttach(baseMark)) {
             return { baseMark: this.baseMarks.pop() };
         } else {
@@ -199,10 +195,13 @@ class RebaseQueue<T> {
     }
 }
 
+/**
+ * Represents the marks rebasing should process next.
+ * If `baseMark` and `newMark` are both defined, then they are `SizedMark`s covering the same range of nodes.
+ */
 interface RebaseMarks<T> {
     baseMark?: Mark<T>;
     newMark?: Mark<T>;
-    inverseRevision?: RevisionTag;
 }
 
 function rebaseMark<TNodeChange>(
@@ -237,11 +236,16 @@ function handleCurrAttach<T>(
     factory: MarkListFactory<T>,
     lineageRequests: LineageRequest<T>[],
     offset: number,
-    reattachRevision: RevisionTag | undefined,
+    baseRevision: RevisionTag | undefined,
 ) {
     const rebasedMark = clone(currMark);
-    if (reattachRevision !== undefined) {
-        tryRemoveLineageEvent(rebasedMark, reattachRevision);
+
+    // If the changeset we are rebasing over has the same revision as an event in rebasedMark's lineage,
+    // we assume that the base changeset is the inverse of the changeset in the lineage, so we remove the lineage event.
+    // TODO: Handle cases where the base changeset is a composition of multiple revisions.
+    // TODO: Don't remove the lineage event in cases where the event isn't actually inverted by the base changeset.
+    if (baseRevision !== undefined) {
+        tryRemoveLineageEvent(rebasedMark, baseRevision);
     }
     factory.pushContent(rebasedMark);
     lineageRequests.push({ mark: rebasedMark, offset });
@@ -327,7 +331,9 @@ function updateLineage<T>(requests: LineageRequest<T>[], revision: RevisionTag) 
 }
 
 function tryRemoveLineageEvent<T>(mark: Attach<T>, revisionToRemove: RevisionTag) {
-    assert(mark.lineage !== undefined, 0x464 /* Cannot remove event from empty lineage */);
+    if (mark.lineage === undefined) {
+        return;
+    }
     const index = mark.lineage.findIndex((event) => event.revision === revisionToRemove);
     if (index >= 0) {
         mark.lineage.splice(index, 1);
