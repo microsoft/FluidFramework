@@ -8,7 +8,9 @@
         "Atomics": "readonly",
         "SharedArrayBuffer": "readonly"
     },
-    "ignorePatterns": [],
+    "ignorePatterns": [
+        "**/packageVersion.ts"
+    ],
     "parserOptions": {
         "ecmaFeatures": {
             "jsx": true
