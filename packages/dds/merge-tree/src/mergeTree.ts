@@ -398,6 +398,10 @@ export interface LRUSegment {
     maxSeq: number;
 }
 
+export interface IRootMergeBlock extends IMergeBlock {
+    mergeTree?: MergeTree;
+}
+
 /**
  * @deprecated For internal use only. public export will be removed.
  * @internal
@@ -413,7 +417,6 @@ export class MergeTree {
     private static readonly initBlockUpdateActions: BlockUpdateActions;
     private static readonly theUnfinishedNode = <IMergeBlock>{ childCount: -1 };
 
-    root: IMergeBlock;
     private readonly blockUpdateActions: BlockUpdateActions = MergeTree.initBlockUpdateActions;
     public readonly collabWindow = new CollaborationWindow();
 
@@ -435,7 +438,18 @@ export class MergeTree {
 
     // TODO: make and use interface describing options
     public constructor(public options?: PropertySet) {
-        this.root = this.makeBlock(0);
+        this._root = this.makeBlock(0);
+        this._root.mergeTree = this;
+    }
+
+    private _root: IRootMergeBlock;
+    public get root(): IRootMergeBlock {
+        return this._root;
+    }
+
+    public set root(value) {
+        this._root = value;
+        value.mergeTree = this;
     }
 
     private makeBlock(childCount: number) {

@@ -405,8 +405,6 @@ export const createRevertDriver =
     return {
         createLocalReferencePosition: client.createLocalReferencePosition.bind(client),
 
-        createEndOfTreeSegment: client.createEndOfTreeSegment.bind(client),
-
         removeRange(start: number, end: number) {
             const op = client.removeRangeLocal(start, end);
             this.submitOpCallback?.(op);
@@ -422,19 +420,6 @@ export const createRevertDriver =
                 this.submitOpCallback?.(op);
             },
         insertFromSpec(pos: number, spec: IJSONSegment) {
-            // want the segment's content and the state of insert/remove
-            const test: string[] = [];
-            walkAllChildSegments(client.mergeTree.root,
-                (segment) => {
-                    const prefixes: (string | undefined | number)[] = [];
-                    prefixes.push(segment.seq !== UnassignedSequenceNumber ? segment.seq : `L${segment.localSeq}`);
-                    if (segment.removedSeq !== undefined) {
-                        prefixes.push(segment.removedSeq !== UnassignedSequenceNumber
-                            ? segment.removedSeq
-                            : `L${segment.localRemovedSeq}`);
-                    }
-                    test.push(`${prefixes.join(",")}:${(segment as any).text}`);
-                });
             const op = client.insertSegmentLocal(pos, client.specToSegment(spec));
             this.submitOpCallback?.(op);
         },
@@ -445,6 +430,22 @@ export const createRevertDriver =
 
     };
 };
+
+export function debugDumpTree(tree: MergeTree) {
+    // want the segment's content and the state of insert/remove
+    const test: string[] = [];
+    walkAllChildSegments(tree.root,
+        (segment) => {
+            const prefixes: (string | undefined | number)[] = [];
+            prefixes.push(segment.seq !== UnassignedSequenceNumber ? segment.seq : `L${segment.localSeq}`);
+            if (segment.removedSeq !== undefined) {
+                prefixes.push(segment.removedSeq !== UnassignedSequenceNumber
+                    ? segment.removedSeq
+                    : `L${segment.localRemovedSeq}`);
+            }
+            test.push(`${prefixes.join(",")}:${(segment as any).text}`);
+        });
+}
 
 export function getStats(tree: MergeTree) {
     const nodeGetStats = (block: IMergeBlock): MergeTreeStats => {

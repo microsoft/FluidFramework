@@ -57,7 +57,6 @@ import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./r
 import { MergeTree } from "./mergeTree";
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk";
-import { EndOfTreeSegment } from "./endOfTreeSegment";
 import {
     IMergeTreeClientSequenceArgs,
     IMergeTreeDeltaOpArgs,
@@ -105,10 +104,6 @@ export class Client {
         options?: PropertySet,
     ) {
         this._mergeTree = new MergeTree(options);
-    }
-
-    public createEndOfTreeSegment(): ISegment {
-        return new EndOfTreeSegment(this._mergeTree);
     }
 
     /**

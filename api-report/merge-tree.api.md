@@ -108,8 +108,6 @@ export class Client {
     applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
     // (undocumented)
     cloneFromSegments(): Client;
-    // (undocumented)
-    createEndOfTreeSegment(): ISegment;
     createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
@@ -395,8 +393,10 @@ export interface IMergeBlock extends IMergeNodeCommon {
     setOrdinal(child: IMergeNode, index: number): void;
 }
 
+// Warning: (ae-forgotten-export) The symbol "IRootMergeBlock" needs to be exported by the entry point index.d.ts
+//
 // @public (undocumented)
-export type IMergeNode = IMergeBlock | ISegment;
+export type IMergeNode = IMergeBlock | IRootMergeBlock | ISegment;
 
 // @public
 export interface IMergeNodeCommon {
@@ -858,8 +858,6 @@ export type MergeTreeMaintenanceType = typeof MergeTreeMaintenanceType[keyof typ
 export interface MergeTreeRevertibleDriver {
     // (undocumented)
     annotateRange(start: number, end: number, props: PropertySet): any;
-    // (undocumented)
-    createEndOfTreeSegment(): ISegment;
     // (undocumented)
     createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // (undocumented)
