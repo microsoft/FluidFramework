@@ -69,7 +69,7 @@ export type EventSpecEntry<TEventKey, TListenerArgs extends any[]> =
 
 
 /** These events are always supported due to base EventEmitter implementation */
-export interface IBaseEventSpec {
+export interface BaseEventSpec {
     newListener: (event: string, listener: (...args: any[]) => void) => void;
     removeListener: (event: string, listener: (...args: any[]) => void) => void;
 }
@@ -109,7 +109,7 @@ export interface IEventProvider2<TEventSpec> {
     off: EventHandlerRegistrationSignatures<this, TEventSpec>;
 }
 
-export class TypedEventEmitter2<TEventSpec extends IBaseEventSpec> extends EventEmitter implements IEventProvider2<TEventSpec> {
+export class TypedEventEmitter2<TEventSpec extends BaseEventSpec> extends EventEmitter implements IEventProvider2<TEventSpec> {
     constructor() {
         super();
         this.addListener = super.addListener.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
@@ -165,7 +165,7 @@ export class TypedEventEmitter<TEvent>
     readonly off: TypedEventTransform<this, TEvent>;
 }
 
-export interface ISampleEventSpec extends IBaseEventSpec {
+export interface SampleEventSpec extends BaseEventSpec {
     foo: (x: number, y: string) => void;
     bar: () => void;
     baz: (options: { a: string; b: boolean; }) => void;
@@ -173,7 +173,7 @@ export interface ISampleEventSpec extends IBaseEventSpec {
     // BOOM: number;
 }
 
-class MyTee extends TypedEventEmitter2<ISampleEventSpec> {}
+class MyTee extends TypedEventEmitter2<SampleEventSpec> {}
 const sample = new MyTee();
 
 // These are strongly typed
@@ -193,7 +193,7 @@ sample.on("useThis", (x: MyTee) => {});
 sample.emit("unspecified", 123);
 sample.on("unspecified", () => {});
 
-export interface INewEvents {
+export interface NewEventSpec {
     something: (x: number) => void;
     useThis1: (y: IEventThisPlaceHolder) => void;
 }
