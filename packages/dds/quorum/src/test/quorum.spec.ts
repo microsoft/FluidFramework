@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line unicorn/prefer-node-protocol
 import { strict as assert } from "assert";
 import {
     MockFluidDataStoreRuntime,
@@ -339,7 +338,6 @@ describe("Quorum", () => {
             containerRuntimeFactory.processAllMessages();
         });
 
-        // eslint-disable-next-line max-len
         it("Doesn't resubmit unsequenced proposals that were sent before offline but are futile after reconnect", async () => {
             const targetKey = "key";
             quorum1.set(targetKey, "unexpected");
@@ -355,7 +353,6 @@ describe("Quorum", () => {
             assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
         });
 
-        // eslint-disable-next-line max-len
         it("Unsequenced proposals sent before offline and still valid after reconnect are accepted after reconnect", async () => {
             const targetKey = "key";
             quorum1.set(targetKey, "expected");
@@ -366,7 +363,6 @@ describe("Quorum", () => {
             assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
         });
 
-        // eslint-disable-next-line max-len
         it("Doesn't resubmit unsequenced proposals that were sent during offline but are futile after reconnect", async () => {
             const targetKey = "key";
             containerRuntime1.connected = false;
@@ -381,7 +377,6 @@ describe("Quorum", () => {
             assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
         });
 
-        // eslint-disable-next-line max-len
         it("Unsequenced proposals sent during offline and still valid after reconnect are accepted after reconnect", async () => {
             const targetKey = "key";
             containerRuntime1.connected = false;

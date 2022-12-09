@@ -20,7 +20,6 @@ export const enum CaretEventType {
     leave = "fluid:caretleave",
 }
 
-// eslint-disable-next-line max-len
 function dispatchCaretEvent(type: CaretEventType, target: Element, direction: Direction, caretBounds: ICaretBounds) {
     return !(target.dispatchEvent(
         new CustomEvent(

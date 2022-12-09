@@ -237,7 +237,6 @@ export class HashCalculator {
 
     // Compute the hash for the remaining bytes in the buffer
     const buffer = this.hashBuffer.Uint8HashArray;
-    /* eslint-disable no-multi-spaces */
     switch (this.hashBuffer.pos) {
       case 15: k4 = (k4 ^ (buffer[14] << 16)) >>> 0;
       case 14: k4 = (k4 ^ (buffer[13] << 8)) >>> 0;
@@ -281,7 +280,6 @@ export class HashCalculator {
       default:
         throw new Error("_finalizeHash: We should never get into the default case.");
     }
-    /* eslint-enable no-multi-spaces */
 
     // Perform the finalization
     const len = this.length + this.hashBuffer.pos;

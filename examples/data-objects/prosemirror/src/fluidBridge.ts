@@ -170,7 +170,6 @@ export class ProseMirrorTransactionBuilder {
                 //
                 // Typing the above out it's not all that different from the removal case actually
                 const splicePoint = this.splitAt(position, i);
-                // eslint-disable-next-line max-len
                 this.things.splice(splicePoint, 0, { type: "insert", event: range, length: range.segment.cachedLength });
 
                 break;

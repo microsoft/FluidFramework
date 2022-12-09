@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-bitwise */
 import { strict as assert } from "assert";
 import { Direction, getDeltaX, getDeltaY } from "../util";
 
-/* eslint-disable no-multi-spaces */
 
 const cases = [
     { name: "none",       direction: Direction.none,                      expectedX: 0,    expectedY: 0 },
@@ -20,8 +18,6 @@ const cases = [
     { name: "left down",  direction: Direction.left  | Direction.down,    expectedX: -1,    expectedY: 1 },
     { name: "right down", direction: Direction.right | Direction.down,    expectedX: 1,    expectedY: 1 },
 ];
-
-/* eslint-enable no-multi-spaces */
 
 describe("direction", () => {
     describe("getDeltaX", () => {

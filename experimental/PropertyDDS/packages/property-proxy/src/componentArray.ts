@@ -239,11 +239,11 @@ class ComponentArray extends Array {
         let startValue = Number(start) === start ? parseInt(start, 10) : 0;
         const arrayLength = this.property.getLength();
 
-        // If start is greater than the array, start is set to the length of the array
-        // eslint-disable-next-line @typescript-eslint/brace-style
-        if (startValue > arrayLength) { startValue = arrayLength; }
-        // If start is negative, we begin from the end of the array
-        else if (startValue < 0) {
+        if (startValue > arrayLength) {
+            // If start is greater than the array, start is set to the length of the array
+            startValue = arrayLength;
+        } else if (startValue < 0) {
+            // If start is negative, we begin from the end of the array
             startValue = arrayLength + startValue;
             if (startValue < 0) {
                 startValue = 0;

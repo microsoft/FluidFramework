@@ -122,7 +122,6 @@ export class CollaborativeInput
         }
 
         const selectionEnd = this.inputElementRef.current.selectionEnd ? this.inputElementRef.current.selectionEnd : 0;
-        // eslint-disable-next-line max-len
         const selectionStart = this.inputElementRef.current.selectionStart ? this.inputElementRef.current.selectionStart : 0;
         this.setState({ selectionEnd, selectionStart });
     }

@@ -25,5 +25,14 @@ module.exports = {
                 },
             },
         ],
-    }
+    },
+    overrides: [
+        {
+            files: ["packageVersion.ts"],
+            rules: {
+                "jsdoc/require-jsdoc": "off",
+                "jsdoc/require-description": "off",
+            },
+        },
+    ],
 }

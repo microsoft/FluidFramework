@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable max-len */
-
 /**
  * Error messages for the Schema Validator
  */

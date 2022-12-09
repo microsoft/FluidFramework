@@ -162,7 +162,6 @@ const uint32x4ToGUID = function(in_guidArray: Uint32Array | Int32Array | number[
             const hex = in_guidArray[i].toString(16);
             str += ("0".repeat(8 - hex.length) + hex);
         }
-        // eslint-disable-next-line max-len
         return `${str.substr(0, 8)}-${str.substr(8, 4)}-${str.substr(12, 4)}-${str.substr(16, 4)}-${str.substr(20, 12)}`;
     }
 };

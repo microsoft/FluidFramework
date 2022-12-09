@@ -96,7 +96,6 @@ export class SharedStringHelper extends TypedEventEmitter<ISharedStringHelperEve
                     ? oldPosition
                     // Position is moved by the length of the insertion if it is after the insertion's start
                     : oldPosition + changeLength;
-                // eslint-disable-next-line max-len
                 // console.log(`previousText: ${previousText} newText: ${this._latestText} ChangeRange: ${changeStartPosition}-${changeStartPosition + changeLength}, Transform: ${oldPosition} -> ${newPosition}`);
                 // console.log(op);
                 return newPosition;
@@ -123,7 +122,6 @@ export class SharedStringHelper extends TypedEventEmitter<ISharedStringHelperEve
                     // Position snaps to the left side of the deletion if it is inside the deletion.
                     newPosition = changeStartPosition;
                 }
-                // eslint-disable-next-line max-len
                 // console.log(`previousText: ${previousText} newText: ${this._latestText} ChangeRange: ${changeStartPosition}-${changeEndPosition}, Transform: ${oldPosition} -> ${newPosition}`);
                 // console.log(op);
                 return newPosition;

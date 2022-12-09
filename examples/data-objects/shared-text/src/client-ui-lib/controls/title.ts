@@ -22,7 +22,6 @@ export class Title extends ui.Component {
     }
 
     public setTitle(title: string) {
-        // eslint-disable-next-line max-len
         this.viewportDiv.innerHTML = `<span id="docname" style="font-size:20px;font-family:Book Antiqua">${title} <span id="doctoken"></span></span>`;
     }
 
