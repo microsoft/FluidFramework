@@ -242,6 +242,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         this.messageBuffer.push(message);
 
+        if (message.type === MessageType.NoOp){
+            this.noOpCount++;
+        }
+
         this.emit("submitOp", message);
 
         if (!batch) {
@@ -760,9 +764,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             0x0ec /* "Unexpected value for previously processed message's sequence number" */);
 
         for (const message of messages) {
-            if (message.type === MessageType.NoOp){
-                this.noOpCount++;
-            }
             // Check that the messages are arriving in the expected order
             if (message.sequenceNumber <= this.lastQueuedSequenceNumber) {
                 // Validate that we do not have data loss, i.e. sequencing is reset and started again
@@ -845,6 +846,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 } else {
                     throw new Error(`gap in client sequence number :${clientSeqNumGap}`);
                 }
+            } else if (message.type === MessageType.NoOp){
+                this.noOpCount--;
             }
         }
         this.lastClientSequenceNumber = message.clientSequenceNumber;
