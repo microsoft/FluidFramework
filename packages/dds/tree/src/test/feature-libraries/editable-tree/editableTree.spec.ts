@@ -740,10 +740,10 @@ describe("editable-tree: read-only", () => {
     const xx: MarkedArrayLike<ContextuallyTypedNodeData> = 0 as any as EditableField;
 
     // TODO: there seems to be a bug in TypeCheck library, since
-    // this should fail, but its does not (undefined should break it).
+    // this should fail, but it does not (undefined should break it).
     type _checkFail = requireTrue<
         isAssignableTo<UnwrappedEditableField, ContextuallyTypedNodeData>
     >;
-    // This does fail: but it should check the same as the above:
+    // This does fail, but it should check the same as the above
     // const _dummyValue: ContextuallyTypedNodeData = 0 as any as UnwrappedEditableField;
 }

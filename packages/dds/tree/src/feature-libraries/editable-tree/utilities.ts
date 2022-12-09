@@ -186,11 +186,11 @@ export function keyIsValidIndex(key: string | number, length: number): boolean {
 export const arrayLikeMarkerSymbol: unique symbol = Symbol("editable-tree:arrayLikeMarker");
 
 /**
- * Can be used to mark a type which works like an array, but is not compatible with Array.isArray.
+ * Can be used to mark a type which works like an array, but is not compatible with `Array.isArray`.
  */
 export interface MarkedArrayLike<T> extends ArrayLike<T> {
     /**
-     * ArrayLike numeric indexed access, but writable.
+     * `ArrayLike` numeric indexed access, but writable.
      */
     [n: number]: T;
     readonly [arrayLikeMarkerSymbol]: true;
@@ -271,7 +271,9 @@ export interface ContextuallyTypedNodeDataObject {
 }
 
 /**
- * @returns false if `data` is incompatible compatible with `type` based on a cheap/shallow check.
+ * Checks if data is schema-compatible.
+ *
+ * @returns false if `data` is incompatible with `type` based on a cheap/shallow check.
  *
  * Note that this may return true for cases where data is incompatible, but it must not return false in cases where the data is compatible.
  */
@@ -384,7 +386,7 @@ export function applyFieldTypesFromContext(
     }
     assert(
         multiplicity === Multiplicity.Value || multiplicity === Multiplicity.Optional,
-        "Single value provided for unsupported field",
+        "single value provided for unsupported field",
     );
     return [applyTypesFromContext(schemaData, field.types, data)];
 }

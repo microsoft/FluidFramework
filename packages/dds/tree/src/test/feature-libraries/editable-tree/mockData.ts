@@ -27,8 +27,6 @@ import {
 } from "../../../core";
 import { brand, Brand } from "../../../util";
 
-// TODO: Use typed schema (ex: typedTreeSchema), here, and derive the types below from them programmatically.
-
 export const stringSchema = namedTreeSchema({
     name: brand("String"),
     value: ValueSchema.String,
@@ -296,7 +294,6 @@ export const personData: JsonableTree = {
 export function getPerson(): Person {
     const age: Int32 = brand(35);
     return {
-        // [typeNameSymbol]: personSchema.name,
         // typed with built-in primitive type
         name: "Adam",
         // explicitly typed
