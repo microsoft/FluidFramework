@@ -392,15 +392,21 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
             this.moveToPosition(this.positionIndex + offset * info.shape.positions.length);
             return true;
         }
-        if (offset === 0) {
-            return true;
-        }
         this.exitNode();
         return false;
     }
 
     nextNode(): boolean {
-        return this.seekNodes(1);
+        // This is the same as `return this.seekNodes(1);` but slightly faster.
+
+        const info = this.nodeInfo(CursorLocationType.Nodes);
+        const index = info.parentIndex + 1;
+        if (index === info.topLevelLength) {
+            this.exitNode();
+            return false;
+        }
+        this.moveToPosition(this.positionIndex + info.shape.positions.length);
+        return true;
     }
 
     exitNode(): void {
