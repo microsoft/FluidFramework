@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -39,11 +40,11 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
         const gcState = getGCStateFromSummary(summaryTree);
         assert(gcState !== undefined, "GC tree is not available in the summary");
 
-        const nodeReferenceStates: Map<string, boolean> = new Map();
+        const nodeIsReferencedMap: Map<string, boolean> = new Map();
         for (const [nodePath, nodeData] of Object.entries(gcState.gcNodes)) {
-            nodeReferenceStates.set(nodePath.slice(1), nodeData.unreferencedTimestampMs !== undefined ? false : true);
+            nodeIsReferencedMap.set(nodePath.slice(1), nodeData.unreferencedTimestampMs === undefined ? true : false);
         }
-        return nodeReferenceStates;
+        return nodeIsReferencedMap;
     }
 
     /*
@@ -83,9 +84,11 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
         const summarizer1 = await createSummarizer(provider, mainContainer);
 
         // Create a data store and mark it unreferenced to begin with.
-        const dataStoreB = await requestFluidObject<ITestDataObject>(
-            await containerRuntime.createDataStore(TestDataObjectType), "");
-        dataStoreA._root.set("dataStoreB", dataStoreB.handle);
+        const dataStoreBHandle =
+            (await containerRuntime.createDataStore(TestDataObjectType)).entryPoint as IFluidHandle<ITestDataObject>;
+        assert(dataStoreBHandle !== undefined, "New data store does not have a handle");
+        const dataStoreB = await dataStoreBHandle.get();
+        dataStoreA._root.set("dataStoreB", dataStoreBHandle);
         dataStoreA._root.delete("dataStoreB");
 
         await provider.ensureSynchronized();
@@ -129,8 +132,10 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
         const summarizer1 = await createSummarizer(provider, mainContainer);
 
         // Create a data store and mark it referenced to begin with.
-        const dataStoreB = await requestFluidObject<ITestDataObject>(
-            await containerRuntime.createDataStore(TestDataObjectType), "");
+        const dataStoreBHandle =
+            (await containerRuntime.createDataStore(TestDataObjectType)).entryPoint as IFluidHandle<ITestDataObject>;
+        assert(dataStoreBHandle !== undefined, "New data store does not have a handle");
+        const dataStoreB = await dataStoreBHandle.get();
         dataStoreA._root.set("dataStoreB", dataStoreB.handle);
 
         await provider.ensureSynchronized();
