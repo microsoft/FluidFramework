@@ -40,15 +40,35 @@ export type TypedEventTransform<TThis, TEvent> =
         // Add the default overload so this is covertable to EventEmitter regardless of environment
         TransformedEvent<TThis, EventEmitterEventType, any[]>;
 
+/** These events are always supported due to base EventEmitter implementation */
+export interface IBaseEventSpec {
+    newListener: (event: string, listener: (...args: any[]) => void) => void;
+    removeListener: (event: string, listener: (...args: any[]) => void) => void;
+}
+
+/** Extracts the supported event names from the spec */
+type EventKeys<TEventSpec> =
+    keyof TEventSpec extends string ?
+        TEventSpec[keyof TEventSpec] extends (...args: any[]) => void ?
+            keyof TEventSpec
+: never : never;
+
+/** Extracts the given event's listener signature (including replacing IEventThisPlaceHolder) */
+type ListenerSignature<TThis, TEventSpec, TEventKey extends EventKeys<TEventSpec>> =
+    keyof TEventSpec extends string ?
+        TEventSpec[TEventKey] extends (...args: infer TArgs) => void ?
+            (...args: ReplaceIEventThisPlaceHolder<TArgs, TThis>) => void
+: never : never;
+
 /** Signature for on/once/off functions */
-export type EventHandlerRegistrationSignatures<TThis, TEventSpec> =
+type EventHandlerRegistrationSignatures<TThis, TEventSpec> =
     <TEventKey extends EventKeys<TEventSpec>>(
         event: TEventKey,
         listener: ListenerSignature<TThis, TEventSpec, TEventKey>,
     ) => TThis;
 
 /** Signature for emit */
-export type EventEmitSignatures<TThis, TEventSpec> =
+type EventEmitSignatures<TThis, TEventSpec> =
     <TEventKey extends EventKeys<TEventSpec>>(
         event: TEventKey,
         ...args: Parameters<ListenerSignature<TThis, TEventSpec, TEventKey>>
@@ -59,6 +79,30 @@ export interface IEventProvider2<TEventSpec> {
     on: EventHandlerRegistrationSignatures<this, TEventSpec>;
     once: EventHandlerRegistrationSignatures<this, TEventSpec>;
     off: EventHandlerRegistrationSignatures<this, TEventSpec>;
+}
+
+export class TypedEventEmitter2<TEventSpec extends IBaseEventSpec> extends EventEmitter implements IEventProvider2<TEventSpec> {
+    constructor() {
+        super();
+        this.addListener = super.addListener.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
+        this.on = super.on.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
+        this.once = super.once.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
+        this.prependListener = super.prependListener.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
+        this.prependOnceListener = super.prependOnceListener.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
+        this.removeListener = super.removeListener.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
+        this.off = super.off.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
+
+        this.emit = super.emit.bind(this) as EventEmitSignatures<this, TEventSpec>;
+    }
+    readonly addListener: EventHandlerRegistrationSignatures<this, TEventSpec>;
+    readonly on: EventHandlerRegistrationSignatures<this, TEventSpec>;
+    readonly once: EventHandlerRegistrationSignatures<this, TEventSpec>;
+    readonly prependListener: EventHandlerRegistrationSignatures<this, TEventSpec>;
+    readonly prependOnceListener: EventHandlerRegistrationSignatures<this, TEventSpec>;
+    readonly removeListener: EventHandlerRegistrationSignatures<this, TEventSpec>;
+    readonly off: EventHandlerRegistrationSignatures<this, TEventSpec>;
+
+    readonly emit: EventEmitSignatures<this, TEventSpec>;
 }
 
 /**
@@ -93,49 +137,6 @@ export class TypedEventEmitter<TEvent>
     readonly off: TypedEventTransform<this, TEvent>;
 }
 
-export class TypedEventEmitter2<TEventSpec extends IBaseEventSpec> extends EventEmitter implements IEventProvider2<TEventSpec> {
-    constructor() {
-        super();
-        this.addListener = super.addListener.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
-        this.on = super.on.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
-        this.once = super.once.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
-        this.prependListener = super.prependListener.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
-        this.prependOnceListener = super.prependOnceListener.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
-        this.removeListener = super.removeListener.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
-        this.off = super.off.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
-
-        this.emit = super.emit.bind(this) as EventEmitSignatures<this, TEventSpec>;
-    }
-    readonly addListener: EventHandlerRegistrationSignatures<this, TEventSpec>;
-    readonly on: EventHandlerRegistrationSignatures<this, TEventSpec>;
-    readonly once: EventHandlerRegistrationSignatures<this, TEventSpec>;
-    readonly prependListener: EventHandlerRegistrationSignatures<this, TEventSpec>;
-    readonly prependOnceListener: EventHandlerRegistrationSignatures<this, TEventSpec>;
-    readonly removeListener: EventHandlerRegistrationSignatures<this, TEventSpec>;
-    readonly off: EventHandlerRegistrationSignatures<this, TEventSpec>;
-
-    readonly emit: EventEmitSignatures<this, TEventSpec>;
-}
-
-/** These events are always supported due to base EventEmitter implementation */
-export interface IBaseEventSpec {
-    newListener: (event: string, listener: (...args: any[]) => void) => void;
-    removeListener: (event: string, listener: (...args: any[]) => void) => void;
-}
-
-type EventKeys<TEventSpec> =
-    keyof TEventSpec extends string ?
-        TEventSpec[keyof TEventSpec] extends (...args: any[]) => void ?
-            keyof TEventSpec
-: never : never;
-
-type ListenerSignature<TThis, TEventSpec, TEventKey extends EventKeys<TEventSpec>> =
-    keyof TEventSpec extends string ?
-        TEventSpec[TEventKey] extends (...args: infer TArgs) => void ?
-            (...args: ReplaceIEventThisPlaceHolder<TArgs, TThis>) => void
-: never : never;
-
-// extend Record<string, any[]> if you want to allow any undeclared event (why?) - also this will allow numerical keys
 export interface ISampleEventSpec extends IBaseEventSpec {
     foo: (x: number, y: string) => void;
     bar: () => void;
@@ -144,9 +145,7 @@ export interface ISampleEventSpec extends IBaseEventSpec {
     // BOOM: number;
 }
 
-class MyTee extends TypedEventEmitter2<ISampleEventSpec> {
-}
-
+class MyTee extends TypedEventEmitter2<ISampleEventSpec> {}
 const sample = new MyTee();
 
 // These are strongly typed
@@ -168,7 +167,7 @@ sample.on("unspecified", () => {});
 
 export interface IOldEvents extends IEvent {
     (event: "something", listener: (x: number) => void);
-    // (event: "useThis1", listener: (y: IEventThisPlaceHolder) => void)
+    (event: "useThis1", listener: (y: IEventThisPlaceHolder) => void)
 }
 
 const sampleOld = new TypedEventEmitter<IOldEvents>();
