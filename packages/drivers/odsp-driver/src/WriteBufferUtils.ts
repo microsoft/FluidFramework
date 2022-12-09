@@ -62,7 +62,6 @@ export class WriteBuffer {
 
 // This list of maps below is reverse mapping of Marker Codes specified in zipItDataRepresentationUtils.ts file.
 // We can also found them on server filestore code.
-// eslint-disable-next-line max-len
 // https://onedrive.visualstudio.com/SharePoint%20Online/_git/SPO?path=/cobalt/Base/Property/BinaryEncodedPropertyReader.cs&version=GBmaster&_a=contents
 
 /**

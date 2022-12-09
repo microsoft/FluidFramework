@@ -158,9 +158,7 @@ export class PartitionManager extends EventEmitter {
                 continue;
             }
 
-            // eslint-disable-next-line max-len
             this.logger?.info(`Creating ${partition.topic}: Partition ${partition.partition}, Epoch ${partition.leaderEpoch}, Offset ${partition.offset} due to rebalance`);
-            // eslint-disable-next-line max-len
             Lumberjack.info(`Creating ${partition.topic}: Partition ${partition.partition}, Epoch ${partition.leaderEpoch}, Offset ${partition.offset} due to rebalance`);
 
             const newPartition = new Partition(

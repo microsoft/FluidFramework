@@ -2671,7 +2671,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             } else if (!this.flushMicroTaskExists) {
                 this.flushMicroTaskExists = true;
                 // Queue a microtask to detect the end of the turn and force a flush.
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 Promise.resolve().then(() => {
                     this.flushMicroTaskExists = false;
                     this.flush();

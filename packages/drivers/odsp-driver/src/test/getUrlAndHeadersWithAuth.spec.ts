@@ -56,7 +56,6 @@ describe("getUrlAndHeadersWithAuth", () => {
         assert.strictEqual(returnedUrl.href, originalUrl.href, "Returned url must match original url");
     };
 
-    // eslint-disable-next-line max-len
     it("returns url with token embedded as part of query string when overall query string does not exceed 2048 characters", async () => {
         validateTokenEmbeddedIntoQueryString(
             urlWithoutParams, shortToken, getUrlAndHeadersWithAuth(urlWithoutParams.href, shortToken, false));
@@ -89,7 +88,6 @@ describe("getUrlAndHeadersWithAuth", () => {
         );
     });
 
-    // eslint-disable-next-line max-len
     it("returns headers with token embedded in Authorization header when overall query string exceeds 2048 characters", async () => {
         const longTokenForUrlWithoutParams = generateToken(maxTokenLength + 1);
         validateTokenEmbeddedIntoHeaders(

@@ -36,7 +36,6 @@ describe("DeltaStorageService", () => {
             createUtEpochTracker(fileEntry, logger),
             logger);
         const actualDeltaUrl = deltaStorageService.buildUrl(3, 8);
-        // eslint-disable-next-line max-len
         const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?ump=1&filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
         assert.equal(actualDeltaUrl, expectedDeltaUrl, "The constructed delta url is invalid");
     });

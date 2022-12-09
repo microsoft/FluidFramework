@@ -147,7 +147,6 @@ export class KafkaNodeProducer implements IProducer {
             if (stringifiedMessage.byteLength > this.maxMessageSize) {
                 const error = new NetworkError(
                     413,
-                    // eslint-disable-next-line max-len
                     `Boxcar message size (${stringifiedMessage.byteLength}) exceeded max message size (${this.maxMessageSize})`,
                 );
                 boxcar.deferred.reject(error);

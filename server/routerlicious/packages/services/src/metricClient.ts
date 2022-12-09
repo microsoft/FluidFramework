@@ -52,6 +52,7 @@ class TelegrafClient implements IMetricClient {
 }
 
 export function createMetricClient(config: any): IMetricClient {
-    // eslint-disable-next-line max-len
-    return (config !== undefined && config.client === "telegraf") ? new TelegrafClient(config.telegraf) : new DefaultMetricClient();
+    return (config !== undefined && config.client === "telegraf")
+        ? new TelegrafClient(config.telegraf)
+        : new DefaultMetricClient();
 }

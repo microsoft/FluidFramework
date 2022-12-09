@@ -298,7 +298,6 @@ describe("Odsp Driver Resolver", () => {
 
         assert.strictEqual(
             resolvedUrl.url,
-            // eslint-disable-next-line max-len
             "fluid-odsp://placeholder/placeholder/AV5r7rhbMqs3T5cL8TUpqk6FpWldev0qKsKlnjkC5mg%3D/?driveId=driveId&itemId=&path=/",
         );
     });

@@ -1536,7 +1536,6 @@ export class MergeTree {
             if (this.collabWindow.collaborating) {
                 if ((locSegment.seq === UnassignedSequenceNumber) && (clientId === this.collabWindow.clientId)) {
                     segmentGroup = this.addToPendingList(locSegment, segmentGroup, localSeq);
-                    // eslint-disable-next-line @typescript-eslint/brace-style
                 }
                 // LocSegment.seq === 0 when coming from SharedSegmentSequence.loadBody()
                 // In all other cases this has to be true (checked by addToLRUSet):

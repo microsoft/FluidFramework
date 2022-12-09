@@ -426,7 +426,6 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	private createMessageSizeTooLargeError(boxcar: IPendingBoxcar, message: Buffer) {
 		return new NetworkError(
 			413,
-			// eslint-disable-next-line max-len
 			`Message size too large. Boxcar message count: ${boxcar.messages.length}, size: ${message.byteLength}, max message size: ${this.producerOptions.maxMessageSize}.`,
 		);
 	}

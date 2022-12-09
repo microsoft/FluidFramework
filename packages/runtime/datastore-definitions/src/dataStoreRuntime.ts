@@ -28,11 +28,7 @@ import {
 import { IChannel } from ".";
 
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
-    (
-        // eslint-disable-next-line @typescript-eslint/unified-signatures
-        event: "disconnected" | "dispose" | "attaching" | "attached",
-        listener: () => void,
-    );
+    (event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
     (event: "connected", listener: (clientId: string) => void);

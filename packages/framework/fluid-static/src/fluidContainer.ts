@@ -16,7 +16,6 @@ import type { IRootDataObject, LoadableObjectClass, LoadableObjectRecord } from 
 /**
  * Events emitted from {@link IFluidContainer}.
  */
-/* eslint-disable @typescript-eslint/unified-signatures */
 export interface IFluidContainerEvents extends IEvent {
     /**
      * Emitted when the {@link IFluidContainer} completes connecting to the Fluid service.
@@ -72,7 +71,6 @@ export interface IFluidContainerEvents extends IEvent {
      */
     (event: "disposed", listener: (error?: ICriticalContainerError) => void);
 }
-/* eslint-enable @typescript-eslint/unified-signatures */
 
 /**
  * Provides an entrypoint into the client side of collaborative Fluid data.

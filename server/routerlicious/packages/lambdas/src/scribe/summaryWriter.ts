@@ -531,7 +531,6 @@ export class SummaryWriter implements ISummaryWriter {
                 }
             }
             Lumberjack.info(
-                // eslint-disable-next-line max-len
                 `FullLogTail missing ops from: ${from} exclusive, to: ${to} exclusive with sequence numbers: ${JSON.stringify(missingOpsSequenceNumbers)}`
                 , this.lumberProperties);
         }
@@ -571,7 +570,6 @@ export class SummaryWriter implements ISummaryWriter {
         const missingOpsSN: number[] = [];
         missingOps?.forEach((op) => missingOpsSN.push(op.sequenceNumber));
         if (missingOpsSN.length > 0) {
-            // eslint-disable-next-line max-len
             Lumberjack.info(`Fetched ops gt: ${gt} exclusive, lt: ${lt} exclusive of last summary logtail: ${JSON.stringify(missingOpsSN)}`
                 , this.lumberProperties);
         }

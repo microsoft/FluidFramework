@@ -37,7 +37,6 @@ describeInstallVersions(
         afterEach(async () => provider.reset());
 
         const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             runtime.IFluidHandleContext.resolveHandle(request);
         const mapId = "map";
         const registry: ChannelFactoryRegistry = [

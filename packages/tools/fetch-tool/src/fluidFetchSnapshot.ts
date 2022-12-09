@@ -176,7 +176,6 @@ async function dumpSnapshotTreeVerbose(name: string, fetchedData: IFetchedData[]
             continue;
         }
         const blob = bufferToString(buffer, "utf8");
-        // eslint-disable-next-line max-len
         console.log(`${item.treePath.padEnd(nameLength)} |    ${item.reused ? "X" : " "}   | ${formatNumber(blob.length).padStart(10)}`);
         size += blob.length;
     }
