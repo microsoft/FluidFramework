@@ -283,9 +283,31 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
         this.moveToPosition(0);
     }
 
+    /**
+     * Change the current node withing the chunk.
+     * See `nodeInfo` for getting data about the current node.
+     *
+     * @param positionIndex - index of the position of the newly selected node in `positions`.
+     * This is NOT an index within a field, and is not bounds checked.
+     */
     private moveToPosition(positionIndex: number): void {
         this.nodePositionInfo = this.positions[positionIndex];
         this.positionIndex = positionIndex;
+    }
+
+    /**
+     * Gets information about the current node.
+     *
+     * When in Nodes mode, this means the node this cursor is current at.
+     * When if fields mode, this means the node which is the parent of the current field.
+     * This cursor is in Nodes mode at the root, so there is no case where a fields mode does not have a parent.
+     *
+     * @param requiredMode - asserts that the mode matches this. Since the semantics of this function are somewhat mode dependent,
+     * providing this ensures that the caller knows what the results will mean.
+     */
+    private nodeInfo(requiredMode: CursorLocationType): NodePositionInfo {
+        assert(this.mode === requiredMode, "tried to access cursor when in wrong mode");
+        return this.nodePositionInfo;
     }
 
     nextField(): boolean {
@@ -331,8 +353,8 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     enterNode(childIndex: number): void {
         const info = this.nodeInfo(CursorLocationType.Fields);
         const f = info.shape.fieldsOffsetArray[this.indexOfField];
-        assert(childIndex >= 0, "index past end of field");
-        assert(childIndex < f.topLevelLength, "index past end of field");
+        assert(childIndex >= 0, "index must be positive");
+        assert(childIndex < f.topLevelLength, "index must not be past the end of the field");
         this.mode = CursorLocationType.Nodes;
         this.moveToPosition(this.positionIndex + f.offset + childIndex * f.shape.positions.length);
         assert(this.fieldIndex === childIndex, "should be at selected child");
@@ -346,11 +368,11 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     }
 
     getPath(): UpPath | undefined {
-        return this.nodeInfo();
+        return this.nodeInfo(CursorLocationType.Nodes);
     }
 
     get fieldIndex(): number {
-        return this.nodeInfo().parentIndex;
+        return this.nodeInfo(CursorLocationType.Nodes).parentIndex;
     }
 
     public get chunkStart(): number {
@@ -382,7 +404,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     }
 
     exitNode(): void {
-        const info = this.nodeInfo();
+        const info = this.nodeInfo(CursorLocationType.Nodes);
         this.indexOfField =
             info.indexOfParentField ?? fail("navigation up to root field not yet supported"); // TODO;
         this.moveToPosition(
@@ -393,7 +415,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     }
 
     firstField(): boolean {
-        const fieldsArray = this.nodeInfo().shape.fieldsArray;
+        const fieldsArray = this.nodeInfo(CursorLocationType.Nodes).shape.fieldsArray;
         if (fieldsArray.length === 0) {
             return false;
         }
@@ -404,7 +426,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     }
 
     enterField(key: FieldKey): void {
-        const fieldMap = this.nodeInfo().shape.fields;
+        const fieldMap = this.nodeInfo(CursorLocationType.Nodes).shape.fields;
         const fieldInfo = fieldMap.get(key);
         this.indexOfField =
             fieldInfo === undefined
@@ -414,17 +436,12 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
         this.mode = CursorLocationType.Fields;
     }
 
-    nodeInfo(requiredMode = CursorLocationType.Nodes): NodePositionInfo {
-        assert(this.mode === requiredMode, "tried to access cursor when in wrong mode");
-        return this.nodePositionInfo;
-    }
-
     get type(): TreeSchemaIdentifier {
-        return this.nodeInfo().shape.type;
+        return this.nodeInfo(CursorLocationType.Nodes).shape.type;
     }
 
     get value(): Value {
-        const info = this.nodeInfo();
+        const info = this.nodeInfo(CursorLocationType.Nodes);
         return info.shape.hasValue ? this.chunk.values[info.valueOffset] : undefined;
     }
 }
