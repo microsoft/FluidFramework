@@ -34,10 +34,40 @@ import { GitRestLumberEventName } from "./gitrestTelemetryDefinitions";
 import { IsomorphicGitManagerFactory } from "./isomorphicgitManager";
 
 interface ISummaryVersion {
+    /**
+     * Commit sha.
+     */
     id: string;
+    /**
+     * Tree sha.
+     */
     treeId: string;
 }
 
+/**
+ * A representation of a recursive Git Tree containing a map
+ * with all of the referenced blobs. This can be stored as an
+ * individual git blob using the `.fullTree` path.
+ */
+interface IFullGitTree {
+    /**
+     * Original git tree object containing all tree entries.
+     */
+    tree: ITree;
+    /**
+     * Sha-Blob map of all blobs in this git tree.
+     */
+    blobs: Record<string, IBlob>;
+    /**
+     * Inform consumer that this tree contained "FullGitTree" blobs.
+     */
+    parsedFullTreeBlobs: boolean;
+}
+
+/**
+ * A representation of an IFullGitTree in summary format that
+ * can be understood by Fluid.
+ */
 interface IFullSummaryTree {
     treeEntries: IWholeFlatSummaryTreeEntry[];
     blobs: IWholeFlatSummaryBlob[];
@@ -82,6 +112,9 @@ const DefaultSummaryWriteOptions: ISummaryWriteOptions = {
     enableLowIoWrite: false,
 };
 
+/**
+ * Convert a Summary Tree Entry into a SummaryObject for type reference.
+ */
 function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry): SummaryObject {
     if ((entry as IWholeSummaryTreeHandleEntry).id !== undefined) {
         return {
@@ -108,11 +141,16 @@ function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry)
     throw new NetworkError(400, `Unknown entry type: ${entry.type}`);
 }
 
-interface IFullGitTree {
-    tree: ITree;
-    blobs: Record<string, IBlob>;
-    parsedFullTreeBlobs: boolean;
-}
+/**
+ * Package a Git tree into a Full Git Tree object by (optionally) parsing and unpacking
+ * inner full git tree blobs and (optionally) retrieving all referenced blobs from storage.
+ * 
+ * @param gitTree - Git tree object containing tree entries
+ * @param repoManager - Repository manager to use for retrieving referenced blobs
+ * @param parseInnerFullGitTrees - Whether to parse and unpack inner full git tree blobs
+ * @param retrieveBlobs - Whether to retrieve blobs (other than full git trees) from storage
+ * @param depth - internally tracks recursion depth for potential future logging or protection
+ */
 async function buildFullGitTreeFromGitTree(
     gitTree: ITree,
     repoManager: IRepositoryManager,
@@ -171,6 +209,13 @@ async function buildFullGitTreeFromGitTree(
         parsedFullTreeBlobs,
     };
 }
+
+/**
+ * Convert a Git blob object into Summary blob format.
+ * 
+ * @param blob - Git blob to convert to summary blob
+ * @returns summary blob
+ */
 function convertGitBlobToSummaryBlob(blob: IBlob): IWholeFlatSummaryBlob {
     return {
         content: blob.content,
@@ -179,6 +224,13 @@ function convertGitBlobToSummaryBlob(blob: IBlob): IWholeFlatSummaryBlob {
         size: blob.size,
     };
 }
+
+/**
+ * Convert a Full Git tree into summary format for use in Fluid.
+ * 
+ * @param fullGitTree - Full Git tree to convert
+ * @returns summary tree
+ */
 function convertFullGitTreeToFullSummaryTree(
     fullGitTree: IFullGitTree,
 ): IFullSummaryTree {
@@ -206,7 +258,13 @@ function convertFullGitTreeToFullSummaryTree(
         blobs: wholeFlatSummaryBlobs,
     };
 }
-
+/**
+ * Convert a Full Summary tree into a Full Summary payload, which can then be used to
+ * write that full summary into an alternate storage repo (e.g. in-memory)
+ * 
+ * @param fullSummaryTree - Full summary tree to parse into a full summary payload
+ * @returns full summary as a write payload
+ */
 function convertFullSummaryToWholeSummaryEntries(fullSummaryTree: IFullSummaryTree): WholeSummaryTreeEntry[] {
     const fullSummaryBlobMap = new Map<string, IWholeFlatSummaryBlob>();
     fullSummaryTree.blobs.forEach((fullSummaryBlob) => {
@@ -271,11 +329,11 @@ function convertFullSummaryToWholeSummaryEntries(fullSummaryTree: IFullSummaryTr
 }
 
 export const latestSummarySha = "latest";
+const fullTreePath = ".fullTree";
 
 export const isContainerSummary = (payload: IWholeSummaryPayload) => payload.type === "container";
 export const isChannelSummary = (payload: IWholeSummaryPayload) => payload.type === "channel";
 
-const fullTreePath = ".fullTree";
 
 /**
  * Handles reading/writing summaries from/to storage when the client expects or sends summary information in
@@ -538,6 +596,7 @@ export class GitWholeSummaryManager {
                 false, /* retrieveBlobs */
             );
             for (const treeEntry of previousSummaryMemoryFullGitTree.tree.tree) {
+                // Update entry handle to object sha map for reference when writing summary handles.
                 this.entryHandleToObjectShaCache.set(`${existingRef.object.sha}/${treeEntry.path}`, treeEntry.sha);
             }
         }
@@ -716,13 +775,7 @@ export class GitWholeSummaryManager {
         const gitTree: IFullGitTree = await buildFullGitTreeFromGitTree(
             parentTree,
             this.repoManager,
-            /** TODO: current problem: when uploading channel in high-io mode
-             * referencing summary version from low-io mode, the sha for the path does not exist
-             * in storage, because it is hidden within a low-io tree blob.
-             * 
-             * potential solution: When in high-io mode, and detecting a low-io summary, write low-io tree to storage
-             * similar to writing into memory?
-             */
+            // Parse inner git tree blobs so that we can properly reference blob shas in new summary.
             true, /* parseInnerFullGitTrees */
             // We only need shas here, so don't waste resources retrieving blobs that are not included in fullGitTrees.
             false, /* retrieveBlobs */
