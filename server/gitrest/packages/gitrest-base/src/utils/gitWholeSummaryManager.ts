@@ -114,9 +114,6 @@ async function buildFullGitTreeFromGitTree(
     retrieveBlobs = true,
     depth = 0,
 ): Promise<IFullGitTree> {
-    if (depth > 100) {
-        throw new Error("Encountered recursion depth > 100 in buildFullGitTreeFromGitTree. Exiting to avoid infinite loop.");
-    }
     let parsedFullTreeBlobs = false;
     const blobPs: Promise<IBlob>[] = [];
     const treeEntries: ITreeEntry[] = [];
@@ -548,9 +545,6 @@ export class GitWholeSummaryManager {
             repoManager: IRepositoryManager,
             depth: number = 0,
         ): Promise<ITree> => {
-            if (depth > 100) {
-                throw new Error("Encountered recursion depth > 100 in getTreeWithStorageFallback. Exiting to avoid infinite loop.");
-            }
             try {
                 const tree = await repoManager.getTree(treeHandle, true /* recursive */);
                 return tree;
