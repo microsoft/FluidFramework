@@ -45,12 +45,13 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
     const setupContainers = async (containerConfig: ITestContainerConfig) => {
         // Create a Container for the first client.
+
         container1 = await provider.makeTestContainer(containerConfig);
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         dataObject1map = await dataObject1.getSharedObject<SharedMap>(mapId);
 
         // Load the Container that was created by the first client.
-        const container2 = await provider.loadTestContainer(testContainerConfig);
+        const container2 = await provider.loadTestContainer(containerConfig);
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
 
