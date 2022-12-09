@@ -20,12 +20,12 @@ import * as ReactDOM from "react-dom";
  * bundle is not supported.
  */
 export class MountableView implements IFluidMountableView {
-    public get IFluidMountableView() { return this; }
+    public get IFluidMountableView(): MountableView { return this; }
 
     /**
      * {@inheritDoc @fluidframework/view-interfaces#IFluidMountableViewClass.canMount}
      */
-    public static canMount(view: FluidObject) {
+    public static canMount(view: FluidObject): boolean {
         const maybeView: FluidObject<IFluidHTMLView> = view;
         return (
             React.isValidElement(view)
@@ -65,7 +65,7 @@ export class MountableView implements IFluidMountableView {
     /**
      * {@inheritDoc @fluidframework/view-interfaces#IFluidMountableView.mount}
      */
-    public mount(container: HTMLElement) {
+    public mount(container: HTMLElement): void {
         if (this.containerElement !== undefined) {
             throw new Error("Already mounted");
         }
@@ -105,7 +105,7 @@ export class MountableView implements IFluidMountableView {
     /**
      * {@inheritDoc @fluidframework/view-interfaces#IFluidMountableView.unmount}
      */
-    public unmount() {
+    public unmount(): void {
         // Do nothing if we are already unmounted.
         if (this.containerElement === undefined) {
             return;
@@ -119,7 +119,7 @@ export class MountableView implements IFluidMountableView {
                 this.htmlView.remove();
             }
             while (this.containerElement.firstChild !== null) {
-                this.containerElement.removeChild(this.containerElement.firstChild);
+                this.containerElement.firstChild.remove();
             }
         }
 

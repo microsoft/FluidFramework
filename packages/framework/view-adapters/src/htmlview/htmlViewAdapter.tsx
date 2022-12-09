@@ -16,13 +16,13 @@ import ReactDOM from "react-dom";
  * objects that implement IFluidHTMLView.
  */
 export class HTMLViewAdapter implements IFluidHTMLView {
-    public get IFluidHTMLView() { return this; }
+    public get IFluidHTMLView(): HTMLViewAdapter { return this; }
 
     /**
      * Test whether the given view can be successfully adapted by an HTMLViewAdapter.
      * @param view - the view to test if it is adaptable.
      */
-    public static canAdapt(view: FluidObject) {
+    public static canAdapt(view: FluidObject): boolean {
         const maybeView: FluidObject<IFluidHTMLView> = view;
         return (
             React.isValidElement(view)
@@ -47,7 +47,7 @@ export class HTMLViewAdapter implements IFluidHTMLView {
     /**
      * {@inheritDoc @fluidframework/view-interfaces#IFluidHTMLView.render}
      */
-    public render(elm: HTMLElement, options?: IFluidHTMLOptions) {
+    public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
         // Note that if we're already mounted, this can cause multiple rendering with possibly unintended effects.
         // Probably try to avoid doing this.
         this.containerNode = elm;
@@ -73,7 +73,7 @@ export class HTMLViewAdapter implements IFluidHTMLView {
     /**
      * {@inheritDoc @fluidframework/view-interfaces#IFluidHTMLView.remove}
      */
-    public remove() {
+    public remove(): void {
         if (this.containerNode === undefined) {
             // Then we are already unmounted.
             return;
