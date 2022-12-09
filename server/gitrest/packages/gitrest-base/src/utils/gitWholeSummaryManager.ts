@@ -114,8 +114,8 @@ async function buildFullGitTreeFromGitTree(
     retrieveBlobs = true,
     depth = 0,
 ): Promise<IFullGitTree> {
-    if (depth > 10) {
-        throw new Error("Encountered depth > 10 in buildFullGitTreeFromGitTree. Exiting to avoid infinite loop.");
+    if (depth > 100) {
+        throw new Error("Encountered recursion depth > 100 in buildFullGitTreeFromGitTree. Exiting to avoid infinite loop.");
     }
     let parsedFullTreeBlobs = false;
     const blobPs: Promise<IBlob>[] = [];
@@ -371,8 +371,9 @@ export class GitWholeSummaryManager {
         writeSummaryMetric.setProperty("enableLowIoWrite", this.writeOptions.enableLowIoWrite);
         try {
             if (isChannelSummary(payload)) {
-                const summaryTreeHandle = await this.writeChannelSummary(payload);
                 writeSummaryMetric.setProperty("summaryType", "channel");
+                const summaryTreeHandle = await this.writeChannelSummary(payload);
+                writeSummaryMetric.setProperty("treeSha", summaryTreeHandle);
                 writeSummaryMetric.success("GitWholeSummaryManager succeeded in writing channel summary");
                 return {
                     isNew: false,
@@ -382,8 +383,10 @@ export class GitWholeSummaryManager {
                 };
             }
             if (isContainerSummary(payload)) {
-                const writeSummaryInfo = await this.writeContainerSummary(payload);
                 writeSummaryMetric.setProperty("summaryType", "container");
+                const writeSummaryInfo = await this.writeContainerSummary(payload);
+                writeSummaryMetric.setProperty("newDocument", writeSummaryInfo.isNew);
+                writeSummaryMetric.setProperty("commitSha", writeSummaryInfo.writeSummaryResponse.id);
                 writeSummaryMetric.success("GitWholeSummaryManager succeeded in writing container summary");
                 return writeSummaryInfo;
             }
@@ -488,7 +491,6 @@ export class GitWholeSummaryManager {
             );
         }
 
-        Lumberjack.info("Low-IO mode: Initializing In-memory Filesystem");
         const inMemoryFsManagerFactory = new MemFsManagerFactory();
         const inMemoryRepoManagerFactory = new IsomorphicGitManagerFactory(
             {
@@ -513,18 +515,15 @@ export class GitWholeSummaryManager {
 
         if (existingRef) {
             // Update in-memory repo manager with previous summary for handle references.
-            Lumberjack.info(`Low-IO mode: Reading previous summary with sha ${existingRef.object.sha} from storage`);
             const previousSummary = await this.readSummary(existingRef.object.sha);
             const fullSummaryPayload = convertFullSummaryToWholeSummaryEntries({
                 treeEntries: previousSummary.trees[0].entries,
                 blobs: previousSummary.blobs ?? [],
             });
-            Lumberjack.info("Low-IO mode: Writing previous summary to memory");
             const previousSummaryMemoryHandle = await this.writeSummaryTreeCore(
                 fullSummaryPayload,
                 inMemoryRepoManager,
             );
-            Lumberjack.info(`Low-IO mode: Wrote previous summary to memory with sha ${previousSummaryMemoryHandle}`);
             const previousSummaryMemoryGitTree = await inMemoryRepoManager.getTree(
                 previousSummaryMemoryHandle,
                 true /* recursive */
@@ -540,19 +539,17 @@ export class GitWholeSummaryManager {
             }
         }
 
-        Lumberjack.info("Low-IO mode: Writing summary to memory");
         const inMemorySummaryTreeHandle = await this.writeSummaryTreeCore(
             wholeSummaryTreeEntries,
             inMemoryRepoManager,
         );
-        Lumberjack.info("Low-IO mode: Reading summary from memory");
-        const getTreeWithStorageFallback = async (
+        const getGitTreeWithStorageFallback = async (
             treeHandle: string,
             repoManager: IRepositoryManager,
             depth: number = 0,
         ): Promise<ITree> => {
-            if (depth > 10) {
-                throw new Error("Encountered depth > 10 in getTreeWithStorageFallback. Exiting to avoid infinite loop.");
+            if (depth > 100) {
+                throw new Error("Encountered recursion depth > 100 in getTreeWithStorageFallback. Exiting to avoid infinite loop.");
             }
             try {
                 const tree = await repoManager.getTree(treeHandle, true /* recursive */);
@@ -561,9 +558,7 @@ export class GitWholeSummaryManager {
                 if (error.code === "NotFoundError" && typeof error.data.what === "string") {
                     // Likely, In-memory RepoManager is missing a previous channel summary.
                     // We can attempt to recover by retrieving it from storage and writing it back into memory.
-                    Lumberjack.info("Encountered NotFoundError when reading git tree. Attempting recovery.", { error });
                     const missingElementSha = error.data.what;
-                    Lumberjack.info(`Retrieving missing element ${missingElementSha} from storage`);
                     const missingTreeElement = await this.repoManager.getTree(
                         missingElementSha,
                         true, /* recursive */
@@ -582,22 +577,20 @@ export class GitWholeSummaryManager {
                         inMemoryRepoManager,
                     );
 
-                    Lumberjack.info(`Wrote tree ${inMemoryTreeHandle}. Retrying reading tree`);
                     if (inMemoryTreeHandle !== missingElementSha) {
-                        throw new Error(`Written tree sha (${inMemoryTreeHandle}) did not match missing tree sha (${missingElementSha})`);
+                        throw new Error(`Recovery tree sha (${inMemoryTreeHandle}) did not match missing tree sha (${missingElementSha}).`);
                     }
-                    return getTreeWithStorageFallback(treeHandle, repoManager, depth + 1);
+                    return getGitTreeWithStorageFallback(treeHandle, repoManager, depth + 1);
                 }
                 throw error;
             }
         };
-        const gitTree = await getTreeWithStorageFallback(inMemorySummaryTreeHandle, inMemoryRepoManager);
+        const gitTree = await getGitTreeWithStorageFallback(inMemorySummaryTreeHandle, inMemoryRepoManager);
         const fullGitTree = await buildFullGitTreeFromGitTree(
             gitTree,
             inMemoryRepoManager,
             false, /* parseInnerFullGitTrees */
         );
-        Lumberjack.info("Low-IO mode: Writing summary to storage");
         const summaryTreeHandle = this.writeSummaryTreeCore(
             [{
                 path: fullTreePath,
@@ -664,7 +657,6 @@ export class GitWholeSummaryManager {
             case SummaryType.Handle:
                 return this.getShaFromTreeHandleEntry(
                     wholeSummaryTreeEntry as IWholeSummaryTreeHandleEntry,
-                    repoManager,
                 );
             default:
                 throw new NetworkError(501, "Not Implemented");
@@ -702,7 +694,6 @@ export class GitWholeSummaryManager {
 
     private async getShaFromTreeHandleEntry(
         entry: IWholeSummaryTreeHandleEntry,
-        repoManager: IRepositoryManager,
     ): Promise<string> {
         if (!entry.id) {
             throw new NetworkError(400, `Empty summary tree handle`);
