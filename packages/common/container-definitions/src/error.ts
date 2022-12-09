@@ -76,7 +76,8 @@ export interface IErrorBase extends Partial<Error> {
 export interface ContainerWarning extends IErrorBase {
     /**
      * Whether this error has already been logged. Used to avoid logging errors twice.
-     * Default is false.
+     *
+     * @defaultValue `false`
      */
     logged?: boolean;
 }
