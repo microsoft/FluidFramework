@@ -102,6 +102,10 @@ type EventEmitSignatures<TThis, TEventSpec> =
         ...args: Parameters<ListenerSignature<TThis, TEventSpec, TEventKey>>
     ) => boolean;
 
+/** Also includes (event: string, ...) signature */
+type EventEmitSignaturesLoose<TThis, TEventSpec> =
+    EventEmitSignatures<TThis, TEventSpec> & {(event: string, ...args: any[])};
+
 /** Interface exposed to consumers who will listen to events */
 export interface IEventProvider2<TEventSpec> {
     on: EventHandlerRegistrationSignatures<this, TEventSpec>;
@@ -155,6 +159,8 @@ export class TypedEventEmitter<TEvent>
         >;
         this.removeListener = super.removeListener.bind(this) as TypedEventTransform<this, TEvent>;
         this.off = super.off.bind(this) as TypedEventTransform<this, TEvent>;
+
+        this.emit = super.emit.bind(this) as EventEmitSignaturesLoose<this, ToEventSpec<TEvent & IEvent>>;
     }
     readonly addListener: TypedEventTransform<this, TEvent>;
     readonly on: TypedEventTransform<this, TEvent>;
@@ -163,6 +169,8 @@ export class TypedEventEmitter<TEvent>
     readonly prependOnceListener: TypedEventTransform<this, TEvent>;
     readonly removeListener: TypedEventTransform<this, TEvent>;
     readonly off: TypedEventTransform<this, TEvent>;
+
+    readonly emit: EventEmitSignaturesLoose<this, ToEventSpec<TEvent & IEvent>>;
 }
 
 export interface SampleEventSpec extends BaseEventSpec {
@@ -204,6 +212,8 @@ export interface IOldEvents extends IEvent {
 }
 
 const sampleOld = new TypedEventEmitter<IOldEvents>();
+
+sampleOld.emit("something", 54);
 
 // Notice these are acceptable
 sampleOld.emit("unspecified", () => {});
