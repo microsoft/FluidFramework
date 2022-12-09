@@ -565,7 +565,7 @@ export class BlobManager {
             const pathParts = route.split("/");
             assert(
                 pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
-                "Invalid blob node id in used routes.",
+                0x4bc /* Invalid blob node id in used routes. */,
             );
             const blobId = pathParts[2];
             // Un-tombstone the blob if it was marked tombstone.
