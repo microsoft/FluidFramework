@@ -1501,7 +1501,6 @@ describe('DataBinder', function() {
         childDataBindings.push(dataBinder.resolve(childPsets[i + 1].getAbsolutePath(), 'BINDING'));
       }
       dataBinder._resetDebugCounters();
-      /* eslint-disable max-len */
       expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[0]', 'BINDING').getProperty()).toEqual(childPsets[1]);
       expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[1]', 'BINDING').getProperty()).toEqual(childPsets[2]);
       expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[2]', 'BINDING').getProperty()).toEqual(childPsets[3]);
@@ -1509,7 +1508,6 @@ describe('DataBinder', function() {
       expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[0]', 'BINDING').onPostCreate).toHaveBeenCalledTimes(1);
       expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[1]', 'BINDING').onPostCreate).toHaveBeenCalledTimes(1);
       expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[2]', 'BINDING').onPostCreate).toHaveBeenCalledTimes(1);
-      /* eslint-enable max-len */
 
       // change one of the elements
       workspace.pushNotificationDelayScope();
@@ -1555,14 +1553,9 @@ describe('DataBinder', function() {
       expect(arrayPset.resolvePath(subArrayPath).get(0)).toEqual(childPsets[0]);
       expect(arrayPset.resolvePath(subArrayPath).get(1)).toEqual(childPsets[1]);
       expect(arrayPset.resolvePath(subArrayPath).get(2)).toEqual(childPsets[10]);
-      /* eslint-disable max-len */
-      expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[0]',
-        'BINDING').getProperty()).toEqual(childPsets[0]);
-      expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[1]',
-        'BINDING').getProperty()).toEqual(childPsets[1]);
-      expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[2]',
-        'BINDING').getProperty()).toEqual(childPsets[10]);
-      /* eslint-enable max-len */
+      expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[0]', 'BINDING').getProperty()).toEqual(childPsets[0]);
+      expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[1]', 'BINDING').getProperty()).toEqual(childPsets[1]);
+      expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[2]', 'BINDING').getProperty()).toEqual(childPsets[10]);
       expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[0]', 'BINDING')).toEqual(actChildDataBinding);
       expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[1]', 'BINDING')).toEqual(childDataBindings[0]);
       expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[2]', 'BINDING')).toEqual(secondCreatedDataBinding);

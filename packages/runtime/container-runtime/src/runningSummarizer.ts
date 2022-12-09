@@ -279,7 +279,6 @@ export class RunningSummarizer implements IDisposable {
     }
 
     private nonRuntimeOpCanTriggerSummary(): boolean {
-        // eslint-disable-next-line max-len
         const opsSinceLastAck = this.heuristicData.lastOpSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber;
         return this.configuration.state === "enabled"
             && (this.configuration.nonRuntimeHeuristicThreshold === undefined

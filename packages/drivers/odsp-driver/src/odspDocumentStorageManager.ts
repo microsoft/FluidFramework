@@ -48,8 +48,6 @@ import { OdspDocumentStorageServiceBase } from "./odspDocumentStorageServiceBase
 
 export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.
 
-/* eslint-disable max-len */
-
 // An implementation of Promise.race that gives you the winner of the promise race
 async function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{ index: number; value: T; }> {
     return new Promise((resolve, reject) => {
@@ -568,5 +566,3 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         });
     }
 }
-
-/* eslint-enable max-len */

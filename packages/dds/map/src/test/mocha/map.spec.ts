@@ -138,7 +138,6 @@ describe("Map", () => {
 
                 const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob).content;
                 const subMapHandleUrl = subMap.handle.absolutePath;
-                // eslint-disable-next-line max-len
                 assert.equal(summaryContent, `{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`);
             });
 
@@ -152,7 +151,6 @@ describe("Map", () => {
 
                 const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob).content;
                 const subMapHandleUrl = subMap.handle.absolutePath;
-                // eslint-disable-next-line max-len
                 assert.equal(summaryContent, `{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`);
             });
 
@@ -170,7 +168,6 @@ describe("Map", () => {
                 const subMapHandleUrl = subMap.handle.absolutePath;
                 const subMap2HandleUrl = subMap2.handle.absolutePath;
                 const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob).content;
-                // eslint-disable-next-line max-len
                 assert.equal(summaryContent, `{"blobs":[],"content":{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"${subMap2HandleUrl}"}}}}}}`);
             });
 

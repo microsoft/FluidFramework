@@ -40,7 +40,7 @@ describe("Container Runtime", () => {
         let batchBegin: number = 0;
         let batchEnd: number = 0;
 
-        const startDeltaManager = async () =>
+        const startDeltaManager = async (): Promise<void> =>
             new Promise((resolve) => {
                 deltaManager.on("connect", resolve);
                 deltaManager.connect({ reason: "test" });
@@ -53,7 +53,7 @@ describe("Container Runtime", () => {
             });
         }
 
-        async function emitMessages(messages: ISequencedDocumentMessage[]) {
+        async function emitMessages(messages: ISequencedDocumentMessage[]): Promise<void> {
             deltaConnection.emitOp(docId, messages);
             // Yield the event loop because the inbound op will be processed asynchronously.
             await yieldEventLoop();
@@ -75,7 +75,7 @@ describe("Container Runtime", () => {
         }
 
         // Function to process an inbound op. It adds delay to simulate time taken in processing an op.
-        function processOp(message: ISequencedDocumentMessage) {
+        function processOp(message: ISequencedDocumentMessage): void {
             scheduleManager.beforeOpProcessing(message);
 
             // Add delay such that each op takes greater than the DeltaScheduler's processing time to process.

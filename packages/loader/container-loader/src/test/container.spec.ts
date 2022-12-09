@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable max-len */
-/* eslint-disable @typescript-eslint/consistent-type-assertions */
-
 import assert from "assert";
 import { AttachState, IAudience, IContainer, IContainerEvents, IDeltaManager, IDeltaManagerEvents, ReadOnlyInfo } from "@fluidframework/container-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
@@ -18,7 +15,7 @@ import { ConnectionState } from "../connectionState";
 class MockDeltaManager
     extends TypedEventEmitter<IDeltaManagerEvents>
     implements Partial<Omit<IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, "on" | "off" | "once">>
-{ // eslint-disable-line @typescript-eslint/brace-style
+{
     hasCheckpointSequenceNumber = true;
     lastKnownSeqNumber = 2;
     lastSequenceNumber = 1;

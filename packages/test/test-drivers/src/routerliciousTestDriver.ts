@@ -144,7 +144,6 @@ export class RouterliciousTestDriver implements ITestDriver {
 
     async createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string> {
         const containerId = containerUrl && "id" in containerUrl ? containerUrl.id : testId;
-        // eslint-disable-next-line max-len
         return `${this.serviceEndpoints.hostUrl}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(containerId)}`;
     }
 

@@ -535,7 +535,6 @@ export class MergeTree {
         return index;
     }
 
-    /* eslint-disable max-len */
     public reloadFromSegments(segments: ISegment[]) {
         // This code assumes that a later call to `startCollaboration()` will initialize partial lengths.
         assert(!this.collabWindow.collaborating, 0x049 /* "Trying to reload from segments while collaborating!" */);
@@ -582,7 +581,6 @@ export class MergeTree {
             this.root = this.makeBlock(0);
         }
     }
-    /* eslint-enable max-len */
 
     // For now assume min starts at zero
     public startCollaboration(localClientId: number, minSeq: number, currentSeq: number) {

@@ -38,7 +38,6 @@ export function getSnapshotFileContent(filePath: string): string | Buffer {
         return "\"codeLoader\" and \"fluidFileConverter\" cannot both be provided. See README for details.";
     }
     if (!codeLoader && fluidFileConverter === undefined) {
-        // eslint-disable-next-line max-len
         return "\"codeLoader\" must be provided if there is no explicit \"fluidFileConverter\". See README for details.";
     }
     return undefined;

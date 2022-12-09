@@ -22,8 +22,6 @@ import { EpochTracker } from "./epochTracker";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { getWithRetryForTokenRefresh } from "./odspUtils";
 
-/* eslint-disable max-len */
-
 /**
  * This class manages a summary upload. When it receives a call to upload summary, it converts the summary tree into
  * a snapshot tree and then uploads that to the server.
@@ -239,5 +237,3 @@ export class OdspSummaryUploadManager {
         return { snapshotTree, blobs };
     }
 }
-
-/* eslint-enable max-len */

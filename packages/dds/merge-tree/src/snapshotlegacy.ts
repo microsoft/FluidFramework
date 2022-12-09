@@ -155,7 +155,6 @@ export class SnapshotLegacy {
         const segs: ISegment[] = [];
         let prev: ISegment | undefined;
         const extractSegment =
-            // eslint-disable-next-line max-len
             (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number | undefined, end: number | undefined) => {
                 if ((segment.seq !== UnassignedSequenceNumber) && (segment.seq! <= this.seq!) &&
                     ((segment.removedSeq === undefined) || (segment.removedSeq === UnassignedSequenceNumber) ||

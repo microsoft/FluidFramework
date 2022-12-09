@@ -165,7 +165,6 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
      *
      * - `target` - The {@link ISharedDirectory} itself.
      */
-    // eslint-disable-next-line @typescript-eslint/unified-signatures
     (event: "subDirectoryDeleted", listener: (
         path: string,
         local: boolean,
@@ -226,7 +225,6 @@ export interface IDirectoryEvents extends IEvent {
      *
      * - `target` - The {@link ISharedDirectory} itself.
      */
-    // eslint-disable-next-line @typescript-eslint/unified-signatures
     (event: "subDirectoryDeleted", listener: (
         path: string,
         local: boolean,

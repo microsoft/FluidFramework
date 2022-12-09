@@ -82,7 +82,6 @@ export class SummaryWriter implements ISummaryWriter {
      * @returns ISummaryWriteResponse; that represents the success or failure of the write, along with an
      * Ack or Nack message
      */
-    /* eslint-disable max-len */
     public async writeClientSummary(
         op: ISequencedDocumentAugmentedMessage,
         lastSummaryHead: string | undefined,
@@ -322,8 +321,6 @@ export class SummaryWriter implements ISummaryWriter {
         }
     }
 
-    /* eslint-enable max-len */
-
     /**
      * Helper function that writes a new summary. Unlike client summaries, service summaries can be
      * triggered at any point in time. At first it fetches the last summary written by client. Once done,
@@ -554,7 +551,7 @@ export class SummaryWriter implements ISummaryWriter {
         if (fullLogTail.length > 0) {
             Lumberjack.info(`LogTail of length ${fullLogTail.length} generated from seq no ${fullLogTail[0].sequenceNumber} to ${fullLogTail[fullLogTail.length - 1].sequenceNumber}`, this.lumberProperties);
         }
-        
+
         return logTailEntries;
     }
 

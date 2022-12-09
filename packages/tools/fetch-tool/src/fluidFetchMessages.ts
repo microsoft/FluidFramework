@@ -146,7 +146,6 @@ async function* loadAllSequencedMessages(
         yield messages;
     }
 
-    // eslint-disable-next-line max-len
     console.log(`\n${Math.floor((Date.now() - timeStart) / 1000)} seconds to retrieve ${opsStorage} ops in ${requests} requests`);
 
     if (connectToWebSocket) {
@@ -172,7 +171,6 @@ async function* loadAllSequencedMessages(
             const filtered = initialMessages.filter((a) => a.sequenceNumber > lastSequenceNumber);
             const sorted = filtered.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
             lastSeq = sorted[sorted.length - 1].sequenceNumber;
-            // eslint-disable-next-line max-len
             logMsg = ` (${opsStorage} delta storage, ${initialMessages.length} initial ws messages, ${initialMessages.length - sorted.length} dup)`;
             yield sorted;
         }

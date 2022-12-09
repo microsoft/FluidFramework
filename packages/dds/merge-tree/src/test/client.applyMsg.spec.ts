@@ -530,7 +530,6 @@ describe("client.applyMsg", () => {
         assert.strictEqual(seg.segment, undefined);
     });
 
-    /* eslint-disable max-len */
     /**
      * ```
      * _: Local State
@@ -586,7 +585,6 @@ describe("client.applyMsg", () => {
      * Client C does not match client A
      * ```
      */
-    /* eslint-enable max-len */
     it.skip("Concurrent insert into removed segment across block boundary", () => {
         const clients = createClientsAtInitialState(
             { initialState: "", options: { mergeTreeUseNewLengthCalculations: true } },

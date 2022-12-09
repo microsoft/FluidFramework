@@ -92,14 +92,11 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         if (provider && isInternalRequest) {
             storageUrl = provider.get("worker:internalBlobStorageUrl");
             ordererUrl = provider.get("worker:alfredUrl");
-            deltaStorageUrl =
-                // eslint-disable-next-line max-len
-                `${provider.get("worker:alfredUrl")}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
+            deltaStorageUrl = `${provider.get("worker:alfredUrl")}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
         } else if (provider) {
             storageUrl = provider.get("worker:blobStorageUrl").replace("historian:3000", "localhost:3001");
             ordererUrl = provider.get("worker:serverUrl");
-            deltaStorageUrl =
-                `${ordererUrl}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
+            deltaStorageUrl = `${ordererUrl}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
         } else if (isLocalHost) {
             storageUrl = `http://localhost:3001`;
             ordererUrl = `http://localhost:3003`;

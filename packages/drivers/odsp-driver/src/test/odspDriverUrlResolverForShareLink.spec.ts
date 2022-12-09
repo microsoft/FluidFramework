@@ -4,7 +4,6 @@
  */
 
 /* eslint-disable @typescript-eslint/dot-notation */
-/* eslint-disable max-len */
 
 import { strict as assert } from "assert";
 import { stub } from "sinon";

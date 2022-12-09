@@ -399,7 +399,6 @@ export class ReplayTool {
                         } catch (err) {}
                     }
                     if (this.args.fromVersion === undefined) {
-                        // eslint-disable-next-line max-len
                         console.error(`Failed to parse ${name} snapshot to find .attributes blob and check sequence number. This may result in failure to process file. In such case, please point to any snapshot via --from argument.`);
                     }
                 }
@@ -771,7 +770,6 @@ export class ReplayTool {
         }
 
         if (failed) {
-            // eslint-disable-next-line max-len
             this.reportError(`\nOp ${op}: Discrepancy between ${name1} & ${name2}! Likely a bug in snapshot load-save sequence!`, error);
 
             // Write the failed snapshots under 'FailedSnapshot' sub-directory of the current directory. This will in

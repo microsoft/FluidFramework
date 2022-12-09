@@ -148,11 +148,9 @@ function dumpStats(
 
     if (props.removeTotals === undefined) {
         if (allOtherCount || allOtherSize) {
-            // eslint-disable-next-line max-len
             console.log(`${`All Others (${sorted.length - recordsToShow})`.padEnd(nameLength)} │ ${formatNumber(allOtherCount).padStart(fieldSizes[0])} ${formatNumber(allOtherSize).padStart(fieldSizes[1])}`);
         }
         console.log(`${"─".repeat(nameLength + 1)}┼${"─".repeat(fieldsLength + 1)}`);
-        // eslint-disable-next-line max-len
         console.log(`${"Total".padEnd(nameLength)} │ ${formatNumber(totalCount).padStart(fieldSizes[0])} ${formatNumber(sizeTotal).padStart(fieldSizes[1])}`);
     }
 }
@@ -283,7 +281,6 @@ class FilteredMessageAnalyzer implements IMessageAnalyzer {
 
     public reportAnalyzes(lastOp: ISequencedDocumentMessage): void {
         if (this.filtered) {
-            // eslint-disable-next-line max-len
             console.log(`\nData is filtered according to --filter:messageType argument(s):\nOp size: ${this.sizeFiltered} / ${this.sizeTotal}\nOp count ${this.opsFiltered} / ${this.opsTotal}`);
         }
         if (this.opsTotal === 0) {
@@ -308,7 +305,6 @@ class MessageDensityAnalyzer implements IMessageAnalyzer {
             if (message.sequenceNumber !== 1) {
                 const timeDiff = durationFromTime(message.timestamp - this.timeStart);
                 const opsString = `ops = [${this.opLimit - this.opChunk}, ${this.opLimit - 1}]`.padEnd(26);
-                // eslint-disable-next-line max-len
                 const timeString = `time = [${durationFromTime(this.timeStart - this.doctimerStart)}, ${durationFromTime(message.timestamp - this.doctimerStart)}]`;
                 this.ranges.set(
                     `${opsString} ${timeString}`,

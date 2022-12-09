@@ -27,7 +27,7 @@ export class DataObjectWithCounter extends DataObject {
         return this._counter;
     }
 
-    protected async initializingFirstTime(props?: any): Promise<void> {
+    protected async initializingFirstTime(): Promise<void> {
         this.root.set<IFluidHandle>(counterKey, SharedCounter.create(this.runtime).handle);
     }
 
@@ -37,16 +37,16 @@ export class DataObjectWithCounter extends DataObject {
         this._counter = await handle.get();
     }
 
-    public stop() {
+    public stop(): void {
         this.isRunning = false;
     }
 
-    public start() {
+    public start(): void {
         this.isRunning = true;
         this.run().catch((error) => { console.log(error); });
     }
 
-    protected async run() {
+    protected async run(): Promise<void> {
         assert(this.isRunning === true, "Should be running to send ops");
         while (this.isRunning && !this.disposed) {
             this.counter.increment(1);

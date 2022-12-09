@@ -11,7 +11,9 @@ export const gcBlobKey = "gc";
  * Used for running GC in the Container.
  */
 export interface IGarbageCollectionData {
-    /** The GC nodes of a Fluid object in the Container. Each node has an id and a set of routes to other GC nodes. */
+    /**
+     * The GC nodes of a Fluid object in the Container. Each node has an id and a set of routes to other GC nodes.
+     */
     gcNodes: { [ id: string ]: string[]; };
 }
 
@@ -19,10 +21,16 @@ export interface IGarbageCollectionData {
  * GC details provided to each node during creation.
  */
 export interface IGarbageCollectionDetailsBase {
-    /** A list of routes to Fluid objects that are used in this node. */
+    /**
+     * A list of routes to Fluid objects that are used in this node.
+     */
     usedRoutes?: string[];
-    /** The GC data of this node. */
+    /**
+     * The GC data of this node.
+     */
     gcData?: IGarbageCollectionData;
-    /** If this node is unreferenced, the time when it was marked as such. */
+    /**
+     * If this node is unreferenced, the time when it was marked as such.
+     */
     unrefTimestamp?: number;
 }

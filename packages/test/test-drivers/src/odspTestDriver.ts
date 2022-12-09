@@ -263,9 +263,7 @@ export class OdspTestDriver implements ITestDriver {
                 {
                     type: "browserLogin",
                     navigator: (openUrl) => {
-                        // eslint-disable-next-line max-len
                         console.log(`Open the following url in a new private browser window, and login with user: ${config.username}`);
-                        // eslint-disable-next-line max-len
                         console.log(`Additional account details may be available in the environment variable login__odsp__test__accounts`);
                         console.log(`"${openUrl}"`);
                     },
