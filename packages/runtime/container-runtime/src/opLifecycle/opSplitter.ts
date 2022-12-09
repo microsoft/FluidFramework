@@ -133,10 +133,9 @@ export class OpSplitter {
 
         const firstMessage = batch.content[0]; // we expect this to be the large compressed op, which needs to be split
         assert(firstMessage.metadata?.compressed === true || firstMessage.compression !== undefined, "Batch needs to be compressed");
+        assert((firstMessage.contents?.length ?? 0) >= this.chunkSizeInBytes, "First message in the batch needs to be chunkable");
 
         const restOfMessages = batch.content.slice(1); // we expect these to be empty ops, created to reserve sequence numbers
-
-        assert((firstMessage.contents?.length ?? 0) >= this.chunkSizeInBytes, "First message in the batch needs to be chunkable");
         const chunks = splitOp(firstMessage, this.chunkSizeInBytes);
 
         // Send the first N-1 chunks immediately
