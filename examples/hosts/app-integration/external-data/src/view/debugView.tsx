@@ -5,9 +5,10 @@
 
 import React, { useEffect, useState } from "react";
 import { externalDataSource, parseStringData } from "../externalData";
+import type { IAppModel } from "../modelInterfaces";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IDebugViewProps {
+    model: IAppModel;
 }
 
 export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
@@ -16,7 +17,7 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
             <h2 style={{ textDecoration: "underline" }}>Debug info</h2>
             <ExternalDataView />
             <SyncStatusView />
-            <ControlsView />
+            <ControlsView model={ props.model }/>
         </div>
     );
 };
@@ -28,14 +29,14 @@ interface IExternalDataViewProps {
 const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalDataViewProps) => {
     const [externalData, setExternalData] = useState<string | undefined>();
     useEffect(() => {
-        const fetchExternalData = () => {
+        const fetchExternalData = (): void => {
             externalDataSource.fetchData()
                 .then(setExternalData)
                 .catch(console.error);
         };
         externalDataSource.on("debugDataWritten", fetchExternalData);
         fetchExternalData();
-        return () => {
+        return (): void => {
             externalDataSource.off("debugDataWritten", fetchExternalData);
         };
     }, []);
@@ -91,8 +92,8 @@ const SyncStatusView: React.FC<ISyncStatusViewProps> = (props: ISyncStatusViewPr
     );
 };
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface IControlsViewProps {
+    model: IAppModel;
 }
 
 // TODO: Implement simulation of an external data change.  Maybe include UI for the debug user to edit the data
@@ -104,7 +105,7 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
             <h3>Debug controls</h3>
             <div style={{ margin: "10px 0" }}>
                 <button onClick={ externalDataSource.debugResetData }>Reset external data</button><br />
-                <button>Simulate external data change (not implemented)</button><br />
+                <button onClick={ props.model.debugSendCustomSignal }>Trigger external data change signal</button><br />
             </div>
         </div>
     );

@@ -12,7 +12,7 @@ export { CombinedProducer } from "./combinedProducer";
 export {
 	DefaultServiceConfiguration,
 	IBroadcasterServerConfiguration,
-	IDeliCheckpointHeuristicsServerConfiguration,
+	ICheckpointHeuristicsServerConfiguration,
 	IDeliOpEventServerConfiguration,
 	IDeliServerConfiguration,
 	IDeliSummaryNackMessagesServerConfiguration,

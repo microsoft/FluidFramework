@@ -17,6 +17,13 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
      * A task tracker list.
      */
     readonly taskList: ITaskList;
+
+    /**
+    * Send custom signals to the server which will cause the server to respond
+    * with the (currently experimental) RuntimeMessage Signal to communicate
+    * an external data change and and possibly the changed data as well
+    */
+    readonly debugSendCustomSignal: () => void;
 }
 
 export interface ITaskEvents extends IEvent {
@@ -84,6 +91,12 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
      * Persist the current state of the Fluid data back to the external data source.
      */
     readonly saveChanges: () => Promise<void>;
+
+    /**
+     * Kick off fetching external data directly from the TaskList.
+     * Triggered on receipt of ExternalDataChanged signal from container.
+     */
+    readonly importExternalData: () => Promise<void>;
 
     // TODO: Should there be an imperative API to trigger importing changes from the external source?
     // Even if we don't want this to be how the signal gets routed, we might want a "fetch latest changes" button

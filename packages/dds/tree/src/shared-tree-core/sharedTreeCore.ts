@@ -201,6 +201,7 @@ export class SharedTreeCore<
             index.sequencedChange?.(sequencedChange);
             index.newLocalState?.(delta);
         }
+        this.editManager.advanceMinimumSequenceNumber(message.minimumSequenceNumber);
     }
 
     protected onDisconnect() {}

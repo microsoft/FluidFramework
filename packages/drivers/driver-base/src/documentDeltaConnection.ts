@@ -323,6 +323,11 @@ export class DocumentDeltaConnection
      * multiplexing here, so we need to close the socket here.
      */
     public dispose() {
+        this.logger.sendTelemetryEvent({
+            eventName: "ClientClosingDeltaConnection",
+            driverVersion,
+            details: JSON.stringify({ disposed: this._disposed, socketConnected: this.socket.connected }),
+        });
         this.disconnect(createGenericNetworkError(
             // pre-0.58 error message: clientClosingConnection
             "Client closing delta connection", { canRetry: true }, { driverVersion }),
@@ -344,10 +349,17 @@ export class DocumentDeltaConnection
         // to prevent normal messages from being emitted.
         this._disposed = true;
 
-        // Let user of connection object know about disconnect. This has to happen in betwee setting _disposed and
+        // Let user of connection object know about disconnect. This has to happen in between setting _disposed and
         // removing all listeners!
         this.emit("disconnect", err);
-
+        this.logger.sendTelemetryEvent({
+            eventName: "AfterDisconnectEvent",
+            driverVersion,
+            details: JSON.stringify({
+                socketConnected: this.socket.connected,
+                disconnectListenerCount: this.listenerCount("disconnect"),
+            }),
+        });
         // user of DeltaConnection should have processed "disconnect" event and removed all listeners. Not clear
         // if we want to enforce that, as some users (like LocalDocumentService) do not unregister any handlers
         // assert(this.listenerCount("disconnect") === 0, "'disconnect` events should be processed synchronously");
@@ -478,15 +490,12 @@ export class DocumentDeltaConnection
             // had a chance to register its handlers.
             this.addTrackedListener("disconnect", (reason) => {
                 const err = this.createErrorObject("disconnect", reason);
-                this.emit("disconnect", err);
                 failAndCloseSocket(err);
             });
 
             this.addTrackedListener("error", ((error) => {
-                // First, raise an error event, to give clients a chance to observe error contents
                 // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
                 const err = this.createErrorObject("error", error, error !== "Invalid namespace");
-                this.emit("error", err);
                 // Disconnect socket - required if happened before initial handshake
                 failAndCloseSocket(err);
             }));

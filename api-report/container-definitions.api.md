@@ -127,7 +127,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     attach(request: IRequest): Promise<void>;
     readonly attachState: AttachState;
     readonly audience: IAudience;
-    // @alpha
     readonly clientId?: string | undefined;
     close(error?: ICriticalContainerError): void;
     closeAndGetPendingLocalState(): string;
@@ -204,24 +203,18 @@ export interface IContainerContext extends IDisposable {
 
 // @public
 export interface IContainerEvents extends IEvent {
-    // (undocumented)
     (event: "readonly", listener: (readonly: boolean) => void): void;
-    // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
-    // (undocumented)
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: ISequencedProposal) => void): any;
-    // (undocumented)
+    // @deprecated (undocumented)
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void): any;
-    // (undocumented)
-    (event: "disconnected" | "attached", listener: () => void): any;
-    // (undocumented)
+    (event: "disconnected", listener: () => void): any;
+    (event: "attached", listener: () => void): any;
     (event: "closed", listener: (error?: ICriticalContainerError) => void): any;
-    // (undocumented)
     (event: "warning", listener: (error: ContainerWarning) => void): any;
-    // (undocumented)
     (event: "op", listener: (message: ISequencedDocumentMessage) => void): any;
-    // (undocumented)
-    (event: "dirty" | "saved", listener: (dirty: boolean) => void): any;
+    (event: "dirty", listener: (dirty: boolean) => void): any;
+    (event: "saved", listener: (dirty: boolean) => void): any;
 }
 
 // @public (undocumented)
@@ -264,20 +257,19 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 
 // @public
 export interface IDeltaManagerEvents extends IEvent {
-    // (undocumented)
+    // @deprecated (undocumented)
     (event: "prepareSend", listener: (messageBuffer: any[]) => void): any;
-    // (undocumented)
+    // @deprecated (undocumented)
     (event: "submitOp", listener: (message: IDocumentMessage) => void): any;
-    // (undocumented)
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void): any;
-    // (undocumented)
+    // @deprecated (undocumented)
     (event: "allSentOpsAckd", listener: () => void): any;
-    // (undocumented)
-    (event: "pong" | "processTime", listener: (latency: number) => void): any;
+    // @deprecated (undocumented)
+    (event: "pong", listener: (latency: number) => void): any;
+    // @deprecated (undocumented)
+    (event: "processTime", listener: (latency: number) => void): any;
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void): any;
-    // (undocumented)
     (event: "disconnect", listener: (reason: string) => void): any;
-    // (undocumented)
     (event: "readonly", listener: (readonly: boolean) => void): any;
 }
 
@@ -298,9 +290,8 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
 
 // @public
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
-    // (undocumented)
-    (event: "push" | "op", listener: (task: T) => void): any;
-    // (undocumented)
+    (event: "push", listener: (task: T) => void): any;
+    (event: "op", listener: (task: T) => void): any;
     (event: "idle", listener: (count: number, duration: number) => void): any;
 }
 
