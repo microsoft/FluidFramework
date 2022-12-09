@@ -21,6 +21,7 @@
         },
         "persistLatestFullSummary": false,
         "enableLowIoWrite": false,
-        "repoPerDocEnabled": false
+        "repoPerDocEnabled": false,
+        "enableRepositoryManagerMetrics": false
     }
 }

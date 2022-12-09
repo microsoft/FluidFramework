@@ -166,10 +166,12 @@ async function buildFullGitTreeFromGitTree(
             if (treeEntry.path.endsWith(fullTreePath) && parseInnerFullGitTrees) {
                 parsedFullTreeBlobs = true;
                 const fullTreeBlob = await repoManager.getBlob(treeEntry.sha);
-                const fullTree = JSON.parse(Buffer.from(
-                    fullTreeBlob.content,
-                    fullTreeBlob.encoding === "base64" ? "base64" : "utf-8",
-                ).toString("utf-8")) as IFullGitTree;
+                const fullTree = JSON.parse(
+                    fullTreeBlob.encoding === "base64"
+                        // Convert base64 to utf-8 for JSON parsing
+                        ? Buffer.from(fullTreeBlob.content, fullTreeBlob.encoding).toString("utf-8")
+                        : fullTreeBlob.content,
+                ) as IFullGitTree;
                 const builtFullGitTree = await buildFullGitTreeFromGitTree(
                     fullTree.tree,
                     repoManager,
@@ -266,9 +268,13 @@ function convertFullGitTreeToFullSummaryTree(
  * @returns full summary as a write payload
  */
 function convertFullSummaryToWholeSummaryEntries(fullSummaryTree: IFullSummaryTree): WholeSummaryTreeEntry[] {
-    const fullSummaryBlobMap = new Map<string, IWholeFlatSummaryBlob>();
+    const fullSummaryBlobMap = new Map<string, IWholeSummaryBlob>();
     fullSummaryTree.blobs.forEach((fullSummaryBlob) => {
-        fullSummaryBlobMap.set(fullSummaryBlob.id, fullSummaryBlob);
+        fullSummaryBlobMap.set(fullSummaryBlob.id, {
+            type: "blob",
+            content: fullSummaryBlob.content,
+            encoding: fullSummaryBlob.encoding,
+        });
     });
 
     // Inspired by `buildHeirarchy` from services-client
@@ -314,11 +320,7 @@ function convertFullSummaryToWholeSummaryEntries(fullSummaryTree: IFullSummaryTr
             const newBlob: IWholeSummaryTreeValueEntry & { value: IWholeSummaryBlob; } = {
                 type: "blob",
                 path: entryPathBase,
-                value: {
-                    type: "blob",
-                    content: fullSummaryBlob.content,
-                    encoding: fullSummaryBlob.encoding,
-                },
+                value: fullSummaryBlob,
             };
             node.value.entries.push(newBlob);
         } else {
