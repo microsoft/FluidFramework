@@ -13,19 +13,6 @@ export type RecursiveReadonly<T> = {
 };
 
 /**
- * Convert a union type to an intersection type
- * @example
- * ```typescript
- * type T = UnionToIntersection<number | string> // `number & string`
- * ```
- */
-export type UnionToIntersection<T> = (T extends any ? (k: T) => void : never) extends (
-    k: infer U,
-) => void
-    ? U
-    : never;
-
-/**
  * Remove `readonly` from all fields.
  */
 export type Mutable<T> = { -readonly [P in keyof T]: T[P] };

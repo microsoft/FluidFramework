@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { UnionToIntersection } from "../util";
+// Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
+type UnionToIntersection<T> = (T extends any ? (k: T) => void : never) extends (k: infer U) => void
+    ? U
+    : never;
 
 /**
  * `true` if the given type is an acceptable shape for an event, otherwise `false`;

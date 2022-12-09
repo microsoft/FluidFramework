@@ -316,7 +316,7 @@ flowchart
             forest-->tree
         end
         core-->events
-        events-->util
+        core-->util
         feature-->core
         shared-tree-->feature
         subgraph feature ["feature-libraries"]
