@@ -19,7 +19,7 @@ import {
 import { brand, compareArrays, fail } from "../../util";
 import { SynchronousCursor } from "../treeCursorUtils";
 
-interface ReferenceCounted {
+export interface ReferenceCounted {
     referenceAdded(): void;
 
     referenceRemoved(): void;
@@ -27,7 +27,12 @@ interface ReferenceCounted {
     isShared(): boolean;
 }
 
-export interface TreeChunk {
+/**
+ * Contiguous part of the tree which get stored together in some data format.
+ * Copy-on-write, but optimized to be mutated in place when a chunk only has a single user (detected using reference counting).
+ * This allows for efficient cloning of without major performance overheads for non-cloning scenarios.
+ */
+export interface TreeChunk extends ReferenceCounted {
     cursor(): ITreeCursorSynchronous;
 }
 
@@ -41,6 +46,12 @@ export function uniformChunk(shape: ChunkShape, values: TreeValue[]): TreeChunk 
     return new UniformChunk(shape, values);
 }
 
+/**
+ * Chunk which handles a sequence of trees with identical "shape" (see `TreeShape`).
+ *
+ * Separates shape from content,
+ * allowing deduplication of shape information and storing of content as a flat sequence of values.
+ */
 export class UniformChunk implements ReferenceCounted {
     private refCount: number = 1;
     /**
@@ -82,7 +93,22 @@ export const dummyRoot: GlobalFieldKeySymbol = symbolFromKey(
     brand("a1499167-8421-4639-90a6-4e543b113b06: dummyRoot"),
 );
 
+/**
+ * The "shape" of a field.
+ *
+ * Requires that all trees in the field have the same shape, which is described by `TreeShape`.
+ * Note that this requirement means that not all fields can be described using this type.
+ */
 export type FieldShape = readonly [FieldKey, TreeShape, number];
+
+/**
+ * The "shape" of a tree.
+ * Does not contain the actual values from  the tree, but describes everything else,
+ * including where the values would be found in a flat values array.
+ *
+ * Note that since this requires fields to have uniform shapes (see `FieldShape`),
+ * not all trees can have their shape described using this type.
+ */
 export class TreeShape {
     public readonly fields: ReadonlyMap<FieldKey, OffsetShape>;
     public readonly fieldsOffsetArray: readonly OffsetShape[];
@@ -167,7 +193,15 @@ export function clonePositions(
     }
 }
 
-// TODO: consider storing shape information in WASM
+/**
+ * The shape (see `TreeShape`) of a sequence of trees, all with the same shape (like `FieldShape`, but without a field key).
+ *
+ * This shape is optimized (by caching derived data like the positions array),
+ * so that when paired with a value array it can be efficiently traversed like a tree by an {@link ITreeCursorSynchronous}.
+ * See {@link uniformChunk} for how to do this.
+ *
+ * TODO: consider storing shape information in WASM
+ */
 export class ChunkShape {
     public readonly positions: readonly NodePositionInfo[];
 
@@ -219,6 +253,9 @@ export class ChunkShape {
     }
 }
 
+/**
+ * Shape of a field (like `FieldShape`) but with information about how it would be offset withing a chunk because of its parents.
+ */
 class OffsetShape {
     /**
      * @param shape - the shape of each child in this field
@@ -236,6 +273,9 @@ class OffsetShape {
     ) {}
 }
 
+/**
+ * Information about a node at a specific position within a uniform chunk.
+ */
 class NodePositionInfo implements UpPath {
     /**
      * @param parent - TODO
@@ -258,6 +298,11 @@ class NodePositionInfo implements UpPath {
     ) {}
 }
 
+/**
+ * The cursor implementation for `UniformChunk`.
+ *
+ * Works by tracking its location in the chunk's `positions` array.
+ */
 class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     private positionIndex!: number; // When in fields mode, this points to the parent node.
     private nodePositionInfo!: NodePositionInfo;
