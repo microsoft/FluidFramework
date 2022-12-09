@@ -34,6 +34,8 @@ export {
     GlobalFieldKeySymbol,
     symbolFromKey,
     keyFromSymbol,
+    symbolIsFieldKey,
+    isGlobalFieldKey,
     ITreeCursor,
     CursorLocationType,
     ITreeCursorSynchronous,

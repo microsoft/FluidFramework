@@ -580,6 +580,9 @@ export function isContextuallyTypedNodeDataObject(data: ContextuallyTypedNodeDat
 export function isEditableField(field: UnwrappedEditableField): field is EditableField;
 
 // @public
+export function isGlobalFieldKey(key: FieldKey): key is GlobalFieldKeySymbol;
+
+// @public
 export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObject, AnchorLocator {
     readonly context: EditableTreeContext;
     get root(): UnwrappedEditableField;
@@ -1296,6 +1299,9 @@ export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPol
 
 // @public (undocumented)
 export function symbolFromKey(key: GlobalFieldKey): GlobalFieldKeySymbol;
+
+// @public (undocumented)
+export function symbolIsFieldKey(key: symbol): key is GlobalFieldKeySymbol;
 
 // @public (undocumented)
 export interface TaggedChange<TChangeset> {
