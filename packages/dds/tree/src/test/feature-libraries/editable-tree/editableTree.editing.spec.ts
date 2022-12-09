@@ -133,6 +133,14 @@ describe("editable-tree: editing", () => {
                 },
             ],
         };
+        // make sure the value is not set at the primary field parent node
+        {
+            const person = trees[0].root as Person;
+            assert(person);
+            assert(isUnwrappedNode(person.address));
+            const phones = person.address[getField](brand("phones"));
+            assert(phones.getNode(0)[valueSymbol], undefined);
+        }
         maybePerson.address.street = "unknown";
 
         // can use strict types to access the data

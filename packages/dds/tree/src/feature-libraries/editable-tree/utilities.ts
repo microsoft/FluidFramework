@@ -329,34 +329,32 @@ export function applyTypesFromContext(
     if (isPrimitiveValue(data)) {
         assertPrimitiveValueType(data, schema);
         return { value: data, type, fields: new Map() };
-    }
-    if (isArrayLike(data)) {
+    } else if (isArrayLike(data)) {
         const primary = getPrimaryField(schema);
         assert(
             primary !== undefined,
             "array data reported comparable with schema without primary field",
         );
         const children = applyFieldTypesFromContext(schemaData, primary.schema, data);
-        return { value: data, type, fields: new Map([[primary.key, children]]) };
+        const value = allowsValue(schema.value, data) ? data : undefined;
+        return { value, type, fields: new Map([[primary.key, children]]) };
+    } else {
+        const fields: Map<FieldKey, MapTree[]> = new Map(
+            Reflect.ownKeys(data)
+                .filter((key) => typeof key === "string" || symbolIsFieldKey(key))
+                .map((key) => {
+                    const childKey: FieldKey = brand(key);
+                    const childSchema = getFieldSchema(childKey, schemaData, schema);
+                    return [
+                        childKey,
+                        applyFieldTypesFromContext(schemaData, childSchema, data[childKey]),
+                    ];
+                }),
+        );
+        const value = data[valueSymbol];
+        assert(allowsValue(schema.value, value), "provided value not permitted by schema");
+        return { value, type, fields };
     }
-
-    const fields: Map<FieldKey, MapTree[]> = new Map(
-        Reflect.ownKeys(data)
-            .filter((key) => typeof key === "string" || symbolIsFieldKey(key))
-            .map((key) => {
-                const fieldKey: FieldKey = brand(key);
-                const fieldSchema = getFieldSchema(fieldKey, schemaData, schema);
-                return [
-                    fieldKey,
-                    applyFieldTypesFromContext(schemaData, fieldSchema, data[fieldKey]),
-                ];
-            }),
-    );
-
-    const value = data[valueSymbol];
-    assert(allowsValue(schema.value, value), "provided value not permitted by schema");
-
-    return { value, type, fields };
 }
 
 /**
