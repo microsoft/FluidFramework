@@ -30,7 +30,7 @@ export class RemoteMessageProcessor {
         const chunkProcessingResult = this.opSplitter.processRemoteMessage(message);
         message = chunkProcessingResult.message;
         if (chunkProcessingResult.state !== "Processed") {
-            // If the op is not chunked or if the splitter is still rebuilding the original op,
+            // If the message is not chunked or if the splitter is still rebuilding the original message,
             // there is no need to continue processing
             return message;
         }

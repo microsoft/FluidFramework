@@ -17,15 +17,6 @@ describe("RemoteMessageProcessor", () => {
         return newMessage;
     };
 
-    const getMockDecompressor = (): Partial<OpDecompressor> => ({
-        processMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
-            return {
-                message: stamp(message, "decompress"),
-                state: "Skipped",
-            }
-        },
-    });
-
     const getMockSplitter = (): Partial<OpSplitter> => ({
         processRemoteMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
             return {
@@ -35,8 +26,20 @@ describe("RemoteMessageProcessor", () => {
         },
     });
 
-    const getMessageProcessor = (): RemoteMessageProcessor =>
-        new RemoteMessageProcessor(getMockSplitter() as OpSplitter, getMockDecompressor() as OpDecompressor);
+    const getMockDecompressor = (): Partial<OpDecompressor> => ({
+        processMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
+            return {
+                message: stamp(message, "decompress"),
+                state: "Skipped",
+            }
+        },
+    });
+
+    const getMessageProcessor = (
+        mockSpliter: Partial<OpSplitter> = getMockSplitter(),
+        mockDecompressor: Partial<OpDecompressor> = getMockDecompressor(),
+    ): RemoteMessageProcessor =>
+        new RemoteMessageProcessor(mockSpliter as OpSplitter, mockDecompressor as OpDecompressor);
 
     it("Always processing a shallow copy of the message", () => {
         const messageProcessor = getMessageProcessor();
@@ -62,12 +65,13 @@ describe("RemoteMessageProcessor", () => {
 
     it("Invokes internal processors in order", () => {
         const messageProcessor = getMessageProcessor();
-        const contents = {
-            contents: { key: "value" },
-            type: ContainerMessageType.FluidDataStoreOp,
-        };
         const message = {
-            contents,
+            contents: {
+                contents: {
+                    key: "value"
+                },
+                type: ContainerMessageType.FluidDataStoreOp,
+            },
             clientId: "clientId",
             type: MessageType.Operation,
             metadata: { meta: "data" },
@@ -76,6 +80,48 @@ describe("RemoteMessageProcessor", () => {
         const result = messageProcessor.process(documentMessage);
 
         assert.deepStrictEqual(result.metadata.history, ["decompress", "reconstruct"]);
+        assert.deepStrictEqual(result.contents, message.contents.contents);
+    });
+
+    it("Invokes internal processors in order if the message is compressed and chunked", () => {
+        let decompressCalls = 0;
+        const messageProcessor = getMessageProcessor(
+            {
+                processRemoteMessage(original: ISequencedDocumentMessage): IMessageProcessingResult {
+                    return {
+                        message: stamp(original, "reconstruct"),
+                        state: "Processed",
+                    }
+                },
+            },
+            {
+                processMessage(original: ISequencedDocumentMessage): IMessageProcessingResult {
+                    return {
+                        message: stamp(original, "decompress"),
+                        state: decompressCalls++ % 2 === 0 ? "Skipped" : "Processed",
+                    }
+                },
+            }
+        );
+
+        const message = {
+            contents: {
+                contents: {
+                    contents: {
+                        key: "value"
+                    }
+                },
+                type: ContainerMessageType.FluidDataStoreOp,
+            },
+            clientId: "clientId",
+            type: MessageType.Operation,
+            metadata: { meta: "data" },
+        };
+        const documentMessage = message as ISequencedDocumentMessage;
+        const result = messageProcessor.process(documentMessage);
+
+        assert.deepStrictEqual(result.metadata.history, ["decompress", "reconstruct", "decompress"]);
+        assert.deepStrictEqual(result.contents, message.contents.contents.contents);
     });
 
     it("Processes legacy string-content message", () => {
