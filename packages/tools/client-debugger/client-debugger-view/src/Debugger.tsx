@@ -88,12 +88,13 @@ export function FluidClientDebugger(props: FluidClientDebuggerProps): React.Reac
 	return (
 		<Resizable
 			style={{
-				position: "fixed",
+				position: "absolute",
 				width: "400px",
 				height: "100%",
 				top: "0px",
 				right: "0px",
-				zIndex: "999999999",
+				bottom: "0px",
+				zIndex: "2",
 				backgroundColor: "lightgray", // TODO: remove
 			}}
 			className={"debugger-panel"}

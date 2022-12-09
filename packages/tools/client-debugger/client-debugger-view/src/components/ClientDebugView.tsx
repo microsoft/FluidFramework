@@ -16,6 +16,7 @@ import { HasClientDebugger, HasContainerId } from "../CommonProps";
 import { RenderOptions, getRenderOptionsWithDefaults } from "../RendererOptions";
 import { AudienceView } from "./AudienceView";
 import { ContainerDataView } from "./ContainerDataView";
+import { ContainerSelectionDropdown } from "./ContainerSelectionDropdown";
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { DataObjectsView } from "./DataObjectsView";
 
@@ -133,6 +134,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 			}}
 			className={clientDebugViewClassName}
 		>
+			<ContainerSelectionDropdown clientDebugger={clientDebugger} />
 			<ContainerSummaryView clientDebugger={clientDebugger} />
 			<div style={{ width: "100%", height: "100%", overflowY: "auto" }}>{view}</div>
 		</Stack>
