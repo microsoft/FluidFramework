@@ -87,7 +87,7 @@ import {
     getAttributesFormatVersion,
     getFluidDataStoreAttributes,
 } from "./summaryFormat";
-import { throwOnTombstoneUsageKey } from "./garbageCollection";
+import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
 import { summarizerClientType } from "./summarizerClientElection";
 
 function createAttributes(

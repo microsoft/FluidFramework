@@ -4,7 +4,7 @@
 
 ## Overview
 
-This document discusses options for providing a Fluid DDS with efficient, large-scale storage that organizes data in a tree structure. It's primary goal is to allow a DDS a practical way to store documents that can grow very large (potentially much larger than client memory). The SharedTree DDS (currently in development) is an example of a DDS that has this requirement. This necessitates both an architecture and an API that differ significantly from what are currently available to a DDS. Ideally, these would be introduced at the container level and provided as a service that any DDS can use rather than being exclusive to a single DDS (like SharedTree).
+This document discusses options for providing a Fluid DDS with efficient, large-scale storage that organizes data in a tree structure. Its primary goal is to allow a DDS a practical way to store documents that can grow very large (potentially much larger than client memory). The SharedTree DDS (currently in development) is an example of a DDS that has this requirement. This necessitates both an architecture and an API that differ significantly from what are currently available to a DDS. Ideally, these would be introduced at the container level and provided as a service that any DDS can use rather than being exclusive to a single DDS (like SharedTree).
 
 ## Virtualization and Incrementality
 
@@ -12,7 +12,7 @@ Existing Fluid DDSs generally assume that their documents will fit entirely in a
 
 > As presented above, the amount of the document that a client can view at once is limited by a client machine's memory. An optimization might expand that size to the amount of _disk_ space available to a client by using an on-disk cache (e.g. indexDB). But even with this orders-of-magnitude increase in available local space, it doesn't fundamentally change the approach for virtualization because a document might fit neither in a client's memory _nor_ its disk, either because the document is impressively huge or the disk is already close to full.
 
-Allowing for partial downloads of the tree has implications on the layout of the storage data. For example, item 6 in the list above might not be necessary if the full tree was always available to a client, but for a client with only part of the tree, it needs that data locally available.
+Allowing for partial downloads of the tree has implications on the layout and structure of the stored data, which this document will explore.
 
 > The downloaded region of the tree is always strictly within a client's [partial checkout](#glossary). A partial checkout is a client's "working space" restricted to some particular region of the tree. It is sanctioned by the server; the server knows that the client is restricted to activity in that area. The server can therefore enforce that the client downloads content in that area exclusively, and the server can filter the ops that it delivers to that client to be only the ones relevant to that area. This can provide the server a way to enforce permission boundaries for different parts of the tree as well as provide improved efficiency for clients since they will receive fewer ops. The implementation of partial checkouts itself is outside the scope of this document, but this document will provide the fundamental building blocks for such an implementation.
 
@@ -89,13 +89,13 @@ graph TD;
     A(Chunk A)-->B(Chunk B)-->C(Chunk C)
 ```
 
-The folowing sections will examine some of the general properties of this "chunk tree".
+The following sections will examine some of the general properties of this "chunk tree."
 
 ### Immutability
 
-Except where stated otherwise, this document assumes that blobs are immmutable and [content-addressable](#glossary). This means that once a blob has been created it can never be updated/changed, but must instead be completely replaced, even if most of its contents remain the same. The replacement blob will always have a different key than the original blob, because the key is derived from a hash of the blob's contents, which are different. Any references to that blob must also be updated with the new key.
+Except where stated otherwise, this document assumes that blobs are immutable and [content-addressable](#glossary). This means that once a blob has been created it can never be updated/changed, but must instead be completely replaced, even if most of its contents remain the same. The replacement blob will always have a different key than the original blob, because the key is derived from a hash of the blob's contents, which are different. Any references to that blob must also be updated with the new key.
 
-Suppose, in the diagram above, that Chunk A, B and C are each stored in Blob A, B and C, respectively. A client changes the value of _h_ which changes a value in Blob C. This means that Blob C must be replaced by a new blob, Blob C', which is identical to Blob C but contains a different value for _h_. Blob C' also has a different key than Blob C, and that means that the reference to Blob C in Blob B is now incorrect. Blob B must be updated to point to to Blob C', a.k.a. the "new Blob C". Therefore, Blob B must also be replaced with a Blob B'. Finally, Blob A, which has a reference to Blob B, must change for the same reason. This chain reaction ends at Blob A because Blob A is at the top of the tree (the "root blob") and has no parent. Even though only Chunk C changed, all three chunks had to be replaced. In general, the entire [spine](#glossary) of the tree above any edited node must be replaced for each edit.
+Suppose, in the diagram above, that Chunk A, B and C are each stored in Blob A, B and C, respectively. A client changes the value of _h_ which changes a value in Blob C. This means that Blob C must be replaced by a new blob, Blob C', which is identical to Blob C but contains a different value for _h_. Blob C' also has a different key than Blob C, and that means that the reference to Blob C in Blob B is now incorrect. Blob B must be updated to point to Blob C', a.k.a. the "new Blob C". Therefore, Blob B must also be replaced with a Blob B'. Finally, Blob A, which has a reference to Blob B, must change for the same reason. This chain reaction ends at Blob A because Blob A is at the top of the tree (the "root blob") and has no parent. Even though only Chunk C changed, all three chunks had to be replaced. In general, the entire [spine](#glossary) of the tree above any edited node must be replaced for each edit.
 
 ### Copy-On-Write History
 
@@ -156,7 +156,7 @@ graph TD;
     end
 ```
 
-Consider Chunk A and Chunk A', the predecessors to A''. They still exist in storage even though they are outdated and have been superceded by A'' in the latest revision of the tree (Revision 2). They are immutable and still retain the same contents that they did in prior revisions (their children are Chunk B/C/E and Chunk B'/C/E, respectively). Likewise, Chunk B, the predecessor to B', still exists (and the same for chunks C and D). In fact, _all_ chunks from all revisions remain accessible and untouched from their original state. This means that one can walk down from the root chunk of any revision and retrieve the entire contents of the tree as it had been at that revision. And conveniently, every revision produces exactly one new root chunk because a spine was cloned for each and the root chunk always belongs to any possible spine. This means that every revision is "captured" by a unique root chunk, and preserving the history of the tree can be accomplished by keeping references those root chunks. Storing the entire history of the tree is as simple as keeping a log of keys to those root chunks:
+Consider Chunk A and Chunk A', the predecessors to A''. They still exist in storage even though they are outdated and have been superseded by A'' in the latest revision of the tree (Revision 2). They are immutable and still retain the same contents that they did in prior revisions (their children are Chunk B/C/E and Chunk B'/C/E, respectively). Likewise, Chunk B, the predecessor to B', still exists (and the same for chunks C and D). In fact, _all_ chunks from all revisions remain accessible and untouched from their original state. This means that one can walk down from the root chunk of any revision and retrieve the entire contents of the tree as it had been at that revision. And conveniently, every revision produces exactly one new root chunk because a spine was cloned for each and the root chunk always belongs to any possible spine. This means that every revision is "captured" by a unique root chunk, and preserving the history of the tree can be accomplished by keeping references those root chunks. Storing the entire history of the tree is as simple as keeping a log of keys to those root chunks:
 
 | Revision | Root Chunk Key |
 | -------- | -------------- |
@@ -181,7 +181,7 @@ One possible alternative would be to provide a mode in which the server assumes 
 
 The drawback to replacing the spine for every edit is the intense [write amplification](https://en.wikipedia.org/wiki/Write_amplification). For every write to the tree, every chunk of the spine above the edited node is replaced, incurring multiple blob uploads for what began as a single update to a single value. To make matters even worse, each of these uploads must wait to begin until it knows the key of the blob below. Assuming that a blob's key is determined by the server and is not known until the upload completes, all uploads in the spine must occur one-by-one and are completely unparallelizable.
 
-> The uploads could happen in parallel if a client were able to predict the keys for each new blob ahead of time by running the same hashing algorithm as the server does on the contents of the blob. If the client then sent the key to the server as well as the contents, the key could be used a checksum to verify the integrity of the upload as well as ensure that the correct hashing algorithm was used.
+> The uploads could happen in parallel if a client were able to predict the keys for each new blob ahead of time by running the same hashing algorithm as the server does on the contents of the blob. If the client then sent the key to the server as well as the contents, the key could be used as a checksum to verify the integrity of the upload as well as ensure that the correct hashing algorithm was used.
 
 Paying this cost for every edit is a burden for a client desiring high write throughput. The next section, "[Amortizing Writes](#amortizing-writes)" will explore how to spread this cost out over multiple edits.
 
@@ -189,7 +189,7 @@ Paying this cost for every edit is a burden for a client desiring high write thr
 
 ## Amortizing Writes
 
-Writes to the chunk data structure are expensive. Even in the best case (a small tree, in which only one chunk has to be updated for each write operation) this scheme is still doing _a blob upload for every single write_. This is unnacceptable for a DDS which requires high write throughput. There are different ways to mitigate this cost; one is proposed below.
+Writes to the chunk data structure are expensive. Even in the best case (a small tree, in which only one chunk has to be updated for each write operation) this scheme is still doing _a blob upload for every single write_. This is unacceptable for a DDS which requires high write throughput. There are different ways to mitigate this cost; one is proposed below.
 
 ### Write-Ahead Log and Intermittent Flushing
 
@@ -278,7 +278,7 @@ After a flush completes, all clients are notified of the flush and the new chunk
 > 2. Client B is elected to be the new flushing client
 > 3. Client B begins a flush. At that time, the latest sequence number delivered to Client B is 10.
 > 4. Both Client A and Client B receive the next five ops, their latest known sequence numbers are now both `15`.
-> 5. Client A's flush finishes uploading, so Client A submits an flush op that contains a handle to the new chunk root and the reference sequence number `10` (_not_ `15`).
+> 5. Client A's flush finishes uploading, so Client A submits a flush op that contains a handle to the new chunk root and the reference sequence number `10` (_not_ `15`).
 > 6. The server sequences Client A's flush op with sequence number `16`.
 > 7. Client B's flush finishes uploading, so Client B submits a flush op that contains a handle to the new chunk root and the reference sequence number `10`.
 > 8. The server sequences Client B's flush op with sequence number `17`.
@@ -332,7 +332,7 @@ graph TD;
     style E fill:#844
 ```
 
-This tree might have the same number of nodes and chunks as the tree above, but it takes many more reuploads (five) to edit a the leaf simply because the logical tree has a deeper shape.
+This tree might have the same number of nodes and chunks as the tree above, but it takes many more reuploads (five) to edit a leaf simply because the logical tree has a deeper shape.
 
 There's also the problem in the other direction; trees which have extremely long sequences of children under the same parent (and are therefore very wide). Consider this logical tree with one million nodes under a single parent:
 
@@ -380,7 +380,7 @@ Clearly, the tree's shape alone can have a significant effect on both read and w
 
 ### Optimizing Tree Shapes
 
-So the worst case performance of both reads and writes, in terms of blob downloads and blob uploads, respectively, is `O(N)`. Given a decent chunking algorithm and trees that aren't pathologically shaped, most trees will do far better than incur an upload or download per node per operation, but the asymptotics are nonetheless unenticing. However, if the chunks in the tree can be re-organized into a different hierarchy, then the worst case can be much improved. It's possible to organize the chunks in such a way that both reads and writes can be bounded to `O(log(D))`/`O(log(N))` for any shape of tree. This can be accomplished by implementing a more intelligent chunk data structure. See [Appendix A](#appendix-a-chunk-data-structure-implementations) for an analysis of some different implementations of the chunk data structure.
+So the worst case performance of both reads and writes, in terms of blob downloads and blob uploads, respectively, is `O(N)`. Given a decent chunking algorithm and trees that aren't pathologically shaped, most trees will do far better than incur an upload or download per node per operation, but the asymptotics are nonetheless unenticing. However, if the chunks in the tree can be re-organized into a different hierarchy, then the worst case can be much improved. It's possible to organize the chunks in such a way that both reads and writes can be bounded to `O(log(N))` for any shape of tree. This can be accomplished by implementing a more intelligent chunk data structure. See [Appendix A](#appendix-a-chunk-data-structure-implementations) for an analysis of some different implementations of the chunk data structure.
 
 ## Generalization
 
@@ -452,7 +452,7 @@ graph TD;
     A(Chunk A)--1/0-->B(Chunk B)--0-->C(Chunk C)
 ```
 
-Note how the edges in the logical tree concatenate to form the edges in the chunk tree; these are necessary to look up nodes by their paths. For example, the path "1/0/0/2" has a prefix "1/0" which matches the edge from the root chunk A to Chunk B; the next part of the path ("0") is used to find Chunk C, and the rest ("2") points to node _h_ within Chunk C. This data structure is simple but suffers from the the problems with read and write amplification discussed above. A deep logical tree might form a very deep chunk tree. The next two data structures provide strategies to mitigate that problem.
+Note how the edges in the logical tree concatenate to form the edges in the chunk tree; these are necessary to look up nodes by their paths. For example, the path "1/0/0/2" has a prefix "1/0" which matches the edge from the root chunk A to Chunk B; the next part of the path ("0") is used to find Chunk C, and the rest ("2") points to node _h_ within Chunk C. This data structure is simple but suffers from the problems with read and write amplification discussed above. A deep logical tree might form a very deep chunk tree. The next two data structures provide strategies to mitigate that problem.
 
 ---
 
@@ -469,9 +469,9 @@ Drawbacks:
 
 ### Sequence Tree
 
-The Sequence Tree is used specifically in the aforementioned problematic case where many, many child chunks are under a single parent chunk. It is in the [B-tree](https://en.wikipedia.org/wiki/B-tree) family; it organizes the child chunks as leaves in a balanced tree to guarantee that each chunk in the sequence is at most `log(C)` chunks away from the parent chunk, where `C` is the number of children. It is also optimized for range operations; it can insert, delete, and move a large range of children atomically without resorting to doing an individual insert/delete/move for each node in the range. It can scale to be arbitrarily large and can accomodate any number of children, which a parent chunk in general cannot do because they have a finite amount of space in which to store their children's keys. The Sequence Tree has been successfully prototyped although its implementation details are outside the scope of this document.
+The Sequence Tree is used specifically in the aforementioned problematic case where many, many child chunks are under a single parent chunk. It is in the [B-tree](https://en.wikipedia.org/wiki/B-tree) family; it organizes the child chunks as leaves in a balanced tree to guarantee that each chunk in the sequence is at most `log(C)` chunks away from the parent chunk, where `C` is the number of children. It is also optimized for range operations; it can insert, delete, and move a large range of children atomically without resorting to doing an individual insert/delete/move for each node in the range. It can scale to be arbitrarily large and can accommodate any number of children, which a parent chunk in general cannot do because they have a finite amount of space in which to store their children's keys. The Sequence Tree has been successfully prototyped although its implementation details are outside the scope of this document.
 
-A Simple Chunk Tree could, for example, leverage a Sequence Tree whenever it encounters node with a number of children that exceeds the threshold of possible children under a single parent. This would give a Simple Chunk Tree ideal performance for this scenario, although it does not help the Simple Chunk Tree's poor handling of deep trees.
+A Simple Chunk Tree could, for example, leverage a Sequence Tree whenever it encounters a node with a number of children that exceeds the threshold of possible children under a single parent. This would give a Simple Chunk Tree ideal performance for this scenario, although it does not help the Simple Chunk Tree's poor handling of deep trees.
 
 ### Path-Based B-Tree
 
@@ -487,7 +487,7 @@ graph TD;
     e--2-->h;
 ```
 
-Note that its paths are sortable. For example, they can be sorted lexically to order the nodes as `a`, `b`, `c`, `d`, `e`, `f`, `h`, `h`, `i` which produces an in-order traversal of the tree.
+Note that its paths are sortable. For example, they can be sorted lexically to order the nodes as `a`, `b`, `c`, `d`, `e`, `f`, `g`, `h`, `i` which produces an in-order traversal of the tree.
 
 | Node | Path      |
 | ---- | --------- |
@@ -772,7 +772,7 @@ A lookup of any node requires traversing through the "layers of chunks" in this 
 
 Advantages:
 
--   Has the performance of the path based B-tree (`O(log(N))` uploads/downloads for random writes/reads) and also the flexibility of the simple chunk tree (chunks can be chosen arbitrarily by a chunking alogrithm and hinted at by schema).
+-   Has the performance of the path based B-tree (`O(log(N))` uploads/downloads for random writes/reads) and also the flexibility of the simple chunk tree (chunks can be chosen arbitrarily by a chunking algorithm and hinted at by schema).
 -   Automatically handles the "many-children-under-one-node" scenario. There is no need for a Sequence Tree explicitly, because long sequences of nodes will be progressively chunked into a B-Tree like structure by the same algorithm that SPICE tree uses for the rest of the tree.
 
 Drawbacks:

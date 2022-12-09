@@ -4,22 +4,23 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { SharedCell } from "@fluidframework/cell";
+import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 
 import { externalDataSource, parseStringData } from "../externalData";
 import type { ITask, ITaskEvents, ITaskList } from "../modelInterfaces";
 
 class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
-    public get id() {
+    public get id(): string {
         return this._id;
     }
     // Probably would be nice to not hand out the SharedString, but the CollaborativeInput expects it.
-    public get name() {
+    public get name(): SharedString {
         return this._name;
     }
-    public get priority() {
+    public get priority(): number {
         const cellValue = this._priority.get();
         if (cellValue === undefined) {
             throw new Error("Expected a valid priority");
@@ -32,7 +33,7 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
     public constructor(
         private readonly _id: string,
         private readonly _name: SharedString,
-        private readonly _priority: SharedCell<number>,
+        private readonly _priority: ISharedCell<number>
     ) {
         super();
         this._name.on("sequenceDelta", () => {
@@ -42,6 +43,15 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
             this.emit("priorityChanged");
         });
     }
+}
+
+/**
+ * Persisted form of task data stored in root {@link @fluidframework/map#SharedDirectory}.
+ */
+interface PersistedTask {
+    id: string;
+    name: IFluidHandle<SharedString>;
+    priority: IFluidHandle<ISharedCell<number>>;
 }
 
 /**
@@ -57,18 +67,25 @@ export class TaskList extends DataObject implements ITaskList {
      */
     private readonly tasks = new Map<string, Task>();
 
-    public readonly addTask = (id: string, name: string, priority: number) => {
+    public readonly addTask = (id: string, name: string, priority: number): void => {
         if (this.tasks.get(id) !== undefined) {
             throw new Error("Task already exists");
         }
         const nameString = SharedString.create(this.runtime);
         nameString.insertText(0, name);
-        const priorityCell: SharedCell<number> = SharedCell.create(this.runtime);
+        const priorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
         priorityCell.set(priority);
+
         // To add a task, we update the root SharedDirectory.  This way the change is propagated to all collaborators
         // and persisted.  In turn, this will trigger the "valueChanged" event and handleTaskAdded which will update
         // the this.tasks collection.
-        this.root.set(id, { id, name: nameString.handle, priority: priorityCell.handle });
+        const data: PersistedTask = {
+            id,
+            name: nameString.handle as IFluidHandle<SharedString>,
+            priority: priorityCell.handle as IFluidHandle<ISharedCell<number>>,
+        };
+        this.root.set(id, data);
+
         // TODO: Ultimately we want to retain the data we retrieved from the external source separate from the draft
         // Fluid data.  Maybe we do this by just adding it to the objects we're already storing in the root?
         // this.root.set(
@@ -100,20 +117,24 @@ export class TaskList extends DataObject implements ITaskList {
         // );
     };
 
-    public readonly deleteTask = (id: string) => {
+    public readonly deleteTask = (id: string): void => {
         this.root.delete(id);
     };
 
-    public readonly getTasks = () => {
+    public readonly getTasks = (): Task[] => {
         return [...this.tasks.values()];
     };
 
-    public readonly getTask = (id: string) => {
+    public readonly getTask = (id: string): Task | undefined => {
         return this.tasks.get(id);
     };
 
-    private readonly handleTaskAdded = async (id: string) => {
-        const taskData = this.root.get(id);
+    private readonly handleTaskAdded = async (id: string): Promise<void> => {
+        const taskData = this.root.get(id) as PersistedTask;
+        if (taskData === undefined) {
+            throw new Error("Newly added task is missing from map.");
+        }
+
         const [nameSharedString, prioritySharedCell] = await Promise.all([
             taskData.name.get(),
             taskData.priority.get(),
@@ -127,7 +148,7 @@ export class TaskList extends DataObject implements ITaskList {
         this.emit("taskAdded", newTask);
     };
 
-    private readonly handleTaskDeleted = (id: string) => {
+    private readonly handleTaskDeleted = (id: string): void => {
         const deletedTask = this.tasks.get(id);
         this.tasks.delete(id);
         // Here we might want to consider raising an event on the Task object so that anyone holding it can know
@@ -140,7 +161,8 @@ export class TaskList extends DataObject implements ITaskList {
     // TODO: Consider performing the update in 2 phases (fetch, merge) to enable some nice conflict UI
     // TODO: Guard against reentrancy
     // TODO: Use leader election to reduce noise from competing clients
-    public async importExternalData() {
+    public async importExternalData(): Promise<void> {
+        console.log('Kicking off fetching external data from TaskList');
         const externalData = await externalDataSource.fetchData();
         const parsedTaskData = parseStringData(externalData);
         // TODO: Delete any items that are in the root but missing from the external data
@@ -171,7 +193,7 @@ export class TaskList extends DataObject implements ITaskList {
      * sync'ing this method probably wouldn't exist.
      * @returns A promise that resolves when the write completes
      */
-    public readonly saveChanges = async () => {
+    public readonly saveChanges = async (): Promise<void> => {
         // TODO: Consider this.getTasks() will include local (un-ack'd) changes to the Fluid data as well.  In
         // the "save" button case this might be fine (the user saves what they see), but in more-automatic
         // sync'ing perhaps this should only include ack'd changes (by spinning up a second local client same
@@ -181,6 +203,7 @@ export class TaskList extends DataObject implements ITaskList {
             return `${ task.id }:${ task.name.getText() }:${ task.priority.toString() }`;
         });
         const stringDataToWrite = `${taskStrings.join("\n")}`;
+
         // TODO: Do something reasonable to handle failure, retry, etc.
         return externalDataSource.writeData(stringDataToWrite);
     };
@@ -195,7 +218,7 @@ export class TaskList extends DataObject implements ITaskList {
      * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
      * DataObject, by registering an event listener for changes to the task list.
      */
-    protected async hasInitialized() {
+    protected async hasInitialized(): Promise<void> {
         this.root.on("valueChanged", (changed) => {
             if (changed.previousValue === undefined) {
                 // Must be from adding a new task
@@ -213,9 +236,10 @@ export class TaskList extends DataObject implements ITaskList {
         });
 
         for (const [id, taskData] of this.root) {
+            const typedTaskData = taskData as PersistedTask;
             const [nameSharedString, prioritySharedCell] = await Promise.all([
-                taskData.name.get(),
-                taskData.priority.get(),
+                typedTaskData.name.get(),
+                typedTaskData.priority.get(),
             ]);
             this.tasks.set(id, new Task(id, nameSharedString, prioritySharedCell));
         }
