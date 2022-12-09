@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 /**
- * Contract representing the result of a newly established connection to the server for syncing deltas
+ * Contract representing the result of a newly established connection to the server for syncing deltas.
  */
 export interface IConnectionDetails {
     clientId: string;
@@ -26,9 +26,13 @@ export interface IConnectionDetails {
     version: string;
     initialClients: ISignalClient[];
     serviceConfiguration: IClientConfiguration;
+
     /**
-     * Last known sequence number to ordering service at the time of connection
-     * It may lap actual last sequence number (quite a bit, if container  is very active).
+     * Last known sequence number to ordering service at the time of connection.
+     *
+     * @remarks
+     *
+     * It may lap actual last sequence number (quite a bit, if container is very active).
      * But it's the best information for client to figure out how far it is behind, at least
      * for "read" connections. "write" connections may use own "join" op to similar information,
      * that is likely to be more up-to-date.
@@ -61,21 +65,88 @@ export interface IDeltaSender {
     flush(): void;
 }
 
-/** Events emitted by the Delta Manager */
+/**
+ * Events emitted by {@link IDeltaManager}.
+ */
+/* eslint-disable @typescript-eslint/unified-signatures */
 export interface IDeltaManagerEvents extends IEvent {
-    (event: "prepareSend", listener: (messageBuffer: any[]) => void);
-    (event: "submitOp", listener: (message: IDocumentMessage) => void);
-    (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void);
-    (event: "allSentOpsAckd", listener: () => void);
-    (event: "pong" | "processTime", listener: (latency: number) => void);
     /**
-     * The connect event fires once we've received the connect_document_success message from the
-     * server.  This happens prior to the client's join message (if there is a join message).
+     * @deprecated No replacement API recommended.
+     */
+    (event: "prepareSend", listener: (messageBuffer: any[]) => void);
+
+    /**
+     * @deprecated No replacement API recommended.
+     */
+    (event: "submitOp", listener: (message: IDocumentMessage) => void);
+
+    /**
+     * Emitted immediately after processing an incoming operation (op).
+     *
+     * @remarks
+     *
+     * Note: this event is not intended for general use.
+     * Prefer to listen to events on the appropriate ultimate recipients of the ops, rather than listening to the
+     * ops directly on the {@link IDeltaManager}.
+     *
+     * Listener parameters:
+     *
+     * - `message`: The op that was processed.
+     *
+     * - `processingTime`: The amount of time it took to process the inbound operation (op), expressed in milliseconds.
+     */
+    (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void);
+
+    /**
+     * @deprecated No replacement API recommended.
+     */
+    (event: "allSentOpsAckd", listener: () => void);
+
+    /**
+     * @deprecated No replacement API recommended.
+     */
+    (event: "pong", listener: (latency: number) => void);
+
+    /**
+     * @deprecated No replacement API recommended.
+     */
+    (event: "processTime", listener: (latency: number) => void);
+
+    /**
+     * Emitted when the {@link IDeltaManager} completes connecting to the Fluid service.
+     *
+     * @remarks
+     * This occurs once we've received the connect_document_success message from the server,
+     * and happens prior to the client's join message (if there is a join message).
+     *
+     * Listener parameters:
+     *
+     * - `details`: Connection metadata.
+     *
+     * - `opsBehind`: An estimate of far behind the client is relative to the service in terms of ops.
+     * Will not be specified if an estimate cannot be determined.
      */
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void);
+
+    /**
+     * Emitted when the {@link IDeltaManager} becomes disconnected from the Fluid service.
+     *
+     * @remarks Listener parameters:
+     *
+     * - `reason`: Describes the reason for which the delta manager was disconnected.
+     */
     (event: "disconnect", listener: (reason: string) => void);
+
+    /**
+     * Emitted when read/write permissions change.
+     *
+     * @remarks Listener parameters:
+     *
+     * - `readonly`: Whether or not the delta manager is now read-only.
+     */
     (event: "readonly", listener: (readonly: boolean) => void);
 }
+/* eslint-enable @typescript-eslint/unified-signatures */
 
 /**
  * Manages the transmission of ops between the runtime and storage.
@@ -132,15 +203,49 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     submitSignal(content: any): void;
 }
 
-/** Events emitted by a Delta Queue */
+/**
+ * Events emitted by {@link IDeltaQueue}.
+ */
+/* eslint-disable @typescript-eslint/unified-signatures */
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
-    (event: "push" | "op", listener: (task: T) => void);
     /**
-     * @param count - number of events (T) processed before becoming idle
-     * @param duration - amount of time it took to process elements (milliseconds).
+     * Emitted when a task is enqueued.
+     *
+     * @remarks Listener parameters:
+     *
+     * - `task`: The task being enqueued.
+     */
+    (event: "push", listener: (task: T) => void);
+
+    /**
+     * Emitted immediately after processing an enqueued task and removing it from the queue.
+     *
+     * @remarks
+     *
+     * Note: this event is not intended for general use.
+     * Prefer to listen to events on the appropriate ultimate recipients of the ops, rather than listening to the
+     * ops directly on the {@link IDeltaQueue}.
+     *
+     * Listener parameters:
+     *
+     * - `task`: The task that was processed.
+     */
+    (event: "op", listener: (task: T) => void);
+
+    /**
+     * Emitted when the queue of tasks to process is emptied.
+     *
+     * @remarks Listener parameters:
+     *
+     * - `count`: The number of events (`T`) processed before becoming idle.
+     *
+     * - `duration`: The amount of time it took to process elements (in milliseconds).
+     *
+     * @see {@link IDeltaQueue.idle}
      */
     (event: "idle", listener: (count: number, duration: number) => void);
 }
+/* eslint-enable @typescript-eslint/unified-signatures */
 
 /**
  * Queue of ops to be sent to or processed from storage
@@ -157,12 +262,14 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
     length: number;
 
     /**
-     * Flag indicating whether or not the queue is idle
+     * Flag indicating whether or not the queue is idle.
+     * I.e. there are no remaining messages to processes.
      */
     idle: boolean;
 
     /**
-     * Pauses processing on the queue
+     * Pauses processing on the queue.
+     *
      * @returns A promise which resolves when processing has been paused.
      */
     pause(): Promise<void>;

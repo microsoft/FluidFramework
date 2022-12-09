@@ -100,3 +100,4 @@ export { ForestRepairDataStore } from "./forestRepairDataStore";
 export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
 export { runSynchronousTransaction } from "./defaultTransaction";
+export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
