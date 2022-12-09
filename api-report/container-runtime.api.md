@@ -160,7 +160,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get options(): ILoaderOptions;
     // (undocumented)
-    orderSequentially(callback: () => void): void;
+    orderSequentially<T>(callback: () => T): T;
     // (undocumented)
     process(messageArg: ISequencedDocumentMessage, local: boolean): void;
     // (undocumented)

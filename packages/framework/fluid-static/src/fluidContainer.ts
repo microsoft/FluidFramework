@@ -27,7 +27,7 @@ export interface IFluidContainerEvents extends IEvent {
      *
      * - {@link IFluidContainer.connectionState}
      *
-     * - {@link IFluidContainer.disconnect}
+     * - {@link IFluidContainer.connect}
      */
     (event: "connected", listener: () => void): void;
 
@@ -65,10 +65,10 @@ export interface IFluidContainerEvents extends IEvent {
     /**
      * Emitted when the {@link IFluidContainer} is closed, which permanently disables it.
      *
-     * @remarks
+     * @remarks Listener parameters:
      *
-     * If container was closed due to error (as opposed to an explicit call to
-     * {@link IFluidContainer.dispose}), optional argument contains further details about the error.
+     * - `error`: If the container was closed due to error (as opposed to an explicit call to
+     * {@link IFluidContainer.dispose}), this will contain details about the error that caused it.
      */
     (event: "disposed", listener: (error?: ICriticalContainerError) => void);
 }
@@ -145,7 +145,8 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 
     /**
      * Attempts to connect the container to the delta stream and process operations.
-     * Will throw an error if unsuccessful.
+     *
+     * @throws Will throw an error if connection is unsuccessful.
      *
      * @remarks
      *
