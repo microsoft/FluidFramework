@@ -11,30 +11,26 @@ export interface IDebugViewProps {
     model: IAppModel;
 }
 
-export const DebugView: React.FC<IDebugViewProps> = (
-    props: IDebugViewProps
-) => {
+export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
     return (
         <div>
             <h2 style={{ textDecoration: "underline" }}>Debug info</h2>
             <ExternalDataView />
             <SyncStatusView />
-            <ControlsView model={props.model} />
+            <ControlsView model={ props.model }/>
         </div>
     );
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface IExternalDataViewProps {}
+interface IExternalDataViewProps {
+}
 
-const ExternalDataView: React.FC<IExternalDataViewProps> = (
-    props: IExternalDataViewProps
-) => {
+const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalDataViewProps) => {
     const [externalData, setExternalData] = useState<string | undefined>();
     useEffect(() => {
         const fetchExternalData = (): void => {
-            externalDataSource
-                .fetchData()
+            externalDataSource.fetchData()
                 .then(setExternalData)
                 .catch(console.error);
         };
@@ -45,14 +41,15 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (
         };
     }, []);
 
-    const parsedExternalData =
-        externalData === undefined ? [] : parseStringData(externalData);
+    const parsedExternalData = externalData === undefined
+        ? []
+        : parseStringData(externalData);
     console.log(parsedExternalData);
     const taskRows = parsedExternalData.map(({ id, name, priority }) => (
-        <tr key={id}>
-            <td>{id}</td>
-            <td>{name}</td>
-            <td>{priority}</td>
+        <tr key={ id }>
+            <td>{ id }</td>
+            <td>{ name }</td>
+            <td>{ priority }</td>
         </tr>
     ));
 
@@ -68,7 +65,9 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (
                             <td>Priority</td>
                         </tr>
                     </thead>
-                    <tbody>{taskRows}</tbody>
+                    <tbody>
+                        { taskRows }
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -76,23 +75,18 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface ISyncStatusViewProps {}
+interface ISyncStatusViewProps {
+}
 
 // TODO: Implement the statuses below
-const SyncStatusView: React.FC<ISyncStatusViewProps> = (
-    props: ISyncStatusViewProps
-) => {
+const SyncStatusView: React.FC<ISyncStatusViewProps> = (props: ISyncStatusViewProps) => {
     return (
         <div>
             <h3>Sync status</h3>
             <div style={{ margin: "10px 0" }}>
-                Fluid has [no] unsync'd changes (not implemented)
-                <br />
-                External data source has [no] unsync'd changes (not implemented)
-                <br />
-                Current sync activity: [idle | fetching | writing | resolving
-                conflicts?] (not implemented)
-                <br />
+                Fluid has [no] unsync'd changes (not implemented)<br />
+                External data source has [no] unsync'd changes (not implemented)<br />
+                Current sync activity: [idle | fetching | writing | resolving conflicts?] (not implemented)<br />
             </div>
         </div>
     );
@@ -105,21 +99,13 @@ interface IControlsViewProps {
 // TODO: Implement simulation of an external data change.  Maybe include UI for the debug user to edit the data
 // themselves (as if they were editing it outside of Fluid).
 // TODO: Consider how we might simulate errors/failures here to play with retry and recovery.
-const ControlsView: React.FC<IControlsViewProps> = (
-    props: IControlsViewProps
-) => {
+const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
     return (
         <div>
             <h3>Debug controls</h3>
             <div style={{ margin: "10px 0" }}>
-                <button onClick={externalDataSource.debugResetData}>
-                    Reset external data
-                </button>
-                <br />
-                <button onClick={props.model.debugSendCustomSignal}>
-                    Trigger external data change signal
-                </button>
-                <br />
+                <button onClick={ externalDataSource.debugResetData }>Reset external data</button><br />
+                <button onClick={ props.model.debugSendCustomSignal }>Trigger external data change signal</button><br />
             </div>
         </div>
     );

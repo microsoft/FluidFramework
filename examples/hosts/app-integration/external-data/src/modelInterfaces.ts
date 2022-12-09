@@ -3,14 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type {
-    IEvent,
-    IEventProvider,
-} from "@fluidframework/common-definitions";
+import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { SharedString } from "@fluidframework/sequence";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IAppModelEvents extends IEvent {}
+export interface IAppModelEvents extends IEvent { }
 
 /**
  * For this simple demo, our app model only needs a single member taskList.
@@ -22,10 +19,10 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
     readonly taskList: ITaskList;
 
     /**
-     * Send custom signals to the server which will cause the server to respond
-     * with the (currently experimental) RuntimeMessage Signal to communicate
-     * an external data change and and possibly the changed data as well
-     */
+    * Send custom signals to the server which will cause the server to respond
+    * with the (currently experimental) RuntimeMessage Signal to communicate
+    * an external data change and and possibly the changed data as well
+    */
     readonly debugSendCustomSignal: () => void;
 }
 

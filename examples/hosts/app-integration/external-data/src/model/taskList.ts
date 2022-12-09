@@ -67,19 +67,13 @@ export class TaskList extends DataObject implements ITaskList {
      */
     private readonly tasks = new Map<string, Task>();
 
-    public readonly addTask = (
-        id: string,
-        name: string,
-        priority: number
-    ): void => {
+    public readonly addTask = (id: string, name: string, priority: number): void => {
         if (this.tasks.get(id) !== undefined) {
             throw new Error("Task already exists");
         }
         const nameString = SharedString.create(this.runtime);
         nameString.insertText(0, name);
-        const priorityCell = SharedCell.create(
-            this.runtime
-        ) as ISharedCell<number>;
+        const priorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
         priorityCell.set(priority);
 
         // To add a task, we update the root SharedDirectory.  This way the change is propagated to all collaborators
@@ -168,30 +162,28 @@ export class TaskList extends DataObject implements ITaskList {
     // TODO: Guard against reentrancy
     // TODO: Use leader election to reduce noise from competing clients
     public async importExternalData(): Promise<void> {
-        console.log("Kicking off fetching external data from TaskList");
+        console.log('Kicking off fetching external data from TaskList');
         const externalData = await externalDataSource.fetchData();
         const parsedTaskData = parseStringData(externalData);
         // TODO: Delete any items that are in the root but missing from the external data
-        const updateTaskPs = parsedTaskData.map(
-            async ({ id, name, priority }) => {
-                const currentTask = this.tasks.get(id);
-                if (currentTask === undefined) {
-                    // A new task was added from external source, add it to the Fluid data.
-                    this.addTask(id, name, priority);
-                    return;
-                }
-                if (currentTask.name.getText() !== name) {
-                    // TODO: Name has changed from external source, update the Fluid data
-                    // For a first approach it's probably fine to stomp the Fluid data.  But eventually this is where
-                    // we'd want conflict resolution UX.
-                }
-                if (currentTask.priority !== priority) {
-                    // TODO: Priority has changed from external source, update the Fluid data
-                    // For a first approach it's probably fine to stomp the Fluid data.  But eventually this is where
-                    // we'd want conflict resolution UX.
-                }
+        const updateTaskPs = parsedTaskData.map(async ({ id, name, priority }) => {
+            const currentTask = this.tasks.get(id);
+            if (currentTask === undefined) {
+                // A new task was added from external source, add it to the Fluid data.
+                this.addTask(id, name, priority);
+                return;
             }
-        );
+            if (currentTask.name.getText() !== name) {
+                // TODO: Name has changed from external source, update the Fluid data
+                // For a first approach it's probably fine to stomp the Fluid data.  But eventually this is where
+                // we'd want conflict resolution UX.
+            }
+            if (currentTask.priority !== priority) {
+                // TODO: Priority has changed from external source, update the Fluid data
+                // For a first approach it's probably fine to stomp the Fluid data.  But eventually this is where
+                // we'd want conflict resolution UX.
+            }
+        });
         await Promise.all(updateTaskPs);
     }
 
@@ -208,9 +200,7 @@ export class TaskList extends DataObject implements ITaskList {
         // as what we do for summarization).
         const tasks = this.getTasks();
         const taskStrings = tasks.map((task) => {
-            return `${
-                task.id
-            }:${task.name.getText()}:${task.priority.toString()}`;
+            return `${ task.id }:${ task.name.getText() }:${ task.priority.toString() }`;
         });
         const stringDataToWrite = `${taskStrings.join("\n")}`;
 
@@ -251,10 +241,7 @@ export class TaskList extends DataObject implements ITaskList {
                 typedTaskData.name.get(),
                 typedTaskData.priority.get(),
             ]);
-            this.tasks.set(
-                id,
-                new Task(id, nameSharedString, prioritySharedCell)
-            );
+            this.tasks.set(id, new Task(id, nameSharedString, prioritySharedCell));
         }
     }
 }
@@ -267,6 +254,9 @@ export class TaskList extends DataObject implements ITaskList {
 export const TaskListInstantiationFactory = new DataObjectFactory<TaskList>(
     "task-list",
     TaskList,
-    [SharedCell.getFactory(), SharedString.getFactory()],
-    {}
+    [
+        SharedCell.getFactory(),
+        SharedString.getFactory(),
+    ],
+    {},
 );

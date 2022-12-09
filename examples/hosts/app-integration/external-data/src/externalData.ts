@@ -25,8 +25,7 @@ export interface ParsedTaskData {
 export function parseStringData(stringData: string): ParsedTaskData[] {
     const taskStrings = stringData.split("\n");
     return taskStrings.map((taskString) => {
-        const [taskIdString, taskNameString, taskPriorityString] =
-            taskString.split(":");
+        const [taskIdString, taskNameString, taskPriorityString] = taskString.split(":");
         return {
             id: taskIdString,
             name: taskNameString,
@@ -81,12 +80,9 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
      * more structured data?  Maybe something that looks like a Response that we can .json()?
      */
     public async fetchData(): Promise<string> {
-        const currentExternalData =
-            window.localStorage.getItem(localStorageKey);
+        const currentExternalData = window.localStorage.getItem(localStorageKey);
         if (currentExternalData === null) {
-            throw new Error(
-                "External data should not be null, something went wrong"
-            );
+            throw new Error("External data should not be null, something went wrong");
         }
         return currentExternalData;
     }

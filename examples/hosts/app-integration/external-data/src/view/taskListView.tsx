@@ -34,33 +34,30 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
     }, [task]);
 
     const inputHandler = (e: React.FormEvent): void => {
-        const newValue = Number.parseInt(
-            (e.target as HTMLInputElement).value,
-            10
-        );
+        const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
         task.priority = newValue;
     };
 
     return (
         <tr>
-            <td>{task.id}</td>
+            <td>{ task.id }</td>
             <td>
                 <CollaborativeInput
-                    sharedString={task.name}
+                    sharedString={ task.name }
                     style={{ width: "200px" }}
                 ></CollaborativeInput>
             </td>
             <td>
                 <input
-                    ref={priorityRef}
-                    onInput={inputHandler}
+                    ref={ priorityRef }
+                    onInput={ inputHandler }
                     type="number"
                     style={{ width: "50px" }}
                 ></input>
             </td>
             <td>
                 <button
-                    onClick={deleteTask}
+                    onClick={ deleteTask }
                     style={{ background: "none", border: "none" }}
                 >
                     ❌
@@ -77,9 +74,7 @@ export interface ITaskListViewProps {
 /**
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
  */
-export const TaskListView: React.FC<ITaskListViewProps> = (
-    props: ITaskListViewProps
-) => {
+export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
     const { taskList } = props;
 
     const [tasks, setTasks] = useState<ITask[]>(taskList.getTasks());
@@ -98,9 +93,9 @@ export const TaskListView: React.FC<ITaskListViewProps> = (
 
     const taskRows = tasks.map((task) => (
         <TaskRow
-            key={task.id}
-            task={task}
-            deleteTask={(): void => taskList.deleteTask(task.id)}
+            key={ task.id }
+            task={ task }
+            deleteTask={ (): void => taskList.deleteTask(task.id) }
         />
     ));
 
@@ -116,9 +111,11 @@ export const TaskListView: React.FC<ITaskListViewProps> = (
                         <td>Priority</td>
                     </tr>
                 </thead>
-                <tbody>{taskRows}</tbody>
+                <tbody>
+                    { taskRows }
+                </tbody>
             </table>
-            <button onClick={taskList.saveChanges}>Save changes</button>
+            <button onClick={ taskList.saveChanges }>Save changes</button>
         </div>
     );
 };

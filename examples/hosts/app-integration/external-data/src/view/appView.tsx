@@ -18,5 +18,5 @@ export interface IAppViewProps {
 export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
     const { model } = props;
 
-    return <TaskListView taskList={model.taskList} />;
+    return <TaskListView taskList={ model.taskList } />;
 };
