@@ -15,12 +15,12 @@ import { TaskListInstantiationFactory } from "./taskList";
 const taskListId = "task-list";
 
 /*
-* This is a server origin signal that lets the client know that the external source of truth
-* for the data has changed. On receiving this, the client should take some action, such as
-* fetching the new data. This is an enum as there may be more signals that need to be created.
-*/
+ * This is a server origin signal that lets the client know that the external source of truth
+ * for the data has changed. On receiving this, the client should take some action, such as
+ * fetching the new data. This is an enum as there may be more signals that need to be created.
+ */
 const SignalType = {
-    ExternalDataChanged: "externalDataChange"
+    ExternalDataChanged: "externalDataChange",
 };
 
 /**
@@ -29,22 +29,28 @@ const SignalType = {
 export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
     public constructor() {
         super(
-            new Map([TaskListInstantiationFactory.registryEntry]), // registryEntries
+            new Map([TaskListInstantiationFactory.registryEntry]) // registryEntries
         );
     }
 
     /**
      * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
      */
-    protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
-        const taskList = await runtime.createDataStore(TaskListInstantiationFactory.type);
+    protected async containerInitializingFirstTime(
+        runtime: IContainerRuntime
+    ): Promise<void> {
+        const taskList = await runtime.createDataStore(
+            TaskListInstantiationFactory.type
+        );
         await taskList.trySetAlias(taskListId);
     }
 
     /**
      * {@inheritDoc ModelContainerRuntimeFactory.containerHasInitialized}
      */
-    protected async containerHasInitialized(runtime: IContainerRuntime): Promise<void> {
+    protected async containerHasInitialized(
+        runtime: IContainerRuntime
+    ): Promise<void> {
         runtime.on("signal", (message) => {
             // TODO: Check the message type? clientId?  And route to the TaskList for interpretation?
             // Interpretation of the message contents should probably live on the TaskList to encapsulate
@@ -55,10 +61,13 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
     /**
      * {@inheritDoc ModelContainerRuntimeFactory.createModel}
      */
-    protected async createModel(runtime: IContainerRuntime, container: IContainer): Promise<AppModel> {
+    protected async createModel(
+        runtime: IContainerRuntime,
+        container: IContainer
+    ): Promise<AppModel> {
         const taskList = await requestFluidObject<ITaskList>(
             await runtime.getRootDataStore(taskListId),
-            "",
+            ""
         );
         // Register listener only once the model is fully loaded and ready
         runtime.on("signal", (message) => {

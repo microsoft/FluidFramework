@@ -21,10 +21,12 @@ module.exports = (env) => {
                 extensions: [".ts", ".tsx", ".js"],
             },
             module: {
-                rules: [{
-                    test: /\.tsx?$/,
-                    loader: "ts-loader",
-                }],
+                rules: [
+                    {
+                        test: /\.tsx?$/,
+                        loader: "ts-loader",
+                    },
+                ],
             },
             output: {
                 filename: "[name].bundle.js",
@@ -45,8 +47,6 @@ module.exports = (env) => {
                 // new CleanWebpackPlugin(),
             ],
         },
-        isProduction
-            ? require("./webpack.prod")
-            : require("./webpack.dev"),
+        isProduction ? require("./webpack.prod") : require("./webpack.dev")
     );
 };
