@@ -70,8 +70,6 @@ function rebaseMarkList<TNodeChange>(
                 "Non-empty RebaserManager should return at least one mark",
             );
             if (isAttach(currMark)) {
-                if (inverseRevision !== undefined) {
-                }
                 handleCurrAttach(
                     currMark,
                     factory,
@@ -87,7 +85,6 @@ function rebaseMarkList<TNodeChange>(
                 baseDetachOffset += getInputLength(baseMark);
             } else if (isAttach(baseMark)) {
                 factory.pushOffset(getOutputLength(baseMark));
-            } else {
             }
         } else {
             assert(
