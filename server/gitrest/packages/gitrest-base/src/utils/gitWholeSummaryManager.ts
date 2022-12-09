@@ -56,14 +56,20 @@ interface IWriteSummaryInfo {
 
 interface ISummaryWriteOptions {
     /**
-     * WARNING: this option is highly optimized for read/write performance and has serious impact on storage space
+     * WARNING: this option is highly optimized for read/write performance when using a storage solution
+     * with high overhead on individual read/writes, and it has a serious impact on storage space
      * efficiency when maintaining all versions (summaries) of a document because Git cannot share blobs between
-     * summaries in this way. For optimal results, it is recommended to only use this flag when writing an initial
-     * document summary, which is in the critical path for performance.
+     * summarie versions this way. For optimal results, it is recommended to only use this flag when writing an initial
+     * document summary, which is in the critical path for performance. Then future summaries will efficiently
+     * share unchanged blobs across versions as the summary size grows.
      * 
-     * Uploading/downloading summaries from external filesystems using "Shredded Summary"
+     * Purpose: Uploading/downloading summaries from external filesystems using "Shredded Summary"
      * format can be very slow due to I/O overhead. Enabling low I/O summary writing moves the majority
      * of storage read/writes into memory and stores the resulting summary tree as a single blob in storage.
+     * 
+     * Caveats: Low-io mode will likely use more memory than high-io when using a local FS, 
+     * and as summary sizes grow, read/write speed worsens faster than in high-io mode. Low-io mode is not
+     * recommended when using a storage solution with low-overhead on individual read/writes.
      * 
      * true: All summary writes will use low I/O mode
      * false (default): No summary writes will use low I/O mode
