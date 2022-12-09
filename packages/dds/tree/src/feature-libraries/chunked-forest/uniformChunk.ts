@@ -81,7 +81,7 @@ export class UniformChunk implements ReferenceCounted {
     }
 
     public isShared(): boolean {
-        return this.refCount > 0;
+        return this.refCount > 1;
     }
 
     public cursor(): Cursor {
@@ -163,7 +163,7 @@ export class TreeShape {
     }
 }
 
-export function clonePositions(
+function clonePositions(
     indexOfParentInOutput: number | undefined,
     [key, shape, copies]: FieldShape,
     indexOfParentField: number,
@@ -421,13 +421,11 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     }
 
     public get chunkStart(): number {
-        // TODO: properly report chunks and expose fast path
-        return this.fieldIndex;
+        return 0;
     }
 
     public get chunkLength(): number {
-        // TODO: properly report chunks and expose fast path
-        return 1;
+        return this.nodeInfo(CursorLocationType.Nodes).topLevelLength;
     }
 
     seekNodes(offset: number): boolean {
