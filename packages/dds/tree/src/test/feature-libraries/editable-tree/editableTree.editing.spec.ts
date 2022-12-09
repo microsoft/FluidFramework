@@ -32,7 +32,6 @@ import {
     typeNameSymbol,
     namedTreeSchema,
     ContextuallyTypedNodeDataObject,
-    isArrayLike,
     isWritableArrayLike,
 } from "../../../feature-libraries";
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
@@ -139,10 +138,9 @@ describe("editable-tree: editing", () => {
         // can use strict types to access the data
         assert.equal((maybePerson.address.phones as Phones)[0], "+491234567890");
 
-        assert(isArrayLike(maybePerson.address.phones));
+        assert(isWritableArrayLike(maybePerson.address.phones));
         assert.equal(maybePerson.address.phones[0], "+491234567890");
         assert.equal(Array.isArray(maybePerson.address.phones), false);
-        assert(isWritableArrayLike(maybePerson.address.phones));
         maybePerson.address.phones[0] = "+1234567890";
 
         const globalField: FieldKey = globalFieldSymbolSequencePhones;

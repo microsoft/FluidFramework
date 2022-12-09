@@ -160,7 +160,6 @@ export {
     ContextuallyTypedNodeDataObject,
     ContextuallyTypedNodeData,
     MarkedArrayLike,
-    isArrayLike,
     isWritableArrayLike,
     isContextuallyTypedNodeDataObject,
     defaultSchemaPolicy,

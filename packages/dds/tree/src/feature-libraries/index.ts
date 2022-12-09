@@ -37,7 +37,6 @@ export {
     ContextuallyTypedNodeDataObject,
     ContextuallyTypedNodeData,
     MarkedArrayLike,
-    isArrayLike,
     isWritableArrayLike,
     isContextuallyTypedNodeDataObject,
 } from "./editable-tree";

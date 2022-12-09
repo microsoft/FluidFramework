@@ -571,9 +571,6 @@ function invert<TNodeChange>(change: TaggedChange<Changeset<TNodeChange>>, inver
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
 
 // @public
-export function isArrayLike(data: ContextuallyTypedNodeData | undefined): data is readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData>;
-
-// @public
 export function isContextuallyTypedNodeDataObject(data: ContextuallyTypedNodeData | undefined): data is ContextuallyTypedNodeDataObject;
 
 // @public
