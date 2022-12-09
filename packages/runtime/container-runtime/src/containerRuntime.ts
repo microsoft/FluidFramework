@@ -513,9 +513,10 @@ export enum RuntimeHeaders {
 /**
  * Available compression algorithms for op compression.
  */
-export enum CompressionAlgorithms {
-    lz4 = "lz4",
-}
+export const CompressionAlgorithms = {
+    lz4: "lz4",
+} as const;
+export type CompressionAlgorithms = typeof CompressionAlgorithms[keyof typeof CompressionAlgorithms];
 
 /**
  * @deprecated
