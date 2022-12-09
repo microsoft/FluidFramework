@@ -240,7 +240,7 @@ describe("MergeTree.Revertibles", () => {
         logger.validate();
     });
 
-    describe.only("Redo does not works as expected when a pair of markers and text is involved", ()=>{
+    describe("Redo does not works as expected when a pair of markers and text is involved", ()=>{
 
         generatePairwiseOptions({
             revertMarkerInsert:[true, undefined],
