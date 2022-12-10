@@ -81,7 +81,7 @@ function composeMarkLists<TNodeChange>(
                 // so neither has an effect in the composition.
                 assert(
                     getInputLength(baseMark) === getOutputLength(newMark),
-                    "Inverse marks should be the same length",
+                    0x4ac /* Inverse marks should be the same length */,
                 );
             } else {
                 factory.pushContent(composeMark(newMark, newRev, composeChild));
