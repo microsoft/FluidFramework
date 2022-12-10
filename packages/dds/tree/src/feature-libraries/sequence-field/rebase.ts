@@ -67,7 +67,7 @@ function rebaseMarkList<TNodeChange>(
         if (baseMark === undefined) {
             assert(
                 currMark !== undefined,
-                "Non-empty RebaserManager should return at least one mark",
+                "Non-empty RebaserQueue should return at least one mark",
             );
             if (isAttach(currMark)) {
                 handleCurrAttach(
