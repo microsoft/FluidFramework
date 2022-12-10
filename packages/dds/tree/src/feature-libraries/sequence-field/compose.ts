@@ -20,8 +20,6 @@ import {
     ModifyMoveOut,
     ModifyReattach,
     MoveId,
-    MoveIn,
-    MoveOut,
     SizedMark,
     SizedObjectMark,
 } from "./format";
@@ -46,6 +44,8 @@ import {
     MoveSrcPartition,
     MoveDstPartition,
     MoveMark,
+    splitMoveIn,
+    splitMoveOut,
 } from "./utils";
 
 export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
@@ -516,22 +516,6 @@ function applyMoveEffects<TNodeChange>(
     return factory.list;
 }
 
-function splitMoveIn<T>(mark: MoveIn, parts: MoveDstPartition<T>[]): Attach<T>[] {
-    const result: Attach<T>[] = [];
-    for (const part of parts) {
-        if (part.replaceWith !== undefined) {
-            result.push(...part.replaceWith);
-        } else {
-            result.push({
-                ...mark,
-                id: part.id,
-                count: part.count ?? mark.count,
-            });
-        }
-    }
-    return result;
-}
-
 function splitModifyMoveIn<T>(
     mark: ModifyMoveIn<T>,
     parts: MoveDstPartition<T>[],
@@ -574,22 +558,6 @@ function splitModifyMoveIn<T>(
     }
 }
 
-function splitMoveOut<T>(mark: MoveOut, parts: MoveSrcPartition<T>[]): SizedObjectMark<T>[] {
-    const result: SizedObjectMark<T>[] = [];
-    for (const part of parts) {
-        if (part.replaceWith !== undefined) {
-            result.push(...part.replaceWith);
-        } else {
-            result.push({
-                ...mark,
-                id: part.id,
-                count: part.count ?? mark.count,
-            });
-        }
-    }
-    return result;
-}
-
 function splitModifyMoveOut<T>(
     mark: ModifyMoveOut<T>,
     parts: MoveSrcPartition<T>[],
@@ -600,6 +568,7 @@ function splitModifyMoveOut<T>(
 
     assert(parts.length === 1, "Cannot split ModifyMoveOut marks");
     if (parts[0].replaceWith !== undefined) {
+        // TODO: Apply modifications
         return parts[0].replaceWith;
     }
     return [

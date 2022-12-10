@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { clone, fail, StackyIterator } from "../../util";
+import { clone, fail, getOrAddEmptyToMap, StackyIterator } from "../../util";
 import { RevisionTag, TaggedChange } from "../../core";
 import { IdAllocator } from "../modular-schema";
 import {
@@ -13,11 +13,15 @@ import {
     isAttach,
     isDetachMark,
     isModify,
+    isObjMark,
     isSkipMark,
     MoveEffectTable,
     newMoveEffectTable,
+    removeMoveDest,
     splitMarkOnInput,
     splitMarkOnOutput,
+    splitMoveIn,
+    splitMoveOut,
 } from "./utils";
 import { Attach, Changeset, LineageEvent, Mark, MarkList, SizedMark } from "./format";
 import { MarkListFactory } from "./markListFactory";
@@ -44,7 +48,15 @@ export function rebase<TNodeChange>(
     genId: IdAllocator,
 ): Changeset<TNodeChange> {
     const moveEffects = newMoveEffectTable<TNodeChange>();
-    return rebaseMarkList(change, base.change, base.revision, rebaseChild, genId, moveEffects);
+    const rebased = rebaseMarkList(
+        change,
+        base.change,
+        base.revision,
+        rebaseChild,
+        genId,
+        moveEffects,
+    );
+    return applyMoveEffects(base.revision, base.change, rebased, moveEffects, genId);
 }
 
 export type NodeChangeRebaser<TNodeChange> = (
@@ -61,7 +73,7 @@ function rebaseMarkList<TNodeChange>(
     moveEffects: MoveEffectTable<TNodeChange>,
 ): MarkList<TNodeChange> {
     const factory = new MarkListFactory<TNodeChange>();
-    const manager = new RebaseQueue(baseRevision, baseMarkList, currMarkList, genId, moveEffects);
+    const queue = new RebaseQueue(baseRevision, baseMarkList, currMarkList, genId, moveEffects);
 
     // Each attach mark in `currMarkList` should have a lineage event added for `baseRevision` if a node adjacent to
     // the attach position was detached by `baseMarkList`.
@@ -69,13 +81,10 @@ function rebaseMarkList<TNodeChange>(
     // marks which should have their lineage updated if we encounter a detach.
     const lineageRequests: LineageRequest<TNodeChange>[] = [];
     let baseDetachOffset = 0;
-    while (!manager.isEmpty()) {
-        const { baseMark, newMark: currMark } = manager.pop();
+    while (!queue.isEmpty()) {
+        const { baseMark, newMark: currMark } = queue.pop();
         if (baseMark === undefined) {
-            assert(
-                currMark !== undefined,
-                "Non-empty RebaserManager should return at least one mark",
-            );
+            assert(currMark !== undefined, "Non-empty RebaseQueue should return at least one mark");
             if (isAttach(currMark)) {
                 handleCurrAttach(
                     currMark,
@@ -103,7 +112,7 @@ function rebaseMarkList<TNodeChange>(
                 "The two marks should be the same size",
             );
 
-            const rebasedMark = rebaseMark(currMark, baseMark, rebaseChild);
+            const rebasedMark = rebaseMark(currMark, baseMark, rebaseChild, moveEffects);
             factory.push(rebasedMark);
 
             if (isDetachMark(baseMark)) {
@@ -166,7 +175,13 @@ class RebaseQueue<T> {
                 } else if (offset >= getOutputLength(baseMark)) {
                     return { baseMark: this.baseMarks.pop() };
                 } else {
-                    const [baseMark1, baseMark2] = splitMarkOnOutput(baseMark, offset, this.genId, this.moveEffects);
+                    // TODO: Splitting base moves seems problematic
+                    const [baseMark1, baseMark2] = splitMarkOnOutput(
+                        baseMark,
+                        offset,
+                        this.genId,
+                        this.moveEffects,
+                    );
                     this.baseMarks.push(baseMark2);
                     return { baseMark: baseMark1 };
                 }
@@ -190,11 +205,21 @@ class RebaseQueue<T> {
             const newMarkLength = getInputLength(newMark);
             const baseMarkLength = getInputLength(baseMark);
             if (newMarkLength < baseMarkLength) {
-                const [baseMark1, baseMark2] = splitMarkOnInput(baseMark, newMarkLength, this.genId, this.moveEffects);
+                const [baseMark1, baseMark2] = splitMarkOnInput(
+                    baseMark,
+                    newMarkLength,
+                    this.genId,
+                    this.moveEffects,
+                );
                 this.baseMarks.push(baseMark2);
                 return { baseMark: baseMark1, newMark };
             } else if (newMarkLength > baseMarkLength) {
-                const [newMark1, newMark2] = splitMarkOnInput(newMark, baseMarkLength, this.genId, this.moveEffects);
+                const [newMark1, newMark2] = splitMarkOnInput(
+                    newMark,
+                    baseMarkLength,
+                    this.genId,
+                    this.moveEffects,
+                );
                 this.newMarks.push(newMark2);
                 return { baseMark, newMark: newMark1 };
             } else {
@@ -217,6 +242,7 @@ function rebaseMark<TNodeChange>(
     currMark: SizedMark<TNodeChange>,
     baseMark: SizedMark<TNodeChange>,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
+    moveEffects: MoveEffectTable<TNodeChange>,
 ): SizedMark<TNodeChange> {
     if (isSkipMark(baseMark)) {
         return clone(currMark);
@@ -225,6 +251,12 @@ function rebaseMark<TNodeChange>(
     switch (baseType) {
         case "Delete":
         case "MDelete":
+            if (
+                isObjMark(currMark) &&
+                (currMark.type === "MoveOut" || currMark.type === "MMoveOut")
+            ) {
+                removeMoveDest(moveEffects, currMark.id);
+            }
             return 0;
         case "Modify": {
             if (isModify(currMark)) {
@@ -235,9 +267,96 @@ function rebaseMark<TNodeChange>(
             }
             return clone(currMark);
         }
+        case "MoveOut":
+        case "MMoveOut": {
+            getOrAddEmptyToMap(moveEffects.movedMarks, baseMark.id).push(currMark);
+            return 0;
+        }
         default:
             fail(`Unsupported mark type: ${baseType}`);
     }
+}
+
+function applyMoveEffects<TNodeChange>(
+    baseRevision: RevisionTag | undefined,
+    baseMarks: MarkList<TNodeChange>,
+    rebasedMarks: MarkList<TNodeChange>,
+    moveEffects: MoveEffectTable<TNodeChange>,
+    genId: IdAllocator,
+): Changeset<TNodeChange> {
+    // TODO: When splitting base move marks, should make sure to use same IDs as first pass
+    const queue = new RebaseQueue<TNodeChange>(
+        baseRevision,
+        baseMarks,
+        rebasedMarks,
+        genId,
+        moveEffects,
+    );
+    const factory = new MarkListFactory<TNodeChange>();
+
+    let offset = 0;
+    while (!queue.isEmpty()) {
+        const { baseMark, newMark } = queue.pop();
+        if (isObjMark(baseMark) && (baseMark.type === "MoveIn" || baseMark.type === "MMoveIn")) {
+            const movedMarks = moveEffects.movedMarks.get(baseMark.id);
+            if (movedMarks !== undefined) {
+                factory.pushOffset(offset);
+                factory.push(...movedMarks);
+                const size = movedMarks.reduce<number>(
+                    (count, mark) => count + getInputLength(mark),
+                    0,
+                );
+                factory.pushOffset(-size);
+            }
+        }
+        if (newMark === undefined) {
+            assert(baseMark !== undefined, "Non-empty RebaseQueue should return at least one mark");
+            offset += getOutputLength(baseMark);
+            continue;
+        }
+
+        offset = 0;
+        if (isObjMark(newMark)) {
+            switch (newMark.type) {
+                case "MoveIn": {
+                    const effect = moveEffects.dstEffects.get(newMark.id);
+                    if (effect !== undefined) {
+                        factory.push(...splitMoveIn(newMark, effect));
+                        continue;
+                    }
+                    break;
+                }
+                case "MMoveIn": {
+                    const effect = moveEffects.dstEffects.get(newMark.id);
+                    if (effect !== undefined) {
+                        fail("Not implemented");
+                    }
+                    break;
+                }
+                case "MoveOut": {
+                    const effect = moveEffects.srcEffects.get(newMark.id);
+                    if (effect !== undefined) {
+                        factory.push(...splitMoveOut(newMark, effect));
+                        continue;
+                    }
+                    break;
+                }
+                case "MMoveOut": {
+                    const effect = moveEffects.srcEffects.get(newMark.id);
+                    if (effect !== undefined) {
+                        fail("Not implemented");
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+
+        factory.push(newMark);
+    }
+
+    return factory.list;
 }
 
 function handleCurrAttach<T>(

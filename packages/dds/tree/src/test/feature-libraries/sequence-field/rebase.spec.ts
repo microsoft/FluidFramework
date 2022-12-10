@@ -9,7 +9,13 @@ import { makeAnonChange, RevisionTag, tagChange } from "../../../rebase";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
-import { checkDeltaEquality, composeAnonChanges, getMaxId, rebaseTagged } from "./utils";
+import {
+    checkDeltaEquality,
+    composeAnonChanges,
+    getMaxId,
+    normalizeMoveIds,
+    rebaseTagged,
+} from "./utils";
 import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
 
 const tag1: RevisionTag = brand(41);
@@ -172,6 +178,26 @@ describe("SequenceField - Rebase", () => {
         const deleteB = Change.delete(2, 2);
         const actual = rebase(deleteA, deleteB);
         assert.deepEqual(actual, deleteA);
+    });
+
+    it("move ↷ overlapping delete", () => {
+        // Moves ---DEFGH--
+        const move = Change.move(3, 5, 0);
+        // Deletes --CD-F-HI
+        const deletion = composeAnonChanges([
+            Change.delete(2, 2),
+            Change.delete(3, 1),
+            Change.delete(4, 2),
+        ]);
+        const actual = rebase(move, deletion);
+        normalizeMoveIds(actual);
+
+        // Moves --E-G
+        // TODO: Merge adjacent moves
+        // const expected = Change.move(2, 2, 0);
+        const expected = composeAnonChanges([Change.move(2, 1, 0), Change.move(3, 1, 1)]);
+        normalizeMoveIds(expected);
+        assert.deepEqual(actual, expected);
     });
 
     it("modify ↷ insert", () => {
@@ -338,5 +364,40 @@ describe("SequenceField - Rebase", () => {
         const insertE2 = rebaseTagged(insertE, delA, delB, delC, insertD2);
         const expected = Change.insert(1, 1);
         checkDeltaEquality(insertE2.change, expected);
+    });
+
+    it("concurrent insert and move ↷ delete", () => {
+        const delA = tagChange(Change.delete(0, 1), brand(1));
+        const insertB = tagChange(Change.insert(0, 1), brand(2));
+        const moveC = tagChange(Change.move(2, 1, 1), brand(3));
+        const insertB2 = rebaseTagged(insertB, delA);
+        const moveC2 = rebaseTagged(moveC, delA, insertB2);
+        const expected = Change.move(2, 1, 1);
+        checkDeltaEquality(moveC2.change, expected);
+    });
+
+    it("modify ↷ move", () => {
+        const inner = TestChange.mint([0], 1);
+        const modify = Change.modify(0, inner);
+        const move = Change.move(0, 1, 3);
+        const expected = Change.modify(3, inner);
+        const rebased = rebase(modify, move);
+        assert.deepEqual(rebased, expected);
+    });
+
+    it("delete ↷ move", () => {
+        const deletion = Change.delete(2, 2);
+        const move = Change.move(1, 3, 0);
+        const expected = Change.delete(1, 2);
+        const rebased = rebase(deletion, move);
+        assert.deepEqual(rebased, expected);
+    });
+
+    it("move ↷ move", () => {
+        const moveA = Change.move(2, 2, 0);
+        const moveB = Change.move(2, 2, 3);
+        const expected = Change.move(0, 2, 3);
+        const rebased = rebase(moveB, moveA);
+        assert.deepEqual(rebased, expected);
     });
 });
