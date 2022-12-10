@@ -41,7 +41,7 @@ export type TypedEventTransform<TThis, TEvent> =
         TransformedEvent<TThis, EventEmitterEventType, any[]>;
 
 /** Converting from IEvent shape to EventSpec shape. Might allow for easier transition to EventSpec */
-export type ToEventSpec<TEvent extends IEvent> =
+export type ToEventArgsMappingCore<TEvent extends IEvent> =
     // ...Start with all 15 like IEventTransformer
     // I think we would drop all mention of the (event: string, ...) signature
     TEvent extends
@@ -52,7 +52,7 @@ export type ToEventSpec<TEvent extends IEvent> =
         (event: infer E3, listener: (...args: infer A3) => void),
         (event: string, listener: (...args: any[]) => void),
     }
-    ? EventSpecEntry<E0, A0> & EventSpecEntry<E1, A1> & EventSpecEntry<E2, A2> & EventSpecEntry<E3, A3>
+    ? SingleEventArgsMapping<E0, A0> & SingleEventArgsMapping<E1, A1> & SingleEventArgsMapping<E2, A2> & SingleEventArgsMapping<E3, A3>
     : TEvent extends
     {
         (event: infer E0, listener: (...args: infer A0) => void),
@@ -60,24 +60,33 @@ export type ToEventSpec<TEvent extends IEvent> =
         (event: infer E2, listener: (...args: infer A2) => void),
         (event: string, listener: (...args: any[]) => void),
     }
-    ? EventSpecEntry<E0, A0> & EventSpecEntry<E1, A1> & EventSpecEntry<E2, A2>
+    ? SingleEventArgsMapping<E0, A0> & SingleEventArgsMapping<E1, A1> & SingleEventArgsMapping<E2, A2>
     : TEvent extends
     {
         (event: infer E0, listener: (...args: infer A0) => void),
         (event: infer E1, listener: (...args: infer A1) => void),
         (event: string, listener: (...args: any[]) => void),
     }
-    ? EventSpecEntry<E0, A0> & EventSpecEntry<E1, A1>
+    ? SingleEventArgsMapping<E0, A0> & SingleEventArgsMapping<E1, A1>
     : TEvent extends
     {
         (event: infer E0, listener: (...args: infer A0) => void),
         (event: string, listener: (...args: any[]) => void),
     }
-    ? EventSpecEntry<E0, A0>
-    : EventSpecEntry<string, any[]>
+    ? SingleEventArgsMapping<E0, A0>
+    : SingleEventArgsMapping<string, any[]>
     ;
 
-export type EventSpecEntry<TEventKey, TListenerArgs extends any[]> =
+export type ToEventArgsMapping<TEvent extends IEvent> =
+    ToEventArgsMappingCore<TEvent> &
+    SingleEventArgsMapping<"addListener", [event: string, listener: (...args: any[]) => void]> &
+    SingleEventArgsMapping<"removeListener", [event: string, listener: (...args: any[]) => void]>;
+    //* Uncomment this to allow emitting anything. But themn emit loses intellisense for event keys
+    // & EventSpecEntry<string, any[]>;
+
+type G = ToEventArgsMapping<IOldEvents & IEvent>;
+
+export type SingleEventArgsMapping<TEventKey, TListenerArgs extends any[]> =
     TEventKey extends string ?
     {
         [TK in TEventKey]: TListenerArgs;
@@ -88,31 +97,12 @@ type B = IBaseEvents & IOldEvents;
 
 declare const b: B;
 
-type A = ToEventSpec<IOldEvents & IEvent>;
+type A = ToEventArgsMapping<IOldEvents & IEvent>;
 
 type D = keyof A;
 type F = A["asdf"];
 
-/** Extracts the supported event names from the spec */
-type EventKeys2<TEventSpec> =
-    keyof TEventSpec extends string ?
-        TEventSpec[keyof TEventSpec] extends any[] ?
-            keyof TEventSpec
-: never : never;
-
-type EventEmitSignatures2<TThis, TEvent extends IEvent> =
-    <TEventKey extends EventKeys2<ToEventSpec<TEvent>>>(
-        event: TEventKey,
-        // ...args: ToEventSpec<TEvent>[TEventKey]
-        ...args: ReplaceIEventThisPlaceHolder<ToEventSpec<TEvent>[TEventKey], TThis>
-    ) => boolean;
-
-type EventEmitSignaturesLoose2<TThis, TEvent extends IEvent> =
-    EventEmitSignatures2<TThis, TEvent> &
-    {(event: string, ...args: any[])};
-
-type C = EventEmitSignaturesLoose2<{ somethis: string }, IOldEvents & IEvent>;
-type E = EventEmitSignatures2<{ somethis: string }, IOldEvents & IEvent>;
+type E = EventEmitSignatures<{ somethis: string }, IOldEvents & IEvent>;
 
 declare const e: E;
 e("useThis1", { somethis: "ok" });
@@ -126,28 +116,16 @@ export interface BaseEventSpec {
 /** Extracts the supported event names from the spec */
 type EventKeys<TEventSpec> =
     keyof TEventSpec extends string ?
-        TEventSpec[keyof TEventSpec] extends (...args: any[]) => void ?
+        TEventSpec[keyof TEventSpec] extends any[] ?
             keyof TEventSpec
 : never : never;
 
-/** Extracts the given event's listener signature (including replacing IEventThisPlaceHolder) */
-type ListenerSignature<TThis, TEventSpec, TEventKey extends EventKeys<TEventSpec>> =
-    keyof TEventSpec extends string ?
-        TEventSpec[TEventKey] extends (...args: infer TArgs) => void ?
-            (...args: ReplaceIEventThisPlaceHolder<TArgs, TThis>) => void
-: never : never;
-
 /** Signature for emit */
-type EventEmitSignatures<TThis, TEventSpec> =
-    <TEventKey extends EventKeys<TEventSpec>>(
+type EventEmitSignatures<TThis, TEvent extends IEvent> =
+    <TEventKey extends EventKeys<ToEventArgsMapping<TEvent>>>(
         event: TEventKey,
-        ...args: Parameters<ListenerSignature<TThis, TEventSpec, TEventKey>>
+        ...args: ReplaceIEventThisPlaceHolder<ToEventArgsMapping<TEvent>[TEventKey], TThis>
     ) => boolean;
-
-/** Also includes (event: string, ...) signature */
-type EventEmitSignaturesLoose<TThis, TEventSpec> =
-    EventEmitSignatures<TThis, TEventSpec> &
-    {(event: string, ...args: any[])};
 
 /**
  * Event Emitter helper class the supports emitting typed events
@@ -172,7 +150,7 @@ export class TypedEventEmitter<TEvent>
         this.removeListener = super.removeListener.bind(this) as TypedEventTransform<this, TEvent>;
         this.off = super.off.bind(this) as TypedEventTransform<this, TEvent>;
 
-        this.emit = super.emit.bind(this) as EventEmitSignatures2<this, TEvent & IEvent>;
+        this.emit = super.emit.bind(this) as EventEmitSignatures<this, TEvent & IEvent>;
     }
     readonly addListener: TypedEventTransform<this, TEvent>;
     readonly on: TypedEventTransform<this, TEvent>;
@@ -182,7 +160,7 @@ export class TypedEventEmitter<TEvent>
     readonly removeListener: TypedEventTransform<this, TEvent>;
     readonly off: TypedEventTransform<this, TEvent>;
 
-    readonly emit: EventEmitSignatures2<this, TEvent & IEvent>;
+    readonly emit: EventEmitSignatures<this, TEvent & IEvent>;
 }
 
 export interface NewEventSpec {
@@ -205,7 +183,12 @@ export interface IOldEvents extends IEvent {
 const sampleOld = new TypedEventEmitter<IOldEvents>();
 
 sampleOld.emit("something", 5);
+sampleOld.emit("addListener", "asdf", () => {});
 
-// Notice these are acceptable (ACTUALLY NOT)
+sampleOld.emit("something", 7);
+
+sampleOld.on("something", (x) => {});
+
+// Notice these are acceptable (EMITTING IS NOT ACTUALLY)
 sampleOld.emit("unspecified", () => {});
 sampleOld.on("unspecified", () => {});
