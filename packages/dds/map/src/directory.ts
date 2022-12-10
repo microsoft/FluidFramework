@@ -382,6 +382,12 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                 this.emit("subDirectoryDeleted", relativePath, local, this);
             },
         );
+        this.root.on(
+            "subDirectoryUndeleted",
+            (relativePath: string, local: boolean) => {
+                this.emit("subDirectoryUndeleted", relativePath, local, this);
+            },
+        );
     }
 
     /**
@@ -1771,7 +1777,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
                 this.undeleteSubDirectoryTree(localOpMetadata.subDirectory);
                 // don't need to register events because deleting never unregistered
                 this._subdirectories.set(op.subdirName, localOpMetadata.subDirectory);
-                this.emit("subDirectoryCreated", op.subdirName, true, this);
+                this.emit("subDirectoryUndeleted", op.subdirName, true, this);
             }
 
             this.rollbackPendingMessageId(this.pendingSubDirectories, op.subdirName, localOpMetadata.pendingMessageId);
@@ -1956,6 +1962,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         });
         subDirectory.on("subDirectoryDeleted", (relativePath: string, local: boolean) => {
             this.emit("subDirectoryDeleted", posix.join(subDirName, relativePath), local, this);
+        });
+        subDirectory.on("subDirectoryUndeleted", (relativePath: string, local: boolean) => {
+            this.emit("subDirectoryUndeleted", posix.join(subDirName, relativePath), local, this);
         });
     }
 
