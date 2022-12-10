@@ -54,7 +54,7 @@ function rebaseMarkList<TNodeChange>(
     rebaseChild: NodeChangeRebaser<TNodeChange>,
 ): MarkList<TNodeChange> {
     const factory = new MarkListFactory<TNodeChange>();
-    const manager = new RebaseQueue(baseRevision, baseMarkList, currMarkList);
+    const queue = new RebaseQueue(baseRevision, baseMarkList, currMarkList);
 
     // Each attach mark in `currMarkList` should have a lineage event added for `baseRevision` if a node adjacent to
     // the attach position was detached by `baseMarkList`.
@@ -62,8 +62,8 @@ function rebaseMarkList<TNodeChange>(
     // marks which should have their lineage updated if we encounter a detach.
     const lineageRequests: LineageRequest<TNodeChange>[] = [];
     let baseDetachOffset = 0;
-    while (!manager.isEmpty()) {
-        const { baseMark, newMark: currMark } = manager.pop();
+    while (!queue.isEmpty()) {
+        const { baseMark, newMark: currMark } = queue.pop();
         if (baseMark === undefined) {
             assert(
                 currMark !== undefined,
@@ -89,7 +89,7 @@ function rebaseMarkList<TNodeChange>(
         } else {
             assert(
                 !isAttach(baseMark) && !isAttach(currMark),
-                "Two attaches cannot be at the same position",
+                "An attach cannot be at the same position as another mark",
             );
             assert(
                 getInputLength(baseMark) === getInputLength(currMark),
@@ -243,7 +243,8 @@ function handleCurrAttach<T>(
     // If the changeset we are rebasing over has the same revision as an event in rebasedMark's lineage,
     // we assume that the base changeset is the inverse of the changeset in the lineage, so we remove the lineage event.
     // TODO: Handle cases where the base changeset is a composition of multiple revisions.
-    // TODO: Don't remove the lineage event in cases where the event isn't actually inverted by the base changeset.
+    // TODO: Don't remove the lineage event in cases where the event isn't actually inverted by the base changeset,
+    // e.g., if the inverse of the lineage event is muted after rebasing.
     if (baseRevision !== undefined) {
         tryRemoveLineageEvent(rebasedMark, baseRevision);
     }
