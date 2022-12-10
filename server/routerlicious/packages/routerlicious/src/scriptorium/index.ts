@@ -22,6 +22,8 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const permanentDeletionEnabled = config.get("mongo:permanentDeletionEnabled") as boolean;
     const deletionIntervalMs = config.get("mongo:deletionIntervalMs") as number;
 
+    const enableRunWithRetryMetricTelemetry = config.get("scriptorium:enableRunWithRetryMetricTelemetry") as boolean ?? false;
+
     // Database connection for global db if enabled
     const factory = await services.getDbFactory(config);
 
@@ -78,5 +80,5 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
         (error) => { return error.code === FluidServiceErrorCode.FeatureDisabled; },
     );
 
-    return new ScriptoriumLambdaFactory(operationsDbManager, opCollection);
+    return new ScriptoriumLambdaFactory(operationsDbManager, opCollection, { enableRunWithRetryMetricTelemetry });
 }
