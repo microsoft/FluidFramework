@@ -13,13 +13,4 @@ module.exports = {
         "import/no-unassigned-import": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
     },
-    overrides: [
-        {
-            files: ["packageVersion.ts"],
-            rules: {
-                "jsdoc/require-jsdoc": "off",
-                "jsdoc/require-description": "off",
-            },
-        },
-    ],
 };

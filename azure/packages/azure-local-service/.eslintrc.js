@@ -9,13 +9,4 @@ module.exports = {
     parserOptions: {
         project: ["./tsconfig.json"],
     },
-    overrides: [
-        {
-            files: ["packageVersion.ts"],
-            rules: {
-                "jsdoc/require-jsdoc": "off",
-                "jsdoc/require-description": "off",
-            },
-        },
-    ],
 };
