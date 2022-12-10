@@ -22,13 +22,13 @@ import { ITinyliciousAudience, TinyliciousClient } from "@fluidframework/tinylic
 import { CollaborativeTextView } from "@fluid-example/collaborative-textarea";
 import { closeFluidClientDebugger } from "@fluid-tools/client-debugger";
 
-import { CounterWidget } from "../../components";
 import {
 	ContainerInfo,
 	createFluidContainer,
 	initializeFluidClientDebugger,
 	loadExistingFluidContainer,
 } from "../ClientUtilities";
+import { CounterWidget } from "../widgets";
 
 /**
  * Key in the app's `rootMap` under which the SharedString object is stored.

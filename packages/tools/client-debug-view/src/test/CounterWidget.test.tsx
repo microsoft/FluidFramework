@@ -12,8 +12,8 @@ import { SharedCounter } from "@fluidframework/counter";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
-import { CounterWidget } from "../components";
 import { createFluidContainer } from "./ClientUtilities";
+import { CounterWidget } from "./widgets";
 
 describe("CounterWidget component tests", () => {
 	let client: TinyliciousClient | undefined;
