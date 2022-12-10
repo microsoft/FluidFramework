@@ -4,7 +4,6 @@
  */
 
 import * as base64js from "base64-js";
-import { assert } from "./assert";
 
 /**
  * Converts a Uint8Array to a string of the provided encoding
@@ -100,17 +99,10 @@ export class IsoBuffer extends Uint8Array {
             return IsoBuffer.fromString(value, encodingOrOffset as string | undefined);
             // Capture any typed arrays, including Uint8Array (and thus - IsoBuffer!)
         } else if (value !== null && typeof value === "object" && isArrayBuffer(value.buffer)) {
-            // Support currently for full array, no view ports! (though it can be added in future)
-            assert(value.byteOffset === 0, 0x000 /* "nonzero isobuffer byte offset" */);
-            assert(
-                value.byteLength === value.buffer.byteLength,
-                0x001 /* "unexpected isobuffer byte length" */,
-            );
-            return IsoBuffer.fromArrayBuffer(
-                value.buffer,
-                encodingOrOffset as number | undefined,
-                length,
-            );
+            // The version of the from function for the node buffer, which takes a buffer or typed array
+            // as first parameter, does not have any offset or length parameters. Those are just silently
+            // ignored and not taken into account
+            return IsoBuffer.fromArrayBuffer(value.buffer, value.byteOffset, value.byteLength);
         } else if (isArrayBuffer(value)) {
             return IsoBuffer.fromArrayBuffer(value, encodingOrOffset as number | undefined, length);
         } else {
