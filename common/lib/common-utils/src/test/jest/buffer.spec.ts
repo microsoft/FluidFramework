@@ -116,6 +116,80 @@ describe("Buffer isomorphism", () => {
         expect(nodeBufferBase64.byteLength).toEqual(browserBufferBase64.byteLength);
     });
 
+    test("Views are supported", () => {
+        const testArray = [
+            "",
+            "asdfasdf", // ascii range
+            "比特币", // non-ascii range
+            "😂💁🏼‍♂️💁🏼‍💁‍♂", // surrogate pairs with glyph modifiers
+        ];
+
+        for (const item of testArray) {
+            const encoded = new TextEncoder().encode(`aa${item}bb`).buffer;
+            const view = new Uint8Array(encoded, 2, encoded.byteLength - 4);
+            const nodeBuffer = BufferNode.IsoBuffer.from(view);
+            const browserBuffer = BufferBrowser.IsoBuffer.from(view);
+
+            expect(nodeBuffer.toString()).toEqual(browserBuffer.toString());
+
+            const encodedWithoutView = new TextEncoder().encode(item).buffer;
+            const nodeBufferWithoutView = BufferNode.IsoBuffer.from(encodedWithoutView);
+            const browserBufferWithoutView = BufferNode.IsoBuffer.from(encodedWithoutView);
+
+            expect(nodeBufferWithoutView.toString("base64")).toEqual(nodeBuffer.toString("base64"));
+            expect(browserBufferWithoutView.toString("base64")).toEqual(
+                browserBuffer.toString("base64"),
+            );
+
+            expect(nodeBufferWithoutView.toString("utf8")).toEqual(nodeBuffer.toString("utf8"));
+            expect(browserBufferWithoutView.toString("utf8")).toEqual(
+                browserBuffer.toString("utf8"),
+            );
+
+            expect(nodeBufferWithoutView.byteLength).toEqual(nodeBuffer.byteLength);
+            expect(browserBufferWithoutView.byteLength).toEqual(browserBuffer.byteLength);
+
+            expect(BufferNode.bufferToString(nodeBufferWithoutView, "base64")).toEqual(
+                BufferNode.bufferToString(nodeBuffer, "base64"),
+            );
+            expect(BufferBrowser.bufferToString(browserBufferWithoutView, "base64")).toEqual(
+                BufferBrowser.bufferToString(browserBuffer, "base64"),
+            );
+
+            expect(BufferNode.bufferToString(nodeBufferWithoutView, "utf8")).toEqual(
+                BufferNode.bufferToString(nodeBuffer, "utf8"),
+            );
+            expect(BufferBrowser.bufferToString(browserBufferWithoutView, "utf8")).toEqual(
+                BufferBrowser.bufferToString(browserBuffer, "utf8"),
+            );
+        }
+    });
+
+    test("Ranges parameters are ignored when passing views", () => {
+        const testArray = [
+            "", // The specified view lies outside of the string
+            "abcdefg", // The specified view lies within the string
+        ];
+
+        for (const item of testArray) {
+            const encoded = new TextEncoder().encode(`aa${item}bb`).buffer;
+
+            const uint8View = new Uint8Array(encoded, 2, encoded.byteLength - 4);
+
+            const fullBuffer = BufferNode.IsoBuffer.from(uint8View);
+
+            const subsetUInt8ViewNode = BufferNode.IsoBuffer.from(uint8View, 2, 4);
+            const subsetFullBufferNode = BufferNode.IsoBuffer.from(fullBuffer, 2, 4);
+            expect(fullBuffer.toString()).toEqual(subsetUInt8ViewNode.toString());
+            expect(fullBuffer.toString()).toEqual(subsetFullBufferNode.toString());
+
+            const subsetUInt8ViewBrowser = BufferBrowser.IsoBuffer.from(uint8View, 2, 4);
+            const subsetFullBufferBrowser = BufferBrowser.IsoBuffer.from(fullBuffer, 2, 4);
+            expect(fullBuffer.toString()).toEqual(subsetUInt8ViewBrowser.toString());
+            expect(fullBuffer.toString()).toEqual(subsetFullBufferBrowser.toString());
+        }
+    });
+
     test("Uint8ArrayToString is compatible", () => {
         const testArray = new Uint8Array([1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377]);
 
