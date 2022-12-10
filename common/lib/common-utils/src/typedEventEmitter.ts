@@ -80,10 +80,42 @@ export type ToEventSpec<TEvent extends IEvent> =
 export type EventSpecEntry<TEventKey, TListenerArgs extends any[]> =
     TEventKey extends string ?
     {
-        [TK in TEventKey]: (...args: TListenerArgs) => void;
+        [TK in TEventKey]: TListenerArgs;
     }
     : never;
 
+type B = IBaseEvents & IOldEvents;
+
+declare const b: B;
+
+type A = ToEventSpec<IOldEvents & IEvent>;
+
+type D = keyof A;
+type F = A["asdf"];
+
+/** Extracts the supported event names from the spec */
+type EventKeys2<TEventSpec> =
+    keyof TEventSpec extends string ?
+        TEventSpec[keyof TEventSpec] extends any[] ?
+            keyof TEventSpec
+: never : never;
+
+type EventEmitSignatures2<TThis, TEvent extends IEvent> =
+    <TEventKey extends EventKeys2<ToEventSpec<TEvent>>>(
+        event: TEventKey,
+        // ...args: ToEventSpec<TEvent>[TEventKey]
+        ...args: ReplaceIEventThisPlaceHolder<ToEventSpec<TEvent>[TEventKey], TThis>
+    ) => boolean;
+
+type EventEmitSignaturesLoose2<TThis, TEvent extends IEvent> =
+    EventEmitSignatures2<TThis, TEvent> &
+    {(event: string, ...args: any[])};
+
+type C = EventEmitSignaturesLoose2<{ somethis: string }, IOldEvents & IEvent>;
+type E = EventEmitSignatures2<{ somethis: string }, IOldEvents & IEvent>;
+
+declare const e: E;
+e("useThis1", { somethis: "ok" });
 
 /** These events are always supported due to base EventEmitter implementation */
 export interface BaseEventSpec {
@@ -140,7 +172,7 @@ export class TypedEventEmitter<TEvent>
         this.removeListener = super.removeListener.bind(this) as TypedEventTransform<this, TEvent>;
         this.off = super.off.bind(this) as TypedEventTransform<this, TEvent>;
 
-        this.emit = super.emit.bind(this) as EventEmitSignaturesLoose<this, ToEventSpec<TEvent & IEvent>>;
+        this.emit = super.emit.bind(this) as EventEmitSignatures2<this, TEvent & IEvent>;
     }
     readonly addListener: TypedEventTransform<this, TEvent>;
     readonly on: TypedEventTransform<this, TEvent>;
@@ -150,7 +182,7 @@ export class TypedEventEmitter<TEvent>
     readonly removeListener: TypedEventTransform<this, TEvent>;
     readonly off: TypedEventTransform<this, TEvent>;
 
-    readonly emit: EventEmitSignaturesLoose<this, ToEventSpec<IBaseEvents & TEvent & IEvent> & BaseEventSpec>;
+    readonly emit: EventEmitSignatures2<this, TEvent & IEvent>;
 }
 
 export interface NewEventSpec {
@@ -165,16 +197,15 @@ interface IBaseEvents extends IEvent {
 }
 
 export interface IOldEvents extends IEvent {
+    (event: "asdf", listener: (y: boolean, z: string) => void);
     (event: "something", listener: (x: number) => void);
     (event: "useThis1", listener: (y: IEventThisPlaceHolder) => void)
-    (event: "asdf", listener: (y: boolean) => void);
 }
 
 const sampleOld = new TypedEventEmitter<IOldEvents>();
 
-sampleOld.emit("something", );
-sampleOld.emit("removeListener", )
+sampleOld.emit("something", 5);
 
-// Notice these are acceptable
+// Notice these are acceptable (ACTUALLY NOT)
 sampleOld.emit("unspecified", () => {});
 sampleOld.on("unspecified", () => {});
