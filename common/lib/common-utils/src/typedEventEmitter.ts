@@ -5,7 +5,7 @@
 
 /* eslint-disable max-len */
 
-import { EventEmitter, Listener } from "events";
+import { EventEmitter } from "events";
 import {
     IEvent,
     TransformedEvent,
@@ -45,6 +45,23 @@ export type ToEventSpec<TEvent extends IEvent> =
     // ...Start with all 15 like IEventTransformer
     // I think we would drop all mention of the (event: string, ...) signature
     TEvent extends
+    {
+        (event: infer E0, listener: (...args: infer A0) => void),
+        (event: infer E1, listener: (...args: infer A1) => void),
+        (event: infer E2, listener: (...args: infer A2) => void),
+        (event: infer E3, listener: (...args: infer A3) => void),
+        (event: string, listener: (...args: any[]) => void),
+    }
+    ? EventSpecEntry<E0, A0> & EventSpecEntry<E1, A1> & EventSpecEntry<E2, A2> & EventSpecEntry<E3, A3>
+    : TEvent extends
+    {
+        (event: infer E0, listener: (...args: infer A0) => void),
+        (event: infer E1, listener: (...args: infer A1) => void),
+        (event: infer E2, listener: (...args: infer A2) => void),
+        (event: string, listener: (...args: any[]) => void),
+    }
+    ? EventSpecEntry<E0, A0> & EventSpecEntry<E1, A1> & EventSpecEntry<E2, A2>
+    : TEvent extends
     {
         (event: infer E0, listener: (...args: infer A0) => void),
         (event: infer E1, listener: (...args: infer A1) => void),
@@ -88,13 +105,6 @@ type ListenerSignature<TThis, TEventSpec, TEventKey extends EventKeys<TEventSpec
             (...args: ReplaceIEventThisPlaceHolder<TArgs, TThis>) => void
 : never : never;
 
-/** Signature for on/once/off functions */
-type EventHandlerRegistrationSignatures<TThis, TEventSpec> =
-    <TEventKey extends EventKeys<TEventSpec>>(
-        event: TEventKey,
-        listener: ListenerSignature<TThis, TEventSpec, TEventKey>,
-    ) => TThis;
-
 /** Signature for emit */
 type EventEmitSignatures<TThis, TEventSpec> =
     <TEventKey extends EventKeys<TEventSpec>>(
@@ -104,38 +114,8 @@ type EventEmitSignatures<TThis, TEventSpec> =
 
 /** Also includes (event: string, ...) signature */
 type EventEmitSignaturesLoose<TThis, TEventSpec> =
-    EventEmitSignatures<TThis, TEventSpec> & {(event: string, ...args: any[])};
-
-/** Interface exposed to consumers who will listen to events */
-export interface IEventProvider2<TEventSpec> {
-    on: EventHandlerRegistrationSignatures<this, TEventSpec>;
-    once: EventHandlerRegistrationSignatures<this, TEventSpec>;
-    off: EventHandlerRegistrationSignatures<this, TEventSpec>;
-}
-
-export class TypedEventEmitter2<TEventSpec extends BaseEventSpec> extends EventEmitter implements IEventProvider2<TEventSpec> {
-    constructor() {
-        super();
-        this.addListener = super.addListener.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
-        this.on = super.on.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
-        this.once = super.once.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
-        this.prependListener = super.prependListener.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
-        this.prependOnceListener = super.prependOnceListener.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
-        this.removeListener = super.removeListener.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
-        this.off = super.off.bind(this) as EventHandlerRegistrationSignatures<this, TEventSpec>;
-
-        this.emit = super.emit.bind(this) as EventEmitSignatures<this, TEventSpec>;
-    }
-    readonly addListener: EventHandlerRegistrationSignatures<this, TEventSpec>;
-    readonly on: EventHandlerRegistrationSignatures<this, TEventSpec>;
-    readonly once: EventHandlerRegistrationSignatures<this, TEventSpec>;
-    readonly prependListener: EventHandlerRegistrationSignatures<this, TEventSpec>;
-    readonly prependOnceListener: EventHandlerRegistrationSignatures<this, TEventSpec>;
-    readonly removeListener: EventHandlerRegistrationSignatures<this, TEventSpec>;
-    readonly off: EventHandlerRegistrationSignatures<this, TEventSpec>;
-
-    readonly emit: EventEmitSignatures<this, TEventSpec>;
-}
+    EventEmitSignatures<TThis, TEventSpec> &
+    {(event: string, ...args: any[])};
 
 /**
  * Event Emitter helper class the supports emitting typed events
@@ -170,50 +150,30 @@ export class TypedEventEmitter<TEvent>
     readonly removeListener: TypedEventTransform<this, TEvent>;
     readonly off: TypedEventTransform<this, TEvent>;
 
-    readonly emit: EventEmitSignaturesLoose<this, ToEventSpec<TEvent & IEvent>>;
+    readonly emit: EventEmitSignaturesLoose<this, ToEventSpec<IBaseEvents & TEvent & IEvent> & BaseEventSpec>;
 }
-
-export interface SampleEventSpec extends BaseEventSpec {
-    foo: (x: number, y: string) => void;
-    bar: () => void;
-    baz: (options: { a: string; b: boolean; }) => void;
-    useThis: (x: IEventThisPlaceHolder) => void;
-    // BOOM: number;
-}
-
-class MyTee extends TypedEventEmitter2<SampleEventSpec> {}
-const sample = new MyTee();
-
-// These are strongly typed
-sample.emit("foo", 3, "asdf");
-sample.emit("bar");
-sample.emit("baz", { a: "hello", b: true });
-sample.emit("useThis", sample);
-
-sample.on("newListener", (event: string, listener: Listener) => {});
-sample.on("foo", (x: number, y: string) => {});
-sample.on("bar", () => {});
-sample.on("baz", ({ a, b }) => {});
-sample.on("useThis", (x: MyTee) => {});
-
-
-// Not supported
-sample.emit("unspecified", 123);
-sample.on("unspecified", () => {});
 
 export interface NewEventSpec {
     something: (x: number) => void;
     useThis1: (y: IEventThisPlaceHolder) => void;
 }
 
+interface IBaseEvents extends IEvent {
+    (event: "removeListener", listener: (event: string) => void);
+    // (event: "newListener", listener: (event: string, listener: (...args: any[]) => void) => void);
+    // (event: "removeListener", listener: (event: string, listener: (...args: any[]) => void) => void);
+}
+
 export interface IOldEvents extends IEvent {
     (event: "something", listener: (x: number) => void);
     (event: "useThis1", listener: (y: IEventThisPlaceHolder) => void)
+    (event: "asdf", listener: (y: boolean) => void);
 }
 
 const sampleOld = new TypedEventEmitter<IOldEvents>();
 
-sampleOld.emit("something", 54);
+sampleOld.emit("something", );
+sampleOld.emit("removeListener", )
 
 // Notice these are acceptable
 sampleOld.emit("unspecified", () => {});
