@@ -4,7 +4,12 @@
  */
 import React from "react";
 
-import { IFluidHandle, IProvideFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	IFluidHandle,
+	IFluidLoadable,
+	IProvideFluidHandle,
+	IProvideFluidLoadable,
+} from "@fluidframework/core-interfaces";
 
 import { SharedObjectRenderOptions } from "../../RendererOptions";
 import { FluidObjectView } from "./FluidObjectView";
@@ -44,6 +49,11 @@ export function DynamicDataView(props: DynamicDataViewProps): React.ReactElement
 	// Render primitives and falsy types via their string representation
 	if (typeof data !== "object") {
 		return <>{data}</>;
+	}
+
+	if ((data as IProvideFluidLoadable)?.IFluidLoadable !== undefined) {
+		const handle = (data as IFluidLoadable).handle;
+		return <FluidObjectView fluidObjectHandle={handle} renderOptions={renderOptions} />;
 	}
 
 	if ((data as IProvideFluidHandle)?.IFluidHandle !== undefined) {
