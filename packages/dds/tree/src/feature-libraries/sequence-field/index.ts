@@ -37,6 +37,8 @@ export {
     ProtoNode,
     RangeType,
     Reattach,
+    ReturnFrom,
+    ReturnTo,
     SizedMark,
     SizedObjectMark,
     Tiebreak,

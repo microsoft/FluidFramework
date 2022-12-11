@@ -43,7 +43,6 @@ export function isModifyingMark<TNodeChange>(
             mark.type === "MInsert" ||
             mark.type === "MRevive" ||
             mark.type === "MMoveIn" ||
-            mark.type === "MReturn" ||
             mark.type === "MDelete" ||
             mark.type === "MMoveOut")
     );
@@ -65,10 +64,7 @@ export function isReattach<TNodeChange>(
 ): mark is Reattach | ModifyReattach<TNodeChange> {
     return (
         isObjMark(mark) &&
-        (mark.type === "Revive" ||
-            mark.type === "MRevive" ||
-            mark.type === "Return" ||
-            mark.type === "MReturn")
+        (mark.type === "Revive" || mark.type === "MRevive" || mark.type === "ReturnTo")
     );
 }
 
@@ -78,13 +74,12 @@ export function getAttachLength(attach: Attach): number {
         case "MInsert":
         case "MMoveIn":
         case "MRevive":
-        case "MReturn":
             return 1;
         case "Insert":
             return attach.content.length;
         case "MoveIn":
         case "Revive":
-        case "Return":
+        case "ReturnTo":
             return attach.count;
         default:
             unreachableCase(type);
@@ -132,14 +127,13 @@ export function getOutputLength(mark: Mark<unknown>): number {
     const type = mark.type;
     switch (type) {
         case "Revive":
-        case "Return":
+        case "ReturnTo":
         case "MoveIn":
             return mark.count;
         case "Insert":
             return mark.content.length;
         case "MInsert":
         case "MMoveIn":
-        case "MReturn":
         case "MRevive":
         case "Modify":
             return 1;
@@ -147,6 +141,7 @@ export function getOutputLength(mark: Mark<unknown>): number {
         case "MDelete":
         case "MoveOut":
         case "MMoveOut":
+        case "ReturnFrom":
             return 0;
         default:
             unreachableCase(type);
@@ -168,6 +163,7 @@ export function getInputLength(mark: Mark<unknown>): number {
     switch (type) {
         case "Delete":
         case "MoveOut":
+        case "ReturnFrom":
             return mark.count;
         case "Modify":
         case "MDelete":
@@ -228,6 +224,11 @@ export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
                 { ...markObj, id: newId, count: remainder },
             ] as [TMark, TMark];
         }
+        case "ReturnFrom":
+            return [
+                { ...markObj, count: length },
+                { ...markObj, count: remainder, detachIndex: mark.detachIndex + length },
+            ] as [TMark, TMark];
         default:
             unreachableCase(type);
     }
@@ -260,7 +261,6 @@ export function splitMarkOnOutput<TMark extends Mark<unknown>>(
     const type = markObj.type;
     switch (type) {
         case "Modify":
-        case "MReturn":
         case "MRevive":
         case "MInsert":
         case "MMoveIn":
@@ -269,6 +269,7 @@ export function splitMarkOnOutput<TMark extends Mark<unknown>>(
         case "MMoveOut":
         case "Delete":
         case "MoveOut":
+        case "ReturnFrom":
             fail(`Unable to split ${type} mark of length 0`);
         case "Insert":
             return [
@@ -286,7 +287,7 @@ export function splitMarkOnOutput<TMark extends Mark<unknown>>(
                 { ...markObj, id: newId, count: remainder },
             ] as [TMark, TMark];
         }
-        case "Return":
+        case "ReturnTo":
         case "Revive":
             return [
                 { ...markObj, count: length },
@@ -364,7 +365,7 @@ export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boole
             break;
         }
         case "Revive":
-        case "Return": {
+        case "ReturnTo": {
             const lhsReattach = lhs as Reattach;
             if (
                 rhs.detachedBy === lhsReattach.detachedBy &&

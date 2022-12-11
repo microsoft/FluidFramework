@@ -113,7 +113,8 @@ export type Attach<TNodeChange = NodeChangeType> =
     | MoveIn
     | ModifyMoveIn<TNodeChange>
     | Reattach
-    | ModifyReattach<TNodeChange>;
+    | ModifyReattach<TNodeChange>
+    | ReturnTo;
 
 export type ModifyingMark<TNodeChange = NodeChangeType> =
     | Modify<TNodeChange>
@@ -122,7 +123,7 @@ export type ModifyingMark<TNodeChange = NodeChangeType> =
     | ModifyMoveIn<TNodeChange>
     | ModifyReattach<TNodeChange>;
 
-export type Detach = Delete | MoveOut;
+export type Detach = Delete | MoveOut | ReturnFrom;
 export type ModifyDetach<TNodeChange> = ModifyDelete<TNodeChange> | ModifyMoveOut<TNodeChange>;
 
 export interface Delete extends HasRevisionTag {
@@ -168,14 +169,26 @@ export interface HasReattachFields extends HasPlaceFields {
 }
 
 export interface Reattach extends HasReattachFields, HasRevisionTag {
-    type: "Revive" | "Return";
+    type: "Revive";
     count: NodeCount;
 }
+
 export interface ModifyReattach<TNodeChange = NodeChangeType>
     extends HasReattachFields,
         HasRevisionTag,
         HasChanges<TNodeChange> {
-    type: "MRevive" | "MReturn";
+    type: "MRevive";
+}
+
+export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId {
+    type: "ReturnTo";
+    count: NodeCount;
+}
+
+export interface ReturnFrom extends HasReattachFields, HasRevisionTag, HasMoveId {
+    type: "ReturnFrom";
+    count: NodeCount;
+    tomb?: RevisionTag;
 }
 
 /**

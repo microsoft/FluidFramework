@@ -33,7 +33,7 @@ export class AnchorSet {
 }
 
 // @public (undocumented)
-type Attach<TNodeChange = NodeChangeType> = Insert_2 | ModifyInsert<TNodeChange> | MoveIn_2 | ModifyMoveIn<TNodeChange> | Reattach | ModifyReattach<TNodeChange>;
+type Attach<TNodeChange = NodeChangeType> = Insert_2 | ModifyInsert<TNodeChange> | MoveIn_2 | ModifyMoveIn<TNodeChange> | Reattach | ModifyReattach<TNodeChange> | ReturnTo;
 
 // @public
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
@@ -197,7 +197,7 @@ export interface Dependent extends NamedComputation {
 }
 
 // @public (undocumented)
-type Detach = Delete_2 | MoveOut_2;
+type Detach = Delete_2 | MoveOut_2 | ReturnFrom;
 
 // @public
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
@@ -805,7 +805,7 @@ interface ModifyMoveOut<TNodeChange = NodeChangeType> extends HasMoveId, HasRevi
 // @public (undocumented)
 interface ModifyReattach<TNodeChange = NodeChangeType> extends HasReattachFields, HasRevisionTag, HasChanges<TNodeChange> {
     // (undocumented)
-    type: "MRevive" | "MReturn";
+    type: "MRevive";
 }
 
 // @public @sealed
@@ -1058,7 +1058,7 @@ interface Reattach extends HasReattachFields, HasRevisionTag {
     // (undocumented)
     count: NodeCount;
     // (undocumented)
-    type: "Revive" | "Return";
+    type: "Revive";
 }
 
 // @public
@@ -1070,6 +1070,24 @@ export function recordDependency(dependent: ObservingDependent | undefined, depe
 // @public
 export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepairDataStore<TTree> {
     capture(change: Delta.Root, revision: RevisionTag): void;
+}
+
+// @public (undocumented)
+interface ReturnFrom extends HasReattachFields, HasRevisionTag, HasMoveId {
+    // (undocumented)
+    count: NodeCount;
+    // (undocumented)
+    tomb?: RevisionTag;
+    // (undocumented)
+    type: "ReturnFrom";
+}
+
+// @public (undocumented)
+interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId {
+    // (undocumented)
+    count: NodeCount;
+    // (undocumented)
+    type: "ReturnTo";
 }
 
 // @public
@@ -1144,6 +1162,8 @@ declare namespace SequenceField {
         ProtoNode_2 as ProtoNode,
         RangeType,
         Reattach,
+        ReturnFrom,
+        ReturnTo,
         SizedMark,
         SizedObjectMark,
         Tiebreak,
@@ -1211,6 +1231,8 @@ interface SequenceFieldEditor extends FieldEditor<Changeset> {
     // (undocumented)
     move(sourceIndex: number, count: number, destIndex: number): Changeset<never>;
     // (undocumented)
+    return(sourceIndex: number, count: number, destIndex: number, detachedBy: RevisionTag, detachIndex: number): Changeset<never>;
+    // (undocumented)
     revive(index: number, count: number, detachIndex: number, revision: RevisionTag): Changeset<never>;
 }
 
@@ -1221,6 +1243,7 @@ const sequenceFieldEditor: {
     delete: (index: number, count: number) => Changeset<never>;
     revive: (index: number, count: number, detachIndex: number, revision: RevisionTag) => Changeset<never>;
     move(sourceIndex: number, count: number, destIndex: number): Changeset<never>;
+    return(sourceIndex: number, count: number, destIndex: number, detachedBy: RevisionTag, detachIndex: number): Changeset<never>;
 };
 
 // @public (undocumented)

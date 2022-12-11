@@ -57,7 +57,8 @@ export function sequenceFieldToDelta<TNodeChange>(
                     }
                     break;
                 }
-                case "MoveIn": {
+                case "MoveIn":
+                case "ReturnTo": {
                     const moveMark: Delta.MoveIn = {
                         type: Delta.MarkType.MoveIn,
                         moveId: brandOpaque<Delta.MoveId>(mark.id),
@@ -101,7 +102,8 @@ export function sequenceFieldToDelta<TNodeChange>(
                     }
                     break;
                 }
-                case "MoveOut": {
+                case "MoveOut":
+                case "ReturnFrom": {
                     const moveMark: Delta.MoveOut = {
                         type: Delta.MarkType.MoveOut,
                         moveId: brandOpaque<Delta.MoveId>(mark.id),
@@ -151,8 +153,6 @@ export function sequenceFieldToDelta<TNodeChange>(
                 }
                 case "MMoveIn":
                 case "MMoveOut":
-                case "Return":
-                case "MReturn":
                     fail(ERR_NOT_IMPLEMENTED);
                 default:
                     unreachableCase(type);

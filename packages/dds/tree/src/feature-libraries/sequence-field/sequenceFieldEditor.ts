@@ -7,7 +7,7 @@ import { jsonableTreeFromCursor } from "../treeTextCursor";
 import { ITreeCursor, RevisionTag } from "../../core";
 import { FieldEditor } from "../modular-schema";
 import { brand } from "../../util";
-import { Changeset, Mark, NodeChangeType } from "./format";
+import { Changeset, Mark, MoveId, NodeChangeType } from "./format";
 import { MarkListFactory } from "./markListFactory";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
@@ -27,6 +27,13 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
      * @param destIndex - The index the nodes should be moved to, interpreted after removing the moving nodes
      */
     move(sourceIndex: number, count: number, destIndex: number): Changeset<never>;
+    return(
+        sourceIndex: number,
+        count: number,
+        destIndex: number,
+        detachedBy: RevisionTag,
+        detachIndex: number,
+    ): Changeset<never>;
 }
 
 export const sequenceFieldEditor = {
@@ -86,6 +93,49 @@ export const sequenceFieldEditor = {
             factory.pushContent(moveIn);
             factory.pushOffset(sourceIndex - destIndex);
             factory.pushContent(moveOut);
+        }
+        return factory.list;
+    },
+
+    return(
+        sourceIndex: number,
+        count: number,
+        destIndex: number,
+        detachedBy: RevisionTag,
+        detachIndex: number,
+    ): Changeset<never> {
+        if (count === 0) {
+            return [];
+        }
+
+        const id = brand<MoveId>(0);
+        const returnFrom: Mark<never> = {
+            type: "ReturnFrom",
+            id,
+            count,
+            detachedBy,
+            detachIndex,
+        };
+
+        const returnTo: Mark<never> = {
+            type: "ReturnTo",
+            id,
+            count,
+            detachedBy,
+            detachIndex,
+        };
+
+        const factory = new MarkListFactory<never>();
+        if (sourceIndex < destIndex) {
+            factory.pushOffset(sourceIndex);
+            factory.pushContent(returnFrom);
+            factory.pushOffset(destIndex - sourceIndex);
+            factory.pushContent(returnTo);
+        } else {
+            factory.pushOffset(destIndex);
+            factory.pushContent(returnTo);
+            factory.pushOffset(sourceIndex - destIndex);
+            factory.pushContent(returnFrom);
         }
         return factory.list;
     },

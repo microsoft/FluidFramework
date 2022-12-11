@@ -22,6 +22,7 @@ export const cases: {
     delete: TestChangeset;
     revive: TestChangeset;
     move: TestChangeset;
+    return: TestChangeset;
 } = {
     no_change: [],
     insert: createInsertChangeset(1, 2, 1),
@@ -37,6 +38,7 @@ export const cases: {
     delete: createDeleteChangeset(1, 3),
     revive: createReviveChangeset(2, 2, 0, tag),
     move: createMoveChangeset(1, 2, 2),
+    return: createReturnChangeset(1, 3, 0, tag, 0),
 };
 
 function createInsertChangeset(
@@ -72,6 +74,16 @@ function createMoveChangeset(
     return SF.sequenceFieldEditor.move(sourceIndex, count, destIndex);
 }
 
+function createReturnChangeset(
+    sourceIndex: number,
+    count: number,
+    destIndex: number,
+    detachedBy: RevisionTag,
+    detachIndex: number,
+): SF.Changeset<never> {
+    return SF.sequenceFieldEditor.return(sourceIndex, count, destIndex, detachedBy, detachIndex);
+}
+
 function createModifyChangeset<TNodeChange>(
     index: number,
     change: TNodeChange,
@@ -84,5 +96,6 @@ export const ChangeMaker = {
     delete: createDeleteChangeset,
     revive: createReviveChangeset,
     move: createMoveChangeset,
+    return: createReturnChangeset,
     modify: createModifyChangeset,
 };

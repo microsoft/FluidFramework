@@ -268,7 +268,8 @@ function rebaseMark<TNodeChange>(
             return clone(currMark);
         }
         case "MoveOut":
-        case "MMoveOut": {
+        case "MMoveOut":
+        case "ReturnFrom": {
             getOrAddEmptyToMap(moveEffects.movedMarks, baseMark.id).push(currMark);
             return 0;
         }

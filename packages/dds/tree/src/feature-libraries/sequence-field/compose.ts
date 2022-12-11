@@ -46,6 +46,7 @@ import {
     MoveMark,
     splitMoveIn,
     splitMoveOut,
+    removeMoveDest,
 } from "./utils";
 
 export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
@@ -381,8 +382,30 @@ function composeMarks<TNodeChange>(
                     );
                     return 0;
                 }
+                case "ReturnFrom": {
+                    if (newMark.detachedBy === baseMark.revision) {
+                        // TODO: Handle case where MoveOut and ReturnTo don't cancel
+                        return 0;
+                    } else {
+                        // TODO
+                    }
+                }
                 default:
-                    fail("Not implemented");
+                    fail(`Not implemented: ${newType}`);
+            }
+        }
+        case "ReturnTo": {
+            switch (newType) {
+                case "MoveOut": {
+                    if (baseMark.detachedBy === newMark.revision ?? newRev) {
+                        // TODO: Handle case where MoveOut and ReturnTo don't cancel
+                        return 0;
+                    } else {
+                        // TODO
+                    }
+                }
+                default:
+                    fail(`Not implemented: ${newType}`);
             }
         }
         default:

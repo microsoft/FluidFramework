@@ -131,29 +131,4 @@ describe("SequenceField - MarkListFactory", () => {
         factory.pushContent(revive2);
         assert.deepStrictEqual(factory.list, [revive1, revive2]);
     });
-
-    it("Can merge consecutive returns", () => {
-        const factory = new SF.MarkListFactory();
-        const return1: SF.Reattach = {
-            type: "Return",
-            detachedBy,
-            detachIndex: 0,
-            count: 1,
-        };
-        const return2: SF.Reattach = {
-            type: "Return",
-            detachedBy,
-            detachIndex: 1,
-            count: 1,
-        };
-        factory.pushContent(return1);
-        factory.pushContent(return2);
-        const expected: SF.Reattach = {
-            type: "Return",
-            detachedBy,
-            detachIndex: 0,
-            count: 2,
-        };
-        assert.deepStrictEqual(factory.list, [expected]);
-    });
 });

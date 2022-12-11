@@ -34,7 +34,6 @@ export function encodeForJson<TNodeChange>(
                 case "MInsert":
                 case "MMoveIn":
                 case "MMoveOut":
-                case "MReturn":
                 case "MRevive":
                     jsonMarks.push({
                         ...mark,
@@ -45,7 +44,8 @@ export function encodeForJson<TNodeChange>(
                 case "Insert":
                 case "MoveIn":
                 case "MoveOut":
-                case "Return":
+                case "ReturnFrom":
+                case "ReturnTo":
                 case "Revive":
                     jsonMarks.push(mark as unknown as JsonCompatible);
                     break;
@@ -75,7 +75,6 @@ export function decodeJson<TNodeChange>(
                 case "MInsert":
                 case "MMoveIn":
                 case "MMoveOut":
-                case "MReturn":
                 case "MRevive":
                     marks.push({
                         ...mark,
@@ -86,7 +85,8 @@ export function decodeJson<TNodeChange>(
                 case "Insert":
                 case "MoveIn":
                 case "MoveOut":
-                case "Return":
+                case "ReturnFrom":
+                case "ReturnTo":
                 case "Revive":
                     marks.push(mark);
                     break;
