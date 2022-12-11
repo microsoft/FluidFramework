@@ -51,7 +51,6 @@ function shallowCompose(changes: TaggedChange<SF.Changeset>[]): SF.Changeset {
 }
 
 describe("SequenceField - Compose", () => {
-    // TODO: Should tolerate alternate equivalent assignments of `MoveId`s.
     describe("associativity of triplets", () => {
         const entries = Object.entries(cases);
         for (const a of entries) {

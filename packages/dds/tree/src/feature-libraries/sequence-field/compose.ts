@@ -47,6 +47,8 @@ import {
     splitMoveIn,
     splitMoveOut,
     removeMoveDest,
+    removeMoveSrc,
+    isMoveMark,
 } from "./utils";
 
 export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
@@ -130,7 +132,10 @@ function composeMarkLists<TNodeChange>(
             // We perform any necessary splitting in order to end up with a pair of marks that do have the same length.
 
             // TODO: Handle MMoveOut and MMoveIn
-            if (isObjMark(newMark) && newMark.type === "MoveOut") {
+            if (
+                isObjMark(newMark) &&
+                (newMark.type === "MoveOut" || newMark.type === "ReturnFrom")
+            ) {
                 const newId = getUniqueMoveId(newMark, newRev, genId, moveEffects);
                 if (newId !== newMark.id) {
                     newMark = clone(newMark);
@@ -150,7 +155,10 @@ function composeMarkLists<TNodeChange>(
                 }
             }
 
-            if (isObjMark(baseMark) && baseMark.type === "MoveIn") {
+            if (
+                isObjMark(baseMark) &&
+                (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")
+            ) {
                 const effect = moveEffects.dstEffects.get(baseMark.id);
                 if (effect !== undefined) {
                     const splitMarks = splitMoveIn(baseMark, effect);
@@ -175,7 +183,9 @@ function composeMarkLists<TNodeChange>(
             } else if (newMarkLength > baseMarkLength) {
                 if (
                     isObjMark(newMark) &&
-                    (newMark.type === "MoveOut" || newMark.type === "MMoveOut")
+                    (newMark.type === "MoveOut" ||
+                        newMark.type === "MMoveOut" ||
+                        newMark.type === "ReturnFrom")
                 ) {
                     const newId = getUniqueMoveId(newMark, newRev, genId, moveEffects);
                     if (newId !== newMark.id) {
@@ -264,6 +274,7 @@ function composeMarks<TNodeChange>(
                     return 0;
                 }
                 case "MoveOut":
+                case "ReturnFrom":
                     // The insert has been moved by `newMark`.
                     // We can represent net effect of the two marks as an insert at the move destination.
                     replaceMoveDest(
@@ -291,7 +302,7 @@ function composeMarks<TNodeChange>(
                     return 0;
                 }
                 default:
-                    fail("Not implemented");
+                    fail(`Not implemented: ${newType}`);
             }
         case "MRevive":
         case "MInsert": {
@@ -305,7 +316,8 @@ function composeMarks<TNodeChange>(
                     // TODO: preserve the insertions as muted
                     return 0;
                 }
-                case "MoveOut": {
+                case "MoveOut":
+                case "ReturnFrom": {
                     // The insert has been moved by `newMark`.
                     // We can represent net effect of the two marks as an insert at the move destination.
                     // TODO: Fix repair data when moving revive.
@@ -351,7 +363,8 @@ function composeMarks<TNodeChange>(
                     // The deletion undoes the revival
                     return 0;
                 }
-                case "MoveOut": {
+                case "MoveOut":
+                case "ReturnFrom": {
                     // The insert has been moved by `newMark`.
                     // We can represent net effect of the two marks as an insert at the move destination.
                     // TODO: Fix repair data when moving revive.
@@ -384,10 +397,29 @@ function composeMarks<TNodeChange>(
                 }
                 case "ReturnFrom": {
                     if (newMark.detachedBy === baseMark.revision) {
-                        // TODO: Handle case where MoveOut and ReturnTo don't cancel
+                        removeMoveSrc(moveEffects, baseMark.id);
+                        removeMoveDest(
+                            moveEffects,
+                            getUniqueMoveId(
+                                newMark,
+                                newMark.revision ?? newRev,
+                                genId,
+                                moveEffects,
+                            ),
+                        );
                         return 0;
                     } else {
-                        // TODO
+                        changeSrcMoveId(
+                            moveEffects,
+                            baseMark.id,
+                            getUniqueMoveId(
+                                newMark,
+                                newMark.revision ?? newRev,
+                                genId,
+                                moveEffects,
+                            ),
+                        );
+                        return 0;
                     }
                 }
                 default:
@@ -396,12 +428,65 @@ function composeMarks<TNodeChange>(
         }
         case "ReturnTo": {
             switch (newType) {
+                case "Delete": {
+                    replaceMoveSrc(moveEffects, baseMark.id, newMark);
+                    return 0;
+                }
                 case "MoveOut": {
-                    if (baseMark.detachedBy === newMark.revision ?? newRev) {
-                        // TODO: Handle case where MoveOut and ReturnTo don't cancel
+                    if (baseMark.detachedBy === (newMark.revision ?? newRev)) {
+                        removeMoveSrc(moveEffects, baseMark.id);
+                        removeMoveDest(
+                            moveEffects,
+                            getUniqueMoveId(
+                                newMark,
+                                newMark.revision ?? newRev,
+                                genId,
+                                moveEffects,
+                            ),
+                        );
                         return 0;
                     } else {
-                        // TODO
+                        changeSrcMoveId(
+                            moveEffects,
+                            baseMark.id,
+                            getUniqueMoveId(
+                                newMark,
+                                newMark.revision ?? newRev,
+                                genId,
+                                moveEffects,
+                            ),
+                        );
+                        return 0;
+                    }
+                }
+                case "ReturnFrom": {
+                    if (
+                        baseMark.detachedBy === (newMark.revision ?? newRev) ||
+                        newMark.detachedBy === baseMark.revision
+                    ) {
+                        removeMoveSrc(moveEffects, baseMark.id);
+                        removeMoveDest(
+                            moveEffects,
+                            getUniqueMoveId(
+                                newMark,
+                                newMark.revision ?? newRev,
+                                genId,
+                                moveEffects,
+                            ),
+                        );
+                        return 0;
+                    } else {
+                        changeSrcMoveId(
+                            moveEffects,
+                            baseMark.id,
+                            getUniqueMoveId(
+                                newMark,
+                                newMark.revision ?? newRev,
+                                genId,
+                                moveEffects,
+                            ),
+                        );
+                        return 0;
                     }
                 }
                 default:
@@ -443,21 +528,13 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
         (cloned as HasRevisionTag).revision = revision;
     }
 
-    switch (mark.type) {
-        case "MoveIn":
-        case "MMoveIn":
-        case "MoveOut":
-        case "MMoveOut": {
-            (cloned as MoveMark<TNodeChange>).id = getUniqueMoveId(
-                mark,
-                mark.revision ?? revision,
-                genId,
-                moveEffects,
-            );
-            break;
-        }
-        default:
-            break;
+    if (isMoveMark(mark)) {
+        (cloned as MoveMark<TNodeChange>).id = getUniqueMoveId(
+            mark,
+            mark.revision ?? revision,
+            genId,
+            moveEffects,
+        );
     }
 
     if (isModifyingMark(mark)) {
@@ -496,7 +573,8 @@ function applyMoveEffects<TNodeChange>(
     for (const mark of marks) {
         if (isObjMark(mark)) {
             switch (mark.type) {
-                case "MoveIn": {
+                case "MoveIn":
+                case "ReturnTo": {
                     const effect = moveEffects.dstEffects.get(mark.id);
                     if (effect !== undefined) {
                         factory.push(...splitMoveIn(mark, effect));
@@ -512,7 +590,8 @@ function applyMoveEffects<TNodeChange>(
                     }
                     break;
                 }
-                case "MoveOut": {
+                case "MoveOut":
+                case "ReturnFrom": {
                     const effect = moveEffects.srcEffects.get(mark.id);
                     if (effect !== undefined) {
                         factory.push(...splitMoveOut(mark, effect));

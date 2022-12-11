@@ -10,26 +10,32 @@ import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze, fakeRepair } from "../../utils";
-import { checkDeltaEquality, getMaxId, getMaxIdTagged, rebaseTagged } from "./utils";
+import {
+    checkDeltaEquality,
+    composeAnonChanges,
+    getMaxId,
+    getMaxIdTagged,
+    rebaseTagged,
+} from "./utils";
 import { ChangeMaker as Change } from "./testEdits";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const detachedBy: RevisionTag = brand(41);
 
 const testChanges: [string, (index: number) => SF.Changeset<TestChange>][] = [
-    // ["SetValue", (i) => Change.modify(i, TestChange.mint([], 1))],
-    // [
-    //     "MInsert",
-    //     (i) =>
-    //         composeAnonChanges([Change.insert(i, 1, 42), Change.modify(i, TestChange.mint([], 2))]),
-    // ],
-    // ["Insert", (i) => Change.insert(i, 2, 42)],
-    // ["Delete", (i) => Change.delete(i, 2)],
-    // ["Revive", (i) => Change.revive(i, 2, 0, detachedBy)],
+    ["SetValue", (i) => Change.modify(i, TestChange.mint([], 1))],
+    [
+        "MInsert",
+        (i) =>
+            composeAnonChanges([Change.insert(i, 1, 42), Change.modify(i, TestChange.mint([], 2))]),
+    ],
+    ["Insert", (i) => Change.insert(i, 2, 42)],
+    ["Delete", (i) => Change.delete(i, 2)],
+    ["Revive", (i) => Change.revive(i, 2, 0, detachedBy)],
     ["MoveOut", (i) => Change.move(i, 2, 1)],
-    // ["MoveIn", (i) => Change.move(1, 2, i)],
-    // ["ReturnFrom", (i) => Change.return(i, 2, 1, detachedBy, 0)],
-    // ["ReturnTo", (i) => Change.return(1, 2, i, detachedBy, 0)],
+    ["MoveIn", (i) => Change.move(1, 2, i)],
+    ["ReturnFrom", (i) => Change.return(i, 2, 1, detachedBy, 0)],
+    ["ReturnTo", (i) => Change.return(1, 2, i, detachedBy, 0)],
 ];
 deepFreeze(testChanges);
 
@@ -113,7 +119,7 @@ describe("SequenceField - Rebaser Axioms", () => {
         }
     });
 
-    describe.only("A ○ A⁻¹ === ε", () => {
+    describe("A ○ A⁻¹ === ε", () => {
         for (const [name, makeChange] of testChanges) {
             it(`${name} ○ ${name}⁻¹ === ε`, () => {
                 const change = makeChange(0);
@@ -148,6 +154,7 @@ describe("SequenceField - Rebaser Axioms", () => {
                         TestChange.compose,
                         TestChange.newIdAllocator(getMaxIdTagged(changes)),
                     );
+                    console.debug(actual);
                     const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta, fakeRepair);
                     assert.deepEqual(delta, []);
                 });

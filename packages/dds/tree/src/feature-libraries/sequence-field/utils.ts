@@ -25,6 +25,8 @@ import {
     MoveOut,
     ObjectMark,
     Reattach,
+    ReturnFrom,
+    ReturnTo,
     SizedMark,
     SizedObjectMark,
     Skip,
@@ -213,7 +215,9 @@ export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
                 { ...markObj, count: length },
                 { ...markObj, count: remainder },
             ] as [TMark, TMark];
-        case "MoveOut": {
+        case "MoveOut":
+        case "ReturnFrom": {
+            // TODO: Handle detach index for ReturnFrom
             const newId = genId();
             splitMoveDest(moveEffects, mark.id, [
                 { id: mark.id, count: length },
@@ -224,11 +228,6 @@ export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
                 { ...markObj, id: newId, count: remainder },
             ] as [TMark, TMark];
         }
-        case "ReturnFrom":
-            return [
-                { ...markObj, count: length },
-                { ...markObj, count: remainder, detachIndex: mark.detachIndex + length },
-            ] as [TMark, TMark];
         default:
             unreachableCase(type);
     }
@@ -276,7 +275,9 @@ export function splitMarkOnOutput<TMark extends Mark<unknown>>(
                 { ...markObj, content: markObj.content.slice(0, length) },
                 { ...markObj, content: markObj.content.slice(length) },
             ] as [TMark, TMark];
-        case "MoveIn": {
+        case "MoveIn":
+        case "ReturnTo": {
+            // TODO: Handle detachIndex
             const newId = genId();
             splitMoveSrc(moveEffects, markObj.id, [
                 { id: markObj.id, count: length },
@@ -287,7 +288,6 @@ export function splitMarkOnOutput<TMark extends Mark<unknown>>(
                 { ...markObj, id: newId, count: remainder },
             ] as [TMark, TMark];
         }
-        case "ReturnTo":
         case "Revive":
             return [
                 { ...markObj, count: length },
@@ -303,7 +303,13 @@ export function isDetachMark<TNodeChange>(
 ): mark is Detach | ModifyDetach<TNodeChange> {
     if (isObjMark(mark)) {
         const type = mark.type;
-        return type === "Delete" || type === "MDelete" || type === "MoveOut" || type === "MMoveOut";
+        return (
+            type === "Delete" ||
+            type === "MDelete" ||
+            type === "MoveOut" ||
+            type === "MMoveOut" ||
+            type === "ReturnFrom"
+        );
     }
     return false;
 }
@@ -426,11 +432,14 @@ export function splitMoveSrc<T>(
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.srcEffects.get(id)!;
+        const effect = table.srcEffects.get(origId)!;
         const index = effect.findIndex((p) => p.id === id);
 
         // TODO: Assert that the sums of the partition sizes match
         effect.splice(index, 1, ...parts);
+        for (const { id: newId } of parts) {
+            table.splitIdToOrigId.set(newId, origId);
+        }
     } else {
         assert(
             !table.srcEffects.has(id),
@@ -515,6 +524,18 @@ export function replaceMoveSrc<T>(
     }
 }
 
+export function removeMoveSrc(table: MoveEffectTable<unknown>, id: MoveId): void {
+    const origId = table.splitIdToOrigId.get(id);
+    if (origId !== undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const effect = table.srcEffects.get(origId)!;
+        const index = effect.findIndex((p) => p.id === id);
+        effect.splice(index, 1);
+    } else {
+        table.srcEffects.set(id, []);
+    }
+}
+
 export function replaceMoveId<T>(table: MoveEffectTable<T>, id: MoveId, newId: MoveId): void {
     assert(!table.idRemappings.has(id), "Cannot remap ID which has already been remapped");
     table.idRemappings.set(id, newId);
@@ -532,7 +553,14 @@ export function changeSrcMoveId<T>(table: MoveEffectTable<T>, id: MoveId, newId:
     }
 }
 
-export type MoveMark<T> = MoveOut | ModifyMoveOut<T> | MoveIn | ModifyMoveIn<T>;
+export type MoveMark<T> =
+    | MoveOut
+    | ModifyMoveOut<T>
+    | MoveIn
+    | ModifyMoveIn<T>
+    | ReturnFrom
+    | ReturnTo;
+
 export function isMoveMark<T>(mark: Mark<T>): mark is MoveMark<T> {
     if (isSkipMark(mark)) {
         return false;
@@ -542,13 +570,15 @@ export function isMoveMark<T>(mark: Mark<T>): mark is MoveMark<T> {
         case "MMoveIn":
         case "MoveOut":
         case "MMoveOut":
+        case "ReturnFrom":
+        case "ReturnTo":
             return true;
         default:
             return false;
     }
 }
 
-export function splitMoveIn<T>(mark: MoveIn, parts: MoveDstPartition<T>[]): Attach<T>[] {
+export function splitMoveIn<T>(mark: MoveIn | ReturnTo, parts: MoveDstPartition<T>[]): Attach<T>[] {
     const result: Attach<T>[] = [];
     for (const part of parts) {
         if (part.replaceWith !== undefined) {
@@ -564,7 +594,10 @@ export function splitMoveIn<T>(mark: MoveIn, parts: MoveDstPartition<T>[]): Atta
     return result;
 }
 
-export function splitMoveOut<T>(mark: MoveOut, parts: MoveSrcPartition<T>[]): SizedObjectMark<T>[] {
+export function splitMoveOut<T>(
+    mark: MoveOut | ReturnFrom,
+    parts: MoveSrcPartition<T>[],
+): SizedObjectMark<T>[] {
     const result: SizedObjectMark<T>[] = [];
     for (const part of parts) {
         if (part.replaceWith !== undefined) {

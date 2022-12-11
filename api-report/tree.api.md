@@ -879,7 +879,7 @@ interface MoveInAndModify<TTree = ProtoNode> {
 }
 
 // @public (undocumented)
-type MoveMark<T> = MoveOut_2 | ModifyMoveOut<T> | MoveIn_2 | ModifyMoveIn<T>;
+type MoveMark<T> = MoveOut_2 | ModifyMoveOut<T> | MoveIn_2 | ModifyMoveIn<T> | ReturnFrom | ReturnTo;
 
 // @public
 interface MoveOut {
