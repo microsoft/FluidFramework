@@ -7,9 +7,6 @@ import { strict as assert } from "assert";
 import { BatchManager, BatchMessage } from "../../opLifecycle";
 
 describe("BatchManager", () => {
-    beforeEach(() => {
-    });
-
     const softLimit = 1024;
     const hardLimit = 950 * 1024;
     const smallMessageSize = 10;
@@ -161,9 +158,19 @@ describe("BatchManager", () => {
         assert.equal(batchManager.contentSizeInBytes, smallMessageSize * batchManager.length);
         assert.equal(batchManager.push(smallMessage()), true);
         assert.equal(batchManager.contentSizeInBytes, smallMessageSize * batchManager.length);
+    });
 
-        const batchContentSizeInBytes = batchManager.contentSizeInBytes;
-        const batch = batchManager.popBatch();
-        assert.equal(batchContentSizeInBytes, batch.contentSizeInBytes);
+    it("Don't verify op ordering by default", () => {
+        const batchManager = new BatchManager({ hardLimit });
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
+    });
+
+    it("Verify op ordering if requested", () => {
+        const batchManager = new BatchManager({ enableOpReentryCheck: true, hardLimit });
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
+        assert.throws(() => batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }));
     });
 });
