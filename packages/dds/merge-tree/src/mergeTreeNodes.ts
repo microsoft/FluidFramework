@@ -49,15 +49,15 @@ import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManage
 // TODO: Once @fluid-internal/attributor is made public, this package should reference that type.
 export interface AttributionKey {
     /**
-     * The type of the attributor this key corresponds to.
+     * The id of the attributor this key corresponds to.
      * 
-     * Keys currently all represent op-based attribution, so have the form `{ type: "op", key: sequenceNumber }`.
+     * Keys currently all represent op-based attribution, so have the form `{ id: "op", key: sequenceNumber }`.
      * Thus, they can be used with an `OpStreamAttributor` to recover timestamp/user information.
      * 
-     * @remarks - There are plans to make the `type` field of an attribution key an extensibility point to empower
+     * @remarks - There are plans to make the `id` field of an attribution key an extensibility point to empower
      * consumers with the ability to implement different attribution policies.
     */
-    type: string;
+    id: string;
 
     key: number | string;
 }

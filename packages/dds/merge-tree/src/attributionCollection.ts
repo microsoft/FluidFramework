@@ -54,7 +54,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
         assert(offset >= 0 && offset < this._length, 0x443 /* Requested offset should be valid */);
         const node = this.entries.floor(offset);
         assert(node !== undefined, 0x444 /* Collection should have at least one entry */);
-        return { type: "op", key: node.data };
+        return { id: "op", key: node.data };
     }
 
     public get length(): number {
@@ -92,7 +92,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
     public getAll(): { offset: number; key: AttributionKey; }[] {
         const results: { offset: number; key: AttributionKey; }[] = [];
         this.entries.map(({ key, data }) => {
-            results.push({ offset: key, key: { type: "op", key: data } });
+            results.push({ offset: key, key: { id: "op", key: data } });
             return true;
         });
         return results;
