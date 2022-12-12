@@ -28,9 +28,9 @@ export class EndOfTreeSegment implements ISegment, IRemovalInfo {
     private readonly mergeTree: MergeTree;
     constructor(segmentOrNode: IMergeNode) {
         let maybeRoot: IRootMergeBlock | undefined = segmentOrNode.isLeaf()
-        ? segmentOrNode.parent
-        : segmentOrNode;
-        while(maybeRoot?.parent !== undefined) {
+            ? segmentOrNode.parent
+            : segmentOrNode;
+        while (maybeRoot?.parent !== undefined) {
             maybeRoot = maybeRoot.parent;
         }
         if (maybeRoot?.mergeTree === undefined) {
