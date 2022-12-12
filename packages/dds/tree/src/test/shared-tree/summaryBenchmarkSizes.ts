@@ -7,13 +7,19 @@ import assert from "assert";
 import { IsoBuffer, unreachableCase } from "@fluidframework/common-utils";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { TransactionResult } from "../../checkout";
-import { FieldKinds, singleTextCursor } from "../../feature-libraries";
+import { FieldKinds, singleTextCursor, namedTreeSchema } from "../../feature-libraries";
 import { ISharedTree } from "../../shared-tree";
-import { rootFieldKey, rootFieldKeySymbol, TreeValue } from "../../tree";
 import { brand } from "../../util";
-import { TestTreeProvider } from "../utils";
-import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData } from "../../schema-stored";
+import { SummarizeType, TestTreeProvider } from "../utils";
+import {
+    TransactionResult,
+    rootFieldKey,
+    rootFieldKeySymbol,
+    TreeValue,
+    fieldSchema,
+    GlobalFieldKey,
+    SchemaData,
+} from "../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { PlacePath } from "../../feature-libraries/sequence-change-family";
 
@@ -27,7 +33,7 @@ enum TreeShape {
 // TODO: report these sizes as benchmark output which can be tracked over time.
 describe("Summary size benchmark", () => {
     it("for an empty tree.", async () => {
-        const provider = await TestTreeProvider.create(1, true);
+        const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
         const tree = provider.trees[0];
         const { summary } = tree.getAttachSummary();
         const summaryString = JSON.stringify(summary);
@@ -120,7 +126,7 @@ export async function getInsertsSummaryTree(
     numberOfNodes: number,
     shape: TreeShape,
 ): Promise<ISummaryTree> {
-    const provider = await TestTreeProvider.create(1, true);
+    const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
     const tree = provider.trees[0];
     initializeTestTreeWithValue(tree, 1);
 

@@ -9,12 +9,15 @@ module.exports = {
         "oclif",
         "oclif-typescript",
         // eslint-disable-next-line node/no-extraneous-require
-        require.resolve("@fluidframework/eslint-config-fluid"),
+        require.resolve("@fluidframework/eslint-config-fluid/minimal"),
         "prettier",
     ],
     rules: {
         "@typescript-eslint/no-unused-vars": "warn",
         "unused-imports/no-unused-imports": "warn",
+
+        // This package is exclusively used in a Node.js context
+        "import/no-nodejs-modules": "off",
 
         // oclif uses default exports for commands
         "import/no-default-export": "off",

@@ -24,9 +24,12 @@ export type SizedObjectMark<TNodeChange = NodeChangeType> =
     | Detach
     | ModifyDetach<TNodeChange>;
 
-export interface Modify<TNodeChange = NodeChangeType> {
+export interface Modify<TNodeChange = NodeChangeType> extends HasChanges<TNodeChange> {
     type: "Modify";
     tomb?: RevisionTag;
+}
+
+export interface HasChanges<TNodeChange> {
     changes: TNodeChange;
 }
 
@@ -75,18 +78,20 @@ export interface LineageEvent {
     readonly offset: number;
 }
 
-export interface Insert extends HasOpId, HasTiebreakPolicy {
+export interface Insert extends HasTiebreakPolicy, HasRevisionTag {
     type: "Insert";
     content: ProtoNode[];
 }
 
-export interface ModifyInsert<TNodeChange = NodeChangeType> extends HasOpId, HasTiebreakPolicy {
+export interface ModifyInsert<TNodeChange = NodeChangeType>
+    extends HasTiebreakPolicy,
+        HasRevisionTag,
+        HasChanges<TNodeChange> {
     type: "MInsert";
     content: ProtoNode;
-    changes: TNodeChange;
 }
 
-export interface MoveIn extends HasOpId, HasPlaceFields {
+export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag {
     type: "MoveIn";
     /**
      * The actual number of nodes being moved-in. This count excludes nodes that were concurrently deleted.
@@ -94,9 +99,12 @@ export interface MoveIn extends HasOpId, HasPlaceFields {
     count: NodeCount;
 }
 
-export interface ModifyMoveIn<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFields {
+export interface ModifyMoveIn<TNodeChange = NodeChangeType>
+    extends HasMoveId,
+        HasPlaceFields,
+        HasRevisionTag,
+        HasChanges<TNodeChange> {
     type: "MMoveIn";
-    changes: TNodeChange;
 }
 
 export type Attach<TNodeChange = NodeChangeType> =
@@ -107,21 +115,44 @@ export type Attach<TNodeChange = NodeChangeType> =
     | Reattach
     | ModifyReattach<TNodeChange>;
 
-export type NodeMark = Detach;
+export type ModifyingMark<TNodeChange = NodeChangeType> =
+    | Modify<TNodeChange>
+    | ModifyInsert<TNodeChange>
+    | ModifyDetach<TNodeChange>
+    | ModifyMoveIn<TNodeChange>
+    | ModifyReattach<TNodeChange>;
 
-export interface Detach extends HasOpId {
+export type Detach = Delete | MoveOut;
+export type ModifyDetach<TNodeChange> = ModifyDelete<TNodeChange> | ModifyMoveOut<TNodeChange>;
+
+export interface Delete extends HasRevisionTag {
+    type: "Delete";
     tomb?: RevisionTag;
-    type: "Delete" | "MoveOut";
     count: NodeCount;
 }
 
-export interface ModifyDetach<TNodeChange = NodeChangeType> extends HasOpId {
-    type: "MDelete" | "MMoveOut";
+export interface MoveOut extends HasRevisionTag, HasMoveId {
+    type: "MoveOut";
+    count: NodeCount;
     tomb?: RevisionTag;
-    changes: TNodeChange;
 }
 
-export interface HasReattachFields extends HasOpId, HasPlaceFields {
+export interface ModifyDelete<TNodeChange = NodeChangeType>
+    extends HasRevisionTag,
+        HasChanges<TNodeChange> {
+    type: "MDelete";
+    tomb?: RevisionTag;
+}
+
+export interface ModifyMoveOut<TNodeChange = NodeChangeType>
+    extends HasMoveId,
+        HasRevisionTag,
+        HasChanges<TNodeChange> {
+    type: "MMoveOut";
+    tomb?: RevisionTag;
+}
+
+export interface HasReattachFields extends HasPlaceFields {
     /**
      * The tag of the change that detached the data being reattached.
      *
@@ -136,13 +167,15 @@ export interface HasReattachFields extends HasOpId, HasPlaceFields {
     detachIndex: number;
 }
 
-export interface Reattach extends HasReattachFields {
+export interface Reattach extends HasReattachFields, HasRevisionTag {
     type: "Revive" | "Return";
     count: NodeCount;
 }
-export interface ModifyReattach<TNodeChange = NodeChangeType> extends HasReattachFields {
+export interface ModifyReattach<TNodeChange = NodeChangeType>
+    extends HasReattachFields,
+        HasRevisionTag,
+        HasChanges<TNodeChange> {
     type: "MRevive" | "MReturn";
-    changes: TNodeChange;
 }
 
 /**
@@ -161,7 +194,6 @@ export interface Tombstones {
 
 export interface PriorOp {
     change: RevisionTag;
-    id: OpId;
 }
 
 export interface HasLength {
@@ -182,20 +214,28 @@ export enum RangeType {
     Slice = "Slice",
 }
 
+export interface HasRevisionTag {
+    /**
+     * The revision this mark is part of.
+     * Only set for marks in fields which are a composition of multiple revisions.
+     */
+    revision?: RevisionTag;
+}
+
 /**
- * A monotonically increasing positive integer assigned to each change within the changeset.
- * OpIds are scoped to a single changeset, so referring to OpIds across changesets requires
+ * A monotonically increasing positive integer assigned to an individual mark within the changeset.
+ * MoveIds are scoped to a single changeset, so referring to MoveIds across changesets requires
  * qualifying them by change tag.
  *
  * The uniqueness of IDs is leveraged to uniquely identify the matching move-out for a move-in/return and vice-versa.
  */
-export type OpId = number;
+export type MoveId = number;
 
-export interface HasOpId {
+export interface HasMoveId {
     /**
      * The sequential ID assigned to a change within a transaction.
      */
-    id: OpId;
+    id: MoveId;
 }
 
 /**
