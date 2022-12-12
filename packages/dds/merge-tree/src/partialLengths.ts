@@ -510,6 +510,19 @@ export class PartialSequenceLengths {
 
                 seqOrLocalSeq = moveInfo.movedSeq;
                 segmentLen = -segmentLen;
+
+                if (
+                    segment.movedSeq !== UnassignedSequenceNumber && segment.seq === UnassignedSequenceNumber
+                    || (segment.seq !== UnassignedSequenceNumber
+                        && segment.seq !== undefined
+                        && segment.movedSeq !== UnassignedSequenceNumber
+                        && segment.movedSeq !== undefined
+                        && segment.movedSeq < segment.seq)
+                ) {
+                    segmentLen = 0;
+                    remoteObliteratedLen = 0;
+                }
+
                 const hasOverlap = moveInfo.movedClientIds.length > 1;
                 moveClientOverlap = hasOverlap ? moveInfo.movedClientIds : undefined;
             } else {
@@ -539,7 +552,7 @@ export class PartialSequenceLengths {
                 clientId !== segment.clientId
                 && obliterateRefSeq !== undefined
                 && segment.seq !== undefined
-                && obliterateRefSeq < segment.seq
+                && (obliterateRefSeq < segment.seq || segment.seq === -1)
             ) {
                 remoteObliteratedLen = segmentLen;
             }
@@ -765,8 +778,19 @@ export class PartialSequenceLengths {
                 const removalInfo = toRemovalInfo(segment);
                 const moveInfo = toMoveInfo(segment);
 
+                if (
+                    segment.movedSeq !== UnassignedSequenceNumber && segment.seq === UnassignedSequenceNumber
+                    || (segment.seq !== UnassignedSequenceNumber
+                        && segment.seq !== undefined
+                        && segment.movedSeq !== UnassignedSequenceNumber
+                        && segment.movedSeq !== undefined
+                        && segment.movedSeq < segment.seq)
+                ) {
+                    // if segment was obliterated before insertion -- as a result
+                    // of being inserted into a concurrently obliterated range --
+                    // we consider it a nop when calculating partial lengths
                 // eslint-disable-next-line unicorn/prefer-switch
-                if (segment.seq === seq) {
+                } else if (segment.seq === seq) {
                     if ((!removalInfo || removalInfo.removedSeq !== seq)
                         && ((!moveInfo || moveInfo.movedSeq !== seq))) {
                         seqSeglen += segment.cachedLength;
