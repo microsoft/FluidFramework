@@ -100,6 +100,20 @@ describe("OpSplitter", () => {
         }
     });
 
+    it("Chunk metadata", () => {
+        const originalOp = generateChunkableOp(chunkSizeInBytes * 4);
+        const chunks = splitOp(originalOp, chunkSizeInBytes);
+        assert.equal(
+            chunks
+                .slice(0, -1)
+                .every((chunk) => chunk.originalCompression === undefined && chunk.originalMetadata === undefined),
+            true);
+
+        const lastChunk = chunks[chunks.length - 1];
+        assert.deepStrictEqual(lastChunk.originalMetadata, originalOp.metadata);
+        assert.equal(lastChunk.originalCompression, originalOp.compression);
+    });
+
     it("Batch split invariants", () => {
         const opSplitter = new OpSplitter([], mockSubmitBatchFn, 50, maxBatchSizeInBytes, mockLogger);
         const regularMessage = generateChunkableOp(20);

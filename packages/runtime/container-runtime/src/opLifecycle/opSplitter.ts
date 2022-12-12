@@ -67,8 +67,8 @@ export class OpSplitter {
         const newMessage = { ...message };
         newMessage.contents = serializedContent === "" ? undefined : JSON.parse(serializedContent);
         newMessage.type = chunkedContent.originalType;
-        newMessage.metadata = chunkedContent.metadata;
-        newMessage.compression = chunkedContent.compression;
+        newMessage.metadata = chunkedContent.originalMetadata;
+        newMessage.compression = chunkedContent.originalCompression;
         return {
             message: newMessage,
             state: "Processed",
@@ -189,15 +189,22 @@ export const splitOp = (op: BatchMessage, chunkSizeInBytes: number): IChunkedOp[
     const chunkN = Math.floor((contentLength - 1) / chunkSizeInBytes) + 1;
     let offset = 0;
     for (let i = 1; i <= chunkN; i++) {
-        chunks.push({
+        const chunk: IChunkedOp = {
             chunkId: i,
             contents: op.contents.substr(offset, chunkSizeInBytes),
             originalType: op.deserializedContent.type,
             totalChunks: chunkN,
-            metadata: op.metadata,
-            compression: op.compression,
-        });
+        }
 
+        if (i === chunkN) {
+            // We don't need to port these to all the chunks,
+            // as we rebuild the original op when we process the
+            // last chunk, therefore it is the only one that needs it.
+            chunk.originalMetadata = op.metadata;
+            chunk.originalCompression = op.compression;
+        }
+
+        chunks.push(chunk);
         offset += chunkSizeInBytes;
     }
 
