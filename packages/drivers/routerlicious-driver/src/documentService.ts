@@ -147,10 +147,9 @@ export class DocumentService implements api.IDocumentService {
 
         const getRestWrapper = async (): Promise<RestWrapper> => {
             const shouldUpdateDiscoveredSessionInfo = this.shouldUpdateDiscoveredSessionInfo();
+
             if (shouldUpdateDiscoveredSessionInfo) {
                 await this.refreshDiscovery();
-            }
-            if (shouldUpdateDiscoveredSessionInfo) {
                 const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
                 this.ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
                     this.tenantId,

@@ -53,10 +53,6 @@ export class RouterliciousRestWrapper extends RestWrapper {
         super(baseurl, defaultQueryString);
     }
 
-    public async load() {
-        this.token = await this.fetchRefreshedToken();
-    }
-
     protected async request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry = true): Promise<T> {
         const config = {
             ...requestConfig,
@@ -191,14 +187,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
         const restWrapper = new RouterliciousStorageRestWrapper(
             logger, rateLimiter, storagetoken, 
                 fetchStorageToken, getAuthorizationHeader, useRestLess, baseurl, defaultQueryString);
-        try {
-            await restWrapper.load();
-        } catch (e) {
-            logger.sendErrorEvent({
-                eventName: "R11sRestWrapperLoadFailure",
-            }, e);
-            throw e;
-        }
+
         return restWrapper;
     }
 }
@@ -254,14 +243,6 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
         const restWrapper = new RouterliciousOrdererRestWrapper(
             logger, rateLimiter, newtoken, fetchOrdererToken, getAuthorizationHeader, useRestLess, baseurl);
 
-        try {
-            await restWrapper.load();
-        } catch (e) {
-            logger.sendErrorEvent({
-                eventName: "R11sRestWrapperLoadFailure",
-            }, e);
-            throw e;
-        }
         return restWrapper;
     }
 }
