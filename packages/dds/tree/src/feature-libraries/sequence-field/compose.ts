@@ -72,7 +72,6 @@ function composeMarkLists<TNodeChange>(
             assert(baseMark !== undefined, "Non-empty queue should not return two undefined marks");
             factory.push(baseMark);
         } else if (baseMark === undefined) {
-            assert(newMark !== undefined, "Non-empty queue should not return two undefined marks");
             factory.push(composeMark(newMark, newRev, composeChild));
         } else {
             // Past this point, we are guaranteed that `newMark` and `baseMark` have the same length and
