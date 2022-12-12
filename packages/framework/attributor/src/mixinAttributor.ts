@@ -40,6 +40,10 @@ export interface IRuntimeAttribution extends IProvideRuntimeAttribution {
     getAttributionInfo(key: AttributionKey): AttributionInfo;
 }
 
+export const defaultAttributorRegistry: NamedAttributorRegistryEntry[] = [
+    ["op", (runtime, entries) => new OpStreamAttributor(runtime.deltaManager, runtime.getAudience(), entries)]
+];
+
 /**
  * Mixin class that adds runtime-based attribution functionality.
  * @param registry - Registry of constructable attributor types.
@@ -51,8 +55,8 @@ export interface IRuntimeAttribution extends IProvideRuntimeAttribution {
  * data migration for existing documents that store attribution information in some format.
  */
 export const mixinAttributor = (
-    registry: Iterable<NamedAttributorRegistryEntry>,
     Base: typeof ContainerRuntime = ContainerRuntime,
+    registry: Iterable<NamedAttributorRegistryEntry> = defaultAttributorRegistry,
 ) => class ContainerRuntimeWithAttributor extends Base implements IRuntimeAttribution {
         public get IRuntimeAttribution(): IRuntimeAttribution { return this; }
 
@@ -123,9 +127,9 @@ export const mixinAttributor = (
         private readonly attributors = new Map<string, IAttributor>();
 
         public getAttributionInfo(key: AttributionKey): AttributionInfo {
-            const attributor = this.attributors.get(key.type);
+            const attributor = this.attributors.get(key.id);
             if (!attributor) {
-                throw new UsageError(`Requested attribution information for non-existent attributor at ${key.type}`);
+                throw new UsageError(`Requested attribution information for non-existent attributor at ${key.id}`);
             }
             return attributor.getAttributionInfo(key.key);
         }

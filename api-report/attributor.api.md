@@ -4,7 +4,9 @@
 
 ```ts
 
+import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { IAudience } from '@fluidframework/container-definitions';
+import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -19,8 +21,8 @@ export interface AttributionInfo {
 
 // @public
 export interface AttributionKey {
+    id: string;
     key: number | string;
-    type: string;
 }
 
 // @public
@@ -54,6 +56,9 @@ export class AttributorSerializer implements IAttributorSerializer {
 export const chain: <T1, T2, T3>(a: Encoder<T1, T2>, b: Encoder<T2, T3>) => Encoder<T1, T3>;
 
 // @public (undocumented)
+export const defaultAttributorRegistry: NamedAttributorRegistryEntry[];
+
+// @public (undocumented)
 export const deltaEncoder: TimestampEncoder;
 
 // @public (undocumented)
@@ -85,7 +90,25 @@ export type InternedStringId = number & {
 };
 
 // @public (undocumented)
+export interface IProvideRuntimeAttribution {
+    // (undocumented)
+    readonly IRuntimeAttribution: IRuntimeAttribution;
+}
+
+// @public (undocumented)
+export const IRuntimeAttribution: keyof IProvideRuntimeAttribution;
+
+// @public
+export interface IRuntimeAttribution extends IProvideRuntimeAttribution {
+    // (undocumented)
+    getAttributionInfo(key: AttributionKey): AttributionInfo;
+}
+
+// @public (undocumented)
 export function makeLZ4Encoder<T>(): Encoder<Jsonable<T>, string>;
+
+// @public
+export const mixinAttributor: (Base?: typeof ContainerRuntime, registry?: Iterable<NamedAttributorRegistryEntry>) => typeof ContainerRuntime;
 
 // @public
 export class MutableStringInterner implements StringInterner {
@@ -99,6 +122,9 @@ export class MutableStringInterner implements StringInterner {
     // (undocumented)
     getString(internId: number): string;
 }
+
+// @public
+export type NamedAttributorRegistryEntry = [string, (runtime: IContainerRuntime, entries: Iterable<[number, AttributionInfo]>) => IAttributor];
 
 // @public
 export class OpStreamAttributor extends Attributor implements IAttributor {

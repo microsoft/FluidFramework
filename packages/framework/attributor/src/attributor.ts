@@ -38,10 +38,9 @@ export interface AttributionInfo {
  */
 export interface AttributionKey {
 	/**
-	 * The type of attribution that this key corresponds to.
-	 * This aligns with the id/name of the attributor injected into the runtime that stores this key.
+	 * The id of attributor that this key is for.
 	 */
-	type: string;
+	id: string;
 
 	/**
 	 * The key associated with that attributor.

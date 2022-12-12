@@ -22,6 +22,13 @@ export {
 	makeLZ4Encoder,
 } from "./lz4Encoder";
 export {
+	defaultAttributorRegistry,
+	IProvideRuntimeAttribution,
+	IRuntimeAttribution,
+	mixinAttributor,
+	NamedAttributorRegistryEntry,
+} from "./mixinAttributor";
+export {
 	InternedStringId,
 	MutableStringInterner,
 	StringInterner,

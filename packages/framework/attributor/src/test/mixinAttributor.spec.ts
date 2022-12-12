@@ -19,7 +19,7 @@ import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { IProvideRuntimeAttribution, mixinAttributor } from "../mixinAttributor";
-import { Attributor as BaseAttributor, OpStreamAttributor } from "../attributor";
+import { Attributor as BaseAttributor } from "../attributor";
 import { makeLZ4Encoder } from "../lz4Encoder";
 import { AttributorSerializer, chain, deltaEncoder } from "../encoders";
 import { makeMockAudience } from "./utils";
@@ -49,9 +49,7 @@ describe("mixinAttributor", () => {
         };
     });
 
-    const AttributingContainerRuntime = mixinAttributor([
-        ["op", (runtime, entries) => new OpStreamAttributor(runtime.deltaManager, runtime.getAudience(), entries)]
-    ]);
+    const AttributingContainerRuntime = mixinAttributor();
 
     it("Attributes ops", async () => {
         const context = getMockContext() as IContainerContext;
@@ -74,7 +72,7 @@ describe("mixinAttributor", () => {
 
         (context.deltaManager as MockDeltaManager).emit("op", op);
         
-        assert.deepEqual(runtimeAttribution.getAttributionInfo({ type: "op", key: op.sequenceNumber! }), {
+        assert.deepEqual(runtimeAttribution.getAttributionInfo({ id: "op", key: op.sequenceNumber! }), {
             timestamp: op.timestamp,
             user: context.audience?.getMember(op.clientId!)?.user
         });
@@ -93,7 +91,7 @@ describe("mixinAttributor", () => {
         assert(maybeProvidesAttribution.IRuntimeAttribution !== undefined)
         const runtimeAttribution = maybeProvidesAttribution.IRuntimeAttribution;
         assert.throws(
-            () => runtimeAttribution.getAttributionInfo({ type: "doesn't exist", key: "irrelevant" }),
+            () => runtimeAttribution.getAttributionInfo({ id: "doesn't exist", key: "irrelevant" }),
             /Requested attribution information for non-existent attributor/
         );
     });
@@ -192,7 +190,7 @@ describe("mixinAttributor", () => {
         const runtimeAttribution = maybeProvidesAttribution.IRuntimeAttribution;
 
         assert.deepEqual(
-            runtimeAttribution.getAttributionInfo({ type: "op", key: op.sequenceNumber! }),
+            runtimeAttribution.getAttributionInfo({ id: "op", key: op.sequenceNumber! }),
             { timestamp: op.timestamp, user: context.audience?.getMember(op.clientId!)?.user }
         );
     });
