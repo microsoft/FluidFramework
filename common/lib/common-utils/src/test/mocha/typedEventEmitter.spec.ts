@@ -1,57 +1,40 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { IErrorEvent, IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { IErrorEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "../..";
-import { IBaseEventSpec, IEventProvider2, TypedEventEmitter2 } from "../../typedEventEmitter";
 
-export interface ISampleEvents extends IEvent {
-    (event: "something", listener: (x: number) => void);
-    (event: "useThis", listener: (y: IEventThisPlaceHolder) => void)
-}
-
-export interface ISampleEventSpec extends IBaseEventSpec {
+export interface NewEventSpec {
     something: (x: number) => void;
-    useThis: (y: IEventThisPlaceHolder) => void;
+    useThis1: (y: IEventThisPlaceHolder) => void;
 }
 
-export interface ISample extends IEventProvider<ISampleEvents> {
-    dummy: number;
+interface IBaseEvents extends IEvent {
+    (event: "removeListener", listener: (event: string) => void);
+    // (event: "newListener", listener: (event: string, listener: (...args: any[]) => void) => void);
+    // (event: "removeListener", listener: (event: string, listener: (...args: any[]) => void) => void);
 }
 
-export class Sample extends TypedEventEmitter<ISampleEvents> implements ISample {
-    dummy = 4;
-
-    someCode(): void {
-        this.emit("something", this.dummy);
-    }
+export interface IOldEvents extends IEvent {
+    (event: "asdf", listener: (y: boolean, z: string) => void);
+    (event: "something", listener: (x: number) => void);
+    (event: "useThis1", listener: (y: IEventThisPlaceHolder) => void)
 }
 
-export interface ISample2 extends IEventProvider2<ISampleEventSpec> {
-    dummy: number;
-}
+const sampleOld = new TypedEventEmitter<IOldEvents>();
 
-export class Sample2 extends TypedEventEmitter2<ISampleEventSpec> implements ISample2 {
-    dummy = 4;
+sampleOld.emit("something", 5);
+sampleOld.emit("addListener", "asdf", () => {});
 
-    someCode(): void {
-        this.emit("something", this.dummy);
-        this.emit("useThis", this);
-    }
-}
+sampleOld.emit("something", 7);
 
-function takeOld(oldIep: ISample) {
-}
+sampleOld.on("something", (x) => {});
 
-function takeNew(newIep: ISample2) {
-}
-
-takeOld(new Sample2());
-takeNew(new Sample()); // This one still works even if event specs don't match. I think that's ok though
-
+// Notice these are acceptable (EMITTING IS NOT ACTUALLY)
+sampleOld.emit("unspecified", () => {});
+sampleOld.on("unspecified", () => {});
 
 describe("TypedEventEmitter", () => {
     it("Validate Function proxies", () => {
@@ -96,39 +79,3 @@ describe("TypedEventEmitter", () => {
         assert.equal(removeListenerCalls, 1);
     });
 });
-
-// ////
-// This section was where I learned that IEventProvider<IEvents<Spec>> doesn't work
-// It matches with multiple event signatures (e.g. E0, E1, E2) and results in a case
-// with unknown that breaks type compatibility
-
-// export type IdmEvents = IEvents<ISampleEventSpec>;
-// export type IdmEventProvider = IEventProvider<IdmEvents>;
-
-// declare const e1: IdmEvents;
-// declare const e2: ISampleEvents;
-// declare const p1: IdmEventProvider;
-// declare const p2: IEventProvider<ISampleEvents>;
-
-// declare const newThing: IEventProvider2<ISampleEventSpec>;
-// takeOld(newThing);
-
-// e1()
-// e2()
-
-// p1.on();
-// p2.on();
-
-// type Testing<TThis, T> = T extends
-// {
-//     (event: infer E0, listener: (...args: infer A0) => void),
-//     (event: infer E1, listener: (...args: infer A1) => void),
-//     (event: infer E2, listener: (...args: infer A2) => void),
-//     (event: string, listener: (...args: any[]) => void),
-// }
-// ? true
-// : false
-
-// type Testing1 = IEventTransformer<ISample, IdmEvents>
-// type Testing2 = Testing<ISample, IdmEvents>
-// type Testing3 = Testing<ISample, ISampleEvents>

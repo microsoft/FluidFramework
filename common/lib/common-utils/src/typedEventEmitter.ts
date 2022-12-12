@@ -12,7 +12,6 @@ import {
     IEventTransformer,
     IEventProvider,
     ReplaceIEventThisPlaceHolder,
-    IEventThisPlaceHolder,
 } from "@fluidframework/common-definitions";
 
 /**
@@ -43,7 +42,6 @@ export type TypedEventTransform<TThis, TEvent> =
 /** Converting from IEvent shape to EventSpec shape. Might allow for easier transition to EventSpec */
 export type ToEventArgsMappingCore<TEvent extends IEvent> =
     // ...Start with all 15 like IEventTransformer
-    // I think we would drop all mention of the (event: string, ...) signature
     TEvent extends
     {
         (event: infer E0, listener: (...args: infer A0) => void),
@@ -77,14 +75,12 @@ export type ToEventArgsMappingCore<TEvent extends IEvent> =
     : SingleEventArgsMapping<string, any[]>
     ;
 
-export type ToEventArgsMapping<TEvent extends IEvent> =
-    ToEventArgsMappingCore<TEvent> &
+export type ToEventArgsMapping<TEvent> =
+    ToEventArgsMappingCore<TEvent & IEvent> &
     SingleEventArgsMapping<"addListener", [event: string, listener: (...args: any[]) => void]> &
     SingleEventArgsMapping<"removeListener", [event: string, listener: (...args: any[]) => void]>;
     //* Uncomment this to allow emitting anything. But themn emit loses intellisense for event keys
     // & EventSpecEntry<string, any[]>;
-
-type G = ToEventArgsMapping<IOldEvents & IEvent>;
 
 export type SingleEventArgsMapping<TEventKey, TListenerArgs extends any[]> =
     TEventKey extends string ?
@@ -93,36 +89,15 @@ export type SingleEventArgsMapping<TEventKey, TListenerArgs extends any[]> =
     }
     : never;
 
-type B = IBaseEvents & IOldEvents;
-
-declare const b: B;
-
-type A = ToEventArgsMapping<IOldEvents & IEvent>;
-
-type D = keyof A;
-type F = A["asdf"];
-
-type E = EventEmitSignatures<{ somethis: string }, IOldEvents & IEvent>;
-
-declare const e: E;
-e("useThis1", { somethis: "ok" });
-
-/** These events are always supported due to base EventEmitter implementation */
-export interface BaseEventSpec {
-    newListener: (event: string, listener: (...args: any[]) => void) => void;
-    removeListener: (event: string, listener: (...args: any[]) => void) => void;
-}
-
-/** Extracts the supported event names from the spec */
-type EventKeys<TEventSpec> =
+type StringKeys<TEventSpec> =
     keyof TEventSpec extends string ?
-        TEventSpec[keyof TEventSpec] extends any[] ?
             keyof TEventSpec
-: never : never;
+ : never
+;
 
 /** Signature for emit */
-type EventEmitSignatures<TThis, TEvent extends IEvent> =
-    <TEventKey extends EventKeys<ToEventArgsMapping<TEvent>>>(
+type EventEmitSignatures<TThis, TEvent> =
+    <TEventKey extends StringKeys<ToEventArgsMapping<TEvent>>>(
         event: TEventKey,
         ...args: ReplaceIEventThisPlaceHolder<ToEventArgsMapping<TEvent>[TEventKey], TThis>
     ) => boolean;
@@ -160,35 +135,5 @@ export class TypedEventEmitter<TEvent>
     readonly removeListener: TypedEventTransform<this, TEvent>;
     readonly off: TypedEventTransform<this, TEvent>;
 
-    readonly emit: EventEmitSignatures<this, TEvent & IEvent>;
+    readonly emit: EventEmitSignatures<this, TEvent>;
 }
-
-export interface NewEventSpec {
-    something: (x: number) => void;
-    useThis1: (y: IEventThisPlaceHolder) => void;
-}
-
-interface IBaseEvents extends IEvent {
-    (event: "removeListener", listener: (event: string) => void);
-    // (event: "newListener", listener: (event: string, listener: (...args: any[]) => void) => void);
-    // (event: "removeListener", listener: (event: string, listener: (...args: any[]) => void) => void);
-}
-
-export interface IOldEvents extends IEvent {
-    (event: "asdf", listener: (y: boolean, z: string) => void);
-    (event: "something", listener: (x: number) => void);
-    (event: "useThis1", listener: (y: IEventThisPlaceHolder) => void)
-}
-
-const sampleOld = new TypedEventEmitter<IOldEvents>();
-
-sampleOld.emit("something", 5);
-sampleOld.emit("addListener", "asdf", () => {});
-
-sampleOld.emit("something", 7);
-
-sampleOld.on("something", (x) => {});
-
-// Notice these are acceptable (EMITTING IS NOT ACTUALLY)
-sampleOld.emit("unspecified", () => {});
-sampleOld.on("unspecified", () => {});
