@@ -149,18 +149,20 @@ lineReader.on("line", (line) => {
 });
 
 lineReader.once("close", () => {
-    handlers.forEach((h) => {
-        const final = h.final;
-        if (final) {
-            const result = runWithPerf(h.name, "final", () =>
-                final(pathToGitRoot, program.resolve),
-            );
-            if (result?.error) {
-                process.exitCode = 1;
-                console.log(result.error);
+    handlers
+        .filter((handler) => handlerRegex.test(handler.name))
+        .forEach((h) => {
+            const final = h.final;
+            if (final) {
+                const result = runWithPerf(h.name, "final", () =>
+                    final(pathToGitRoot, program.resolve),
+                );
+                if (result?.error) {
+                    process.exitCode = 1;
+                    console.log(result.error);
+                }
             }
-        }
-    });
+        });
 });
 
 process.on("beforeExit", () => {
