@@ -54,7 +54,9 @@ import {
  */
 export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObject, AnchorLocator {
     /**
-     * Root field of the tree.
+     * Gets or sets the root field of the tree.
+     *
+     * See {@link EditableTreeContext.unwrappedRoot} on how its setter works.
      *
      * Currently this editable tree's fields do not update on edits,
      * so holding onto this root object across edits will only work if its an unwrapped node.
@@ -62,8 +64,8 @@ export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObje
      *
      * Currently any access to this view of the tree may allocate cursors and thus require
      * `context.prepareForEdit()` before editing can occur.
-     * TODO: Make this happen automatically.
      */
+    // TODO: either rename this or `EditableTreeContext.unwrappedRoot` to avoid name confusion.
     get root(): UnwrappedEditableField;
 
     set root(data: ContextuallyTypedNodeData | undefined);

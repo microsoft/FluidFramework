@@ -29,7 +29,7 @@ import { DefaultChangeset, DefaultEditBuilder } from "../defaultChangeFamily";
 import { runSynchronousTransaction } from "../defaultTransaction";
 import { singleMapTreeCursor } from "../mapTreeCursor";
 import { ProxyTarget, EditableField, proxifyField, UnwrappedEditableField } from "./editableTree";
-import { applyFieldTypesFromContext, ContextuallyTypedNodeData, isArrayLike } from "./utilities";
+import { applyFieldTypesFromContext, ContextuallyTypedNodeData } from "./utilities";
 
 /**
  * A common context of a "forest" of EditableTrees.
@@ -37,21 +37,34 @@ import { applyFieldTypesFromContext, ContextuallyTypedNodeData, isArrayLike } fr
  */
 export interface EditableTreeContext {
     /**
-     * Gets a Javascript Proxy providing a JavaScript object like API for interacting with the tree.
+     * Gets or sets the root field of the tree.
      *
-     * Use built-in JS functions to get more information about the data stored e.g.
-     * ```
-     * for (const key of Object.keys(context.root)) { ... }
-     * // OR
-     * if ("foo" in data) { ... }
-     * context.free();
-     * ```
+     * Its setter works exactly the same way as {@link EditableTreeContext.unwrappedRoot}.
      */
-    root: EditableField;
+    get root(): EditableField;
+
+    set root(data: ContextuallyTypedNodeData | undefined);
 
     /**
-     * Same as `root`, but with unwrapped fields.
-     * See {@link UnwrappedEditableField} for what is unwrapped.
+     * Gets or sets the root field of the tree.
+     *
+     * When using its getter, see {@link UnwrappedEditableField} for what is unwrapped.
+     *
+     * When using its setter, the input data has to follow the root field schema.
+     *
+     * If the input data is `undefined` and the root field is not empty, its nodes will be deleted
+     * if its schema follows the `Optional` or `Forbidden` multiplicity.
+     * Using `undefined` will raise an exception if the field follows any other multiplicity.
+     * Use empty array (`[]`) to delete all nodes of a sequence root.
+     *
+     * If the input data is a {@link ContextuallyTypedNodeData},
+     * the root nodes will be created or replaced depending on if the root is empty.
+     * Possible variants are:
+     * - use array data or an {@link EditableField} if the root is a sequence,
+     * or if it's a non-sequence, but its node schema is defined with a primary field (see `getPrimaryField`);
+     * - use `PrimitiveValue` if the root field is a non-sequence and
+     * its node value schema is `String`, `Number` or `Boolean` (see `ValueSchema`);
+     * - use `ContextuallyTypedNodeDataObject` in all other cases.
      */
     get unwrappedRoot(): UnwrappedEditableField;
 
@@ -172,7 +185,6 @@ export class ProxyContext implements EditableTreeContext {
     }
 
     public set root(value: ContextuallyTypedNodeData | undefined) {
-        assert(isArrayLike(value), "expected array data");
         this.unwrappedRoot = value;
     }
 

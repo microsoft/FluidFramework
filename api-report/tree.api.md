@@ -248,7 +248,8 @@ export interface EditableTreeContext {
     clear(): void;
     free(): void;
     prepareForEdit(): void;
-    root: EditableField;
+    get root(): EditableField;
+    set root(data: ContextuallyTypedNodeData | undefined);
     readonly schema: SchemaDataAndPolicy;
     get unwrappedRoot(): UnwrappedEditableField;
     set unwrappedRoot(data: ContextuallyTypedNodeData | undefined);

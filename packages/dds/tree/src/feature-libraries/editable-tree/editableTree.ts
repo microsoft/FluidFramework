@@ -101,6 +101,18 @@ export const replaceField: unique symbol = Symbol("editable-tree:replaceField()"
  *
  * When iterating, only visits non-empty fields.
  * To discover empty fields, inspect the schema using {@link typeSymbol}.
+ *
+ * The tree can be inspected by means of the built-in JS functions e.g.
+ * ```
+ * const root = context.unwrappedRoot;
+ * for (const key of Reflect.ownKeys(root)) { ... }
+ * // OR
+ * if ("foo" in root) { ... }
+ * ```
+ * where `context` is a common `EditableTreeContext`.
+ *
+ * The tree can be edited either by using its symbol-based "toolbox" (e.g. {@link createField})
+ * or using a simple assignment operator (see `EditableTreeContext.unwrappedRoot` for more details).
  */
 export interface EditableTree extends Iterable<EditableField>, ContextuallyTypedNodeDataObject {
     /**
@@ -155,6 +167,9 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
      * to set the value of the field or, more precisely, of its existing node using the simple assignment operator (`=`)
      * if the field is defined as `optional` or `value`, its node {@link isPrimitive} and the value is a {@link PrimitiveValue}.
      * Concurrently setting the value will follow the "last-write-wins" semantics.
+     *
+     * See `EditableTreeContext.unwrappedRoot` for how to use the simple assignment operator in other cases,
+     * as it works the same way for all children of the tree starting from its root.
      */
     // TODO: update docs for concurrently deleting the field.
     [key: FieldKey]: UnwrappedEditableField;
@@ -830,7 +845,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
         // assert(fieldKind.multiplicity === Multiplicity.Sequence, "The field must be of a sequence kind.");
         if (fieldKind.multiplicity !== Multiplicity.Sequence) {
             assert(
-                this.length === 0 && (!Array.isArray(newContent) || newContent.length === 1),
+                this.length === 0 && (!Array.isArray(newContent) || newContent.length <= 1),
                 0x455 /* A non-sequence field cannot have more than one node. */,
             );
         }
@@ -869,7 +884,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
         // assert(fieldKind.multiplicity === Multiplicity.Sequence, "The field must be of a sequence kind.");
         if (fieldKind.multiplicity !== Multiplicity.Sequence) {
             assert(
-                this.length === 1 && (!Array.isArray(newContent) || newContent.length === 1),
+                this.length === 1 && (!Array.isArray(newContent) || newContent.length <= 1),
                 "A non-sequence field cannot have more than one node.",
             );
         }

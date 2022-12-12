@@ -183,6 +183,9 @@ export function keyIsValidIndex(key: string | number, length: number): boolean {
     return Number.isInteger(index) && 0 <= index && index < length;
 }
 
+/**
+ * A symbol used to define a {@link MarkedArrayLike} interface.
+ */
 export const arrayLikeMarkerSymbol: unique symbol = Symbol("editable-tree:arrayLikeMarker");
 
 /**
