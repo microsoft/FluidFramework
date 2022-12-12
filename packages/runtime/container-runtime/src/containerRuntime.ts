@@ -1820,9 +1820,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
     }
 
-    public orderSequentially(callback: () => void): void {
+    public orderSequentially<T>(callback: () => T): T {
         let checkpoint: IBatchCheckpoint | undefined;
-
+        let result: T;
         if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
             // Note: we are not touching this.pendingAttachBatch here, for two reasons:
             // 1. It would not help, as we flush attach ops as they become available.
@@ -1831,7 +1831,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
         try {
             this._orderSequentiallyCalls++;
-            callback();
+            result = callback();
         } catch (error) {
             if (checkpoint) {
                 // This will throw and close the container if rollback fails
@@ -1863,6 +1863,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.flushMode === FlushMode.Immediate && this._orderSequentiallyCalls === 0) {
             this.flush();
         }
+        return result;
     }
 
     public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
