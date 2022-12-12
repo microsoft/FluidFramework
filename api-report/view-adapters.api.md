@@ -15,12 +15,12 @@ export class HTMLViewAdapter implements IFluidHTMLView {
     constructor(view: FluidObject);
     static canAdapt(view: FluidObject): boolean;
     // (undocumented)
-    get IFluidHTMLView(): this;
+    get IFluidHTMLView(): HTMLViewAdapter;
     // (undocumented)
     remove(): void;
     // (undocumented)
     render(elm: HTMLElement, options?: IFluidHTMLOptions): void;
-    }
+}
 
 // @public (undocumented)
 export interface IReactViewAdapterProps {
@@ -33,20 +33,19 @@ export class MountableView implements IFluidMountableView {
     // (undocumented)
     static canMount(view: FluidObject): boolean;
     // (undocumented)
-    get IFluidMountableView(): this;
+    get IFluidMountableView(): MountableView;
     // (undocumented)
     mount(container: HTMLElement): void;
     // (undocumented)
     unmount(): void;
-    }
+}
 
 // @public
 export class ReactViewAdapter extends React_2.Component<IReactViewAdapterProps> {
     constructor(props: IReactViewAdapterProps);
     static canAdapt(view: FluidObject): boolean;
     // (undocumented)
-    render(): JSX.Element;
+    render(): React_2.ReactElement;
 }
-
 
 ```
