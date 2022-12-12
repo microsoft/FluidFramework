@@ -51,6 +51,8 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     get disposed(): boolean;
     _getInternalContainer(): IContainer;
     get initialObjects(): LoadableObjectRecord;
+    // @internal
+    readonly INTERNAL_CONTAINER_DO_NOT_USE?: () => IContainer;
     get isDirty(): boolean;
 }
 

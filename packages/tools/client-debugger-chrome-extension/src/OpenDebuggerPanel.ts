@@ -4,6 +4,7 @@
  */
 import { renderClientDebuggerView } from "@fluid-tools/client-debug-view";
 
+import { debuggerPanelId } from "./Constants";
 import { isDebuggerPanelOpen } from "./Utilities";
 
 /**
@@ -18,5 +19,9 @@ export async function openDebuggerPanel(): Promise<boolean> {
 		return false;
 	}
 
-	return renderClientDebuggerView(document.body);
+	const debugPanel = document.createElement("div");
+	debugPanel.id = debuggerPanelId;
+	document.body.append(debugPanel);
+
+	return renderClientDebuggerView(debugPanel);
 }

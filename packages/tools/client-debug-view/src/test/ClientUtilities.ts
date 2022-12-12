@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import { ContainerSchema, FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
 import {
 	ITinyliciousAudience,
 	TinyliciousClient,
@@ -127,15 +127,12 @@ export async function loadExistingFluidContainer(
 
 /**
  * Initializes the Fluid Client debugger using the current session Container info.
- *
- * @privateRemarks TODO: this should live in a fluid-static / azure-client debugger adapter library,
- * not here.
  */
 export function initializeFluidClientDebugger(containerInfo: ContainerInfo): void {
 	initializeFluidClientDebuggerBase({
 		containerId: containerInfo.containerId,
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		container: containerInfo.container._getInternalContainer!(),
+		container: (containerInfo.container as FluidContainer).INTERNAL_CONTAINER_DO_NOT_USE!(),
 		containerData: containerInfo.container.initialObjects,
 	});
 }

@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DefaultPalette, Stack, StackItem, Icon, IStackItemStyles } from "@fluentui/react";
+import { DefaultPalette, IStackItemStyles, Icon, Stack, StackItem } from "@fluentui/react";
 import React from "react";
 
 import { IClient } from "@fluidframework/protocol-definitions";
@@ -167,40 +167,49 @@ function HistoryView(props: HistoryViewProps): React.ReactElement {
 		const changeTimeStamp = new Date(changeEntry.timestamp);
 		const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
 
-        const accordianBackgroundColor: IStackItemStyles = {
-            root: {
-                background: changeEntry.changeKind === "added" ? "#90ee90" : "#FF7377",
-                borderStyle: "solid",
-                borderWidth: 1,
-                borderColor: DefaultPalette.neutralTertiary,
-                padding: 3
-            }
-        }
+		const accordianBackgroundColor: IStackItemStyles = {
+			root: {
+				background: changeEntry.changeKind === "added" ? "#90ee90" : "#FF7377",
+				borderStyle: "solid",
+				borderWidth: 1,
+				borderColor: DefaultPalette.neutralTertiary,
+				padding: 3,
+			},
+		};
 
-        const iconStyle: IStackItemStyles = {
-            root: {
-                padding: 10
-            }
-        }
+		const iconStyle: IStackItemStyles = {
+			root: {
+				padding: 10,
+			},
+		};
 
 		historyViews.push(
-            <div>
-                <Stack horizontal={true} styles={accordianBackgroundColor}>
-                    <StackItem styles={iconStyle}>
-                        <Icon iconName={changeEntry.changeKind === "added" ? "AddFriend" : "UserRemove"} title={changeEntry.changeKind === "added" ? "Member Joined" : "Member Left"}/>
-                    </StackItem>
-                    <StackItem>
-                        <div key={`${changeEntry.clientId}-${changeEntry.changeKind}`}>
-                            <b>Client ID: </b>
-                            {changeEntry.clientId}
-                            <br />
-                            <b>Time: </b>{" "}
-                            {wasChangeToday ? changeTimeStamp.toTimeString() : changeTimeStamp.toDateString()}
-                            <br />
-                        </div>
-                    </StackItem>
-                </Stack>
-            </div>
+			<div>
+				<Stack horizontal={true} styles={accordianBackgroundColor}>
+					<StackItem styles={iconStyle}>
+						<Icon
+							iconName={
+								changeEntry.changeKind === "added" ? "AddFriend" : "UserRemove"
+							}
+							title={
+								changeEntry.changeKind === "added" ? "Member Joined" : "Member Left"
+							}
+						/>
+					</StackItem>
+					<StackItem>
+						<div key={`${changeEntry.clientId}-${changeEntry.changeKind}`}>
+							<b>Client ID: </b>
+							{changeEntry.clientId}
+							<br />
+							<b>Time: </b>{" "}
+							{wasChangeToday
+								? changeTimeStamp.toTimeString()
+								: changeTimeStamp.toDateString()}
+							<br />
+						</div>
+					</StackItem>
+				</Stack>
+			</div>,
 		);
 	}
 
@@ -209,15 +218,11 @@ function HistoryView(props: HistoryViewProps): React.ReactElement {
 			styles={{
 				root: {
 					overflowY: "auto",
-                    height: "300px"
+					height: "300px",
 				},
 			}}
 		>
-			<div style={{ overflowY: "scroll" }}>
-				{historyViews}
-			</div>
+			<div style={{ overflowY: "scroll" }}>{historyViews}</div>
 		</Stack>
 	);
 }
-
-

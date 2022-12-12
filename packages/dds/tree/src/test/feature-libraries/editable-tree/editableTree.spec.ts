@@ -545,7 +545,7 @@ describe("editable-tree: read-only", () => {
         const context = getEditableTreeContext(forest);
         assert.throws(
             () => (context.unwrappedRoot as EditableTree)["child" as FieldKey],
-            (e) => validateAssertionError(e, "undefined` values not allowed for primitive field"),
+            (e) => validateAssertionError(e, "`undefined` values not allowed for primitive fields"),
             "Expected exception was not thrown",
         );
         context.free();

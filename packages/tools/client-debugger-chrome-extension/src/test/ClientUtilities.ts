@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import { ContainerSchema, FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
 import {
 	ITinyliciousAudience,
 	TinyliciousClient,
@@ -117,7 +117,7 @@ export function initializeFluidClientDebugger(containerInfo: ContainerInfo): voi
 	/* eslint-disable @typescript-eslint/no-non-null-assertion */
 	initializeFluidClientDebuggerBase({
 		containerId: containerInfo.containerId,
-		container: containerInfo.container._getInternalContainer!(),
+		container: (containerInfo.container as FluidContainer).INTERNAL_CONTAINER_DO_NOT_USE!(),
 		containerData: containerInfo.container.initialObjects,
 	});
 	/* eslint-enable @typescript-eslint/no-non-null-assertion */

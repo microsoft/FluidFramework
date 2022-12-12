@@ -5,7 +5,7 @@
 import { expect } from "chai";
 
 import { SharedCounter } from "@fluidframework/counter";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import { ContainerSchema, FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
 import {
 	TinyliciousClient,
 	TinyliciousContainerServices,
@@ -72,7 +72,7 @@ describe("ClientDebugger unit tests", () => {
 
 		_debuggerProps = {
 			containerId,
-			container: tinyliciousContainer._getInternalContainer!(),
+			container: (tinyliciousContainer as FluidContainer).INTERNAL_CONTAINER_DO_NOT_USE!(),
 			containerData: tinyliciousContainer.initialObjects,
 		};
 	});
