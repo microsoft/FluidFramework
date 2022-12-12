@@ -8,6 +8,7 @@ import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
+import { SharedMap } from "@fluidframework/map";
 
 import { externalDataSource, parseStringData } from "../externalData";
 import type { ITask, ITaskEvents, ITaskList } from "../modelInterfaces";
@@ -66,55 +67,66 @@ export class TaskList extends DataObject implements ITaskList {
      * collection pattern -- see the contact-collection example for more details on this pattern.
      */
     private readonly tasks = new Map<string, Task>();
+    /*
+     * savedData stores data retrieved from the external source.
+     */
+    private _savedData: SharedMap | undefined;
+    /*
+     * draftData is used for storage of the draft Fluid data. It's used with savedData
+     * to resolve & synchronize the data.
+     * TODO: Update^ when the sync mechanism is appropriately defined.
+     */
+    private _draftData: SharedMap | undefined;
+
+    private get savedData(): SharedMap {
+        if (this._savedData === undefined) {
+            throw new Error("The savedData SharedMap has not yet been initialized.");
+        }
+        return this._savedData;
+    }
+
+    private get draftData(): SharedMap {
+        if (this._draftData === undefined) {
+            throw new Error("The draftData SharedMap has not yet been initialized.");
+        }
+        return this._draftData;
+    }
 
     public readonly addTask = (id: string, name: string, priority: number): void => {
+
         if (this.tasks.get(id) !== undefined) {
             throw new Error("Task already exists");
         }
-        const nameString = SharedString.create(this.runtime);
-        nameString.insertText(0, name);
-        const priorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
-        priorityCell.set(priority);
+        const savedNameString = SharedString.create(this.runtime);
+        const draftNameString = SharedString.create(this.runtime);
+
+        // TODO: addTask will be called for tasks added in Fluid. Should only write to the draftMap directly here
+        // savedMAp will get updated when the data syncs back
+        savedNameString.insertText(0, name);
+        draftNameString.insertText(0, name);
+
+        const savedPriorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
+        const draftPriorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
+
+        savedPriorityCell.set(priority);
+        draftPriorityCell.set(priority);
 
         // To add a task, we update the root SharedDirectory.  This way the change is propagated to all collaborators
         // and persisted.  In turn, this will trigger the "valueChanged" event and handleTaskAdded which will update
         // the this.tasks collection.
-        const data: PersistedTask = {
+        const savedDataPT: PersistedTask = {
             id,
-            name: nameString.handle as IFluidHandle<SharedString>,
-            priority: priorityCell.handle as IFluidHandle<ISharedCell<number>>,
+            name: savedNameString.handle as IFluidHandle<SharedString>,
+            priority: savedPriorityCell.handle as IFluidHandle<ISharedCell<number>>,
         };
-        this.root.set(id, data);
+        this.savedData.set(id, savedDataPT);
 
-        // TODO: Ultimately we want to retain the data we retrieved from the external source separate from the draft
-        // Fluid data.  Maybe we do this by just adding it to the objects we're already storing in the root?
-        // this.root.set(
-        //     id,
-        //     {
-        //         id,
-        //         draftName: nameString.handle,
-        //         savedName: name,
-        //         draftPriority: priorityCell.handle,
-        //         savedPriority: priority,
-        //     },
-        // );
-        // Or maybe we create a separate map for it.  I probably prefer this direction.
-        // this.savedData.set(
-        //     id,
-        //     {
-        //         id,
-        //         name,
-        //         priority,
-        //     },
-        // );
-        // this.draftData.set(
-        //     id,
-        //     {
-        //         id,
-        //         name: nameString.handle,
-        //         priority: priorityCell.handle,
-        //     },
-        // );
+        const draftDataPT: PersistedTask = {
+            id,
+            name: draftNameString.handle as IFluidHandle<SharedString>,
+            priority: draftPriorityCell.handle as IFluidHandle<ISharedCell<number>>,
+        };
+        this.draftData.set(id, draftDataPT);
     };
 
     public readonly deleteTask = (id: string): void => {
@@ -200,7 +212,7 @@ export class TaskList extends DataObject implements ITaskList {
         // as what we do for summarization).
         const tasks = this.getTasks();
         const taskStrings = tasks.map((task) => {
-            return `${ task.id }:${ task.name.getText() }:${ task.priority.toString() }`;
+            return `${task.id}:${task.name.getText()}:${task.priority.toString()}`;
         });
         const stringDataToWrite = `${taskStrings.join("\n")}`;
 
@@ -209,6 +221,10 @@ export class TaskList extends DataObject implements ITaskList {
     };
 
     protected async initializingFirstTime(): Promise<void> {
+        this._draftData = SharedMap.create(this.runtime);
+        this._savedData = SharedMap.create(this.runtime);
+        this.root.set("draftData", this._draftData.handle);
+        this.root.set("savedData", this._savedData.handle);
         // TODO: Probably don't need to await this once the sync'ing flow is solid, we can just trust it to sync
         // at some point in the future.
         await this.importExternalData();
@@ -219,6 +235,18 @@ export class TaskList extends DataObject implements ITaskList {
      * DataObject, by registering an event listener for changes to the task list.
      */
     protected async hasInitialized(): Promise<void> {
+        const saved = this.root.get<IFluidHandle<SharedMap>>("savedData");
+        if (saved === undefined) {
+            throw new Error("savedData was not initialized");
+        }
+        this._savedData = await saved.get();
+
+        const draft = this.root.get<IFluidHandle<SharedMap>>("draftData");
+        if (draft === undefined) {
+            throw new Error("draftData was not initialized");
+        }
+        this._draftData = await draft.get();
+
         this.root.on("valueChanged", (changed) => {
             if (changed.previousValue === undefined) {
                 // Must be from adding a new task
@@ -235,8 +263,8 @@ export class TaskList extends DataObject implements ITaskList {
             }
         });
 
-        for (const [id, taskData] of this.root) {
-            const typedTaskData = taskData as PersistedTask;
+        for (const [id, task] of this.draftData) {
+            const typedTaskData = task as PersistedTask;
             const [nameSharedString, prioritySharedCell] = await Promise.all([
                 typedTaskData.name.get(),
                 typedTaskData.priority.get(),
@@ -257,6 +285,7 @@ export const TaskListInstantiationFactory = new DataObjectFactory<TaskList>(
     [
         SharedCell.getFactory(),
         SharedString.getFactory(),
+        SharedMap.getFactory(),
     ],
     {},
 );
