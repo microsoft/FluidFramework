@@ -96,118 +96,26 @@ function composeMarkLists<TNodeChange>(
     moveEffects: MoveEffectTable<TNodeChange>,
 ): MarkList<TNodeChange> {
     const factory = new MarkListFactory<TNodeChange>();
-    const baseIter = new StackyIterator(baseMarkList);
-    const newIter = new StackyIterator(newMarkList);
-    for (let newMark of newIter) {
-        let baseMark: Mark<TNodeChange> | undefined = baseIter.pop();
-        if (baseMark === undefined) {
-            // We have reached a region of the field that the base change does not affect.
-            // We therefore adopt the new mark as is.
+    const queue = new ComposeQueue(baseMarkList, newRev, newMarkList, genId, moveEffects);
+    while (!queue.isEmpty()) {
+        const { baseMark, newMark, areInverses } = queue.pop();
+        if (areInverses) {
+            continue;
+        }
+        if (newMark === undefined) {
+            assert(baseMark !== undefined, "Non-empty queue should not return two undefined marks");
+            factory.push(baseMark);
+        } else if (baseMark === undefined) {
+            assert(newMark !== undefined, "Non-empty queue should not return two undefined marks");
             factory.push(composeMark(newMark, newRev, composeChild, genId, moveEffects));
-        } else if (isAttach(newMark)) {
-            if (
-                isReattach(newMark) &&
-                isDetachMark(baseMark) &&
-                newRev !== undefined &&
-                baseMark.revision === newRev
-            ) {
-                // We assume that baseMark and newMark having the same revision means that they are inverses of each other,
-                // so neither has an effect in the composition.
-                assert(
-                    getInputLength(baseMark) === getOutputLength(newMark),
-                    0x4ac /* Inverse marks should be the same length */,
-                );
-            } else {
-                factory.pushContent(composeMark(newMark, newRev, composeChild, genId, moveEffects));
-                baseIter.push(baseMark);
-            }
-        } else if (isDetachMark(baseMark)) {
-            factory.pushContent(baseMark);
-            newIter.push(newMark);
         } else {
-            // If we've reached this branch then `baseMark` and `newMark` start at the same location
-            // in the document field at the revision after the base changes and before the new changes.
-            // Despite that, it's not necessarily true that they affect the same range in that document
-            // field because they may be of different lengths.
-            // We perform any necessary splitting in order to end up with a pair of marks that do have the same length.
-
-            // TODO: Handle MMoveOut and MMoveIn
-            if (
-                isObjMark(newMark) &&
-                (newMark.type === "MoveOut" || newMark.type === "ReturnFrom")
-            ) {
-                const newId = getUniqueMoveId(newMark, newRev, genId, moveEffects);
-                if (newId !== newMark.id) {
-                    newMark = clone(newMark);
-                    newMark.id = newId;
-                    moveEffects.validatedMarks.add(newMark);
-                }
-                const effect = moveEffects.srcEffects.get(newId);
-                if (effect !== undefined) {
-                    const splitMarks = splitMoveOut(newMark, effect);
-                    for (const mark of splitMarks) {
-                        moveEffects.validatedMarks.add(mark);
-                    }
-                    newMark = splitMarks[0];
-                    for (let i = splitMarks.length - 1; i > 0; i--) {
-                        newIter.push(splitMarks[i]);
-                    }
-                }
-            }
-
-            if (
-                isObjMark(baseMark) &&
-                (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")
-            ) {
-                const effect = moveEffects.dstEffects.get(baseMark.id);
-                if (effect !== undefined) {
-                    const splitMarks = splitMoveIn(baseMark, effect);
-                    baseMark = splitMarks[0];
-                    for (let i = splitMarks.length - 1; i > 0; i--) {
-                        newIter.push(splitMarks[i]);
-                    }
-                }
-            }
-
-            const newMarkLength = getInputLength(newMark);
-            const baseMarkLength = getOutputLength(baseMark);
-            if (newMarkLength < baseMarkLength) {
-                let nextBaseMark;
-                [baseMark, nextBaseMark] = splitMarkOnOutput(
-                    baseMark,
-                    newMarkLength,
-                    genId,
-                    moveEffects,
-                );
-                baseIter.push(nextBaseMark);
-            } else if (newMarkLength > baseMarkLength) {
-                if (
-                    isObjMark(newMark) &&
-                    (newMark.type === "MoveOut" ||
-                        newMark.type === "MMoveOut" ||
-                        newMark.type === "ReturnFrom")
-                ) {
-                    const newId = getUniqueMoveId(newMark, newRev, genId, moveEffects);
-                    if (newId !== newMark.id) {
-                        newMark = clone(newMark);
-                        newMark.id = newId;
-                    }
-                }
-                let nextNewMark;
-                [newMark, nextNewMark] = splitMarkOnInput(
-                    newMark,
-                    baseMarkLength,
-                    genId,
-                    moveEffects,
-                );
-
-                moveEffects.validatedMarks.add(newMark);
-                moveEffects.validatedMarks.add(nextNewMark);
-                newIter.push(nextNewMark);
-            }
             // Past this point, we are guaranteed that `newMark` and `baseMark` have the same length and
             // start at the same location in the revision after the base changes.
             // They therefore refer to the same range for that revision.
+            assert(
+                !isAttach(newMark),
+                "A new attach cannot be at the same position as a base mark",
+            );
             const composedMark = composeMarks(
                 baseMark,
                 newRev,
@@ -218,10 +126,6 @@ function composeMarkLists<TNodeChange>(
             );
             factory.push(composedMark);
         }
-    }
-    // Push the remaining base marks if any
-    for (const baseMark of baseIter) {
-        factory.push(baseMark);
     }
     return factory.list;
 }
@@ -679,4 +583,157 @@ function splitModifyMoveOut<T>(
             id: parts[0].id,
         },
     ];
+}
+
+class ComposeQueue<T> {
+    private readonly baseMarks: StackyIterator<Mark<T>>;
+    private readonly newMarks: StackyIterator<Mark<T>>;
+
+    public constructor(
+        baseMarks: Changeset<T>,
+        private readonly newRevision: RevisionTag | undefined,
+        newMarks: Changeset<T>,
+        private readonly genId: IdAllocator,
+        private readonly moveEffects: MoveEffectTable<T>,
+    ) {
+        this.baseMarks = new StackyIterator(baseMarks);
+        this.newMarks = new StackyIterator(newMarks);
+    }
+
+    public isEmpty(): boolean {
+        return this.baseMarks.done && this.newMarks.done;
+    }
+
+    public pop(): ComposeMarks<T> {
+        let baseMark: Mark<T> | undefined = this.baseMarks.peek();
+        let newMark: Mark<T> | undefined = this.newMarks.peek();
+        if (baseMark === undefined || newMark === undefined) {
+            return { baseMark: this.baseMarks.pop(), newMark: this.newMarks.pop() };
+        } else if (isAttach(newMark)) {
+            const newRev = newMark.revision ?? this.newRevision;
+            if (
+                isReattach(newMark) &&
+                isDetachMark(baseMark) &&
+                newRev !== undefined &&
+                baseMark.revision === newRev
+            ) {
+                // We assume that baseMark and newMark having the same revision means that they are inverses of each other,
+                // so neither has an effect in the composition.
+                assert(
+                    getInputLength(baseMark) === getOutputLength(newMark),
+                    0x4ac /* Inverse marks should be the same length */,
+                );
+                return {
+                    baseMark: this.baseMarks.pop(),
+                    newMark: this.newMarks.pop(),
+                    areInverses: true,
+                };
+            } else {
+                return { newMark: this.newMarks.pop() };
+            }
+        } else if (isDetachMark(baseMark)) {
+            return { baseMark: this.baseMarks.pop() };
+        } else {
+            // If we've reached this branch then `baseMark` and `newMark` start at the same location
+            // in the document field at the revision after the base changes and before the new changes.
+            // Despite that, it's not necessarily true that they affect the same range in that document
+            // field because they may be of different lengths.
+            // We perform any necessary splitting in order to end up with a pair of marks that do have the same length.
+            this.newMarks.pop();
+            this.baseMarks.pop();
+
+            if (
+                isObjMark(newMark) &&
+                (newMark.type === "MoveOut" || newMark.type === "ReturnFrom")
+            ) {
+                const newId = getUniqueMoveId(
+                    newMark,
+                    this.newRevision,
+                    this.genId,
+                    this.moveEffects,
+                );
+                if (newId !== newMark.id) {
+                    newMark = clone(newMark);
+                    newMark.id = newId;
+                    this.moveEffects.validatedMarks.add(newMark);
+                }
+                const effect = this.moveEffects.srcEffects.get(newId);
+                if (effect !== undefined) {
+                    const splitMarks = splitMoveOut(newMark, effect);
+                    for (const mark of splitMarks) {
+                        this.moveEffects.validatedMarks.add(mark);
+                    }
+                    newMark = splitMarks[0];
+                    for (let i = splitMarks.length - 1; i > 0; i--) {
+                        this.newMarks.push(splitMarks[i]);
+                    }
+                }
+            }
+
+            if (
+                isObjMark(baseMark) &&
+                (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")
+            ) {
+                const effect = this.moveEffects.dstEffects.get(baseMark.id);
+                if (effect !== undefined) {
+                    const splitMarks = splitMoveIn(baseMark, effect);
+                    baseMark = splitMarks[0];
+                    for (let i = splitMarks.length - 1; i > 0; i--) {
+                        this.baseMarks.push(splitMarks[i]);
+                    }
+                }
+            }
+
+            const newMarkLength = getInputLength(newMark);
+            const baseMarkLength = getOutputLength(baseMark);
+            if (newMarkLength < baseMarkLength) {
+                let nextBaseMark;
+                [baseMark, nextBaseMark] = splitMarkOnOutput(
+                    baseMark,
+                    newMarkLength,
+                    this.genId,
+                    this.moveEffects,
+                );
+                this.baseMarks.push(nextBaseMark);
+            } else if (newMarkLength > baseMarkLength) {
+                if (
+                    isObjMark(newMark) &&
+                    (newMark.type === "MoveOut" ||
+                        newMark.type === "MMoveOut" ||
+                        newMark.type === "ReturnFrom")
+                ) {
+                    const newId = getUniqueMoveId(
+                        newMark,
+                        this.newRevision,
+                        this.genId,
+                        this.moveEffects,
+                    );
+                    if (newId !== newMark.id) {
+                        newMark = clone(newMark);
+                        newMark.id = newId;
+                    }
+                }
+                let nextNewMark;
+                [newMark, nextNewMark] = splitMarkOnInput(
+                    newMark,
+                    baseMarkLength,
+                    this.genId,
+                    this.moveEffects,
+                );
+                this.newMarks.push(nextNewMark);
+                this.moveEffects.validatedMarks.add(newMark);
+                this.moveEffects.validatedMarks.add(nextNewMark);
+            }
+            // Past this point, we are guaranteed that `newMark` and `baseMark` have the same length and
+            // start at the same location in the revision after the base changes.
+            // They therefore refer to the same range for that revision.
+            return { baseMark, newMark };
+        }
+    }
+}
+
+interface ComposeMarks<T> {
+    baseMark?: Mark<T>;
+    newMark?: Mark<T>;
+    areInverses?: boolean;
 }
