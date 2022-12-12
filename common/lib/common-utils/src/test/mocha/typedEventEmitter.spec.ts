@@ -96,7 +96,7 @@ describe("TypedEventEmitter", () => {
         ]);
     });
 
-    it("emit not supported for ivalid event type", () => {
+    it("emit not supported for invalid event type", () => {
         const tee = new TypedEventEmitter<IInvalidEvents>();
 
         // @ts-expect-error any invalid signatures invalidate the type altogether (even though noArgs is on there)

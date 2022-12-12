@@ -75,20 +75,21 @@ export type EventArgsMapping<TEvent> =
         ? SingleEventArgsMapping<E0, A0>
         : SingleEventArgsMapping<string, any[]>;
 
-export type SingleEventArgsMapping<TEventKey, TListenerArgs extends any[]> = TEventKey extends string
+export type SingleEventArgsMapping<
+    TEventKey,
+    TListenerArgs extends any[],
+> = TEventKey extends string
     ? {
           [TK in TEventKey]: TListenerArgs;
       }
     : never;
 
 export type TypedEmit<TThis, TEvent> = keyof EventArgsMapping<TEvent> extends string
-? <
-    TEventKey extends keyof EventArgsMapping<TEvent>,
->(
-    event: TEventKey,
-    ...args: ReplaceIEventThisPlaceHolder<EventArgsMapping<TEvent>[TEventKey], TThis>
-) => boolean
-: never;
+    ? <TEventKey extends keyof EventArgsMapping<TEvent>>(
+          event: TEventKey,
+          ...args: ReplaceIEventThisPlaceHolder<EventArgsMapping<TEvent>[TEventKey], TThis>
+      ) => boolean
+    : never;
 
 /**
  * Event Emitter helper class the supports emitting typed events

@@ -49,6 +49,6 @@ export {
     TypedEventTransform,
     EventArgsMapping,
     SingleEventArgsMapping,
-    TypedEmit
+    TypedEmit,
 } from "./typedEventEmitter";
 export { unreachableCase } from "./unreachable";
