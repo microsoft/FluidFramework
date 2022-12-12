@@ -324,7 +324,6 @@ export function configureWebSocketServices(
             if (!version) {
                 throw new NetworkError(
                     400,
-                    // eslint-disable-next-line max-len
                     `Unsupported client protocol. Server: ${protocolVersions}. Client: ${JSON.stringify(connectVersions)}`,
                 );
             }
@@ -396,7 +395,6 @@ export function configureWebSocketServices(
                 connection.once("error", (error) => {
                     const messageMetaData = getMessageMetadata(connection.documentId, connection.tenantId);
 
-                    // eslint-disable-next-line max-len
                     logger.error(`Disconnecting socket on connection error: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
                     Lumberjack.error(
                         `Disconnecting socket on connection error`,
@@ -409,7 +407,6 @@ export function configureWebSocketServices(
 
                 connection.connect()
                     .catch(async (err) => {
-                        // eslint-disable-next-line max-len
                         const errMsg = `Failed to connect to the orderer connection. Error: ${safeStringify(err, undefined, 2)}`;
                         connectDocumentOrdererConnectionMetric.error("Failed to establish orderer connection", err);
                         return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);

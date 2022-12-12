@@ -119,7 +119,6 @@ export class TestProducer implements IProducer {
         return true;
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
     public async send(messages: object[], key: string): Promise<any> {
         for (const message of messages) {
             this.kafka.addMessage(message, key);

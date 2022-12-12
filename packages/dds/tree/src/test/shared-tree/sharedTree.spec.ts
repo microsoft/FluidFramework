@@ -8,8 +8,11 @@ import {
     singleTextCursor,
     getSchemaString,
     jsonableTreeFromCursor,
+    namedTreeSchema,
 } from "../../feature-libraries";
 import { brand } from "../../util";
+import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
+import { ISharedTree } from "../../shared-tree";
 import {
     compareUpPaths,
     FieldKey,
@@ -21,13 +24,13 @@ import {
     TreeValue,
     UpPath,
     Value,
-} from "../../tree";
-import { moveToDetachedField } from "../../forest";
-import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
-import { ISharedTree } from "../../shared-tree";
-import { TransactionResult } from "../../checkout";
-import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData } from "../../schema-stored";
-import { SharedTreeCore } from "../../shared-tree-core";
+    moveToDetachedField,
+    TransactionResult,
+    fieldSchema,
+    GlobalFieldKey,
+    SchemaData,
+    SharedTreeCore,
+} from "../../core";
 
 const fooKey: FieldKey = brand("foo");
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");

@@ -5,6 +5,8 @@
 
 import { strict as assert } from "assert";
 import { v4, v5 } from "uuid";
+import { MockLogger } from "@fluidframework/telemetry-utils";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { take } from "@fluid-internal/stochastic-test-utils";
 import {
     IdCompressor,
@@ -48,15 +50,15 @@ describe("IdCompressor", () => {
         const compressor = createCompressor(Client.Client1, 1);
         assert.throws(
             () => (compressor.clusterCapacity = -1),
-            Error("Clusters must have a positive capacity"),
+            (e) => validateAssertionError(e, "Clusters must have a positive capacity"),
         );
         assert.throws(
             () => (compressor.clusterCapacity = 0),
-            Error("Clusters must have a positive capacity"),
+            (e) => validateAssertionError(e, "Clusters must have a positive capacity"),
         );
         assert.throws(
             () => (compressor.clusterCapacity = IdCompressor.maxClusterSize + 1),
-            Error("Clusters must not exceed max cluster size"),
+            (e) => validateAssertionError(e, "Clusters must not exceed max cluster size"),
         );
     });
 
@@ -110,11 +112,11 @@ describe("IdCompressor", () => {
             const compressor = createCompressor(Client.Client1);
             assert.throws(
                 () => compressor.decompress(-1 as LocalCompressedId),
-                Error(errorMessage),
+                (e) => validateAssertionError(e, errorMessage),
             );
             assert.throws(
                 () => compressor.decompress(compressor.reservedIdCount as FinalCompressedId),
-                Error(errorMessage),
+                (e) => validateAssertionError(e, errorMessage),
             );
         });
 
@@ -420,7 +422,7 @@ describe("IdCompressor", () => {
             rangeCompressor.finalizeCreationRange(batchRange);
             assert.throws(
                 () => rangeCompressor.finalizeCreationRange(batchRange),
-                Error("Ranges finalized out of order."),
+                (e) => validateAssertionError(e, "Ranges finalized out of order."),
             );
 
             // Make a new compressor, as the first one will be left in a bad state
@@ -431,7 +433,7 @@ describe("IdCompressor", () => {
             explicitCompressor.finalizeCreationRange(explicitRange);
             assert.throws(
                 () => explicitCompressor.finalizeCreationRange(explicitRange),
-                Error("Ranges finalized out of order."),
+                (e) => validateAssertionError(e, "Ranges finalized out of order."),
             );
         });
 
@@ -443,7 +445,7 @@ describe("IdCompressor", () => {
             const secondRange = compressor.takeNextCreationRange();
             assert.throws(
                 () => compressor.finalizeCreationRange(secondRange),
-                Error("Ranges finalized out of order."),
+                (e) => validateAssertionError(e, "Ranges finalized out of order."),
             );
         });
 
@@ -465,9 +467,11 @@ describe("IdCompressor", () => {
             };
             assert.throws(
                 () => compressor1.finalizeCreationRange(largeRange2),
-                Error(
-                    "The number of allocated final IDs must not exceed the JS maximum safe integer.",
-                ),
+                (e) =>
+                    validateAssertionError(
+                        e,
+                        "The number of allocated final IDs must not exceed the JS maximum safe integer.",
+                    ),
             );
         });
     });
@@ -574,10 +578,13 @@ describe("IdCompressor", () => {
                 assert.equal(finalIdForReserved, reservedId);
             }
             const outOfBoundsError = "Reserved Id index out of bounds";
-            assert.throws(() => compressor.getReservedId(-1), Error(outOfBoundsError));
+            assert.throws(
+                () => compressor.getReservedId(-1),
+                (e) => validateAssertionError(e, outOfBoundsError),
+            );
             assert.throws(
                 () => compressor.getReservedId(compressor.reservedIdCount),
-                Error(outOfBoundsError),
+                (e) => validateAssertionError(e, outOfBoundsError),
             );
         });
 
@@ -684,7 +691,11 @@ describe("IdCompressor", () => {
             const normalized = compressor1.normalizeToOpSpace(compressor1.generateCompressedId());
             assert.throws(
                 () => compressor2.normalizeToSessionSpace(normalized, compressor1.localSessionId),
-                Error("No IDs have ever been finalized by the supplied session."),
+                (e) =>
+                    validateAssertionError(
+                        e,
+                        "No IDs have ever been finalized by the supplied session.",
+                    ),
             );
         });
 
@@ -807,7 +818,11 @@ describe("IdCompressor", () => {
                 network.allocateAndSendIds(Client.Client1, 1); // new cluster
                 assert.throws(
                     () => network.deliverOperations(Client.Client1),
-                    Error(`Override '${nextUuid}' collides with another allocated UUID.`),
+                    (e) =>
+                        validateAssertionError(
+                            e,
+                            `Override '${nextUuid}' collides with another allocated UUID.`,
+                        ),
                 );
             },
         );
@@ -824,7 +839,11 @@ describe("IdCompressor", () => {
             network.allocateAndSendIds(Client.Client1, expansion, { 0: nextUuid });
             assert.throws(
                 () => network.deliverOperations(DestinationClient.All),
-                Error(`Override '${nextUuid}' collides with another allocated UUID.`),
+                (e) =>
+                    validateAssertionError(
+                        e,
+                        `Override '${nextUuid}' collides with another allocated UUID.`,
+                    ),
             );
         });
     });
@@ -924,9 +943,11 @@ describe("IdCompressor", () => {
                 const id = opSpaceIds[0];
                 const getSessionNormalizedId = () =>
                     compressor2.normalizeToSessionSpace(id, compressor1.localSessionId);
-                assert.throws(
-                    getSessionNormalizedId,
-                    Error("No IDs have ever been finalized by the supplied session."),
+                assert.throws(getSessionNormalizedId, (e) =>
+                    validateAssertionError(
+                        e,
+                        "No IDs have ever been finalized by the supplied session.",
+                    ),
                 );
                 network.deliverOperations(Client.Client2);
                 assert(isFinalId(getSessionNormalizedId()));
@@ -1170,8 +1191,227 @@ describe("IdCompressor", () => {
             const emptyId = (id + 1) as FinalCompressedId;
             assert.throws(
                 () => network.getCompressor(Client.Client2).decompress(emptyId),
-                Error("Compressed ID was not generated by this compressor"),
+                (e) =>
+                    validateAssertionError(e, "Compressed ID was not generated by this compressor"),
             );
+        });
+
+        describe("Telemetry", () => {
+            it("emits first cluster and new cluster telemetry events", () => {
+                const mockLogger = new MockLogger();
+                const compressor = createCompressor(Client.Client1, 5, mockLogger);
+                const localId1 = compressor.generateCompressedId();
+                assert(isLocalId(localId1));
+                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+
+                mockLogger.assertMatch([
+                    {
+                        eventName: "RuntimeIdCompressor:FirstCluster",
+                        sessionId: "88888888-8888-4888-b088-888888888888",
+                    },
+                    {
+                        eventName: "RuntimeIdCompressor:NewCluster",
+                        sessionId: "88888888-8888-4888-b088-888888888888",
+                        clusterCapacity: 5,
+                        clusterCount: 1,
+                    },
+                    {
+                        eventName: "RuntimeIdCompressor:IdCompressorStatus",
+                        sessionId: "88888888-8888-4888-b088-888888888888",
+                        eagerFinalIdCount: 0,
+                        overridesCount: 0,
+                        localIdCount: 1,
+                    },
+                ]);
+            });
+
+            it("emits new cluster event on second cluster", () => {
+                // Fill the first cluster
+                const mockLogger = new MockLogger();
+                const compressor = createCompressor(Client.Client1, 5, mockLogger);
+                for (let i = 0; i < 5; i++) {
+                    compressor.generateCompressedId();
+                }
+                const range = compressor.takeNextCreationRange();
+                compressor.finalizeCreationRange(range);
+
+                // Create another cluster with a different client so that expansion doesn't happen
+                const mockLogger2 = new MockLogger();
+                const compressor2 = createCompressor(Client.Client2, 5, mockLogger2);
+                compressor2.finalizeCreationRange(range);
+                compressor2.generateCompressedId();
+                const range2 = compressor2.takeNextCreationRange();
+                compressor2.finalizeCreationRange(range2);
+                compressor.finalizeCreationRange(range2);
+                // Make sure we emitted the FirstCluster event
+                mockLogger.assertMatchAny([
+                    {
+                        eventName: "RuntimeIdCompressor:FirstCluster",
+                    },
+                ]);
+                mockLogger.clear();
+
+                // Trigger a new cluster creation and make sure FirstCluster isn't emitted
+                compressor.generateCompressedId();
+                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+                mockLogger.assertMatchAny([
+                    {
+                        eventName: "RuntimeIdCompressor:NewCluster",
+                    },
+                ]);
+                mockLogger.assertMatchNone([
+                    {
+                        eventName: "RuntimeIdCompressor:FirstCluster",
+                    },
+                ]);
+            });
+
+            it("correctly logs telemetry events for eager final id allocations", () => {
+                const mockLogger = new MockLogger();
+                const compressor = createCompressor(Client.Client1, 5, mockLogger);
+                const localId1 = compressor.generateCompressedId();
+                assert(isLocalId(localId1));
+
+                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+                mockLogger.assertMatchAny([
+                    {
+                        eventName: "RuntimeIdCompressor:IdCompressorStatus",
+                        eagerFinalIdCount: 0,
+                        localIdCount: 1,
+                        overridesCount: 0,
+                        sessionId: "88888888-8888-4888-b088-888888888888",
+                    },
+                ]);
+                mockLogger.clear();
+                const finalId1 = compressor.generateCompressedId();
+                const finalId2 = compressor.generateCompressedId();
+                assert(isFinalId(finalId1));
+                assert(isFinalId(finalId2));
+
+                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+                mockLogger.assertMatchAny([
+                    {
+                        eventName: "RuntimeIdCompressor:IdCompressorStatus",
+                        eagerFinalIdCount: 2,
+                        localIdCount: 0,
+                        overridesCount: 0,
+                        sessionId: "88888888-8888-4888-b088-888888888888",
+                    },
+                ]);
+            });
+
+            it("correctly logs telemetry events for expansion case", () => {
+                const mockLogger = new MockLogger();
+                const compressor = createCompressor(Client.Client1, 5, mockLogger);
+                const localId1 = compressor.generateCompressedId();
+                assert(isLocalId(localId1));
+
+                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+                mockLogger.assertMatchAny([
+                    {
+                        eventName: "RuntimeIdCompressor:IdCompressorStatus",
+                        eagerFinalIdCount: 0,
+                        localIdCount: 1,
+                        overridesCount: 0,
+                        sessionId: "88888888-8888-4888-b088-888888888888",
+                    },
+                ]);
+                mockLogger.clear();
+
+                for (let i = 0; i < 4; i++) {
+                    const id = compressor.generateCompressedId();
+                    assert(isFinalId(id));
+                }
+
+                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+                mockLogger.assertMatchAny([
+                    {
+                        eventName: "RuntimeIdCompressor:IdCompressorStatus",
+                        eagerFinalIdCount: 4,
+                        localIdCount: 0,
+                        overridesCount: 0,
+                        sessionId: "88888888-8888-4888-b088-888888888888",
+                    },
+                ]);
+                mockLogger.clear();
+
+                const expansionId1 = compressor.generateCompressedId();
+                const expansionId2 = compressor.generateCompressedId();
+                assert(isLocalId(expansionId1));
+                assert(isLocalId(expansionId2));
+
+                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+                mockLogger.assertMatch([
+                    {
+                        eventName: "RuntimeIdCompressor:ClusterExpansion",
+                        sessionId: "88888888-8888-4888-b088-888888888888",
+                        previousCapacity: 5,
+                        newCapacity: 12,
+                        overflow: 2,
+                    },
+                    {
+                        eventName: "RuntimeIdCompressor:IdCompressorStatus",
+                        eagerFinalIdCount: 2,
+                        localIdCount: 0,
+                        overridesCount: 0,
+                        sessionId: "88888888-8888-4888-b088-888888888888",
+                    },
+                ]);
+            });
+
+            it("emits correct telemetry status with overrides", () => {
+                const mockLogger = new MockLogger();
+                const compressor = createCompressor(Client.Client1, 5, mockLogger);
+                const localId1 = compressor.generateCompressedId();
+                assert(isLocalId(localId1));
+
+                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+                mockLogger.assertMatchAny([
+                    {
+                        eventName: "RuntimeIdCompressor:IdCompressorStatus",
+                        eagerFinalIdCount: 0,
+                        localIdCount: 1,
+                        overridesCount: 0,
+                        sessionId: "88888888-8888-4888-b088-888888888888",
+                    },
+                ]);
+                mockLogger.clear();
+
+                const finalId2 = compressor.generateCompressedId();
+                const overrideId3 = compressor.generateCompressedId("override");
+                assert(isFinalId(finalId2));
+                assert(isLocalId(overrideId3));
+
+                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+                mockLogger.assertMatchAny([
+                    {
+                        eventName: "RuntimeIdCompressor:IdCompressorStatus",
+                        eagerFinalIdCount: 1,
+                        localIdCount: 1,
+                        overridesCount: 1,
+                        sessionId: "88888888-8888-4888-b088-888888888888",
+                    },
+                ]);
+            });
+
+            it("emits telemetry when serialized", () => {
+                const mockLogger = new MockLogger();
+                const compressor = createCompressor(Client.Client1, 5, mockLogger);
+                const localId1 = compressor.generateCompressedId();
+                assert(isLocalId(localId1));
+
+                compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+                compressor.serialize(false);
+
+                mockLogger.assertMatchAny([
+                    {
+                        eventName: "RuntimeIdCompressor:SerializedIdCompressorSize",
+                        size: 137,
+                        clusterCount: 1,
+                        sessionCount: 1,
+                    },
+                ]);
+            });
         });
 
         describe("Eager final ID allocation", () => {
@@ -1362,7 +1602,7 @@ describe("IdCompressor", () => {
                                 serializedWithoutLocalState,
                                 sessionIds.get(Client.Client2),
                             ),
-                        Error("Cannot resume existing session."),
+                        (e) => validateAssertionError(e, "Cannot resume existing session."),
                     );
                 },
             );

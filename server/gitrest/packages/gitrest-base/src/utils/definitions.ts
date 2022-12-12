@@ -34,7 +34,6 @@ export interface IRepositoryManager {
     getRefs(): Promise<git.IRef[]>;
     getRef(ref: string, externalWriterConfig?: IExternalWriterConfig): Promise<git.IRef>;
     createRef(createRefParams: git.ICreateRefParams, externalWriterConfig?: IExternalWriterConfig): Promise<git.IRef>;
-    // eslint-disable-next-line max-len
     patchRef(refId: string, patchRefParams: git.IPatchRefParams, externalWriterConfig?: IExternalWriterConfig): Promise<git.IRef>;
     deleteRef(refId: string): Promise<void>;
     getTag(tagId: string): Promise<git.ITag>;

@@ -48,7 +48,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.1.0",
-    "@fluidframework/eslint-config-fluid": "^1.2.0",
+    "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@rushstack/eslint-config": "^2.6.1",
     "@types/async": "^3.2.9",
     "@types/cors": "^2.8.4",

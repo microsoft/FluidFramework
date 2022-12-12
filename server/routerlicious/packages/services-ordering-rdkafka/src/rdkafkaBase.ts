@@ -131,7 +131,6 @@ export abstract class RdkafkaBase extends EventEmitter {
         this.emit("error", error, errorData);
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
     protected static isObject(value: any): value is object {
         return value !== null && typeof (value) === "object";
     }
