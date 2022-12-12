@@ -154,7 +154,6 @@ describe("SequenceField - Rebaser Axioms", () => {
                         TestChange.compose,
                         TestChange.newIdAllocator(getMaxIdTagged(changes)),
                     );
-                    console.debug(actual);
                     const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta, fakeRepair);
                     assert.deepEqual(delta, []);
                 });

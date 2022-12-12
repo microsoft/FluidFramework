@@ -336,7 +336,6 @@ describe("SequenceField - Compose", () => {
                 ],
             },
         ];
-        console.debug(actual);
         assert.deepEqual(actual, expected);
     });
 
