@@ -51,8 +51,12 @@ describe("TypedEventEmitter", () => {
 
     it("Validate emit typing for valid event type", () => {
         const eventArgsEmitted: any[] = [];
-        const handler = (...args): void => { eventArgsEmitted.push(args); }
-        const tee = new (class SomeClass extends TypedEventEmitter<ISampleEvents>{ someMember: 0 = 0; })();
+        const handler = (...args): void => {
+            eventArgsEmitted.push(args);
+        };
+        const tee = new (class SomeClass extends TypedEventEmitter<ISampleEvents> {
+            someMember: 0 = 0;
+        })();
         const plainTee = new TypedEventEmitter();
 
         tee.on("noArgs", handler);
@@ -86,7 +90,7 @@ describe("TypedEventEmitter", () => {
             ["bogus"],
             ["wrongType", 123],
             [plainTee],
-        ])
+        ]);
     });
 
     it("emit not supported for ivalid event type", () => {
@@ -104,7 +108,7 @@ describe("TypedEventEmitter", () => {
 interface ISampleEvents extends IEvent {
     (event: "noArgs", listener: () => void);
     (event: "twoArgs", listener: (y: boolean, z: string) => void);
-    (event: "useThis", listener: (y: IEventThisPlaceHolder) => void)
+    (event: "useThis", listener: (y: IEventThisPlaceHolder) => void);
 }
 
 interface IInvalidEvents extends IEvent {

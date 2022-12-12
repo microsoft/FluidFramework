@@ -198,11 +198,14 @@ describe("Loader", () => {
                     class Forwarder extends EventForwarder<ITestEvents> {
                         testing(): void {
                             // forwardEvent allows any event names to be specified, even ones not declared on source or this
-                            this.forwardEvent(new TypedEventEmitter<ITestEvents>(), "unknownEventName");
+                            this.forwardEvent(
+                                new TypedEventEmitter<ITestEvents>(),
+                                "unknownEventName",
+                            );
                         }
                     }
                     new Forwarder();
-                })
+                });
             });
         });
     });

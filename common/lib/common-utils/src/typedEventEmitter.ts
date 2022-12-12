@@ -40,63 +40,56 @@ export type TypedEventTransform<TThis, TEvent> =
         TransformedEvent<TThis, EventEmitterEventType, any[]>;
 
 /** Converting from IEvent shape to EventSpec shape. Might allow for easier transition to EventSpec */
-export type ToEventArgsMappingCore<TEvent extends IEvent> =
-    // ...Start with all 15 like IEventTransformer
-    TEvent extends
-    {
-        (event: infer E0, listener: (...args: infer A0) => void),
-        (event: infer E1, listener: (...args: infer A1) => void),
-        (event: infer E2, listener: (...args: infer A2) => void),
-        (event: infer E3, listener: (...args: infer A3) => void),
-        (event: string, listener: (...args: any[]) => void),
-    }
-    ? SingleEventArgsMapping<E0, A0> & SingleEventArgsMapping<E1, A1> & SingleEventArgsMapping<E2, A2> & SingleEventArgsMapping<E3, A3>
-    : TEvent extends
-    {
-        (event: infer E0, listener: (...args: infer A0) => void),
-        (event: infer E1, listener: (...args: infer A1) => void),
-        (event: infer E2, listener: (...args: infer A2) => void),
-        (event: string, listener: (...args: any[]) => void),
-    }
-    ? SingleEventArgsMapping<E0, A0> & SingleEventArgsMapping<E1, A1> & SingleEventArgsMapping<E2, A2>
-    : TEvent extends
-    {
-        (event: infer E0, listener: (...args: infer A0) => void),
-        (event: infer E1, listener: (...args: infer A1) => void),
-        (event: string, listener: (...args: any[]) => void),
-    }
-    ? SingleEventArgsMapping<E0, A0> & SingleEventArgsMapping<E1, A1>
-    : TEvent extends
-    {
-        (event: infer E0, listener: (...args: infer A0) => void),
-        (event: string, listener: (...args: any[]) => void),
-    }
-    ? SingleEventArgsMapping<E0, A0>
-    : SingleEventArgsMapping<string, any[]>
-    ;
-
 export type ToEventArgsMapping<TEvent> =
-    ToEventArgsMappingCore<TEvent & IEvent>;
-
-export type SingleEventArgsMapping<TEventKey, TListenerArgs extends any[]> =
-    TEventKey extends string ?
-    {
-        [TK in TEventKey]: TListenerArgs;
+    //* TODO: ...Start with all 15 like IEventTransformer
+    TEvent extends {
+        (event: infer E0, listener: (...args: infer A0) => void);
+        (event: infer E1, listener: (...args: infer A1) => void);
+        (event: infer E2, listener: (...args: infer A2) => void);
+        (event: infer E3, listener: (...args: infer A3) => void);
+        (event: string, listener: (...args: any[]) => void);
     }
+        ? SingleEventArgsMapping<E0, A0> &
+              SingleEventArgsMapping<E1, A1> &
+              SingleEventArgsMapping<E2, A2> &
+              SingleEventArgsMapping<E3, A3>
+        : TEvent extends {
+              (event: infer E0, listener: (...args: infer A0) => void);
+              (event: infer E1, listener: (...args: infer A1) => void);
+              (event: infer E2, listener: (...args: infer A2) => void);
+              (event: string, listener: (...args: any[]) => void);
+          }
+        ? SingleEventArgsMapping<E0, A0> &
+              SingleEventArgsMapping<E1, A1> &
+              SingleEventArgsMapping<E2, A2>
+        : TEvent extends {
+              (event: infer E0, listener: (...args: infer A0) => void);
+              (event: infer E1, listener: (...args: infer A1) => void);
+              (event: string, listener: (...args: any[]) => void);
+          }
+        ? SingleEventArgsMapping<E0, A0> & SingleEventArgsMapping<E1, A1>
+        : TEvent extends {
+              (event: infer E0, listener: (...args: infer A0) => void);
+              (event: string, listener: (...args: any[]) => void);
+          }
+        ? SingleEventArgsMapping<E0, A0>
+        : SingleEventArgsMapping<string, any[]>;
+
+type SingleEventArgsMapping<TEventKey, TListenerArgs extends any[]> = TEventKey extends string
+    ? {
+          [TK in TEventKey]: TListenerArgs;
+      }
     : never;
 
-export type StringKeys<TEventSpec> =
-    keyof TEventSpec extends string ?
-            keyof TEventSpec
- : never
-;
+type RequireAllStringKeys<TEventSpec> = keyof TEventSpec extends string ? keyof TEventSpec : never;
 
 /** Signature for emit */
-type EventEmitSignatures<TThis, TEvent> =
-    <TEventKey extends StringKeys<ToEventArgsMapping<TEvent>>>(
-        event: TEventKey,
-        ...args: ReplaceIEventThisPlaceHolder<ToEventArgsMapping<TEvent>[TEventKey], TThis>
-    ) => boolean;
+type EventEmitSignatures<TThis, TEvent> = <
+    TEventKey extends RequireAllStringKeys<ToEventArgsMapping<TEvent>>,
+>(
+    event: TEventKey,
+    ...args: ReplaceIEventThisPlaceHolder<ToEventArgsMapping<TEvent>[TEventKey], TThis>
+) => boolean;
 
 /**
  * Event Emitter helper class the supports emitting typed events
