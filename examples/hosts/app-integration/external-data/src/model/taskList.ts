@@ -68,14 +68,14 @@ export class TaskList extends DataObject implements ITaskList {
      */
     private readonly tasks = new Map<string, Task>();
     /*
-    * savedData stores data retrieved from the external source.
-    */
+     * savedData stores data retrieved from the external source.
+     */
     private _savedData: SharedMap | undefined;
     /*
-    * draftData is used for storage of the draft Fluid data. It's used with savedData
-    * to resolve & synchronize the data.
-    * TODO: Update^ when the sync mechanism is appropriately defined.
-    */
+     * draftData is used for storage of the draft Fluid data. It's used with savedData
+     * to resolve & synchronize the data.
+     * TODO: Update^ when the sync mechanism is appropriately defined.
+     */
     private _draftData: SharedMap | undefined;
 
     private get savedData(): SharedMap {
@@ -100,6 +100,8 @@ export class TaskList extends DataObject implements ITaskList {
         const savedNameString = SharedString.create(this.runtime);
         const draftNameString = SharedString.create(this.runtime);
 
+        // TODO: addTask will be called for tasks added in Fluid. Should only write to the draftMap directly here
+        // savedMAp will get updated when the data syncs back
         savedNameString.insertText(0, name);
         draftNameString.insertText(0, name);
 
@@ -146,8 +148,8 @@ export class TaskList extends DataObject implements ITaskList {
         }
 
         const [nameSharedString, prioritySharedCell] = await Promise.all([
-            taskData.name?.get(),
-            taskData.priority?.get(),
+            taskData.name.get(),
+            taskData.priority.get(),
         ]);
         // It's possible the task was deleted while getting the name/priority, in which case quietly exit.
         if (this.root.get(id) === undefined) {
