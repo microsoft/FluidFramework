@@ -65,10 +65,7 @@ function rebaseMarkList<TNodeChange>(
     while (!queue.isEmpty()) {
         const { baseMark, newMark: currMark } = queue.pop();
         if (baseMark === undefined) {
-            assert(
-                currMark !== undefined,
-                "Non-empty RebaserQueue should return at least one mark",
-            );
+            assert(currMark !== undefined, "Non-empty queue should return at least one mark");
             if (isAttach(currMark)) {
                 handleCurrAttach(
                     currMark,
