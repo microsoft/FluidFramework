@@ -259,8 +259,7 @@ class ComposeQueue<T> {
                 newRev !== undefined &&
                 baseMark.revision === newRev
             ) {
-                // We assume that baseMark and newMark having the same revision means that they are inverses of each other,
-                // so neither has an effect in the composition.
+                // We assume that baseMark and newMark having the same revision means that they are inverses of each other.
                 assert(
                     getInputLength(baseMark) === getOutputLength(newMark),
                     0x4ac /* Inverse marks should be the same length */,
