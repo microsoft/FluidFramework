@@ -88,3 +88,16 @@ export class ExternalStorageManager implements IExternalStorageManager {
             });
     }
 }
+
+/**
+ * Throws away calls to external storage.
+ * For use in places where ExternalStorageManagement is explicitly not supported or does not make sense,
+ * but the manager is needed for compatibility with interface definitions.
+ */
+export class NullExternalStorageManager implements IExternalStorageManager {
+    public async read(tenantId: string, documentId: string): Promise<boolean> {
+        return false;
+    }
+
+    public async write(tenantId: string, ref: string, sha: string, update: boolean): Promise<void> { }
+}
