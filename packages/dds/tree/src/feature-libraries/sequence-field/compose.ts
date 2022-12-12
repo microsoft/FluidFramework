@@ -585,7 +585,7 @@ function splitModifyMoveOut<T>(
     ];
 }
 
-class ComposeQueue<T> {
+export class ComposeQueue<T> {
     private readonly baseMarks: StackyIterator<Mark<T>>;
     private readonly newMarks: StackyIterator<Mark<T>>;
 
@@ -595,6 +595,7 @@ class ComposeQueue<T> {
         newMarks: Changeset<T>,
         private readonly genId: IdAllocator,
         private readonly moveEffects: MoveEffectTable<T>,
+        private readonly reassignNewMoveIds: boolean = true,
     ) {
         this.baseMarks = new StackyIterator(baseMarks);
         this.newMarks = new StackyIterator(newMarks);
@@ -646,18 +647,20 @@ class ComposeQueue<T> {
                 isObjMark(newMark) &&
                 (newMark.type === "MoveOut" || newMark.type === "ReturnFrom")
             ) {
-                const newId = getUniqueMoveId(
-                    newMark,
-                    this.newRevision,
-                    this.genId,
-                    this.moveEffects,
-                );
-                if (newId !== newMark.id) {
-                    newMark = clone(newMark);
-                    newMark.id = newId;
-                    this.moveEffects.validatedMarks.add(newMark);
+                if (this.reassignNewMoveIds) {
+                    const newId = getUniqueMoveId(
+                        newMark,
+                        this.newRevision,
+                        this.genId,
+                        this.moveEffects,
+                    );
+                    if (newId !== newMark.id) {
+                        newMark = clone(newMark);
+                        newMark.id = newId;
+                        this.moveEffects.validatedMarks.add(newMark);
+                    }
                 }
-                const effect = this.moveEffects.srcEffects.get(newId);
+                const effect = this.moveEffects.srcEffects.get(newMark.id);
                 if (effect !== undefined) {
                     const splitMarks = splitMoveOut(newMark, effect);
                     for (const mark of splitMarks) {
@@ -702,15 +705,17 @@ class ComposeQueue<T> {
                         newMark.type === "MMoveOut" ||
                         newMark.type === "ReturnFrom")
                 ) {
-                    const newId = getUniqueMoveId(
-                        newMark,
-                        this.newRevision,
-                        this.genId,
-                        this.moveEffects,
-                    );
-                    if (newId !== newMark.id) {
-                        newMark = clone(newMark);
-                        newMark.id = newId;
+                    if (this.reassignNewMoveIds) {
+                        const newId = getUniqueMoveId(
+                            newMark,
+                            this.newRevision,
+                            this.genId,
+                            this.moveEffects,
+                        );
+                        if (newId !== newMark.id) {
+                            newMark = clone(newMark);
+                            newMark.id = newId;
+                        }
                     }
                 }
                 let nextNewMark;

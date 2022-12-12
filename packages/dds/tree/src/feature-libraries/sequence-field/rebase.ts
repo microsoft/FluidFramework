@@ -25,6 +25,7 @@ import {
 } from "./utils";
 import { Attach, Changeset, LineageEvent, Mark, MarkList, SizedMark } from "./format";
 import { MarkListFactory } from "./markListFactory";
+import { ComposeQueue } from "./compose";
 
 /**
  * Rebases `change` over `base` assuming they both apply to the same initial state.
@@ -48,7 +49,7 @@ export function rebase<TNodeChange>(
     genId: IdAllocator,
 ): Changeset<TNodeChange> {
     const moveEffects = newMoveEffectTable<TNodeChange>();
-    const rebased = rebaseMarkList(
+    const [rebased, splitBase] = rebaseMarkList(
         change,
         base.change,
         base.revision,
@@ -56,7 +57,7 @@ export function rebase<TNodeChange>(
         genId,
         moveEffects,
     );
-    return applyMoveEffects(base.revision, base.change, rebased, moveEffects, genId);
+    return applyMoveEffects(splitBase, rebased, moveEffects, genId);
 }
 
 export type NodeChangeRebaser<TNodeChange> = (
@@ -71,8 +72,9 @@ function rebaseMarkList<TNodeChange>(
     rebaseChild: NodeChangeRebaser<TNodeChange>,
     genId: IdAllocator,
     moveEffects: MoveEffectTable<TNodeChange>,
-): MarkList<TNodeChange> {
+): [MarkList<TNodeChange>, MarkList<TNodeChange>] {
     const factory = new MarkListFactory<TNodeChange>();
+    const splitBaseMarks: MarkList<TNodeChange> = [];
     const queue = new RebaseQueue(baseRevision, baseMarkList, currMarkList, genId, moveEffects);
 
     // Each attach mark in `currMarkList` should have a lineage event added for `baseRevision` if a node adjacent to
@@ -126,13 +128,16 @@ function rebaseMarkList<TNodeChange>(
                 baseDetachOffset = 0;
             }
         }
+        if (baseMark !== undefined) {
+            splitBaseMarks.push(baseMark);
+        }
     }
 
     if (baseDetachOffset > 0 && baseRevision !== undefined) {
         updateLineage(lineageRequests, baseRevision);
     }
 
-    return factory.list;
+    return [factory.list, splitBaseMarks];
 }
 
 class RebaseQueue<T> {
@@ -279,26 +284,32 @@ function rebaseMark<TNodeChange>(
 }
 
 function applyMoveEffects<TNodeChange>(
-    baseRevision: RevisionTag | undefined,
     baseMarks: MarkList<TNodeChange>,
     rebasedMarks: MarkList<TNodeChange>,
     moveEffects: MoveEffectTable<TNodeChange>,
     genId: IdAllocator,
 ): Changeset<TNodeChange> {
     // TODO: When splitting base move marks, should make sure to use same IDs as first pass
-    const queue = new RebaseQueue<TNodeChange>(
-        baseRevision,
+    // Also need to consider splits of rebased marks
+    const queue = new ComposeQueue<TNodeChange>(
         baseMarks,
+        undefined,
         rebasedMarks,
-        genId,
+        () => fail("Should not split moves while applying move effects"),
         moveEffects,
+        false,
     );
     const factory = new MarkListFactory<TNodeChange>();
 
     let offset = 0;
     while (!queue.isEmpty()) {
         const { baseMark, newMark } = queue.pop();
-        if (isObjMark(baseMark) && (baseMark.type === "MoveIn" || baseMark.type === "MMoveIn")) {
+        if (
+            isObjMark(baseMark) &&
+            (baseMark.type === "MoveIn" ||
+                baseMark.type === "MMoveIn" ||
+                baseMark.type === "ReturnTo")
+        ) {
             const movedMarks = moveEffects.movedMarks.get(baseMark.id);
             if (movedMarks !== undefined) {
                 factory.pushOffset(offset);
