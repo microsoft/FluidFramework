@@ -284,9 +284,6 @@ const editNodesWithSingleTransaction = async (
     await provider.ensureSynchronized();
 };
 
-
-
-
 const INSERT_BENCHMARK_PERCENTILES = {
     individualTransactions: {
         nodeCounts: {
@@ -426,9 +423,9 @@ describe("SharedTree Op Size Benchmarks", () => {
     const getOperationsStats = (operations: ISequencedDocumentMessage[]) => {
         if (operations.length === 0) {
             return {
-                'Avg. Op Size (Bytes)': 0,
-                'Max Op Size (Bytes)': 0,
-                'Min Op Size (Bytes)':  0,
+                "Avg. Op Size (Bytes)": 0,
+                "Max Op Size (Bytes)": 0,
+                "Min Op Size (Bytes)": 0,
             };
         }
         let averageOpSizeBytes = 0;
@@ -440,57 +437,57 @@ describe("SharedTree Op Size Benchmarks", () => {
         let maxOpSizeBytes = new TextEncoder().encode(JSON.stringify(operations[0])).length;
         operations.forEach(
             (operation) =>
-            (maxOpSizeBytes = Math.max(
-                new TextEncoder().encode(JSON.stringify(operation)).length,
-                maxOpSizeBytes,
-            )),
+                (maxOpSizeBytes = Math.max(
+                    new TextEncoder().encode(JSON.stringify(operation)).length,
+                    maxOpSizeBytes,
+                )),
         );
 
         let minOpSizeBytes = new TextEncoder().encode(JSON.stringify(operations[0])).length;
         operations.forEach(
             (operation) =>
-            (minOpSizeBytes = Math.min(
-                new TextEncoder().encode(JSON.stringify(operation)).length,
-                minOpSizeBytes,
-            )),
+                (minOpSizeBytes = Math.min(
+                    new TextEncoder().encode(JSON.stringify(operation)).length,
+                    minOpSizeBytes,
+                )),
         );
 
         return {
-            'Avg. Op Size (Bytes)': Number.parseFloat(averageOpSizeBytes.toFixed(2)),
-            'Max Op Size (Bytes)': maxOpSizeBytes,
-            'Min Op Size (Bytes)':  minOpSizeBytes,
+            "Avg. Op Size (Bytes)": Number.parseFloat(averageOpSizeBytes.toFixed(2)),
+            "Max Op Size (Bytes)": maxOpSizeBytes,
+            "Min Op Size (Bytes)": minOpSizeBytes,
         };
     };
 
     const initializeOpDataCollection = (provider: ITestTreeProvider, testName: string) => {
         currentBenchmarkName = testName;
         registerOpListener(provider, currentTestOps);
-    }
+    };
 
     afterEach(() => {
         opsByBenchmarkName[currentBenchmarkName] = [...currentTestOps];
         currentTestOps.length = 0;
-    })
+    });
 
     after(() => {
         const allBenchmarkOpStats: any[] = [];
-        Object.entries(opsByBenchmarkName).forEach(entry => {
+        Object.entries(opsByBenchmarkName).forEach((entry) => {
             const [benchmarkName, ops] = entry;
             allBenchmarkOpStats.push({
-                'Test name': benchmarkName,
-                ...getOperationsStats(ops)
-            })
+                "Test name": benchmarkName,
+                ...getOperationsStats(ops),
+            });
         });
         const table = new Table();
-        allBenchmarkOpStats.forEach(data => {
-            Object.keys(data).forEach(key => table.cell(key, data[key]))
+        allBenchmarkOpStats.forEach((data) => {
+            Object.keys(data).forEach((key) => table.cell(key, data[key]));
             table.newRow();
         });
-        table.sort(['Avg. Op Size (Bytes)|des']);
+        table.sort(["Avg. Op Size (Bytes)|des"]);
 
         console.log("-- Op Size Benchmark Statistics Sorted by Avg. Op Size -- ");
-        console.log(table.toString())
-    })
+        console.log(table.toString());
+    });
 
     describe("1. Insert Nodes", () => {
         describe("1a. With Individual transactions", () => {
@@ -507,7 +504,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`1a.a. Insert ${BASE_BENCHMARK_NODE_COUNT} small nodes in ${BASE_BENCHMARK_NODE_COUNT} transactions`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `1a.a. Insert ${BASE_BENCHMARK_NODE_COUNT} small nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`);
+                initializeOpDataCollection(
+                    provider,
+                    `1a.a. Insert ${BASE_BENCHMARK_NODE_COUNT} small nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`,
+                );
                 initializeTestTree(provider.trees[0]);
                 const jsonNode = getJsonNode(
                     INSERT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
@@ -525,7 +525,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`1a.b. Insert ${BASE_BENCHMARK_NODE_COUNT} medium nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `1a.b. Insert ${BASE_BENCHMARK_NODE_COUNT} medium nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`);
+                initializeOpDataCollection(
+                    provider,
+                    `1a.b. Insert ${BASE_BENCHMARK_NODE_COUNT} medium nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`,
+                );
                 initializeTestTree(provider.trees[0]);
 
                 const jsonNode = getJsonNode(
@@ -544,7 +547,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`1a.c. Insert ${BASE_BENCHMARK_NODE_COUNT} large nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `1a.c. Insert ${BASE_BENCHMARK_NODE_COUNT} large nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`);
+                initializeOpDataCollection(
+                    provider,
+                    `1a.c. Insert ${BASE_BENCHMARK_NODE_COUNT} large nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`,
+                );
                 initializeTestTree(provider.trees[0]);
 
                 const jsonNode = getJsonNode(
@@ -576,7 +582,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`1b.a. Insert ${BASE_BENCHMARK_NODE_COUNT} small nodes in one transaction`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `1b.a. Insert ${BASE_BENCHMARK_NODE_COUNT} small nodes in one transaction`);
+                initializeOpDataCollection(
+                    provider,
+                    `1b.a. Insert ${BASE_BENCHMARK_NODE_COUNT} small nodes in one transaction`,
+                );
                 initializeTestTree(provider.trees[0]);
 
                 const jsonNode = getJsonNode(
@@ -595,7 +604,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`1b.b. Insert ${BASE_BENCHMARK_NODE_COUNT} medium nodes in one transaction`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `1b.b. Insert ${BASE_BENCHMARK_NODE_COUNT} medium nodes in 1 transaction`);
+                initializeOpDataCollection(
+                    provider,
+                    `1b.b. Insert ${BASE_BENCHMARK_NODE_COUNT} medium nodes in 1 transaction`,
+                );
                 initializeTestTree(provider.trees[0]);
 
                 const jsonNode = getJsonNode(
@@ -614,7 +626,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`1b.c. Insert ${BASE_BENCHMARK_NODE_COUNT} large nodes in one transaction`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `1b.c. Insert ${BASE_BENCHMARK_NODE_COUNT} large nodes in one transaction`);
+                initializeOpDataCollection(
+                    provider,
+                    `1b.c. Insert ${BASE_BENCHMARK_NODE_COUNT} large nodes in one transaction`,
+                );
                 initializeTestTree(provider.trees[0]);
 
                 const jsonNode = getJsonNode(
@@ -631,7 +646,6 @@ describe("SharedTree Op Size Benchmarks", () => {
                 assertChildNodeCount(provider.trees[0], BASE_BENCHMARK_NODE_COUNT);
             });
         });
-
     });
 
     describe("2. Delete Nodes", () => {
@@ -649,7 +663,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`2a.a. Delete ${BASE_BENCHMARK_NODE_COUNT} small nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `2a.a. Delete ${BASE_BENCHMARK_NODE_COUNT} small nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`);
+                initializeOpDataCollection(
+                    provider,
+                    `2a.a. Delete ${BASE_BENCHMARK_NODE_COUNT} small nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`,
+                );
                 const childByteSize =
                     DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
                         `${BASE_BENCHMARK_NODE_COUNT}`
@@ -664,7 +681,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`2a.b. Delete ${BASE_BENCHMARK_NODE_COUNT} medium nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `2a.b. Delete ${BASE_BENCHMARK_NODE_COUNT} medium nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`);
+                initializeOpDataCollection(
+                    provider,
+                    `2a.b. Delete ${BASE_BENCHMARK_NODE_COUNT} medium nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`,
+                );
                 const childByteSize =
                     DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
                         `${BASE_BENCHMARK_NODE_COUNT}`
@@ -679,7 +699,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`2a.c. Delete ${BASE_BENCHMARK_NODE_COUNT} large nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `2a.c. Delete ${BASE_BENCHMARK_NODE_COUNT} large nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`);
+                initializeOpDataCollection(
+                    provider,
+                    `2a.c. Delete ${BASE_BENCHMARK_NODE_COUNT} large nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`,
+                );
 
                 const childByteSize =
                     DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
@@ -708,7 +731,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`2b.a. Delete ${BASE_BENCHMARK_NODE_COUNT} small nodes in 1 transaction containing 1 delete of ${BASE_BENCHMARK_NODE_COUNT} nodes`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `2b.a. Delete ${BASE_BENCHMARK_NODE_COUNT} small nodes in 1 transaction containing 1 delete of ${BASE_BENCHMARK_NODE_COUNT} nodes`);
+                initializeOpDataCollection(
+                    provider,
+                    `2b.a. Delete ${BASE_BENCHMARK_NODE_COUNT} small nodes in 1 transaction containing 1 delete of ${BASE_BENCHMARK_NODE_COUNT} nodes`,
+                );
 
                 const childByteSize =
                     DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
@@ -724,7 +750,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`2b.b. Delete ${BASE_BENCHMARK_NODE_COUNT} medium nodes in 1 transactions containing 1 delete of ${BASE_BENCHMARK_NODE_COUNT} nodes`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `2b.b. Delete ${BASE_BENCHMARK_NODE_COUNT} medium nodes in 1 transactions containing 1 delete of ${BASE_BENCHMARK_NODE_COUNT} nodes`);
+                initializeOpDataCollection(
+                    provider,
+                    `2b.b. Delete ${BASE_BENCHMARK_NODE_COUNT} medium nodes in 1 transactions containing 1 delete of ${BASE_BENCHMARK_NODE_COUNT} nodes`,
+                );
 
                 const childByteSize =
                     DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
@@ -740,7 +769,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`2b.c. Delete ${BASE_BENCHMARK_NODE_COUNT} large nodes in 1 transactions containing 1 delete of ${BASE_BENCHMARK_NODE_COUNT} nodes`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `2b.c. Delete ${BASE_BENCHMARK_NODE_COUNT} large nodes in 1 transactions containing 1 delete of ${BASE_BENCHMARK_NODE_COUNT} nodes`);
+                initializeOpDataCollection(
+                    provider,
+                    `2b.c. Delete ${BASE_BENCHMARK_NODE_COUNT} large nodes in 1 transactions containing 1 delete of ${BASE_BENCHMARK_NODE_COUNT} nodes`,
+                );
 
                 const childByteSize =
                     DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
@@ -777,7 +809,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`3a.a. ${BASE_BENCHMARK_NODE_COUNT} small edits in ${BASE_BENCHMARK_NODE_COUNT} transactions containing 1 edit`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `3a.a. ${BASE_BENCHMARK_NODE_COUNT} small edits in ${BASE_BENCHMARK_NODE_COUNT} transactions containing 1 edit`);
+                initializeOpDataCollection(
+                    provider,
+                    `3a.a. ${BASE_BENCHMARK_NODE_COUNT} small edits in ${BASE_BENCHMARK_NODE_COUNT} transactions containing 1 edit`,
+                );
 
                 initializeTestTree(
                     provider.trees[0],
@@ -803,7 +838,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`3a.b. ${BASE_BENCHMARK_NODE_COUNT} medium edits in ${BASE_BENCHMARK_NODE_COUNT} transactions containing 1 edit`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `3a.b. ${BASE_BENCHMARK_NODE_COUNT} medium edits in ${BASE_BENCHMARK_NODE_COUNT} transactions containing 1 edit`);
+                initializeOpDataCollection(
+                    provider,
+                    `3a.b. ${BASE_BENCHMARK_NODE_COUNT} medium edits in ${BASE_BENCHMARK_NODE_COUNT} transactions containing 1 edit`,
+                );
 
                 initializeTestTree(
                     provider.trees[0],
@@ -829,7 +867,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`3a.c. ${BASE_BENCHMARK_NODE_COUNT} large edits in ${BASE_BENCHMARK_NODE_COUNT} transactions containing 1 edit`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `3a.c. ${BASE_BENCHMARK_NODE_COUNT} large edits in ${BASE_BENCHMARK_NODE_COUNT} transactions containing 1 edit`);
+                initializeOpDataCollection(
+                    provider,
+                    `3a.c. ${BASE_BENCHMARK_NODE_COUNT} large edits in ${BASE_BENCHMARK_NODE_COUNT} transactions containing 1 edit`,
+                );
 
                 initializeTestTree(
                     provider.trees[0],
@@ -867,7 +908,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`3b.a. ${BASE_BENCHMARK_NODE_COUNT} small edits in 1 transaction containing ${BASE_BENCHMARK_NODE_COUNT} edits`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `3b.a. ${BASE_BENCHMARK_NODE_COUNT} small edits in 1 transaction containing ${BASE_BENCHMARK_NODE_COUNT} edits`);
+                initializeOpDataCollection(
+                    provider,
+                    `3b.a. ${BASE_BENCHMARK_NODE_COUNT} small edits in 1 transaction containing ${BASE_BENCHMARK_NODE_COUNT} edits`,
+                );
 
                 initializeTestTree(
                     provider.trees[0],
@@ -893,7 +937,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`3b.b. ${BASE_BENCHMARK_NODE_COUNT} medium edits in 1 transaction containing ${BASE_BENCHMARK_NODE_COUNT} edits`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `3b.b. ${BASE_BENCHMARK_NODE_COUNT} medium edits in 1 transaction containing ${BASE_BENCHMARK_NODE_COUNT} edits`);
+                initializeOpDataCollection(
+                    provider,
+                    `3b.b. ${BASE_BENCHMARK_NODE_COUNT} medium edits in 1 transaction containing ${BASE_BENCHMARK_NODE_COUNT} edits`,
+                );
 
                 initializeTestTree(
                     provider.trees[0],
@@ -919,7 +966,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`3b.c. ${BASE_BENCHMARK_NODE_COUNT} large edits in 1 transaction containing ${BASE_BENCHMARK_NODE_COUNT} edits`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `3b.c. ${BASE_BENCHMARK_NODE_COUNT} large edits in 1 transaction containing ${BASE_BENCHMARK_NODE_COUNT} edits`);
+                initializeOpDataCollection(
+                    provider,
+                    `3b.c. ${BASE_BENCHMARK_NODE_COUNT} large edits in 1 transaction containing ${BASE_BENCHMARK_NODE_COUNT} edits`,
+                );
                 initializeTestTree(
                     provider.trees[0],
                     getInitialJsonTreeWithChildren(BASE_BENCHMARK_NODE_COUNT, 1000),
@@ -954,7 +1004,10 @@ describe("SharedTree Op Size Benchmarks", () => {
         describe("4a. With individual transactions and an equal distribution of operation type", () => {
             it(`4a.a. insert ${BASE_BENCHMARK_NODE_COUNT} small nodes, delete ${BASE_BENCHMARK_NODE_COUNT} small nodes, edit ${BASE_BENCHMARK_NODE_COUNT} nodes with small payloads`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `4a.a. insert ${BASE_BENCHMARK_NODE_COUNT} small nodes, delete ${BASE_BENCHMARK_NODE_COUNT} small nodes, edit ${BASE_BENCHMARK_NODE_COUNT} nodes with small payloads`);
+                initializeOpDataCollection(
+                    provider,
+                    `4a.a. insert ${BASE_BENCHMARK_NODE_COUNT} small nodes, delete ${BASE_BENCHMARK_NODE_COUNT} small nodes, edit ${BASE_BENCHMARK_NODE_COUNT} nodes with small payloads`,
+                );
                 // delete
                 const childByteSize =
                     DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
@@ -1007,7 +1060,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`4a.b. insert ${BASE_BENCHMARK_NODE_COUNT} medium nodes, delete ${BASE_BENCHMARK_NODE_COUNT} medium nodes, edit ${BASE_BENCHMARK_NODE_COUNT} nodes with medium payloads`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider,`4a.b. insert ${BASE_BENCHMARK_NODE_COUNT} medium nodes, delete ${BASE_BENCHMARK_NODE_COUNT} medium nodes, edit ${BASE_BENCHMARK_NODE_COUNT} nodes with medium payloads`)
+                initializeOpDataCollection(
+                    provider,
+                    `4a.b. insert ${BASE_BENCHMARK_NODE_COUNT} medium nodes, delete ${BASE_BENCHMARK_NODE_COUNT} medium nodes, edit ${BASE_BENCHMARK_NODE_COUNT} nodes with medium payloads`,
+                );
                 // delete
                 const childByteSize =
                     DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
@@ -1061,7 +1117,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`4a.c. insert ${BASE_BENCHMARK_NODE_COUNT} large nodes, delete ${BASE_BENCHMARK_NODE_COUNT} large medium, edit ${BASE_BENCHMARK_NODE_COUNT} nodes with large payloads`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `4a.c. insert ${BASE_BENCHMARK_NODE_COUNT} large nodes, delete ${BASE_BENCHMARK_NODE_COUNT} large medium, edit ${BASE_BENCHMARK_NODE_COUNT} nodes with large payloads`)
+                initializeOpDataCollection(
+                    provider,
+                    `4a.c. insert ${BASE_BENCHMARK_NODE_COUNT} large nodes, delete ${BASE_BENCHMARK_NODE_COUNT} large medium, edit ${BASE_BENCHMARK_NODE_COUNT} nodes with large payloads`,
+                );
                 // delete
                 const childByteSize =
                     DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
@@ -1120,7 +1179,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`4b.a. Insert ${seventyPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `4b.a. Insert ${seventyPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`)
+                initializeOpDataCollection(
+                    provider,
+                    `4b.a. Insert ${seventyPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`,
+                );
                 // delete
                 const childByteSize =
                     DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
@@ -1169,7 +1231,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`4b.b. Insert ${seventyPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `4b.b. Insert ${seventyPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`)
+                initializeOpDataCollection(
+                    provider,
+                    `4b.b. Insert ${seventyPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`,
+                );
 
                 // delete
                 const childByteSize =
@@ -1219,7 +1284,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`4b.b. Insert ${seventyPercentCount} large nodes, delete ${fifteenPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `4b.b. Insert ${seventyPercentCount} large nodes, delete ${fifteenPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`)
+                initializeOpDataCollection(
+                    provider,
+                    `4b.b. Insert ${seventyPercentCount} large nodes, delete ${fifteenPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`,
+                );
 
                 // delete
                 const childByteSize =
@@ -1274,7 +1342,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`4c.a. Insert ${fifteenPercentCount} small nodes, delete ${seventyPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `4c.a. Insert ${fifteenPercentCount} small nodes, delete ${seventyPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`)
+                initializeOpDataCollection(
+                    provider,
+                    `4c.a. Insert ${fifteenPercentCount} small nodes, delete ${seventyPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`,
+                );
 
                 // delete
                 const childByteSize =
@@ -1324,7 +1395,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`4c.b. Insert ${fifteenPercentCount} medium nodes, delete ${seventyPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `4c.b. Insert ${fifteenPercentCount} medium nodes, delete ${seventyPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`)
+                initializeOpDataCollection(
+                    provider,
+                    `4c.b. Insert ${fifteenPercentCount} medium nodes, delete ${seventyPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`,
+                );
 
                 // delete
                 const childByteSize =
@@ -1374,7 +1448,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`4c.b. Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `4c.b. Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`)
+                initializeOpDataCollection(
+                    provider,
+                    `4c.b. Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`,
+                );
 
                 // delete
                 const childByteSize =
@@ -1429,7 +1506,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`4d.a. Insert ${fifteenPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${seventyPercentCount} nodes with small payloads`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `4d.a. Insert ${fifteenPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${seventyPercentCount} nodes with small payloads`)
+                initializeOpDataCollection(
+                    provider,
+                    `4d.a. Insert ${fifteenPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${seventyPercentCount} nodes with small payloads`,
+                );
 
                 // delete
                 const childByteSize =
@@ -1482,7 +1562,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`4d.b. Insert ${fifteenPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${seventyPercentCount} nodes with medium payloads`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `4d.b. Insert ${fifteenPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${seventyPercentCount} nodes with medium payloads`)
+                initializeOpDataCollection(
+                    provider,
+                    `4d.b. Insert ${fifteenPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${seventyPercentCount} nodes with medium payloads`,
+                );
 
                 // delete
                 const childByteSize =
@@ -1535,7 +1618,10 @@ describe("SharedTree Op Size Benchmarks", () => {
 
             it(`4d.c. Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${seventyPercentCount} nodes with large payloads`, async () => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(provider, `4d.c. Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${seventyPercentCount} nodes with large payloads`)
+                initializeOpDataCollection(
+                    provider,
+                    `4d.c. Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${seventyPercentCount} nodes with large payloads`,
+                );
 
                 // delete
                 const childByteSize =
