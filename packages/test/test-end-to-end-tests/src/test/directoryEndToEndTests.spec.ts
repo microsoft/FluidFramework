@@ -718,6 +718,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
     let changedEventData: IDirectoryValueChanged[];
     let subDirCreatedEventData: string[];
     let subDirDeletedEventData: string[];
+    let subDirUndeletedEventData: string[];
 
     const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
         getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -750,6 +751,9 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
         });
         sharedDir.on("subDirectoryDeleted", (path, _local, _target) => {
             subDirDeletedEventData.push(path);
+        });
+        sharedDir.on("subDirectoryUndeleted", (path, _local, _target) => {
+            subDirUndeletedEventData.push(path);
         });
     });
 
