@@ -5,7 +5,7 @@
 
  module.exports = {
     "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid"),
+        require.resolve("@fluidframework/eslint-config-fluid/minimal"),
         "prettier"
     ],
     "parserOptions": {
@@ -16,5 +16,6 @@
         "@typescript-eslint/promise-function-async":"off",
         "@typescript-eslint/strict-boolean-expressions": "off",
         "import/no-internal-modules":"off",
+        "import/no-nodejs-modules": "off",
     }
 }
