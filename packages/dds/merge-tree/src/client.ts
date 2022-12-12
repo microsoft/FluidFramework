@@ -721,32 +721,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         return this._mergeTree.getPosition(segment, currentSeq, clientId, localSeq);
     }
 
-    /**
-     * Rebases a (local) position from the perspective `{ seq: seqNumberFrom, localSeq }` to the perspective
-     * of the current sequence number. This is desirable when rebasing operations for reconnection.
-     *
-     * If the position refers to a segment/offset that was removed by some operation between `seqNumberFrom` and
-     * the current sequence number, returns undefined.
-     */
-    public rebasePosition(
-        pos: number,
-        seqNumberFrom: number,
-        localSeq: number,
-    ): number | undefined {
-        assert(localSeq <= this._mergeTree.collabWindow.localSeq, 0x424 /* localSeq greater than collab window */);
-        const { clientId } = this.getCollabWindow();
-        const { segment, offset } = this._mergeTree.getContainingSegment(pos, seqNumberFrom, clientId, localSeq);
-        if (segment === undefined && offset === undefined) {
-            return;
-        }
-
-        // if segment is undefined, it slid off the string
-        assert(segment !== undefined, 0x425 /* No segment found */);
-
-        assert(offset !== undefined && 0 <= offset && offset < segment.cachedLength, 0x426 /* Invalid offset */);
-        return this.findReconnectionPosition(segment, localSeq) + offset;
-    }
-
     private resetPendingDeltaToOps(
         resetOp: IMergeTreeDeltaOp,
         segmentGroup: SegmentGroup): IMergeTreeDeltaOp[] {
@@ -1078,10 +1052,16 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         }
     }
 
+    getContainingSegment<T extends ISegment>(pos: number, sequenceArgs?: { referenceSequenceNumber: number; clientId: number; }, localSeq?: number) {
+        const args = sequenceArgs ?? this.getClientSequenceArgsForMessage(undefined);
+        return this._mergeTree.getContainingSegment<T>(pos, args.referenceSequenceNumber, args.clientId, localSeq);
+    }
+
+    /*
     getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage, localSeq?: number, seqNumberFrom?: number, clientId?: number) {
         const args = this.getClientSequenceArgsForMessage(op);
         return this._mergeTree.getContainingSegment<T>(pos, seqNumberFrom ?? args.referenceSequenceNumber, clientId ?? args.clientId, localSeq);
-    }
+    } */
 
     /**
      * Returns the position to slide a reference to if a slide is required.

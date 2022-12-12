@@ -16,7 +16,7 @@ import { createClientsAtInitialState } from "./testClientLogger";
 import { TestClient } from "./";
 
 function getSlideOnRemoveReferencePosition(client: Client, pos: number, op: ISequencedDocumentMessage) {
-    let segoff = client.getContainingSegment(pos, op);
+    let segoff = client.getContainingSegment(pos, { referenceSequenceNumber: op.referenceSequenceNumber, clientId: client.getOrAddShortClientId(op.clientId) });
     segoff = client.getSlideToSegment(segoff);
     return segoff;
 }
@@ -360,7 +360,9 @@ describe("MergeTree.Client", () => {
         client1.removeRangeLocal(0, 2);
 
         const opFromBeforeRemovePerspective = client2.makeOpMessage(client2.insertTextLocal(3, "X"));
-        const { segment, offset } = client1.getContainingSegment(0, opFromBeforeRemovePerspective);
+        const referenceSequenceNumber = opFromBeforeRemovePerspective.referenceSequenceNumber;
+        const clientId = client1.getOrAddShortClientId(opFromBeforeRemovePerspective.clientId);
+        const { segment, offset } = client1.getContainingSegment(0, { referenceSequenceNumber, clientId });
         assert(segment && toRemovalInfo(segment) !== undefined);
         const transientRef = client1.createLocalReferencePosition(segment, offset, ReferenceType.Transient, {});
         assert.equal(transientRef.getSegment(), segment);
