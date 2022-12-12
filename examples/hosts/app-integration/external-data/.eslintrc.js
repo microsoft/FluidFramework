@@ -23,5 +23,7 @@ module.exports = {
                 },
             },
         ],
+        "import/no-nodejs-modules": "off",
+        "unicorn/prefer-node-protocol": "off",
     },
 };
