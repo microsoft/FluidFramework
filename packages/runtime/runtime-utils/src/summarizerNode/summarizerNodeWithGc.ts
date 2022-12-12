@@ -250,7 +250,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // If GC is disabled, skip setting referenced used routes since we are not tracking GC state.
         if (!this.gcDisabled) {
             const summaryNode = this.pendingSummaries.get(proposalHandle) as SummaryNodeWithGC;
-            if (summaryNode !== undefined) {
+            if (summaryNode?.serializedUsedRoutes !== undefined) {
                 this.referenceUsedRoutes = JSON.parse(summaryNode.serializedUsedRoutes);
             }
         }

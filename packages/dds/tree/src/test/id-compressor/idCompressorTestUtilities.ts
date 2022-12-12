@@ -17,6 +17,7 @@ import {
     take,
     BaseFuzzTestState,
 } from "@fluid-internal/stochastic-test-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IdCompressor,
     isLocalId,
@@ -29,11 +30,9 @@ import {
     SessionId,
     StableId,
     SessionSpaceCompressedId,
-    AttributionId,
     OpSpaceCompressedId,
     getIds,
     assertIsStableId,
-    assertIsUuidString,
 } from "../../id-compressor";
 import type {
     IdCreationRange,
@@ -41,7 +40,6 @@ import type {
     SerializedIdCompressorWithNoSession,
 } from "../../id-compressor";
 import { fail, getOrCreate } from "../../util";
-import { expectDefined } from "./testCommon";
 
 /**
  * A readonly `Map` which is known to contain a value for every possible key
@@ -84,9 +82,9 @@ export const DestinationClient = { ...Client, ...MetaClient };
 export function createCompressor(
     client: Client,
     clusterCapacity = 5,
-    attributionId?: AttributionId,
+    logger?: ITelemetryLogger,
 ): IdCompressor {
-    const compressor = new IdCompressor(sessionIds.get(client), 1024, attributionId);
+    const compressor = new IdCompressor(sessionIds.get(client), 1024, logger);
     compressor.clusterCapacity = clusterCapacity;
     return compressor;
 }
@@ -123,13 +121,6 @@ export const sessionNumericUuids = new Map(
         return [client, numericUuidFromStableId(sessionId)];
     }),
 ) as ClientMap<NumericUuid>;
-
-export const attributionIds = new Map(
-    Object.values(Client).map((c, i) => [
-        c,
-        assertIsUuidString(`00000000-0000-0000-0000-${(i + 1).toString(16).padStart(12, "0")}`),
-    ]),
-) as ClientMap<AttributionId>;
 
 /** An immutable view of an `IdCompressor` */
 export interface ReadonlyIdCompressor
@@ -185,11 +176,7 @@ export class IdCompressorTestNetwork {
         const clientIds = new Map<Client, TestIdData[]>();
         const clientSequencedIds = new Map<Client, TestIdData[]>();
         for (const client of Object.values(Client)) {
-            const compressor = createCompressor(
-                client,
-                initialClusterSize,
-                attributionIds.get(client),
-            );
+            const compressor = createCompressor(client, initialClusterSize);
             compressors.set(client, compressor);
             clientProgress.set(client, 0);
             clientIds.set(client, []);
@@ -468,11 +455,6 @@ export class IdCompressorTestNetwork {
                     idDataA.originatingClient === originatingClient,
                     "Test infra gave wrong originating client to TestIdData",
                 );
-                const attributionA = compressorA.attributeId(idDataA.id);
-                if (attributionA !== attributionIds.get(idDataA.originatingClient)) {
-                    // Unification
-                    expectDefined(idDataA.expectedOverride);
-                }
 
                 // Only one client should have this ID as local in its session space, as only one client could have created this ID
                 if (isLocalId(sessionSpaceIdA)) {
@@ -539,9 +521,6 @@ export class IdCompressorTestNetwork {
             // override to unify.
             if (rowCount === this.sequencedIdLogs.size && localCount <= 1) {
                 assert.strictEqual(localCount <= 1, true);
-                for (const [[compressor, { id, originatingClient: o }]] of getLogIndices(i)) {
-                    assert.strictEqual(compressor.attributeId(id), attributionIds.get(o));
-                }
             }
 
             assert.strictEqual(uuids.size, finalIds.size);

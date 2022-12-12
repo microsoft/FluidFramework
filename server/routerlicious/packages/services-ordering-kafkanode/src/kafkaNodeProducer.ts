@@ -53,7 +53,7 @@ export class KafkaNodeProducer implements IProducer {
     /**
      * Sends the provided message to Kafka
      */
-    // eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public send(messages: object[], tenantId: string, documentId: string): Promise<any> {
         const key = `${tenantId}/${documentId}`;
 
@@ -147,7 +147,6 @@ export class KafkaNodeProducer implements IProducer {
             if (stringifiedMessage.byteLength > this.maxMessageSize) {
                 const error = new NetworkError(
                     413,
-                    // eslint-disable-next-line max-len
                     `Boxcar message size (${stringifiedMessage.byteLength}) exceeded max message size (${this.maxMessageSize})`,
                 );
                 boxcar.deferred.reject(error);

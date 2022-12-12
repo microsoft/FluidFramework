@@ -398,6 +398,10 @@ export interface LRUSegment {
     maxSeq: number;
 }
 
+export interface IRootMergeBlock extends IMergeBlock {
+    mergeTree?: MergeTree;
+}
+
 /**
  * @deprecated For internal use only. public export will be removed.
  * @internal
@@ -413,7 +417,6 @@ export class MergeTree {
     private static readonly initBlockUpdateActions: BlockUpdateActions;
     private static readonly theUnfinishedNode = <IMergeBlock>{ childCount: -1 };
 
-    root: IMergeBlock;
     private readonly blockUpdateActions: BlockUpdateActions = MergeTree.initBlockUpdateActions;
     public readonly collabWindow = new CollaborationWindow();
 
@@ -435,7 +438,18 @@ export class MergeTree {
 
     // TODO: make and use interface describing options
     public constructor(public options?: PropertySet) {
-        this.root = this.makeBlock(0);
+        this._root = this.makeBlock(0);
+        this._root.mergeTree = this;
+    }
+
+    private _root: IRootMergeBlock;
+    public get root(): IRootMergeBlock {
+        return this._root;
+    }
+
+    public set root(value) {
+        this._root = value;
+        value.mergeTree = this;
     }
 
     private makeBlock(childCount: number) {
@@ -693,24 +707,24 @@ export class MergeTree {
             childBlock.parent = undefined;
         }
         const totalNodeCount = holdNodes.length;
-        const halfCount = MaxNodesInBlock / 2;
-        let childCount = Math.min(MaxNodesInBlock - 1, Math.floor(totalNodeCount / halfCount));
+        const halfOfMaxNodeCount = MaxNodesInBlock / 2;
+        let childCount = Math.min(MaxNodesInBlock - 1, Math.floor(totalNodeCount / halfOfMaxNodeCount));
         if (childCount < 1) {
             childCount = 1;
         }
-        const baseCount = Math.floor(totalNodeCount / childCount);
-        let extraCount = totalNodeCount % childCount;
+        const baseNodesInBlockCount = Math.floor(totalNodeCount / childCount);
+        let remainderCount = totalNodeCount % childCount;
         const packedBlocks = new Array<IMergeBlock>(MaxNodesInBlock);
-        let readCount = 0;
+        let childrenPackedCount = 0;
         for (let nodeIndex = 0; nodeIndex < childCount; nodeIndex++) {
-            let nodeCount = baseCount;
-            if (extraCount > 0) {
+            let nodeCount = baseNodesInBlockCount;
+            if (remainderCount > 0) {
                 nodeCount++;
-                extraCount--;
+                remainderCount--;
             }
             const packedBlock = this.makeBlock(nodeCount);
             for (let packedNodeIndex = 0; packedNodeIndex < nodeCount; packedNodeIndex++) {
-                const nodeToPack = holdNodes[readCount++];
+                const nodeToPack = holdNodes[childrenPackedCount++];
                 packedBlock.assignChild(nodeToPack, packedNodeIndex, false);
             }
             packedBlock.parent = parent;

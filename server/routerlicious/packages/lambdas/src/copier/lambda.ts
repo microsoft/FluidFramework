@@ -83,7 +83,6 @@ export class CopierLambda implements IPartitionLambda {
         Promise.all(allProcessed).then(
             () => {
                 this.currentJobs.clear();
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                 this.context.checkpoint(batchOffset as IQueuedMessage);
                 this.sendPending();
             },
@@ -95,7 +94,6 @@ export class CopierLambda implements IPartitionLambda {
     private async processMongoCore(kafkaBatches: IRawOperationMessageBatch[]): Promise<void> {
         await this.rawOpCollection
             .insertMany(kafkaBatches, false)
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
             .catch((error) => {
                 // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
                 // All other errors result in a rejected promise.
