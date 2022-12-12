@@ -41,15 +41,6 @@ describe("Loader", () => {
                     assert(emitted);
                 });
 
-                it("Should forward events 2", () => {
-                    let emitted = false;
-                    forwarder.on(testEvent, () => {
-                        emitted = true;
-                    });
-                    source.emit(testEvent);
-                    assert(emitted);
-                });
-
                 it("Should forward events in correct order", () => {
                     let emitCount = 0;
                     forwarder.on(testEvent, () => {
