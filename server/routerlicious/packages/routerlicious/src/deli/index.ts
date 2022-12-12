@@ -40,7 +40,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const factory = await services.getDbFactory(config);
 
     const checkpointHeuristics = config.get("deli:checkpointHeuristics") as
-        core.IDeliCheckpointHeuristicsServerConfiguration;
+        core.ICheckpointHeuristicsServerConfiguration;
     // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
     if (checkpointHeuristics && checkpointHeuristics.enable) {
         core.DefaultServiceConfiguration.deli.checkpointHeuristics = checkpointHeuristics;

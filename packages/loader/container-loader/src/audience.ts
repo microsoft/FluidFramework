@@ -26,7 +26,7 @@ export class Audience extends EventEmitter implements IAudienceOwner {
         // In such case we should see exactly same payload (IClient), and should not raise event twice!
         if (this.members.has(clientId)) {
             const client = this.members.get(clientId);
-            assert(JSON.stringify(client) === JSON.stringify(details), "new client has different payload from existing one");
+            assert(JSON.stringify(client) === JSON.stringify(details), 0x4b2 /* new client has different payload from existing one */);
         }
         else {
             this.members.set(clientId, details);

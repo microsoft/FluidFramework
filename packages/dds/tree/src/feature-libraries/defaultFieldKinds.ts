@@ -355,7 +355,7 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
             let newValue: ITreeCursorSynchronous;
             if ("revert" in change.value) {
                 const revision = change.value.revert;
-                assert(revision !== undefined, "Unable to revert to undefined revision");
+                assert(revision !== undefined, 0x477 /* Unable to revert to undefined revision */);
                 newValue = reviver(revision, 0, 1)[0];
             } else {
                 newValue = singleTextCursor(change.value.set);
@@ -645,7 +645,7 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
                 content = update?.set;
             } else {
                 const revision = update.revert;
-                assert(revision !== undefined, "Unable to revert to undefined revision");
+                assert(revision !== undefined, 0x478 /* Unable to revert to undefined revision */);
                 content = reviver(revision, 0, 1)[0];
             }
             const insertDelta = deltaFromInsertAndChange(
