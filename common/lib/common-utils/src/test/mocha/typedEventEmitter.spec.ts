@@ -3,38 +3,8 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { IErrorEvent } from "@fluidframework/common-definitions";
+import { IErrorEvent, IEvent, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "../..";
-
-export interface NewEventSpec {
-    something: (x: number) => void;
-    useThis1: (y: IEventThisPlaceHolder) => void;
-}
-
-interface IBaseEvents extends IEvent {
-    (event: "removeListener", listener: (event: string) => void);
-    // (event: "newListener", listener: (event: string, listener: (...args: any[]) => void) => void);
-    // (event: "removeListener", listener: (event: string, listener: (...args: any[]) => void) => void);
-}
-
-export interface IOldEvents extends IEvent {
-    (event: "asdf", listener: (y: boolean, z: string) => void);
-    (event: "something", listener: (x: number) => void);
-    (event: "useThis1", listener: (y: IEventThisPlaceHolder) => void)
-}
-
-const sampleOld = new TypedEventEmitter<IOldEvents>();
-
-sampleOld.emit("something", 5);
-sampleOld.emit("addListener", "asdf", () => {});
-
-sampleOld.emit("something", 7);
-
-sampleOld.on("something", (x) => {});
-
-// Notice these are acceptable (EMITTING IS NOT ACTUALLY)
-sampleOld.emit("unspecified", () => {});
-sampleOld.on("unspecified", () => {});
 
 describe("TypedEventEmitter", () => {
     it("Validate Function proxies", () => {
@@ -78,4 +48,67 @@ describe("TypedEventEmitter", () => {
         assert.equal(newListenerCalls, 1);
         assert.equal(removeListenerCalls, 1);
     });
+
+    it("Validate emit typing for valid event type", () => {
+        const eventArgsEmitted: any[] = [];
+        const handler = (...args): void => { eventArgsEmitted.push(args); }
+        const tee = new (class SomeClass extends TypedEventEmitter<ISampleEvents>{ someMember: 0 = 0; })();
+        const plainTee = new TypedEventEmitter();
+
+        tee.on("noArgs", handler);
+        tee.on("twoArgs", handler);
+        tee.on("useThis", handler);
+        tee.on("somethingElse", handler);
+
+        tee.emit("noArgs");
+        tee.emit("twoArgs", true, "hello");
+        tee.emit("useThis", tee);
+
+        // @ts-expect-error Unknown event
+        tee.emit("somethingElse");
+        // @ts-expect-error Unknown event
+        tee.emit("noArgs", "bogus");
+        // @ts-expect-error Wrong arg types
+        tee.emit("twoArgs", "wrongType", 123);
+        // @ts-expect-error Wrong arg type for "this"-typed arg
+        tee.emit("useThis", plainTee);
+
+        // @ts-expect-error This shouldn't be emitted manually
+        tee.emit("addListener", "asdf", () => {});
+        // @ts-expect-error This shouldn't be emitted manually
+        tee.emit("removeListener", "asdf", () => {});
+
+        assert.deepStrictEqual(eventArgsEmitted, [
+            [],
+            [true, "hello"],
+            [tee],
+            [],
+            ["bogus"],
+            ["wrongType", 123],
+            [plainTee],
+        ])
+    });
+
+    it("emit not supported for ivalid event type", () => {
+        const tee = new TypedEventEmitter<IInvalidEvents>();
+
+        // @ts-expect-error any invalid signatures invalidate the type altogether (even though noArgs is on there)
+        tee.emit("noArgs");
+        // @ts-expect-error only strings are supported for event keys
+        tee.emit(123);
+        // @ts-expect-error only strings are supported for event keys
+        tee.emit(456);
+    });
 });
+
+interface ISampleEvents extends IEvent {
+    (event: "noArgs", listener: () => void);
+    (event: "twoArgs", listener: (y: boolean, z: string) => void);
+    (event: "useThis", listener: (y: IEventThisPlaceHolder) => void)
+}
+
+interface IInvalidEvents extends IEvent {
+    (event: "noArgs", listener: () => void); // Note: even this won't work
+    (event: 123, listener: () => void);
+    (event: number, listener: () => void);
+}

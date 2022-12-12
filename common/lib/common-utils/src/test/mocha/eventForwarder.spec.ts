@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { IErrorEvent } from "@fluidframework/common-definitions";
-import { EventForwarder } from "../..";
+import { EventForwarder, TypedEventEmitter } from "../..";
 
 interface ITestEvents extends IErrorEvent {
     (event: "testEvent", listener: (name: string, count: number) => void);
@@ -27,13 +27,21 @@ describe("Loader", () => {
                 });
 
                 afterEach(() => {
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (!forwarder.disposed) {
                         forwarder.dispose();
                     }
                 });
 
                 it("Should forward events", () => {
+                    let emitted = false;
+                    forwarder.on(testEvent, () => {
+                        emitted = true;
+                    });
+                    source.emit(testEvent);
+                    assert(emitted);
+                });
+
+                it("Should forward events 2", () => {
                     let emitted = false;
                     forwarder.on(testEvent, () => {
                         emitted = true;
@@ -185,6 +193,16 @@ describe("Loader", () => {
                     assert.strictEqual(forwarder.listenerCount(testEvent), 1);
                     source.emit(testEvent);
                 });
+
+                it("forwardEvent weak typing", () => {
+                    class Forwarder extends EventForwarder<ITestEvents> {
+                        testing(): void {
+                            // forwardEvent allows any event names to be specified, even ones not declared on source or this
+                            this.forwardEvent(new TypedEventEmitter<ITestEvents>(), "unknownEventName");
+                        }
+                    }
+                    new Forwarder();
+                })
             });
         });
     });

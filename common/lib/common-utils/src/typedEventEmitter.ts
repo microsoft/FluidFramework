@@ -76,11 +76,7 @@ export type ToEventArgsMappingCore<TEvent extends IEvent> =
     ;
 
 export type ToEventArgsMapping<TEvent> =
-    ToEventArgsMappingCore<TEvent & IEvent> &
-    SingleEventArgsMapping<"addListener", [event: string, listener: (...args: any[]) => void]> &
-    SingleEventArgsMapping<"removeListener", [event: string, listener: (...args: any[]) => void]>;
-    //* Uncomment this to allow emitting anything. But themn emit loses intellisense for event keys
-    // & EventSpecEntry<string, any[]>;
+    ToEventArgsMappingCore<TEvent & IEvent>;
 
 export type SingleEventArgsMapping<TEventKey, TListenerArgs extends any[]> =
     TEventKey extends string ?
@@ -89,7 +85,7 @@ export type SingleEventArgsMapping<TEventKey, TListenerArgs extends any[]> =
     }
     : never;
 
-type StringKeys<TEventSpec> =
+export type StringKeys<TEventSpec> =
     keyof TEventSpec extends string ?
             keyof TEventSpec
  : never

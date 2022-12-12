@@ -87,7 +87,9 @@ export class EventForwarder<TEvent = IEvent>
                     this.forwardingEvents.set(event, sources);
                 }
                 if (!sources.has(source)) {
-                    const listener = (...args: any[]): boolean => this.emit(event, ...args);
+                    // Event forwarding doesn't include type safety on the event names forwarded,
+                    // so we opt out of TypedEventEmitter.emit strong typing here.
+                    const listener = (...args: any[]): boolean => (this as EventEmitter).emit(event, ...args);
                     sources.set(source, () => source.off(event, listener));
                     source.on(event, listener);
                 }
