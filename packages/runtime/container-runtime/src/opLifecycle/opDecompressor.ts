@@ -52,6 +52,8 @@ export class OpDecompressor {
         }
 
         if (this.rootMessageContents !== undefined && message.metadata?.batch === undefined && this.activeBatch) {
+            assert(message.contents === undefined, "Expecting empty message");
+
             // Continuation of compressed batch
             return {
                 message: { ...message, contents: this.rootMessageContents[this.processedCount++] },

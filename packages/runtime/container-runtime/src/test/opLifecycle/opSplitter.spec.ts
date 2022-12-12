@@ -135,6 +135,12 @@ describe("OpSplitter", () => {
             contentSizeInBytes: 3,
         }));
 
+        // Old loader
+        assert.throws(() => new OpSplitter([], undefined, 0, maxBatchSizeInBytes, mockLogger).splitCompressedBatch({
+            content: [compressedMessage],
+            contentSizeInBytes: 3,
+        }));
+
         // Misconfigured op splitter
         assert.throws(() => new OpSplitter([], mockSubmitBatchFn, 2, 1, mockLogger).splitCompressedBatch({
             content: [compressedMessage],

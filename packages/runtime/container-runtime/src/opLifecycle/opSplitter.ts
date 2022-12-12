@@ -22,7 +22,7 @@ export class OpSplitter {
 
     constructor(
         chunks: [string, string[]][],
-        private readonly submitBatchFn: (batch: IBatchMessage[]) => number,
+        private readonly submitBatchFn: ((batch: IBatchMessage[]) => number) | undefined,
         private readonly chunkSizeInBytes: number,
         private readonly maxBatchSizeInBytes: number,
         logger: ITelemetryLogger,
@@ -32,7 +32,7 @@ export class OpSplitter {
     }
 
     public get isBatchChunkingEnabled(): boolean {
-        return this.chunkSizeInBytes < Number.POSITIVE_INFINITY;
+        return this.chunkSizeInBytes < Number.POSITIVE_INFINITY && this.submitBatchFn !== undefined;
     }
 
     public get chunks(): ReadonlyMap<string, string[]> {
@@ -138,6 +138,7 @@ export class OpSplitter {
         const restOfMessages = batch.content.slice(1); // we expect these to be empty ops, created to reserve sequence numbers
         const chunks = splitOp(firstMessage, this.chunkSizeInBytes);
 
+        assert(this.submitBatchFn !== undefined, "We don't support old loaders");
         // Send the first N-1 chunks immediately
         for (const chunk of chunks.slice(0, -1)) {
             this.submitBatchFn([chunkToBatchMessage(chunk, firstMessage.referenceSequenceNumber)]);

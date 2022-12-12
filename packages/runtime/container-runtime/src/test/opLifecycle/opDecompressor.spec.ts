@@ -54,7 +54,7 @@ function generateCompressedBatchMessage(length: number, metadata = true): ISeque
 }
 
 const emptyMessage: ISequencedDocumentMessage = {
-    contents: {},
+    contents: undefined,
     clientId: "clientId",
     sequenceNumber: 1,
     term: 1,
@@ -106,6 +106,16 @@ describe("OpDecompressor", () => {
         const lastMessageResult = decompressor.processMessage(endBatchEmptyMessage);
         assert.equal(lastMessageResult.state, "Processed");
         assert.strictEqual(lastMessageResult.message.contents.contents, "value4");
+    });
+
+    it("Expecting empty messages in the middle of the compressed batch", () => {
+        const rootMessage = generateCompressedBatchMessage(5);
+        const firstMessageResult = decompressor.processMessage(rootMessage);
+
+        assert.equal(firstMessageResult.state, "Accepted");
+        assert.strictEqual(firstMessageResult.message.contents.contents, "value0");
+
+        assert.throws(() => decompressor.processMessage({ ...emptyMessage, contents: {} }));
     });
 
     it("Processes multiple batches of compressed ops", () => {

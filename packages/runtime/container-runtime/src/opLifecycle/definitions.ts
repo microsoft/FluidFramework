@@ -45,9 +45,26 @@ export interface IChunkedOp {
     compression?: string;
 }
 
-type ProcessingState = "Processed" | "Skipped" | "Accepted";
+/**
+ * The state of remote message processing:
+ * `Processed` - the message can be considered processed
+ * `Skipped` - the message was ignored by the processor
+ * `Accepted` - the message was processed partially. Eventually, a message
+ * will make the processor return `Processed`.
+ */
+export type ProcessingState = "Processed" | "Skipped" | "Accepted";
 
+/**
+ * Return type for functions which process remote messages
+ */
 export interface IMessageProcessingResult {
+    /**
+     * A shallow copy of the input message if processing happened, or
+     * the original message otherwise
+     */
     readonly message: ISequencedDocumentMessage;
+    /**
+     * Processing result of the input message.
+     */
     readonly state: ProcessingState;
 }

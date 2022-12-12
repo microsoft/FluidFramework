@@ -197,35 +197,34 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
     });
 
-    describe("Large payloads", () =>
-        [
-            { messagesInBatch: 1, messageSize: 5 * 1024 * 1024 }, // One large message
-            { messagesInBatch: 3, messageSize: 5 * 1024 * 1024 }, // Three large messages
-            { messagesInBatch: 50, messageSize: 215 * 1024 }, // Many small messages
-        ].forEach((config) => {
-            it("Large payloads pass when compression enabled, " +
-                "compressed content is over max op size and chunking enabled. " +
-                `${config.messagesInBatch} messages of ${config.messageSize}b == ` +
-                `${(config.messagesInBatch * config.messageSize / (1024 * 1024)).toFixed(2)} MB`, async function() {
-                    // This is not supported by the local server. See ADO:2690
-                    if (provider.driver.type === "local") {
-                        this.skip();
-                    }
+    describe("Large payloads", () => [
+        { messagesInBatch: 1, messageSize: 5 * 1024 * 1024 }, // One large message
+        { messagesInBatch: 3, messageSize: 5 * 1024 * 1024 }, // Three large messages
+        { messagesInBatch: 50, messageSize: 215 * 1024 }, // Many small messages
+    ].forEach((config) => {
+        it("Large payloads pass when compression enabled, " +
+            "compressed content is over max op size and chunking enabled. " +
+            `${config.messagesInBatch} messages of ${config.messageSize}b == ` +
+            `${(config.messagesInBatch * config.messageSize / (1024 * 1024)).toFixed(2)} MB`, async function() {
+                // This is not supported by the local server. See ADO:2690
+                if (provider.driver.type === "local") {
+                    this.skip();
+                }
 
-                    await setupContainers({
-                        ...testContainerConfig,
-                        runtimeOptions: {
-                            compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
-                            chunkSizeInBytes: 200 * 1024,
-                            summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
-                        },
-                    });
+                await setupContainers({
+                    ...testContainerConfig,
+                    runtimeOptions: {
+                        compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
+                        chunkSizeInBytes: 200 * 1024,
+                        summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
+                    },
+                });
 
-                    const largeString = generateRandomStringOfSize(config.messageSize);
+                const largeString = generateRandomStringOfSize(config.messageSize);
 
-                    setMapKeys(dataObject1map, config.messagesInBatch, largeString);
-                    await provider.ensureSynchronized();
-                    assertMapValues(dataObject2map, config.messagesInBatch, largeString);
-                }).timeout(200000);
-        }));
+                setMapKeys(dataObject1map, config.messagesInBatch, largeString);
+                await provider.ensureSynchronized();
+                assertMapValues(dataObject2map, config.messagesInBatch, largeString);
+            }).timeout(200000);
+    }));
 });
