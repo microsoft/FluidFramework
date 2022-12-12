@@ -740,6 +740,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
         changedEventData = [];
         subDirCreatedEventData = [];
         subDirDeletedEventData = [];
+        subDirUndeletedEventData = [];
         sharedDir.on("valueChanged", (changed, _local, _target) => {
             changedEventData.push(changed);
         });
