@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { IErrorEvent } from "@fluidframework/common-definitions";
+import { IErrorEvent, IEvent, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "../..";
 
 export interface NewEventSpec {
