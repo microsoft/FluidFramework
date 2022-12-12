@@ -43,5 +43,12 @@ export {
     Timer,
 } from "./timer";
 export { ITraceEvent, Trace } from "./trace";
-export { EventEmitterEventType, TypedEventEmitter, TypedEventTransform } from "./typedEventEmitter";
+export {
+    EventEmitterEventType,
+    TypedEventEmitter,
+    TypedEventTransform,
+    EventArgsMapping,
+    SingleEventArgsMapping,
+    TypedEmit
+} from "./typedEventEmitter";
 export { unreachableCase } from "./unreachable";

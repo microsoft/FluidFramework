@@ -15,6 +15,7 @@ import { ITelemetryErrorEvent } from '@fluidframework/common-definitions';
 import { ITelemetryGenericEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITelemetryPerformanceEvent } from '@fluidframework/common-definitions';
+import { ReplaceIEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { TransformedEvent } from '@fluidframework/common-definitions';
 
 // @public
@@ -52,6 +53,27 @@ export const delay: (timeMs: number) => Promise<void>;
 
 // @public
 export function doIfNotDisposed<T>(disposable: IDisposable, f: (...args: any[]) => T): (...args: any[]) => T;
+
+// @public
+export type EventArgsMapping<TEvent> = TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? SingleEventArgsMapping<E0, A0> & SingleEventArgsMapping<E1, A1> & SingleEventArgsMapping<E2, A2> & SingleEventArgsMapping<E3, A3> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? SingleEventArgsMapping<E0, A0> & SingleEventArgsMapping<E1, A1> & SingleEventArgsMapping<E2, A2> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? SingleEventArgsMapping<E0, A0> & SingleEventArgsMapping<E1, A1> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? SingleEventArgsMapping<E0, A0> : SingleEventArgsMapping<string, any[]>;
 
 // @public
 export type EventEmitterEventType = EventEmitter extends {
@@ -256,6 +278,11 @@ export function safelyParseJSON(json: string): any | undefined;
 // @public
 export function setLongTimeout(timeoutFn: () => void, timeoutMs: number, setTimeoutIdFn?: (timeoutId: ReturnType<typeof setTimeout>) => void): ReturnType<typeof setTimeout>;
 
+// @public (undocumented)
+export type SingleEventArgsMapping<TEventKey, TListenerArgs extends any[]> = TEventKey extends string ? {
+    [TK in TEventKey]: TListenerArgs;
+} : never;
+
 // @public
 export function stringToBuffer(input: string, encoding: string): ArrayBufferLike;
 
@@ -296,11 +323,16 @@ export class Trace {
     trace(): ITraceEvent;
 }
 
+// @public (undocumented)
+export type TypedEmit<TThis, TEvent> = keyof EventArgsMapping<TEvent> extends string ? <TEventKey extends keyof EventArgsMapping<TEvent>>(event: TEventKey, ...args: ReplaceIEventThisPlaceHolder<EventArgsMapping<TEvent>[TEventKey], TThis>) => boolean : never;
+
 // @public
 export class TypedEventEmitter<TEvent> extends EventEmitter implements IEventProvider<TEvent & IEvent> {
     constructor();
     // (undocumented)
     readonly addListener: TypedEventTransform<this, TEvent>;
+    // (undocumented)
+    readonly emit: TypedEmit<this, TEvent>;
     // (undocumented)
     readonly off: TypedEventTransform<this, TEvent>;
     // (undocumented)

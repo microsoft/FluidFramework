@@ -39,8 +39,8 @@ export type TypedEventTransform<TThis, TEvent> =
         // Add the default overload so this is covertable to EventEmitter regardless of environment
         TransformedEvent<TThis, EventEmitterEventType, any[]>;
 
-/** Converting from IEvent shape to EventSpec shape. Might allow for easier transition to EventSpec */
-export type ToEventArgsMapping<TEvent> =
+/** Convert from IEvent shape to a type mapping event name to args list */
+export type EventArgsMapping<TEvent> =
     //* TODO: ...Start with all 15 like IEventTransformer
     TEvent extends {
         (event: infer E0, listener: (...args: infer A0) => void);
@@ -75,21 +75,20 @@ export type ToEventArgsMapping<TEvent> =
         ? SingleEventArgsMapping<E0, A0>
         : SingleEventArgsMapping<string, any[]>;
 
-type SingleEventArgsMapping<TEventKey, TListenerArgs extends any[]> = TEventKey extends string
+export type SingleEventArgsMapping<TEventKey, TListenerArgs extends any[]> = TEventKey extends string
     ? {
           [TK in TEventKey]: TListenerArgs;
       }
     : never;
 
-type RequireAllStringKeys<TEventSpec> = keyof TEventSpec extends string ? keyof TEventSpec : never;
-
-/** Signature for emit */
-type EventEmitSignatures<TThis, TEvent> = <
-    TEventKey extends RequireAllStringKeys<ToEventArgsMapping<TEvent>>,
+export type TypedEmit<TThis, TEvent> = keyof EventArgsMapping<TEvent> extends string
+? <
+    TEventKey extends keyof EventArgsMapping<TEvent>,
 >(
     event: TEventKey,
-    ...args: ReplaceIEventThisPlaceHolder<ToEventArgsMapping<TEvent>[TEventKey], TThis>
-) => boolean;
+    ...args: ReplaceIEventThisPlaceHolder<EventArgsMapping<TEvent>[TEventKey], TThis>
+) => boolean
+: never;
 
 /**
  * Event Emitter helper class the supports emitting typed events
@@ -114,7 +113,7 @@ export class TypedEventEmitter<TEvent>
         this.removeListener = super.removeListener.bind(this) as TypedEventTransform<this, TEvent>;
         this.off = super.off.bind(this) as TypedEventTransform<this, TEvent>;
 
-        this.emit = super.emit.bind(this) as EventEmitSignatures<this, TEvent & IEvent>;
+        this.emit = super.emit.bind(this) as TypedEmit<this, TEvent & IEvent>;
     }
     readonly addListener: TypedEventTransform<this, TEvent>;
     readonly on: TypedEventTransform<this, TEvent>;
@@ -124,5 +123,5 @@ export class TypedEventEmitter<TEvent>
     readonly removeListener: TypedEventTransform<this, TEvent>;
     readonly off: TypedEventTransform<this, TEvent>;
 
-    readonly emit: EventEmitSignatures<this, TEvent>;
+    readonly emit: TypedEmit<this, TEvent>;
 }

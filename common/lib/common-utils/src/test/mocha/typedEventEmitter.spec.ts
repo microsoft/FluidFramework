@@ -72,6 +72,8 @@ describe("TypedEventEmitter", () => {
         tee.emit("somethingElse");
         // @ts-expect-error Unknown event
         tee.emit("noArgs", "bogus");
+        // @ts-expect-error Missing arg
+        tee.emit("twoArgs", true);
         // @ts-expect-error Wrong arg types
         tee.emit("twoArgs", "wrongType", 123);
         // @ts-expect-error Wrong arg type for "this"-typed arg
