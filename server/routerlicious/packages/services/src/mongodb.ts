@@ -59,7 +59,6 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         );
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
     public async update(filter: object, set: any, addToSet: any): Promise<void> {
         const req = async () => this.updateCore(filter, set, addToSet, false);
         return this.requestWithRetry(
@@ -68,7 +67,6 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         );
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
     public async updateMany(filter: object, set: any, addToSet: any): Promise<void> {
         const req = async () => this.updateManyCore(filter, set, addToSet, false);
         return this.requestWithRetry(
@@ -77,7 +75,6 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         );
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
     public async upsert(filter: object, set: any, addToSet: any): Promise<void> {
         const req = async () => this.updateCore(filter, set, addToSet, true);
         return this.requestWithRetry(
@@ -148,7 +145,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         }
     }
 
-    // Create index mostly happened at service bootstrap time. If we bubble up at that time, 
+    // Create index mostly happened at service bootstrap time. If we bubble up at that time,
     // service will failed to start. So instead we need catch the exception and log it without bubbling up.
     public async createTTLIndex(index: any, expireAfterSeconds?: number): Promise<void> {
         const req = async () => this.collection.createIndex(index, { expireAfterSeconds });

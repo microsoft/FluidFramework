@@ -23,7 +23,6 @@ export interface IPlugin {
 }
 
 export async function createDocumentRouter(config: nconf.Provider): Promise<IPartitionLambdaFactory<IPartitionConfig>> {
-    // eslint-disable-next-line @typescript-eslint/ban-types
     const pluginConfig = config.get("documentLambda") as string | object;
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const plugin = (typeof pluginConfig === "object" ? pluginConfig : require(pluginConfig)) as IPlugin;
