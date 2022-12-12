@@ -306,6 +306,22 @@ export class TestClient extends Client {
         return nextWord;
     }
 
+    public debugDumpTree(tree: MergeTree) {
+        // want the segment's content and the state of insert/remove
+        const test: string[] = [];
+        walkAllChildSegments(tree.root,
+            (segment) => {
+                const prefixes: (string | undefined | number)[] = [];
+                prefixes.push(segment.seq !== UnassignedSequenceNumber ? segment.seq : `L${segment.localSeq}`);
+                if (segment.removedSeq !== undefined) {
+                    prefixes.push(segment.removedSeq !== UnassignedSequenceNumber
+                        ? segment.removedSeq
+                        : `L${segment.localRemovedSeq}`);
+                }
+                test.push(`${prefixes.join(",")}:${(segment as any).text}`);
+            });
+    }
+
     private findReconnectionPositionSegment?: ISegment;
 
     /**
