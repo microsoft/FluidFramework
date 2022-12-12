@@ -560,7 +560,6 @@ export class IdCompressor {
                     Math.min(currentCluster.count + finalizeCount, currentCluster.capacity) -
                     1) as FinalCompressedId;
                 if (lastFinalInCluster > lastKnownFinal) {
-                    eagerFinalIdCount = lastFinalInCluster - (lastKnownFinal + 1);
                     this.sessionIdNormalizer.addFinalIds(
                         (lastKnownFinal + 1) as FinalCompressedId,
                         lastFinalInCluster,
@@ -574,6 +573,7 @@ export class IdCompressor {
             const hasRoom = overflow <= 0;
             if (hasRoom || currentBaseFinalId === this.finalIdToCluster.maxKey()) {
                 currentCluster.count += remainingCount;
+                eagerFinalIdCount = remainingCount;
                 remainingCount = 0;
                 // The common case is that there is room in the cluster, and the new final IDs can simply be added to it
                 if (!hasRoom) {
@@ -635,7 +635,7 @@ export class IdCompressor {
                             currentCluster,
                         );
                         this.logger?.sendTelemetryEvent({
-                            eventName: "IdCompressor:ClusterExpansion",
+                            eventName: "RuntimeIdCompressor:ClusterExpansion",
                             sessionId: this.localSessionId,
                             previousCapacity,
                             newCapacity: currentCluster.capacity,
@@ -650,17 +650,19 @@ export class IdCompressor {
                 currentCluster.count += remainingCapacity;
                 remainingCount -= remainingCapacity;
                 this.logger?.sendTelemetryEvent({
-                    eventName: "IdCompressor:OverfilledCluster",
+                    eventName: "RuntimeIdCompressor:OverfilledCluster",
                     sessionId: this.localSessionId,
                 });
             }
         } else {
             // Session has never made a cluster, form a new one with the session UUID as the baseUuid
             newBaseUuid = session.sessionUuid;
-            this.logger?.sendTelemetryEvent({
-                eventName: "IdCompressor:FirstCluster",
-                sessionId: this.localSessionId,
-            });
+            if (isLocal) {
+                this.logger?.sendTelemetryEvent({
+                    eventName: "RuntimeIdCompressor:FirstCluster",
+                    sessionId: this.localSessionId,
+                });
+            }
         }
 
         // Finalizing a range results in one of three cases:
@@ -697,7 +699,7 @@ export class IdCompressor {
 
             if (isLocal) {
                 this.logger?.sendTelemetryEvent({
-                    eventName: "IdCompressor:NewCluster",
+                    eventName: "RuntimeIdCompressor:NewCluster",
                     sessionId: this.localSessionId,
                     clusterCapacity: newCapacity,
                     clusterCount: remainingCount,
@@ -843,9 +845,9 @@ export class IdCompressor {
 
         if (isLocal) {
             this.logger?.sendTelemetryEvent({
-                eventName: "IdCompressor:IdCompressorStatus",
-                eagerFinalIdCount,
-                localIdCount: remainingCount,
+                eventName: "RuntimeIdCompressor:IdCompressorStatus",
+                eagerFinalIdCount: eagerFinalIdCount - (overrides?.length ?? 0),
+                localIdCount: remainingCount + (overrides?.length ?? 0),
                 overridesCount: overrides?.length ?? 0,
                 sessionId: this.localSessionId,
             });
@@ -1712,6 +1714,13 @@ export class IdCompressor {
 
             return serializedWithSession;
         }
+
+        this.logger?.sendTelemetryEvent({
+            eventName: "RuntimeIdCompressor:SerializedIdCompressorSize",
+            size: JSON.stringify(serializedIdCompressor).length,
+            clusterCount: serializedIdCompressor.clusters.length,
+            sessionCount: serializedIdCompressor.sessions.length,
+        });
 
         return serializedIdCompressor as SerializedIdCompressor;
     }
