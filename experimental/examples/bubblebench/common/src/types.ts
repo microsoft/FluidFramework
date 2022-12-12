@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { Serializable } from "@fluidframework/datastore-definitions";
+
 import { normal, randomColor, rnd } from "./rnd";
 
 export interface IArrayish<T> extends ArrayLike<T>, Pick<T[], "push" | "pop" | "map">, Iterable<T> { }
@@ -46,7 +48,7 @@ export function makeBubble(stageWidth: number, stageHeight: number): IBubble {
     };
 }
 
-export const makeClient = (stageWidth: number, stageHeight: number, numBubbles: number): IClient => ({
+export const makeClient = (stageWidth: number, stageHeight: number, numBubbles: number): Serializable => ({
     clientId: "pending",
     color: randomColor(),
     bubbles: Array.from({length: numBubbles})
