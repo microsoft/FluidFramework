@@ -50,25 +50,23 @@ export interface EditableTreeContext {
      *
      * When using its getter, see {@link UnwrappedEditableField} for what is unwrapped.
      *
-     * When using its setter, the input data has to follow the root field schema.
-     *
-     * If the input data is `undefined`, the field nodes will be deleted
-     * if its not empty and its schema follows the `Optional` multiplicity.
-     * For any other multiplicities except of `Forbidden` (in which case the field is alway empty),
-     * an exception will be thrown.
-     * Use empty array (`[]`) instead to delete all nodes of a sequence root.
-     *
-     * If the input data is a {@link ContextuallyTypedNodeData}, it must be formed depending
-     * on a multiplicity of the field, on if its polymorphic or, for non-sequence multiplicities,
+     * When using its setter, the input data must be formed depending
+     * on a multiplicity of the field, on if it's polymorphic or not and, for non-sequence multiplicities,
      * on if the field's node declares its primary function using a primary field (see `getPrimaryField`):
-     * - for `Sequence` multiplicities and "primary fielded" nodes, array data or an {@link EditableField} is expected;
-     * - for `Value` or `Optional` multiplicities, `ContextuallyTypedNodeDataObject` is expected.
+     * - For `Sequence` multiplicities and "primary fielded" nodes, array data or an {@link EditableField} is expected.
+     * Use empty array (`[]`) to delete all nodes of a sequence field.
+     * - For `Optional` multiplicities, `ContextuallyTypedNodeDataObject | undefined` is expected.
+     * If the input data is `undefined`, the field node will be deleted if it exists.
+     * - For `Value` multiplicities, `ContextuallyTypedNodeDataObject` is expected.
      *
      * If the field is a non-sequence and some of its types declare to follow
      * the `String`, `Number` or `Boolean` value schema (see `ValueSchema`),
-     * a `PrimitiveValue` can be used to create/replace the field or to set the value of the primitive node.
+     * a `PrimitiveValue` can be used instead of a `ContextuallyTypedNodeDataObject`
+     * to create/replace or to set the value of the primitive node.
      * Required is to be possible to unambiguously resolve the node type out of a primitive type
-     * of the data and the field types, or, if there are none, of the types of the global tree schema.
+     * of the data and of the field types, or, if there are none, of the types of the global tree schema.
+     * If it's not possible, a `ContextuallyTypedNodeDataObject` with an explicitly provided
+     * type and a value (using a `typeNameSymbol` and a `valueSymbol`) must be used instead.
      */
     // TODO: replace "replace" semantics for primitives with "change value" whenever possible
     get unwrappedRoot(): UnwrappedEditableField;
