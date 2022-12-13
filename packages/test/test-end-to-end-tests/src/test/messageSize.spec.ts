@@ -234,7 +234,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
             }).timeout(chunkingBatchesTimeoutMs);
     }));
 
-    describe.only("Large payload resiliency", () => {
+    describe("Large payload resiliency", () => {
         const messageSize = 5 * 1024 * 1024;
         const messagesInBatch = 3;
 
