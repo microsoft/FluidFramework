@@ -1407,6 +1407,9 @@ export class MergeTree {
                 }
                 if (opArgs.op.type === MergeTreeDeltaType.OBLITERATE) {
                     this.moveSeqs.push(seq);
+                    if (localMovedSeq !== undefined) {
+                        this.localMoveSeqs.delete(localMovedSeq);
+                    }
                 }
                 if (MergeTree.options.zamboniSegments) {
                     this.addToLRUSet(pendingSegment, seq);
@@ -1795,7 +1798,7 @@ export class MergeTree {
                 const leftLocalSegments: Record<number, ISegment> = {};
 
                 const findLeftMovedSegment = (seg: ISegment) => {
-                    if ((seg.movedSeq !== undefined && seg.movedSeq >= refSeq)) {
+                    if ((seg.movedSeq !== undefined && seg.movedSeq !== -1 && seg.movedSeq >= refSeq)) {
                         leftAckedSegments[seg.movedSeq] = seg;
                         return true;
                     } else if (seg.localMovedSeq !== undefined) {
@@ -1812,7 +1815,7 @@ export class MergeTree {
                 };
 
                 const findRightMovedSegment = (seg: ISegment) => {
-                    if ((seg.movedSeq !== undefined && seg.movedSeq >= refSeq)) {
+                    if ((seg.movedSeq !== undefined && seg.movedSeq !== -1 && seg.movedSeq >= refSeq)) {
                         const left = leftAckedSegments[seg.movedSeq];
                         if (left) {
                             leftMovedSegment = left;
@@ -1914,8 +1917,12 @@ export class MergeTree {
 
     // TODO: use this in a smarter way
     private readonly moveSeqs: number[] = [];
+    private readonly localMoveSeqs: Set<number> = new Set();
 
     private getSmallestSeqMoveOp(): number {
+        if (this.localMoveSeqs.size > 0) {
+            return -1;
+        }
         return this.moveSeqs.find((seq) => seq > this.collabWindow.minSeq) ?? Number.MIN_SAFE_INTEGER;
     }
 
@@ -2120,10 +2127,6 @@ export class MergeTree {
         overwrite: boolean = false,
         opArgs: IMergeTreeDeltaOpArgs,
     ): void {
-        if (seq !== UnassignedSequenceNumber && seq !== this.moveSeqs[this.moveSeqs.length - 1]) {
-            this.moveSeqs.push(seq);
-        }
-
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);
 
@@ -2132,6 +2135,11 @@ export class MergeTree {
         const movedSegments: IMergeTreeSegmentDelta[] = [];
         const localSeq =
             seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
+        if (seq !== UnassignedSequenceNumber && seq !== this.moveSeqs[this.moveSeqs.length - 1]) {
+            this.moveSeqs.push(seq);
+        } else if (seq === UnassignedSequenceNumber && localSeq !== undefined) {
+            this.localMoveSeqs.add(localSeq)
+        }
         let segmentGroup: SegmentGroup;
         const markMoved = (segment: ISegment, pos: number, _start: number, _end: number) => {
             const existingMoveInfo = toMoveInfo(segment);
