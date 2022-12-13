@@ -1057,12 +1057,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         return this._mergeTree.getContainingSegment<T>(pos, args.referenceSequenceNumber, args.clientId, localSeq);
     }
 
-    /*
-    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage, localSeq?: number, seqNumberFrom?: number, clientId?: number) {
-        const args = this.getClientSequenceArgsForMessage(op);
-        return this._mergeTree.getContainingSegment<T>(pos, seqNumberFrom ?? args.referenceSequenceNumber, clientId ?? args.clientId, localSeq);
-    } */
-
     /**
      * Returns the position to slide a reference to if a slide is required.
      * @param segoff - The segment and offset to slide from
