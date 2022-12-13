@@ -1,10 +1,13 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { strict as assert } from "assert";
 import Table from "easy-table";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { TransactionResult } from "../../checkout";
 import { emptyField, FieldKinds, namedTreeSchema, singleTextCursor } from "../../feature-libraries";
-// import { PlacePath } from "../../feature-libraries/sequence-change-family";
 import { moveToDetachedField } from "../../forest";
 import { fieldSchema, SchemaData, ValueSchema } from "../../schema-stored";
 import { ISharedTree } from "../../shared-tree";
