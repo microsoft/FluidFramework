@@ -328,6 +328,25 @@ stages:
               mergeTestResults: false
             condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
+          # Copy Test Reports
+          - task: CopyFiles@2
+            displayName: Copy Test Reports
+            inputs:
+              SourceFolder: ${{ parameters.buildDirectory }}/nyc
+              Contents: '**/*junit-report.xml'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)/testFiles'
+            condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+
+          # Console Log Failed Tests
+          - task: Bash@3
+            displayName: Log Failed Tests
+            inputs:
+              targetType: inline
+              script: |
+                node printReports.js '$(Build.ArtifactStagingDirectory)/testFiles'
+              workingDirectory: tools/helper
+            condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+
         # Pack
         - ${{ if ne(parameters.taskPack, false) }}:
           - task: Bash@3
