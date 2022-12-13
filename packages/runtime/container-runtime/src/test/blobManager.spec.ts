@@ -296,8 +296,11 @@ describe("BlobManager", () => {
     });
 
     it("detached snapshot", async () => {
+        assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
         await createBlob(IsoBuffer.from("blob", "utf8"));
+        assert.strictEqual(runtime.blobManager.hasPendingBlobs, true);
         await runtime.processAll();
+        assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);

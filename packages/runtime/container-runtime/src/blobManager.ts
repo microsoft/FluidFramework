@@ -190,7 +190,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 
     public get hasPendingBlobs(): boolean {
-        return this.pendingBlobs.size > 0;
+        return (this.runtime.attachState !== AttachState.Attached && this.redirectTable.size > 0)
+        || this.pendingBlobs.size > 0;
     }
 
     /**
