@@ -35,6 +35,8 @@ let expressApp: Express | undefined;
 
 /**
  * Initializes the mock customer service.
+ *
+ * @remarks Consumers are required to manually dispose of the returned `Server` object.
  */
 export async function initializeCustomerService(): Promise<Server> {
     if(expressApp !== undefined) {
@@ -62,16 +64,7 @@ export async function initializeCustomerService(): Promise<Server> {
     }
 
     expressApp = express();
-
-    // Bind simple console logger middleware
-    expressApp.use((request, result, next): void => {
-        console.log(
-            `${request.protocol}://${request.get("host")}${
-                request.originalUrl
-            }: ${new Date().toLocaleString()}`
-        );
-        next();
-    });
+    expressApp.use(express.json());
 
     /**
      * Hello World!
@@ -97,7 +90,7 @@ export async function initializeCustomerService(): Promise<Server> {
         externalDataSource.fetchData().then(
             (data) => {
                 console.log("Data fetch request completed!");
-                result.send(data);
+                result.send({taskList: data});
             },
             (error) => {
                 console.error(`Encountered an error while reading mock external data file:`);
@@ -115,12 +108,13 @@ export async function initializeCustomerService(): Promise<Server> {
      *
      * TODO: document expected request format
      */
-    expressApp.put("/set-tasks", (request, result) => {
-        const data = request.get("taskList");
-        if (data === undefined) {
+    expressApp.post("/set-tasks", (request, result) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        const taskList = request.body.taskList as string;
+        if (taskList === undefined) {
             result.status(400).json({message: "Client failed to provide task list to set."})
         } else {
-            externalDataSource.writeData(data).then(
+            externalDataSource.writeData(taskList).then(
                 () => {
                     console.log("Data set request completed!");
                     result.send();
@@ -139,8 +133,8 @@ export async function initializeCustomerService(): Promise<Server> {
 
     const server = expressApp.listen(customerServicePort);
 
-    // Bind file-watcher disposal to server close event to ensure everything is properly cleaned up between sessions.
     server.on("close", () => {
+        closeCustomerService();
         closeWebhook().catch((error) => {
             console.error(`Encountered an error closing mock webhook:`);
             console.group();
@@ -150,6 +144,15 @@ export async function initializeCustomerService(): Promise<Server> {
     });
 
     return server;
+}
+
+function closeCustomerService(): void {
+    if(expressApp === undefined) {
+        console.warn("Service has already been closed.")
+    } else {
+        expressApp.removeAllListeners();
+        expressApp = undefined;
+    }
 }
 
 
