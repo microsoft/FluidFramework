@@ -104,7 +104,9 @@ export class OldestClientObserver extends TypedEventEmitter<IOldestClientObserve
             return false;
         }
 
-        assert(this.observable.clientId !== undefined, 0x1_da /* "Client id should be set if connected" */);
+        // TODO: Clean up error code linter violations repo-wide.
+        // eslint-disable-next-line unicorn/numeric-separators-style
+        assert(this.observable.clientId !== undefined, 0x1da /* "Client id should be set if connected" */);
 
         const selfSequencedClient = this.quorum.getMember(this.observable.clientId);
         // When in readonly mode our clientId will not be present in the quorum.

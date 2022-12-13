@@ -202,7 +202,11 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      */
     protected applyStashedOp(op: unknown): void {
         const counterOp = op as IIncrementOperation;
-        assert(counterOp.type === "increment", 0x3_ec /* Op type is not increment */);
+
+        // TODO: Clean up error code linter violations repo-wide.
+        // eslint-disable-next-line unicorn/numeric-separators-style
+        assert(counterOp.type === "increment", 0x3ec /* Op type is not increment */);
+
         this.incrementCore(counterOp.incrementAmount);
     }
 }
