@@ -23,11 +23,11 @@ import {
     ModularChangeFamily,
     ModularEditBuilder,
     FieldChangeset,
-    FieldChangeMap,
+    ModularChangeset,
 } from "./modular-schema";
 import { forbidden, optional, sequence, value as valueFieldKind } from "./defaultFieldKinds";
 
-export type DefaultChangeset = FieldChangeMap;
+export type DefaultChangeset = ModularChangeset;
 
 const defaultFieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
     [valueFieldKind, optional, sequence, forbidden].map((f) => [f.identifier, f]),

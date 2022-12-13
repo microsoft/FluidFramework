@@ -114,7 +114,7 @@ export class OpStreamAttributor extends Attributor implements IAttributor {
 		deltaManager.on("op", (message: ISequencedDocumentMessage) => {
 			const client = audience.getMember(message.clientId);
 			// TODO: This case may be legitimate, and if so we need to figure out how to handle it.
-			assert(client !== undefined, "Received message from user not in the audience");
+			assert(client !== undefined, 0x4af /* Received message from user not in the audience */);
 			this.keyToInfo.set(message.sequenceNumber, { user: client.user, timestamp: message.timestamp });
 		});
 	}

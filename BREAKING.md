@@ -15,20 +15,59 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - Avoid using code formatting in the title (it's fine to use in the body).
 - To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.2.2.0
+
+## 2.0.0-internal.2.2.0 Upcoming changes
+
+### Deprecated events and event parameters on IContainer and IDeltaManager
+
+The following legacy events and event parameters have been marked as deprecated due to being legacy and/or unsupported API patterns:
+
+- IContainerEvents
+    - "contextChanged": Event deprecated in its entirety.
+        - Represents a legacy design that is mostly no longer supported (only ever emitted during Container instantiation, and there are no recommended patterns for consuming it).
+          No replacement API recommended.
+    - "dirty": Event parameter "dirty" deprecated.
+        - The parameter is unneeded, as the event itself signals the current "dirty" state (true).
+    - "saved": Event parameter "dirty" deprecated.
+        - The parameter is unneeded, as the event itself signals the current "dirty" state (false).
+- IDeltaManagerEvents
+    - "prepareSend": Event deprecated in its entirety.
+        - No longer required by the runtime, and only currently used for backwards compatability.
+          No replacement API recommended.
+    - "submitOp": Event deprecated in its entirety.
+        - No longer required by the runtime, and only currently used for backwards compatability.
+          No replacement API recommended.
+    - "allSentOpsAckd": Event deprecated in its entirety.
+        - This event has been unused and unsupported for some time.
+          No replacement API recommended.
+    - "processTime": Event deprecated in its entirety.
+        - This event has been unused and unsupported for some time.
+          No replacement API recommended.
+    - "pong": Event deprecated in its entirety.
+        - This event has been unused and unsupported for some time.
+          No replacement API recommended.
+
 # 2.0.0-internal.2.1.0
 
 ## 2.0.0-internal.2.1.0 Upcoming changes
+
 - [Deprecated ISummarizerRuntime batchEnd listener](#Deprecated-ISummarizerRuntime-batchEnd-listener)
 - [Deprecate ISummaryBaseConfiguration.summarizerClientElection](#Deprecate-ISummaryBaseConfigurationsummarizerClientElection)
-
 
 ### Deprecated ISummarizerRuntime batchEnd listener
 The `"batchEnd"` listener in `ISummarizerRuntime` has been deprecated and will be removed in a future release. Please remove all usage and implementations of `ISummarizerRuntime.on("batchEnd", ...)` and `ISummarizerRuntime.removeListener("batchEnd", ...)`.
 If these methods are needed, please refer to the `IContainerRuntimeBase` interface.
+
 ### Deprecate-ISummaryBaseConfigurationsummarizerClientElection
 `ISummaryBaseConfiguration.summarizerClientElection` has been deprecated and will be removed in a future release.
 There will be no replacement for this property.
+
 ## 2.0.0-internal.2.1.0 Breaking changes
+- [Package @fluid-experimental/task-manager renamed to @fluidframework/task-manager](#Package-fluid-experimental/task-manager-renamed-to-fluidframework/task-manager)
+
+### Package @fluid-experimental/task-manager renamed to @fluidframework/task-manager
+The package `@fluid-experimental/task-manager` is no longer experimental and has therefore been renamed to `@fluidframework/task-manager`. Update all imports to the new package name to accommodate this change.
 
 # 2.0.0-internal.2.0.0
 

@@ -4,17 +4,10 @@
  */
 
 import { ICollection, IDeliState, IDocument, IQueuedMessage } from "@fluidframework/server-services-core";
-
-export enum DeliCheckpointReason {
-    EveryMessage,
-    IdleTime,
-    MaxTime,
-    MaxMessages,
-    ClearCache,
-}
+import { CheckpointReason } from "../utils";
 
 export interface IDeliCheckpointManager {
-    writeCheckpoint(checkpoint: IDeliState, reason: DeliCheckpointReason): Promise<void>;
+    writeCheckpoint(checkpoint: IDeliState, reason: CheckpointReason): Promise<void>;
     deleteCheckpoint(checkpointParams: ICheckpointParams): Promise<void>;
 }
 
@@ -22,7 +15,7 @@ export interface ICheckpointParams {
     /**
      * The reason why this checkpoint was triggered
      */
-    reason: DeliCheckpointReason;
+    reason: CheckpointReason;
 
     /**
      * The deli checkpoint state \@ deliCheckpointMessage

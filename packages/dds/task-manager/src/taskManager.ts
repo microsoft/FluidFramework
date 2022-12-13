@@ -387,7 +387,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenario
-            assert(this.clientId !== undefined, "clientId should not be undefined");
+            assert(this.clientId !== undefined, 0x472 /* clientId should not be undefined */);
             this.addClientToQueue(taskId, this.clientId);
             return true;
         }
@@ -512,7 +512,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenario
-            assert(this.clientId !== undefined, "clientId should not be undefined");
+            assert(this.clientId !== undefined, 0x473 /* clientId should not be undefined */);
             this.addClientToQueue(taskId, this.clientId);
             // Because we volunteered with placeholderClientId, we need to wait for when we attach and are assigned
             // a real clientId. At that point we should re-enter the queue with a real volunteer op (assuming we are
@@ -553,7 +553,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenario
-            assert(this.clientId !== undefined, "clientId is undefined");
+            assert(this.clientId !== undefined, 0x474 /* clientId is undefined */);
             this.removeClientFromQueue(taskId, this.clientId);
             this.abandonWatcher.emit("abandon", taskId);
             return;
@@ -656,7 +656,15 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             // a new clientId.
             this.removeClientFromAllQueues(placeholderClientId);
         }
-        const content = [...this.taskQueues.entries()];
+
+        // Only include tasks if there are clients in the queue.
+        const filteredMap = new Map<string, string[]>();
+        this.taskQueues.forEach((queue: string[], taskId: string) => {
+            if (queue.length > 0) {
+                filteredMap.set(taskId, queue);
+            }
+        });
+        const content = [...filteredMap.entries()];
         return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));
     }
 
@@ -669,6 +677,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         content.forEach(([taskId, clientIdQueue]) => {
             this.taskQueues.set(taskId, clientIdQueue);
         });
+        this.scrubClientsNotInQuorum();
     }
 
     /**
@@ -791,11 +800,28 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * transitioning from detached to attached and this.runtime.clientId is defined.
      */
     private replacePlaceholderInAllQueues() {
-        assert(this.runtime.clientId !== undefined, "this.runtime.clientId should be defined");
+        assert(this.runtime.clientId !== undefined, 0x475 /* this.runtime.clientId should be defined */);
         for (const clientQueue of this.taskQueues.values()) {
             const clientIdIndex = clientQueue.indexOf(placeholderClientId);
             if (clientIdIndex !== -1) {
                 clientQueue[clientIdIndex] = this.runtime.clientId;
+            }
+        }
+    }
+
+    // This seems like it should be unnecessary if we can trust to receive the join/leave messages and
+    // also have an accurate snapshot.
+    private scrubClientsNotInQuorum() {
+        const quorum = this.runtime.getQuorum();
+        for (const [taskId, clientQueue] of this.taskQueues) {
+            const filteredClientQueue = clientQueue.filter((clientId) => quorum.getMember(clientId) !== undefined);
+            if (clientQueue.length !== filteredClientQueue.length) {
+                if (filteredClientQueue.length === 0) {
+                    this.taskQueues.delete(taskId);
+                } else {
+                    this.taskQueues.set(taskId, filteredClientQueue);
+                }
+                this.queueWatcher.emit("queueChange", taskId);
             }
         }
     }
