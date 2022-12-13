@@ -15,6 +15,7 @@ module.exports = {
     globals: {
         PATH: `http://localhost:${mappedPort}`,
     },
+    setupFilesAfterEnv: ["<rootDir>/test/startUp"],
     testMatch: ["**/?(*.)+(spec|test).[t]s"],
     testPathIgnorePatterns: ["/node_modules/", "dist"],
     transform: {

@@ -8,6 +8,7 @@ module.exports = {
         require.resolve("@fluidframework/eslint-config-fluid/strict"),
         "prettier",
     ],
+    ignorePatterns: ["test/startUp.js"],
     rules: {
         // TODO: remove once dependency on base config has been updated.
         "@typescript-eslint/explicit-member-accessibility": [
