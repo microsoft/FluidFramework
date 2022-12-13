@@ -410,11 +410,7 @@ export function configureWebSocketServices(
                 connection.once("error", (error) => {
                     const messageMetaData = getMessageMetadata(connection.documentId, connection.tenantId);
 
-                    logger.error(
-                        `Disconnecting socket on connection error: ${safeStringify(error, undefined, 2)}`,
-                        { messageMetaData }
-                    );
-
+                    logger.error(`Disconnecting socket on connection error: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
                     Lumberjack.error(
                         `Disconnecting socket on connection error`,
                         getLumberBaseProperties(connection.documentId, connection.tenantId),

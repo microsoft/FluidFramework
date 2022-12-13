@@ -50,7 +50,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-tools": "^0.4.4000",
-    "@fluidframework/eslint-config-fluid": "^1.2.0",
+    "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@rushstack/eslint-config": "^2.6.1",
     "@types/compression": "0.0.36",
     "@types/cors": "^2.8.4",

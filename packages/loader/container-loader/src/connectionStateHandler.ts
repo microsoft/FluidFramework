@@ -288,7 +288,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 
     private startJoinOpTimer() {
         assert(!this.joinOpTimer.hasTimer, 0x234 /* "has joinOpTimer" */);
-        assert(this.connection !== undefined, "have connection");
+        assert(this.connection !== undefined, 0x4b3 /* have connection */);
         this.joinOpTimer.start(
             this.connection.mode === "write" ? JoinOpTimeoutMs : JoinSignalTimeoutMs,
         );
@@ -388,7 +388,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
     }
 
     private shouldWaitForJoinSignal() {
-        assert(this.connection !== undefined, "all callers call here with active connection");
+        assert(this.connection !== undefined, 0x4b4 /* all callers call here with active connection */);
         return this.connection.mode === "write" || this.readClientsWaitForJoinSignal;
     }
 
@@ -525,12 +525,12 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 
         this.membership?.on("addMember", (clientId, details) => {
             assert((details as IClient).mode === "read" || protocol.quorum.getMember(clientId) !== undefined,
-                "Audience is subset of quorum");
+                0x4b5 /* Audience is subset of quorum */);
             this.receivedAddMemberEvent(clientId);
         });
 
         this.membership?.on("removeMember", (clientId) => {
-            assert(protocol.quorum.getMember(clientId) === undefined, "Audience is subset of quorum");
+            assert(protocol.quorum.getMember(clientId) === undefined, 0x4b6 /* Audience is subset of quorum */);
             this.receivedRemoveMemberEvent(clientId);
         });
 
