@@ -46,7 +46,7 @@ export class OpDecompressor {
             this.rootMessageContents = asObj;
 
             return {
-                message: { ...message, contents: this.rootMessageContents[this.processedCount++] },
+                message: newMessage(message, this.rootMessageContents[this.processedCount++]),
                 state: "Accepted",
             };
         }
@@ -56,17 +56,14 @@ export class OpDecompressor {
 
             // Continuation of compressed batch
             return {
-                message: { ...message, contents: this.rootMessageContents[this.processedCount++] },
+                message: newMessage(message, this.rootMessageContents[this.processedCount++]),
                 state: "Accepted",
             };
         }
 
         if (this.rootMessageContents !== undefined && message.metadata?.batch === false) {
             // End of compressed batch
-            const returnMessage = {
-                ...message,
-                contents: this.rootMessageContents[this.processedCount++]
-            };
+            const returnMessage = newMessage(message, this.rootMessageContents[this.processedCount++]);
 
             this.activeBatch = false;
             this.rootMessageContents = undefined;
@@ -89,7 +86,7 @@ export class OpDecompressor {
             const asObj = JSON.parse(intoString);
 
             return {
-                message: { ...message, contents: asObj[0] },
+                message: newMessage(message, asObj[0]),
                 state: "Processed",
             };
         }
@@ -100,3 +97,30 @@ export class OpDecompressor {
         };
     }
 }
+
+// We should not be mutating the input message nor its metadata
+const newMessage = (originalMessage: ISequencedDocumentMessage, contents: any): ISequencedDocumentMessage =>
+    stripCompressionMarkers({
+        ...originalMessage,
+        contents,
+        metadata: { ...originalMessage.metadata },
+    });
+
+// After compression, it is irrelevant to the other layers whether or not the
+// original message was compressed, so in the interest of both correctness and safety
+// we should remove all compression markers after we decompress.
+const stripCompressionMarkers = (message: ISequencedDocumentMessage): ISequencedDocumentMessage => {
+    if (message.compression !== undefined) {
+        delete message.compression;
+    }
+
+    if (message.metadata?.compressed === true) {
+        delete message.metadata.compressed;
+
+        if (Object.keys(message.metadata).length === 0) {
+            delete message.metadata;
+        }
+    }
+
+    return message;
+};

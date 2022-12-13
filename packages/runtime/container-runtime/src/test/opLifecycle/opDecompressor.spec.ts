@@ -23,6 +23,7 @@ function generateCompressedBatchMessage(length: number, metadata = true): ISeque
 
     const messageBase: ISequencedDocumentMessage = {
         contents: { packedContents: compressedContent },
+        metadata: { meta: "data" },
         clientId: "clientId",
         sequenceNumber: 1,
         term: 1,
@@ -34,22 +35,18 @@ function generateCompressedBatchMessage(length: number, metadata = true): ISeque
         compression: "lz4",
     };
 
-    let opMetadata;
     if (metadata) {
-        opMetadata = { compressed: true };
+        messageBase.metadata = { ...messageBase.metadata, compressed: true };
     }
 
     // Single compressed message won't have batch metadata
     if (length === 1) {
-        return {
-            ...messageBase,
-            metadata: opMetadata,
-        };
+        return messageBase;
     }
 
     return {
         ...messageBase,
-        metadata: { ...opMetadata, batch: true },
+        metadata: { ...messageBase.metadata, batch: true },
     };
 }
 
@@ -88,6 +85,8 @@ describe("OpDecompressor", () => {
         const result = decompressor.processMessage(generateCompressedBatchMessage(1));
         assert.equal(result.state, "Processed");
         assert.strictEqual(result.message.contents.contents, "value0");
+        assert.strictEqual(result.message.metadata?.compressed, undefined);
+        assert.strictEqual(result.message.compression, undefined);
     });
 
     it("Processes multiple compressed ops", () => {
@@ -96,16 +95,22 @@ describe("OpDecompressor", () => {
 
         assert.equal(firstMessageResult.state, "Accepted");
         assert.strictEqual(firstMessageResult.message.contents.contents, "value0");
+        assert.strictEqual(firstMessageResult.message.metadata?.compressed, undefined);
+        assert.strictEqual(firstMessageResult.message.compression, undefined);
 
         for (let i = 1; i < 4; i++) {
             const result = decompressor.processMessage(emptyMessage);
             assert.equal(result.state, "Accepted");
             assert.strictEqual(result.message.contents.contents, `value${i}`);
+            assert.strictEqual(result.message.metadata?.compressed, undefined);
+            assert.strictEqual(result.message.compression, undefined);
         }
 
         const lastMessageResult = decompressor.processMessage(endBatchEmptyMessage);
         assert.equal(lastMessageResult.state, "Processed");
         assert.strictEqual(lastMessageResult.message.contents.contents, "value4");
+        assert.strictEqual(lastMessageResult.message.metadata?.compressed, undefined);
+        assert.strictEqual(lastMessageResult.message.compression, undefined);
     });
 
     it("Expecting empty messages in the middle of the compressed batch", () => {
