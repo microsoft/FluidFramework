@@ -174,6 +174,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
                 eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
             },
             { eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived" },
+            { eventName: "fluid:telemetry:Summarizer:Running:TombstoneObject_Revived" },
         ],
         async () => {
             const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
