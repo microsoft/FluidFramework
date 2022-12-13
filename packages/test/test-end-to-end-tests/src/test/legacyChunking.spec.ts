@@ -24,7 +24,8 @@ const versionWithChunking = "0.56.0";
 describeInstallVersions(
     {
         requestAbsoluteVersions: [versionWithChunking],
-    }
+    },
+    /* timeoutMs */ 50000,
 )(
     "Legacy chunking",
     (getTestObjectProvider) => {
