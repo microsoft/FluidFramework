@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -47,7 +47,8 @@ describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
         // and after the datastore is attached. This sets the isRootDataStore to false.
         let summaryWithStats = await waitForSummary(container2);
         const gcStatePreAlias = getGCStateFromSummary(summaryWithStats.summary);
-        assert(gcStatePreAlias?.gcNodes[ds1.handle.absolutePath].unreferencedTimestampMs !== undefined,
+        assert(gcStatePreAlias !== undefined, "Should get gc pre state from summary!");
+        assert(gcStatePreAlias.gcNodes[ds1.handle.absolutePath].unreferencedTimestampMs !== undefined,
             "AliasableDataStore1 should be unreferenced as it is not aliased and not root!");
 
         // Alias a datastore
@@ -62,7 +63,8 @@ describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
             "Aliased datastore should be root as it is aliased!");
         summaryWithStats = await waitForSummary(container2);
         const gcStatePostAlias = getGCStateFromSummary(summaryWithStats.summary);
-        assert(gcStatePostAlias?.gcNodes[ds1.handle.absolutePath].unreferencedTimestampMs === undefined,
+        assert(gcStatePostAlias !== undefined, "Should get gc post state from summary!");
+        assert(gcStatePostAlias.gcNodes[ds1.handle.absolutePath].unreferencedTimestampMs === undefined,
             "AliasableDataStore1 should be referenced as it is aliased and thus a root datastore!");
     });
 });
