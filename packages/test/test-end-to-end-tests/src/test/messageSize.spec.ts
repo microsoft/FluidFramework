@@ -19,7 +19,8 @@ import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils"
 import { IContainer, IErrorBase } from "@fluidframework/container-definitions";
 import { GenericError } from "@fluidframework/container-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { CompressionAlgorithms } from "@fluidframework/container-runtime";
+import { CompressionAlgorithms, ContainerMessageType } from "@fluidframework/container-runtime";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 
 describeNoCompat("Message size", (getTestObjectProvider) => {
     const mapId = "mapId";
@@ -37,7 +38,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     });
     afterEach(async () => provider.reset());
 
-    let container1: IContainer;
+    let localContainer: IContainer;
+    let remoteContainer: IContainer;
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;
     let dataObject1map: SharedMap;
@@ -46,14 +48,16 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     const setupContainers = async (containerConfig: ITestContainerConfig) => {
         // Create a Container for the first client.
 
-        container1 = await provider.makeTestContainer(containerConfig);
-        dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+        localContainer = await provider.makeTestContainer(containerConfig);
+        dataObject1 = await requestFluidObject<ITestFluidObject>(localContainer, "default");
         dataObject1map = await dataObject1.getSharedObject<SharedMap>(mapId);
 
         // Load the Container that was created by the first client.
-        const container2 = await provider.loadTestContainer(containerConfig);
-        dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        remoteContainer = await provider.loadTestContainer(containerConfig);
+        dataObject2 = await requestFluidObject<ITestFluidObject>(remoteContainer, "default");
         dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
+        await new Promise<void>((resolve) => localContainer.once("connected", () => resolve()));
+        await new Promise<void>((resolve) => remoteContainer.once("connected", () => resolve()));
 
         await provider.ensureSynchronized();
     };
@@ -82,7 +86,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     ], async () => {
         const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
         await setupContainers(testContainerConfig);
-        const errorEvent = containerError(container1);
+        const errorEvent = containerError(localContainer);
 
         const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
         const messageCount = 1;
@@ -197,6 +201,16 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
     });
 
+    const chunkingBatchesConfig: ITestContainerConfig = {
+        ...testContainerConfig,
+        runtimeOptions: {
+            compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
+            chunkSizeInBytes: 600 * 1024,
+            summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
+        },
+    };
+    const chunkingBatchesTimeoutMs = 200000;
+
     describe("Large payloads", () => [
         { messagesInBatch: 1, messageSize: 5 * 1024 * 1024 }, // One large message
         { messagesInBatch: 3, messageSize: 5 * 1024 * 1024 }, // Three large messages
@@ -211,20 +225,81 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
                     this.skip();
                 }
 
-                await setupContainers({
-                    ...testContainerConfig,
-                    runtimeOptions: {
-                        compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
-                        chunkSizeInBytes: 200 * 1024,
-                        summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
-                    },
-                });
-
+                await setupContainers(chunkingBatchesConfig);
                 const largeString = generateRandomStringOfSize(config.messageSize);
-
                 setMapKeys(dataObject1map, config.messagesInBatch, largeString);
                 await provider.ensureSynchronized();
+
                 assertMapValues(dataObject2map, config.messagesInBatch, largeString);
-            }).timeout(200000);
+            }).timeout(chunkingBatchesTimeoutMs);
     }));
+
+    describe.only("Large payload resiliency", () => {
+        const messageSize = 5 * 1024 * 1024;
+        const messagesInBatch = 3;
+
+        describe("Remote container", () => {
+            // Forces a reconnection after a number of ops have been processed
+            const reconnectAfterOpProcessing = async (
+                container: IContainer,
+                shouldProcess: (op: ISequencedDocumentMessage) => boolean,
+                count: number = 2,
+            ) => {
+                let opsProcessed = 0;
+                return new Promise<void>((resolve) => {
+                    const handler = (op) => {
+                        if (shouldProcess(op) && ++opsProcessed === count) {
+                            container.disconnect();
+                            container.once("connected", () => {
+                                resolve();
+                                container.off("op", handler);
+                            });
+                            container.connect();
+                        }
+                    };
+
+                    container.on("op", handler);
+                });
+            };
+
+            it("Reconnects while processing chunks", async function() {
+                // This is not supported by the local server. See ADO:2690
+                if (provider.driver.type === "local") {
+                    this.skip();
+                }
+
+                await setupContainers(chunkingBatchesConfig);
+                const secondConnection = reconnectAfterOpProcessing(
+                    remoteContainer,
+                    (op) => op.contents?.type === ContainerMessageType.ChunkedOp,
+                );
+
+                const largeString = generateRandomStringOfSize(messageSize);
+                setMapKeys(dataObject1map, messagesInBatch, largeString);
+                await secondConnection;
+                await provider.ensureSynchronized();
+
+                assertMapValues(dataObject2map, messagesInBatch, largeString);
+            }).timeout(chunkingBatchesTimeoutMs);
+
+            it("Reconnects while processing compressed batch", async function() {
+                // This is not supported by the local server. See ADO:2690
+                if (provider.driver.type === "local") {
+                    this.skip();
+                }
+
+                await setupContainers(chunkingBatchesConfig);
+                const secondConnection = reconnectAfterOpProcessing(
+                    remoteContainer,
+                    (op) => op.type === MessageType.Operation && op.contents === undefined,
+                );
+                const largeString = generateRandomStringOfSize(messageSize);
+                setMapKeys(dataObject1map, messagesInBatch, largeString);
+                await secondConnection;
+                await provider.ensureSynchronized();
+
+                assertMapValues(dataObject2map, messagesInBatch, largeString);
+            }).timeout(chunkingBatchesTimeoutMs);
+        });
+    });
 });
