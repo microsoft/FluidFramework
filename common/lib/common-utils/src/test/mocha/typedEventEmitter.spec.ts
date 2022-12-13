@@ -84,13 +84,14 @@ describe("TypedEventEmitter", () => {
         // @ts-expect-error This shouldn't be emitted manually
         tee.emit("removeListener", "asdf", () => {});
 
-        // Even if typing is violated, events are still emitted as written
         assert.deepStrictEqual(eventArgsEmitted, [
             [],
             [true, "hello"],
             [tee],
+            // Below: Even if typing is violated, events are still emitted as written
             [],
             ["bogus"],
+            [true],
             ["wrongType", 123],
             [plainTee],
         ]);
