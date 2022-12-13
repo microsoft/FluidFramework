@@ -69,7 +69,7 @@ describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
     });
 });
 
-describeNoCompat("GC aliased datastore is always referenced", async (getTestObjectProvider) => {
+describeNoCompat("GC aliased datastore is always referenced", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
 
     beforeEach(async () => {
