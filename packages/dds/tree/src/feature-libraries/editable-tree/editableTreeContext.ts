@@ -63,7 +63,7 @@ export interface EditableTreeContext {
      * the `String`, `Number` or `Boolean` value schema (see `ValueSchema`),
      * a `PrimitiveValue` can be used instead of a `ContextuallyTypedNodeDataObject`
      * to create/replace or to set the value of the primitive node.
-     * Required is to be possible to unambiguously resolve the node type out of a primitive type
+     * For this to work, it must be possible to unambiguously resolve the node type out of a primitive type
      * of the data and of the field types, or, if there are none, of the types of the global tree schema.
      * If it's not possible, a `ContextuallyTypedNodeDataObject` with an explicitly provided
      * type and a value (using a `typeNameSymbol` and a `valueSymbol`) must be used instead.
