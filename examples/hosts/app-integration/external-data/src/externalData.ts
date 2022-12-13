@@ -65,7 +65,7 @@ export interface IExternalDataSourceEvents extends IEvent {
 export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEvents> {
     public constructor() {
         super();
-        if (window.localStorage.getItem(localStorageKey) === null) {
+        if (globalThis.localStorage.getItem(localStorageKey) === null) {
             this.debugResetData();
         }
         // TODO: Should probably register here for the "storage" event to detect other tabs manipulating the external
@@ -80,7 +80,7 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
      * more structured data?  Maybe something that looks like a Response that we can .json()?
      */
     public async fetchData(): Promise<string> {
-        const currentExternalData = window.localStorage.getItem(localStorageKey);
+        const currentExternalData = globalThis.localStorage.getItem(localStorageKey);
         if (currentExternalData === null) {
             throw new Error("External data should not be null, something went wrong");
         }
@@ -95,7 +95,7 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
      */
     public async writeData(data: string): Promise<void> {
         // Write to persisted storage
-        window.localStorage.setItem(localStorageKey, data);
+        globalThis.localStorage.setItem(localStorageKey, data);
         // Emit for debug views to update
         this.emit("debugDataWritten");
     }
@@ -105,7 +105,7 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
      * @remarks Debug API for demo purposes, not really something we'd expect to find on a real external data source.
      */
     public readonly debugResetData = (): void => {
-        window.localStorage.setItem(localStorageKey, startingExternalData);
+        globalThis.localStorage.setItem(localStorageKey, startingExternalData);
         // Emit for debug views to update
         this.emit("debugDataWritten");
     };
