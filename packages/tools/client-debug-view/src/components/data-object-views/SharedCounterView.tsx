@@ -40,10 +40,12 @@ export function SharedCounterView(props: SharedCounterViewProps): React.ReactEle
 	const { sharedCounter } = props;
 
 	const [value, setValue] = React.useState<number>(sharedCounter.value);
+    const [deltaValue, setDeltaValue] = React.useState(1);
 
 	React.useEffect(() => {
 		function updateValue(delta: number, newValue: number): void {
-			setValue(Math.max(newValue, 0));
+            console.log(newValue);
+			setValue(newValue);
 		}
 
 		sharedCounter.on("incremented", updateValue);
@@ -55,25 +57,26 @@ export function SharedCounterView(props: SharedCounterViewProps): React.ReactEle
 
 
     function decrementCounter(): void {
-        sharedCounter.increment(-1);
+        sharedCounter.increment(-deltaValue);
 	}
 
     function incrementCounter(): void {
-		sharedCounter.increment(1);
+		sharedCounter.increment(deltaValue);
 	}
 
-    const inputSetValue = (e: any): void => {
+    const inputSetValue = (e: React.ChangeEvent<HTMLInputElement>): void => {
         numberFormatCheck(e.target.value);
     }
 
-    const numberFormatCheck = (val: number): void => {
-        const num = val ?? value;
+    const numberFormatCheck = (val: string): void => {
+        const num = Number.parseInt(val, 10) || value;
 
-        if (!isFinite(num) || num[0] === '-') {
+        if (!Number.isFinite(num) || num[0] === '-') {
             return
         }
 
-        sharedCounter.increment(num - value);
+        setDeltaValue(num);
+        // sharedCounter.increment(num - value);
     }
 
 	return (
@@ -89,7 +92,7 @@ export function SharedCounterView(props: SharedCounterViewProps): React.ReactEle
 				>
                     <IconButton
                             onClick={decrementCounter}
-                            disabled={value === 0}
+                            // disabled={value === 0}
                             menuIconProps={{ iconName: "CalculatorSubtract" }}
                             aria-describedby={decrementButtonTooltipId}
                     />
@@ -99,7 +102,7 @@ export function SharedCounterView(props: SharedCounterViewProps): React.ReactEle
                     content="Change the counter value by passing the number in input field"
                     id={inputFieldTooltipId}
                 >
-                    <input type="number" onChange={inputSetValue} value={value}/>
+                    <input type="number" onChange={inputSetValue}/>
                 </TooltipHost>
 
                 <TooltipHost
