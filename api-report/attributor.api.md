@@ -19,10 +19,8 @@ export interface AttributionInfo {
 
 // @public (undocumented)
 export interface AttributionKey {
-    // (undocumented)
+    id: string;
     key: number | string;
-    // (undocumented)
-    type: string;
 }
 
 // @public
