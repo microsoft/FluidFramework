@@ -10,18 +10,21 @@ import { ClientSessionExpiredError, DataProcessingError, UsageError } from "@flu
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import {
     cloneGCData,
-    concatGarbageCollectionStates,
     concatGarbageCollectionData,
+    getGCDataFromSnapshot,
     IGCResult,
     runGarbageCollection,
     unpackChildNodesGCDetails,
 } from "@fluidframework/garbage-collector";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
-    gcBlobKey,
+    gcTreeKey,
+    gcBlobPrefix,
+    gcTombstoneBlobKey,
     IGarbageCollectionData,
-    IGarbageCollectionState,
     IGarbageCollectionDetailsBase,
+    IGarbageCollectionSnapshotData,
+    IGarbageCollectionState,
     ISummarizeResult,
     ITelemetryContext,
     IGarbageCollectionNodeData,
@@ -51,10 +54,7 @@ import {
     defaultSessionExpiryDurationMs,
     disableSweepLogKey,
     disableTombstoneKey,
-    gcBlobPrefix,
     gcTestModeKey,
-    gcTombstoneBlobKey,
-    gcTreeKey,
     oneDayMs,
     runGCKey,
     runSessionExpiryKey,
@@ -218,14 +218,6 @@ interface IUnreferencedEventProps {
 interface IGCSummaryTrackingData {
     serializedGCState: string | undefined;
     serializedTombstones: string | undefined;
-}
-
-/**
- * The GC data that is read from a snapshot. It contains the GC state and tombstone state.
- */
-interface IGCSnapshotData {
-    gcState: IGarbageCollectionState;
-    tombstones: string[] | undefined;
 }
 
 /**
@@ -423,7 +415,7 @@ export class GarbageCollector implements IGarbageCollector {
     private pendingSummaryData: IGCSummaryTrackingData | undefined;
 
     // Promise when resolved returns the GC data data in the base snapshot.
-    private readonly baseSnapshotDataP: Promise<IGCSnapshotData | undefined>;
+    private readonly baseSnapshotDataP: Promise<IGarbageCollectionSnapshotData | undefined>;
     // Promise when resolved initializes the GC state from the data in the base snapshot.
     private readonly initializeGCStateFromBaseSnapshotP: Promise<void>;
     // The map of data store ids to their GC details in the base summary returned in getDataStoreGCDetails().
@@ -638,7 +630,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Get the GC data from the base snapshot. Use LazyPromise because we only want to do this once since it
         // it involves fetching blobs from storage which is expensive.
-        this.baseSnapshotDataP = new LazyPromise<IGCSnapshotData | undefined>(async () => {
+        this.baseSnapshotDataP = new LazyPromise<IGarbageCollectionSnapshotData | undefined>(async () => {
             if (baseSnapshot === undefined) {
                 return undefined;
             }
@@ -661,7 +653,7 @@ export class GarbageCollector implements IGarbageCollector {
                 assert(dataStoreSnapshotTree !== undefined,
                     0x2a8 /* "Expected data store snapshot tree in base snapshot" */);
                 for (const [dsId, dsSnapshotTree] of Object.entries(dataStoreSnapshotTree.trees)) {
-                    const blobId = dsSnapshotTree.blobs[gcBlobKey];
+                    const blobId = dsSnapshotTree.blobs[gcTreeKey];
                     if (blobId === undefined) {
                         continue;
                     }
@@ -1586,39 +1578,6 @@ export class GarbageCollector implements IGarbageCollector {
         }
         this.pendingEventsQueue = [];
     }
-}
-
-/**
- * Gets the base garbage collection state from the given snapshot tree. It contains GC state and tombstone state.
- * The GC state may be written into multiple blobs. Merge the GC state from all such blobs into one.
- */
-async function getGCDataFromSnapshot(
-    gcSnapshotTree: ISnapshotTree,
-    readAndParseBlob: ReadAndParseBlob,
-): Promise<IGCSnapshotData> {
-    let rootGCState: IGarbageCollectionState = { gcNodes: {} };
-    let tombstones: string[] | undefined;
-    for (const key of Object.keys(gcSnapshotTree.blobs)) {
-        if (key === gcTombstoneBlobKey) {
-            tombstones = await readAndParseBlob<string[]>(gcSnapshotTree.blobs[key]);
-            continue;
-        }
-
-        // Skip blobs that do not start with the GC prefix.
-        if (!key.startsWith(gcBlobPrefix)) {
-            continue;
-        }
-
-        const blobId = gcSnapshotTree.blobs[key];
-        if (blobId === undefined) {
-            continue;
-        }
-        const gcState = await readAndParseBlob<IGarbageCollectionState>(blobId);
-        assert(gcState !== undefined, 0x2ad /* "GC blob missing from snapshot" */);
-        // Merge the GC state of this blob into the root GC state.
-        rootGCState = concatGarbageCollectionStates(rootGCState, gcState);
-    }
-    return { gcState: rootGCState, tombstones };
 }
 
 function generateSortedGCState(gcState: IGarbageCollectionState): IGarbageCollectionState {

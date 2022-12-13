@@ -5,11 +5,11 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
-import { cloneGCData } from "@fluidframework/garbage-collector";
+import { cloneGCData, getGCDataFromSnapshot, runGarbageCollection, unpackChildNodesGCDetails } from "@fluidframework/garbage-collector";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
     CreateChildSummarizerNodeParam,
-    gcBlobKey,
+    gcTreeKey,
     IGarbageCollectionData,
     IGarbageCollectionDetailsBase,
     ISummarizeInternalResult,
@@ -26,6 +26,7 @@ import {
     ICreateChildDetails,
     IInitialSummary,
     ISummarizerNodeRootContract,
+    parseSummaryForSubtrees,
     SummaryNode,
 } from "./summarizerNodeUtils";
 
@@ -272,17 +273,42 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     ): Promise<void> {
         // If GC is disabled, skip setting referenced used routes since we are not tracking GC state.
         if (!this.gcDisabled) {
-            const gcDetailsBlob = snapshotTree.blobs[gcBlobKey];
-            if (gcDetailsBlob !== undefined) {
-                const gcDetails = await readAndParseBlob<IGarbageCollectionDetailsBase>(gcDetailsBlob);
+            let gcDetails: IGarbageCollectionDetailsBase = { gcData: { gcNodes: {} } };
+            const gcSnapshotTree = snapshotTree.trees[gcTreeKey];
+            if (gcSnapshotTree !== undefined) {
+                const gcSnapshotData = await getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
 
                 // Possible re-entrancy. If we have already seen a summary later than this one, ignore it.
                 if (this.referenceSequenceNumber >= referenceSequenceNumber) {
                     return;
                 }
 
-                this.referenceUsedRoutes = gcDetails.usedRoutes;
+                const gcNodes: { [id: string]: string[]; } = {};
+                for (const [nodeId, nodeData] of Object.entries(gcSnapshotData.gcState.gcNodes)) {
+                    gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
+                }
+                // Run GC on the nodes in the snapshot to get the routes used in each node in the container.
+                // This is an optimization for space (vs performance) wherein we don't need to store the used routes of
+                // each node in the summary.
+                const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
+                gcDetails = { gcData: { gcNodes }, usedRoutes };
+            } else {
+                const gcDetailsBlob = snapshotTree.blobs[gcTreeKey];
+                gcDetails = JSON.parse(gcDetailsBlob) as IGarbageCollectionDetailsBase;
+
+                // Possible re-entrancy. If we have already seen a summary later than this one, ignore it.
+                if (this.referenceSequenceNumber >= referenceSequenceNumber) {
+                    return;
+                }
             }
+            this.gcData = gcDetails.gcData;
+            this.referenceUsedRoutes = gcDetails.usedRoutes;
+
+            const baseGCDetailsMap = unpackChildNodesGCDetails(gcDetails);
+            const { childrenTree } = parseSummaryForSubtrees(snapshotTree);
+            baseGCDetailsMap.forEach((childGCDetails: IGarbageCollectionDetailsBase, childId: string) => {
+                childrenTree.trees[childId].blobs[gcTreeKey] = JSON.stringify(childGCDetails);
+            });
         }
 
         return super.refreshLatestSummaryFromSnapshot(

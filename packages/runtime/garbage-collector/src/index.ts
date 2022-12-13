@@ -9,6 +9,7 @@ export {
 	concatGarbageCollectionData,
 	concatGarbageCollectionStates,
 	GCDataBuilder,
+    getGCDataFromSnapshot,
 	removeRouteFromAllNodes,
 	trimLeadingAndTrailingSlashes,
 	trimLeadingSlashes,

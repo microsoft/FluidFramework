@@ -3,14 +3,6 @@
  * Licensed under the MIT License.
  */
 
-
-// The key for the GC tree in summary.
-export const gcTreeKey = "gc";
-// They prefix for GC blobs in the GC tree in summary.
-export const gcBlobPrefix = "__gc";
-// The key for tombstone blob in the GC tree in summary.
-export const gcTombstoneBlobKey = "__tombstones";
-
 // Feature gate key to turn GC on / off.
 export const runGCKey = "Fluid.GarbageCollection.RunGC";
 // Feature gate key to turn GC sweep on / off.
