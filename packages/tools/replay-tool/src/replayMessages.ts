@@ -354,12 +354,6 @@ export class ReplayTool {
             return false;
         }
 
-        // GC will consider unreferenced node in old documents to be inactive. When such nodes receive ops or are
-        // loaded, GC will log an error. Ignore those errors since we don't care about them when replaying old docs.
-        if (event.eventName.includes("GarbageCollector:inactiveObject_")) {
-            return false;
-        }
-
         return this.shouldReportError(errorString);
     }
 
