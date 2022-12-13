@@ -12,8 +12,8 @@ Bumps the version of a release group or package to the next minor, major, or pat
 
 ```
 USAGE
-  $ flub bump [PACKAGE_OR_RELEASE_GROUP] [-t major|minor|patch | --exact <value>] [--scheme
-    semver|internal|virtualPatch | ] [-x | --install | --commit |  |  | ] [-v]
+  $ flub bump [PACKAGE_OR_RELEASE_GROUP] [-v] [-t major|minor|patch | --exact <value>] [--scheme
+    semver|internal|virtualPatch | ] [-x | --install | --commit |  |  | ]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
@@ -59,9 +59,9 @@ Update the dependency version of a specified package or release group. That is, 
 
 ```
 USAGE
-  $ flub bump deps [PACKAGE_OR_RELEASE_GROUP] [--prerelease -t
+  $ flub bump deps [PACKAGE_OR_RELEASE_GROUP] [-v] [--prerelease -t
     latest|newest|greatest|minor|patch|@next|@canary] [--onlyBumpPrerelease] [-g client|server|azure|build-tools | -p
-    <value>] [-x | --install | --commit |  |  | ] [-v]
+    <value>] [-x | --install | --commit |  |  | ]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.

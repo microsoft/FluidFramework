@@ -33,6 +33,12 @@ module.exports = {
         "unicorn/prevent-abbreviations": "off",
 
         /**
+         * "node:" imports are not supported prior to Node.js v16.
+         * TODO: re-enable this (remove override) once the repo has been updated to v16.
+         */
+        "unicorn/prefer-node-protocol": "off",
+
+        /**
          * Disallows the `any` type.
          * Using the `any` type defeats the purpose of using TypeScript.
          * When `any` is used, all compiler type checks around that value are ignored.
@@ -108,7 +114,7 @@ module.exports = {
         },
         {
             // Rules only for type validation files
-            files: ["**/types/*validate*Previous.ts"],
+            files: ["**/types/*validate*Previous*.ts"],
             rules: {
                 "@typescript-eslint/no-explicit-any": "off",
                 "@typescript-eslint/no-unsafe-argument": "off",

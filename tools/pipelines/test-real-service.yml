@@ -36,6 +36,7 @@ stages:
         poolBuild: Small
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         testCommand: test:realsvc:local:report
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
@@ -50,6 +51,7 @@ stages:
         poolBuild: Small
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         testCommand: test:realsvc:tinylicious:report
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
@@ -67,6 +69,7 @@ stages:
         poolBuild: Small
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         testCommand: test:realsvc:routerlicious:report
         continueOnError: true
         r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
@@ -75,8 +78,6 @@ stages:
             flags: --compatVersion=0
           - name: N-1
             flags: --compatVersion=-1
-          - name: N-2
-            flags: --compatVersion=-2
           - name: LTS
             flags: --compatVersion=LTS
         env:
@@ -96,6 +97,7 @@ stages:
         poolBuild: Small
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 360
         continueOnError: true
         testCommand: test:realsvc:frs:report
@@ -104,8 +106,6 @@ stages:
             flags: --compatVersion=0
           - name: N-1
             flags: --compatVersion=-1
-          - name: N-2
-            flags: --compatVersion=-2
           - name: LTS
             flags: --compatVersion=LTS
         env:
@@ -125,6 +125,7 @@ stages:
         poolBuild: Small
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 360
         continueOnError: true
         testCommand: test:realsvc:odsp:report
@@ -133,10 +134,8 @@ stages:
             flags: --compatVersion=0 --tenantIndex=0
           - name: N-1
             flags: --compatVersion=-1 --tenantIndex=1
-          - name: N-2
-            flags: --compatVersion=-2 --tenantIndex=2
           - name: LTS
-            flags: --compatVersion=LTS --tenantIndex=3
+            flags: --compatVersion=LTS --tenantIndex=2
         env:
           login__microsoft__clientId: $(login-microsoft-clientId)
           login__microsoft__secret: $(login-microsoft-secret)

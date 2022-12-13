@@ -11,6 +11,7 @@ import {
     RevisionTag,
     TransactionResult,
     tagChange,
+    makeAnonChange,
 } from "../core";
 import { brand } from "../util";
 import { ForestRepairDataStore } from "./forestRepairDataStore";
@@ -26,7 +27,7 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
     const repairStore = new ForestRepairDataStore((revision: RevisionTag) => {
         assert(
             revision === currentRevision,
-            "The repair data store should only ask for the current forest state",
+            0x479 /* The repair data store should only ask for the current forest state */,
         );
         return forest;
     });
@@ -57,7 +58,7 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
     }
 
     if (result === TransactionResult.Apply) {
-        const edit = changeFamily.rebaser.compose(changes);
+        const edit = changeFamily.rebaser.compose(changes.map((c) => makeAnonChange(c)));
         submitEdit(edit);
     }
 

@@ -69,11 +69,11 @@ function composeIntentions(base: readonly number[], extras: readonly number[]): 
     return composed;
 }
 
-function compose(changes: TestChange[], verify: boolean = true): TestChange {
+function compose(changes: TaggedChange<TestChange>[], verify: boolean = true): TestChange {
     let inputContext: number[] | undefined;
     let outputContext: number[] | undefined;
     let intentions: number[] = [];
-    for (const change of changes) {
+    for (const { change } of changes) {
         if (isNonEmptyChange(change)) {
             inputContext ??= change.inputContext;
             if (verify && outputContext !== undefined) {
@@ -203,7 +203,7 @@ export const TestChange = {
 deepFreeze(TestChange);
 
 export class TestChangeRebaser implements ChangeRebaser<TestChange> {
-    public compose(changes: TestChange[]): TestChange {
+    public compose(changes: TaggedChange<TestChange>[]): TestChange {
         return compose(changes);
     }
 

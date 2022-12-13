@@ -13,8 +13,8 @@ Releases a package or release group.
 
 ```
 USAGE
-  $ flub release [-g client|server|azure|build-tools | -p <value>] [-t major|minor|patch] [-x | --install |
-    --commit | --branchCheck | --updateCheck | --policyCheck] [-v]
+  $ flub release [-v] [-g client|server|azure|build-tools | -p <value>] [-t major|minor|patch] [-x |
+    --install | --commit | --branchCheck | --updateCheck | --policyCheck]
 
 FLAGS
   -g, --releaseGroup=<option>  Name of the release group
@@ -53,7 +53,7 @@ Prints a list of released versions of a package or release group. Releases are g
 
 ```
 USAGE
-  $ flub release history [-g client|server|azure|build-tools | -p <value>] [-l <value>] [-v]
+  $ flub release history [-v] [-g client|server|azure|build-tools | -p <value>] [-l <value>] [--json]
 
 FLAGS
   -g, --releaseGroup=<option>  Name of the release group
@@ -62,6 +62,9 @@ FLAGS
                                semver, so '--limit 10' will return the 10 highest semver releases for the release group.
   -p, --package=<value>        Name of package.
   -v, --verbose                Verbose logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
 
 DESCRIPTION
   Prints a list of released versions of a package or release group. Releases are gathered from the git tags in repo
@@ -87,7 +90,7 @@ Generates a report of Fluid Framework releases.
 
 ```
 USAGE
-  $ flub release report [--json] [-i | -r | -s] [-g client|server|azure|build-tools] [-o <value>] [-v]
+  $ flub release report [-v] [--json] [-i | -r | -s] [-g client|server|azure|build-tools] [-o <value>]
 
 FLAGS
   -g, --releaseGroup=<option>

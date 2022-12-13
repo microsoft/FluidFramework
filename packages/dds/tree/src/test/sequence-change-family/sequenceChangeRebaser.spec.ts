@@ -128,7 +128,10 @@ describe("SequenceChangeFamily", () => {
                 it(`${name} ○ ${name}⁻¹ === ε`, () => {
                     const change = asForest([mark]);
                     const inv = sequenceChangeRebaser.invert(makeAnonChange(change));
-                    const actual = sequenceChangeRebaser.compose([change, inv]);
+                    const actual = sequenceChangeRebaser.compose([
+                        makeAnonChange(change),
+                        makeAnonChange(inv),
+                    ]);
                     const delta = sequenceChangeFamily.intoDelta(actual);
                     assert.deepEqual(delta, Delta.empty);
                 });

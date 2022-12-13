@@ -54,6 +54,12 @@ retrieve it.
 A `FluidContainer` object has a `create` function that takes a shared object type (that is, a distributed data structure (DDS) type
 or a Data Object type) and returns a new shared object. But only shared object types that are specified in the schema's `dynamicObjectTypes` array can be dynamically created.
 
+{{< callout note >}}
+
+Data Objects are currently beta and should not be used in production applications.
+
+{{< /callout >}}
+
 Dynamically created objects are local only (in-memory) and cannot be shared with other clients unless a reference to each of them is stored in a connected shared object.
 
 ```js

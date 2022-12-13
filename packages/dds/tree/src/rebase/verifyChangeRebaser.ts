@@ -97,7 +97,8 @@ export function verifyChangeRebaser<TChange>(
     isEquivalent: (a: TChange, b: TChange) => boolean,
 ): OutputType<TChange> {
     const rebase = (change: TChange, over: TChange) => rebaser.rebase(change, makeAnonChange(over));
-    const compose = rebaser.compose.bind(rebaser);
+    const compose = (changeToCompose: TChange[]) =>
+        rebaser.compose(changeToCompose.map(makeAnonChange));
     const invert = (change: TChange) => rebaser.invert(makeAnonChange(change));
 
     const output: OutputType<TChange> = {

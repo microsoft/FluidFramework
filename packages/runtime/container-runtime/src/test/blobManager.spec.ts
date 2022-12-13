@@ -11,7 +11,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/protocol-definitions";
+import { IClientDetails, ISequencedDocumentMessage, SummaryType } from "@fluidframework/protocol-definitions";
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager";
@@ -43,6 +43,7 @@ class NonDedupeStorage extends BaseMockBlobStorage {
 }
 
 class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements IBlobManagerRuntime {
+    public readonly clientDetails: IClientDetails = { capabilities: { interactive: true } };
     constructor(snapshot: IBlobManagerLoadInfo = {}, attached = false) {
         super();
         this.attachState = attached ? AttachState.Attached : AttachState.Detached;

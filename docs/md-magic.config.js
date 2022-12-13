@@ -158,6 +158,37 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 }
 
 /**
+ * Generates a Markdown heading and contents with a section pointing developers to our contribution guidelines.
+ *
+ * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
+ */
+ const generateContributionGuidelinesSection = (includeHeading) => {
+    const sectionBody = `Please refer to our [Github Wiki](https://github.com/microsoft/FluidFramework/wiki/Contributing) for an overview of our contribution guidelines.`;
+
+    return includeHeading
+        ? `## Contribution Guidelines${os.EOL}${os.EOL}${sectionBody}`
+        : sectionBody;
+}
+
+/**
+ * Generats a simple Markdown heading and contents with a section pointing developers to other sources of documentation,
+ * and to our issue tracker.
+ *
+ * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
+ */
+const generateHelpSection = (includeHeading) => {
+    const sectionBody = `Not finding what you're looking for in this README?
+Check out our [GitHub Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
+
+Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Thank you!`;
+
+    return includeHeading
+        ? `## Help${os.EOL}${os.EOL}${sectionBody}`
+        : sectionBody;
+}
+
+/**
  * Generats a simple Markdown heading and contents with information about API documentation for the package.
  *
  * @param {object} packageJson - `package.json` contents
@@ -250,7 +281,7 @@ const mdMagicConfig = {
             options.pkg = getPackageJsonPathFromOriginalPath(config.originalPath);
             return require("markdown-magic-package-json")(content, options, config);
         },
-        /* Match <!-- AUTO-GENERATED-CONTENT:START (README_SIMPLE:installation=TRUE&apiDocs=TRUE&scripts=TRUE&trademark=TRUE&devDependency=FALSE) --> */
+        /* Match <!-- AUTO-GENERATED-CONTENT:START (README_SIMPLE:installation=TRUE&apiDocs=TRUE&scripts=TRUE&contributionGuidelines=TRUE&help=TRUE&trademark=TRUE&devDependency=FALSE) --> */
         README_SIMPLE(content, options, config) {
             const pkg = getPackageJsonFromOriginalPath(config.originalPath);
 
@@ -267,6 +298,14 @@ const mdMagicConfig = {
             if(options.scripts !== "FALSE") {
                 const scriptsTable = scripts(content, options, config);
                 sections.push(generateScriptsSection(scriptsTable, true));
+            }
+
+            if(options.contributionGuidelines !== "FALSE") {
+                sections.push(generateContributionGuidelinesSection(true));
+            }
+
+            if(options.help !== "FALSE") {
+                sections.push(generateHelpSection(true));
             }
 
             if(options.trademark !== "FALSE") {
@@ -291,6 +330,16 @@ const mdMagicConfig = {
         README_TRADEMARK_SECTION(content, options, config) {
             const includeHeading = options.includeHeading !== "FALSE";
             return generateTrademarkSection(includeHeading);
+        },
+        /* Match <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) --> */
+        README_CONTRIBUTION_GUIDELINES_SECTION(content, options, config) {
+            const includeHeading = options.includeHeading !== "FALSE";
+            return generateContributionGuidelinesSection(includeHeading);
+        },
+        /* Match <!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) --> */
+        README_HELP_SECTION(content, options, config) {
+            const includeHeading = options.includeHeading !== "FALSE";
+            return generateHelpSection(includeHeading);
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (TEMPLATE:src="<name-of-template-file under `/.md-magic-templates`>") --> */
         TEMPLATE(content, options, config) {

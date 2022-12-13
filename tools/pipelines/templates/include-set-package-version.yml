@@ -39,7 +39,9 @@ steps:
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
         pushd "$(Build.SourcesDirectory)/build-tools"
-        npm ci
+        npm i -g pnpm
+        pnpm i
+        npm run build:compile
         popd
 
 - ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:

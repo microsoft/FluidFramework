@@ -15,8 +15,8 @@ This command is used to compute the version number of Fluid packages. The releas
 
 ```
 USAGE
-  $ flub generate buildVersion --build <value> [--testBuild <value>] [--release release|prerelease|none] [--patch <value>]
-    [--base <value>] [--tag <value>] [-i <value>] [-v]
+  $ flub generate buildVersion --build <value> [-v] [--testBuild <value>] [--release release|prerelease|none] [--patch
+    <value>] [--base <value>] [--tag <value>] [-i <value>]
 
 FLAGS
   -i, --includeInternalVersions=<value>  Include Fluid internal versions.
@@ -45,7 +45,7 @@ Find all bundle analysis artifacts and copy them into a central location to uplo
 
 ```
 USAGE
-  $ flub generate bundleStats [--smallestAssetSize <value>] [-v]
+  $ flub generate bundleStats [-v] [--smallestAssetSize <value>]
 
 FLAGS
   -v, --verbose                Verbose logging.
@@ -113,24 +113,33 @@ Generates type tests based on the individual package settings in package.json.
 
 ```
 USAGE
-  $ flub generate typetests [-d <value> | --packages | -g client|server|azure|build-tools] [--prepare | --generate]
-    [--pin] [--exact <value> |  | -s ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|previousM
-    inor|previousPatch|baseMinor|baseMajor|~baseMinor] [--reset | ] [--generateInName] [-v]
+  $ flub generate typetests [-v] [-d <value> | --packages | -g client|server|azure|build-tools] [--prepare | --generate]
+    [--reset | ] [-b <value> | -s ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|previousMino
+    r|previousPatch|baseMinor|baseMajor|~baseMinor] [--exact <value> |  | ] [--pin] [--generateInName]
 
 FLAGS
+  -b, --branch=<value>
+      Use the specified branch name to determine the version constraint to use for previous versions, rather than using
+      the current branch name.
+
+      The version constraint used will still be loaded from branch configuration; this flag only controls which branch's
+      settings are used.
+
   -d, --dir=<value>
-      Run on the package in this directory.
+      Run on the package in this directory. Cannot be used with --releaseGroup or --packages.
 
   -g, --releaseGroup=<option>
-      Run on all packages within this release group.
+      Run on all packages within this release group. Cannot be used with --dir or --packages.
       <options: client|server|azure|build-tools>
 
   -s, --versionConstraint=<option>
-      The type of version constraint to use for previous versions. Only applies to the prepare phase. This overrides the
-      branch-specific configuration in package.json, which is used by default.
+      The type of version constraint to use for previous versions. This overrides the branch-specific configuration in
+      package.json, which is used by default.
 
       For more information about the options, see https://github.com/microsoft/FluidFramework/blob/main/build-tools/packag
       es/build-cli/docs/typetestDetails.md#configuring-a-branch-for-a-specific-baseline
+
+      Cannot be used with --dir or --packages.
 
       <options: ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|previousMinor|previousPatch|base
       Minor|baseMajor|~baseMinor>
@@ -154,7 +163,7 @@ FLAGS
 
   --pin
       Searches the release git tags in the repo and selects the baseline version as the maximum
-      eleased version that matches the range.
+      released version that matches the range.
 
       This effectively pins the version to a specific version while allowing it to be updated manually as
       needed by running type test preparation again.

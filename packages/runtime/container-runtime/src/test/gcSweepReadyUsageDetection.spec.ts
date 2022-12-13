@@ -14,7 +14,7 @@ import {
     closuresMapLocalStorageKey,
     SweepReadyUsageDetectionHandler,
 } from "../gcSweepReadyUsageDetection";
-import { oneDayMs } from "../garbageCollection";
+import { oneDayMs } from "../garbageCollectionConstants";
 
 describe("Garbage Collection Tests", () => {
     let clock: SinonFakeTimers;

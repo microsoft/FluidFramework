@@ -8,7 +8,7 @@ import { jsonString } from "../../../domains";
 import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import { TestChange, TestChangeEncoder } from "../../testChange";
 import { deepFreeze } from "../../utils";
-import { TestChangeset } from "./utils";
+import { ChangeMaker as Change, TestChangeset } from "./testEdits";
 
 const nodeX = { type: jsonString.name, value: "X" };
 const nodeY = { type: jsonString.name, value: "Y" };
@@ -17,7 +17,7 @@ deepFreeze(content);
 
 describe("SequenceField - Encoder", () => {
     it("with child change", () => {
-        const change: TestChangeset = [1, { type: "Modify", changes: TestChange.mint([], 1) }];
+        const change: TestChangeset = Change.modify(1, TestChange.mint([], 1));
         deepFreeze(change);
         const childEncoder = new TestChangeEncoder();
         const encoded = JSON.stringify(
@@ -28,7 +28,7 @@ describe("SequenceField - Encoder", () => {
     });
 
     it("without child change", () => {
-        const change: TestChangeset = [2, { type: "Delete", id: 0, count: 2 }];
+        const change: TestChangeset = Change.delete(2, 2);
         deepFreeze(change);
         const encoded = JSON.stringify(
             SF.encodeForJson(0, change, () => assert.fail("Child encoder should not be called")),

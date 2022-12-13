@@ -153,6 +153,7 @@ jobs:
               reviewers: [
                 'sonalivdeshpande',
                 'tylerbutler',
+                'scottn12',
               ]
             });
             await octokit.request('POST /repos/{owner}/{repo}/issues/{issue_number}/labels', {
