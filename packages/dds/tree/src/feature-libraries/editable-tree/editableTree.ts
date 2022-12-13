@@ -202,7 +202,9 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
      *
      * The content of the field must follow the {@link Multiplicity} of the {@link FieldKind}:
      * - use a single cursor when replacing an `optional` or a `value` field;
-     * - use array of cursors when replacing a `sequence` field;
+     * - use array of cursors when replacing a `sequence` field.
+     *
+     * Use `delete` operator to delete `optional` or `sequence` fields of this node, if any.
      */
     [replaceField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
 }
@@ -608,6 +610,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
             const multiplicity = target.lookupFieldKind(fieldKey).multiplicity;
             const content = applyFieldTypesFromContext(target.context.schema, fieldSchema, value);
             const cursors = content.map(singleMapTreeCursor);
+            // TODO: revisit to find a case where `replaceField` can't be used, fix and simplify
             if (target.has(fieldKey)) {
                 if (cursors.length === 0) {
                     target.deleteField(fieldKey);
@@ -884,11 +887,14 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
         // assert(fieldKind.multiplicity === Multiplicity.Sequence, "The field must be of a sequence kind.");
         if (fieldKind.multiplicity !== Multiplicity.Sequence) {
             assert(
-                this.length === 1 && (!Array.isArray(newContent) || newContent.length <= 1),
+                this.length <= 1 && (!Array.isArray(newContent) || newContent.length <= 1),
                 "A non-sequence field cannot have more than one node.",
             );
         }
-        assert(keyIsValidIndex(index, this.length), "Index must be less than length.");
+        assert(
+            this.length === 0 || keyIsValidIndex(index, this.length),
+            "Index must be less than length.",
+        );
         if (count !== undefined) assert(count >= 0, "Count must be non-negative.");
         const maxCount = this.length - index;
         const _count = count === undefined || count > maxCount ? maxCount : count;

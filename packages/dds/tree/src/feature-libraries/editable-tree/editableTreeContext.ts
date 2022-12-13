@@ -52,20 +52,25 @@ export interface EditableTreeContext {
      *
      * When using its setter, the input data has to follow the root field schema.
      *
-     * If the input data is `undefined` and the root field is not empty, its nodes will be deleted
-     * if its schema follows the `Optional` or `Forbidden` multiplicity.
-     * Using `undefined` will raise an exception if the field follows any other multiplicity.
-     * Use empty array (`[]`) to delete all nodes of a sequence root.
+     * If the input data is `undefined`, the field nodes will be deleted
+     * if its not empty and its schema follows the `Optional` multiplicity.
+     * For any other multiplicities except of `Forbidden` (in which case the field is alway empty),
+     * an exception will be thrown.
+     * Use empty array (`[]`) instead to delete all nodes of a sequence root.
      *
-     * If the input data is a {@link ContextuallyTypedNodeData},
-     * the root nodes will be created or replaced depending on if the root is empty.
-     * Possible variants are:
-     * - use array data or an {@link EditableField} if the root is a sequence,
-     * or if it's a non-sequence, but its node schema is defined with a primary field (see `getPrimaryField`);
-     * - use `PrimitiveValue` if the root field is a non-sequence and
-     * its node value schema is `String`, `Number` or `Boolean` (see `ValueSchema`);
-     * - use `ContextuallyTypedNodeDataObject` in all other cases.
+     * If the input data is a {@link ContextuallyTypedNodeData}, it must be formed depending
+     * on a multiplicity of the field, on if its polymorphic or, for non-sequence multiplicities,
+     * on if the field's node declares its primary function using a primary field (see `getPrimaryField`):
+     * - for `Sequence` multiplicities and "primary fielded" nodes, array data or an {@link EditableField} is expected;
+     * - for `Value` or `Optional` multiplicities, `ContextuallyTypedNodeDataObject` is expected.
+     *
+     * If the field is a non-sequence and some of its types declare to follow
+     * the `String`, `Number` or `Boolean` value schema (see `ValueSchema`),
+     * a `PrimitiveValue` can be used to create/replace the field or to set the value of the primitive node.
+     * Required is to be possible to unambiguously resolve the node type out of a primitive type
+     * of the data and the field types, or, if there are none, of the types of the global tree schema.
      */
+    // TODO: replace "replace" semantics for primitives with "change value" whenever possible
     get unwrappedRoot(): UnwrappedEditableField;
 
     set unwrappedRoot(data: ContextuallyTypedNodeData | undefined);
