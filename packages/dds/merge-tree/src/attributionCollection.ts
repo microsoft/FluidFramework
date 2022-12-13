@@ -120,13 +120,16 @@ export class AttributionCollection implements IAttributionCollection<Attribution
             0x445 /* Invalid attribution summary blob provided */);
         let curIndex = 0;
         let cumulativeSegPos = 0;
-        let currentInfo = keys[curIndex];
+        let currentInfo: number = keys[curIndex] as number;
+        assert(typeof currentInfo === "number", "AttributionCollection summary should only contain numbers in keys.");
 
         for (const segment of segments) {
-            const attribution = new AttributionCollection(currentInfo as number, segment.cachedLength);
+            const attribution = new AttributionCollection(currentInfo, segment.cachedLength);
             while (posBreakpoints[curIndex] < cumulativeSegPos + segment.cachedLength) {
-                currentInfo = keys[curIndex];
-                attribution.entries.put(posBreakpoints[curIndex] - cumulativeSegPos, currentInfo as number);
+                currentInfo = keys[curIndex] as number;
+                assert(typeof currentInfo === "number",
+                    "AttributionCollection summary should only contain numbers in keys.");
+                attribution.entries.put(posBreakpoints[curIndex] - cumulativeSegPos, currentInfo);
                 curIndex++;
             }
 
