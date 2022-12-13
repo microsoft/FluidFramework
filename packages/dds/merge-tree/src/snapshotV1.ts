@@ -13,6 +13,7 @@ import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { UnassignedSequenceNumber } from "./constants";
 import {
+    AttributionKey,
     ISegment,
 } from "./mergeTreeNodes";
 import {
@@ -30,7 +31,7 @@ import {
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { MergeTree } from "./mergeTree";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk";
-import { AttributionCollection } from "./attributionCollection";
+import { AttributionCollection, IAttributionCollection } from "./attributionCollection";
 
 export class SnapshotV1 {
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
@@ -44,7 +45,7 @@ export class SnapshotV1 {
     private readonly header: MergeTreeHeaderMetadata;
     private readonly segments: JsonSegmentSpecs[];
     private readonly segmentLengths: number[];
-    private readonly attributionCollections: AttributionCollection[];
+    private readonly attributionCollections: IAttributionCollection<AttributionKey>[];
     private readonly logger: ITelemetryLogger;
     private readonly chunkSize: number;
 
@@ -75,11 +76,11 @@ export class SnapshotV1 {
     private getSeqLengthSegs(
         allSegments: JsonSegmentSpecs[],
         allLengths: number[],
-        attributionCollections: AttributionCollection[],
+        attributionCollections: IAttributionCollection<AttributionKey>[],
         approxSequenceLength: number,
         startIndex = 0): MergeTreeChunkV1 {
         const segments: JsonSegmentSpecs[] = [];
-        const collections: { attribution: AttributionCollection; cachedLength: number; }[] = [];
+        const collections: { attribution: IAttributionCollection<AttributionKey>; cachedLength: number; }[] = [];
         let length = 0;
         let segmentCount = 0;
         let hasAttribution = false;
@@ -171,7 +172,7 @@ export class SnapshotV1 {
         const pushSegRaw = (
             json: JsonSegmentSpecs,
             length: number,
-            attribution: AttributionCollection | undefined,
+            attribution: IAttributionCollection<AttributionKey> | undefined,
         ) => {
             this.segments.push(json);
             this.segmentLengths.push(length);
@@ -182,7 +183,7 @@ export class SnapshotV1 {
 
         // Helper to serialize the given `segment` and add it to the snapshot (if a segment is provided).
         const pushSeg = (segment?: ISegment) => {
-            if (segment) { pushSegRaw(segment.toJSONObject(), segment.cachedLength, segment.attribution as AttributionCollection); }
+            if (segment) { pushSegRaw(segment.toJSONObject(), segment.cachedLength, segment.attribution); }
         };
 
         let prev: ISegment | undefined;
@@ -257,7 +258,7 @@ export class SnapshotV1 {
                     0x066 /* "Corrupted preservation of segment metadata!" */);
 
                 // Record the segment with it's required metadata.
-                pushSegRaw(raw, segment.cachedLength, segment.attribution as AttributionCollection);
+                pushSegRaw(raw, segment.cachedLength, segment.attribution);
             }
             return true;
         };
