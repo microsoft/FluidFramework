@@ -111,7 +111,7 @@ interface PendingBlob {
 export interface IPendingBlobs { [id: string]: { blob: string; }; }
 
 export interface IBlobManagerEvents {
-    (event: "NoPendingBlobs", listener: () => void);
+    (event: "noPendingBlobs", listener: () => void);
 }
 
 export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
