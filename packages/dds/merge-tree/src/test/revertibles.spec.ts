@@ -240,7 +240,7 @@ describe("MergeTree.Revertibles", () => {
         logger.validate();
     });
 
-    describe("Redo does not works as expected when a pair of markers and text is involved", ()=>{
+    describe("Revertibles work as expected when a pair of markers and text is involved", ()=>{
 
         generatePairwiseOptions({
             revertMarkerInsert:[true, undefined],
@@ -261,6 +261,7 @@ describe("MergeTree.Revertibles", () => {
                 const ops: ISequencedDocumentMessage[] = [];
         
                 const clientB_Revertibles: MergeTreeDeltaRevertible[][] = [];
+                const openNewUndoRedoTransaction = () => clientB_Revertibles.unshift([])
                 // the test logger uses these callbacks, so preserve it
                 const old = clients.B.mergeTreeDeltaCallback;
                 const clientBDriver = createRevertDriver(clients.B);
@@ -276,7 +277,7 @@ describe("MergeTree.Revertibles", () => {
                 };
                 let afterUndoBaseText: string | undefined;
                 if(options.revertMarkerInsert){
-                    clientB_Revertibles.unshift([]);
+                    openNewUndoRedoTransaction();
                     afterUndoBaseText ??= clients.B.getText();
                 }
                 ops.push(clients.B.makeOpMessage(clients.B.insertMarkerLocal(0,ReferenceType.Simple), ++seq));
@@ -288,7 +289,7 @@ describe("MergeTree.Revertibles", () => {
                 }
 
                 if(options.splitInsertTextRevertible){
-                    clientB_Revertibles.unshift([]);
+                    openNewUndoRedoTransaction()
                     afterUndoBaseText ??= clients.B.getText();
                 }
                 ops.push(clients.B.makeOpMessage(clients.B.insertTextLocal(1,"B"), ++seq));
@@ -298,7 +299,7 @@ describe("MergeTree.Revertibles", () => {
                 }
 
                 if(options.splitRemoveRevertible){
-                    clientB_Revertibles.unshift([]);
+                    openNewUndoRedoTransaction();
                     afterUndoBaseText ??= clients.B.getText();
                 }
 
@@ -312,7 +313,7 @@ describe("MergeTree.Revertibles", () => {
                 try {
                     const reverts = clientB_Revertibles.splice(0);
                     reverts.forEach((revert)=>{
-                        clientB_Revertibles.unshift([]);
+                        openNewUndoRedoTransaction();
                         revertMergeTreeDeltaRevertibles(clientBDriver, revert);
                     });
                 } catch (e) {
@@ -328,7 +329,6 @@ describe("MergeTree.Revertibles", () => {
                 try {
                     const reverts = clientB_Revertibles.splice(0);
                     reverts.forEach((revert)=>{
-                        clientB_Revertibles.unshift([]);
                         revertMergeTreeDeltaRevertibles(clientBDriver, revert);
                     });
                 } catch (e) {
