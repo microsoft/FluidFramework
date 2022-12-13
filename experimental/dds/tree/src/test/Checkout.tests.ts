@@ -187,10 +187,21 @@ export function checkoutTests(
 			expect(() => checkout.applyChanges(...malformedMove)).throws(
 				'Locally constructed edits must be well-formed and valid.'
 			);
-			expect(events.length).to.equal(0);
-			expect(() => checkout.closeEdit()).throws('Locally constructed edits must be well-formed and valid');
 			expect(events.length).to.equal(1);
 			expect(events[0]).to.deep.equal({
+				category: 'error',
+				error: 'FailedLocalEdit',
+				eventName: 'SharedTree:Checkout:FailedLocalEdit',
+				failureKind: 'BadRange',
+				isSharedTreeEvent: true,
+				rangeFailure: 'BadPlace',
+				rangeEndpointFailure: 'Malformed',
+				status: 'Malformed',
+			});
+
+			expect(() => checkout.closeEdit()).throws('Locally constructed edits must be well-formed and valid');
+			expect(events.length).to.equal(2);
+			expect(events[1]).to.deep.equal({
 				category: 'error',
 				error: 'FailedLocalEdit',
 				eventName: 'SharedTree:Checkout:FailedLocalEdit',
