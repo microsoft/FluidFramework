@@ -16,7 +16,6 @@ import {
 } from "@fluidframework/container-utils";
 import { DeltaScheduler } from "./deltaScheduler";
 import { pkgVersion } from "./packageVersion";
-import { latencyThreshold } from "./connectionTelemetry";
 
 type IRuntimeMessageMetadata = undefined | {
     batch?: boolean;
