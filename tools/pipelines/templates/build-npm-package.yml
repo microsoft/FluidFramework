@@ -397,7 +397,7 @@ stages:
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run bundle-analysis:collect'
 
-          - task: PublishPipelineArtifact@1
+          - task: PublishBuildArtifacts@1
             displayName: Publish Artifacts - bundle-analysis
             condition:
               and(
@@ -406,9 +406,9 @@ stages:
                 eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true)
               )
             inputs:
-              targetPath: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
-              artifactname: 'bundleAnalysis'
-              publishLocation: 'pipeline'
+              PathtoPublish: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
+              Artifactname: 'bundleAnalysis'
+              publishLocation: 'Container'
 
           - task: Npm@1
             displayName: run bundle size comparison
