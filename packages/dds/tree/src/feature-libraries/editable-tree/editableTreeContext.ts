@@ -70,7 +70,6 @@ export interface EditableTreeContext {
      * If it's not possible, a `ContextuallyTypedNodeDataObject` with an explicitly provided
      * type and a value (using a `typeNameSymbol` and a `valueSymbol`) must be used instead.
      */
-    // TODO: replace "replace" semantics for primitives with "change value" where possible
     get unwrappedRoot(): UnwrappedEditableField;
 
     set unwrappedRoot(data: ContextuallyTypedNodeData | undefined);
