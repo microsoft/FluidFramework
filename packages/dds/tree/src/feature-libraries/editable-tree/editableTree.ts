@@ -45,6 +45,7 @@ import {
     ContextuallyTypedNodeDataObject,
     applyFieldTypesFromContext,
     applyTypesFromContext,
+    getPossibleTypes,
 } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 
@@ -237,8 +238,26 @@ export type UnwrappedEditableField = UnwrappedEditableTree | undefined | Editabl
  * The number of nodes depends on a field's multiplicity.
  * When iterating, the nodes are read at once. Use index access to read the nodes "lazily".
  * Use `getNode` to get a node without unwrapping.
+ *
+ * It is possible to create/replace a node or to set its value by using the simple assignment operator (`=`)
+ * and providing an input data as a {@link ContextuallyTypedNodeData}.
+ * See `EditableTreeContext.unwrappedRoot` for more details, as it works the same way for all
+ * children of the tree starting from its root.
+ *
+ * It is forbidden to delete the node using the `delete` operator, use the `deleteNodes()` method instead.
  */
-export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree> {
+export interface EditableField
+    // Here, the `UnwrappedEditableTree | ContextuallyTypedNodeData` union is used
+    // due to a lacking support for variant accessors for index signatures in TypeScript,
+    // see https://github.com/microsoft/TypeScript/issues/43826.
+    // Otherwise it would be better to have a setter accepting the `ContextuallyTypedNodeData`
+    // and a getter returning the `UnwrappedEditableTree` for the numeric indexed access
+    // similar to, e.g., the getter and setter of the `EditableTreeContext.root`.
+    // Thus, in most cases this must be understood as:
+    // - "returns `UnwrappedEditableTree` when accessing the nodes by their indices" and
+    // - "can also accept `ContextuallyTypedNodeData` when setting the nodes by their indices".
+    // TODO: replace the numeric indexed access with getters and setters if possible.
+    extends MarkedArrayLike<UnwrappedEditableTree | ContextuallyTypedNodeData> {
     /**
      * The `FieldSchema` of this field.
      */
@@ -270,15 +289,6 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree> {
     getNode(index: number): EditableTree;
 
     /**
-     * Gets an iterator iterating over the nodes (unwrapped) of this field.
-     * See {@link UnwrappedEditableTree} for what does "unwrapped" mean.
-     * It reads all nodes at once before the iteration starts to get a "snapshot" of this field.
-     * It might be inefficient regarding resources, but avoids situations
-     * when the field is getting changed while iterating.
-     */
-    [Symbol.iterator](): IterableIterator<UnwrappedEditableTree>;
-
-    /**
      * Inserts new nodes into this field.
      */
     insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
@@ -298,18 +308,11 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree> {
      * @param index - the index of the first node to be replaced. It must be in a range of existing node indices.
      * @param count - the number of nodes to be replaced. If not provided, replaces all nodes
      * starting from the index and up to the length of the field.
+     *
+     * Note that, if multiple clients concurrently call replace on a sequence field,
+     * all the insertions will be preserved.
      */
     replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
-
-    /**
-     * Nodes of this field, indexed by their numeric indices.
-     *
-     * It is possible to use this indexed access to set the value of the node using the simple assignment operator (`=`)
-     * if the node {@link isPrimitive} and the value is a {@link PrimitiveValue}.
-     * Concurrently setting the value will follow the "last-write-wins" semantics.
-     * It is forbidden to delete the node using the `delete` operator, use the `deleteNodes()` method instead.
-     */
-    [index: number]: UnwrappedEditableTree;
 }
 
 /**
@@ -608,25 +611,30 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
             const fieldKey: FieldKey = brand(key);
             const fieldSchema = target.getFieldSchema(fieldKey);
             const multiplicity = target.lookupFieldKind(fieldKey).multiplicity;
+            if (target.has(fieldKey) && isPrimitiveValue(value)) {
+                assert(
+                    multiplicity === Multiplicity.Value || multiplicity === Multiplicity.Optional,
+                    "single value provided for an unsupported field",
+                );
+                const possibleTypes = getPossibleTypes(
+                    target.context.schema,
+                    fieldSchema.types,
+                    value,
+                );
+                if (possibleTypes.length > 1) {
+                    const field = target.proxifyField(fieldKey, false);
+                    const node = field.getNode(0);
+                    assertPrimitiveValueType(value, node[typeSymbol]);
+                    node[valueSymbol] = value;
+                    return true;
+                }
+            }
             const content = applyFieldTypesFromContext(target.context.schema, fieldSchema, value);
             const cursors = content.map(singleMapTreeCursor);
-            // TODO: revisit to find a case where `replaceField` can't be used, fix and simplify
-            if (target.has(fieldKey)) {
-                if (cursors.length === 0) {
-                    target.deleteField(fieldKey);
-                } else {
-                    if (multiplicity !== Multiplicity.Sequence) {
-                        target.replaceField(fieldKey, cursors[0]);
-                    } else {
-                        target.replaceField(fieldKey, cursors);
-                    }
-                }
+            if (multiplicity !== Multiplicity.Sequence) {
+                target.replaceField(fieldKey, cursors[0]);
             } else {
-                if (multiplicity !== Multiplicity.Sequence) {
-                    target.createField(fieldKey, cursors[0]);
-                } else {
-                    target.createField(fieldKey, cursors);
-                }
+                target.replaceField(fieldKey, cursors);
             }
             return true;
         }

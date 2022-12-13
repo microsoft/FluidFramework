@@ -145,6 +145,26 @@ export function getAllowedTypes(
 }
 
 /**
+ * @returns all types, for which the data is schema-compatible.
+ */
+export function getPossibleTypes(
+    schemaData: SchemaDataAndPolicy,
+    typeSet: TreeTypeSet,
+    data: ContextuallyTypedNodeData,
+) {
+    // All types allowed by schema
+    const allowedTypes = getAllowedTypes(schemaData, typeSet);
+
+    const possibleTypes: TreeSchemaIdentifier[] = [];
+    for (const allowed of allowedTypes) {
+        if (shallowCompatibilityTest(schemaData, allowed, data)) {
+            possibleTypes.push(allowed);
+        }
+    }
+    return possibleTypes;
+}
+
+/**
  * Variant of ProxyHandler covering when the type of the target and implemented interface are different.
  * Only the parts needed so far are included.
  */
@@ -197,6 +217,7 @@ export interface MarkedArrayLike<T> extends ArrayLike<T> {
      */
     [n: number]: T;
     readonly [arrayLikeMarkerSymbol]: true;
+    [Symbol.iterator](): IterableIterator<T>;
 }
 
 /**
@@ -314,18 +335,13 @@ export function applyTypesFromContext(
     typeSet: TreeTypeSet,
     data: ContextuallyTypedNodeData,
 ): MapTree {
-    // All types allowed by schema
-    const allowedTypes = getAllowedTypes(schemaData, typeSet);
+    const possibleTypes: TreeSchemaIdentifier[] = getPossibleTypes(schemaData, typeSet, data);
 
-    const possibleTypes: TreeSchemaIdentifier[] = [];
-    for (const allowed of allowedTypes) {
-        if (shallowCompatibilityTest(schemaData, allowed, data)) {
-            possibleTypes.push(allowed);
-        }
-    }
-
-    assert(possibleTypes.length !== 0, "data incompatible with all types allowed by schema");
-    assert(possibleTypes.length === 1, "data compatible with more than one type allowed by schema");
+    assert(possibleTypes.length !== 0, "data incompatible with all types allowed by the schema");
+    assert(
+        possibleTypes.length === 1,
+        "data compatible with more than one type allowed by the schema",
+    );
 
     const type = possibleTypes[0];
     const schema = lookupTreeSchema(schemaData, type);
@@ -336,7 +352,7 @@ export function applyTypesFromContext(
         const primary = getPrimaryField(schema);
         assert(
             primary !== undefined,
-            "array data reported comparable with schema without primary field",
+            "array data reported comparable with the schema without a primary field",
         );
         const children = applyFieldTypesFromContext(schemaData, primary.schema, data);
         const value = allowsValue(schema.value, data) ? data : undefined;
@@ -355,7 +371,7 @@ export function applyTypesFromContext(
                 }),
         );
         const value = data[valueSymbol];
-        assert(allowsValue(schema.value, value), "provided value not permitted by schema");
+        assert(allowsValue(schema.value, value), "provided value not permitted by the schema");
         return { value, type, fields };
     }
 }
@@ -374,12 +390,12 @@ export function applyFieldTypesFromContext(
     if (data === undefined) {
         assert(
             multiplicity === Multiplicity.Forbidden || multiplicity === Multiplicity.Optional,
-            "undefined provided for field that does not support undefined",
+            "`undefined` provided for a field that does not support `undefined`",
         );
         return [];
     }
     if (multiplicity === Multiplicity.Sequence) {
-        assert(isArrayLike(data), "expected array for sequence field");
+        assert(isArrayLike(data), "expected array for a sequence field");
         const children = Array.from(data, (child) =>
             applyTypesFromContext(schemaData, field.types, child),
         );
@@ -387,7 +403,7 @@ export function applyFieldTypesFromContext(
     }
     assert(
         multiplicity === Multiplicity.Value || multiplicity === Multiplicity.Optional,
-        "single value provided for unsupported field",
+        "single value provided for an unsupported field",
     );
     return [applyTypesFromContext(schemaData, field.types, data)];
 }

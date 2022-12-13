@@ -31,8 +31,10 @@ import {
     replaceField,
     typeNameSymbol,
     namedTreeSchema,
-    ContextuallyTypedNodeDataObject,
     isWritableArrayLike,
+    isContextuallyTypedNodeDataObject,
+    EditableField,
+    getPrimaryField,
 } from "../../../feature-libraries";
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
 import {
@@ -50,6 +52,8 @@ import {
     Address,
     float64Schema,
     Phones,
+    phonesSchema,
+    decimalSchema,
 } from "./mockData";
 
 const globalFieldKey: GlobalFieldKey = brand("foo");
@@ -101,22 +105,48 @@ const testCases: (readonly [string, FieldKey])[] = [
 
 describe("editable-tree: editing", () => {
     it("edit using contextually typed API", async () => {
-        const [, trees] = await createSharedTrees(fullSchemaData);
+        const [, trees] = await createSharedTrees(fullSchemaData, [personData]);
+        assert.equal((trees[0].root as Person).name, "Adam");
+        // delete optional root
+        trees[0].root = undefined;
+        assert.equal(trees[0].root, undefined);
 
+        // create optional root
         trees[0].root = { name: "Mike" };
+        assert.deepEqual(clone(trees[0].root), { name: "Mike" });
 
+        // replace optional root
         trees[0].root = { name: "Peter", adult: true };
 
-        assert(isUnwrappedNode(trees[0].root));
-        const maybePerson: ContextuallyTypedNodeDataObject = trees[0].root;
+        assert(isContextuallyTypedNodeDataObject(trees[0].root));
+        const maybePerson = trees[0].root;
+        // unambiguously typed field
         maybePerson.age = 150;
 
-        // polymorphic field (uses Float64 and Int32 schemas)
+        // polymorphic field supports:
+        // - Float64 schema (number-based)
+        // - Int32 schema (number-based)
+        // - Decimal schema (string-based)
+        // - String schema
         maybePerson.salary = {
-            [valueSymbol]: 99.99,
+            [valueSymbol]: "100.1",
+            [typeNameSymbol]: decimalSchema.name,
+        };
+        // basic primitive data type does match the current node type
+        maybePerson.salary = "not ok";
+        // basic primitive data type does not match the current node type
+        assert.throws(
+            () => (maybePerson.salary = 99.99),
+            (e) => validateAssertionError(e, "unsupported schema for provided primitive"),
+            "Expected exception was not thrown",
+        );
+        // explicit typing
+        maybePerson.salary = {
             [typeNameSymbol]: float64Schema.name,
+            [valueSymbol]: 99.99,
         };
 
+        // Map<String>
         maybePerson.friends = { Anna: "Anna" };
         maybePerson.friends.John = "John";
 
@@ -136,7 +166,6 @@ describe("editable-tree: editing", () => {
         // make sure the value is not set at the primary field parent node
         {
             const person = trees[0].root as Person;
-            assert(person);
             assert(isUnwrappedNode(person.address));
             const phones = person.address[getField](brand("phones"));
             assert.equal(phones.getNode(0)[valueSymbol], undefined);
@@ -151,21 +180,32 @@ describe("editable-tree: editing", () => {
         assert.equal(Array.isArray(maybePerson.address.phones), false);
         maybePerson.address.phones[0] = "+1234567890";
 
-        const globalField: FieldKey = globalFieldSymbolSequencePhones;
-        maybePerson.address[globalField] = ["111"];
+        // can still use the EditableTree API at children
+        {
+            const phones: EditableField = maybePerson.address.phones as EditableField;
+            assert.deepEqual(phones.fieldSchema, getPrimaryField(phonesSchema)?.schema);
+            // can use the contextually typed API again
+            phones[1] = {
+                [typeNameSymbol]: complexPhoneSchema.name,
+                prefix: "+1",
+                number: "2345",
+            };
+        }
+
+        const globalPhonesKey: FieldKey = globalFieldSymbolSequencePhones;
+        maybePerson.address[globalPhonesKey] = ["111"];
+        // TypeScript can't this
         // assert(isWritableArrayLike(maybePerson.address[globalField]));
         // maybePerson.address[globalField][1] = "888";
-        const globalPhones: string[] = maybePerson.address[globalField] as string[];
+        const globalPhones = maybePerson.address[globalPhonesKey];
+        assert(isWritableArrayLike(globalPhones));
         globalPhones[0] = "222";
         globalPhones[1] = "333";
-
-        // explicitly check the global field as `clone` does not support symbols as field keys
-        assert.deepEqual(clone(maybePerson.address[globalField]), {
-            "0": "222",
-            "1": "333",
-        });
+        // explicitly check and delete the global field as `clone` (used below)
+        // does not support symbols as property keys
+        assert.deepEqual([...globalPhones], ["222", "333"]);
         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete maybePerson.address[globalField];
+        delete maybePerson.address[globalPhonesKey];
 
         const clonedPerson = clone(maybePerson);
         assert.deepEqual(clonedPerson, {
@@ -184,8 +224,8 @@ describe("editable-tree: editing", () => {
                 phones: {
                     "0": "+1234567890",
                     "1": {
-                        prefix: "+49",
-                        number: "1234567",
+                        prefix: "+1",
+                        number: "2345",
                     },
                 },
             },
@@ -457,6 +497,7 @@ describe("editable-tree: editing", () => {
                 assert.deepEqual(field_0, field_1);
                 field_0.deleteNodes(0, 5);
                 assert.equal(field_0.length, 0);
+                assert(!(fieldKey in trees[0].root));
                 assert.doesNotThrow(() => field_0.deleteNodes(0, 0));
                 await provider.ensureSynchronized();
                 assert.deepEqual(field_0, field_1);

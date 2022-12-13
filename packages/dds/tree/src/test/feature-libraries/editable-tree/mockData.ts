@@ -32,6 +32,11 @@ export const stringSchema = namedTreeSchema({
     value: ValueSchema.String,
 });
 
+export const decimalSchema = namedTreeSchema({
+    name: brand("Decimal"),
+    value: ValueSchema.String,
+});
+
 export const int32Schema = namedTreeSchema({
     name: brand("Int32"),
     value: ValueSchema.Number,
@@ -110,7 +115,12 @@ export const personSchema = namedTreeSchema({
         name: fieldSchema(FieldKinds.value, [stringSchema.name]),
         age: fieldSchema(FieldKinds.optional, [int32Schema.name]),
         adult: fieldSchema(FieldKinds.optional, [boolSchema.name]),
-        salary: fieldSchema(FieldKinds.optional, [float64Schema.name, int32Schema.name]),
+        salary: fieldSchema(FieldKinds.optional, [
+            float64Schema.name,
+            int32Schema.name,
+            stringSchema.name,
+            decimalSchema.name,
+        ]),
         friends: fieldSchema(FieldKinds.optional, [mapStringSchema.name]),
         address: fieldSchema(FieldKinds.optional, [addressSchema.name]),
     },
@@ -146,6 +156,7 @@ export const schemaTypes: Set<NamedTreeSchema> = new Set([
     addressSchema,
     mapStringSchema,
     personSchema,
+    decimalSchema,
 ]);
 
 export const schemaMap: Map<TreeSchemaIdentifier, NamedTreeSchema> = new Map();
@@ -153,7 +164,7 @@ for (const named of schemaTypes) {
     schemaMap.set(named.name, named);
 }
 
-export const rootPersonSchema = fieldSchema(FieldKinds.value, [personSchema.name]);
+export const rootPersonSchema = fieldSchema(FieldKinds.optional, [personSchema.name]);
 
 export const fullSchemaData: SchemaData = {
     treeSchema: schemaMap,

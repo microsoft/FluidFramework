@@ -215,10 +215,8 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 }
 
 // @public
-export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree> {
+export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree | ContextuallyTypedNodeData> {
     readonly [proxyTargetSymbol]: object;
-    [Symbol.iterator](): IterableIterator<UnwrappedEditableTree>;
-    [index: number]: UnwrappedEditableTree;
     deleteNodes(index: number, count?: number): void;
     readonly fieldKey: FieldKey;
     readonly fieldSchema: FieldSchema;
@@ -727,6 +725,8 @@ type Mark_2<TNodeChange = NodeChangeType> = SizedMark<TNodeChange> | Attach<TNod
 export interface MarkedArrayLike<T> extends ArrayLike<T> {
     // (undocumented)
     readonly [arrayLikeMarkerSymbol]: true;
+    // (undocumented)
+    [Symbol.iterator](): IterableIterator<T>;
     [n: number]: T;
 }
 
