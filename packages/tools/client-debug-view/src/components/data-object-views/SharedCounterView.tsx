@@ -44,7 +44,6 @@ export function SharedCounterView(props: SharedCounterViewProps): React.ReactEle
 
 	React.useEffect(() => {
 		function updateValue(delta: number, newValue: number): void {
-            console.log(newValue);
 			setValue(newValue);
 		}
 
@@ -76,7 +75,6 @@ export function SharedCounterView(props: SharedCounterViewProps): React.ReactEle
         }
 
         setDeltaValue(num);
-        // sharedCounter.increment(num - value);
     }
 
 	return (
@@ -92,7 +90,6 @@ export function SharedCounterView(props: SharedCounterViewProps): React.ReactEle
 				>
                     <IconButton
                             onClick={decrementCounter}
-                            // disabled={value === 0}
                             menuIconProps={{ iconName: "CalculatorSubtract" }}
                             aria-describedby={decrementButtonTooltipId}
                     />
