@@ -1271,9 +1271,7 @@ export class MergeTree {
         if (pendingSegmentGroup !== undefined) {
             const deltaSegments: IMergeTreeSegmentDelta[] = [];
             pendingSegmentGroup.segments.map((pendingSegment) => {
-                const attributionKey = (opArgs.op.type === MergeTreeDeltaType.INSERT && this.options?.attribution?.track) ?
-                    seq : undefined;
-                const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs, attributionKey);
+                const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs);
                 if (opArgs.op.type === MergeTreeDeltaType.INSERT && this.options?.attribution?.track) {
                     pendingSegment.attribution = new AttributionCollection(
                         seq,

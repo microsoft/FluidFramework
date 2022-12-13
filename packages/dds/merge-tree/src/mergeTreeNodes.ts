@@ -229,7 +229,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
      *
      * @param segmentGroup - Pending segment group associated with this op.
      * @param opArgs - Information about the op that was acked
-     * @param attribution - If specified, any attribution data associated with this segment.
      * @returns - true if the op modifies the segment, otherwise false.
      * The only current false case is overlapping remove, where a segment is removed
      * by a previously sequenced operation before the current operation is acked.
@@ -237,7 +236,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
      * E.g. if the segment group is not first in the pending queue, or
      * an inserted segment does not have unassigned sequence number.
      */
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, attribution?: unknown): boolean;
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
 }
 
 export interface IMarkerModifiedAction {

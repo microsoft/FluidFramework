@@ -13,7 +13,7 @@ import { IMergeTreeOp } from "../ops";
 import { SnapshotV1 } from "../snapshotV1";
 import { IMergeTreeOptions } from "../mergeTree";
 import { TestSerializer } from "./testSerializer";
-import { TestClient } from ".";
+import { ISegment, TestClient } from ".";
 
 // Reconstitutes a MergeTree client from a summary
 async function loadSnapshot(summary: ISummaryTree, options?: IMergeTreeOptions) {
@@ -65,7 +65,7 @@ class TestString {
 
     // Ensures the MergeTree client's contents successfully roundtrip through a snapshot.
     public async checkSnapshot(options?: IMergeTreeOptions) {
-        this.applyPending();
+        this.applyPendingOps();
         const expectedAttributionKeys = this.client.getAllAttributionKeys();
         const summary = this.getSummary();
         const client2 = await loadSnapshot(summary, options);
@@ -97,7 +97,7 @@ class TestString {
 
     public getText() { return this.client.getText(); }
 
-    private applyPending() {
+    public applyPendingOps() {
         for (const msg of this.pending) {
             this.client.applyMsg(msg);
         }
@@ -117,6 +117,12 @@ class TestString {
                 this.minSeq = increaseMsn
                     ? seq
                     : this.minSeq));
+    }
+
+    public getSegment(pos: number): ISegment {
+        const { segment } = this.client.getContainingSegment(pos);
+        assert(segment !== undefined);
+        return segment;
     }
 }
 
@@ -229,11 +235,17 @@ describe("snapshot", () => {
         const str = new TestString("id", { attribution: { track: true } });
         str.append("hello world", /* increaseMsn: */ true);
         await str.checkSnapshot({ attribution: { track: false } });
+        str.insert(0, "should have attribution", false);
+        str.applyPendingOps();
+        assert(str.getSegment(0).attribution !== undefined, "Attribution should be created on new segments");
     });
 
     it("lack of attribution overrides merge-tree initialization", async () => {
         const str = new TestString("id", { attribution: { track: false } });
         str.append("hello world", /* increaseMsn: */ true);
         await str.checkSnapshot({ attribution: { track: true } });
+        str.insert(0, "should not have attribution", false);
+        str.applyPendingOps();
+        assert(str.getSegment(0).attribution === undefined, "No attribution should be created on new segments");
     });
 });
