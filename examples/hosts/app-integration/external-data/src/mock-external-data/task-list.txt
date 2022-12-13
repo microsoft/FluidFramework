@@ -1,4 +1,0 @@
-12:Alpha:1
-34:Beta:2
-56:Gamma:3
-78:Delta:4
