@@ -234,14 +234,14 @@ export interface IDirectoryEvents extends IEvent {
     ) => void);
 
     /**
-     * Emitted when a subdirectory is undeleted.
+     * Emitted when a previously deleted subdirectory is restored.
      *
      * @remarks Listener parameters:
      *
-     * - `path` - The relative path to the subdirectory that is undeleted.
+     * - `path` - The relative path to the subdirectory that is restored.
      * It is relative from the object which raises the event.
      *
-     * - `local` - Whether the undelete originated from the this client.
+     * - `local` - Whether the restore (undelete) originated from this client.
      *
      * - `target` - The {@link ISharedDirectory} itself.
      */
@@ -264,7 +264,7 @@ export interface IDirectoryEvents extends IEvent {
     ) => void);
 
     /**
-     * Emitted when this sub directory is undeleted.
+     * Emitted when this previously deleted sub directory is restored.
      *
      * @remarks Listener parameters:
      *
