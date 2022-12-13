@@ -49,9 +49,5 @@ export function makeBubble(stageWidth: number, stageHeight: number): IBubble {
 export const makeClient = (stageWidth: number, stageHeight: number, numBubbles: number): IClient => ({
     clientId: "pending",
     color: randomColor(),
-    bubbles: Array.from({length: numBubbles})
-        // False positive
-        // eslint-disable-next-line unicorn/no-useless-undefined
-        .fill(undefined)
-        .map(() => makeBubble(stageWidth, stageHeight)),
+    bubbles: Array.from({length: numBubbles}).map(() => makeBubble(stageWidth, stageHeight)),
 });
