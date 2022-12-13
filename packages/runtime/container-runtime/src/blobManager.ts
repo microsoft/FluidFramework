@@ -177,6 +177,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         stashedBlobs: IPendingBlobs = {},
     ) {
 
+        super();
         this.mc = loggerToMonitoringContext(ChildLogger.create(this.runtime.logger, "BlobManager"));
         // Read the feature flag that tells whether to throw when a tombstone blob is requested.
         this.throwOnTombstoneUsage =
