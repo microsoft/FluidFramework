@@ -45,7 +45,7 @@ export class ReactViewAdapter extends React_2.Component<IReactViewAdapterProps> 
     constructor(props: IReactViewAdapterProps);
     static canAdapt(view: FluidObject): boolean;
     // (undocumented)
-    render(): React_2.ReactElement;
+    render(): JSX.Element;
 }
 
 ```

@@ -55,7 +55,7 @@ export class ReactViewAdapter extends React.Component<IReactViewAdapterProps> {
         this.element = <></>;
     }
 
-    public render(): React.ReactElement {
+    public render(): JSX.Element {
         return this.element;
     }
 }
