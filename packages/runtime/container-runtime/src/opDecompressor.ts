@@ -29,11 +29,11 @@ export class OpDecompressor {
         if (message.metadata?.batch === true
             && (message.metadata?.compressed || message.compression !== undefined)) {
             // Beginning of a compressed batch
-            assert(this.activeBatch === false, "shouldn't have multiple active batches");
+            assert(this.activeBatch === false, 0x4b8 /* shouldn't have multiple active batches */);
             if (message.compression) {
                 // lz4 is the only supported compression algorithm for now
                 assert(message.compression === CompressionAlgorithms.lz4,
-                        "lz4 is currently the only supported compression algorithm");
+                        0x4b9 /* lz4 is currently the only supported compression algorithm */);
             }
 
             this.activeBatch = true;
@@ -67,7 +67,7 @@ export class OpDecompressor {
         if (message.metadata?.batch === undefined &&
             (message.metadata?.compressed || message.compression === CompressionAlgorithms.lz4)) {
             // Single compressed message
-            assert(this.activeBatch === false, "shouldn't receive compressed message in middle of a batch");
+            assert(this.activeBatch === false, 0x4ba /* shouldn't receive compressed message in middle of a batch */);
 
             const contents = IsoBuffer.from(message.contents.packedContents, "base64");
             const decompressedMessage = decompress(contents);
