@@ -36,6 +36,7 @@ stages:
         poolBuild: Small
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         testCommand: test:realsvc:local:report
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
@@ -50,6 +51,7 @@ stages:
         poolBuild: Small
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         testCommand: test:realsvc:tinylicious:report
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
@@ -67,6 +69,7 @@ stages:
         poolBuild: Small
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         testCommand: test:realsvc:routerlicious:report
         continueOnError: true
         r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
@@ -94,6 +97,7 @@ stages:
         poolBuild: Small
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 360
         continueOnError: true
         testCommand: test:realsvc:frs:report
@@ -121,6 +125,7 @@ stages:
         poolBuild: Small
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 360
         continueOnError: true
         testCommand: test:realsvc:odsp:report
