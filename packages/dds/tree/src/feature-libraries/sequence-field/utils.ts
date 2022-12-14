@@ -18,6 +18,7 @@ import {
     ModifyingMark,
     ModifyReattach,
     MoveIn,
+    NewAttach,
     ObjectMark,
     Reattach,
     SizedMark,
@@ -44,15 +45,18 @@ export function isModifyingMark<TNodeChange>(
     );
 }
 
-export function isAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is Attach<TNodeChange> {
+export function newAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is NewAttach<TNodeChange> {
     return (
-        (isObjMark(mark) &&
-            (mark.type === "Insert" ||
-                mark.type === "MInsert" ||
-                mark.type === "MoveIn" ||
-                mark.type === "MMoveIn")) ||
-        isReattach(mark)
+        isObjMark(mark) &&
+        (mark.type === "Insert" ||
+            mark.type === "MInsert" ||
+            mark.type === "MoveIn" ||
+            mark.type === "MMoveIn")
     );
+}
+
+export function isAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is Attach<TNodeChange> {
+    return newAttach(mark) || isReattach(mark);
 }
 
 export function isReattach<TNodeChange>(

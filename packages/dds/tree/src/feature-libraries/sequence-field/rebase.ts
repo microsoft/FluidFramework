@@ -12,11 +12,13 @@ import {
     isAttach,
     isDetachMark,
     isModify,
+    isReattach,
     isSkipMark,
+    newAttach,
     splitMarkOnInput,
     splitMarkOnOutput,
 } from "./utils";
-import { Attach, Changeset, LineageEvent, Mark, MarkList, SizedMark } from "./format";
+import { Attach, Changeset, LineageEvent, Mark, MarkList, OverlapableMark } from "./format";
 import { MarkListFactory } from "./markListFactory";
 
 /**
@@ -85,15 +87,15 @@ function rebaseMarkList<TNodeChange>(
             }
         } else {
             assert(
-                !isAttach(baseMark) && !isAttach(currMark),
-                "An attach cannot be at the same position as another mark",
+                !newAttach(baseMark) && !newAttach(currMark),
+                "A new attach cannot be at the same position as another mark",
             );
             assert(
                 getInputLength(baseMark) === getInputLength(currMark),
                 "The two marks should be the same size",
             );
 
-            const rebasedMark = rebaseMark(currMark, baseMark, rebaseChild);
+            const rebasedMark = rebaseMark(currMark, baseMark, baseRevision, rebaseChild);
             factory.push(rebasedMark);
 
             if (isDetachMark(baseMark)) {
@@ -144,6 +146,49 @@ class RebaseQueue<T> {
                 newMark: this.newMarks.pop(),
             };
         } else if (isAttach(baseMark) && isAttach(newMark)) {
+            if (
+                isReattach(baseMark) &&
+                isReattach(newMark) &&
+                baseMark.detachedBy === newMark.detachedBy
+            ) {
+                this.baseMarks.pop();
+                this.newMarks.pop();
+                const newMarkLength = getOutputLength(newMark);
+                const baseMarkLength = getOutputLength(baseMark);
+                if (newMark.detachIndex === baseMark.detachIndex) {
+                    if (newMarkLength < baseMarkLength) {
+                        const [baseMark1, baseMark2] = splitMarkOnOutput(baseMark, newMarkLength);
+                        this.baseMarks.push(baseMark2);
+                        return { baseMark: baseMark1, newMark };
+                    } else if (newMarkLength > baseMarkLength) {
+                        const [newMark1, newMark2] = splitMarkOnOutput(newMark, baseMarkLength);
+                        this.newMarks.push(newMark2);
+                        return { baseMark, newMark: newMark1 };
+                    } else {
+                        return { baseMark, newMark };
+                    }
+                } else if (newMark.detachIndex < baseMark.detachIndex) {
+                    if (newMark.detachIndex + newMarkLength <= baseMark.detachIndex) {
+                        return { newMark };
+                    }
+                    const [newMark1, newMark2] = splitMarkOnOutput(
+                        newMark,
+                        baseMark.detachIndex - newMark.detachIndex,
+                    );
+                    this.newMarks.push(newMark2);
+                    return { newMark: newMark1 };
+                } else {
+                    if (baseMark.detachIndex + baseMarkLength <= newMark.detachIndex) {
+                        return { baseMark };
+                    }
+                    const [baseMark1, baseMark2] = splitMarkOnOutput(
+                        baseMark,
+                        newMark.detachIndex - baseMark.detachIndex,
+                    );
+                    this.baseMarks.push(baseMark2);
+                    return { baseMark: baseMark1 };
+                }
+            }
             const revision = baseMark.revision ?? this.baseRevision;
             const reattachOffset = getOffsetInReattach(newMark.lineage, revision);
             if (reattachOffset !== undefined) {
@@ -202,10 +247,11 @@ interface RebaseMarks<T> {
 }
 
 function rebaseMark<TNodeChange>(
-    currMark: SizedMark<TNodeChange>,
-    baseMark: SizedMark<TNodeChange>,
+    currMark: OverlapableMark<TNodeChange>,
+    baseMark: OverlapableMark<TNodeChange>,
+    baseRevision: RevisionTag | undefined,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
-): SizedMark<TNodeChange> {
+): OverlapableMark<TNodeChange> {
     if (isSkipMark(baseMark)) {
         return clone(currMark);
     }
@@ -214,6 +260,15 @@ function rebaseMark<TNodeChange>(
         case "Delete":
         case "MDelete":
             return 0;
+        case "MRevive":
+        case "Revive": {
+            assert(isReattach(currMark), "Only a reattach can overlap with a reattach");
+            assert(currMark.mutedBy === undefined, "Only non-muted revive marks can overlap");
+            return {
+                ...clone(currMark),
+                mutedBy: baseMark.revision ?? baseRevision,
+            };
+        }
         case "Modify": {
             if (isModify(currMark)) {
                 return {

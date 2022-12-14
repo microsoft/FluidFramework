@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
-import { makeAnonChange, RevisionTag, tagChange } from "../../../rebase";
+import { RevisionTag, tagChange, tagInverse } from "../../../rebase";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
@@ -15,10 +15,10 @@ import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
 const tag1: RevisionTag = brand(41);
 const tag2: RevisionTag = brand(42);
 
-function rebase(change: TestChangeset, base: TestChangeset): TestChangeset {
+function rebase(change: TestChangeset, base: TestChangeset, baseRev?: RevisionTag): TestChangeset {
     deepFreeze(change);
     deepFreeze(base);
-    return SF.rebase(change, makeAnonChange(base), TestChange.rebase);
+    return SF.rebase(change, tagChange(base, baseRev), TestChange.rebase);
 }
 
 describe("SequenceField - Rebase", () => {
@@ -296,18 +296,14 @@ describe("SequenceField - Rebase", () => {
     });
 
     // TODO: update rebase to detect overlap of revives
-    it.skip("revive ↷ same revive", () => {
-        const reviveA = composeAnonChanges([
-            Change.revive(0, 1, 0, tag1),
-            Change.revive(2, 2, 1, tag1),
-            Change.revive(4, 1, 3, tag1),
-        ]);
-        const reviveB = Change.revive(2, 1, 1, tag1);
-        const actual = rebase(reviveA, reviveB);
+    it("revive ↷ same revive", () => {
+        const reviveA = Change.revive(0, 3, 1, tag1);
+        const reviveB = Change.revive(0, 1, 2, tag1);
+        const actual = rebase(reviveA, reviveB, tag2);
         const expected = composeAnonChanges([
-            Change.revive(0, 1, 0, tag1),
-            Change.revive(2, 1, 2, tag1),
-            Change.revive(5, 1, 3, tag1),
+            Change.revive(0, 1, 1, tag1),
+            Change.revive(1, 1, 2, tag1, tag2),
+            Change.revive(2, 1, 3, tag1),
         ]);
         assert.deepEqual(actual, expected);
     });

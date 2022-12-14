@@ -24,6 +24,11 @@ export type SizedObjectMark<TNodeChange = NodeChangeType> =
     | Detach
     | ModifyDetach<TNodeChange>;
 
+export type OverlapableMark<TNodeChange> =
+    | Reattach
+    | ModifyReattach<TNodeChange>
+    | SizedMark<TNodeChange>;
+
 export interface Modify<TNodeChange = NodeChangeType> extends HasChanges<TNodeChange> {
     type: "Modify";
     tomb?: RevisionTag;
@@ -108,12 +113,15 @@ export interface ModifyMoveIn<TNodeChange = NodeChangeType>
 }
 
 export type Attach<TNodeChange = NodeChangeType> =
+    | NewAttach<TNodeChange>
+    | Reattach
+    | ModifyReattach<TNodeChange>;
+
+export type NewAttach<TNodeChange = NodeChangeType> =
     | Insert
     | ModifyInsert<TNodeChange>
     | MoveIn
-    | ModifyMoveIn<TNodeChange>
-    | Reattach
-    | ModifyReattach<TNodeChange>;
+    | ModifyMoveIn<TNodeChange>;
 
 export type ModifyingMark<TNodeChange = NodeChangeType> =
     | Modify<TNodeChange>
@@ -170,12 +178,14 @@ export interface HasReattachFields extends HasPlaceFields {
 export interface Reattach extends HasReattachFields, HasRevisionTag {
     type: "Revive" | "Return";
     count: NodeCount;
+    mutedBy?: RevisionTag;
 }
 export interface ModifyReattach<TNodeChange = NodeChangeType>
     extends HasReattachFields,
         HasRevisionTag,
         HasChanges<TNodeChange> {
     type: "MRevive" | "MReturn";
+    mutedBy?: RevisionTag;
 }
 
 /**
