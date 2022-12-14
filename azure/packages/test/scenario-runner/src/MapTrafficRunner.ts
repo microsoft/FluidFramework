@@ -5,6 +5,7 @@
 import child_process from "child_process";
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
+
 import { IRunConfig, IRunner, IRunnerEvents, IRunnerStatus, RunnnerStatus } from "./interface";
 import { delay } from "./utils";
 
@@ -13,6 +14,7 @@ export interface AzureClientConfig {
     endpoint: string;
     key?: string;
     tenantId?: string;
+    useSecureTokenProvider?: boolean;
 }
 
 export interface ContainerTrafficSchema {
@@ -71,6 +73,7 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
                 connection.type,
                 "--connEndpoint",
                 connection.endpoint,
+                ...(connection.useSecureTokenProvider ? ["--secureTokenProvider"] : []),
             ];
             childArgs.push("--verbose");
             runnerArgs.push(childArgs);
