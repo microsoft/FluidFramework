@@ -29,7 +29,7 @@ export const customerServicePort =
  * The express app instance.
  * Used to mock the customer service.
  *
- * The task-manager client will interact with this service
+ * @remarks The task-manager client will interact with this service.
  */
 let expressApp: Express | undefined;
 
