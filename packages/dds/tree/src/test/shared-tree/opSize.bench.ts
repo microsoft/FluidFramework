@@ -422,7 +422,10 @@ describe("SharedTree Op Size Benchmarks", () => {
     };
 
     afterEach(() => {
-        opsByBenchmarkName[currentBenchmarkName] = [...currentTestOps];
+        if (!opsByBenchmarkName[currentBenchmarkName]) {
+            opsByBenchmarkName[currentBenchmarkName] = [];
+        }
+        currentTestOps.forEach((op) => opsByBenchmarkName[currentBenchmarkName].push(op));
         currentTestOps.length = 0;
     });
 
@@ -468,24 +471,24 @@ describe("SharedTree Op Size Benchmarks", () => {
                 assertChildNodeCount(provider.trees[0], BENCHMARK_NODE_COUNT);
             };
 
-            it(`1a.a. Insert ${BENCHMARK_NODE_COUNT} small nodes in ${BENCHMARK_NODE_COUNT} transactions`, async () => {
+            it(`1a.a. [Insert] [Individual Txs] ${BENCHMARK_NODE_COUNT} small nodes in ${BENCHMARK_NODE_COUNT} transactions`, async () => {
                 await benchmarkInsertNodesWithInvidualTxs(
                     0.01,
-                    `1a.a. Insert ${BENCHMARK_NODE_COUNT} small nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
+                    `1a.a. [Insert] [Individual Txs] ${BENCHMARK_NODE_COUNT} small nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
                 );
             });
 
-            it(`1a.b. Insert ${BENCHMARK_NODE_COUNT} medium nodes in ${BENCHMARK_NODE_COUNT} individual transactions`, async () => {
+            it(`1a.b. [Insert] [Individual Txs] ${BENCHMARK_NODE_COUNT} medium nodes in ${BENCHMARK_NODE_COUNT} individual transactions`, async () => {
                 await benchmarkInsertNodesWithInvidualTxs(
                     0.5,
-                    `1a.b. Insert ${BENCHMARK_NODE_COUNT} medium nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
+                    `1a.b. [Insert] [Individual Txs] ${BENCHMARK_NODE_COUNT} medium nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
                 );
             });
 
-            it(`1a.c. Insert ${BENCHMARK_NODE_COUNT} large nodes in ${BENCHMARK_NODE_COUNT} individual transactions`, async () => {
+            it(`1a.c. [Insert] [Individual Txs] ${BENCHMARK_NODE_COUNT} large nodes in ${BENCHMARK_NODE_COUNT} individual transactions`, async () => {
                 await benchmarkInsertNodesWithInvidualTxs(
                     1,
-                    `1a.c. Insert ${BENCHMARK_NODE_COUNT} large nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
+                    `1a.c. [Insert] [Individual Txs] ${BENCHMARK_NODE_COUNT} large nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
                 );
             });
         });
@@ -511,24 +514,24 @@ describe("SharedTree Op Size Benchmarks", () => {
                 assertChildNodeCount(provider.trees[0], BENCHMARK_NODE_COUNT);
             };
 
-            it(`1b.a. Insert ${BENCHMARK_NODE_COUNT} small nodes in one transaction`, async () => {
+            it(`1b.a. [Insert] [Single Tx] ${BENCHMARK_NODE_COUNT} small nodes in 1 transaction`, async () => {
                 await benchmarkInsertNodesWithSingleTx(
                     0.01,
-                    `1b.a. Insert ${BENCHMARK_NODE_COUNT} small nodes in one transaction`,
+                    `1b.a. [Insert] [Single Tx] ${BENCHMARK_NODE_COUNT} small nodes in 1 transaction`,
                 );
             });
 
-            it(`1b.b. Insert ${BENCHMARK_NODE_COUNT} medium nodes in one transaction`, async () => {
+            it(`1b.b. [Insert] [Single Tx] ${BENCHMARK_NODE_COUNT} medium nodes in 1 transaction`, async () => {
                 await benchmarkInsertNodesWithSingleTx(
                     0.5,
-                    `1b.b. Insert ${BENCHMARK_NODE_COUNT} medium nodes in 1 transaction`,
+                    `1b.b. [Insert] [Single Tx] ${BENCHMARK_NODE_COUNT} medium nodes in 1 transaction`,
                 );
             });
 
-            it(`1b.c. Insert ${BENCHMARK_NODE_COUNT} large nodes in one transaction`, async () => {
+            it(`1b.c. [Insert] [Single Tx] ${BENCHMARK_NODE_COUNT} large nodes in 1 transaction`, async () => {
                 await benchmarkInsertNodesWithSingleTx(
                     1,
-                    `1b.c. Insert ${BENCHMARK_NODE_COUNT} large nodes in one transaction`,
+                    `1b.c. [Insert] [Single Tx] ${BENCHMARK_NODE_COUNT} large nodes in 1 transaction`,
                 );
             });
         });
@@ -552,24 +555,24 @@ describe("SharedTree Op Size Benchmarks", () => {
                 assertChildNodeCount(provider.trees[0], 0);
             };
 
-            it(`2a.a. Delete ${BENCHMARK_NODE_COUNT} small nodes in ${BENCHMARK_NODE_COUNT} individual transactions`, async () => {
+            it(`2a.a. [Delete] [Individual Txs] ${BENCHMARK_NODE_COUNT} small nodes in ${BENCHMARK_NODE_COUNT} individual transactions`, async () => {
                 await benchmarkDeleteNodesWithInvidualTxs(
                     0.01,
-                    `2a.a. Delete ${BENCHMARK_NODE_COUNT} small nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
+                    `2a.a. [Delete] [Individual Txs] ${BENCHMARK_NODE_COUNT} small nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
                 );
             });
 
-            it(`2a.b. Delete ${BENCHMARK_NODE_COUNT} medium nodes in ${BENCHMARK_NODE_COUNT} individual transactions`, async () => {
+            it(`2a.b. [Delete] [Individual Txs] ${BENCHMARK_NODE_COUNT} medium nodes in ${BENCHMARK_NODE_COUNT} individual transactions`, async () => {
                 await benchmarkDeleteNodesWithInvidualTxs(
                     0.5,
-                    `2a.b. Delete ${BENCHMARK_NODE_COUNT} medium nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
+                    `2a.b. [Delete] [Individual Txs] ${BENCHMARK_NODE_COUNT} medium nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
                 );
             });
 
-            it(`2a.c. Delete ${BENCHMARK_NODE_COUNT} large nodes in ${BENCHMARK_NODE_COUNT} individual transactions`, async () => {
+            it(`2a.c. [Delete] [Individual Txs] ${BENCHMARK_NODE_COUNT} large nodes in ${BENCHMARK_NODE_COUNT} individual transactions`, async () => {
                 await benchmarkDeleteNodesWithInvidualTxs(
                     1,
-                    `2a.c. Delete ${BENCHMARK_NODE_COUNT} large nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
+                    `2a.c. [Delete] [Individual Txs] ${BENCHMARK_NODE_COUNT} large nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
                 );
             });
         });
@@ -591,24 +594,24 @@ describe("SharedTree Op Size Benchmarks", () => {
                 assertChildNodeCount(provider.trees[0], 0);
             };
 
-            it(`2b.a. Delete ${BENCHMARK_NODE_COUNT} small nodes in 1 transaction containing 1 delete of ${BENCHMARK_NODE_COUNT} nodes`, async () => {
+            it(`2b.a. [Delete] [Single Tx] ${BENCHMARK_NODE_COUNT} small nodes in 1 transaction containing 1 delete of ${BENCHMARK_NODE_COUNT} nodes`, async () => {
                 await benchmarkDeleteNodesWithSingleTx(
                     0.01,
-                    `2b.a. Delete ${BENCHMARK_NODE_COUNT} small nodes in 1 transaction containing 1 delete of ${BENCHMARK_NODE_COUNT} nodes`,
+                    `2b.a. [Delete] [Single Tx] ${BENCHMARK_NODE_COUNT} small nodes in 1 transaction containing 1 delete of ${BENCHMARK_NODE_COUNT} nodes`,
                 );
             });
 
-            it(`2b.b. Delete ${BENCHMARK_NODE_COUNT} medium nodes in 1 transactions containing 1 delete of ${BENCHMARK_NODE_COUNT} nodes`, async () => {
+            it(`2b.b. [Delete] [Single Tx] ${BENCHMARK_NODE_COUNT} medium nodes in 1 transactions containing 1 delete of ${BENCHMARK_NODE_COUNT} nodes`, async () => {
                 await benchmarkDeleteNodesWithSingleTx(
                     0.5,
-                    `2b.b. Delete ${BENCHMARK_NODE_COUNT} medium nodes in 1 transactions containing 1 delete of ${BENCHMARK_NODE_COUNT} nodes`,
+                    `2b.b. [Delete] [Single Tx] ${BENCHMARK_NODE_COUNT} medium nodes in 1 transactions containing 1 delete of ${BENCHMARK_NODE_COUNT} nodes`,
                 );
             });
 
-            it(`2b.c. Delete ${BENCHMARK_NODE_COUNT} large nodes in 1 transactions containing 1 delete of ${BENCHMARK_NODE_COUNT} nodes`, async () => {
+            it(`2b.c. [Delete] [Single Tx] ${BENCHMARK_NODE_COUNT} large nodes in 1 transactions containing 1 delete of ${BENCHMARK_NODE_COUNT} nodes`, async () => {
                 await benchmarkDeleteNodesWithSingleTx(
                     1,
-                    `2b.c. Delete ${BENCHMARK_NODE_COUNT} large nodes in 1 transactions containing 1 delete of ${BENCHMARK_NODE_COUNT} nodes`,
+                    `2b.c. [Delete] [Single Tx] ${BENCHMARK_NODE_COUNT} large nodes in 1 transactions containing 1 delete of ${BENCHMARK_NODE_COUNT} nodes`,
                 );
             });
         });
@@ -644,24 +647,24 @@ describe("SharedTree Op Size Benchmarks", () => {
                 );
             };
 
-            it(`3a.a. ${BENCHMARK_NODE_COUNT} small edits in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`, async () => {
+            it(`3a.a. [Edit] [Individual Txs] ${BENCHMARK_NODE_COUNT} small changes in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`, async () => {
                 await benchmarkEditNodesWithInvidualTxs(
                     0.01,
-                    `3a.a. ${BENCHMARK_NODE_COUNT} small edits in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`,
+                    `3a.a. [Edit] [Individual Txs] ${BENCHMARK_NODE_COUNT} small changes in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`,
                 );
             });
 
-            it(`3a.b. ${BENCHMARK_NODE_COUNT} medium edits in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`, async () => {
+            it(`3a.b. [Edit] [Individual Txs] ${BENCHMARK_NODE_COUNT} medium changes in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`, async () => {
                 await benchmarkEditNodesWithInvidualTxs(
                     0.5,
-                    `3a.b. ${BENCHMARK_NODE_COUNT} medium edits in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`,
+                    `3a.b. [Edit] [Individual Txs] ${BENCHMARK_NODE_COUNT} medium changes in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`,
                 );
             });
 
-            it(`3a.c. ${BENCHMARK_NODE_COUNT} large edits in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`, async () => {
+            it(`3a.c. [Edit] [Individual Txs] ${BENCHMARK_NODE_COUNT} large changes in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`, async () => {
                 await benchmarkEditNodesWithInvidualTxs(
                     1,
-                    `3a.c. ${BENCHMARK_NODE_COUNT} large edits in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`,
+                    `3a.c. [Edit] [Individual Txs] ${BENCHMARK_NODE_COUNT} large changes in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`,
                 );
             });
         });
@@ -692,227 +695,497 @@ describe("SharedTree Op Size Benchmarks", () => {
                 );
             };
 
-            it(`3b.a. ${BENCHMARK_NODE_COUNT} small edits in 1 transaction containing ${BENCHMARK_NODE_COUNT} edits`, async () => {
+            it(`3b.a. [Edit] [Single Tx] ${BENCHMARK_NODE_COUNT} small edits in 1 transaction containing ${BENCHMARK_NODE_COUNT} edits`, async () => {
                 await benchmarkEditNodesWithSingleTx(
                     0.01,
-                    `3b.a. ${BENCHMARK_NODE_COUNT} small edits in 1 transaction containing ${BENCHMARK_NODE_COUNT} edits`,
+                    `3b.a. [Edit] [Single Tx] ${BENCHMARK_NODE_COUNT} small changes in 1 transaction containing ${BENCHMARK_NODE_COUNT} edits`,
                 );
             });
 
-            it(`3b.b. ${BENCHMARK_NODE_COUNT} medium edits in 1 transaction containing ${BENCHMARK_NODE_COUNT} edits`, async () => {
+            it(`3b.b. [Edit] [Single Tx] ${BENCHMARK_NODE_COUNT} medium changes in 1 transaction containing ${BENCHMARK_NODE_COUNT} edits`, async () => {
                 await benchmarkEditNodesWithSingleTx(
                     0.5,
-                    `3b.b. ${BENCHMARK_NODE_COUNT} medium edits in 1 transaction containing ${BENCHMARK_NODE_COUNT} edits`,
+                    `3b.b. [Edit] [Single Tx] ${BENCHMARK_NODE_COUNT} medium changes in 1 transaction containing ${BENCHMARK_NODE_COUNT} edits`,
                 );
             });
 
-            it(`3b.c. ${BENCHMARK_NODE_COUNT} large edits in 1 transaction containing ${BENCHMARK_NODE_COUNT} edits`, async () => {
+            it(`3b.c. [Edit] [Single Tx] ${BENCHMARK_NODE_COUNT} large changes in 1 transaction containing ${BENCHMARK_NODE_COUNT} edits`, async () => {
                 await benchmarkEditNodesWithSingleTx(
                     1,
-                    `3b.c. ${BENCHMARK_NODE_COUNT} large edits in 1 transaction containing ${BENCHMARK_NODE_COUNT} edits`,
+                    `3b.c. [Edit] [Single Tx] ${BENCHMARK_NODE_COUNT} large changes in 1 transaction containing ${BENCHMARK_NODE_COUNT} edits`,
                 );
             });
         });
     });
 
     describe("4. Insert, Delete & Edit Nodes", () => {
-        const benchmarkInsertDeleteEditNodesWithInvidiualTxs = async (
-            percentile: number,
-            testName: string,
-            insertNodeCount: number,
-            deleteNodeCount: number,
-            editNodeCount: number,
-        ) => {
-            const provider = await TestTreeProvider.create(1);
-            initializeOpDataCollection(provider, testName);
+        // const benchmarkInsertDeleteEditNodesWithInvidiualTxs = async (
+        //     percentile: number,
+        //     testName: string,
+        //     insertNodeCount: number,
+        //     deleteNodeCount: number,
+        //     editNodeCount: number,
+        // ) => {
+        //     const provider = await TestTreeProvider.create(1);
+        //     initializeOpDataCollection(provider, testName);
 
-            // delete
-            const childByteSize = getSuccessfulOpByteSize("DELETE", "INDIVIDUAL", percentile);
-            initializeTestTree(
-                provider.trees[0],
-                getInitialJsonTreeWithChildren(deleteNodeCount, childByteSize),
-            );
-            deleteCurrentOps(); // We don't want to record the ops from initializing the tree.
-            await deleteNodesWithInvidualTransactions(
-                provider.trees[0],
-                provider,
-                deleteNodeCount,
-                1,
-            );
-            assertChildNodeCount(provider.trees[0], 0);
+        //     // delete
+        //     const childByteSize = getSuccessfulOpByteSize("DELETE", "INDIVIDUAL", percentile);
+        //     initializeTestTree(
+        //         provider.trees[0],
+        //         getInitialJsonTreeWithChildren(deleteNodeCount, childByteSize),
+        //     );
+        //     deleteCurrentOps(); // We don't want to record the ops from initializing the tree.
+        //     await deleteNodesWithInvidualTransactions(
+        //         provider.trees[0],
+        //         provider,
+        //         deleteNodeCount,
+        //         1,
+        //     );
+        //     assertChildNodeCount(provider.trees[0], 0);
 
-            // insert
-            const insertChildNode = getJsonNode(
-                getSuccessfulOpByteSize("INSERT", "INDIVIDUAL", percentile),
-            );
-            await insertNodesWithInvidualTransactions(
-                provider.trees[0],
-                provider,
-                insertChildNode,
-                insertNodeCount,
-            );
-            assertChildNodeCount(provider.trees[0], insertNodeCount);
+        //     // insert
+        //     const insertChildNode = getJsonNode(
+        //         getSuccessfulOpByteSize("INSERT", "INDIVIDUAL", percentile),
+        //     );
+        //     await insertNodesWithInvidualTransactions(
+        //         provider.trees[0],
+        //         provider,
+        //         insertChildNode,
+        //         insertNodeCount,
+        //     );
+        //     assertChildNodeCount(provider.trees[0], insertNodeCount);
 
-            // edit
-            // The editing function iterates over each child node and performs an edit so we have to make sure we have enough children to avoid going out of bounds.
-            if (insertNodeCount < editNodeCount) {
-                const remainder = editNodeCount - insertNodeCount;
-                saveAndResetCurrentOps();
+        //     // edit
+        //     // The editing function iterates over each child node and performs an edit so we have to make sure we have enough children to avoid going out of bounds.
+        //     if (insertNodeCount < editNodeCount) {
+        //         const remainder = editNodeCount - insertNodeCount;
+        //         saveAndResetCurrentOps();
+        //         await insertNodesWithInvidualTransactions(
+        //             provider.trees[0],
+        //             provider,
+        //             getJsonNode(childByteSize),
+        //             remainder,
+        //         );
+        //         deleteCurrentOps(); // We don't want to record the ops from re-initializing the tree.
+        //     }
+        //     const editPayload = getEditPayloadInBytes(
+        //         getSuccessfulOpByteSize("EDIT", "INDIVIDUAL", percentile),
+        //     );
+        //     await editNodesWithInvidualTransactions(
+        //         provider.trees[0],
+        //         provider,
+        //         editNodeCount,
+        //         editPayload,
+        //     );
+        //     assertChildValuesEqualExpected(provider.trees[0], editPayload, editNodeCount);
+        // };
+
+        describe("4a. Insert, Delete & Edit Nodes in Individual Transactions", () => {
+            const benchmarkInsertDeleteEditNodesWithInvidiualTxs = async (
+                percentile: number,
+                testName: string,
+                insertNodeCount: number,
+                deleteNodeCount: number,
+                editNodeCount: number,
+            ) => {
+                const provider = await TestTreeProvider.create(1);
+                initializeOpDataCollection(provider, testName);
+
+                // delete
+                const childByteSize = getSuccessfulOpByteSize("DELETE", "INDIVIDUAL", percentile);
+                initializeTestTree(
+                    provider.trees[0],
+                    getInitialJsonTreeWithChildren(deleteNodeCount, childByteSize),
+                );
+                deleteCurrentOps(); // We don't want to record the ops from initializing the tree.
+                await deleteNodesWithInvidualTransactions(
+                    provider.trees[0],
+                    provider,
+                    deleteNodeCount,
+                    1,
+                );
+                assertChildNodeCount(provider.trees[0], 0);
+
+                // insert
+                const insertChildNode = getJsonNode(
+                    getSuccessfulOpByteSize("INSERT", "INDIVIDUAL", percentile),
+                );
                 await insertNodesWithInvidualTransactions(
                     provider.trees[0],
                     provider,
-                    getJsonNode(childByteSize),
-                    remainder,
+                    insertChildNode,
+                    insertNodeCount,
                 );
-                deleteCurrentOps(); // We don't want to record the ops from re-initializing the tree.
-            }
-            const editPayload = getEditPayloadInBytes(
-                getSuccessfulOpByteSize("EDIT", "INDIVIDUAL", percentile),
-            );
-            await editNodesWithInvidualTransactions(
-                provider.trees[0],
-                provider,
-                editNodeCount,
-                editPayload,
-            );
-            assertChildValuesEqualExpected(provider.trees[0], editPayload, editNodeCount);
-        };
+                assertChildNodeCount(provider.trees[0], insertNodeCount);
 
-        describe("4a. With individual transactions and an equal distribution of operation type", () => {
-            it(`4a.a. insert ${BENCHMARK_NODE_COUNT} small nodes, delete ${BENCHMARK_NODE_COUNT} small nodes, edit ${BENCHMARK_NODE_COUNT} nodes with small payloads`, async () => {
-                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-                    0.01,
-                    `4a.a. insert ${BENCHMARK_NODE_COUNT} small nodes, delete ${BENCHMARK_NODE_COUNT} small nodes, edit ${BENCHMARK_NODE_COUNT} nodes with small payloads`,
-                    BENCHMARK_NODE_COUNT,
-                    BENCHMARK_NODE_COUNT,
-                    BENCHMARK_NODE_COUNT,
+                // edit
+                // The editing function iterates over each child node and performs an edit so we have to make sure we have enough children to avoid going out of bounds.
+                if (insertNodeCount < editNodeCount) {
+                    const remainder = editNodeCount - insertNodeCount;
+                    saveAndResetCurrentOps();
+                    await insertNodesWithInvidualTransactions(
+                        provider.trees[0],
+                        provider,
+                        getJsonNode(childByteSize),
+                        remainder,
+                    );
+                    deleteCurrentOps(); // We don't want to record the ops from re-initializing the tree.
+                }
+                const editPayload = getEditPayloadInBytes(
+                    getSuccessfulOpByteSize("EDIT", "INDIVIDUAL", percentile),
                 );
+                await editNodesWithInvidualTransactions(
+                    provider.trees[0],
+                    provider,
+                    editNodeCount,
+                    editPayload,
+                );
+                assertChildValuesEqualExpected(provider.trees[0], editPayload, editNodeCount);
+            };
+
+            describe("4a.a. [Combination] [Individual Txs] With individual transactions and an equal distribution of operation type", () => {
+                const oneThirdNodeCount = Math.floor(BENCHMARK_NODE_COUNT * (1/3));
+
+                it(`4a.a.a. [Combination] [Individual Txs] insert ${oneThirdNodeCount} small nodes, delete ${oneThirdNodeCount} small nodes, edit ${oneThirdNodeCount} nodes with small payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+                        0.01,
+                        `4a.a.a. [Combination] [Individual Txs] insert ${oneThirdNodeCount} small nodes, delete ${oneThirdNodeCount} small nodes, edit ${oneThirdNodeCount} nodes with small payloads`,
+                        oneThirdNodeCount,
+                        oneThirdNodeCount,
+                        oneThirdNodeCount,
+                    );
+                });
+
+                it(`4a.a.b. [Combination] [Individual Txs] insert ${oneThirdNodeCount} medium nodes, delete ${oneThirdNodeCount} medium nodes, edit ${oneThirdNodeCount} nodes with medium payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+                        0.5,
+                        `4a.a.b. [Combination] [Individual Txs] insert ${oneThirdNodeCount} medium nodes, delete ${oneThirdNodeCount} medium nodes, edit ${oneThirdNodeCount} nodes with medium payloads`,
+                        oneThirdNodeCount,
+                        oneThirdNodeCount,
+                        oneThirdNodeCount,
+                    );
+                });
+
+                it(`4a.a.c. [Combination] [Individual Txs] insert ${oneThirdNodeCount} large nodes, delete ${oneThirdNodeCount} large medium, edit ${oneThirdNodeCount} nodes with large payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+                        1,
+                        `4a.a.c. [Combination] [Individual Txs] insert ${oneThirdNodeCount} large nodes, delete ${oneThirdNodeCount} large medium, edit ${oneThirdNodeCount} nodes with large payloads`,
+                        oneThirdNodeCount,
+                        oneThirdNodeCount,
+                        oneThirdNodeCount,
+                    );
+                });
             });
 
-            it(`4a.b. insert ${BENCHMARK_NODE_COUNT} medium nodes, delete ${BENCHMARK_NODE_COUNT} medium nodes, edit ${BENCHMARK_NODE_COUNT} nodes with medium payloads`, async () => {
-                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-                    0.5,
-                    `4a.b. insert ${BENCHMARK_NODE_COUNT} medium nodes, delete ${BENCHMARK_NODE_COUNT} medium nodes, edit ${BENCHMARK_NODE_COUNT} nodes with medium payloads`,
-                    BENCHMARK_NODE_COUNT,
-                    BENCHMARK_NODE_COUNT,
-                    BENCHMARK_NODE_COUNT,
-                );
+            describe("4a.b. [Combination] [Individual Txs] In individual transactions with 70% distribution of operations towards insert", () => {
+                const seventyPercentCount = BENCHMARK_NODE_COUNT * 0.7;
+                const fifteenPercentCount = BENCHMARK_NODE_COUNT * 0.15;
+
+                it(`4a.b.a. [Combination] [Individual Txs] Insert ${seventyPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+                        0.01,
+                        `4a.b.a. [Combination] [Individual Txs] Insert ${seventyPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`,
+                        seventyPercentCount,
+                        fifteenPercentCount,
+                        fifteenPercentCount,
+                    );
+                });
+
+                it(`4a.b.b. [Combination] [Individual Txs] Insert ${seventyPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+                        0.5,
+                        `4a.b.b. [Combination] [Individual Txs] Insert ${seventyPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`,
+                        seventyPercentCount,
+                        fifteenPercentCount,
+                        fifteenPercentCount,
+                    );
+                });
+
+                it(`4a.b.c. [Combination] [Individual Txs] Insert ${seventyPercentCount} large nodes, delete ${fifteenPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+                        1,
+                        `4a.b.c. [Combination] [Individual Txs] Insert ${seventyPercentCount} large nodes, delete ${fifteenPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`,
+                        seventyPercentCount,
+                        fifteenPercentCount,
+                        fifteenPercentCount,
+                    );
+                });
             });
 
-            it(`4a.c. insert ${BENCHMARK_NODE_COUNT} large nodes, delete ${BENCHMARK_NODE_COUNT} large medium, edit ${BENCHMARK_NODE_COUNT} nodes with large payloads`, async () => {
-                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-                    1,
-                    `4a.c. insert ${BENCHMARK_NODE_COUNT} large nodes, delete ${BENCHMARK_NODE_COUNT} large medium, edit ${BENCHMARK_NODE_COUNT} nodes with large payloads`,
-                    BENCHMARK_NODE_COUNT,
-                    BENCHMARK_NODE_COUNT,
-                    BENCHMARK_NODE_COUNT,
+            describe("4a.c. [Combination] [Individual Txs] In individual transactions with 70% distribution of operations towards delete", () => {
+                const seventyPercentCount = BENCHMARK_NODE_COUNT * 0.7;
+                const fifteenPercentCount = BENCHMARK_NODE_COUNT * 0.15;
+
+                it(`4a.c.a. [Combination] [Individual Txs] Insert ${fifteenPercentCount} small nodes, delete ${seventyPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+                        0.01,
+                        `4a.c.a. [Combination] [Individual Txs] Insert ${fifteenPercentCount} small nodes, delete ${seventyPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`,
+                        fifteenPercentCount,
+                        seventyPercentCount,
+                        fifteenPercentCount,
+                    );
+                });
+
+                it(`4a.c.b. [Combination] [Individual Txs] Insert ${fifteenPercentCount} medium nodes, delete ${seventyPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+                        0.5,
+                        `4a.c.b. [Combination] [Individual Txs] Insert ${fifteenPercentCount} medium nodes, delete ${seventyPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`,
+                        fifteenPercentCount,
+                        seventyPercentCount,
+                        fifteenPercentCount,
+                    );
+                });
+
+                it(`4a.c.b. [Combination] [Individual Txs] Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+                        1,
+                        `4a.c.b. [Combination] [Individual Txs] Insert ${fifteenPercentCount} medium nodes, delete ${seventyPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`,
+                        fifteenPercentCount,
+                        seventyPercentCount,
+                        fifteenPercentCount,
+                    );
+                });
+            });
+
+            describe("4a.d. [Combination] [Individual Txs] In individual transactions with 70% distribution of operations towards edit", () => {
+                const seventyPercentCount = BENCHMARK_NODE_COUNT * 0.7;
+                const fifteenPercentCount = BENCHMARK_NODE_COUNT * 0.15;
+
+                it(`4a.d.a. [Combination] [Individual Txs] Insert ${fifteenPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${seventyPercentCount} nodes with small payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+                        0.01,
+                        `4a.d.a. [Combination] [Individual Txs] Insert ${fifteenPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${seventyPercentCount} nodes with small payloads`,
+                        fifteenPercentCount,
+                        fifteenPercentCount,
+                        seventyPercentCount,
+                    );
+                });
+
+                it(`4a.d.b. [Combination] [Individual Txs] Insert ${fifteenPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${seventyPercentCount} nodes with medium payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+                        0.5,
+                        `4a.d.b. [Combination] [Individual Txs] Insert ${fifteenPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${seventyPercentCount} nodes with medium payloads`,
+                        fifteenPercentCount,
+                        fifteenPercentCount,
+                        seventyPercentCount,
+                    );
+                });
+
+                it(`4a.d.c. [Combination] [Individual Txs] Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${seventyPercentCount} nodes with large payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+                        1,
+                        `4a.d.c. [Combination] [Individual Txs] Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${seventyPercentCount} nodes with large payloads`,
+                        fifteenPercentCount,
+                        fifteenPercentCount,
+                        seventyPercentCount,
+                    );
+                });
+            });
+
+        });
+
+        describe("4b. Insert, Delete & Edit Nodes in Single Transactions", () => {
+            const benchmarkInsertDeleteEditNodesWithSingleTxs = async (
+                percentile: number,
+                testName: string,
+                insertNodeCount: number,
+                deleteNodeCount: number,
+                editNodeCount: number,
+            ) => {
+                const provider = await TestTreeProvider.create(1);
+                initializeOpDataCollection(provider, testName);
+
+                // delete
+                const childByteSize = getSuccessfulOpByteSize("DELETE", "SINGLE", percentile);
+                initializeTestTree(
+                    provider.trees[0],
+                    getInitialJsonTreeWithChildren(deleteNodeCount, childByteSize),
                 );
+                deleteCurrentOps(); // We don't want to record the ops from initializing the tree.
+                await deleteNodesWithSingleTransaction(
+                    provider.trees[0],
+                    provider,
+                    deleteNodeCount,
+                );
+                assertChildNodeCount(provider.trees[0], 0);
+
+                // insert
+                const insertChildNode = getJsonNode(
+                    getSuccessfulOpByteSize("INSERT", "SINGLE", percentile),
+                );
+                await insertNodesWithSingleTransaction(
+                    provider.trees[0],
+                    provider,
+                    insertChildNode,
+                    insertNodeCount,
+                );
+                assertChildNodeCount(provider.trees[0], insertNodeCount);
+
+                // edit
+                // The editing function iterates over each child node and performs an edit so we have to make sure we have enough children to avoid going out of bounds.
+                if (insertNodeCount < editNodeCount) {
+                    const remainder = editNodeCount - insertNodeCount;
+                    saveAndResetCurrentOps();
+                    await insertNodesWithInvidualTransactions(
+                        provider.trees[0],
+                        provider,
+                        getJsonNode(childByteSize),
+                        remainder,
+                    );
+                    deleteCurrentOps(); // We don't want to record the ops from re-initializing the tree.
+                }
+                const editPayload = getEditPayloadInBytes(
+                    getSuccessfulOpByteSize("EDIT", "SINGLE", percentile),
+                );
+                await editNodesWithSingleTransaction(
+                    provider.trees[0],
+                    provider,
+                    editNodeCount,
+                    editPayload,
+                );
+                assertChildValuesEqualExpected(provider.trees[0], editPayload, editNodeCount);
+            };
+
+            describe("4b.a. [Combination] [Single Tx] With single transactions and an equal distribution of operation type", () => {
+                const oneThirdNodeCount = Math.floor(BENCHMARK_NODE_COUNT * (1/3));
+
+                it(`4b.a.a. [Combination] [Single Tx] insert ${oneThirdNodeCount} small nodes, delete ${oneThirdNodeCount} small nodes, edit ${oneThirdNodeCount} nodes with small payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithSingleTxs(
+                        0.01,
+                        `4b.a.a. [Combination] [Single Tx] insert ${oneThirdNodeCount} small nodes, delete ${oneThirdNodeCount} small nodes, edit ${oneThirdNodeCount} nodes with small payloads`,
+                        oneThirdNodeCount,
+                        oneThirdNodeCount,
+                        oneThirdNodeCount,
+                    );
+                });
+
+                it(`4b.a.b. [Combination] [Single Tx] insert ${oneThirdNodeCount} medium nodes, delete ${oneThirdNodeCount} medium nodes, edit ${oneThirdNodeCount} nodes with medium payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithSingleTxs(
+                        0.5,
+                        `4b.a.b. [Combination] [Single Tx] insert ${oneThirdNodeCount} medium nodes, delete ${oneThirdNodeCount} medium nodes, edit ${oneThirdNodeCount} nodes with medium payloads`,
+                        oneThirdNodeCount,
+                        oneThirdNodeCount,
+                        oneThirdNodeCount,
+                    );
+                });
+
+                it(`4b.a.c. [Combination] [Single Tx] insert ${oneThirdNodeCount} large nodes, delete ${oneThirdNodeCount} large medium, edit ${oneThirdNodeCount} nodes with large payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithSingleTxs(
+                        1,
+                        `4b.a.c. [Combination] [Single Tx] insert ${oneThirdNodeCount} large nodes, delete ${oneThirdNodeCount} large medium, edit ${oneThirdNodeCount} nodes with large payloads`,
+                        oneThirdNodeCount,
+                        oneThirdNodeCount,
+                        oneThirdNodeCount,
+                    );
+                });
+            });
+
+            describe("4b.b. [Combination] [Single Tx] With single transactions with 70% distribution of operations towards insert", () => {
+                const seventyPercentCount = BENCHMARK_NODE_COUNT * 0.7;
+                const fifteenPercentCount = BENCHMARK_NODE_COUNT * 0.15;
+
+                it(`4b.b.a. [Combination] [Single Tx] Insert ${seventyPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithSingleTxs(
+                        0.01,
+                        `4b.b.a. [Combination] [Single Tx] Insert ${seventyPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`,
+                        seventyPercentCount,
+                        fifteenPercentCount,
+                        fifteenPercentCount,
+                    );
+                });
+
+                it(`4b.b.b. [Combination] [Single Tx] Insert ${seventyPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithSingleTxs(
+                        0.5,
+                        `4b.b.b. [Combination] [Single Tx] Insert ${seventyPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`,
+                        seventyPercentCount,
+                        fifteenPercentCount,
+                        fifteenPercentCount,
+                    );
+                });
+
+                it(`4b.b.c. [Combination] [Single Tx] Insert ${seventyPercentCount} large nodes, delete ${fifteenPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithSingleTxs(
+                        1,
+                        `4b.b.c. [Combination] [Single Tx] Insert ${seventyPercentCount} large nodes, delete ${fifteenPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`,
+                        seventyPercentCount,
+                        fifteenPercentCount,
+                        fifteenPercentCount,
+                    );
+                });
+            });
+
+            describe("4b.c. [Combination] [Single Tx] With single transactions with 70% distribution of operations towards delete", () => {
+                const seventyPercentCount = BENCHMARK_NODE_COUNT * 0.7;
+                const fifteenPercentCount = BENCHMARK_NODE_COUNT * 0.15;
+
+                it(`4b.c.a. [Combination] [Single Tx] Insert ${fifteenPercentCount} small nodes, delete ${seventyPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithSingleTxs(
+                        0.01,
+                        `4b.c.a. [Combination] [Single Tx] Insert ${fifteenPercentCount} small nodes, delete ${seventyPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`,
+                        fifteenPercentCount,
+                        seventyPercentCount,
+                        fifteenPercentCount,
+                    );
+                });
+
+                it(`4b.c.b. [Combination] [Single Tx] Insert ${fifteenPercentCount} medium nodes, delete ${seventyPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithSingleTxs(
+                        0.5,
+                        `4b.c.b. [Combination] [Single Tx] Insert ${fifteenPercentCount} medium nodes, delete ${seventyPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`,
+                        fifteenPercentCount,
+                        seventyPercentCount,
+                        fifteenPercentCount,
+                    );
+                });
+
+                it(`4b.c.b. [Combination] [Single Tx] Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithSingleTxs(
+                        1,
+                        `4a.c.b. [Combination] [Single Tx] Insert ${fifteenPercentCount} medium nodes, delete ${seventyPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`,
+                        fifteenPercentCount,
+                        seventyPercentCount,
+                        fifteenPercentCount,
+                    );
+                });
+            });
+
+            describe("4b.d. [Combination] [Single Tx] In individual With single transactions with 70% distribution of operations towards edit", () => {
+                const seventyPercentCount = BENCHMARK_NODE_COUNT * 0.7;
+                const fifteenPercentCount = BENCHMARK_NODE_COUNT * 0.15;
+
+                it(`4b.d.a. [Combination] [Single Tx] Insert ${fifteenPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${seventyPercentCount} nodes with small payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithSingleTxs(
+                        0.01,
+                        `4a.d.a. [Combination] [Single Tx] Insert ${fifteenPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${seventyPercentCount} nodes with small payloads`,
+                        fifteenPercentCount,
+                        fifteenPercentCount,
+                        seventyPercentCount,
+                    );
+                });
+
+                it(`4b.d.b. [Combination] [Single Tx] Insert ${fifteenPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${seventyPercentCount} nodes with medium payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithSingleTxs(
+                        0.5,
+                        `4b.d.b. [Combination] [Single Tx] Insert ${fifteenPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${seventyPercentCount} nodes with medium payloads`,
+                        fifteenPercentCount,
+                        fifteenPercentCount,
+                        seventyPercentCount,
+                    );
+                });
+
+                it(`4b.d.c. [Combination] Single Txs] Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${seventyPercentCount} nodes with large payloads`, async () => {
+                    await benchmarkInsertDeleteEditNodesWithSingleTxs(
+                        1,
+                        `4b.d.c. [Combination] [Single Tx] Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${seventyPercentCount} nodes with large payloads`,
+                        fifteenPercentCount,
+                        fifteenPercentCount,
+                        seventyPercentCount,
+                    );
+                });
             });
         });
 
-        describe("4b. In individual transactions with 70% distribution of operations towards insert", () => {
-            const seventyPercentCount = BENCHMARK_NODE_COUNT * 0.7;
-            const fifteenPercentCount = BENCHMARK_NODE_COUNT * 0.15;
-
-            it(`4b.a. Insert ${seventyPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`, async () => {
-                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-                    0.01,
-                    `4b.a. Insert ${seventyPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`,
-                    seventyPercentCount,
-                    fifteenPercentCount,
-                    fifteenPercentCount,
-                );
-            });
-
-            it(`4b.b. Insert ${seventyPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`, async () => {
-                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-                    0.5,
-                    `4b.b. Insert ${seventyPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`,
-                    seventyPercentCount,
-                    fifteenPercentCount,
-                    fifteenPercentCount,
-                );
-            });
-
-            it(`4b.b. Insert ${seventyPercentCount} large nodes, delete ${fifteenPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`, async () => {
-                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-                    1,
-                    `4b.b. Insert ${seventyPercentCount} large nodes, delete ${fifteenPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`,
-                    seventyPercentCount,
-                    fifteenPercentCount,
-                    fifteenPercentCount,
-                );
-            });
-        });
-
-        describe("4c. In individual transactions with 70% distribution of operations towards delete", () => {
-            const seventyPercentCount = BENCHMARK_NODE_COUNT * 0.7;
-            const fifteenPercentCount = BENCHMARK_NODE_COUNT * 0.15;
-
-            it(`4c.a. Insert ${fifteenPercentCount} small nodes, delete ${seventyPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`, async () => {
-                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-                    0.01,
-                    `4c.a. Insert ${fifteenPercentCount} small nodes, delete ${seventyPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`,
-                    fifteenPercentCount,
-                    seventyPercentCount,
-                    fifteenPercentCount,
-                );
-            });
-
-            it(`4c.b. Insert ${fifteenPercentCount} medium nodes, delete ${seventyPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`, async () => {
-                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-                    0.5,
-                    `4c.b. Insert ${fifteenPercentCount} medium nodes, delete ${seventyPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`,
-                    fifteenPercentCount,
-                    seventyPercentCount,
-                    fifteenPercentCount,
-                );
-            });
-
-            it(`4c.b. Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`, async () => {
-                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-                    1,
-                    `4c.b. Insert ${fifteenPercentCount} medium nodes, delete ${seventyPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`,
-                    fifteenPercentCount,
-                    seventyPercentCount,
-                    fifteenPercentCount,
-                );
-            });
-        });
-
-        describe("4d. In individual transactions with 70% distribution of operations towards edit", () => {
-            const seventyPercentCount = BENCHMARK_NODE_COUNT * 0.7;
-            const fifteenPercentCount = BENCHMARK_NODE_COUNT * 0.15;
-
-            it(`4d.a. Insert ${fifteenPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${seventyPercentCount} nodes with small payloads`, async () => {
-                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-                    0.01,
-                    `4d.a. Insert ${fifteenPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${seventyPercentCount} nodes with small payloads`,
-                    fifteenPercentCount,
-                    fifteenPercentCount,
-                    seventyPercentCount,
-                );
-            });
-
-            it(`4d.b. Insert ${fifteenPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${seventyPercentCount} nodes with medium payloads`, async () => {
-                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-                    0.5,
-                    `4d.b. Insert ${fifteenPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${seventyPercentCount} nodes with medium payloads`,
-                    fifteenPercentCount,
-                    fifteenPercentCount,
-                    seventyPercentCount,
-                );
-            });
-
-            it(`4d.c. Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${seventyPercentCount} nodes with large payloads`, async () => {
-                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
-                    1,
-                    `4d.c. Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${seventyPercentCount} nodes with large payloads`,
-                    fifteenPercentCount,
-                    fifteenPercentCount,
-                    seventyPercentCount,
-                );
-            });
-        });
     });
 });
