@@ -32,14 +32,7 @@ import {
     valueSymbol,
 } from "../../../feature-libraries";
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
-import {
-    ComplexPhoneType,
-    fullSchemaData,
-    personData,
-    PersonType,
-    schemaMap,
-    stringSchema,
-} from "./mockData";
+import { fullSchemaData, personData, Person, schemaMap, stringSchema } from "./mockData";
 
 const globalFieldKey: GlobalFieldKey = brand("foo");
 const globalFieldSymbol = symbolFromKey(globalFieldKey);
@@ -90,21 +83,22 @@ const testCases: (readonly [string, FieldKey])[] = [
 describe("editable-tree: editing", () => {
     it("assert set primitive value using assignment", async () => {
         const [, trees] = await createSharedTrees(fullSchemaData, [personData]);
-        const person = trees[0].root as PersonType;
+        const person = trees[0].root as Person;
         const nameNode = person[getField](brand("name")).getNode(0);
         const ageNode = person[getField](brand("age")).getNode(0);
-        const phonesField = person.address.phones;
-        assert(isEditableField(phonesField));
 
         assert.throws(
-            () => (person.friends[valueSymbol] = { kate: "kate" }),
+            () => {
+                assert(person.friends !== undefined);
+                person.friends[valueSymbol] = { kate: "kate" };
+            },
             (e) => validateAssertionError(e, "The value is not primitive"),
             "Expected exception was not thrown",
         );
         assert.throws(
             () => {
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                phonesField[2] = {} as ComplexPhoneType;
+                assert(person.address !== undefined);
+                person.address[valueSymbol] = 123;
             },
             (e) => validateAssertionError(e, "Cannot set a value of a non-primitive field"),
             "Expected exception was not thrown",
