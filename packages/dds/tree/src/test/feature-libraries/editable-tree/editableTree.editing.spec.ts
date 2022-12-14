@@ -466,9 +466,28 @@ describe("editable-tree: editing", () => {
                 assert.deepEqual(field_0, field_1);
 
                 // edit using `replaceNodes()`
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                delete trees[0].root[fieldKey];
+                assert.throws(
+                    () => field_0.replaceNodes(1, singleTextCursor({ type: stringSchema.name })),
+                    (e) =>
+                        validateAssertionError(
+                            e,
+                            "Index must be less than length or, if the field is empty, be 0.",
+                        ),
+                    "Expected exception was not thrown",
+                );
+                assert(isEditableField(field_1));
+                for (let index = 0; index < field_1.length; index++) {
+                    field_0[index] = field_1[index];
+                }
                 assert.throws(
                     () => field_0.replaceNodes(5, singleTextCursor({ type: stringSchema.name })),
-                    (e) => validateAssertionError(e, "Index must be less than length."),
+                    (e) =>
+                        validateAssertionError(
+                            e,
+                            "Index must be less than length or, if the field is empty, be 0.",
+                        ),
                     "Expected exception was not thrown",
                 );
                 field_0.replaceNodes(

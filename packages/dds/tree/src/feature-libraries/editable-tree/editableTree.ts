@@ -206,6 +206,14 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
      * - use array of cursors when replacing a `sequence` field.
      *
      * Use `delete` operator to delete `optional` or `sequence` fields of this node, if any.
+     *
+     * When replacing a field in a concurrent environment,
+     * the following merge semantics will be applied depending on the field multiplicity:
+     * - optional and value fields will be overwritten in a "last-write-wins" fashion,
+     * - for sequence fields, the nodes present in the field on the issuing client will be
+     * deleted and the newContent will be inserted. This means concurrent inserts (including
+     * calls to `replaceField`) can all contribute content. In the future this will likely be
+     * replaced with merge semantics that is more consistent with that of optional and value fields.
      */
     [replaceField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
 }
@@ -550,6 +558,13 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
                 this.cursor.enterField(fieldKey);
                 const length = this.cursor.getFieldLength();
                 this.cursor.exitField();
+                /**
+                 * `replaceNodes` has different merge semantics than the `replaceField` would ideally offer:
+                 * `replaceNodes` should not overwrite concurrently inserted content while `replaceField` should.
+                 * We currently use `replaceNodes` here because the low-level editing API
+                 * for the desired `replaceField` semantics is not yet avaialble.
+                 */
+                // TODO: update implementation once the low-level editing API is available.
                 this.context.replaceNodes(path, fieldKey, 0, length, newContent);
                 break;
             }
@@ -631,6 +646,12 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
             }
             const content = applyFieldTypesFromContext(target.context.schema, fieldSchema, value);
             const cursors = content.map(singleMapTreeCursor);
+            // This unconditionally uses `replaceField`, which differs from `createField`
+            // only for sequence fields while using `insertNodes` instead of `replaceNodes`
+            // (plus some difference in assertions, which is ignored here for a sake of a better
+            // consistency with the low-level editing API).
+            // Since `insertNodes` and `replaceNodes` have same merge semantics with `replaceNodes`
+            // being a bit more general purpose function, it's ok to just use that.
             if (multiplicity !== Multiplicity.Sequence) {
                 target.replaceField(fieldKey, cursors[0]);
             } else {
@@ -900,8 +921,8 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
             );
         }
         assert(
-            this.length === 0 || keyIsValidIndex(index, this.length),
-            "Index must be less than length.",
+            (this.length === 0 && index === 0) || keyIsValidIndex(index, this.length),
+            "Index must be less than length or, if the field is empty, be 0.",
         );
         if (count !== undefined) assert(count >= 0, "Count must be non-negative.");
         const maxCount = this.length - index;
@@ -969,6 +990,10 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
         const cursor = singleMapTreeCursor(
             applyTypesFromContext(target.context.schema, target.fieldSchema.types, value),
         );
+        // This is just a cheap way to check if there might be a node at the given index.
+        // An implementation of the target methods holds all relevant key assertions.
+        // TODO: maybe refactor this to add a real node existence check if desired,
+        // but it might be costly regarding performance.
         if (keyIsValidIndex(key, target.length)) {
             target.replaceNodes(Number(key), cursor, 1);
         } else {

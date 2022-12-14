@@ -39,20 +39,9 @@ export interface EditableTreeContext {
     /**
      * Gets or sets the root field of the tree.
      *
-     * Its setter works exactly the same way as {@link EditableTreeContext.unwrappedRoot}.
-     */
-    get root(): EditableField;
-
-    set root(data: ContextuallyTypedNodeData | undefined);
-
-    /**
-     * Gets or sets the root field of the tree.
-     *
-     * When using its getter, see {@link UnwrappedEditableField} for what is unwrapped.
-     *
      * When using its setter, the input data must be formed depending
      * on a multiplicity of the field, on if it's polymorphic or not and, for non-sequence multiplicities,
-     * on if the field's node declares its primary function by using a primary field (see `getPrimaryField`):
+     * on if the field's node declares its primary function by means of a primary field (see `getPrimaryField`):
      * - For `Sequence` multiplicities and "primary fielded" nodes, an array of a {@link ContextuallyTypedNodeData}
      * or an {@link EditableField} is expected.
      * Use an empty array to delete all nodes of a sequence field.
@@ -69,6 +58,25 @@ export interface EditableTreeContext {
      * or, if the field types are undefined, to one of the types available in the global tree schema.
      * If it's not possible, a `ContextuallyTypedNodeDataObject` with an explicitly provided
      * type and a value (using a `typeNameSymbol` and a `valueSymbol`) must be used instead.
+     *
+     * Note that currently a setter implementation replaces the nodes and not the field itself,
+     * as this is the only option available in the low-level editing API.
+     * Replacing the nodes has different merge semantics than replacing the field:
+     * it should not overwrite concurrently inserted content while replacing the field should.
+     * This might be changed in the future once the low-level editing API is available.
+     */
+    get root(): EditableField;
+
+    set root(data: ContextuallyTypedNodeData | undefined);
+
+    /**
+     * Gets or sets the root field of the tree.
+     *
+     * When using its getter, see {@link UnwrappedEditableField} for what is unwrapped.
+     *
+     * Currently, its setter works exactly the same way as {@link EditableTreeContext.root},
+     * but it might be changed in the future once the low-level editing API
+     * for `replaceField` will become available.
      */
     get unwrappedRoot(): UnwrappedEditableField;
 
@@ -174,14 +182,13 @@ export class ProxyContext implements EditableTreeContext {
     }
 
     public set unwrappedRoot(value: ContextuallyTypedNodeData | undefined) {
-        const rootField = this.getRoot(false);
-        const mapTrees = applyFieldTypesFromContext(this.schema, rootField.fieldSchema, value);
-        const cursors = mapTrees.map(singleMapTreeCursor);
-        if (rootField.length > 0) {
-            rootField.replaceNodes(0, cursors);
-        } else {
-            rootField.insertNodes(0, cursors);
-        }
+        // Note that an implementation of `set root` might change in the future,
+        // see a comment in there regarding the `replaceNodes` and `replaceField` semantics.
+        // This setter might want to keep the `replaceNodes` semantics for the cases when the root is unwrapped,
+        // and use `replaceField` only if the root is a sequence field i.e.
+        // it's unwrapped to the field itself.
+        // TODO: update implementation once the low-level editing API is available.
+        this.root = value;
     }
 
     public get root(): EditableField {
@@ -189,7 +196,15 @@ export class ProxyContext implements EditableTreeContext {
     }
 
     public set root(value: ContextuallyTypedNodeData | undefined) {
-        this.unwrappedRoot = value;
+        const rootField = this.getRoot(false);
+        const mapTrees = applyFieldTypesFromContext(this.schema, rootField.fieldSchema, value);
+        const cursors = mapTrees.map(singleMapTreeCursor);
+        // `replaceNodes` has different merge semantics than the `replaceField` would ideally offer:
+        // `replaceNodes` should not overwrite concurrently inserted content while `replaceField` should.
+        // We currently use `replaceNodes` here because the low-level editing API
+        // for the desired `replaceField` semantics is not yet avaialble.
+        // TODO: update implementation once the low-level editing API is available.
+        rootField.replaceNodes(0, cursors);
     }
 
     private getRoot(unwrap: false): EditableField;
