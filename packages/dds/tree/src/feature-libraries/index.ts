@@ -24,6 +24,7 @@ export {
     isEditableField,
     isPrimitive,
     isPrimitiveValue,
+    getPrimaryField,
     isUnwrappedNode,
     PrimitiveValue,
     proxyTargetSymbol,
@@ -32,6 +33,12 @@ export {
     valueSymbol,
     getField,
     createField,
+    replaceField,
+    ContextuallyTypedNodeDataObject,
+    ContextuallyTypedNodeData,
+    MarkedArrayLike,
+    isWritableArrayLike,
+    isContextuallyTypedNodeDataObject,
 } from "./editable-tree";
 export { ForestIndex } from "./forestIndex";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
@@ -95,3 +102,4 @@ export { ForestRepairDataStore } from "./forestRepairDataStore";
 export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
 export { runSynchronousTransaction } from "./defaultTransaction";
+export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";

@@ -447,6 +447,7 @@ export class GenericTransaction {
     get changes(): readonly ChangeInternal[];
     // (undocumented)
     close(): EditingResult;
+    get failure(): TransactionInternal.Failure | undefined;
     get isOpen(): boolean;
     get status(): EditStatus;
     get steps(): readonly ReconciliationChange[];

@@ -24,9 +24,7 @@ export type SizedObjectMark<TNodeChange = NodeChangeType> =
     | Detach
     | ModifyDetach<TNodeChange>;
 
-export interface Modify<TNodeChange = NodeChangeType>
-    extends HasChanges<TNodeChange>,
-        HasRevisionTag {
+export interface Modify<TNodeChange = NodeChangeType> extends HasChanges<TNodeChange> {
     type: "Modify";
     tomb?: RevisionTag;
 }

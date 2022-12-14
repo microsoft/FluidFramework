@@ -183,7 +183,7 @@ export function incrementUuid(uuid: NumericUuid, amount: number): NumericUuid {
             const upperNumber = Number.parseInt(upperString, 16);
             assert(
                 upperNumber <= maxUpperNumber,
-                "Unexpectedly large upper number when incrementing UUID",
+                0x49c /* Unexpectedly large upper number when incrementing UUID */,
             );
             const newUpperNumber = upperNumber + 1;
             if (newUpperNumber > maxUpperNumber) {
@@ -330,7 +330,7 @@ namespace ChunkMath {
         const variantNumber = getNumericValue(variantChunk);
         assert(
             variantNumber <= maxVariantNumber,
-            "Unexpectedly large variant number when incrementing UUID",
+            0x49d /* Unexpectedly large variant number when incrementing UUID */,
         );
         // 3. Add one to the variant number to produce our new variant number.
         const newVariantNumber = variantNumber + 1;

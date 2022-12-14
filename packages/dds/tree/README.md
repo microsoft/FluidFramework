@@ -109,7 +109,7 @@ When nothing in that container references the DDS anymore, it may get garbage co
 The tree DDS itself, or more specifically [`shared-tree-core`](./src/shared-tree-core/README.md) is composed of a collection of indexes (just like a database) which contribute data which get persisted as part of the summary in the container.
 `shared-tree-core` owns these databases, and is responsible for populating them from summaries and updating them when summarizing.
 
-TODO: When support for multiple branches is added, do we want to have indexes for each branch, and if so, maybe their ownership should move to a branch-specific structure (like checkout?).
+See [indexes and branches](./docs/indexes%20and%20branches.md) for details on how this works with branches.
 
 When applications want access to the `tree`'s data, they do so through a [`checkout`](./src/checkout/README.md) which abstracts the indexes into nice application facing APIs.
 Checkouts may also have state from the application, including:
@@ -341,16 +341,6 @@ flowchart
 
 The design issues here all impact the architectural role of top-level modules in this package in a way that when fixed will likely require changes to the architectural details covered above.
 Smaller scoped issues which will not impact the overall architecture should be documented in more localized locations.
-
-## How should indexes relate to branches?
-
-Some possible options:
-
--   Use copy on write in indexes, and keep all needed indexes for all needed revisions within edit-manager. Provide all relevant indexes to `ChangeRebaser`. Maybe allow `ChangeRebaser` to compute intermediate indexes as needed.
--   Keep a single index, and adjust it to the needed location in the branch tree as needed using deltas.
--   Keep multiple indexes, one at each branch head, updated via mutation.
--   Keep a single reference index (maybe after the latest sequenced edit), and make delta indexes referencing it for the other required branches.
--   Something else?
 
 ## How should specialized sub-tree handling compose?
 

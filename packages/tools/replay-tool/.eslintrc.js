@@ -9,6 +9,7 @@ module.exports = {
     ],
     "rules": {
         "@typescript-eslint/strict-boolean-expressions": "off",
+        "import/no-nodejs-modules": "off",
         "no-case-declarations": "off"
     }
 }
