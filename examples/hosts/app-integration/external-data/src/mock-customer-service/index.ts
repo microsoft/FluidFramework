@@ -59,7 +59,7 @@ export async function initializeCustomerService(): Promise<Server> {
     /**
      * Closes down the mock external service webhook.
      */
-    async function closeWebhook(): Promise<void> {
+    function closeWebhook(): void {
         externalDataSource.off("debugDataWritten", notifySubscribers);
     }
 
@@ -134,13 +134,8 @@ export async function initializeCustomerService(): Promise<Server> {
     const server = expressApp.listen(customerServicePort);
 
     server.on("close", () => {
+        closeWebhook();
         closeCustomerService();
-        closeWebhook().catch((error) => {
-            console.error(`Encountered an error closing mock webhook:`);
-            console.group();
-            console.error(error);
-            console.groupEnd();
-        });
     });
 
     return server;
