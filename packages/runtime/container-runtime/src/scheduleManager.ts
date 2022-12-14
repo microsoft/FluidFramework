@@ -236,6 +236,8 @@ class ScheduleManagerCore {
             0x299 /* "non-synchronized state" */);
 
         const metadata = message.metadata as IRuntimeMessageMetadata;
+        // batchMetadata will be true for the message that starts a batch, false for the one that ends it, and
+        // undefined for all other messages.
         const batchMetadata = metadata?.batch;
 
         // Protocol messages are never part of a runtime batch of messages
@@ -265,30 +267,28 @@ class ScheduleManagerCore {
             return;
         }
 
-        // If the client ID changes then we can move the pause point. If it stayed the same then we need to check.
-        // If batchMetadata is not undefined then if it's true we've begun a new batch - if false we've ended
-        // the previous one
-        if (this.currentBatchClientId !== undefined || batchMetadata === false) {
-            if (this.currentBatchClientId !== message.clientId) {
-                // "Batch not closed, yet message from another client!"
-                throw new DataCorruptionError(
-                    "OpBatchIncomplete",
-                    {
-                        runtimeVersion: pkgVersion,
-                        batchClientId: this.currentBatchClientId,
-                        pauseSequenceNumber: this.pauseSequenceNumber,
-                        localBatch: this.currentBatchClientId === this.getClientId(),
-                        localMessage: message.clientId === this.getClientId(),
-                        ...extractSafePropertiesFromMessage(message),
-                    });
-            }
+        // If we got here, the message is part of a batch. Either starting, in progress, or ending.
+
+        // If this is not the start of the batch, error out if the message was sent by a client other than the one that
+        // started the current batch (it should not be possible for ops from other clients to get interleaved with a batch).
+        if (this.currentBatchClientId !== undefined && this.currentBatchClientId !== message.clientId) {
+            throw new DataCorruptionError(
+                "OpBatchIncomplete",
+                {
+                    runtimeVersion: pkgVersion,
+                    batchClientId: this.currentBatchClientId,
+                    pauseSequenceNumber: this.pauseSequenceNumber,
+                    localBatch: this.currentBatchClientId === this.getClientId(),
+                    localMessage: message.clientId === this.getClientId(),
+                    ...extractSafePropertiesFromMessage(message),
+                });
         }
 
         // The queue is
         // 1. paused only when the next message to be processed is the beginning of a batch. Done in two places:
         //    - in afterOpProcessing() - processing ops until reaching start of incomplete batch
-        //    - here (batchMetadata == false below), when queue was empty and start of batch showed up.
-        // 2. resumed when batch end comes in (batchMetadata === true case below)
+        //    - here, when queue was empty and start of batch showed up (batchMetadata === true below).
+        // 2. resumed when batch end comes in (batchMetadata === false below)
 
         if (batchMetadata) {
             assert(this.currentBatchClientId === undefined, 0x29e /* "there can't be active batch" */);
