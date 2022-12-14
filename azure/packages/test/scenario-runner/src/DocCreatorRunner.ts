@@ -61,7 +61,7 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
                 "--connType",
                 connection.type,
                 "--connEndpoint",
-                connection.endpoint ?? process.env.azure__fluid__relay__service__endpoint,
+                connection.endpoint,
             ];
             childArgs.push("--verbose");
             runnerArgs.push(childArgs);
