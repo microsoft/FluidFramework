@@ -147,7 +147,7 @@ const getInitialJsonTreeWithChildren = (numChildNodes: number, childNodeByteSize
     return jsonTree;
 };
 
-const insertNodesWithInvidualTransactions = async (
+const insertNodesWithIndividualTransactions = async (
     tree: ISharedTree,
     provider: ITestTreeProvider,
     jsonNode: JsonableTree,
@@ -190,7 +190,7 @@ const insertNodesWithSingleTransaction = async (
     await provider.ensureSynchronized();
 };
 
-const deleteNodesWithInvidualTransactions = async (
+const deleteNodesWithIndividualTransactions = async (
     tree: ISharedTree,
     provider: ITestTreeProvider,
     numDeletes: number,
@@ -237,7 +237,7 @@ const getEditPayloadInBytes = (numBytes: number) => {
     return payload;
 };
 
-const editNodesWithInvidualTransactions = async (
+const editNodesWithIndividualTransactions = async (
     tree: ISharedTree,
     provider: ITestTreeProvider,
     numChildrenToEdit: number,
@@ -451,7 +451,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 
     describe("1. Insert Nodes", () => {
         describe("1a. With Individual transactions", () => {
-            const benchmarkInsertNodesWithInvidualTxs = async (
+            const benchmarkInsertNodesWithIndividualTxs = async (
                 percentile: number,
                 testName: string,
             ) => {
@@ -462,7 +462,7 @@ describe("SharedTree Op Size Benchmarks", () => {
                 const jsonNode = getJsonNode(
                     getSuccessfulOpByteSize("INSERT", "INDIVIDUAL", percentile),
                 );
-                await insertNodesWithInvidualTransactions(
+                await insertNodesWithIndividualTransactions(
                     provider.trees[0],
                     provider,
                     jsonNode,
@@ -472,21 +472,21 @@ describe("SharedTree Op Size Benchmarks", () => {
             };
 
             it(`1a.a. [Insert] [Individual Txs] ${BENCHMARK_NODE_COUNT} small nodes in ${BENCHMARK_NODE_COUNT} transactions`, async () => {
-                await benchmarkInsertNodesWithInvidualTxs(
+                await benchmarkInsertNodesWithIndividualTxs(
                     0.01,
                     `1a.a. [Insert] [Individual Txs] ${BENCHMARK_NODE_COUNT} small nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
                 );
             });
 
             it(`1a.b. [Insert] [Individual Txs] ${BENCHMARK_NODE_COUNT} medium nodes in ${BENCHMARK_NODE_COUNT} individual transactions`, async () => {
-                await benchmarkInsertNodesWithInvidualTxs(
+                await benchmarkInsertNodesWithIndividualTxs(
                     0.5,
                     `1a.b. [Insert] [Individual Txs] ${BENCHMARK_NODE_COUNT} medium nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
                 );
             });
 
             it(`1a.c. [Insert] [Individual Txs] ${BENCHMARK_NODE_COUNT} large nodes in ${BENCHMARK_NODE_COUNT} individual transactions`, async () => {
-                await benchmarkInsertNodesWithInvidualTxs(
+                await benchmarkInsertNodesWithIndividualTxs(
                     1,
                     `1a.c. [Insert] [Individual Txs] ${BENCHMARK_NODE_COUNT} large nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
                 );
@@ -539,7 +539,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 
     describe("2. Delete Nodes", () => {
         describe("2a. With Individual transactions", () => {
-            const benchmarkDeleteNodesWithInvidualTxs = async (
+            const benchmarkDeleteNodesWithIndividualTxs = async (
                 percentile: number,
                 testName: string,
             ) => {
@@ -551,26 +551,26 @@ describe("SharedTree Op Size Benchmarks", () => {
                     getInitialJsonTreeWithChildren(100, childByteSize),
                 );
                 deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
-                await deleteNodesWithInvidualTransactions(provider.trees[0], provider, 100, 1);
+                await deleteNodesWithIndividualTransactions(provider.trees[0], provider, 100, 1);
                 assertChildNodeCount(provider.trees[0], 0);
             };
 
             it(`2a.a. [Delete] [Individual Txs] ${BENCHMARK_NODE_COUNT} small nodes in ${BENCHMARK_NODE_COUNT} individual transactions`, async () => {
-                await benchmarkDeleteNodesWithInvidualTxs(
+                await benchmarkDeleteNodesWithIndividualTxs(
                     0.01,
                     `2a.a. [Delete] [Individual Txs] ${BENCHMARK_NODE_COUNT} small nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
                 );
             });
 
             it(`2a.b. [Delete] [Individual Txs] ${BENCHMARK_NODE_COUNT} medium nodes in ${BENCHMARK_NODE_COUNT} individual transactions`, async () => {
-                await benchmarkDeleteNodesWithInvidualTxs(
+                await benchmarkDeleteNodesWithIndividualTxs(
                     0.5,
                     `2a.b. [Delete] [Individual Txs] ${BENCHMARK_NODE_COUNT} medium nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
                 );
             });
 
             it(`2a.c. [Delete] [Individual Txs] ${BENCHMARK_NODE_COUNT} large nodes in ${BENCHMARK_NODE_COUNT} individual transactions`, async () => {
-                await benchmarkDeleteNodesWithInvidualTxs(
+                await benchmarkDeleteNodesWithIndividualTxs(
                     1,
                     `2a.c. [Delete] [Individual Txs] ${BENCHMARK_NODE_COUNT} large nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
                 );
@@ -619,7 +619,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 
     describe("3. Edit Nodes", () => {
         describe("3a. With Individual transactions", () => {
-            const benchmarkEditNodesWithInvidualTxs = async (
+            const benchmarkEditNodesWithIndividualTxs = async (
                 percentile: number,
                 testName: string,
             ) => {
@@ -634,7 +634,7 @@ describe("SharedTree Op Size Benchmarks", () => {
                 const editPayload = getEditPayloadInBytes(
                     getSuccessfulOpByteSize("EDIT", "INDIVIDUAL", percentile),
                 );
-                await editNodesWithInvidualTransactions(
+                await editNodesWithIndividualTransactions(
                     provider.trees[0],
                     provider,
                     BENCHMARK_NODE_COUNT,
@@ -648,21 +648,21 @@ describe("SharedTree Op Size Benchmarks", () => {
             };
 
             it(`3a.a. [Edit] [Individual Txs] ${BENCHMARK_NODE_COUNT} small changes in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`, async () => {
-                await benchmarkEditNodesWithInvidualTxs(
+                await benchmarkEditNodesWithIndividualTxs(
                     0.01,
                     `3a.a. [Edit] [Individual Txs] ${BENCHMARK_NODE_COUNT} small changes in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`,
                 );
             });
 
             it(`3a.b. [Edit] [Individual Txs] ${BENCHMARK_NODE_COUNT} medium changes in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`, async () => {
-                await benchmarkEditNodesWithInvidualTxs(
+                await benchmarkEditNodesWithIndividualTxs(
                     0.5,
                     `3a.b. [Edit] [Individual Txs] ${BENCHMARK_NODE_COUNT} medium changes in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`,
                 );
             });
 
             it(`3a.c. [Edit] [Individual Txs] ${BENCHMARK_NODE_COUNT} large changes in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`, async () => {
-                await benchmarkEditNodesWithInvidualTxs(
+                await benchmarkEditNodesWithIndividualTxs(
                     1,
                     `3a.c. [Edit] [Individual Txs] ${BENCHMARK_NODE_COUNT} large changes in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`,
                 );
@@ -736,7 +736,7 @@ describe("SharedTree Op Size Benchmarks", () => {
         //         getInitialJsonTreeWithChildren(deleteNodeCount, childByteSize),
         //     );
         //     deleteCurrentOps(); // We don't want to record the ops from initializing the tree.
-        //     await deleteNodesWithInvidualTransactions(
+        //     await deleteNodesWithIndividualTransactions(
         //         provider.trees[0],
         //         provider,
         //         deleteNodeCount,
@@ -748,7 +748,7 @@ describe("SharedTree Op Size Benchmarks", () => {
         //     const insertChildNode = getJsonNode(
         //         getSuccessfulOpByteSize("INSERT", "INDIVIDUAL", percentile),
         //     );
-        //     await insertNodesWithInvidualTransactions(
+        //     await insertNodesWithIndividualTransactions(
         //         provider.trees[0],
         //         provider,
         //         insertChildNode,
@@ -761,7 +761,7 @@ describe("SharedTree Op Size Benchmarks", () => {
         //     if (insertNodeCount < editNodeCount) {
         //         const remainder = editNodeCount - insertNodeCount;
         //         saveAndResetCurrentOps();
-        //         await insertNodesWithInvidualTransactions(
+        //         await insertNodesWithIndividualTransactions(
         //             provider.trees[0],
         //             provider,
         //             getJsonNode(childByteSize),
@@ -772,7 +772,7 @@ describe("SharedTree Op Size Benchmarks", () => {
         //     const editPayload = getEditPayloadInBytes(
         //         getSuccessfulOpByteSize("EDIT", "INDIVIDUAL", percentile),
         //     );
-        //     await editNodesWithInvidualTransactions(
+        //     await editNodesWithIndividualTransactions(
         //         provider.trees[0],
         //         provider,
         //         editNodeCount,
@@ -799,7 +799,7 @@ describe("SharedTree Op Size Benchmarks", () => {
                     getInitialJsonTreeWithChildren(deleteNodeCount, childByteSize),
                 );
                 deleteCurrentOps(); // We don't want to record the ops from initializing the tree.
-                await deleteNodesWithInvidualTransactions(
+                await deleteNodesWithIndividualTransactions(
                     provider.trees[0],
                     provider,
                     deleteNodeCount,
@@ -811,7 +811,7 @@ describe("SharedTree Op Size Benchmarks", () => {
                 const insertChildNode = getJsonNode(
                     getSuccessfulOpByteSize("INSERT", "INDIVIDUAL", percentile),
                 );
-                await insertNodesWithInvidualTransactions(
+                await insertNodesWithIndividualTransactions(
                     provider.trees[0],
                     provider,
                     insertChildNode,
@@ -824,7 +824,7 @@ describe("SharedTree Op Size Benchmarks", () => {
                 if (insertNodeCount < editNodeCount) {
                     const remainder = editNodeCount - insertNodeCount;
                     saveAndResetCurrentOps();
-                    await insertNodesWithInvidualTransactions(
+                    await insertNodesWithIndividualTransactions(
                         provider.trees[0],
                         provider,
                         getJsonNode(childByteSize),
@@ -835,7 +835,7 @@ describe("SharedTree Op Size Benchmarks", () => {
                 const editPayload = getEditPayloadInBytes(
                     getSuccessfulOpByteSize("EDIT", "INDIVIDUAL", percentile),
                 );
-                await editNodesWithInvidualTransactions(
+                await editNodesWithIndividualTransactions(
                     provider.trees[0],
                     provider,
                     editNodeCount,
@@ -1027,7 +1027,7 @@ describe("SharedTree Op Size Benchmarks", () => {
                 if (insertNodeCount < editNodeCount) {
                     const remainder = editNodeCount - insertNodeCount;
                     saveAndResetCurrentOps();
-                    await insertNodesWithInvidualTransactions(
+                    await insertNodesWithIndividualTransactions(
                         provider.trees[0],
                         provider,
                         getJsonNode(childByteSize),
