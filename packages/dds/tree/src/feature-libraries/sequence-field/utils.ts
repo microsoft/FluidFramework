@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { fail } from "../../util";
 import {
     Attach,
@@ -161,6 +161,9 @@ export function getInputLength(mark: Mark<unknown>): number {
         return mark;
     }
     if (isAttach(mark)) {
+        if (isReattach(mark) && mark.mutedBy !== undefined) {
+            return mark.type === "Return" || mark.type === "Revive" ? mark.count : 1;
+        }
         return 0;
     }
     const type = mark.type;
@@ -188,7 +191,7 @@ export function isSkipMark(mark: Mark<unknown>): mark is Skip {
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has input length `length`.
  */
-export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
+export function splitMarkOnInput<TMark extends SizedMark<unknown> | Reattach | ModifyReattach>(
     mark: TMark,
     length: number,
 ): [TMark, TMark] {
@@ -202,13 +205,22 @@ export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
     if (isSkipMark(mark)) {
         return [length, remainder] as [TMark, TMark];
     }
-    const markObj = mark as SizedObjectMark;
+    const markObj = mark as SizedObjectMark | Reattach;
     const type = mark.type;
     switch (type) {
         case "Modify":
         case "MDelete":
         case "MMoveOut":
+        case "MRevive":
+        case "MReturn":
             fail(`Unable to split ${type} mark of length 1`);
+        case "Revive":
+        case "Return":
+            assert(mark.mutedBy !== undefined, "Non-muted reattach marks have no input length");
+            return [
+                { ...markObj, count: length },
+                { ...markObj, count: remainder, detachIndex: mark.detachIndex + length },
+            ] as [TMark, TMark];
         case "Delete":
         case "MoveOut":
             return [
@@ -338,6 +350,7 @@ export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boole
             const lhsReattach = lhs as Reattach;
             if (
                 rhs.detachedBy === lhsReattach.detachedBy &&
+                rhs.mutedBy === lhsReattach.mutedBy &&
                 lhsReattach.detachIndex + lhsReattach.count === rhs.detachIndex
             ) {
                 lhsReattach.count += rhs.count;

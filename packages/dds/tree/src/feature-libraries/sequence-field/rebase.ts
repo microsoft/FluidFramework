@@ -209,7 +209,9 @@ class RebaseQueue<T> {
                 return { newMark: this.newMarks.pop() };
             }
         } else if (isAttach(newMark)) {
-            return { newMark: this.newMarks.pop() };
+            if (!isReattach(newMark) || newMark.mutedBy === undefined) {
+                return { newMark: this.newMarks.pop() };
+            }
         }
 
         // TODO: Handle case where `baseMarks` has adjacent or nested inverse reattaches from multiple revisions
@@ -258,8 +260,18 @@ function rebaseMark<TNodeChange>(
     const baseType = baseMark.type;
     switch (baseType) {
         case "Delete":
-        case "MDelete":
+        case "MDelete": {
+            if (isReattach(currMark)) {
+                assert(
+                    currMark.mutedBy !== undefined,
+                    "Revive marks can only overlap with delete marks if muted",
+                );
+                const revive = clone(currMark);
+                delete revive.mutedBy;
+                return revive;
+            }
             return 0;
+        }
         case "MRevive":
         case "Revive": {
             assert(isReattach(currMark), "Only a reattach can overlap with a reattach");

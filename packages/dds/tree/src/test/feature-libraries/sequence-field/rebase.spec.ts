@@ -134,6 +134,21 @@ describe("SequenceField - Rebase", () => {
         assert.deepEqual(actual, expected);
     });
 
+    it("muted revive ↷ delete", () => {
+        const revive = Change.revive(0, 3, 1, tag1, tag2);
+        const deletion = Change.delete(1, 1);
+        const actual = rebase(revive, deletion);
+        const expected = composeAnonChanges([
+            // Earlier revive is unaffected
+            Change.revive(0, 1, 1, tag1, tag2),
+            // Overlapping revive is no longer muted
+            Change.revive(1, 1, 2, tag1),
+            // Later revive has is unaffected
+            Change.revive(2, 1, 3, tag1, tag2),
+        ]);
+        assert.deepEqual(actual, expected);
+    });
+
     it("delete ↷ overlapping delete", () => {
         // Deletes ---DEFGH--
         const deleteA = Change.delete(3, 5);
