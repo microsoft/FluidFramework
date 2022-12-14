@@ -47,7 +47,7 @@ describe("Editing", () => {
             expectJsonTree([tree1, tree2], ["w", "x"]);
         });
 
-        it("does not interleave concurrent left to right inserts", () => {
+        it("merge-left tie-breaking does not interleave concurrent left to right inserts", () => {
             const sequencer = new Sequencer();
             const tree1 = TestTree.fromJson([]);
             const tree2 = tree1.fork();
@@ -79,8 +79,11 @@ describe("Editing", () => {
         });
 
         // The current implementation orders the letters from inserted last to inserted first.
-        // TODO: address this scenario.
-        it.skip("does not interleave concurrent right to left inserts", () => {
+        // This is due to the hard-coded merge-left policy.
+        // Having merge-right tie-breaking does preserve groupings but in a first-to-last order
+        // which is the desired outcome for RTL text.
+        // TODO: update and activate this test once merge-right is supported.
+        it("merge-right tie-breaking does not interleave concurrent right to left inserts", () => {
             const sequencer = new Sequencer();
             const tree1 = TestTree.fromJson([]);
             const tree2 = tree1.fork();
