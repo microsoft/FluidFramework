@@ -199,18 +199,8 @@ export function checkoutTests(
 				status: 'Malformed',
 			});
 
-			expect(() => checkout.closeEdit()).throws('Locally constructed edits must be well-formed and valid');
-			expect(events.length).to.equal(2);
-			expect(events[1]).to.deep.equal({
-				category: 'error',
-				error: 'FailedLocalEdit',
-				eventName: 'SharedTree:Checkout:FailedLocalEdit',
-				failureKind: 'BadRange',
-				isSharedTreeEvent: true,
-				rangeFailure: 'BadPlace',
-				rangeEndpointFailure: 'Malformed',
-				status: 'Malformed',
-			});
+			expect(() => checkout.closeEdit()).throws('Cannot close a transaction that has already failed.');
+			expect(events.length).to.equal(1);
 		});
 
 		it('can try to apply an invalid edit and abort without causing an error', async () => {
@@ -281,7 +271,7 @@ export function checkoutTests(
 			);
 			expect(checkout.getEditStatus()).equals(EditStatus.Invalid);
 
-			expect(() => checkout.closeEdit()).throws('Locally constructed edits must be well-formed and valid');
+			expect(() => checkout.closeEdit()).throws('Cannot close a transaction that has already failed.');
 
 			// Next edit is unaffected
 			checkout.openEdit();
@@ -314,7 +304,7 @@ export function checkoutTests(
 			);
 			expect(checkout.getEditStatus()).equals(EditStatus.Malformed);
 
-			expect(() => checkout.closeEdit()).throws('Locally constructed edits must be well-formed and valid');
+			expect(() => checkout.closeEdit()).throws('Cannot close a transaction that has already failed.');
 
 			// Next edit is unaffected
 			checkout.openEdit();

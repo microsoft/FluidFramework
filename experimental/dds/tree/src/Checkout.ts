@@ -163,7 +163,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 * Ends the ongoing edit operation and commits it to the history.
 	 *
 	 * Malformed edits are considered an error, and will assert:
-	 * All named detached sequences must have been used or theEdit is malformed.
+	 * All named detached sequences must have been used or the Edit is malformed.
 	 *
 	 * @returns the `id` of the committed edit
 	 */
@@ -171,6 +171,10 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 		const { currentEdit } = this;
 		assert(currentEdit !== undefined, 'An edit is not open.');
 		this.currentEdit = undefined;
+		if (currentEdit.failure !== undefined) {
+			fail('Cannot close a transaction that has already failed. Use abortEdit instead.');
+		}
+
 		const editingResult = currentEdit.close();
 		this.validateChangesApplied(editingResult);
 		const id: EditId = newEditId();
