@@ -19,11 +19,6 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
         container: IContainer,
         private readonly runtime: IContainerRuntime ) {
         super();
-        this.runtime = runtime;
-    }
-
-    public readonly debugSendCustomSignal = (): void => {
-        this.runtime.submitSignal('debugSignal', {message: "externalDataChanged"});
     }
 
     /**
