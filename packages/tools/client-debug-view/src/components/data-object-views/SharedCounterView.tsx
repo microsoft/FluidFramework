@@ -40,7 +40,7 @@ export function SharedCounterView(props: SharedCounterViewProps): React.ReactEle
 	const { sharedCounter } = props;
 
 	const [value, setValue] = React.useState<number>(sharedCounter.value);
-    const [deltaValue, setDeltaValue] = React.useState(1);
+    const [deltaValue, setDeltaValue] = React.useState("");
 
 	React.useEffect(() => {
 		function updateValue(delta: number, newValue: number): void {
@@ -54,27 +54,18 @@ export function SharedCounterView(props: SharedCounterViewProps): React.ReactEle
 		};
 	}, [sharedCounter, setValue]);
 
-
     function decrementCounter(): void {
-        sharedCounter.increment(-deltaValue);
+        sharedCounter.increment(-Number.parseInt(deltaValue, 10));
+        setDeltaValue("");
 	}
 
     function incrementCounter(): void {
-		sharedCounter.increment(deltaValue);
+		sharedCounter.increment(Number.parseInt(deltaValue, 10));
+        setDeltaValue("");
 	}
 
     const inputSetValue = (e: React.ChangeEvent<HTMLInputElement>): void => {
-        numberFormatCheck(e.target.value);
-    }
-
-    const numberFormatCheck = (val: string): void => {
-        const num = Number.parseInt(val, 10) || value;
-
-        if (!Number.isFinite(num) || num[0] === '-') {
-            return
-        }
-
-        setDeltaValue(num);
+        setDeltaValue(e.target.value);
     }
 
 	return (
@@ -85,29 +76,31 @@ export function SharedCounterView(props: SharedCounterViewProps): React.ReactEle
 			<StackItem>Value: {value} </StackItem>
             <StackItem>
                 <TooltipHost
-					content="Decrement counter by 1 (min 0)."
+					content="Decrememt counter by the delta-value."
 					id={decrementButtonTooltipId}
 				>
                     <IconButton
                             onClick={decrementCounter}
+                            disabled={deltaValue === ""}
                             menuIconProps={{ iconName: "CalculatorSubtract" }}
                             aria-describedby={decrementButtonTooltipId}
                     />
                 </TooltipHost>
 
                 <TooltipHost
-                    content="Change the counter value by passing the number in input field"
+                    content="Enter the delta value of your choice"
                     id={inputFieldTooltipId}
                 >
-                    <input type="number" onChange={inputSetValue}/>
+                    <input onChange={inputSetValue} placeholder="Enter Delta" value={deltaValue}/>
                 </TooltipHost>
 
                 <TooltipHost
-					content="Increment counter by 1."
+					content="Increment counter by the delta-value."
 					id={incrementButtonTooltipId}
 				>
                     <IconButton
                             onClick={incrementCounter}
+                            disabled={deltaValue === ""}
                             menuIconProps={{ iconName: "CalculatorAddition" }}
                             aria-describedby={incrementButtonTooltipId}
                     />
