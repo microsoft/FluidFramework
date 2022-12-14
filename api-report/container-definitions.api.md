@@ -500,7 +500,7 @@ export const IRuntimeFactory: keyof IProvideRuntimeFactory;
 
 // @public
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
-    instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime>;
+    instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
 }
 
 // @public

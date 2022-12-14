@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { GenericError } from "@fluidframework/container-utils";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions";
 
 export interface IBatchManagerOptions {
+    readonly enableOpReentryCheck?: boolean;
     readonly hardLimit: number;
     readonly softLimit?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
@@ -25,6 +27,8 @@ export class BatchManager {
     constructor(public readonly options: IBatchManagerOptions) { }
 
     public push(message: BatchMessage): boolean {
+        this.checkReferenceSequenceNumber(message);
+
         const contentSize = this.batchContentSize + (message.contents?.length ?? 0);
         const opCount = this.pendingBatch.length;
 
@@ -86,6 +90,20 @@ export class BatchManager {
                 this.pendingBatch.length = startPoint;
             },
         };
+    }
+
+    private checkReferenceSequenceNumber(message: BatchMessage) {
+        if (this.options.enableOpReentryCheck === true
+            && this.pendingBatch.length > 0
+            && message.referenceSequenceNumber !== this.pendingBatch[0].referenceSequenceNumber) {
+            throw new GenericError(
+                "Submission of an out of order message",
+                /* error */ undefined,
+                {
+                    referenceSequenceNumber: this.pendingBatch[0].referenceSequenceNumber,
+                    messageReferenceSequenceNumber: message.referenceSequenceNumber,
+                });
+        }
     }
 }
 
