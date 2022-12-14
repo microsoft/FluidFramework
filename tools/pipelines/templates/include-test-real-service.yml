@@ -203,10 +203,12 @@ jobs:
             echo "registry=https://registry.npmjs.org" >> ./.npmrc
             echo "always-auth=false" >> ./.npmrc
 
+            echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
             echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
             echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
             echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
             echo "@microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
+            echo "always-auth=true" >> ./.npmrc
             cat .npmrc
 
             if [[ `ls -1 ${{ variables.testPackagePathPattern }} | wc -l` -eq 1 ]]; then
@@ -230,39 +232,13 @@ jobs:
           workingFile: ${{ parameters.testWorkspace }}/.npmrc
           customEndpoint: 'Office Packages - Readonly'
 
-      # Install logger package
+      # Install test and logger package
       - task: Npm@1
         displayName: 'npm install'
         inputs:
           command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}
-          customCommand: 'install @ff-internal/aria-logger'
-          customRegistry: 'useNpmrc'
-
-      - task: Bash@3
-        name: InitializeInternal
-        displayName: Initialize
-        inputs:
-          targetType: 'inline'
-          workingDirectory: ${{ parameters.testWorkspace }}
-          script: |
-            echo Initialize package v2
-            echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
-            cat .npmrc
-
-      # Auth to internal feed
-      - task: npmAuthenticate@0
-        displayName: 'npm authenticate (internal feed) again'
-        inputs:
-          workingFile: ${{ parameters.testWorkspace }}/.npmrc
-
-      # Install test package
-      - task: Npm@1
-        displayName: 'npm install'
-        inputs:
-          command: 'custom'
-          workingDir: ${{ parameters.testWorkspace }}
-          customCommand: 'install $(Initialize.testPackageTgz)'
+          customCommand: 'install $(Initialize.testPackageTgz) ${{ parameters.loggerPackage }}'
           customRegistry: 'useNpmrc'
 
       # Download Test Files & Install Extra Dependencies
