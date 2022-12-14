@@ -287,126 +287,67 @@ const editNodesWithSingleTransaction = async (
     await provider.ensureSynchronized();
 };
 
-const INSERT_BENCHMARK_PERCENTILES = {
-    individualTransactions: {
-        nodeCounts: {
-            "100": {
-                percentiles: {
-                    "1%": {
-                        byteSize: 90,
-                    },
-                    "50%": {
-                        byteSize: 4500,
-                    },
-                    "99%": {
-                        byteSize: 9000,
-                    },
-                },
-            },
-        },
-    },
-    singleTransaction: {
-        nodeCounts: {
-            "100": {
-                percentiles: {
-                    "1%": {
-                        byteSize: 97,
-                    },
-                    "50%": {
-                        byteSize: 4850,
-                    },
-                    "99%": {
-                        byteSize: 9700,
-                    },
-                },
-            },
-        },
-    },
-} as const;
-
-const DELETE_BENCHMARK_PERCENTILES = {
-    individualTransactions: {
-        nodeCounts: {
-            "100": {
-                percentiles: {
-                    "1%": {
-                        byteSize: 97,
-                    },
-                    "50%": {
-                        byteSize: 4850,
-                    },
-                    "99%": {
-                        byteSize: 9700,
-                    },
-                },
-            },
-        },
-    },
-    singleTransaction: {
-        nodeCounts: {
-            "100": {
-                percentiles: {
-                    "1%": {
-                        byteSize: 97,
-                    },
-                    "50%": {
-                        byteSize: 4850,
-                    },
-                    "99%": {
-                        byteSize: 9700,
-                    },
-                },
-            },
-        },
-    },
-} as const;
-
-// Edit benchmarks use 1/10 of the actual max sizes outside of perf mode because it takes so long to execute.
-const EDIT_BENCHMARK_PERCENTILES = {
-    individualTransactions: {
-        nodeCounts: {
-            "100": {
-                percentiles: {
-                    "1%": {
-                        byteSize: isInPerformanceTestingMode ? 8000 : 800,
-                    },
-                    "50%": {
-                        byteSize: isInPerformanceTestingMode ? 400000 : 40000,
-                    },
-                    "99%": {
-                        byteSize: isInPerformanceTestingMode ? 800000 : 80000,
-                    },
-                },
-            },
-        },
-    },
-    singleTransaction: {
-        nodeCounts: {
-            "100": {
-                percentiles: {
-                    "1%": {
-                        byteSize: 86,
-                    },
-                    "50%": {
-                        byteSize: 4300,
-                    },
-                    "99%": {
-                        byteSize: 8600,
-                    },
-                },
-            },
-        },
-    },
-} as const;
-
-const BASE_BENCHMARK_NODE_COUNT = 100;
-
 /**
- * Legend
- * 'small nodes' -
- * 'medium nodes' -
- * 'large nodes' -
+ * The following byte sizes in utf-8 encoded bytes of JsonableTree were found to be the maximum size that could be successfully
+ * inserted/deleted/edited using the following node counts and either individual of singular (bulk) transactions.
+ *
+ * Using any larger of a byte size of JsonableTree children causes the "BatchToLarge" error; this would require either:
+ * Adding artificial wait, for e.x. by using a for-loop to segment our transactions into batches of less than the given node count.
+ * OR
+ * Making the size in bytes of the children smaller.
  */
+const MAX_SUCCESSFUL_OP_BYTE_SIZES = {
+    INSERT: {
+        INDIVIDUAL: {
+            nodeCounts: {
+                "100": 9000,
+            },
+        },
+        SINGLE: {
+            nodeCounts: {
+                "100": 9700,
+            },
+        },
+    },
+    DELETE: {
+        INDIVIDUAL: {
+            nodeCounts: {
+                "100": 9700,
+            },
+        },
+        SINGLE: {
+            nodeCounts: {
+                "100": 9700,
+            },
+        },
+    },
+    EDIT: {
+        INDIVIDUAL: {
+            nodeCounts: {
+                // Edit benchmarks use 1/10 of the actual max sizes outside of perf mode because it takes so long to execute.
+                "100": isInPerformanceTestingMode ? 800000 : 80000,
+            },
+        },
+        SINGLE: {
+            nodeCounts: {
+                "100": 8600,
+            },
+        },
+    },
+} as const;
+
+const getSuccessfulOpByteSize = (
+    operation: "INSERT" | "DELETE" | "EDIT",
+    transactionStyle: "INDIVIDUAL" | "SINGLE",
+    percentile: number,
+) => {
+    return Math.floor(
+        MAX_SUCCESSFUL_OP_BYTE_SIZES[operation][transactionStyle].nodeCounts["100"] * percentile,
+    );
+};
+
+const BENCHMARK_NODE_COUNT = 100;
+
 describe("SharedTree Op Size Benchmarks", () => {
     const opsByBenchmarkName: Record<string, ISequencedDocumentMessage[]> = {};
     let currentBenchmarkName = "";
@@ -464,7 +405,20 @@ describe("SharedTree Op Size Benchmarks", () => {
 
     const initializeOpDataCollection = (provider: ITestTreeProvider, testName: string) => {
         currentBenchmarkName = testName;
+        currentTestOps.length = 0;
         registerOpListener(provider, currentTestOps);
+    };
+
+    const saveAndResetCurrentOps = () => {
+        if (!opsByBenchmarkName[currentBenchmarkName]) {
+            opsByBenchmarkName[currentBenchmarkName] = [];
+        }
+        currentTestOps.forEach((op) => opsByBenchmarkName[currentBenchmarkName].push(op));
+        currentTestOps.length = 0;
+    };
+
+    const deleteCurrentOps = () => {
+        currentTestOps.length = 0;
     };
 
     afterEach(() => {
@@ -494,1185 +448,470 @@ describe("SharedTree Op Size Benchmarks", () => {
 
     describe("1. Insert Nodes", () => {
         describe("1a. With Individual transactions", () => {
-            /**
-             * BASE_BENCHMARK_NODE_COUNT child nodes each with a size of ~9Kb in utf-8 encoded bytes of JsonableTree
-             * was found to be the maximum size that could be successfully inserted using BASE_BENCHMARK_NODE_COUNT individual transactions
-             * each containing 1 child node insertion.
-             *
-             * Using any larger of a byte size of JsonableTree children causes the "BatchToLarge" error; this would require either:
-             * Adding artificial wait, for e.x. by using a for-loop to segment our transactions into batches of less than BASE_BENCHMARK_NODE_COUNT.
-             * OR
-             * Making the size in bytes of the children smaller.
-             */
-
-            it(`1a.a. Insert ${BASE_BENCHMARK_NODE_COUNT} small nodes in ${BASE_BENCHMARK_NODE_COUNT} transactions`, async () => {
+            const benchmarkInsertNodesWithInvidualTxs = async (
+                percentile: number,
+                testName: string,
+            ) => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `1a.a. Insert ${BASE_BENCHMARK_NODE_COUNT} small nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`,
-                );
+                initializeOpDataCollection(provider, testName);
                 initializeTestTree(provider.trees[0]);
+                deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
                 const jsonNode = getJsonNode(
-                    INSERT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["1%"].byteSize,
+                    getSuccessfulOpByteSize("INSERT", "INDIVIDUAL", percentile),
                 );
                 await insertNodesWithInvidualTransactions(
                     provider.trees[0],
                     provider,
                     jsonNode,
-                    BASE_BENCHMARK_NODE_COUNT,
+                    BENCHMARK_NODE_COUNT,
                 );
-                assertChildNodeCount(provider.trees[0], BASE_BENCHMARK_NODE_COUNT);
+                assertChildNodeCount(provider.trees[0], BENCHMARK_NODE_COUNT);
+            };
+
+            it(`1a.a. Insert ${BENCHMARK_NODE_COUNT} small nodes in ${BENCHMARK_NODE_COUNT} transactions`, async () => {
+                await benchmarkInsertNodesWithInvidualTxs(
+                    0.01,
+                    `1a.a. Insert ${BENCHMARK_NODE_COUNT} small nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
+                );
             });
 
-            it(`1a.b. Insert ${BASE_BENCHMARK_NODE_COUNT} medium nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `1a.b. Insert ${BASE_BENCHMARK_NODE_COUNT} medium nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`,
+            it(`1a.b. Insert ${BENCHMARK_NODE_COUNT} medium nodes in ${BENCHMARK_NODE_COUNT} individual transactions`, async () => {
+                await benchmarkInsertNodesWithInvidualTxs(
+                    0.5,
+                    `1a.b. Insert ${BENCHMARK_NODE_COUNT} medium nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
                 );
-                initializeTestTree(provider.trees[0]);
-
-                const jsonNode = getJsonNode(
-                    INSERT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["50%"].byteSize,
-                );
-                await insertNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    jsonNode,
-                    BASE_BENCHMARK_NODE_COUNT,
-                );
-                assertChildNodeCount(provider.trees[0], BASE_BENCHMARK_NODE_COUNT);
             });
 
-            it(`1a.c. Insert ${BASE_BENCHMARK_NODE_COUNT} large nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `1a.c. Insert ${BASE_BENCHMARK_NODE_COUNT} large nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`,
+            it(`1a.c. Insert ${BENCHMARK_NODE_COUNT} large nodes in ${BENCHMARK_NODE_COUNT} individual transactions`, async () => {
+                await benchmarkInsertNodesWithInvidualTxs(
+                    1,
+                    `1a.c. Insert ${BENCHMARK_NODE_COUNT} large nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
                 );
-                initializeTestTree(provider.trees[0]);
-
-                const jsonNode = getJsonNode(
-                    INSERT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["99%"].byteSize,
-                );
-                await insertNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    jsonNode,
-                    BASE_BENCHMARK_NODE_COUNT,
-                );
-                assertChildNodeCount(provider.trees[0], BASE_BENCHMARK_NODE_COUNT);
             });
         });
 
-        describe("1b. With one transaction", () => {
-            /**
-             * 100 child nodes each with a size of ~9.7Kb in utf-8 encoded bytes of JsonableTree
-             * was found to be the maximum size that could be successfully inserted using 1 transaction
-             * containing 100 insertions of 1 child node.
-             *
-             * Using any larger of a byte size of JsonableTree children causes the "BatchToLarge" error; this would require either:
-             * Adding artificial wait, for e.x. by using a for-loop to segment our transactions into batches of less than 100.
-             * OR
-             * Making the size in bytes of the children smaller.
-             */
-
-            it(`1b.a. Insert ${BASE_BENCHMARK_NODE_COUNT} small nodes in one transaction`, async () => {
+        describe("1b. With Single transaction", () => {
+            const benchmarkInsertNodesWithSingleTx = async (
+                percentile: number,
+                testName: string,
+            ) => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `1b.a. Insert ${BASE_BENCHMARK_NODE_COUNT} small nodes in one transaction`,
-                );
+                initializeOpDataCollection(provider, testName);
                 initializeTestTree(provider.trees[0]);
-
+                deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
                 const jsonNode = getJsonNode(
-                    INSERT_BENCHMARK_PERCENTILES.singleTransaction.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["1%"].byteSize,
+                    getSuccessfulOpByteSize("INSERT", "SINGLE", percentile),
                 );
                 await insertNodesWithSingleTransaction(
                     provider.trees[0],
                     provider,
                     jsonNode,
-                    BASE_BENCHMARK_NODE_COUNT,
+                    BENCHMARK_NODE_COUNT,
                 );
-                assertChildNodeCount(provider.trees[0], BASE_BENCHMARK_NODE_COUNT);
+                assertChildNodeCount(provider.trees[0], BENCHMARK_NODE_COUNT);
+            };
+
+            it(`1b.a. Insert ${BENCHMARK_NODE_COUNT} small nodes in one transaction`, async () => {
+                await benchmarkInsertNodesWithSingleTx(
+                    0.01,
+                    `1b.a. Insert ${BENCHMARK_NODE_COUNT} small nodes in one transaction`,
+                );
             });
 
-            it(`1b.b. Insert ${BASE_BENCHMARK_NODE_COUNT} medium nodes in one transaction`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `1b.b. Insert ${BASE_BENCHMARK_NODE_COUNT} medium nodes in 1 transaction`,
+            it(`1b.b. Insert ${BENCHMARK_NODE_COUNT} medium nodes in one transaction`, async () => {
+                await benchmarkInsertNodesWithSingleTx(
+                    0.5,
+                    `1b.b. Insert ${BENCHMARK_NODE_COUNT} medium nodes in 1 transaction`,
                 );
-                initializeTestTree(provider.trees[0]);
-
-                const jsonNode = getJsonNode(
-                    INSERT_BENCHMARK_PERCENTILES.singleTransaction.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["50%"].byteSize,
-                );
-                await insertNodesWithSingleTransaction(
-                    provider.trees[0],
-                    provider,
-                    jsonNode,
-                    BASE_BENCHMARK_NODE_COUNT,
-                );
-                assertChildNodeCount(provider.trees[0], BASE_BENCHMARK_NODE_COUNT);
             });
 
-            it(`1b.c. Insert ${BASE_BENCHMARK_NODE_COUNT} large nodes in one transaction`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `1b.c. Insert ${BASE_BENCHMARK_NODE_COUNT} large nodes in one transaction`,
+            it(`1b.c. Insert ${BENCHMARK_NODE_COUNT} large nodes in one transaction`, async () => {
+                await benchmarkInsertNodesWithSingleTx(
+                    1,
+                    `1b.c. Insert ${BENCHMARK_NODE_COUNT} large nodes in one transaction`,
                 );
-                initializeTestTree(provider.trees[0]);
-
-                const jsonNode = getJsonNode(
-                    INSERT_BENCHMARK_PERCENTILES.singleTransaction.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["99%"].byteSize,
-                );
-                await insertNodesWithSingleTransaction(
-                    provider.trees[0],
-                    provider,
-                    jsonNode,
-                    BASE_BENCHMARK_NODE_COUNT,
-                );
-                assertChildNodeCount(provider.trees[0], BASE_BENCHMARK_NODE_COUNT);
             });
         });
     });
 
     describe("2. Delete Nodes", () => {
         describe("2a. With Individual transactions", () => {
-            /**
-             * A tree with 100 child nodes each with a size of ~9.7Kb in utf-8 encoded bytes of JsonableTree
-             * was found to be the maximum size that could be successfully deleted using BASE_BENCHMARK_NODE_COUNT transactions
-             * each containing 1 child node deletion.
-             *
-             * Using any larger of a byte size of JsonableTree children causes the "BatchToLarge" error; this would require either:
-             * Adding artificial wait, for e.x. by using a for-loop to segment our transactions into batches of less than 100.
-             * OR
-             * Making the size in bytes of the children smaller.
-             */
-
-            it(`2a.a. Delete ${BASE_BENCHMARK_NODE_COUNT} small nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`, async () => {
+            const benchmarkDeleteNodesWithInvidualTxs = async (
+                percentile: number,
+                testName: string,
+            ) => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `2a.a. Delete ${BASE_BENCHMARK_NODE_COUNT} small nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`,
-                );
-                const childByteSize =
-                    DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["1%"].byteSize;
+                initializeOpDataCollection(provider, testName);
+                const childByteSize = getSuccessfulOpByteSize("DELETE", "INDIVIDUAL", percentile);
                 initializeTestTree(
                     provider.trees[0],
                     getInitialJsonTreeWithChildren(100, childByteSize),
                 );
+                deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
                 await deleteNodesWithInvidualTransactions(provider.trees[0], provider, 100, 1);
                 assertChildNodeCount(provider.trees[0], 0);
+            };
+
+            it(`2a.a. Delete ${BENCHMARK_NODE_COUNT} small nodes in ${BENCHMARK_NODE_COUNT} individual transactions`, async () => {
+                await benchmarkDeleteNodesWithInvidualTxs(
+                    0.01,
+                    `2a.a. Delete ${BENCHMARK_NODE_COUNT} small nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
+                );
             });
 
-            it(`2a.b. Delete ${BASE_BENCHMARK_NODE_COUNT} medium nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `2a.b. Delete ${BASE_BENCHMARK_NODE_COUNT} medium nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`,
+            it(`2a.b. Delete ${BENCHMARK_NODE_COUNT} medium nodes in ${BENCHMARK_NODE_COUNT} individual transactions`, async () => {
+                await benchmarkDeleteNodesWithInvidualTxs(
+                    0.5,
+                    `2a.b. Delete ${BENCHMARK_NODE_COUNT} medium nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
                 );
-                const childByteSize =
-                    DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["50%"].byteSize;
-                initializeTestTree(
-                    provider.trees[0],
-                    getInitialJsonTreeWithChildren(100, childByteSize),
-                );
-                await deleteNodesWithInvidualTransactions(provider.trees[0], provider, 100, 1);
-                assertChildNodeCount(provider.trees[0], 0);
             });
 
-            it(`2a.c. Delete ${BASE_BENCHMARK_NODE_COUNT} large nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `2a.c. Delete ${BASE_BENCHMARK_NODE_COUNT} large nodes in ${BASE_BENCHMARK_NODE_COUNT} individual transactions`,
+            it(`2a.c. Delete ${BENCHMARK_NODE_COUNT} large nodes in ${BENCHMARK_NODE_COUNT} individual transactions`, async () => {
+                await benchmarkDeleteNodesWithInvidualTxs(
+                    1,
+                    `2a.c. Delete ${BENCHMARK_NODE_COUNT} large nodes in ${BENCHMARK_NODE_COUNT} individual transactions`,
                 );
-
-                const childByteSize =
-                    DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["99%"].byteSize;
-                initializeTestTree(
-                    provider.trees[0],
-                    getInitialJsonTreeWithChildren(100, childByteSize),
-                );
-                await deleteNodesWithInvidualTransactions(provider.trees[0], provider, 100, 1);
-                assertChildNodeCount(provider.trees[0], 0);
             });
         });
 
         describe("2b. With Single transaction", () => {
-            /**
-             * A tree with 100 child nodes each with a size of ~9.7Kb in utf-8 encoded bytes of JsonableTree
-             * was found to be the maximum size that could be successfully deleted in 1 transaction
-             * containing 100 deletes.
-             *
-             * Using any larger of a byte size of JsonableTree children causes the "BatchToLarge" error; this would require either:
-             * Adding artificial wait, for e.x. by using a for-loop to segment our transactions into batches of less than 100.
-             * OR
-             * Making the size in bytes of the children smaller.
-             */
-
-            it(`2b.a. Delete ${BASE_BENCHMARK_NODE_COUNT} small nodes in 1 transaction containing 1 delete of ${BASE_BENCHMARK_NODE_COUNT} nodes`, async () => {
+            const benchmarkDeleteNodesWithSingleTx = async (
+                percentile: number,
+                testName: string,
+            ) => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `2b.a. Delete ${BASE_BENCHMARK_NODE_COUNT} small nodes in 1 transaction containing 1 delete of ${BASE_BENCHMARK_NODE_COUNT} nodes`,
-                );
-
-                const childByteSize =
-                    DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["1%"].byteSize;
+                initializeOpDataCollection(provider, testName);
+                const childByteSize = getSuccessfulOpByteSize("DELETE", "SINGLE", percentile);
                 initializeTestTree(
                     provider.trees[0],
                     getInitialJsonTreeWithChildren(100, childByteSize),
                 );
+                deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
                 await deleteNodesWithSingleTransaction(provider.trees[0], provider, 100);
                 assertChildNodeCount(provider.trees[0], 0);
+            };
+
+            it(`2b.a. Delete ${BENCHMARK_NODE_COUNT} small nodes in 1 transaction containing 1 delete of ${BENCHMARK_NODE_COUNT} nodes`, async () => {
+                await benchmarkDeleteNodesWithSingleTx(
+                    0.01,
+                    `2b.a. Delete ${BENCHMARK_NODE_COUNT} small nodes in 1 transaction containing 1 delete of ${BENCHMARK_NODE_COUNT} nodes`,
+                );
             });
 
-            it(`2b.b. Delete ${BASE_BENCHMARK_NODE_COUNT} medium nodes in 1 transactions containing 1 delete of ${BASE_BENCHMARK_NODE_COUNT} nodes`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `2b.b. Delete ${BASE_BENCHMARK_NODE_COUNT} medium nodes in 1 transactions containing 1 delete of ${BASE_BENCHMARK_NODE_COUNT} nodes`,
+            it(`2b.b. Delete ${BENCHMARK_NODE_COUNT} medium nodes in 1 transactions containing 1 delete of ${BENCHMARK_NODE_COUNT} nodes`, async () => {
+                await benchmarkDeleteNodesWithSingleTx(
+                    0.5,
+                    `2b.b. Delete ${BENCHMARK_NODE_COUNT} medium nodes in 1 transactions containing 1 delete of ${BENCHMARK_NODE_COUNT} nodes`,
                 );
-
-                const childByteSize =
-                    DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["50%"].byteSize;
-                initializeTestTree(
-                    provider.trees[0],
-                    getInitialJsonTreeWithChildren(100, childByteSize),
-                );
-                await deleteNodesWithSingleTransaction(provider.trees[0], provider, 100);
-                assertChildNodeCount(provider.trees[0], 0);
             });
 
-            it(`2b.c. Delete ${BASE_BENCHMARK_NODE_COUNT} large nodes in 1 transactions containing 1 delete of ${BASE_BENCHMARK_NODE_COUNT} nodes`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `2b.c. Delete ${BASE_BENCHMARK_NODE_COUNT} large nodes in 1 transactions containing 1 delete of ${BASE_BENCHMARK_NODE_COUNT} nodes`,
+            it(`2b.c. Delete ${BENCHMARK_NODE_COUNT} large nodes in 1 transactions containing 1 delete of ${BENCHMARK_NODE_COUNT} nodes`, async () => {
+                await benchmarkDeleteNodesWithSingleTx(
+                    1,
+                    `2b.c. Delete ${BENCHMARK_NODE_COUNT} large nodes in 1 transactions containing 1 delete of ${BENCHMARK_NODE_COUNT} nodes`,
                 );
-
-                const childByteSize =
-                    DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["99%"].byteSize;
-                initializeTestTree(
-                    provider.trees[0],
-                    getInitialJsonTreeWithChildren(100, childByteSize),
-                );
-                await deleteNodesWithSingleTransaction(provider.trees[0], provider, 100);
-                assertChildNodeCount(provider.trees[0], 0);
             });
         });
-
-        //     describe("Delete subtrees in one transaction", () => {
-        //         // 1. delete subtree with ${BASE_BENCHMARK_NODE_COUNT} nodes (X) bytes in 1 transaction
-        //         // 1. delete subtree with 10000 nodes (X) bytes in 1 transaction
-        //         // 1. delete subtree with 1000000 nodes (X) bytes in 1 transaction
-        //     });
     });
 
     describe("3. Edit Nodes", () => {
         describe("3a. With Individual transactions", () => {
-            /**
-             * Editing the children of a tree with a payload of larger than 800 Kb yielded inconsistent success
-             * when editing each child with invidiual transactions.
-             * 800Kb was found to be the largest consistently successful edit payload.
-             *
-             * Using any larger of a byte size of JsonableTree children causes the "BatchToLarge" error; this would require either:
-             * Adding artificial wait, for e.x. by using a for-loop to segment our transactions into batches of less than 100.
-             * OR
-             * Making the size in bytes of the children smaller.
-             */
-
-            it(`3a.a. ${BASE_BENCHMARK_NODE_COUNT} small edits in ${BASE_BENCHMARK_NODE_COUNT} transactions containing 1 edit`, async () => {
+            const benchmarkEditNodesWithInvidualTxs = async (
+                percentile: number,
+                testName: string,
+            ) => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `3a.a. ${BASE_BENCHMARK_NODE_COUNT} small edits in ${BASE_BENCHMARK_NODE_COUNT} transactions containing 1 edit`,
-                );
-
+                initializeOpDataCollection(provider, testName);
+                // Note that the child node byte size for the intial tree here should be arbitrary
                 initializeTestTree(
                     provider.trees[0],
-                    getInitialJsonTreeWithChildren(BASE_BENCHMARK_NODE_COUNT, 1000),
+                    getInitialJsonTreeWithChildren(BENCHMARK_NODE_COUNT, 1000),
                 );
+                deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
                 const editPayload = getEditPayloadInBytes(
-                    EDIT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["1%"].byteSize,
+                    getSuccessfulOpByteSize("EDIT", "INDIVIDUAL", percentile),
                 );
                 await editNodesWithInvidualTransactions(
                     provider.trees[0],
                     provider,
-                    BASE_BENCHMARK_NODE_COUNT,
+                    BENCHMARK_NODE_COUNT,
                     editPayload,
                 );
                 assertChildValuesEqualExpected(
                     provider.trees[0],
                     editPayload,
-                    BASE_BENCHMARK_NODE_COUNT,
+                    BENCHMARK_NODE_COUNT,
+                );
+            };
+
+            it(`3a.a. ${BENCHMARK_NODE_COUNT} small edits in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`, async () => {
+                await benchmarkEditNodesWithInvidualTxs(
+                    0.01,
+                    `3a.a. ${BENCHMARK_NODE_COUNT} small edits in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`,
                 );
             });
 
-            it(`3a.b. ${BASE_BENCHMARK_NODE_COUNT} medium edits in ${BASE_BENCHMARK_NODE_COUNT} transactions containing 1 edit`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `3a.b. ${BASE_BENCHMARK_NODE_COUNT} medium edits in ${BASE_BENCHMARK_NODE_COUNT} transactions containing 1 edit`,
-                );
-
-                initializeTestTree(
-                    provider.trees[0],
-                    getInitialJsonTreeWithChildren(BASE_BENCHMARK_NODE_COUNT, 1000),
-                );
-                const editPayload = getEditPayloadInBytes(
-                    EDIT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["50%"].byteSize,
-                );
-                await editNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    BASE_BENCHMARK_NODE_COUNT,
-                    editPayload,
-                );
-                assertChildValuesEqualExpected(
-                    provider.trees[0],
-                    editPayload,
-                    BASE_BENCHMARK_NODE_COUNT,
+            it(`3a.b. ${BENCHMARK_NODE_COUNT} medium edits in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`, async () => {
+                await benchmarkEditNodesWithInvidualTxs(
+                    0.5,
+                    `3a.b. ${BENCHMARK_NODE_COUNT} medium edits in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`,
                 );
             });
 
-            it(`3a.c. ${BASE_BENCHMARK_NODE_COUNT} large edits in ${BASE_BENCHMARK_NODE_COUNT} transactions containing 1 edit`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `3a.c. ${BASE_BENCHMARK_NODE_COUNT} large edits in ${BASE_BENCHMARK_NODE_COUNT} transactions containing 1 edit`,
-                );
-
-                initializeTestTree(
-                    provider.trees[0],
-                    getInitialJsonTreeWithChildren(BASE_BENCHMARK_NODE_COUNT, 1000),
-                );
-                const editPayload = getEditPayloadInBytes(
-                    EDIT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["99%"].byteSize,
-                );
-                await editNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    BASE_BENCHMARK_NODE_COUNT,
-                    editPayload,
-                );
-                assertChildValuesEqualExpected(
-                    provider.trees[0],
-                    editPayload,
-                    BASE_BENCHMARK_NODE_COUNT,
+            it(`3a.c. ${BENCHMARK_NODE_COUNT} large edits in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`, async () => {
+                await benchmarkEditNodesWithInvidualTxs(
+                    1,
+                    `3a.c. ${BENCHMARK_NODE_COUNT} large edits in ${BENCHMARK_NODE_COUNT} transactions containing 1 edit`,
                 );
             });
         });
 
         describe("3b. With Single transaction", () => {
-            /**
-             * Editing the children of a tree with a payload of larger than 8.6 Kb yielded inconsistent success.
-             * 8.6kb was found to be the largest consistently successful edit payload when.
-             *
-             * Using any larger of a byte size of JsonableTree children causes the "BatchToLarge" error; this would require either:
-             * Adding artificial wait, for e.x. by using a for-loop to segment our transactions into batches of less than 100.
-             * OR
-             * Making the size in bytes of the children smaller.
-             */
-
-            it(`3b.a. ${BASE_BENCHMARK_NODE_COUNT} small edits in 1 transaction containing ${BASE_BENCHMARK_NODE_COUNT} edits`, async () => {
+            const benchmarkEditNodesWithSingleTx = async (percentile: number, testName: string) => {
                 const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `3b.a. ${BASE_BENCHMARK_NODE_COUNT} small edits in 1 transaction containing ${BASE_BENCHMARK_NODE_COUNT} edits`,
-                );
-
+                initializeOpDataCollection(provider, testName);
+                // Note that the child node byte size for the intial tree here should be arbitrary
                 initializeTestTree(
                     provider.trees[0],
-                    getInitialJsonTreeWithChildren(BASE_BENCHMARK_NODE_COUNT, 1000),
+                    getInitialJsonTreeWithChildren(BENCHMARK_NODE_COUNT, 1000),
                 );
+                deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
                 const editPayload = getEditPayloadInBytes(
-                    EDIT_BENCHMARK_PERCENTILES.singleTransaction.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["1%"].byteSize,
+                    getSuccessfulOpByteSize("EDIT", "SINGLE", percentile),
                 );
                 await editNodesWithSingleTransaction(
                     provider.trees[0],
                     provider,
-                    BASE_BENCHMARK_NODE_COUNT,
+                    BENCHMARK_NODE_COUNT,
                     editPayload,
                 );
                 assertChildValuesEqualExpected(
                     provider.trees[0],
                     editPayload,
-                    BASE_BENCHMARK_NODE_COUNT,
+                    BENCHMARK_NODE_COUNT,
+                );
+            };
+
+            it(`3b.a. ${BENCHMARK_NODE_COUNT} small edits in 1 transaction containing ${BENCHMARK_NODE_COUNT} edits`, async () => {
+                await benchmarkEditNodesWithSingleTx(
+                    0.01,
+                    `3b.a. ${BENCHMARK_NODE_COUNT} small edits in 1 transaction containing ${BENCHMARK_NODE_COUNT} edits`,
                 );
             });
 
-            it(`3b.b. ${BASE_BENCHMARK_NODE_COUNT} medium edits in 1 transaction containing ${BASE_BENCHMARK_NODE_COUNT} edits`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `3b.b. ${BASE_BENCHMARK_NODE_COUNT} medium edits in 1 transaction containing ${BASE_BENCHMARK_NODE_COUNT} edits`,
-                );
-
-                initializeTestTree(
-                    provider.trees[0],
-                    getInitialJsonTreeWithChildren(BASE_BENCHMARK_NODE_COUNT, 1000),
-                );
-                const editPayload = getEditPayloadInBytes(
-                    EDIT_BENCHMARK_PERCENTILES.singleTransaction.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["50%"].byteSize,
-                );
-                await editNodesWithSingleTransaction(
-                    provider.trees[0],
-                    provider,
-                    BASE_BENCHMARK_NODE_COUNT,
-                    editPayload,
-                );
-                assertChildValuesEqualExpected(
-                    provider.trees[0],
-                    editPayload,
-                    BASE_BENCHMARK_NODE_COUNT,
+            it(`3b.b. ${BENCHMARK_NODE_COUNT} medium edits in 1 transaction containing ${BENCHMARK_NODE_COUNT} edits`, async () => {
+                await benchmarkEditNodesWithSingleTx(
+                    0.5,
+                    `3b.b. ${BENCHMARK_NODE_COUNT} medium edits in 1 transaction containing ${BENCHMARK_NODE_COUNT} edits`,
                 );
             });
 
-            it(`3b.c. ${BASE_BENCHMARK_NODE_COUNT} large edits in 1 transaction containing ${BASE_BENCHMARK_NODE_COUNT} edits`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `3b.c. ${BASE_BENCHMARK_NODE_COUNT} large edits in 1 transaction containing ${BASE_BENCHMARK_NODE_COUNT} edits`,
-                );
-                initializeTestTree(
-                    provider.trees[0],
-                    getInitialJsonTreeWithChildren(BASE_BENCHMARK_NODE_COUNT, 1000),
-                );
-                const editPayload = getEditPayloadInBytes(
-                    EDIT_BENCHMARK_PERCENTILES.singleTransaction.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["99%"].byteSize,
-                );
-                await editNodesWithSingleTransaction(
-                    provider.trees[0],
-                    provider,
-                    BASE_BENCHMARK_NODE_COUNT,
-                    editPayload,
-                );
-                assertChildValuesEqualExpected(
-                    provider.trees[0],
-                    editPayload,
-                    BASE_BENCHMARK_NODE_COUNT,
+            it(`3b.c. ${BENCHMARK_NODE_COUNT} large edits in 1 transaction containing ${BENCHMARK_NODE_COUNT} edits`, async () => {
+                await benchmarkEditNodesWithSingleTx(
+                    1,
+                    `3b.c. ${BENCHMARK_NODE_COUNT} large edits in 1 transaction containing ${BENCHMARK_NODE_COUNT} edits`,
                 );
             });
         });
-
-        //     describe("Subtrees in one transaction", () => {
-        //         // 1. edit subtree with ${BASE_BENCHMARK_NODE_COUNT} nodes (X) bytes in 1 transaction
-        //         // 1. edit subtree with 10000 nodes (X) bytes in 1 transaction
-        //         // 1. edit subtree with 1000000 nodes (X) bytes in 1 transaction
-        //     });
     });
 
     describe("4. Insert, Delete & Edit Nodes", () => {
+        const benchmarkInsertDeleteEditNodesWithInvidiualTxs = async (
+            percentile: number,
+            testName: string,
+            insertNodeCount: number,
+            deleteNodeCount: number,
+            editNodeCount: number,
+        ) => {
+            const provider = await TestTreeProvider.create(1);
+            initializeOpDataCollection(provider, testName);
+
+            // delete
+            const childByteSize = getSuccessfulOpByteSize("DELETE", "INDIVIDUAL", percentile);
+            initializeTestTree(
+                provider.trees[0],
+                getInitialJsonTreeWithChildren(deleteNodeCount, childByteSize),
+            );
+            deleteCurrentOps(); // We don't want to record the ops from initializing the tree.
+            await deleteNodesWithInvidualTransactions(
+                provider.trees[0],
+                provider,
+                deleteNodeCount,
+                1,
+            );
+            assertChildNodeCount(provider.trees[0], 0);
+
+            // insert
+            const insertChildNode = getJsonNode(
+                getSuccessfulOpByteSize("INSERT", "INDIVIDUAL", percentile),
+            );
+            await insertNodesWithInvidualTransactions(
+                provider.trees[0],
+                provider,
+                insertChildNode,
+                insertNodeCount,
+            );
+            assertChildNodeCount(provider.trees[0], insertNodeCount);
+
+            // edit
+            // The editing function iterates over each child node and performs an edit so we have to make sure we have enough children to avoid going out of bounds.
+            if (insertNodeCount < editNodeCount) {
+                const remainder = editNodeCount - insertNodeCount;
+                saveAndResetCurrentOps();
+                await insertNodesWithInvidualTransactions(
+                    provider.trees[0],
+                    provider,
+                    getJsonNode(childByteSize),
+                    remainder,
+                );
+                deleteCurrentOps(); // We don't want to record the ops from re-initializing the tree.
+            }
+            const editPayload = getEditPayloadInBytes(
+                getSuccessfulOpByteSize("EDIT", "INDIVIDUAL", percentile),
+            );
+            await editNodesWithInvidualTransactions(
+                provider.trees[0],
+                provider,
+                editNodeCount,
+                editPayload,
+            );
+            assertChildValuesEqualExpected(provider.trees[0], editPayload, editNodeCount);
+        };
+
         describe("4a. With individual transactions and an equal distribution of operation type", () => {
-            it(`4a.a. insert ${BASE_BENCHMARK_NODE_COUNT} small nodes, delete ${BASE_BENCHMARK_NODE_COUNT} small nodes, edit ${BASE_BENCHMARK_NODE_COUNT} nodes with small payloads`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `4a.a. insert ${BASE_BENCHMARK_NODE_COUNT} small nodes, delete ${BASE_BENCHMARK_NODE_COUNT} small nodes, edit ${BASE_BENCHMARK_NODE_COUNT} nodes with small payloads`,
-                );
-                // delete
-                const childByteSize =
-                    DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["1%"].byteSize;
-                initializeTestTree(
-                    provider.trees[0],
-                    getInitialJsonTreeWithChildren(BASE_BENCHMARK_NODE_COUNT, childByteSize),
-                );
-                await deleteNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    BASE_BENCHMARK_NODE_COUNT,
-                    1,
-                );
-                assertChildNodeCount(provider.trees[0], 0);
-
-                // insert
-                const insertChildNode = getJsonNode(
-                    INSERT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["1%"].byteSize,
-                );
-                await insertNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    insertChildNode,
-                    BASE_BENCHMARK_NODE_COUNT,
-                );
-                assertChildNodeCount(provider.trees[0], 100);
-
-                // edit
-                const editPayload = getEditPayloadInBytes(
-                    EDIT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["1%"].byteSize,
-                );
-                await editNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    BASE_BENCHMARK_NODE_COUNT,
-                    editPayload,
-                );
-                assertChildValuesEqualExpected(
-                    provider.trees[0],
-                    editPayload,
-                    BASE_BENCHMARK_NODE_COUNT,
+            it(`4a.a. insert ${BENCHMARK_NODE_COUNT} small nodes, delete ${BENCHMARK_NODE_COUNT} small nodes, edit ${BENCHMARK_NODE_COUNT} nodes with small payloads`, async () => {
+                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+                    0.01,
+                    `4a.a. insert ${BENCHMARK_NODE_COUNT} small nodes, delete ${BENCHMARK_NODE_COUNT} small nodes, edit ${BENCHMARK_NODE_COUNT} nodes with small payloads`,
+                    BENCHMARK_NODE_COUNT,
+                    BENCHMARK_NODE_COUNT,
+                    BENCHMARK_NODE_COUNT,
                 );
             });
 
-            it(`4a.b. insert ${BASE_BENCHMARK_NODE_COUNT} medium nodes, delete ${BASE_BENCHMARK_NODE_COUNT} medium nodes, edit ${BASE_BENCHMARK_NODE_COUNT} nodes with medium payloads`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `4a.b. insert ${BASE_BENCHMARK_NODE_COUNT} medium nodes, delete ${BASE_BENCHMARK_NODE_COUNT} medium nodes, edit ${BASE_BENCHMARK_NODE_COUNT} nodes with medium payloads`,
-                );
-                // delete
-                const childByteSize =
-                    DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["50%"].byteSize;
-                initializeTestTree(
-                    provider.trees[0],
-                    getInitialJsonTreeWithChildren(BASE_BENCHMARK_NODE_COUNT, childByteSize),
-                );
-                await deleteNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    BASE_BENCHMARK_NODE_COUNT,
-                    1,
-                );
-                assertChildNodeCount(provider.trees[0], 0);
-
-                // insert
-                initializeTestTree(provider.trees[0]);
-                const insertChildNode = getJsonNode(
-                    INSERT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["50%"].byteSize,
-                );
-                await insertNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    insertChildNode,
-                    BASE_BENCHMARK_NODE_COUNT,
-                );
-                assertChildNodeCount(provider.trees[0], BASE_BENCHMARK_NODE_COUNT);
-
-                // edit
-                const editPayload = getEditPayloadInBytes(
-                    EDIT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["50%"].byteSize,
-                );
-                await editNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    BASE_BENCHMARK_NODE_COUNT,
-                    editPayload,
-                );
-                assertChildValuesEqualExpected(
-                    provider.trees[0],
-                    editPayload,
-                    BASE_BENCHMARK_NODE_COUNT,
+            it(`4a.b. insert ${BENCHMARK_NODE_COUNT} medium nodes, delete ${BENCHMARK_NODE_COUNT} medium nodes, edit ${BENCHMARK_NODE_COUNT} nodes with medium payloads`, async () => {
+                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+                    0.5,
+                    `4a.b. insert ${BENCHMARK_NODE_COUNT} medium nodes, delete ${BENCHMARK_NODE_COUNT} medium nodes, edit ${BENCHMARK_NODE_COUNT} nodes with medium payloads`,
+                    BENCHMARK_NODE_COUNT,
+                    BENCHMARK_NODE_COUNT,
+                    BENCHMARK_NODE_COUNT,
                 );
             });
 
-            it(`4a.c. insert ${BASE_BENCHMARK_NODE_COUNT} large nodes, delete ${BASE_BENCHMARK_NODE_COUNT} large medium, edit ${BASE_BENCHMARK_NODE_COUNT} nodes with large payloads`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `4a.c. insert ${BASE_BENCHMARK_NODE_COUNT} large nodes, delete ${BASE_BENCHMARK_NODE_COUNT} large medium, edit ${BASE_BENCHMARK_NODE_COUNT} nodes with large payloads`,
-                );
-                // delete
-                const childByteSize =
-                    DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["99%"].byteSize;
-                initializeTestTree(
-                    provider.trees[0],
-                    getInitialJsonTreeWithChildren(BASE_BENCHMARK_NODE_COUNT, childByteSize),
-                );
-                await deleteNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    BASE_BENCHMARK_NODE_COUNT,
+            it(`4a.c. insert ${BENCHMARK_NODE_COUNT} large nodes, delete ${BENCHMARK_NODE_COUNT} large medium, edit ${BENCHMARK_NODE_COUNT} nodes with large payloads`, async () => {
+                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
                     1,
-                );
-                assertChildNodeCount(provider.trees[0], 0);
-
-                // insert
-                initializeTestTree(provider.trees[0]);
-                const insertChildNode = getJsonNode(
-                    INSERT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["99%"].byteSize,
-                );
-                await insertNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    insertChildNode,
-                    BASE_BENCHMARK_NODE_COUNT,
-                );
-                assertChildNodeCount(provider.trees[0], BASE_BENCHMARK_NODE_COUNT);
-
-                // edit
-                const editPayload = getEditPayloadInBytes(
-                    EDIT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["99%"].byteSize,
-                );
-                await editNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    BASE_BENCHMARK_NODE_COUNT,
-                    editPayload,
-                );
-                assertChildValuesEqualExpected(
-                    provider.trees[0],
-                    editPayload,
-                    BASE_BENCHMARK_NODE_COUNT,
+                    `4a.c. insert ${BENCHMARK_NODE_COUNT} large nodes, delete ${BENCHMARK_NODE_COUNT} large medium, edit ${BENCHMARK_NODE_COUNT} nodes with large payloads`,
+                    BENCHMARK_NODE_COUNT,
+                    BENCHMARK_NODE_COUNT,
+                    BENCHMARK_NODE_COUNT,
                 );
             });
         });
 
         describe("4b. In individual transactions with 70% distribution of operations towards insert", () => {
-            const seventyPercentCount = BASE_BENCHMARK_NODE_COUNT * 0.7;
-            const fifteenPercentCount = BASE_BENCHMARK_NODE_COUNT * 0.15;
+            const seventyPercentCount = BENCHMARK_NODE_COUNT * 0.7;
+            const fifteenPercentCount = BENCHMARK_NODE_COUNT * 0.15;
 
             it(`4b.a. Insert ${seventyPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
+                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+                    0.01,
                     `4b.a. Insert ${seventyPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`,
-                );
-                // delete
-                const childByteSize =
-                    DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["1%"].byteSize;
-                initializeTestTree(
-                    provider.trees[0],
-                    getInitialJsonTreeWithChildren(fifteenPercentCount, childByteSize),
-                );
-                await deleteNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    fifteenPercentCount,
-                    1,
-                );
-                assertChildNodeCount(provider.trees[0], 0);
-
-                // insert
-                const insertChildNode = getJsonNode(
-                    INSERT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["1%"].byteSize,
-                );
-                await insertNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    insertChildNode,
                     seventyPercentCount,
-                );
-                assertChildNodeCount(provider.trees[0], seventyPercentCount);
-
-                // edit
-                const editPayload = getEditPayloadInBytes(
-                    EDIT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["1%"].byteSize,
-                );
-                await editNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
                     fifteenPercentCount,
-                    editPayload,
+                    fifteenPercentCount,
                 );
-                assertChildValuesEqualExpected(provider.trees[0], editPayload, fifteenPercentCount);
             });
 
             it(`4b.b. Insert ${seventyPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
+                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+                    0.5,
                     `4b.b. Insert ${seventyPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`,
-                );
-
-                // delete
-                const childByteSize =
-                    DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["50%"].byteSize;
-                initializeTestTree(
-                    provider.trees[0],
-                    getInitialJsonTreeWithChildren(fifteenPercentCount, childByteSize),
-                );
-                await deleteNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    fifteenPercentCount,
-                    1,
-                );
-                assertChildNodeCount(provider.trees[0], 0);
-
-                // insert
-                const insertChildNode = getJsonNode(
-                    INSERT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["50%"].byteSize,
-                );
-                await insertNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    insertChildNode,
                     seventyPercentCount,
-                );
-                assertChildNodeCount(provider.trees[0], seventyPercentCount);
-
-                // edit
-                const editPayload = getEditPayloadInBytes(
-                    EDIT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["50%"].byteSize,
-                );
-                await editNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
                     fifteenPercentCount,
-                    editPayload,
+                    fifteenPercentCount,
                 );
-                assertChildValuesEqualExpected(provider.trees[0], editPayload, fifteenPercentCount);
             });
 
             it(`4b.b. Insert ${seventyPercentCount} large nodes, delete ${fifteenPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `4b.b. Insert ${seventyPercentCount} large nodes, delete ${fifteenPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`,
-                );
-
-                // delete
-                const childByteSize =
-                    DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["99%"].byteSize;
-                initializeTestTree(
-                    provider.trees[0],
-                    getInitialJsonTreeWithChildren(fifteenPercentCount, childByteSize),
-                );
-                await deleteNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    fifteenPercentCount,
+                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
                     1,
-                );
-                assertChildNodeCount(provider.trees[0], 0);
-
-                // insert
-                const insertChildNode = getJsonNode(
-                    INSERT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["99%"].byteSize,
-                );
-                await insertNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    insertChildNode,
+                    `4b.b. Insert ${seventyPercentCount} large nodes, delete ${fifteenPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`,
                     seventyPercentCount,
-                );
-                assertChildNodeCount(provider.trees[0], seventyPercentCount);
-
-                // edit
-                const editPayload = getEditPayloadInBytes(
-                    EDIT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["99%"].byteSize,
-                );
-                await editNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
                     fifteenPercentCount,
-                    editPayload,
+                    fifteenPercentCount,
                 );
-                assertChildValuesEqualExpected(provider.trees[0], editPayload, fifteenPercentCount);
             });
         });
 
         describe("4c. In individual transactions with 70% distribution of operations towards delete", () => {
-            const seventyPercentCount = BASE_BENCHMARK_NODE_COUNT * 0.7;
-            const fifteenPercentCount = BASE_BENCHMARK_NODE_COUNT * 0.15;
+            const seventyPercentCount = BENCHMARK_NODE_COUNT * 0.7;
+            const fifteenPercentCount = BENCHMARK_NODE_COUNT * 0.15;
 
             it(`4c.a. Insert ${fifteenPercentCount} small nodes, delete ${seventyPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
+                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+                    0.01,
                     `4c.a. Insert ${fifteenPercentCount} small nodes, delete ${seventyPercentCount} small nodes, edit ${fifteenPercentCount} nodes with small payloads`,
-                );
-
-                // delete
-                const childByteSize =
-                    DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["1%"].byteSize;
-                initializeTestTree(
-                    provider.trees[0],
-                    getInitialJsonTreeWithChildren(seventyPercentCount, childByteSize),
-                );
-                await deleteNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
+                    fifteenPercentCount,
                     seventyPercentCount,
-                    1,
-                );
-                assertChildNodeCount(provider.trees[0], 0);
-
-                // insert
-                const insertChildNode = getJsonNode(
-                    INSERT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["1%"].byteSize,
-                );
-                await insertNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    insertChildNode,
                     fifteenPercentCount,
                 );
-                assertChildNodeCount(provider.trees[0], fifteenPercentCount);
-
-                // edit
-                const editPayload = getEditPayloadInBytes(
-                    EDIT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["1%"].byteSize,
-                );
-                await editNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    fifteenPercentCount,
-                    editPayload,
-                );
-                assertChildValuesEqualExpected(provider.trees[0], editPayload, fifteenPercentCount);
             });
 
             it(`4c.b. Insert ${fifteenPercentCount} medium nodes, delete ${seventyPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
+                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+                    0.5,
                     `4c.b. Insert ${fifteenPercentCount} medium nodes, delete ${seventyPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`,
-                );
-
-                // delete
-                const childByteSize =
-                    DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["50%"].byteSize;
-                initializeTestTree(
-                    provider.trees[0],
-                    getInitialJsonTreeWithChildren(seventyPercentCount, childByteSize),
-                );
-                await deleteNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
+                    fifteenPercentCount,
                     seventyPercentCount,
-                    1,
-                );
-                assertChildNodeCount(provider.trees[0], 0);
-
-                // insert
-                const insertChildNode = getJsonNode(
-                    INSERT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["50%"].byteSize,
-                );
-                await insertNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    insertChildNode,
                     fifteenPercentCount,
                 );
-                assertChildNodeCount(provider.trees[0], fifteenPercentCount);
-
-                // edit
-                const editPayload = getEditPayloadInBytes(
-                    EDIT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["50%"].byteSize,
-                );
-                await editNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    fifteenPercentCount,
-                    editPayload,
-                );
-                assertChildValuesEqualExpected(provider.trees[0], editPayload, fifteenPercentCount);
             });
 
             it(`4c.b. Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `4c.b. Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${fifteenPercentCount} nodes with large payloads`,
-                );
-
-                // delete
-                const childByteSize =
-                    DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["99%"].byteSize;
-                initializeTestTree(
-                    provider.trees[0],
-                    getInitialJsonTreeWithChildren(seventyPercentCount, childByteSize),
-                );
-                await deleteNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    seventyPercentCount,
+                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
                     1,
-                );
-                assertChildNodeCount(provider.trees[0], 0);
-
-                // insert
-                const insertChildNode = getJsonNode(
-                    INSERT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["99%"].byteSize,
-                );
-                await insertNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    insertChildNode,
+                    `4c.b. Insert ${fifteenPercentCount} medium nodes, delete ${seventyPercentCount} medium nodes, edit ${fifteenPercentCount} nodes with medium payloads`,
+                    fifteenPercentCount,
+                    seventyPercentCount,
                     fifteenPercentCount,
                 );
-                assertChildNodeCount(provider.trees[0], fifteenPercentCount);
-
-                // edit
-                const editPayload = getEditPayloadInBytes(
-                    EDIT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["99%"].byteSize,
-                );
-                await editNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    fifteenPercentCount,
-                    editPayload,
-                );
-                assertChildValuesEqualExpected(provider.trees[0], editPayload, fifteenPercentCount);
             });
         });
 
         describe("4d. In individual transactions with 70% distribution of operations towards edit", () => {
-            const seventyPercentCount = BASE_BENCHMARK_NODE_COUNT * 0.7;
-            const fifteenPercentCount = BASE_BENCHMARK_NODE_COUNT * 0.15;
+            const seventyPercentCount = BENCHMARK_NODE_COUNT * 0.7;
+            const fifteenPercentCount = BENCHMARK_NODE_COUNT * 0.15;
 
             it(`4d.a. Insert ${fifteenPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${seventyPercentCount} nodes with small payloads`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
+                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+                    0.01,
                     `4d.a. Insert ${fifteenPercentCount} small nodes, delete ${fifteenPercentCount} small nodes, edit ${seventyPercentCount} nodes with small payloads`,
-                );
-
-                // delete
-                const childByteSize =
-                    DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["1%"].byteSize;
-                initializeTestTree(
-                    provider.trees[0],
-                    getInitialJsonTreeWithChildren(BASE_BENCHMARK_NODE_COUNT, childByteSize),
-                );
-                await deleteNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
                     fifteenPercentCount,
-                    1,
-                );
-                assertChildNodeCount(
-                    provider.trees[0],
-                    BASE_BENCHMARK_NODE_COUNT - fifteenPercentCount,
-                );
-
-                // insert
-                const insertChildNode = getJsonNode(
-                    INSERT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["1%"].byteSize,
-                );
-                await insertNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    insertChildNode,
                     fifteenPercentCount,
-                );
-                assertChildNodeCount(provider.trees[0], BASE_BENCHMARK_NODE_COUNT);
-
-                // edit
-                const editPayload = getEditPayloadInBytes(
-                    EDIT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["1%"].byteSize,
-                );
-                await editNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
                     seventyPercentCount,
-                    editPayload,
                 );
-                assertChildValuesEqualExpected(provider.trees[0], editPayload, seventyPercentCount);
             });
 
             it(`4d.b. Insert ${fifteenPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${seventyPercentCount} nodes with medium payloads`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
+                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+                    0.5,
                     `4d.b. Insert ${fifteenPercentCount} medium nodes, delete ${fifteenPercentCount} medium nodes, edit ${seventyPercentCount} nodes with medium payloads`,
-                );
-
-                // delete
-                const childByteSize =
-                    DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["50%"].byteSize;
-                initializeTestTree(
-                    provider.trees[0],
-                    getInitialJsonTreeWithChildren(BASE_BENCHMARK_NODE_COUNT, childByteSize),
-                );
-                await deleteNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
                     fifteenPercentCount,
-                    1,
-                );
-                assertChildNodeCount(
-                    provider.trees[0],
-                    BASE_BENCHMARK_NODE_COUNT - fifteenPercentCount,
-                );
-
-                // insert
-                const insertChildNode = getJsonNode(
-                    INSERT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["50%"].byteSize,
-                );
-                await insertNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    insertChildNode,
                     fifteenPercentCount,
-                );
-                assertChildNodeCount(provider.trees[0], BASE_BENCHMARK_NODE_COUNT);
-
-                // edit
-                const editPayload = getEditPayloadInBytes(
-                    EDIT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["50%"].byteSize,
-                );
-                await editNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
                     seventyPercentCount,
-                    editPayload,
                 );
-                assertChildValuesEqualExpected(provider.trees[0], editPayload, seventyPercentCount);
             });
 
             it(`4d.c. Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${seventyPercentCount} nodes with large payloads`, async () => {
-                const provider = await TestTreeProvider.create(1);
-                initializeOpDataCollection(
-                    provider,
-                    `4d.c. Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${seventyPercentCount} nodes with large payloads`,
-                );
-
-                // delete
-                const childByteSize =
-                    DELETE_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["99%"].byteSize;
-                initializeTestTree(
-                    provider.trees[0],
-                    getInitialJsonTreeWithChildren(BASE_BENCHMARK_NODE_COUNT, childByteSize),
-                );
-                await deleteNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    fifteenPercentCount,
+                await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
                     1,
-                );
-                assertChildNodeCount(
-                    provider.trees[0],
-                    BASE_BENCHMARK_NODE_COUNT - fifteenPercentCount,
-                );
-
-                // insert
-                const insertChildNode = getJsonNode(
-                    INSERT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["99%"].byteSize,
-                );
-                await insertNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
-                    insertChildNode,
+                    `4d.c. Insert ${fifteenPercentCount} large nodes, delete ${seventyPercentCount} large nodes, edit ${seventyPercentCount} nodes with large payloads`,
                     fifteenPercentCount,
-                );
-                assertChildNodeCount(provider.trees[0], BASE_BENCHMARK_NODE_COUNT);
-
-                // edit
-                const editPayload = getEditPayloadInBytes(
-                    EDIT_BENCHMARK_PERCENTILES.individualTransactions.nodeCounts[
-                        `${BASE_BENCHMARK_NODE_COUNT}`
-                    ].percentiles["99%"].byteSize,
-                );
-                await editNodesWithInvidualTransactions(
-                    provider.trees[0],
-                    provider,
+                    fifteenPercentCount,
                     seventyPercentCount,
-                    editPayload,
                 );
-                assertChildValuesEqualExpected(provider.trees[0], editPayload, seventyPercentCount);
             });
         });
     });
