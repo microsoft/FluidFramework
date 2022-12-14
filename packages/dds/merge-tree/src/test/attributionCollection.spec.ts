@@ -127,16 +127,16 @@ describe("AttributionCollection", () => {
             AttributionCollection.populateAttributionCollections(segments, {
                 length: 9,
                 posBreakpoints: [0, 2, 5, 7],
-                keys: [0, 2, 5, 7].map((key) => `val${key}`),
+                keys: [10, 12, 15, 17],
             });
             assert.deepEqual(segments[0].attribution?.getAll(), [
-                { offset: 0, key: { id: "op", key: "val0" } },
-                { offset: 2, key: { id: "op", key: "val2" } },
+                { offset: 0, key: { id: "op", key: 10 } },
+                { offset: 2, key: { id: "op", key: 12 } },
             ]);
 
             assert.deepEqual(segments[1].attribution?.getAll(), [
-                { offset: 0, key: { id: "op", key: "val5" } },
-                { offset: 2, key: { id: "op", key: "val7" } },
+                { offset: 0, key: { id: "op", key: 15 } },
+                { offset: 2, key: { id: "op", key: 17 } },
             ]);
 
             for (const segment of segments) {
@@ -149,17 +149,17 @@ describe("AttributionCollection", () => {
             AttributionCollection.populateAttributionCollections(segments, {
                 length: 9,
                 posBreakpoints: [0, 2, 5, 7],
-                keys: [0, 2, 5, 7].map((key) => `val${key}`),
+                keys: [10, 12, 15, 17],
             });
             assert.deepEqual(segments[0].attribution?.getAll(), [
-                { offset: 0, key: { id: "op", key: "val0" } },
-                { offset: 2, key: { id: "op", key: "val2" } },
+                { offset: 0, key: { id: "op", key: 10 } },
+                { offset: 2, key: { id: "op", key: 12 } },
             ]);
 
             assert.deepEqual(segments[1].attribution?.getAll(), [
-                { offset: 0, key: { id: "op", key: "val2" } },
-                { offset: 1, key: { id: "op", key: "val5" } },
-                { offset: 3, key: { id: "op", key: "val7" } },
+                { offset: 0, key: { id: "op", key: 12 } },
+                { offset: 1, key: { id: "op", key: 15 } },
+                { offset: 3, key: { id: "op", key: 17 } },
             ]);
 
             for (const segment of segments) {
@@ -200,7 +200,7 @@ describe("AttributionCollection", () => {
                 blob: {
                     length: 3,
                     posBreakpoints: [0],
-                    keys: ["foo"],
+                    keys: [51],
                 },
                 segments: [seg(3)],
             },
