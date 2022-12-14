@@ -273,6 +273,11 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     ): Promise<void> {
         // If GC is disabled, skip updating GC state since we are not tracking GC state.
         if (!this.gcDisabled) {
+            // Possible re-entrancy. If we have already seen a summary later than this one, ignore it.
+            if (this.referenceSequenceNumber >= referenceSequenceNumber) {
+                return;
+            }
+
             // Load the base GC details before proceeding because if that happens later it can overwrite the GC details
             // written by the following code.
             await this.loadBaseGCDetails();
@@ -288,13 +293,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             let gcDetails: IGarbageCollectionDetailsBase = { gcData: { gcNodes: {} } };
             const gcSnapshotTree = snapshotTree.trees[gcTreeKey];
             if (gcSnapshotTree !== undefined) {
-                // This is the root summarizer node. It reads GC data from the root and processes it as explained above.
+                // If there is a GC tree in the snapshot, this is the root summarizer node. Read GC data from the tree
+                // process it as explained above.
                 const gcSnapshotData = await getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
-
-                // Possible re-entrancy. If we have already seen a summary later than this one, ignore it.
-                if (this.referenceSequenceNumber >= referenceSequenceNumber) {
-                    return;
-                }
 
                 const gcNodes: { [id: string]: string[]; } = {};
                 for (const [nodeId, nodeData] of Object.entries(gcSnapshotData.gcState.gcNodes)) {
@@ -304,13 +305,11 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
                 const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
                 gcDetails = { gcData: { gcNodes }, usedRoutes };
             } else {
-                // Non root summarizer nodes. They get their GC data and used routes from their snapshot tree.
+                // If there is a GC blob in the snapshot, it's a non-root summarizer nodes - The root summarizer node
+                // writes GC blob in the snapshot of child nodes. Get  GC data and used routes from the blob.
                 const gcDetailsBlob = snapshotTree.blobs[gcTreeKey];
-                gcDetails = JSON.parse(gcDetailsBlob) as IGarbageCollectionDetailsBase;
-
-                // Possible re-entrancy. If we have already seen a summary later than this one, ignore it.
-                if (this.referenceSequenceNumber >= referenceSequenceNumber) {
-                    return;
+                if (gcDetailsBlob !== undefined) {
+                    gcDetails = JSON.parse(gcDetailsBlob) as IGarbageCollectionDetailsBase;
                 }
             }
 
@@ -319,9 +318,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             this.referenceUsedRoutes = gcDetails.usedRoutes !== undefined ? Array.from(gcDetails.usedRoutes) : undefined;
 
             // Generate the GC data and used routes of children GC nodes and add it to their snapshot tree.
-            const baseGCDetailsMap = unpackChildNodesGCDetails(gcDetails);
+            const gcDetailsMap = unpackChildNodesGCDetails(gcDetails);
             const { childrenTree } = parseSummaryForSubtrees(snapshotTree);
-            baseGCDetailsMap.forEach((childGCDetails: IGarbageCollectionDetailsBase, childId: string) => {
+            gcDetailsMap.forEach((childGCDetails: IGarbageCollectionDetailsBase, childId: string) => {
                 childrenTree.trees[childId].blobs[gcTreeKey] = JSON.stringify(childGCDetails);
             });
         }
