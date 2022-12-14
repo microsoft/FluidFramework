@@ -308,6 +308,9 @@ stages:
                 workingDirectory: ${{ parameters.buildDirectory }}/nyc/report
                 script: |
                   sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
+                  echo "sed -i '/<skipped/d' cobertura-coverage-patched.xml"
+                  sed -i '/<skipped/d' cobertura-coverage-patched.xml
+                  cat cobertura-coverage-patched.xml
               condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
             - task: PublishCodeCoverageResults@1
               displayName: Publish Code Coverage

@@ -309,6 +309,15 @@ jobs:
           workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
           customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
 
+      # filter report
+      - task: Bash@3
+        displayName: Filter skipped test from report
+        inputs:
+          workingDir: ${{ variables.testPackageDir }}/nyc
+          targetType: 'inline'
+          script: |
+            for i in `ls`; do sed -i '/<skipped/d' $i; echo $i; cat $i ; done
+
       # Upload results
       - task: PublishTestResults@2
         displayName: Publish Test Results
