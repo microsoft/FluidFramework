@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IconButton, Stack, StackItem, TooltipHost } from "@fluentui/react";
+import { IconButton, IStackStyles, Stack, StackItem, TooltipHost } from "@fluentui/react";
 import React from "react";
 
 import { SharedCounter } from "@fluidframework/counter";
@@ -68,13 +68,26 @@ export function SharedCounterView(props: SharedCounterViewProps): React.ReactEle
         setDeltaValue(e.target.value);
     }
 
+    const stackStyles: IStackStyles = {
+        root: {
+            padding: 15,
+        }
+    }
+
+    const buttonStyles: IStackStyles = {
+        root: {
+            margin: 20
+        }
+    }
+
+
 	return (
 		<Stack>
 			<StackItem>
 				<b>SharedCounter</b>
 			</StackItem>
 			<StackItem>Value: {value} </StackItem>
-            <StackItem>
+            <StackItem styles={stackStyles}>
                 <TooltipHost
 					content="Decrememt counter by the delta-value."
 					id={decrementButtonTooltipId}
@@ -84,6 +97,7 @@ export function SharedCounterView(props: SharedCounterViewProps): React.ReactEle
                             disabled={deltaValue === ""}
                             menuIconProps={{ iconName: "CalculatorSubtract" }}
                             aria-describedby={decrementButtonTooltipId}
+                            styles={buttonStyles}
                     />
                 </TooltipHost>
 
@@ -103,6 +117,7 @@ export function SharedCounterView(props: SharedCounterViewProps): React.ReactEle
                             disabled={deltaValue === ""}
                             menuIconProps={{ iconName: "CalculatorAddition" }}
                             aria-describedby={incrementButtonTooltipId}
+                            styles={buttonStyles}
                     />
                 </TooltipHost>
             </StackItem>
