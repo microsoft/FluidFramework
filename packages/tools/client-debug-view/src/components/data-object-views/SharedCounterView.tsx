@@ -91,7 +91,7 @@ export function SharedCounterView(props: SharedCounterViewProps): React.ReactEle
                     content="Enter the delta value of your choice"
                     id={inputFieldTooltipId}
                 >
-                    <input onChange={inputSetValue} placeholder="Enter Delta" value={deltaValue}/>
+                    <input type="number" onChange={inputSetValue} placeholder="Enter Delta" value={deltaValue}/>
                 </TooltipHost>
 
                 <TooltipHost
