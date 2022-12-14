@@ -201,17 +201,17 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
     });
 
-    const chunkingBatchesConfig: ITestContainerConfig = {
-        ...testContainerConfig,
-        runtimeOptions: {
-            compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
-            chunkSizeInBytes: 600 * 1024,
-            summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
-        },
-    };
-    const chunkingBatchesTimeoutMs = 200000;
-
     describe("Large payloads (exceeding the 1MB limit)", () => {
+        const chunkingBatchesConfig: ITestContainerConfig = {
+            ...testContainerConfig,
+            runtimeOptions: {
+                compressionOptions: { minimumBatchSizeInBytes: 1024 * 1024, compressionAlgorithm: CompressionAlgorithms.lz4 },
+                chunkSizeInBytes: 600 * 1024,
+                summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
+            },
+        };
+        const chunkingBatchesTimeoutMs = 200000;
+
         describe("Chunking compressed batches", () => [
             { messagesInBatch: 1, messageSize: 5 * 1024 * 1024 }, // One large message
             { messagesInBatch: 3, messageSize: 5 * 1024 * 1024 }, // Three large messages
