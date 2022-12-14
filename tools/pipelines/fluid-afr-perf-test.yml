@@ -57,7 +57,7 @@ variables:
 stages:
   # Run Azure Client FRS Tests (WestUS2)
   - stage:
-    displayName: e2e - frs perf tests (WestUS2)
+    displayName: AFR Perf Tests (WestUS2)
     dependsOn: []
     jobs:
       - template: templates/include-test-real-service.yml
@@ -76,7 +76,7 @@ stages:
             azure__fluid__relay__service__function__url: $(fluid-afr-perf-test-westus2-function-url)
   # Run Azure Client FRS Tests (WestUS3)
   - stage:
-    displayName: e2e - frs perf tests (WestUS3)
+    displayName: AFR Perf Tests (WestUS3)
     dependsOn: []
     jobs:
       - template: templates/include-test-real-service.yml
@@ -95,7 +95,7 @@ stages:
             azure__fluid__relay__service__function__url: $(fluid-afr-perf-test-westus3-function-url)
   # Run Azure Client FRS Tests (EastUS)
   - stage:
-    displayName: e2e - frs perf tests (EastUS)
+    displayName: AFR Perf Tests (EastUS)
     dependsOn: []
     jobs:
       - template: templates/include-test-real-service.yml
@@ -114,7 +114,7 @@ stages:
             azure__fluid__relay__service__function__url: $(fluid-afr-perf-test-eastus-function-url)
   # Run Azure Client FRS Tests (WestEurope)
   - stage:
-    displayName: e2e - frs perf tests (WestEurope)
+    displayName: AFR Perf Tests (WestEurope)
     dependsOn: []
     jobs:
       - template: templates/include-test-real-service.yml
