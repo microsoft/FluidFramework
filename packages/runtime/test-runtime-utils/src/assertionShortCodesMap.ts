@@ -716,7 +716,6 @@ export const shortCodeMap = {
     "0x3ab": "Must be in a field to enter node",
     "0x3ac": "Must have parent node",
     "0x3ad": "Unknown field kind",
-    "0x3ae": "not enough ops were sent to reach the noop frequency",
     "0x3af": "Already processing ops.",
     "0x3b0": "inactive timeout must not be greater than the sweep timeout",
     "0x3b1": "inactiveTimer still running after sweepTimer fired!",
