@@ -400,7 +400,10 @@ stages:
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run bundle-analysis:collect'
 
-          - task: PublishPipelineArtifact@1
+          # NOTE: this task is deliberately not updated to the newer PublishPipelineArtifact because some of our tooling
+          # does not support the newer task.
+          # See the getZipObjectFromArtifact function in @fluidframework/bundle-size-tools for details about the issue.
+          - task: PublishBuildArtifacts@1
             displayName: Publish Artifacts - bundle-analysis
             condition:
               and(
@@ -409,9 +412,9 @@ stages:
                 eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true)
               )
             inputs:
-              targetPath: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
-              artifactname: 'bundleAnalysis'
-              publishLocation: 'pipeline'
+              PathtoPublish: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
+              Artifactname: 'bundleAnalysis'
+              publishLocation: 'Container'
 
           - task: Npm@1
             displayName: run bundle size comparison

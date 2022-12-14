@@ -28,10 +28,10 @@ import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils";
 
 /**
- * These tests validate that SweepReady objects are correctly marked as tombstones. Tombstones should be added to the
- * summary and changing them (sending / receiving ops, loading, etc.) is not allowed.
+ * These tests validate that SweepReady data stores are correctly marked as tombstones. Tombstones should be added
+ * to the summary and changing them (sending / receiving ops, loading, etc.) is not allowed.
  */
-describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
+describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
     const remainingTimeUntilSweepMs = 100;
     const sweepTimeoutMs = 200;
     assert(remainingTimeUntilSweepMs < sweepTimeoutMs, "remainingTimeUntilSweepMs should be < sweepTimeoutMs");

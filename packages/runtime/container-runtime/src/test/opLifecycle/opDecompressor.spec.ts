@@ -7,8 +7,9 @@ import { strict as assert } from "assert";
 import { compress } from "lz4js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IsoBuffer } from "@fluidframework/common-utils";
-import { OpDecompressor } from "../opDecompressor";
-import { ContainerMessageType, ContainerRuntimeMessage } from "..";
+import { ContainerRuntimeMessage, ContainerMessageType } from "../..";
+import { OpDecompressor } from "../../opLifecycle";
+
 
 function generateCompressedBatchMessage(length: number, metadata = true): ISequencedDocumentMessage {
     const batch: ContainerRuntimeMessage[] = [];

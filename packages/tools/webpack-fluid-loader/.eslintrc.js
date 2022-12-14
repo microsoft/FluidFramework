@@ -13,6 +13,7 @@ module.exports = {
     "rules": {
         "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
+        "import/no-nodejs-modules": "off",
         "no-case-declarations": "off"
     }
 }

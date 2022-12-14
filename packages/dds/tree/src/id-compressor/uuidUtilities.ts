@@ -31,7 +31,7 @@ export const nilUuid = assertIsUuidString(NIL);
  * Asserts that the given string is a UUID
  */
 export function assertIsUuidString(uuidString: string): UuidString {
-    assert(isUuidString(uuidString), `Expected an UuidString`);
+    assert(isUuidString(uuidString), 0x4a2 /* Expected an UuidString */);
     return uuidString;
 }
 
@@ -73,7 +73,7 @@ export function generateStableId(): StableId {
  * Asserts that the given string is a stable ID.
  */
 export function assertIsStableId(stableId: string): StableId {
-    assert(isStableId(stableId), "Expected a StableId");
+    assert(isStableId(stableId), 0x4a3 /* Expected a StableId */);
     return stableId;
 }
 

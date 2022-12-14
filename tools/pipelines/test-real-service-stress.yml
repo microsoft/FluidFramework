@@ -39,6 +39,7 @@ stages:
         poolBuild: Large
         testPackage: "@fluid-internal/test-service-load"
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 120
         testCommand: start:odsp
         env:
@@ -60,6 +61,7 @@ stages:
         poolBuild: Large
         testPackage: "@fluid-internal/test-service-load"
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 120
         testCommand: start:odspdf
         env:
@@ -78,6 +80,7 @@ stages:
         poolBuild: Large
         testPackage: "@fluid-internal/test-service-load"
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 120
         testCommand: start:t9s
         env:
@@ -96,6 +99,7 @@ stages:
         poolBuild: Large
         testPackage: "@fluid-internal/test-service-load"
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 120
         testCommand: start:frs
         env:

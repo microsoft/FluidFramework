@@ -5,11 +5,11 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Merge Tree Test",
+      "name": "Tree Tests",
       "type": "node",
       "request": "launch",
       "program": "${workspaceRoot}/../../../node_modules/mocha/bin/_mocha",
-      "args": ["dist/test", " --recursive", "--no-timeouts", "--exit"],
+      "args": ["--no-timeouts"],
       "cwd": "${workspaceRoot}"
     }
   ]
