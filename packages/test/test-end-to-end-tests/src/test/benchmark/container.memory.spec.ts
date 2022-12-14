@@ -51,7 +51,7 @@ describeNoCompat("Container - memory usage benchmarks", (getTestObjectProvider) 
         provider = getTestObjectProvider();
 
         // TODO: Convert these to mocked unit test. These are all API tests and doesn't
-        // need the service.  For new disable the tests other than local driver
+        // need the service.  For now disable the tests other than local driver
         if (provider.driver.type !== "local") {
             this.skip();
         }
