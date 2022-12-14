@@ -241,14 +241,14 @@ const getCodeProposal =
  * @param eventName - event name
  * @param action - functor to call and measure
  */
-async function ReportIfTooLong(
+export async function ReportIfTooLong(
     logger: ITelemetryLogger,
     eventName: string,
     action: () => Promise<ITelemetryProperties>,
 ) {
     const event = PerformanceEvent.start(logger, { eventName });
     const props = await action();
-    if (event.duration > 1000) {
+    if (event.duration > 200) {
         event.end(props);
     }
 }

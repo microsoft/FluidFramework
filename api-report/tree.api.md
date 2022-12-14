@@ -740,7 +740,7 @@ interface Modify<TTree = ProtoNode> {
 }
 
 // @public (undocumented)
-interface Modify_2<TNodeChange = NodeChangeType> extends HasChanges<TNodeChange>, HasRevisionTag {
+interface Modify_2<TNodeChange = NodeChangeType> extends HasChanges<TNodeChange> {
     // (undocumented)
     tomb?: RevisionTag;
     // (undocumented)

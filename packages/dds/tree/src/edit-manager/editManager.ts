@@ -254,6 +254,8 @@ export class EditManager<
             inverses.unshift(tagInverse(inverse, localChange.revision));
         }
 
+        // This approach can lead to non-minimal changesets (and therefore deltas) for local inserts because
+        // the rebased local insert does not cancel out with its inverse during composition.
         const netChange = this.changeFamily.rebaser.compose([
             ...inverses,
             trunkChange,
