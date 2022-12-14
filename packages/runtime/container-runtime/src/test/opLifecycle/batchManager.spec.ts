@@ -7,9 +7,6 @@ import { strict as assert } from "assert";
 import { BatchManager, BatchMessage } from "../../opLifecycle";
 
 describe("BatchManager", () => {
-    beforeEach(() => {
-    });
-
     const softLimit = 1024;
     const hardLimit = 950 * 1024;
     const smallMessageSize = 10;

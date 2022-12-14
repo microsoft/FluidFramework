@@ -63,7 +63,6 @@ export class LocalKafka implements IProducer {
         this.subscriptions.push(kafkaSubscription);
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
     public async send(messages: object[], topic: string): Promise<any> {
         for (const message of messages) {
             const queuedMessage: IQueuedMessage = {

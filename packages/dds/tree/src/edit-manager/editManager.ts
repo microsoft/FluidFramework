@@ -70,7 +70,7 @@ export class EditManager<
     public advanceMinimumSequenceNumber(minimumSequenceNumber: number): void {
         assert(
             minimumSequenceNumber >= this.minimumSequenceNumber,
-            "number must be larger or equal to current minimumSequenceNumber.",
+            0x476 /* number must be larger or equal to current minimumSequenceNumber. */,
         );
         this.minimumSequenceNumber = minimumSequenceNumber;
         let commitsToRemove = 0;
@@ -254,6 +254,8 @@ export class EditManager<
             inverses.unshift(tagInverse(inverse, localChange.revision));
         }
 
+        // This approach can lead to non-minimal changesets (and therefore deltas) for local inserts because
+        // the rebased local insert does not cancel out with its inverse during composition.
         const netChange = this.changeFamily.rebaser.compose([
             ...inverses,
             trunkChange,
