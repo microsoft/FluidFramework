@@ -65,7 +65,7 @@ stages:
           poolBuild: Small
           testPackage: "@fluidframework/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
-          testCommand: start:westus2
+          testCommand: start
           downloadAzureTestArtifacts: true
           artifactBuildId: $(resources.pipeline.azure.runID)
           env:
@@ -84,7 +84,7 @@ stages:
           poolBuild: Small
           testPackage: "@fluidframework/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
-          testCommand: start:westus3
+          testCommand: start
           downloadAzureTestArtifacts: true
           artifactBuildId: $(resources.pipeline.azure.runID)
           env:
@@ -103,7 +103,7 @@ stages:
           poolBuild: Small
           testPackage: "@fluidframework/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
-          testCommand: start:eastus
+          testCommand: start
           downloadAzureTestArtifacts: true
           artifactBuildId: $(resources.pipeline.azure.runID)
           env:
@@ -122,7 +122,7 @@ stages:
           poolBuild: Small
           testPackage: "@fluidframework/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
-          testCommand: start:westeurope
+          testCommand: start
           downloadAzureTestArtifacts: true
           artifactBuildId: $(resources.pipeline.azure.runID)
           env:
