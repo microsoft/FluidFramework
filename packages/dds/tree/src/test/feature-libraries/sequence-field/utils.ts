@@ -34,7 +34,7 @@ export function rebaseTagged(
                 currChange.change,
                 baseChange,
                 TestChange.rebase,
-                TestChange.newIdAllocator(getMaxId(currChange.change)),
+                TestChange.newIdAllocator(getMaxId(currChange.change, baseChange.change)),
             ),
             change.revision,
         );
@@ -50,11 +50,13 @@ function toDelta(change: TestChangeset): Delta.MarkList {
     return SF.sequenceFieldToDelta(change, TestChange.toDelta, fakeRepair);
 }
 
-export function getMaxId(change: SF.Changeset<unknown>): ChangesetLocalId | undefined {
+export function getMaxId(...changes: SF.Changeset<unknown>[]): ChangesetLocalId | undefined {
     let max: ChangesetLocalId | undefined;
-    for (const mark of change) {
-        if (SF.isMoveMark(mark)) {
-            max = max === undefined ? mark.id : brand(Math.max(max, mark.id));
+    for (const change of changes) {
+        for (const mark of change) {
+            if (SF.isMoveMark(mark)) {
+                max = max === undefined ? mark.id : brand(Math.max(max, mark.id));
+            }
         }
     }
 
@@ -64,16 +66,7 @@ export function getMaxId(change: SF.Changeset<unknown>): ChangesetLocalId | unde
 export function getMaxIdTagged(
     changes: TaggedChange<SF.Changeset<unknown>>[],
 ): ChangesetLocalId | undefined {
-    const reduceMax = (
-        max: ChangesetLocalId | undefined,
-        c: SF.Changeset<unknown>,
-    ): ChangesetLocalId | undefined => {
-        const currMax = getMaxId(c);
-        return max !== undefined && currMax !== undefined
-            ? brand(Math.max(max, currMax))
-            : max ?? currMax;
-    };
-    return changes.map((c) => c.change).reduce(reduceMax, undefined);
+    return getMaxId(...changes.map((c) => c.change));
 }
 
 export function normalizeMoveIds(change: SF.Changeset<unknown>): void {

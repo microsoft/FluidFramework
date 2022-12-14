@@ -28,7 +28,7 @@ function rebase(change: TestChangeset, base: TestChangeset): TestChangeset {
         change,
         makeAnonChange(base),
         TestChange.rebase,
-        TestChange.newIdAllocator(getMaxId(change)),
+        TestChange.newIdAllocator(getMaxId(change, base)),
     );
 }
 

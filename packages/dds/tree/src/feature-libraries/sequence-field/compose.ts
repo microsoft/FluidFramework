@@ -601,13 +601,44 @@ export class ComposeQueue<T> {
         this.newMarks = new StackyIterator(newMarks);
     }
 
+    // TODO: Don't know if lists are empty until applying move effects.
+    // Probably should redesign this class to just be an iterator.
     public isEmpty(): boolean {
         return this.baseMarks.done && this.newMarks.done;
     }
 
     public pop(): ComposeMarks<T> {
-        let baseMark: Mark<T> | undefined = this.baseMarks.peek();
-        let newMark: Mark<T> | undefined = this.newMarks.peek();
+        let baseMark: Mark<T> | undefined = this.baseMarks.pop();
+        let newMark: Mark<T> | undefined = this.newMarks.pop();
+
+        if (baseMark !== undefined) {
+            const splitMarks = applyMoveEffectsToMark(
+                baseMark,
+                undefined,
+                this.moveEffects,
+                this.genId,
+                false,
+            );
+            baseMark = splitMarks[0];
+            for (let i = splitMarks.length - 1; i >= 0; i--) {
+                this.baseMarks.push(splitMarks[i]);
+            }
+        }
+
+        if (newMark !== undefined) {
+            const splitMarks = applyMoveEffectsToMark(
+                newMark,
+                this.newRevision,
+                this.moveEffects,
+                this.genId,
+                this.reassignNewMoveIds,
+            );
+            newMark = splitMarks[0];
+            for (let i = splitMarks.length - 1; i >= 0; i--) {
+                this.newMarks.push(splitMarks[i]);
+            }
+        }
+
         if (baseMark === undefined || newMark === undefined) {
             return { baseMark: this.baseMarks.pop(), newMark: this.newMarks.pop() };
         } else if (isAttach(newMark)) {
@@ -643,50 +674,6 @@ export class ComposeQueue<T> {
             this.newMarks.pop();
             this.baseMarks.pop();
 
-            if (
-                isObjMark(newMark) &&
-                (newMark.type === "MoveOut" || newMark.type === "ReturnFrom")
-            ) {
-                if (this.reassignNewMoveIds) {
-                    const newId = getUniqueMoveId(
-                        newMark,
-                        this.newRevision,
-                        this.genId,
-                        this.moveEffects,
-                    );
-                    if (newId !== newMark.id) {
-                        newMark = clone(newMark);
-                        newMark.id = newId;
-                        this.moveEffects.validatedMarks.add(newMark);
-                    }
-                }
-                const effect = this.moveEffects.srcEffects.get(newMark.id);
-                if (effect !== undefined) {
-                    const splitMarks = splitMoveOut(newMark, effect);
-                    for (const mark of splitMarks) {
-                        this.moveEffects.validatedMarks.add(mark);
-                    }
-                    newMark = splitMarks[0];
-                    for (let i = splitMarks.length - 1; i > 0; i--) {
-                        this.newMarks.push(splitMarks[i]);
-                    }
-                }
-            }
-
-            if (
-                isObjMark(baseMark) &&
-                (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")
-            ) {
-                const effect = this.moveEffects.dstEffects.get(baseMark.id);
-                if (effect !== undefined) {
-                    const splitMarks = splitMoveIn(baseMark, effect);
-                    baseMark = splitMarks[0];
-                    for (let i = splitMarks.length - 1; i > 0; i--) {
-                        this.baseMarks.push(splitMarks[i]);
-                    }
-                }
-            }
-
             const newMarkLength = getInputLength(newMark);
             const baseMarkLength = getOutputLength(baseMark);
             if (newMarkLength < baseMarkLength) {
@@ -699,25 +686,6 @@ export class ComposeQueue<T> {
                 );
                 this.baseMarks.push(nextBaseMark);
             } else if (newMarkLength > baseMarkLength) {
-                if (
-                    isObjMark(newMark) &&
-                    (newMark.type === "MoveOut" ||
-                        newMark.type === "MMoveOut" ||
-                        newMark.type === "ReturnFrom")
-                ) {
-                    if (this.reassignNewMoveIds) {
-                        const newId = getUniqueMoveId(
-                            newMark,
-                            this.newRevision,
-                            this.genId,
-                            this.moveEffects,
-                        );
-                        if (newId !== newMark.id) {
-                            newMark = clone(newMark);
-                            newMark.id = newId;
-                        }
-                    }
-                }
                 let nextNewMark;
                 [newMark, nextNewMark] = splitMarkOnInput(
                     newMark,
@@ -735,6 +703,56 @@ export class ComposeQueue<T> {
             return { baseMark, newMark };
         }
     }
+}
+
+function applyMoveEffectsToMark<T>(
+    inputMark: Mark<T>,
+    revision: RevisionTag | undefined,
+    moveEffects: MoveEffectTable<T>,
+    genId: IdAllocator,
+    reassignIds: boolean,
+): Mark<T>[] {
+    let mark = inputMark;
+    if (isMoveMark(mark)) {
+        if (reassignIds) {
+            const newId = getUniqueMoveId(mark, revision, genId, moveEffects);
+            if (newId !== mark.id) {
+                mark = clone(mark);
+                mark.id = newId;
+                moveEffects.validatedMarks.add(mark);
+            }
+        }
+
+        switch (mark.type) {
+            case "MoveOut":
+            case "ReturnFrom": {
+                const effect = moveEffects.srcEffects.get(mark.id);
+                if (effect !== undefined) {
+                    const splitMarks = splitMoveOut(mark, effect);
+                    for (const splitMark of splitMarks) {
+                        moveEffects.validatedMarks.add(splitMark);
+                    }
+                    return splitMarks;
+                }
+                break;
+            }
+            case "MoveIn":
+            case "ReturnTo": {
+                const effect = moveEffects.dstEffects.get(mark.id);
+                if (effect !== undefined) {
+                    const splitMarks = splitMoveIn(mark, effect);
+                    for (const splitMark of splitMarks) {
+                        moveEffects.validatedMarks.add(splitMark);
+                    }
+                    return splitMarks;
+                }
+                break;
+            }
+            default:
+                fail(`Unhandled mark type: ${mark.type}`);
+        }
+    }
+    return [mark];
 }
 
 interface ComposeMarks<T> {

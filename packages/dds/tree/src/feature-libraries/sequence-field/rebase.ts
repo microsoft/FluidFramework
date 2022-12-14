@@ -48,6 +48,8 @@ export function rebase<TNodeChange>(
     rebaseChild: NodeChangeRebaser<TNodeChange>,
     genId: IdAllocator,
 ): Changeset<TNodeChange> {
+    // TODO: New and base move IDs can collide. Should be distinguishable by revision, but this is not implemented, and base is not currently guaranteed to have a revision.
+    // We could use separate move tables for new and base, or we could reassign the new move IDs.
     const moveEffects = newMoveEffectTable<TNodeChange>();
     const [rebased, splitBase] = rebaseMarkList(
         change,
@@ -289,8 +291,6 @@ function applyMoveEffects<TNodeChange>(
     moveEffects: MoveEffectTable<TNodeChange>,
     genId: IdAllocator,
 ): Changeset<TNodeChange> {
-    // TODO: When splitting base move marks, should make sure to use same IDs as first pass
-    // Also need to consider splits of rebased marks
     const queue = new ComposeQueue<TNodeChange>(
         baseMarks,
         undefined,
