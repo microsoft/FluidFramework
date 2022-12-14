@@ -97,19 +97,19 @@ describe("SequenceField - Rebaser Axioms", () => {
                                 change1,
                                 makeAnonChange(change2),
                                 TestChange.rebase,
-                                TestChange.newIdAllocator(getMaxId(change1)),
+                                TestChange.newIdAllocator(getMaxId(change1, change2)),
                             );
                             const r2 = SF.rebase(
                                 r1,
                                 makeAnonChange(inverse2),
                                 TestChange.rebase,
-                                TestChange.newIdAllocator(getMaxId(r1)),
+                                TestChange.newIdAllocator(getMaxId(r1, inverse2)),
                             );
                             const r3 = SF.rebase(
                                 r2,
                                 makeAnonChange(change2),
                                 TestChange.rebase,
-                                TestChange.newIdAllocator(getMaxId(r2)),
+                                TestChange.newIdAllocator(getMaxId(r2, change2)),
                             );
                             assert.deepEqual(r3, r1);
                         }

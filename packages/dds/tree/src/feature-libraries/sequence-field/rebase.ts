@@ -277,7 +277,9 @@ function rebaseMark<TNodeChange>(
         case "MoveOut":
         case "MMoveOut":
         case "ReturnFrom": {
-            getOrAddEmptyToMap(moveEffects.movedMarks, baseMark.id).push(clone(currMark));
+            if (!isSkipMark(currMark)) {
+                getOrAddEmptyToMap(moveEffects.movedMarks, baseMark.id).push(clone(currMark));
+            }
             return 0;
         }
         default:
@@ -313,6 +315,9 @@ function applyMoveEffects<TNodeChange>(
             const movedMarks = moveEffects.movedMarks.get(baseMark.id);
             if (movedMarks !== undefined) {
                 factory.pushOffset(offset);
+                offset = 0;
+
+                // TODO: Do moved marks ever need to be split?
                 factory.push(...movedMarks);
                 const size = movedMarks.reduce<number>(
                     (count, mark) => count + getInputLength(mark),
@@ -327,6 +332,7 @@ function applyMoveEffects<TNodeChange>(
             continue;
         }
 
+        // TODO: Offset wouldn't be needed if queue returned skip instead of undefined in cases where it should return two marks
         offset = 0;
         if (isObjMark(newMark)) {
             switch (newMark.type) {
