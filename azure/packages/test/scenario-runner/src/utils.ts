@@ -83,12 +83,8 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
         if (!config.tenantId) {
             throw new Error("Missing FRS configuration: Tenant ID.");
         }
-        if (config.secureTokenProvider) {
-            if (!config.functionUrl) {
-                throw new Error("Missing FRS configuration: Function URL.");
-            }
-        }
 
+        /* Insecure Token Provider */
         if (!config.secureTokenProvider) {
             if (!config.tenantKey) {
                 throw new Error("Missing FRS configuration: Tenant Primary Key.");
@@ -104,6 +100,7 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
                 type: "remote",
             };
         } else {
+            /* Secure Token Provider (Azure Function) */
             if (!config.functionUrl) {
                 throw new Error("Missing FRS configuration: Function URL.");
             }
