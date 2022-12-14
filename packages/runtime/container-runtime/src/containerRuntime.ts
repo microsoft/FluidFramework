@@ -168,6 +168,7 @@ import { ISerializedBaseSnapshotBlobs, SerializedSnapshotStorage } from "./seria
 import { ScheduleManager } from "./scheduleManager";
 import { OpDecompressor } from "./opDecompressor";
 import { BatchMessage, IBatchCheckpoint, OpCompressor, Outbox } from "./opLifecycle";
+import { createSessionId, IdCompressor } from "./id-compressor";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -979,6 +980,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             : 0;
     }
 
+    private readonly idCompressor: IdCompressor;
+    public getIdCompressor(): IdCompressor {
+        return this.idCompressor;
+    }
+
     private readonly initialSummarizerDelayMs: number;
     private getInitialSummarizerDelayMs(): number {
         // back-compat: initialSummarizerDelayMs was moved from ISummaryRuntimeOptions
@@ -1063,6 +1069,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summarizerClientElectionEnabled = this.isSummarizerClientElectionEnabled();
         this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
         this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
+        this.idCompressor = new IdCompressor(createSessionId(), 10, this.logger);
 
         this.maxConsecutiveReconnects =
             this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? this.defaultMaxConsecutiveReconnects;
