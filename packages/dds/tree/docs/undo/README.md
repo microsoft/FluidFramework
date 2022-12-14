@@ -3,6 +3,23 @@
 This document offers a high-level description of the undo system.
 It should be updated once more progress is made on the implementation.
 
+## Undo Model and Semantics
+
+There are several different choices for what the semantics of undo could be.
+At the same time, there are several different undo-related workflows that consuming application may want to support.
+Understanding those workflows and uncovering what undo semantics would best serve them is still a work in progress,
+but two key points have emerged in that space:
+
+1. Undo as a feature very important in that it is likely to be the only/primary way that end users access document history.
+2. While we can offer advanced/powerful undo semantics,
+   most applications are likely to adopt a workflow that
+   is simple for users to grasp,
+   and fits within the confines of their existing user interface.
+
+See
+[the brain-dump on inverse changes](../wip/inverse-changes/README.md#undo-semantics)
+for some prior thinking on undo semantics.
+
 ## Abstract vs. Concrete Undo Messages
 
 Conceptually, an undo edit starts as a very abstract and succinct intention:
@@ -85,15 +102,63 @@ or try again in the new context (i.e., undoing an edit outside the undo window).
 In a low-frequency (i.e. non-live) collaboration environment,
 the edit to be undone will commonly lie outside of the undo window.
 
-There are several approaches we could consider:
+There are several approaches we could consider.
+All of them have to contend with the fact that peers may not have access to the relevant historical data necessary to perform the undo.
+The approaches listed below all rely on having the issuer of the undo send the relevant data in some form as part of the undo message.
+For this to be possible, the issuing client must itself have access to the historical data in question.
 
-1. Do the same when the edit to undo is within the undo window but send along the relevant historical data.
-2. Compute the net change to the tip state
-   (possibly by re-running commands)
-   and send that as a normal changeset.
-   Such a changeset would be rebased over any concurrent edits.
-3. Same as #2 but with instruction for the changeset to be handled differently
-   (e.g., by [postbasing](#postbase) it over concurrent edits instead of rebasing it).
+### Historical Data on the Issuing Client
+
+We expect users are typically interested in undoing their own edits
+or undoing edits that had an impact on their edits.
+The historical data necessary for that can be retained on the issuing client by not discarding historical data for edits that fall outside the undo window.
+A limit may be imposed on how far back this historical record goes in order to avoid unbounded memory growth,
+but the option of storing some of this information on disk is likely to make the limit tolerable.
+
+If this were to prove insufficient
+(either because of a need to undo edits before the client joined,
+or because of the need to undo edits whose historical data had been dropped due to the limit mentioned above)
+it may be possible for the client to request the missing data from a history server.
+Note this this would make the undo operation asynchronous for the issuing client.
+
+The presence of a history server also means that the peers could fetch the historical data from it rather than have the issuing client send that data as part of the undo message.
+This however has two undesirable properties:
+
+-   It makes the application of the undo asynchronous for all peers.
+-   It means the history server will have to serve all clients.
+    This may prove to be an unacceptable workload for sessions with many participants.
+
+### Undo Messages for Edits Outside The Undo Window
+
+We now turn to the different ways the historical data on the client can be used to undo edits that lie outside of the undo window.
+
+#### Abstract Undo With Historical Data
+
+In this approach,
+the only difference between the message sent when undoing an edit that lies within the undo window
+and undoing an edit that lies outside it,
+would be that the latter includes additional historical data.
+
+This is the approach we currently intend to implement.
+
+One challenge with this approach is that it could result in attempting to send prohibitively large amounts of historical data.
+That's because applying the undo _may_ require historical data not only from the edit to be undone,
+but from all edits that occurred after it also.
+This could be alleviated by having the issuing client determine which parts of the historical record actually are required
+and not sending the parts that are not.
+
+#### Undo as a Regular Changeset
+
+In this approach,
+the issuing client computes the net change to the tip state and sends that as a normal changeset.
+Such a changeset would be rebased over any concurrent edits as changesets normally are.
+Note that this precludes having undo-specific logic for rebasing the change over concurrent edits.
+
+#### Undo as a Special Changeset
+
+This approach is similar to the "Regular Changeset" approach,
+with the difference that the undo changeset would receive special rebasing treatment in order to impart the desired undo semantics.
+For example, the undo changeset could be [postbased](#postbase) over concurrent edits instead of rebased.
 
 ## Partial Undo
 
