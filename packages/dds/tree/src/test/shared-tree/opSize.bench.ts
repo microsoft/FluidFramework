@@ -719,67 +719,6 @@ describe("SharedTree Op Size Benchmarks", () => {
     });
 
     describe("4. Insert, Delete & Edit Nodes", () => {
-        // const benchmarkInsertDeleteEditNodesWithInvidiualTxs = async (
-        //     percentile: number,
-        //     testName: string,
-        //     insertNodeCount: number,
-        //     deleteNodeCount: number,
-        //     editNodeCount: number,
-        // ) => {
-        //     const provider = await TestTreeProvider.create(1);
-        //     initializeOpDataCollection(provider, testName);
-
-        //     // delete
-        //     const childByteSize = getSuccessfulOpByteSize("DELETE", "INDIVIDUAL", percentile);
-        //     initializeTestTree(
-        //         provider.trees[0],
-        //         getInitialJsonTreeWithChildren(deleteNodeCount, childByteSize),
-        //     );
-        //     deleteCurrentOps(); // We don't want to record the ops from initializing the tree.
-        //     await deleteNodesWithIndividualTransactions(
-        //         provider.trees[0],
-        //         provider,
-        //         deleteNodeCount,
-        //         1,
-        //     );
-        //     assertChildNodeCount(provider.trees[0], 0);
-
-        //     // insert
-        //     const insertChildNode = getJsonNode(
-        //         getSuccessfulOpByteSize("INSERT", "INDIVIDUAL", percentile),
-        //     );
-        //     await insertNodesWithIndividualTransactions(
-        //         provider.trees[0],
-        //         provider,
-        //         insertChildNode,
-        //         insertNodeCount,
-        //     );
-        //     assertChildNodeCount(provider.trees[0], insertNodeCount);
-
-        //     // edit
-        //     // The editing function iterates over each child node and performs an edit so we have to make sure we have enough children to avoid going out of bounds.
-        //     if (insertNodeCount < editNodeCount) {
-        //         const remainder = editNodeCount - insertNodeCount;
-        //         saveAndResetCurrentOps();
-        //         await insertNodesWithIndividualTransactions(
-        //             provider.trees[0],
-        //             provider,
-        //             getJsonNode(childByteSize),
-        //             remainder,
-        //         );
-        //         deleteCurrentOps(); // We don't want to record the ops from re-initializing the tree.
-        //     }
-        //     const editPayload = getEditPayloadInBytes(
-        //         getSuccessfulOpByteSize("EDIT", "INDIVIDUAL", percentile),
-        //     );
-        //     await editNodesWithIndividualTransactions(
-        //         provider.trees[0],
-        //         provider,
-        //         editNodeCount,
-        //         editPayload,
-        //     );
-        //     assertChildValuesEqualExpected(provider.trees[0], editPayload, editNodeCount);
-        // };
 
         describe("4a. Insert, Delete & Edit Nodes in Individual Transactions", () => {
             const benchmarkInsertDeleteEditNodesWithInvidiualTxs = async (
