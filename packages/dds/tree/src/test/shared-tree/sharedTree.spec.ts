@@ -11,6 +11,7 @@ import {
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import {
+    compareUpPaths,
     FieldKey,
     JsonableTree,
     mapCursorField,
@@ -18,6 +19,7 @@ import {
     rootFieldKeySymbol,
     symbolFromKey,
     TreeValue,
+    UpPath,
     Value,
 } from "../../tree";
 import { moveToDetachedField } from "../../forest";
@@ -461,6 +463,45 @@ describe("SharedTree", () => {
             const expected = ["x", "y", "a", "b", "c"];
             validateRootField(tree1, expected);
             validateRootField(tree2, expected);
+        });
+    });
+
+    describe("Anchors", () => {
+        it("Anchors can be created and dereferenced", async () => {
+            const provider = await TestTreeProvider.create(1);
+            const tree = provider.trees[0];
+
+            const initialState: JsonableTree = {
+                type: brand("Node"),
+                fields: {
+                    foo: [
+                        { type: brand("Number"), value: 0 },
+                        { type: brand("Number"), value: 1 },
+                        { type: brand("Number"), value: 2 },
+                    ],
+                },
+            };
+            initializeTestTree(tree, initialState);
+
+            const cursor = tree.forest.allocateCursor();
+            moveToDetachedField(tree.forest, cursor);
+            cursor.enterNode(0);
+            cursor.enterField(brand("foo"));
+            cursor.enterNode(0);
+            cursor.seekNodes(1);
+            const anchor = cursor.buildAnchor();
+            cursor.free();
+            const childPath = tree.locate(anchor);
+            const expected: UpPath = {
+                parent: {
+                    parent: undefined,
+                    parentField: rootFieldKeySymbol,
+                    parentIndex: 0,
+                },
+                parentField: brand("foo"),
+                parentIndex: 1,
+            };
+            assert(compareUpPaths(childPath, expected));
         });
     });
 });

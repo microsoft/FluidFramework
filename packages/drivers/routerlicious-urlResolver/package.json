@@ -43,7 +43,7 @@
     "@fluidframework/core-interfaces": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluidframework/driver-definitions": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluidframework/protocol-definitions": "^1.1.0",
-    "nconf": "^0.11.4",
+    "nconf": "^0.12.0",
     "url": "^0.11.0"
   },
   "devDependencies": {
