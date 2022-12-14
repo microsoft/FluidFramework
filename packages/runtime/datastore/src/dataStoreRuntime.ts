@@ -185,6 +185,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly quorum: IQuorumClients;
     private readonly audience: IAudience;
     public readonly logger: ITelemetryLogger;
+    public readonly idCompressor: any;
 
     // A map of child channel context ids to the their base GC details. This is used to initialize the GC state of the
     // channel contexts.
@@ -223,6 +224,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this.deltaManager = dataStoreContext.deltaManager;
         this.quorum = dataStoreContext.getQuorum();
         this.audience = dataStoreContext.getAudience();
+        this.idCompressor = (dataStoreContext as any).getIdCompressor();
 
         const tree = dataStoreContext.baseSnapshot;
 

@@ -89,6 +89,7 @@ import {
 } from "./summaryFormat";
 import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
 import { summarizerClientType } from "./summarizerClientElection";
+import { IdCompressor } from "./id-compressor";
 
 function createAttributes(
     pkg: readonly string[],
@@ -468,6 +469,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public getAudience(): IAudience {
         return this._containerRuntime.getAudience();
+    }
+
+    public getIdCompressor(): IdCompressor {
+        return this._containerRuntime.getIdCompressor();
     }
 
     /**

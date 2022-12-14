@@ -123,6 +123,11 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         this.attachListeners();
     }
 
+    public generateCompressedId() {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return (this.runtime as any).idCompressor.generateCompressedId();
+    }
+
     /**
      * This function is only supposed to be called from SharedObjectCore's constructor and
      * depends on a few things being set already. assert() calls make sure of it.

@@ -127,6 +127,8 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
             incrementAmount,
         };
 
+        console.log(this.generateCompressedId());
+
         this.incrementCore(incrementAmount);
         this.submitLocalMessage(op);
     }
