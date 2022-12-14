@@ -7,7 +7,6 @@ env:
             key2: SharedMap
     connectionConfig:
         type: remote
-        endpoint: https://alfred.westus3.fluidrelay.azure.com
 stages:
     - stage-1:
       id: 1

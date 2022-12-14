@@ -49,6 +49,9 @@ async function main() {
         .requiredOption("-k, --sharedMapKey <sharedMapKey>", "Shared map location")
         .requiredOption("-ct, --connType <connType>", "Connection type")
         .requiredOption("-ce, --connEndpoint <connEndpoint>", "Connection endpoint")
+        .requiredOption("-ti, --tenantId <tenantId>", "Tenant ID")
+        .requiredOption("-tk, --tenantKey <tenantKey>", "Tenant Key")
+        .requiredOption("-furl, --functionUrl <functionUrl>", "Azure Function URL")
         .option(
             "-l, --log <filter>",
             "Filter debug logging. If not provided, uses DEBUG env variable.",
@@ -66,6 +69,10 @@ async function main() {
         sharedMapKey: commander.sharedMapKey,
         connType: commander.connType,
         connEndpoint: commander.connEndpoint,
+        tenantId: commander.tenantId ?? process.env.azure__fluid__relay__service__tenantId,
+        tenantKey: commander.tenantKey ?? process.env.azure__fluid__relay__service__tenantKey,
+        functionUrl:
+            commander.functionUrl ?? process.env.azure__fluid__relay__service__function__url,
     };
 
     if (commander.log !== undefined) {
@@ -77,19 +84,25 @@ async function main() {
         process.exit(-1);
     }
 
-    const logger = await getLogger({
-        runId: config.runId,
-        scenarioName: config.scenarioName,
-    }, [
-        "scenario:runner",
-        // "fluid:telemetry:OpPerf"
-    ]);
+    const logger = await getLogger(
+        {
+            runId: config.runId,
+            scenarioName: config.scenarioName,
+        },
+        [
+            "scenario:runner",
+            // "fluid:telemetry:OpPerf"
+        ],
+    );
 
     const ac = await createAzureClient({
         userId: "testUserId",
         userName: "testUserName",
         connType: config.connType,
         connEndpoint: config.connEndpoint,
+        tenantId: config.tenantId,
+        tenantKey: config.tenantKey,
+        functionUrl: config.functionUrl,
         logger,
     });
 

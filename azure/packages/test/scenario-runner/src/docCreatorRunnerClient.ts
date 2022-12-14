@@ -69,6 +69,9 @@ async function main() {
         .requiredOption("-c, --childId <childId>", "id of this node client.", parseIntArg)
         .requiredOption("-ct, --connType <connType>", "Connection type")
         .requiredOption("-ce, --connEndpoint <connEndpoint>", "Connection endpoint")
+        .requiredOption("-ti, --tenantId <tenantId>", "Tenant ID")
+        .requiredOption("-tk, --tenantKey <tenantKey>", "Tenant Key")
+        .requiredOption("-furl, --functionUrl <functionUrl>", "Azure Function URL")
         .option(
             "-l, --log <filter>",
             "Filter debug logging. If not provided, uses DEBUG env variable.",
@@ -82,6 +85,10 @@ async function main() {
         childId: commander.childId,
         connType: commander.connType,
         connEndpoint: commander.connEndpoint,
+        tenantId: commander.tenantId ?? process.env.azure__fluid__relay__service__tenantId,
+        tenantKey: commander.tenantKey ?? process.env.azure__fluid__relay__service__tenantKey,
+        functionUrl:
+            commander.functionUrl ?? process.env.azure__fluid__relay__service__function__url,
     };
 
     if (commander.log !== undefined) {
@@ -103,6 +110,9 @@ async function main() {
         userName: `testUserName_${config.childId}`,
         connType: config.connType,
         connEndpoint: config.connEndpoint,
+        tenantId: config.tenantId,
+        tenantKey: config.tenantKey,
+        functionUrl: config.functionUrl,
         logger,
     });
 

@@ -5,6 +5,7 @@
 import child_process from "child_process";
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
+
 import { IRunConfig, IRunner, IRunnerEvents, IRunnerStatus, RunnnerStatus } from "./interface";
 import { delay } from "./utils";
 
@@ -60,7 +61,7 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
                 "--connType",
                 connection.type,
                 "--connEndpoint",
-                connection.endpoint,
+                connection.endpoint ?? process.env.azure__fluid__relay__service__endpoint,
             ];
             childArgs.push("--verbose");
             runnerArgs.push(childArgs);
