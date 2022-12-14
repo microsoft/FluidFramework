@@ -211,95 +211,103 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     };
     const chunkingBatchesTimeoutMs = 200000;
 
-    describe("Large payloads", () => [
-        { messagesInBatch: 1, messageSize: 5 * 1024 * 1024 }, // One large message
-        { messagesInBatch: 3, messageSize: 5 * 1024 * 1024 }, // Three large messages
-        { messagesInBatch: 50, messageSize: 215 * 1024 }, // Many small messages
-    ].forEach((config) => {
-        it("Large payloads pass when compression enabled, " +
-            "compressed content is over max op size and chunking enabled. " +
-            `${config.messagesInBatch} messages of ${config.messageSize}b == ` +
-            `${(config.messagesInBatch * config.messageSize / (1024 * 1024)).toFixed(2)} MB`, async function() {
-                // This is not supported by the local server. See ADO:2690
-                if (provider.driver.type === "local") {
-                    this.skip();
-                }
+    describe("Large payloads (exceeding the 1MB limit)", () => {
+        describe("Chunking compressed batches", () => [
+            { messagesInBatch: 1, messageSize: 5 * 1024 * 1024 }, // One large message
+            { messagesInBatch: 3, messageSize: 5 * 1024 * 1024 }, // Three large messages
+            { messagesInBatch: 50, messageSize: 215 * 1024 }, // Many small messages
+        ].forEach((config) => {
+            it("Large payloads pass when compression enabled, " +
+                "compressed content is over max op size and chunking enabled. " +
+                `${config.messagesInBatch} messages of ${config.messageSize}b == ` +
+                `${(config.messagesInBatch * config.messageSize / (1024 * 1024)).toFixed(2)} MB`, async function() {
+                    // This is not supported by the local server. See ADO:2690
+                    if (provider.driver.type === "local") {
+                        this.skip();
+                    }
 
-                await setupContainers(chunkingBatchesConfig);
-                const largeString = generateRandomStringOfSize(config.messageSize);
-                setMapKeys(dataObject1map, config.messagesInBatch, largeString);
-                await provider.ensureSynchronized();
+                    await setupContainers(chunkingBatchesConfig);
+                    const largeString = generateRandomStringOfSize(config.messageSize);
+                    setMapKeys(dataObject1map, config.messagesInBatch, largeString);
+                    await provider.ensureSynchronized();
 
-                assertMapValues(dataObject2map, config.messagesInBatch, largeString);
-            }).timeout(chunkingBatchesTimeoutMs);
-    }));
+                    assertMapValues(dataObject2map, config.messagesInBatch, largeString);
+                }).timeout(chunkingBatchesTimeoutMs);
+        }));
 
-    describe("Large payload resiliency", () => {
-        const messageSize = 5 * 1024 * 1024;
-        const messagesInBatch = 3;
+        describe("Resiliency", () => {
+            const messageSize = 5 * 1024 * 1024;
+            const messagesInBatch = 3;
 
-        describe("Remote container", () => {
-            // Forces a reconnection after a number of ops have been processed
-            const reconnectAfterOpProcessing = async (
-                container: IContainer,
-                shouldProcess: (op: ISequencedDocumentMessage) => boolean,
-                count: number = 2,
-            ) => {
-                let opsProcessed = 0;
-                return new Promise<void>((resolve) => {
-                    const handler = (op) => {
-                        if (shouldProcess(op) && ++opsProcessed === count) {
-                            container.disconnect();
-                            container.once("connected", () => {
-                                resolve();
-                                container.off("op", handler);
-                            });
-                            container.connect();
-                        }
-                    };
+            describe("Remote container", () => {
+                // Forces a reconnection after processing a specified number
+                // of ops which satisfy a given condition
+                const reconnectAfterOpProcessing = async (
+                    container: IContainer,
+                    shouldProcess: (op: ISequencedDocumentMessage) => boolean,
+                    count: number,
+                ) => {
+                    let opsProcessed = 0;
+                    return new Promise<void>((resolve) => {
+                        const handler = (op) => {
+                            if (shouldProcess(op) && ++opsProcessed === count) {
+                                container.disconnect();
+                                container.once("connected", () => {
+                                    resolve();
+                                    container.off("op", handler);
+                                });
+                                container.connect();
+                            }
+                        };
 
-                    container.on("op", handler);
-                });
-            };
+                        container.on("op", handler);
+                    });
+                };
 
-            it("Reconnects while processing chunks", async function() {
-                // This is not supported by the local server. See ADO:2690
-                if (provider.driver.type === "local") {
-                    this.skip();
-                }
+                it("Reconnects while processing chunks", async function() {
+                    // This is not supported by the local server. See ADO:2690
+                    if (provider.driver.type === "local") {
+                        this.skip();
+                    }
 
-                await setupContainers(chunkingBatchesConfig);
-                const secondConnection = reconnectAfterOpProcessing(
-                    remoteContainer,
-                    (op) => op.contents?.type === ContainerMessageType.ChunkedOp,
-                );
+                    await setupContainers(chunkingBatchesConfig);
+                    // Force the container to reconnect after processing 2 chunked ops
+                    const secondConnection = reconnectAfterOpProcessing(
+                        remoteContainer,
+                        (op) => op.contents?.type === ContainerMessageType.ChunkedOp,
+                        2,
+                    );
 
-                const largeString = generateRandomStringOfSize(messageSize);
-                setMapKeys(dataObject1map, messagesInBatch, largeString);
-                await secondConnection;
-                await provider.ensureSynchronized();
+                    const largeString = generateRandomStringOfSize(messageSize);
+                    setMapKeys(dataObject1map, messagesInBatch, largeString);
+                    await secondConnection;
+                    await provider.ensureSynchronized();
 
-                assertMapValues(dataObject2map, messagesInBatch, largeString);
-            }).timeout(chunkingBatchesTimeoutMs);
+                    assertMapValues(dataObject2map, messagesInBatch, largeString);
+                }).timeout(chunkingBatchesTimeoutMs);
 
-            it("Reconnects while processing compressed batch", async function() {
-                // This is not supported by the local server. See ADO:2690
-                if (provider.driver.type === "local") {
-                    this.skip();
-                }
+                it("Reconnects while processing compressed batch", async function() {
+                    // This is not supported by the local server. See ADO:2690
+                    if (provider.driver.type === "local") {
+                        this.skip();
+                    }
 
-                await setupContainers(chunkingBatchesConfig);
-                const secondConnection = reconnectAfterOpProcessing(
-                    remoteContainer,
-                    (op) => op.type === MessageType.Operation && op.contents === undefined,
-                );
-                const largeString = generateRandomStringOfSize(messageSize);
-                setMapKeys(dataObject1map, messagesInBatch, largeString);
-                await secondConnection;
-                await provider.ensureSynchronized();
+                    await setupContainers(chunkingBatchesConfig);
+                    // Force the container to reconnect after processing 2 empty ops
+                    // which would unroll the original ops from compression
+                    const secondConnection = reconnectAfterOpProcessing(
+                        remoteContainer,
+                        (op) => op.type === MessageType.Operation && op.contents === undefined,
+                        2,
+                    );
+                    const largeString = generateRandomStringOfSize(messageSize);
+                    setMapKeys(dataObject1map, messagesInBatch, largeString);
+                    await secondConnection;
+                    await provider.ensureSynchronized();
 
-                assertMapValues(dataObject2map, messagesInBatch, largeString);
-            }).timeout(chunkingBatchesTimeoutMs);
+                    assertMapValues(dataObject2map, messagesInBatch, largeString);
+                }).timeout(chunkingBatchesTimeoutMs);
+            });
         });
     });
 });
