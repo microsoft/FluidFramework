@@ -193,7 +193,8 @@
       "main": "minor",
       "lts": "minor",
       "release/**": "patch",
-      "next": "major"
+      "next": "major",
+      "*": "minor"
     }
   }
 }

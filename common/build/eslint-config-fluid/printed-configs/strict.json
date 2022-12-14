@@ -1485,7 +1485,7 @@
             "error"
         ],
         "unicorn/prefer-node-protocol": [
-            "error"
+            "off"
         ],
         "unicorn/prefer-number-properties": [
             "error"
