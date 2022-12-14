@@ -263,7 +263,6 @@ export class DocumentService implements api.IDocumentService {
         this.storageUrl = fluidResolvedUrl.endpoints.storageUrl;
         this.ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
         this.deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
-        this.lastDiscoveredAt = Date.now();
     }
 
     /**
@@ -279,6 +278,15 @@ export class DocumentService implements api.IDocumentService {
         // Disconnect event is not so reliable in local testing. To ensure re-discovery when necessary,
         // re-discover if enough time has passed since last discovery.
         const pastLastDiscoveryTimeThreshold = (now - this.lastDiscoveredAt) > RediscoverAfterTimeSinceDiscoveryMs;
+        if (pastLastDiscoveryTimeThreshold) {
+            // Reset discover promise and refresh discovery.
+            this.lastDiscoveredAt = Date.now();
+            this.discoverP = undefined;
+            this.refreshDiscovery().catch(() => {
+                // Undo discovery time set on failure, so that next check refreshes.
+                this.lastDiscoveredAt = 0;
+            });
+        }
         return pastLastDiscoveryTimeThreshold;
     }
 }
