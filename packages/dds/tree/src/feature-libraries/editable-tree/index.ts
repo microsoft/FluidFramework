@@ -18,8 +18,19 @@ export {
     indexSymbol,
     getField,
     createField,
+    replaceField,
 } from "./editableTree";
 
 export { EditableTreeContext, getEditableTreeContext } from "./editableTreeContext";
 
-export { PrimitiveValue, isPrimitiveValue, isPrimitive, getPrimaryField } from "./utilities";
+export {
+    PrimitiveValue,
+    isPrimitiveValue,
+    isPrimitive,
+    getPrimaryField,
+    ContextuallyTypedNodeDataObject,
+    ContextuallyTypedNodeData,
+    MarkedArrayLike,
+    isWritableArrayLike,
+    isContextuallyTypedNodeDataObject,
+} from "./utilities";
