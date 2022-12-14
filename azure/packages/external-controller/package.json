@@ -51,7 +51,7 @@
   "devDependencies": {
     "@fluid-experimental/get-container": "^1.4.0-108057",
     "@fluidframework/build-common": "^1.1.0",
-    "@fluidframework/eslint-config-fluid": "^1.2.1",
+    "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@fluidframework/fluid-static": "^1.4.0-108057",
     "@fluidframework/test-client-utils": "1.4.0-108057",
     "@fluidframework/test-tools": "^0.2.3074",

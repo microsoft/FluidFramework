@@ -4,7 +4,7 @@
  */
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
-import { TaskManager } from "@fluid-experimental/task-manager";
+import { TaskManager } from "@fluidframework/task-manager";
 import {
     DataObject,
     DataObjectFactory,

@@ -50,7 +50,6 @@ export class NodeCodeLoader {
     }
 
     private async installOrWaitForPackages(pkg: string): Promise<string> {
-        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
         const dataStores = pkg.match(/(.*)\/(.*)@(.*)/);
         if (!dataStores) {
             return Promise.reject(new Error("Invalid package"));
