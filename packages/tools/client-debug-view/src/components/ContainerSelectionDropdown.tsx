@@ -5,7 +5,12 @@
 import { Dropdown, IDropdownOption, IDropdownStyles, IStackTokens, Stack } from "@fluentui/react";
 import React from "react";
 
-import { IFluidClientDebugger, getFluidClientDebuggers } from "@fluid-tools/client-debugger";
+import {
+	DebuggerRegistry,
+	IFluidClientDebugger,
+	getDebuggerRegistry,
+	getFluidClientDebuggers,
+} from "@fluid-tools/client-debugger";
 
 import { HasClientDebugger } from "../CommonProps";
 
@@ -28,17 +33,42 @@ export function ContainerSelectionDropdown(
 
 	const stackTokens: IStackTokens = { childrenGap: 20 };
 
-	const [clientDebuggers] = React.useState<IFluidClientDebugger[]>(getFluidClientDebuggers());
+	const debuggerRegistry: DebuggerRegistry = getDebuggerRegistry();
 
-	const _clientDebuggerOptions: IDropdownOption[] = [];
-
-	for (const x of clientDebuggers) {
-		console.log(x.containerId);
-		_clientDebuggerOptions.push({
-			key: x.containerId,
-			text: x.containerNickname ?? x.containerId,
-		});
+	function renewContainerOptions(debuggers: IFluidClientDebugger[]): IDropdownOption[] {
+		const options: IDropdownOption[] = [];
+		for (const x of debuggers) {
+			console.log(x.containerId);
+			options.push({
+				key: x.containerId,
+				text: x.containerNickname ?? x.containerId,
+			});
+		}
+		return options;
 	}
+
+	const [clientDebuggers, setClientDebuggers] = React.useState<IFluidClientDebugger[]>(
+		getFluidClientDebuggers(),
+	);
+
+	const [clientDebuggerOptions, setClientDebuggerOptions] = React.useState<IDropdownOption[]>(
+		renewContainerOptions(clientDebuggers),
+	);
+
+	React.useEffect(() => {
+		function onDebuggerChanged(): void {
+			setClientDebuggers(getFluidClientDebuggers());
+			setClientDebuggerOptions(renewContainerOptions(clientDebuggers));
+		}
+
+		debuggerRegistry.on("debuggerRegistered", onDebuggerChanged);
+		debuggerRegistry.on("debuggerClosed", onDebuggerChanged);
+
+		return (): void => {
+			debuggerRegistry.off("debuggerRegistered");
+			debuggerRegistry.off("debuggerClosed");
+		};
+	}, [clientDebuggers, clientDebuggerOptions, setClientDebuggers, setClientDebuggerOptions]);
 
 	const _onClientDebuggerDropdownChange = (
 		event: React.FormEvent<HTMLDivElement>,
@@ -57,7 +87,7 @@ export function ContainerSelectionDropdown(
 			<Dropdown
 				placeholder="Select an option"
 				label="Containers: "
-				options={_clientDebuggerOptions}
+				options={clientDebuggerOptions}
 				styles={dropdownStyles}
 				onChange={_onClientDebuggerDropdownChange}
 			/>
