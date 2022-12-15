@@ -11,7 +11,7 @@ import { delay } from "./utils";
 
 export interface AzureClientConfig {
     type: "remote" | "local";
-    endpoint: string;
+    endpoint?: string;
     key?: string;
     tenantId?: string;
 }
@@ -61,8 +61,7 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
                 JSON.stringify(this.c.schema),
                 "--connType",
                 connection.type,
-                "--connEndpoint",
-                connection.endpoint,
+                ...(connection.endpoint ? ["--connEndpoint", connection.endpoint] : []),
             ];
             childArgs.push("--verbose");
             runnerArgs.push(childArgs);
@@ -83,8 +82,8 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 
         try {
             await Promise.all(children);
-        } catch (error) {
-            throw new Error(`Not all clients closed sucesfully. ${error}`);
+        } catch {
+            throw new Error("Not all clients closed sucesfully");
         }
     }
 

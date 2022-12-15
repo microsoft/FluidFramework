@@ -11,7 +11,7 @@ import { delay } from "./utils";
 
 export interface AzureClientConfig {
     type: "remote" | "local";
-    endpoint: string;
+    endpoint?: string;
     key?: string;
     tenantId?: string;
 }
@@ -70,8 +70,7 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
                 this.c.sharedMapKey,
                 "--connType",
                 connection.type,
-                "--connEndpoint",
-                connection.endpoint,
+                ...(connection.endpoint ? ["--connEndpoint", connection.endpoint] : []),
             ];
             childArgs.push("--verbose");
             runnerArgs.push(childArgs);

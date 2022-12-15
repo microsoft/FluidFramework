@@ -149,8 +149,8 @@ async function execRun(ac: AzureClient, config: DocCreatorRunnerConfig): Promise
             },
             { start: true, end: true, cancel: "generic" },
         ));
-    } catch {
-        throw new Error("Unable to create container.");
+    } catch (error) {
+        throw new Error(`Unable to create container. ${error}`);
     }
 
     let id: string;
