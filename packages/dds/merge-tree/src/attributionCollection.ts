@@ -8,7 +8,13 @@ import { RedBlackTree } from "./collections";
 import { AttributionKey, compareNumbers, ISegment } from "./mergeTreeNodes";
 
 export interface SerializedAttributionCollection {
-    keys: unknown[];
+    /**
+     * Parallel array with posBreakpoints which tracks the seq of insertion.
+     * Ex: if seqs is [45, 46] and posBreakpoints is [0, 3], the section of the string
+     * between offsets 0 and 3 was inserted at seq 45 and the section of the string between
+     * 3 and the length of the string was inserted at seq 46.
+     */
+    seqs: number[];
     posBreakpoints: number[];
     /* Total length; only necessary for validation */
     length: number;
@@ -24,17 +30,18 @@ export interface IAttributionCollection<T> {
     getAtOffset(offset: number): T;
 
     /**
+     * Total length of all attribution keys in this collection.
+     */
+    readonly length: number;
+
+    /**
      * Retrieve all key/offset pairs stored on this segment. Entries should be ordered by offset, such that
      * the `i`th result's attribution key applies to offsets in the open range between the `i`th offset and the
      * `i+1`th offset.
      * The last entry's key applies to the open interval from the last entry's offset to this collection's length.
+     * @internal
      */
     getAll(): Iterable<{ offset: number; key: T; }>;
-
-    /**
-     * Total length of all attribution keys in this collection.
-     */
-    readonly length: number;
 
     /** @internal */
     splitAt(pos: number): IAttributionCollection<T>;
@@ -117,21 +124,18 @@ export class AttributionCollection implements IAttributionCollection<Attribution
         segments: Iterable<ISegment>,
         summary: SerializedAttributionCollection,
     ): void {
-        const { keys, posBreakpoints } = summary;
+        const { seqs, posBreakpoints } = summary;
         assert(
-            keys.length === posBreakpoints.length && keys.length > 0,
+            seqs.length === posBreakpoints.length && seqs.length > 0,
             0x445 /* Invalid attribution summary blob provided */);
         let curIndex = 0;
         let cumulativeSegPos = 0;
-        let currentInfo: number = keys[curIndex] as number;
-        assert(typeof currentInfo === "number", "AttributionCollection summary should only contain numbers in keys.");
+        let currentInfo = seqs[curIndex];
 
         for (const segment of segments) {
             const attribution = new AttributionCollection(currentInfo, segment.cachedLength);
             while (posBreakpoints[curIndex] < cumulativeSegPos + segment.cachedLength) {
-                currentInfo = keys[curIndex] as number;
-                assert(typeof currentInfo === "number",
-                    "AttributionCollection summary should only contain numbers in keys.");
+                currentInfo = seqs[curIndex];
                 attribution.entries.put(posBreakpoints[curIndex] - cumulativeSegPos, currentInfo);
                 curIndex++;
             }
@@ -148,8 +152,8 @@ export class AttributionCollection implements IAttributionCollection<Attribution
         segments: Iterable<{ attribution?: IAttributionCollection<AttributionKey>; cachedLength: number; }>,
     ): SerializedAttributionCollection {
         const posBreakpoints: number[] = [];
-        const keys: unknown[] = [];
-        let mostRecentAttributionKey: unknown | undefined;
+        const seqs: number[] = [];
+        let mostRecentAttributionKey: number | undefined;
         let cumulativePos = 0;
 
         let segmentsWithAttribution = 0;
@@ -160,7 +164,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
                 for (const { offset, key: info } of segment.attribution?.getAll() ?? []) {
                     if (info.seq !== mostRecentAttributionKey) {
                         posBreakpoints.push(offset + cumulativePos);
-                        keys.push(info.seq);
+                        seqs.push(info.seq);
                     }
                     mostRecentAttributionKey = info.seq;
                 }
@@ -174,7 +178,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
         assert(segmentsWithAttribution === 0 || segmentsWithoutAttribution === 0,
             0x446 /* Expected either all segments or no segments to have attribution information. */);
 
-        const blobContents: SerializedAttributionCollection = { keys, posBreakpoints, length: cumulativePos };
+        const blobContents: SerializedAttributionCollection = { seqs, posBreakpoints, length: cumulativePos };
         return blobContents;
     }
 }

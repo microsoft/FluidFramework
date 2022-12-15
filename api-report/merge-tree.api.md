@@ -309,6 +309,7 @@ export interface IAttributionCollection<T> {
     append(other: IAttributionCollection<T>): void;
     // @internal (undocumented)
     clone(): IAttributionCollection<T>;
+    // @internal
     getAll(): Iterable<{
         offset: number;
         key: T;

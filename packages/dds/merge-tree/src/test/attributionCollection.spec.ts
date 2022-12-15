@@ -127,7 +127,7 @@ describe("AttributionCollection", () => {
             AttributionCollection.populateAttributionCollections(segments, {
                 length: 9,
                 posBreakpoints: [0, 2, 5, 7],
-                keys: [10, 12, 15, 17],
+                seqs: [10, 12, 15, 17],
             });
             assert.deepEqual(segments[0].attribution?.getAll(), [
                 { offset: 0, key: { type: "op", seq: 10 } },
@@ -149,7 +149,7 @@ describe("AttributionCollection", () => {
             AttributionCollection.populateAttributionCollections(segments, {
                 length: 9,
                 posBreakpoints: [0, 2, 5, 7],
-                keys: [10, 12, 15, 17],
+                seqs: [10, 12, 15, 17],
             });
             assert.deepEqual(segments[0].attribution?.getAll(), [
                 { offset: 0, key: { type: "op", seq: 10 } },
@@ -177,7 +177,7 @@ describe("AttributionCollection", () => {
             const blob = AttributionCollection.serializeAttributionCollections(segments);
             assert.deepEqual(blob, {
                 posBreakpoints: [0],
-                keys: [0],
+                seqs: [0],
                 length: 9,
             });
         });
@@ -200,7 +200,7 @@ describe("AttributionCollection", () => {
                 blob: {
                     length: 3,
                     posBreakpoints: [0],
-                    keys: [51],
+                    seqs: [51],
                 },
                 segments: [seg(3)],
             },
@@ -209,7 +209,7 @@ describe("AttributionCollection", () => {
                 blob: {
                     length: 7,
                     posBreakpoints: [0, 1, 3, 5],
-                    keys: [1, 2, 3, 4],
+                    seqs: [1, 2, 3, 4],
                 },
                 segments: [seg(7)],
             },
@@ -218,7 +218,7 @@ describe("AttributionCollection", () => {
                 blob: {
                     length: 7,
                     posBreakpoints: [0],
-                    keys: [1],
+                    seqs: [1],
                 },
                 segments: [seg(3), seg(4)],
             },
@@ -227,7 +227,7 @@ describe("AttributionCollection", () => {
                 blob: {
                     length: 7,
                     posBreakpoints: [0, 3],
-                    keys: [0, 1],
+                    seqs: [0, 1],
                 },
                 segments: [seg(3), seg(4)],
             },
