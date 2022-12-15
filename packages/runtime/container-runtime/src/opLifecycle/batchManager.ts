@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { GenericError } from "@fluidframework/container-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions";
 
@@ -17,13 +20,27 @@ export interface IBatchManagerOptions {
  * Helper class that manages partial batch & rollback.
  */
 export class BatchManager {
+    private readonly logger;
     private pendingBatch: BatchMessage[] = [];
     private batchContentSize = 0;
+    /**
+    * Tracks the number of ops which were detected to have a mismatched
+    * reference sequence number, in order to self-throttle the telemetry events.
+    *
+    * This should be removed as part of ADO:2322
+    */
+    private baselineMismatchedOpsToReport = 5;
+
 
     public get length() { return this.pendingBatch.length; }
     public get contentSizeInBytes() { return this.batchContentSize; }
 
-    constructor(public readonly options: IBatchManagerOptions) { }
+    constructor(
+        public readonly options: IBatchManagerOptions,
+        logger: ITelemetryLogger,
+    ) {
+        this.logger = ChildLogger.create(logger, "BatchManager");
+    }
 
     public push(message: BatchMessage): boolean {
         this.checkReferenceSequenceNumber(message);
@@ -89,6 +106,37 @@ export class BatchManager {
                 this.pendingBatch.length = startPoint;
             },
         };
+    }
+
+    private checkReferenceSequenceNumber(message: BatchMessage) {
+        if (this.pendingBatch.length === 0 || message.referenceSequenceNumber === this.pendingBatch[0].referenceSequenceNumber) {
+            // The reference sequence numbers are stable
+            return;
+        }
+
+        const telemetryProperties = {
+            referenceSequenceNumber: this.pendingBatch[0].referenceSequenceNumber,
+            messageReferenceSequenceNumber: message.referenceSequenceNumber,
+            type: message.deserializedContent.type,
+            length: this.pendingBatch.length,
+        };
+        const error = new GenericError(
+            "Submission of an out of order message",
+                /* error */ undefined,
+            telemetryProperties);
+
+
+        if (this.options.enableOpReentryCheck === true) {
+            throw error;
+        }
+
+        if (this.baselineMismatchedOpsToReport > 0) {
+            this.logger.sendTelemetryEvent(
+                { eventName: "Submission of an out of order message", ...telemetryProperties },
+                error,
+            );
+            this.baselineMismatchedOpsToReport--;
+        }
     }
 }
 

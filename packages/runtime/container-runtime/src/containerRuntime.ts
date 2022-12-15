@@ -1033,7 +1033,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
         }
 
-        this.enableOpReentryCheck = runtimeOptions.enableOpReentryCheck === true
+        this.enableOpReentryCheck = (runtimeOptions.enableOpReentryCheck === true
+            // If compression is enabled, we need to disallow op reentry as it is required that
+            // ops within the same batch to have the same reference sequence number.
+            || runtimeOptions.compressionOptions.minimumBatchSizeInBytes !== Number.POSITIVE_INFINITY)
             // Allow for a break-glass config to override the options
             && this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableOpReentryCheck") !== true;
 
@@ -1173,6 +1176,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
                 enableOpReentryCheck: this.enableOpReentryCheck,
             },
+            logger: this.mc.logger,
         });
 
         this.context.quorum.on("removeMember", (clientId: string) => {

@@ -4,20 +4,30 @@
  */
 
 import { strict as assert } from "assert";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { BatchManager, BatchMessage } from "../../opLifecycle";
+import { ContainerMessageType } from "../../containerRuntime";
 
 describe("BatchManager", () => {
+    const mockLogger = new MockLogger();
     const softLimit = 1024;
     const hardLimit = 950 * 1024;
     const smallMessageSize = 10;
 
+    beforeEach(() => {
+        mockLogger.clear();
+    });
+
     const generateStringOfSize = (sizeInBytes: number): string => new Array(sizeInBytes + 1).join("0");
 
-    const smallMessage = (): BatchMessage => ({ contents: generateStringOfSize(smallMessageSize) } as any as BatchMessage);
+    const smallMessage = (): BatchMessage => ({
+        contents: generateStringOfSize(smallMessageSize),
+        deserializedContent: { type: ContainerMessageType.FluidDataStoreOp }
+    } as any as BatchMessage);
 
     it("BatchManager's soft limit: a bunch of small messages", () => {
         const message = { contents: generateStringOfSize(softLimit / 2) } as any as BatchMessage;
-        const batchManager = new BatchManager({ hardLimit, softLimit });
+        const batchManager = new BatchManager({ hardLimit, softLimit }, mockLogger);
 
         // Can push one large message
         assert.equal(batchManager.push(message), true);
@@ -46,7 +56,7 @@ describe("BatchManager", () => {
 
     it("BatchManager's soft limit: single large message", () => {
         const message = { contents: generateStringOfSize(softLimit * 2) } as any as BatchMessage;
-        const batchManager = new BatchManager({ hardLimit, softLimit });
+        const batchManager = new BatchManager({ hardLimit, softLimit }, mockLogger);
 
         // Can push one large message, even above soft limit
         assert.equal(batchManager.push(message), true);
@@ -70,7 +80,7 @@ describe("BatchManager", () => {
     });
 
     it("BatchManager: no soft limit", () => {
-        const batchManager = new BatchManager({ hardLimit });
+        const batchManager = new BatchManager({ hardLimit }, mockLogger);
         const third = Math.floor(hardLimit / 3) + 1;
         const message = { contents: generateStringOfSize(third) } as any as BatchMessage;
 
@@ -102,7 +112,7 @@ describe("BatchManager", () => {
     });
 
     it("BatchManager: soft limit is higher than hard limit", () => {
-        const batchManager = new BatchManager({ hardLimit, softLimit: hardLimit * 2 });
+        const batchManager = new BatchManager({ hardLimit, softLimit: hardLimit * 2 }, mockLogger);
         const twoThird = Math.floor(hardLimit * 2 / 3);
         const message = { contents: generateStringOfSize(twoThird) } as any as BatchMessage;
         const largeMessage = { contents: generateStringOfSize(hardLimit + 1) } as any as BatchMessage;
@@ -126,7 +136,7 @@ describe("BatchManager", () => {
 
     it("BatchManager: 'infinity' hard limit allows everything", () => {
         const message = { contents: generateStringOfSize(softLimit) } as any as BatchMessage;
-        const batchManager = new BatchManager({ hardLimit: Infinity });
+        const batchManager = new BatchManager({ hardLimit: Infinity }, mockLogger);
 
         for (let i = 1; i <= 10; i++) {
             assert.equal(batchManager.push(message), true);
@@ -135,7 +145,7 @@ describe("BatchManager", () => {
     });
 
     it("Batch metadata is set correctly", () => {
-        const batchManager = new BatchManager({ hardLimit });
+        const batchManager = new BatchManager({ hardLimit }, mockLogger);
         assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
         assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
         assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 2 }), true);
@@ -151,7 +161,7 @@ describe("BatchManager", () => {
     });
 
     it("Batch content size is tracked correctly", () => {
-        const batchManager = new BatchManager({ hardLimit });
+        const batchManager = new BatchManager({ hardLimit }, mockLogger);
         assert.equal(batchManager.push(smallMessage()), true);
         assert.equal(batchManager.contentSizeInBytes, smallMessageSize * batchManager.length);
         assert.equal(batchManager.push(smallMessage()), true);
@@ -162,5 +172,40 @@ describe("BatchManager", () => {
         const batchContentSizeInBytes = batchManager.contentSizeInBytes;
         const batch = batchManager.popBatch();
         assert.equal(batchContentSizeInBytes, batch.contentSizeInBytes);
+    });
+
+    it("Don't verify op ordering by default, but log at most 5 events when it occurs", () => {
+        const batchManager = new BatchManager({ hardLimit }, mockLogger);
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
+
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 2 }), true);
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 2 }), true);
+
+        mockLogger.assertMatch([{
+            eventName: "BatchManager:Submission of an out of order message",
+        }, {
+            eventName: "BatchManager:Submission of an out of order message",
+        }, {
+            eventName: "BatchManager:Submission of an out of order message",
+        }, {
+            eventName: "BatchManager:Submission of an out of order message",
+        }, {
+            eventName: "BatchManager:Submission of an out of order message",
+        }]);
+    });
+
+    it("Verify op ordering if requested", () => {
+        const batchManager = new BatchManager({ enableOpReentryCheck: true, hardLimit }, mockLogger);
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
+        assert.throws(() => batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }));
+        mockLogger.assertMatchNone([{
+            eventName: "BatchManager:Submission of an out of order message",
+        }]);
     });
 });
