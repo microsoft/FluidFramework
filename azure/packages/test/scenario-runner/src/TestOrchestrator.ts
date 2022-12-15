@@ -80,16 +80,14 @@ export class TestOrchestrator {
     }
 
     public static getConfigs(): VersionedRunConfig[] {
-        return [
-            { version: "v1", config: this.getConfig("v1") },
-        ];
+        return [{ version: "v1", config: this.getConfig("v1") }];
     }
 
     public static getConfig(version: string): RunConfig {
         return yaml.load(fs.readFileSync(this.getConfigFileName(version), "utf8")) as RunConfig;
     }
 
-    public async run(): Promise<void> {
+    public async run(): Promise<boolean> {
         this.runStatus = "running";
         const connConfig: IConnectionConfig = this.doc.env.connectionConfig as IConnectionConfig;
         const logger = await getLogger({
@@ -103,14 +101,17 @@ export class TestOrchestrator {
             logger,
             { eventName: "RunStages" },
             async () => {
-                await this.execRun(logger);
+                if (!(await this.execRun(logger))) {
+                    return false;
+                }
             },
             { start: true, end: true, cancel: "generic" },
         );
         this.runStatus = "done";
+        return true;
     }
 
-    private async execRun(logger: TelemetryLogger): Promise<void> {
+    private async execRun(logger: TelemetryLogger): Promise<boolean> {
         if (!this.doc) {
             throw new Error("Invalid config.");
         }
@@ -153,11 +154,12 @@ export class TestOrchestrator {
                         description: error as string,
                         details: {},
                     });
-                    console.log("Stage existed with error:", stage.name, error);
-                    break;
+                    console.log("Stage exited with error:", stage.name, error);
+                    return false;
                 }
             }
         }
+        return true;
     }
 
     public getStatus(): IRunStatus {
