@@ -77,6 +77,8 @@ export interface IFluidContainerEvents extends IEvent {
 /**
  * Provides an entrypoint into the client side of collaborative Fluid data.
  * Provides access to the data as well as status on the collaboration session.
+ *
+ * @remarks Note: external implementations of this interface are not supported.
  */
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     /**
@@ -302,5 +304,19 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
         this.container.off("disconnected", this.disconnectedHandler);
         this.container.off("saved", this.savedHandler);
         this.container.off("dirty", this.dirtyHandler);
+    }
+
+    /**
+     * FOR INTERNAL USE ONLY. NOT FOR EXTERNAL USE.
+     * We make no stability guarantees here whatsoever.
+     *
+     * Gets the underlying {@link @fluidframework/container-definitions#IContainer}.
+     *
+     * @remarks Used to power debug tooling.
+     *
+     * @internal
+     */
+    public readonly INTERNAL_CONTAINER_DO_NOT_USE?: () => IContainer = () => {
+        return this.container;
     }
 }
