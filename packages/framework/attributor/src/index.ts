@@ -22,8 +22,8 @@ export {
 	makeLZ4Encoder,
 } from "./lz4Encoder";
 export {
-	IProvideRuntimeAttribution,
-	IRuntimeAttribution,
+	IProvideRuntimeAttributor as IProvideRuntimeAttribution,
+	IRuntimeAttributor as IRuntimeAttribution,
 	mixinAttributor,
 } from "./mixinAttributor";
 export {

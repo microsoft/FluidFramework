@@ -79,7 +79,7 @@ export type InternedStringId = number & {
 // @alpha (undocumented)
 export interface IProvideRuntimeAttribution {
     // (undocumented)
-    readonly IRuntimeAttribution: IRuntimeAttribution;
+    readonly IRuntimeAttributor: IRuntimeAttribution;
 }
 
 // @alpha (undocumented)

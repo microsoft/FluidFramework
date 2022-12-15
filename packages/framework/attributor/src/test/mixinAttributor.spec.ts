@@ -18,7 +18,7 @@ import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtim
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IProvideRuntimeAttribution, mixinAttributor } from "../mixinAttributor";
+import { IProvideRuntimeAttributor, mixinAttributor } from "../mixinAttributor";
 import { Attributor as BaseAttributor } from "../attributor";
 import { makeLZ4Encoder } from "../lz4Encoder";
 import { AttributorSerializer, chain, deltaEncoder } from "../encoders";
@@ -60,9 +60,9 @@ describe("mixinAttributor", () => {
             {}, // runtimeOptions
         );
 
-        const maybeProvidesAttribution: FluidObject<IProvideRuntimeAttribution> = containerRuntime as FluidObject;
-        assert(maybeProvidesAttribution.IRuntimeAttribution !== undefined)
-        const runtimeAttribution = maybeProvidesAttribution.IRuntimeAttribution;
+        const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> = containerRuntime.scope;
+        assert(maybeProvidesAttributor.IRuntimeAttributor !== undefined)
+        const runtimeAttribution = maybeProvidesAttributor.IRuntimeAttributor;
 
         const op: Partial<ISequencedDocumentMessage> = {
             sequenceNumber: 7,
@@ -76,24 +76,6 @@ describe("mixinAttributor", () => {
             timestamp: op.timestamp,
             user: context.audience?.getMember(op.clientId!)?.user
         });
-    });
-
-    it("throws when requesting attribution from uninjected attributor", async () => {
-        const context = getMockContext() as IContainerContext;
-        containerRuntime = await AttributingContainerRuntime.load(
-            context,
-            [],
-            undefined, // requestHandler
-            {}, // runtimeOptions
-        );
-
-        const maybeProvidesAttribution: FluidObject<IProvideRuntimeAttribution> = containerRuntime as FluidObject;
-        assert(maybeProvidesAttribution.IRuntimeAttribution !== undefined)
-        const runtimeAttribution = maybeProvidesAttribution.IRuntimeAttribution;
-        assert.throws(
-            () => runtimeAttribution.getAttributionInfo({ type: "doesn't exist" as string as "op", seq: 0 }),
-            /Requested attribution information for non-existent attributor/
-        );
     });
 
     it("includes attribution association data in the summary tree", async () => {
@@ -185,14 +167,32 @@ describe("mixinAttributor", () => {
             {}, // runtimeOptions
         );
 
-        const maybeProvidesAttribution: FluidObject<IProvideRuntimeAttribution> = containerRuntime as FluidObject;
-        assert(maybeProvidesAttribution.IRuntimeAttribution !== undefined)
-        const runtimeAttribution = maybeProvidesAttribution.IRuntimeAttribution;
+        const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> = containerRuntime.scope;
+        assert(maybeProvidesAttributor.IRuntimeAttributor !== undefined)
+        const runtimeAttribution = maybeProvidesAttributor.IRuntimeAttributor;
 
         assert.deepEqual(
             runtimeAttribution.getAttributionInfo({ type: "op", seq: op.sequenceNumber! }),
             { timestamp: op.timestamp, user: context.audience?.getMember(op.clientId!)?.user }
         );
+    });
+
+    it("Doesn't inject an IRuntimeAttributor into the scope for existing documents that had no attributor", async () => {
+        const context = getMockContext() as Mutable<IContainerContext>;
+        const snapshot: ISnapshotTree = {
+            blobs: {},
+            trees: {}
+        };
+        context.baseSnapshot = snapshot;
+        containerRuntime = await AttributingContainerRuntime.load(
+            context,
+            [],
+            undefined, // requestHandler
+            {}, // runtimeOptions
+        );
+
+        const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> = containerRuntime.scope;
+        assert(maybeProvidesAttributor.IRuntimeAttributor === undefined);
     });
 });
 
