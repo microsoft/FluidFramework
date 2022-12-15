@@ -7,6 +7,7 @@ import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions";
 
 export interface IBatchManagerOptions {
+    readonly enableOpReentryCheck?: boolean;
     readonly hardLimit: number;
     readonly softLimit?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
@@ -25,6 +26,8 @@ export class BatchManager {
     constructor(public readonly options: IBatchManagerOptions) { }
 
     public push(message: BatchMessage): boolean {
+        this.checkReferenceSequenceNumber(message);
+
         const contentSize = this.batchContentSize + (message.contents?.length ?? 0);
         const opCount = this.pendingBatch.length;
 

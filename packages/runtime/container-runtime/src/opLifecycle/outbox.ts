@@ -17,6 +17,7 @@ export interface IOutboxConfig {
     readonly compressionOptions: ICompressionRuntimeOptions;
     // The maximum size of a batch that we can send over the wire.
     readonly maxBatchSizeInBytes: number;
+    readonly enableOpReentryCheck?: boolean;
 };
 
 export interface IOutboxParameters {
@@ -41,9 +42,11 @@ export class Outbox {
         this.attachFlowBatch = new BatchManager({
             hardLimit,
             softLimit,
+            enableOpReentryCheck: params.config.enableOpReentryCheck,
         });
         this.mainBatch = new BatchManager({
-            hardLimit
+            hardLimit,
+            enableOpReentryCheck: params.config.enableOpReentryCheck,
         });
     }
 
