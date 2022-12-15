@@ -14,6 +14,9 @@ export interface SerializedAttributionCollection {
     length: number;
 }
 
+/**
+ * @alpha
+ */
 export interface IAttributionCollection<T> {
     /**
      * Retrieves the attribution key associated with the provided offset.
@@ -44,9 +47,9 @@ export interface IAttributionCollection<T> {
 }
 
 export class AttributionCollection implements IAttributionCollection<AttributionKey> {
-    private readonly entries: RedBlackTree<number, string | number> = new RedBlackTree(compareNumbers);
+    private readonly entries: RedBlackTree<number, number> = new RedBlackTree(compareNumbers);
 
-    public constructor(baseEntry: string | number, private _length: number) {
+    public constructor(baseEntry: number, private _length: number) {
         this.entries.put(0, baseEntry);
     }
 
@@ -54,7 +57,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
         assert(offset >= 0 && offset < this._length, 0x443 /* Requested offset should be valid */);
         const node = this.entries.floor(offset);
         assert(node !== undefined, 0x444 /* Collection should have at least one entry */);
-        return { id: "op", key: node.data };
+        return { type: "op", seq: node.data };
     }
 
     public get length(): number {
@@ -66,7 +69,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
      */
     public splitAt(pos: number): AttributionCollection {
         const splitBaseEntry = this.getAtOffset(pos);
-        const splitCollection = new AttributionCollection(splitBaseEntry.key, this.length - pos);
+        const splitCollection = new AttributionCollection(splitBaseEntry.seq, this.length - pos);
         for (let current = this.entries.ceil(pos); current !== undefined; current = this.entries.ceil(pos)) {
             // If there happened to be an attribution change at exactly pos, it's already set in the base entry
             if (current.key !== pos) {
@@ -79,7 +82,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
     }
 
     public append(other: AttributionCollection): void {
-        const lastEntry = this.getAtOffset(this.length - 1).key;
+        const lastEntry = this.getAtOffset(this.length - 1).seq;
         other.entries.map(({ key, data }) => {
             if (key !== 0 || lastEntry !== data) {
                 this.entries.put(key + this.length, data);
@@ -92,14 +95,14 @@ export class AttributionCollection implements IAttributionCollection<Attribution
     public getAll(): { offset: number; key: AttributionKey; }[] {
         const results: { offset: number; key: AttributionKey; }[] = [];
         this.entries.map(({ key, data }) => {
-            results.push({ offset: key, key: { id: "op", key: data } });
+            results.push({ offset: key, key: { type: "op", seq: data } });
             return true;
         });
         return results;
     }
 
     public clone(): AttributionCollection {
-        const copy = new AttributionCollection(this.getAtOffset(0).key, this.length);
+        const copy = new AttributionCollection(this.getAtOffset(0).seq, this.length);
         this.entries.map(({ key, data }) => {
             copy.entries.put(key, data);
             return true;
@@ -155,11 +158,11 @@ export class AttributionCollection implements IAttributionCollection<Attribution
             if (segment.attribution) {
                 segmentsWithAttribution++;
                 for (const { offset, key: info } of segment.attribution?.getAll() ?? []) {
-                    if (info.key !== mostRecentAttributionKey) {
+                    if (info.seq !== mostRecentAttributionKey) {
                         posBreakpoints.push(offset + cumulativePos);
-                        keys.push(info.key);
+                        keys.push(info.seq);
                     }
-                    mostRecentAttributionKey = info.key;
+                    mostRecentAttributionKey = info.seq;
                 }
             } else {
                 segmentsWithoutAttribution++;

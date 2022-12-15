@@ -47,19 +47,24 @@ import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager";
 
 // TODO: Once @fluid-internal/attributor is made public, this package should reference that type.
+/**
+ * @internal
+ * @remarks - This will eventually be exported by a different package.
+ */
 export interface AttributionKey {
     /**
-     * The id of the attributor this key corresponds to.
+     * The type of attribution this key corresponds to.
      * 
-     * Keys currently all represent op-based attribution, so have the form `{ id: "op", key: sequenceNumber }`.
+     * Keys currently all represent op-based attribution, so have the form `{ type: "op", key: sequenceNumber }`.
      * Thus, they can be used with an `OpStreamAttributor` to recover timestamp/user information.
      * 
-     * @remarks - There are plans to make the `id` field of an attribution key an extensibility point to empower
+     * @remarks - If we want to support different types of attribution, a reasonable extensibility point is to make
+     * AttributionKey a discriminated union on the 'type' field. This would empower
      * consumers with the ability to implement different attribution policies.
     */
-    id: string;
+    type: "op";
 
-    key: number | string;
+    seq: number;
 }
 
 /**
@@ -168,11 +173,12 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
      * 
      * Keys can be used opaquely with an IAttributor or a container runtime that provides attribution.
      * 
+     * @alpha
+     * 
      * @remarks - There are plans to make the shape of the data stored extensible in a couple ways:
      * 
      * 1. Injection of custom attribution information associated with the segment (ex: copy-paste of
-     * content but keeping the old attribution information). This would leverage the `type` field of
-     * the returned AttributionKey (since the information is no longer op-based)
+     * content but keeping the old attribution information).
      * 2. Storage of multiple "channels" of information (ex: track property changes separately from insertion,
      * or only attribute certain property modifications, etc.)
      */
@@ -405,6 +411,9 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     public removedClientIds?: number[];
     public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
     public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
+    /**
+     * @alpha
+     */
     public attribution?: IAttributionCollection<AttributionKey>;
     public propertyManager?: PropertiesManager;
     public properties?: PropertySet;

@@ -84,7 +84,7 @@ describe("snapshot", () => {
 
 
     async function assertAttributionKeysMatch(client: TestClient, expected: number[] | undefined): Promise<void> {
-        assert.deepEqual(client.getAllAttributionKeys(), expected, "Keys don't match before round-tripping");
+        assert.deepEqual(client.getAllAttributionSeqs(), expected, "Keys don't match before round-tripping");
         const serializer = new TestSerializer();
         // This avoids necessitating handling catchup ops.
         client.mergeTree.setMinSeq(client.mergeTree.getCollabWindow().currentSeq);
@@ -99,7 +99,7 @@ describe("snapshot", () => {
             clientId: "round-trips summary",
         };
         await roundTripClient.load(runtime as IFluidDataStoreRuntime, services, serializer);
-        assert.deepEqual(roundTripClient.getAllAttributionKeys(), expected, "Keys don't match after round-tripping");
+        assert.deepEqual(roundTripClient.getAllAttributionSeqs(), expected, "Keys don't match after round-tripping");
     }
 
     it("preserves attribution information", async () => {

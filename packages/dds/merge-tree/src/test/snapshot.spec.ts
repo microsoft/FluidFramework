@@ -66,7 +66,7 @@ class TestString {
     // Ensures the MergeTree client's contents successfully roundtrip through a snapshot.
     public async checkSnapshot(options?: IMergeTreeOptions) {
         this.applyPendingOps();
-        const expectedAttributionKeys = this.client.getAllAttributionKeys();
+        const expectedAttributionKeys = this.client.getAllAttributionSeqs();
         const summary = this.getSummary();
         const client2 = await loadSnapshot(summary, options);
 
@@ -77,7 +77,7 @@ class TestString {
         assert.equal(this.client.getLength(), client2.getLength(),
             "Snapshot must produce a MergeTree with the same length as the original");
 
-        const actualAttributionKeys = client2.getAllAttributionKeys();
+        const actualAttributionKeys = client2.getAllAttributionSeqs();
         assert.deepEqual(actualAttributionKeys, expectedAttributionKeys,
             "Snapshot must produce a MergeTree with identical attribution as the original");
 

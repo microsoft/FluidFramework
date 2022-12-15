@@ -412,20 +412,20 @@ export class TestClient extends Client {
     }
 
     /**
-     * @returns an array of all attribution keys from the current perspective.
+     * @returns an array of all attribution seq#s from the current perspective.
      * The `i`th entry of the array is the attribution key for the character at position `i`.
      * Validates segments either all have attribution information or none of them.
      * If no segment has attribution information, returns undefined.
      */
-    public getAllAttributionKeys(): unknown[] | undefined {
-        const keys: unknown[] | undefined = [];
+    public getAllAttributionSeqs(): number[] | undefined {
+        const seqs: number[] | undefined = [];
         let segmentsWithAttribution = 0;
         let segmentsWithoutAttribution = 0;
         this.walkAllSegments((segment) => {
             if (segment.attribution) {
                 segmentsWithAttribution++;
                 for (let i = 0; i < segment.cachedLength; i++) {
-                    keys.push(segment.attribution.getAtOffset(i).key);
+                    seqs.push(segment.attribution.getAtOffset(i).seq);
                 }
             } else {
                 segmentsWithoutAttribution++;
@@ -434,7 +434,7 @@ export class TestClient extends Client {
         });
 
         assert(segmentsWithAttribution === 0 || segmentsWithoutAttribution === 0);
-        return segmentsWithAttribution !== 0 ? keys : undefined;
+        return segmentsWithAttribution !== 0 ? seqs : undefined;
     }
 }
 

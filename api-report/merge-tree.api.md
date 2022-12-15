@@ -30,7 +30,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     append(other: ISegment): void;
     // Warning: (ae-forgotten-export) The symbol "AttributionKey" needs to be exported by the entry point index.d.ts
     //
-    // (undocumented)
+    // @alpha (undocumented)
     attribution?: IAttributionCollection<AttributionKey>;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
@@ -303,7 +303,7 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, c
 // @public (undocumented)
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T>;
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IAttributionCollection<T> {
     // @internal (undocumented)
     append(other: IAttributionCollection<T>): void;
@@ -641,11 +641,12 @@ export interface IRemovalInfo {
 
 // @public
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, attribution?: unknown): boolean;
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
     append(segment: ISegment): void;
+    // @alpha
     attribution?: IAttributionCollection<AttributionKey>;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
