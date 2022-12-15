@@ -33,7 +33,7 @@ export class AnchorSet {
 }
 
 // @public (undocumented)
-type Attach<TNodeChange = NodeChangeType> = Insert_2 | ModifyInsert<TNodeChange> | MoveIn_2 | ModifyMoveIn<TNodeChange> | Reattach | ModifyReattach<TNodeChange>;
+type Attach<TNodeChange = NodeChangeType> = NewAttach<TNodeChange> | Reattach | ModifyReattach<TNodeChange>;
 
 // @public
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
@@ -802,6 +802,8 @@ interface ModifyMoveOut<TNodeChange = NodeChangeType> extends HasMoveId, HasRevi
 // @public (undocumented)
 interface ModifyReattach<TNodeChange = NodeChangeType> extends HasReattachFields, HasRevisionTag, HasChanges<TNodeChange> {
     // (undocumented)
+    mutedBy?: RevisionTag;
+    // (undocumented)
     type: "MRevive" | "MReturn";
 }
 
@@ -923,6 +925,9 @@ export type NameFromBranded<T extends BrandedType<any, string>> = T extends Bran
 
 // @public
 export const neverTree: TreeSchema;
+
+// @public (undocumented)
+type NewAttach<TNodeChange = NodeChangeType> = Insert_2 | ModifyInsert<TNodeChange> | MoveIn_2 | ModifyMoveIn<TNodeChange>;
 
 // @public (undocumented)
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
@@ -1052,6 +1057,8 @@ interface Reattach extends HasReattachFields, HasRevisionTag {
     // (undocumented)
     count: NodeCount;
     // (undocumented)
+    mutedBy?: RevisionTag;
+    // (undocumented)
     type: "Revive" | "Return";
 }
 
@@ -1106,6 +1113,7 @@ type SequenceChangeRebaser = FieldChangeRebaser<Changeset>;
 declare namespace SequenceField {
     export {
         Attach,
+        NewAttach,
         Changeset,
         ClientId,
         Delete_2 as Delete,
@@ -1208,7 +1216,7 @@ const sequenceFieldEditor: {
     buildChildChange: <TNodeChange = NodeChangeset>(index: number, change: TNodeChange) => Changeset<TNodeChange>;
     insert: (index: number, cursors: ITreeCursor | ITreeCursor[]) => Changeset<never>;
     delete: (index: number, count: number) => Changeset<never>;
-    revive: (index: number, count: number, detachIndex: number, revision: RevisionTag) => Changeset<never>;
+    revive: (index: number, count: number, detachIndex: number, revision: RevisionTag, mutedBy?: RevisionTag | undefined) => Changeset<never>;
 };
 
 // @public (undocumented)

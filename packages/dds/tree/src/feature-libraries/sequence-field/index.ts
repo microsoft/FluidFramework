@@ -5,6 +5,7 @@
 
 export {
     Attach,
+    NewAttach,
     Changeset,
     ClientId,
     Delete,
