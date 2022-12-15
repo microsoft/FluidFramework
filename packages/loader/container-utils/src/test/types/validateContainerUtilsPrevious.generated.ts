@@ -23,7 +23,6 @@ declare function get_old_ClassDeclaration_ClientSessionExpiredError():
 declare function use_current_ClassDeclaration_ClientSessionExpiredError(
     use: TypeOnly<current.ClientSessionExpiredError>);
 use_current_ClassDeclaration_ClientSessionExpiredError(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ClientSessionExpiredError());
 
 /*
@@ -36,7 +35,6 @@ declare function get_current_ClassDeclaration_ClientSessionExpiredError():
 declare function use_old_ClassDeclaration_ClientSessionExpiredError(
     use: TypeOnly<old.ClientSessionExpiredError>);
 use_old_ClassDeclaration_ClientSessionExpiredError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ClientSessionExpiredError());
 
 /*
@@ -49,7 +47,6 @@ declare function get_old_ClassDeclaration_DataCorruptionError():
 declare function use_current_ClassDeclaration_DataCorruptionError(
     use: TypeOnly<current.DataCorruptionError>);
 use_current_ClassDeclaration_DataCorruptionError(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_DataCorruptionError());
 
 /*
@@ -62,7 +59,6 @@ declare function get_current_ClassDeclaration_DataCorruptionError():
 declare function use_old_ClassDeclaration_DataCorruptionError(
     use: TypeOnly<old.DataCorruptionError>);
 use_old_ClassDeclaration_DataCorruptionError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DataCorruptionError());
 
 /*
@@ -75,7 +71,6 @@ declare function get_old_ClassDeclaration_DataProcessingError():
 declare function use_current_ClassDeclaration_DataProcessingError(
     use: TypeOnly<current.DataProcessingError>);
 use_current_ClassDeclaration_DataProcessingError(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_DataProcessingError());
 
 /*
@@ -88,7 +83,6 @@ declare function get_current_ClassDeclaration_DataProcessingError():
 declare function use_old_ClassDeclaration_DataProcessingError(
     use: TypeOnly<old.DataProcessingError>);
 use_old_ClassDeclaration_DataProcessingError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DataProcessingError());
 
 /*
@@ -125,7 +119,6 @@ declare function get_old_ClassDeclaration_GenericError():
 declare function use_current_ClassDeclaration_GenericError(
     use: TypeOnly<current.GenericError>);
 use_current_ClassDeclaration_GenericError(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_GenericError());
 
 /*
@@ -138,7 +131,6 @@ declare function get_current_ClassDeclaration_GenericError():
 declare function use_old_ClassDeclaration_GenericError(
     use: TypeOnly<old.GenericError>);
 use_old_ClassDeclaration_GenericError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_GenericError());
 
 /*
@@ -151,7 +143,6 @@ declare function get_old_ClassDeclaration_ThrottlingWarning():
 declare function use_current_ClassDeclaration_ThrottlingWarning(
     use: TypeOnly<current.ThrottlingWarning>);
 use_current_ClassDeclaration_ThrottlingWarning(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ThrottlingWarning());
 
 /*
@@ -164,7 +155,6 @@ declare function get_current_ClassDeclaration_ThrottlingWarning():
 declare function use_old_ClassDeclaration_ThrottlingWarning(
     use: TypeOnly<old.ThrottlingWarning>);
 use_old_ClassDeclaration_ThrottlingWarning(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ThrottlingWarning());
 
 /*
@@ -177,7 +167,6 @@ declare function get_old_ClassDeclaration_UsageError():
 declare function use_current_ClassDeclaration_UsageError(
     use: TypeOnly<current.UsageError>);
 use_current_ClassDeclaration_UsageError(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_UsageError());
 
 /*
@@ -190,5 +179,4 @@ declare function get_current_ClassDeclaration_UsageError():
 declare function use_old_ClassDeclaration_UsageError(
     use: TypeOnly<old.UsageError>);
 use_old_ClassDeclaration_UsageError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_UsageError());
