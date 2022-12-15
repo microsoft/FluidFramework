@@ -39,6 +39,7 @@ export {
     MarkedArrayLike,
     isWritableArrayLike,
     isContextuallyTypedNodeDataObject,
+    EditableTreeIndex,
 } from "./editable-tree";
 export { ForestIndex } from "./forestIndex";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";

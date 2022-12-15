@@ -24,7 +24,13 @@ import {
     Dependent,
     afterChangeToken,
     SchemaDataAndPolicy,
+    makeAnonChange,
+    tagChange,
+    Index,
+    TaggedChange,
 } from "../../core";
+import { brand, fail } from "../../util";
+import { ModularChangeset } from "../modular-schema";
 import { DefaultChangeset, DefaultEditBuilder } from "../defaultChangeFamily";
 import { runSynchronousTransaction } from "../defaultTransaction";
 import { singleMapTreeCursor } from "../mapTreeCursor";
@@ -118,6 +124,22 @@ export interface EditableTreeContext {
      * is committed successfully.
      */
     attachAfterChangeHandler(afterChangeHandler: (context: EditableTreeContext) => void): void;
+
+    openTransaction(): void;
+    commitTransaction(): void;
+    get hasOpenTransaction(): boolean;
+}
+
+type Transaction = (editor: DefaultEditBuilder) => void;
+
+export class EditableTreeIndex<TChangeset extends ModularChangeset> implements Index<TChangeset> {
+    public constructor(private readonly context: EditableTreeContext) {}
+
+    public sequencedChange(change: TChangeset, derivedFromLocal?: TChangeset): void {
+        if (derivedFromLocal === undefined) {
+            (this.context as ProxyContext).applySequencedChange(tagChange(change, undefined));
+        }
+    }
 }
 
 /**
@@ -299,7 +321,106 @@ export class ProxyContext implements EditableTreeContext {
         });
     }
 
-    private runTransaction(transaction: (editor: DefaultEditBuilder) => void): boolean {
+    private editor?: DefaultEditBuilder;
+
+    get hasOpenTransaction(): boolean {
+        return this.editor !== undefined;
+    }
+
+    /**
+     * This applies changes received by our EditableTreeIndex from the SharedTreeCore (see `SharedTreeCore.processCore`)
+     * to our local changes occured while the transaction is open.
+     *
+     * @param sequencedChange - The change sequenced by the SharedTreeCore
+     */
+    applySequencedChange(sequencedChange: TaggedChange<ModularChangeset>): void {
+        if (this.transactionCheckout === undefined) return;
+        if (!this.hasOpenTransaction) return;
+
+        const changeFamily = this.transactionCheckout.changeFamily;
+        const forest = this.forest;
+
+        const localChanges = this.editor?.getChanges() ?? [];
+
+        if (localChanges.length === 0) return;
+
+        // we have to roll back all changes occured after the transaction has been opened
+        const inverses = localChanges
+            .map((change, index) => changeFamily.rebaser.invert(tagChange(change, brand(index))))
+            .reverse();
+        // note that this sequencedChange is already applied to the Forest by the SharedTree,
+        // as ForestIndex is updated before EditableTreeIndex.
+        // Revert it. As it is the last one applied, it must be the first one in reverts.
+        inverses.unshift(
+            changeFamily.rebaser.invert(tagChange(sequencedChange.change, brand(inverses.length))),
+        );
+        // Roll back changes including the sequenced change
+        for (const inverse of inverses) {
+            changeFamily.rebaser.rebaseAnchors(this.forest.anchors, inverse);
+            this.forest.applyDelta(changeFamily.intoDelta(inverse));
+        }
+
+        const editor = changeFamily.buildEditor((edit) => {
+            forest.applyDelta(changeFamily.intoDelta(edit));
+        }, forest.anchors);
+        // apply sequenced change, but now on top of the forest state before the transaction has been opened
+        changeFamily.rebaser.rebaseAnchors(this.forest.anchors, sequencedChange.change);
+        this.forest.applyDelta(changeFamily.intoDelta(sequencedChange.change));
+        // apply local changes rebased on the new sequenced change
+        for (const change of localChanges) {
+            // Also, in general, sequenced changes are handled by the SharedTree, so if handled properly
+            // here by the time they arrive, we don't have to track them, only to rebase
+            // our local changes over the most recent one.
+            const rebased = changeFamily.rebaser.rebase(change, sequencedChange);
+            editor.apply(rebased);
+        }
+        this.editor = editor;
+    }
+
+    openTransaction(): void {
+        assert(
+            this.transactionCheckout !== undefined,
+            "`transactionCheckout` is required to edit the EditableTree",
+        );
+        assert(!this.hasOpenTransaction, "already running");
+        const changeFamily = this.transactionCheckout.changeFamily;
+        const forest = this.forest;
+        this.editor = changeFamily.buildEditor((edit) => {
+            forest.applyDelta(changeFamily.intoDelta(edit));
+        }, forest.anchors);
+    }
+
+    commitTransaction(): void {
+        assert(
+            this.transactionCheckout !== undefined,
+            "`transactionCheckout` is required to edit the EditableTree",
+        );
+        assert(this.hasOpenTransaction, "no open transaction, nothing to commit");
+        const submitEdit = this.transactionCheckout.submitEdit.bind(this.transactionCheckout);
+        const changeFamily = this.transactionCheckout.changeFamily;
+        const changes = this.editor?.getChanges() ?? [];
+        if (changes.length > 0) {
+            const inverses = changes
+                .map((change, index) =>
+                    changeFamily.rebaser.invert(tagChange(change, brand(index))),
+                )
+                .reverse();
+            // Roll back changes
+            for (const inverse of inverses) {
+                changeFamily.rebaser.rebaseAnchors(this.forest.anchors, inverse);
+                this.forest.applyDelta(changeFamily.intoDelta(inverse));
+            }
+            const edit = changeFamily.rebaser.compose(changes.map((c) => makeAnonChange(c)));
+            submitEdit(edit);
+        }
+        this.editor = undefined;
+    }
+
+    private runTransaction(transaction: Transaction): boolean {
+        if (this.hasOpenTransaction) {
+            transaction(this.editor ?? fail("expected editor"));
+            return true;
+        }
         assert(
             this.transactionCheckout !== undefined,
             0x45a /* `transactionCheckout` is required to edit the EditableTree */,

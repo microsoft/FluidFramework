@@ -53,7 +53,6 @@ import {
     float64Schema,
     Phones,
     phonesSchema,
-    decimalSchema,
 } from "./mockData";
 
 const globalFieldKey: GlobalFieldKey = brand("foo");
@@ -104,6 +103,34 @@ const testCases: (readonly [string, FieldKey])[] = [
 ];
 
 describe("editable-tree: editing", () => {
+    it("can build transactions myself", async () => {
+        const schemaData = {
+            treeSchema: schemaMap,
+            globalFieldSchema: new Map([
+                [rootFieldKey, fieldSchema(FieldKinds.sequence, [stringSchema.name])],
+            ]),
+        };
+        const [provider, [tree1, tree2]] = await createSharedTrees(schemaData, undefined, 2);
+        const context1 = tree1.context;
+        const context2 = tree2.context;
+        context1.root = [];
+        context1.openTransaction();
+        // create concurrently to simulate a merge conflict
+        context1.root[0] = "first";
+        context2.root[0] = "my first";
+        await provider.ensureSynchronized();
+        // the result must follow the merge semantics for sequences:
+        // all inserts are preserved in order of "sequenced-last" to "sequenced-first"
+        assert.deepEqual([...context1.root], ["first", "my first"]);
+        // no sync for the second tree as the transaction is still open
+        assert.deepEqual([...context2.root], ["my first"]);
+        context1.root[0] = "second";
+        context1.commitTransaction();
+        await provider.ensureSynchronized();
+        assert.deepEqual([...context1.root], ["second", "my first"]);
+        assert.deepEqual([...context1.root], [...context2.root]);
+    });
+
     it("edit using contextually typed API", async () => {
         const [, trees] = await createSharedTrees(fullSchemaData, [personData]);
         assert.equal((trees[0].root as Person).name, "Adam");
@@ -130,7 +157,7 @@ describe("editable-tree: editing", () => {
         // - String schema
         maybePerson.salary = {
             [valueSymbol]: "100.1",
-            [typeNameSymbol]: decimalSchema.name,
+            [typeNameSymbol]: stringSchema.name,
         };
         // basic primitive data type does match the current node type
         maybePerson.salary = "not ok";

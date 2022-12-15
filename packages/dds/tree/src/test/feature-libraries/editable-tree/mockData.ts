@@ -156,7 +156,7 @@ export const schemaTypes: Set<NamedTreeSchema> = new Set([
     addressSchema,
     mapStringSchema,
     personSchema,
-    decimalSchema,
+    // decimalSchema,
 ]);
 
 export const schemaMap: Map<TreeSchemaIdentifier, NamedTreeSchema> = new Map();

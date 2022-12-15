@@ -44,6 +44,7 @@ import {
     runSynchronousTransaction,
     buildForest,
     ContextuallyTypedNodeData,
+    EditableTreeIndex,
 } from "../feature-libraries";
 
 /**
@@ -129,10 +130,17 @@ class SharedTree
             defaultChangeFamily,
             anchors,
         );
+        const transactionCheckout: TransactionCheckout<DefaultEditBuilder, DefaultChangeset> = {
+            forest,
+            changeFamily: defaultChangeFamily,
+            submitEdit: (edit) => this.submitEdit(edit),
+        };
+        const context = getEditableTreeContext(forest, transactionCheckout);
         const indexes: Index<DefaultChangeset>[] = [
             new SchemaIndex(runtime, schema),
             new ForestIndex(runtime, forest),
             new EditManagerIndex(runtime, editManager),
+            new EditableTreeIndex(context),
         ];
         super(
             indexes,
@@ -147,13 +155,8 @@ class SharedTree
 
         this.forest = forest;
         this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
-        this.transactionCheckout = {
-            forest,
-            changeFamily: this.changeFamily,
-            submitEdit: (edit) => this.submitEdit(edit),
-        };
-
-        this.context = getEditableTreeContext(forest, this.transactionCheckout);
+        this.transactionCheckout = transactionCheckout;
+        this.context = context;
     }
 
     public locate(anchor: Anchor): UpPath | undefined {
