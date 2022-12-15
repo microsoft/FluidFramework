@@ -16,6 +16,7 @@ import {
     IRequest,
     IResponse,
     IFluidRouter,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
