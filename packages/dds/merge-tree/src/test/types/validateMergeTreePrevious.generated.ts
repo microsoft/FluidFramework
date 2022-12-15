@@ -143,6 +143,7 @@ declare function get_old_ClassDeclaration_Client():
 declare function use_current_ClassDeclaration_Client(
     use: TypeOnly<current.Client>);
 use_current_ClassDeclaration_Client(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_Client());
 
 /*
@@ -2975,6 +2976,7 @@ declare function get_old_InterfaceDeclaration_SegmentGroup():
 declare function use_current_InterfaceDeclaration_SegmentGroup(
     use: TypeOnly<current.SegmentGroup>);
 use_current_InterfaceDeclaration_SegmentGroup(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_SegmentGroup());
 
 /*
