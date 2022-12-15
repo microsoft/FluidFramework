@@ -13,9 +13,7 @@ import {
 import { SharedSegmentSequenceUndoRedoHandler } from "../sequenceHandler";
 import { UndoRedoStackManager } from "../undoRedoStackManager";
 
-const text =
-    // eslint-disable-next-line max-len
-    "The SharedSegmentSequenceRevertible does the heavy lifting of tracking and reverting changes on the underlying SharedSegmentSequence. This is accomplished via TrackingGroup objects.";
+const text = "The SharedSegmentSequenceRevertible does the heavy lifting of tracking and reverting changes on the underlying SharedSegmentSequence. This is accomplished via TrackingGroup objects.";
 
 function insertTextAsChunks(sharedString: SharedString, targetLength = text.length) {
     let chunks = 0;

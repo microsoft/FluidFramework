@@ -1,6 +1,6 @@
-# Azure Scenario Runner
+# @fluidframework/azure-scenario-runner
 
-    @fluidframework/azure-scenario-runner
+## Azure Scenario Runner
 
 This package provides a reference application that executes pre-set scenarios with the intent of measuring the Fluid Framework's performance and reliability. We primarily use this package as part of a pipeline scheduled to run periodically to measure, log, and report various performance and reliability metrics. These metrics can then be used to gauge an undrestanding of the expected behavior/performance of the Fluid Framework in these various scenarios, which can help define the SLA.
 

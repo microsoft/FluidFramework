@@ -1501,7 +1501,6 @@ describe('DataBinder', function() {
         childDataBindings.push(dataBinder.resolve(childPsets[i + 1].getAbsolutePath(), 'BINDING'));
       }
       dataBinder._resetDebugCounters();
-      /* eslint-disable max-len */
       expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[0]', 'BINDING').getProperty()).toEqual(childPsets[1]);
       expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[1]', 'BINDING').getProperty()).toEqual(childPsets[2]);
       expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[2]', 'BINDING').getProperty()).toEqual(childPsets[3]);
@@ -1509,7 +1508,6 @@ describe('DataBinder', function() {
       expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[0]', 'BINDING').onPostCreate).toHaveBeenCalledTimes(1);
       expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[1]', 'BINDING').onPostCreate).toHaveBeenCalledTimes(1);
       expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[2]', 'BINDING').onPostCreate).toHaveBeenCalledTimes(1);
-      /* eslint-enable max-len */
 
       // change one of the elements
       workspace.pushNotificationDelayScope();
@@ -1555,14 +1553,9 @@ describe('DataBinder', function() {
       expect(arrayPset.resolvePath(subArrayPath).get(0)).toEqual(childPsets[0]);
       expect(arrayPset.resolvePath(subArrayPath).get(1)).toEqual(childPsets[1]);
       expect(arrayPset.resolvePath(subArrayPath).get(2)).toEqual(childPsets[10]);
-      /* eslint-disable max-len */
-      expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[0]',
-        'BINDING').getProperty()).toEqual(childPsets[0]);
-      expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[1]',
-        'BINDING').getProperty()).toEqual(childPsets[1]);
-      expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[2]',
-        'BINDING').getProperty()).toEqual(childPsets[10]);
-      /* eslint-enable max-len */
+      expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[0]', 'BINDING').getProperty()).toEqual(childPsets[0]);
+      expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[1]', 'BINDING').getProperty()).toEqual(childPsets[1]);
+      expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[2]', 'BINDING').getProperty()).toEqual(childPsets[10]);
       expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[0]', 'BINDING')).toEqual(actChildDataBinding);
       expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[1]', 'BINDING')).toEqual(childDataBindings[0]);
       expect(dataBinder.resolve('myArrayPset.' + subArrayPath + '[2]', 'BINDING')).toEqual(secondCreatedDataBinding);
@@ -3017,7 +3010,6 @@ describe('DataBinder', function() {
     it('should be possible to unregister before attaching to a workspace', function() {
       var callbackSpyRegistered = jest.fn();
       var callbackSpyUnregistered = jest.fn();
-      // eslint-disable-next-line max-len
       const handle = dataBinder.registerOnPath('myPrimitiveChildTemplate.aString', ['insert'], callbackSpyUnregistered);
       dataBinder.registerOnPath('myPrimitiveChildTemplate.aString', ['insert'], callbackSpyRegistered);
 
@@ -4807,7 +4799,6 @@ describe('DataBinder', function() {
     it('should work when registering an exactPath to an element in an array (LYNXDEV-5380)', function() {
       dataBinder.attachTo(workspace);
       workspace.root.insert('arrTest', PropertyFactory.create(ParentTemplate.typeid, 'array'));
-      // eslint-disable-next-line max-len
       const handle = dataBinder.register('BINDING', ParentTemplate.typeid, ParentDataBinding, { exactPath: 'arrTest[0]' });
       expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
       workspace.root.get('arrTest').push(PropertyFactory.create(ParentTemplate.typeid, 'single'));
@@ -4820,7 +4811,6 @@ describe('DataBinder', function() {
       dataBinder.attachTo(workspace);
       workspace.root.insert('arrTest', PropertyFactory.create(ParentTemplate.typeid, 'array'));
       workspace.root.get('arrTest').push(PropertyFactory.create(ParentTemplate.typeid));
-      // eslint-disable-next-line max-len
       const handle = dataBinder.register('BINDING', ParentTemplate.typeid, ParentDataBinding, { exactPath: 'arrTest[0]' });
       expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
       workspace.root.get('arrTest').remove(0);

@@ -146,7 +146,6 @@ export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsCompa
      */
     satisfies(candidate: IFluidCodeDetails, constraint: IFluidCodeDetails): Promise<boolean>;
 
-/* eslint-disable max-len */
     /**
      * Returns a number representing the ascending sort order of the `a` and `b` code details:
      *
@@ -162,5 +161,4 @@ export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsCompa
      * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#description | Array.sort}
      */
     compare(a: IFluidCodeDetails, b: IFluidCodeDetails): Promise<number | undefined>;
-/* eslint-enable max-len */
 }
