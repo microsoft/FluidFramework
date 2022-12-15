@@ -7,16 +7,26 @@ import { IDocumentMessage, ISequencedDocumentMessage, IUser } from "@fluidframew
 import { UsageError } from "@fluidframework/container-utils";
 import { IAudience, IDeltaManager } from "@fluidframework/container-definitions";
 
+/**
+ * @alpha
+ */
  export interface AttributionKey {
-	/**
-	 * The id of attributor that this key is for.
-	 */
-	id: string;
+    /**
+     * The type of attribution this key corresponds to.
+     * 
+     * Keys currently all represent op-based attribution, so have the form `{ type: "op", key: sequenceNumber }`.
+     * Thus, they can be used with an `OpStreamAttributor` to recover timestamp/user information.
+     * 
+     * @remarks - If we want to support different types of attribution, a reasonable extensibility point is to make
+     * AttributionKey a discriminated union on the 'type' field. This would empower
+     * consumers with the ability to implement different attribution policies.
+    */
+    type: "op";
 
 	/**
-	 * The key associated with that attributor.
+	 * The sequenceNumber of the op this attribution key is for.
 	 */
-	key: number | string;
+    seq: number;
 }
 
 /**

@@ -17,10 +17,10 @@ export interface AttributionInfo {
     user: IUser;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface AttributionKey {
-    id: string;
-    key: number | string;
+    seq: number;
+    type: "op";
 }
 
 // @public

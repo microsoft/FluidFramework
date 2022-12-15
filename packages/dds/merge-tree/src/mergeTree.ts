@@ -1286,6 +1286,10 @@ export class MergeTree {
             const deltaSegments: IMergeTreeSegmentDelta[] = [];
             pendingSegmentGroup.segments.map((pendingSegment) => {
                 const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs);
+                // TODO: This work should likely be done as part of the above `ack` call. However the exact format
+                // of the argument to pass isn't obvious given some planned extensibility points around customizing
+                // what types of operations are attributed and how. Since `ack` is in the public API, leaving it
+                // here for now should reduce future breaking changes.
                 if (opArgs.op.type === MergeTreeDeltaType.INSERT && this.options?.attribution?.track) {
                     pendingSegment.attribution = new AttributionCollection(
                         seq,
