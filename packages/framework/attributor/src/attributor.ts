@@ -11,7 +11,7 @@ import { IAudience, IDeltaManager } from "@fluidframework/container-definitions"
  * Attribution information associated with a change.
  * @alpha
  */
- export interface AttributionInfo {
+export interface AttributionInfo {
 	/**
 	 * The user that performed the change.
 	 */
@@ -26,7 +26,7 @@ import { IAudience, IDeltaManager } from "@fluidframework/container-definitions"
  * Can be indexed into the ContainerRuntime in order to retrieve {@link AttributionInfo}.
  * @alpha
  */
- export interface AttributionKey {
+export interface AttributionKey {
     /**
      * The type of attribution this key corresponds to.
      * 

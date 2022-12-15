@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { AttributionInfo, Attributor as BaseAttributor, IAttributor } from "../attributor";
+import { AttributionInfo, Attributor, IAttributor } from "../attributor";
 import { AttributorSerializer, chain, Encoder, SerializedAttributor } from "../encoders";
 
 function makeNoopEncoder<T>(): Encoder<T, T> {
@@ -13,12 +13,7 @@ function makeNoopEncoder<T>(): Encoder<T, T> {
     };
 }
 
-class Attributor extends BaseAttributor {
-    public get type(): string { return "basic"; };
-}
-
 describe("AttributorSerializer", () => {
-    const makeAttributor = (entries) => new Attributor(entries);
     it("uses its timestamp encoder", () => {
         it("on encode", () => {
             const attributor = new Attributor([
@@ -26,7 +21,7 @@ describe("AttributorSerializer", () => {
                 [2, { user: { id: "a" }, timestamp: 6001 }],
             ]);
             const calls: any[] = [];
-            const serializer = new AttributorSerializer(makeAttributor, {
+            const serializer = new AttributorSerializer((entries) => new Attributor(entries), {
                 encode: (x) => {
                     calls.push(x);
                     return x;
@@ -41,7 +36,7 @@ describe("AttributorSerializer", () => {
 
         it("on decode", () => {
             const calls: any[] = [];
-            const serializer = new AttributorSerializer(makeAttributor, {
+            const serializer = new AttributorSerializer((entries) => new Attributor(entries), {
                 encode: (x) => x,
                 decode: (x) => {
                     calls.push(x);
