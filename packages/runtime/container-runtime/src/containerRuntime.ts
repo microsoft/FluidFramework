@@ -175,7 +175,7 @@ import {
     OpSplitter,
     RemoteMessageProcessor,
 } from "./opLifecycle";
-import { IdCompressor, createSessionId } from "./id-compressor";
+import { createSessionId, IdCompressor } from "./id-compressor";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -1035,11 +1035,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summarizerClientElectionEnabled = this.isSummarizerClientElectionEnabled();
         this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
         this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
-        try {
-            this.idCompressor = IdCompressor.deserialize(idCompressorSnapshot);
-        } catch(e) {
-            this.idCompressor = new IdCompressor(createSessionId(), 10, this.logger);
-        }
+        this.idCompressor = idCompressorSnapshot !== undefined ? IdCompressor.deserialize(idCompressorSnapshot, createSessionId()) : new IdCompressor(createSessionId(), 10, this.logger);
 
         this.maxConsecutiveReconnects =
             this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? this.defaultMaxConsecutiveReconnects;
