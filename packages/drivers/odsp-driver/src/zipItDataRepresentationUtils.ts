@@ -16,7 +16,6 @@ import { ReadBuffer } from "./ReadBufferUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { measure } from "./odspUtils";
 
-// eslint-disable-next-line max-len
 // https://onedrive.visualstudio.com/SharePoint%20Online/_git/SPO?path=/cobalt/Base/Property/BinaryEncodedPropertyReader.cs&version=GBmaster&_a=contents
 /**
  * Control codes used by tree serialization / decentralization code. Same as on server. These can be found on

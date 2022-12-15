@@ -84,7 +84,6 @@ declare function get_current_ClassDeclaration_ContainerRuntime():
 declare function use_old_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<old.ContainerRuntime>);
 use_old_ClassDeclaration_ContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -458,7 +457,6 @@ declare function get_old_InterfaceDeclaration_ICompressionRuntimeOptions():
 declare function use_current_InterfaceDeclaration_ICompressionRuntimeOptions(
     use: TypeOnly<current.ICompressionRuntimeOptions>);
 use_current_InterfaceDeclaration_ICompressionRuntimeOptions(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ICompressionRuntimeOptions());
 
 /*
@@ -471,7 +469,6 @@ declare function get_current_InterfaceDeclaration_ICompressionRuntimeOptions():
 declare function use_old_InterfaceDeclaration_ICompressionRuntimeOptions(
     use: TypeOnly<old.ICompressionRuntimeOptions>);
 use_old_InterfaceDeclaration_ICompressionRuntimeOptions(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ICompressionRuntimeOptions());
 
 /*
@@ -508,7 +505,6 @@ declare function get_old_InterfaceDeclaration_IContainerRuntimeOptions():
 declare function use_current_InterfaceDeclaration_IContainerRuntimeOptions(
     use: TypeOnly<current.IContainerRuntimeOptions>);
 use_current_InterfaceDeclaration_IContainerRuntimeOptions(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerRuntimeOptions());
 
 /*
@@ -521,7 +517,6 @@ declare function get_current_InterfaceDeclaration_IContainerRuntimeOptions():
 declare function use_old_InterfaceDeclaration_IContainerRuntimeOptions(
     use: TypeOnly<old.IContainerRuntimeOptions>);
 use_old_InterfaceDeclaration_IContainerRuntimeOptions(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntimeOptions());
 
 /*
@@ -1415,7 +1410,6 @@ declare function get_current_InterfaceDeclaration_ISummaryRuntimeOptions():
 declare function use_old_InterfaceDeclaration_ISummaryRuntimeOptions(
     use: TypeOnly<old.ISummaryRuntimeOptions>);
 use_old_InterfaceDeclaration_ISummaryRuntimeOptions(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummaryRuntimeOptions());
 
 /*
