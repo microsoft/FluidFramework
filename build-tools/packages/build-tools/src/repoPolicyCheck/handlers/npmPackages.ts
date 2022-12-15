@@ -598,28 +598,34 @@ export const handlers: Handler[] = [
                 return "Error parsing JSON file: " + file;
             }
 
-            const hasPrettierScript = Object.prototype.hasOwnProperty.call(
-                json.scripts,
-                "prettier",
-            );
-            const hasPrettierFixScript = Object.prototype.hasOwnProperty.call(
-                json.scripts,
-                "prettier:fix",
-            );
-            const hasFormatScript = Object.prototype.hasOwnProperty.call(json.scripts, "format");
-
+            const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
             const missingScripts: string[] = [];
 
-            if (!hasPrettierScript) {
-                missingScripts.push(`prettier`);
-            }
+            if (hasScriptsField) {
+                const hasPrettierScript = Object.prototype.hasOwnProperty.call(
+                    json.scripts,
+                    "prettier",
+                );
+                const hasPrettierFixScript = Object.prototype.hasOwnProperty.call(
+                    json.scripts,
+                    "prettier:fix",
+                );
+                const hasFormatScript = Object.prototype.hasOwnProperty.call(
+                    json.scripts,
+                    "format",
+                );
 
-            if (!hasPrettierFixScript) {
-                missingScripts.push(`prettier:fix`);
-            }
+                if (!hasPrettierScript) {
+                    missingScripts.push(`prettier`);
+                }
 
-            if (!hasFormatScript) {
-                missingScripts.push(`format`);
+                if (!hasPrettierFixScript) {
+                    missingScripts.push(`prettier:fix`);
+                }
+
+                if (!hasFormatScript) {
+                    missingScripts.push(`format`);
+                }
             }
 
             return missingScripts.length > 0
@@ -635,8 +641,13 @@ export const handlers: Handler[] = [
             }
 
             const resolved = true;
-            addPrettier(json);
-            writeFile(file, JSON.stringify(sortPackageJson(json), undefined, 2) + newline);
+
+            const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+
+            if (hasScriptsField) {
+                addPrettier(json);
+                writeFile(file, JSON.stringify(sortPackageJson(json), undefined, 2) + newline);
+            }
 
             return { resolved: resolved };
         },
@@ -644,32 +655,22 @@ export const handlers: Handler[] = [
 ];
 
 function addPrettier(json: Record<string, any>) {
-    // if the json file contains scripts field
-    console.log(1);
+    const hasPrettierScriptResolver = Object.prototype.hasOwnProperty.call(
+        json.scripts,
+        "prettier",
+    );
 
-    const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+    const hasPrettierFixScriptResolver = Object.prototype.hasOwnProperty.call(
+        json.scripts,
+        "prettier:fix",
+    );
 
-    if (hasScriptsField) {
-        const hasPrettierScriptResolver = Object.prototype.hasOwnProperty.call(
-            json.scripts,
-            "prettier",
-        );
+    const hasFormatScriptResolver = Object.prototype.hasOwnProperty.call(json.scripts, "format");
 
-        const hasPrettierFixScriptResolver = Object.prototype.hasOwnProperty.call(
-            json.scripts,
-            "prettier:fix",
-        );
-
-        const hasFormatScriptResolver = Object.prototype.hasOwnProperty.call(
-            json.scripts,
-            "format",
-        );
-
-        if (hasPrettierScriptResolver || hasPrettierFixScriptResolver || hasFormatScriptResolver) {
-            json["scripts"]["format"] = "npm run prettier:fix";
-            json["scripts"]["prettier"] = "prettier --check .";
-            json["scripts"]["prettier:"] = "prettier --write .";
-        }
+    if (hasPrettierScriptResolver || hasPrettierFixScriptResolver || hasFormatScriptResolver) {
+        json["scripts"]["format"] = "npm run prettier:fix";
+        json["scripts"]["prettier"] = "prettier --check .";
+        json["scripts"]["prettier:"] = "prettier --write .";
     }
 }
 
