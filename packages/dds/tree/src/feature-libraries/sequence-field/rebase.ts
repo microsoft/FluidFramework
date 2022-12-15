@@ -151,11 +151,11 @@ class RebaseQueue<T> {
                 isReattach(newMark) &&
                 baseMark.detachedBy === newMark.detachedBy
             ) {
-                this.baseMarks.pop();
-                this.newMarks.pop();
                 const newMarkLength = getOutputLength(newMark);
                 const baseMarkLength = getOutputLength(baseMark);
                 if (newMark.detachIndex === baseMark.detachIndex) {
+                    this.baseMarks.pop();
+                    this.newMarks.pop();
                     if (newMarkLength < baseMarkLength) {
                         const [baseMark1, baseMark2] = splitMarkOnOutput(baseMark, newMarkLength);
                         this.baseMarks.push(baseMark2);
@@ -168,6 +168,7 @@ class RebaseQueue<T> {
                         return { baseMark, newMark };
                     }
                 } else if (newMark.detachIndex < baseMark.detachIndex) {
+                    this.newMarks.pop();
                     if (newMark.detachIndex + newMarkLength <= baseMark.detachIndex) {
                         return { newMark };
                     }
@@ -178,6 +179,7 @@ class RebaseQueue<T> {
                     this.newMarks.push(newMark2);
                     return { newMark: newMark1 };
                 } else {
+                    this.baseMarks.pop();
                     if (baseMark.detachIndex + baseMarkLength <= newMark.detachIndex) {
                         return { baseMark };
                     }
@@ -266,9 +268,11 @@ function rebaseMark<TNodeChange>(
                     currMark.mutedBy !== undefined,
                     "Revive marks can only overlap with delete marks if muted",
                 );
-                const revive = clone(currMark);
-                delete revive.mutedBy;
-                return revive;
+                if (currMark.mutedBy === baseRevision) {
+                    const revive = clone(currMark);
+                    delete revive.mutedBy;
+                    return revive;
+                }
             }
             return 0;
         }

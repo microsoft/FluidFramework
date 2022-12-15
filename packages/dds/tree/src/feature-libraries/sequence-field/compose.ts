@@ -252,25 +252,36 @@ class ComposeQueue<T> {
             return { baseMark: this.baseMarks.pop(), newMark: this.newMarks.pop() };
         } else if (isAttach(newMark)) {
             const newRev = newMark.revision ?? this.newRevision;
-            if (
-                isReattach(newMark) &&
-                isDetachMark(baseMark) &&
-                newRev !== undefined &&
-                baseMark.revision === newRev
-            ) {
-                // We assume that baseMark and newMark having the same revision means that they are inverses of each other.
-                assert(
-                    getInputLength(baseMark) === getOutputLength(newMark),
-                    0x4ac /* Inverse marks should be the same length */,
-                );
-                return {
-                    baseMark: this.baseMarks.pop(),
-                    newMark: this.newMarks.pop(),
-                    areInverses: true,
-                };
-            } else {
-                return { newMark: this.newMarks.pop() };
+            if (isReattach(newMark) && isDetachMark(baseMark)) {
+                if (
+                    (newRev !== undefined && baseMark.revision === newRev) ||
+                    newMark.detachedBy === baseMark.revision
+                ) {
+                    this.baseMarks.pop();
+                    this.newMarks.pop();
+                    const baseMarkLength = getInputLength(baseMark);
+                    const newMarkLength = getOutputLength(newMark);
+                    if (baseMarkLength === newMarkLength) {
+                        // The two marks fully cancel out
+                    } else if (baseMarkLength > newMarkLength) {
+                        // Only a portion of the base mark is cancelled out
+                        let nextBaseMark;
+                        [baseMark, nextBaseMark] = splitMarkOnInput(baseMark, newMarkLength);
+                        this.baseMarks.push(nextBaseMark);
+                    } else {
+                        // Only a portion of the new mark is cancelled out
+                        let nextNewMark;
+                        [newMark, nextNewMark] = splitMarkOnOutput(newMark, baseMarkLength);
+                        this.newMarks.push(nextNewMark);
+                    }
+                    return {
+                        baseMark,
+                        newMark,
+                        areInverses: true,
+                    };
+                }
             }
+            return { newMark: this.newMarks.pop() };
         } else if (isDetachMark(baseMark)) {
             return { baseMark: this.baseMarks.pop() };
         } else {

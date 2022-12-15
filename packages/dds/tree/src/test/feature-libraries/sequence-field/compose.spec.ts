@@ -398,7 +398,7 @@ describe("SequenceField - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("delete ○ revive", () => {
+    it("delete ○ revive (different nodes)", () => {
         const deletion = Change.delete(0, 3);
         const revive = Change.revive(0, 2, 0, tag1);
         // TODO: test with merge-right policy as well
@@ -407,6 +407,14 @@ describe("SequenceField - Compose", () => {
             { type: "Delete", count: 3 },
         ];
         const actual = shallowCompose([makeAnonChange(deletion), makeAnonChange(revive)]);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("delete ○ revive (deleted nodes)", () => {
+        const deletion = Change.delete(0, 3);
+        const revive = Change.revive(0, 3, 0, tag1);
+        const expected: SF.Changeset = [];
+        const actual = shallowCompose([tagChange(deletion, tag1), makeAnonChange(revive)]);
         assert.deepEqual(actual, expected);
     });
 

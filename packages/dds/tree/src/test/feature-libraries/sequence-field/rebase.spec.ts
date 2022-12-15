@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
-import { RevisionTag, tagChange, tagInverse } from "../../../rebase";
+import { RevisionTag, tagChange } from "../../../rebase";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
@@ -137,7 +137,7 @@ describe("SequenceField - Rebase", () => {
     it("muted revive ↷ delete", () => {
         const revive = Change.revive(0, 3, 1, tag1, tag2);
         const deletion = Change.delete(1, 1);
-        const actual = rebase(revive, deletion);
+        const actual = rebase(revive, deletion, tag2);
         const expected = composeAnonChanges([
             // Earlier revive is unaffected
             Change.revive(0, 1, 1, tag1, tag2),
@@ -146,7 +146,7 @@ describe("SequenceField - Rebase", () => {
             // Later revive has is unaffected
             Change.revive(2, 1, 3, tag1, tag2),
         ]);
-        assert.deepEqual(actual, expected);
+        checkDeltaEquality(actual, expected);
     });
 
     it("delete ↷ overlapping delete", () => {
