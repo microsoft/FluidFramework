@@ -181,6 +181,10 @@ const appViewPaneStackStyles = mergeStyles({
 	flex: 1,
 });
 
+/**
+ * Root application component.
+ * Initializes the Fluid Container and displays app view once it is ready.
+ */
 export function App(): React.ReactElement {
 	// Load the collaborative SharedString object
 	const containerInfo = useContainerInfo();

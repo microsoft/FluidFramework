@@ -183,7 +183,6 @@ export class TestClientLogger {
                     assert.equal(
                         c.getText(),
                         baseText,
-                        // eslint-disable-next-line max-len
                         `${errorPrefix}\n${this.toString()}\nClient ${c.longClientId} does not match client ${opts?.baseText ? "baseText" : this.clients[0].longClientId}`);
                 }
 
@@ -201,7 +200,6 @@ export class TestClientLogger {
                                     assert.deepStrictEqual(
                                         segProps,
                                         properties[pos + i],
-                                        // eslint-disable-next-line max-len
                                         `${errorPrefix}\n${this.toString()}\nClient ${c.longClientId} does not match client ${this.clients[0].longClientId} properties at pos ${pos + i}`);
                                 }
                             }

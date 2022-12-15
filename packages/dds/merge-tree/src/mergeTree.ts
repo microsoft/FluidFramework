@@ -549,7 +549,6 @@ export class MergeTree {
         return index;
     }
 
-    /* eslint-disable max-len */
     public reloadFromSegments(segments: ISegment[]) {
         // This code assumes that a later call to `startCollaboration()` will initialize partial lengths.
         assert(!this.collabWindow.collaborating, 0x049 /* "Trying to reload from segments while collaborating!" */);
@@ -596,7 +595,6 @@ export class MergeTree {
             this.root = this.makeBlock(0);
         }
     }
-    /* eslint-enable max-len */
 
     // For now assume min starts at zero
     public startCollaboration(localClientId: number, minSeq: number, currentSeq: number) {
@@ -1552,7 +1550,6 @@ export class MergeTree {
             if (this.collabWindow.collaborating) {
                 if ((locSegment.seq === UnassignedSequenceNumber) && (clientId === this.collabWindow.clientId)) {
                     segmentGroup = this.addToPendingList(locSegment, segmentGroup, localSeq);
-                    // eslint-disable-next-line @typescript-eslint/brace-style
                 }
                 // LocSegment.seq === 0 when coming from SharedSegmentSequence.loadBody()
                 // In all other cases this has to be true (checked by addToLRUSet):

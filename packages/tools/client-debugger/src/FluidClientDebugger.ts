@@ -117,7 +117,7 @@ export class FluidClientDebugger
 	 */
 	private _disposed: boolean;
 
-	constructor(props: FluidClientDebuggerProps) {
+	public constructor(props: FluidClientDebuggerProps) {
 		super();
 
 		this.containerId = props.containerId;
