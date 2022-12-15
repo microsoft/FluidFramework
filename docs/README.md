@@ -246,6 +246,14 @@ When linking to external webpages, this is the syntax we recommend.
 When linking to other documents on the website, however, we recommend either using the built-in [`relref`](#relref) shortcode, or one of our [custom shortcode templates](#custom-shortcode-templates).
 These are designed to reduce boilerplate and be more tolerant to future changes to the website.
 
+### Adding images
+
+To add an image to your document you can add the image to `/docs/static/images` and reference it in your `Markdown` document using the following syntax:
+
+```markdown
+![Image description](/images/image-name.png)
+```
+
 ## Shortcodes
 
 [Shortcodes](https://gohugo.io/content-management/shortcodes/) are custom functions that can be called from within the `Markdown` or `HTML` to insert specific content.
