@@ -85,7 +85,7 @@ async function main() {
         scenarioName: commander.scenarioName,
         childId: commander.childId,
         connType: commander.connType,
-        connEndpoint: commander.connEndpoint,
+        connEndpoint: commander.connEndpoint ?? process.env.azure__fluid__relay__service__endpoint,
         tenantId: commander.tenantId ?? process.env.azure__fluid__relay__service__tenantId,
         tenantKey: commander.tenantKey ?? process.env.azure__fluid__relay__service__tenantKey,
         functionUrl:
