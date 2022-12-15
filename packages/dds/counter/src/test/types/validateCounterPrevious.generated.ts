@@ -71,6 +71,7 @@ declare function get_old_ClassDeclaration_SharedCounter():
 declare function use_current_ClassDeclaration_SharedCounter(
     use: TypeOnly<current.SharedCounter>);
 use_current_ClassDeclaration_SharedCounter(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedCounter());
 
 /*

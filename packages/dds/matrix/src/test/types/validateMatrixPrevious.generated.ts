@@ -95,6 +95,7 @@ declare function get_old_ClassDeclaration_SharedMatrix():
 declare function use_current_ClassDeclaration_SharedMatrix(
     use: TypeOnly<current.SharedMatrix>);
 use_current_ClassDeclaration_SharedMatrix(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedMatrix());
 
 /*

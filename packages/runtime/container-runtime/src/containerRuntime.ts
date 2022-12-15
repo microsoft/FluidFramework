@@ -175,7 +175,7 @@ import {
     OpSplitter,
     RemoteMessageProcessor,
 } from "./opLifecycle";
-import { createSessionId, IdCompressor } from "./id-compressor";
+import { IdCompressor, createSessionId } from "./id-compressor";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -683,11 +683,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         };
 
-        const [chunks, metadata, electedSummarizerData, aliases] = await Promise.all([
+        const [chunks, metadata, electedSummarizerData, aliases, idCompressor] = await Promise.all([
             tryFetchBlob<[string, string[]][]>(chunksBlobName),
             tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName),
             tryFetchBlob<ISerializedElection>(electedSummarizerBlobName),
             tryFetchBlob<[string, string][]>(aliasBlobName),
+            tryFetchBlob<any>(".idCompressor"),
         ]);
 
         const loadExisting = existing === true || context.existing === true;
@@ -746,6 +747,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             loadExisting,
             blobManagerSnapshot,
             storage,
+            idCompressor,
             requestHandler,
         );
 
@@ -983,6 +985,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         existing: boolean,
         blobManagerSnapshot: IBlobManagerLoadInfo,
         private readonly _storage: IDocumentStorageService,
+        idCompressorSnapshot: any,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private readonly summaryConfiguration: ISummaryConfiguration = {
             // the defaults
@@ -1032,7 +1035,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summarizerClientElectionEnabled = this.isSummarizerClientElectionEnabled();
         this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
         this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
-        this.idCompressor = new IdCompressor(createSessionId(), 10, this.logger);
+        try {
+            this.idCompressor = IdCompressor.deserialize(idCompressorSnapshot);
+        } catch(e) {
+            this.idCompressor = new IdCompressor(createSessionId(), 10, this.logger);
+        }
 
         this.maxConsecutiveReconnects =
             this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? this.defaultMaxConsecutiveReconnects;
@@ -1475,6 +1482,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ) {
         this.addMetadataToSummary(summaryTree);
 
+        const idCompressorState = JSON.stringify(this.idCompressor.serialize(false));
+        addBlobToSummary(summaryTree, '.idCompressor', idCompressorState);
+
         if (this.remoteMessageProcessor.partialMessages.size > 0) {
             const content = JSON.stringify([...this.remoteMessageProcessor.partialMessages]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
@@ -1689,6 +1699,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
         // messages once a batch has been fully processed.
         this.scheduleManager.beforeOpProcessing(message);
+
+        if (message.type === ContainerMessageType.FluidDataStoreOp) {
+            this.idCompressor.finalizeCreationRange(message.contents.contents.idRange);
+        }
 
         try {
             let localOpMetadata: unknown;
@@ -2515,6 +2529,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         id: string,
         contents: any,
         localOpMetadata: unknown = undefined): void {
+        contents.idRange = this.idCompressor.takeNextCreationRange();
         const envelope: IEnvelope = {
             address: id,
             contents,

@@ -23,6 +23,7 @@ declare function get_old_ClassDeclaration_ConsensusRegisterCollection():
 declare function use_current_ClassDeclaration_ConsensusRegisterCollection(
     use: TypeOnly<current.ConsensusRegisterCollection<any>>);
 use_current_ClassDeclaration_ConsensusRegisterCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ConsensusRegisterCollection());
 
 /*

@@ -47,6 +47,7 @@ declare function get_old_ClassDeclaration_SharedSummaryBlock():
 declare function use_current_ClassDeclaration_SharedSummaryBlock(
     use: TypeOnly<current.SharedSummaryBlock>);
 use_current_ClassDeclaration_SharedSummaryBlock(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedSummaryBlock());
 
 /*

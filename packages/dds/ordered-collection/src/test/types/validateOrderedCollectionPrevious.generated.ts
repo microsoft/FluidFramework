@@ -71,6 +71,7 @@ declare function get_old_ClassDeclaration_ConsensusOrderedCollection():
 declare function use_current_ClassDeclaration_ConsensusOrderedCollection(
     use: TypeOnly<current.ConsensusOrderedCollection>);
 use_current_ClassDeclaration_ConsensusOrderedCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ConsensusOrderedCollection());
 
 /*
@@ -95,6 +96,7 @@ declare function get_old_ClassDeclaration_ConsensusQueue():
 declare function use_current_ClassDeclaration_ConsensusQueue(
     use: TypeOnly<current.ConsensusQueue>);
 use_current_ClassDeclaration_ConsensusQueue(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ConsensusQueue());
 
 /*

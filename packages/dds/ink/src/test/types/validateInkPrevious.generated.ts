@@ -215,6 +215,7 @@ declare function get_old_ClassDeclaration_Ink():
 declare function use_current_ClassDeclaration_Ink(
     use: TypeOnly<current.Ink>);
 use_current_ClassDeclaration_Ink(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_Ink());
 
 /*
