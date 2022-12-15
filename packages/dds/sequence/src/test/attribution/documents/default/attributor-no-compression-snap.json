@@ -21,7 +21,7 @@
             "{\"id\":\"AAAAAAAAAA@microsoft.com\",\"name\":\"AAAAAAAAAA\",\"email\":\"AAAAAAAAAA@microsoft.com\"}",
             "{\"id\":\"CCCCCCCCCC@microsoft.com\",\"name\":\"CCCCCCCCCC\",\"email\":\"CCCCCCCCCC@microsoft.com\"}"
         ],
-        "keys": [
+        "seqs": [
             1,
             2,
             3,
