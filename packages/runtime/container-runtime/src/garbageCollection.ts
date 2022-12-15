@@ -1542,6 +1542,8 @@ export class GarbageCollector implements IGarbageCollector {
                     stack: generateStack(),
                 };
 
+                // Do not log the inactive object x events as error events as they are not the best signal for
+                // detecting something wrong with GC either from the partner or from the runtime itself.
                 if (state === UnreferencedState.Inactive) {
                     this.mc.logger.sendTelemetryEvent(event);
                 } else {
