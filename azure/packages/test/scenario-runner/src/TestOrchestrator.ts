@@ -97,18 +97,16 @@ export class TestOrchestrator {
             endpoint: connConfig.endpoint,
         });
 
-        await PerformanceEvent.timedExecAsync(
+        const success = await PerformanceEvent.timedExecAsync(
             logger,
             { eventName: "RunStages" },
             async () => {
-                if (!(await this.execRun(logger))) {
-                    return false;
-                }
+                return this.execRun(logger);
             },
             { start: true, end: true, cancel: "generic" },
         );
         this.runStatus = "done";
-        return true;
+        return success;
     }
 
     private async execRun(logger: TelemetryLogger): Promise<boolean> {

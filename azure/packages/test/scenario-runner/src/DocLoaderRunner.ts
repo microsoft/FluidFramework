@@ -83,8 +83,8 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 
         try {
             await Promise.all(children);
-        } catch {
-            throw new Error("Not all clients closed sucesfully.");
+        } catch (error) {
+            throw new Error(`Not all clients closed sucesfully. ${error}`);
         }
     }
 
