@@ -18,6 +18,13 @@ export function addProperties(oldProps: PropertySet | undefined, newProps: Prope
 // @alpha
 export function appendToMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
+// @alpha (undocumented)
+export interface AttributionKey {
+    // (undocumented)
+    seq: number;
+    type: "op";
+}
+
 // @public (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
@@ -28,8 +35,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     protected addSerializedProps(jseg: IJSONSegment): void;
     // (undocumented)
     append(other: ISegment): void;
-    // Warning: (ae-forgotten-export) The symbol "AttributionKey" needs to be exported by the entry point index.d.ts
-    //
     // @alpha (undocumented)
     attribution?: IAttributionCollection<AttributionKey>;
     // (undocumented)
