@@ -7,9 +7,9 @@ import assert from "assert";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { PendingStateManager } from "../pendingStateManager";
 import { BatchManager, BatchMessage } from "../opLifecycle";
-import { MockLogger } from "@fluidframework/telemetry-utils";
 
 describe("Pending State Manager", () => {
     describe("Rollback", () => {

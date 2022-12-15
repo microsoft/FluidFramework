@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { IBatchMessage, IContainerContext, IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { PendingStateManager } from "../../pendingStateManager";
 import { BatchMessage, IBatch, OpCompressor, Outbox } from "../../opLifecycle";
 import {
@@ -14,7 +15,6 @@ import {
     ContainerRuntimeMessage,
     ICompressionRuntimeOptions,
 } from "../../containerRuntime";
-import { MockLogger } from "@fluidframework/telemetry-utils";
 
 describe("Outbox", () => {
     const maxBatchSizeInBytes = 1024;
