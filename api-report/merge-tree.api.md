@@ -18,6 +18,13 @@ export function addProperties(oldProps: PropertySet | undefined, newProps: Prope
 // @alpha
 export function appendToMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
+// @alpha (undocumented)
+export interface AttributionKey {
+    // (undocumented)
+    seq: number;
+    type: "op";
+}
+
 // @public (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
@@ -27,7 +34,9 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     protected addSerializedProps(jseg: IJSONSegment): void;
     // (undocumented)
-    append(segment: ISegment): void;
+    append(other: ISegment): void;
+    // @alpha (undocumented)
+    attribution?: IAttributionCollection<AttributionKey>;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     // (undocumented)
@@ -298,6 +307,23 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, c
 
 // @public (undocumented)
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T>;
+
+// @alpha (undocumented)
+export interface IAttributionCollection<T> {
+    // @internal (undocumented)
+    append(other: IAttributionCollection<T>): void;
+    // @internal (undocumented)
+    clone(): IAttributionCollection<T>;
+    // @internal
+    getAll(): Iterable<{
+        offset: number;
+        key: T;
+    }>;
+    getAtOffset(offset: number): T;
+    readonly length: number;
+    // @internal (undocumented)
+    splitAt(pos: number): IAttributionCollection<T>;
+}
 
 // @public (undocumented)
 export interface ICombiningOp {
@@ -626,6 +652,8 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
     append(segment: ISegment): void;
+    // @alpha
+    attribution?: IAttributionCollection<AttributionKey>;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     clientId: number;
