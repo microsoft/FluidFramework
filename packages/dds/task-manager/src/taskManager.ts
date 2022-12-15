@@ -387,7 +387,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenario
-            assert(this.clientId !== undefined, "clientId should not be undefined");
+            assert(this.clientId !== undefined, 0x472 /* clientId should not be undefined */);
             this.addClientToQueue(taskId, this.clientId);
             return true;
         }
@@ -512,7 +512,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenario
-            assert(this.clientId !== undefined, "clientId should not be undefined");
+            assert(this.clientId !== undefined, 0x473 /* clientId should not be undefined */);
             this.addClientToQueue(taskId, this.clientId);
             // Because we volunteered with placeholderClientId, we need to wait for when we attach and are assigned
             // a real clientId. At that point we should re-enter the queue with a real volunteer op (assuming we are
@@ -553,7 +553,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenario
-            assert(this.clientId !== undefined, "clientId is undefined");
+            assert(this.clientId !== undefined, 0x474 /* clientId is undefined */);
             this.removeClientFromQueue(taskId, this.clientId);
             this.abandonWatcher.emit("abandon", taskId);
             return;
@@ -800,7 +800,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * transitioning from detached to attached and this.runtime.clientId is defined.
      */
     private replacePlaceholderInAllQueues() {
-        assert(this.runtime.clientId !== undefined, "this.runtime.clientId should be defined");
+        assert(this.runtime.clientId !== undefined, 0x475 /* this.runtime.clientId should be defined */);
         for (const clientQueue of this.taskQueues.values()) {
             const clientIdIndex = clientQueue.indexOf(placeholderClientId);
             if (clientIdIndex !== -1) {

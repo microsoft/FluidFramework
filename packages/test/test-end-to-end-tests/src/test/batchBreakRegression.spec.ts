@@ -317,7 +317,6 @@ describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
                                     && args.length >= 2
                                     && Array.isArray(args[1])) {
                                         // this code adds a join message in the middle of a batch
-                                        // eslint-disable-next-line max-len
                                         const newMessages: (ISequencedDocumentMessage | ISequencedDocumentSystemMessage)[]
                                             = [...args[1]];
                                         const batchEndIndex = newMessages.findIndex((m) => m.metadata?.batch === false);
@@ -332,7 +331,6 @@ describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
                                                     contents: null,
                                                     referenceSequenceNumber: -1,
                                                     type: "join",
-                                                    // eslint-disable-next-line max-len
                                                     data: "{\"clientId\":\"fake_client\",\"detail\":{\"user\":{\"id\":\"fake_user\"},\"scopes\":[\"doc:read\",\"doc:write\"],\"permission\":[],\"details\":{\"capabilities\":{\"interactive\":true}},\"mode\":\"write\"}}",
 
                                                 })

@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { AzureClient } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -141,6 +141,7 @@ describe("Container create scenarios", () => {
             errorFn,
             "Azure Client can load a non-existent container",
         );
+        // eslint-disable-next-line require-atomic-updates
         console.error = consoleErrorFn;
     });
 });

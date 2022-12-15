@@ -15,7 +15,6 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
         private readonly enableRepositoryManagerMetrics: boolean = false,
     ) {}
 
-    /* eslint-disable max-len */
     protected abstract getCommitCore(sha: string): Promise<git.ICommit>;
     protected abstract getCommitsCore(sha: string, count: number, externalWriterConfig?: IExternalWriterConfig): Promise<git.ICommitDetails[]>;
     protected abstract getTreeCore(root: string, recursive: boolean): Promise<git.ITree>;
@@ -31,7 +30,6 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
     protected abstract deleteRefCore(refId: string): Promise<void>;
     protected abstract getTagCore(tagId: string): Promise<git.ITag>;
     protected abstract createTagCore(tagParams: git.ICreateTagParams): Promise<git.ITag>;
-    /* eslint-enable max-len */
 
     public get path(): string {
         return this.directory;

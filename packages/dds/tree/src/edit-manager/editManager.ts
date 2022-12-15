@@ -70,7 +70,7 @@ export class EditManager<
     public advanceMinimumSequenceNumber(minimumSequenceNumber: number): void {
         assert(
             minimumSequenceNumber >= this.minimumSequenceNumber,
-            "number must be larger or equal to current minimumSequenceNumber.",
+            0x476 /* number must be larger or equal to current minimumSequenceNumber. */,
         );
         this.minimumSequenceNumber = minimumSequenceNumber;
         let commitsToRemove = 0;

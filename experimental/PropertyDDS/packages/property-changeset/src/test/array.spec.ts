@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-unused-expressions */
 /**
  * @fileoverview Tests for the array changeset operations
  */
+
 import isEmpty from "lodash/isEmpty";
 import isNumber from "lodash/isNumber";
 import { copy as cloneDeep } from "fastest-json-copy";

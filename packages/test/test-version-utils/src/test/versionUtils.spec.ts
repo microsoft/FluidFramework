@@ -5,7 +5,6 @@
 import { strict as assert } from "assert";
 import { getRequestedRange, versionHasMovedSparsedMatrix } from "../versionUtils";
 
-/* eslint-disable max-len */
 describe("versionUtils", () => {
     it("Get the major version number above or below the baseVersion", () => {
         // assert for major bumps
@@ -89,4 +88,3 @@ describe("versionUtils", () => {
         });
     });
 });
-/* eslint-enable max-len */

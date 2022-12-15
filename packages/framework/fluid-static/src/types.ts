@@ -134,7 +134,6 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
  * @typeParam M - A service-specific {@link IMember} implementation.
  */
 export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
-    /* eslint-disable @typescript-eslint/unified-signatures */
     /**
      * Emitted when a {@link IMember | member}(s) are either added or removed.
      *
@@ -155,7 +154,6 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
      * @eventProperty
      */
     (event: "memberRemoved", listener: MemberChangedListener<M>): void;
-    /* eslint-enable @typescript-eslint/unified-signatures */
 }
 
 /**

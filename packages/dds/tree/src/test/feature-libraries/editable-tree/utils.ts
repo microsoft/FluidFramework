@@ -102,7 +102,7 @@ export function expectTreeSequence(
     assert(Array.isArray(expected));
     assert.equal(field.length, expected.length);
     for (let index = 0; index < field.length; index++) {
-        expectTreeEquals(schemaData, field[index], expected[index]);
+        expectTreeEquals(schemaData, field[index] as UnwrappedEditableField, expected[index]);
     }
 }
 
