@@ -20,9 +20,8 @@ import {
     MoveIn,
     NewAttach,
     ObjectMark,
+    InputSpanningMark,
     Reattach,
-    SizedMark,
-    SizedObjectMark,
     Skip,
 } from "./format";
 
@@ -191,7 +190,7 @@ export function isSkipMark(mark: Mark<unknown>): mark is Skip {
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has input length `length`.
  */
-export function splitMarkOnInput<TMark extends SizedMark<unknown> | Reattach | ModifyReattach>(
+export function splitMarkOnInput<TMark extends InputSpanningMark<unknown>>(
     mark: TMark,
     length: number,
 ): [TMark, TMark] {
@@ -205,7 +204,9 @@ export function splitMarkOnInput<TMark extends SizedMark<unknown> | Reattach | M
     if (isSkipMark(mark)) {
         return [length, remainder] as [TMark, TMark];
     }
-    const markObj = mark as SizedObjectMark | Reattach;
+    // The linter doesn't think this cast does anything (which seems correct) but the compiler needs it.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    const markObj = mark as Exclude<TMark, Skip>;
     const type = mark.type;
     switch (type) {
         case "Modify":

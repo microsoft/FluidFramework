@@ -18,7 +18,7 @@ import {
     splitMarkOnInput,
     splitMarkOnOutput,
 } from "./utils";
-import { Attach, Changeset, LineageEvent, Mark, MarkList, OverlapableMark } from "./format";
+import { Attach, Changeset, LineageEvent, Mark, MarkList, InputSpanningMark } from "./format";
 import { MarkListFactory } from "./markListFactory";
 
 /**
@@ -251,11 +251,11 @@ interface RebaseMarks<T> {
 }
 
 function rebaseMark<TNodeChange>(
-    currMark: OverlapableMark<TNodeChange>,
-    baseMark: OverlapableMark<TNodeChange>,
+    currMark: InputSpanningMark<TNodeChange>,
+    baseMark: InputSpanningMark<TNodeChange>,
     baseRevision: RevisionTag | undefined,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
-): OverlapableMark<TNodeChange> {
+): InputSpanningMark<TNodeChange> {
     if (isSkipMark(baseMark)) {
         return clone(currMark);
     }

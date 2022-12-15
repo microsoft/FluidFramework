@@ -9,13 +9,13 @@ import { clone, fail, StackyIterator } from "../../util";
 import {
     Changeset,
     HasRevisionTag,
+    InputSpanningMark,
     Mark,
     MarkList,
     Modify,
     ModifyingMark,
     ModifyInsert,
     ModifyReattach,
-    SizedMark,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
@@ -100,7 +100,7 @@ function composeMarkLists<TNodeChange>(
 function composeMarks<TNodeChange>(
     baseMark: Mark<TNodeChange>,
     newRev: RevisionTag | undefined,
-    newMark: SizedMark<TNodeChange>,
+    newMark: InputSpanningMark<TNodeChange>,
     composeChild: NodeChangeComposer<TNodeChange>,
 ): Mark<TNodeChange> {
     if (isSkipMark(baseMark)) {

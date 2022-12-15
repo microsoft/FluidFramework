@@ -509,6 +509,9 @@ export const indexSymbol: unique symbol;
 // @public
 function inputLength(mark: Mark<unknown>): number;
 
+// @public (undocumented)
+type InputSpanningMark<TNodeChange> = Skip_2 | Detach | Reattach | Modify_2<TNodeChange> | ModifyDetach<TNodeChange> | ModifyReattach<TNodeChange>;
+
 // @public
 interface Insert<TTree = ProtoNode> {
     // (undocumented)
@@ -696,7 +699,7 @@ export interface MakeNominal {
 type Mark<TTree = ProtoNode> = Skip | Modify<TTree> | Delete | MoveOut | MoveIn | Insert<TTree> | ModifyAndDelete<TTree> | ModifyAndMoveOut<TTree> | MoveInAndModify<TTree> | InsertAndModify<TTree>;
 
 // @public (undocumented)
-type Mark_2<TNodeChange = NodeChangeType> = SizedMark<TNodeChange> | Attach<TNodeChange>;
+type Mark_2<TNodeChange = NodeChangeType> = InputSpanningMark<TNodeChange> | OutputSpanningMark<TNodeChange>;
 
 // @public
 type MarkList<TTree = ProtoNode> = Mark<TTree>[];
@@ -983,7 +986,7 @@ export interface NodeData {
 export type NodeReviver = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
 
 // @public (undocumented)
-type ObjectMark<TNodeChange = NodeChangeType> = SizedObjectMark<TNodeChange> | Attach<TNodeChange>;
+type ObjectMark<TNodeChange = NodeChangeType> = Exclude<Mark_2<TNodeChange>, Skip_2>;
 
 // @public
 export interface ObservingDependent extends Dependent {
@@ -1002,6 +1005,9 @@ export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueTy
 export interface OptionalFieldEditBuilder {
     set(newContent: ITreeCursor | undefined, wasEmpty: boolean): void;
 }
+
+// @public (undocumented)
+type OutputSpanningMark<TNodeChange> = Skip_2 | NewAttach<TNodeChange> | Reattach | Modify_2<TNodeChange> | ModifyReattach<TNodeChange>;
 
 // @public (undocumented)
 export type PrimitiveValue = string | boolean | number;
@@ -1146,8 +1152,8 @@ declare namespace SequenceField {
         ProtoNode_2 as ProtoNode,
         RangeType,
         Reattach,
-        SizedMark,
-        SizedObjectMark,
+        InputSpanningMark,
+        OutputSpanningMark,
         Tiebreak,
         Tombstones,
         TreeForestPath,
@@ -1250,12 +1256,6 @@ export class SimpleDependee implements Dependee {
 
 // @public
 export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous;
-
-// @public (undocumented)
-type SizedMark<TNodeChange = NodeChangeType> = Skip_2 | SizedObjectMark<TNodeChange>;
-
-// @public (undocumented)
-type SizedObjectMark<TNodeChange = NodeChangeType> = Modify_2<TNodeChange> | Detach | ModifyDetach<TNodeChange>;
 
 // @public
 type Skip = number;

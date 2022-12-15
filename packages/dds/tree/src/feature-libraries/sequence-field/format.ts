@@ -11,23 +11,26 @@ export type Changeset<TNodeChange = NodeChangeType> = MarkList<TNodeChange>;
 
 export type MarkList<TNodeChange = NodeChangeType, TMark = Mark<TNodeChange>> = TMark[];
 
-export type Mark<TNodeChange = NodeChangeType> = SizedMark<TNodeChange> | Attach<TNodeChange>;
+export type Mark<TNodeChange = NodeChangeType> =
+    | InputSpanningMark<TNodeChange>
+    | OutputSpanningMark<TNodeChange>;
 
-export type ObjectMark<TNodeChange = NodeChangeType> =
-    | SizedObjectMark<TNodeChange>
-    | Attach<TNodeChange>;
+export type ObjectMark<TNodeChange = NodeChangeType> = Exclude<Mark<TNodeChange>, Skip>;
 
-export type SizedMark<TNodeChange = NodeChangeType> = Skip | SizedObjectMark<TNodeChange>;
-
-export type SizedObjectMark<TNodeChange = NodeChangeType> =
-    | Modify<TNodeChange>
+export type InputSpanningMark<TNodeChange> =
+    | Skip
     | Detach
-    | ModifyDetach<TNodeChange>;
-
-export type OverlapableMark<TNodeChange> =
     | Reattach
-    | ModifyReattach<TNodeChange>
-    | SizedMark<TNodeChange>;
+    | Modify<TNodeChange>
+    | ModifyDetach<TNodeChange>
+    | ModifyReattach<TNodeChange>;
+
+export type OutputSpanningMark<TNodeChange> =
+    | Skip
+    | NewAttach<TNodeChange>
+    | Reattach
+    | Modify<TNodeChange>
+    | ModifyReattach<TNodeChange>;
 
 export interface Modify<TNodeChange = NodeChangeType> extends HasChanges<TNodeChange> {
     type: "Modify";
