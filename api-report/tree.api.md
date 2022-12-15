@@ -12,6 +12,12 @@ import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
 
+// @public (undocumented)
+interface Active {
+    // (undocumented)
+    mutedBy?: undefined;
+}
+
 // @public
 export type Anchor = Brand<number, "rebaser.Anchor">;
 
@@ -510,7 +516,7 @@ export const indexSymbol: unique symbol;
 function inputLength(mark: Mark<unknown>): number;
 
 // @public (undocumented)
-type InputSpanningMark<TNodeChange> = Skip_2 | Detach | Reattach | Modify_2<TNodeChange> | ModifyDetach<TNodeChange> | ModifyReattach<TNodeChange>;
+type InputSpanningMark<TNodeChange> = Skip_2 | Detach | Modify_2<TNodeChange> | ModifyDetach<TNodeChange> | (Muted & (Reattach | ModifyReattach<TNodeChange>));
 
 // @public
 interface Insert<TTree = ProtoNode> {
@@ -908,6 +914,18 @@ export enum Multiplicity {
 }
 
 // @public (undocumented)
+interface Mutable {
+    // (undocumented)
+    mutedBy?: RevisionTag;
+}
+
+// @public (undocumented)
+interface Muted {
+    // (undocumented)
+    mutedBy: RevisionTag;
+}
+
+// @public (undocumented)
 export interface Named<TName> {
     // (undocumented)
     readonly name: TName;
@@ -986,6 +1004,9 @@ export interface NodeData {
 export type NodeReviver = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
 
 // @public (undocumented)
+type NodeSpanningMark<TNodeChange> = Exclude<Mark_2<TNodeChange>, NewAttach<TNodeChange>>;
+
+// @public (undocumented)
 type ObjectMark<TNodeChange = NodeChangeType> = Exclude<Mark_2<TNodeChange>, Skip_2>;
 
 // @public
@@ -1007,7 +1028,7 @@ export interface OptionalFieldEditBuilder {
 }
 
 // @public (undocumented)
-type OutputSpanningMark<TNodeChange> = Skip_2 | NewAttach<TNodeChange> | Reattach | Modify_2<TNodeChange> | ModifyReattach<TNodeChange>;
+type OutputSpanningMark<TNodeChange> = Skip_2 | NewAttach<TNodeChange> | Modify_2<TNodeChange> | (Active & (Reattach | ModifyReattach<TNodeChange>));
 
 // @public (undocumented)
 export type PrimitiveValue = string | boolean | number;
@@ -1152,6 +1173,7 @@ declare namespace SequenceField {
         ProtoNode_2 as ProtoNode,
         RangeType,
         Reattach,
+        NodeSpanningMark,
         InputSpanningMark,
         OutputSpanningMark,
         Tiebreak,
@@ -1161,6 +1183,9 @@ declare namespace SequenceField {
         Skip_2 as Skip,
         LineageEvent,
         HasReattachFields,
+        Active,
+        Muted,
+        Mutable,
         SequenceFieldChangeHandler,
         sequenceFieldChangeHandler,
         SequenceChangeRebaser,

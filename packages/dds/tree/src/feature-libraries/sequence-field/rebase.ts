@@ -12,13 +12,23 @@ import {
     isAttach,
     isDetachMark,
     isModify,
+    isMutedReattach,
     isReattach,
     isSkipMark,
     newAttach,
     splitMarkOnInput,
     splitMarkOnOutput,
 } from "./utils";
-import { Attach, Changeset, LineageEvent, Mark, MarkList, InputSpanningMark } from "./format";
+import {
+    Attach,
+    Changeset,
+    LineageEvent,
+    Mark,
+    MarkList,
+    Reattach,
+    ModifyReattach,
+    NodeSpanningMark,
+} from "./format";
 import { MarkListFactory } from "./markListFactory";
 
 /**
@@ -210,10 +220,8 @@ class RebaseQueue<T> {
             } else {
                 return { newMark: this.newMarks.pop() };
             }
-        } else if (isAttach(newMark)) {
-            if (!isReattach(newMark) || newMark.mutedBy === undefined) {
-                return { newMark: this.newMarks.pop() };
-            }
+        } else if (isAttach(newMark) && !isMutedReattach(newMark)) {
+            return { newMark: this.newMarks.pop() };
         }
 
         // TODO: Handle case where `baseMarks` has adjacent or nested inverse reattaches from multiple revisions
@@ -251,11 +259,11 @@ interface RebaseMarks<T> {
 }
 
 function rebaseMark<TNodeChange>(
-    currMark: InputSpanningMark<TNodeChange>,
-    baseMark: InputSpanningMark<TNodeChange>,
+    currMark: NodeSpanningMark<TNodeChange>,
+    baseMark: NodeSpanningMark<TNodeChange>,
     baseRevision: RevisionTag | undefined,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
-): InputSpanningMark<TNodeChange> {
+): NodeSpanningMark<TNodeChange> {
     if (isSkipMark(baseMark)) {
         return clone(currMark);
     }
@@ -264,12 +272,8 @@ function rebaseMark<TNodeChange>(
         case "Delete":
         case "MDelete": {
             if (isReattach(currMark)) {
-                assert(
-                    currMark.mutedBy !== undefined,
-                    "Revive marks can only overlap with delete marks if muted",
-                );
                 if (currMark.mutedBy === baseRevision) {
-                    const revive = clone(currMark);
+                    const revive = clone(currMark) as Reattach | ModifyReattach<TNodeChange>;
                     delete revive.mutedBy;
                     return revive;
                 }

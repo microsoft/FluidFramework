@@ -23,6 +23,8 @@ import {
     InputSpanningMark,
     Reattach,
     Skip,
+    Muted,
+    Mutable,
 } from "./format";
 
 export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<TNodeChange> {
@@ -68,6 +70,16 @@ export function isReattach<TNodeChange>(
             mark.type === "Return" ||
             mark.type === "MReturn")
     );
+}
+
+export function isMutedReattach<TNodeChange>(
+    mark: Mark<TNodeChange>,
+): mark is (Reattach | ModifyReattach<TNodeChange>) & Muted {
+    return isReattach(mark) && isMuted(mark);
+}
+
+export function isMuted(mark: Mutable): mark is Muted {
+    return mark.mutedBy !== undefined;
 }
 
 export function getAttachLength(attach: Attach): number {

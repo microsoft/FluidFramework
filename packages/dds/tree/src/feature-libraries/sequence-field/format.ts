@@ -16,21 +16,32 @@ export type Mark<TNodeChange = NodeChangeType> =
     | OutputSpanningMark<TNodeChange>;
 
 export type ObjectMark<TNodeChange = NodeChangeType> = Exclude<Mark<TNodeChange>, Skip>;
+export type NodeSpanningMark<TNodeChange> = Exclude<Mark<TNodeChange>, NewAttach<TNodeChange>>;
 
 export type InputSpanningMark<TNodeChange> =
     | Skip
     | Detach
-    | Reattach
     | Modify<TNodeChange>
     | ModifyDetach<TNodeChange>
-    | ModifyReattach<TNodeChange>;
+    | (Muted & (Reattach | ModifyReattach<TNodeChange>));
 
 export type OutputSpanningMark<TNodeChange> =
     | Skip
     | NewAttach<TNodeChange>
-    | Reattach
     | Modify<TNodeChange>
-    | ModifyReattach<TNodeChange>;
+    | (Active & (Reattach | ModifyReattach<TNodeChange>));
+
+export interface Mutable {
+    mutedBy?: RevisionTag;
+}
+
+export interface Muted {
+    mutedBy: RevisionTag;
+}
+
+export interface Active {
+    mutedBy?: undefined;
+}
 
 export interface Modify<TNodeChange = NodeChangeType> extends HasChanges<TNodeChange> {
     type: "Modify";

@@ -38,6 +38,7 @@ export {
     ProtoNode,
     RangeType,
     Reattach,
+    NodeSpanningMark,
     InputSpanningMark,
     OutputSpanningMark,
     Tiebreak,
@@ -47,6 +48,9 @@ export {
     Skip,
     LineageEvent,
     HasReattachFields,
+    Active,
+    Muted,
+    Mutable,
 } from "./format";
 export {
     SequenceFieldChangeHandler,
