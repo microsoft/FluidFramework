@@ -40,12 +40,12 @@ describe("mockCustomerService", () => {
         });
     });
 
-    it("fetch-tasks", async () => {
+    it("fetch-tasks: Ensure server yields the data we expect", async () => {
         const expectedData = await externalDataSource!.fetchData();
         await request(server!).get("/fetch-tasks").expect(200, {taskList: expectedData});
     });
 
-    it("set-tasks", async () => {
+    it("set-tasks: Ensure external data is updated with provided data", async () => {
         const newData = "42:Determine meaning of life:37";
         await request(server!).post("/set-tasks").send({taskList: newData}).expect(200);
 
@@ -53,7 +53,7 @@ describe("mockCustomerService", () => {
         expect(externalData).toEqual(newData);
     });
 
-    it("set-tasks (400: no data provided)", async () => {
+    it("set-tasks: Ensure server rejects update with no data", async () => {
         const oldData = await externalDataSource!.fetchData();
         await request(server!).post("/set-tasks").send().expect(400);
 
@@ -61,7 +61,7 @@ describe("mockCustomerService", () => {
         expect(externalData).toEqual(oldData); // Sanity check that we didn't blow away data
     });
 
-    it("set-tasks (400: Bad key)", async () => {
+    it("set-tasks: Ensure server rejects update with malformed data", async () => {
         const oldData = await externalDataSource!.fetchData();
         await request(server!).post("/set-tasks").send({tasks: "42:Determine meaning of life:37"}).expect(400);
 
