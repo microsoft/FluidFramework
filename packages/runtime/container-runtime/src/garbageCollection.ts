@@ -1535,12 +1535,20 @@ export class GarbageCollector implements IGarbageCollector {
             // Events generated:
             // InactiveObject_Loaded, SweepReadyObject_Loaded
             if (usageType === "Loaded") {
-                this.mc.logger.sendErrorEvent({
+                const event = {
                     ...propsToLog,
                     eventName: `${state}Object_${usageType}`,
                     pkg: packagePathToTelemetryProperty(packagePath),
                     stack: generateStack(),
-                });
+                };
+
+                // Do not log the inactive object x events as error events as they are not the best signal for
+                // detecting something wrong with GC either from the partner or from the runtime itself.
+                if (state === UnreferencedState.Inactive) {
+                    this.mc.logger.sendTelemetryEvent(event);
+                } else {
+                    this.mc.logger.sendErrorEvent(event);
+                }
             }
 
             // If SweepReady Usage Detection is enabed, the handler may close the interactive container.
@@ -1571,12 +1579,19 @@ export class GarbageCollector implements IGarbageCollector {
             if ((usageType === "Revived") === active) {
                 const pkg = await this.getNodePackagePath(eventProps.id);
                 const fromPkg = eventProps.fromId ? await this.getNodePackagePath(eventProps.fromId) : undefined;
-                logger.sendErrorEvent({
+
+                const event = {
                     ...propsToLog,
                     eventName: `${state}Object_${usageType}`,
                     pkg: pkg ? { value: pkg.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
                     fromPkg: fromPkg ? { value: fromPkg.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
-                });
+                }
+
+                if (state === UnreferencedState.Inactive) {
+                    logger.sendTelemetryEvent(event);
+                } else {
+                    logger.sendErrorEvent(event);
+                }
             }
         }
         this.pendingEventsQueue = [];
