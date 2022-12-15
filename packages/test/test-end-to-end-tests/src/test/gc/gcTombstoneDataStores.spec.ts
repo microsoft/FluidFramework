@@ -759,9 +759,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
         itExpects("removes un-tombstoned data store and attachment blob from tombstone blob in summary",
         [
             { eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived", type: "DataStore" },
-            { eventName: "fluid:telemetry:Summarizer:Running:TombstoneObject_Revived", type: "DataStore" },
             { eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived", type: "Blob" },
-            { eventName: "fluid:telemetry:Summarizer:Running:TombstoneObject_Revived", type: "Blob" },
         ],
         async () => {
             const mainContainer = await provider.makeTestContainer(testContainerConfig);

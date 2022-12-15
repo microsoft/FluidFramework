@@ -1052,7 +1052,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             metadata,
             createContainerMetadata: this.createContainerMetadata,
             isSummarizerClient: this.context.clientDetails.type === summarizerClientType,
-            getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
+            getNodePackagePathAsync: async (nodePath: string) => this.getGCNodePackagePathAsync(nodePath),
+            getNodePackagePath: (nodePath: string) => this.getGCNodePackagePath(nodePath),
             getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
             readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
             getContainerDiagnosticId: () => this.context.id,
@@ -2199,17 +2200,33 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * Called by GC to retrieve the package path of the node with the given path. The node should belong to a
      * data store or an attachment blob.
      */
-    public async getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined> {
+    public async getGCNodePackagePathAsync(nodePath: string): Promise<readonly string[] | undefined> {
         switch (this.getNodeType(nodePath)) {
             case GCNodeType.Blob:
                 return ["_blobs"];
             case GCNodeType.DataStore:
             case GCNodeType.SubDataStore:
-                return this.dataStores.getDataStorePackagePath(nodePath);
+                return this.dataStores.getDataStorePackagePathAsync(nodePath);
             default:
                 assert(false, 0x2de /* "Package path requested for unsupported node type." */);
         }
     }
+
+        /**
+     * Called by GC to retrieve the package path of the node with the given path. The node should belong to a
+     * data store or an attachment blob.
+     */
+        public getGCNodePackagePath(nodePath: string): readonly string[] | undefined {
+            switch (this.getNodeType(nodePath)) {
+                case GCNodeType.Blob:
+                    return ["_blobs"];
+                case GCNodeType.DataStore:
+                case GCNodeType.SubDataStore:
+                    return this.dataStores.getDataStorePackagePath(nodePath);
+                default:
+                    assert(false, 0x2de /* "Package path requested for unsupported node type." */);
+            }
+        }
 
     /**
      * Returns whether a given path is for attachment blobs that are in the format - "/BlobManager.basePath/...".

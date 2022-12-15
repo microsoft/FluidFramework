@@ -15,6 +15,7 @@ import {
     IGCResult,
     runGarbageCollection,
     unpackChildNodesGCDetails,
+    trimLeadingSlashes,
 } from "@fluidframework/garbage-collector";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
@@ -58,6 +59,7 @@ import {
     runGCKey,
     runSessionExpiryKey,
     runSweepKey,
+    throwOnTombstoneUsageKey,
     trackGCStateKey
 } from "./garbageCollectionConstants";
 import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
@@ -177,7 +179,8 @@ export interface IGarbageCollectorCreateParams {
     readonly createContainerMetadata: ICreateContainerMetadata;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly isSummarizerClient: boolean;
-    readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
+    readonly getNodePackagePathAsync: (nodePath: string) => Promise<readonly string[] | undefined>;
+    readonly getNodePackagePath: (nodePath: string) => readonly string[] | undefined;
     readonly getLastSummaryTimestampMs: () => number | undefined;
     readonly readAndParseBlob: ReadAndParseBlob;
     readonly activeConnection: () => boolean;
@@ -192,8 +195,6 @@ export const UnreferencedState = {
     Inactive: "Inactive",
     /** The node is ready to be deleted by the sweep phase. */
     SweepReady: "SweepReady",
-    /** The node has been tombstoned. */
-    Tombstone: "Tombstone",
 } as const;
 export type UnreferencedState = typeof UnreferencedState[keyof typeof UnreferencedState];
 
@@ -456,7 +457,12 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly sweepTimeoutMs: number | undefined;
 
     /** For a given node path, returns the node's package path. */
-    private readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
+    private readonly getNodePackagePathAsync: (nodePath: string) => Promise<readonly string[] | undefined>;
+    /**
+     * For a given node path, returns the node's package path. Since this is sync, this has the disadvantage
+     * of not always being able to retrieve the package path if the datastore hasn't been realized.
+     */
+    private readonly getNodePackagePath: (nodePath: string) => readonly string[] | undefined;
     /** Returns the timestamp of the last summary generated for this container. */
     private readonly getLastSummaryTimestampMs: () => number | undefined;
     /** Returns true if connection is active, i.e. it's "write" connection and the runtime is connected. */
@@ -487,6 +493,7 @@ export class GarbageCollector implements IGarbageCollector {
         this.isSummarizerClient = createParams.isSummarizerClient;
         this.gcOptions = createParams.gcOptions;
         this.createContainerMetadata = createParams.createContainerMetadata;
+        this.getNodePackagePathAsync = createParams.getNodePackagePathAsync;
         this.getNodePackagePath = createParams.getNodePackagePath;
         this.getLastSummaryTimestampMs = createParams.getLastSummaryTimestampMs;
         this.activeConnection = createParams.activeConnection;
@@ -1141,8 +1148,7 @@ export class GarbageCollector implements IGarbageCollector {
             this.inactiveNodeUsed(
                 reason,
                 nodePath,
-                nodeStateTracker.state,
-                nodeStateTracker.unreferencedTimestampMs,
+                nodeStateTracker,
                 undefined /* fromNodeId */,
                 packagePath,
                 timestampMs,
@@ -1169,11 +1175,26 @@ export class GarbageCollector implements IGarbageCollector {
 
         const nodeStateTracker = this.unreferencedNodesState.get(toNodePath);
         if (nodeStateTracker && nodeStateTracker.state !== UnreferencedState.Active) {
-            this.inactiveNodeUsed("Revived", toNodePath, nodeStateTracker.state, nodeStateTracker.unreferencedTimestampMs, fromNodePath);
+            this.inactiveNodeUsed("Revived", toNodePath, nodeStateTracker, fromNodePath);
         }
 
         if (this.tombstones.includes(toNodePath)) {
-            this.inactiveNodeUsed("Revived", toNodePath, UnreferencedState.Tombstone, nodeStateTracker?.unreferencedTimestampMs ?? 0, fromNodePath);
+            const nodeType = this.runtime.getNodeType(toNodePath)
+            if (nodeType === GCNodeType.DataStore) {
+                this.mc.logger.sendTelemetryEvent({
+                    eventName: "GC_Tombstone_Datastore_Revived",
+                    url: trimLeadingSlashes(toNodePath),
+                    throwOnTombstoneUsage: this.mc.config.getBoolean(throwOnTombstoneUsageKey),
+                    pkg: packagePathToTelemetryProperty(this.getNodePackagePath(toNodePath)),
+                });
+            } else if (nodeType === GCNodeType.Blob) {
+                this.mc.logger.sendTelemetryEvent({
+                    eventName: "GC_Tombstone_Blob_Revived",
+                    url: trimLeadingSlashes(toNodePath),
+                    throwOnTombstoneUsage: this.mc.config.getBoolean(throwOnTombstoneUsageKey),
+                    pkg: packagePathToTelemetryProperty(this.getNodePackagePath(toNodePath)),
+                });
+            }
         }
     }
 
@@ -1486,8 +1507,7 @@ export class GarbageCollector implements IGarbageCollector {
     private inactiveNodeUsed(
         usageType: "Changed" | "Loaded" | "Revived",
         nodeId: string,
-        nodeState: UnreferencedState,
-        unreferencedTimestampMs: number,
+        nodeStateTracker: UnreferencedStateTracker,
         fromNodeId?: string,
         packagePath?: readonly string[],
         currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs(),
@@ -1496,7 +1516,7 @@ export class GarbageCollector implements IGarbageCollector {
         // If there is no reference timestamp to work with, no ops have been processed after creation. If so, skip
         // logging as nothing interesting would have happened worth logging.
         // If the node is active, skip logging.
-        if (currentReferenceTimestampMs === undefined || nodeState === UnreferencedState.Active) {
+        if (currentReferenceTimestampMs === undefined || nodeStateTracker.state === UnreferencedState.Active) {
             return;
         }
 
@@ -1507,7 +1527,8 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
-        const uniqueEventId = `${nodeState}-${nodeId}-${usageType}`;
+        const state = nodeStateTracker.state;
+        const uniqueEventId = `${state}-${nodeId}-${usageType}`;
         if (this.loggedUnreferencedEvents.has(uniqueEventId)) {
             return;
         }
@@ -1516,9 +1537,9 @@ export class GarbageCollector implements IGarbageCollector {
         const propsToLog = {
             id: nodeId,
             type: nodeType,
-            unrefTime: unreferencedTimestampMs,
-            age: currentReferenceTimestampMs - unreferencedTimestampMs,
-            timeout: nodeState === UnreferencedState.Inactive
+            unrefTime: nodeStateTracker.unreferencedTimestampMs,
+            age: currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
+            timeout: nodeStateTracker.state === UnreferencedState.Inactive
                 ? this.inactiveTimeoutMs
                 : this.sweepTimeoutMs,
             completedGCRuns: this.completedRuns,
@@ -1535,7 +1556,7 @@ export class GarbageCollector implements IGarbageCollector {
         // Inactive errors are usages of Objects that are unreferenced for at least a period of 7 days.
         // SweepReady errors are usages of Objects that will be deleted by GC Sweep!
         if (this.isSummarizerClient) {
-            this.pendingEventsQueue.push({ ...propsToLog, usageType, state: nodeState });
+            this.pendingEventsQueue.push({ ...propsToLog, usageType, state });
         } else {
             // For non-summarizer clients, only log "Loaded" type events since these objects may not be loaded in the
             // summarizer clients if they are based off of user actions (such as scrolling to content for these objects)
@@ -1544,7 +1565,7 @@ export class GarbageCollector implements IGarbageCollector {
             if (usageType === "Loaded") {
                 this.mc.logger.sendErrorEvent({
                     ...propsToLog,
-                    eventName: `${nodeState}Object_${usageType}`,
+                    eventName: `${state}Object_${usageType}`,
                     pkg: packagePathToTelemetryProperty(packagePath),
                     stack: generateStack(),
                 });
@@ -1553,7 +1574,7 @@ export class GarbageCollector implements IGarbageCollector {
             // If SweepReady Usage Detection is enabed, the handler may close the interactive container.
             // Once Sweep is fully implemented, this will be removed since the objects will be gone
             // and errors will arise elsewhere in the runtime
-            if (nodeState === UnreferencedState.SweepReady) {
+            if (state === UnreferencedState.SweepReady) {
                 this.sweepReadyUsageHandler.usageDetectedInInteractiveClient({ ...propsToLog, usageType });
             }
         }
@@ -1576,8 +1597,8 @@ export class GarbageCollector implements IGarbageCollector {
             const nodeStateTracker = this.unreferencedNodesState.get(eventProps.id);
             const active = nodeStateTracker === undefined || nodeStateTracker.state === UnreferencedState.Active;
             if ((usageType === "Revived") === active) {
-                const pkg = await this.getNodePackagePath(eventProps.id);
-                const fromPkg = eventProps.fromId ? await this.getNodePackagePath(eventProps.fromId) : undefined;
+                const pkg = await this.getNodePackagePathAsync(eventProps.id);
+                const fromPkg = eventProps.fromId ? await this.getNodePackagePathAsync(eventProps.fromId) : undefined;
                 logger.sendErrorEvent({
                     ...propsToLog,
                     eventName: `${state}Object_${usageType}`,

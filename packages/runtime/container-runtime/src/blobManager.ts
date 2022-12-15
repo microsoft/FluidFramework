@@ -264,6 +264,7 @@ export class BlobManager {
             this.mc.logger.sendErrorEvent({
                 eventName: "GC_Tombstone_Blob_Requested",
                 url: request.url,
+                throwOnTombstoneUsage: this.throwOnTombstoneUsage,
             }, error);
             if (this.throwOnTombstoneUsage) {
                 throw error;
