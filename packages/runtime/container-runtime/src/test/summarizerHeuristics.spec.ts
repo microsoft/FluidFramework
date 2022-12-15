@@ -29,7 +29,6 @@ describe("Runtime", () => {
                 maxAckWaitTime: 120000, // 2 min
                 maxOpsSinceLastSummary: 7000,
                 initialSummarizerDelayMs: 0,
-                summarizerClientElection: false,
                 minIdleTime: 5000, // 5 sec (idle)
                 maxIdleTime: 5000, // 5 sec (idle)
                 nonRuntimeOpWeight: 0.1,
@@ -59,7 +58,6 @@ describe("Runtime", () => {
                 maxAckWaitTime = defaultSummaryConfig.maxAckWaitTime,
                 maxOpsSinceLastSummary = defaultSummaryConfig.maxOpsSinceLastSummary,
                 initialSummarizerDelayMs = defaultSummaryConfig.initialSummarizerDelayMs,
-                summarizerClientElection = defaultSummaryConfig.summarizerClientElection,
                 minOpsForLastSummaryAttempt = defaultSummaryConfig.minOpsForLastSummaryAttempt,
                 run = true,
                 minIdleTime = defaultSummaryConfig.minIdleTime,
@@ -79,7 +77,6 @@ describe("Runtime", () => {
                     maxAckWaitTime,
                     maxOpsSinceLastSummary,
                     initialSummarizerDelayMs,
-                    summarizerClientElection,
                     minOpsForLastSummaryAttempt,
                     minIdleTime,
                     maxIdleTime,

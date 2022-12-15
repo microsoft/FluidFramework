@@ -5,12 +5,14 @@
 ```ts
 
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import type { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import type { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public (undocumented)
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
@@ -91,8 +93,10 @@ export interface BlockUpdateActions {
     child: (block: IMergeBlock, index: number) => void;
 }
 
+// Warning: (ae-forgotten-export) The symbol "IClientEvents" needs to be exported by the entry point index.d.ts
+//
 // @public (undocumented)
-export class Client {
+export class Client extends TypedEventEmitter<IClientEvents> {
     constructor(specToSegment: (spec: IJSONSegment) => ISegment, logger: ITelemetryLogger, options?: PropertySet);
     // (undocumented)
     accumOps: number;
@@ -1177,6 +1181,8 @@ export interface SegmentGroup {
     localSeq: number;
     // (undocumented)
     previousProps?: PropertySet[];
+    // (undocumented)
+    refSeq: number;
     // (undocumented)
     segments: ISegment[];
 }
