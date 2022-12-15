@@ -8,6 +8,7 @@ import { clone, fail, getOrAddEmptyToMap, StackyIterator } from "../../util";
 import { RevisionTag, TaggedChange } from "../../core";
 import { IdAllocator } from "../modular-schema";
 import {
+    applyMoveEffectsToMark,
     getInputLength,
     getOutputLength,
     isAttach,
@@ -51,6 +52,9 @@ export function rebase<TNodeChange>(
     // TODO: New and base move IDs can collide. Should be distinguishable by revision, but this is not implemented, and base is not currently guaranteed to have a revision.
     // We could use separate move tables for new and base, or we could reassign the new move IDs.
     const moveEffects = newMoveEffectTable<TNodeChange>();
+
+    // Necessary so we don't have to re-split any marks when applying move effects.
+    moveEffects.allowMerges = false;
     const [rebased, splitBase] = rebaseMarkList(
         change,
         base.change,
@@ -59,7 +63,16 @@ export function rebase<TNodeChange>(
         genId,
         moveEffects,
     );
-    return applyMoveEffects(splitBase, rebased, moveEffects, genId);
+    moveEffects.allowMerges = true;
+    const pass2 = applyMoveEffects(splitBase, rebased, moveEffects, genId);
+
+    // We may have discovered new mergeable marks while applying move effects, as we may have moved a MoveOut next to another MoveOut.
+    // A second pass through MarkListFactory will handle any remaining merges.
+    const factory = new MarkListFactory<TNodeChange>(moveEffects);
+    for (const mark of pass2) {
+        factory.push(mark);
+    }
+    return factory.list;
 }
 
 export type NodeChangeRebaser<TNodeChange> = (
@@ -75,7 +88,7 @@ function rebaseMarkList<TNodeChange>(
     genId: IdAllocator,
     moveEffects: MoveEffectTable<TNodeChange>,
 ): [MarkList<TNodeChange>, MarkList<TNodeChange>] {
-    const factory = new MarkListFactory<TNodeChange>();
+    const factory = new MarkListFactory<TNodeChange>(moveEffects);
     const splitBaseMarks: MarkList<TNodeChange> = [];
     const queue = new RebaseQueue(baseRevision, baseMarkList, currMarkList, genId, moveEffects);
 
@@ -98,7 +111,7 @@ function rebaseMarkList<TNodeChange>(
                     baseRevision,
                 );
             } else {
-                factory.push(currMark);
+                factory.push(clone(currMark));
             }
         } else if (currMark === undefined) {
             if (isDetachMark(baseMark)) {
@@ -163,8 +176,38 @@ class RebaseQueue<T> {
     }
 
     public pop(): RebaseMarks<T> {
-        const baseMark = this.baseMarks.peek();
-        const newMark = this.newMarks.peek();
+        let baseMark = this.baseMarks.pop();
+        let newMark = this.newMarks.pop();
+
+        if (baseMark !== undefined) {
+            const splitMarks = applyMoveEffectsToMark(
+                baseMark,
+                undefined,
+                this.moveEffects,
+                this.genId,
+                false,
+            );
+            baseMark = splitMarks[0];
+            for (let i = splitMarks.length - 1; i >= 0; i--) {
+                this.baseMarks.push(splitMarks[i]);
+            }
+        }
+
+        if (newMark !== undefined) {
+            const splitMarks = applyMoveEffectsToMark(
+                newMark,
+                undefined,
+                this.moveEffects,
+                this.genId,
+                true,
+            );
+            newMark = splitMarks[0];
+            this.moveEffects.validatedMarks.add(newMark);
+            for (let i = splitMarks.length - 1; i >= 0; i--) {
+                this.newMarks.push(splitMarks[i]);
+                this.moveEffects.validatedMarks.add(splitMarks[i]);
+            }
+        }
 
         if (baseMark === undefined || newMark === undefined) {
             return {
@@ -176,10 +219,10 @@ class RebaseQueue<T> {
             const reattachOffset = getOffsetInReattach(newMark.lineage, revision);
             if (reattachOffset !== undefined) {
                 const offset = reattachOffset - this.reattachOffset;
-                this.reattachOffset = reattachOffset;
                 if (offset === 0) {
                     return { newMark: this.newMarks.pop() };
                 } else if (offset >= getOutputLength(baseMark)) {
+                    this.reattachOffset += getOutputLength(baseMark);
                     return { baseMark: this.baseMarks.pop() };
                 } else {
                     // TODO: Splitting base moves seems problematic
@@ -190,6 +233,7 @@ class RebaseQueue<T> {
                         this.moveEffects,
                     );
                     this.baseMarks.push(baseMark2);
+                    this.reattachOffset += offset;
                     return { baseMark: baseMark1 };
                 }
             } else if (isAttachAfterBaseAttach(newMark, baseMark)) {
@@ -228,6 +272,8 @@ class RebaseQueue<T> {
                     this.moveEffects,
                 );
                 this.newMarks.push(newMark2);
+                this.moveEffects.validatedMarks.add(newMark1);
+                this.moveEffects.validatedMarks.add(newMark2);
                 return { baseMark, newMark: newMark1 };
             } else {
                 return { baseMark, newMark };
@@ -301,7 +347,7 @@ function applyMoveEffects<TNodeChange>(
         moveEffects,
         false,
     );
-    const factory = new MarkListFactory<TNodeChange>();
+    const factory = new MarkListFactory<TNodeChange>(moveEffects);
 
     let offset = 0;
     while (!queue.isEmpty()) {
@@ -340,6 +386,7 @@ function applyMoveEffects<TNodeChange>(
                     const effect = moveEffects.dstEffects.get(newMark.id);
                     if (effect !== undefined) {
                         factory.push(...splitMoveIn(newMark, effect));
+                        moveEffects.dstEffects.delete(newMark.id);
                         continue;
                     }
                     break;
@@ -355,6 +402,7 @@ function applyMoveEffects<TNodeChange>(
                     const effect = moveEffects.srcEffects.get(newMark.id);
                     if (effect !== undefined) {
                         factory.push(...splitMoveOut(newMark, effect));
+                        moveEffects.srcEffects.delete(newMark.id);
                         continue;
                     }
                     break;

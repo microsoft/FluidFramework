@@ -46,6 +46,7 @@ describe("SequenceField - Rebase", () => {
         for (const [name, testCase] of Object.entries(cases)) {
             it(`${name} ↷ no changes`, () => {
                 const actual = rebase(testCase, cases.no_change);
+                normalizeMoveIds(actual);
                 assert.deepEqual(actual, testCase);
             });
         }
@@ -373,6 +374,7 @@ describe("SequenceField - Rebase", () => {
         const insertB2 = rebaseTagged(insertB, delA);
         const moveC2 = rebaseTagged(moveC, delA, insertB2);
         const expected = Change.move(2, 1, 1);
+        normalizeMoveIds(moveC2.change);
         checkDeltaEquality(moveC2.change, expected);
     });
 
@@ -398,6 +400,7 @@ describe("SequenceField - Rebase", () => {
         const moveB = Change.move(2, 2, 3);
         const expected = Change.move(0, 2, 3);
         const rebased = rebase(moveB, moveA);
+        normalizeMoveIds(rebased);
         assert.deepEqual(rebased, expected);
     });
 });

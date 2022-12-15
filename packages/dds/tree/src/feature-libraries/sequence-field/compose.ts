@@ -19,7 +19,6 @@ import {
     ModifyMoveIn,
     ModifyMoveOut,
     ModifyReattach,
-    MoveId,
     SizedMark,
     SizedObjectMark,
 } from "./format";
@@ -38,7 +37,6 @@ import {
     splitMarkOnInput,
     splitMarkOnOutput,
     newMoveEffectTable,
-    replaceMoveId,
     changeSrcMoveId,
     isReattach,
     MoveSrcPartition,
@@ -49,6 +47,8 @@ import {
     removeMoveDest,
     removeMoveSrc,
     isMoveMark,
+    getUniqueMoveId,
+    applyMoveEffectsToMark,
 } from "./utils";
 
 export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
@@ -95,7 +95,7 @@ function composeMarkLists<TNodeChange>(
     genId: IdAllocator,
     moveEffects: MoveEffectTable<TNodeChange>,
 ): MarkList<TNodeChange> {
-    const factory = new MarkListFactory<TNodeChange>();
+    const factory = new MarkListFactory<TNodeChange>(moveEffects);
     const queue = new ComposeQueue(baseMarkList, newRev, newMarkList, genId, moveEffects);
     while (!queue.isEmpty()) {
         const { baseMark, newMark, areInverses } = queue.pop();
@@ -451,29 +451,12 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
     return cloned;
 }
 
-function getUniqueMoveId<T>(
-    mark: MoveMark<T>,
-    revision: RevisionTag | undefined,
-    genId: IdAllocator,
-    moveEffects: MoveEffectTable<T>,
-): MoveId {
-    if (!moveEffects.validatedMarks.has(mark) && (mark.revision ?? revision === undefined)) {
-        let newId = moveEffects.idRemappings.get(mark.id);
-        if (newId === undefined) {
-            newId = genId();
-            replaceMoveId(moveEffects, mark.id, newId);
-        }
-        return newId;
-    }
-    return mark.id;
-}
-
 function applyMoveEffects<TNodeChange>(
     marks: MarkList<TNodeChange>,
     composeChild: NodeChangeComposer<TNodeChange>,
     moveEffects: MoveEffectTable<TNodeChange>,
 ): MarkList<TNodeChange> {
-    const factory = new MarkListFactory<TNodeChange>();
+    const factory = new MarkListFactory<TNodeChange>(moveEffects);
     for (const mark of marks) {
         if (isObjMark(mark)) {
             switch (mark.type) {
@@ -482,6 +465,7 @@ function applyMoveEffects<TNodeChange>(
                     const effect = moveEffects.dstEffects.get(mark.id);
                     if (effect !== undefined) {
                         factory.push(...splitMoveIn(mark, effect));
+                        moveEffects.dstEffects.delete(mark.id);
                         continue;
                     }
                     break;
@@ -490,6 +474,7 @@ function applyMoveEffects<TNodeChange>(
                     const effect = moveEffects.dstEffects.get(mark.id);
                     if (effect !== undefined) {
                         factory.push(...splitModifyMoveIn(mark, effect, composeChild));
+                        moveEffects.dstEffects.delete(mark.id);
                         continue;
                     }
                     break;
@@ -499,6 +484,7 @@ function applyMoveEffects<TNodeChange>(
                     const effect = moveEffects.srcEffects.get(mark.id);
                     if (effect !== undefined) {
                         factory.push(...splitMoveOut(mark, effect));
+                        moveEffects.srcEffects.delete(mark.id);
                         continue;
                     }
                     break;
@@ -507,6 +493,7 @@ function applyMoveEffects<TNodeChange>(
                     const effect = moveEffects.srcEffects.get(mark.id);
                     if (effect !== undefined) {
                         factory.push(...splitModifyMoveOut(mark, effect));
+                        moveEffects.srcEffects.delete(mark.id);
                         continue;
                     }
                     break;
@@ -703,56 +690,6 @@ export class ComposeQueue<T> {
             return { baseMark, newMark };
         }
     }
-}
-
-function applyMoveEffectsToMark<T>(
-    inputMark: Mark<T>,
-    revision: RevisionTag | undefined,
-    moveEffects: MoveEffectTable<T>,
-    genId: IdAllocator,
-    reassignIds: boolean,
-): Mark<T>[] {
-    let mark = inputMark;
-    if (isMoveMark(mark)) {
-        if (reassignIds) {
-            const newId = getUniqueMoveId(mark, revision, genId, moveEffects);
-            if (newId !== mark.id) {
-                mark = clone(mark);
-                mark.id = newId;
-                moveEffects.validatedMarks.add(mark);
-            }
-        }
-
-        switch (mark.type) {
-            case "MoveOut":
-            case "ReturnFrom": {
-                const effect = moveEffects.srcEffects.get(mark.id);
-                if (effect !== undefined) {
-                    const splitMarks = splitMoveOut(mark, effect);
-                    for (const splitMark of splitMarks) {
-                        moveEffects.validatedMarks.add(splitMark);
-                    }
-                    return splitMarks;
-                }
-                break;
-            }
-            case "MoveIn":
-            case "ReturnTo": {
-                const effect = moveEffects.dstEffects.get(mark.id);
-                if (effect !== undefined) {
-                    const splitMarks = splitMoveIn(mark, effect);
-                    for (const splitMark of splitMarks) {
-                        moveEffects.validatedMarks.add(splitMark);
-                    }
-                    return splitMarks;
-                }
-                break;
-            }
-            default:
-                fail(`Unhandled mark type: ${mark.type}`);
-        }
-    }
-    return [mark];
 }
 
 interface ComposeMarks<T> {

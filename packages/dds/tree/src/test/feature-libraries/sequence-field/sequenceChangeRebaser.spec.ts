@@ -15,6 +15,7 @@ import {
     composeAnonChanges,
     getMaxId,
     getMaxIdTagged,
+    normalizeMoveIds,
     rebaseTagged,
 } from "./utils";
 import { ChangeMaker as Change } from "./testEdits";
@@ -47,7 +48,10 @@ describe("SequenceField - Rebaser Axioms", () => {
     describe("A ↷ [B, B⁻¹] === A", () => {
         for (const [name1, makeChange1] of testChanges) {
             for (const [name2, makeChange2] of testChanges) {
-                if (name2 === "Delete" && ["SetValue", "Delete"].includes(name1)) {
+                if (
+                    name2 === "Delete" &&
+                    ["SetValue", "Delete", "MoveOut", "MoveIn"].includes(name1)
+                ) {
                     it.skip(`(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`, () => {
                         /**
                          * These cases are currently disabled because marks that affect existing content are removed
@@ -67,6 +71,7 @@ describe("SequenceField - Rebaser Axioms", () => {
                                 );
                                 const r1 = rebaseTagged(change1, change2);
                                 const r2 = rebaseTagged(r1, inv);
+                                normalizeMoveIds(r2.change);
                                 checkDeltaEquality(r2.change, change1.change);
                             }
                         }
@@ -111,6 +116,8 @@ describe("SequenceField - Rebaser Axioms", () => {
                                 TestChange.rebase,
                                 TestChange.newIdAllocator(getMaxId(r2, change2)),
                             );
+                            normalizeMoveIds(r1);
+                            normalizeMoveIds(r3);
                             assert.deepEqual(r3, r1);
                         }
                     }

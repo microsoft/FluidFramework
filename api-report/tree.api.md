@@ -709,6 +709,7 @@ type MarkList_2<TNodeChange = NodeChangeType, TMark = Mark_2<TNodeChange>> = TMa
 
 // @public
 class MarkListFactory<TNodeChange> {
+    constructor(moveEffects?: MoveEffectTable<TNodeChange> | undefined);
     // (undocumented)
     readonly list: MarkList_2<TNodeChange>;
     // (undocumented)
@@ -848,6 +849,30 @@ export class ModularEditBuilder extends ProgressiveEditBuilderBase<ModularChange
     submitChange(path: UpPath | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset, maxId?: ChangesetLocalId): void;
 }
 
+// @public (undocumented)
+type MoveDstPartition<T> = MovePartition<Attach<T>>;
+
+// @public (undocumented)
+interface MoveEffectTable<T> {
+    // (undocumented)
+    allowMerges: boolean;
+    // (undocumented)
+    dstEffects: Map<MoveId_2, MoveDstPartition<T>[]>;
+    // (undocumented)
+    dstMergeable: Map<MoveId_2, MoveId_2>;
+    // (undocumented)
+    idRemappings: Map<MoveId_2, MoveId_2>;
+    // (undocumented)
+    movedMarks: Map<MoveId_2, Mark_2<T>[]>;
+    // (undocumented)
+    splitIdToOrigId: Map<MoveId_2, MoveId_2>;
+    // (undocumented)
+    srcEffects: Map<MoveId_2, MoveSrcPartition<T>[]>;
+    // (undocumented)
+    srcMergeable: Map<MoveId_2, MoveId_2>;
+    validatedMarks: Set<Mark_2<T>>;
+}
+
 // @public
 interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {
 }
@@ -899,6 +924,19 @@ interface MoveOut_2 extends HasRevisionTag, HasMoveId {
     // (undocumented)
     type: "MoveOut";
 }
+
+// @public (undocumented)
+interface MovePartition<T> {
+    // (undocumented)
+    count?: number;
+    // (undocumented)
+    id: MoveId_2;
+    // (undocumented)
+    replaceWith?: T[];
+}
+
+// @public (undocumented)
+type MoveSrcPartition<T> = MovePartition<SizedObjectMark<T>>;
 
 // @public
 export enum Multiplicity {
@@ -1194,7 +1232,11 @@ declare namespace SequenceField {
         compose,
         NodeChangeComposer_2 as NodeChangeComposer,
         isMoveMark,
-        MoveMark
+        MoveMark,
+        MoveEffectTable,
+        MoveDstPartition,
+        MoveSrcPartition,
+        MovePartition
     }
 }
 export { SequenceField }
