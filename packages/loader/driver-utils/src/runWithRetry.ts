@@ -35,7 +35,7 @@ export interface IProgress {
      * Called whenever api returns cancellable error and the call is going to be retried.
      * Any exception thrown from this call back result in cancellation of operation
      * and propagation of thrown exception.
-     * TODO: we abort the above signal instead
+     * This call back may also trigger an abort of this object's "cancel" signal
      * @param delayInMs - delay before next retry. This value will depend on internal back-off logic,
      * as well as information provided by service (like 429 error asking to wait for some time before retry)
      * @param error - error object returned from the call.
@@ -43,7 +43,7 @@ export interface IProgress {
     onRetry?(delayInMs: number, error: any): void;
 }
 
-/** @deprecated - TODO */
+/** @deprecated - Use runWithRetry2 */
 export async function runWithRetry<T>(
     api: (cancel?: AbortSignal) => Promise<T>,
     fetchCallName: string,
