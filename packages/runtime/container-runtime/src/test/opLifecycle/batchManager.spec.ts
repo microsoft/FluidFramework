@@ -170,15 +170,23 @@ describe("BatchManager", () => {
         assert.equal(batchManager.contentSizeInBytes, smallMessageSize * batchManager.length);
     });
 
-    it("Don't verify op ordering by default", () => {
+    it("Don't verify op ordering by default, but log at most 5 events when it occurs", () => {
         const batchManager = new BatchManager({ hardLimit }, mockLogger);
         assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
         assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
+
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
+        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 2 }), true);
         assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
         assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
         assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 2 }), true);
 
         mockLogger.assertMatchStrict([{
+            eventName: "BatchManager:Submission of an out of order message",
+        }, {
+            eventName: "BatchManager:Submission of an out of order message",
+        }, {
             eventName: "BatchManager:Submission of an out of order message",
         }, {
             eventName: "BatchManager:Submission of an out of order message",
