@@ -20,6 +20,7 @@ import {
     UpPath,
     compareUpPaths,
     compareFieldUpPaths,
+    clonePath,
 } from "../tree";
 import { brand } from "../util";
 
@@ -171,6 +172,13 @@ export interface SpecialCaseBuilder<TData> {
     withKeys?(keys: FieldKey[]): TData;
 }
 
+export interface TestTree<TData> {
+    readonly name: string;
+    readonly data: TData;
+    readonly reference?: JsonableTree;
+    readonly path?: UpPath;
+}
+
 /**
  * Tests a cursor implementation.
  * Prefer using `testGeneralPurposeTreeCursor` when possible:
@@ -190,8 +198,8 @@ export function testSpecializedCursor<TData, TCursor extends ITreeCursor>(config
     cursorName: string;
     builders: SpecialCaseBuilder<TData>;
     cursorFactory: (data: TData) => TCursor;
-    dataFromCursor: (cursor: ITreeCursor) => TData;
-    testData: readonly { name: string; data: TData; reference?: JsonableTree }[];
+    dataFromCursor?: (cursor: ITreeCursor) => TData;
+    testData: readonly TestTree<TData>[];
 }): Mocha.Suite {
     return testTreeCursor(config);
 }
@@ -238,8 +246,8 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
     cursorName: string;
     builders: SpecialCaseBuilder<TData> | ((data: JsonableTree) => TData);
     cursorFactory: (data: TData) => TCursor;
-    dataFromCursor?: (cursor: ITreeCursor) => TData;
-    testData: readonly { name: string; data: TData; reference?: JsonableTree }[];
+    dataFromCursor?: (cursor: TCursor) => TData;
+    testData: readonly TestTree<TData>[];
     extraRoot?: true;
 }): Mocha.Suite {
     const {
@@ -254,7 +262,9 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
     const dataFromJsonableTree = typeof builder === "object" ? undefined : builder;
     const withKeys: undefined | ((keys: FieldKey[]) => TData) =
         typeof builder === "object"
-            ? builder.withKeys?.bind
+            ? builder.withKeys === undefined
+                ? undefined
+                : builder.withKeys.bind(builder.withKeys)
             : (keys: FieldKey[]) => {
                   const root: JsonableTree = {
                       type: brand("Foo"),
@@ -280,7 +290,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 
     return describe(`${cursorName} cursor implementation`, () => {
         describe("test trees", () => {
-            for (const { name, data, reference } of testData) {
+            for (const { name, data, reference, path } of testData) {
                 describe(name, () => {
                     it("jsonableTreeFromCursor", () => {
                         const cursor = cursorFactory(data);
@@ -292,7 +302,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
                     });
 
                     it("traversal", () => {
-                        checkTraversal(cursorFactory(data), parent);
+                        checkTraversal(cursorFactory(data), path ?? parent);
                     });
 
                     if (reference !== undefined) {
@@ -481,7 +491,12 @@ function checkTraversal(cursor: ITreeCursor, expectedPath: UpPath | undefined) {
     const originalNodeType = cursor.type;
 
     const path = cursor.getPath();
-    assert(compareUpPaths(path, expectedPath));
+    if (!compareUpPaths(path, expectedPath)) {
+        // This is slower than above compare, so only do it in the error case.
+        // Make a nice error message:
+        assert.deepEqual(clonePath(path), clonePath(expectedPath));
+        assert.fail("unequal paths, but clones compared equal");
+    }
 
     const fieldLengths: Map<FieldKey, number> = new Map();
 
@@ -498,6 +513,7 @@ function checkTraversal(cursor: ITreeCursor, expectedPath: UpPath | undefined) {
         // Check that iterating nodes of this field works as expected.
         let actualChildNodesTraversed = 0;
         for (let inNode = cursor.firstNode(); inNode; inNode = cursor.nextNode()) {
+            assert.equal(cursor.fieldIndex, actualChildNodesTraversed);
             assert(cursor.chunkStart <= actualChildNodesTraversed);
             assert(cursor.chunkLength > actualChildNodesTraversed - cursor.chunkStart);
             assert(cursor.chunkLength + cursor.chunkStart <= expectedFieldLength);

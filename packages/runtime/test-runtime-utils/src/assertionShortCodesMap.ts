@@ -252,7 +252,6 @@ export const shortCodeMap = {
     "0x12d": "Container Context should already be in attaching state",
     "0x12e": "Container Context should already be in attached state",
     "0x12f": "Container Runtime's summarize should always return a tree",
-    "0x131": "Mismatch between new chunkId and expected chunkMap",
     "0x132": "sending ops in detached container",
     "0x133": "Container disconnected when trying to submit system message",
     "0x137": "Failed to get version from storage",
