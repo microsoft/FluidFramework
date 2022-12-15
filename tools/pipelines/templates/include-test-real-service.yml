@@ -316,12 +316,20 @@ jobs:
           workingDir: ${{ variables.testPackageDir }}/nyc
           targetType: 'inline'
           script: |
-            for i in `ls`; do sed -i '/<skipped/d' $i; done
+            echo "
+            Pipeline Parameters:
+              should be current directory=${{ variables.testPackageDir }}/nyc
+            "
+            echo 'pwd ='
+            pwd
+            cd ${{ variables.testPackageDir }}/nyc
             echo 'pwd ='
             pwd
             echo 'ls ='
             ls
             echo 'cat * ='
+            cat *
+            for i in `ls`; do sed -i '/<skipped/d' $i; done
             cat *
 
       # Upload results
