@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import random from "random-js";
+import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ISegment, SegmentGroup } from "../mergeTreeNodes";
 import {
     appendToMergeTreeDeltaRevertibles,
@@ -45,15 +45,12 @@ describe("MergeTree.Client", () => {
                 for (const ackBeforeRevert of defaultOptions.ackBeforeRevert) {
                     // eslint-disable-next-line max-len
                     it(`InitialOps: ${defaultOptions.initialOps} MinLen: ${minLen}  ConcurrentOpsWithRevert: ${opsWithRevert} RevertOps: ${revertOps} AckBeforeRevert: ${ackBeforeRevert}`, async () => {
-                        const mt = random.engines.mt19937();
-                        mt.seedWithArray([
-                            0xDEADBEEF,
-                            0xFEEDBED,
+                        const random = makeRandom(
                             minLen,
                             revertOps,
                             [...ackBeforeRevert].reduce<number>((pv, cv) => pv + cv.charCodeAt(0), 0),
                             opsWithRevert,
-                        ]);
+                        );
 
                         const clients = createClientsAtInitialState(
                             {
@@ -69,7 +66,7 @@ describe("MergeTree.Client", () => {
                             {
                                 // init with random values
                                 const initialMsgs = generateOperationMessagesForClients(
-                                    mt,
+                                    random,
                                     seq,
                                     clients.all,
                                     logger,
@@ -103,7 +100,7 @@ describe("MergeTree.Client", () => {
                                     }
                                 };
                                 msgs.push(...generateOperationMessagesForClients(
-                                    mt,
+                                    random,
                                     seq,
                                     [clients.A, clients.B],
                                     logger,
@@ -115,7 +112,7 @@ describe("MergeTree.Client", () => {
                             if (opsWithRevert > 0) {
                                 // add modifications from another client
                                 msgs.push(...generateOperationMessagesForClients(
-                                    mt,
+                                    random,
                                     seq,
                                     [clients.A, clients.C],
                                     logger,
@@ -133,7 +130,7 @@ describe("MergeTree.Client", () => {
                                         0,
                                         ackAll
                                             ? msgs.length
-                                            : random.integer(0, Math.floor(msgs.length / 2))(mt)),
+                                            : random.integer(0, Math.floor(msgs.length / 2))),
                                     clients.all,
                                     logger);
                                 if (ackAll) {

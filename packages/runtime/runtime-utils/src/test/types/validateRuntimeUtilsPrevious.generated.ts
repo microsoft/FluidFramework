@@ -595,6 +595,7 @@ use_old_ClassDeclaration_ObjectStoragePartition(
 * "FunctionDeclaration_packagePathToTelemetryProperty": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_packagePathToTelemetryProperty():
+    // @ts-expect-error compatibility expected to be broken
     TypeOnly<typeof old.packagePathToTelemetryProperty>;
 declare function use_current_FunctionDeclaration_packagePathToTelemetryProperty(
     use: TypeOnly<typeof current.packagePathToTelemetryProperty>);
@@ -609,6 +610,7 @@ use_current_FunctionDeclaration_packagePathToTelemetryProperty(
 declare function get_current_FunctionDeclaration_packagePathToTelemetryProperty():
     TypeOnly<typeof current.packagePathToTelemetryProperty>;
 declare function use_old_FunctionDeclaration_packagePathToTelemetryProperty(
+    // @ts-expect-error compatibility expected to be broken
     use: TypeOnly<typeof old.packagePathToTelemetryProperty>);
 use_old_FunctionDeclaration_packagePathToTelemetryProperty(
     get_current_FunctionDeclaration_packagePathToTelemetryProperty());
