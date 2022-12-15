@@ -1176,6 +1176,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
                 enableOpReentryCheck: this.enableOpReentryCheck,
             },
+            logger: this.mc.logger,
         });
 
         this.context.quorum.on("removeMember", (clientId: string) => {

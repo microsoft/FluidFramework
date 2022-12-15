@@ -14,6 +14,7 @@ import {
     ContainerRuntimeMessage,
     ICompressionRuntimeOptions,
 } from "../../containerRuntime";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 
 describe("Outbox", () => {
     const maxBatchSizeInBytes = 1024;
@@ -141,7 +142,8 @@ describe("Outbox", () => {
         config: {
             maxBatchSizeInBytes: maxBatchSize,
             compressionOptions,
-        }
+        },
+        logger: new MockLogger(),
     });
 
     beforeEach(() => {
