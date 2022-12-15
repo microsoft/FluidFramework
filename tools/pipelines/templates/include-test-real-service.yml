@@ -317,7 +317,12 @@ jobs:
           targetType: 'inline'
           script: |
             for i in `ls`; do sed -i '/<skipped/d' $i; done
-            cat **/*junit-report.xml
+            echo 'pwd ='
+            pwd
+            echo 'ls ='
+            ls
+            echo 'cat * ='
+            cat *
 
       # Upload results
       - task: PublishTestResults@2
