@@ -6,14 +6,16 @@ parameters:
   type: object
   default: Large
 
-- name: customSteps
-  type: stepList
-
 - name: testWorkspace
   type: string
 
+# Name of the pipeline from which artifacts will be dowloaded
 - name: artifactPipeline
   type: string
+
+# Custom steps specified by the "caller" of this template, to actually run perf tests
+- name: customSteps
+  type: stepList
 
 jobs:
   - job: runTests
@@ -106,5 +108,4 @@ jobs:
           npm i;
           npm run build:compile;
 
-    # Custom steps specified by the "caller" of this template, to actually run perf tests
     - ${{ parameters.customSteps }}
