@@ -103,10 +103,21 @@ export const handler: Handler = {
                                 .replace(/\/\*/g, "")
                                 .replace(/\*\//g, "")
                                 .trim();
-                            if (
-                                originalErrorText.startsWith('"') ||
-                                originalErrorText.startsWith("`")
-                            ) {
+
+                            // Replace leading+trailing double quotes and backticks.
+                            // Only do it if the initial and final characters in the string are the only occurrences of
+                            // the double quotes / backticks, to avoid messing up comments that use them in a different
+                            // way. If we clean up the assert comments that have them, this code could go away.
+                            const shouldRemoveSurroundingQuotes = (input: string): boolean => {
+                                return (
+                                    (input.startsWith('"') &&
+                                        input.indexOf('"', 1) === input.length - 1) ||
+                                    (input.startsWith("`") &&
+                                        input.indexOf("`", 1) === input.length - 1)
+                                );
+                            };
+
+                            if (shouldRemoveSurroundingQuotes(originalErrorText)) {
                                 originalErrorText = originalErrorText.substring(
                                     1,
                                     originalErrorText.length - 1,
