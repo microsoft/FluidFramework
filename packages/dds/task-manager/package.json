@@ -104,8 +104,6 @@
     "baselineRange": ">=2.0.0-internal.2.1.0 <2.0.0-internal.2.2.0",
     "baselineVersion": "2.0.0-internal.2.1.0",
     "broken": {
-      "ClassDeclaration_TaskManager": {"backCompat": false, "forwardCompat": false},
-      "InterfaceDeclaration_ITaskManager": {"forwardCompat": false}
     }
   }
 }

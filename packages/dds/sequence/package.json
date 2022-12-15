@@ -91,7 +91,7 @@
     "@fluidframework/eslint-config-fluid": "^1.2.0",
     "@fluidframework/gitresources": "^0.1038.2000",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-internal.2.1.0",
+    "@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-internal.2.2.0",
     "@fluidframework/server-services-client": "^0.1038.2000",
     "@fluidframework/test-runtime-utils": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@microsoft/api-extractor": "^7.22.2",
@@ -114,8 +114,7 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.2.0",
-    "baselineRange": ">=2.0.0-internal.2.1.0 <2.0.0-internal.2.2.0",
-    "baselineVersion": "2.0.0-internal.2.1.0",
+    "baselineRange": "2.0.0-internal.2.2.0",
     "broken": {}
   }
 }

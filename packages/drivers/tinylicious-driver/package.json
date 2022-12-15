@@ -49,7 +49,7 @@
     "@fluidframework/build-tools": "^0.7.0",
     "@fluidframework/eslint-config-fluid": "^1.2.0",
     "@fluidframework/test-tools": "^0.2.3074",
-    "@fluidframework/tinylicious-driver-previous": "npm:@fluidframework/tinylicious-driver@2.0.0-internal.2.1.0",
+    "@fluidframework/tinylicious-driver-previous": "npm:@fluidframework/tinylicious-driver@2.0.0-internal.2.2.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/jsrsasign": "^8.0.8",
     "@types/mocha": "^9.1.1",
@@ -63,8 +63,7 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.2.2.0",
-    "baselineRange": ">=2.0.0-internal.2.1.0 <2.0.0-internal.2.2.0",
-    "baselineVersion": "2.0.0-internal.2.1.0",
+    "baselineRange": "2.0.0-internal.2.2.0",
     "broken": {}
   }
 }
