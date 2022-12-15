@@ -13,6 +13,7 @@ import {
     KeyName,
     MongoManager,
     ISecretManager,
+    ICache,
 } from "@fluidframework/server-services-core";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
@@ -59,6 +60,7 @@ export class TenantManager {
         private readonly defaultHistorianUrl: string,
         private readonly defaultInternalHistorianUrl: string,
         private readonly secretManager: ISecretManager,
+        private readonly cache?: ICache
     ) {
     }
 
@@ -236,6 +238,9 @@ export class TenantManager {
      * Retrieves the secret for the given tenant
      */
     public async getTenantKeys(tenantId: string, includeDisabledTenant = false): Promise<ITenantKeys> {
+        // Read from cache first
+
+        // Read from database
         const tenantDocument = await this.getTenantDocument(tenantId, includeDisabledTenant);
 
         if (!tenantDocument) {
