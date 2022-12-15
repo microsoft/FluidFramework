@@ -23,6 +23,7 @@ import { runWithRetry2 } from "@fluidframework/driver-utils";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
     private _disposed = false;
+    private readonly _disposedController = new AbortController();
     constructor(
         private readonly internalStorageService: IDocumentStorageService,
         private readonly logger: ITelemetryLogger,
@@ -35,6 +36,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
     public get disposed() { return this._disposed; }
     public dispose() {
         this._disposed = true;
+        this._disposedController.abort();
     }
 
     public get repositoryUrl(): string {
@@ -105,18 +107,12 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
     }
 
     private async runWithRetry<T>(api: () => Promise<T>, callName: string): Promise<T> {
-        const disposedAbort = new AbortController();
         const runResult = await runWithRetry2(
             api,
             callName,
             this.logger,
             {
-                cancel: disposedAbort.signal,
-                onRetry: (_delayInMs: number, _error: any) => {
-                    if (this._disposed) {
-                        disposedAbort.abort();
-                    }
-                },
+                cancel: this._disposedController.signal,
             },
         );
 

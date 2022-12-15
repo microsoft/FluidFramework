@@ -912,7 +912,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         case "aborted":
                             throw new GenericError(
                                 // We know the reason since we use closeSignal above but don't pass an onRetry callback
-                                "Container.attach() was aborted because the container was closed",
+                                this.closed ? "Container.attach() was aborted because the container was closed"
+                                    : "Container.attach() was aborted",
                             );
                         default:
                             unreachableCase(runResult);
