@@ -2,10 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint no-unused-expressions: 0 */
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-undef */
-/* eslint-disable max-nested-callbacks */
+
 /**
  * @fileoverview In this file, we will test typeid_helper functions.
  */

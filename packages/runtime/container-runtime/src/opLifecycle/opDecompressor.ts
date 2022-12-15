@@ -6,7 +6,7 @@
 import { decompress } from "lz4js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
-import { CompressionAlgorithms } from ".";
+import { CompressionAlgorithms } from "../containerRuntime";
 
 /**
  * State machine that "unrolls" contents of compressed batches of ops after decompressing them.
@@ -29,11 +29,11 @@ export class OpDecompressor {
         if (message.metadata?.batch === true
             && (message.metadata?.compressed || message.compression !== undefined)) {
             // Beginning of a compressed batch
-            assert(this.activeBatch === false, "shouldn't have multiple active batches");
+            assert(this.activeBatch === false, 0x4b8 /* shouldn't have multiple active batches */);
             if (message.compression) {
                 // lz4 is the only supported compression algorithm for now
                 assert(message.compression === CompressionAlgorithms.lz4,
-                        "lz4 is currently the only supported compression algorithm");
+                    0x4b9 /* lz4 is currently the only supported compression algorithm */);
             }
 
             this.activeBatch = true;
@@ -54,8 +54,10 @@ export class OpDecompressor {
 
         if (this.rootMessageContents !== undefined && message.metadata?.batch === false) {
             // End of compressed batch
-            const returnMessage = { ...message,
-                                    contents: this.rootMessageContents[this.processedCount++] };
+            const returnMessage = {
+                ...message,
+                contents: this.rootMessageContents[this.processedCount++]
+            };
 
             this.activeBatch = false;
             this.rootMessageContents = undefined;
@@ -67,7 +69,7 @@ export class OpDecompressor {
         if (message.metadata?.batch === undefined &&
             (message.metadata?.compressed || message.compression === CompressionAlgorithms.lz4)) {
             // Single compressed message
-            assert(this.activeBatch === false, "shouldn't receive compressed message in middle of a batch");
+            assert(this.activeBatch === false, 0x4ba /* shouldn't receive compressed message in middle of a batch */);
 
             const contents = IsoBuffer.from(message.contents.packedContents, "base64");
             const decompressedMessage = decompress(contents);

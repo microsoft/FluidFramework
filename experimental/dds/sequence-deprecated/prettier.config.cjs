@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-"use strict";
-
-const config = {
-    require: ["@fluidframework/mocha-test-setup"],
+module.exports = {
+    ...require("@fluidframework/build-common/prettier.config.cjs"),
 };
-
-module.exports = config;

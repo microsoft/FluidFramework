@@ -142,11 +142,9 @@ describe("Ordered Client Collection", () => {
                 `${prefix}Invalid eligible count: ${election.eligibleCount} !== ${expectedEligibleCount}`);
             assert.strictEqual(
                 election.electedClient?.clientId, expectedElectedClientId,
-                // eslint-disable-next-line max-len
                 `${prefix}Invalid elected client id: ${election.electedClient?.clientId} !== ${expectedElectedClientId}`);
             assert.strictEqual(
                 election.electionSequenceNumber, expectedElectionSequenceNumber,
-                // eslint-disable-next-line max-len
                 `${prefix}Invalid election seq #: ${election.electionSequenceNumber} !== ${expectedElectionSequenceNumber}`);
         }
         function assertEvents(expectedElectionCount: number) {
@@ -159,7 +157,6 @@ describe("Ordered Client Collection", () => {
                 `Unexpected count of ordered eligible client ids: ${actualIds.length} !== ${expectedIds.length}`);
             for (let i = 0; i < actualIds.length; i++) {
                 assert.strictEqual(actualIds[i].clientId, expectedIds[i],
-                    // eslint-disable-next-line max-len
                     `Unexpected ordered eligible client id at index ${i}: ${actualIds[i].clientId} !== ${expectedIds[i]}`);
             }
         }

@@ -26,11 +26,4 @@ export {
     schemaDataIsEmpty,
     SchemaDataAndPolicy,
 } from "./storedSchemaRepository";
-export {
-    treeSchema,
-    fieldSchema,
-    emptyMap,
-    emptySet,
-    TreeSchemaBuilder,
-    namedTreeSchema,
-} from "./builders";
+export { treeSchema, fieldSchema, emptyMap, emptySet, TreeSchemaBuilder } from "./builders";

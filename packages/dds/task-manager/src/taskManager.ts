@@ -16,6 +16,7 @@ import {
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import { ReadOnlyInfo } from "@fluidframework/container-definitions";
 import { TaskManagerFactory } from "./taskManagerFactory";
 import { ITaskManager, ITaskManagerEvents } from "./interfaces";
 
@@ -175,7 +176,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     // opWatcher emits for every op on this data store.  This is just a repackaging of processCore into events.
     private readonly opWatcher: EventEmitter = new EventEmitter();
     // queueWatcher emits an event whenever the consensus state of the task queues changes
-    // TODO currently could event even if the queue doesn't actually change
     private readonly queueWatcher: EventEmitter = new EventEmitter();
     // abandonWatcher emits an event whenever the local client calls abandon() on a task.
     private readonly abandonWatcher: EventEmitter = new EventEmitter();
@@ -205,6 +205,13 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      */
     private get clientId(): string | undefined {
         return this.isAttached() ? this.runtime.clientId : placeholderClientId;
+    }
+
+    /**
+     * Returns a ReadOnlyInfo object to determine current read/write permissions.
+     */
+    private get readOnlyInfo(): ReadOnlyInfo {
+        return this.runtime.deltaManager.readOnlyInfo;
     }
 
     /**
@@ -253,7 +260,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             if (runtime.connected && local) {
                 const pendingOp = this.latestPendingOps.get(taskId);
                 assert(pendingOp !== undefined, 0x400 /* Unexpected op */);
-                // TODO: check below comment and stuff, see if applicable
                 // Need to check the id, since it's possible to complete multiple times before the acks
                 if (messageId === pendingOp.messageId) {
                     assert(pendingOp.type === "complete", 0x401 /* Unexpected op type */);
@@ -317,11 +323,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         });
     }
 
-    // TODO Remove or hide from interface, this is just for debugging
-    public _getTaskQueues() {
-        return this.taskQueues;
-    }
-
     private submitVolunteerOp(taskId: string) {
         const op: ITaskManagerVolunteerOperation = {
             type: "volunteer",
@@ -377,9 +378,16 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             return true;
         }
 
+        if (this.readOnlyInfo.readonly === true) {
+            const error = this.readOnlyInfo.permissions === true ?
+                new Error(`Attempted to volunteer with read-only permissions: ${taskId}`) :
+                new Error(`Attempted to volunteer in read-only state: ${taskId}`);
+            throw error;
+        }
+
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenario
-            assert(this.clientId !== undefined, "clientId should not be undefined");
+            assert(this.clientId !== undefined, 0x472 /* clientId should not be undefined */);
             this.addClientToQueue(taskId, this.clientId);
             return true;
         }
@@ -459,6 +467,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             return;
         }
 
+        if (this.readOnlyInfo.readonly === true && this.readOnlyInfo.permissions === true) {
+            throw new Error(`Attempted to subscribe with read-only permissions: ${taskId}`);
+        }
+
         const submitVolunteerOp = () => {
             this.submitVolunteerOp(taskId);
         };
@@ -500,7 +512,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenario
-            assert(this.clientId !== undefined, "clientId should not be undefined");
+            assert(this.clientId !== undefined, 0x473 /* clientId should not be undefined */);
             this.addClientToQueue(taskId, this.clientId);
             // Because we volunteered with placeholderClientId, we need to wait for when we attach and are assigned
             // a real clientId. At that point we should re-enter the queue with a real volunteer op (assuming we are
@@ -541,7 +553,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenario
-            assert(this.clientId !== undefined, "clientId is undefined");
+            assert(this.clientId !== undefined, 0x474 /* clientId is undefined */);
             this.removeClientFromQueue(taskId, this.clientId);
             this.abandonWatcher.emit("abandon", taskId);
             return;
@@ -617,6 +629,17 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     /**
+     * {@inheritDoc ITaskManager.canVolunteer}
+     */
+    public canVolunteer(): boolean {
+        // A client can volunteer for a task if it's both connected to the delta stream and in write mode.
+        // this.connected reflects that condition, but is unintuitive and may be changed in the future. This API allows
+        // us to make changes to this.connected without affecting our guidance on how to check if a client is eligible
+        // to volunteer for a task.
+        return this.connected;
+    }
+
+    /**
      * Create a summary for the task manager
      *
      * @returns the summary of the current state of the task manager
@@ -633,8 +656,15 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             // a new clientId.
             this.removeClientFromAllQueues(placeholderClientId);
         }
-        // TODO filter out tasks with no clients, some are still getting in.
-        const content = [...this.taskQueues.entries()];
+
+        // Only include tasks if there are clients in the queue.
+        const filteredMap = new Map<string, string[]>();
+        this.taskQueues.forEach((queue: string[], taskId: string) => {
+            if (queue.length > 0) {
+                filteredMap.set(taskId, queue);
+            }
+        });
+        const content = [...filteredMap.entries()];
         return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));
     }
 
@@ -731,10 +761,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             const oldLockHolder = clientQueue[0];
             clientQueue.push(clientId);
             const newLockHolder = clientQueue[0];
-            this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
+            if (newLockHolder !== oldLockHolder) {
+                this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
+            }
 
-            // TODO remove, just for debugging
-            this.emit("changed");
         }
     }
 
@@ -754,10 +784,9 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             }
         }
         const newLockHolder = clientQueue[0];
-        this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
-
-        // TODO remove, just for debugging
-        this.emit("changed");
+        if (newLockHolder !== oldLockHolder) {
+            this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
+        }
     }
 
     private removeClientFromAllQueues(clientId: string) {
@@ -771,7 +800,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * transitioning from detached to attached and this.runtime.clientId is defined.
      */
     private replacePlaceholderInAllQueues() {
-        assert(this.runtime.clientId !== undefined, "this.runtime.clientId should be defined");
+        assert(this.runtime.clientId !== undefined, 0x475 /* this.runtime.clientId should be defined */);
         for (const clientQueue of this.taskQueues.values()) {
             const clientIdIndex = clientQueue.indexOf(placeholderClientId);
             if (clientIdIndex !== -1) {
@@ -792,8 +821,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 } else {
                     this.taskQueues.set(taskId, filteredClientQueue);
                 }
-                // TODO remove, just for debugging
-                this.emit("changed");
                 this.queueWatcher.emit("queueChange", taskId);
             }
         }

@@ -101,3 +101,34 @@ export function topDownPath(path: UpPath | undefined): UpPath[] {
     }
     return out;
 }
+
+/**
+ * @returns true iff `a` and `b` describe the same path.
+ *
+ * Note that for mutable paths (as used in `AnchorSet`), this equality may change over time: this only checks if the two paths are currently the same.
+ */
+export function compareUpPaths(a: UpPath | undefined, b: UpPath | undefined): boolean {
+    if (a === b) {
+        // This handles the both `undefined` case, as well as provides an early out if a shared node is encountered.
+        return true;
+    }
+    if (a === undefined || b === undefined) {
+        return false;
+    }
+    if (a.parentField !== b.parentField || a.parentIndex !== b.parentIndex) {
+        return false;
+    }
+    return compareUpPaths(a.parent, b.parent);
+}
+
+/**
+ * @returns true iff `a` and `b` describe the same field path.
+ *
+ * Note that for mutable paths (as used in `AnchorSet`), this equality may change over time: this only checks if the two paths are currently the same.
+ */
+export function compareFieldUpPaths(a: FieldUpPath, b: FieldUpPath): boolean {
+    if (a.field !== b.field) {
+        return false;
+    }
+    return compareUpPaths(a.parent, b.parent);
+}

@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { RevisionTag, tagChange, TaggedChange } from "../../core";
 import { clone, fail, StackyIterator } from "../../util";
 import {
     Changeset,
+    HasRevisionTag,
     Mark,
     MarkList,
     Modify,
+    ModifyingMark,
     ModifyInsert,
     ModifyReattach,
     SizedMark,
@@ -59,67 +62,28 @@ function composeMarkLists<TNodeChange>(
     composeChild: NodeChangeComposer<TNodeChange>,
 ): MarkList<TNodeChange> {
     const factory = new MarkListFactory<TNodeChange>();
-    const baseIter = new StackyIterator(baseMarkList);
-    const newIter = new StackyIterator(newMarkList);
-    for (let newMark of newIter) {
-        let baseMark: Mark<TNodeChange> | undefined = baseIter.pop();
-        if (baseMark === undefined) {
-            // We have reached a region of the field that the base change does not affect.
-            // We therefore adopt the new mark as is.
+    const queue = new ComposeQueue(baseMarkList, newRev, newMarkList);
+    while (!queue.isEmpty()) {
+        const { baseMark, newMark, areInverses } = queue.pop();
+        if (areInverses) {
+            continue;
+        }
+        if (newMark === undefined) {
+            assert(baseMark !== undefined, "Non-empty queue should not return two undefined marks");
+            factory.push(baseMark);
+        } else if (baseMark === undefined) {
             factory.push(composeMark(newMark, newRev, composeChild));
-        } else if (isAttach(newMark)) {
-            // Content that is being attached by the new changeset cannot interact with base changes.
-            // Note that attach marks from different changesets can only target the same gap if they are concurrent.
-            // This method assumes that `newMarkList` is based on `baseMarkList`, so they are not concurrent.
-            factory.pushContent(composeMark(newMark, newRev, composeChild));
-            baseIter.push(baseMark);
-        } else if (isReattach(newMark)) {
-            // Content that is being re-attached by the new changeset can interact with base changes.
-            // This can happen in two cases:
-            // - The base change contains the detach that the re-attach is the inverse of.
-            // - The base change contains a tombstone for the detach that the re-attach is the inverse of.
-            // We're ignoring these cases for now. The impact of ignoring them is that the relative order of
-            // reattached content and concurrently attached content is not preserved.
-            // TODO: properly compose reattach marks with their matching base marks if any.
-            factory.pushContent(composeMark(newMark, newRev, composeChild));
-            baseIter.push(baseMark);
-        } else if (isDetachMark(baseMark)) {
-            // Content that is being detached by the base changeset can interact with the new changes.
-            // This can happen in two cases:
-            // - The new change contains reattach marks for this detach. (see above)
-            // - The new change contains tombs for this detach.
-            // We're ignoring these cases for now. The impact of ignoring them is that the relative order of
-            // reattached content and concurrently attached content is not preserved.
-            // TODO: properly compose detach marks with their matching new marks if any.
-            factory.pushContent(baseMark);
-            newIter.push(newMark);
         } else {
-            // If we've reached this branch then `baseMark` and `newMark` start at the same location
-            // in the document field at the revision after the base changes and before the new changes.
-            // Despite that, it's not necessarily true that they affect the same range in that document
-            // field because they may be of different lengths.
-            // We perform any necessary splitting in order to end up with a pair of marks that do have the same length.
-            const newMarkLength = getInputLength(newMark);
-            const baseMarkLength = getOutputLength(baseMark);
-            if (newMarkLength < baseMarkLength) {
-                let nextBaseMark;
-                [baseMark, nextBaseMark] = splitMarkOnOutput(baseMark, newMarkLength);
-                baseIter.push(nextBaseMark);
-            } else if (newMarkLength > baseMarkLength) {
-                let nextNewMark;
-                [newMark, nextNewMark] = splitMarkOnInput(newMark, baseMarkLength);
-                newIter.push(nextNewMark);
-            }
             // Past this point, we are guaranteed that `newMark` and `baseMark` have the same length and
             // start at the same location in the revision after the base changes.
             // They therefore refer to the same range for that revision.
+            assert(
+                !isAttach(newMark),
+                "A new attach cannot be at the same position as a base mark",
+            );
             const composedMark = composeMarks(baseMark, newRev, newMark, composeChild);
             factory.push(composedMark);
         }
-    }
-    // Push the remaining base marks if any
-    for (const baseMark of baseIter) {
-        factory.push(baseMark);
     }
     return factory.list;
 }
@@ -140,7 +104,7 @@ function composeMarks<TNodeChange>(
     composeChild: NodeChangeComposer<TNodeChange>,
 ): Mark<TNodeChange> {
     if (isSkipMark(baseMark)) {
-        return clone(newMark);
+        return composeMark(newMark, newRev, composeChild);
     }
     if (isSkipMark(newMark)) {
         return baseMark;
@@ -157,10 +121,10 @@ function composeMarks<TNodeChange>(
             switch (newType) {
                 case "Modify": {
                     return {
-                        ...newMark,
+                        ...baseMark,
                         type: "MInsert",
-                        id: baseMark.id,
                         content: baseMark.content[0],
+                        changes: newMark.changes,
                     };
                 }
                 case "Delete": {
@@ -207,7 +171,6 @@ function composeMarks<TNodeChange>(
                 case "Modify": {
                     const modRevive: ModifyReattach<TNodeChange> = {
                         type: "MRevive",
-                        id: baseMark.id,
                         detachedBy: baseMark.detachedBy,
                         detachIndex: baseMark.detachIndex,
                         changes: newMark.changes,
@@ -250,11 +213,95 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
         return mark;
     }
 
+    const cloned = clone(mark);
+    if (revision !== undefined && mark.type !== "Modify") {
+        (cloned as HasRevisionTag).revision = revision;
+    }
+
     if (isModifyingMark(mark)) {
-        const cloned = clone(mark);
-        cloned.changes = composeChild([tagChange(mark.changes, revision)]);
+        (cloned as ModifyingMark<TNodeChange>).changes = composeChild([
+            tagChange(mark.changes, revision),
+        ]);
         return cloned;
     }
 
-    return clone(mark);
+    return cloned;
+}
+
+class ComposeQueue<T> {
+    private readonly baseMarks: StackyIterator<Mark<T>>;
+    private readonly newMarks: StackyIterator<Mark<T>>;
+
+    public constructor(
+        baseMarks: Changeset<T>,
+        private readonly newRevision: RevisionTag | undefined,
+        newMarks: Changeset<T>,
+    ) {
+        this.baseMarks = new StackyIterator(baseMarks);
+        this.newMarks = new StackyIterator(newMarks);
+    }
+
+    public isEmpty(): boolean {
+        return this.baseMarks.done && this.newMarks.done;
+    }
+
+    public pop(): ComposeMarks<T> {
+        let baseMark: Mark<T> | undefined = this.baseMarks.peek();
+        let newMark: Mark<T> | undefined = this.newMarks.peek();
+        if (baseMark === undefined || newMark === undefined) {
+            return { baseMark: this.baseMarks.pop(), newMark: this.newMarks.pop() };
+        } else if (isAttach(newMark)) {
+            const newRev = newMark.revision ?? this.newRevision;
+            if (
+                isReattach(newMark) &&
+                isDetachMark(baseMark) &&
+                newRev !== undefined &&
+                baseMark.revision === newRev
+            ) {
+                // We assume that baseMark and newMark having the same revision means that they are inverses of each other.
+                assert(
+                    getInputLength(baseMark) === getOutputLength(newMark),
+                    0x4ac /* Inverse marks should be the same length */,
+                );
+                return {
+                    baseMark: this.baseMarks.pop(),
+                    newMark: this.newMarks.pop(),
+                    areInverses: true,
+                };
+            } else {
+                return { newMark: this.newMarks.pop() };
+            }
+        } else if (isDetachMark(baseMark)) {
+            return { baseMark: this.baseMarks.pop() };
+        } else {
+            // If we've reached this branch then `baseMark` and `newMark` start at the same location
+            // in the document field at the revision after the base changes and before the new changes.
+            // Despite that, it's not necessarily true that they affect the same range in that document
+            // field because they may be of different lengths.
+            // We perform any necessary splitting in order to end up with a pair of marks that do have the same length.
+            this.newMarks.pop();
+            this.baseMarks.pop();
+            const newMarkLength = getInputLength(newMark);
+            const baseMarkLength = getOutputLength(baseMark);
+            if (newMarkLength < baseMarkLength) {
+                let nextBaseMark;
+                [baseMark, nextBaseMark] = splitMarkOnOutput(baseMark, newMarkLength);
+                this.baseMarks.push(nextBaseMark);
+            } else if (newMarkLength > baseMarkLength) {
+                let nextNewMark;
+                [newMark, nextNewMark] = splitMarkOnInput(newMark, baseMarkLength);
+                this.newMarks.push(nextNewMark);
+            }
+            // Past this point, we are guaranteed that `newMark` and `baseMark` have the same length and
+            // start at the same location in the revision after the base changes.
+            // They therefore refer to the same range for that revision.
+            return { baseMark, newMark };
+        }
+    }
+}
+
+interface ComposeMarks<T> {
+    baseMark?: Mark<T>;
+    newMark?: Mark<T>;
+    areInverses?: boolean;
 }

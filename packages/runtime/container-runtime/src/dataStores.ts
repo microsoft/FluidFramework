@@ -54,7 +54,8 @@ import {
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
-import { throwOnTombstoneUsageKey, GCNodeType } from "./garbageCollection";
+import { GCNodeType } from "./garbageCollection";
+import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
 import { summarizerClientType } from "./summarizerClientElection";
 
 type PendingAliasResolve = (success: boolean) => void;

@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { SharedTreeCore } from "../../shared-tree-core";
-import { spyOnMethod, TestTreeProvider } from "../utils";
+import { spyOnMethod, SummarizeType, TestTreeProvider } from "../utils";
 
 describe("TestTreeProvider", () => {
     it("can manually trigger summaries with summarizeOnDemand", async () => {
@@ -14,7 +14,7 @@ describe("TestTreeProvider", () => {
             summaryCount += 1;
         });
 
-        const provider = await TestTreeProvider.create(1, true);
+        const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
         const summaries = summaryCount;
         await provider.summarize();
 
@@ -36,7 +36,7 @@ describe("TestTreeProvider", () => {
     it("cannot manually trigger summaries with 0 trees", async () => {
         let summarizerError;
         try {
-            const provider = await TestTreeProvider.create(0, true);
+            const provider = await TestTreeProvider.create(0, SummarizeType.onDemand);
             await provider.summarize();
         } catch (error) {
             summarizerError = error;
@@ -50,7 +50,7 @@ describe("TestTreeProvider", () => {
             summaryCount += 1;
         });
 
-        const provider = await TestTreeProvider.create(2, true);
+        const provider = await TestTreeProvider.create(2, SummarizeType.onDemand);
 
         const summaries = summaryCount;
         await provider.summarize();

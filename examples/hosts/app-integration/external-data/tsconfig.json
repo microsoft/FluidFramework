@@ -19,5 +19,6 @@
     "include": [
         "src/**/*",
         "tests/**/*"
-    ]
+    ],
+    "lib": ["dom"]
 }

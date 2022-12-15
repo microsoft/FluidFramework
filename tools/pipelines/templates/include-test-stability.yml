@@ -28,17 +28,6 @@ parameters:
   type: boolean
   default: false
 
-- name: buildNumberInPatch
-  type: string
-  default:
-
-- name: tagName
-  type: string
-
-- name: buildToolsVersionToInstall
-  type: string
-  default: repo
-
 - name: timeoutInMinutes
   type: number
   default: 60
@@ -70,7 +59,7 @@ jobs:
           echo "
           Pipeline Variables:
             releaseBuild=$(releaseBuildVar)
-            
+
           Tasks Parameters:
             BuildDir=${{ parameters.buildDirectory }}
             Build=${{ parameters.taskBuild }}
@@ -78,39 +67,6 @@ jobs:
             Test=${{ convertToJson(parameters.taskTest) }}
             TestCoverage=$(testCoverage)
           "
-
-          # Error checking
-          if [[ "$(release)" == "release" ]]; then
-            if [[ "${{ variables.canRelease }}" == "False" ]]; then
-              echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
-              exit -1;
-            fi
-
-            if [ -f "lerna.json" ]; then
-              grep -e fluid.*[0-9]-[0-9] `find packages -name 'package.json'`
-            else
-              grep -e fluid.*[0-9]-[0-9] `find . -name 'package.json'`
-            fi
-
-            if [[ $? == 0 ]]; then
-              echo "##vso[task.logissue type=error]Release shouldn't contain prerelease dependencies"
-              exit -1;
-            fi
-          fi
-
-          if [[ "$(release)" == "prerelease" ]]; then
-            if [[ "${{ parameters.buildNumberInPatch }}" == "true" ]]; then
-              echo "##vso[task.logissue type=error] Prerelease not allow for builds that put build number as the patch version"
-              exit -1;
-            fi
-          fi
-
-          if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
-            if [[ "${{ variables.publish }}" != "True" ]]; then
-              echo "##vso[task.logissue type=error]'$(release)'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
-              exit -1;
-            fi
-          fi
 
     # Install
     - task: UseNode@1
@@ -124,14 +80,6 @@ jobs:
         workingDir: ${{ parameters.buildDirectory }}
         customCommand: 'ci --unsafe-perm'
         customRegistry: 'useNpmrc'
-
-    # Set version
-    - template: include-set-package-version.yml
-      parameters:
-        buildDirectory: ${{ parameters.buildDirectory }}
-        buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-        buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-        tagName: ${{ parameters.tagName }}
 
     # Build
     - ${{ if ne(parameters.taskBuild, 'false') }}:

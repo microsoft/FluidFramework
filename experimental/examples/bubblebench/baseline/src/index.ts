@@ -10,7 +10,7 @@ import React from "react";
 import { Bubblebench, BubblebenchInstantiationFactory } from "./main";
 export { Bubblebench, BubblebenchInstantiationFactory } from "./main";
 
-const bubblebenchViewCallback = (model: Bubblebench) => React.createElement(AppView, { app: model.clientManager });
+const bubblebenchViewCallback = (model: Bubblebench): React.ReactElement => React.createElement(AppView, { app: model.clientManager });
 
 /**
  * This does setup for the Container. The ContainerViewRuntimeFactory will instantiate a single Fluid object to use

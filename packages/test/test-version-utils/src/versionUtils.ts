@@ -313,7 +313,6 @@ export function internalSchema(publicVersion: string, internalVersion: string, r
         throw new Error(err as string);
     }
 
-    // eslint-disable-next-line max-len
     return `>=${publicVersion}-internal.${parsedVersion.major - 1}.0.0 <${publicVersion}-internal.${parsedVersion.major}.0.0`;
 }
 

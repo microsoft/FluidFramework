@@ -14,6 +14,7 @@ import {
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
+    IdAllocator,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
 
@@ -202,9 +203,10 @@ export function convertGenericChange<TChange>(
     changeset: GenericChangeset,
     target: FieldChangeHandler<TChange>,
     composeChild: NodeChangeComposer,
+    genId: IdAllocator,
 ): TChange {
     const perIndex: TaggedChange<TChange>[] = changeset.map(({ index, nodeChange }) =>
         makeAnonChange(target.editor.buildChildChange(index, nodeChange)),
     );
-    return target.rebaser.compose(perIndex, composeChild);
+    return target.rebaser.compose(perIndex, composeChild, genId);
 }

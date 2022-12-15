@@ -18,8 +18,8 @@ export {
 	IStorageRoutingId,
 } from "./definitions";
 export {
-    BaseGitRestTelemetryProperties,
-    GitRestLumberEventName,
+	BaseGitRestTelemetryProperties,
+	GitRestLumberEventName,
 } from "./gitrestTelemetryDefinitions";
 export {
 	GitWholeSummaryManager,
@@ -46,5 +46,5 @@ export {
 	validateBlobEncoding,
 } from "./helpers";
 export { IsomorphicGitManagerFactory, IsomorphicGitRepositoryManager } from "./isomorphicgitManager";
-export { NodeFsManagerFactory } from "./nodeFsManagerFactory";
+export { NodeFsManagerFactory, MemFsManagerFactory } from "./filesystems";
 export { NodegitRepositoryManager, NodegitRepositoryManagerFactory } from "./nodegitManager";
