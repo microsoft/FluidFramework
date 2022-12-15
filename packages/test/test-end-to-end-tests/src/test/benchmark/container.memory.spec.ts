@@ -30,7 +30,6 @@ const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
 const codeDetails: IFluidCodeDetails = { package: "test" };
 
-// REVIEW: enable compat testing?
 describeNoCompat("Container - memory usage benchmarks", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let loader: Loader;

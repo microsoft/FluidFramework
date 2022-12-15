@@ -26,7 +26,6 @@ import { describeNoCompat } from "@fluidframework/test-version-utils";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
 
-// REVIEW: enable compat testing?
 describeNoCompat("Container - runtime benchmarks", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let loader: Loader;
