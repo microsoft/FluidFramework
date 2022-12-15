@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IDisposable } from "@fluidframework/common-definitions";
+
 import { ExternalDataSource } from "../externalData";
 
 /**
@@ -14,7 +16,7 @@ export type SubscriberUrl = string;
 /**
  * Mock implementation of a webhook configured to receive updates from an external data provider.
  */
-export class MockWebhook {
+export class MockWebhook implements IDisposable {
     /**
      * Set of active subscribers.
      * Values are the URLs that will be notified of changes.
@@ -42,10 +44,18 @@ export class MockWebhook {
         }
     }
 
+    /**
+     * {@inheritDoc MockWebhook.disposed}
+     */
+    private _disposed: boolean;
+
     public constructor() {
         this._subscribers = new Set<SubscriberUrl>();
+
         this.externalDataSource = new ExternalDataSource();
         this.externalDataSource.on("debugDataWritten", this.notifySubscribers);
+
+        this._disposed = false;
     }
 
     /**
@@ -53,5 +63,20 @@ export class MockWebhook {
      */
     public get subscribers(): readonly SubscriberUrl[] {
         return [...this._subscribers.values()];
+    }
+
+    /**
+     * {@inheritDoc @fluidframework/common-definitions#IDisposable.dispose}
+     */
+    public dispose(error?: Error | undefined): void {
+        this.externalDataSource.off("debugDataWritten", this.notifySubscribers);
+        this._disposed = true;
+    }
+
+    /**
+     * {@inheritDoc @fluidframework/common-definitions#IDisposable.disposed}
+     */
+    public get disposed(): boolean {
+        return this._disposed;
     }
 }
