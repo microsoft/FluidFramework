@@ -5,17 +5,27 @@ This package contains definitions and implementations for framework-provided att
 ## Quickstart
 
 To turn on op-stream based attribution in your container, use `mixinAttributor` to create a `ContainerRuntime` class which supports querying for attribution information.
+When you instantiate your container runtime, pass a scope which implements `IProvideRuntimeAttributor`.
 
 ```typescript
 import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { mixinAttributor, createRuntimeAttributor } from "@fluidframework/attributor";
 
 const ContainerRuntimeWithAttribution = mixinAttributor(ContainerRuntime);
 
 // ...then, in your ContainerRuntime factory use this class:
 class ContainerRuntimeFactory implements IRuntimeFactory {
     public async instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime> {
+        const attributor = createRuntimeAttributor();
+        // ...make this attributor accessible however you deem fit; e.g. by registering it on a DependencyContainer.
+        // To inject loading and storing of attribution data on your runtime, provide a scope implementing IProvideRuntimeAttributor:
+        const scope: FluidObject<IProvideRuntimeAttributor> = { IRuntimeAttributor: attributor };
         const runtime = await ContainerRuntimeWithAttribution.load(
-            /* same arguments you would have provided to ContainerRuntime.load */
+            context,
+            dataStoreRegistry,
+            undefined,
+            undefined,
+            scope,
         );
         // do whatever setup is necessary with the runtime here
         return runtime;
@@ -23,14 +33,13 @@ class ContainerRuntimeFactory implements IRuntimeFactory {
 }
 ```
 
-TODO: document any settings you need to turn on to get DDSes to track attribution
-
 This will cause documents created with this container runtime to store associations which attribute document content to timestamp/user information.
+Be sure to also [enable any necessary options at the DDS level](#dds-support).
 
 Applications can recover this information using APIs on the DDSes they use. For example, the following code snippet illustrates how that works for `SharedString`:
 
 ```typescript
-function getAttributionInfo(attributor: IRuntimeAttribution, sharedString: SharedString, pos: number): AttributionInfo {
+function getAttributionInfo(attributor: IRuntimeAttributor, sharedString: SharedString, pos: number): AttributionInfo {
     const { segment, offset } = sharedString.getContainingSegment(pos);
     if (!segment || !offset) {
         throw new UsageError("Invalid pos");
@@ -48,6 +57,7 @@ const { user, timestamp } = getAttributionInfo(attributor, sharedString, 0);
 > that document will continue to operate as if no attribution has been mixed in.
 > Additionally, if a document that contains attribution is loaded using a container runtime without a mixed-in attributor,
 > any attribution information stored in that document may be lost.
+> Beware that this can yield unintuitive results when combined with feature flags!
 > The current implementation is thus suitable for prototyping/feature development, but shouldn't be rolled out to users that
 > expect production-quality attribution.
 
@@ -58,27 +68,14 @@ Since applications typically want attribution at a relatively fine-grained level
 A DDS may define its attribution API as it sees fit, but should somehow expose a way to retrieve attribution keys from its content.
 These attribution keys can be exchanged for user and timestamp information using the container runtime.
 
+### DDS Support
+
 The following DDSes currently support attribution:
 
-- [SharedString](#TODO:Link to merge-tree doc, document any feature flags required if those aren't set up by mixinAttributor somehow)
+- [SharedString](../../dds/sequence/README.md#attribution)
 
-## Op Stream Attribution
+### Op Stream Attribution
 
 Framework-provided attribution tracks user and timestamp information for each op submitted.
-Any more complex scenarios where attribution doesn't align with the direct submitter (such as attributing copy-pasted content to the original creators) should be handled by Fluid consumers using the extensibility points.
-
-## Extensibility Points
-
-`mixinAttributor` provides the ability to register alternative `IAttributor` implementations which aren't op-based.
-There is currently no API to cause creation of those `IAttributor`s, but there are plans to allow this.
-A container runtime with mixed-in attribution capabilities would then support having multiple attributors with different
-associated IDs.
-
-Such an API would be useful for a couple scenarios:
-
-- Association of data to users which haven't opened the current document (ex: cut-and-paste from a nested document into
-  the outer document while preserving op-based attribution on the inner document)
-- Migrating attribution data in some format that precedes the framework-provided one
-
-Note that attributor creation and modification doesn't cause any data to be sent to other clients, so to ensure all clients agree on attribution state,
-the set of attributors associated with a runtime as well as the keys those attributors contain should only contain data derivable from the op stream.
+Any more complex scenarios where attribution doesn't align with the direct submitter (such as attributing copy-pasted content to the original creators) will need to be handled by Fluid consumers using extensibility points.
+The extensibility APIs are a work in progress; check back later for more details.
