@@ -9,8 +9,9 @@ import { IAudience, IDeltaManager } from "@fluidframework/container-definitions"
 
 /**
  * Attribution information associated with a change.
+ * @alpha
  */
-export interface AttributionInfo {
+ export interface AttributionInfo {
 	/**
 	 * The user that performed the change.
 	 */
@@ -23,33 +24,30 @@ export interface AttributionInfo {
 
 /**
  * Can be indexed into the ContainerRuntime in order to retrieve {@link AttributionInfo}.
- * 
- * @remarks - These keys contain information about the type of attribution the information corresponds to, as
- * well as the key which should be used to index into that information.
- * 
- * For example, `{ type: "op", key: 205 }` is the AttributionKey which provides the user/timestamp information
- * for whoever actually performed the op with sequenceNumber 205.
- * If that op happened to be a copy-paste of content from an external document, the application might want to
- * preserve some information about who originally wrote that content (note: there are privacy considerations
- * in this realm).
- * The application could do so by injecting a second IAttributor into their runtime and transferring whatever
- * information they know to that attributor. Then, when later querying their content for any AttributionKeys,
- * they would discover both `{ type: "op", key: 205 }` and `{ type: "externalPaste", key: "<whatever key they used>" }`.
+ * @alpha
  */
-export interface AttributionKey {
-	/**
-	 * The id of attributor that this key is for.
-	 */
-	id: string;
+ export interface AttributionKey {
+    /**
+     * The type of attribution this key corresponds to.
+     * 
+     * Keys currently all represent op-based attribution, so have the form `{ type: "op", key: sequenceNumber }`.
+     * Thus, they can be used with an `OpStreamAttributor` to recover timestamp/user information.
+     * 
+     * @remarks - If we want to support different types of attribution, a reasonable extensibility point is to make
+     * AttributionKey a discriminated union on the 'type' field. This would empower
+     * consumers with the ability to implement different attribution policies.
+    */
+    type: "op";
 
 	/**
-	 * The key associated with that attributor.
+	 * The sequenceNumber of the op this attribution key is for.
 	 */
-	key: number | string;
+    seq: number;
 }
 
 /**
  * Provides lookup between attribution keys and their associated attribution information.
+ * @alpha
  */
 export interface IAttributor {
 	/**
@@ -57,24 +55,18 @@ export interface IAttributor {
 	 * @param key - Attribution key to look up.
 	 * @throws If no attribution information is recorded for that key.
 	 */
-	getAttributionInfo(key: number | string): AttributionInfo;
+	getAttributionInfo(key: number): AttributionInfo;
 
 	/**
 	 * @param key - Attribution key to look up.
 	 * @returns the attribution information associated with the provided key, or undefined if no information exists.
 	 */
-	tryGetAttributionInfo(key: number | string): AttributionInfo | undefined;
+	tryGetAttributionInfo(key: number): AttributionInfo | undefined;
 
 	/**
 	 * @returns an iterable of (attribution key, attribution info) pairs for each stored key.
 	 */
-	entries(): IterableIterator<[number | string, AttributionInfo]>;
-
-	/**
-	 * Runtime type information of the attributor. This is required for the runtime to reconstruct custom attributors
-	 * from snapshots.
-	 */
-	readonly type: string;
+	entries(): IterableIterator<[number, AttributionInfo]>;
 
 	// TODO:
 	// - GC
@@ -82,15 +74,16 @@ export interface IAttributor {
 
 /**
  * {@inheritdoc IAttributor}
+ * @alpha
  */
-export abstract class Attributor implements IAttributor {
-	protected readonly keyToInfo: Map<number | string, AttributionInfo>;
+export class Attributor implements IAttributor {
+	protected readonly keyToInfo: Map<number, AttributionInfo>;
 
 	/**
 	 * @param initialEntries - Any entries which should be populated on instantiation.
 	 */
 	constructor(
-		initialEntries?: Iterable<[number | string, AttributionInfo]>,
+		initialEntries?: Iterable<[number, AttributionInfo]>,
 	) {
 		this.keyToInfo = new Map(initialEntries ?? []);
 	}
@@ -98,7 +91,7 @@ export abstract class Attributor implements IAttributor {
 	/**
 	 * {@inheritdoc IAttributor.getAttributionInfo}
 	 */
-	public getAttributionInfo(key: number | string): AttributionInfo {
+	public getAttributionInfo(key: number): AttributionInfo {
 		const result = this.tryGetAttributionInfo(key);
 		if (!result) {
 			throw new UsageError(`Requested attribution information for unstored key: ${key}.`);
@@ -109,23 +102,22 @@ export abstract class Attributor implements IAttributor {
 	/**
 	 * {@inheritdoc IAttributor.tryGetAttributionInfo}
 	 */
-	public tryGetAttributionInfo(key: number | string): AttributionInfo | undefined {
+	public tryGetAttributionInfo(key: number): AttributionInfo | undefined {
 		return this.keyToInfo.get(key);
 	}
 
 	/**
 	 * {@inheritdoc IAttributor.entries}
 	 */
-	public entries(): IterableIterator<[number | string, AttributionInfo]> {
+	public entries(): IterableIterator<[number, AttributionInfo]> {
 		return this.keyToInfo.entries();
 	}
-
-	abstract get type(): string;
 }
 
 /**
  * Attributor which listens to an op stream and records entries for each op.
  * Sequence numbers are used as attribution keys.
+ * @alpha
  */
 export class OpStreamAttributor extends Attributor implements IAttributor {
 	constructor(
@@ -141,6 +133,4 @@ export class OpStreamAttributor extends Attributor implements IAttributor {
 			this.keyToInfo.set(message.sequenceNumber, { user: client.user, timestamp: message.timestamp });
 		});
 	}
-
-	public get type(): string { return "op"; }
 }

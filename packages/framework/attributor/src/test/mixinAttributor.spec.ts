@@ -72,7 +72,7 @@ describe("mixinAttributor", () => {
 
         (context.deltaManager as MockDeltaManager).emit("op", op);
         
-        assert.deepEqual(runtimeAttribution.getAttributionInfo({ id: "op", key: op.sequenceNumber! }), {
+        assert.deepEqual(runtimeAttribution.getAttributionInfo({ type: "op", seq: op.sequenceNumber! }), {
             timestamp: op.timestamp,
             user: context.audience?.getMember(op.clientId!)?.user
         });
@@ -91,7 +91,7 @@ describe("mixinAttributor", () => {
         assert(maybeProvidesAttribution.IRuntimeAttribution !== undefined)
         const runtimeAttribution = maybeProvidesAttribution.IRuntimeAttribution;
         assert.throws(
-            () => runtimeAttribution.getAttributionInfo({ id: "doesn't exist", key: "irrelevant" }),
+            () => runtimeAttribution.getAttributionInfo({ type: "doesn't exist" as string as "op", seq: 0 }),
             /Requested attribution information for non-existent attributor/
         );
     });
@@ -122,7 +122,7 @@ describe("mixinAttributor", () => {
         assert(attributorBlob.type === SummaryType.Blob && typeof attributorBlob.content === "string");
         const decoder = chain(
             new AttributorSerializer(
-                new Map([["op", (entries) => new Attributor(entries)]]),
+                (entries) => new Attributor(entries),
                 deltaEncoder
             ),
             makeLZ4Encoder()
@@ -143,7 +143,7 @@ describe("mixinAttributor", () => {
 
         const encoder = chain(
             new AttributorSerializer(
-                new Map([["op", (entries) => new Attributor(entries)]]),
+                (entries) => new Attributor(entries),
                 deltaEncoder
             ),
             makeLZ4Encoder()
@@ -190,7 +190,7 @@ describe("mixinAttributor", () => {
         const runtimeAttribution = maybeProvidesAttribution.IRuntimeAttribution;
 
         assert.deepEqual(
-            runtimeAttribution.getAttributionInfo({ id: "op", key: op.sequenceNumber! }),
+            runtimeAttribution.getAttributionInfo({ type: "op", seq: op.sequenceNumber! }),
             { timestamp: op.timestamp, user: context.audience?.getMember(op.clientId!)?.user }
         );
     });

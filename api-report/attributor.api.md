@@ -6,62 +6,52 @@
 
 import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { IAudience } from '@fluidframework/container-definitions';
-import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { Jsonable } from '@fluidframework/datastore-definitions';
 
-// @public
+// @alpha
 export interface AttributionInfo {
     timestamp: number;
     user: IUser;
 }
 
-// @public
+// @alpha
 export interface AttributionKey {
-    id: string;
-    key: number | string;
+    seq: number;
+    type: "op";
 }
 
-// @public
-export abstract class Attributor implements IAttributor {
-    constructor(initialEntries?: Iterable<[number | string, AttributionInfo]>);
+// @alpha
+export class Attributor implements IAttributor {
+    constructor(initialEntries?: Iterable<[number, AttributionInfo]>);
     // (undocumented)
-    entries(): IterableIterator<[number | string, AttributionInfo]>;
-    getAttributionInfo(key: number | string): AttributionInfo;
+    entries(): IterableIterator<[number, AttributionInfo]>;
+    getAttributionInfo(key: number): AttributionInfo;
     // (undocumented)
-    protected readonly keyToInfo: Map<number | string, AttributionInfo>;
+    protected readonly keyToInfo: Map<number, AttributionInfo>;
     // (undocumented)
-    tryGetAttributionInfo(key: number | string): AttributionInfo | undefined;
-    // (undocumented)
-    abstract get type(): string;
+    tryGetAttributionInfo(key: number): AttributionInfo | undefined;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export class AttributorSerializer implements IAttributorSerializer {
-    constructor(registry: Map<string, (entries: Iterable<[number, AttributionInfo]>) => IAttributor>, timestampEncoder: TimestampEncoder);
-    // Warning: (ae-incompatible-release-tags) The symbol "decode" is marked as @public, but its signature references "SerializedAttributor" which is marked as @internal
-    //
+    constructor(makeAttributor: (entries: Iterable<[number, AttributionInfo]>) => IAttributor, timestampEncoder: TimestampEncoder);
     // (undocumented)
     decode(encoded: SerializedAttributor): IAttributor;
-    // Warning: (ae-incompatible-release-tags) The symbol "encode" is marked as @public, but its signature references "SerializedAttributor" which is marked as @internal
-    //
     // (undocumented)
     encode(attributor: IAttributor): SerializedAttributor;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export const chain: <T1, T2, T3>(a: Encoder<T1, T2>, b: Encoder<T2, T3>) => Encoder<T1, T3>;
 
-// @public (undocumented)
-export const defaultAttributorRegistry: NamedAttributorRegistryEntry[];
-
-// @public (undocumented)
+// @alpha (undocumented)
 export const deltaEncoder: TimestampEncoder;
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface Encoder<TDecoded, TEncoded> {
     // (undocumented)
     decode(encoded: TEncoded): TDecoded;
@@ -69,19 +59,16 @@ export interface Encoder<TDecoded, TEncoded> {
     encode(decoded: TDecoded): TEncoded;
 }
 
-// @public
+// @alpha
 export interface IAttributor {
     // (undocumented)
-    entries(): IterableIterator<[number | string, AttributionInfo]>;
-    getAttributionInfo(key: number | string): AttributionInfo;
+    entries(): IterableIterator<[number, AttributionInfo]>;
+    getAttributionInfo(key: number): AttributionInfo;
     // (undocumented)
-    tryGetAttributionInfo(key: number | string): AttributionInfo | undefined;
-    readonly type: string;
+    tryGetAttributionInfo(key: number): AttributionInfo | undefined;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "IAttributorSerializer" is marked as @public, but its signature references "SerializedAttributor" which is marked as @internal
-//
-// @public (undocumented)
+// @internal (undocumented)
 export type IAttributorSerializer = Encoder<IAttributor, SerializedAttributor>;
 
 // @public
@@ -89,26 +76,26 @@ export type InternedStringId = number & {
     readonly InternedStringId: "e221abc9-9d17-4493-8db0-70c871a1c27c";
 };
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IProvideRuntimeAttribution {
     // (undocumented)
     readonly IRuntimeAttribution: IRuntimeAttribution;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export const IRuntimeAttribution: keyof IProvideRuntimeAttribution;
 
-// @public
+// @alpha
 export interface IRuntimeAttribution extends IProvideRuntimeAttribution {
     // (undocumented)
     getAttributionInfo(key: AttributionKey): AttributionInfo;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export function makeLZ4Encoder<T>(): Encoder<Jsonable<T>, string>;
 
-// @public
-export const mixinAttributor: (Base?: typeof ContainerRuntime, registry?: Iterable<NamedAttributorRegistryEntry>) => typeof ContainerRuntime;
+// @alpha
+export const mixinAttributor: (Base?: typeof ContainerRuntime) => typeof ContainerRuntime;
 
 // @public
 export class MutableStringInterner implements StringInterner {
@@ -123,14 +110,9 @@ export class MutableStringInterner implements StringInterner {
     getString(internId: number): string;
 }
 
-// @public
-export type NamedAttributorRegistryEntry = [string, (runtime: IContainerRuntime, entries: Iterable<[number, AttributionInfo]>) => IAttributor];
-
-// @public
+// @alpha
 export class OpStreamAttributor extends Attributor implements IAttributor {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, audience: IAudience, initialEntries?: Iterable<[number, AttributionInfo]>);
-    // (undocumented)
-    get type(): string;
 }
 
 // @internal (undocumented)
@@ -140,10 +122,9 @@ export interface SerializedAttributor {
     // (undocumented)
     interner: readonly string[];
     // (undocumented)
-    keys: (number | string)[];
+    seqs: number[];
     // (undocumented)
     timestamps: number[];
-    type: string;
 }
 
 // @public
@@ -156,7 +137,7 @@ export interface StringInterner {
     getString(internedId: number): string;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export type TimestampEncoder = Encoder<number[], number[]>;
 
 // (No @packageDocumentation comment for this package)

@@ -21,42 +21,32 @@ import { makeLZ4Encoder } from "./lz4Encoder";
 const attributorKey = "attributor";
 
 /**
- * Key-value pairs of known IAttributor implementations.
- * Keys in this registry correspond to `IAttributor.type` fields.
- * Values in this registry are factory functions to construct the corresponding attributor.
+ * @alpha
  */
-export type NamedAttributorRegistryEntry = [string, (runtime: IContainerRuntime, entries: Iterable<[number, AttributionInfo]>) => IAttributor];
-
 export const IRuntimeAttribution: keyof IProvideRuntimeAttribution = "IRuntimeAttribution";
 
+/**
+ * @alpha
+ */
 export interface IProvideRuntimeAttribution {
     readonly IRuntimeAttribution: IRuntimeAttribution;
 }
 
 /**
  * Provides access to attribution information stored on the container runtime.
+ * @alpha
  */
 export interface IRuntimeAttribution extends IProvideRuntimeAttribution {
     getAttributionInfo(key: AttributionKey): AttributionInfo;
 }
 
-export const defaultAttributorRegistry: NamedAttributorRegistryEntry[] = [
-    ["op", (runtime, entries) => new OpStreamAttributor(runtime.deltaManager, runtime.getAudience(), entries)]
-];
-
 /**
  * Mixin class that adds runtime-based attribution functionality.
- * @param registry - Registry of constructable attributor types.
  * @param Base - base class, inherits from FluidAttributorRuntime
- * 
- * @remarks - Currently, though a registry can be provided, the only attributor that gets instantiated
- * is the op stream based one. Future changes will support using the registry to inject other attributors,
- * however, which is the plan for features like non-op-stream-based cut+paste attribution as well as
- * data migration for existing documents that store attribution information in some format.
+ * @alpha
  */
 export const mixinAttributor = (
     Base: typeof ContainerRuntime = ContainerRuntime,
-    registry: Iterable<NamedAttributorRegistryEntry> = defaultAttributorRegistry,
 ) => class ContainerRuntimeWithAttributor extends Base implements IRuntimeAttribution {
         public get IRuntimeAttribution(): IRuntimeAttribution { return this; }
 
@@ -84,13 +74,9 @@ export const mixinAttributor = (
             const { audience, deltaManager } = context;
             assert(audience !== undefined, "Audience must exist when instantiating attribution-providing runtime");
 
-            const serializerRegistry = new Map<string, (entries: Iterable<[number, AttributionInfo]>) => IAttributor>();
-            for (const [key, factory] of registry) {
-                serializerRegistry.set(key, (entries) => factory(runtime, entries));
-            }
             runtime.encoder = chain(
                 new AttributorSerializer(
-                    serializerRegistry,
+                    (entries) => new OpStreamAttributor(runtime.deltaManager, runtime.getAudience(), entries),
                     deltaEncoder
                 ),
                 makeLZ4Encoder(),
@@ -107,7 +93,7 @@ export const mixinAttributor = (
             } else {
                 // TODO: need configurable policy on how to instantiate these stores
                 const attributor = new OpStreamAttributor(deltaManager, audience);
-                runtime.attributors.set(attributor.type, attributor);
+                runtime.attributors.set("op", attributor);
             }
 
             return runtime;
@@ -127,11 +113,11 @@ export const mixinAttributor = (
         private readonly attributors = new Map<string, IAttributor>();
 
         public getAttributionInfo(key: AttributionKey): AttributionInfo {
-            const attributor = this.attributors.get(key.id);
+            const attributor = this.attributors.get(key.type);
             if (!attributor) {
-                throw new UsageError(`Requested attribution information for non-existent attributor at ${key.id}`);
+                throw new UsageError(`Requested attribution information for non-existent attributor at ${key.type}`);
             }
-            return attributor.getAttributionInfo(key.key);
+            return attributor.getAttributionInfo(key.seq);
         }
 
         protected addContainerStateToSummary(
