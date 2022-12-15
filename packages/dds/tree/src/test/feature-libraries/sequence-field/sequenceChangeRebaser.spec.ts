@@ -176,4 +176,18 @@ describe("SequenceField - Sandwich Rebasing", () => {
         const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta, fakeRepair);
         assert.deepEqual(delta, []);
     });
+
+    it("[Delete AC, Revive AC] ↷ Insert B", () => {
+        const addB = tagChange(Change.insert(1, 1), brand(1));
+        const delAC = tagChange(Change.delete(0, 2), brand(2));
+        const revAC = tagChange(Change.revive(0, 2, 0, brand(2)), brand(3));
+        const delAC2 = rebaseTagged(delAC, addB);
+        const invDelAC = SF.invert(delAC, TestChange.invert);
+        const revAC2 = rebaseTagged(revAC, tagInverse(invDelAC, delAC2.revision));
+        const revAC3 = rebaseTagged(revAC2, addB);
+        const revAC4 = rebaseTagged(revAC3, delAC2);
+        const actual = SF.compose([delAC2, revAC4], TestChange.compose);
+        const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta, fakeRepair);
+        assert.deepEqual(delta, []);
+    });
 });

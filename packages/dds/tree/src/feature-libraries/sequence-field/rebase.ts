@@ -216,7 +216,7 @@ class RebaseQueue<T> {
                     this.baseMarks.push(baseMark2);
                     return { baseMark: baseMark1 };
                 }
-            } else if (isAttachAfterBaseAttach(newMark, baseMark)) {
+            } else if (isAttachAfterBaseAttach(newMark, baseMark) || isMutedReattach(newMark)) {
                 return { baseMark: this.baseMarks.pop() };
             } else {
                 return { newMark: this.newMarks.pop() };

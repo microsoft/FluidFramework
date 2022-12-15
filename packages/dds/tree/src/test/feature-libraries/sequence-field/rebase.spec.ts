@@ -247,6 +247,17 @@ describe("SequenceField - Rebase", () => {
         assert.deepEqual(actual, expected);
     });
 
+    it("muted revive ↷ insert", () => {
+        const revive = composeAnonChanges([Change.revive(0, 3, 0, tag1, tag2)]);
+        const insert = Change.insert(1, 1);
+        const actual = rebase(revive, insert);
+        const expected = composeAnonChanges([
+            Change.revive(0, 1, 0, tag1, tag2),
+            Change.revive(2, 2, 1, tag1, tag2),
+        ]);
+        assert.deepEqual(actual, expected);
+    });
+
     it("modify ↷ revive", () => {
         const mods = composeAnonChanges([
             Change.modify(0, TestChange.mint([0], 1)),
