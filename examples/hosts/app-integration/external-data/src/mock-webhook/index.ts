@@ -49,10 +49,10 @@ export class MockWebhook implements IDisposable {
      */
     private _disposed: boolean;
 
-    public constructor() {
+    public constructor(externalDataSource: ExternalDataSource) {
         this._subscribers = new Set<SubscriberUrl>();
 
-        this.externalDataSource = new ExternalDataSource();
+        this.externalDataSource = externalDataSource;
         this.externalDataSource.on("debugDataWritten", this.notifySubscribers);
 
         this._disposed = false;
@@ -63,6 +63,28 @@ export class MockWebhook implements IDisposable {
      */
     public get subscribers(): readonly SubscriberUrl[] {
         return [...this._subscribers.values()];
+    }
+
+    /**
+     * Registers a subscriber for external data updates.
+     */
+    public registerSubscriber(subscriber: SubscriberUrl): void {
+        if(this._subscribers.has(subscriber)) {
+            console.warn(`URL "" has already been registered for data notifications.`);
+        } else {
+            this._subscribers.add(subscriber);
+        }
+    }
+
+    /**
+     * De-registers the provided subscriber URL from future notifications.
+     */
+    public removeSubscriber(subscriber: SubscriberUrl): void {
+        if(this._subscribers.has(subscriber)) {
+            this._subscribers.delete(subscriber);
+        } else {
+            console.warn(`URL "" has already been registered for data notifications.`);
+        }
     }
 
     /**

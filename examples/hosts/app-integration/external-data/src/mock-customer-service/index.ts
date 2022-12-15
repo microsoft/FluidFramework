@@ -17,7 +17,8 @@ import { Server } from 'http';
 import express from "express";
 import type { Express } from "express";
 
-import { ExternalDataSource } from "../externalData";
+import { MockWebhook } from '../mock-webhook';
+import { ExternalDataSource } from '../externalData';
 
 /**
  * The port used by the mock customer service.
@@ -49,19 +50,11 @@ export async function initializeCustomerService(): Promise<Server> {
     const externalDataSource = new ExternalDataSource();
 
     /**
-     * Mocks initializing the external service webhook.
-     * Once this has been called, updates will be sent any time a data change is detected in our mock external data file.
+     * Mock webhook for notifying subscibers to changes in external data.
+     *
+     * @remarks Initialized on demand.
      */
-    function initializeWebhook(): void {
-        externalDataSource.on("debugDataWritten", notifySubscribers)
-    }
-
-    /**
-     * Closes down the mock external service webhook.
-     */
-    function closeWebhook(): void {
-        externalDataSource.off("debugDataWritten", notifySubscribers);
-    }
+    let webhook: MockWebhook | undefined;
 
     expressApp = express();
     expressApp.use(express.json());
@@ -77,8 +70,17 @@ export async function initializeCustomerService(): Promise<Server> {
      * Initializes REST-style content updates for data changes to the external data.
      */
     expressApp.get("/initialize-webhook", (request, result) => {
-        initializeWebhook();
-        result.send();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        const subscriberUrl = request.body.url as string;
+        if (subscriberUrl === undefined) {
+            result.status(400).json({message: "Client failed to provide URL for subscription."})
+        } else {
+            if(webhook === undefined) {
+                webhook = new MockWebhook(externalDataSource);
+            }
+            webhook.registerSubscriber(subscriberUrl);
+            result.send();
+        }
     });
 
     /**
@@ -112,7 +114,7 @@ export async function initializeCustomerService(): Promise<Server> {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const taskList = request.body.taskList as string;
         if (taskList === undefined) {
-            result.status(400).json({message: "Client failed to provide task list to set."})
+            result.status(400).json({message: "Client failed to provide task list to set."});
         } else {
             externalDataSource.writeData(taskList).then(
                 () => {
@@ -134,7 +136,7 @@ export async function initializeCustomerService(): Promise<Server> {
     const server = expressApp.listen(customerServicePort);
 
     server.on("close", () => {
-        closeWebhook();
+        webhook?.dispose();
         closeCustomerService();
     });
 
@@ -151,14 +153,3 @@ function closeCustomerService(): void {
 }
 
 
-/**
- * Mocks submitting notifications of changes to webhook subscribers.
- *
- * For now, we simply send a notification that data has changed.
- * Consumers are expected to query for the actual data updates.
- * This could be updated in the future to send the new data / just the delta as a part of the webhook payload.
- */
-function notifySubscribers(data: string): void {
-    console.log("External data has been updated. Notifying subscribers...");
-    // TODO: notify subscribers of data change.
-}
