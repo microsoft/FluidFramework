@@ -49,6 +49,9 @@ export class AttributorSerializer implements IAttributorSerializer {
 export const chain: <T1, T2, T3>(a: Encoder<T1, T2>, b: Encoder<T2, T3>) => Encoder<T1, T3>;
 
 // @alpha (undocumented)
+export function createRuntimeAttributor(): IRuntimeAttributor;
+
+// @alpha (undocumented)
 export const deltaEncoder: TimestampEncoder;
 
 // @alpha (undocumented)
@@ -77,18 +80,20 @@ export type InternedStringId = number & {
 };
 
 // @alpha (undocumented)
-export interface IProvideRuntimeAttribution {
+export interface IProvideRuntimeAttributor {
     // (undocumented)
-    readonly IRuntimeAttributor: IRuntimeAttribution;
+    readonly IRuntimeAttributor: IRuntimeAttributor;
 }
 
 // @alpha (undocumented)
-export const IRuntimeAttribution: keyof IProvideRuntimeAttribution;
+export const IRuntimeAttributor: keyof IProvideRuntimeAttributor;
 
-// @alpha
-export interface IRuntimeAttribution extends IProvideRuntimeAttribution {
+// @alpha @sealed
+export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
     // (undocumented)
-    getAttributionInfo(key: AttributionKey): AttributionInfo;
+    get(key: AttributionKey): AttributionInfo;
+    // (undocumented)
+    has(key: AttributionKey): boolean;
 }
 
 // @alpha (undocumented)

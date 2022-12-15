@@ -18,7 +18,7 @@ import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtim
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IProvideRuntimeAttributor, mixinAttributor } from "../mixinAttributor";
+import { createRuntimeAttributor, IProvideRuntimeAttributor, mixinAttributor } from "../mixinAttributor";
 import { Attributor as BaseAttributor } from "../attributor";
 import { makeLZ4Encoder } from "../lz4Encoder";
 import { AttributorSerializer, chain, deltaEncoder } from "../encoders";
@@ -49,6 +49,10 @@ describe("mixinAttributor", () => {
         };
     });
 
+    const getScope = (): FluidObject<IProvideRuntimeAttributor> => ({
+        IRuntimeAttributor: createRuntimeAttributor()
+    });
+
     const AttributingContainerRuntime = mixinAttributor();
 
     it("Attributes ops", async () => {
@@ -58,6 +62,7 @@ describe("mixinAttributor", () => {
             [],
             undefined, // requestHandler
             {}, // runtimeOptions
+            getScope(),
         );
 
         const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> = containerRuntime.scope;
@@ -72,7 +77,7 @@ describe("mixinAttributor", () => {
 
         (context.deltaManager as MockDeltaManager).emit("op", op);
         
-        assert.deepEqual(runtimeAttribution.getAttributionInfo({ type: "op", seq: op.sequenceNumber! }), {
+        assert.deepEqual(runtimeAttribution.get({ type: "op", seq: op.sequenceNumber! }), {
             timestamp: op.timestamp,
             user: context.audience?.getMember(op.clientId!)?.user
         });
@@ -85,6 +90,7 @@ describe("mixinAttributor", () => {
             [],
             undefined, // requestHandler
             {}, // runtimeOptions
+            getScope(),
         );
 
         const op: Partial<ISequencedDocumentMessage> = {
@@ -165,6 +171,7 @@ describe("mixinAttributor", () => {
             [],
             undefined, // requestHandler
             {}, // runtimeOptions
+            getScope(),
         );
 
         const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> = containerRuntime.scope;
@@ -172,12 +179,12 @@ describe("mixinAttributor", () => {
         const runtimeAttribution = maybeProvidesAttributor.IRuntimeAttributor;
 
         assert.deepEqual(
-            runtimeAttribution.getAttributionInfo({ type: "op", seq: op.sequenceNumber! }),
+            runtimeAttribution.get({ type: "op", seq: op.sequenceNumber! }),
             { timestamp: op.timestamp, user: context.audience?.getMember(op.clientId!)?.user }
         );
     });
 
-    it("Doesn't inject an IRuntimeAttributor into the scope for existing documents that had no attributor", async () => {
+    it("Doesn't summarize attributor for existing documents that had no attributor", async () => {
         const context = getMockContext() as Mutable<IContainerContext>;
         const snapshot: ISnapshotTree = {
             blobs: {},
@@ -189,10 +196,14 @@ describe("mixinAttributor", () => {
             [],
             undefined, // requestHandler
             {}, // runtimeOptions
+            getScope(),
         );
 
         const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> = containerRuntime.scope;
-        assert(maybeProvidesAttributor.IRuntimeAttributor === undefined);
+        assert(maybeProvidesAttributor.IRuntimeAttributor !== undefined);
+
+        const { summary } = await containerRuntime.summarize({ fullTree: true, trackState: false, runGC: false });
+        assert(summary.tree.attributor === undefined);
     });
 });
 

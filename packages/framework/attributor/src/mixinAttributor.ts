@@ -11,7 +11,8 @@ import { addSummarizeResultToSummary, SummaryTreeBuilder } from "@fluidframework
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import { assert, bufferToString, unreachableCase } from "@fluidframework/common-utils";
-import { AttributionInfo, AttributionKey, IAttributor, OpStreamAttributor } from "./attributor";
+import { UsageError } from "@fluidframework/container-utils";
+import { AttributionInfo, AttributionKey, Attributor, IAttributor, OpStreamAttributor } from "./attributor";
 import { AttributorSerializer, chain, deltaEncoder, Encoder } from "./encoders";
 import { makeLZ4Encoder } from "./lz4Encoder";
 
@@ -33,14 +34,39 @@ export interface IProvideRuntimeAttributor {
 
 /**
  * Provides access to attribution information stored on the container runtime.
+ * 
+ * Attributors are only populated after the container runtime they are injected into has initialized.
+ * @sealed
  * @alpha
  */
 export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
-    getAttributionInfo(key: AttributionKey): AttributionInfo;
+    /**
+     * @throws - If no AttributionInfo exists for this key.
+     */
+    get(key: AttributionKey): AttributionInfo;
+
+    /**
+     * @returns - Whether any AttributionInfo exists for the provided key.
+     */
+    has(key: AttributionKey): boolean;
 }
 
 /**
- * Mixin class that adds runtime-based attribution functionality.
+ * @returns an IRuntimeAttributor for usage with `mixinAttributor`. The attributor will only be populated
+ * @alpha
+ */
+export function createRuntimeAttributor(): IRuntimeAttributor {
+    return new RuntimeAttributor();
+}
+
+/**
+ * Mixes in logic to load and store runtime-based attribution functionality.
+ * 
+ * The `scope` passed to `load` should implement `IProvideRuntimeAttributor`.
+ * 
+ * Existing documents without stored attributors will not start storing attribution information: if an
+ * IRuntimeAttributor is passed via scope to load a document that never previously had attribution information,
+ * that attributor's `has` method will always return `false`.
  * @param Base - base class, inherits from FluidAttributorRuntime
  * @alpha
  */
@@ -56,38 +82,36 @@ export const mixinAttributor = (
             existing?: boolean | undefined,
             ctor: typeof ContainerRuntime = ContainerRuntimeWithAttributor as unknown as typeof ContainerRuntime
         ): Promise<ContainerRuntime> {
+            const runtimeAttributor = (containerScope as FluidObject<IProvideRuntimeAttributor> | undefined)?.IRuntimeAttributor;
+            if (!runtimeAttributor) {
+                throw new UsageError("ContainerRuntimeWithAttributor must be passed a scope implementing IProvideRuntimeAttributor");
+            }
+
             const pendingRuntimeState = context.pendingLocalState as { baseSnapshot?: ISnapshotTree };
             const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
-            const attributorSnapshot = baseSnapshot?.trees[attributorKey];
 
             const { audience, deltaManager } = context;
             assert(audience !== undefined, "Audience must exist when instantiating attribution-providing runtime");
 
-            // Existing documents that don't already have a snapshot containing runtime attribution info shouldn't
-            // inject any for now--this causes some back-compat integration problems that aren't fully worked out.
-            const shouldExcludeAttributor = baseSnapshot !== undefined && attributorSnapshot === undefined;
-
-            const runtimeAttributor = shouldExcludeAttributor ? undefined : new RuntimeAttributor();
-            const scope = { ...containerScope, IRuntimeAttributor: runtimeAttributor };
             const runtime = await Base.load(
                 context,
                 registryEntries,
                 requestHandler,
                 runtimeOptions,
-                scope,
+                containerScope,
                 existing,
                 ctor
             ) as ContainerRuntimeWithAttributor;
-            runtime.runtimeAttributor = runtimeAttributor;
+            runtime.runtimeAttributor = runtimeAttributor as RuntimeAttributor;
 
             // Note: this fetches attribution blobs relatively eagerly in the load flow; we may want to optimize
             // this to avoid blocking on such information until application actually requests some op-based attribution
             // info or we need to summarize. All that really needs to happen immediately is to start recording
             // op seq# -> attributionInfo for new ops.
-            await runtimeAttributor?.initialize(
+            await runtime.runtimeAttributor.initialize(
                 deltaManager,
                 audience,
-                attributorSnapshot,
+                baseSnapshot,
                 async (id) => runtime.storage.readBlob(id)
             );
             return runtime;
@@ -102,20 +126,26 @@ export const mixinAttributor = (
             telemetryContext?: ITelemetryContext,
         ) {
             super.addContainerStateToSummary(summaryTree, fullTree, trackState, telemetryContext);
-            if (this.runtimeAttributor) {
-                addSummarizeResultToSummary(summaryTree, attributorKey, this.runtimeAttributor.summarize());
+            const attributorSummary = this.runtimeAttributor?.summarize();
+            if (attributorSummary) {
+                addSummarizeResultToSummary(summaryTree, attributorKey, attributorSummary);
             }
         }
     } as unknown as typeof ContainerRuntime;
 
+
 class RuntimeAttributor implements IRuntimeAttributor {
     public get IRuntimeAttributor(): IRuntimeAttributor { return this; };
 
-    public getAttributionInfo(key: AttributionKey): AttributionInfo {
+    public get(key: AttributionKey): AttributionInfo {
         assert(this.opAttributor !== undefined,
             "RuntimeAttributor must be initialized before getAttributionInfo can be called");
         
         return this.opAttributor.getAttributionInfo(key.seq);
+    }
+
+    public has(key: AttributionKey): boolean {
+        return this.opAttributor?.tryGetAttributionInfo(key.seq) !== undefined;
     }
     
     private encoder: Encoder<IAttributor, string> = {
@@ -125,24 +155,25 @@ class RuntimeAttributor implements IRuntimeAttributor {
 
 
     private opAttributor: IAttributor | undefined;
+    private skipSummary = true;
 
-    /**
-     * Must be called before `getAttributionInfo` can return valid results.
-     * @remarks - This class uses a construct-then-initialize pattern rather than an async static initializer because:
-     * 1. It needs to be constructed in order to be placed on the container runtime's scope
-     * 2. It can only read blobs from the snapshot once the container runtime has been initialized (in order to access
-     * its `storage`, since the offline storage layer isn't possible to construct outside of the container-runtime
-     * package)
-     * 
-     * If either of those problems have alternate solutions, converting this to a static async initializer and hiding
-     * the constructor would likely be a better choice.
-     */
     public async initialize(
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         audience: IAudience,
-        snapshot: ISnapshotTree | undefined,
+        baseSnapshot: ISnapshotTree | undefined,
         readBlob: (id: string) => Promise<ArrayBufferLike>,
     ): Promise<void> {
+        const snapshot = baseSnapshot?.trees[attributorKey];
+        // Existing documents that don't already have a snapshot containing runtime attribution info shouldn't
+        // inject any for now--this causes some back-compat integration problems that aren't fully worked out.
+        const shouldExcludeAttributor = baseSnapshot !== undefined && snapshot === undefined;
+        if (shouldExcludeAttributor) {
+            // This gives a consistent error for calls to `get` on keys that don't exist.
+            this.opAttributor = new Attributor();
+            return;
+        }
+
+        this.skipSummary = false;
         this.encoder = chain(
             new AttributorSerializer(
                 (entries) => new OpStreamAttributor(deltaManager, audience, entries),
@@ -164,7 +195,11 @@ class RuntimeAttributor implements IRuntimeAttributor {
         }
     }
 
-    public summarize() {
+    public summarize(): ISummaryTreeWithStats | undefined {
+        if (this.skipSummary) {
+            // Loaded existing document without attributor data: avoid injecting any data.
+            return undefined;
+        }
         // Note: we're leaving room in the summary format for additional attributors that this class keeps track of.
         // This is a potential solution to some extensibility asks.
         assert(this.opAttributor !== undefined, "RuntimeAttributor should be initialized before summarization");
