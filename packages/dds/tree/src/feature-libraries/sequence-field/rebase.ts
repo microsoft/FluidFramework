@@ -12,6 +12,7 @@ import {
     isAttach,
     isDetachMark,
     isModify,
+    isMuted,
     isMutedReattach,
     isReattach,
     isSkipMark,
@@ -283,7 +284,7 @@ function rebaseMark<TNodeChange>(
         case "MRevive":
         case "Revive": {
             assert(isReattach(currMark), "Only a reattach can overlap with a reattach");
-            assert(currMark.mutedBy === undefined, "Only non-muted revive marks can overlap");
+            assert(!isMuted(currMark), "Only non-muted revive marks can overlap");
             return {
                 ...clone(currMark),
                 mutedBy: baseMark.revision ?? baseRevision,

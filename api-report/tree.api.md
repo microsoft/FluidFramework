@@ -809,9 +809,7 @@ interface ModifyMoveOut<TNodeChange = NodeChangeType> extends HasMoveId, HasRevi
 }
 
 // @public (undocumented)
-interface ModifyReattach<TNodeChange = NodeChangeType> extends HasReattachFields, HasRevisionTag, HasChanges<TNodeChange> {
-    // (undocumented)
-    mutedBy?: RevisionTag;
+interface ModifyReattach<TNodeChange = NodeChangeType> extends HasReattachFields, HasRevisionTag, HasChanges<TNodeChange>, Mutable {
     // (undocumented)
     type: "MRevive" | "MReturn";
 }
@@ -1028,7 +1026,7 @@ export interface OptionalFieldEditBuilder {
 }
 
 // @public (undocumented)
-type OutputSpanningMark<TNodeChange> = Skip_2 | NewAttach<TNodeChange> | Modify_2<TNodeChange> | (Active & (Reattach | ModifyReattach<TNodeChange>));
+type OutputSpanningMark<TNodeChange> = Skip_2 | NewAttach<TNodeChange> | Modify_2<TNodeChange> | Reattach | ModifyReattach<TNodeChange>;
 
 // @public (undocumented)
 export type PrimitiveValue = string | boolean | number;
@@ -1080,11 +1078,9 @@ export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode> {
 }
 
 // @public (undocumented)
-interface Reattach extends HasReattachFields, HasRevisionTag {
+interface Reattach extends HasReattachFields, HasRevisionTag, Mutable {
     // (undocumented)
     count: NodeCount;
-    // (undocumented)
-    mutedBy?: RevisionTag;
     // (undocumented)
     type: "Revive" | "Return";
 }

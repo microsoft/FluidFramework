@@ -25,6 +25,7 @@ import {
     Skip,
     Muted,
     Mutable,
+    OutputSpanningMark,
 } from "./format";
 
 export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<TNodeChange> {
@@ -172,7 +173,7 @@ export function getInputLength(mark: Mark<unknown>): number {
         return mark;
     }
     if (isAttach(mark)) {
-        if (isReattach(mark) && mark.mutedBy !== undefined) {
+        if (isMutedReattach(mark)) {
             return mark.type === "Return" || mark.type === "Revive" ? mark.count : 1;
         }
         return 0;
@@ -216,8 +217,6 @@ export function splitMarkOnInput<TMark extends InputSpanningMark<unknown>>(
     if (isSkipMark(mark)) {
         return [length, remainder] as [TMark, TMark];
     }
-    // The linter doesn't think this cast does anything (which seems correct) but the compiler needs it.
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     const markObj = mark as Exclude<TMark, Skip>;
     const type = mark.type;
     switch (type) {
@@ -252,7 +251,7 @@ export function splitMarkOnInput<TMark extends InputSpanningMark<unknown>>(
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has output length `length`.
  */
-export function splitMarkOnOutput<TMark extends Mark<unknown>>(
+export function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(
     mark: TMark,
     length: number,
 ): [TMark, TMark] {
@@ -266,7 +265,7 @@ export function splitMarkOnOutput<TMark extends Mark<unknown>>(
     if (isSkipMark(mark)) {
         return [length, remainder] as [TMark, TMark];
     }
-    const markObj = mark as ObjectMark;
+    const markObj = mark as Exclude<TMark, Skip>;
     const type = markObj.type;
     switch (type) {
         case "Modify":
@@ -275,11 +274,6 @@ export function splitMarkOnOutput<TMark extends Mark<unknown>>(
         case "MInsert":
         case "MMoveIn":
             fail(`Unable to split ${type} mark of length 1`);
-        case "MDelete":
-        case "MMoveOut":
-        case "Delete":
-        case "MoveOut":
-            fail(`Unable to split ${type} mark of length 0`);
         case "Insert":
             return [
                 { ...markObj, content: markObj.content.slice(0, length) },

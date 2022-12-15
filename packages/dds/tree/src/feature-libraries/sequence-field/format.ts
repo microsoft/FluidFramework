@@ -29,7 +29,8 @@ export type OutputSpanningMark<TNodeChange> =
     | Skip
     | NewAttach<TNodeChange>
     | Modify<TNodeChange>
-    | (Active & (Reattach | ModifyReattach<TNodeChange>));
+    | Reattach
+    | ModifyReattach<TNodeChange>;
 
 export interface Mutable {
     mutedBy?: RevisionTag;
@@ -189,17 +190,16 @@ export interface HasReattachFields extends HasPlaceFields {
     detachIndex: number;
 }
 
-export interface Reattach extends HasReattachFields, HasRevisionTag {
+export interface Reattach extends HasReattachFields, HasRevisionTag, Mutable {
     type: "Revive" | "Return";
     count: NodeCount;
-    mutedBy?: RevisionTag;
 }
 export interface ModifyReattach<TNodeChange = NodeChangeType>
     extends HasReattachFields,
         HasRevisionTag,
-        HasChanges<TNodeChange> {
+        HasChanges<TNodeChange>,
+        Mutable {
     type: "MRevive" | "MReturn";
-    mutedBy?: RevisionTag;
 }
 
 /**
