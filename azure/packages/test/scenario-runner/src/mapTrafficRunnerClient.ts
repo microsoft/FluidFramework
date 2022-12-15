@@ -48,10 +48,10 @@ async function main() {
         )
         .requiredOption("-k, --sharedMapKey <sharedMapKey>", "Shared map location")
         .requiredOption("-ct, --connType <connType>", "Connection type")
-        .requiredOption("-ce, --connEndpoint <connEndpoint>", "Connection endpoint")
-        .requiredOption("-ti, --tenantId <tenantId>", "Tenant ID")
-        .requiredOption("-tk, --tenantKey <tenantKey>", "Tenant Key")
-        .requiredOption("-furl, --functionUrl <functionUrl>", "Azure Function URL")
+        .option("-ce, --connEndpoint <connEndpoint>", "Connection endpoint")
+        .option("-ti, --tenantId <tenantId>", "Tenant ID")
+        .option("-tk, --tenantKey <tenantKey>", "Tenant Key")
+        .option("-furl, --functionUrl <functionUrl>", "Azure Function URL")
         .option(
             "-l, --log <filter>",
             "Filter debug logging. If not provided, uses DEBUG env variable.",
