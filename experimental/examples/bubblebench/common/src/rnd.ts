@@ -5,16 +5,15 @@
 
 import { Random } from "best-random";
 
-// eslint-disable-next-line no-bitwise
-export const rnd = new Random((Math.random() * 0x100000000) | 0);
+export const rnd = new Random(Math.trunc(Math.random() * 0x1_00_00_00_00));
 
-export function randomColor() {
-    // eslint-disable-next-line no-bitwise
-    const channel = () => (32 + (rnd.float64() * 196) | 0).toString(16).padStart(2, "0");
+export function randomColor(): string {
+    // eslint-disable-next-line no-bitwise, unicorn/consistent-function-scoping, unicorn/prefer-math-trunc
+    const channel = (): string => (32 + (rnd.float64() * 196) | 0).toString(16).padStart(2, "0");
     return `#${channel()}${channel()}${channel()}`;
 }
 
-export function normal() {
+export function normal(): number {
     // Produce normal distribution from uniform distribution using polar Box-Muller transform.
     for (;;) {
         const u = 2 * rnd.float64() - 1;

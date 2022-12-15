@@ -1235,8 +1235,13 @@ export class GarbageCollector implements IGarbageCollector {
 
     /**
      * Since GC runs periodically, the GC data that is generated only tells us the state of the world at that point in
-     * time. It's possible that nodes transition from `unreferenced -> referenced -> unreferenced` between two runs. The
-     * unreferenced timestamp of such nodes needs to be reset as they may have been accessed when they were referenced.
+     * time. There can be nodes that were referenced in between two runs and their unreferenced state needs to be
+     * updated. For example, in the following scenarios not updating the unreferenced timestamp can lead to deletion of
+     * these objects while there can be in-memory referenced to it:
+     * 1. A node transitions from `unreferenced -> referenced -> unreferenced` between two runs. When the reference is
+     * added, the object may have been accessed and in-memory reference to it added.
+     * 2. A reference is added from one unreferenced node to one or more unreferenced nodes. Even though the node[s] were
+     * unreferenced, they could have been accessed and in-memory reference to them added.
      *
      * This function identifies nodes that were referenced since last run and removes their unreferenced state, if any.
      * If these nodes are currently unreferenced, they will be assigned new unreferenced state by the current run.
@@ -1277,41 +1282,41 @@ export class GarbageCollector implements IGarbageCollector {
          * run, and then add the references since last run.
          *
          * Note on why we need to combine the data from previous run, current run and all references in between -
-         *
          * 1. We need data from last run because some of its references may have been deleted since then. If those
-         * references added new outbound references before getting deleted, we need to detect them.
+         * references added new outbound references before they were deleted, we need to detect them.
          *
          * 2. We need new outbound references since last run because some of them may have been deleted later. If those
-         * references added new outbound references before getting deleted, we need to detect them.
+         * references added new outbound references before they were deleted, we need to detect them.
          *
          * 3. We need data from the current run because currently we may not detect when DDSes are referenced:
-         *
-         * - We don't require DDSes handles to be stored in a referenced DDS. For this, we need GC at DDS level
-         * which is tracked by https://github.com/microsoft/FluidFramework/issues/8470.
-         *
+         * - We don't require DDSes handles to be stored in a referenced DDS.
          * - A new data store may have "root" DDSes already created and we don't detect them today.
          */
         const gcDataSuperSet = concatGarbageCollectionData(this.previousGCDataFromLastRun, currentGCData);
+        const newOutboundRoutesSinceLastRun: string[] = [];
         this.newReferencesSinceLastRun.forEach((outboundRoutes: string[], sourceNodeId: string) => {
             if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
                 gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
             } else {
                 gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
             }
+            newOutboundRoutesSinceLastRun.push(...outboundRoutes);
         });
 
         /**
-         * Run GC on the above reference graph to find all nodes that are referenced. For each one, if they are
+         * Run GC on the above reference graph starting with root and all new outbound routes. This will generate a
+         * list of all nodes that could have been referenced since the last run. If any of these nodes are unreferenced,
          * unreferenced, stop tracking them and remove from unreferenced list.
-         * Some of these nodes may be unreferenced now and if so, the current run will add unreferenced state for them.
+         * Note that some of these nodes may be unreferenced now and if so, the current run will mark them as
+         * unreferenced and add unreferenced state.
          */
-        const gcResult = runGarbageCollection(gcDataSuperSet.gcNodes, ["/"]);
+        const gcResult = runGarbageCollection(gcDataSuperSet.gcNodes, ["/", ...newOutboundRoutesSinceLastRun]);
         for (const nodeId of gcResult.referencedNodeIds) {
             const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
             if (nodeStateTracker !== undefined) {
                 // Stop tracking so as to clear out any running timers.
                 nodeStateTracker.stopTracking();
-                // Delete the node as we don't need to track it any more.
+                // Delete the unreferenced state as we don't need to track it any more.
                 this.unreferencedNodesState.delete(nodeId);
             }
         }
@@ -1530,12 +1535,20 @@ export class GarbageCollector implements IGarbageCollector {
             // Events generated:
             // InactiveObject_Loaded, SweepReadyObject_Loaded
             if (usageType === "Loaded") {
-                this.mc.logger.sendErrorEvent({
+                const event = {
                     ...propsToLog,
                     eventName: `${state}Object_${usageType}`,
                     pkg: packagePathToTelemetryProperty(packagePath),
                     stack: generateStack(),
-                });
+                };
+
+                // Do not log the inactive object x events as error events as they are not the best signal for
+                // detecting something wrong with GC either from the partner or from the runtime itself.
+                if (state === UnreferencedState.Inactive) {
+                    this.mc.logger.sendTelemetryEvent(event);
+                } else {
+                    this.mc.logger.sendErrorEvent(event);
+                }
             }
 
             // If SweepReady Usage Detection is enabed, the handler may close the interactive container.
@@ -1566,12 +1579,19 @@ export class GarbageCollector implements IGarbageCollector {
             if ((usageType === "Revived") === active) {
                 const pkg = await this.getNodePackagePath(eventProps.id);
                 const fromPkg = eventProps.fromId ? await this.getNodePackagePath(eventProps.fromId) : undefined;
-                logger.sendErrorEvent({
+
+                const event = {
                     ...propsToLog,
                     eventName: `${state}Object_${usageType}`,
                     pkg: pkg ? { value: pkg.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
                     fromPkg: fromPkg ? { value: fromPkg.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
-                });
+                }
+
+                if (state === UnreferencedState.Inactive) {
+                    logger.sendTelemetryEvent(event);
+                } else {
+                    logger.sendErrorEvent(event);
+                }
             }
         }
         this.pendingEventsQueue = [];

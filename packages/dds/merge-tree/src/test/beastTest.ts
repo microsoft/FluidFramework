@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/consistent-type-assertions, max-len, no-bitwise */
+/* eslint-disable @typescript-eslint/consistent-type-assertions, no-bitwise */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 

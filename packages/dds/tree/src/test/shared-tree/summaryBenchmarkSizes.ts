@@ -7,13 +7,19 @@ import assert from "assert";
 import { IsoBuffer, unreachableCase } from "@fluidframework/common-utils";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { TransactionResult } from "../../checkout";
-import { FieldKinds, singleTextCursor } from "../../feature-libraries";
+import { FieldKinds, singleTextCursor, namedTreeSchema } from "../../feature-libraries";
 import { ISharedTree } from "../../shared-tree";
-import { rootFieldKey, rootFieldKeySymbol, TreeValue } from "../../tree";
 import { brand } from "../../util";
 import { SummarizeType, TestTreeProvider } from "../utils";
-import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData } from "../../schema-stored";
+import {
+    TransactionResult,
+    rootFieldKey,
+    rootFieldKeySymbol,
+    TreeValue,
+    fieldSchema,
+    GlobalFieldKey,
+    SchemaData,
+} from "../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { PlacePath } from "../../feature-libraries/sequence-change-family";
 
