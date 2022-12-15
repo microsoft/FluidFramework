@@ -28,10 +28,10 @@ import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils";
 
 /**
- * These tests validate that SweepReady objects are correctly marked as tombstones. Tombstones should be added to the
- * summary and changing them (sending / receiving ops, loading, etc.) is not allowed.
+ * These tests validate that SweepReady data stores are correctly marked as tombstones. Tombstones should be added
+ * to the summary and changing them (sending / receiving ops, loading, etc.) is not allowed.
  */
-describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
+describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
     const remainingTimeUntilSweepMs = 100;
     const sweepTimeoutMs = 200;
     assert(remainingTimeUntilSweepMs < sweepTimeoutMs, "remainingTimeUntilSweepMs should be < sweepTimeoutMs");
@@ -285,7 +285,6 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
         itExpects("Receive ops fails for tombstoned datastores in summarizing container loaded before sweep timeout",
         [
-            { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded" },
             {
                 eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
                 error: "Context is tombstoned! Call site [process]",
@@ -543,7 +542,6 @@ describeNoCompat("GC tombstone tests", (getTestObjectProvider) => {
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
         itExpects("Can untombstone datastores by storing a handle",
         [
-            { eventName: "fluid:telemetry:Summarizer:Running:InactiveObject_Loaded" },
             { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested" },
             { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed" },
             {

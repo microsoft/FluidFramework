@@ -158,17 +158,17 @@ export class ForestRepairDataStore implements RepairDataStore {
     ): ITreeCursorSynchronous[] {
         const parent = getDescendant(this.root, path);
         const sparseField = parent.children.get(field);
-        assert(sparseField !== undefined, "No repair data found");
+        assert(sparseField !== undefined, 0x47a /* No repair data found */);
         // TODO: should do more optimized search (ex: binary search).
         const sparseIndex = sparseField.findIndex((child) => child.parentIndex === index);
-        assert(sparseIndex !== -1, "No repair data found");
+        assert(sparseIndex !== -1, 0x47b /* No repair data found */);
         assert(
             sparseField[sparseIndex + count - 1]?.parentIndex === index + count - 1,
-            "No repair data found",
+            0x47c /* No repair data found */,
         );
         return sparseField.slice(sparseIndex, sparseIndex + count).map((node) => {
             const repair = node.data?.node?.get(revision);
-            assert(repair !== undefined, "No repair data found");
+            assert(repair !== undefined, 0x47d /* No repair data found */);
             return singleMapTreeCursor(repair);
         });
     }
@@ -176,7 +176,7 @@ export class ForestRepairDataStore implements RepairDataStore {
     public getValue(revision: RevisionTag, path: UpPath): Value {
         const data = getDescendant(this.root, path).data;
         const valueMap = data?.value;
-        assert(valueMap?.has(revision) === true, "No repair data found");
+        assert(valueMap?.has(revision) === true, 0x47e /* No repair data found */);
         return valueMap.get(revision);
     }
 }

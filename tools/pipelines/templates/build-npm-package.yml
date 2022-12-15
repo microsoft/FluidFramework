@@ -397,6 +397,9 @@ stages:
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run bundle-analysis:collect'
 
+          # NOTE: this task is deliberately not updated to the newer PublishPipelineArtifact because some of our tooling
+          # does not support the newer task.
+          # See the getZipObjectFromArtifact function in @fluidframework/bundle-size-tools for details about the issue.
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifacts - bundle-analysis
             condition:
