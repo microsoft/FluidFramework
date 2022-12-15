@@ -10,7 +10,6 @@ import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
-import { Jsonable } from '@fluidframework/datastore-definitions';
 
 // @alpha
 export interface AttributionInfo {
@@ -36,31 +35,8 @@ export class Attributor implements IAttributor {
     tryGetAttributionInfo(key: number): AttributionInfo | undefined;
 }
 
-// @internal (undocumented)
-export class AttributorSerializer implements IAttributorSerializer {
-    constructor(makeAttributor: (entries: Iterable<[number, AttributionInfo]>) => IAttributor, timestampEncoder: TimestampEncoder);
-    // (undocumented)
-    decode(encoded: SerializedAttributor): IAttributor;
-    // (undocumented)
-    encode(attributor: IAttributor): SerializedAttributor;
-}
-
-// @alpha (undocumented)
-export const chain: <T1, T2, T3>(a: Encoder<T1, T2>, b: Encoder<T2, T3>) => Encoder<T1, T3>;
-
 // @alpha (undocumented)
 export function createRuntimeAttributor(): IRuntimeAttributor;
-
-// @alpha (undocumented)
-export const deltaEncoder: TimestampEncoder;
-
-// @alpha (undocumented)
-export interface Encoder<TDecoded, TEncoded> {
-    // (undocumented)
-    decode(encoded: TEncoded): TDecoded;
-    // (undocumented)
-    encode(decoded: TDecoded): TEncoded;
-}
 
 // @alpha
 export interface IAttributor {
@@ -70,14 +46,6 @@ export interface IAttributor {
     // (undocumented)
     tryGetAttributionInfo(key: number): AttributionInfo | undefined;
 }
-
-// @internal (undocumented)
-export type IAttributorSerializer = Encoder<IAttributor, SerializedAttributor>;
-
-// @public
-export type InternedStringId = number & {
-    readonly InternedStringId: "e221abc9-9d17-4493-8db0-70c871a1c27c";
-};
 
 // @alpha (undocumented)
 export interface IProvideRuntimeAttributor {
@@ -96,54 +64,13 @@ export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
     has(key: AttributionKey): boolean;
 }
 
-// @alpha (undocumented)
-export function makeLZ4Encoder<T>(): Encoder<Jsonable<T>, string>;
-
 // @alpha
 export const mixinAttributor: (Base?: typeof ContainerRuntime) => typeof ContainerRuntime;
-
-// @public
-export class MutableStringInterner implements StringInterner {
-    constructor(inputStrings?: readonly string[]);
-    // (undocumented)
-    getInternedId(input: string): InternedStringId | undefined;
-    // (undocumented)
-    getOrCreateInternedId(input: string): InternedStringId;
-    // (undocumented)
-    getSerializable(): readonly string[];
-    // (undocumented)
-    getString(internId: number): string;
-}
 
 // @alpha
 export class OpStreamAttributor extends Attributor implements IAttributor {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, audience: IAudience, initialEntries?: Iterable<[number, AttributionInfo]>);
 }
-
-// @internal (undocumented)
-export interface SerializedAttributor {
-    // (undocumented)
-    attributionRefs: InternedStringId[];
-    // (undocumented)
-    interner: readonly string[];
-    // (undocumented)
-    seqs: number[];
-    // (undocumented)
-    timestamps: number[];
-}
-
-// @public
-export interface StringInterner {
-    // (undocumented)
-    getInternedId(input: string): InternedStringId | undefined;
-    // (undocumented)
-    getSerializable(): readonly string[];
-    // (undocumented)
-    getString(internedId: number): string;
-}
-
-// @alpha (undocumented)
-export type TimestampEncoder = Encoder<number[], number[]>;
 
 // (No @packageDocumentation comment for this package)
 
