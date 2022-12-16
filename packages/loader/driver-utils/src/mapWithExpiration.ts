@@ -6,44 +6,6 @@
 import { IDisposable } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 
-// export class MapWithExpiration2<TKey, TValue> implements Map<TKey, TValue>, IDisposable {
-//     clear(): void {
-//         throw new Error("Method not implemented.");
-//     }
-//     delete(key: TKey): boolean {
-//         throw new Error("Method not implemented.");
-//     }
-//     forEach(callbackfn: (value: TValue, key: TKey, map: Map<TKey, TValue>) => void, thisArg?: any): void {
-//         throw new Error("Method not implemented.");
-//     }
-//     get(key: TKey): TValue | undefined {
-//         throw new Error("Method not implemented.");
-//     }
-//     has(key: TKey): boolean {
-//         throw new Error("Method not implemented.");
-//     }
-//     set(key: TKey, value: TValue): this {
-//         throw new Error("Method not implemented.");
-//     }
-//     size: number;
-//     entries(): IterableIterator<[TKey, TValue]> {
-//         throw new Error("Method not implemented.");
-//     }
-//     keys(): IterableIterator<TKey> {
-//         throw new Error("Method not implemented.");
-//     }
-//     values(): IterableIterator<TValue> {
-//         throw new Error("Method not implemented.");
-//     }
-//     [Symbol.iterator](): IterableIterator<[TKey, TValue]> {
-//         throw new Error("Method not implemented.");
-//     }
-//     [Symbol.toStringTag]: string;
-
-// }
-
-//* Anything other basic props like ValueOf?
-
 /**
  * An extension of Map that expires (deletes) entries after a period of inactivity.
  * The policy is based on the last time a key was written to.
@@ -51,9 +13,8 @@ import { assert } from "@fluidframework/common-utils";
 export class MapWithExpiration<TKey, TValue> extends Map<TKey, TValue> implements IDisposable {
     public disposed: boolean = false;
 
-    //* Or: rather than extending Map just implement it and have a Map<TKey, [TValue, number]>
     /** Timestamps (as epoch ms numbers) of when each key was last refreshed */
-    private readonly freshness = new Map<TKey, number>();
+    private readonly lastRefreshedTimes = new Map<TKey, number>();
 
     constructor(
         private readonly expiryMs: number,
@@ -62,29 +23,34 @@ export class MapWithExpiration<TKey, TValue> extends Map<TKey, TValue> implement
     }
 
     private refresh(key: TKey): void {
-        this.freshness.set(key, (new Date()).valueOf());
+        this.lastRefreshedTimes.set(key, (new Date()).valueOf());
     }
 
     /**
      * Returns true if the key is present and expired, false if it's not expired, and undefined if it's not found
      * If cleanUp is passed as true, then delete any expired entry before returning.
-     **/
+     */
     private checkExpiry(key: TKey, cleanUp: boolean = false): boolean | undefined {
-        const freshness = this.freshness.get(key);
-        if (freshness === undefined) {
-            assert(!super.has(key), "freshness map out of sync");
+        const refreshTime = this.lastRefreshedTimes.get(key);
+        assert((refreshTime !== undefined) === super.has(key), "freshness map out of sync");
+
+        if (refreshTime === undefined) {
             return undefined;
         }
-        const expired = (new Date()).valueOf() - freshness >= this.expiryMs;
+        const expired = (new Date()).valueOf() - refreshTime >= this.expiryMs;
         if (expired && cleanUp) {
             this.delete(key);
         }
         return expired;
     }
 
-    get size(): number {
+    private clearExpiredEntries() {
         // forEach clears out any expired entries
         this.forEach(() => {});
+    }
+
+    get size(): number {
+        this.clearExpiredEntries();
         return super.size;
     }
 
@@ -105,50 +71,48 @@ export class MapWithExpiration<TKey, TValue> extends Map<TKey, TValue> implement
     }
 
     delete(key: TKey): boolean {
-        this.freshness.delete(key);
+        this.lastRefreshedTimes.delete(key);
         return super.delete(key);
     }
 
     clear(): void {
-        this.freshness.clear();
+        this.lastRefreshedTimes.clear();
         super.clear();
     }
 
     forEach(callbackfn: (value: TValue, key: TKey, map: Map<TKey, TValue>) => void, thisArg?: any): void {
         const expiredKeys: TKey[] = [];
         super.forEach((v, k, m) => {
-            if (this.checkExpiry(k)) {
+            if (this.checkExpiry(k) === true) {
                 expiredKeys.push(k);
             } else {
                 callbackfn(v, k, m);
             }
         }, thisArg);
 
-        // Clean up keys we know are expired
+        // Clean up keys we know are expired now that we're done iterating
         expiredKeys.forEach((key: TKey) => { this.delete(key); });
     }
 
     entries(): IterableIterator<[TKey, TValue]> {
-        this.forEach(() => {});
+        this.clearExpiredEntries();
         return super.entries();
     }
     keys(): IterableIterator<TKey> {
-        this.forEach(() => {});
+        this.clearExpiredEntries();
         return super.keys();
     }
     values(): IterableIterator<TValue> {
-        this.forEach(() => {});
+        this.clearExpiredEntries();
         return super.values();
     }
     [Symbol.iterator](): IterableIterator<[TKey, TValue]> {
-        this.forEach(() => {});
+        this.clearExpiredEntries();
         return super[Symbol.iterator]();
     }
 
-    //* [Symbol.toStringTag]: string = "MapWithExpiration";
-
     valueOf() {
-        this.forEach(() => {});
+        this.clearExpiredEntries();
         return super.valueOf();
     }
 
