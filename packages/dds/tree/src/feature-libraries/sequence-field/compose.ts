@@ -106,7 +106,6 @@ function composeMarkLists<TNodeChange>(
             assert(baseMark !== undefined, "Non-empty queue should not return two undefined marks");
             factory.push(baseMark);
         } else if (baseMark === undefined) {
-            assert(newMark !== undefined, "Non-empty queue should not return two undefined marks");
             factory.push(composeMark(newMark, newRev, composeChild, genId, moveEffects));
         } else {
             // Past this point, we are guaranteed that `newMark` and `baseMark` have the same length and
@@ -605,8 +604,7 @@ export class ComposeQueue<T> {
                 newRev !== undefined &&
                 baseMark.revision === newRev
             ) {
-                // We assume that baseMark and newMark having the same revision means that they are inverses of each other,
-                // so neither has an effect in the composition.
+                // We assume that baseMark and newMark having the same revision means that they are inverses of each other.
                 assert(
                     getInputLength(baseMark) === getOutputLength(newMark),
                     0x4ac /* Inverse marks should be the same length */,
@@ -629,7 +627,6 @@ export class ComposeQueue<T> {
             // We perform any necessary splitting in order to end up with a pair of marks that do have the same length.
             this.newMarks.pop();
             this.baseMarks.pop();
-
             const newMarkLength = getInputLength(newMark);
             const baseMarkLength = getOutputLength(baseMark);
             if (newMarkLength < baseMarkLength) {

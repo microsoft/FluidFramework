@@ -787,7 +787,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                         parentSubdir.resubmitSubDirectoryMessage(op, localOpMetadata);
                     }
                 },
-                // eslint-disable-next-line max-len
                 applyStashedOp: (op: IDirectoryCreateSubDirectoryOperation): ICreateSubDirLocalOpMetadata | undefined => {
                     const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     if (parentSubdir) {
@@ -813,7 +812,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                         parentSubdir.resubmitSubDirectoryMessage(op, localOpMetadata);
                     }
                 },
-                // eslint-disable-next-line max-len
                 applyStashedOp: (op: IDirectoryDeleteSubDirectoryOperation): IDeleteSubDirLocalOpMetadata | undefined => {
                     const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     if (parentSubdir) {
