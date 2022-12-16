@@ -58,8 +58,16 @@ function createReviveChangeset(
     detachIndex: number,
     revision: RevisionTag,
     mutedBy?: RevisionTag,
+    lastDeletedBy?: RevisionTag,
 ): SF.Changeset<never> {
-    return SF.sequenceFieldEditor.revive(startIndex, count, detachIndex, revision, mutedBy);
+    return SF.sequenceFieldEditor.revive(
+        startIndex,
+        count,
+        detachIndex,
+        revision,
+        mutedBy,
+        lastDeletedBy,
+    );
 }
 
 function createModifyChangeset<TNodeChange>(

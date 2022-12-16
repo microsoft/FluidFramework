@@ -36,6 +36,6 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
     assertMarkListEqual(toDelta(actual), toDelta(expected));
 }
 
-function toDelta(change: TestChangeset): Delta.MarkList {
+export function toDelta(change: TestChangeset): Delta.MarkList {
     return SF.sequenceFieldToDelta(change, TestChange.toDelta, fakeRepair);
 }

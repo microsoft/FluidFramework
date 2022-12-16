@@ -39,6 +39,7 @@ export const sequenceFieldEditor = {
         detachIndex: number,
         revision: RevisionTag,
         mutedBy?: RevisionTag,
+        lastDeletedBy?: RevisionTag,
     ): Changeset<never> => {
         if (count === 0) {
             return [];
@@ -51,6 +52,9 @@ export const sequenceFieldEditor = {
         };
         if (mutedBy !== undefined) {
             mark.mutedBy = mutedBy;
+        }
+        if (lastDeletedBy !== undefined) {
+            mark.lastDeletedBy = lastDeletedBy;
         }
         return markAtIndex(index, mark);
     },

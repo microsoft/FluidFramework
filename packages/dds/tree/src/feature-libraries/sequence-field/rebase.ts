@@ -16,9 +16,11 @@ import {
     isMutedReattach,
     isReattach,
     isSkipMark,
-    newAttach,
+    isNewAttach,
     splitMarkOnInput,
     splitMarkOnOutput,
+    isAttachInGap,
+    isInertReattach,
 } from "./utils";
 import {
     Attach,
@@ -98,7 +100,7 @@ function rebaseMarkList<TNodeChange>(
             }
         } else {
             assert(
-                !newAttach(baseMark) && !newAttach(currMark),
+                !isNewAttach(baseMark) && !isNewAttach(currMark),
                 "A new attach cannot be at the same position as another mark",
             );
             assert(
@@ -221,13 +223,13 @@ class RebaseQueue<T> {
             } else {
                 return { newMark: this.newMarks.pop() };
             }
-        } else if (isAttach(newMark) && !isMutedReattach(newMark)) {
+        } else if (isAttachInGap(newMark)) {
             return { newMark: this.newMarks.pop() };
         }
 
         // TODO: Handle case where `baseMarks` has adjacent or nested inverse reattaches from multiple revisions
         this.reattachOffset = 0;
-        if (isAttach(baseMark)) {
+        if (isAttachInGap(baseMark)) {
             return { baseMark: this.baseMarks.pop() };
         } else {
             this.reattachOffset = 0;
@@ -265,26 +267,35 @@ function rebaseMark<TNodeChange>(
     baseRevision: RevisionTag | undefined,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
 ): NodeSpanningMark<TNodeChange> {
-    if (isSkipMark(baseMark)) {
+    if (isSkipMark(baseMark) || isInertReattach(baseMark)) {
         return clone(currMark);
     }
     const baseType = baseMark.type;
     switch (baseType) {
         case "Delete":
         case "MDelete": {
+            const baseMarkRevision = baseMark.revision ?? baseRevision;
             if (isReattach(currMark)) {
-                if (currMark.mutedBy === baseRevision) {
+                if (currMark.mutedBy === baseMarkRevision) {
                     const revive = clone(currMark) as Reattach | ModifyReattach<TNodeChange>;
                     delete revive.mutedBy;
                     return revive;
+                } else {
+                    return {
+                        ...clone(currMark),
+                        lastDeletedBy: baseMarkRevision,
+                    };
                 }
             }
             return 0;
         }
         case "MRevive":
         case "Revive": {
-            assert(isReattach(currMark), "Only a reattach can overlap with a reattach");
-            assert(!isMuted(currMark), "Only non-muted revive marks can overlap");
+            assert(isReattach(currMark), "Only a reattach can overlap with a non-inert reattach");
+            assert(
+                !isMuted(currMark) && !isMuted(baseMark),
+                "Only non-muted revive marks can overlap",
+            );
             return {
                 ...clone(currMark),
                 mutedBy: baseMark.revision ?? baseRevision,

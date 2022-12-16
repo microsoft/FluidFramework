@@ -47,7 +47,7 @@ export function isModifyingMark<TNodeChange>(
     );
 }
 
-export function newAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is NewAttach<TNodeChange> {
+export function isNewAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is NewAttach<TNodeChange> {
     return (
         isObjMark(mark) &&
         (mark.type === "Insert" ||
@@ -58,7 +58,14 @@ export function newAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is NewAtta
 }
 
 export function isAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is Attach<TNodeChange> {
-    return newAttach(mark) || isReattach(mark);
+    return isNewAttach(mark) || isReattach(mark);
+}
+
+export function isAttachInGap<TNodeChange>(mark: Mark<TNodeChange>): mark is Attach<TNodeChange> {
+    return (
+        isNewAttach(mark) ||
+        (isReattach(mark) && (mark.mutedBy === undefined || mark.lastDeletedBy !== undefined))
+    );
 }
 
 export function isReattach<TNodeChange>(
@@ -77,6 +84,12 @@ export function isMutedReattach<TNodeChange>(
     mark: Mark<TNodeChange>,
 ): mark is (Reattach | ModifyReattach<TNodeChange>) & Muted {
     return isReattach(mark) && isMuted(mark);
+}
+
+export function isInertReattach<TNodeChange>(
+    mark: Mark<TNodeChange>,
+): mark is (Reattach | ModifyReattach<TNodeChange>) & Muted {
+    return isMutedReattach(mark) && mark.lastDeletedBy === undefined;
 }
 
 export function isMuted(mark: Mutable): mark is Muted {
@@ -173,8 +186,8 @@ export function getInputLength(mark: Mark<unknown>): number {
         return mark;
     }
     if (isAttach(mark)) {
-        if (isMutedReattach(mark)) {
-            return mark.type === "Return" || mark.type === "Revive" ? mark.count : 1;
+        if (isReattach(mark) && mark.lastDeletedBy === undefined) {
+            return "count" in mark ? mark.count : 1;
         }
         return 0;
     }
@@ -228,7 +241,10 @@ export function splitMarkOnInput<TMark extends InputSpanningMark<unknown>>(
             fail(`Unable to split ${type} mark of length 1`);
         case "Revive":
         case "Return":
-            assert(mark.mutedBy !== undefined, "Non-muted reattach marks have no input length");
+            assert(
+                mark.lastDeletedBy === undefined,
+                "Reattach marks that do not target live cells have no input length",
+            );
             return [
                 { ...markObj, count: length },
                 { ...markObj, count: remainder, detachIndex: mark.detachIndex + length },
@@ -358,6 +374,7 @@ export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boole
             if (
                 rhs.detachedBy === lhsReattach.detachedBy &&
                 rhs.mutedBy === lhsReattach.mutedBy &&
+                rhs.lastDeletedBy === lhsReattach.lastDeletedBy &&
                 lhsReattach.detachIndex + lhsReattach.count === rhs.detachIndex
             ) {
                 lhsReattach.count += rhs.count;

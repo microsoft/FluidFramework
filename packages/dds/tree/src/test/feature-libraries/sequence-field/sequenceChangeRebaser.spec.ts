@@ -9,12 +9,14 @@ import { makeAnonChange, RevisionTag, tagChange, tagInverse } from "../../../reb
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
-import { deepFreeze, fakeRepair } from "../../utils";
-import { checkDeltaEquality, rebaseTagged } from "./utils";
+import { deepFreeze } from "../../utils";
+import { checkDeltaEquality, rebaseTagged, toDelta } from "./utils";
 import { ChangeMaker as Change } from "./testEdits";
 
 const type: TreeSchemaIdentifier = brand("Node");
-const detachedBy: RevisionTag = brand(41);
+const tag1: RevisionTag = brand(41);
+const tag2: RevisionTag = brand(42);
+const tag3: RevisionTag = brand(43);
 
 const testMarks: [string, SF.Mark<TestChange>][] = [
     ["SetValue", { type: "Modify", changes: TestChange.mint([], 1) }],
@@ -30,7 +32,17 @@ const testMarks: [string, SF.Mark<TestChange>][] = [
         },
     ],
     ["Delete", { type: "Delete", count: 2 }],
-    ["Revive", { type: "Revive", count: 2, detachedBy, detachIndex: 0 }],
+    ["Revive", { type: "Revive", count: 2, detachedBy: tag1, detachIndex: 0 }],
+    [
+        "MutedRevive",
+        {
+            type: "Revive",
+            count: 2,
+            detachedBy: tag2,
+            detachIndex: 0,
+            mutedBy: tag3,
+        },
+    ],
 ];
 deepFreeze(testMarks);
 
@@ -112,7 +124,7 @@ describe("SequenceField - Rebaser Axioms", () => {
                     [taggedChange, tagInverse(inv, taggedChange.revision)],
                     TestChange.compose,
                 );
-                const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta, fakeRepair);
+                const delta = toDelta(actual);
                 assert.deepEqual(delta, []);
             });
         }
@@ -133,7 +145,7 @@ describe("SequenceField - Rebaser Axioms", () => {
                         [tagInverse(inv, taggedChange.revision), taggedChange],
                         TestChange.compose,
                     );
-                    const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta, fakeRepair);
+                    const delta = toDelta(actual);
                     assert.deepEqual(delta, []);
                 });
             }
@@ -173,7 +185,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
         const revABC3 = rebaseTagged(revABC2, delB);
         const revABC4 = rebaseTagged(revABC3, delABC2);
         const actual = SF.compose([delABC2, revABC4], TestChange.compose);
-        const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta, fakeRepair);
+        const delta = toDelta(actual);
         assert.deepEqual(delta, []);
     });
 
@@ -187,7 +199,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
         const revAC3 = rebaseTagged(revAC2, addB);
         const revAC4 = rebaseTagged(revAC3, delAC2);
         const actual = SF.compose([delAC2, revAC4], TestChange.compose);
-        const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta, fakeRepair);
+        const delta = toDelta(actual);
         assert.deepEqual(delta, []);
     });
 });

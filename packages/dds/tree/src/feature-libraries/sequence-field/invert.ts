@@ -73,12 +73,18 @@ function invertMark<TNodeChange>(
                 ];
             }
             case "Revive": {
-                return [
-                    {
-                        type: "Delete",
-                        count: mark.count,
-                    },
-                ];
+                if (mark.mutedBy === undefined) {
+                    return [
+                        {
+                            type: "Delete",
+                            count: mark.count,
+                        },
+                    ];
+                }
+                if (mark.lastDeletedBy === undefined) {
+                    return [mark.count];
+                }
+                return [];
             }
             case "Modify": {
                 return [

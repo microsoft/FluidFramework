@@ -134,7 +134,7 @@ describe("SequenceField - Rebase", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("muted revive ↷ delete", () => {
+    it("muted revive ↷ related delete", () => {
         const revive = Change.revive(0, 3, 1, tag1, tag2);
         const deletion = Change.delete(1, 1);
         const actual = rebase(revive, deletion, tag2);
@@ -143,6 +143,21 @@ describe("SequenceField - Rebase", () => {
             Change.revive(0, 1, 1, tag1, tag2),
             // Overlapping revive is no longer muted
             Change.revive(1, 1, 2, tag1),
+            // Later revive has is unaffected
+            Change.revive(2, 1, 3, tag1, tag2),
+        ]);
+        checkDeltaEquality(actual, expected);
+    });
+
+    it("muted revive ↷ unrelated delete", () => {
+        const revive = Change.revive(0, 3, 1, tag1, tag2);
+        const deletion = Change.delete(1, 1);
+        const actual = rebase(revive, deletion);
+        const expected = composeAnonChanges([
+            // Earlier revive is unaffected
+            Change.revive(0, 1, 1, tag1, tag2),
+            // Overlapping revive is muted but has an input length of 0
+            Change.revive(1, 1, 2, tag1, tag2),
             // Later revive has is unaffected
             Change.revive(2, 1, 3, tag1, tag2),
         ]);
@@ -248,7 +263,7 @@ describe("SequenceField - Rebase", () => {
     });
 
     it("muted revive ↷ insert", () => {
-        const revive = composeAnonChanges([Change.revive(0, 3, 0, tag1, tag2)]);
+        const revive = Change.revive(0, 3, 0, tag1, tag2);
         const insert = Change.insert(1, 1);
         const actual = rebase(revive, insert);
         const expected = composeAnonChanges([
@@ -321,7 +336,6 @@ describe("SequenceField - Rebase", () => {
         assert.deepEqual(actual, expected);
     });
 
-    // TODO: update rebase to detect overlap of revives
     it("revive ↷ same revive", () => {
         const reviveA = Change.revive(0, 3, 1, tag1);
         const reviveB = Change.revive(0, 1, 2, tag1);

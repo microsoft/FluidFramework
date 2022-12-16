@@ -175,6 +175,9 @@ function composeMarks<TNodeChange>(
                         detachIndex: baseMark.detachIndex,
                         changes: newMark.changes,
                     };
+                    if (baseMark.lastDeletedBy !== undefined) {
+                        modRevive.lastDeletedBy = baseMark.lastDeletedBy;
+                    }
                     return modRevive;
                 }
                 case "Delete": {
@@ -255,7 +258,7 @@ class ComposeQueue<T> {
             if (isReattach(newMark) && isDetachMark(baseMark)) {
                 if (
                     (newRev !== undefined && baseMark.revision === newRev) ||
-                    newMark.detachedBy === baseMark.revision
+                    (newMark.lastDeletedBy ?? newMark.detachedBy) === baseMark.revision
                 ) {
                     this.baseMarks.pop();
                     this.newMarks.pop();
