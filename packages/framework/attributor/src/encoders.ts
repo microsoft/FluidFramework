@@ -8,6 +8,9 @@ import { IUser } from "@fluidframework/protocol-definitions";
 import { IAttributor, AttributionInfo } from "./attributor";
 import { InternedStringId, MutableStringInterner } from "./stringInterner";
 
+/**
+ * @alpha
+ */
 export interface Encoder<TDecoded, TEncoded> {
 	encode(decoded: TDecoded): TEncoded;
 
@@ -16,8 +19,14 @@ export interface Encoder<TDecoded, TEncoded> {
 
 // Note: the encoded format doesn't matter as long as it's serializable;
 // these types could be weakened.
+/**
+ * @alpha
+ */
 export type TimestampEncoder = Encoder<number[], number[]>;
 
+/**
+ * @alpha
+ */
 export const deltaEncoder: TimestampEncoder = {
 	encode: (timestamps: number[]) => {
 		const deltaTimestamps: number[] = new Array(timestamps.length);
@@ -40,6 +49,9 @@ export const deltaEncoder: TimestampEncoder = {
 	},
 };
 
+/**
+ * @internal
+ */
 export type IAttributorSerializer = Encoder<IAttributor, SerializedAttributor>;
 
 /**
@@ -47,11 +59,14 @@ export type IAttributorSerializer = Encoder<IAttributor, SerializedAttributor>;
  */
 export interface SerializedAttributor {
 	interner: readonly string[]; /* result of calling getSerializable() on a StringInterner */
-	keys: number[];
+	seqs: number[];
 	timestamps: number[];
 	attributionRefs: InternedStringId[];
 }
 
+/**
+ * @internal
+ */
 export class AttributorSerializer implements IAttributorSerializer {
 	constructor(
 		private readonly makeAttributor: (entries: Iterable<[number, AttributionInfo]>) => IAttributor,
@@ -60,11 +75,11 @@ export class AttributorSerializer implements IAttributorSerializer {
 
 	public encode(attributor: IAttributor): SerializedAttributor {
 		const interner = new MutableStringInterner();
-		const keys: number[] = [];
+		const seqs: number[] = [];
 		const timestamps: number[] = [];
 		const attributionRefs: InternedStringId[] = [];
-		for (const [key, { user, timestamp }] of attributor.entries()) {
-			keys.push(key);
+		for (const [seq, { user, timestamp }] of attributor.entries()) {
+			seqs.push(seq);
 			timestamps.push(timestamp);
 			const ref = interner.getOrCreateInternedId(JSON.stringify(user));
 			attributionRefs.push(ref);
@@ -72,7 +87,7 @@ export class AttributorSerializer implements IAttributorSerializer {
 
 		const serialized: SerializedAttributor = {
 			interner: interner.getSerializable(),
-			keys,
+			seqs,
 			timestamps: this.timestampEncoder.encode(timestamps),
 			attributionRefs,
 		};
@@ -82,13 +97,13 @@ export class AttributorSerializer implements IAttributorSerializer {
 
 	public decode(encoded: SerializedAttributor): IAttributor {
 		const interner = new MutableStringInterner(encoded.interner);
-		const { keys, timestamps: encodedTimestamps, attributionRefs } = encoded;
+		const { seqs, timestamps: encodedTimestamps, attributionRefs } = encoded;
 		const timestamps = this.timestampEncoder.decode(encodedTimestamps);
-		assert(keys.length === timestamps.length && timestamps.length === attributionRefs.length,
+		assert(seqs.length === timestamps.length && timestamps.length === attributionRefs.length,
 			0x4b1 /* serialized attribution columns should have the same length */);
-		const entries = new Array(keys.length);
-		for (let i = 0; i < keys.length; i++) {
-			const key = keys[i];
+		const entries = new Array(seqs.length);
+		for (let i = 0; i < seqs.length; i++) {
+			const key = seqs[i];
 			const timestamp = timestamps[i];
 			const ref = attributionRefs[i];
 			const user: IUser = JSON.parse(interner.getString(ref));
@@ -100,6 +115,7 @@ export class AttributorSerializer implements IAttributorSerializer {
 
 /**
  * @returns an encoder which composes `a` and `b`.
+ * @alpha
  */
 export const chain = <T1, T2, T3>(a: Encoder<T1, T2>, b: Encoder<T2, T3>): Encoder<T1, T3> => ({
 	encode: (content) => b.encode(a.encode(content)),
