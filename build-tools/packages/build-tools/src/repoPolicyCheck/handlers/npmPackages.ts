@@ -9,6 +9,7 @@ import merge from "lodash.merge";
 import { NpmPackageJsonLint } from "npm-package-json-lint";
 import { EOL as newline } from "os";
 import path from "path";
+import { stringify } from "querystring";
 import * as readline from "readline";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
@@ -585,7 +586,93 @@ export const handlers: Handler[] = [
             return { resolved: resolved };
         },
     },
+    {
+        name: "npm-package-json-prettier",
+        match,
+        handler: (file) => {
+            let json;
+
+            try {
+                json = JSON.parse(readFile(file));
+            } catch (err) {
+                return "Error parsing JSON file: " + file;
+            }
+
+            const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+            const missingScripts: string[] = [];
+
+            if (hasScriptsField) {
+                const hasPrettierScript = Object.prototype.hasOwnProperty.call(
+                    json.scripts,
+                    "prettier",
+                );
+                const hasPrettierFixScript = Object.prototype.hasOwnProperty.call(
+                    json.scripts,
+                    "prettier:fix",
+                );
+                const hasFormatScript = Object.prototype.hasOwnProperty.call(
+                    json.scripts,
+                    "format",
+                );
+
+                if (!hasPrettierScript) {
+                    missingScripts.push(`prettier`);
+                }
+
+                if (!hasPrettierFixScript) {
+                    missingScripts.push(`prettier:fix`);
+                }
+
+                if (!hasFormatScript) {
+                    missingScripts.push(`format`);
+                }
+            }
+
+            return missingScripts.length > 0
+                ? `${file} is missing the following scripts: ${missingScripts.join("\n\t")}`
+                : undefined;
+        },
+        resolver: (file) => {
+            let json;
+            try {
+                json = JSON.parse(readFile(file));
+            } catch (err) {
+                return { resolved: false, message: "Error parsing JSON file: " + file };
+            }
+
+            const resolved = true;
+
+            const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+
+            if (hasScriptsField) {
+                addPrettier(json);
+                writeFile(file, JSON.stringify(sortPackageJson(json), undefined, 2) + newline);
+            }
+
+            return { resolved: resolved };
+        },
+    },
 ];
+
+function addPrettier(json: Record<string, any>) {
+    const hasPrettierScriptResolver = Object.prototype.hasOwnProperty.call(
+        json.scripts,
+        "prettier",
+    );
+
+    const hasPrettierFixScriptResolver = Object.prototype.hasOwnProperty.call(
+        json.scripts,
+        "prettier:fix",
+    );
+
+    const hasFormatScriptResolver = Object.prototype.hasOwnProperty.call(json.scripts, "format");
+
+    if (hasPrettierScriptResolver || hasPrettierFixScriptResolver || hasFormatScriptResolver) {
+        json["scripts"]["format"] = "npm run prettier:fix";
+        json["scripts"]["prettier"] = "prettier --check .";
+        json["scripts"]["prettier:"] = "prettier --write .";
+    }
+}
 
 function runNpmJsonLint(json: any, file: string) {
     const lintConfig = getLintConfig(file);
