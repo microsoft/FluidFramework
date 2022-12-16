@@ -197,7 +197,8 @@ export class TestClientLogger {
                         if (toRemovalInfo(seg) === undefined) {
                             const segProps = seg.properties;
                             for (let i = 0; i < seg.cachedLength; i++) {
-                                if (!matchProperties(segProps, properties[pos + i])) {
+                                if (!matchProperties(segProps, properties[pos + i])
+                                    && (!TestClientLogger.arePropsEmpty(segProps) || !TestClientLogger.arePropsEmpty(properties[pos + i]))) {
                                     assert.deepStrictEqual(
                                         segProps,
                                         properties[pos + i],
@@ -217,6 +218,10 @@ export class TestClientLogger {
             this.addNewLogLine(); // capture initial state
         }
         return baseText;
+    }
+
+    private static arePropsEmpty(props: PropertySet | undefined) {
+        return props === undefined || Object.entries(props).length === 0;
     }
 
     static validate(clients: readonly TestClient[], title?: string) {
