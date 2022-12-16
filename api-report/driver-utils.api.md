@@ -10,7 +10,6 @@ import { IAuthorizationError } from '@fluidframework/driver-definitions';
 import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
 import { IDeltasFetchResult } from '@fluidframework/driver-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -274,7 +273,7 @@ export class LocationRedirectionError extends LoggingError implements ILocationR
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any): void;
 
 // @public
-export class MapWithExpiration<TKey, TValue> extends Map<TKey, TValue> implements IDisposable {
+export class MapWithExpiration<TKey, TValue> extends Map<TKey, TValue> {
     // (undocumented)
     [Symbol.iterator](): IterableIterator<[TKey, TValue]>;
     constructor(expiryMs: number);
@@ -282,10 +281,6 @@ export class MapWithExpiration<TKey, TValue> extends Map<TKey, TValue> implement
     clear(): void;
     // (undocumented)
     delete(key: TKey): boolean;
-    // (undocumented)
-    dispose(_error?: Error): void;
-    // (undocumented)
-    disposed: boolean;
     // (undocumented)
     entries(): IterableIterator<[TKey, TValue]>;
     // (undocumented)
