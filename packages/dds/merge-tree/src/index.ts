@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { IAttributionCollection } from "./attributionCollection";
 export { IIntegerRange } from "./base";
 export { Client } from "./client";
 export 	{
@@ -46,6 +47,7 @@ export {
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback";
 export {
+	AttributionKey,
 	BaseSegment,
 	BlockAction,
 	BlockUpdateActions,

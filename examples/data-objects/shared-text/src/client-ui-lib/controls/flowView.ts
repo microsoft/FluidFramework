@@ -369,7 +369,6 @@ function makeContentDiv(r: ui.Rectangle, lineFontstr) {
     contentDiv.onclick = (e) => {
         const targetDiv = e.target as HTMLDivElement;
         if (targetDiv.lastElementChild) {
-            // eslint-disable-next-line max-len
             console.log(`div click at ${e.clientX},${e.clientY} rightmost span with text ${targetDiv.lastElementChild.innerHTML}`);
         }
     };
@@ -627,7 +626,6 @@ function showCell(pos: number, flowView: FlowView) {
         const endMarker = cellMarker.cell!.endMarker;
         const end = getPosition(flowView.sharedString, endMarker) + 1;
         setLongStringRepresentationOnMarkers(flowView);
-        // eslint-disable-next-line max-len
         console.log(`cell ${cellMarker.getId()} seq ${cellMarker.seq} clid ${cellMarker.clientId} at [${start},${end})`);
         console.log(`cell contents: ${flowView.sharedString.getTextRangeWithMarkers(start, end)}`);
     }
@@ -1203,7 +1201,6 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
                 if (currentPos < totalLength) {
                     segoff = getContainingSegment(flowView.sharedString, currentPos);
                     if (segoff.segment && MergeTree.Marker.is(segoff.segment)) {
-                        // eslint-disable-next-line max-len
                         if (refHasRangeLabel(segoff.segment, "cell") && (segoff.segment.refType & MergeTree.ReferenceType.NestEnd)) {
                             break;
                         }
@@ -2441,7 +2438,6 @@ export class FlowView extends ui.Component {
                 let inputDelta = e.wheelDelta;
                 inputDelta = Math.abs(e.wheelDelta) === 120 ? e.wheelDelta / 6 : e.wheelDelta / 2;
                 const delta = factor * inputDelta;
-                // eslint-disable-next-line max-len
                 // console.log(`top char: ${this.topChar - delta} factor ${factor}; delta: ${delta} wheel: ${e.wheelDeltaY} ${e.wheelDelta} ${e.detail}`);
                 setTimeout(() => {
                     this.render(Math.floor(this.topChar - delta));
@@ -3064,7 +3060,6 @@ export class FlowView extends ui.Component {
     public loadFinished(clockStart = 0) {
         this.render(0, true);
         if (clockStart > 0) {
-            // eslint-disable-next-line max-len
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.getLength()} - ${performance.now()}`);
         }
 

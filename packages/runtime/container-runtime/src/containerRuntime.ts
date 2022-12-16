@@ -1638,7 +1638,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (!this.shouldContinueReconnecting()) {
                 this.closeFn(
                     DataProcessingError.create(
-                        // eslint-disable-next-line max-len
                         "Runtime detected too many reconnects with no progress syncing local ops. Batch of ops is likely too large (over 1Mb)",
                         "setConnectionState",
                         undefined,
@@ -2316,7 +2315,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 if (this.deltaManager.lastSequenceNumber !== summaryRefSeqNum) {
                     return {
                         continue: false,
-                        // eslint-disable-next-line max-len
                         error: `lastSequenceNumber changed before uploading to storage. ${this.deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
                     };
                 }
@@ -2326,7 +2324,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 if (lastAck !== this.summaryCollection.latestAck) {
                     return {
                         continue: false,
-                        // eslint-disable-next-line max-len
                         error: `Last summary changed while summarizing. ${this.summaryCollection.latestAck} !== ${lastAck}`,
                     };
                 }
@@ -2588,7 +2585,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             } else if (!this.flushMicroTaskExists) {
                 this.flushMicroTaskExists = true;
                 // Queue a microtask to detect the end of the turn and force a flush.
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 Promise.resolve().then(() => {
                     this.flushMicroTaskExists = false;
                     this.flush();
