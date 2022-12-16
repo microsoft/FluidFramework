@@ -17,8 +17,8 @@ import { AttributorSerializer, chain, deltaEncoder, Encoder } from "./encoders";
 import { makeLZ4Encoder } from "./lz4Encoder";
 
 // Summary tree keys
-const attributorKey = "attributor";
-const opKey = "op";
+const attributorTreeName = ".attributor";
+const opBlobName = "op";
 
 /**
  * @alpha
@@ -128,7 +128,7 @@ export const mixinAttributor = (
             super.addContainerStateToSummary(summaryTree, fullTree, trackState, telemetryContext);
             const attributorSummary = this.runtimeAttributor?.summarize();
             if (attributorSummary) {
-                addSummarizeResultToSummary(summaryTree, attributorKey, attributorSummary);
+                addSummarizeResultToSummary(summaryTree, attributorTreeName, attributorSummary);
             }
         }
     } as unknown as typeof ContainerRuntime;
@@ -163,10 +163,10 @@ class RuntimeAttributor implements IRuntimeAttributor {
         baseSnapshot: ISnapshotTree | undefined,
         readBlob: (id: string) => Promise<ArrayBufferLike>,
     ): Promise<void> {
-        const snapshot = baseSnapshot?.trees[attributorKey];
+        const attributorTree = baseSnapshot?.trees[attributorTreeName];
         // Existing documents that don't already have a snapshot containing runtime attribution info shouldn't
         // inject any for now--this causes some back-compat integration problems that aren't fully worked out.
-        const shouldExcludeAttributor = baseSnapshot !== undefined && snapshot === undefined;
+        const shouldExcludeAttributor = baseSnapshot !== undefined && attributorTree === undefined;
         if (shouldExcludeAttributor) {
             // This gives a consistent error for calls to `get` on keys that don't exist.
             this.opAttributor = new Attributor();
@@ -182,12 +182,10 @@ class RuntimeAttributor implements IRuntimeAttributor {
             makeLZ4Encoder(),
         );
 
-        if (snapshot !== undefined) {
-            const opAttributorTree = snapshot.trees[opKey];
-            assert(opAttributorTree !== undefined,
-                "RuntimeAttributor snapshot should contain op-based attribution tree");
-            
-            const blobContents = await readBlob(opAttributorTree.blobs[attributorKey]);
+        if (attributorTree !== undefined) {
+            const id = attributorTree.blobs[opBlobName];
+            assert(id !== undefined, "Attributor tree should have op attributor summary blob.");
+            const blobContents = await readBlob(id);
             const attributorSnapshot = bufferToString(blobContents, "utf8");
             this.opAttributor = this.encoder.decode(attributorSnapshot);
         } else {
@@ -200,17 +198,10 @@ class RuntimeAttributor implements IRuntimeAttributor {
             // Loaded existing document without attributor data: avoid injecting any data.
             return undefined;
         }
-        // Note: we're leaving room in the summary format for additional attributors that this class keeps track of.
-        // This is a potential solution to some extensibility asks.
+
         assert(this.opAttributor !== undefined, "RuntimeAttributor should be initialized before summarization");
         const builder = new SummaryTreeBuilder();
-        builder.addWithStats(opKey, this.summarizeAttributor(this.opAttributor));
-        return builder.getSummaryTree();
-    }
-
-    private summarizeAttributor(attributor: IAttributor) {
-        const builder = new SummaryTreeBuilder();
-        builder.addBlob(attributorKey, this.encoder.encode(attributor));
+        builder.addBlob(opBlobName, this.encoder.encode(this.opAttributor));
         return builder.getSummaryTree();
     }
 }
