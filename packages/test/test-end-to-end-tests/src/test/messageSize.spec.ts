@@ -20,7 +20,7 @@ import { IContainer, IErrorBase } from "@fluidframework/container-definitions";
 import { GenericError } from "@fluidframework/container-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { CompressionAlgorithms, ContainerMessageType } from "@fluidframework/container-runtime";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 
 describeNoCompat("Message size", (getTestObjectProvider) => {
     const mapId = "mapId";
@@ -232,6 +232,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
                     await provider.ensureSynchronized();
 
                     assertMapValues(dataObject2map, config.messagesInBatch, largeString);
+                    assertMapValues(dataObject1map, config.messagesInBatch, largeString);
                 }).timeout(chunkingBatchesTimeoutMs);
         }));
 
@@ -284,6 +285,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
                     await provider.ensureSynchronized();
 
                     assertMapValues(dataObject2map, messagesInBatch, largeString);
+                    assertMapValues(dataObject1map, messagesInBatch, largeString);
                 }).timeout(chunkingBatchesTimeoutMs);
 
                 it("Reconnects while processing compressed batch", async function() {
@@ -306,6 +308,80 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
                     await provider.ensureSynchronized();
 
                     assertMapValues(dataObject2map, messagesInBatch, largeString);
+                    assertMapValues(dataObject1map, messagesInBatch, largeString);
+                }).timeout(chunkingBatchesTimeoutMs);
+            });
+
+            describe("Local container", () => {
+                const reconnectAfterBatchSending = async (
+                    container: IContainer,
+                    shouldProcess: (batch: IDocumentMessage[]) => boolean,
+                    count: number,
+                ) => {
+                    let opsProcessed = 0;
+                    return new Promise<void>((resolve) => {
+                        const handler = (batch) => {
+                            if (shouldProcess(batch) && ++opsProcessed === count) {
+                                container.disconnect();
+                                container.once("connected", () => {
+                                    resolve();
+                                    container.deltaManager.outbound.off("op", handler);
+                                });
+                                container.connect();
+                            }
+                        };
+
+                        container.deltaManager.outbound.on("op", handler);
+                    });
+                };
+
+                it("Reconnects while sending chunks", async function() {
+                    // This is not supported by the local server. See ADO:2690
+                    if (provider.driver.type === "local") {
+                        this.skip();
+                    }
+
+                    await setupContainers(chunkingBatchesConfig);
+                    // Force the container to reconnect after sending 2 chunked ops,
+                    // each in their own batch
+                    const secondConnection = reconnectAfterBatchSending(
+                        localContainer,
+                        (batch) => batch.length === 1
+                            && JSON.parse(batch[0].contents)?.type === ContainerMessageType.ChunkedOp,
+                        2,
+                    );
+
+                    const largeString = generateRandomStringOfSize(messageSize);
+                    setMapKeys(dataObject1map, messagesInBatch, largeString);
+                    await secondConnection;
+                    await provider.ensureSynchronized();
+
+                    assertMapValues(dataObject2map, messagesInBatch, largeString);
+                    assertMapValues(dataObject1map, messagesInBatch, largeString);
+                }).timeout(chunkingBatchesTimeoutMs);
+
+                it("Reconnects while sending compressed batch", async function() {
+                    // This is not supported by the local server. See ADO:2690
+                    if (provider.driver.type === "local") {
+                        this.skip();
+                    }
+
+                    await setupContainers(chunkingBatchesConfig);
+                    // Force the container to reconnect after sending the compressed batch
+                    const secondConnection = reconnectAfterBatchSending(
+                        localContainer,
+                        (batch) => batch.length > 1
+                            && batch.slice(1).every((x) => x.contents === undefined),
+                        1,
+                    );
+
+                    const largeString = generateRandomStringOfSize(messageSize);
+                    setMapKeys(dataObject1map, messagesInBatch, largeString);
+                    await secondConnection;
+                    await provider.ensureSynchronized();
+
+                    assertMapValues(dataObject2map, messagesInBatch, largeString);
+                    assertMapValues(dataObject1map, messagesInBatch, largeString);
                 }).timeout(chunkingBatchesTimeoutMs);
             });
         });
