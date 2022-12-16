@@ -316,21 +316,20 @@ jobs:
           workingDir: ${{ variables.testPackageDir }}/nyc
           targetType: 'inline'
           script: |
-            echo "
-            Pipeline Parameters:
-              should be current directory=${{ variables.testPackageDir }}/nyc
-            "
-            echo 'pwd ='
-            pwd
-            cd ${{ variables.testPackageDir }}/nyc
-            echo 'pwd ='
-            pwd
-            echo 'ls ='
-            ls
-            echo 'cat * ='
-            cat *
-            for i in `ls`; do sed -i '/<skipped/d' $i; done
-            cat *
+            if [[ -d ${{ variables.testPackageDir }}/nyc ]]; then
+              echo "directory '${{ variables.testPackageDir }}/nyc' exists."
+              cd ${{ variables.testPackageDir }}/nyc
+              cat *
+              if ! [[ -z "$(ls -A .)" ]]; then
+                echo "report file(s) 'ls' found. Filtering skipped tests..."
+                for i in `ls`; do sed -i '/<skipped/d' $i; done
+                cat *
+              else
+                echo "No report files found in '${{ variables.testPackageDir }}/nyc' 
+              fi
+            else
+              echo "Directory '${{ variables.testPackageDir }}/nyc' not found"
+            fi
 
       # Upload results
       - task: PublishTestResults@2
