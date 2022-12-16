@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import request from "request";
+
 import { IDisposable } from "@fluidframework/common-definitions";
 
 import { ExternalDataSource } from "../externalData";
@@ -38,9 +40,15 @@ export class MockWebhook implements IDisposable {
      * This could be updated in the future to send the new data / just the delta as a part of the webhook payload.
      */
     private readonly notifySubscribers: () => void = () => {
-        console.log("External data has been updated. Notifying subscribers...");
+        console.log(`External data has been updated. Notifying ${this._subscribers.size} subscribers...`);
+
         for (const subscriberUrl of this._subscribers) {
-            // TODO: notify the subscriber of the data change.
+            request({
+                method: 'POST',
+                uri: subscriberUrl,
+                strictSSL: false,
+                // TODO: body: New data / data change?
+              });
         }
     }
 
