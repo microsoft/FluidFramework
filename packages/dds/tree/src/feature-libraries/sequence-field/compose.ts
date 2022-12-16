@@ -4,24 +4,10 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { RevisionTag, tagChange, TaggedChange } from "../../core";
+import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
 import { clone, fail, StackyIterator } from "../../util";
 import { IdAllocator } from "../modular-schema";
-import {
-    Attach,
-    Changeset,
-    HasRevisionTag,
-    Mark,
-    MarkList,
-    Modify,
-    ModifyingMark,
-    ModifyInsert,
-    ModifyMoveIn,
-    ModifyMoveOut,
-    ModifyReattach,
-    SizedMark,
-    SizedObjectMark,
-} from "./format";
+import { Changeset, HasChanges, HasRevisionTag, Mark, MarkList, SizedMark } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
     replaceMoveSrc,
@@ -29,8 +15,7 @@ import {
     getOutputLength,
     isAttach,
     isDetachMark,
-    isModifyingMark,
-    isObjMark,
+    isReattach,
     isSkipMark,
     MoveEffectTable,
     replaceMoveDest,
@@ -38,9 +23,6 @@ import {
     splitMarkOnOutput,
     newMoveEffectTable,
     changeSrcMoveId,
-    isReattach,
-    MoveSrcPartition,
-    MoveDstPartition,
     MoveMark,
     splitMoveIn,
     splitMoveOut,
@@ -155,21 +137,20 @@ function composeMarks<TNodeChange>(
 
     const baseType = baseMark.type;
     const newType = newMark.type;
-    if (newType === "MDelete" || baseType === "MDelete") {
+    if (
+        (newType === "Delete" && newMark.changes !== undefined) ||
+        (baseType === "Delete" && baseMark.changes !== undefined)
+    ) {
         // This should not occur yet because we discard all modifications to deleted subtrees
         // In the long run we want to preserve them.
         fail("TODO: support modifications to deleted subtree");
     }
     switch (baseType) {
         case "Insert":
+        case "Revive":
             switch (newType) {
                 case "Modify": {
-                    return {
-                        ...baseMark,
-                        type: "MInsert",
-                        content: baseMark.content[0],
-                        changes: newMark.changes,
-                    };
+                    return mergeInNewChildChanges(baseMark, newMark.changes, newRev, composeChild);
                 }
                 case "Delete": {
                     // The insertion made by the base change is subsequently deleted.
@@ -186,99 +167,18 @@ function composeMarks<TNodeChange>(
                         clone(baseMark),
                     );
                     return 0;
-
-                case "MMoveOut": {
-                    // The insert has been moved by `newMark`.
-                    // We can represent net effect of the two marks as an insert at the move destination.
-                    const composedMark: ModifyInsert<TNodeChange> = {
-                        ...baseMark,
-                        type: "MInsert",
-                        content: baseMark.content[0],
-                        changes: newMark.changes,
-                    };
-
-                    replaceMoveDest(
-                        moveEffects,
-                        getUniqueMoveId(newMark, newMark.revision ?? newRev, genId, moveEffects),
-                        composedMark,
-                    );
-                    return 0;
-                }
                 default:
                     fail(`Not implemented: ${newType}`);
             }
-        case "MRevive":
-        case "MInsert": {
-            switch (newType) {
-                case "Modify": {
-                    updateModifyLike(newRev, newMark.changes, baseMark, composeChild);
-                    return baseMark;
-                }
-                case "Delete": {
-                    // The insertion made by the base change is subsequently deleted.
-                    // TODO: preserve the insertions as muted
-                    return 0;
-                }
-                case "MoveOut":
-                case "ReturnFrom": {
-                    // The insert has been moved by `newMark`.
-                    // We can represent net effect of the two marks as an insert at the move destination.
-                    // TODO: Fix repair data when moving revive.
-                    // TODO: Handle MMoveOut
-                    replaceMoveDest(
-                        moveEffects,
-                        getUniqueMoveId(newMark, newMark.revision ?? newRev, genId, moveEffects),
-                        clone(baseMark),
-                    );
-                    return 0;
-                }
-                default:
-                    fail("Not implemented");
-            }
-        }
         case "Modify": {
             switch (newType) {
                 case "Modify": {
-                    updateModifyLike(newRev, newMark.changes, baseMark, composeChild);
-                    return baseMark;
+                    return mergeInNewChildChanges(baseMark, newMark.changes, newRev, composeChild);
                 }
                 case "Delete": {
                     // For now the deletion obliterates all other modifications.
                     // In the long run we want to preserve them.
                     return clone(newMark);
-                }
-                default:
-                    fail("Not implemented");
-            }
-        }
-        case "Revive": {
-            switch (newType) {
-                case "Modify": {
-                    const modRevive: ModifyReattach<TNodeChange> = {
-                        type: "MRevive",
-                        detachedBy: baseMark.detachedBy,
-                        detachIndex: baseMark.detachIndex,
-                        changes: newMark.changes,
-                    };
-                    return modRevive;
-                }
-                case "Delete": {
-                    // The deletion undoes the revival
-                    return 0;
-                }
-                case "MoveOut":
-                case "ReturnFrom": {
-                    // The insert has been moved by `newMark`.
-                    // We can represent net effect of the two marks as an insert at the move destination.
-                    // TODO: Fix repair data when moving revive.
-                    // TODO: Are we now unable to cancel the moved mark if we compose with its inverse?
-                    // TODO: Handle MMoveOut
-                    replaceMoveDest(
-                        moveEffects,
-                        getUniqueMoveId(newMark, newMark.revision ?? newRev, genId, moveEffects),
-                        clone(baseMark),
-                    );
-                    return 0;
                 }
                 default:
                     fail("Not implemented");
@@ -401,18 +301,39 @@ function composeMarks<TNodeChange>(
     }
 }
 
-function updateModifyLike<TNodeChange>(
-    currRev: RevisionTag | undefined,
-    currChanges: TNodeChange,
-    base: ModifyInsert<TNodeChange> | Modify<TNodeChange> | ModifyReattach<TNodeChange>,
+function composeChildChanges<TNodeChange>(
+    baseChange: TNodeChange | undefined,
+    newChange: TNodeChange | undefined,
+    newRevision: RevisionTag | undefined,
     composeChild: NodeChangeComposer<TNodeChange>,
-) {
-    // `base.changes` is assumed to be the result of a call to `composeChildren`, so it does not need a revision tag.
-    // See the contract of `FieldChangeHandler.compose`.
-    base.changes = composeChild([
-        tagChange(base.changes, undefined),
-        tagChange(currChanges, currRev),
-    ]);
+): TNodeChange | undefined {
+    if (newChange === undefined) {
+        return baseChange;
+    } else if (baseChange === undefined) {
+        return composeChild([tagChange(newChange, newRevision)]);
+    } else {
+        return composeChild([makeAnonChange(baseChange), tagChange(newChange, newRevision)]);
+    }
+}
+
+function mergeInNewChildChanges<TNodeChange, TMark extends HasChanges<TNodeChange>>(
+    baseMark: TMark,
+    newChanges: TNodeChange | undefined,
+    newRevision: RevisionTag | undefined,
+    composeChild: NodeChangeComposer<TNodeChange>,
+): TMark {
+    const composedChanges = composeChildChanges(
+        baseMark.changes,
+        newChanges,
+        newRevision,
+        composeChild,
+    );
+    if (composedChanges !== undefined) {
+        baseMark.changes = composedChanges;
+    } else {
+        delete baseMark.changes;
+    }
+    return baseMark;
 }
 
 function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
@@ -440,8 +361,8 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
         );
     }
 
-    if (isModifyingMark(mark)) {
-        (cloned as ModifyingMark<TNodeChange>).changes = composeChild([
+    if (mark.type !== "MoveIn" && mark.type !== "ReturnTo" && mark.changes !== undefined) {
+        (cloned as HasChanges<TNodeChange>).changes = composeChild([
             tagChange(mark.changes, revision),
         ]);
         return cloned;
@@ -457,22 +378,13 @@ function applyMoveEffects<TNodeChange>(
 ): MarkList<TNodeChange> {
     const factory = new MarkListFactory<TNodeChange>(moveEffects);
     for (const mark of marks) {
-        if (isObjMark(mark)) {
+        if (isMoveMark(mark)) {
             switch (mark.type) {
                 case "MoveIn":
                 case "ReturnTo": {
                     const effect = moveEffects.dstEffects.get(mark.id);
                     if (effect !== undefined) {
                         factory.push(...splitMoveIn(mark, effect));
-                        moveEffects.dstEffects.delete(mark.id);
-                        continue;
-                    }
-                    break;
-                }
-                case "MMoveIn": {
-                    const effect = moveEffects.dstEffects.get(mark.id);
-                    if (effect !== undefined) {
-                        factory.push(...splitModifyMoveIn(mark, effect, composeChild));
                         moveEffects.dstEffects.delete(mark.id);
                         continue;
                     }
@@ -488,15 +400,6 @@ function applyMoveEffects<TNodeChange>(
                     }
                     break;
                 }
-                case "MMoveOut": {
-                    const effect = moveEffects.srcEffects.get(mark.id);
-                    if (effect !== undefined) {
-                        factory.push(...splitModifyMoveOut(mark, effect));
-                        moveEffects.srcEffects.delete(mark.id);
-                        continue;
-                    }
-                    break;
-                }
                 default:
                     break;
             }
@@ -506,69 +409,6 @@ function applyMoveEffects<TNodeChange>(
     }
 
     return factory.list;
-}
-
-function splitModifyMoveIn<T>(
-    mark: ModifyMoveIn<T>,
-    parts: MoveDstPartition<T>[],
-    composeChild: NodeChangeComposer<T>,
-): Attach<T>[] {
-    if (parts.length === 0) {
-        return [];
-    }
-
-    assert(parts.length === 1, "Cannot split a ModifyMoveIn mark");
-    assert((parts[0].count ?? 1) === 1, "Cannot change the size of a ModifyMoveIn mark");
-    if (parts[0].replaceWith !== undefined) {
-        assert(parts[0].replaceWith.length === 1, "Can only modify a single moved mark");
-        let movedMark = parts[0].replaceWith[0];
-        switch (movedMark.type) {
-            case "Insert": {
-                movedMark = {
-                    ...movedMark,
-                    type: "MInsert",
-                    content: movedMark.content[0],
-                    changes: mark.changes,
-                };
-                break;
-            }
-            case "MInsert": {
-                updateModifyLike(undefined, mark.changes, movedMark, composeChild);
-                break;
-            }
-            default:
-                fail(`Unhandled case: ${movedMark.type}`);
-        }
-        return [movedMark];
-    } else {
-        return [
-            {
-                ...mark,
-                id: parts[0].id,
-            },
-        ];
-    }
-}
-
-function splitModifyMoveOut<T>(
-    mark: ModifyMoveOut<T>,
-    parts: MoveSrcPartition<T>[],
-): SizedObjectMark<T>[] {
-    if (parts.length === 0) {
-        return [];
-    }
-
-    assert(parts.length === 1, "Cannot split ModifyMoveOut marks");
-    if (parts[0].replaceWith !== undefined) {
-        // TODO: Apply modifications
-        return parts[0].replaceWith;
-    }
-    return [
-        {
-            ...mark,
-            id: parts[0].id,
-        },
-    ];
 }
 
 export class ComposeQueue<T> {

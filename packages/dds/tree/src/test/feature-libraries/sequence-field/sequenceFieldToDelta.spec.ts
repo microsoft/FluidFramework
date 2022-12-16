@@ -123,7 +123,7 @@ describe("SequenceField - toDelta", () => {
             fieldChanges: new Map([[fooField, nestedChange]]),
         };
         const changeset: SF.Changeset = [
-            { type: "MRevive", detachedBy: tag, detachIndex: 0, changes: nodeChange },
+            { type: "Revive", count: 1, detachedBy: tag, detachIndex: 0, changes: nodeChange },
         ];
         const fieldChanges = new Map([[fooField, [{ type: Delta.MarkType.Insert, content: [] }]]]);
         const deltaFromChild = (child: NodeChangeset): Delta.Modify => {
@@ -269,8 +269,8 @@ describe("SequenceField - toDelta", () => {
         };
         const changeset: SF.Changeset = [
             {
-                type: "MInsert",
-                content: content[0],
+                type: "Insert",
+                content,
                 changes: nodeChange,
             },
         ];

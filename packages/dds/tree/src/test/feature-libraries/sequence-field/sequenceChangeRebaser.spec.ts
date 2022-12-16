@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { RevisionTag, tagChange, tagInverse } from "../../../rebase";
-import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze, fakeRepair } from "../../utils";
@@ -19,7 +18,6 @@ import {
 } from "./utils";
 import { ChangeMaker as Change } from "./testEdits";
 
-const type: TreeSchemaIdentifier = brand("Node");
 const detachedBy: RevisionTag = brand(41);
 
 const testChanges: [string, (index: number) => SF.Changeset<TestChange>][] = [

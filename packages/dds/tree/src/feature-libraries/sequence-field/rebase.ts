@@ -18,7 +18,6 @@ import {
     isSkipMark,
     MoveEffectTable,
     newMoveEffectTable,
-    removeMoveDest,
     splitMarkOnInput,
     splitMarkOnOutput,
     splitMoveIn,
@@ -311,15 +310,6 @@ function rebaseMark<TNodeChange>(
     const baseType = baseMark.type;
     switch (baseType) {
         case "Delete":
-        case "MDelete":
-            if (
-                isObjMark(currMark) &&
-                (currMark.type === "MoveOut" ||
-                    currMark.type === "MMoveOut" ||
-                    currMark.type === "ReturnFrom")
-            ) {
-                removeMoveDest(moveEffects, currMark.id);
-            }
             return 0;
         case "Modify": {
             if (isModify(currMark)) {
@@ -331,7 +321,6 @@ function rebaseMark<TNodeChange>(
             return clone(currMark);
         }
         case "MoveOut":
-        case "MMoveOut":
         case "ReturnFrom": {
             if (!isSkipMark(currMark)) {
                 getOrAddEmptyToMap(moveEffects.movedMarks, baseMark.id).push(clone(currMark));
@@ -362,12 +351,7 @@ function applyMoveEffects<TNodeChange>(
     let offset = 0;
     while (!queue.isEmpty()) {
         const { baseMark, newMark } = queue.pop();
-        if (
-            isObjMark(baseMark) &&
-            (baseMark.type === "MoveIn" ||
-                baseMark.type === "MMoveIn" ||
-                baseMark.type === "ReturnTo")
-        ) {
+        if (isObjMark(baseMark) && (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")) {
             const movedMarks = moveEffects.movedMarks.get(baseMark.id);
             if (movedMarks !== undefined) {
                 factory.pushOffset(offset);
@@ -401,26 +385,12 @@ function applyMoveEffects<TNodeChange>(
                     }
                     break;
                 }
-                case "MMoveIn": {
-                    const effect = moveEffects.dstEffects.get(newMark.id);
-                    if (effect !== undefined) {
-                        fail("Not implemented");
-                    }
-                    break;
-                }
                 case "MoveOut": {
                     const effect = moveEffects.srcEffects.get(newMark.id);
                     if (effect !== undefined) {
                         factory.push(...splitMoveOut(newMark, effect));
                         moveEffects.srcEffects.delete(newMark.id);
                         continue;
-                    }
-                    break;
-                }
-                case "MMoveOut": {
-                    const effect = moveEffects.srcEffects.get(newMark.id);
-                    if (effect !== undefined) {
-                        fail("Not implemented");
                     }
                     break;
                 }

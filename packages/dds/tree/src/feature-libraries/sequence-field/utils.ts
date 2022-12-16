@@ -10,17 +10,13 @@ import { IdAllocator } from "../modular-schema";
 import {
     Attach,
     Detach,
+    HasChanges,
     HasRevisionTag,
     HasTiebreakPolicy,
     Insert,
     LineageEvent,
     Mark,
     Modify,
-    ModifyDetach,
-    ModifyingMark,
-    ModifyMoveIn,
-    ModifyMoveOut,
-    ModifyReattach,
     MoveId,
     MoveIn,
     MoveOut,
@@ -37,47 +33,19 @@ export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<T
     return isObjMark(mark) && mark.type === "Modify";
 }
 
-export function isModifyingMark<TNodeChange>(
-    mark: Mark<TNodeChange>,
-): mark is ModifyingMark<TNodeChange> {
-    return (
-        isObjMark(mark) &&
-        (mark.type === "Modify" ||
-            mark.type === "MInsert" ||
-            mark.type === "MRevive" ||
-            mark.type === "MMoveIn" ||
-            mark.type === "MDelete" ||
-            mark.type === "MMoveOut")
-    );
-}
-
 export function isAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is Attach<TNodeChange> {
     return (
-        (isObjMark(mark) &&
-            (mark.type === "Insert" ||
-                mark.type === "MInsert" ||
-                mark.type === "MoveIn" ||
-                mark.type === "MMoveIn")) ||
-        isReattach(mark)
+        (isObjMark(mark) && (mark.type === "Insert" || mark.type === "MoveIn")) || isReattach(mark)
     );
 }
 
-export function isReattach<TNodeChange>(
-    mark: Mark<TNodeChange>,
-): mark is Reattach | ModifyReattach<TNodeChange> {
-    return (
-        isObjMark(mark) &&
-        (mark.type === "Revive" || mark.type === "MRevive" || mark.type === "ReturnTo")
-    );
+export function isReattach<TNodeChange>(mark: Mark<TNodeChange>): mark is Reattach<TNodeChange> {
+    return isObjMark(mark) && (mark.type === "Revive" || mark.type === "ReturnTo");
 }
 
 export function getAttachLength(attach: Attach): number {
     const type = attach.type;
     switch (type) {
-        case "MInsert":
-        case "MMoveIn":
-        case "MRevive":
-            return 1;
         case "Insert":
             return attach.content.length;
         case "MoveIn":
@@ -135,15 +103,10 @@ export function getOutputLength(mark: Mark<unknown>): number {
             return mark.count;
         case "Insert":
             return mark.content.length;
-        case "MInsert":
-        case "MMoveIn":
-        case "MRevive":
         case "Modify":
             return 1;
         case "Delete":
-        case "MDelete":
         case "MoveOut":
-        case "MMoveOut":
         case "ReturnFrom":
             return 0;
         default:
@@ -169,8 +132,6 @@ export function getInputLength(mark: Mark<unknown>): number {
         case "ReturnFrom":
             return mark.count;
         case "Modify":
-        case "MDelete":
-        case "MMoveOut":
             return 1;
         default:
             unreachableCase(type);
@@ -208,8 +169,6 @@ export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
     const type = mark.type;
     switch (type) {
         case "Modify":
-        case "MDelete":
-        case "MMoveOut":
             fail(`Unable to split ${type} mark of length 1`);
         case "Delete":
             return [
@@ -261,12 +220,7 @@ export function splitMarkOnOutput<TMark extends Mark<unknown>>(
     const type = markObj.type;
     switch (type) {
         case "Modify":
-        case "MRevive":
-        case "MInsert":
-        case "MMoveIn":
             fail(`Unable to split ${type} mark of length 1`);
-        case "MDelete":
-        case "MMoveOut":
         case "Delete":
         case "MoveOut":
         case "ReturnFrom":
@@ -301,16 +255,10 @@ export function splitMarkOnOutput<TMark extends Mark<unknown>>(
 
 export function isDetachMark<TNodeChange>(
     mark: Mark<TNodeChange> | undefined,
-): mark is Detach | ModifyDetach<TNodeChange> {
+): mark is Detach<TNodeChange> {
     if (isObjMark(mark)) {
         const type = mark.type;
-        return (
-            type === "Delete" ||
-            type === "MDelete" ||
-            type === "MoveOut" ||
-            type === "MMoveOut" ||
-            type === "ReturnFrom"
-        );
+        return type === "Delete" || type === "MoveOut" || type === "ReturnFrom";
     }
     return false;
 }
@@ -338,6 +286,13 @@ export function tryExtendMark(
     }
     const type = rhs.type;
     if (type !== "Modify" && rhs.revision !== (lhs as HasRevisionTag).revision) {
+        return false;
+    }
+
+    if (
+        (type !== "MoveIn" && type !== "ReturnTo" && rhs.changes !== undefined) ||
+        (lhs as Modify | HasChanges).changes !== undefined
+    ) {
         return false;
     }
 
@@ -663,13 +618,7 @@ export function changeSrcMoveId<T>(table: MoveEffectTable<T>, id: MoveId, newId:
     }
 }
 
-export type MoveMark<T> =
-    | MoveOut
-    | ModifyMoveOut<T>
-    | MoveIn
-    | ModifyMoveIn<T>
-    | ReturnFrom
-    | ReturnTo;
+export type MoveMark<T> = MoveOut<T> | MoveIn | ReturnFrom<T> | ReturnTo;
 
 export function isMoveMark<T>(mark: Mark<T>): mark is MoveMark<T> {
     if (isSkipMark(mark)) {
@@ -677,9 +626,7 @@ export function isMoveMark<T>(mark: Mark<T>): mark is MoveMark<T> {
     }
     switch (mark.type) {
         case "MoveIn":
-        case "MMoveIn":
         case "MoveOut":
-        case "MMoveOut":
         case "ReturnFrom":
         case "ReturnTo":
             return true;
@@ -705,7 +652,7 @@ export function splitMoveIn<T>(mark: MoveIn | ReturnTo, parts: MoveDstPartition<
 }
 
 export function splitMoveOut<T>(
-    mark: MoveOut | ReturnFrom,
+    mark: MoveOut<T> | ReturnFrom<T>,
     parts: MoveSrcPartition<T>[],
 ): SizedObjectMark<T>[] {
     const result: SizedObjectMark<T>[] = [];
@@ -741,7 +688,8 @@ export function applyMoveEffectsToMark<T>(
             }
         }
 
-        switch (mark.type) {
+        const type = mark.type;
+        switch (type) {
             case "MoveOut":
             case "ReturnFrom": {
                 const effect = moveEffects.srcEffects.get(mark.id);
@@ -769,7 +717,7 @@ export function applyMoveEffectsToMark<T>(
                 break;
             }
             default:
-                fail(`Unhandled mark type: ${mark.type}`);
+                unreachableCase(type);
         }
     }
     return [mark];

@@ -33,7 +33,7 @@ export class AnchorSet {
 }
 
 // @public (undocumented)
-type Attach<TNodeChange = NodeChangeType> = Insert_2 | ModifyInsert<TNodeChange> | MoveIn_2 | ModifyMoveIn<TNodeChange> | Reattach | ModifyReattach<TNodeChange> | ReturnTo;
+type Attach<TNodeChange = NodeChangeType> = Insert_2<TNodeChange> | MoveIn_2 | Reattach<TNodeChange>;
 
 // @public
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
@@ -159,7 +159,7 @@ interface Delete {
 }
 
 // @public (undocumented)
-interface Delete_2 extends HasRevisionTag {
+interface Delete_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasChanges<TNodeChange> {
     // (undocumented)
     count: NodeCount;
     // (undocumented)
@@ -208,7 +208,7 @@ export interface Dependent extends NamedComputation {
 }
 
 // @public (undocumented)
-type Detach = Delete_2 | MoveOut_2 | ReturnFrom;
+type Detach<TNodeChange = NodeChangeType> = Delete_2<TNodeChange> | MoveOut_2<TNodeChange> | ReturnFrom<TNodeChange>;
 
 // @public
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
@@ -442,9 +442,9 @@ export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
 export type GlobalFieldKeySymbol = Brand<symbol, "GlobalFieldKeySymbol">;
 
 // @public (undocumented)
-interface HasChanges<TNodeChange> {
+interface HasChanges<TNodeChange = NodeChangeType> {
     // (undocumented)
-    changes: TNodeChange;
+    changes?: TNodeChange;
 }
 
 // @public (undocumented)
@@ -531,7 +531,7 @@ interface Insert<TTree = ProtoNode> {
 }
 
 // @public (undocumented)
-interface Insert_2 extends HasTiebreakPolicy, HasRevisionTag {
+interface Insert_2<TNodeChange = NodeChangeType> extends HasTiebreakPolicy, HasRevisionTag, HasChanges<TNodeChange> {
     // (undocumented)
     content: ProtoNode_2[];
     // (undocumented)
@@ -776,7 +776,9 @@ interface Modify<TTree = ProtoNode> {
 }
 
 // @public (undocumented)
-interface Modify_2<TNodeChange = NodeChangeType> extends HasChanges<TNodeChange> {
+interface Modify_2<TNodeChange = NodeChangeType> {
+    // (undocumented)
+    changes: TNodeChange;
     // (undocumented)
     tomb?: RevisionTag;
     // (undocumented)
@@ -800,45 +802,6 @@ interface ModifyAndMoveOut<TTree = ProtoNode> {
     setValue?: Value;
     // (undocumented)
     type: typeof MarkType.ModifyAndMoveOut;
-}
-
-// @public (undocumented)
-interface ModifyDelete<TNodeChange = NodeChangeType> extends HasRevisionTag, HasChanges<TNodeChange> {
-    // (undocumented)
-    tomb?: RevisionTag;
-    // (undocumented)
-    type: "MDelete";
-}
-
-// @public (undocumented)
-type ModifyDetach<TNodeChange> = ModifyDelete<TNodeChange> | ModifyMoveOut<TNodeChange>;
-
-// @public (undocumented)
-interface ModifyInsert<TNodeChange = NodeChangeType> extends HasTiebreakPolicy, HasRevisionTag, HasChanges<TNodeChange> {
-    // (undocumented)
-    content: ProtoNode_2;
-    // (undocumented)
-    type: "MInsert";
-}
-
-// @public (undocumented)
-interface ModifyMoveIn<TNodeChange = NodeChangeType> extends HasMoveId, HasPlaceFields, HasRevisionTag, HasChanges<TNodeChange> {
-    // (undocumented)
-    type: "MMoveIn";
-}
-
-// @public (undocumented)
-interface ModifyMoveOut<TNodeChange = NodeChangeType> extends HasMoveId, HasRevisionTag, HasChanges<TNodeChange> {
-    // (undocumented)
-    tomb?: RevisionTag;
-    // (undocumented)
-    type: "MMoveOut";
-}
-
-// @public (undocumented)
-interface ModifyReattach<TNodeChange = NodeChangeType> extends HasReattachFields, HasRevisionTag, HasChanges<TNodeChange> {
-    // (undocumented)
-    type: "MRevive";
 }
 
 // @public @sealed
@@ -936,7 +899,7 @@ interface MoveInAndModify<TTree = ProtoNode> {
 }
 
 // @public (undocumented)
-type MoveMark<T> = MoveOut_2 | ModifyMoveOut<T> | MoveIn_2 | ModifyMoveIn<T> | ReturnFrom | ReturnTo;
+type MoveMark<T> = MoveOut_2<T> | MoveIn_2 | ReturnFrom<T> | ReturnTo;
 
 // @public
 interface MoveOut {
@@ -948,7 +911,7 @@ interface MoveOut {
 }
 
 // @public (undocumented)
-interface MoveOut_2 extends HasRevisionTag, HasMoveId {
+interface MoveOut_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMoveId, HasChanges<TNodeChange> {
     // (undocumented)
     count: NodeCount;
     // (undocumented)
@@ -1124,12 +1087,7 @@ export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode> {
 }
 
 // @public (undocumented)
-interface Reattach extends HasReattachFields, HasRevisionTag {
-    // (undocumented)
-    count: NodeCount;
-    // (undocumented)
-    type: "Revive";
-}
+type Reattach<TNodeChange = NodeChangeType> = Revive<TNodeChange> | ReturnTo;
 
 // @public
 function rebase<TNodeChange>(change: Changeset<TNodeChange>, base: TaggedChange<Changeset<TNodeChange>>, rebaseChild: NodeChangeRebaser_2<TNodeChange>, genId: IdAllocator): Changeset<TNodeChange>;
@@ -1146,7 +1104,7 @@ export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepair
 export const replaceField: unique symbol;
 
 // @public (undocumented)
-interface ReturnFrom extends HasRevisionTag, HasMoveId {
+interface ReturnFrom<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMoveId, HasChanges<TNodeChange> {
     // (undocumented)
     count: NodeCount;
     // (undocumented)
@@ -1167,6 +1125,14 @@ interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId {
 
 // @public
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
+
+// @public (undocumented)
+interface Revive<TNodeChange = NodeChangeType> extends HasReattachFields, HasRevisionTag, HasChanges<TNodeChange> {
+    // (undocumented)
+    count: NodeCount;
+    // (undocumented)
+    type: "Revive";
+}
 
 // @public
 type Root<TTree = ProtoNode> = FieldMarks<TTree>;
@@ -1221,12 +1187,6 @@ declare namespace SequenceField {
         Mark_2 as Mark,
         MarkList_2 as MarkList,
         Modify_2 as Modify,
-        ModifyDelete,
-        ModifyDetach,
-        ModifyInsert,
-        ModifyMoveIn,
-        ModifyMoveOut,
-        ModifyReattach,
         MoveIn_2 as MoveIn,
         MoveOut_2 as MoveOut,
         NodeChangeType,
@@ -1239,6 +1199,7 @@ declare namespace SequenceField {
         Reattach,
         ReturnFrom,
         ReturnTo,
+        Revive,
         SizedMark,
         SizedObjectMark,
         Tiebreak,
@@ -1361,7 +1322,7 @@ export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous;
 type SizedMark<TNodeChange = NodeChangeType> = Skip_2 | SizedObjectMark<TNodeChange>;
 
 // @public (undocumented)
-type SizedObjectMark<TNodeChange = NodeChangeType> = Modify_2<TNodeChange> | Detach | ModifyDetach<TNodeChange>;
+type SizedObjectMark<TNodeChange = NodeChangeType> = Modify_2<TNodeChange> | Detach<TNodeChange>;
 
 // @public
 type Skip = number;
