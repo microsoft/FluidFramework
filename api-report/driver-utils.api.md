@@ -275,6 +275,8 @@ export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErr
 
 // @public
 export class MapWithExpiration<TKey, TValue> extends Map<TKey, TValue> implements IDisposable {
+    // (undocumented)
+    [Symbol.iterator](): IterableIterator<[TKey, TValue]>;
     constructor(expiryMs: number);
     // (undocumented)
     clear(): void;
@@ -285,9 +287,23 @@ export class MapWithExpiration<TKey, TValue> extends Map<TKey, TValue> implement
     // (undocumented)
     disposed: boolean;
     // (undocumented)
+    entries(): IterableIterator<[TKey, TValue]>;
+    // (undocumented)
+    forEach(callbackfn: (value: TValue, key: TKey, map: Map<TKey, TValue>) => void, thisArg?: any): void;
+    // (undocumented)
     get(key: TKey): TValue | undefined;
     // (undocumented)
+    has(key: TKey): boolean;
+    // (undocumented)
+    keys(): IterableIterator<TKey>;
+    // (undocumented)
     set(key: TKey, value: TValue): this;
+    // (undocumented)
+    get size(): number;
+    // (undocumented)
+    valueOf(): Object;
+    // (undocumented)
+    values(): IterableIterator<TValue>;
 }
 
 // @public (undocumented)

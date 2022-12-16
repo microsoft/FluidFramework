@@ -3,16 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 
 /**
  * An extension of Map that expires (deletes) entries after a period of inactivity.
  * The policy is based on the last time a key was written to.
  */
-export class MapWithExpiration<TKey, TValue> extends Map<TKey, TValue> implements IDisposable {
-    public disposed: boolean = false;
-
+export class MapWithExpiration<TKey, TValue> extends Map<TKey, TValue> {
     /** Timestamps (as epoch ms numbers) of when each key was last refreshed */
     private readonly lastRefreshedTimes = new Map<TKey, number>();
 
@@ -114,13 +111,5 @@ export class MapWithExpiration<TKey, TValue> extends Map<TKey, TValue> implement
     valueOf() {
         this.clearExpiredEntries();
         return super.valueOf();
-    }
-
-    dispose(_error?: Error): void {
-        if (this.disposed) {
-            return;
-        }
-        this.disposed = true;
-        this.clear();
     }
 }
