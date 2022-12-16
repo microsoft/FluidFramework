@@ -41,6 +41,7 @@ export {
     NodeSpanningMark,
     InputSpanningMark,
     OutputSpanningMark,
+    InputSpanningReattach,
     Tiebreak,
     Tombstones,
     TreeForestPath,
