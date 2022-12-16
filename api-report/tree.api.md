@@ -1111,9 +1111,11 @@ export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepair
 }
 
 // @public (undocumented)
-interface ReturnFrom extends HasReattachFields, HasRevisionTag, HasMoveId {
+interface ReturnFrom extends HasRevisionTag, HasMoveId {
     // (undocumented)
     count: NodeCount;
+    // (undocumented)
+    detachedBy: RevisionTag | undefined;
     // (undocumented)
     tomb?: RevisionTag;
     // (undocumented)

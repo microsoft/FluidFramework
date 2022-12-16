@@ -114,7 +114,6 @@ export const sequenceFieldEditor = {
             id,
             count,
             detachedBy,
-            detachIndex,
         };
 
         const returnTo: Mark<never> = {

@@ -185,9 +185,10 @@ export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId {
     count: NodeCount;
 }
 
-export interface ReturnFrom extends HasReattachFields, HasRevisionTag, HasMoveId {
+export interface ReturnFrom extends HasRevisionTag, HasMoveId {
     type: "ReturnFrom";
     count: NodeCount;
+    detachedBy: RevisionTag | undefined;
     tomb?: RevisionTag;
 }
 

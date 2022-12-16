@@ -588,44 +588,13 @@ export class ComposeQueue<T> {
         this.newMarks = new StackyIterator(newMarks);
     }
 
-    // TODO: Don't know if lists are empty until applying move effects.
-    // Probably should redesign this class to just be an iterator.
     public isEmpty(): boolean {
-        return this.baseMarks.done && this.newMarks.done;
+        return (this.getNextBaseMark() ?? this.getNextNewMark()) === undefined;
     }
 
     public pop(): ComposeMarks<T> {
-        let baseMark: Mark<T> | undefined = this.baseMarks.pop();
-        let newMark: Mark<T> | undefined = this.newMarks.pop();
-
-        if (baseMark !== undefined) {
-            const splitMarks = applyMoveEffectsToMark(
-                baseMark,
-                undefined,
-                this.moveEffects,
-                this.genId,
-                false,
-            );
-            baseMark = splitMarks[0];
-            for (let i = splitMarks.length - 1; i >= 0; i--) {
-                this.baseMarks.push(splitMarks[i]);
-            }
-        }
-
-        if (newMark !== undefined) {
-            const splitMarks = applyMoveEffectsToMark(
-                newMark,
-                this.newRevision,
-                this.moveEffects,
-                this.genId,
-                this.reassignNewMoveIds,
-            );
-            newMark = splitMarks[0];
-            for (let i = splitMarks.length - 1; i >= 0; i--) {
-                this.newMarks.push(splitMarks[i]);
-            }
-        }
-
+        let baseMark = this.getNextBaseMark();
+        let newMark = this.getNextNewMark();
         if (baseMark === undefined || newMark === undefined) {
             return { baseMark: this.baseMarks.pop(), newMark: this.newMarks.pop() };
         } else if (isAttach(newMark)) {
@@ -689,6 +658,44 @@ export class ComposeQueue<T> {
             // They therefore refer to the same range for that revision.
             return { baseMark, newMark };
         }
+    }
+
+    private getNextBaseMark(): Mark<T> | undefined {
+        return this.getNextMark(this.baseMarks, false, undefined);
+    }
+
+    private getNextNewMark(): Mark<T> | undefined {
+        return this.getNextMark(this.newMarks, this.reassignNewMoveIds, this.newRevision);
+    }
+
+    private getNextMark(
+        marks: StackyIterator<Mark<T>>,
+        reassignMoveIds: boolean,
+        revision: RevisionTag | undefined,
+    ): Mark<T> | undefined {
+        let mark: Mark<T> | undefined;
+        while (mark === undefined) {
+            mark = marks.pop();
+            if (mark === undefined) {
+                return undefined;
+            }
+
+            const splitMarks = applyMoveEffectsToMark(
+                mark,
+                revision,
+                this.moveEffects,
+                this.genId,
+                reassignMoveIds,
+            );
+
+            mark = splitMarks[0];
+            for (let i = splitMarks.length - 1; i >= 0; i--) {
+                marks.push(splitMarks[i]);
+                this.moveEffects.validatedMarks.add(splitMarks[i]);
+            }
+        }
+
+        return mark;
     }
 }
 

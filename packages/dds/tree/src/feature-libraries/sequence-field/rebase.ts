@@ -172,42 +172,12 @@ class RebaseQueue<T> {
     }
 
     public isEmpty(): boolean {
-        return this.baseMarks.done && this.newMarks.done;
+        return (this.getNextBaseMark() ?? this.getNextNewMark()) === undefined;
     }
 
     public pop(): RebaseMarks<T> {
-        let baseMark = this.baseMarks.pop();
-        let newMark = this.newMarks.pop();
-
-        if (baseMark !== undefined) {
-            const splitMarks = applyMoveEffectsToMark(
-                baseMark,
-                undefined,
-                this.moveEffects,
-                this.genId,
-                false,
-            );
-            baseMark = splitMarks[0];
-            for (let i = splitMarks.length - 1; i >= 0; i--) {
-                this.baseMarks.push(splitMarks[i]);
-            }
-        }
-
-        if (newMark !== undefined) {
-            const splitMarks = applyMoveEffectsToMark(
-                newMark,
-                undefined,
-                this.moveEffects,
-                this.genId,
-                true,
-            );
-            newMark = splitMarks[0];
-            this.moveEffects.validatedMarks.add(newMark);
-            for (let i = splitMarks.length - 1; i >= 0; i--) {
-                this.newMarks.push(splitMarks[i]);
-                this.moveEffects.validatedMarks.add(splitMarks[i]);
-            }
-        }
+        const baseMark = this.getNextBaseMark();
+        const newMark = this.getNextNewMark();
 
         if (baseMark === undefined || newMark === undefined) {
             return {
@@ -279,6 +249,44 @@ class RebaseQueue<T> {
                 return { baseMark, newMark };
             }
         }
+    }
+
+    private getNextBaseMark(): Mark<T> | undefined {
+        return this.getNextMark(this.baseMarks, false, undefined);
+    }
+
+    private getNextNewMark(): Mark<T> | undefined {
+        return this.getNextMark(this.newMarks, true, undefined);
+    }
+
+    private getNextMark(
+        marks: StackyIterator<Mark<T>>,
+        reassignMoveIds: boolean,
+        revision: RevisionTag | undefined,
+    ): Mark<T> | undefined {
+        let mark: Mark<T> | undefined;
+        while (mark === undefined) {
+            mark = marks.pop();
+            if (mark === undefined) {
+                return undefined;
+            }
+
+            const splitMarks = applyMoveEffectsToMark(
+                mark,
+                revision,
+                this.moveEffects,
+                this.genId,
+                reassignMoveIds,
+            );
+
+            mark = splitMarks[0];
+            for (let i = splitMarks.length - 1; i >= 0; i--) {
+                marks.push(splitMarks[i]);
+                this.moveEffects.validatedMarks.add(splitMarks[i]);
+            }
+        }
+
+        return mark;
     }
 }
 

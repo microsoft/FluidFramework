@@ -105,9 +105,6 @@ function invertMark<TNodeChange>(
                         id: mark.id,
                         count: mark.count,
                         detachedBy: mark.revision ?? revision,
-
-                        // TOOD: This is incorrect
-                        detachIndex: inputIndex,
                     },
                 ];
             }
