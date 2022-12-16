@@ -665,7 +665,6 @@ export class SharedMatrix<T = any>
         // locally removed and the row/col handles recycled.  If this happens, the pendingLocalSeq will
         // be 'undefined' or > 'localSeq'.
         assert(!(pendingLocalSeq < localSeq),
-            // eslint-disable-next-line max-len
             0x023 /* "The 'localSeq' of pending write (if any) must be <= the localSeq of the currently processed op." */);
 
         // If this is the most recent write to the cell by the local client, the stored localSeq

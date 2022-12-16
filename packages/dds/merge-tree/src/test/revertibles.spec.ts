@@ -228,7 +228,7 @@ describe("MergeTree.Revertibles", () => {
         ops.push(clients.C.makeOpMessage(clients.C.annotateRangeLocal(3, 4, { test: "C" }, undefined), ++seq));
 
         ops.splice(0).forEach((op) => clients.all.forEach((c) => c.applyMsg(op)));
-        logger.validate();
+        logger.validate({ baseText: "134" });
 
         try {
             revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
@@ -237,7 +237,7 @@ describe("MergeTree.Revertibles", () => {
             throw logger.addLogsToError(e);
         }
 
-        logger.validate();
+        logger.validate({ baseText: "1234" });
     });
 
     describe("Revertibles work as expected when a pair of markers and text is involved", ()=>{
