@@ -3,14 +3,18 @@
  * Licensed under the MIT License.
  */
 
+// The mock service is not intended to be directly visible to other parts of the app sample.
+/* eslint-disable import/no-internal-modules */
+
 import { Server } from 'http';
 
+import express from "express";
 import request from "supertest";
-import { ExternalDataSource } from '../src/externalData';
 
-// The mock service is not intended to be directly visible to other parts of the app sample.
-// eslint-disable-next-line import/no-internal-modules
+import { ExternalDataSource } from '../src/externalData';
 import { initializeCustomerService } from "../src/mock-customer-service";
+
+/* eslint-enable import/no-internal-modules */
 
 describe("mockCustomerService", () => {
     let externalDataSource: ExternalDataSource | undefined;
@@ -30,12 +34,8 @@ describe("mockCustomerService", () => {
             server = undefined;
             externalDataSource!.debugResetData();
 
-            _server.close((error) => {
-                if (error) {
-                    reject(error)
-                } else {
-                    resolve();
-                }
+            _server.close(() => {
+                resolve();
             });
         });
     });
@@ -68,4 +68,39 @@ describe("mockCustomerService", () => {
         const externalData = await externalDataSource!.fetchData();
         expect(externalData).toEqual(oldData); // Sanity check that we didn't blow away data
     });
+
+    it("register-for-webhook", async () => {
+        // Set up mock local service, which will be registered as webhook listener
+        const localServicePort = 5328;
+        const localServiceApp = express();
+
+        let wasHookNotifiedForChange = false;
+
+        localServiceApp.get("/task-list-hook", (request, result) => {
+            wasHookNotifiedForChange = true;
+        });
+
+        const localServer = localServiceApp.listen(localServicePort);
+
+        try {
+            // Register our local service URL with customer service for webhook subscription
+            const localServiceListenerUrl = `http://localhost:${localServicePort}/task-list-hook`;
+            await request(server!).post("/register-for-webhook").send({ url: localServiceListenerUrl }).expect(200);
+
+            // Submit data change to customer service
+            await request(server!).post("/set-tasks").send({taskList: "42:Determine meaning of life:37"}).expect(200);
+
+            // Verify that our subscriber was notified to the changes.
+            await setTimeout(() => {
+                expect(wasHookNotifiedForChange).toBe(true);
+            }, 10000);
+        } finally {
+            await new Promise<void>((resolve) => {
+                localServer.close(() => {
+                    resolve();
+                });
+            });
+        }
+
+    })
 });

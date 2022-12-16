@@ -68,7 +68,7 @@ export async function initializeCustomerService(): Promise<Server> {
     /**
      * Initializes REST-style content updates for data changes to the external data.
      */
-    expressApp.get("/register-for-webhook", (request, result) => {
+    expressApp.post("/register-for-webhook", (request, result) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const subscriberUrl = request.body.url as string;
         if (subscriberUrl === undefined) {

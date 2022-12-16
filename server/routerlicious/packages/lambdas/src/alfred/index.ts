@@ -482,7 +482,7 @@ export function configureWebSocketServices(
 
                 request({
                     method: 'POST',
-                    uri: `localhost:${customerServicePort}/register-for-webhook`,
+                    uri: `http://localhost:${customerServicePort}/register-for-webhook`,
                     strictSSL: false,
                     body: JSON.stringify({url})
                 }, (error, response) => {
