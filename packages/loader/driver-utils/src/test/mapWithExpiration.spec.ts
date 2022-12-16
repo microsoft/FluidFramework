@@ -7,8 +7,7 @@ import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { MapWithExpiration } from "../mapWithExpiration";
 
-//* ONLY!
-describe.only("MapWithExpiration", () => {
+describe("MapWithExpiration", () => {
     let clock: SinonFakeTimers;
     let map: MapWithExpiration<number, string>;
 
