@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import request from "request";
 import {
     ConnectionMode,
     IClient,
@@ -40,6 +41,7 @@ import {
     generateClientId,
     getRandomInt,
 } from "../utils";
+
 
 const summarizerClientType = "summarizer";
 
@@ -213,6 +215,7 @@ export function configureWebSocketServices(
     submitSignalThrottler?: core.IThrottler,
     throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
     verifyMaxMessageSize?: boolean,
+    httpServer?: core.IHttpServer,
 ) {
     webSocketServer.on("connection", (socket: core.IWebSocket): void => {
         /**
@@ -470,6 +473,31 @@ export function configureWebSocketServices(
             (connectedMessage as any).timestamp = connectedTimestamp;
 
             // TODO: KLUDGE webhook connection
+            if(httpServer !== undefined) {
+                const customerServicePort = process.env.MOCK_CUSTOMER_SERVICE_PORT ?? 5237;
+
+                const url = `${httpServer.address().address}/task-list-hook`; // TODO: verify this
+                console.log(`Registering for webhook at ${url}...`);
+
+                request({
+                    method: 'GET',
+                    uri: `localhost:${customerServicePort}/register-for-webhook`,
+                    strictSSL: false,
+                    body: JSON.stringify({url})
+                }, (error, response) => {
+                    if(error) {
+                        console.error("Registering for webhook failed due to an error:");
+                        console.error(error);
+                    } else {
+                        console.log(`Webhook registration response:`);
+                        console.log(response);
+                    }
+                });
+
+                httpServer.on("task-list-hook", () => {
+                    // TODO: invoke signal
+                })
+            }
 
             return {
                 connection: connectedMessage,
