@@ -19,7 +19,7 @@ import { createClientsAtInitialState, TestClientLogger } from "./testClientLogge
 
 const allOperations: TestOperation[] = [
     removeRange,
-    annotateRange, // Bug AB2724: properties in rollback client don't match oracle
+    annotateRange,
     insertAtRefPos,
 ];
 
