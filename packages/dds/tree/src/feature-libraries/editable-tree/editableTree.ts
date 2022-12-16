@@ -26,6 +26,7 @@ import {
 } from "../../core";
 import { brand, fail } from "../../util";
 import { FieldKind, Multiplicity } from "../modular-schema";
+import { singleMapTreeCursor } from "../mapTreeCursor";
 import {
     AdaptingProxyHandler,
     adaptWithProxy,
@@ -38,6 +39,13 @@ import {
     keyIsValidIndex,
     getOwnArrayKeys,
     assertPrimitiveValueType,
+    ContextuallyTypedNodeData,
+    MarkedArrayLike,
+    arrayLikeMarkerSymbol,
+    ContextuallyTypedNodeDataObject,
+    applyFieldTypesFromContext,
+    applyTypesFromContext,
+    getPossibleTypes,
 } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 
@@ -84,12 +92,30 @@ export const getField: unique symbol = Symbol("editable-tree:getField()");
 export const createField: unique symbol = Symbol("editable-tree:createField()");
 
 /**
+ * A symbol to get the function, which replaces a field of {@link EditableTree},
+ * in contexts where string keys are already in use for fields.
+ */
+export const replaceField: unique symbol = Symbol("editable-tree:replaceField()");
+
+/**
  * A tree which can be traversed and edited.
  *
  * When iterating, only visits non-empty fields.
  * To discover empty fields, inspect the schema using {@link typeSymbol}.
+ *
+ * The tree can be inspected by means of the built-in JS functions e.g.
+ * ```
+ * const root = context.unwrappedRoot;
+ * for (const key of Reflect.ownKeys(root)) { ... }
+ * // OR
+ * if ("foo" in root) { ... }
+ * ```
+ * where `context` is a common `EditableTreeContext`.
+ *
+ * The tree can be edited either by using its symbol-based "toolbox" (e.g. {@link createField})
+ * or using a simple assignment operator (see `EditableTreeContext.unwrappedRoot` for more details).
  */
-export interface EditableTree extends Iterable<EditableField> {
+export interface EditableTree extends Iterable<EditableField>, ContextuallyTypedNodeDataObject {
     /**
      * The name of the node type.
      */
@@ -142,6 +168,9 @@ export interface EditableTree extends Iterable<EditableField> {
      * to set the value of the field or, more precisely, of its existing node using the simple assignment operator (`=`)
      * if the field is defined as `optional` or `value`, its node {@link isPrimitive} and the value is a {@link PrimitiveValue}.
      * Concurrently setting the value will follow the "last-write-wins" semantics.
+     *
+     * See `EditableTreeContext.unwrappedRoot` for how to use the simple assignment operator in other cases,
+     * as it works the same way for all children of the tree starting from its root.
      */
     // TODO: update docs for concurrently deleting the field.
     [key: FieldKey]: UnwrappedEditableField;
@@ -168,6 +197,25 @@ export interface EditableTree extends Iterable<EditableField> {
      * and for `sequence` fields the content ends up in order of "sequenced-last" to "sequenced-first".
      */
     [createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
+
+    /**
+     * Replaces the field of this node.
+     *
+     * The content of the field must follow the {@link Multiplicity} of the {@link FieldKind}:
+     * - use a single cursor when replacing an `optional` or a `value` field;
+     * - use array of cursors when replacing a `sequence` field.
+     *
+     * Use `delete` operator to delete `optional` or `sequence` fields of this node, if any.
+     *
+     * When replacing a field in a concurrent environment,
+     * the following merge semantics will be applied depending on the field multiplicity:
+     * - optional and value fields will be overwritten in a "last-write-wins" fashion,
+     * - for sequence fields, the nodes present in the field on the issuing client will be
+     * deleted and the newContent will be inserted. This means concurrent inserts (including
+     * calls to `replaceField`) can all contribute content. In the future this will likely be
+     * replaced with merge semantics that is more consistent with that of optional and value fields.
+     */
+    [replaceField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
 }
 
 /**
@@ -185,13 +233,39 @@ export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
 export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableField;
 
 /**
+ * Unwrapped field.
+ * Non-sequence multiplicities are unwrapped to the child tree or `undefined` if there is none.
+ * Sequence multiplicities are handled with {@link EditableField}.
+ * See {@link UnwrappedEditableTree} for how the children themselves are unwrapped.
+ */
+export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EditableField;
+
+/**
  * A field of an {@link EditableTree} as an array-like sequence of unwrapped nodes (see {@link UnwrappedEditableTree}).
  *
  * The number of nodes depends on a field's multiplicity.
  * When iterating, the nodes are read at once. Use index access to read the nodes "lazily".
  * Use `getNode` to get a node without unwrapping.
+ *
+ * It is possible to create/replace a node or to set its value by using the simple assignment operator (`=`)
+ * and providing an input data as a {@link ContextuallyTypedNodeData}.
+ * See `EditableTreeContext.unwrappedRoot` for more details, as it works the same way for all
+ * children of the tree starting from its root.
+ *
+ * It is forbidden to delete the node using the `delete` operator, use the `deleteNodes()` method instead.
  */
-export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
+export interface EditableField
+    // Here, the `UnwrappedEditableTree | ContextuallyTypedNodeData` union is used
+    // due to a lacking support for variant accessors for index signatures in TypeScript,
+    // see https://github.com/microsoft/TypeScript/issues/43826.
+    // Otherwise it would be better to have a setter accepting the `ContextuallyTypedNodeData`
+    // and a getter returning the `UnwrappedEditableTree` for the numeric indexed access
+    // similar to, e.g., the getter and setter of the `EditableTreeContext.root`.
+    // Thus, in most cases this must be understood as:
+    // - "returns `UnwrappedEditableTree` when accessing the nodes by their indices" and
+    // - "can also accept `ContextuallyTypedNodeData` when setting the nodes by their indices".
+    // TODO: replace the numeric indexed access with getters and setters if possible.
+    extends MarkedArrayLike<UnwrappedEditableTree | ContextuallyTypedNodeData> {
     /**
      * The `FieldSchema` of this field.
      */
@@ -223,15 +297,6 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
     getNode(index: number): EditableTree;
 
     /**
-     * Gets an iterator iterating over the nodes (unwrapped) of this field.
-     * See {@link UnwrappedEditableTree} for what does "unwrapped" mean.
-     * It reads all nodes at once before the iteration starts to get a "snapshot" of this field.
-     * It might be inefficient regarding resources, but avoids situations
-     * when the field is getting changed while iterating.
-     */
-    [Symbol.iterator](): IterableIterator<UnwrappedEditableTree>;
-
-    /**
      * Inserts new nodes into this field.
      */
     insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
@@ -246,23 +311,17 @@ export interface EditableField extends ArrayLike<UnwrappedEditableTree> {
     deleteNodes(index: number, count?: number): void;
 
     /**
-     * Nodes of this field, indexed by their numeric indices.
+     * Sequentially replaces the nodes of this field.
      *
-     * It is possible to use this indexed access to set the value of the node using the simple assignment operator (`=`)
-     * if the node {@link isPrimitive} and the value is a {@link PrimitiveValue}.
-     * Concurrently setting the value will follow the "last-write-wins" semantics.
-     * It is forbidden to delete the node using the `delete` operator, use the `deleteNodes()` method instead.
+     * @param index - the index of the first node to be replaced. It must be in a range of existing node indices.
+     * @param count - the number of nodes to be replaced. If not provided, replaces all nodes
+     * starting from the index and up to the length of the field.
+     *
+     * Note that, if multiple clients concurrently call replace on a sequence field,
+     * all the insertions will be preserved.
      */
-    [index: number]: UnwrappedEditableTree;
+    replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
 }
-
-/**
- * Unwrapped field.
- * Non-sequence multiplicities are unwrapped to the child tree or `undefined` if there is none.
- * Sequence multiplicities are handled with {@link EditableField}.
- * See {@link UnwrappedEditableTree} for how the children themselves are unwrapped.
- */
-export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EditableField;
 
 /**
  * This is a base class for `NodeProxyTarget` and `FieldProxyTarget`, which uniformly handles cursors and anchors.
@@ -482,6 +541,45 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
                 fail("`Forbidden` fields may not be deleted.");
         }
     }
+
+    public replaceField(fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void {
+        const fieldKind = this.lookupFieldKind(fieldKey);
+        const path = this.cursor.getPath();
+        switch (fieldKind.multiplicity) {
+            case Multiplicity.Optional: {
+                assert(
+                    !Array.isArray(newContent),
+                    "It is invalid to replace the optional field using the array data.",
+                );
+                this.context.setOptionalField(path, fieldKey, newContent, !this.has(fieldKey));
+                break;
+            }
+            case Multiplicity.Sequence: {
+                this.cursor.enterField(fieldKey);
+                const length = this.cursor.getFieldLength();
+                this.cursor.exitField();
+                /**
+                 * `replaceNodes` has different merge semantics than the `replaceField` would ideally offer:
+                 * `replaceNodes` should not overwrite concurrently inserted content while `replaceField` should.
+                 * We currently use `replaceNodes` here because the low-level editing API
+                 * for the desired `replaceField` semantics is not yet avaialble.
+                 */
+                // TODO: update implementation once the low-level editing API is available.
+                this.context.replaceNodes(path, fieldKey, 0, length, newContent);
+                break;
+            }
+            case Multiplicity.Value: {
+                assert(
+                    !Array.isArray(newContent),
+                    "It is invalid to replace the value field using the array data.",
+                );
+                this.context.setValueField(path, fieldKey, newContent);
+                break;
+            }
+            default:
+                fail("`Forbidden` fields may not be replaced as they never exist.");
+        }
+    }
 }
 
 /**
@@ -512,6 +610,8 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
                 return target.getField.bind(target);
             case createField:
                 return target.createField.bind(target);
+            case replaceField:
+                return target.replaceField.bind(target);
             default:
                 return undefined;
         }
@@ -519,22 +619,44 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
     set: (
         target: NodeProxyTarget,
         key: string | symbol,
-        value: unknown,
+        value: ContextuallyTypedNodeData,
         receiver: NodeProxyTarget,
     ): boolean => {
         if (typeof key === "string" || symbolIsFieldKey(key)) {
             const fieldKey: FieldKey = brand(key);
-            const fieldKind = target.lookupFieldKind(fieldKey);
-            assert(
-                fieldKind.multiplicity !== Multiplicity.Sequence,
-                0x451 /* Cannot set a value of a sequence field. */,
-            );
-            assert(
-                target.has(fieldKey),
-                0x452 /* The field does not exist. Create the field first using `newFieldSymbol`. */,
-            );
-            const field = target.proxifyField(fieldKey, false);
-            field.getNode(0)[valueSymbol] = value;
+            const fieldSchema = target.getFieldSchema(fieldKey);
+            const multiplicity = target.lookupFieldKind(fieldKey).multiplicity;
+            if (target.has(fieldKey) && isPrimitiveValue(value)) {
+                assert(
+                    multiplicity === Multiplicity.Value || multiplicity === Multiplicity.Optional,
+                    "single value provided for an unsupported field",
+                );
+                const possibleTypes = getPossibleTypes(
+                    target.context.schema,
+                    fieldSchema.types,
+                    value,
+                );
+                if (possibleTypes.length > 1) {
+                    const field = target.proxifyField(fieldKey, false);
+                    const node = field.getNode(0);
+                    assertPrimitiveValueType(value, node[typeSymbol]);
+                    node[valueSymbol] = value;
+                    return true;
+                }
+            }
+            const content = applyFieldTypesFromContext(target.context.schema, fieldSchema, value);
+            const cursors = content.map(singleMapTreeCursor);
+            // This unconditionally uses `replaceField`, which differs from `createField`
+            // only for sequence fields while using `insertNodes` instead of `replaceNodes`
+            // (plus some difference in assertions, which is ignored here for a sake of a better
+            // consistency with the low-level editing API).
+            // Since `insertNodes` and `replaceNodes` have same merge semantics with `replaceNodes`
+            // being a bit more general purpose function, it's ok to just use that.
+            if (multiplicity !== Multiplicity.Sequence) {
+                target.replaceField(fieldKey, cursors[0]);
+            } else {
+                target.replaceField(fieldKey, cursors);
+            }
             return true;
         }
         if (key === valueSymbol) {
@@ -564,6 +686,8 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
             case indexSymbol:
             case Symbol.iterator:
             case getField:
+            case createField:
+            case replaceField:
                 return true;
             case valueSymbol:
                 // Could do `target.value !== ValueSchema.Nothing`
@@ -640,6 +764,20 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
                     value: target.getField.bind(target),
                     writable: false,
                 };
+            case createField:
+                return {
+                    configurable: true,
+                    enumerable: false,
+                    value: target.createField.bind(target),
+                    writable: false,
+                };
+            case replaceField:
+                return {
+                    configurable: true,
+                    enumerable: false,
+                    value: target.replaceField.bind(target),
+                    writable: false,
+                };
             default:
                 return undefined;
         }
@@ -654,6 +792,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
     public readonly fieldKey: FieldKey;
     public readonly fieldSchema: FieldSchema;
     public readonly primaryType?: TreeSchemaIdentifier;
+    public readonly [arrayLikeMarkerSymbol]: true;
 
     constructor(
         context: ProxyContext,
@@ -666,6 +805,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
         this.fieldKey = cursor.getFieldKey();
         this.primaryType = primaryType;
         this.fieldSchema = fieldSchema;
+        this[arrayLikeMarkerSymbol] = true;
     }
 
     get [proxyTargetSymbol](): FieldProxyTarget {
@@ -737,7 +877,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
         // assert(fieldKind.multiplicity === Multiplicity.Sequence, "The field must be of a sequence kind.");
         if (fieldKind.multiplicity !== Multiplicity.Sequence) {
             assert(
-                this.length === 0,
+                this.length === 0 && (!Array.isArray(newContent) || newContent.length <= 1),
                 0x455 /* A non-sequence field cannot have more than one node. */,
             );
         }
@@ -763,6 +903,32 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
         const _count = count === undefined || count > maxCount ? maxCount : count;
         const fieldPath = this.cursor.getFieldPath();
         this.context.deleteNodes(fieldPath.parent, fieldPath.field, index, _count);
+    }
+
+    public replaceNodes(
+        index: number,
+        newContent: ITreeCursor | ITreeCursor[],
+        count?: number,
+    ): void {
+        const fieldKind = getFieldKind(this.fieldSchema);
+        // TODO: currently for all field kinds the nodes can be created by editor using `sequenceField.insert()`.
+        // Uncomment the next line and remove non-sequence related code when the editor will become more schema-aware.
+        // assert(fieldKind.multiplicity === Multiplicity.Sequence, "The field must be of a sequence kind.");
+        if (fieldKind.multiplicity !== Multiplicity.Sequence) {
+            assert(
+                this.length <= 1 && (!Array.isArray(newContent) || newContent.length <= 1),
+                "A non-sequence field cannot have more than one node.",
+            );
+        }
+        assert(
+            (this.length === 0 && index === 0) || keyIsValidIndex(index, this.length),
+            "Index must be less than length or, if the field is empty, be 0.",
+        );
+        if (count !== undefined) assert(count >= 0, "Count must be non-negative.");
+        const maxCount = this.length - index;
+        const _count = count === undefined || count > maxCount ? maxCount : count;
+        const fieldPath = this.cursor.getFieldPath();
+        this.context.replaceNodes(fieldPath.parent, fieldPath.field, index, _count, newContent);
     }
 }
 
@@ -809,14 +975,30 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
                 return target;
             case Symbol.iterator:
                 return target[Symbol.iterator].bind(target);
+            case arrayLikeMarkerSymbol:
+                return true;
             default:
         }
         return undefined;
     },
-    set: (target: FieldProxyTarget, key: string, value: unknown, receiver: unknown): boolean => {
-        assert(keyIsValidIndex(key, target.length), 0x459 /* The node does not exist. */);
-        const node = target.proxifyNode(Number(key), false);
-        node[valueSymbol] = value;
+    set: (
+        target: FieldProxyTarget,
+        key: string,
+        value: ContextuallyTypedNodeData,
+        receiver: unknown,
+    ): boolean => {
+        const cursor = singleMapTreeCursor(
+            applyTypesFromContext(target.context.schema, target.fieldSchema.types, value),
+        );
+        // This is just a cheap way to check if there might be a node at the given index.
+        // An implementation of the target methods holds all relevant key assertions.
+        // TODO: maybe refactor this to add a real node existence check if desired,
+        // but it might be costly regarding performance.
+        if (keyIsValidIndex(key, target.length)) {
+            target.replaceNodes(Number(key), cursor, 1);
+        } else {
+            target.insertNodes(Number(key), cursor);
+        }
         return true;
     },
     deleteProperty: (target: FieldProxyTarget, key: string): boolean => {
@@ -828,6 +1010,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
             switch (key) {
                 case Symbol.iterator:
                 case proxyTargetSymbol:
+                case arrayLikeMarkerSymbol:
                     return true;
                 default:
             }

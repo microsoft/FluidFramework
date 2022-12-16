@@ -31,6 +31,14 @@ export const defaultProvider = new nconf.Provider({}).use("memory").defaults({
         enabled: false,
         endpoint: "http://localhost:3005",
     },
+    git: {
+        lib: {
+            name: "nodegit"
+        },
+        persistLatestFullSummary: false,
+        enableLowIoWrite: false,
+        repoPerDocEnabled: false
+    }
 });
 
 const rimraf = util.promisify(rimrafCallback);
