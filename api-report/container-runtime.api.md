@@ -334,6 +334,7 @@ export interface IConnectableRuntime {
 export interface IContainerRuntimeOptions {
     readonly compressionOptions?: ICompressionRuntimeOptions;
     readonly enableOfflineLoad?: boolean;
+    readonly enableOpReentryCheck?: boolean;
     readonly flushMode?: FlushMode;
     // (undocumented)
     readonly gcOptions?: IGCRuntimeOptions;
