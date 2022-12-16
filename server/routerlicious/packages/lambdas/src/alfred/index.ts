@@ -14,6 +14,7 @@ import {
     ISignalMessage,
     NackErrorType,
     ScopeType,
+    SignalType,
 } from "@fluidframework/protocol-definitions";
 import {
     canSummarize,
@@ -480,7 +481,7 @@ export function configureWebSocketServices(
                 console.log(`Registering for webhook at ${url}...`);
 
                 request({
-                    method: 'GET',
+                    method: 'POST',
                     uri: `localhost:${customerServicePort}/register-for-webhook`,
                     strictSSL: false,
                     body: JSON.stringify({url})
@@ -495,7 +496,23 @@ export function configureWebSocketServices(
                 });
 
                 httpServer.on("task-list-hook", () => {
-                    // TODO: invoke signal
+                    // Only for debugging purposes
+                    const signalMessageRuntimeMessage : ISignalMessage = {
+                        clientId: null, // system signal
+                        content: JSON.stringify({
+                            type: SignalType.RuntimeMessage,
+                            contents: {
+                                content: {
+                                    type: "ExternalDataChanged",
+                                    content: "Data has changed upstream. Please import new data."
+                                },
+                                type: SignalType.RuntimeMessage
+                            }
+                        })
+                    }
+                    console.log("\nsignalMessageRuntimeMessage\n");
+                    console.log(signalMessageRuntimeMessage);
+                    socket.emitToRoom(getRoomId(room), "signal", signalMessageRuntimeMessage );
                 })
             }
 
