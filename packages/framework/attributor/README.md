@@ -17,7 +17,7 @@ const ContainerRuntimeWithAttribution = mixinAttributor(ContainerRuntime);
 class ContainerRuntimeFactory implements IRuntimeFactory {
     public async instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime> {
         const attributor = createRuntimeAttributor();
-        // ...make this attributor accessible however you deem fit; e.g. by registering it on a DependencyContainer.
+        // ...make this attributor accessible to your application however you deem fit; e.g. by registering it on a DependencyContainer.
         // To inject loading and storing of attribution data on your runtime, provide a scope implementing IProvideRuntimeAttributor:
         const scope: FluidObject<IProvideRuntimeAttributor> = { IRuntimeAttributor: attributor };
         const runtime = await ContainerRuntimeWithAttribution.load(
