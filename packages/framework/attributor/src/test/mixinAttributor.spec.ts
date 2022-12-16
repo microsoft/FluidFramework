@@ -102,12 +102,10 @@ describe("mixinAttributor", () => {
         (context.deltaManager as MockDeltaManager).emit("op", op);
         const { summary } = await containerRuntime.summarize({ fullTree: true, trackState: false, runGC: false });
         
-        const { attributor } = summary.tree;
+        const { ".attributor": attributor } = summary.tree;
         assert(attributor !== undefined && attributor.type === SummaryType.Tree, "summary should contain attributor data");
-        const opAttributorTree = attributor.tree.op;
-        assert(opAttributorTree.type === SummaryType.Tree);
-        const attributorBlob = opAttributorTree.tree.attributor;
-        assert(attributorBlob.type === SummaryType.Blob && typeof attributorBlob.content === "string");
+        const opAttributorBlob = attributor.tree.op;
+        assert(opAttributorBlob.type === SummaryType.Blob && typeof opAttributorBlob.content === "string");
         const decoder = chain(
             new AttributorSerializer(
                 (entries) => new Attributor(entries),
@@ -115,7 +113,7 @@ describe("mixinAttributor", () => {
             ),
             makeLZ4Encoder()
         );
-        const decoded = decoder.decode(attributorBlob.content);
+        const decoded = decoder.decode(opAttributorBlob.content);
         assert.deepEqual(
             decoded.getAttributionInfo(op.sequenceNumber!),
             { timestamp: op.timestamp, user: context.audience?.getMember(op.clientId!)?.user }
@@ -151,16 +149,9 @@ describe("mixinAttributor", () => {
         const snapshot: ISnapshotTree = {
             blobs: {},
             trees: {
-                attributor: {
-                    blobs: {},
-                    trees: {
-                        op: {
-                            blobs: {
-                                attributor: opAttributorBlobId
-                            },
-                            trees: {}
-                        }
-                    }
+                ".attributor": {
+                    blobs: { op: opAttributorBlobId },
+                    trees: {},
                 }
             }
         };
@@ -203,7 +194,7 @@ describe("mixinAttributor", () => {
         assert(maybeProvidesAttributor.IRuntimeAttributor !== undefined);
 
         const { summary } = await containerRuntime.summarize({ fullTree: true, trackState: false, runGC: false });
-        assert(summary.tree.attributor === undefined);
+        assert(summary.tree[".attributor"] === undefined);
     });
 });
 
