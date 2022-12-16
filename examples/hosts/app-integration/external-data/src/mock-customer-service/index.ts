@@ -23,8 +23,7 @@ import { ExternalDataSource } from '../externalData';
 /**
  * The port used by the mock customer service.
  */
-export const customerServicePort =
-    process.env.MOCK_CUSTOMER_SERVICE_PORT ?? 5237;
+export const customerServicePort = process.env.MOCK_CUSTOMER_SERVICE_PORT ?? 5237;
 
 /**
  * The express app instance.
@@ -69,7 +68,7 @@ export async function initializeCustomerService(): Promise<Server> {
     /**
      * Initializes REST-style content updates for data changes to the external data.
      */
-    expressApp.get("/initialize-webhook", (request, result) => {
+    expressApp.get("/register-for-webhook", (request, result) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const subscriberUrl = request.body.url as string;
         if (subscriberUrl === undefined) {
