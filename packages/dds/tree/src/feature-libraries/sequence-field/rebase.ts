@@ -306,7 +306,9 @@ function rebaseMark<TNodeChange>(
         case "MDelete":
             if (
                 isObjMark(currMark) &&
-                (currMark.type === "MoveOut" || currMark.type === "MMoveOut")
+                (currMark.type === "MoveOut" ||
+                    currMark.type === "MMoveOut" ||
+                    currMark.type === "ReturnFrom")
             ) {
                 removeMoveDest(moveEffects, currMark.id);
             }

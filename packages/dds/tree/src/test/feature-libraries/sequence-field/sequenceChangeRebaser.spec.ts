@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
-import { makeAnonChange, RevisionTag, tagChange, tagInverse } from "../../../rebase";
+import { RevisionTag, tagChange, tagInverse } from "../../../rebase";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
@@ -13,7 +13,6 @@ import { deepFreeze, fakeRepair } from "../../utils";
 import {
     checkDeltaEquality,
     composeAnonChanges,
-    getMaxId,
     getMaxIdTagged,
     normalizeMoveIds,
     rebaseTagged,
@@ -50,7 +49,9 @@ describe("SequenceField - Rebaser Axioms", () => {
             for (const [name2, makeChange2] of testChanges) {
                 if (
                     name2 === "Delete" &&
-                    ["SetValue", "Delete", "MoveOut", "MoveIn"].includes(name1)
+                    ["SetValue", "Delete", "MoveOut", "MoveIn", "ReturnFrom", "ReturnTo"].includes(
+                        name1,
+                    )
                 ) {
                     it.skip(`(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`, () => {
                         /**
@@ -95,29 +96,17 @@ describe("SequenceField - Rebaser Axioms", () => {
                 it(`${name1} ↷ [${name2}, ${name2}⁻¹, ${name2}] => ${name1} ↷ ${name2}`, () => {
                     for (let offset1 = 1; offset1 <= 4; ++offset1) {
                         for (let offset2 = 1; offset2 <= 4; ++offset2) {
-                            const change1 = makeChange1(offset1);
-                            const change2 = makeChange2(offset2);
-                            const inverse2 = SF.invert(makeAnonChange(change2), TestChange.invert);
-                            const r1 = SF.rebase(
-                                change1,
-                                makeAnonChange(change2),
-                                TestChange.rebase,
-                                TestChange.newIdAllocator(getMaxId(change1, change2)),
+                            const change1 = tagChange(makeChange1(offset1), brand(1));
+                            const change2 = tagChange(makeChange2(offset2), brand(2));
+                            const inverse2 = tagInverse(
+                                SF.invert(change2, TestChange.invert),
+                                change2.revision,
                             );
-                            const r2 = SF.rebase(
-                                r1,
-                                makeAnonChange(inverse2),
-                                TestChange.rebase,
-                                TestChange.newIdAllocator(getMaxId(r1, inverse2)),
-                            );
-                            const r3 = SF.rebase(
-                                r2,
-                                makeAnonChange(change2),
-                                TestChange.rebase,
-                                TestChange.newIdAllocator(getMaxId(r2, change2)),
-                            );
-                            normalizeMoveIds(r1);
-                            normalizeMoveIds(r3);
+                            const r1 = rebaseTagged(change1, change2);
+                            normalizeMoveIds(r1.change);
+                            const r2 = rebaseTagged(r1, inverse2);
+                            const r3 = rebaseTagged(r2, change2);
+                            normalizeMoveIds(r3.change);
                             assert.deepEqual(r3, r1);
                         }
                     }
