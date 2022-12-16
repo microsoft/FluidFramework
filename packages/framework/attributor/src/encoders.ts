@@ -8,9 +8,6 @@ import { IUser } from "@fluidframework/protocol-definitions";
 import { IAttributor, AttributionInfo } from "./attributor";
 import { InternedStringId, MutableStringInterner } from "./stringInterner";
 
-/**
- * @alpha
- */
 export interface Encoder<TDecoded, TEncoded> {
 	encode(decoded: TDecoded): TEncoded;
 
@@ -19,14 +16,8 @@ export interface Encoder<TDecoded, TEncoded> {
 
 // Note: the encoded format doesn't matter as long as it's serializable;
 // these types could be weakened.
-/**
- * @alpha
- */
 export type TimestampEncoder = Encoder<number[], number[]>;
 
-/**
- * @alpha
- */
 export const deltaEncoder: TimestampEncoder = {
 	encode: (timestamps: number[]) => {
 		const deltaTimestamps: number[] = new Array(timestamps.length);
@@ -49,14 +40,8 @@ export const deltaEncoder: TimestampEncoder = {
 	},
 };
 
-/**
- * @internal
- */
 export type IAttributorSerializer = Encoder<IAttributor, SerializedAttributor>;
 
-/**
- * @internal
- */
 export interface SerializedAttributor {
 	interner: readonly string[]; /* result of calling getSerializable() on a StringInterner */
 	seqs: number[];
@@ -64,9 +49,6 @@ export interface SerializedAttributor {
 	attributionRefs: InternedStringId[];
 }
 
-/**
- * @internal
- */
 export class AttributorSerializer implements IAttributorSerializer {
 	constructor(
 		private readonly makeAttributor: (entries: Iterable<[number, AttributionInfo]>) => IAttributor,
@@ -115,7 +97,6 @@ export class AttributorSerializer implements IAttributorSerializer {
 
 /**
  * @returns an encoder which composes `a` and `b`.
- * @alpha
  */
 export const chain = <T1, T2, T3>(a: Encoder<T1, T2>, b: Encoder<T2, T3>): Encoder<T1, T3> => ({
 	encode: (content) => b.encode(a.encode(content)),

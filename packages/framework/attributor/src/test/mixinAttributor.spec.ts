@@ -19,7 +19,7 @@ import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { createRuntimeAttributor, IProvideRuntimeAttributor, mixinAttributor } from "../mixinAttributor";
-import { Attributor as BaseAttributor } from "../attributor";
+import { Attributor } from "../attributor";
 import { makeLZ4Encoder } from "../lz4Encoder";
 import { AttributorSerializer, chain, deltaEncoder } from "../encoders";
 import { makeMockAudience } from "./utils";
@@ -27,10 +27,6 @@ import { makeMockAudience } from "./utils";
 type Mutable<T> = {
     -readonly[P in keyof T]: T[P]
 };
-
-class Attributor extends BaseAttributor {
-    public get type(): string { return "op" };
-}
 
 describe("mixinAttributor", () => {
     const clientId = "mock client id";
