@@ -339,6 +339,8 @@ stages:
                 mkdir $(Build.ArtifactStagingDirectory)/pack/
                 mkdir $(Build.ArtifactStagingDirectory)/pack/scoped/
                 mkdir $(Build.ArtifactStagingDirectory)/test-files/
+                mkdir $(Build.ArtifactStagingDirectory)/logs/
+                mv ${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log $(Build.ArtifactStagingDirectory)/logs/
                 if [[ "${{ variables.publishNonScopedPackages }}" == "True" ]]; then
                   mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
                 fi
@@ -379,23 +381,12 @@ stages:
               artifactName: 'test-files'
               publishLocation: 'pipeline'
 
-        # Publish logs for other components that ran in this pipeline
-        # Right now this is only tinylicious but we could add logs for other things in the same artifact.
-        - task: Bash@3
-          displayName:
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
-            script: |
-              mkdir -p $(Build.ArtifactStagingDirectory)/logs/
-              mv ${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log $(Build.ArtifactStagingDirectory)/logs/
-
-        - task: PublishPipelineArtifact@1
-          displayName: Publish Artifact - Tinylicious Log
-          inputs:
-            targetPath: '$(Build.ArtifactStagingDirectory)/logs'
-            artifactName: 'tinyliciousLog'
-            publishLocation: 'pipeline'
+          - task: PublishPipelineArtifact@1
+            displayName: Publish Artifact - Tinylicious Log
+            inputs:
+              targetPath: '$(Build.ArtifactStagingDirectory)/logs'
+              artifactName: 'tinyliciousLog'
+              publishLocation: 'pipeline'
 
         # Collect/publish/run bundle analysis
         - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
