@@ -18,6 +18,7 @@ import {
     isSkipMark,
     MoveEffectTable,
     newMoveEffectTable,
+    removeMoveDest,
     splitMarkOnInput,
     splitMarkOnOutput,
     splitMoveIn,
@@ -310,6 +311,12 @@ function rebaseMark<TNodeChange>(
     const baseType = baseMark.type;
     switch (baseType) {
         case "Delete":
+            if (
+                isObjMark(currMark) &&
+                (currMark.type === "MoveOut" || currMark.type === "ReturnFrom")
+            ) {
+                removeMoveDest(moveEffects, currMark.id);
+            }
             return 0;
         case "Modify": {
             if (isModify(currMark)) {

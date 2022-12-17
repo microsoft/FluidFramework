@@ -194,9 +194,7 @@ describe("SequenceField - Rebase", () => {
         normalizeMoveIds(actual);
 
         // Moves --E-G
-        // TODO: Merge adjacent moves
-        // const expected = Change.move(2, 2, 0);
-        const expected = composeAnonChanges([Change.move(2, 1, 0), Change.move(3, 1, 1)]);
+        const expected = Change.move(2, 2, 0);
         normalizeMoveIds(expected);
         assert.deepEqual(actual, expected);
     });

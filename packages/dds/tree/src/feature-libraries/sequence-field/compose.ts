@@ -7,7 +7,15 @@ import { assert } from "@fluidframework/common-utils";
 import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
 import { clone, fail, StackyIterator } from "../../util";
 import { IdAllocator } from "../modular-schema";
-import { Changeset, HasChanges, HasRevisionTag, Mark, MarkList, SizedMark } from "./format";
+import {
+    Changeset,
+    HasChanges,
+    HasRevisionTag,
+    Mark,
+    MarkList,
+    SizedMark,
+    SizedObjectMark,
+} from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
     replaceMoveSrc,
@@ -180,8 +188,19 @@ function composeMarks<TNodeChange>(
                     // In the long run we want to preserve them.
                     return clone(newMark);
                 }
+                case "MoveOut":
+                case "ReturnFrom": {
+                    return composeWithBaseChildChanges(
+                        newMark,
+                        newRev,
+                        baseMark.changes,
+                        composeChild,
+                        genId,
+                        moveEffects,
+                    );
+                }
                 default:
-                    fail("Not implemented");
+                    fail(`Not implemented: ${newType}`);
             }
         }
         case "MoveIn": {
@@ -231,6 +250,10 @@ function composeMarks<TNodeChange>(
         }
         case "ReturnTo": {
             switch (newType) {
+                case "Modify": {
+                    // TODO: Send modifications to ReturnFrom mark
+                    return baseMark;
+                }
                 case "Delete": {
                     replaceMoveSrc(moveEffects, baseMark.id, newMark);
                     return 0;
@@ -316,6 +339,47 @@ function composeChildChanges<TNodeChange>(
     }
 }
 
+function composeWithBaseChildChanges<
+    TNodeChange,
+    TMark extends SizedObjectMark<TNodeChange> & HasChanges<TNodeChange> & HasRevisionTag,
+>(
+    newMark: TMark,
+    newRevision: RevisionTag | undefined,
+    baseChanges: TNodeChange | undefined,
+    composeChild: NodeChangeComposer<TNodeChange>,
+    genId: IdAllocator,
+    moveEffects: MoveEffectTable<TNodeChange>,
+): TMark {
+    const composedChanges = composeChildChanges(
+        baseChanges,
+        newMark.changes,
+        newMark.revision ?? newRevision,
+        composeChild,
+    );
+
+    const cloned = clone(newMark);
+    if (newRevision !== undefined && cloned.type !== "Modify") {
+        cloned.revision = newRevision;
+    }
+
+    if (isMoveMark(cloned)) {
+        (cloned as MoveMark<TNodeChange>).id = getUniqueMoveId(
+            cloned,
+            cloned.revision ?? newRevision,
+            genId,
+            moveEffects,
+        );
+    }
+
+    if (composedChanges !== undefined) {
+        cloned.changes = composedChanges;
+    } else {
+        delete cloned.changes;
+    }
+
+    return cloned;
+}
+
 function mergeInNewChildChanges<TNodeChange, TMark extends HasChanges<TNodeChange>>(
     baseMark: TMark,
     newChanges: TNodeChange | undefined,
@@ -348,23 +412,17 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
     }
 
     const cloned = clone(mark);
-    if (revision !== undefined && mark.type !== "Modify") {
+    assert(!isSkipMark(cloned), "Cloned should be same type as input mark");
+    if (revision !== undefined && cloned.type !== "Modify") {
         (cloned as HasRevisionTag).revision = revision;
     }
 
-    if (isMoveMark(mark)) {
-        (cloned as MoveMark<TNodeChange>).id = getUniqueMoveId(
-            mark,
-            mark.revision ?? revision,
-            genId,
-            moveEffects,
-        );
+    if (isMoveMark(cloned)) {
+        cloned.id = getUniqueMoveId(cloned, cloned.revision ?? revision, genId, moveEffects);
     }
 
-    if (mark.type !== "MoveIn" && mark.type !== "ReturnTo" && mark.changes !== undefined) {
-        (cloned as HasChanges<TNodeChange>).changes = composeChild([
-            tagChange(mark.changes, revision),
-        ]);
+    if (cloned.type !== "MoveIn" && cloned.type !== "ReturnTo" && cloned.changes !== undefined) {
+        cloned.changes = composeChild([tagChange(cloned.changes, revision)]);
         return cloned;
     }
 
