@@ -240,6 +240,16 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
             const messageSize = 5 * 1024 * 1024;
             const messagesInBatch = 3;
 
+            const sendAndAssertSynchronization = async (connection: Promise<void>) => {
+                const largeString = generateRandomStringOfSize(messageSize);
+                setMapKeys(dataObject1map, messagesInBatch, largeString);
+                await connection;
+                await provider.ensureSynchronized();
+
+                assertMapValues(dataObject2map, messagesInBatch, largeString);
+                assertMapValues(dataObject1map, messagesInBatch, largeString);
+            };
+
             describe("Remote container", () => {
                 // Forces a reconnection after processing a specified number
                 // of ops which satisfy a given condition
@@ -279,13 +289,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
                         2,
                     );
 
-                    const largeString = generateRandomStringOfSize(messageSize);
-                    setMapKeys(dataObject1map, messagesInBatch, largeString);
-                    await secondConnection;
-                    await provider.ensureSynchronized();
-
-                    assertMapValues(dataObject2map, messagesInBatch, largeString);
-                    assertMapValues(dataObject1map, messagesInBatch, largeString);
+                    await sendAndAssertSynchronization(secondConnection);
                 }).timeout(chunkingBatchesTimeoutMs);
 
                 it("Reconnects while processing compressed batch", async function() {
@@ -302,13 +306,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
                         (op) => op.type === MessageType.Operation && op.contents === undefined,
                         2,
                     );
-                    const largeString = generateRandomStringOfSize(messageSize);
-                    setMapKeys(dataObject1map, messagesInBatch, largeString);
-                    await secondConnection;
-                    await provider.ensureSynchronized();
 
-                    assertMapValues(dataObject2map, messagesInBatch, largeString);
-                    assertMapValues(dataObject1map, messagesInBatch, largeString);
+                    await sendAndAssertSynchronization(secondConnection);
                 }).timeout(chunkingBatchesTimeoutMs);
             });
 
@@ -351,13 +350,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
                         2,
                     );
 
-                    const largeString = generateRandomStringOfSize(messageSize);
-                    setMapKeys(dataObject1map, messagesInBatch, largeString);
-                    await secondConnection;
-                    await provider.ensureSynchronized();
-
-                    assertMapValues(dataObject2map, messagesInBatch, largeString);
-                    assertMapValues(dataObject1map, messagesInBatch, largeString);
+                    await sendAndAssertSynchronization(secondConnection);
                 }).timeout(chunkingBatchesTimeoutMs);
 
                 it("Reconnects while sending compressed batch", async function() {
@@ -375,13 +368,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
                         1,
                     );
 
-                    const largeString = generateRandomStringOfSize(messageSize);
-                    setMapKeys(dataObject1map, messagesInBatch, largeString);
-                    await secondConnection;
-                    await provider.ensureSynchronized();
-
-                    assertMapValues(dataObject2map, messagesInBatch, largeString);
-                    assertMapValues(dataObject1map, messagesInBatch, largeString);
+                    await sendAndAssertSynchronization(secondConnection);
                 }).timeout(chunkingBatchesTimeoutMs);
             });
         });
