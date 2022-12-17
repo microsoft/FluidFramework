@@ -317,10 +317,10 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
                     shouldProcess: (batch: IDocumentMessage[]) => boolean,
                     count: number,
                 ) => {
-                    let opsProcessed = 0;
+                    let batchesSent = 0;
                     return new Promise<void>((resolve) => {
                         const handler = (batch) => {
-                            if (shouldProcess(batch) && ++opsProcessed === count) {
+                            if (shouldProcess(batch) && ++batchesSent === count) {
                                 container.disconnect();
                                 container.once("connected", () => {
                                     resolve();
