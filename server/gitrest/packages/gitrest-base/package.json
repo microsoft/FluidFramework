@@ -45,7 +45,7 @@
     "compression": "^1.7.3",
     "cors": "^2.8.5",
     "debug": "^4.1.1",
-    "express": "^4.16.4",
+    "express": "^4.17.3",
     "isomorphic-git": "^1.14.0",
     "json-stringify-safe": "^5.0.1",
     "memfs": "^3.4.12",
