@@ -12,6 +12,7 @@ describe("Idle task scheduler", () => {
 
     beforeEach(() => {
         clock = useFakeTimers();
+        (globalThis as any).requestIdleCallback = undefined;
     });
 
     afterEach(() => {
@@ -42,6 +43,7 @@ describe("Idle task scheduler", () => {
 
     it("Should fall back to setTimeout when idle Task API is not available", async () => {
         let success = false;
+        assert((globalThis as any).requestIdleCallback === undefined);
         await new Promise((resolve, reject) => {
             try {
                 resolve(async () => {
