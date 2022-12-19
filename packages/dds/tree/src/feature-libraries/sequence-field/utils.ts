@@ -62,10 +62,7 @@ export function isAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is Attach<T
 }
 
 export function isAttachInGap<TNodeChange>(mark: Mark<TNodeChange>): mark is Attach<TNodeChange> {
-    return (
-        isNewAttach(mark) ||
-        (isReattach(mark) && (mark.mutedBy === undefined || mark.lastDetachedBy !== undefined))
-    );
+    return isNewAttach(mark) || isActiveReattach(mark) || isBlockedReattach(mark);
 }
 
 export function isReattach<TNodeChange>(
@@ -97,6 +94,12 @@ export function isSkipLikeReattach<TNodeChange>(
     mark: Mark<TNodeChange>,
 ): mark is (Reattach | ModifyReattach<TNodeChange>) & Muted {
     return isMutedReattach(mark) && mark.lastDetachedBy === undefined;
+}
+
+export function isBlockedReattach<TNodeChange>(
+    mark: Mark<TNodeChange>,
+): mark is (Reattach | ModifyReattach<TNodeChange>) & Muted {
+    return isMutedReattach(mark) && mark.lastDetachedBy !== undefined;
 }
 
 export function isMuted(mark: Mutable): mark is Muted {
