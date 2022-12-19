@@ -3,9 +3,31 @@
  * Licensed under the MIT License.
  */
 import { assert } from "@fluidframework/common-utils";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage, IUser } from "@fluidframework/protocol-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage, IUser } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/container-utils";
+import { IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+
+/**
+ * @alpha
+ */
+ export interface AttributionKey {
+    /**
+     * The type of attribution this key corresponds to.
+     * 
+     * Keys currently all represent op-based attribution, so have the form `{ type: "op", key: sequenceNumber }`.
+     * Thus, they can be used with an `OpStreamAttributor` to recover timestamp/user information.
+     * 
+     * @remarks - If we want to support different types of attribution, a reasonable extensibility point is to make
+     * AttributionKey a discriminated union on the 'type' field. This would empower
+     * consumers with the ability to implement different attribution policies.
+    */
+    type: "op";
+
+	/**
+	 * The sequenceNumber of the op this attribution key is for.
+	 */
+    seq: number;
+}
 
 /**
  * Attribution information associated with a change.
@@ -94,15 +116,15 @@ export class Attributor implements IAttributor {
  */
 export class OpStreamAttributor extends Attributor implements IAttributor {
 	constructor(
-		runtime: IFluidDataStoreRuntime,
+		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		audience: IAudience,
 		initialEntries?: Iterable<[number, AttributionInfo]>,
 	) {
 		super(initialEntries);
-		const { deltaManager } = runtime;
 		deltaManager.on("op", (message: ISequencedDocumentMessage) => {
-			const client = runtime.getAudience().getMember(message.clientId);
+			const client = audience.getMember(message.clientId);
 			// TODO: This case may be legitimate, and if so we need to figure out how to handle it.
-			assert(client !== undefined, "Received message from user not in the audience");
+			assert(client !== undefined, 0x4af /* Received message from user not in the audience */);
 			this.keyToInfo.set(message.sequenceNumber, { user: client.user, timestamp: message.timestamp });
 		});
 	}

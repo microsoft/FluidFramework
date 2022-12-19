@@ -52,6 +52,8 @@ export class EditManager<
 
     private localSessionId?: SessionId;
 
+    private minimumSequenceNumber: number = -1;
+
     public readonly computationName: string = "EditManager";
 
     public constructor(
@@ -59,6 +61,26 @@ export class EditManager<
         public readonly anchors?: AnchorSet,
     ) {
         super();
+    }
+
+    /**
+     * Advances the minimum sequence number, and removes all commits from the trunk which lie outside the collaboration window.
+     * @param minimumSequenceNumber - the minimum sequence number for all of the connected clients
+     */
+    public advanceMinimumSequenceNumber(minimumSequenceNumber: number): void {
+        assert(
+            minimumSequenceNumber >= this.minimumSequenceNumber,
+            0x476 /* number must be larger or equal to current minimumSequenceNumber. */,
+        );
+        this.minimumSequenceNumber = minimumSequenceNumber;
+        let commitsToRemove = 0;
+        while (
+            commitsToRemove < this.trunk.length &&
+            this.trunk[commitsToRemove].seqNumber < minimumSequenceNumber
+        ) {
+            commitsToRemove += 1;
+        }
+        this.trunk.splice(0, commitsToRemove);
     }
 
     /**
@@ -232,6 +254,8 @@ export class EditManager<
             inverses.unshift(tagInverse(inverse, localChange.revision));
         }
 
+        // This approach can lead to non-minimal changesets (and therefore deltas) for local inserts because
+        // the rebased local insert does not cancel out with its inverse during composition.
         const netChange = this.changeFamily.rebaser.compose([
             ...inverses,
             trunkChange,

@@ -65,7 +65,7 @@
     "@fluid-experimental/property-common": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "ajv": "7.1.1",
     "ajv-keywords": "4.0.0",
-    "async": "^3.2.0",
+    "async": "^3.2.2",
     "fastest-json-copy": "^1.0.1",
     "lodash": "^4.17.21",
     "semver": "^7.3.4",

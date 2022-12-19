@@ -165,8 +165,15 @@ import {
 import { BindBatchTracker } from "./batchTracker";
 import { ISerializedBaseSnapshotBlobs, SerializedSnapshotStorage } from "./serializedSnapshotStorage";
 import { ScheduleManager } from "./scheduleManager";
-import { OpDecompressor } from "./opDecompressor";
-import { BatchMessage, IBatchCheckpoint, OpCompressor, Outbox } from "./opLifecycle";
+import {
+    BatchMessage,
+    IBatchCheckpoint,
+    OpCompressor,
+    OpDecompressor,
+    Outbox,
+    OpSplitter,
+    RemoteMessageProcessor,
+} from "./opLifecycle";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -186,16 +193,6 @@ export enum ContainerMessageType {
 
     // Sets the alias of a root data store
     Alias = "alias",
-}
-
-export interface IChunkedOp {
-    chunkId: number;
-
-    totalChunks: number;
-
-    contents: string;
-
-    originalType: MessageType | ContainerMessageType;
 }
 
 export interface ContainerRuntimeMessage {
@@ -557,36 +554,6 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 }
 
 /**
- * Unpacks runtime messages
- *
- * @remarks This API makes no promises regarding backward-compatibility. This is internal API.
- * @param message - message (as it observed in storage / service)
- * @returns unpacked runtime message
- *
- * @internal
- */
-export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
-    if (message.type === MessageType.Operation) {
-        // legacy op format?
-        if (message.contents.address !== undefined && message.contents.type === undefined) {
-            message.type = ContainerMessageType.FluidDataStoreOp;
-        } else {
-            // new format
-            const innerContents = message.contents as ContainerRuntimeMessage;
-            message.type = innerContents.type;
-            message.contents = innerContents.contents;
-        }
-        return true;
-    } else {
-        // Legacy format, but it's already "unpacked",
-        // i.e. message.type is actually ContainerMessageType.
-        // Or it's non-runtime message.
-        // Nothing to do in such case.
-        return false;
-    }
-}
-
-/**
  * Legacy ID for the built-in AgentScheduler.  To minimize disruption while removing it, retaining this as a
  * special-case for document dirty state.  Ultimately we should have no special-cases from the
  * ContainerRuntime's perspective.
@@ -869,8 +836,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly mc: MonitoringContext;
 
-    private readonly opDecompressor: OpDecompressor = new OpDecompressor();
-
     private readonly summarizerClientElection?: SummarizerClientElection;
     /**
      * summaryManager will only be created if this client is permitted to spawn a summarizing client
@@ -966,10 +931,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly garbageCollector: IGarbageCollector;
 
-    // Local copy of incomplete received chunks.
-    private readonly chunkMap: Map<string, string[]>;
-
     private readonly dataStores: DataStores;
+    private readonly remoteMessageProcessor: RemoteMessageProcessor;
 
     /** The last message processed at the time of the last summary. */
     private messageAtLastSummary: ISummaryMetadataMessage | undefined;
@@ -1064,7 +1027,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.messageAtLastSummary = metadata?.message;
 
         this._connected = this.context.connected;
-        this.chunkMap = new Map<string, string[]>(chunks);
+        this.remoteMessageProcessor = new RemoteMessageProcessor(new OpSplitter(chunks), new OpDecompressor());
 
         this.handleContext = new ContainerFluidHandleContext("", this);
 
@@ -1216,7 +1179,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
 
         this.context.quorum.on("removeMember", (clientId: string) => {
-            this.clearPartialChunks(clientId);
+            this.remoteMessageProcessor.clearPartialMessagesFor(clientId);
         });
 
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
@@ -1524,8 +1487,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ) {
         this.addMetadataToSummary(summaryTree);
 
-        if (this.chunkMap.size > 0) {
-            const content = JSON.stringify([...this.chunkMap]);
+        if (this.remoteMessageProcessor.partialMessages.size > 0) {
+            const content = JSON.stringify([...this.remoteMessageProcessor.partialMessages]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
         }
 
@@ -1694,7 +1657,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (!this.shouldContinueReconnecting()) {
                 this.closeFn(
                     DataProcessingError.create(
-                        // eslint-disable-next-line max-len
                         "Runtime detected too many reconnects with no progress syncing local ops. Batch of ops is likely too large (over 1Mb)",
                         "setConnectionState",
                         undefined,
@@ -1720,28 +1682,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public process(messageArg: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
 
-        // Do shallow copy of message, as methods below will modify it.
-        // There might be multiple container instances receiving same message
-        // We do not need to make deep copy, as each layer will just replace message.content itself,
-        // but would not modify contents details
-        let message = { ...messageArg };
-
-        // back-compat: ADO #1385: eventually should become unconditional, but only for runtime messages!
-        // System message may have no contents, or in some cases (mostly for back-compat) they may have actual objects.
-        // Old ops may contain empty string (I assume noops).
-        if (typeof message.contents === "string" && message.contents !== "") {
-            message.contents = JSON.parse(message.contents);
-        }
-
-        message = this.opDecompressor.processMessage(message);
-
-        // Caveat: This will return false for runtime message in very old format, that are used in snapshot tests
-        // This format was not shipped to production workflows.
-        const runtimeMessage = unpackRuntimeMessage(message);
-
         if (this.mc.config.getBoolean("enableOfflineLoad") ?? this.runtimeOptions.enableOfflineLoad) {
             this.savedOps.push(messageArg);
         }
+
+
+        // Whether or not the message is actually a runtime message.
+        // It may be a legacy runtime message (ie already unpacked and ContainerMessageType)
+        // or something different, like a system message.
+        const runtimeMessage = messageArg.type === MessageType.Operation;
+
+        // Do shallow copy of message, as the processing flow will modify it.
+        const messageCopy = { ...messageArg };
+        const message = this.remoteMessageProcessor.process(messageCopy);
 
         // Surround the actual processing of the operation with messages to the schedule manager indicating
         // the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
@@ -1749,10 +1702,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.scheduleManager.beforeOpProcessing(message);
 
         try {
-            // Chunk processing must come first given that we will transform the message to the unchunked version
-            // once all pieces are available
-            message = this.processRemoteChunkedMessage(message);
-
             let localOpMetadata: unknown;
             if (local && runtimeMessage) {
                 localOpMetadata = this.pendingStateManager.processPendingLocalMessage(message);
@@ -1889,9 +1838,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
     }
 
-    public orderSequentially(callback: () => void): void {
+    public orderSequentially<T>(callback: () => T): T {
         let checkpoint: IBatchCheckpoint | undefined;
-
+        let result: T;
         if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
             // Note: we are not touching this.pendingAttachBatch here, for two reasons:
             // 1. It would not help, as we flush attach ops as they become available.
@@ -1900,7 +1849,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
         try {
             this._orderSequentiallyCalls++;
-            callback();
+            result = callback();
         } catch (error) {
             if (checkpoint) {
                 // This will throw and close the container if rollback fails
@@ -1933,6 +1882,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.flushMode !== FlushMode.TurnBased && this._orderSequentiallyCalls === 0) {
             this.flush();
         }
+        return result;
     }
 
     public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
@@ -2208,20 +2158,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // always referenced, so the used routes is only self-route (empty string).
         this.summarizerNode.updateUsedRoutes([""]);
 
+        const blobManagerUsedRoutes: string[] = [];
         const dataStoreUsedRoutes: string[] = [];
         for (const route of usedRoutes) {
-            if (route.split("/")[1] !== BlobManager.basePath) {
+            if (this.isBlobPath(route)) {
+                blobManagerUsedRoutes.push(route);
+            } else {
                 dataStoreUsedRoutes.push(route);
             }
         }
 
-        return this.dataStores.updateUsedRoutes(dataStoreUsedRoutes);
+        this.blobManager.updateUsedRoutes(blobManagerUsedRoutes);
+        this.dataStores.updateUsedRoutes(dataStoreUsedRoutes);
     }
 
     /**
      * This is called to update objects whose routes are unused. The unused objects are either deleted or marked as
      * tombstones.
-     * @param unusedRoutes - The routes that are unused in all data stores in this Container.
+     * @param unusedRoutes - The routes that are unused in all data stores and attachment blobs in this Container.
      * @param tombstone - if true, the objects corresponding to unused routes are marked tombstones. Otherwise, they
      * are deleted.
      */
@@ -2236,10 +2190,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
-        // Todo: Add tombstone for attachment blobs. For now, we ignore attachment blobs that should be tombstoned.
-        if (!tombstone) {
-            this.blobManager.deleteUnusedRoutes(blobManagerUnusedRoutes);
-        }
+        this.blobManager.updateUnusedRoutes(blobManagerUnusedRoutes, tombstone);
         this.dataStores.updateUnusedRoutes(dataStoreUnusedRoutes, tombstone);
     }
 
@@ -2384,7 +2335,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 if (this.deltaManager.lastSequenceNumber !== summaryRefSeqNum) {
                     return {
                         continue: false,
-                        // eslint-disable-next-line max-len
                         error: `lastSequenceNumber changed before uploading to storage. ${this.deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
                     };
                 }
@@ -2394,7 +2344,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 if (lastAck !== this.summaryCollection.latestAck) {
                     return {
                         continue: false,
-                        // eslint-disable-next-line max-len
                         error: `Last summary changed while summarizing. ${this.summaryCollection.latestAck} !== ${lastAck}`,
                     };
                 }
@@ -2548,43 +2497,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    private processRemoteChunkedMessage(message: ISequencedDocumentMessage) {
-        if (message.type !== ContainerMessageType.ChunkedOp) {
-            return message;
-        }
-
-        const clientId = message.clientId;
-        const chunkedContent = message.contents as IChunkedOp;
-        this.addChunk(clientId, chunkedContent);
-        if (chunkedContent.chunkId === chunkedContent.totalChunks) {
-            const newMessage = { ...message };
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const serializedContent = this.chunkMap.get(clientId)!.join("");
-            newMessage.contents = JSON.parse(serializedContent);
-            newMessage.type = chunkedContent.originalType;
-            this.clearPartialChunks(clientId);
-            return newMessage;
-        }
-        return message;
-    }
-
-    private addChunk(clientId: string, chunkedContent: IChunkedOp) {
-        let map = this.chunkMap.get(clientId);
-        if (map === undefined) {
-            map = [];
-            this.chunkMap.set(clientId, map);
-        }
-        assert(chunkedContent.chunkId === map.length + 1,
-            0x131 /* "Mismatch between new chunkId and expected chunkMap" */); // 1-based indexing
-        map.push(chunkedContent.contents);
-    }
-
-    private clearPartialChunks(clientId: string) {
-        if (this.chunkMap.has(clientId)) {
-            this.chunkMap.delete(clientId);
-        }
-    }
-
     private hasPendingMessages() {
         return this.pendingStateManager.hasPendingMessages() || !this.outbox.isEmpty;
     }
@@ -2650,7 +2562,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const serializedContent = JSON.stringify(deserializedContent);
 
         if (this.deltaManager.readOnlyInfo.readonly) {
-            this.logger.sendErrorEvent({ eventName: "SubmitOpInReadonly" });
+            this.logger.sendTelemetryEvent({ eventName: "SubmitOpInReadonly", connected: this.connected });
         }
 
         const message: BatchMessage = {
@@ -2694,7 +2606,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             } else if (!this.flushMicroTaskExists) {
                 this.flushMicroTaskExists = true;
                 // Queue a microtask to detect the end of the turn and force a flush.
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 Promise.resolve().then(() => {
                     this.flushMicroTaskExists = false;
                     this.flush();

@@ -36,13 +36,13 @@ export class RootDataObjectWithChildDataObject extends DataObjectWithCounter {
         this.start();
     }
 
-    private unreferenceChild() {
+    private unreferenceChild(): void {
         assert(this.child !== undefined, `Child should be defined when unreferencing!`);
         this.child.stop();
         this.root.delete(this.childKey);
     }
 
-    private async createAndReferenceChild() {
+    private async createAndReferenceChild(): Promise<void> {
         // If this assert is hit, we may potentially have a child that is running and we did not stop it.
         assert(this.child === undefined, "A child should not exist!");
         this.child = await dataObjectWithCounterFactory.createInstance(this.context.containerRuntime);
@@ -50,7 +50,7 @@ export class RootDataObjectWithChildDataObject extends DataObjectWithCounter {
         this.child.start();
     }
 
-    protected async run() {
+    protected async run(): Promise<void> {
         assert(this.isRunning === true, "Should be running to send ops");
 
         // The ideal loop is to send a number of counter ops, and then reference or unreference a child.

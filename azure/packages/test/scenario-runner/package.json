@@ -91,7 +91,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.1.0",
-    "@fluidframework/eslint-config-fluid": "^1.2.1",
+    "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/js-yaml": "^4.0.5",
     "@types/mocha": "^9.1.1",

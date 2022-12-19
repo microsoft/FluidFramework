@@ -9,9 +9,12 @@ import { createField, isUnwrappedNode, singleTextCursor } from "../../../feature
 import { ISharedTree } from "../../../shared-tree";
 import { brand } from "../../../util";
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
-// eslint-disable-next-line import/no-internal-modules
+
+// Allow importing from this specific file which is being tested:
+/* eslint-disable-next-line import/no-internal-modules */
 import { ProxyContext } from "../../../feature-libraries/editable-tree/editableTreeContext";
-import { fullSchemaData, int32Schema, personData, PersonType } from "./mockData";
+
+import { fullSchemaData, int32Schema, personData, Person } from "./mockData";
 
 async function createSharedTrees(
     schemaData: SchemaData,
@@ -31,8 +34,8 @@ async function createSharedTrees(
 describe("editable-tree context", () => {
     it("can't synchronize trees after the context been freed", async () => {
         const [provider, [tree1, tree2]] = await createSharedTrees(fullSchemaData, [personData], 2);
-        const person1 = tree1.root as PersonType;
-        const person2 = tree2.root as PersonType;
+        const person1 = tree1.root as Person;
+        const person2 = tree2.root as Person;
         tree2.context.free();
 
         assert.equal(person1.age, 35);
@@ -46,12 +49,12 @@ describe("editable-tree context", () => {
     it("can clear and reuse context", async () => {
         const [provider, [tree1, tree2]] = await createSharedTrees(fullSchemaData, [personData], 2);
         const context2 = tree2.context;
-        const person1 = tree1.root as PersonType;
+        const person1 = tree1.root as Person;
 
-        let person2 = tree2.root as PersonType;
+        let person2 = tree2.root as Person;
         context2.attachAfterChangeHandler((context) => {
             context.clear();
-            person2 = context.unwrappedRoot as PersonType;
+            person2 = context.unwrappedRoot as Person;
         });
 
         // reify EditableTrees

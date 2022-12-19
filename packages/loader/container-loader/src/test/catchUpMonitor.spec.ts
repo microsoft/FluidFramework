@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable max-len */
 
 import { strict as assert } from "assert";
 import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
@@ -13,7 +12,7 @@ import { CatchUpMonitor } from "../catchUpMonitor";
 class MockDeltaManagerForCatchingUp
     extends TypedEventEmitter<IDeltaManagerEvents>
     implements Pick<IDeltaManager<any, any>, "lastSequenceNumber" | "lastKnownSeqNumber">
-{ // eslint-disable-line @typescript-eslint/brace-style
+{
     constructor(
         public lastSequenceNumber: number = 5,
         public lastKnownSeqNumber: number = 10,

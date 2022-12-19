@@ -17,7 +17,7 @@ import { ISharedCounter, SharedCounter } from "..";
 import { CounterFactory } from "../counterFactory";
 
 class TestSharedCounter extends SharedCounter {
-    public testApplyStashedOp(content: unknown) {
+    public testApplyStashedOp(content: unknown): void {
         this.applyStashedOp(content);
     }
 }

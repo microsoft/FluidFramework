@@ -2,7 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as querystring from "querystring";
+
+// Just using the type from a node.js module does not introduce a runtime dependency.
+// eslint-disable-next-line import/no-nodejs-modules
+import type { ParsedUrlQueryInput } from "querystring";
+
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { RateLimiter } from "@fluidframework/driver-utils";
@@ -46,7 +50,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
         private readonly getAuthorizationHeader: AuthorizationHeaderGetter,
         private readonly useRestLess: boolean,
         baseurl?: string,
-        defaultQueryString: querystring.ParsedUrlQueryInput = {},
+        defaultQueryString: ParsedUrlQueryInput = {},
     ) {
         super(baseurl, defaultQueryString);
     }
@@ -128,7 +132,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
         getAuthorizationHeader: AuthorizationHeaderGetter,
         useRestLess: boolean,
         baseurl?: string,
-        defaultQueryString: querystring.ParsedUrlQueryInput = {},
+        defaultQueryString: ParsedUrlQueryInput = {},
     ) {
         super(logger, rateLimiter, getAuthorizationHeader, useRestLess, baseurl, defaultQueryString);
     }
@@ -189,7 +193,7 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
         getAuthorizationHeader: AuthorizationHeaderGetter,
         useRestLess: boolean,
         baseurl?: string,
-        defaultQueryString: querystring.ParsedUrlQueryInput = {},
+        defaultQueryString: ParsedUrlQueryInput = {},
     ) {
         super(logger, rateLimiter, getAuthorizationHeader, useRestLess, baseurl, defaultQueryString);
     }
