@@ -51,14 +51,12 @@ export function ContainerSelectionDropdown(
 		getFluidClientDebuggers(),
 	);
 
-	const [clientDebuggerOptions, setClientDebuggerOptions] = React.useState<IDropdownOption[]>(
-		renewContainerOptions(clientDebuggers),
-	);
+	let clientDebuggerOptions = renewContainerOptions(clientDebuggers);
 
 	React.useEffect(() => {
 		function onDebuggerChanged(): void {
 			setClientDebuggers(getFluidClientDebuggers());
-			setClientDebuggerOptions(renewContainerOptions(clientDebuggers));
+			clientDebuggerOptions = renewContainerOptions(clientDebuggers);
 		}
 
 		debuggerRegistry.on("debuggerRegistered", onDebuggerChanged);
@@ -68,7 +66,7 @@ export function ContainerSelectionDropdown(
 			debuggerRegistry.off("debuggerRegistered");
 			debuggerRegistry.off("debuggerClosed");
 		};
-	}, [clientDebuggers, clientDebuggerOptions, setClientDebuggers, setClientDebuggerOptions]);
+	}, [clientDebuggers, clientDebuggerOptions, setClientDebuggers]);
 
 	const _onClientDebuggerDropdownChange = (
 		event: React.FormEvent<HTMLDivElement>,
