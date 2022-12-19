@@ -15,8 +15,6 @@ import * as api from "@fluidframework/protocol-definitions";
 import { IConfigProvider } from "@fluidframework/telemetry-utils";
 import { ISnapshotContents } from "./odspPublicUtils";
 
-/* eslint-disable max-len */
-
 const maximumCacheDurationMs: FiveDaysMs = 432000000; // 5 * 24 * 60 * 60 * 1000 = 5 days in ms
 
 class BlobCache {
@@ -288,4 +286,3 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
     }
 }
 
-/* eslint-enable max-len */

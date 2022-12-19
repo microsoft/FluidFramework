@@ -142,7 +142,7 @@ export interface ChangeRebaser<TChangeset> {
      * Compose a collection of changesets into a single one.
      * See {@link ChangeRebaser} for requirements.
      */
-    compose(changes: TChangeset[]): TChangeset;
+    compose(changes: TaggedChange<TChangeset>[]): TChangeset;
 
     /**
      * @returns the inverse of `changes`.
@@ -185,8 +185,12 @@ export interface TaggedChange<TChangeset> {
     readonly change: TChangeset;
 }
 
-export function tagChange<T>(change: T, tag: RevisionTag | undefined): TaggedChange<T> {
-    return { revision: tag, change };
+export function tagChange<T>(
+    change: T,
+    tag: RevisionTag | undefined,
+    isInverse?: boolean,
+): TaggedChange<T> {
+    return { revision: tag, isInverse, change };
 }
 
 export function tagInverse<T>(

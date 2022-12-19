@@ -165,6 +165,7 @@ describe("DeltaUtils", () => {
                     ],
                 ],
             ]);
+            deepFreeze(expected);
             assert.deepEqual(actual, expected);
         });
     });
@@ -201,7 +202,7 @@ describe("DeltaUtils", () => {
                                 type,
                                 value: "Y",
                                 fields: new Map([
-                                    [fooField, [{ type, value: "Z", fields: emptyMap }]],
+                                    [fooField, [{ type, value: "Z", fields: new Map() }]],
                                 ]),
                             },
                         ],

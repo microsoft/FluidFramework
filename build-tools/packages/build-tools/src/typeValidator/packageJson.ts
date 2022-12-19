@@ -20,6 +20,7 @@ import {
 } from "@fluid-tools/version-tools";
 
 import { Context } from "../bumpVersion/context";
+import { Logger, defaultLogger } from "../common/logging";
 import { BrokenCompatTypes, PackageJson } from "../common/npmPackage";
 
 export type PackageDetails = {
@@ -297,6 +298,8 @@ function getPreviousVersionBaseline(version: ReleaseVersion, style: PreviousVers
  * @param style - The version style to use when determining the previous version. Can be the exact
  * previous major or minor versions, or caret/tilde-equivalent dependency ranges on those previous versions. If this
  * is undefined, then the style will be set according to the branchReleaseTypes defined in package.json.
+ * @param branchName - If provided, this branch name will be used to set the previous version style according to the
+ * branchReleaseTypes defined in package.json. If undefined, then the current branch name will be used.
  * @param exactPreviousVersionString - If provided, this string will be used as the previous version string.
  * @param resetBroken - If true, clears the "broken" section of the type validation, effectively clearing all known
  * breaking changes.
@@ -304,6 +307,7 @@ function getPreviousVersionBaseline(version: ReleaseVersion, style: PreviousVers
  * effectively pins the version to a specific version while allowing it to be updated manually as needed. This is
  * functionally similar to what a lockfile does, but this provides us with an extra level of control so we don't rely on
  * lockfiles (in which we have found bugs).
+ * @param log - A {@link Logger} that will be used for logging. Uses {@link defaultLogger} by default.
  * @returns package metadata or a reason the package was skipped.
  *
  * @internal
@@ -313,9 +317,11 @@ export async function getAndUpdatePackageDetails(
     packageDir: string,
     writeUpdates: boolean | undefined,
     style?: PreviousVersionStyle,
+    branchName?: string,
     exactPreviousVersionString?: string,
     resetBroken?: boolean,
     pinRange = false,
+    log: Logger = defaultLogger,
 ): Promise<(PackageDetails & { skipReason?: undefined }) | { skipReason: string }> {
     const packageDetails = await getPackageDetails(packageDir);
     const pkg = context.fullPackageMap.get(packageDetails.json.name);
@@ -348,6 +354,7 @@ export async function getAndUpdatePackageDetails(
 
     const version = packageDetails.json.version;
     const fluidConfig = pkg.monoRepo?.fluidBuildConfig ?? pkg.fluidBuildConfig;
+    const branch = branchName ?? context.originalBranchName;
     let releaseType: VersionBumpType | undefined;
     let previousVersionStyle: PreviousVersionStyle | undefined;
 
@@ -363,7 +370,7 @@ export async function getAndUpdatePackageDetails(
         }
 
         for (const [branchPattern, branchReleaseType] of Object.entries(releaseTypes)) {
-            if (minimatch(context.originalBranchName, branchPattern)) {
+            if (minimatch(branch, branchPattern)) {
                 // The config can be either a VersionBumpType (major/minor/patch) which will be used to calculate the
                 // previous version or a PreviousVersionStyle that will used as-is.
                 if (isVersionBumpType(branchReleaseType)) {
@@ -376,8 +383,10 @@ export async function getAndUpdatePackageDetails(
     }
 
     previousVersionStyle =
-        previousVersionStyle ??
+        // If the style was explicitly passed in, use it
         style ??
+        // if the branch config was a version style, use it
+        previousVersionStyle ??
         (releaseType === "major"
             ? "^previousMajor"
             : releaseType === "minor"
@@ -389,7 +398,7 @@ export async function getAndUpdatePackageDetails(
     if (previousVersionStyle === undefined) {
         // Skip if there's no previous version style defined for the package.
         return {
-            skipReason: "Skipping package: no previousVersionStyle is defined for the branch",
+            skipReason: `Skipping package: no previousVersionStyle is defined for the branch`,
         };
     }
 

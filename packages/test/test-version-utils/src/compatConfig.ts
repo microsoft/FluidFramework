@@ -30,8 +30,8 @@ interface CompatConfig {
     dataRuntime?: string | number;
 }
 
-// N, N - 1, and N - 2
-const defaultVersions = [0, -1, -2];
+// N and N - 1
+const defaultVersions = [0, -1];
 // we are currently supporting 0.45 long-term
 const LTSVersions = ["^0.45.0"];
 

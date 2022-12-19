@@ -16,6 +16,18 @@ npm i @fluid-experimental/quorum
 
 API documentation for **@fluid-experimental/quorum** is available at <https://fluidframework.com/docs/apis/quorum>.
 
+## Contribution Guidelines
+
+Please refer to our [Github Wiki](https://github.com/microsoft/FluidFramework/wiki/Contributing) for an overview of our contribution guidelines.
+
+## Help
+
+Not finding what you're looking for in this README?
+Check out our [Github Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
+
+Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Thank you!
+
 ## Trademark
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.

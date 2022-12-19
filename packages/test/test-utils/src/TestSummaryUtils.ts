@@ -66,7 +66,6 @@ const defaultSummaryOptions: ISummaryRuntimeOptions = {
         maxAckWaitTime: 10000,
         maxOpsSinceLastSummary: 7000,
         initialSummarizerDelayMs: 0,
-        summarizerClientElection: false,
     },
 };
 

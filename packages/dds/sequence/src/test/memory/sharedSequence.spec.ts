@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { benchmarkMemory } from "@fluid-tools/benchmark";
+import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { SubSequence } from "../../sharedSequence";
 
 describe("SharedSequence memory usage", () => {
@@ -25,19 +25,35 @@ describe("SharedSequence memory usage", () => {
         // See the comment at the top of the test suite for more details.
     });
 
+
+    benchmarkMemory(new class implements IMemoryTestObject {
+        title = "Create empty SharedSequence";
+        minSampleCount = 500;
+
+        private segment = new SubSequence<number>([]);
+
+        async run() {
+            this.segment = new SubSequence<number>([]);
+        }
+    }());
+
     const numbersOfEntriesForTests = [100, 1000, 10_000];
 
     numbersOfEntriesForTests.forEach((x) => {
-        benchmarkMemory({
-            title: `Append and remove ${x} subsequences`,
-            benchmarkFn: async () => {
-                const segment = new SubSequence<number>([]);
+        benchmarkMemory(new class implements IMemoryTestObject {
+            title = `Append and remove ${x} subsequences`;
+            private segment = new SubSequence<number>([]);
+
+            async run() {
                 for (let i = 0; i < x; i++) {
-                    segment.append(new SubSequence<number>([i]));
-                    segment.removeRange(0, 1);
+                    this.segment.append(new SubSequence<number>([i]));
+                    this.segment.removeRange(0, 1);
                 }
-            },
-        });
+            }
+            beforeIteration() {
+                this.segment = new SubSequence<number>([]);
+            }
+        }());
 
         // NOTE: This test is commented out because SharedSequence does not exist
         // as an implementable standalone datastructure. In order to implement the

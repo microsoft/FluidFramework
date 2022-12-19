@@ -135,7 +135,13 @@ data:
             "checkpointTimeIntervalMsec": 1000
         },
         "scribe": {
-            "kafkaClientId": "{{ template "scribe.fullname" . }}"
+            "kafkaClientId": "{{ template "scribe.fullname" . }}",
+            "checkpointHeuristics": {
+                "enable": {{ .Values.scribe.checkpointHeuristics.enable }},
+                "idleTime": {{ .Values.scribe.checkpointHeuristics.idleTime }},
+                "maxTime": {{ .Values.scribe.checkpointHeuristics.maxTime }},
+                "maxMessages": {{ .Values.scribe.checkpointHeuristics.maxMessages }}
+            }
         },
         "system": {
             "httpServer": {

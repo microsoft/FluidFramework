@@ -151,6 +151,7 @@ function firstPass(delta: Delta.MarkList, props: PassProps): void {
                     break;
                 case Delta.MarkType.ModifyAndMoveOut:
                     visitModify(mark, { ...props, startIndex: index }, firstPass);
+                    moveInfo.set(mark.moveId, { ...mark, count: 1, type: Delta.MarkType.MoveOut });
                     visitor.onMoveOut(index, 1, mark.moveId);
                     break;
                 case Delta.MarkType.MoveOut:

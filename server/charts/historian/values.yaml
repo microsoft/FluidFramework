@@ -43,6 +43,7 @@ gitrest:
     lib:
       name: nodegit
     persistLatestFullSummary: false
+    enableLowIoWrite: false
     repoPerDocEnabled: false
     enableRepositoryManagerMetrics: false
 

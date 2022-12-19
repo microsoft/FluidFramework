@@ -8,3 +8,4 @@
  */
 export const parseBoolean = (value: any): boolean =>
     typeof value === "boolean" ? value : value === "true";
+    

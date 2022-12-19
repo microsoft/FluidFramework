@@ -24,7 +24,7 @@
     "@fluid-experimental/property-changeset": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluid-experimental/property-common": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "ajv": "7.1.1",
-    "async": "^3.2.0",
+    "async": "^3.2.2",
     "http-status": "1.3.2",
     "http-status-codes": "1.3.0",
     "joi": "14.3.1",
@@ -36,7 +36,6 @@
   },
   "devDependencies": {
     "@fluid-experimental/property-properties": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
-    "@fluid-experimental/property-query-previous": "npm:@fluid-experimental/property-query@2.0.0-internal.2.0.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "chai": "^4.2.0",
     "cross-env": "^7.0.2",
@@ -46,7 +45,10 @@
     "sinon": "^7.4.2"
   },
   "typeValidation": {
-    "version": "2.0.0-internal.3.0.0",
+    "disabled": true,
+    "version": "2.0.0-internal.2.2.0",
+    "baselineRange": ">=2.0.0-internal.2.1.0 <2.0.0-internal.2.2.0",
+    "baselineVersion": "2.0.0-internal.2.1.0",
     "broken": {}
   }
 }

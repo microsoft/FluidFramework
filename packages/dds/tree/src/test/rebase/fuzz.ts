@@ -48,7 +48,10 @@ export function generateFuzzyCombinedChange<TChange>(
                 change = rebase(change, makeAnonChange(changeGenerator(random.real())));
                 break;
             case Operation.Compose:
-                change = compose([change, changeGenerator(random.real())]);
+                change = compose([
+                    makeAnonChange(change),
+                    makeAnonChange(changeGenerator(random.real())),
+                ]);
                 break;
             case Operation.Invert:
                 change = invert(makeAnonChange(change));

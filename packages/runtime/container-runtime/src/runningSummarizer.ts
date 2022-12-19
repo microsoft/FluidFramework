@@ -263,9 +263,9 @@ export class RunningSummarizer implements IDisposable {
 
     /**
      * Can the given op trigger a summary?
-     * # Currently only prevents summaries for Summarize and SummaryAck ops
+     * # Currently always prevents summaries for Summarize and SummaryAck/Nack ops
      * @param op - op to check
-     * @returns true if this type of op can trigger a summary
+     * @returns true if this op can trigger a summary
      */
     private opCanTriggerSummary(op: ISequencedDocumentMessage): boolean {
         switch (op.type) {
@@ -274,8 +274,15 @@ export class RunningSummarizer implements IDisposable {
             case MessageType.SummaryNack:
                 return false;
             default:
-                return true;
+                return isRuntimeMessage(op) || this.nonRuntimeOpCanTriggerSummary();
         }
+    }
+
+    private nonRuntimeOpCanTriggerSummary(): boolean {
+        const opsSinceLastAck = this.heuristicData.lastOpSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber;
+        return this.configuration.state === "enabled"
+            && (this.configuration.nonRuntimeHeuristicThreshold === undefined
+                || this.configuration.nonRuntimeHeuristicThreshold <= opsSinceLastAck);
     }
 
     public async waitStop(allowLastSummary: boolean): Promise<void> {

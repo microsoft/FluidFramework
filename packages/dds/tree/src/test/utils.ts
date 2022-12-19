@@ -38,14 +38,57 @@ import { brand, makeArray } from "../util";
 
 // Testing utilities
 
+const frozenMethod = () => {
+    assert.fail("Object is frozen");
+};
+
+function freezeObjectMethods<T>(object: T, methods: (keyof T)[]): void {
+    if (Object.isFrozen(object)) {
+        for (const method of methods) {
+            assert.equal(object[method], frozenMethod);
+        }
+    } else {
+        for (const method of methods) {
+            Object.defineProperty(object, method, {
+                enumerable: false,
+                configurable: false,
+                writable: false,
+                value: frozenMethod,
+            });
+        }
+    }
+}
+
+/**
+ * Recursively freezes the given object.
+ *
+ * WARNING: this function mutates Map and Set instances to override their mutating methods in order to ensure that the
+ * state of those instances cannot be changed. This is necessary because calling `Object.freeze` on a Set or Map does
+ * not prevent it from being mutated.
+ *
+ * @param object - The object to freeze.
+ */
 export function deepFreeze<T>(object: T): void {
-    // Retrieve the property names defined on object
-    const propNames: (keyof T)[] = Object.getOwnPropertyNames(object) as (keyof T)[];
-    // Freeze properties before freezing self
-    for (const name of propNames) {
-        const value = object[name];
-        if (typeof value === "object") {
+    if (object instanceof Map) {
+        for (const [key, value] of object.entries()) {
+            deepFreeze(key);
             deepFreeze(value);
+        }
+        freezeObjectMethods(object, ["set", "delete", "clear"]);
+    } else if (object instanceof Set) {
+        for (const key of object.keys()) {
+            deepFreeze(key);
+        }
+        freezeObjectMethods(object, ["add", "delete", "clear"]);
+    } else {
+        // Retrieve the property names defined on object
+        const propNames: (keyof T)[] = Object.getOwnPropertyNames(object) as (keyof T)[];
+        // Freeze properties before freezing self
+        for (const name of propNames) {
+            const value = object[name];
+            if (typeof value === "object") {
+                deepFreeze(value);
+            }
         }
     }
     Object.freeze(object);
@@ -63,6 +106,12 @@ export class MockDependent extends SimpleObservingDependent {
  * Satisfies the {@link ITestObjectProvider} interface.
  */
 export type ITestTreeProvider = TestTreeProvider & ITestObjectProvider;
+
+export enum SummarizeType {
+    onDemand = 0,
+    automatic = 1,
+    disabled = 2,
+}
 
 /**
  * A test helper class that manages the creation, connection and retrieval of SharedTrees. Instances of this
@@ -87,7 +136,7 @@ export class TestTreeProvider {
     /**
      * Create a new {@link TestTreeProvider} with a number of trees pre-initialized.
      * @param trees - the number of trees to initialize this provider with. This is the same as calling
-     * @param summarizeOnDemand - if `true`, summaries will only be made when `TestTreeProvider.summarize` is called.
+     * @param summarizeType - enum to manually, automatically, or disable summarization
      * @param factory - The factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
      * {@link create} followed by {@link createTree} _trees_ times.
      *
@@ -101,28 +150,34 @@ export class TestTreeProvider {
      */
     public static async create(
         trees = 0,
-        summarizeOnDemand = false,
+        summarizeType: SummarizeType = SummarizeType.disabled,
         factory: SharedTreeFactory = new SharedTreeFactory(),
     ): Promise<ITestTreeProvider> {
         // The on-demand summarizer shares a container with the first tree, so at least one tree and container must be created right away.
         assert(
-            !(trees === 0 && summarizeOnDemand),
+            !(trees === 0 && summarizeType === SummarizeType.onDemand),
             "trees must be >= 1 to allow summarization on demand",
         );
 
         const registry = [[TestTreeProvider.treeId, factory]] as ChannelFactoryRegistry;
         const driver = new LocalServerTestDriver();
-        const objProvider = new TestObjectProvider(
-            Loader,
-            driver,
-            () =>
-                new TestContainerRuntimeFactory(
-                    "@fluid-example/test-dataStore",
-                    new TestFluidObjectFactory(registry),
-                ),
-        );
+        const containerRuntimeFactory = () =>
+            new TestContainerRuntimeFactory(
+                "@fluid-example/test-dataStore",
+                new TestFluidObjectFactory(registry),
+                {
+                    summaryOptions: {
+                        summaryConfigOverrides:
+                            summarizeType === SummarizeType.disabled
+                                ? { state: "disabled" }
+                                : undefined,
+                    },
+                },
+            );
 
-        if (summarizeOnDemand) {
+        const objProvider = new TestObjectProvider(Loader, driver, containerRuntimeFactory);
+
+        if (summarizeType === SummarizeType.onDemand) {
             const container = await objProvider.makeTestContainer();
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
             const firstTree = await dataObject.getSharedObject<ISharedTree>(

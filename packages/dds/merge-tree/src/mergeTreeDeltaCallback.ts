@@ -52,7 +52,6 @@ export type MergeTreeMaintenanceType = typeof MergeTreeMaintenanceType[keyof typ
 
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
 
-// eslint-disable-next-line max-len
 export interface IMergeTreeDeltaCallbackArgs<TOperationType extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType> {
     readonly operation: TOperationType;
     readonly deltaSegments: IMergeTreeSegmentDelta[];
