@@ -110,7 +110,8 @@
     "baselineVersion": "2.0.0-internal.2.1.1",
     "broken": {
       "ClassDeclaration_Client": {
-        "forwardCompat": false
+        "forwardCompat": false,
+        "backCompat": false
       },
       "InterfaceDeclaration_SegmentGroup": {
         "forwardCompat": false

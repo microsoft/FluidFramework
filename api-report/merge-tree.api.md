@@ -124,7 +124,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
-    protected findReconnectionPosition(segment: ISegment, localSeq: number): number;
+    findReconnectionPosition(segment: ISegment, localSeq: number): number;
     // (undocumented)
     findTile(startPos: number, tileLabel: string, preceding?: boolean): {
         tile: ReferencePosition;
@@ -135,7 +135,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     getCollabWindow(): CollaborationWindow;
     // (undocumented)
-    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage, localSeq?: number): {
+    getContainingSegment<T extends ISegment>(pos: number, sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">, localSeq?: number): {
         segment: T | undefined;
         offset: number | undefined;
     };
@@ -199,8 +199,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     set mergeTreeMaintenanceCallback(callback: MergeTreeMaintenanceCallback | undefined);
     peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
-    rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number;
-    rebasePositionWithoutSegmentSlide(pos: number, seqNumberFrom: number, localSeq: number): number | undefined;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg;

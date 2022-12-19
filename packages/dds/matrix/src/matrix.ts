@@ -26,7 +26,7 @@ import {
     IMatrixReader,
     IMatrixWriter,
 } from "@tiny-calc/nano";
-import { MergeTreeDeltaType, IMergeTreeOp, SegmentGroup, ISegment } from "@fluidframework/merge-tree";
+import { MergeTreeDeltaType, IMergeTreeOp, SegmentGroup, ISegment, Client } from "@fluidframework/merge-tree";
 import { MatrixOp } from "./ops";
 import { PermutationVector, PermutationSegment } from "./permutationvector";
 import { SparseArray2D } from "./sparsearray2d";
@@ -497,6 +497,21 @@ export class SharedMatrix<T = any>
         this.cols.startOrUpdateCollaboration(this.runtime.clientId as string);
     }
 
+    private rebasePosition(
+        client: Client,
+        pos: number,
+        referenceSequenceNumber: number,
+        localSeq: number
+    ): number | undefined {
+        const { clientId } = client.getCollabWindow();
+        const { segment, offset } = client.getContainingSegment(pos, { referenceSequenceNumber, clientId: client.getLongClientId(clientId) }, localSeq);
+        if (segment === undefined || offset === undefined) {
+            return;
+        }
+
+        return client.findReconnectionPosition(segment, localSeq) + offset;
+    }
+
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         switch (content.target) {
             case SnapshotPath.cols:
@@ -519,8 +534,8 @@ export class SharedMatrix<T = any>
                 // to skip resubmitting this op since it is possible the row/col handle has been recycled
                 // and now refers to a different position than when this op was originally submitted.
                 if (this.isLatestPendingWrite(rowHandle, colHandle, localSeq)) {
-                    const row = this.rows.rebasePositionWithoutSegmentSlide(setOp.row, rowsRefSeq, localSeq);
-                    const col = this.cols.rebasePositionWithoutSegmentSlide(setOp.col, colsRefSeq, localSeq);
+                    const row = this.rebasePosition(this.rows, setOp.row, rowsRefSeq, localSeq);
+                    const col = this.rebasePosition(this.cols, setOp.col, colsRefSeq, localSeq);
 
                     if (row !== undefined && col !== undefined && row >= 0 && col >= 0) {
                         this.sendSetCellOp(
