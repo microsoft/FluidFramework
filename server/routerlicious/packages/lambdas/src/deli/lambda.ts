@@ -68,11 +68,12 @@ import {
     createSessionMetric,
     createRoomJoinMessage,
     createRoomLeaveMessage,
+    CheckpointReason,
+    ICheckpoint,
 } from "../utils";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
 import { IDeliCheckpointManager, ICheckpointParams } from "./checkpointManager";
-import { DeliCheckpointReason } from ".";
 
 enum IncomingMessageOrder {
     Duplicate,
@@ -129,26 +130,6 @@ interface IOpEvent {
     idleTimer?: any;
     maxTimer?: any;
     sequencedMessagesSinceLastOpEvent: number;
-}
-
-/**
- * Used for controlling checkpoint logic
- */
-interface ICheckpoint {
-    currentDeliCheckpointMessage?: IQueuedMessage;
-    currentKafkaCheckpointMessage?: IQueuedMessage;
-
-    // used for ensuring the lambda remains open while clients are connected
-    nextKafkaCheckpointMessage?: IQueuedMessage;
-
-    // time fired due that should kick off a checkpoint when deli is idle
-    idleTimer?: any;
-
-    // raw messages since the last checkpoint
-    rawMessagesSinceCheckpoint: number;
-
-    // time in milliseconds since the last checkpoint
-    lastCheckpointTime: number;
 }
 
 export enum OpEventType {
@@ -1205,8 +1186,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             timestamp: message.timestamp,
             traces: message.operation.traces,
             type: message.operation.type,
-            // back-compat ADO #1932: Remove cast when protocol change propagates
-            compression: (message.operation as any).compression,
+            compression: message.operation.compression,
         } as any;
         if (message.operation.type === MessageType.Summarize || message.operation.type === MessageType.NoClient) {
             const augmentedOutputMessage = outputMessage as ISequencedDocumentAugmentedMessage;
@@ -1470,7 +1450,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
      * If noActiveClients is set, that means we sent a NoClient message. so checkpoint the current offset
      */
     private updateCheckpointMessages(rawMessage: IQueuedMessage) {
-        this.checkpointInfo.currentDeliCheckpointMessage = rawMessage;
+        this.checkpointInfo.currentCheckpointMessage = rawMessage;
 
         if (this.noActiveClients) {
             // If noActiveClients is set, that means we sent a NoClient message
@@ -1495,11 +1475,11 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     /**
      * Generates a checkpoint for the current state
      */
-    private generateCheckpoint(reason: DeliCheckpointReason): ICheckpointParams {
+    private generateCheckpoint(reason: CheckpointReason): ICheckpointParams {
         return {
             reason,
             deliState: this.generateDeliCheckpoint(),
-            deliCheckpointMessage: this.checkpointInfo.currentDeliCheckpointMessage as IQueuedMessage,
+            deliCheckpointMessage: this.checkpointInfo.currentCheckpointMessage as IQueuedMessage,
             kafkaCheckpointMessage: this.checkpointInfo.currentKafkaCheckpointMessage,
         };
     }
@@ -1676,27 +1656,27 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
      * Determines a checkpoint reason based on some heuristics
      * @returns a reason when it's time to checkpoint, or undefined if no checkpoint should be made
      */
-    private getCheckpointReason(): DeliCheckpointReason | undefined {
+    private getCheckpointReason(): CheckpointReason | undefined {
         const checkpointHeuristics = this.serviceConfiguration.deli.checkpointHeuristics;
         if (!checkpointHeuristics.enable) {
             // always checkpoint since heuristics are disabled
-            return DeliCheckpointReason.EveryMessage;
+            return CheckpointReason.EveryMessage;
         }
 
         if (this.checkpointInfo.rawMessagesSinceCheckpoint >= checkpointHeuristics.maxMessages) {
             // exceeded max messages since last checkpoint
-            return DeliCheckpointReason.MaxMessages;
+            return CheckpointReason.MaxMessages;
         }
 
         if ((Date.now() - this.checkpointInfo.lastCheckpointTime) >= checkpointHeuristics.maxTime) {
             // exceeded max time since last checkpoint
-            return DeliCheckpointReason.MaxTime;
+            return CheckpointReason.MaxTime;
         }
 
         if (this.lastInstruction === InstructionType.ClearCache) {
             // last instruction is for clearing the cache
             // checkpoint now to ensure that happens
-            return DeliCheckpointReason.ClearCache;
+            return CheckpointReason.ClearCache;
         }
 
         return undefined;
@@ -1705,7 +1685,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     /**
      * Checkpoints the current state once the pending kafka messages are produced
      */
-    private checkpoint(reason: DeliCheckpointReason) {
+    private checkpoint(reason: CheckpointReason) {
         this.clearCheckpointIdleTimer();
 
         this.checkpointInfo.lastCheckpointTime = Date.now();
@@ -1715,7 +1695,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         Promise.all([this.lastSendP, this.lastNoClientP]).then(
             () => {
-                if (reason === DeliCheckpointReason.ClearCache) {
+                if (reason === CheckpointReason.ClearCache) {
                     checkpointParams.clear = true;
                 }
                 void this.checkpointContext.checkpoint(checkpointParams);
@@ -1746,7 +1726,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     private updateCheckpointIdleTimer() {
         this.clearCheckpointIdleTimer();
 
-        const initialDeliCheckpointMessage = this.checkpointInfo.currentDeliCheckpointMessage;
+        const initialDeliCheckpointMessage = this.checkpointInfo.currentCheckpointMessage;
 
         this.checkpointInfo.idleTimer = setTimeout(() => {
             this.checkpointInfo.idleTimer = undefined;
@@ -1754,8 +1734,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             // verify that the current deli message matches the raw message that kicked off this timer
             // if it matches, that means that delis state is for the raw message
             // this means our checkpoint will result in the correct state
-            if (initialDeliCheckpointMessage === this.checkpointInfo.currentDeliCheckpointMessage) {
-                this.checkpoint(DeliCheckpointReason.IdleTime);
+            if (initialDeliCheckpointMessage === this.checkpointInfo.currentCheckpointMessage) {
+                this.checkpoint(CheckpointReason.IdleTime);
             }
         }, this.serviceConfiguration.deli.checkpointHeuristics.idleTime);
     }

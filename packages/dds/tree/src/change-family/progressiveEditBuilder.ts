@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AnchorSet, Delta } from "../tree";
+import { AnchorSet } from "../tree";
 import { ChangeFamily } from "./changeFamily";
 
 export interface ProgressiveEditBuilder<TChange> {
@@ -17,9 +17,10 @@ export abstract class ProgressiveEditBuilderBase<TChange>
     implements ProgressiveEditBuilder<TChange>
 {
     private readonly changes: TChange[] = [];
+
     constructor(
         private readonly changeFamily: ChangeFamily<unknown, TChange>,
-        private readonly deltaReceiver: (delta: Delta.Root) => void,
+        private readonly changeReceiver: (change: TChange) => void,
         private readonly anchorSet: AnchorSet,
     ) {}
 
@@ -31,8 +32,7 @@ export abstract class ProgressiveEditBuilderBase<TChange>
     protected applyChange(change: TChange): void {
         this.changes.push(change);
         this.changeFamily.rebaser.rebaseAnchors(this.anchorSet, change);
-        const delta = this.changeFamily.intoDelta(change);
-        this.deltaReceiver(delta);
+        this.changeReceiver(change);
     }
 
     /**

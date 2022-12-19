@@ -126,6 +126,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 
 // @public
 export interface IDataStore extends IFluidRouter {
+    readonly entryPoint?: IFluidHandle<FluidObject>;
     trySetAlias(alias: string): Promise<AliasResult>;
 }
 
@@ -142,6 +143,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     // @deprecated
     attachGraph(): void;
     readonly attachState: AttachState;
+    readonly entryPoint?: IFluidHandle<FluidObject>;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)

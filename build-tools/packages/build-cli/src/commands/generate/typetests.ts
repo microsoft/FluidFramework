@@ -5,7 +5,11 @@
 import { CliUx, Flags } from "@oclif/core";
 import chalk from "chalk";
 
-import { generateTests, getAndUpdatePackageDetails } from "@fluidframework/build-tools";
+import {
+    PreviousVersionStyle,
+    generateTests,
+    getAndUpdatePackageDetails,
+} from "@fluidframework/build-tools";
 
 import { BaseCommand } from "../../base";
 import { releaseGroupFlag } from "../../flags";
@@ -13,30 +17,34 @@ import { releaseGroupFlag } from "../../flags";
 export default class GenerateTypeTestsCommand extends BaseCommand<
     typeof GenerateTypeTestsCommand.flags
 > {
-    static summary =
-        "Generates type tests based on the individual package settings in package.json.";
+    static description = `Generates type tests based on the individual package settings in package.json.
 
-    static description = `Generating type tests has two parts: preparing package.json and generating test modules. By default, both steps are run for each package. You can run only one part at a time using the --prepare and --generate flags.
+    Generating type tests has two parts: preparing package.json and generating test modules. By default, both steps are run for each package. You can run only one part at a time using the --prepare and --generate flags.
 
     Preparing package.json determines the baseline previous version to use, then sets that version in package.json. If the previous version changes after running preparation, then npm install must be run before the generate step will run correctly.
 
     Optionally, any type tests that are marked "broken" in package.json can be reset using the --reset flag during preparation. This is useful when resetting the type tests to a clean state, such as after a major release.
 
-    Generating test modules takes the type test information from package.json, most notably any known broken type tests, and generates an appropriate `;
+    Generating test modules takes the type test information from package.json, most notably any known broken type tests, and generates test files that should be committed.
+
+    To learn more about how to configure type tests, see the detailed documentation at <https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/typetestDetails.md>.`;
 
     static flags = {
         dir: Flags.directory({
             char: "d",
-            description: "Run on the package in this directory.",
+            description:
+                "Run on the package in this directory. Cannot be used with --releaseGroup or --packages.",
             exclusive: ["packages", "releaseGroup"],
         }),
         packages: Flags.boolean({
-            description: "Run on all independent packages in the repo.",
+            description:
+                "Run on all independent packages in the repo. This is an alternative to using the --dir flag for independent packages.",
             default: false,
             exclusive: ["dir", "releaseGroup"],
         }),
         releaseGroup: releaseGroupFlag({
-            description: "Run on all packages within this release group.",
+            description:
+                "Run on all packages within this release group. Cannot be used with --dir or --packages.",
             exclusive: ["dir", "packages"],
         }),
         prepare: Flags.boolean({
@@ -48,10 +56,18 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
             description: "Generates tests only. Doesn't prepare the package.json.",
             exclusive: ["prepare"],
         }),
+        reset: Flags.boolean({
+            description:
+                "Resets the broken type test settings in package.json. Only applies to the prepare phase.",
+            exclusive: ["generate"],
+        }),
         versionConstraint: Flags.string({
             char: "s",
-            description:
-                "The type of version constraint to use for previous versions. Only applies to the prepare phase.",
+            description: `The type of version constraint to use for previous versions. This overrides the branch-specific configuration in package.json, which is used by default.
+
+                For more information about the options, see https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/typetestDetails.md#configuring-a-branch-for-a-specific-baseline
+
+                Cannot be used with --dir or --packages.\n`,
             options: [
                 "^previousMajor",
                 "^previousMinor",
@@ -59,20 +75,31 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
                 "~previousMinor",
                 "previousMajor",
                 "previousMinor",
+                "previousPatch",
                 "baseMinor",
                 "baseMajor",
+                "~baseMinor",
             ],
-            required: true,
+        }),
+        branch: Flags.string({
+            char: "b",
+            description: `Use the specified branch name to determine the version constraint to use for previous versions, rather than using the current branch name.
+
+            The version constraint used will still be loaded from branch configuration; this flag only controls which branch's settings are used.`,
+            exclusive: ["versionConstraint"],
         }),
         exact: Flags.string({
             description:
                 "An exact string to use as the previous version constraint. The string will be used as-is. Only applies to the prepare phase.",
             exclusive: ["generate", "versionConstraint"],
         }),
-        reset: Flags.boolean({
-            description:
-                "Resets the broken type test settings in package.json. Only applies to the prepare phase.",
-            exclusive: ["generate"],
+        pin: Flags.boolean({
+            description: `Searches the release git tags in the repo and selects the baseline version as the maximum
+            released version that matches the range.
+
+            This effectively pins the version to a specific version while allowing it to be updated manually as
+            needed by running type test preparation again.`,
+            default: false,
         }),
         generateInName: Flags.boolean({
             description: "Includes .generated in the generated type test filenames.",
@@ -140,14 +167,21 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
             this.info(`Finding package in directory: ${dir}`);
             packageDirs.push(dir);
         } else {
-            const context = await this.getContext();
+            const ctx = await this.getContext();
+            if (flags.pin === true) {
+                // preload the release data if we're pinning to a version matching the range. This speeds release
+                // lookups later, which are done async so without the precaching there's a big when all the async tasks
+                // execute.
+                this.info(`Loading release data from git tags`);
+                await ctx.loadReleases();
+            }
             if (independentPackages) {
                 this.info(`Finding independent packages`);
-                packageDirs.push(...context.independentPackages.map((p) => p.directory));
+                packageDirs.push(...ctx.independentPackages.map((p) => p.directory));
             } else if (releaseGroup !== undefined) {
                 this.info(`Finding packages for release group: ${releaseGroup}`);
                 packageDirs.push(
-                    ...context.packagesInReleaseGroup(releaseGroup).map((p) => p.directory),
+                    ...ctx.packagesInReleaseGroup(releaseGroup).map((p) => p.directory),
                 );
             }
         }
@@ -160,8 +194,10 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
             });
         }
 
+        const context = await this.getContext();
         const concurrency = 25;
         const runningGenerates: Promise<boolean>[] = [];
+
         // this loop incrementally builds up the runningGenerates promise list
         // each dir with an index greater than concurrency looks back the concurrency value
         // to determine when to run
@@ -184,11 +220,15 @@ export default class GenerateTypeTestsCommand extends BaseCommand<
                     try {
                         const start = Date.now();
                         const packageData = await getAndUpdatePackageDetails(
+                            context,
                             packageDir,
                             /* writeUpdates */ runPrepare,
-                            flags.versionConstraint as any,
+                            flags.versionConstraint as PreviousVersionStyle | undefined,
+                            flags.branch,
                             flags.exact,
                             flags.reset,
+                            flags.pin,
+                            this.logger,
                         ).finally(() => output.push(`Loaded(${Date.now() - start}ms)`));
 
                         if (packageData.skipReason !== undefined) {

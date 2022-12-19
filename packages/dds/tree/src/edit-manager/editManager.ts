@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ChangeFamily } from "../change-family";
-import { TaggedChange, RevisionTag } from "../rebase";
+import { TaggedChange, RevisionTag, tagChange, tagInverse } from "../rebase";
 import { SimpleDependee } from "../dependency-tracking";
 import { AnchorSet, Delta } from "../tree";
 import { brand, Brand, fail, RecursiveReadonly } from "../util";
@@ -52,6 +52,8 @@ export class EditManager<
 
     private localSessionId?: SessionId;
 
+    private minimumSequenceNumber: number = -1;
+
     public readonly computationName: string = "EditManager";
 
     public constructor(
@@ -59,6 +61,26 @@ export class EditManager<
         public readonly anchors?: AnchorSet,
     ) {
         super();
+    }
+
+    /**
+     * Advances the minimum sequence number, and removes all commits from the trunk which lie outside the collaboration window.
+     * @param minimumSequenceNumber - the minimum sequence number for all of the connected clients
+     */
+    public advanceMinimumSequenceNumber(minimumSequenceNumber: number): void {
+        assert(
+            minimumSequenceNumber >= this.minimumSequenceNumber,
+            0x476 /* number must be larger or equal to current minimumSequenceNumber. */,
+        );
+        this.minimumSequenceNumber = minimumSequenceNumber;
+        let commitsToRemove = 0;
+        while (
+            commitsToRemove < this.trunk.length &&
+            this.trunk[commitsToRemove].seqNumber < minimumSequenceNumber
+        ) {
+            commitsToRemove += 1;
+        }
+        this.trunk.splice(0, commitsToRemove);
     }
 
     /**
@@ -166,10 +188,7 @@ export class EditManager<
         });
 
         return this.changeFamily.intoDelta(
-            this.rebaseLocalBranch({
-                revision: brand(newCommit.seqNumber),
-                change: newChangeFullyRebased,
-            }),
+            this.rebaseLocalBranch(tagChange(newChangeFullyRebased, brand(newCommit.seqNumber))),
         );
     }
 
@@ -192,7 +211,7 @@ export class EditManager<
             0x42a /* The session ID should be set before processing changes */,
         );
 
-        this.localChanges.push({ revision: this.allocateLocalRevisionTag(), change });
+        this.localChanges.push(tagChange(change, this.allocateLocalRevisionTag()));
 
         if (this.anchors !== undefined) {
             this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
@@ -232,17 +251,15 @@ export class EditManager<
             newBranchChanges.push({ ...localChange, change });
 
             const inverse = this.changeFamily.rebaser.invert(localChange);
-
-            inverses.unshift({
-                revision: revisionTagForInverse(localChange.revision),
-                change: inverse,
-            });
+            inverses.unshift(tagInverse(inverse, localChange.revision));
         }
 
+        // This approach can lead to non-minimal changesets (and therefore deltas) for local inserts because
+        // the rebased local insert does not cancel out with its inverse during composition.
         const netChange = this.changeFamily.rebaser.compose([
-            ...inverses.map((change) => change.change),
-            trunkChange.change,
-            ...newBranchChanges.map((change) => change.change),
+            ...inverses,
+            trunkChange,
+            ...newBranchChanges,
         ]);
 
         if (this.anchors !== undefined) {
@@ -285,10 +302,12 @@ export class EditManager<
                 });
             }
 
-            inverses.unshift({
-                revision: brand(nextTempRevision--),
-                change: this.changeFamily.rebaser.invert(taggedChangeFromCommit(commit)),
-            });
+            inverses.unshift(
+                tagChange(
+                    this.changeFamily.rebaser.invert(taggedChangeFromCommit(commit)),
+                    brand(nextTempRevision--),
+                ),
+            );
         }
 
         branch.localChanges = newBranchChanges;
@@ -361,10 +380,10 @@ export class EditManager<
     }
 
     private inverseFromCommit(commit: Commit<TChangeset>): TaggedChange<TChangeset> {
-        return {
-            revision: revisionTagForInverse(brand(commit.seqNumber)),
-            change: this.changeFamily.rebaser.invert(taggedChangeFromCommit(commit)),
-        };
+        return tagInverse(
+            this.changeFamily.rebaser.invert(taggedChangeFromCommit(commit)),
+            brand(commit.seqNumber),
+        );
     }
 
     private allocateLocalRevisionTag(): RevisionTag {
@@ -373,13 +392,7 @@ export class EditManager<
 }
 
 function taggedChangeFromCommit<T>(commit: Commit<T>): TaggedChange<T> {
-    return { revision: brand(commit.seqNumber), change: commit.changeset };
-}
-
-// This always returns undefined, as we do not currently need an identity for the inverse of a change.
-// TODO: Correctly implement this function if needed; otherwise remove it.
-function revisionTagForInverse(revision: RevisionTag | undefined): RevisionTag | undefined {
-    return undefined;
+    return tagChange(commit.changeset, brand(commit.seqNumber));
 }
 
 export interface Branch<TChangeset> {

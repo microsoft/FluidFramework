@@ -14,7 +14,7 @@ import {
     List,
 } from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
-import { ISegment, Marker } from "../mergeTreeNodes";
+import { IMergeBlock, ISegment, Marker, MaxNodesInBlock, MergeTreeStats } from "../mergeTreeNodes";
 import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
 import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
@@ -306,6 +306,22 @@ export class TestClient extends Client {
         return nextWord;
     }
 
+    public debugDumpTree(tree: MergeTree) {
+        // want the segment's content and the state of insert/remove
+        const test: string[] = [];
+        walkAllChildSegments(tree.root,
+            (segment) => {
+                const prefixes: (string | undefined | number)[] = [];
+                prefixes.push(segment.seq !== UnassignedSequenceNumber ? segment.seq : `L${segment.localSeq}`);
+                if (segment.removedSeq !== undefined) {
+                    prefixes.push(segment.removedSeq !== UnassignedSequenceNumber
+                        ? segment.removedSeq
+                        : `L${segment.localRemovedSeq}`);
+                }
+                test.push(`${prefixes.join(",")}:${(segment as any).text}`);
+            });
+    }
+
     private findReconnectionPositionSegment?: ISegment;
 
     /**
@@ -394,6 +410,32 @@ export class TestClient extends Client {
             "Expected fast-path computation to match result from walk all segments");
         return segmentPosition;
     }
+
+    /**
+     * @returns an array of all attribution seq#s from the current perspective.
+     * The `i`th entry of the array is the attribution key for the character at position `i`.
+     * Validates segments either all have attribution information or none of them.
+     * If no segment has attribution information, returns undefined.
+     */
+    public getAllAttributionSeqs(): number[] | undefined {
+        const seqs: number[] | undefined = [];
+        let segmentsWithAttribution = 0;
+        let segmentsWithoutAttribution = 0;
+        this.walkAllSegments((segment) => {
+            if (segment.attribution) {
+                segmentsWithAttribution++;
+                for (let i = 0; i < segment.cachedLength; i++) {
+                    seqs.push(segment.attribution.getAtOffset(i).seq);
+                }
+            } else {
+                segmentsWithoutAttribution++;
+            }
+            return true;
+        });
+
+        assert(segmentsWithAttribution === 0 || segmentsWithoutAttribution === 0);
+        return segmentsWithAttribution !== 0 ? seqs : undefined;
+    }
 }
 
 // the client doesn't submit ops, so this adds a callback to capture them
@@ -430,3 +472,49 @@ export const createRevertDriver =
 
     };
 };
+
+export function getStats(tree: MergeTree) {
+    const nodeGetStats = (block: IMergeBlock): MergeTreeStats => {
+        const stats: MergeTreeStats = {
+            maxHeight: 0,
+            nodeCount: 0,
+            leafCount: 0,
+            removedLeafCount: 0,
+            liveCount: 0,
+            histo: [],
+        };
+        for (let k = 0; k < MaxNodesInBlock; k++) {
+            stats.histo[k] = 0;
+        }
+        for (let i = 0; i < block.childCount; i++) {
+            const child = block.children[i];
+            let height = 1;
+            if (!child.isLeaf()) {
+                const childStats = nodeGetStats(child);
+                height = 1 + childStats.maxHeight;
+                stats.nodeCount += childStats.nodeCount;
+                stats.leafCount += childStats.leafCount;
+                stats.removedLeafCount += childStats.removedLeafCount;
+                stats.liveCount += childStats.liveCount;
+                for (let j = 0; j < MaxNodesInBlock; j++) {
+                    stats.histo[j] += childStats.histo[j];
+                }
+            } else {
+                stats.leafCount++;
+                const segment = child;
+                if (segment.removedSeq !== undefined) {
+                    stats.removedLeafCount++;
+                }
+            }
+            if (height > stats.maxHeight) {
+                stats.maxHeight = height;
+            }
+        }
+        stats.histo[block.childCount]++;
+        stats.nodeCount++;
+        stats.liveCount += block.childCount;
+        return stats;
+    };
+    const rootStats = nodeGetStats(tree.root);
+    return rootStats;
+}

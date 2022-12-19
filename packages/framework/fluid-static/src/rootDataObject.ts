@@ -11,7 +11,6 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ContainerSchema,
     DataObjectClass,
@@ -120,8 +119,9 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
     private async createDataObject<T extends IFluidLoadable>(dataObjectClass: DataObjectClass<T>): Promise<T> {
         const factory = dataObjectClass.factory;
         const packagePath = [...this.context.packagePath, factory.type];
-        const router = await this.context.containerRuntime.createDataStore(packagePath);
-        return requestFluidObject<T>(router, "/");
+        const dataStore = await this.context.containerRuntime.createDataStore(packagePath);
+        const entryPoint = await dataStore.entryPoint?.get();
+        return entryPoint as unknown as T;
     }
 
     private createSharedObject<T extends IFluidLoadable>(

@@ -15,7 +15,6 @@ import {
     pad,
     prettyNumber,
     red,
-    getArrayStatistics,
     getName,
     getSuiteName,
 } from "./ReporterUtilities";
@@ -125,18 +124,14 @@ class MochaMemoryTestReporter {
                         }
                         table.cell("name", italicize(testName));
                         if (!testData.aborted) {
-                            const heapUsedArray: number[] = [];
-                            for (let i = 0; i < testData.samples.before.memoryUsage.length; i++) {
-                                heapUsedArray.push(testData.samples.after.memoryUsage[i].heapUsed
-                                                   - testData.samples.before.memoryUsage[i].heapUsed);
-                            }
-                            const heapUsedStats = getArrayStatistics(heapUsedArray);
-                            table.cell("Heap Used Avg", prettyNumber(heapUsedStats.mean, 2), Table.padLeft);
-                            table.cell("Heap Used StdDev", prettyNumber(heapUsedStats.deviation, 2), Table.padLeft);
-                            table.cell("Margin of Error", `±${prettyNumber(heapUsedStats.moe, 2)}`, Table.padLeft);
+                            table.cell("Heap Used Avg", prettyNumber(testData.stats.mean, 2), Table.padLeft);
+                            table.cell("Heap Used StdDev", prettyNumber(testData.stats.deviation, 2), Table.padLeft);
+                            table.cell("Margin of Error", `±${prettyNumber(testData.stats.moe, 2)}`, Table.padLeft);
                             table.cell("Relative Margin of Error",
-                                `±${prettyNumber(heapUsedStats.rme, 2)}%`, Table.padLeft);
-                            table.cell("Samples", testData.runs.toString(), Table.padLeft);
+                                `±${prettyNumber(testData.stats.rme, 2)}%`, Table.padLeft);
+
+                            table.cell("Iterations", testData.runs.toString(), Table.padLeft);
+                            table.cell("Samples used", testData.stats.sample.length.toString(), Table.padLeft);
                         }
                         table.newRow();
                     });

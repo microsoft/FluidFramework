@@ -1,6 +1,5 @@
 # transaction
 
-This folder contains a proof-of-concept level prototype code for a transaction system for editing [checkouts](../checkout/README.md).
+This folder contains code and abstractions related to transactions for editing [checkouts](../checkout/README.md).
 
-This is intended to be used by checkout, and not depend on it.
-This allows transaction to be tested in isolation.
+More functionality may be added to this module in the future to account for the needs of async transactions.

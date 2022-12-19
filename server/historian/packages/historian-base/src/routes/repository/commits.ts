@@ -55,7 +55,7 @@ export function create(
                 commitsP,
                 response,
                 false);
-    });
+        });
 
     return router;
 }

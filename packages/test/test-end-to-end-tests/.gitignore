@@ -50,3 +50,7 @@ nyc
 # Generated modules
 intel_modules/
 temp_modules/
+
+# Perf tests output
+.memoryTestsOutput
+.timeTestsOutput

@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Label based on file paths
     steps:
-      - uses: actions/labeler@26546f6c4d63b6c0623e8e39bde7869e3c2b1d7b # pin@v3
+      - uses: actions/labeler@5c7539237e04b714afd8ad9b4aed733815b9fab4 # pin@v4.0.2
         with:
           configuration-path: ".github/actions-labeler.yml"
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
@@ -17,13 +17,13 @@ jobs:
     runs-on: ubuntu-latest
     name: Label base branches
     steps:
-      - uses: srvaroa/labeler@36ad6b8842ea13d9ce2e4d22993bbf6fc0d20b5e # pin@v0.9
+      - uses: srvaroa/labeler@97fabbad5804e8a22d5f027aa94c98614facb571 # pin@master
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
   external_label:
     runs-on: ubuntu-latest
     name: Label external PRs
     steps:
-      - uses: tylerbutler/labelmaker-action@4d05a42cd2272689037a1cd82b7ad0e36aaddb23 # pin@main
+      - uses: tylerbutler/labelmaker-action@49487085eebc5be6b766198e231f0688e4b4a7c2 # pin@main
         with:
           token: "${{ secrets.ORG_TOKEN }}"

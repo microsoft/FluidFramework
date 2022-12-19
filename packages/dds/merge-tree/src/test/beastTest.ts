@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/consistent-type-assertions, max-len, no-bitwise */
+/* eslint-disable @typescript-eslint/consistent-type-assertions, no-bitwise */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
@@ -46,7 +46,8 @@ import {
 import { reservedRangeLabelsKey, reservedTileLabelsKey } from "../referencePositions";
 import { MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
-import { specToSegment, TestClient } from "./testClient";
+import { JsonSegmentSpecs } from "../snapshotChunks";
+import { getStats, specToSegment, TestClient } from "./testClient";
 import { TestServer } from "./testServer";
 import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils";
 import { ProxString, TST } from "./tst";
@@ -631,7 +632,7 @@ export function TestPack(verbose = true) {
         }
         const aveTime = (client.accumTime / client.accumOps).toFixed(1);
         const aveLocalTime = (client.localTime / client.localOps).toFixed(1);
-        const stats = client.mergeTree.getStats();
+        const stats = getStats(client.mergeTree);
         const windowTime = stats.windowTime!;
         const packTime = stats.packTime;
         const aveWindowTime = ((windowTime || 0) / (client.accumOps)).toFixed(1);
@@ -897,7 +898,7 @@ export function TestPack(verbose = true) {
             */
             // log(server.getText());
             // log(server.mergeTree.toString());
-            // log(server.mergeTree.getStats());
+            // log(getStats(server.mergeTree));
             if (0 === (roundCount % 100)) {
                 const clockStart = clock();
                 if (checkTextMatch()) {
@@ -909,7 +910,7 @@ export function TestPack(verbose = true) {
                 if (verbose) {
                     log(`wall clock is ${((Date.now() - startTime) / 1000.0).toFixed(1)}`);
                 }
-                const stats = server.mergeTree.getStats();
+                const stats = getStats(server.mergeTree);
                 const liveAve = (stats.liveCount / stats.nodeCount).toFixed(1);
                 const posLeaves = stats.leafCount - stats.removedLeafCount;
                 let aveExtractSnapTime = "off";
@@ -1227,7 +1228,7 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        const segs = <SharedStringJSONSegment[]> new SnapshotLegacy(cli.mergeTree, DebugLogger.create("fluid:snapshot")).extractSync();
+        const segs = <SharedStringJSONSegment[]> new SnapshotLegacy(cli.mergeTree, DebugLogger.create("fluid:snapshot")).extractSync().map((seg) => seg.toJSONObject() as JsonSegmentSpecs);
         if (verbose) {
             for (const seg of segs) {
                 log(`${specToSegment(seg)}`);

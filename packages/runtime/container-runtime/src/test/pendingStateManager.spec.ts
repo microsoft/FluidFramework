@@ -8,7 +8,7 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
 import { PendingStateManager } from "../pendingStateManager";
-import { BatchManager, BatchMessage } from "../batchManager";
+import { BatchManager, BatchMessage } from "../opLifecycle";
 
 describe("Pending State Manager", () => {
     describe("Rollback", () => {
@@ -34,7 +34,7 @@ describe("Pending State Manager", () => {
             rollbackContent = [];
             rollbackShouldThrow = false;
 
-            batchManager = new BatchManager(950 * 1024);
+            batchManager = new BatchManager({ hardLimit: 950 * 1024 });
         });
 
         it("should do nothing when rolling back empty pending stack", () => {

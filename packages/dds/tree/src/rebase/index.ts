@@ -12,6 +12,7 @@ export {
     Rebaser,
     RevisionTag,
     tagChange,
+    tagInverse,
     TaggedChange,
 } from "./rebaser";
 export {

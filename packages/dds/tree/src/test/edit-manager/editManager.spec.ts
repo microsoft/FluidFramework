@@ -223,6 +223,21 @@ describe("EditManager", () => {
             { seq: 10, type: "Pull", ref: 0, from: peer2 },
             { seq: 12, type: "Pull", ref: 1, from: peer2 },
         ]);
+
+        it("Bounds memory growth when provided with a minimumSequenceNumber", () => {
+            const { manager } = editManagerFactory({});
+            for (let i = 0; i < 10; ++i) {
+                manager.addSequencedChange({
+                    changeset: TestChange.mint([], []),
+                    refNumber: brand(0),
+                    seqNumber: brand(i),
+                    sessionId: peer1,
+                });
+            }
+            assert.equal(manager.getTrunk().length, 10);
+            manager.advanceMinimumSequenceNumber(5);
+            assert(manager.getTrunk().length < 10);
+        });
     });
 
     describe("Avoids unnecessary rebases", () => {

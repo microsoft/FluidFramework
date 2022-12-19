@@ -11,7 +11,6 @@ import { TableView } from "./tableView";
 
 const tableModelFactory = createDataStoreFactory(
     tableModelType,
-    // eslint-disable-next-line max-len
     import(/* webpackChunkName: "table-view", webpackPreload: true */ "./tableModel").then((m) => m.TableModel.getFactory()));
 
 const tableViewCallback = (model: TableModel) => React.createElement(TableView, { model });

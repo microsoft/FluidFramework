@@ -61,6 +61,10 @@ export {
     visitDelta,
     setGenericTreeField,
     rootFieldKeySymbol,
+    DeltaVisitor,
+    SparseNode,
+    getDescendant,
+    compareUpPaths,
 } from "../tree";
 
 export {
@@ -96,12 +100,12 @@ export {
     InMemoryStoredSchemaRepository,
     schemaDataIsEmpty,
     fieldSchema,
-    namedTreeSchema,
     lookupTreeSchema,
     lookupGlobalFieldSchema,
     TreeSchemaBuilder,
     emptyMap,
     emptySet,
+    treeSchema,
 } from "../schema-stored";
 
 export {
@@ -117,11 +121,13 @@ export {
     RevisionTag,
     TaggedChange,
     ChangesetFromChangeRebaser,
+    makeAnonChange,
+    tagChange,
 } from "../rebase";
 
 export { ICheckout, TransactionResult } from "../checkout";
 
-export { Checkout, runSynchronousTransaction } from "../transaction";
+export { Checkout } from "../transaction";
 
 export {
     Index,
@@ -145,5 +151,8 @@ export {
     EditManager,
     MutableSummaryData,
     ReadonlySummaryData,
+    SeqNumber,
     SessionId,
 } from "../edit-manager";
+
+export { RepairDataStore, ReadonlyRepairDataStore } from "../repair";

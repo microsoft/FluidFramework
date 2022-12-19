@@ -92,6 +92,7 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
      * Adds a new client to the quorum
      */
     public addMember(clientId: string, details: ISequencedClient) {
+        assert(!!clientId, 0x46f /* clientId has to be non-empty string */);
         assert(!this.members.has(clientId), 0x1ce /* clientId not found */);
         this.members.set(clientId, details);
         this.emit("addMember", clientId, details);
@@ -104,6 +105,7 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
      * Removes a client from the quorum
      */
     public removeMember(clientId: string) {
+        assert(!!clientId, 0x470 /* clientId has to be non-empty string */);
         assert(this.members.has(clientId), 0x1cf /* clientId not found */);
         this.members.delete(clientId);
         this.emit("removeMember", clientId);

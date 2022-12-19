@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-nodejs-modules
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { SchemaDataAndPolicy } from "../../../schema-stored";
@@ -103,7 +102,7 @@ export function expectTreeSequence(
     assert(Array.isArray(expected));
     assert.equal(field.length, expected.length);
     for (let index = 0; index < field.length; index++) {
-        expectTreeEquals(schemaData, field[index], expected[index]);
+        expectTreeEquals(schemaData, field[index] as UnwrappedEditableField, expected[index]);
     }
 }
 

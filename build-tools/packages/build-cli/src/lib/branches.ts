@@ -10,7 +10,6 @@ import { Context, MonoRepoKind } from "@fluidframework/build-tools";
 import {
     ReleaseVersion,
     VersionBumpType,
-    VersionBumpTypeExtended,
     VersionChangeTypeExtended,
     VersionScheme,
     bumpVersionScheme,

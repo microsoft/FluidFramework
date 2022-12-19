@@ -5,6 +5,7 @@
 
 module.exports = {
     ...require("@fluidframework/build-common/prettier.config.cjs"),
+    plugins: [require("@trivago/prettier-plugin-sort-imports")],
     importOrder: [
         "^node:(.*)$", // Special-case `node:` imports
         "<THIRD_PARTY_MODULES>",

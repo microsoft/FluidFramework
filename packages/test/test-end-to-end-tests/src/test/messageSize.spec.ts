@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-nodejs-modules
+import * as crypto from "crypto";
 import { strict as assert } from "assert";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -18,6 +20,7 @@ import { IContainer, IErrorBase } from "@fluidframework/container-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { GenericError } from "@fluidframework/container-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
+import { CompressionAlgorithms } from "@fluidframework/container-runtime";
 
 describeNoCompat("Message size", (getTestObjectProvider) => {
     const mapId = "mapId";
@@ -67,6 +70,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
     };
 
+    const generateRandomStringOfSize = (sizeInBytes: number): string =>
+        crypto.randomBytes(sizeInBytes / 2).toString("hex");
     const generateStringOfSize = (sizeInBytes: number): string => new Array(sizeInBytes + 1).join("0");
     const setMapKeys = (map: SharedMap, count: number, item: string): void => {
         for (let i = 0; i < count; i++) {
@@ -76,7 +81,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
     const assertMapValues = (map: SharedMap, count: number, expected: string): void => {
         for (let i = 0; i < count; i++) {
-            const value = dataObject2map.get(`key${i}`);
+            const value = map.get(`key${i}`);
             assert.strictEqual(value, expected, `Wrong value for key${i}`);
         }
     };
@@ -120,7 +125,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         assertMapValues(dataObject2map, messageCount, largeString);
     });
 
-    it("Large ops passes when smaller than the max op size", async () => {
+    it("Single large op passes when smaller than the max op size", async () => {
         await setupContainers(testContainerConfig, {});
         // Max op size is 768000, round down to account for some overhead
         const largeString = generateStringOfSize(750000);
@@ -143,5 +148,51 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
 
         assertMapValues(dataObject2map, messageCount, largeString);
+    });
+
+    it("Single large op passes when compression enabled and over max op size", async () => {
+        const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
+        await setupContainers({
+            ...testContainerConfig,
+            runtimeOptions: {
+                compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 }
+            }
+        }, {});
+
+        const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
+        const messageCount = 1;
+        setMapKeys(dataObject1map, messageCount, largeString);
+    });
+
+    it("Batched small ops pass when compression enabled and batch is larger than max op size", async function() {
+        await setupContainers({
+            ...testContainerConfig,
+            runtimeOptions: {
+                compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
+            }
+        }, {});
+        const largeString = generateStringOfSize(500000);
+        const messageCount = 10;
+        setMapKeys(dataObject1map, messageCount, largeString);
+        await provider.ensureSynchronized();
+
+        assertMapValues(dataObject2map, messageCount, largeString);
+    });
+
+    itExpects("Large ops fail when compression enabled and compressed content is over max op size", [
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
+    ], async function() {
+        const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
+        await setupContainers({
+            ...testContainerConfig,
+            runtimeOptions: {
+                compressionOptions: { minimumBatchSizeInBytes: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
+            },
+        }, {});
+
+        const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
+        const messageCount = 3; // Will result in a 15 MB payload
+        setMapKeys(dataObject1map, messageCount, largeString);
+        await provider.ensureSynchronized();
     });
 });

@@ -31,7 +31,7 @@ const registryEntries = new Map([
 ]);
 
 // Just a little helper, since we're going to create multiple coordinates.
-const createAndAttachCoordinate = async (runtime: IContainerRuntime, name: string) => {
+const createAndAttachCoordinate = async (runtime: IContainerRuntime, name: string): Promise<ICoordinate> => {
     const dataStore = await runtime.createDataStore(Coordinate.getFactory().type);
     const aliasResult = await dataStore.trySetAlias(name);
     const simpleCoordinateComponentRuntime =
@@ -41,7 +41,7 @@ const createAndAttachCoordinate = async (runtime: IContainerRuntime, name: strin
 };
 
 // Just a little helper, since we're going to request multiple coordinates.
-async function requestObjectStoreFromId<T>(request: RequestParser, runtime: IContainerRuntime, id: string) {
+async function requestObjectStoreFromId<T>(request: RequestParser, runtime: IContainerRuntime, id: string): Promise<T> {
     const coordinateRequest = RequestParser.create({
         url: ``,
         headers: request.headers,
@@ -92,7 +92,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
      * Since we're letting the container define the default view it will respond with, it must do whatever setup
      * it requires to produce that default view.  We'll create a few Coordinates and give them starting values.
      */
-    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+    protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
         const simpleCoordinate = await createAndAttachCoordinate(runtime, simpleCoordinateComponentId);
 
         simpleCoordinate.x = 30;
