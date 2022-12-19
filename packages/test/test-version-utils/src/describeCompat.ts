@@ -99,4 +99,4 @@ export const describeNoCompat: DescribeCompat = createCompatDescribe([CompatKind
 
 export const describeLoaderCompat: DescribeCompat = createCompatDescribe([CompatKind.None, CompatKind.Loader]);
 
-export const describeFullCompat: DescribeCompat = createCompatDescribe([CompatKind.None]);
+export const describeFullCompat: DescribeCompat = createCompatDescribe();
