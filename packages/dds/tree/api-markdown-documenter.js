@@ -23,7 +23,7 @@ const os = require("os");
 const HugoMarkdownEmitter = require("./markdown-emitter");
 
 const apiReportsDirectoryPath = path.resolve(__dirname, "_api-extractor-temp");
-const apiDocsDirectoryPath = path.resolve(__dirname, "docs", "apis");
+const apiDocsDirectoryPath = path.resolve(__dirname, "docs", "api");
 const originalPath = path.resolve(process.argv[2]);
 
 const generatedContentNotice =
