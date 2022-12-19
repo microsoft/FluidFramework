@@ -110,15 +110,13 @@ const newMessage = (originalMessage: ISequencedDocumentMessage, contents: any): 
 // original message was compressed, so in the interest of both correctness and safety
 // we should remove all compression markers after we decompress.
 const stripCompressionMarkers = (message: ISequencedDocumentMessage): ISequencedDocumentMessage => {
-    if (message.compression !== undefined) {
-        delete message.compression;
-    }
+    message.compression = undefined;
 
     if (message.metadata?.compressed === true) {
-        delete message.metadata.compressed;
+        message.metadata.compressed = undefined;
 
         if (Object.keys(message.metadata).length === 0) {
-            delete message.metadata;
+            message.metadata = undefined;
         }
     }
 
