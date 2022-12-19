@@ -214,7 +214,7 @@ export class TaskList extends DataObject implements ITaskList {
         } catch (error) {
             console.error(`Task list fetch failed due to an error:\n${error}`);
 
-            // TODO: display error status to user?
+            // TODO: Display error status to user? Attempt some number of retries on failure? 
 
             return;
         }
