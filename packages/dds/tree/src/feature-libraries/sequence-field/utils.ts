@@ -255,7 +255,7 @@ export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boole
 
     if (
         (type !== "MoveIn" && rhs.changes !== undefined) ||
-        (lhs as Modify | HasChanges).changes !== undefined
+        (lhs.type !== "MoveIn" && lhs.changes !== undefined)
     ) {
         return false;
     }
