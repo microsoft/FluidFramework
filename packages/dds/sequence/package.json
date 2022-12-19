@@ -83,7 +83,6 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluid-internal/attributor": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluid-internal/stochastic-test-utils": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluid-internal/test-dds-utils": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluid-tools/benchmark": "^0.45.0",
