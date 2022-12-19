@@ -115,8 +115,8 @@ export class TestClientLogger {
                         this.localLine[clientLogIndex + 1].length,
                         this.paddings[clientLogIndex + 1]);
             };
-            c.once("delta", callback);
-            c.once("maintenance", (main, op) => {
+            c.on("delta", callback);
+            c.on("maintenance", (main, op) => {
                 if (main.operation === MergeTreeMaintenanceType.ACKNOWLEDGED) {
                     callback(op);
                 }
