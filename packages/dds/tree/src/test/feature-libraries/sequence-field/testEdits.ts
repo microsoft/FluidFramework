@@ -56,18 +56,23 @@ function createReviveChangeset(
     startIndex: number,
     count: number,
     detachIndex: number,
-    revision: RevisionTag,
+    detachedBy: RevisionTag,
     mutedBy?: RevisionTag,
-    lastDeletedBy?: RevisionTag,
+    lastDetachedBy?: RevisionTag,
+    linage?: SF.LineageEvent[],
 ): SF.Changeset<never> {
-    return SF.sequenceFieldEditor.revive(
-        startIndex,
-        count,
-        detachIndex,
-        revision,
-        mutedBy,
-        lastDeletedBy,
-    );
+    const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachIndex, detachedBy);
+    const mark = markList[markList.length - 1] as SF.Reattach;
+    if (mutedBy !== undefined) {
+        mark.mutedBy = mutedBy;
+    }
+    if (lastDetachedBy !== undefined) {
+        mark.lastDetachedBy = lastDetachedBy;
+    }
+    if (linage !== undefined) {
+        mark.lineage = linage;
+    }
+    return markList;
 }
 
 function createModifyChangeset<TNodeChange>(

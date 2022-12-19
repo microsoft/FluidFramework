@@ -516,12 +516,7 @@ export const indexSymbol: unique symbol;
 function inputLength(mark: Mark<unknown>): number;
 
 // @public (undocumented)
-type InputSpanningMark<TNodeChange> = Skip_2 | Detach | Modify_2<TNodeChange> | ModifyDetach<TNodeChange> | InputSpanningReattach<TNodeChange>;
-
-// @public (undocumented)
-type InputSpanningReattach<TNodeChange> = (Reattach | ModifyReattach<TNodeChange>) & {
-    lastDeletedBy?: never;
-};
+type InputSpanningMark<TNodeChange> = Skip_2 | Detach | Modify_2<TNodeChange> | ModifyDetach<TNodeChange> | SkipLikeReattach<TNodeChange>;
 
 // @public
 interface Insert<TTree = ProtoNode> {
@@ -816,7 +811,7 @@ interface ModifyMoveOut<TNodeChange = NodeChangeType> extends HasMoveId, HasRevi
 // @public (undocumented)
 interface ModifyReattach<TNodeChange = NodeChangeType> extends HasReattachFields, HasRevisionTag, HasChanges<TNodeChange>, Mutable {
     // (undocumented)
-    lastDeletedBy?: RevisionTag;
+    lastDetachedBy?: RevisionTag;
     // (undocumented)
     type: "MRevive" | "MReturn";
 }
@@ -1088,8 +1083,7 @@ export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode> {
 interface Reattach extends HasReattachFields, HasRevisionTag, Mutable {
     // (undocumented)
     count: NodeCount;
-    // (undocumented)
-    lastDeletedBy?: RevisionTag;
+    lastDetachedBy?: RevisionTag;
     // (undocumented)
     type: "Revive" | "Return";
 }
@@ -1181,7 +1175,7 @@ declare namespace SequenceField {
         NodeSpanningMark,
         InputSpanningMark,
         OutputSpanningMark,
-        InputSpanningReattach,
+        SkipLikeReattach as InputSpanningReattach,
         Tiebreak,
         Tombstones,
         TreeForestPath,
@@ -1253,7 +1247,7 @@ const sequenceFieldEditor: {
     buildChildChange: <TNodeChange = NodeChangeset>(index: number, change: TNodeChange) => Changeset<TNodeChange>;
     insert: (index: number, cursors: ITreeCursor | ITreeCursor[]) => Changeset<never>;
     delete: (index: number, count: number) => Changeset<never>;
-    revive: (index: number, count: number, detachIndex: number, revision: RevisionTag, mutedBy?: RevisionTag | undefined, lastDeletedBy?: RevisionTag | undefined) => Changeset<never>;
+    revive: (index: number, count: number, detachIndex: number, detachedBy: RevisionTag) => Changeset<never>;
 };
 
 // @public (undocumented)
@@ -1293,6 +1287,11 @@ type Skip = number;
 
 // @public (undocumented)
 type Skip_2 = number;
+
+// @public (undocumented)
+type SkipLikeReattach<TNodeChange> = (Reattach | ModifyReattach<TNodeChange>) & Muted & {
+    lastDeletedBy?: never;
+};
 
 // @public
 export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, SchemaDataAndPolicy<TPolicy> {

@@ -6,7 +6,7 @@
 import { jsonableTreeFromCursor } from "../treeTextCursor";
 import { ITreeCursor, RevisionTag } from "../../core";
 import { FieldEditor } from "../modular-schema";
-import { Changeset, Mark, NodeChangeType, Reattach } from "./format";
+import { Changeset, Mark, NodeChangeType } from "./format";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
     insert(index: number, cursor: ITreeCursor | ITreeCursor[]): Changeset<never>;
@@ -37,27 +37,16 @@ export const sequenceFieldEditor = {
         index: number,
         count: number,
         detachIndex: number,
-        revision: RevisionTag,
-        mutedBy?: RevisionTag,
-        lastDeletedBy?: RevisionTag,
-    ): Changeset<never> => {
-        if (count === 0) {
-            return [];
-        }
-        const mark: Reattach = {
-            type: "Revive",
-            count,
-            detachedBy: revision,
-            detachIndex,
-        };
-        if (mutedBy !== undefined) {
-            mark.mutedBy = mutedBy;
-        }
-        if (lastDeletedBy !== undefined) {
-            mark.lastDeletedBy = lastDeletedBy;
-        }
-        return markAtIndex(index, mark);
-    },
+        detachedBy: RevisionTag,
+    ): Changeset<never> =>
+        count === 0
+            ? []
+            : markAtIndex(index, {
+                  type: "Revive",
+                  count,
+                  detachedBy,
+                  detachIndex,
+              }),
 };
 
 function markAtIndex<TNodeChange>(index: number, mark: Mark<TNodeChange>): Changeset<TNodeChange> {

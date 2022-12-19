@@ -23,7 +23,7 @@ export type InputSpanningMark<TNodeChange> =
     | Detach
     | Modify<TNodeChange>
     | ModifyDetach<TNodeChange>
-    | InputSpanningReattach<TNodeChange>;
+    | SkipLikeReattach<TNodeChange>;
 
 export type OutputSpanningMark<TNodeChange> =
     | Skip
@@ -32,9 +32,10 @@ export type OutputSpanningMark<TNodeChange> =
     | Reattach
     | ModifyReattach<TNodeChange>;
 
-export type InputSpanningReattach<TNodeChange> = (Reattach | ModifyReattach<TNodeChange>) & {
-    lastDeletedBy?: never;
-};
+export type SkipLikeReattach<TNodeChange> = (Reattach | ModifyReattach<TNodeChange>) &
+    Muted & {
+        lastDeletedBy?: never;
+    };
 
 export interface Mutable {
     mutedBy?: RevisionTag;
@@ -131,16 +132,16 @@ export interface ModifyMoveIn<TNodeChange = NodeChangeType>
     type: "MMoveIn";
 }
 
-export type Attach<TNodeChange = NodeChangeType> =
-    | NewAttach<TNodeChange>
-    | Reattach
-    | ModifyReattach<TNodeChange>;
-
 export type NewAttach<TNodeChange = NodeChangeType> =
     | Insert
     | ModifyInsert<TNodeChange>
     | MoveIn
     | ModifyMoveIn<TNodeChange>;
+
+export type Attach<TNodeChange = NodeChangeType> =
+    | NewAttach<TNodeChange>
+    | Reattach
+    | ModifyReattach<TNodeChange>;
 
 export type ModifyingMark<TNodeChange = NodeChangeType> =
     | Modify<TNodeChange>
@@ -197,7 +198,14 @@ export interface HasReattachFields extends HasPlaceFields {
 export interface Reattach extends HasReattachFields, HasRevisionTag, Mutable {
     type: "Revive" | "Return";
     count: NodeCount;
-    lastDeletedBy?: RevisionTag;
+    /**
+     * The changeset that last detached the nodes that this mark intends to revive.
+     * For this property to be set, the target nodes must have been revived my another changeset,
+     * then detached by a changeset other than `Reattach.detachedBy`.
+     *
+     * This property is `undefined` when it would otherwise be equivalent to `Reattach.detachedBy`.
+     */
+    lastDetachedBy?: RevisionTag;
 }
 export interface ModifyReattach<TNodeChange = NodeChangeType>
     extends HasReattachFields,
@@ -205,7 +213,7 @@ export interface ModifyReattach<TNodeChange = NodeChangeType>
         HasChanges<TNodeChange>,
         Mutable {
     type: "MRevive" | "MReturn";
-    lastDeletedBy?: RevisionTag;
+    lastDetachedBy?: RevisionTag;
 }
 
 /**

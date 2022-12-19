@@ -20,7 +20,8 @@ import {
     splitMarkOnInput,
     splitMarkOnOutput,
     isAttachInGap,
-    isInertReattach,
+    isSkipLikeReattach,
+    isActiveReattach,
 } from "./utils";
 import {
     Attach,
@@ -162,7 +163,9 @@ class RebaseQueue<T> {
             if (
                 isReattach(baseMark) &&
                 isReattach(newMark) &&
-                baseMark.detachedBy === newMark.detachedBy
+                baseMark.detachedBy !== undefined &&
+                (baseMark.detachedBy === newMark.detachedBy ||
+                    baseMark.detachedBy === newMark.lastDetachedBy)
             ) {
                 const newMarkLength = getOutputLength(newMark);
                 const baseMarkLength = getOutputLength(baseMark);
@@ -267,7 +270,7 @@ function rebaseMark<TNodeChange>(
     baseRevision: RevisionTag | undefined,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
 ): NodeSpanningMark<TNodeChange> {
-    if (isSkipMark(baseMark) || isInertReattach(baseMark)) {
+    if (isSkipMark(baseMark) || isSkipLikeReattach(baseMark)) {
         return clone(currMark);
     }
     const baseType = baseMark.type;
@@ -283,7 +286,7 @@ function rebaseMark<TNodeChange>(
                 } else {
                     return {
                         ...clone(currMark),
-                        lastDeletedBy: baseMarkRevision,
+                        lastDetachedBy: baseMarkRevision,
                     };
                 }
             }
@@ -292,14 +295,26 @@ function rebaseMark<TNodeChange>(
         case "MRevive":
         case "Revive": {
             assert(isReattach(currMark), "Only a reattach can overlap with a non-inert reattach");
+            if (isMuted(baseMark)) {
+                return clone(currMark);
+            }
+            if (isActiveReattach(currMark)) {
+                // The nodes that currMark aims to revive are being revived by baseMark
+                return {
+                    ...clone(currMark),
+                    mutedBy: baseMark.revision ?? baseRevision,
+                };
+            }
+            assert(!isSkipLikeReattach(currMark), `Unsupported revive mark overlap`);
+            // The nodes that currMark aims to revive and were deleted by `currMark.lastDetachedBy`
+            // are being revived by baseMark.
             assert(
-                !isMuted(currMark) && !isMuted(baseMark),
-                "Only non-muted revive marks can overlap",
+                currMark.lastDetachedBy === baseMark.detachedBy,
+                `Unexpected revive mark overlap`,
             );
-            return {
-                ...clone(currMark),
-                mutedBy: baseMark.revision ?? baseRevision,
-            };
+            const revive = clone(currMark) as Reattach;
+            delete revive.lastDetachedBy;
+            return revive;
         }
         case "Modify": {
             if (isModify(currMark)) {

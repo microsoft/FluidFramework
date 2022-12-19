@@ -21,10 +21,10 @@ import { MarkListFactory } from "./markListFactory";
 import {
     getInputLength,
     getOutputLength,
+    isActiveReattach,
     isAttach,
     isDetachMark,
     isModifyingMark,
-    isReattach,
     isSkipMark,
     splitMarkOnInput,
     splitMarkOnOutput,
@@ -169,15 +169,17 @@ function composeMarks<TNodeChange>(
         case "Revive": {
             switch (newType) {
                 case "Modify": {
+                    // TODO: handle the overlap of muted revive with muted modify
+                    assert(
+                        baseMark.lastDetachedBy === undefined && baseMark.mutedBy === undefined,
+                        "Only an active revive can overlap with a modify",
+                    );
                     const modRevive: ModifyReattach<TNodeChange> = {
                         type: "MRevive",
                         detachedBy: baseMark.detachedBy,
                         detachIndex: baseMark.detachIndex,
                         changes: newMark.changes,
                     };
-                    if (baseMark.lastDeletedBy !== undefined) {
-                        modRevive.lastDeletedBy = baseMark.lastDeletedBy;
-                    }
                     return modRevive;
                 }
                 case "Delete": {
@@ -254,12 +256,14 @@ class ComposeQueue<T> {
         if (baseMark === undefined || newMark === undefined) {
             return { baseMark: this.baseMarks.pop(), newMark: this.newMarks.pop() };
         } else if (isAttach(newMark)) {
-            const newRev = newMark.revision ?? this.newRevision;
-            if (isReattach(newMark) && isDetachMark(baseMark)) {
-                if (
+            if (isActiveReattach(newMark) && isDetachMark(baseMark)) {
+                const newRev = newMark.revision ?? this.newRevision;
+                const areInverses =
+                    // The same RevisionTag implies the two changesets are inverses in a rebase sandwich
                     (newRev !== undefined && baseMark.revision === newRev) ||
-                    (newMark.lastDeletedBy ?? newMark.detachedBy) === baseMark.revision
-                ) {
+                    // The new mark is an undo of the base one
+                    newMark.detachedBy === baseMark.revision;
+                if (areInverses) {
                     this.baseMarks.pop();
                     this.newMarks.pop();
                     const baseMarkLength = getInputLength(baseMark);
@@ -280,7 +284,7 @@ class ComposeQueue<T> {
                     return {
                         baseMark,
                         newMark,
-                        areInverses: true,
+                        areInverses,
                     };
                 }
             }

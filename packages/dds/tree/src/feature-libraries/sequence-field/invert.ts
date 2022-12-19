@@ -81,7 +81,7 @@ function invertMark<TNodeChange>(
                         },
                     ];
                 }
-                if (mark.lastDeletedBy === undefined) {
+                if (mark.lastDetachedBy === undefined) {
                     return [mark.count];
                 }
                 return [];

@@ -14,6 +14,7 @@ import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
 
 const tag1: RevisionTag = brand(41);
 const tag2: RevisionTag = brand(42);
+const tag3: RevisionTag = brand(43);
 
 function rebase(change: TestChangeset, base: TestChangeset, baseRev?: RevisionTag): TestChangeset {
     deepFreeze(change);
@@ -143,25 +144,40 @@ describe("SequenceField - Rebase", () => {
             Change.revive(0, 1, 1, tag1, tag2),
             // Overlapping revive is no longer muted
             Change.revive(1, 1, 2, tag1),
-            // Later revive has is unaffected
-            Change.revive(2, 1, 3, tag1, tag2),
+            // Later revive is unaffected
+            Change.revive(2, 1, 3, tag1, tag2, undefined, [{ revision: tag2, offset: 1 }]),
         ]);
-        checkDeltaEquality(actual, expected);
+        assert.deepEqual(actual, expected);
     });
 
     it("muted revive ↷ unrelated delete", () => {
         const revive = Change.revive(0, 3, 1, tag1, tag2);
         const deletion = Change.delete(1, 1);
-        const actual = rebase(revive, deletion);
+        const actual = rebase(revive, deletion, tag3);
         const expected = composeAnonChanges([
             // Earlier revive is unaffected
             Change.revive(0, 1, 1, tag1, tag2),
-            // Overlapping revive is muted but has an input length of 0
-            Change.revive(1, 1, 2, tag1, tag2),
-            // Later revive has is unaffected
-            Change.revive(2, 1, 3, tag1, tag2),
+            // Overlapping revive is muted and its target is now deleted
+            Change.revive(1, 1, 2, tag1, tag2, tag3),
+            // Later revive gets linage
+            Change.revive(2, 1, 3, tag1, tag2, undefined, [{ revision: tag3, offset: 1 }]),
         ]);
-        checkDeltaEquality(actual, expected);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("muted revive of deleted node ↷ revive of deleted nodes", () => {
+        const revive = Change.revive(0, 3, 1, tag1, tag2, tag3);
+        const deletion = Change.revive(0, 1, 2, tag3);
+        const actual = rebase(revive, deletion, tag3);
+        const expected = composeAnonChanges([
+            // Earlier revive is unaffected
+            Change.revive(0, 1, 1, tag1, tag2, tag3),
+            // Overlapping revive remains muted but its target is no longer deleted
+            Change.revive(1, 1, 2, tag1, tag2),
+            // Later revive is unaffected
+            Change.revive(2, 1, 3, tag1, tag2, tag3),
+        ]);
+        assert.deepEqual(actual, expected);
     });
 
     it("delete ↷ overlapping delete", () => {
