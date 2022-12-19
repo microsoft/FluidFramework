@@ -171,7 +171,7 @@ export class TaskList extends DataObject implements ITaskList {
     /**
      * Fetch any updated data from the external data source and sync local state to it.
      *
-     * @returns A promise that resolves when the fetch completes.
+     * @returns A promise that resolves when the external data fetch and Fluid data update complete.
      *
      * @privateRemarks
      *
@@ -214,7 +214,7 @@ export class TaskList extends DataObject implements ITaskList {
         } catch (error) {
             console.error(`Task list fetch failed due to an error:\n${error}`);
 
-            // TODO: display error status to user?
+            // TODO: Display error status to user? Attempt some number of retries on failure? 
 
             return;
         }
