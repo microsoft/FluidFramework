@@ -45,7 +45,7 @@
     "compression": "^1.7.3",
     "cors": "^2.8.5",
     "debug": "^4.1.1",
-    "express": "^4.16.3",
+    "express": "^4.17.3",
     "ioredis": "^4.24.2",
     "json-stringify-safe": "5.0.1",
     "jsonwebtoken": "^8.5.1",

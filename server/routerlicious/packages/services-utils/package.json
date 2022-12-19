@@ -57,7 +57,7 @@
     "@fluidframework/server-services-core": "^0.1038.3000",
     "@fluidframework/server-services-telemetry": "^0.1038.3000",
     "debug": "^4.1.1",
-    "express": "^4.16.3",
+    "express": "^4.17.3",
     "ioredis": "^4.24.2",
     "json-stringify-safe": "^5.0.1",
     "jsonwebtoken": "^8.4.0",
