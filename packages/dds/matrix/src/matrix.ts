@@ -504,15 +504,11 @@ export class SharedMatrix<T = any>
         localSeq: number
     ): number | undefined {
         const { clientId } = client.getCollabWindow();
-        const { segment, offset } = client.getContainingSegment(pos, { referenceSequenceNumber, clientId }, localSeq);
-        if (segment === undefined && offset === undefined) {
+        const { segment, offset } = client.getContainingSegment(pos, { referenceSequenceNumber, clientId: client.getLongClientId(clientId) }, localSeq);
+        if (segment === undefined || offset === undefined) {
             return;
         }
 
-        // if segment is undefined, it slide off the string
-        assert(segment !== undefined, "No segment found");
-
-        assert(offset !== undefined && 0 <= offset && offset < segment.cachedLength, 0x426 /* Invalid offset */);
         return client.findReconnectionPosition(segment, localSeq) + offset;
     }
 

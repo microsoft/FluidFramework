@@ -126,10 +126,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     getCollabWindow(): CollaborationWindow;
     // (undocumented)
-    getContainingSegment<T extends ISegment>(pos: number, sequenceArgs?: {
-        referenceSequenceNumber: number;
-        clientId: number;
-    }, localSeq?: number): {
+    getContainingSegment<T extends ISegment>(pos: number, sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">, localSeq?: number): {
         segment: T | undefined;
         offset: number | undefined;
     };

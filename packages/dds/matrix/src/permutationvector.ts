@@ -207,7 +207,7 @@ export class PermutationVector extends Client {
     }
 
     public adjustPosition(pos: number, op: ISequencedDocumentMessage) {
-        const { segment, offset } = this.getContainingSegment(pos, {referenceSequenceNumber: op.referenceSequenceNumber, clientId: this.getOrAddShortClientId(op.clientId)});
+        const { segment, offset } = this.getContainingSegment(pos, {referenceSequenceNumber: op.referenceSequenceNumber, clientId: op.clientId });
 
         // Note that until the MergeTree GCs, the segment is still reachable via `getContainingSegment()` with
         // a `refSeq` in the past.  Prevent remote ops from accidentally allocating or using recycled handles

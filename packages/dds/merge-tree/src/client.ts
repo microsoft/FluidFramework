@@ -617,8 +617,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
      * Gets the client args from the op if remote, otherwise uses the local clients info
      * @param sequencedMessage - The sequencedMessage to get the client sequence args for
      */
-     private getClientSequenceArgsForMessage(sequencedMessage: ISequencedDocumentMessage | undefined):
-        IMergeTreeClientSequenceArgs {
+    private getClientSequenceArgsForMessage(sequencedMessage: ISequencedDocumentMessage | undefined): IMergeTreeClientSequenceArgs;
+    private getClientSequenceArgsForMessage(sequencedMessage: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId"> | undefined): Pick<IMergeTreeClientSequenceArgs, "referenceSequenceNumber" | "clientId">;
+    private getClientSequenceArgsForMessage(sequencedMessage: ISequencedDocumentMessage | Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId"> | undefined) {
         // If there this no sequenced message, then the op is local
         // and unacked, so use this clients sequenced args
         //
@@ -633,7 +634,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
             return {
                 clientId: this.getOrAddShortClientId(sequencedMessage.clientId),
                 referenceSequenceNumber: sequencedMessage.referenceSequenceNumber,
-                sequenceNumber: sequencedMessage.sequenceNumber,
+                // Note: return value satisfies overload signatures despite the cast, as if input argument doesn't contain sequenceNumber,
+                // return value isn't expected to have it either.
+                sequenceNumber: (sequencedMessage as ISequencedDocumentMessage).sequenceNumber,
             };
         }
     }
@@ -1052,9 +1055,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         }
     }
 
-    getContainingSegment<T extends ISegment>(pos: number, sequenceArgs?: { referenceSequenceNumber: number; clientId: number; }, localSeq?: number) {
-        const args = sequenceArgs ?? this.getClientSequenceArgsForMessage(undefined);
-        return this._mergeTree.getContainingSegment<T>(pos, args.referenceSequenceNumber, args.clientId, localSeq);
+    getContainingSegment<T extends ISegment>(pos: number, sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">, localSeq?: number) {
+        const { referenceSequenceNumber, clientId } = this.getClientSequenceArgsForMessage(sequenceArgs);
+        return this._mergeTree.getContainingSegment<T>(pos, referenceSequenceNumber, clientId, localSeq);
     }
 
     /**

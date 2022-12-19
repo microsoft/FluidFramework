@@ -652,7 +652,7 @@ function createPositionReference(
     let segoff;
     if (op) {
         assert((refType & ReferenceType.SlideOnRemove) !== 0, 0x2f5 /* op create references must be SlideOnRemove */);
-        segoff = client.getContainingSegment(pos, { referenceSequenceNumber: op.referenceSequenceNumber, clientId: client.getOrAddShortClientId(op.clientId) });
+        segoff = client.getContainingSegment(pos, { referenceSequenceNumber: op.referenceSequenceNumber, clientId: op.clientId });
         segoff = client.getSlideToSegment(segoff);
     } else {
         assert((refType & ReferenceType.SlideOnRemove) === 0 || !!fromSnapshot,
@@ -1356,7 +1356,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             throw new LoggingError("mergeTree client must exist");
         }
         const { clientId } = this.client.getCollabWindow();
-        const { segment, offset } = this.client.getContainingSegment(pos, { referenceSequenceNumber: seqNumberFrom, clientId }, localSeq);
+        const { segment, offset } = this.client.getContainingSegment(pos, { referenceSequenceNumber: seqNumberFrom, clientId: this.client.getLongClientId(clientId) }, localSeq);
 
         // if segment is undefined, it slid off the string
         assert(segment !== undefined, "No segment found");
