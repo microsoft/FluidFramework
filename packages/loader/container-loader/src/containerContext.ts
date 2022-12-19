@@ -327,7 +327,7 @@ export class ContainerContext implements IContainerContext {
         this._runtime = await PerformanceEvent.timedExecAsync(
 			this.taggedLogger,
 			{ eventName: "InstantiateRuntime" },
-			() => runtimeFactory.instantiateRuntime(this, existing));
+			async () => runtimeFactory.instantiateRuntime(this, existing));
     }
 
     private attachListener() {
