@@ -46,7 +46,7 @@ import {
     ISummaryContent,
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { Container, ReportIfTooLong } from "./container";
+import { Container } from "./container";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
