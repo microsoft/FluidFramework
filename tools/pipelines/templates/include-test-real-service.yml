@@ -322,7 +322,7 @@ jobs:
               cat *
               if ! [[ -z "$(ls -A .)" ]]; then
                 curdirfiles = `ls`
-                echo "report file(s) $curdirfiles found. Filtering skipped tests..."
+                echo "report file(s) ${{ curdirfiles }} found. Filtering skipped tests..."
                 for i in `ls`; do sed -i '/<skipped/d' $i; done
                 cat *
               else
