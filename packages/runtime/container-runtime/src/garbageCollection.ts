@@ -59,7 +59,6 @@ import {
     runGCKey,
     runSessionExpiryKey,
     runSweepKey,
-    throwOnTombstoneUsageKey,
     trackGCStateKey
 } from "./garbageCollectionConstants";
 import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
@@ -1181,7 +1180,6 @@ export class GarbageCollector implements IGarbageCollector {
 
         if (this.tombstones.includes(toNodePath)) {
             const nodeType = this.runtime.getNodeType(toNodePath)
-            const throwOnTombstoneUsage = this.mc.config.getBoolean(throwOnTombstoneUsageKey);
 
             let eventName = "GC_Tombstone_SubDatastore_Revived";
             if (nodeType === GCNodeType.DataStore) {
