@@ -250,7 +250,6 @@ export class TenantManager {
         const cachedKey = await this.cache.get(tenantId);
         if (cachedKey) {
             Lumberjack.info(`Tenant key(s) found in cache`, lumberProperties);
-            this.cache.delete(tenantId);
             return this.decryptCachedKeys(cachedKey);
         }
 
