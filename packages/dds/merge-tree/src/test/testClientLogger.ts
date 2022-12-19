@@ -115,8 +115,8 @@ export class TestClientLogger {
                         this.localLine[clientLogIndex + 1].length,
                         this.paddings[clientLogIndex + 1]);
             };
-            c.on("delta", callback);
-            c.on("maintenance", (main, op) => {
+            c.once("delta", callback);
+            c.once("maintenance", (main, op) => {
                 if (main.operation === MergeTreeMaintenanceType.ACKNOWLEDGED) {
                     callback(op);
                 }
@@ -269,10 +269,10 @@ export class TestClientLogger {
                         }
                         parent = node.parent;
                     }
-                    const text = 
-                        TextSegment.is(node) 
-                            ? node.text 
-                            : Marker.is(node) 
+                    const text =
+                        TextSegment.is(node)
+                            ? node.text
+                            : Marker.is(node)
                                 ? "¶"
                                 : undefined;
                     if(text !== undefined){
