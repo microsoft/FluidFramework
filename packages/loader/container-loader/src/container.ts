@@ -236,7 +236,7 @@ const getCodeProposal =
     (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
 /**
- * Helper function to report to telemetry cases where operation takes longer than expected (1s)
+ * Helper function to report to telemetry cases where operation takes longer than expected (200ms)
  * @param logger - logger to use
  * @param eventName - event name
  * @param action - functor to call and measure
