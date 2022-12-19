@@ -1,6 +1,6 @@
 # Routerlicious
 
-Routerlicious handles the receiving of delta operations (ops) and is responsible for the ordering and assignment of a
+Routerlicious handles the receiving of delta operations and is responsible for the ordering and assignment of a
 sequence number to them. Once assigned it is also responsible for notifying connected clients of a new sequence
 number.
 
@@ -134,32 +134,30 @@ If you want to build API documentation locally, see
 
 Routerlicious as a whole is a collection of microservices. These microservices are designed to handle a single task and
 have clear input and output characteristics. Many can be run as serverless lambdas and in fact we have our own
-[lambda framework](./packages/lambdas-driver). We chose this path to have greater control over the throughput and latency
+[lambda framework](./src/kafka-service). We chose this path to have greater control over the throughput and latency
 characteristics of our message processing. But could be also be run with Azure Functions, AWS Lambdas, Fission, etc...
 
 #### [Alfred](./packages/routerlicious/src/alfred)
 
-Alfred is the entry point to the system.
-Clients connect to Alfred to join the operation stream.
-Joining the stream allows them to receive push notifications for new operations, retrieve old operations, as well as create new ones.
-We make use of [Redis][] for push notifications. New operations are placed inside of [Apache Kafka][] for processing.
+Alfred is the entry point to the system. Clients connect to Alfred to join the operation stream. Joining the stream
+allows them to receive push notifications for new operations, retrieve old operations, as well as create new ones. We
+make use of Redis for push notifications. New operations are placed inside of Apache Kafka for processing.
 
 #### [Deli](./packages/routerlicious/src/deli)
 
-Deli retrieves unsequenced messages from [Kafka][] and then attaches a new sequence number to them.
-Sequence numbers are per-document, monotonically increasing numbers.
-Sequenced messages are placed back into [Apache Kafka][] for processing.
-The Deli microservice also runs the [Broadcaster](./packages/lambdas/src/broadcaster) lambda that directly puts sequenced message into [Redis][] so that Alfred can listen and broadcast back to the clients.
+Deli retrieves unsequenced messages from Kafka and then attaches a new sequence number to them. Sequence numbers
+are per-document monotonically increasing numbers. Sequenced messages are placed back into Apache Kafka for processing.
+The Deli microservice also runs the [Broadcaster](./packages/lambdas/src/broadcaster) lambda that directly put sequenced
+message into redis so that alfred can listen and broadcast back to the clients.
 
 #### [Scriptorium](./packages/routerlicious/src/scriptorium)
 
-Scriptorium retrieves sequenced messages from [Kafka][].
-It then writes the message to a database for storage.
-We currently make use of [Redis][] for broadcasting and [MongoDB][] for storage.
+Scriptorium retrieves sequenced messages from Kafka. It then writes the message
+to a database for storage. We currently make use of Redis for broadcasting and MongoDB for storage.
 
 #### [Scribe](./packages/routerlicious/src/scribe)
 
-Scribe is responsible for listening to inbound summary ops and then writing them to the public record in the [Historian](#historian).
+Scribe is responsible for listening to inbound summary ops and then writing them to the public record in the Historian
 
 #### [Historian](../historian)
 
@@ -168,7 +166,7 @@ content-addressable file system represented via the [Git REST API](https://devel
 Storage providers that implement this interface are then able to plug into the system as a whole. Currently we have
 support for [GitHub](https://developer.github.com/v3/git/) and [Git](../gitrest).
 
-More details on content-addressable file systems and Git can be found at:
+More details on content-addressable file systems and Git can be found at
 
 * https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain
 * http://stefan.saasen.me/articles/git-clone-in-haskell-from-the-bottom-up/
@@ -275,23 +273,8 @@ await prague.api.load(id, { encrypted: false, token });
 ```
 Passing an invalid token will fail the load call.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
-## Contribution Guidelines
-
-Please refer to our [Github Wiki](https://github.com/microsoft/FluidFramework/wiki/Contributing) for an overview of our contribution guidelines.
-<!-- AUTO-GENERATED-CONTENT:END -->
-
-<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
 ## Trademark
 
-This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
-Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
-<!-- AUTO-GENERATED-CONTENT:END -->
-
-<!-- Links -->
-
-[apache kafka]: https://kafka.apache.org
-[kafka]: https://kafka.apache.org
-[mongodb]: https://www.mongodb.com
-[redis]: https://redis.io
