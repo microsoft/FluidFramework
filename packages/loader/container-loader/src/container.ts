@@ -70,6 +70,7 @@ import {
     ISummaryTree,
     IVersion,
     MessageType,
+    SignalType,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -1761,8 +1762,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private processSignal(message: ISignalMessage) {
-        // No clientId indicates a system signal message.
-        if (message.clientId === null) {
+        console.log("container-loader:container.ts:processSignal -- message");
+        console.log(message);
+        if (message.clientId === null && message.content.type === SignalType.RuntimeMessage) {
+            const local = this.clientId === message.clientId;
+            this.context.processSignal(message, local);
+        } else if (message.clientId === null) {
             this.protocolHandler.processSignal(message);
         } else {
             const local = this.clientId === message.clientId;
