@@ -5,6 +5,7 @@
 import child_process from "child_process";
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
+
 import { IRunConfig, IRunner, IRunnerEvents, IRunnerStatus, RunnnerStatus } from "./interface";
 import { delay } from "./utils";
 
@@ -82,7 +83,7 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
             throw new Error("Not all clients closed sucesfully.");
         }
 
-        if(this.docIds.length > 0) {
+        if (this.docIds.length > 0) {
             return this.docIds.length === 1 ? this.docIds[0] : this.docIds;
         }
     }
@@ -104,16 +105,16 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
     private async createChild(childArgs: string[]): Promise<boolean> {
         const envVar = { ...process.env };
         const runnerProcess = child_process.spawn("node", childArgs, {
-            stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
+            stdio: ["inherit", "inherit", "inherit", "ipc"],
             env: envVar,
         });
 
         runnerProcess.stdout?.once("data", (data) => {
-            this.docIds.push(String(data))
+            this.docIds.push(String(data));
         });
 
-        runnerProcess.on('message', (id) => {
-            this.docIds.push(String(id))
+        runnerProcess.on("message", (id) => {
+            this.docIds.push(String(id));
         });
 
         return new Promise((resolve, reject) =>

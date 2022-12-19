@@ -77,13 +77,16 @@ async function main() {
         process.exit(-1);
     }
 
-    const logger = await getLogger({
-        runId: config.runId,
-        scenarioName: config.scenarioName,
-    }, [
-        "scenario:runner",
-        // "fluid:telemetry:OpPerf"
-    ]);
+    const logger = await getLogger(
+        {
+            runId: config.runId,
+            scenarioName: config.scenarioName,
+        },
+        [
+            "scenario:runner",
+            // "fluid:telemetry:OpPerf"
+        ],
+    );
 
     const ac = await createAzureClient({
         userId: "testUserId",
