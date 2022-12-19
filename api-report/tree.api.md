@@ -845,14 +845,11 @@ export class ModularEditBuilder extends ProgressiveEditBuilderBase<ModularChange
 }
 
 // @public (undocumented)
-type MoveDstPartition<T> = MovePartition<Attach<T>>;
-
-// @public (undocumented)
 interface MoveEffectTable<T> {
     // (undocumented)
     allowMerges: boolean;
     // (undocumented)
-    dstEffects: Map<MoveId_2, MoveDstPartition<T>[]>;
+    dstEffects: Map<MoveId_2, MovePartition<T>[]>;
     // (undocumented)
     dstMergeable: Map<MoveId_2, MoveId_2>;
     // (undocumented)
@@ -862,7 +859,7 @@ interface MoveEffectTable<T> {
     // (undocumented)
     splitIdToOrigId: Map<MoveId_2, MoveId_2>;
     // (undocumented)
-    srcEffects: Map<MoveId_2, MoveSrcPartition<T>[]>;
+    srcEffects: Map<MoveId_2, MovePartition<T>[]>;
     // (undocumented)
     srcMergeable: Map<MoveId_2, MoveId_2>;
     validatedMarks: Set<Mark_2<T>>;
@@ -921,17 +918,16 @@ interface MoveOut_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMov
 }
 
 // @public (undocumented)
-interface MovePartition<T> {
+interface MovePartition<TNodeChange> {
     // (undocumented)
     count?: number;
     // (undocumented)
     id: MoveId_2;
     // (undocumented)
-    replaceWith?: T[];
+    modifyAfter?: TNodeChange;
+    // (undocumented)
+    replaceWith?: Mark_2<TNodeChange>[];
 }
-
-// @public (undocumented)
-type MoveSrcPartition<T> = MovePartition<SizedObjectMark<T>>;
 
 // @public
 export enum Multiplicity {
@@ -1232,8 +1228,6 @@ declare namespace SequenceField {
         isMoveMark,
         MoveMark,
         MoveEffectTable,
-        MoveDstPartition,
-        MoveSrcPartition,
         MovePartition
     }
 }

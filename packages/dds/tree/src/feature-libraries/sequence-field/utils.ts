@@ -383,8 +383,8 @@ export function tryExtendMark(
 }
 
 export interface MoveEffectTable<T> {
-    srcEffects: Map<MoveId, MoveSrcPartition<T>[]>;
-    dstEffects: Map<MoveId, MoveDstPartition<T>[]>;
+    srcEffects: Map<MoveId, MovePartition<T>[]>;
+    dstEffects: Map<MoveId, MovePartition<T>[]>;
     splitIdToOrigId: Map<MoveId, MoveId>;
     idRemappings: Map<MoveId, MoveId>;
     movedMarks: Map<MoveId, Mark<T>[]>;
@@ -412,21 +412,19 @@ export function newMoveEffectTable<T>(): MoveEffectTable<T> {
     };
 }
 
-export type MoveSrcPartition<T> = MovePartition<SizedObjectMark<T>>;
-export type MoveDstPartition<T> = MovePartition<Attach<T>>;
-
-export interface MovePartition<T> {
+export interface MovePartition<TNodeChange> {
     id: MoveId;
 
     // Undefined means the partition is the same size as the input.
     count?: number;
-    replaceWith?: T[];
+    replaceWith?: Mark<TNodeChange>[];
+    modifyAfter?: TNodeChange;
 }
 
 export function splitMoveSrc<T>(
     table: MoveEffectTable<T>,
     id: MoveId,
-    parts: MoveSrcPartition<T>[],
+    parts: MovePartition<T>[],
 ): void {
     // TODO: Do we need a separate splitIdToOrigId for src and dst? Or do we need to eagerly apply splits when processing?
     const origId = table.splitIdToOrigId.get(id);
@@ -471,7 +469,7 @@ export function splitMoveSrc<T>(
 export function splitMoveDest<T>(
     table: MoveEffectTable<T>,
     id: MoveId,
-    parts: MoveDstPartition<T>[],
+    parts: MovePartition<T>[],
 ): void {
     // TODO: What if source has been deleted?
     const origId = table.splitIdToOrigId.get(id);
@@ -545,6 +543,26 @@ export function removeMoveDest(table: MoveEffectTable<unknown>, id: MoveId): voi
     table.dstMergeable.delete(id);
 }
 
+export function modifyMoveSrc<T>(table: MoveEffectTable<T>, id: MoveId, change: T): void {
+    const origId = table.splitIdToOrigId.get(id);
+    if (origId !== undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const effect = table.srcEffects.get(origId)!;
+        const index = effect.findIndex((p) => p.id === id);
+        assert(effect[index].replaceWith === undefined, "Move source already replaced");
+        assert(effect[index].modifyAfter === undefined, "Move source already been modified");
+        effect[index].modifyAfter = change;
+    } else {
+        table.srcEffects.set(id, [{ id, modifyAfter: change }]);
+    }
+
+    table.srcMergeable.delete(id);
+    const leftId = findKey(table.srcMergeable, id);
+    if (leftId !== undefined) {
+        table.srcMergeable.delete(leftId);
+    }
+}
+
 export function replaceMoveSrc<T>(
     table: MoveEffectTable<T>,
     id: MoveId,
@@ -559,6 +577,7 @@ export function replaceMoveSrc<T>(
         effect[index].replaceWith = [mark];
     } else {
         table.srcEffects.set(id, [{ id, replaceWith: [mark] }]);
+        table.splitIdToOrigId.set(id, id);
     }
 }
 
@@ -635,9 +654,10 @@ export function isMoveMark<T>(mark: Mark<T>): mark is MoveMark<T> {
     }
 }
 
-export function splitMoveIn<T>(mark: MoveIn | ReturnTo, parts: MoveDstPartition<T>[]): Attach<T>[] {
-    const result: Attach<T>[] = [];
+export function splitMoveIn<T>(mark: MoveIn | ReturnTo, parts: MovePartition<T>[]): Mark<T>[] {
+    const result: Mark<T>[] = [];
     for (const part of parts) {
+        assert(part.modifyAfter === undefined, "Cannot modify move destination");
         if (part.replaceWith !== undefined) {
             result.push(...part.replaceWith);
         } else {
@@ -653,18 +673,32 @@ export function splitMoveIn<T>(mark: MoveIn | ReturnTo, parts: MoveDstPartition<
 
 export function splitMoveOut<T>(
     mark: MoveOut<T> | ReturnFrom<T>,
-    parts: MoveSrcPartition<T>[],
-): SizedObjectMark<T>[] {
-    const result: SizedObjectMark<T>[] = [];
+    parts: MovePartition<T>[],
+    composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
+): Mark<T>[] {
+    const result: Mark<T>[] = [];
     for (const part of parts) {
         if (part.replaceWith !== undefined) {
             result.push(...part.replaceWith);
         } else {
-            result.push({
+            const splitMark: MoveOut<T> | ReturnFrom<T> = {
                 ...mark,
                 id: part.id,
                 count: part.count ?? mark.count,
-            });
+            };
+            if (part.modifyAfter !== undefined) {
+                assert(
+                    composeChildren !== undefined,
+                    "Must provide a change composer if modifying moves",
+                );
+                const changes = composeChildren(mark.changes, part.modifyAfter);
+                if (changes !== undefined) {
+                    splitMark.changes = changes;
+                } else {
+                    delete splitMark.changes;
+                }
+            }
+            result.push(splitMark);
         }
     }
     return result;
@@ -676,6 +710,7 @@ export function applyMoveEffectsToMark<T>(
     moveEffects: MoveEffectTable<T>,
     genId: IdAllocator,
     reassignIds: boolean,
+    composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
     let mark = inputMark;
     if (isMoveMark(mark)) {
@@ -695,7 +730,7 @@ export function applyMoveEffectsToMark<T>(
                 const effect = moveEffects.srcEffects.get(mark.id);
                 if (effect !== undefined) {
                     moveEffects.srcEffects.delete(mark.id);
-                    const splitMarks = splitMoveOut(mark, effect);
+                    const splitMarks = splitMoveOut(mark, effect, composeChildren);
                     for (const splitMark of splitMarks) {
                         moveEffects.validatedMarks.add(splitMark);
                     }
