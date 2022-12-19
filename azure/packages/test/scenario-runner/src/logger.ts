@@ -69,6 +69,13 @@ class ScenarioRunnerLogger extends TelemetryLogger implements ITelemetryBuffered
     }
 
     send(event: ITelemetryBaseEvent): void {
+        if (process.env.FLUID_TEST_VERBOSE === "1") {
+            if (event.category.toLowerCase() === "error") {
+                console.error(event)
+            } else {
+                console.log(event)
+            }
+        }
         // We want to log only events that are relevant to the test runner.
         if (this.targetEvents.length > 0) {
             const found = this.targetEvents.find((a) => event.eventName.startsWith(a));

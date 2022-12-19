@@ -1,5 +1,5 @@
 title: Single doc load test
-description: In this scenario we create single container with no data, then let client run a bunch of writes on it while looking at perf and reliability.
+description: In this scenario we create 2 containers with no data, then load them.
 env:
     schema:
         initialObjects:
@@ -7,7 +7,7 @@ env:
             key2: SharedMap
     connectionConfig:
         type: remote
-        endpoint: https://alfred.westus2.fluidrelay.azure.com
+        endpoint: https://dev0.us.frs.azure.com
 stages:
     - stage-1:
       id: 1

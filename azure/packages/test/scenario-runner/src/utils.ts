@@ -7,6 +7,7 @@ import {
     AzureFunctionTokenProvider,
     AzureLocalConnectionConfig,
     AzureRemoteConnectionConfig,
+    IUser,
 } from "@fluidframework/azure-client";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
@@ -45,6 +46,7 @@ export function createAzureTokenProvider(
     fnUrl: string,
     userID?: string,
     userName?: string,
+    tenantKey?: string,
 ): AzureFunctionTokenProvider {
     return new AzureFunctionTokenProvider(`${fnUrl}/api/GetFrsToken`, {
         userId: userID ?? "foo",
@@ -70,25 +72,30 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
         if (!frsConfig.tenantId) {
             throw new Error("Missing FRS env configuration: Tenant ID.");
         }
-        if (!frsConfig.fnUrl) {
+        if (!frsConfig.fnUrl && !frsConfig.tenantKey) {
             throw new Error("Missing FRS env configuration: Secret.");
         }
     }
 
     const tenantId = useAzure ? (frsConfig.tenantId as string) : "frs-client-tenant";
+    const tenantKey = useAzure ? (frsConfig.tenantKey as string) : "";
     const fnUrl = useAzure ? (frsConfig.fnUrl as string) : "";
+    const randomUser = generateUser();
     const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
         ? {
-              tenantId,
-              tokenProvider: createAzureTokenProvider(fnUrl, config.userId, config.userName),
-              endpoint: config.connEndpoint,
-              type: "remote",
-          }
+            tenantId,
+            tokenProvider: tenantKey
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                ? new InsecureTokenProvider(tenantKey, { id: config.userId ?? randomUser.id, name: config.userName ?? (randomUser as any).name } as IUser)
+                : createAzureTokenProvider(fnUrl, config.userId, config.userName, tenantKey),
+            endpoint: config.connEndpoint,
+            type: "remote",
+        }
         : {
-              tokenProvider: new InsecureTokenProvider("fooBar", generateUser()),
-              endpoint: config.connEndpoint,
-              type: "local",
-          };
+            tokenProvider: new InsecureTokenProvider("fooBar", generateUser()),
+            endpoint: config.connEndpoint,
+            type: "local",
+        };
 
     return new AzureClient({ connection: connectionProps, logger: config.logger });
 }

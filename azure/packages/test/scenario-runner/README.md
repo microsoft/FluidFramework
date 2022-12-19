@@ -4,6 +4,18 @@ Scenario runnner for FRS and Azure Local Service. This package can be used to cr
 
 To execute test: `npm run start`.
 
+To execute test against Azure Fluid Relay:
+
+1. Make a tenant config JSON string like so, to be used in place of `<frs-config>` in step 2:
+
+```json
+{ "tenantId": "<tenant-id>", "tenantKey": "<tenant-key>", "fnUrl": "<azure-function-url>" }
+```
+
+> NOTE: You can use _either_ tenantKey or fnUrl. `fnUrl` will be appended with the suffix "/api/GetFrsToken" to retrieve a token from an API.
+>
+> Optionally, you may also need to change the endpoint configured under testConfig.yml to match your tenant's location. 2. Execute test`fluid__scenario__runner='<frs-config>' npm start`
+
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 ## Contribution Guidelines
