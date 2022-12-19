@@ -321,7 +321,8 @@ jobs:
               cd ${{ variables.testPackageDir }}/nyc
               cat *
               if ! [[ -z "$(ls -A .)" ]]; then
-                echo "report file(s) 'ls' found. Filtering skipped tests..."
+                curdirfiles = `ls`
+                echo "report file(s) $curdirfiles found. Filtering skipped tests..."
                 for i in `ls`; do sed -i '/<skipped/d' $i; done
                 cat *
               else
