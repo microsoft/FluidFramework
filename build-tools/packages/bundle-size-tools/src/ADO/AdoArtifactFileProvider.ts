@@ -28,6 +28,12 @@ export function getBundlePathsFromZipObject(jsZip: JSZip): BundleFileData[] {
  * Downloads an Azure Devops artifacts and parses it with the jszip library.
  * @param adoConnection - A connection to the ADO api.
  * @param buildNumber - The ADO build number that contains the artifact we wish to fetch
+ *
+ * @remarks
+ * This function doesn't work with artifacts created by the new PublishPipelineArtifact task, but works for the
+ * old PublishBuildArtifacts task.
+ * See https://github.com/microsoft/azure-devops-node-api/issues/432 for details and a potential workaround that we
+ * could implement at some point.
  */
 export async function getZipObjectFromArtifact(
     adoConnection: WebApi,

@@ -6,7 +6,7 @@
 import {
     MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils";
-import { benchmarkMemory } from "@fluid-tools/benchmark";
+import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import {
     Marker,
     ReferenceType,
@@ -38,91 +38,121 @@ describe("SharedString memory usage", () => {
         // See the comment at the top of the test suite for more details.
     });
 
-    benchmarkMemory({
-        title: "Create empty SharedString",
-        minSampleCount: 1000,
-        benchmarkFn: async () => {
-            createLocalSharedString("testSharedString");
-        },
-    });
+    benchmarkMemory(new class implements IMemoryTestObject {
+        title = "Create empty SharedString";
+        minSampleCount = 500;
+
+        private sharedString = createLocalSharedString("testSharedString");
+
+        async run() {
+            this.sharedString = createLocalSharedString("testSharedString");
+        }
+    }());
 
     const numbersOfEntriesForTests = [100, 1000, 10_000];
 
     numbersOfEntriesForTests.forEach((x) => {
-        benchmarkMemory({
-            title: `Insert and remove text ${x} times`,
-            benchmarkFn: async () => {
-                const sharedString = createLocalSharedString("testSharedString");
+        benchmarkMemory(new class implements IMemoryTestObject {
+            title = `Insert and remove text ${x} times`;
+            private sharedString = createLocalSharedString("testSharedString");
+
+            async run() {
                 for (let i = 0; i < x; i++) {
-                    sharedString.insertText(0, "my-test-text");
-                    sharedString.removeText(0, 12);
+                    this.sharedString.insertText(0, "my-test-text");
+                    this.sharedString.removeText(0, 12);
                 }
-            },
-        });
+            }
 
-        benchmarkMemory({
-            title: `Replace text ${x} times`,
-            benchmarkFn: async () => {
-                const sharedString = createLocalSharedString("testSharedString");
-                sharedString.insertText(0, "0000");
+            beforeIteration() {
+                this.sharedString = createLocalSharedString("testestSharedString");
+            }
+        }());
+
+        benchmarkMemory(new class implements IMemoryTestObject {
+            title = `Replace text ${x} times`;
+            private sharedString = createLocalSharedString("testSharedString");
+
+            async run() {
                 for (let i = 0; i < x; i++) {
-                    sharedString.replaceText(0, 4, i.toString().padStart(4, "0"));
+                    this.sharedString.replaceText(0, 4, i.toString().padStart(4, "0"));
                 }
-            },
-        });
+            }
 
-        benchmarkMemory({
-            title: `Get text annotation ${x} times`,
-            benchmarkFn: async () => {
-                const sharedString = createLocalSharedString("testSharedString");
+            beforeIteration() {
+                this.sharedString = createLocalSharedString("testestSharedString");
+                this.sharedString.insertText(0, "0000");
+            }
+        }());
 
-                const text = "hello world";
-                const styleProps = { style: "bold" };
-                sharedString.insertText(0, text, styleProps);
+        benchmarkMemory(new class implements IMemoryTestObject {
+            title = `Get text annotation ${x} times`;
+            private sharedString = createLocalSharedString("testSharedString");
+            private text = "hello world";
+            private styleProps = { style: "bold" };
 
+            async run() {
                 for (let i = 0; i < x; i++) {
-                    sharedString.getPropertiesAtPosition(i);
+                    this.sharedString.getPropertiesAtPosition(i);
                 }
-            },
-        });
+            }
 
-        benchmarkMemory({
-            title: `Get marker ${x} times`,
-            benchmarkFn: async () => {
-                const markerId = "myMarkerId";
-                const sharedString = createLocalSharedString("testSharedString");
-                sharedString.insertText(0, "my-test-text");
-                sharedString.insertMarker(
+            beforeIteration() {
+                this.sharedString = createLocalSharedString("testSharedString");
+                this.text = "hello world";
+                this.styleProps = { style: "bold" };
+                this.sharedString.insertText(0, this.text, this.styleProps);
+            }
+        }());
+
+        benchmarkMemory(new class implements IMemoryTestObject {
+            title = `Get marker ${x} times`;
+            private markerId = "myMarkerId";
+            private sharedString = createLocalSharedString("testSharedString");
+
+            async run() {
+                for (let i = 0; i < x; i++) {
+                    this.sharedString.getMarkerFromId(this.markerId);
+                }
+            }
+
+            beforeIteration() {
+                this.markerId = "myMarkerId";
+                this.sharedString = createLocalSharedString("testSharedString");
+                this.sharedString.insertText(0, "my-test-text");
+                this.sharedString.insertMarker(
                     0,
                     ReferenceType.Simple,
                     {
-                        [reservedMarkerIdKey]: markerId,
+                        [reservedMarkerIdKey]: this.markerId,
                     });
-                for (let i = 0; i < x; i++) {
-                    sharedString.getMarkerFromId(markerId);
-                }
-            },
-        });
+            }
+        }());
 
-        benchmarkMemory({
-            title: `Annotate marker ${x} times with same options`,
-            benchmarkFn: async () => {
-                const markerId = "myMarkerId";
-                const sharedString = createLocalSharedString("testSharedString");
-                sharedString.insertText(0, "my-test-text");
-                sharedString.insertMarker(
+        benchmarkMemory(new class implements IMemoryTestObject {
+            title = `Annotate marker ${x} times with same options`;
+            private markerId = "myMarkerId";
+            private sharedString = createLocalSharedString("testSharedString");
+            private simpleMarker = this.sharedString.getMarkerFromId(this.markerId) as Marker;
+
+            async run() {
+                for (let i = 0; i < x; i++) {
+                    this.sharedString.annotateMarker(this.simpleMarker, { color: "blue" });
+                }
+            }
+
+            beforeIteration() {
+                this.markerId = "myMarkerId";
+                this.sharedString = createLocalSharedString("testSharedString");
+                this.sharedString.insertText(0, "my-test-text");
+                this.sharedString.insertMarker(
                     0,
                     ReferenceType.Simple,
                     {
-                        [reservedMarkerIdKey]: markerId,
+                        [reservedMarkerIdKey]: this.markerId,
                     },
                 );
-
-                const simpleMarker = sharedString.getMarkerFromId(markerId) as Marker;
-                for (let i = 0; i < x; i++) {
-                    sharedString.annotateMarker(simpleMarker, { color: "blue" });
-                }
-            },
-        });
+                this.simpleMarker = this.sharedString.getMarkerFromId(this.markerId) as Marker;
+            }
+        }());
     });
 });

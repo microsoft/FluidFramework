@@ -8,8 +8,10 @@ import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { RateLimiter } from "@fluidframework/driver-utils";
 import nock from "nock";
-import { RouterliciousRestWrapper } from "../restWrapper";
+import { RouterliciousOrdererRestWrapper } from "../restWrapper";
 import { R11sErrorType } from "../errorUtils";
+import { DefaultTokenProvider } from "../defaultTokenProvider";
+import { ITokenResponse } from "../tokens";
 
 describe("RouterliciousDriverRestWrapper", () => {
     const rateLimiter = new RateLimiter(1);
@@ -22,8 +24,6 @@ describe("RouterliciousDriverRestWrapper", () => {
     const token2 = "9876-auth-token-zyxw";
     const token3 = "abc-auth-token-123";
     let tokenQueue: string[] = [];
-    // Pop a token off tokenQueue to generate an auth header
-    const getAuthHeader = async () => `Bearer ${tokenQueue.shift() ?? ""}`;
 
     // Set up mock throttling
     let throttleDurationInMs: number;
@@ -40,7 +40,7 @@ describe("RouterliciousDriverRestWrapper", () => {
         return [200, "OK"];
     }
 
-    let restWrapper: RouterliciousRestWrapper;
+    let restWrapper: RouterliciousOrdererRestWrapper;
 
     beforeEach(async () => {
         // reset auth mocking
@@ -48,14 +48,23 @@ describe("RouterliciousDriverRestWrapper", () => {
         // reset throttling mocking
         throttledAt = 0;
         throttleDurationInMs = 50;
+        const tokenProvider = new DefaultTokenProvider("testtoken");
+        tokenProvider.fetchOrdererToken = async () => {
+            // Pop a token off tokenQueue
+            const newToken: ITokenResponse = {
+            jwt: tokenQueue.shift() ?? "testtoken"
+        };
+        return newToken;
+    };
 
-        restWrapper = new RouterliciousRestWrapper(
+        restWrapper = await RouterliciousOrdererRestWrapper.load(
+            "dummytenantid",
+            "dummydocumentid",
+            tokenProvider,
             new TelemetryUTLogger(),
             rateLimiter,
-            getAuthHeader,
             false,
         );
-        await restWrapper.load();
     });
     after(() => {
         nock.restore();
@@ -63,17 +72,17 @@ describe("RouterliciousDriverRestWrapper", () => {
 
     describe("get()", () => {
         it("sends a request with auth headers", async () => {
-            nock(testHost, { reqheaders: { authorization: `Bearer ${token1}` } }).get(testPath).reply(200);
+            nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } }).get(testPath).reply(200);
             await assert.doesNotReject(restWrapper.get(testUrl));
         });
         it("retries a request with fresh auth headers on 401", async () => {
-            nock(testHost, { reqheaders: { authorization: `Bearer ${token1}` } }).get(testPath).reply(401);
-            nock(testHost, { reqheaders: { authorization: `Bearer ${token2}` } }).get(testPath).reply(200);
+            nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } }).get(testPath).reply(401);
+            nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } }).get(testPath).reply(200);
             await assert.doesNotReject(restWrapper.get(testUrl));
         });
         it("throws a non-retriable error on 2nd 401", async () => {
-            nock(testHost, { reqheaders: { authorization: `Bearer ${token1}` } }).get(testPath).reply(401);
-            nock(testHost, { reqheaders: { authorization: `Bearer ${token2}` } }).get(testPath).reply(401);
+            nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } }).get(testPath).reply(401);
+            nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } }).get(testPath).reply(401);
             await assert.rejects(restWrapper.get(testUrl), {
                 canRetry: false,
                 errorType: DriverErrorType.authorizationError,
@@ -116,17 +125,17 @@ describe("RouterliciousDriverRestWrapper", () => {
 
     describe("post()", () => {
         it("sends a request with auth headers", async () => {
-            nock(testHost, { reqheaders: { authorization: `Bearer ${token1}` } }).post(testPath).reply(200);
+            nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } }).post(testPath).reply(200);
             await assert.doesNotReject(restWrapper.post(testUrl, { test: "payload" }));
         });
         it("retries a request with fresh auth headers on 401", async () => {
-            nock(testHost, { reqheaders: { authorization: `Bearer ${token1}` } }).post(testPath).reply(401);
-            nock(testHost, { reqheaders: { authorization: `Bearer ${token2}` } }).post(testPath).reply(200);
+            nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } }).post(testPath).reply(401);
+            nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } }).post(testPath).reply(200);
             await assert.doesNotReject(restWrapper.post(testUrl, { test: "payload" }));
         });
         it("throws a non-retriable error on 2nd 401", async () => {
-            nock(testHost, { reqheaders: { authorization: `Bearer ${token1}` } }).post(testPath).reply(401);
-            nock(testHost, { reqheaders: { authorization: `Bearer ${token2}` } }).post(testPath).reply(401);
+            nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } }).post(testPath).reply(401);
+            nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } }).post(testPath).reply(401);
             await assert.rejects(restWrapper.post(testUrl, { test: "payload" }), {
                 canRetry: false,
                 errorType: DriverErrorType.authorizationError,
@@ -169,17 +178,17 @@ describe("RouterliciousDriverRestWrapper", () => {
 
     describe("patch()", () => {
         it("sends a request with auth headers", async () => {
-            nock(testHost, { reqheaders: { authorization: `Bearer ${token1}` } }).patch(testPath).reply(200);
+            nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } }).patch(testPath).reply(200);
             await assert.doesNotReject(restWrapper.patch(testUrl, { test: "payload" }));
         });
         it("retries a request with fresh auth headers on 401", async () => {
-            nock(testHost, { reqheaders: { authorization: `Bearer ${token1}` } }).patch(testPath).reply(401);
-            nock(testHost, { reqheaders: { authorization: `Bearer ${token2}` } }).patch(testPath).reply(200);
+            nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } }).patch(testPath).reply(401);
+            nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } }).patch(testPath).reply(200);
             await assert.doesNotReject(restWrapper.patch(testUrl, { test: "payload" }));
         });
         it("throws a non-retriable error on 2nd 401", async () => {
-            nock(testHost, { reqheaders: { authorization: `Bearer ${token1}` } }).patch(testPath).reply(401);
-            nock(testHost, { reqheaders: { authorization: `Bearer ${token2}` } }).patch(testPath).reply(401);
+            nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } }).patch(testPath).reply(401);
+            nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } }).patch(testPath).reply(401);
             await assert.rejects(restWrapper.patch(testUrl, { test: "payload" }), {
                 canRetry: false,
                 errorType: DriverErrorType.authorizationError,
@@ -222,17 +231,17 @@ describe("RouterliciousDriverRestWrapper", () => {
 
     describe("delete()", () => {
         it("sends a request with auth headers", async () => {
-            nock(testHost, { reqheaders: { authorization: `Bearer ${token1}` } }).delete(testPath).reply(200);
+            nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } }).delete(testPath).reply(200);
             await assert.doesNotReject(restWrapper.delete(testUrl));
         });
         it("retries a request with fresh auth headers on 401", async () => {
-            nock(testHost, { reqheaders: { authorization: `Bearer ${token1}` } }).delete(testPath).reply(401);
-            nock(testHost, { reqheaders: { authorization: `Bearer ${token2}` } }).delete(testPath).reply(200);
+            nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } }).delete(testPath).reply(401);
+            nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } }).delete(testPath).reply(200);
             await assert.doesNotReject(restWrapper.delete(testUrl));
         });
         it("throws a non-retriable error on 2nd 401", async () => {
-            nock(testHost, { reqheaders: { authorization: `Bearer ${token1}` } }).delete(testPath).reply(401);
-            nock(testHost, { reqheaders: { authorization: `Bearer ${token2}` } }).delete(testPath).reply(401);
+            nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } }).delete(testPath).reply(401);
+            nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } }).delete(testPath).reply(401);
             await assert.rejects(restWrapper.delete(testUrl), {
                 canRetry: false,
                 errorType: DriverErrorType.authorizationError,

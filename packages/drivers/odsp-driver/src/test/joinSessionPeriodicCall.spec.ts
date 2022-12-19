@@ -118,6 +118,7 @@ describe("joinSessions Tests", () => {
             submit: (message) => {},
             submitSignal: (message) => {},
             on: (op: any, func?: any) => {},
+            once: (op: any, func?: any) => {},
         };
         const createDeltaConnectionStub = stub(
             odspDocumentDeltaConnection.OdspDocumentDeltaConnection, "create").callsFake(

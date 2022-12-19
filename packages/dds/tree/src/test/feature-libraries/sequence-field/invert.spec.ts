@@ -6,13 +6,11 @@
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { makeAnonChange, RevisionTag, tagChange } from "../../../rebase";
-import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
-import { TestChangeset } from "./utils";
-
-const type: TreeSchemaIdentifier = brand("Node");
+import { composeAnonChanges } from "./utils";
+import { ChangeMaker as Change, TestChangeset } from "./testEdits";
 
 function invert(change: TestChangeset): TestChangeset {
     deepFreeze(change);
@@ -39,92 +37,38 @@ describe("SequenceField - Invert", () => {
     it("child changes", () => {
         const childChange = TestChange.mint([0], 1);
         const inverseChildChange = TestChange.invert(childChange);
-        const input: TestChangeset = [{ type: "Modify", changes: childChange }];
-        const expected: TestChangeset = [{ type: "Modify", changes: inverseChildChange }];
+        const input = Change.modify(0, childChange);
+        const expected = Change.modify(0, inverseChildChange);
         const actual = invert(input);
         assert.deepEqual(actual, expected);
     });
 
     it("insert => delete", () => {
-        const input: SF.Changeset = [
-            {
-                type: "Insert",
-                id: 1,
-                content: [
-                    { type, value: 42 },
-                    { type, value: 43 },
-                ],
-            },
-        ];
-        const expected: SF.Changeset = [
-            {
-                type: "Delete",
-                id: 1,
-                count: 2,
-            },
-        ];
+        const input = Change.insert(0, 2);
+        const expected = Change.delete(0, 2);
         const actual = shallowInvert(input);
         assert.deepEqual(actual, expected);
     });
 
     it("modified insert => delete", () => {
-        const input: SF.Changeset = [
-            {
-                type: "MInsert",
-                id: 1,
-                content: { type, value: 42 },
-                changes: { valueChange: { value: 43 } },
-            },
-        ];
-        const expected: SF.Changeset = [
-            {
-                type: "Delete",
-                id: 1,
-                count: 1,
-            },
-        ];
+        const insert = Change.insert(0, 1);
+        const modify = Change.modify(0, TestChange.mint([], 42));
+        const input = composeAnonChanges([insert, modify]);
+        const expected = Change.delete(0, 1);
         const actual = shallowInvert(input);
         assert.deepEqual(actual, expected);
     });
 
     it("delete => revive", () => {
-        const input: SF.Changeset = [
-            {
-                type: "Delete",
-                id: 1,
-                count: 2,
-            },
-        ];
-        const expected: SF.Changeset = [
-            {
-                type: "Revive",
-                id: 1,
-                count: 2,
-                detachedBy: tag,
-                detachIndex: 0,
-            },
-        ];
+        const input = Change.delete(0, 2);
+        const expected = Change.revive(0, 2, 0, tag);
         const actual = shallowInvert(input);
         assert.deepEqual(actual, expected);
     });
 
     it("revive => delete", () => {
-        const input: SF.Changeset = [
-            {
-                type: "Revive",
-                id: 1,
-                count: 2,
-                detachedBy: tag,
-                detachIndex: 0,
-            },
-        ];
-        const expected: SF.Changeset = [
-            {
-                type: "Delete",
-                id: 1,
-                count: 2,
-            },
-        ];
+        const input = Change.revive(0, 2, 0, tag);
+        const expected = Change.delete(0, 2);
         const actual = shallowInvert(input);
         assert.deepEqual(actual, expected);
     });

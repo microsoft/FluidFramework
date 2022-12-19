@@ -6,6 +6,7 @@
 /* eslint-disable no-bitwise */
 
 import { strict as assert } from "assert";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import {
     numericUuidEquals,
@@ -55,27 +56,27 @@ describe("NumericUuid", () => {
         const uuid = numericUuidFromStableId(maxStableId);
         assert.throws(
             () => stableIdFromNumericUuid(uuid, 1),
-            new Error("Exceeded maximum numeric UUID"),
+            (e) => validateAssertionError(e, "Exceeded maximum numeric UUID"),
         );
         assert.throws(
             () => stableIdFromNumericUuid(incrementUuid(uuid, 1)),
-            new Error("Exceeded maximum numeric UUID"),
+            (e) => validateAssertionError(e, "Exceeded maximum numeric UUID"),
         );
         assert.throws(
             () => stableIdFromNumericUuid(uuid, 256),
-            new Error("Exceeded maximum numeric UUID"),
+            (e) => validateAssertionError(e, "Exceeded maximum numeric UUID"),
         );
         assert.throws(
             () => stableIdFromNumericUuid(incrementUuid(uuid, 256)),
-            new Error("Exceeded maximum numeric UUID"),
+            (e) => validateAssertionError(e, "Exceeded maximum numeric UUID"),
         );
         assert.throws(
             () => stableIdFromNumericUuid(uuid, Number.MAX_SAFE_INTEGER),
-            new Error("Exceeded maximum numeric UUID"),
+            (e) => validateAssertionError(e, "Exceeded maximum numeric UUID"),
         );
         assert.throws(
             () => stableIdFromNumericUuid(incrementUuid(uuid, Number.MAX_SAFE_INTEGER)),
-            new Error("Exceeded maximum numeric UUID"),
+            (e) => validateAssertionError(e, "Exceeded maximum numeric UUID"),
         );
     });
 

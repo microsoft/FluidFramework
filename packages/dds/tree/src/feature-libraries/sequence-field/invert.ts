@@ -5,7 +5,7 @@
 
 import { RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
-import { Changeset, Mark, MarkList, OpId } from "./format";
+import { Changeset, Mark, MarkList } from "./format";
 import { getInputLength, isSkipMark } from "./utils";
 
 export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChange;
@@ -25,24 +25,18 @@ export function invert<TNodeChange>(
     change: TaggedChange<Changeset<TNodeChange>>,
     invertChild: NodeChangeInverter<TNodeChange>,
 ): Changeset<TNodeChange> {
-    // TODO: support the input change being a squash
-    const opIdToTag = (id: OpId): RevisionTag | undefined => {
-        return change.revision;
-    };
-    return invertMarkList(change.change, opIdToTag, invertChild);
+    return invertMarkList(change.change, change.revision, invertChild);
 }
-
-type IdToTagLookup = (id: OpId) => RevisionTag | undefined;
 
 function invertMarkList<TNodeChange>(
     markList: MarkList<TNodeChange>,
-    opIdToTag: IdToTagLookup,
+    revision: RevisionTag | undefined,
     invertChild: NodeChangeInverter<TNodeChange>,
 ): MarkList<TNodeChange> {
     const inverseMarkList: MarkList<TNodeChange> = [];
     let inputIndex = 0;
     for (const mark of markList) {
-        const inverseMarks = invertMark(mark, inputIndex, opIdToTag, invertChild);
+        const inverseMarks = invertMark(mark, inputIndex, revision, invertChild);
         inverseMarkList.push(...inverseMarks);
         inputIndex += getInputLength(mark);
     }
@@ -52,19 +46,17 @@ function invertMarkList<TNodeChange>(
 function invertMark<TNodeChange>(
     mark: Mark<TNodeChange>,
     inputIndex: number,
-    opIdToTag: IdToTagLookup,
+    revision: RevisionTag | undefined,
     invertChild: NodeChangeInverter<TNodeChange>,
 ): Mark<TNodeChange>[] {
     if (isSkipMark(mark)) {
         return [mark];
     } else {
         switch (mark.type) {
-            case "Insert":
-            case "MInsert": {
+            case "Insert": {
                 return [
                     {
                         type: "Delete",
-                        id: mark.id,
                         count: mark.type === "Insert" ? mark.content.length : 1,
                     },
                 ];
@@ -73,8 +65,7 @@ function invertMark<TNodeChange>(
                 return [
                     {
                         type: "Revive",
-                        id: mark.id,
-                        detachedBy: opIdToTag(mark.id),
+                        detachedBy: mark.revision ?? revision,
                         detachIndex: inputIndex,
                         count: mark.count,
                     },
@@ -84,7 +75,6 @@ function invertMark<TNodeChange>(
                 return [
                     {
                         type: "Delete",
-                        id: mark.id,
                         count: mark.count,
                     },
                 ];

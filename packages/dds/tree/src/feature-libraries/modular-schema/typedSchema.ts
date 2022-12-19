@@ -11,9 +11,9 @@ import {
     LocalFieldKey,
     ValueSchema,
     TreeSchemaIdentifier,
-    namedTreeSchema,
     NamedTreeSchema,
 } from "../../core";
+import { namedTreeSchema } from "../viewSchemaUtil";
 import { FieldKind } from "./fieldKind";
 
 /**
