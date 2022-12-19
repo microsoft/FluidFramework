@@ -116,7 +116,7 @@ export class TestClient extends Client {
         this.textHelper = new MergeTreeTextHelper(this.mergeTree);
 
         // Validate by default
-        this.once("delta", (o, d) => {
+        this.on("delta", (o, d) => {
             // assert.notEqual(d.deltaSegments.length, 0);
             d.deltaSegments.forEach((s) => {
                 if (d.operation === MergeTreeDeltaType.INSERT) {
