@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import request from "request";
 import {
     ConnectionMode,
     IClient,
@@ -14,7 +13,6 @@ import {
     ISignalMessage,
     NackErrorType,
     ScopeType,
-    SignalType,
 } from "@fluidframework/protocol-definitions";
 import {
     canSummarize,
@@ -42,7 +40,6 @@ import {
     generateClientId,
     getRandomInt,
 } from "../utils";
-
 
 const summarizerClientType = "summarizer";
 
@@ -83,9 +80,7 @@ const getSubmitOpThrottleId = (clientId: string, tenantId: string) => `${clientI
 
 const getSubmitSignalThrottleId = (clientId: string, tenantId: string) => `${clientId}_${tenantId}_SubmitSignal`;
 
-/**
- * Sanitize the received op before sending.
- */
+// Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
     const sanitizedMessage: IDocumentMessage = {
         clientSequenceNumber: message.clientSequenceNumber,
@@ -137,7 +132,7 @@ async function storeClientConnectivityTime(
     documentId: string,
     tenantId: string,
     connectionTimestamp: number,
-    throttleAndUsageStorageManager: core.IThrottleAndUsageStorageManager): Promise<void> {
+    throttleAndUsageStorageManager: core.IThrottleAndUsageStorageManager) {
     try {
         const now = Date.now();
         const connectionTimeInMinutes = (now - connectionTimestamp) / 60000;
@@ -172,7 +167,7 @@ function checkThrottleAndUsage(
     usageStorageId?: string,
     usageData?: core.IUsageData): core.ThrottlingError | undefined {
     if (!throttler) {
-        return undefined;
+        return;
     }
 
     try {
@@ -216,48 +211,34 @@ export function configureWebSocketServices(
     submitSignalThrottler?: core.IThrottler,
     throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
     verifyMaxMessageSize?: boolean,
-    httpServer?: core.IHttpServer,
 ) {
-    webSocketServer.on("connection", (socket: core.IWebSocket): void => {
-        /**
-         * Map from client IDs on this connection to the object ID and user info.
-         */
+    webSocketServer.on("connection", (socket: core.IWebSocket) => {
+        // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, core.IOrdererConnection>();
-
-        /**
-         * Map from client IDs to room.
-         */
+        // Map from client IDs to room.
         const roomMap = new Map<string, IRoom>();
-
-        /**
-         * Map from client Ids to scope.
-         */
+        // Map from client Ids to scope.
         const scopeMap = new Map<string, string[]>();
-
-        /**
-         * Map from client Ids to connection time.
-         */
+        // Map from client Ids to connection time.
         const connectionTimeMap = new Map<string, number>();
 
-        /**
-         * Timer to check token expiry for this socket connection
-         */
+        // Timer to check token expiry for this socket connection
         let expirationTimer: NodeJS.Timer | undefined;
 
-        const hasWriteAccess = (scopes: string[]): boolean => canWrite(scopes) || canSummarize(scopes);
+        const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
 
         function isWriter(scopes: string[], mode: ConnectionMode): boolean {
             return hasWriteAccess(scopes) ? mode === "write" : false;
         }
 
-        function clearExpirationTimer(): void {
+        function clearExpirationTimer() {
             if (expirationTimer !== undefined) {
                 clearTimeout(expirationTimer);
                 expirationTimer = undefined;
             }
         }
 
-        function setExpirationTimer(mSecUntilExpiration: number): void {
+        function setExpirationTimer(mSecUntilExpiration: number) {
             clearExpirationTimer();
             expirationTimer = setTimeout(() => {
                 socket.disconnect(true);
@@ -336,7 +317,6 @@ export function configureWebSocketServices(
 
             // Join the room to receive signals.
             roomMap.set(clientId, room);
-
             // Iterate over the version ranges provided by the client and select the best one that works
             const connectVersions = message.versions ? message.versions : ["^0.1.0"];
             const version = selectProtocolVersion(connectVersions);
@@ -473,49 +453,6 @@ export function configureWebSocketServices(
             // back-compat: remove cast to any once new definition of IConnected comes through.
             (connectedMessage as any).timestamp = connectedTimestamp;
 
-            // TODO: KLUDGE webhook connection
-            if(httpServer !== undefined) {
-                const customerServicePort = process.env.MOCK_CUSTOMER_SERVICE_PORT ?? 5237;
-
-                const url = `${httpServer.address().address}/task-list-hook`; // TODO: verify this
-                console.log(`Registering for webhook at ${url}...`);
-
-                request({
-                    method: 'POST',
-                    uri: `http://localhost:${customerServicePort}/register-for-webhook`,
-                    strictSSL: false,
-                    body: JSON.stringify({url})
-                }, (error, response) => {
-                    if(error) {
-                        console.error("Registering for webhook failed due to an error:");
-                        console.error(error);
-                    } else {
-                        console.log(`Webhook registration response:`);
-                        console.log(response);
-                    }
-                });
-
-                httpServer.on("task-list-hook", () => {
-                    // Only for debugging purposes
-                    const signalMessageRuntimeMessage : ISignalMessage = {
-                        clientId: null, // system signal
-                        content: JSON.stringify({
-                            type: SignalType.RuntimeMessage,
-                            contents: {
-                                content: {
-                                    type: "ExternalDataChanged",
-                                    content: "Data has changed upstream. Please import new data."
-                                },
-                                type: SignalType.RuntimeMessage
-                            }
-                        })
-                    }
-                    console.log("\nsignalMessageRuntimeMessage\n");
-                    console.log(signalMessageRuntimeMessage);
-                    socket.emitToRoom(getRoomId(room), "signal", signalMessageRuntimeMessage );
-                })
-            }
-
             return {
                 connection: connectedMessage,
                 connectVersions,
@@ -523,8 +460,9 @@ export function configureWebSocketServices(
             };
         }
 
-        // Note: "connect" is a reserved socket.io word so we use "connect_document" to represent the connect request.
-        socket.on("connect_document", (connectionMessage: IConnect): void => {
+        // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+        socket.on("connect_document", async (connectionMessage: IConnect) => {
             const userAgentInfo = parseRelayUserAgent(connectionMessage.relayUserAgent);
             const driverVersion: string | undefined = userAgentInfo.driverVersion;
             const connectMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectDocument);
@@ -557,10 +495,10 @@ export function configureWebSocketServices(
                 });
         });
 
-        // Message sent when a new operation is submitted to the router.
+        // Message sent when a new operation is submitted to the router
         socket.on(
             "submitOp",
-            (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[]): void => {
+            (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[]) => {
                 // Verify the user has an orderer connection.
                 const connection = connectionsMap.get(clientId);
                 if (!connection) {
@@ -651,10 +589,10 @@ export function configureWebSocketServices(
                 }
             });
 
-        // Message sent when a new signal is submitted to the router.
+        // Message sent when a new signal is submitted to the router
         socket.on(
             "submitSignal",
-            (clientId: string, contentBatches: (IDocumentMessage | IDocumentMessage[])[]): void => {
+            (clientId: string, contentBatches: (IDocumentMessage | IDocumentMessage[])[]) => {
                 // Verify the user has subscription to the room.
                 const room = roomMap.get(clientId);
                 if (!room) {
