@@ -31,7 +31,6 @@ import {
     splitMarkOnOutput,
     newMoveEffectTable,
     changeSrcMoveId,
-    MoveMark,
     splitMoveIn,
     splitMoveOut,
     removeMoveDest,
@@ -362,13 +361,12 @@ function composeWithBaseChildChanges<
         cloned.revision = newRevision;
     }
 
+    if (moveEffects.validatedMarks.has(newMark)) {
+        moveEffects.validatedMarks.add(cloned);
+    }
+
     if (isMoveMark(cloned)) {
-        (cloned as MoveMark<TNodeChange>).id = getUniqueMoveId(
-            cloned,
-            cloned.revision ?? newRevision,
-            genId,
-            moveEffects,
-        );
+        cloned.id = getUniqueMoveId(cloned, cloned.revision ?? newRevision, genId, moveEffects);
     }
 
     if (composedChanges !== undefined) {
@@ -412,9 +410,13 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
     }
 
     const cloned = clone(mark);
+    if (moveEffects.validatedMarks.has(mark)) {
+        moveEffects.validatedMarks.add(cloned);
+    }
+
     assert(!isSkipMark(cloned), "Cloned should be same type as input mark");
     if (revision !== undefined && cloned.type !== "Modify") {
-        (cloned as HasRevisionTag).revision = revision;
+        cloned.revision = revision;
     }
 
     if (isMoveMark(cloned)) {
