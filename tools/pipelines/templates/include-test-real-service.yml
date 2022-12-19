@@ -325,7 +325,7 @@ jobs:
                 for i in `ls`; do sed -i '/<skipped/d' $i; done
                 cat *
               else
-                echo "No report files found in '${{ variables.testPackageDir }}/nyc' 
+                echo "No report files found in '${{ variables.testPackageDir }}/nyc'"
               fi
             else
               echo "Directory '${{ variables.testPackageDir }}/nyc' not found"
