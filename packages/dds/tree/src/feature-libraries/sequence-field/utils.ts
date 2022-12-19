@@ -8,7 +8,6 @@ import { fail } from "../../util";
 import {
     Attach,
     Detach,
-    HasChanges,
     HasRevisionTag,
     HasTiebreakPolicy,
     Insert,
