@@ -4,9 +4,7 @@
  */
 
 /* eslint-disable unicorn/numeric-separators-style */
-/* eslint-disable unicorn/number-literal-case */
 
-// eslint-disable-next-line unicorn/prefer-node-protocol
 import { EventEmitter } from "events";
 
 import { assert } from "@fluidframework/common-utils";

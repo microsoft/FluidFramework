@@ -285,7 +285,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
         itExpects("Receive ops fails for tombstoned datastores in summarizing container loaded before sweep timeout",
         [
-            { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded" },
             {
                 eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
                 error: "Context is tombstoned! Call site [process]",
@@ -543,7 +542,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
         itExpects("Can untombstone datastores by storing a handle",
         [
-            { eventName: "fluid:telemetry:Summarizer:Running:InactiveObject_Loaded" },
             { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested" },
             { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed" },
             {

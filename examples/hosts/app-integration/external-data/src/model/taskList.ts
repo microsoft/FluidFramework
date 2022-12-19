@@ -101,7 +101,7 @@ export class TaskList extends DataObject implements ITaskList {
         const draftNameString = SharedString.create(this.runtime);
 
         // TODO: addTask will be called for tasks added in Fluid. Should only write to the draftMap directly here
-        // savedMAp will get updated when the data syncs back
+        // savedMap will get updated when the data syncs back
         savedNameString.insertText(0, name);
         draftNameString.insertText(0, name);
 
@@ -179,22 +179,31 @@ export class TaskList extends DataObject implements ITaskList {
         const parsedTaskData = parseStringData(externalData);
         // TODO: Delete any items that are in the root but missing from the external data
         const updateTaskPs = parsedTaskData.map(async ({ id, name, priority }) => {
-            const currentTask = this.tasks.get(id);
+            const currentTask = this.draftData.get<PersistedTask>(id);
+            // Write external data into savedData map.
+            this.savedData.set(id, currentTask);
+
             if (currentTask === undefined) {
                 // A new task was added from external source, add it to the Fluid data.
                 this.addTask(id, name, priority);
                 return;
             }
-            if (currentTask.name.getText() !== name) {
-                // TODO: Name has changed from external source, update the Fluid data
-                // For a first approach it's probably fine to stomp the Fluid data.  But eventually this is where
+            const [currName, currPriority] = await Promise.all([
+                currentTask.name.get(),
+                currentTask.priority.get(),
+            ]);
+            if (currName.getText() !== name) {
+                // TODO: Currently replacing existing Fluid data.  But eventually this is where
                 // we'd want conflict resolution UX.
+                currName.replaceText(0, currName.getLength(), name);
             }
-            if (currentTask.priority !== priority) {
-                // TODO: Priority has changed from external source, update the Fluid data
-                // For a first approach it's probably fine to stomp the Fluid data.  But eventually this is where
+            if (currPriority.get() !== priority) {
+                // TODO: Currently replacing existing Fluid data. But eventually this is where
                 // we'd want conflict resolution UX.
+                currPriority.set(priority);
             }
+            // Saved updated Fluid data with
+            this.draftData.set(id, currentTask);
         });
         await Promise.all(updateTaskPs);
     }

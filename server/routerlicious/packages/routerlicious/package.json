@@ -58,7 +58,7 @@
     "@fluidframework/server-services-telemetry": "^0.1038.3000",
     "@fluidframework/server-services-utils": "^0.1038.3000",
     "commander": "^2.17.1",
-    "express": "^4.16.3",
+    "express": "^4.17.3",
     "ioredis": "^4.24.2",
     "nconf": "^0.12.0",
     "request": "^2.88.0",
