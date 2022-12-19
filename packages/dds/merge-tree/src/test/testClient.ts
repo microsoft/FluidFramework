@@ -323,8 +323,6 @@ export class TestClient extends Client {
             });
     }
 
-    private findReconnectionPositionSegment?: ISegment;
-
     /**
      * Rebases a (local) position from the perspective `{ seq: seqNumberFrom, localSeq }` to the perspective
      * of the current sequence number. This is desirable when rebasing operations for reconnection. Perform
