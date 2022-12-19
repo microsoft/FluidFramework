@@ -337,6 +337,16 @@ stages:
               TargetFolder: '$(Build.ArtifactStagingDirectory)/testFiles'
             condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
+          # Install parser library
+          - task: Bash@3
+            displayName: Install xml2js
+            inputs:
+              targetType: inline
+              script: |
+                npm i xml2js
+              workingDirectory: tools/helper
+            condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+
           # Console Log Failed Tests
           - task: Bash@3
             displayName: Log Failed Tests
