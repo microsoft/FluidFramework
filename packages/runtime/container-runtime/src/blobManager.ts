@@ -25,6 +25,7 @@ import {
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summarizerClientElection";
 import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
+import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
 
 /**
  * This class represents blob (long string)
@@ -271,11 +272,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         const request = { url: blobId };
         if (this.tombstonedBlobs.has(blobId) ) {
             const error = responseToException(createResponseError(404, "Blob removed by gc", request), request);
-            this.mc.logger.sendErrorEvent({
+            const event = {
                 eventName: "GC_Tombstone_Blob_Requested",
                 url: request.url,
-                throwOnTombstoneUsage: this.throwOnTombstoneUsage,
-            }, error);
+            };
+            sendGCTombstoneEvent(this.mc.logger, event, this.throwOnTombstoneUsage, [BlobManager.basePath], error);
             if (this.throwOnTombstoneUsage) {
                 throw error;
             }

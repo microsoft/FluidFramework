@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
+import { ITelemetryGenericEvent, ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ClientSessionExpiredError, DataProcessingError, UsageError } from "@fluidframework/container-utils";
@@ -62,6 +62,7 @@ import {
     throwOnTombstoneUsageKey,
     trackGCStateKey
 } from "./garbageCollectionConstants";
+import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
 import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
 import {
     getGCVersion,
@@ -1180,21 +1181,28 @@ export class GarbageCollector implements IGarbageCollector {
 
         if (this.tombstones.includes(toNodePath)) {
             const nodeType = this.runtime.getNodeType(toNodePath)
+            const throwOnTombstoneUsage = this.mc.config.getBoolean(throwOnTombstoneUsageKey);
+
+            let eventName = "GC_Tombstone_SubDatastore_Revived";
             if (nodeType === GCNodeType.DataStore) {
-                this.mc.logger.sendTelemetryEvent({
-                    eventName: "GC_Tombstone_Datastore_Revived",
-                    url: trimLeadingSlashes(toNodePath),
-                    throwOnTombstoneUsage: this.mc.config.getBoolean(throwOnTombstoneUsageKey),
-                    pkg: packagePathToTelemetryProperty(this.getNodePackagePath(toNodePath)),
-                });
+                eventName = "GC_Tombstone_Datastore_Revived";
             } else if (nodeType === GCNodeType.Blob) {
-                this.mc.logger.sendTelemetryEvent({
-                    eventName: "GC_Tombstone_Blob_Revived",
-                    url: trimLeadingSlashes(toNodePath),
-                    throwOnTombstoneUsage: this.mc.config.getBoolean(throwOnTombstoneUsageKey),
-                    pkg: packagePathToTelemetryProperty(this.getNodePackagePath(toNodePath)),
-                });
+                eventName = "GC_Tombstone_Blob_Revived";
             }
+
+            const event: ITelemetryGenericEvent = {
+                eventName,
+                url: trimLeadingSlashes(toNodePath),
+            };
+
+            sendGCTombstoneEvent(
+                this.mc.logger,
+                event,
+                throwOnTombstoneUsage ?? false,
+                this.getNodePackagePath(toNodePath),
+            );
+
+            // TODO: may be valuable to remove this node from this.tombstones as we know it's referenced now.
         }
     }
 

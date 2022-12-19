@@ -2199,10 +2199,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * Called by GC to retrieve the package path of the node with the given path. The node should belong to a
      * data store or an attachment blob.
      */
-    public async getGCNodePackagePathAsync(nodePath: string): Promise<readonly string[] | undefined> {
+    private async getGCNodePackagePathAsync(nodePath: string): Promise<readonly string[] | undefined> {
         switch (this.getNodeType(nodePath)) {
             case GCNodeType.Blob:
-                return ["_blobs"];
+                return [BlobManager.basePath];
             case GCNodeType.DataStore:
             case GCNodeType.SubDataStore:
                 return this.dataStores.getDataStorePackagePathAsync(nodePath);
@@ -2211,21 +2211,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-        /**
+    /**
      * Called by GC to retrieve the package path of the node with the given path. The node should belong to a
      * data store or an attachment blob.
      */
-        public getGCNodePackagePath(nodePath: string): readonly string[] | undefined {
-            switch (this.getNodeType(nodePath)) {
-                case GCNodeType.Blob:
-                    return ["_blobs"];
-                case GCNodeType.DataStore:
-                case GCNodeType.SubDataStore:
-                    return this.dataStores.getDataStorePackagePath(nodePath);
-                default:
-                    assert(false, 0x2de /* "Package path requested for unsupported node type." */);
-            }
+    public getGCNodePackagePath(nodePath: string): readonly string[] | undefined {
+        switch (this.getNodeType(nodePath)) {
+            case GCNodeType.Blob:
+                return [BlobManager.basePath];
+            case GCNodeType.DataStore:
+            case GCNodeType.SubDataStore:
+                return this.dataStores.getDataStorePackagePath(nodePath);
+            default:
+                assert(false, "Package path requested for unsupported node type.");
         }
+    }
 
     /**
      * Returns whether a given path is for attachment blobs that are in the format - "/BlobManager.basePath/...".
