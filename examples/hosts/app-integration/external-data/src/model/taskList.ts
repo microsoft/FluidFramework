@@ -188,7 +188,7 @@ export class TaskList extends DataObject implements ITaskList {
      * TODO: Use leader election to reduce noise from competing clients
      */
     public async importExternalData(): Promise<void> {
-        console.log('Kicking off fetching external data from TaskList');
+        console.log('TASK-LIST: Fetching external data from service...');
 
         let updatedExternalData: ParsedTaskData[] | undefined;
         try {
