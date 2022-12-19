@@ -171,7 +171,7 @@ export class TaskList extends DataObject implements ITaskList {
     /**
      * Fetch any updated data from the external data source and sync local state to it.
      *
-     * @returns A promise that resolves when the fetch completes.
+     * @returns A promise that resolves when the external data fetch and Fluid data update complete.
      *
      * @privateRemarks
      *
