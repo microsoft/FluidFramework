@@ -276,7 +276,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
                 eventName: "GC_Tombstone_Blob_Requested",
                 url: request.url,
             };
-            sendGCTombstoneEvent(this.mc.logger, event, this.throwOnTombstoneUsage, [BlobManager.basePath], error);
+            sendGCTombstoneEvent(this.mc, event, this.runtime.clientDetails.type === summarizerClientType, [BlobManager.basePath], error);
             if (this.throwOnTombstoneUsage) {
                 throw error;
             }

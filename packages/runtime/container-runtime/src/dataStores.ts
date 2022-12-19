@@ -447,9 +447,9 @@ export class DataStores implements IDisposable {
                 viaHandle,
             };
             sendGCTombstoneEvent(
-                this.mc.logger,
+                this.mc,
                 event,
-                this.throwOnTombstoneUsage,
+                this.runtime.clientDetails.type === summarizerClientType,
                 context.isLoaded ? context.packagePath : undefined,
                 error,
             );

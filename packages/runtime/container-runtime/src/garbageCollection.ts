@@ -1196,9 +1196,9 @@ export class GarbageCollector implements IGarbageCollector {
             };
 
             sendGCTombstoneEvent(
-                this.mc.logger,
+                this.mc,
                 event,
-                throwOnTombstoneUsage ?? false,
+                this.isSummarizerClient,
                 this.getNodePackagePath(toNodePath),
             );
 
