@@ -5,7 +5,8 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "module": "esnext",
+        "module": "CommonJS",
+        "target": "esnext",
         "outDir": "dist",
         "jsx": "react",
         "types": [

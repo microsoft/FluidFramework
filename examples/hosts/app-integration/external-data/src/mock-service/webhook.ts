@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import request from "request";
+import fetch from "node-fetch";
 
 import { IDisposable } from "@fluidframework/common-definitions";
 
-import { ExternalDataSource } from "../externalData";
+import { ExternalDataSource } from "./externalData";
 
 /**
  * Represents a webhook subscriber URL.
@@ -40,15 +40,18 @@ export class MockWebhook implements IDisposable {
      * This could be updated in the future to send the new data / just the delta as a part of the webhook payload.
      */
     private readonly notifySubscribers: () => void = () => {
-        console.log(`External data has been updated. Notifying ${this._subscribers.size} subscribers...`);
+        console.log(`WEBHOOK: External data has been updated. Notifying ${this._subscribers.size} subscribers...`);
 
         for (const subscriberUrl of this._subscribers) {
-            request({
+            fetch(subscriberUrl, {
                 method: 'POST',
-                uri: subscriberUrl,
-                strictSSL: false,
+                headers: {
+                    "Access-Control-Allow-Origin": "*",
+                }
                 // TODO: body: New data / data change?
-              });
+            }).catch(error => {
+                console.error("WEBHOOK: Encountered an error while notifying subscribers:", error);
+            });
         }
     }
 
@@ -61,6 +64,7 @@ export class MockWebhook implements IDisposable {
         this._subscribers = new Set<SubscriberUrl>();
 
         this.externalDataSource = externalDataSource;
+
         this.externalDataSource.on("debugDataWritten", this.notifySubscribers);
 
         this._disposed = false;
@@ -78,7 +82,7 @@ export class MockWebhook implements IDisposable {
      */
     public registerSubscriber(subscriber: SubscriberUrl): void {
         if(this._subscribers.has(subscriber)) {
-            console.warn(`URL "" has already been registered for data notifications.`);
+            console.warn(`WEBHOOK: URL "${subscriber}" has already been registered for data notifications.`);
         } else {
             this._subscribers.add(subscriber);
         }
@@ -91,7 +95,7 @@ export class MockWebhook implements IDisposable {
         if(this._subscribers.has(subscriber)) {
             this._subscribers.delete(subscriber);
         } else {
-            console.warn(`URL "" has already been registered for data notifications.`);
+            console.warn(`WEBHOOK: URL "${subscriber}" is not registered for data notifications.`);
         }
     }
 
