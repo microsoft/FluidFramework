@@ -178,7 +178,12 @@ function composeMarks<TNodeChange>(
                     replaceMoveDest(
                         moveEffects,
                         getUniqueMoveId(newMark, newMark.revision ?? newRev, genId, moveEffects),
-                        clone(baseMark),
+                        mergeInNewChildChanges(
+                            baseMark,
+                            newMark.changes,
+                            newMark.revision ?? newRev,
+                            composeChild,
+                        ),
                     );
                     return 0;
                 default:
@@ -308,6 +313,9 @@ function composeMarks<TNodeChange>(
                         );
                         return 0;
                     } else {
+                        if (newMark.changes !== undefined) {
+                            modifyMoveSrc(moveEffects, baseMark.id, newMark.changes);
+                        }
                         changeSrcMoveId(
                             moveEffects,
                             baseMark.id,
