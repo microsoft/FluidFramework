@@ -19,7 +19,7 @@
     },
     "include": [
         "src/**/*",
-        "tests/**/*"
+        "test/**/*"
     ],
     "lib": ["dom"]
 }

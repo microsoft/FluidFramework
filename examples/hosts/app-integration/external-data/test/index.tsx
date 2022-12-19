@@ -10,7 +10,7 @@ import ReactDOM from "react-dom";
 
 import { TaskListView } from "../src/view/taskListView";
 import { TaskListContainerRuntimeFactory } from "../src/model";
-import type { IAppModel } from "../src/modelInterfaces";
+import type { IAppModel } from "../src/model-interface";
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
