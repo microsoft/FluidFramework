@@ -25,7 +25,7 @@
     "eslint:fix": "eslint src --format stylish --fix",
     "format": "npm run prettier:fix",
     "good-fences": "gf",
-    "lint": "npm run eslint && npm run good-fences",
+    "lint": "npm run good-fences && npm run eslint",
     "lint:fences": "npm run good-fences",
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
