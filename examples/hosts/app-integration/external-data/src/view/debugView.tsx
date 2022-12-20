@@ -8,10 +8,26 @@ import React, { useEffect, useState } from "react";
 import type { IAppModel } from "../model-interface";
 import { customerServicePort, parseStringData } from "../mock-service-interface";
 
+/**
+ * {@link DebugView} input props.
+ */
 export interface IDebugViewProps {
+    /**
+     * The Task List app model to be visualized.
+     */
     model: IAppModel;
 }
 
+/**
+ * "Debug" view of external data source.
+ *
+ * @remarks
+ *
+ * In a real scenario, we would not be looking at this data directly, instead only observing the local data (except
+ * when resolving merge conflicts with changes to the external data).
+ *
+ * For the purposes of this test app, it is useful to be able to see both data sources side-by-side.
+ */
 export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
     return (
         <div>
@@ -103,8 +119,7 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface ISyncStatusViewProps {
-}
+interface ISyncStatusViewProps { }
 
 // TODO: Implement the statuses below
 const SyncStatusView: React.FC<ISyncStatusViewProps> = (props: ISyncStatusViewProps) => {
