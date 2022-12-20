@@ -9,6 +9,8 @@ import request from "supertest";
 
 import { ExternalDataSource, initializeCustomerService } from "../src/mock-service";
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 describe("mockCustomerService", () => {
     /**
      * External data source backing our service.
@@ -28,7 +30,7 @@ describe("mockCustomerService", () => {
     beforeEach(async () => {
         externalDataSource = new ExternalDataSource();
         server = await initializeCustomerService({
-            externalDataSource: externalDataSource,
+            externalDataSource,
             port: 5326, // A different port than the default to ensure we don't conflict with background service
         });
     });
@@ -44,6 +46,10 @@ describe("mockCustomerService", () => {
             });
         });
     });
+
+    // We have omitted `@types/supertest` due to cross-package build issue.
+    // So for these tests we have to live with `any`.
+    /* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 
     it("fetch-tasks: Ensure server yields the data we expect", async () => {
         const expectedData = await externalDataSource!.fetchData();
@@ -81,4 +87,8 @@ describe("mockCustomerService", () => {
     it("register-for-webhook: Registering invalid URI fails", async () => {
         await request(server!).post("/register-for-webhook").send({ url: "I am not a URI" }).expect(400);
     });
+
+    /* eslint-enable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 });
+
+/* eslint-enable @typescript-eslint/no-non-null-assertion */
