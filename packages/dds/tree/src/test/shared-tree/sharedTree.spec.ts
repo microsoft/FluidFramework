@@ -10,7 +10,7 @@ import {
     jsonableTreeFromCursor,
     namedTreeSchema,
 } from "../../feature-libraries";
-import { brand } from "../../util";
+import { brand, fail } from "../../util";
 import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import {
@@ -31,6 +31,7 @@ import {
     SchemaData,
     SharedTreeCore,
 } from "../../core";
+import { IRandom, makeRandom } from "@fluid-internal/stochastic-test-utils";
 
 const fooKey: FieldKey = brand("foo");
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
@@ -507,7 +508,125 @@ describe("SharedTree", () => {
             assert(compareUpPaths(childPath, expected));
         });
     });
+    describe("Fuzz Testing tools", () => {
+        it("creates a random initial tree", async () => {
+            const provider = await TestTreeProvider.create(1);
+            const tree = provider.trees[0];
+
+            const initialState: JsonableTree = {
+                type: brand("Node"),
+                fields: {
+                    foo: [
+                        { type: brand("Number"), value: 0 },
+                        { type: brand("Number"), value: 1 },
+                        { type: brand("Number"), value: 2 },
+                    ],
+                    foo2: [
+                        { type: brand("Number"), value: 0 },
+                        { type: brand("Number"), value: 1 },
+                        { type: brand("Number"), value: 2 },
+                    ],
+                },
+            };
+            initializeTestTree(tree, initialState);
+            const paths = new Map<string, number>();
+            const random = makeRandom(0);
+            const testerKey: FieldKey = brand("asdfasdfasdfasdfasdfas");
+            for (let i=0; i<1000; i++){
+                const {path, nodeField, nodeIndex, newPath} = getRandomNodePosition(tree, random)
+                const key = JSON.stringify(path)
+                if(paths.get(key) === undefined) {
+                    paths.set(key, 0)
+                } else {
+                    let count = paths.get(key)
+                    if (count === undefined) {
+                        count = 0
+                    }
+                    paths.set(key, count+1)
+                }
+                if (nodeField !== undefined && nodeIndex !== undefined){
+                    tree.runTransaction((forest, editor) => {
+                        const field = editor.sequenceField(path, nodeField);
+                        field.insert(nodeIndex, singleTextCursor({ type: brand("Test"), value: 1 }));
+                        return TransactionResult.Apply;
+                    });
+                }
+            }
+
+            assert.equal(1, paths)
+        });
+    });
 });
+
+interface NodeLocation {
+    path: UpPath | undefined,
+    nodeField: FieldKey | undefined,
+    nodeIndex: number | undefined,
+    newPath: boolean,
+}
+
+function getRandomNodePosition(tree:ISharedTree, random:IRandom): NodeLocation{
+    const moves = {
+        "field": ["enterNode", "nextField"],
+        "nodes": ["stop", "firstField"]
+    }
+    const cursor = tree.forest.allocateCursor();
+    moveToDetachedField(tree.forest, cursor)
+
+    let currentMove = "enterNode"
+    let path: UpPath | undefined;
+    let nodeField: FieldKey | undefined;
+    let nodeIndex: number | undefined;
+    let fieldNodes: number = cursor.getFieldLength();
+    let newPath: boolean = false;
+    const testerKey: FieldKey = brand("Test");
+
+    while (currentMove !== 'stop') {
+        switch (currentMove) {
+            case "enterNode":
+                if (fieldNodes > 0) {
+                    nodeIndex = random.integer(0, fieldNodes-1)
+                    cursor.enterNode(nodeIndex)
+                    path = cursor.getPath()
+                    nodeField = cursor.getFieldKey()
+                    currentMove = random.pick(moves.nodes)
+                    if (currentMove === 'stop'){
+                        cursor.enterField(nodeField)
+                        nodeIndex = cursor.getFieldLength()
+                    }
+                } else {
+                    currentMove = random.pick(moves.nodes)
+                }
+                break
+            case "firstField":
+                if (cursor.firstField()) {
+                    currentMove = random.pick(moves.field)
+                    fieldNodes = cursor.getFieldLength()
+                } else {
+                    currentMove = 'stop';
+                    nodeField = testerKey
+                    nodeIndex = 0
+                    newPath = true;
+                }
+                break
+            case "nextField":
+                if (cursor.nextField()) {
+                    currentMove = random.pick(moves.field)
+                    fieldNodes = cursor.getFieldLength()
+                } else {
+                    currentMove = 'stop';
+                    nodeField = testerKey
+                    nodeIndex = 0
+                    newPath = true;
+                }
+                break
+            default:
+                fail(`Unexpected move ${currentMove}`);
+        }
+    }
+    cursor.free()
+    return { path, nodeField, nodeIndex, newPath}
+}
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
 const globalFieldSchema = fieldSchema(FieldKinds.value);
