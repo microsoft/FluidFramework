@@ -960,6 +960,9 @@ export type NameFromBranded<T extends BrandedType<any, string>> = T extends Bran
 export const neverTree: TreeSchema;
 
 // @public (undocumented)
+function newMoveEffectTable<T>(): MoveEffectTable<T>;
+
+// @public (undocumented)
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
 
 // @public (undocumented)
@@ -1228,7 +1231,8 @@ declare namespace SequenceField {
         isMoveMark,
         MoveMark,
         MoveEffectTable,
-        MovePartition
+        MovePartition,
+        newMoveEffectTable
     }
 }
 export { SequenceField }
