@@ -2166,18 +2166,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
-        this.blobManager.updateUsedRoutes(blobManagerUsedRoutes);
         this.dataStores.updateUsedRoutes(dataStoreUsedRoutes);
     }
 
     /**
-     * This is called to update objects whose routes are unused. The unused objects are either deleted or marked as
-     * tombstones.
-     * @param unusedRoutes - The routes that are unused in all data stores and attachment blobs in this Container.
-     * @param tombstone - if true, the objects corresponding to unused routes are marked tombstones. Otherwise, they
-     * are deleted.
+     * This is called to update objects whose routes are unused.
+     * @param unusedRoutes - Data store and attachment blob routes that are unused in this Container.
      */
-    public updateUnusedRoutes(unusedRoutes: string[], tombstone: boolean) {
+    public updateUnusedRoutes(unusedRoutes: string[]) {
         const blobManagerUnusedRoutes: string[] = [];
         const dataStoreUnusedRoutes: string[] = [];
         for (const route of unusedRoutes) {
@@ -2188,8 +2184,27 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
-        this.blobManager.updateUnusedRoutes(blobManagerUnusedRoutes, tombstone);
-        this.dataStores.updateUnusedRoutes(dataStoreUnusedRoutes, tombstone);
+        this.blobManager.updateUnusedRoutes(blobManagerUnusedRoutes);
+        this.dataStores.updateUnusedRoutes(dataStoreUnusedRoutes);
+    }
+
+    /**
+     * This is called to update objects that are tombstones.
+     * @param tombstonedRoutes - Data store and attachment blob routes that are tombstones in this Container.
+     */
+    public updateTombstonedRoutes(tombstonedRoutes: string[]) {
+        const blobManagerTombstonedRoutes: string[] = [];
+        const dataStoreTombstonedRoutes: string[] = [];
+        for (const route of tombstonedRoutes) {
+            if (this.isBlobPath(route)) {
+                blobManagerTombstonedRoutes.push(route);
+            } else {
+                dataStoreTombstonedRoutes.push(route);
+            }
+        }
+
+        this.blobManager.updateTombstonedRoutes(blobManagerTombstonedRoutes);
+        this.dataStores.updateTombstonedRoutes(dataStoreTombstonedRoutes);
     }
 
     /**
