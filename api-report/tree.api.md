@@ -107,7 +107,7 @@ export interface ChildLocation {
 type ClientId = number;
 
 // @public
-function compose<TNodeChange>(changes: TaggedChange<Changeset<TNodeChange>>[], composeChild: NodeChangeComposer_2<TNodeChange>): Changeset<TNodeChange>;
+function compose<TNodeChange>(changes: TaggedChange<Changeset<TNodeChange>>[], composeChild: NodeChangeComposer_2<TNodeChange>, genId: IdAllocator): Changeset<TNodeChange>;
 
 // @public
 export type ContextuallyTypedNodeData = ContextuallyTypedNodeDataObject | PrimitiveValue | readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData>;
@@ -208,7 +208,7 @@ export interface Dependent extends NamedComputation {
 }
 
 // @public (undocumented)
-type Detach<TNodeChange = NodeChangeType> = Delete_2<TNodeChange> | MoveOut_2<TNodeChange>;
+type Detach<TNodeChange = NodeChangeType> = Delete_2<TNodeChange> | MoveOut_2<TNodeChange> | ReturnFrom<TNodeChange>;
 
 // @public
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
@@ -587,6 +587,9 @@ export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObje
 }
 
 // @public (undocumented)
+function isMoveMark<T>(mark: Mark_2<T>): mark is MoveMark<T>;
+
+// @public (undocumented)
 export function isNeverField(policy: FullSchemaPolicy, originalData: SchemaData, field: FieldSchema): boolean;
 
 // @public (undocumented)
@@ -738,6 +741,7 @@ type MarkList_2<TNodeChange = NodeChangeType, TMark = Mark_2<TNodeChange>> = TMa
 
 // @public
 class MarkListFactory<TNodeChange> {
+    constructor(moveEffects?: MoveEffectTable<TNodeChange> | undefined);
     // (undocumented)
     readonly list: MarkList_2<TNodeChange>;
     // (undocumented)
@@ -840,12 +844,33 @@ export class ModularEditBuilder extends ProgressiveEditBuilderBase<ModularChange
     submitChange(path: UpPath | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset, maxId?: ChangesetLocalId): void;
 }
 
+// @public (undocumented)
+interface MoveEffectTable<T> {
+    // (undocumented)
+    allowMerges: boolean;
+    // (undocumented)
+    dstEffects: Map<MoveId_2, MovePartition<T>[]>;
+    // (undocumented)
+    dstMergeable: Map<MoveId_2, MoveId_2>;
+    // (undocumented)
+    idRemappings: Map<MoveId_2, MoveId_2>;
+    // (undocumented)
+    movedMarks: Map<MoveId_2, Mark_2<T>[]>;
+    // (undocumented)
+    splitIdToOrigId: Map<MoveId_2, MoveId_2>;
+    // (undocumented)
+    srcEffects: Map<MoveId_2, MovePartition<T>[]>;
+    // (undocumented)
+    srcMergeable: Map<MoveId_2, MoveId_2>;
+    validatedMarks: Set<Mark_2<T>>;
+}
+
 // @public
 interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {
 }
 
 // @public
-type MoveId_2 = number;
+type MoveId_2 = ChangesetLocalId;
 
 // @public
 interface MoveIn {
@@ -870,6 +895,9 @@ interface MoveInAndModify<TTree = ProtoNode> {
     type: typeof MarkType.MoveInAndModify;
 }
 
+// @public (undocumented)
+type MoveMark<T> = MoveOut_2<T> | MoveIn_2 | ReturnFrom<T> | ReturnTo;
+
 // @public
 interface MoveOut {
     // (undocumented)
@@ -887,6 +915,18 @@ interface MoveOut_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMov
     tomb?: RevisionTag;
     // (undocumented)
     type: "MoveOut";
+}
+
+// @public (undocumented)
+interface MovePartition<TNodeChange> {
+    // (undocumented)
+    count?: number;
+    // (undocumented)
+    id: MoveId_2;
+    // (undocumented)
+    modifyAfter?: TNodeChange;
+    // (undocumented)
+    replaceWith?: Mark_2<TNodeChange>[];
 }
 
 // @public
@@ -918,6 +958,9 @@ export type NameFromBranded<T extends BrandedType<any, string>> = T extends Bran
 
 // @public
 export const neverTree: TreeSchema;
+
+// @public (undocumented)
+function newMoveEffectTable<T>(): MoveEffectTable<T>;
 
 // @public (undocumented)
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
@@ -1043,15 +1086,10 @@ export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode> {
 }
 
 // @public (undocumented)
-interface Reattach<TNodeChange = NodeChangeType> extends HasReattachFields, HasRevisionTag, HasChanges<TNodeChange> {
-    // (undocumented)
-    count: NodeCount;
-    // (undocumented)
-    type: "Revive" | "Return";
-}
+type Reattach<TNodeChange = NodeChangeType> = Revive<TNodeChange> | ReturnTo;
 
 // @public
-function rebase<TNodeChange>(change: Changeset<TNodeChange>, base: TaggedChange<Changeset<TNodeChange>>, rebaseChild: NodeChangeRebaser_2<TNodeChange>): Changeset<TNodeChange>;
+function rebase<TNodeChange>(change: Changeset<TNodeChange>, base: TaggedChange<Changeset<TNodeChange>>, rebaseChild: NodeChangeRebaser_2<TNodeChange>, genId: IdAllocator): Changeset<TNodeChange>;
 
 // @public
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
@@ -1064,8 +1102,36 @@ export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepair
 // @public
 export const replaceField: unique symbol;
 
+// @public (undocumented)
+interface ReturnFrom<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMoveId, HasChanges<TNodeChange> {
+    // (undocumented)
+    count: NodeCount;
+    // (undocumented)
+    detachedBy: RevisionTag | undefined;
+    // (undocumented)
+    tomb?: RevisionTag;
+    // (undocumented)
+    type: "ReturnFrom";
+}
+
+// @public (undocumented)
+interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId {
+    // (undocumented)
+    count: NodeCount;
+    // (undocumented)
+    type: "ReturnTo";
+}
+
 // @public
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
+
+// @public (undocumented)
+interface Revive<TNodeChange = NodeChangeType> extends HasReattachFields, HasRevisionTag, HasChanges<TNodeChange> {
+    // (undocumented)
+    count: NodeCount;
+    // (undocumented)
+    type: "Revive";
+}
 
 // @public
 type Root<TTree = ProtoNode> = FieldMarks<TTree>;
@@ -1130,6 +1196,9 @@ declare namespace SequenceField {
         ProtoNode_2 as ProtoNode,
         RangeType,
         Reattach,
+        ReturnFrom,
+        ReturnTo,
+        Revive,
         SizedMark,
         SizedObjectMark,
         Tiebreak,
@@ -1158,7 +1227,12 @@ declare namespace SequenceField {
         invert,
         NodeChangeInverter_2 as NodeChangeInverter,
         compose,
-        NodeChangeComposer_2 as NodeChangeComposer
+        NodeChangeComposer_2 as NodeChangeComposer,
+        isMoveMark,
+        MoveMark,
+        MoveEffectTable,
+        MovePartition,
+        newMoveEffectTable
     }
 }
 export { SequenceField }
@@ -1183,6 +1257,7 @@ const sequenceFieldChangeRebaser: {
 export interface SequenceFieldEditBuilder {
     delete(index: number, count: number): void;
     insert(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
+    move(sourceIndex: number, count: number, destIndex: number): void;
 }
 
 // @public (undocumented)
@@ -1191,6 +1266,10 @@ interface SequenceFieldEditor extends FieldEditor<Changeset> {
     delete(index: number, count: number): Changeset<never>;
     // (undocumented)
     insert(index: number, cursor: ITreeCursor | ITreeCursor[]): Changeset<never>;
+    // (undocumented)
+    move(sourceIndex: number, count: number, destIndex: number): Changeset<never>;
+    // (undocumented)
+    return(sourceIndex: number, count: number, destIndex: number, detachedBy: RevisionTag, detachIndex: number): Changeset<never>;
     // (undocumented)
     revive(index: number, count: number, detachIndex: number, revision: RevisionTag): Changeset<never>;
 }
@@ -1201,6 +1280,8 @@ const sequenceFieldEditor: {
     insert: (index: number, cursors: ITreeCursor | ITreeCursor[]) => Changeset<never>;
     delete: (index: number, count: number) => Changeset<never>;
     revive: (index: number, count: number, detachIndex: number, revision: RevisionTag) => Changeset<never>;
+    move(sourceIndex: number, count: number, destIndex: number): Changeset<never>;
+    return(sourceIndex: number, count: number, destIndex: number, detachedBy: RevisionTag, detachIndex: number): Changeset<never>;
 };
 
 // @public (undocumented)
