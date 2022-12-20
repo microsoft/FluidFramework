@@ -10,7 +10,7 @@ const webpack = require("webpack");
 module.exports = (env) => {
     return {
         entry: {
-            app: "./test/index.tsx",
+            app: "./tests/index.tsx",
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
@@ -38,7 +38,7 @@ module.exports = (env) => {
         },
         devServer: {
             static: {
-                directory: path.join(__dirname, "test"),
+                directory: path.join(__dirname, "tests"),
             },
         },
         plugins: [
