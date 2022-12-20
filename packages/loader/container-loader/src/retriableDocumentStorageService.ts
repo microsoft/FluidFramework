@@ -136,7 +136,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
                 // pre-0.58 error message: storageServiceDisposedCannotRetry
                 throw new GenericError(
                     "Storage Service is disposed. Cannot retry",
-                    { canRetry: false },
+                    undefined,
                     { reason: runResult.reason },
                 );
             }
