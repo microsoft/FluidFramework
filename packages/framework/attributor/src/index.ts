@@ -10,19 +10,8 @@ export {
 	IAttributor,
 } from "./attributor";
 export {
-	AttributorSerializer,
-	chain,
-	deltaEncoder,
-	Encoder,
-	IAttributorSerializer,
-	SerializedAttributor,
-	TimestampEncoder,
-} from "./encoders";
-export {
-	makeLZ4Encoder,
-} from "./lz4Encoder";
-export {
-	InternedStringId,
-	MutableStringInterner,
-	StringInterner,
-} from "./stringInterner";
+	createRuntimeAttributor,
+	IProvideRuntimeAttributor,
+	IRuntimeAttributor,
+	mixinAttributor,
+} from "./mixinAttributor";

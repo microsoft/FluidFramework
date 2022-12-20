@@ -25,23 +25,23 @@ import {
     MockFluidDataStoreRuntime,
     MockStorage,
 	MockContainerRuntimeFactoryForReconnection,
+	MockContainerRuntimeForReconnection,
 } from "@fluidframework/test-runtime-utils";
+import { IChannelServices, IFluidDataStoreRuntime, Jsonable } from "@fluidframework/datastore-definitions";
+import { IClient, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { IAudience } from "@fluidframework/container-definitions";
+import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
+import {
+	IAttributor,
+	OpStreamAttributor,
+} from "../../attributor";
 import {
 	AttributorSerializer,
 	chain as chainEncoders,
 	deltaEncoder,
 	Encoder,
-	IAttributor,
-	makeLZ4Encoder,
-	OpStreamAttributor,
-} from "@fluid-internal/attributor";
-import { IChannelServices, IFluidDataStoreRuntime, Jsonable } from "@fluidframework/datastore-definitions";
-import { PropertySet } from "@fluidframework/merge-tree";
-import { IClient, ISummaryTree } from "@fluidframework/protocol-definitions";
-import { IAudience } from "@fluidframework/container-definitions";
-import { SharedString } from "../../sharedString";
-import { SharedStringFactory } from "../../sequenceFactory";
-import { assertConsistent, Client } from "../intervalUtils";
+} from "../../encoders";
+import { makeLZ4Encoder } from "../../lz4Encoder";
 
 function makeMockAudience(clientIds: string[]): IAudience {
 	const clients = new Map<string, IClient>();
@@ -69,6 +69,15 @@ function makeMockAudience(clientIds: string[]): IAudience {
 			return clients.get(clientId);
 		},
 	} as IAudience;
+}
+
+interface PropertySet {
+	[name: string]: any
+}
+
+interface Client {
+    sharedString: SharedString;
+    containerRuntime: MockContainerRuntimeForReconnection;
 }
 
 interface FuzzTestState extends BaseFuzzTestState {
@@ -289,7 +298,6 @@ function createSharedString(
             }),
 			synchronize: statefully((state) => {
 				state.containerRuntimeFactory.processAllMessages();
-				assertConsistent(state.clients);
 			}),
         },
         initialState,
