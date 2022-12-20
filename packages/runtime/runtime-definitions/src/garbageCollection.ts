@@ -29,8 +29,4 @@ export interface IGarbageCollectionDetailsBase {
      * The GC data of this node.
      */
     gcData?: IGarbageCollectionData;
-    /**
-     * If this node is unreferenced, the time when it was marked as such.
-     */
-    unrefTimestamp?: number;
 }
