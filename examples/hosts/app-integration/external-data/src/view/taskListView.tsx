@@ -7,7 +7,7 @@ import { CollaborativeInput } from "@fluid-experimental/react-inputs";
 
 import React, { useEffect, useRef, useState } from "react";
 
-import type { ITask, ITaskList } from "../modelInterfaces";
+import type { ITask, ITaskList } from "../model-interface";
 
 interface ITaskRowProps {
     readonly task: ITask;
