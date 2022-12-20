@@ -26,7 +26,7 @@ import {
     Marker,
     SegmentGroup,
 } from "./mergeTreeNodes";
-import { MergeTreeDeltaCallback } from "./mergeTreeDeltaCallback";
+import { IMergeTreeDeltaCallbackArgs, IMergeTreeMaintenanceCallbackArgs } from "./mergeTreeDeltaCallback";
 import {
     createAnnotateMarkerOp,
     createAnnotateRangeOp,
@@ -58,8 +58,7 @@ import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk";
 import {
     IMergeTreeClientSequenceArgs,
-    IMergeTreeDeltaOpArgs,
-    MergeTreeMaintenanceCallback,
+    IMergeTreeDeltaOpArgs
 } from "./index";
 
 function elapsedMicroseconds(trace: Trace) {
@@ -73,7 +72,11 @@ function elapsedMicroseconds(trace: Trace) {
  *
  * @internal
  */
-export type IClientEvents = (event: "normalize", listener: (target: IEventThisPlaceHolder) => void) => void;
+export interface IClientEvents {
+    (event: "normalize", listener: (target: IEventThisPlaceHolder) => void);
+    (event: "delta", listener: (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs, target: IEventThisPlaceHolder) => void);
+    (event: "maintenance", listener: (args: IMergeTreeMaintenanceCallbackArgs, deltaArgs: IMergeTreeDeltaOpArgs | undefined, target: IEventThisPlaceHolder) => void);
+}
 
 export class Client extends TypedEventEmitter<IClientEvents> {
     public measureOps = false;
@@ -85,19 +88,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     public accumOps = 0;
     public maxWindowTime = 0;
     public longClientId: string | undefined;
-
-    get mergeTreeDeltaCallback(): MergeTreeDeltaCallback | undefined { return this._mergeTree.mergeTreeDeltaCallback; }
-    set mergeTreeDeltaCallback(callback: MergeTreeDeltaCallback | undefined) {
-        this._mergeTree.mergeTreeDeltaCallback = callback;
-    }
-
-    get mergeTreeMaintenanceCallback(): MergeTreeMaintenanceCallback | undefined {
-        return this._mergeTree.mergeTreeMaintenanceCallback;
-    }
-
-    set mergeTreeMaintenanceCallback(callback: MergeTreeMaintenanceCallback | undefined) {
-        this._mergeTree.mergeTreeMaintenanceCallback = callback;
-    }
 
     private readonly _mergeTree: MergeTree;
 
@@ -113,6 +103,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     ) {
         super();
         this._mergeTree = new MergeTree(options);
+        this._mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs) => {
+            this.emit("delta", opArgs, deltaArgs, this);
+        };
+        this._mergeTree.mergeTreeMaintenanceCallback = (args, opArgs) => {
+            this.emit("maintenance", args, opArgs, this);
+        };
     }
 
     /**

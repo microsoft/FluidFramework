@@ -81,7 +81,12 @@ describe("MergeTree.Client", () => {
 
                             const clientB_Revertibles: MergeTreeDeltaRevertible[] = [];
                             const clientBDriver = createRevertDriver(clients.B);
-                            const oldCallback = clients.B.mergeTreeDeltaCallback;
+                            const deltaCallback = (op, delta) => {
+                                if (op.sequencedMessage === undefined) {
+                                    appendToMergeTreeDeltaRevertibles(
+                                        clientBDriver, delta, clientB_Revertibles);
+                                }
+                            };
 
                             const msgs: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] = [];
                             {
@@ -91,13 +96,7 @@ describe("MergeTree.Client", () => {
                                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                                         clients.B.peekPendingSegmentGroups()!,
                                     ]);
-                                clients.B.mergeTreeDeltaCallback = (op, delta) => {
-                                    oldCallback?.(op, delta);
-                                    if (op.sequencedMessage === undefined) {
-                                        appendToMergeTreeDeltaRevertibles(
-                                            clientBDriver, delta, clientB_Revertibles);
-                                    }
-                                };
+                                clients.B.on("delta", deltaCallback);
                                 msgs.push(...generateOperationMessagesForClients(
                                     random,
                                     seq,
@@ -152,7 +151,7 @@ describe("MergeTree.Client", () => {
                             try {
                                 // reset the callback before the final revert
                                 // to avoid accruing any new detached references
-                                clients.B.mergeTreeDeltaCallback = oldCallback;
+                                clients.B.off("delta", deltaCallback);
                                 revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
                                 seq = applyMessages(seq, msgs.splice(0), clients.all, logger);
 
@@ -187,6 +186,7 @@ describe("MergeTree.Client", () => {
                                 errorPrefix: "After Re-Revert (redo)",
                                 baseText: redoBaseText,
                             });
+                            logger.dispose();
                         }
                     });
                 }

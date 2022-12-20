@@ -153,8 +153,8 @@ export class PermutationVector extends Client {
             newMergeTreeSnapshotFormat: true,   // Temporarily force new snapshot format until it is the default.
         });                                     // (See https://github.com/microsoft/FluidFramework/issues/84)
 
-        this.mergeTreeDeltaCallback = this.onDelta;
-        this.mergeTreeMaintenanceCallback = this.onMaintenance;
+        this.on("delta", this.onDelta);
+        this.on("maintenance", this.onMaintenance);
     }
 
     public insert(start: number, length: number) {
