@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { renderClientDebuggerView } from "@fluid-tools/client-debug-view";
+import { renderClientDebuggerView } from "@fluid-tools/client-debugger-view";
 
 import { debuggerPanelId } from "./Constants";
 import { isDebuggerPanelOpen } from "./Utilities";

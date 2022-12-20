@@ -33,7 +33,7 @@ initializeIcons();
  *
  * @internal
  */
-export const clientDebugViewClassName = `fluid-client-debug-view`;
+export const clientDebugViewClassName = `fluid-client-debugger-view`;
 
 /**
  * {@link ClientDebugView} input props.

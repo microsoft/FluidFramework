@@ -1,4 +1,4 @@
-# @fluid-tools/client-debug-view
+# @fluid-tools/client-debugger-view
 
 The Fluid Client Debug View library contains hooks and components for rendering debug information related to a Fluid [Container][] and its [Audience][].
 
@@ -6,9 +6,9 @@ This library is designed to be used with [@fluid-tools/client-debugger][]. It al
 
 The package exposes 2 primary entry-points:
 
--   [renderClientDebuggerView](https://fluidframework.com/docs/apis/client-debug-view/docs/apis/client-debug-view#renderclientdebuggerview-function): A general-purpose function for rendering the debug view to a provided [DOM]() element.
+-   [renderClientDebuggerView](https://fluidframework.com/docs/apis/client-debugger-view/docs/apis/client-debugger-view#renderclientdebuggerview-function): A general-purpose function for rendering the debug view to a provided [DOM]() element.
 
--   [FluidClientDebugger](https://fluidframework.com/docs/apis/client-debug-view/docs/apis/client-debug-view#fluidclientdebugger-function): A [React Component](https://reactjs.org/docs/react-component.html) for embedding the debug view into your own React tree.
+-   [FluidClientDebugger](https://fluidframework.com/docs/apis/client-debugger-view/docs/apis/client-debugger-view#fluidclientdebugger-function): A [React Component](https://reactjs.org/docs/react-component.html) for embedding the debug view into your own React tree.
 
 The library is intended to be extensible and customizable.
 
@@ -21,7 +21,7 @@ Visualizers for new or custom forms of Fluid data (in particular, [DDS](https://
 To get started, install the package by running the following command:
 
 ```bash
-npm i @fluid-tools/client-debug-view -D
+npm i @fluid-tools/client-debugger-view -D
 ```
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -95,7 +95,7 @@ To run the app, navigate to the root of this package and run `npm run start:test
 
 ## API Documentation
 
-API documentation for **@fluid-tools/client-debug-view** is available at <https://fluidframework.com/docs/apis/client-debug-view>.
+API documentation for **@fluid-tools/client-debugger-view** is available at <https://fluidframework.com/docs/apis/client-debugger-view>.
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 

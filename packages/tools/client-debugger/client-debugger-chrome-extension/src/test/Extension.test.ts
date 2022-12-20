@@ -5,7 +5,7 @@
 import { SharedCounter } from "@fluidframework/counter";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
-import { clientDebugViewClassName } from "@fluid-tools/client-debug-view";
+import { clientDebugViewClassName } from "@fluid-tools/client-debugger-view";
 
 import { closeDebuggerPanel } from "../CloseDebuggerPanel";
 import { debuggerPanelId } from "../Constants";
