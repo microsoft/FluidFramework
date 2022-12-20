@@ -42,7 +42,7 @@ module.exports = (env) => {
 				filename: "[name].bundle.js",
 				path: path.resolve(__dirname, "dist"),
 				library: "[name]",
-				devtoolNamespace: "fluid-tools/client-debug-view",
+				devtoolNamespace: "fluid-tools/client-debugger-view",
 				libraryTarget: "umd",
 			},
 			plugins: [
