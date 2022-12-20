@@ -335,7 +335,7 @@ stages:
               SourceFolder: ${{ parameters.buildDirectory }}/nyc
               Contents: '**/*junit-report.xml'
               TargetFolder: '$(Build.ArtifactStagingDirectory)/testFiles'
-            condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+            condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
 
           # Install parser library
           - task: Bash@3
@@ -345,7 +345,7 @@ stages:
               script: |
                 npm i xml2js
               workingDirectory: tools/helper
-            condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+            condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
 
           # Console Log Failed Tests
           - task: Bash@3
@@ -355,7 +355,7 @@ stages:
               script: |
                 node printReports.js '$(Build.ArtifactStagingDirectory)/testFiles'
               workingDirectory: tools/helper
-            condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+            condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
 
         # Pack
         - ${{ if ne(parameters.taskPack, false) }}:
