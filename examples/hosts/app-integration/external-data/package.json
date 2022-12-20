@@ -39,7 +39,7 @@
     "start:app:test": "start-server-and-test start:mock-service 5237 start:client:test",
     "start:client": "webpack serve",
     "start:client:test": "webpack serve --config webpack.test.js",
-    "start:mock-service": "cross-env MOCK_CUSTOMER_SERVICE_PORT=5237 node dist/mock-service/start.js",
+    "start:mock-service": "cross-env MOCK_CUSTOMER_SERVICE_PORT=5237 node dist/tests/mock-service/start.js",
     "start:test": "start-server-and-test start:tinylicious 7070 start:app:test",
     "start:tinylicious": "tinylicious",
     "test": "npm run test:jest",
