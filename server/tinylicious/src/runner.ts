@@ -66,6 +66,18 @@ export class TinyliciousRunner implements IRunner {
             new TestClientManager(),
             new DefaultMetricClient(),
             winston,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            httpServer,
         );
 
         // Listen on provided port, on all network interfaces.
