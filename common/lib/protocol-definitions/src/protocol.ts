@@ -88,6 +88,11 @@ export enum SignalType {
      * System signal sent to indicate a client has left the collaboration.
      */
     ClientLeave = "leave",
+
+    /**
+     * System signal used to transmit runtime messages to clients.
+     */
+    RuntimeMessage = "RuntimeMessage",
 }
 
 /**
