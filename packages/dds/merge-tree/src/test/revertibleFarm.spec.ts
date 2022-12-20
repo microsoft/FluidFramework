@@ -186,6 +186,7 @@ describe("MergeTree.Client", () => {
                                 errorPrefix: "After Re-Revert (redo)",
                                 baseText: redoBaseText,
                             });
+                            logger.dispose();
                         }
                     });
                 }
