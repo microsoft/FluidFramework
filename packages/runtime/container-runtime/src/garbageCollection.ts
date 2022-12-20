@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryGenericEvent, ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ClientSessionExpiredError, DataProcessingError, UsageError } from "@fluidframework/container-utils";
@@ -59,9 +59,9 @@ import {
     runGCKey,
     runSessionExpiryKey,
     runSweepKey,
+    throwOnTombstoneUsageKey,
     trackGCStateKey
 } from "./garbageCollectionConstants";
-import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
 import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
 import {
     getGCVersion,
@@ -1188,19 +1188,14 @@ export class GarbageCollector implements IGarbageCollector {
                 eventName = "GC_Tombstone_Blob_Revived";
             }
 
-            const event: ITelemetryGenericEvent = {
+            this.mc.logger.sendTelemetryEvent({
                 eventName,
+                isSummarizerClient: this.isSummarizerClient,
+                pkg: packagePathToTelemetryProperty(this.getNodePackagePath(toNodePath)),
                 url: trimLeadingSlashes(toNodePath),
-            };
-
-            sendGCTombstoneEvent(
-                this.mc,
-                event,
-                this.isSummarizerClient,
-                this.getNodePackagePath(toNodePath),
-            );
-
-            // TODO: may be valuable to remove this node from this.tombstones as we know it's referenced now.
+                nodeType,
+                throwOnTombstoneUsage: this.mc.config.getBoolean(throwOnTombstoneUsageKey) ?? false,
+            });
         }
     }
 
