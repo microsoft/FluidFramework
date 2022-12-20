@@ -23,7 +23,13 @@ import { runWithRetry2 } from "@fluidframework/driver-utils";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
     private _disposed = false;
-    private readonly _disposedController = new AbortController();
+    // ! Cannot explicitly use AbortController as this may not always be used in browser
+    private readonly _disposedController = {
+        signal: {
+            aborted: false,
+        },
+        abort: () => { this._disposedController.signal.aborted = true; },
+    };
     constructor(
         private readonly internalStorageService: IDocumentStorageService,
         private readonly logger: ITelemetryLogger,
@@ -112,7 +118,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
             callName,
             this.logger,
             {
-                cancel: this._disposedController.signal,
+                cancel: this._disposedController.signal as AbortSignal,
             },
         );
 
@@ -125,9 +131,14 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
                 this.logger.sendTelemetryEvent({
                     eventName: `${callName}_abortedStorageDisposed`,
                     fetchCallName: callName, // fetchCallName matches logs in runWithRetry.ts
+                    reason: runResult.reason,
                 });
                 // pre-0.58 error message: storageServiceDisposedCannotRetry
-                throw new GenericError("Storage Service is disposed. Cannot retry", { canRetry: false });
+                throw new GenericError(
+                    "Storage Service is disposed. Cannot retry",
+                    { canRetry: false },
+                    { reason: runResult.reason },
+                );
             }
             default:
                 unreachableCase(runResult);

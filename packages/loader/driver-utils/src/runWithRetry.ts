@@ -118,6 +118,7 @@ export type RunResult<T> = {
     error: unknown;
 } | {
     status: "aborted";
+    reason?: string;
 };
 
 export async function runWithRetry2<T>(

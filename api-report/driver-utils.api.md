@@ -407,6 +407,7 @@ export type RunResult<T> = {
     error: unknown;
 } | {
     status: "aborted";
+    reason?: string;
 };
 
 // @public @deprecated (undocumented)

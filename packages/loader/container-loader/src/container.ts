@@ -914,6 +914,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                                 // We know the reason since we use closeSignal above but don't pass an onRetry callback
                                 this.closed ? "Container.attach() was aborted because the container was closed"
                                     : "Container.attach() was aborted",
+                                undefined,
+                                { reason: runResult.reason },
                             );
                         default:
                             unreachableCase(runResult);
