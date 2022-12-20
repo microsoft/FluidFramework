@@ -143,7 +143,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         }
         // Sort the used routes because we compare them with the current used routes to check if they changed between
         // summaries. Both are sorted so that the order of elements is the same.
-        this.referenceUsedRoutes = baseGCDetails.usedRoutes?.sort();
+        this.referenceUsedRoutes = baseGCDetails.usedRoutes ? Array.from(baseGCDetails.usedRoutes).sort() : undefined;
     }
 
     public async summarize(
@@ -313,9 +313,13 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
                 }
             }
 
-            // Update the GC data and reference used routes for this node.
+            // Update this node to the same GC state it was when the ack corresponding to this summary was processed.
             this.gcData = gcDetails.gcData !== undefined ? cloneGCData(gcDetails.gcData) : undefined;
             this.referenceUsedRoutes = gcDetails.usedRoutes !== undefined ? Array.from(gcDetails.usedRoutes) : undefined;
+            // If there are no used routes in the GC details, set it to have self route which will make the node
+            // referenced. This scenario can only happen if the snapshot is from a client where GC was not run or
+            // disabled. In both the cases, the node should be referenced.
+            this.usedRoutes = gcDetails.usedRoutes !== undefined ? Array.from(gcDetails.usedRoutes) : [""];
 
             // Generate the GC data and used routes of children GC nodes and add it to their snapshot tree.
             const gcDetailsMap = unpackChildNodesGCDetails(gcDetails);
