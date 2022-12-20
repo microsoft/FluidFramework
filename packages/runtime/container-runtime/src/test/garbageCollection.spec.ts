@@ -17,6 +17,7 @@ import {
     IGarbageCollectionNodeData,
     IGarbageCollectionState,
     IGarbageCollectionDetailsBase,
+    IGarbageCollectionSummaryDetailsLegacy,
     ISummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import {
@@ -773,7 +774,7 @@ describe("Garbage Collection Tests", () => {
             it("generates events for nodes that time out on load - old snapshot format", async () => {
                 // Create GC details for node 3's GC blob whose unreferenced time was > timeout ms ago.
                 // This means this node should time out as soon as its data is loaded.
-                const node3GCDetails: IGarbageCollectionDetailsBase = {
+                const node3GCDetails: IGarbageCollectionSummaryDetailsLegacy = {
                     gcData: { gcNodes: { "/": [] } },
                     unrefTimestamp: Date.now() - (timeout + 100),
                 };

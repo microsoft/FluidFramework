@@ -34,6 +34,7 @@ export {
 	CreateSummarizerNodeSource,
 	IGarbageCollectionNodeData,
 	IGarbageCollectionState,
+    IGarbageCollectionSummaryDetailsLegacy,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNode,
