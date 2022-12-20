@@ -43,7 +43,6 @@ export interface IProgress {
     onRetry?(delayInMs: number, error: any): void;
 }
 
-/** @deprecated - Use runWithRetry2 */
 export async function runWithRetry<T>(
     api: (cancel?: AbortSignal) => Promise<T>,
     fetchCallName: string,
@@ -121,6 +120,7 @@ export type RunResult<T> = {
     reason?: string;
 };
 
+/** ! Will replace runWithRetry in 2.0.0-internal.3.0.0 */
 export async function runWithRetry2<T>(
     api: (cancel?: AbortSignal) => Promise<T>,
     fetchCallName: string,

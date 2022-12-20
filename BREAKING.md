@@ -15,6 +15,14 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - Avoid using code formatting in the title (it's fine to use in the body).
 - To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.2.2.0
+
+## 2.0.0-internal.2.2.0 Upcoming changes
+- [Upcoming change to runWithRetry](#Upcoming-change-to-runWithRetry)
+
+### Upcoming change to `runWithRetry`
+`runWithRetry` in `@fluidframework/driver-utils` will be replaced by the implementation of `runWithRetry2` in the same package. Please prepare all usage for the `runWithRetry2` implementation (see [`Container.attach`](./packages/loader/container-loader/src/container.ts#L892-L923) for reference).
+
 # 2.0.0-internal.2.1.0
 
 ## 2.0.0-internal.2.1.0 Upcoming changes

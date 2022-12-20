@@ -410,10 +410,10 @@ export type RunResult<T> = {
     reason?: string;
 };
 
-// @public @deprecated (undocumented)
+// @public (undocumented)
 export function runWithRetry<T>(api: (cancel?: AbortSignal) => Promise<T>, fetchCallName: string, logger: ITelemetryLogger, progress: IProgress): Promise<T>;
 
-// @public (undocumented)
+// @public
 export function runWithRetry2<T>(api: (cancel?: AbortSignal) => Promise<T>, fetchCallName: string, logger: ITelemetryLogger, progress: IProgress): Promise<RunResult<T>>;
 
 // @public (undocumented)
