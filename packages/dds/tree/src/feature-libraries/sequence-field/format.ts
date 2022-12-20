@@ -21,18 +21,16 @@ export type SizedMark<TNodeChange = NodeChangeType> = Skip | SizedObjectMark<TNo
 
 export type SizedObjectMark<TNodeChange = NodeChangeType> =
     | Modify<TNodeChange>
-    | Detach
-    | ModifyDetach<TNodeChange>;
+    | Detach<TNodeChange>;
 
-export interface Modify<TNodeChange = NodeChangeType>
-    extends HasChanges<TNodeChange>,
-        HasRevisionTag {
+export interface Modify<TNodeChange = NodeChangeType> {
     type: "Modify";
+    changes: TNodeChange;
     tomb?: RevisionTag;
 }
 
-export interface HasChanges<TNodeChange> {
-    changes: TNodeChange;
+export interface HasChanges<TNodeChange = NodeChangeType> {
+    changes?: TNodeChange;
 }
 
 export interface HasPlaceFields {
@@ -80,17 +78,12 @@ export interface LineageEvent {
     readonly offset: number;
 }
 
-export interface Insert extends HasTiebreakPolicy, HasRevisionTag {
-    type: "Insert";
-    content: ProtoNode[];
-}
-
-export interface ModifyInsert<TNodeChange = NodeChangeType>
+export interface Insert<TNodeChange = NodeChangeType>
     extends HasTiebreakPolicy,
         HasRevisionTag,
         HasChanges<TNodeChange> {
-    type: "MInsert";
-    content: ProtoNode;
+    type: "Insert";
+    content: ProtoNode[];
 }
 
 export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag {
@@ -101,56 +94,27 @@ export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag {
     count: NodeCount;
 }
 
-export interface ModifyMoveIn<TNodeChange = NodeChangeType>
-    extends HasMoveId,
-        HasPlaceFields,
-        HasRevisionTag,
-        HasChanges<TNodeChange> {
-    type: "MMoveIn";
-}
-
 export type Attach<TNodeChange = NodeChangeType> =
-    | Insert
-    | ModifyInsert<TNodeChange>
+    | Insert<TNodeChange>
     | MoveIn
-    | ModifyMoveIn<TNodeChange>
-    | Reattach
-    | ModifyReattach<TNodeChange>;
+    | Reattach<TNodeChange>;
 
-export type ModifyingMark<TNodeChange = NodeChangeType> =
-    | Modify<TNodeChange>
-    | ModifyInsert<TNodeChange>
-    | ModifyDetach<TNodeChange>
-    | ModifyMoveIn<TNodeChange>
-    | ModifyReattach<TNodeChange>;
+export type Detach<TNodeChange = NodeChangeType> = Delete<TNodeChange> | MoveOut<TNodeChange>;
 
-export type Detach = Delete | MoveOut;
-export type ModifyDetach<TNodeChange> = ModifyDelete<TNodeChange> | ModifyMoveOut<TNodeChange>;
-
-export interface Delete extends HasRevisionTag {
+export interface Delete<TNodeChange = NodeChangeType>
+    extends HasRevisionTag,
+        HasChanges<TNodeChange> {
     type: "Delete";
     tomb?: RevisionTag;
     count: NodeCount;
 }
 
-export interface MoveOut extends HasRevisionTag, HasMoveId {
+export interface MoveOut<TNodeChange = NodeChangeType>
+    extends HasRevisionTag,
+        HasMoveId,
+        HasChanges<TNodeChange> {
     type: "MoveOut";
     count: NodeCount;
-    tomb?: RevisionTag;
-}
-
-export interface ModifyDelete<TNodeChange = NodeChangeType>
-    extends HasRevisionTag,
-        HasChanges<TNodeChange> {
-    type: "MDelete";
-    tomb?: RevisionTag;
-}
-
-export interface ModifyMoveOut<TNodeChange = NodeChangeType>
-    extends HasMoveId,
-        HasRevisionTag,
-        HasChanges<TNodeChange> {
-    type: "MMoveOut";
     tomb?: RevisionTag;
 }
 
@@ -169,15 +133,12 @@ export interface HasReattachFields extends HasPlaceFields {
     detachIndex: number;
 }
 
-export interface Reattach extends HasReattachFields, HasRevisionTag {
-    type: "Revive" | "Return";
-    count: NodeCount;
-}
-export interface ModifyReattach<TNodeChange = NodeChangeType>
+export interface Reattach<TNodeChange = NodeChangeType>
     extends HasReattachFields,
         HasRevisionTag,
         HasChanges<TNodeChange> {
-    type: "MRevive" | "MReturn";
+    type: "Revive" | "Return";
+    count: NodeCount;
 }
 
 /**

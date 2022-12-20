@@ -23,6 +23,9 @@ variables:
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
+- name: testPackage
+  value: "@fluidframework/test-end-to-end-tests"
+  readonly: true
 
 lockBehavior: sequential
 stages:
@@ -34,8 +37,9 @@ stages:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Small
-        testPackage: "@fluidframework/test-end-to-end-tests"
+        testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         testCommand: test:realsvc:local:report
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
@@ -48,11 +52,23 @@ stages:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Small
-        testPackage: "@fluidframework/test-end-to-end-tests"
+        testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         testCommand: test:realsvc:tinylicious:report
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+        additionalSteps:
+
+        # Publish the tinylicious log
+        - task: PublishPipelineArtifact@1
+          displayName: Publish Artifact - Tinylicious Log
+          inputs:
+            # NOTE: this depends on knowledge of what the template does and where it puts things.
+            # If the template changes its logic, we might need to adjust this path.
+            targetPath: '${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}/tinylicious.log'
+            artifactName: 'tinyliciousLog'
+            publishLocation: 'pipeline'
 
   # end-to-end tests routerlicious
   - stage:
@@ -65,8 +81,9 @@ stages:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Small
-        testPackage: "@fluidframework/test-end-to-end-tests"
+        testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         testCommand: test:realsvc:routerlicious:report
         continueOnError: true
         r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
@@ -92,8 +109,9 @@ stages:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Small
-        testPackage: "@fluidframework/test-end-to-end-tests"
+        testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 360
         continueOnError: true
         testCommand: test:realsvc:frs:report
@@ -119,8 +137,9 @@ stages:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Small
-        testPackage: "@fluidframework/test-end-to-end-tests"
+        testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 360
         continueOnError: true
         testCommand: test:realsvc:odsp:report

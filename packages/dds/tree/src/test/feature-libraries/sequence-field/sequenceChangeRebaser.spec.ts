@@ -18,7 +18,10 @@ const detachedBy: RevisionTag = brand(41);
 
 const testMarks: [string, SF.Mark<TestChange>][] = [
     ["SetValue", { type: "Modify", changes: TestChange.mint([], 1) }],
-    ["MInsert", { type: "MInsert", content: { type, value: 42 }, changes: TestChange.mint([], 2) }],
+    [
+        "MInsert",
+        { type: "Insert", content: [{ type, value: 42 }], changes: TestChange.mint([], 2) },
+    ],
     [
         "Insert",
         {
@@ -120,17 +123,23 @@ describe("SequenceField - Rebaser Axioms", () => {
 
     describe("A⁻¹ ○ A === ε", () => {
         for (const [name, mark] of testMarks) {
-            it(`${name}⁻¹ ○ ${name} === ε`, () => {
-                const change = [mark];
-                const taggedChange = tagChange(change, brand(1));
-                const inv = SF.invert(taggedChange, TestChange.invert);
-                const actual = SF.compose(
-                    [tagInverse(inv, taggedChange.revision), taggedChange],
-                    TestChange.compose,
-                );
-                const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta, fakeRepair);
-                assert.deepEqual(delta, []);
-            });
+            if (name === "Insert" || name === "MInsert") {
+                // A⁻¹ ○ A === ε cannot be true for Insert/MInsert:
+                // Re-inserting nodes after deleting them is different from not having deleted them in the first place.
+                // We may reconsider this in the future in order to minimize the deltas produced when rebasing local changes.
+            } else {
+                it(`${name}⁻¹ ○ ${name} === ε`, () => {
+                    const change = [mark];
+                    const taggedChange = tagChange(change, brand(1));
+                    const inv = SF.invert(taggedChange, TestChange.invert);
+                    const actual = SF.compose(
+                        [tagInverse(inv, taggedChange.revision), taggedChange],
+                        TestChange.compose,
+                    );
+                    const delta = SF.sequenceFieldToDelta(actual, TestChange.toDelta, fakeRepair);
+                    assert.deepEqual(delta, []);
+                });
+            }
         }
     });
 });

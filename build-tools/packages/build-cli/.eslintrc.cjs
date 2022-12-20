@@ -9,7 +9,7 @@ module.exports = {
         "oclif",
         "oclif-typescript",
         // eslint-disable-next-line node/no-extraneous-require
-        require.resolve("@fluidframework/eslint-config-fluid"),
+        require.resolve("@fluidframework/eslint-config-fluid/minimal"),
         "prettier",
     ],
     rules: {

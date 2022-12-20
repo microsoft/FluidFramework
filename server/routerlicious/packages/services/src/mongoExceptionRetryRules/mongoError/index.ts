@@ -180,7 +180,8 @@ class ServiceUnavailableRule extends BaseMongoExceptionRetryRule {
 
 // this handles the pool destroyed error from client side. Should relies on reconnect instead of retry?
 class TopologyDestroyed extends BaseMongoExceptionRetryRule {
-    private static readonly message = "Topology was destroyed";
+    // We see messages with both "Topology was destroyed" and "topology was destroyed" on prod. So need to handle both cases.
+    private static readonly message = "topology was destroyed";
     protected defaultRetryDecision: boolean = false;
 
     constructor(retryRuleOverride: Map<string, boolean>) {
@@ -189,7 +190,7 @@ class TopologyDestroyed extends BaseMongoExceptionRetryRule {
 
     public match(error: any): boolean {
         return error.message
-            && (error.message as string) === TopologyDestroyed.message;
+            && (error.message as string).toLowerCase() === TopologyDestroyed.message;
     }
 }
 
