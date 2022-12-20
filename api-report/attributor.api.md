@@ -4,7 +4,10 @@
 
 ```ts
 
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IAudience } from '@fluidframework/container-definitions';
+import { IDeltaManager } from '@fluidframework/container-definitions';
+import { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { Jsonable } from '@fluidframework/datastore-definitions';
 
@@ -12,6 +15,12 @@ import { Jsonable } from '@fluidframework/datastore-definitions';
 export interface AttributionInfo {
     timestamp: number;
     user: IUser;
+}
+
+// @alpha (undocumented)
+export interface AttributionKey {
+    seq: number;
+    type: "op";
 }
 
 // @public
@@ -90,7 +99,7 @@ export class MutableStringInterner implements StringInterner {
 
 // @public
 export class OpStreamAttributor extends Attributor implements IAttributor {
-    constructor(runtime: IFluidDataStoreRuntime, initialEntries?: Iterable<[number, AttributionInfo]>);
+    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, audience: IAudience, initialEntries?: Iterable<[number, AttributionInfo]>);
 }
 
 // @internal (undocumented)

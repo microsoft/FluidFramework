@@ -19,11 +19,11 @@ const createAzureCreateNewRequest = (): IRequest => (
     }
 );
 
-const verifyEnvConfig = () => {
-    if (process.env.ID === undefined) { throw Error("Define ID in .env file"); }
-    if (process.env.KEY === undefined) { throw Error("Define KEY in .env file"); }
-    if (process.env.ORDERER === undefined) { throw Error("Define ORDERER in .env file"); }
-    if (process.env.STORAGE === undefined) { throw Error("Define STORAGE in .env file"); }
+const verifyEnvConfig = (): void => {
+    if (process.env.ID === undefined) { throw new Error("Define ID in .env file"); }
+    if (process.env.KEY === undefined) { throw new Error("Define KEY in .env file"); }
+    if (process.env.ORDERER === undefined) { throw new Error("Define ORDERER in .env file"); }
+    if (process.env.STORAGE === undefined) { throw new Error("Define STORAGE in .env file"); }
 };
 
 export async function getFluidRelayContainer(
@@ -55,7 +55,7 @@ export async function getFluidRelayContainer(
     return [container, containerId];
 }
 
-export function hasFluidRelayEndpoints() {
+export function hasFluidRelayEndpoints(): boolean {
     try {
         verifyEnvConfig();
         return true;
