@@ -177,7 +177,7 @@ function composeMarks<TNodeChange>(
                     // We can represent net effect of the two marks as an insert at the move destination.
                     replaceMoveDest(
                         moveEffects,
-                        getUniqueMoveId(newMark, newMark.revision ?? newRev, genId, moveEffects),
+                        getUniqueMoveId(newMark, newRev, genId, moveEffects),
                         mergeInNewChildChanges(
                             baseMark,
                             newMark.changes,
@@ -224,7 +224,7 @@ function composeMarks<TNodeChange>(
                     changeSrcMoveId(
                         moveEffects,
                         baseMark.id,
-                        getUniqueMoveId(newMark, newMark.revision ?? newRev, genId, moveEffects),
+                        getUniqueMoveId(newMark, newRev, genId, moveEffects),
                     );
                     return 0;
                 }
@@ -233,24 +233,14 @@ function composeMarks<TNodeChange>(
                         removeMoveSrc(moveEffects, baseMark.id);
                         removeMoveDest(
                             moveEffects,
-                            getUniqueMoveId(
-                                newMark,
-                                newMark.revision ?? newRev,
-                                genId,
-                                moveEffects,
-                            ),
+                            getUniqueMoveId(newMark, newRev, genId, moveEffects),
                         );
                         return 0;
                     } else {
                         changeSrcMoveId(
                             moveEffects,
                             baseMark.id,
-                            getUniqueMoveId(
-                                newMark,
-                                newMark.revision ?? newRev,
-                                genId,
-                                moveEffects,
-                            ),
+                            getUniqueMoveId(newMark, newRev, genId, moveEffects),
                         );
                         return 0;
                     }
@@ -274,24 +264,14 @@ function composeMarks<TNodeChange>(
                         removeMoveSrc(moveEffects, baseMark.id);
                         removeMoveDest(
                             moveEffects,
-                            getUniqueMoveId(
-                                newMark,
-                                newMark.revision ?? newRev,
-                                genId,
-                                moveEffects,
-                            ),
+                            getUniqueMoveId(newMark, newRev, genId, moveEffects),
                         );
                         return 0;
                     } else {
                         changeSrcMoveId(
                             moveEffects,
                             baseMark.id,
-                            getUniqueMoveId(
-                                newMark,
-                                newMark.revision ?? newRev,
-                                genId,
-                                moveEffects,
-                            ),
+                            getUniqueMoveId(newMark, newRev, genId, moveEffects),
                         );
                         return 0;
                     }
@@ -304,12 +284,7 @@ function composeMarks<TNodeChange>(
                         removeMoveSrc(moveEffects, baseMark.id);
                         removeMoveDest(
                             moveEffects,
-                            getUniqueMoveId(
-                                newMark,
-                                newMark.revision ?? newRev,
-                                genId,
-                                moveEffects,
-                            ),
+                            getUniqueMoveId(newMark, newRev, genId, moveEffects),
                         );
                         return 0;
                     } else {
@@ -319,12 +294,7 @@ function composeMarks<TNodeChange>(
                         changeSrcMoveId(
                             moveEffects,
                             baseMark.id,
-                            getUniqueMoveId(
-                                newMark,
-                                newMark.revision ?? newRev,
-                                genId,
-                                moveEffects,
-                            ),
+                            getUniqueMoveId(newMark, newRev, genId, moveEffects),
                         );
                         return 0;
                     }
@@ -381,7 +351,7 @@ function composeWithBaseChildChanges<
     }
 
     if (isMoveMark(cloned)) {
-        cloned.id = getUniqueMoveId(cloned, cloned.revision ?? newRevision, genId, moveEffects);
+        cloned.id = getUniqueMoveId(cloned, newRevision, genId, moveEffects);
     }
 
     if (composedChanges !== undefined) {
@@ -435,7 +405,7 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
     }
 
     if (isMoveMark(cloned)) {
-        cloned.id = getUniqueMoveId(cloned, cloned.revision ?? revision, genId, moveEffects);
+        cloned.id = getUniqueMoveId(cloned, revision, genId, moveEffects);
     }
 
     if (cloned.type !== "MoveIn" && cloned.type !== "ReturnTo" && cloned.changes !== undefined) {
