@@ -98,6 +98,19 @@ export interface IGarbageCollectionState {
     gcNodes: { [ id: string ]: IGarbageCollectionNodeData; };
 }
 
+/**
+ * @deprecated - IGarbageCollectionState is written in the root of the summary now.
+ * Legacy GC details from when the GC details were written at the data store's summary tree.
+ */
+export interface IGarbageCollectionSummaryDetailsLegacy {
+    /** A list of routes to Fluid objects that are used in this node. */
+    usedRoutes?: string[];
+    /** The GC data of this node. */
+    gcData?: IGarbageCollectionData;
+    /** If this node is unreferenced, the time when it was marked as such. */
+    unrefTimestamp?: number;
+}
+
 export type SummarizeInternalFn = (
     fullTree: boolean,
     trackState: boolean,
