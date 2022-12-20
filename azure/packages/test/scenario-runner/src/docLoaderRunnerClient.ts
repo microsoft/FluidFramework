@@ -4,25 +4,8 @@
  */
 import commander from "commander";
 
-import { ConnectionState } from "fluid-framework";
-
-import { AzureClient } from "@fluidframework/azure-client";
-import { IFluidContainer } from "@fluidframework/fluid-static";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { timeoutPromise } from "@fluidframework/test-utils";
-
 import { ContainerFactorySchema } from "./interface";
-import { getLogger } from "./logger";
-import { createAzureClient, loadInitialObjSchema } from "./utils";
-
-export interface DocLoaderRunnerConfig {
-    runId: string;
-    scenarioName: string;
-    childId: number;
-    docId: string;
-    connType: string;
-    connEndpoint: string;
-}
+import { DocLoaderRunner, DocLoaderRunnerRunConfig } from "./DocLoaderRunner";
 
 async function main() {
     const parseIntArg = (value: any): number => {
@@ -47,90 +30,22 @@ async function main() {
         .requiredOption("-v, --verbose", "Enables verbose logging")
         .parse(process.argv);
 
-    const config = {
+    const config: DocLoaderRunnerRunConfig = {
         runId: commander.runId,
         scenarioName: commander.scenarioName,
         childId: commander.childId,
         docId: commander.docId,
         connType: commander.connType,
         connEndpoint: commander.connEndpoint,
+        schema: JSON.parse(commander.schema) as ContainerFactorySchema,
     };
 
     if (commander.log !== undefined) {
         process.env.DEBUG = commander.log;
     }
 
-    const logger = await getLogger(
-        {
-            runId: config.runId,
-            scenarioName: config.scenarioName,
-        },
-        ["scenario:runner"],
-    );
-
-    const ac = await createAzureClient({
-        userId: `testUserId_${config.childId}`,
-        userName: `testUserName_${config.childId}`,
-        connType: config.connType,
-        connEndpoint: config.connEndpoint,
-        logger,
-    });
-
-    await execRun(ac, config);
+    await DocLoaderRunner.execRun(config);
     process.exit(0);
-}
-
-async function execRun(ac: AzureClient, config: DocLoaderRunnerConfig): Promise<void> {
-    let schema;
-    const eventMap = new Map([
-        [
-            "fluid:telemetry:RouterliciousDriver:getWholeFlatSummary",
-            "scenario:runner:DocLoader:getSummary",
-        ],
-    ]);
-    const logger = await getLogger(
-        {
-            runId: config.runId,
-            scenarioName: config.scenarioName,
-            namespace: "scenario:runner:DocLoader",
-        },
-        ["scenario:runner"],
-        eventMap,
-    );
-
-    try {
-        schema = loadInitialObjSchema(JSON.parse(commander.schema) as ContainerFactorySchema);
-    } catch {
-        throw new Error("Invalid schema provided.");
-    }
-
-    let container: IFluidContainer;
-    try {
-        ({ container } = await PerformanceEvent.timedExecAsync(
-            logger,
-            { eventName: "load" },
-            async () => {
-                return ac.getContainer(config.docId, schema);
-            },
-            { start: true, end: true, cancel: "generic" },
-        ));
-    } catch {
-        throw new Error("Unable to load container.");
-    }
-
-    if (container.connectionState !== ConnectionState.Connected) {
-        await PerformanceEvent.timedExecAsync(
-            logger,
-            { eventName: "connected" },
-            async () => {
-                return timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-                    durationMs: 10000,
-                    errorMsg: "container connect() timeout",
-                });
-            },
-            { start: true, end: true, cancel: "generic" },
-        );
-    }
 }
 
 main().catch((error) => {

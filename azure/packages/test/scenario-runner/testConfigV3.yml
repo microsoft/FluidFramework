@@ -1,5 +1,5 @@
 title: Single doc load test
-description: In this scenario we create single container with no data, then let client run a bunch of writes on it while looking at perf and reliability.
+description: In this scenario we create single container with no data, then reproduce a known scenario that causes a summaryNack.
 env:
     schema:
         initialObjects:
@@ -8,6 +8,7 @@ env:
     connectionConfig:
         type: remote
         endpoint: https://us.fluidrelay.azure.com
+    parallelProcesses: false
 stages:
     - stage-1:
       id: 1
@@ -25,19 +26,16 @@ stages:
       params:
           connectionConfig: ${connectionConfig}
           schema: ${schema}
+          client: ${client}
           numDocs: 1
           clientStartDelayMs: 0
       out: ${docId}
     - stage-3:
       id: 3
-      name: Create traffic on SharedMap
-      package: shared-map-traffic
+      name: Create summary
+      package: summarize
       params:
           connectionConfig: ${connectionConfig}
           docId: ${docId}
           schema: ${schema}
-          numClients: 90
-          clientStartDelayMs: 100
-          writeRatePerMin: 120
-          sharedMapKey: key1
-          totalWriteCount: 60
+          client: ${client}

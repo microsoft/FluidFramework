@@ -23,6 +23,11 @@ export interface AzureClientRunnerConfig {
     userId?: string;
     userName?: string;
 }
+export interface AzureClientRunnerRunConfig extends IRunConfig {
+    connectionConfig: AzureClientRunnerConnectionConfig;
+    userId?: string;
+    userName?: string;
+}
 
 export class AzureClientRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
     private status: RunnnerStatus = "notStarted";
@@ -30,17 +35,34 @@ export class AzureClientRunner extends TypedEventEmitter<IRunnerEvents> implemen
         super();
     }
 
-    public async run(config: IRunConfig): Promise<AzureClient | undefined> {
+    public async run(config: IRunConfig): Promise<AzureClient> {
         this.status = "running";
 
-        const ac = await createAzureClient({
-            connType: this.c.connectionConfig.type,
-            connEndpoint: this.c.connectionConfig.endpoint,
-            userId: this.c.userId ?? "testUserId",
-            userName: this.c.userName ?? "testUserId",
-        });
+        try {
+            const ac = await AzureClientRunner.execRun({
+                ...config,
+                ...this.c,
+            });
 
-        this.status = "success";
+            this.status = "success";
+            return ac;
+        } catch {
+            this.status = "error";
+            throw new Error("Failed to create client");
+        }
+    }
+
+    public async runSync(config: IRunConfig): Promise<AzureClient> {
+        return this.run(config);
+    }
+
+    public static async execRun(runConfig: AzureClientRunnerRunConfig): Promise<AzureClient> {
+        const ac = await createAzureClient({
+            connType: runConfig.connectionConfig.type,
+            connEndpoint: runConfig.connectionConfig.endpoint,
+            userId: runConfig.userId ?? "testUserId",
+            userName: runConfig.userName ?? "testUserId",
+        });
         return ac;
     }
 
@@ -52,7 +74,7 @@ export class AzureClientRunner extends TypedEventEmitter<IRunnerEvents> implemen
         };
     }
 
-    public stop(): void {}
+    public stop(): void { }
 
     private description(): string {
         return `Creating ${this.c.connectionConfig.type} Azure Client pointing to: ${this.c.connectionConfig.endpoint}`;

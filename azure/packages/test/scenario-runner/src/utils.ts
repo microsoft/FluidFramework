@@ -46,7 +46,6 @@ export function createAzureTokenProvider(
     fnUrl: string,
     userID?: string,
     userName?: string,
-    tenantKey?: string,
 ): AzureFunctionTokenProvider {
     return new AzureFunctionTokenProvider(`${fnUrl}/api/GetFrsToken`, {
         userId: userID ?? "foo",
@@ -87,7 +86,7 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
             tokenProvider: tenantKey
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 ? new InsecureTokenProvider(tenantKey, { id: config.userId ?? randomUser.id, name: config.userName ?? (randomUser as any).name } as IUser)
-                : createAzureTokenProvider(fnUrl, config.userId, config.userName, tenantKey),
+                : createAzureTokenProvider(fnUrl, config.userId, config.userName),
             endpoint: config.connEndpoint,
             type: "remote",
         }

@@ -21,12 +21,32 @@ export interface IRunConfig {
 }
 
 export interface IRunner extends IEventProvider<IRunnerEvents> {
+    /**
+     * Runs in 1 or more child processes.
+     */
     run(config: IRunConfig): Promise<unknown>;
+    /**
+     * Runs in same process.
+     */
+    runSync(config: IRunConfig): Promise<unknown>;
+    /**
+     * Get the runner's current status.
+     */
     getStatus(): IRunnerStatus;
+    /**
+     * Stop the runner.
+     */
     stop(): void;
 }
 
 export interface ContainerFactorySchema {
     initialObjects: { [key: string]: string };
     dynamicObjects?: { [key: string]: string };
+}
+
+export interface AzureClientConfig {
+    type: "remote" | "local";
+    endpoint: string;
+    key?: string;
+    tenantId?: string;
 }

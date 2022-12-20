@@ -4,24 +4,8 @@
  */
 import commander from "commander";
 
-import { ConnectionState } from "fluid-framework";
-
-import { AzureClient } from "@fluidframework/azure-client";
-import { IFluidContainer } from "@fluidframework/fluid-static";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { timeoutPromise } from "@fluidframework/test-utils";
-
 import { ContainerFactorySchema } from "./interface";
-import { getLogger } from "./logger";
-import { createAzureClient, loadInitialObjSchema } from "./utils";
-
-export interface DocCreatorRunnerConfig {
-    runId: string;
-    scenarioName: string;
-    childId: number;
-    connType: string;
-    connEndpoint: string;
-}
+import { DocCreatorRunner, DocCreatorRunnerRunConfig } from "./DocCreatorRunner";
 
 async function main() {
     const parseIntArg = (value: any): number => {
@@ -45,98 +29,23 @@ async function main() {
         .requiredOption("-v, --verbose", "Enables verbose logging")
         .parse(process.argv);
 
-    const config = {
+    const config: DocCreatorRunnerRunConfig = {
         runId: commander.runId,
         scenarioName: commander.scenarioName,
         childId: commander.childId,
         connType: commander.connType,
         connEndpoint: commander.connEndpoint,
+        schema: JSON.parse(commander.schema) as ContainerFactorySchema,
     };
 
     if (commander.log !== undefined) {
         process.env.DEBUG = commander.log;
     }
 
-    const logger = await getLogger(
-        {
-            runId: config.runId,
-            scenarioName: config.scenarioName,
-        },
-        ["scenario:runner"],
-    );
-
-    const ac = await createAzureClient({
-        userId: `testUserId_${config.childId}`,
-        userName: `testUserName_${config.childId}`,
-        connType: config.connType,
-        connEndpoint: config.connEndpoint,
-        logger,
-    });
-
-    await execRun(ac, config);
-    process.exit(0);
-}
-
-async function execRun(ac: AzureClient, config: DocCreatorRunnerConfig): Promise<void> {
-    let schema;
-    const logger = await getLogger(
-        {
-            runId: config.runId,
-            scenarioName: config.scenarioName,
-            namespace: "scenario:runner:DocCreator",
-        },
-        ["scenario:runner"],
-    );
-
-    try {
-        schema = loadInitialObjSchema(JSON.parse(commander.schema) as ContainerFactorySchema);
-    } catch {
-        throw new Error("Invalid schema provided.");
-    }
-
-    let container: IFluidContainer;
-    try {
-        ({ container } = await PerformanceEvent.timedExecAsync(
-            logger,
-            { eventName: "create" },
-            async () => {
-                return ac.createContainer(schema);
-            },
-            { start: true, end: true, cancel: "generic" },
-        ));
-    } catch {
-        throw new Error("Unable to create container.");
-    }
-
-    let id: string;
-    try {
-        id = await PerformanceEvent.timedExecAsync(
-            logger,
-            { eventName: "attach" },
-            async () => {
-                return container.attach();
-            },
-            { start: true, end: true, cancel: "generic" },
-        );
-    } catch {
-        throw new Error("Unable to attach container.");
-    }
-
-    if (container.connectionState !== ConnectionState.Connected) {
-        await PerformanceEvent.timedExecAsync(
-            logger,
-            { eventName: "connected" },
-            async () => {
-                return timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-                    durationMs: 10000,
-                    errorMsg: "container connect() timeout",
-                });
-            },
-            { start: true, end: true, cancel: "generic" },
-        );
-    }
+    const id = await DocCreatorRunner.execRun(config);
 
     process.send?.(id);
+    process.exit(0);
 }
 
 main().catch((error) => {

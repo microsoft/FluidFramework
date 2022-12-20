@@ -15,44 +15,44 @@ import { getLogger } from "./logger";
 import { AzureClientConfig, ContainerFactorySchema, IRunConfig, IRunner, IRunnerEvents, IRunnerStatus, RunnnerStatus } from "./interface";
 import { delay, loadInitialObjSchema, createAzureClient } from "./utils";
 
-export interface DocCreatorRunnerConfig {
+export interface SummarizeRunnerConfig {
     connectionConfig: AzureClientConfig;
     schema: ContainerFactorySchema;
-    numDocs: number;
+    docIds: string[];
     clientStartDelayMs: number;
     client?: AzureClient;
 }
 
-export interface DocCreatorRunnerRunConfig extends IRunConfig {
+export interface SummarizeRunnerRunConfig extends IRunConfig {
     schema: ContainerFactorySchema;
     childId: number;
+    docId: string;
     connType: string;
     connEndpoint: string;
     client?: AzureClient;
 }
 
-export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
+export class SummarizeRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
     private status: RunnnerStatus = "notStarted";
-    private readonly docIds: string[] = [];
-    constructor(public readonly c: DocCreatorRunnerConfig) {
+
+    constructor(public readonly c: SummarizeRunnerConfig) {
         super();
     }
 
-    public async run(config: IRunConfig): Promise<string | string[] | undefined> {
+    public async run(config: IRunConfig): Promise<void> {
         this.status = "running";
 
-        const r = await this.spawnChildRunners(config);
+        await this.spawnChildRunners(config);
         this.status = "success";
-        return r;
     }
 
-    private async spawnChildRunners(config: IRunConfig): Promise<string | string[] | undefined> {
+    private async spawnChildRunners(config: IRunConfig): Promise<void> {
         this.status = "running";
         const runnerArgs: string[][] = [];
-        for (let i = 0; i < this.c.numDocs; i++) {
+        for (let i = 0; i < this.c.docIds.length; i++) {
             const connection = this.c.connectionConfig;
             const childArgs: string[] = [
-                "./dist/docCreatorRunnerClient.js",
+                "./dist/summarizeRunnerClient.js",
                 "--runId",
                 config.runId,
                 "--scenarioName",
@@ -85,22 +85,20 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
         } catch {
             throw new Error("Not all clients closed succesfully.");
         }
-
-        if (this.docIds.length > 0) {
-            return this.docIds.length === 1 ? this.docIds[0] : this.docIds;
-        }
     }
-    public async runSync(config: IRunConfig): Promise<string | string[] | undefined> {
+
+    public async runSync(config: IRunConfig): Promise<void> {
         this.status = "running";
         const connType = this.c.connectionConfig.type;
         const connEndpoint = this.c.connectionConfig.endpoint;
         const schema = this.c.schema;
         const client = this.c.client;
-        const runs: Promise<string>[] = [];
-        for (let i = 0; i < this.c.numDocs; i++) {
-            runs.push(DocCreatorRunner.execRun({
+        const runs: Promise<void>[] = [];
+        for (let i = 0; i < this.c.docIds.length; i++) {
+            runs.push(SummarizeRunner.execRun({
                 ...config,
                 childId: i,
+                docId: this.c.docIds[i],
                 connType,
                 connEndpoint,
                 schema,
@@ -108,16 +106,15 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
             }));
         }
         try {
-            const ids = await Promise.all(runs);
+            await Promise.all(runs);
             this.status = "success";
-            return ids.length > 1 ? ids : ids[0];
         } catch {
             this.status = "error";
-            throw new Error("Client did not close successfully.");
+            throw new Error("Not all clients closed successfully.");
         }
     }
 
-    public static async execRun(runConfig: DocCreatorRunnerRunConfig): Promise<string> {
+    public static async execRun(runConfig: SummarizeRunnerRunConfig): Promise<void> {
         let schema;
         const logger = await getLogger(
             {
@@ -186,8 +183,6 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
                 { start: true, end: true, cancel: "generic" },
             );
         }
-
-        return id;
     }
 
     public stop(): void { }
@@ -201,7 +196,7 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
     }
 
     private description(): string {
-        return `This stage creates empty document for the given schema.`;
+        return `This stage reproduces a known summary nack scenario.`;
     }
 
     private async createChild(childArgs: string[]): Promise<boolean> {
@@ -209,14 +204,6 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
         const runnerProcess = child_process.spawn("node", childArgs, {
             stdio: ["inherit", "inherit", "inherit", "ipc"],
             env: envVar,
-        });
-
-        runnerProcess.stdout?.once("data", (data) => {
-            this.docIds.push(String(data));
-        });
-
-        runnerProcess.on("message", (id) => {
-            this.docIds.push(String(id));
         });
 
         return new Promise((resolve, reject) =>

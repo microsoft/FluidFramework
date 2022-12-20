@@ -15,6 +15,7 @@ import { DocLoaderRunner, DocLoaderRunnerConfig } from "./DocLoaderRunner";
 import { MapTrafficRunner, MapTrafficRunnerConfig } from "./MapTrafficRunner";
 import { IRunner } from "./interface";
 import { getLogger } from "./logger";
+import { SummarizeRunner, SummarizeRunnerConfig } from "./SummarizeRunner";
 
 export interface IStageParams {
     [key: string]: unknown;
@@ -192,6 +193,9 @@ export class TestOrchestrator {
             case "shared-map-traffic": {
                 return new MapTrafficRunner(stage.params as unknown as MapTrafficRunnerConfig);
             }
+            case "summarize": {
+                return new SummarizeRunner(stage.params as unknown as SummarizeRunnerConfig);
+            }
             default: {
                 console.log("unknown stage:", stage);
             }
@@ -222,8 +226,16 @@ export class TestOrchestrator {
             console.log(this.getStatus());
         });
 
-        // exec
-        return runner.run({
+        const parallelProcesses = this.doc.env.parallelProcesses ?? true;
+        if (parallelProcesses) {
+            // exec with possible child processes
+            return runner.run({
+                runId: this.runId,
+                scenarioName: this.doc?.title ?? "",
+            });
+        }
+        // exec with no child processes
+        return runner.runSync({
             runId: this.runId,
             scenarioName: this.doc?.title ?? "",
         });
@@ -236,6 +248,9 @@ export class TestOrchestrator {
             }
             case "v2": {
                 return "./testConfigV2.yml";
+            }
+            case "v3": {
+                return "./testConfigV3.yml";
             }
             default: {
                 return "";

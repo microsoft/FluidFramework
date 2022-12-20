@@ -4,8 +4,8 @@
  */
 import commander from "commander";
 
+import { SummarizeRunner, SummarizeRunnerRunConfig } from "./SummarizeRunner";
 import { ContainerFactorySchema } from "./interface";
-import { MapTrafficRunner, MapTrafficRunnerRunConfig } from "./MapTrafficRunner";
 
 async function main() {
     const parseIntArg = (value: any): number => {
@@ -16,18 +16,10 @@ async function main() {
     };
     commander
         .version("0.0.1")
-        .requiredOption("-d, --docId <docId>", "Document ID to target")
         .requiredOption("-s, --schema <schema>", "Container Schema")
         .requiredOption("-r, --runId <runId>", "orchestrator run id.")
         .requiredOption("-s, --scenarioName <scenarioName>", "scenario name.")
         .requiredOption("-c, --childId <childId>", "id of this node client.", parseIntArg)
-        .requiredOption("-wr, --writeRatePerMin <writeRatePerMin>", "Rate of writes", parseIntArg)
-        .requiredOption(
-            "-wc, --totalWriteCount <totalWriteCount>",
-            "Total write count",
-            parseIntArg,
-        )
-        .requiredOption("-k, --sharedMapKey <sharedMapKey>", "Shared map location")
         .requiredOption("-ct, --connType <connType>", "Connection type")
         .requiredOption("-ce, --connEndpoint <connEndpoint>", "Connection endpoint")
         .option(
@@ -37,14 +29,10 @@ async function main() {
         .requiredOption("-v, --verbose", "Enables verbose logging")
         .parse(process.argv);
 
-    const config: MapTrafficRunnerRunConfig = {
+    const config: SummarizeRunnerRunConfig = {
         runId: commander.runId,
         scenarioName: commander.scenarioName,
         childId: commander.childId,
-        docId: commander.docId,
-        writeRatePerMin: commander.writeRatePerMin,
-        totalWriteCount: commander.totalWriteCount,
-        sharedMapKey: commander.sharedMapKey,
         connType: commander.connType,
         connEndpoint: commander.connEndpoint,
         schema: JSON.parse(commander.schema) as ContainerFactorySchema,
@@ -54,12 +42,9 @@ async function main() {
         process.env.DEBUG = commander.log;
     }
 
-    if (config.docId === undefined) {
-        console.error("Missing --docId argument needed to run child process");
-        process.exit(-1);
-    }
+    const id = await SummarizeRunner.execRun(config);
 
-    await MapTrafficRunner.execRun(config);
+    process.send?.(id);
     process.exit(0);
 }
 
