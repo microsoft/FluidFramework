@@ -154,7 +154,7 @@ export class PermutationVector extends Client {
         });                                     // (See https://github.com/microsoft/FluidFramework/issues/84)
 
         this.on("delta", this.onDelta);
-        this.on("maintance", this.onMaintenance);
+        this.on("maintenance", this.onMaintenance);
     }
 
     public insert(start: number, length: number) {
