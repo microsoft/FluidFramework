@@ -79,8 +79,11 @@ export class TestClientLogger {
     // initialize to private instance, so first real edit will create a new line
     private lastDeltaArgs: IMergeTreeDeltaOpArgs | undefined;
 
+    /**
+     * Unsubscribes this logger from its clients' events. Consider using this for tests with client lifetime
+     * extending significantly past the logger's.
+     */
     private readonly disposeCallbacks: (() => void)[] = [];
-
     public dispose(): void {
         for (const cb of this.disposeCallbacks) {
             cb();
