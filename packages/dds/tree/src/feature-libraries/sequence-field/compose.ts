@@ -4,26 +4,15 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { RevisionTag, tagChange, TaggedChange } from "../../core";
+import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
 import { clone, fail, StackyIterator } from "../../util";
-import {
-    Changeset,
-    HasRevisionTag,
-    Mark,
-    MarkList,
-    Modify,
-    ModifyingMark,
-    ModifyInsert,
-    ModifyReattach,
-    SizedMark,
-} from "./format";
+import { Changeset, HasChanges, HasRevisionTag, Mark, MarkList, SizedMark } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
     getInputLength,
     getOutputLength,
     isAttach,
     isDetachMark,
-    isModifyingMark,
     isReattach,
     isSkipMark,
     splitMarkOnInput,
@@ -111,21 +100,20 @@ function composeMarks<TNodeChange>(
     }
     const baseType = baseMark.type;
     const newType = newMark.type;
-    if (newType === "MDelete" || baseType === "MDelete") {
+    if (
+        (newType === "Delete" && newMark.changes !== undefined) ||
+        (baseType === "Delete" && baseMark.changes !== undefined)
+    ) {
         // This should not occur yet because we discard all modifications to deleted subtrees
         // In the long run we want to preserve them.
         fail("TODO: support modifications to deleted subtree");
     }
     switch (baseType) {
         case "Insert":
+        case "Revive":
             switch (newType) {
                 case "Modify": {
-                    return {
-                        ...baseMark,
-                        type: "MInsert",
-                        content: baseMark.content[0],
-                        changes: newMark.changes,
-                    };
+                    return mergeInNewChildChanges(baseMark, newMark.changes, newRev, composeChild);
                 }
                 case "Delete": {
                     // The insertion made by the base change is subsequently deleted.
@@ -135,27 +123,10 @@ function composeMarks<TNodeChange>(
                 default:
                     fail("Not implemented");
             }
-        case "MRevive":
-        case "MInsert": {
-            switch (newType) {
-                case "Modify": {
-                    updateModifyLike(newRev, newMark, baseMark, composeChild);
-                    return baseMark;
-                }
-                case "Delete": {
-                    // The insertion made by the base change is subsequently deleted.
-                    // TODO: preserve the insertions as muted
-                    return 0;
-                }
-                default:
-                    fail("Not implemented");
-            }
-        }
         case "Modify": {
             switch (newType) {
                 case "Modify": {
-                    updateModifyLike(newRev, newMark, baseMark, composeChild);
-                    return baseMark;
+                    return mergeInNewChildChanges(baseMark, newMark.changes, newRev, composeChild);
                 }
                 case "Delete": {
                     // For now the deletion obliterates all other modifications.
@@ -166,42 +137,44 @@ function composeMarks<TNodeChange>(
                     fail("Not implemented");
             }
         }
-        case "Revive": {
-            switch (newType) {
-                case "Modify": {
-                    const modRevive: ModifyReattach<TNodeChange> = {
-                        type: "MRevive",
-                        detachedBy: baseMark.detachedBy,
-                        detachIndex: baseMark.detachIndex,
-                        changes: newMark.changes,
-                    };
-                    return modRevive;
-                }
-                case "Delete": {
-                    // The deletion undoes the revival
-                    return 0;
-                }
-                default:
-                    fail("Not implemented");
-            }
-        }
         default:
             fail("Not implemented");
     }
 }
 
-function updateModifyLike<TNodeChange>(
-    currRev: RevisionTag | undefined,
-    curr: Modify<TNodeChange>,
-    base: ModifyInsert<TNodeChange> | Modify<TNodeChange> | ModifyReattach<TNodeChange>,
+function composeChildChanges<TNodeChange>(
+    baseChange: TNodeChange | undefined,
+    newChange: TNodeChange | undefined,
+    newRevision: RevisionTag | undefined,
     composeChild: NodeChangeComposer<TNodeChange>,
-) {
-    // `base.changes` is assumed to be the result of a call to `composeChildren`, so it does not need a revision tag.
-    // See the contract of `FieldChangeHandler.compose`.
-    base.changes = composeChild([
-        tagChange(base.changes, undefined),
-        tagChange(curr.changes, currRev),
-    ]);
+): TNodeChange | undefined {
+    if (newChange === undefined) {
+        return baseChange;
+    } else if (baseChange === undefined) {
+        return composeChild([tagChange(newChange, newRevision)]);
+    } else {
+        return composeChild([makeAnonChange(baseChange), tagChange(newChange, newRevision)]);
+    }
+}
+
+function mergeInNewChildChanges<TNodeChange, TMark extends HasChanges<TNodeChange>>(
+    baseMark: TMark,
+    newChanges: TNodeChange | undefined,
+    newRevision: RevisionTag | undefined,
+    composeChild: NodeChangeComposer<TNodeChange>,
+): TMark {
+    const composedChanges = composeChildChanges(
+        baseMark.changes,
+        newChanges,
+        newRevision,
+        composeChild,
+    );
+    if (composedChanges !== undefined) {
+        baseMark.changes = composedChanges;
+    } else {
+        delete baseMark.changes;
+    }
+    return baseMark;
 }
 
 function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
@@ -218,8 +191,8 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
         (cloned as HasRevisionTag).revision = revision;
     }
 
-    if (isModifyingMark(mark)) {
-        (cloned as ModifyingMark<TNodeChange>).changes = composeChild([
+    if (mark.type !== "MoveIn" && mark.changes !== undefined) {
+        (cloned as HasChanges<TNodeChange>).changes = composeChild([
             tagChange(mark.changes, revision),
         ]);
         return cloned;
