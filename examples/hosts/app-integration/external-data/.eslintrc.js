@@ -8,10 +8,7 @@ module.exports = {
         require.resolve("@fluidframework/eslint-config-fluid/strict"),
         "prettier",
     ],
-    rules: {
-        // TODO: Enable and add missing docs
-        "jsdoc/require-jsdoc": "off",
-    },
+    rules: { },
     overrides: [
         {
             files: ["tests/*"],
