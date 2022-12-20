@@ -21,8 +21,6 @@ import {
     removeMoveDest,
     splitMarkOnInput,
     splitMarkOnOutput,
-    splitMoveIn,
-    splitMoveOut,
 } from "./utils";
 import { Attach, Changeset, LineageEvent, Mark, MarkList, SizedMark } from "./format";
 import { MarkListFactory } from "./markListFactory";
@@ -381,31 +379,6 @@ function applyMoveEffects<TNodeChange>(
 
         // TODO: Offset wouldn't be needed if queue returned skip instead of undefined in cases where it should return two marks
         offset = 0;
-        if (isObjMark(newMark)) {
-            switch (newMark.type) {
-                case "MoveIn": {
-                    const effect = moveEffects.dstEffects.get(newMark.id);
-                    if (effect !== undefined) {
-                        factory.push(...splitMoveIn(newMark, effect));
-                        moveEffects.dstEffects.delete(newMark.id);
-                        continue;
-                    }
-                    break;
-                }
-                case "MoveOut": {
-                    const effect = moveEffects.srcEffects.get(newMark.id);
-                    if (effect !== undefined) {
-                        factory.push(...splitMoveOut(newMark, effect));
-                        moveEffects.srcEffects.delete(newMark.id);
-                        continue;
-                    }
-                    break;
-                }
-                default:
-                    break;
-            }
-        }
-
         factory.push(newMark);
     }
 
