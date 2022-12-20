@@ -8,7 +8,7 @@ import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/exam
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { TaskListView } from "../src/view/taskListView";
+import { TaskListView } from "../src/view";
 import { TaskListContainerRuntimeFactory } from "../src/model";
 import type { IAppModel } from "../src/model-interface";
 
