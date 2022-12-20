@@ -6,7 +6,6 @@
     ],
     "compilerOptions": {
         "module": "CommonJS",
-        "target": "esnext",
         "outDir": "dist",
         "jsx": "react",
         "types": [

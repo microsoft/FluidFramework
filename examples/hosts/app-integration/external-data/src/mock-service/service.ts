@@ -98,6 +98,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
         } else if (isWebUri(subscriberUrl) === undefined) {
             result.status(400).json({message: "Provided subscription URL is invalid."})
         } else {
+            console.log(`SERVICE: Registering for webhook notifications at URL: "${subscriberUrl}".`);
             if(webhook === undefined) {
                 webhook = new MockWebhook(externalDataSource);
             }

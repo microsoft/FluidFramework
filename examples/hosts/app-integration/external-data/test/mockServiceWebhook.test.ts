@@ -9,8 +9,9 @@ import cors from "cors";
 import express from "express";
 import fetch from "node-fetch";
 
-import { customerServicePort } from "../src/mock-service-interface";
 import { delay } from '@fluidframework/common-utils';
+
+import { customerServicePort } from "../src/mock-service-interface";
 
 describe("mockCustomerService", () => {
     it("register-for-webhook", async () => {
