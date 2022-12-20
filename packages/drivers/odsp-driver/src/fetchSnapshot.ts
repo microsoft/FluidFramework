@@ -370,7 +370,7 @@ async function fetchLatestSnapshotCore(
                 // Usually the latest fetch call is to the end of resources, so we start from the end.
                 for (let i = resources1.length - 1; i > 0; i--) {
                     const indResTime = resources1[i] as PerformanceResourceTiming;
-                    const resource_name = indResTime.name;
+                    const resource_name = indResTime.name.toString();
                     const resource_initiatortype = indResTime.initiatorType;
                     if ((resource_initiatortype.localeCompare("fetch") === 0)
                         && (resource_name.localeCompare(response.requestUrl) === 0)) {

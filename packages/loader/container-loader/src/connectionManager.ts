@@ -267,7 +267,7 @@ export class ConnectionManager implements IConnectionManager {
      * It is undefined if we have not yet established websocket connection
      * and do not know if user has write access to a file.
      */
-    private get readonly() {
+    private get readonly(): boolean | undefined {
         if (this._forceReadonly) {
             return true;
         }

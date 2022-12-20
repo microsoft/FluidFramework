@@ -35,7 +35,7 @@
     "compression": "^1.7.3",
     "cors": "^2.8.5",
     "debug": "^4.1.1",
-    "express": "^4.16.4",
+    "express": "^4.17.3",
     "isomorphic-git": "^1.14.0",
     "json-stringify-safe": "^5.0.1",
     "nconf": "^0.11.4",
@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.1.0",
-    "@fluidframework/eslint-config-fluid": "^1.2.0",
+    "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@rushstack/eslint-config": "^2.6.1",
     "@types/async": "^3.2.9",
     "@types/cors": "^2.8.4",

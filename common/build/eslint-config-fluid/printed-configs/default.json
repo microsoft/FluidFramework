@@ -8,7 +8,9 @@
         "Atomics": "readonly",
         "SharedArrayBuffer": "readonly"
     },
-    "ignorePatterns": [],
+    "ignorePatterns": [
+        "**/packageVersion.ts"
+    ],
     "parserOptions": {
         "ecmaFeatures": {
             "jsx": true
@@ -1440,7 +1442,7 @@
             "error"
         ],
         "unicorn/prefer-node-protocol": [
-            "error"
+            "off"
         ],
         "unicorn/prefer-number-properties": [
             "error"

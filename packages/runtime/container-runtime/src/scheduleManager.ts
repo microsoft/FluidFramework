@@ -16,7 +16,6 @@ import {
 } from "@fluidframework/container-utils";
 import { DeltaScheduler } from "./deltaScheduler";
 import { pkgVersion } from "./packageVersion";
-import { latencyThreshold } from "./connectionTelemetry";
 
 type IRuntimeMessageMetadata = undefined | {
     batch?: boolean;
@@ -211,16 +210,6 @@ class ScheduleManagerCore {
         }
 
         this.localPaused = false;
-
-        // Random round number - we want to know when batch waiting paused op processing.
-        if (duration !== undefined && duration > latencyThreshold) {
-            this.logger.sendErrorEvent({
-                eventName: "MaxBatchWaitTimeExceeded",
-                duration,
-                sequenceNumber: endBatch,
-                length: endBatch - startBatch,
-            });
-        }
 
         this.deltaManager.inbound.resume();
     }

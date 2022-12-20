@@ -31,7 +31,10 @@ export function namedTreeSchema(
 export function mapFromNamed<T extends Named<TName>, TName>(named: Iterable<T>): Map<TName, T> {
     const map: Map<TName, T> = new Map();
     for (const item of named) {
-        assert(!map.has(item.name), "cannot build map from named items with colliding names.");
+        assert(
+            !map.has(item.name),
+            0x4bb /* cannot build map from named items with colliding names. */,
+        );
         map.set(item.name, item);
     }
     return map;

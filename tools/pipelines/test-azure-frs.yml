@@ -5,31 +5,24 @@
 
 name: $(Build.BuildId)
 
-trigger:
-  branches:
-    include:
-    - main
-    - next
-    - lts
-    - release/*
-  paths:
-    include:
-    - azure/packages/azure-client
-    - packages/framework/loader/container-loader
-    - packages/framework/fluid-static
-    - packages/drivers/routerlicious-driver
-    - packages/dds/map
-    - tools/pipelines/test-azure-frs.yml
-    - tools/pipelines/templates/include-test-real-service.yml
-
+trigger: none
 pr: none
 
 resources:
   pipelines:
   - pipeline: client
     source: Build - client packages
+    branch: main # Default to using the latest build of the main branch instead of from any branch
+    trigger:
+      branches:
+        include:
+        - releases/*
+        - main
+        - next
+        - lts
   - pipeline: azure
     source: Build - azure
+    branch: main # Default to using the latest build of the main branch instead of from any branch
     trigger:
       branches:
         include:

@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable max-len */
-
 import { strict as assert } from "assert";
 import { Deferred } from "@fluidframework/common-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
