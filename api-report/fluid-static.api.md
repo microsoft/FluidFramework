@@ -49,7 +49,6 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     disconnect(): Promise<void>;
     dispose(): void;
     get disposed(): boolean;
-    _getInternalContainer(): IContainer;
     get initialObjects(): LoadableObjectRecord;
     // @internal
     readonly INTERNAL_CONTAINER_DO_NOT_USE?: () => IContainer;
@@ -72,8 +71,6 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     disconnect(): void;
     dispose(): void;
     readonly disposed: boolean;
-    // @internal
-    _getInternalContainer?: () => IContainer;
     readonly initialObjects: LoadableObjectRecord;
     readonly isDirty: boolean;
 }
@@ -101,8 +98,6 @@ export interface IRootDataObject {
 
 // @public
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
-    // @internal
-    _getInternalAudience?: () => IAudience;
     getMembers(): Map<string, M>;
     getMyself(): Myself<M> | undefined;
 }
@@ -159,7 +154,6 @@ export abstract class ServiceAudience<M extends IMember = IMember> extends Typed
     protected readonly audience: IAudience;
     protected readonly container: IContainer;
     protected abstract createServiceMember(audienceMember: IClient): M;
-    _getInternalAudience(): IAudience;
     getMembers(): Map<string, M>;
     getMyself(): Myself<M> | undefined;
     protected lastMembers: Map<string, M>;
