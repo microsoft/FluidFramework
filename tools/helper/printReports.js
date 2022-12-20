@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as fs from "fs";
 import * as path from "path";
 import * as parser from "xml2js";
