@@ -339,7 +339,8 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly isDirty: boolean;
 
     /**
-     * Disposes the container.
+     * Disposes the container. If not already closed, this acts as a closure and then disposes runtime resources.
+     * The container is not expected to be used anymore once it is disposed.
      *
      * @param error - If the container is being disposed due to error, this provides details about the error that
      * resulted in disposing it.
@@ -347,7 +348,9 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     dispose(error?: ICriticalContainerError): void;
 
     /**
-     * Closes the container.
+     * Closes the container. The "closed" state effectively means the container is disconnected
+     * forever and cannot be reconnected.
+     * The container is expected to still be accessed, so it should be switched to a "safe" mode for viewing.
      *
      * @param error - If the container is being closed due to error, this provides details about the error that
      * resulted in closing it.
