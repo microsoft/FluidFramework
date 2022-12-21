@@ -5,7 +5,9 @@
 
 import type { IEvent } from "@fluidframework/common-definitions";
 
-// Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
+/**
+ * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
+ */
 export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never) extends (
     k: infer U,
 ) => unknown
@@ -13,7 +15,7 @@ export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never)
     : never;
 
 /**
- * `true` if the given type is an acceptable shape for an event, otherwise `false`;
+ * `true` iff the given type is an acceptable shape for an event
  */
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
