@@ -14,6 +14,14 @@ export class Collection<T> implements ICollection<T> {
     constructor() {
     }
 
+    // HACK: Needed to make symlinked build work
+    public async findAndUpdate(query: any, value: T): Promise<{ value: T; existing: boolean; }> {
+        throw new Error("Method not implemented.");
+    }
+    public createTTLIndex?(index: any, mongoExpireAfterSeconds?: number): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+
     public aggregate(pipeline: any, options?: any): any {
         throw new Error("Method Not Implemented");
     }

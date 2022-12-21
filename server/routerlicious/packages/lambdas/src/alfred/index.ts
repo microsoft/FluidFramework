@@ -24,6 +24,8 @@ import {
     validateTokenClaimsExpiration,
 } from "@fluidframework/server-services-client";
 
+import request from "request";
+
 import safeStringify from "json-stringify-safe";
 import * as semver from "semver";
 import * as core from "@fluidframework/server-services-core";
@@ -212,6 +214,7 @@ export function configureWebSocketServices(
     submitSignalThrottler?: core.IThrottler,
     throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
     verifyMaxMessageSize?: boolean,
+    httpServer?: core.IHttpServer,
 ) {
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
@@ -454,6 +457,52 @@ export function configureWebSocketServices(
             // back-compat: remove cast to any once new definition of IConnected comes through.
             (connectedMessage as any).timestamp = connectedTimestamp;
 
+            // TODO: KLUDGE webhook connection
+            if(httpServer !== undefined) {
+                const customerServicePort = 5237;
+
+                const url = `http://localhost:${httpServer.address().port}/task-list-hook`; // TODO: verify this
+                console.log(`ALFRED: Registering for webhook at "${url}"...`);
+
+                request({
+                    method: 'POST',
+                    uri: `http://localhost:${customerServicePort}/register-for-webhook`,
+                    strictSSL: false,
+                    body: JSON.stringify({url}),
+                    headers: {
+                        "Access-Control-Allow-Origin": "*",
+                        "Content-Type": "application/json",
+                    }
+                }, (error, response) => {
+                    if(error) {
+                        console.error("ALFRED: Registering for webhook failed due to an error:");
+                        console.error(error);
+                    } else {
+                        console.log(`ALFRED: Got webhook registration response: ${response.statusCode}!`);
+                    }
+                });
+
+                httpServer.on("task-list-hook", () => {
+                    // Only for debugging purposes
+                    const signalMessageRuntimeMessage : ISignalMessage = {
+                        clientId: null, // system signal
+                        content: JSON.stringify({
+                            type: SignalType.RuntimeMessage,
+                            contents: {
+                                content: {
+                                    type: "ExternalDataChanged",
+                                    content: "Data has changed upstream. Please import new data."
+                                },
+                                type: SignalType.RuntimeMessage
+                            }
+                        })
+                    }
+                    console.log("\nsignalMessageRuntimeMessage\n");
+                    console.log(signalMessageRuntimeMessage);
+                    socket.emitToRoom(getRoomId(room), "signal", signalMessageRuntimeMessage );
+                });
+            }
+
             return {
                 connection: connectedMessage,
                 connectVersions,
@@ -632,26 +681,6 @@ export function configureWebSocketServices(
                             };
 
                             socket.emitToRoom(getRoomId(room), "signal", signalMessage);
-
-                            console.log("\ncontentBatches\n");
-                            console.log(contentBatches);
-                            // Only for debugging purposes
-                            const signalMessageRuntimeMessage : ISignalMessage = {
-                                clientId: null, // system signal
-                                content: JSON.stringify({
-                                    type: SignalType.RuntimeMessage,
-                                    contents: {
-                                        content: {
-                                            type: "ExternalDataChanged",
-                                            content: "Data has changed upstream. Please import new data."
-                                        },
-                                        type: SignalType.RuntimeMessage
-                                    }
-                                })
-                            }
-                            console.log("\nsignalMessageRuntimeMessage\n");
-                            console.log(signalMessageRuntimeMessage);
-                            socket.emitToRoom(getRoomId(room), "signal", signalMessageRuntimeMessage );
                         }
                     });
                 }
