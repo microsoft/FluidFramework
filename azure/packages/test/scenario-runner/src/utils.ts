@@ -63,6 +63,7 @@ export function createInsecureTokenProvider(
 ): InsecureTokenProvider {
     return new InsecureTokenProvider(tenantKey, {
         id: userID ?? "foo",
+        name: userName ?? "bar",
     });
 }
 
