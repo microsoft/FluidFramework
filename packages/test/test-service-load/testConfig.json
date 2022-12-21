@@ -77,10 +77,7 @@
             "faultInjectionMs": {
                 "min": 0,
                 "max": 50000
-            },
-            "useRandomContent": true,
-            "useVariableOpSize": true,
-            "opSizeinBytes": 1572864
+            }
         },
         "ci_nofault": {
             "opRatePerMin": 10,
