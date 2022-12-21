@@ -3,4 +3,6 @@
  * Licensed under the MIT License.
  */
 
+// TODO: fix before merging
+// eslint-disable-next-line no-restricted-syntax
 export * from "./ApiItemUtilities";

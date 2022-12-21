@@ -18,6 +18,9 @@
 // - bundle helper libraries as module (namespace) exports?
 // - Remove DocNode types from exports
 
+// TODO: fix before merging
+/* eslint-disable no-restricted-syntax */
+
 export * from "./old-system";
 export * from "./utilities";
 
@@ -27,7 +30,8 @@ export * from "./Link";
 export * from "./LoadModel";
 export * from "./Logging";
 export * from "./Policies";
-export * from "./utilities";
 
 // Conveinence re-exports of API model types
 export { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";
+
+/* eslint-enable no-restricted-syntax */
