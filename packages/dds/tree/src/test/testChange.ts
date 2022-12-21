@@ -5,9 +5,10 @@
 
 import { fail, strict as assert } from "assert";
 import { ChangeEncoder, ChangeFamily } from "../change-family";
+import { ChangesetLocalId, IdAllocator } from "../feature-libraries";
 import { ChangeRebaser, TaggedChange } from "../rebase";
 import { AnchorSet, Delta } from "../tree";
-import { JsonCompatible, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
+import { brand, JsonCompatible, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
 import { deepFreeze } from "./utils";
 
 export interface NonEmptyTestChange {
@@ -48,6 +49,14 @@ function mint(inputContext: readonly number[], intention: number | number[]): No
         inputContext: [...inputContext],
         intentions,
         outputContext: composeIntentions(inputContext, intentions),
+    };
+}
+
+// TODO: Move this to another file since it isn't related to TestChange.
+function idAllocatorFromMaxId(maxId: ChangesetLocalId | undefined = undefined): IdAllocator {
+    let currId = maxId ?? -1;
+    return () => {
+        return brand(++currId);
     };
 }
 
@@ -192,6 +201,7 @@ const encoder = new TestChangeEncoder();
 export const TestChange = {
     emptyChange,
     mint,
+    newIdAllocator: idAllocatorFromMaxId,
     compose,
     invert,
     rebase,

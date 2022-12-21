@@ -8,7 +8,13 @@ import React from "react";
 import type { IAppModel } from "../model-interface";
 import { TaskListView } from "./taskListView";
 
+/**
+ * {@link AppView} input props.
+ */
 export interface IAppViewProps {
+    /**
+     * The Task List app model to be visualized.
+     */
     model: IAppModel;
 }
 

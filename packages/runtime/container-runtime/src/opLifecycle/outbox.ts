@@ -12,6 +12,7 @@ import { PendingStateManager } from "../pendingStateManager";
 import { BatchManager } from "./batchManager";
 import { BatchMessage, IBatch } from "./definitions";
 import { OpCompressor } from "./opCompressor";
+import { OpSplitter } from "./opSplitter";
 
 export interface IOutboxConfig {
     readonly compressionOptions: ICompressionRuntimeOptions;
@@ -25,6 +26,7 @@ export interface IOutboxParameters {
     readonly containerContext: IContainerContext,
     readonly config: IOutboxConfig,
     readonly compressor: OpCompressor;
+    readonly splitter: OpSplitter;
 }
 
 export class Outbox {
@@ -113,20 +115,25 @@ export class Outbox {
         }
 
         const compressedBatch = this.params.compressor.compressBatch(batch);
-        if (compressedBatch.contentSizeInBytes > this.params.config.maxBatchSizeInBytes) {
-            throw new GenericError(
-                "BatchTooLarge",
-                    /* error */ undefined,
-                {
-                    opSize: batch.contentSizeInBytes,
-                    count: batch.content.length,
-                    limit: this.params.config.maxBatchSizeInBytes,
-                    compressed: true,
-                });
+        if (compressedBatch.contentSizeInBytes <= this.params.config.maxBatchSizeInBytes) {
+            // If we don't reach the maximum supported size of a batch, it can safely be sent as is
+            return compressedBatch;
         }
 
-        // If we don't reach the maximum supported size of a batch, it safe to be sent as is
-        return compressedBatch;
+        if (this.params.splitter.isBatchChunkingEnabled) {
+            return this.params.splitter.splitCompressedBatch(compressedBatch);
+        }
+
+        // If we've reached this point, the runtime would attempt to send a batch larger than the allowed size
+        throw new GenericError(
+            "BatchTooLarge",
+            /* error */ undefined,
+            {
+                opSize: batch.contentSizeInBytes,
+                count: batch.content.length,
+                limit: this.params.config.maxBatchSizeInBytes,
+                compressed: true,
+            });
     }
 
     /**
