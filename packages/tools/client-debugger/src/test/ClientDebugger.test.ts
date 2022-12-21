@@ -95,12 +95,12 @@ describe("ClientDebugger unit tests", () => {
 
 	it("Initializing debugger populates global (window) registry", () => {
 		let debuggerRegistry = getDebuggerRegistry();
-		expect(debuggerRegistry.getRegisteredDebuggers().size).to.equal(0); // There should be no registered debuggers yet.
+		expect(debuggerRegistry.getRegisteredDebuggers().length).to.equal(0); // There should be no registered debuggers yet.
 
 		initializeDebugger(getDebuggerProps());
 
 		debuggerRegistry = getDebuggerRegistry();
-		expect(debuggerRegistry.getRegisteredDebuggers().size).to.equal(1);
+		expect(debuggerRegistry.getRegisteredDebuggers().length).to.equal(1);
 	});
 
 	it("Closing debugger removes it from global (window) registry and disposes it.", () => {
@@ -113,7 +113,7 @@ describe("ClientDebugger unit tests", () => {
 		expect(clientDebugger.disposed).to.be.false;
 
 		let debuggerRegistry = getDebuggerRegistry();
-		expect(debuggerRegistry.getRegisteredDebuggers().size).to.equal(1);
+		expect(debuggerRegistry.getRegisteredDebuggers().length).to.equal(1);
 
 		closeFluidClientDebugger(containerId);
 
@@ -121,7 +121,7 @@ describe("ClientDebugger unit tests", () => {
 		expect(clientDebugger.disposed).to.be.true;
 
 		debuggerRegistry = getDebuggerRegistry();
-		expect(debuggerRegistry.getRegisteredDebuggers().size).to.equal(0);
+		expect(debuggerRegistry.getRegisteredDebuggers().length).to.equal(0);
 	});
 });
 

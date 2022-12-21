@@ -134,7 +134,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 			}}
 			className={clientDebugViewClassName}
 		>
-			<ContainerSelectionDropdown clientDebugger={clientDebugger} />
+			<ContainerSelectionDropdown />
 			<ContainerSummaryView clientDebugger={clientDebugger} />
 			<div style={{ width: "100%", height: "100%", overflowY: "auto" }}>{view}</div>
 		</Stack>

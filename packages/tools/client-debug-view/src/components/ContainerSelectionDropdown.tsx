@@ -12,21 +12,11 @@ import {
 	getFluidClientDebuggers,
 } from "@fluid-tools/client-debugger";
 
-import { HasClientDebugger } from "../CommonProps";
-
-/**
- * {@link ContainerSelectionDropdown} input props.
- */
-export type ContainerSelectionDropdownProps = HasClientDebugger;
-
 /**
  * Small header that displays core container data.
  *
- * @param props - See {@link ContainerSelectionDropdownProps}.
  */
-export function ContainerSelectionDropdown(
-	props: ContainerSelectionDropdownProps,
-): React.ReactElement {
+export function ContainerSelectionDropdown(): React.ReactElement {
 	const dropdownStyles: Partial<IDropdownStyles> = {
 		dropdown: { width: "300px", zIndex: "1" },
 	};
@@ -76,7 +66,7 @@ export function ContainerSelectionDropdown(
 			const selectedDebugger = clientDebuggers.find((c) => {
 				return c.containerId === (option.key as string);
 			}) as IFluidClientDebugger;
-			props.clientDebugger = selectedDebugger;
+			debuggerRegistry.setCurrentDisplayDebugger(selectedDebugger);
 		}
 	};
 
