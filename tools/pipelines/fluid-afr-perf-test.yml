@@ -16,23 +16,7 @@ schedules:
         - release/*
     always: true
 
-trigger:
-  branches:
-    include:
-      - main
-      - next
-      - lts
-      - release/*
-  paths:
-    include:
-      - azure/packages/azure-client
-      - packages/framework/loader/container-loader
-      - packages/framework/fluid-static
-      - packages/drivers/routerlicious-driver
-      - packages/dds/map
-      - tools/pipelines/fluid-afr-perf-test.yml
-      - tools/pipelines/templates/include-test-real-service.yml
-
+trigger: none
 pr: none
 
 resources:
@@ -50,7 +34,7 @@ resources:
             - lts
 
 variables:
-  - group: prague-key-vault
+  - group: fluid-afr-perf-test-keys
   - name: testWorkspace
     value: $(Pipeline.Workspace)/test
 
