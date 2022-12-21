@@ -33,8 +33,10 @@ class ContainerRuntimeFactory implements IRuntimeFactory {
 }
 ```
 
-This will cause documents created with this container runtime to store associations which attribute document content to timestamp/user information.
+This will cause your container runtime to load attribution data available on existing containers.
+To additionally start storing attribution data on new documents, enable the config flag `"Fluid.Attribution.EnableOnNewFile"`.
 Be sure to also [enable any necessary options at the DDS level](#dds-support).
+For a more comprehensive list of backwards-compatability concerns which shed more light on these flags, see [integration](#integration).
 
 Applications can recover this information using APIs on the DDSes they use. For example, the following code snippet illustrates how that works for `SharedString`:
 
@@ -51,15 +53,6 @@ function getAttributionInfo(attributor: IRuntimeAttributor, sharedString: Shared
 // Get the user who inserted the text at position 0 in `sharedString` and the timestamp for when they did so.
 const { user, timestamp } = getAttributionInfo(attributor, sharedString, 0);
 ```
-
-> Note: backwards-compatibility for using this mixin with existing documents is a work in progress.
-> When an existing document is loaded that was created using a ContainerRuntimeFactory without a mixed in attributor,
-> that document will continue to operate as if no attribution has been mixed in.
-> Additionally, if a document that contains attribution is loaded using a container runtime without a mixed-in attributor,
-> any attribution information stored in that document may be lost.
-> Beware that this can yield unintuitive results when combined with feature flags!
-> The current implementation is thus suitable for prototyping/feature development, but shouldn't be rolled out to users that
-> expect production-quality attribution.
 
 ## Overview
 
@@ -79,3 +72,16 @@ The following DDSes currently support attribution:
 Framework-provided attribution tracks user and timestamp information for each op submitted.
 Any more complex scenarios where attribution doesn't align with the direct submitter (such as attributing copy-pasted content to the original creators) will need to be handled by Fluid consumers using extensibility points.
 The extensibility APIs are a work in progress; check back later for more details.
+
+### Integration
+
+Backwards-compatability for using this mixin with existing documents is a work in progress.
+When an existing document is loaded that was created using a ContainerRuntimeFactory without a mixed in attributor,
+that document will continue to operate as if no attribution has been mixed in.
+Additionally, if a document that contains attribution is loaded using a container runtime without a mixed-in attributor,
+any attribution information stored in that document may be lost.
+
+The current design of the mixin's behavior is therefore motivated by the ability to roll out the feature in Fluid's collaborative environment.
+The behavior of `"Fluid.Attribution.WriteOnNewFile"` supports the standard strategy of rolling out code that reads a new format and waiting for it to saturate before beginning to write that new format.
+"reading the new format" corresponds to using a container runtime initialized with `mixinAttributor`, and "writing the new format" to enabling `"Fluid.Attribution.WriteOnNewFile"` in configuration.
+During the "waiting to saturate" period, developers are free to experiment with turning the feature flag on locally and testing various compatability scenarios.
