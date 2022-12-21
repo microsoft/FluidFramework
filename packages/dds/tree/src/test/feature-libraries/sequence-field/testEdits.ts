@@ -60,23 +60,40 @@ function createReviveChangeset(
     detachedBy: RevisionTag,
     mutedBy?: RevisionTag,
     linage?: SF.LineageEvent[],
-    isIntention?: true,
     lastDetachedBy?: RevisionTag,
+): SF.Changeset<never> {
+    const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachIndex, detachedBy);
+    const mark = markList[markList.length - 1] as SF.Reattach;
+    if (mutedBy !== undefined) {
+        mark.mutedBy = mutedBy;
+    }
+    if (lastDetachedBy !== undefined) {
+        mark.lastDetachedBy = lastDetachedBy;
+    }
+    if (linage !== undefined) {
+        mark.lineage = linage;
+    }
+    return markList;
+}
+
+function createIntentionalReviveChangeset(
+    startIndex: number,
+    count: number,
+    detachIndex: number,
+    detachedBy: RevisionTag,
+    mutedBy?: RevisionTag,
+    linage?: SF.LineageEvent[],
 ): SF.Changeset<never> {
     const markList = SF.sequenceFieldEditor.revive(
         startIndex,
         count,
         detachIndex,
         detachedBy,
-        isIntention,
+        true,
     );
     const mark = markList[markList.length - 1] as SF.Reattach;
     if (mutedBy !== undefined) {
         mark.mutedBy = mutedBy;
-    }
-    if (lastDetachedBy !== undefined) {
-        assert(!isIntention, "Only non-intent-full revives should have a lastDetachedBy");
-        mark.lastDetachedBy = lastDetachedBy;
     }
     if (linage !== undefined) {
         mark.lineage = linage;
@@ -95,5 +112,6 @@ export const ChangeMaker = {
     insert: createInsertChangeset,
     delete: createDeleteChangeset,
     revive: createReviveChangeset,
+    intentionalRevive: createIntentionalReviveChangeset,
     modify: createModifyChangeset,
 };
