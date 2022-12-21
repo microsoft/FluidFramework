@@ -131,7 +131,8 @@ export class Outbox {
             "BatchTooLarge",
             /* error */ undefined,
             {
-                batchSize: compressedBatch.contentSizeInBytes,
+                batchSize: batch.contentSizeInBytes,
+                compressedBatchSize: compressedBatch.contentSizeInBytes,
                 count: compressedBatch.content.length,
                 limit: this.params.config.maxBatchSizeInBytes,
                 chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
