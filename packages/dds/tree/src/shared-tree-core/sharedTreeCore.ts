@@ -20,13 +20,17 @@ import {
     IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { mergeStats } from "@fluidframework/runtime-utils";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import {
+    IFluidSerializer,
+    ISharedObjectEvents,
+    SharedObject,
+} from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import { ChangeFamily } from "../change-family";
 import { Commit, EditManager, SeqNumber } from "../edit-manager";
 import { AnchorSet, Delta } from "../tree";
 import { brand, JsonCompatibleReadOnly } from "../util";
-import { Eventful, IEventEmitter, TransformEvents } from "../events";
+import { EventEmitter, IEventEmitter, TransformEvents } from "../events";
 
 /**
  * The events emitted by a {@link SharedTreeCore}
@@ -71,7 +75,7 @@ export interface IndexEvents<TChangeset> {
 export class SharedTreeCore<
     TChange,
     TChangeFamily extends ChangeFamily<any, TChange>,
-> extends SharedObject<TransformEvents<ISharedTreeCoreEvents>> {
+> extends SharedObject<TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>> {
     /**
      * A random ID that uniquely identifies this client in the collab session.
      * This is sent alongside every op to identify which client the op originated from.
@@ -95,7 +99,7 @@ export class SharedTreeCore<
     /**
      * Provides events that indexes can subscribe to
      */
-    private readonly indexEventEmitter = Eventful.create<IndexEvents<TChange>>();
+    private readonly indexEventEmitter = EventEmitter.create<IndexEvents<TChange>>();
 
     /**
      * @param indexes - A list of indexes, either as an array or as a factory function

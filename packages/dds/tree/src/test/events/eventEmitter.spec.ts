@@ -4,17 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { Eventful } from "../../events";
+import { EventEmitter } from "../../events";
 
 interface TestEvents {
     open: () => void;
     close: (error: boolean) => void;
-    ping: () => number;
 }
 
 describe("EventEmitter", () => {
     it("emits events", () => {
-        const emitter = Eventful.create<TestEvents>();
+        const emitter = EventEmitter.create<TestEvents>();
         let opened = false;
         emitter.on("open", () => {
             assert(!opened, "Event should only be fired once");
@@ -25,7 +24,7 @@ describe("EventEmitter", () => {
     });
 
     it("passes arguments to events", () => {
-        const emitter = Eventful.create<TestEvents>();
+        const emitter = EventEmitter.create<TestEvents>();
         let error = false;
         emitter.on("close", (e: boolean) => {
             error = e;
@@ -35,13 +34,13 @@ describe("EventEmitter", () => {
     });
 
     it("emits multiple events", () => {
-        const emitter = Eventful.create<TestEvents>();
+        const emitter = EventEmitter.create<TestEvents>();
         let opened = false;
         let closed = false;
         emitter.on("open", () => {
             opened = true;
         });
-        emitter.on("close", (_) => {
+        emitter.on("close", () => {
             closed = true;
         });
         emitter.emit("open");
@@ -53,7 +52,7 @@ describe("EventEmitter", () => {
     });
 
     it("deregisters events", () => {
-        const emitter = Eventful.create<TestEvents>();
+        const emitter = EventEmitter.create<TestEvents>();
         let error = false;
         const deregister = emitter.on("close", (e: boolean) => {
             error = e;
@@ -64,13 +63,13 @@ describe("EventEmitter", () => {
     });
 
     it("deregisters multiple events", () => {
-        const emitter = Eventful.create<TestEvents>();
+        const emitter = EventEmitter.create<TestEvents>();
         let opened = false;
         let closed = false;
         const deregisterOpen = emitter.on("open", () => {
             opened = true;
         });
-        const deregisterClosed = emitter.on("close", (_) => {
+        const deregisterClosed = emitter.on("close", () => {
             closed = true;
         });
         deregisterOpen();
@@ -84,7 +83,7 @@ describe("EventEmitter", () => {
     });
 
     it("ignores duplicate events", () => {
-        const emitter = Eventful.create<TestEvents>();
+        const emitter = EventEmitter.create<TestEvents>();
         let count = 0;
         const listener = () => (count += 1);
         emitter.on("open", listener);
@@ -92,14 +91,5 @@ describe("EventEmitter", () => {
         emitter.emit("open");
         // Count should be 1, not 2, even though `listener` was registered twice
         assert.strictEqual(count, 1);
-    });
-
-    it("collects event return values", () => {
-        const emitter = Eventful.create<TestEvents>();
-        emitter.on("ping", () => 1);
-        emitter.on("ping", () => 2);
-        emitter.on("ping", () => 3);
-        const values = [...emitter.emit("ping")].sort((a, b) => a - b);
-        assert.deepStrictEqual(values, [1, 2, 3]);
     });
 });

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/common-definitions";
+import type { IEvent } from "@fluidframework/common-definitions";
 
 // Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
 export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never) extends (
@@ -34,8 +34,10 @@ export type Events<E> = {
 };
 
 /**
- * Converts an `Events` object (i.e. the event registry for an {@link IEventEmitter}) into a type consumable
+ * Converts an `Events` type (i.e. the event registry for an {@link IEventEmitter}) into a type consumable
  * by an IEventProvider from `@fluidframework/common-definitions`.
+ * @param E - the `Events` type to transform
+ * @param Target - an optional `IEvent` type that will be merged into the result along with the transformed `E`
  * @example
  * ```ts
  * interface MyEvents {
@@ -43,7 +45,7 @@ export type Events<E> = {
  *   error: (errorCode: number) => void;
  * }
  *
- * class MySharedObject extends SharedObject<TransformEvents<MyEvents> & ISharedObjectEvents> {
+ * class MySharedObject extends SharedObject<TransformEvents<MyEvents, ISharedObjectEvents>> {
  *    // ...
  * }
  * ```
@@ -109,18 +111,18 @@ export interface IEventEmitter<E extends Events<E>> {
  * }
  * ```
  */
-export class Eventful<E extends Events<E>> implements IEventEmitter<E> {
+export class EventEmitter<E extends Events<E>> implements IEventEmitter<E> {
     private readonly listeners: Partial<{
         [P in keyof E]: Set<E[P]>;
     }> = {};
 
     /**
-     * Create an instance of an {@link Eventful}.
+     * Create an instance of an {@link EventEmitter}.
      */
     public static create<E extends Events<E>>() {
-        return new Eventful() as Eventful<E> & {
+        return new EventEmitter() as EventEmitter<E> & {
             // Expose the `emit` method so that it may be called by the creator.
-            emit: Eventful<E>["emit"];
+            emit: EventEmitter<E>["emit"];
         };
     }
 
@@ -131,17 +133,13 @@ export class Eventful<E extends Events<E>> implements IEventEmitter<E> {
      * Fire the given event, notifying all subscribers by calling their registered listener functions
      * @param eventName - the name of the event to fire
      * @param args - the arguments passed to the event listener functions
-     * @returns an iterable of the values returned by all listeners that were fired by this event
      */
-    protected *emit<K extends keyof Events<E>>(
-        eventName: K,
-        ...args: Parameters<E[K]>
-    ): IterableIterator<ReturnType<E[K]>> {
+    protected emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {
         const listeners = this.listeners[eventName];
         if (listeners !== undefined) {
             const argArray: unknown[] = args; // TODO: Current TS (4.5.5) cannot spread `args` into `listener()`, but future versions (e.g. 4.8.4) can.
             for (const listener of listeners.values()) {
-                yield listener(...argArray);
+                listener(...argArray);
             }
         }
     }
@@ -157,7 +155,7 @@ export class Eventful<E extends Events<E>> implements IEventEmitter<E> {
         if (listeners !== undefined) {
             listeners.add(listener);
         } else {
-            this.listeners[eventName] = new Set();
+            this.listeners[eventName] = new Set([listener]);
         }
 
         return this.off.bind(this, eventName, listener);

@@ -4,7 +4,7 @@
  */
 
 export {
-    Eventful,
+    EventEmitter,
     Events,
     IEventEmitter,
     IsEvent,
