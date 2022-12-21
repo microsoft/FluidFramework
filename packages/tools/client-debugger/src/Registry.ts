@@ -47,7 +47,7 @@ export interface FluidClientDebuggerProps {
 }
 
 /**
- * @public
+ * @internal
  */
 export interface DebuggerRegistryEvents extends IEvent {
 	/**
@@ -71,7 +71,7 @@ export interface DebuggerRegistryEvents extends IEvent {
 /**
  * Contract for maintaining a global client debugger registry to store all registered client debugger and current
  * displaying debugger.
- * @Internal
+ * @internal
  */
 export class DebuggerRegistry extends IEventProvider<DebuggerRegistryEvents> {
 	/**
