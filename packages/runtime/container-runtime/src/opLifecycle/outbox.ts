@@ -60,6 +60,7 @@ export class Outbox {
                 /* error */ undefined,
                 {
                     opSize: (message.contents?.length) ?? 0,
+                    batchSize: this.mainBatch.contentSizeInBytes,
                     count: this.mainBatch.length,
                     limit: this.mainBatch.options.hardLimit,
                 });
@@ -78,6 +79,7 @@ export class Outbox {
                     /* error */ undefined,
                     {
                         opSize: (message.contents?.length) ?? 0,
+                        batchSize: this.mainBatch.contentSizeInBytes,
                         count: this.attachFlowBatch.length,
                         limit: this.attachFlowBatch.options.hardLimit,
                     });
@@ -129,10 +131,11 @@ export class Outbox {
             "BatchTooLarge",
             /* error */ undefined,
             {
-                opSize: batch.contentSizeInBytes,
-                count: batch.content.length,
+                batchSize: compressedBatch.contentSizeInBytes,
+                count: compressedBatch.content.length,
                 limit: this.params.config.maxBatchSizeInBytes,
-                compressed: true,
+                chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
+                compressionOptions: JSON.stringify(this.params.config.compressionOptions),
             });
     }
 
