@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export { EventEmitter, EventFilter, IEventEmitter, IsEvent, TransformEvents } from "./events";
-
-export { DelegatingEventEmitter, wrappedEmitter } from "./delegatingEventEmitter";
+export {
+    Eventful,
+    Events,
+    IEventEmitter,
+    IsEvent,
+    TransformEvents,
+    UnionToIntersection,
+} from "./events";

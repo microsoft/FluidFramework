@@ -3,30 +3,41 @@
  * Licensed under the MIT License.
  */
 
+import { IEvent } from "@fluidframework/common-definitions";
+
 // Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
-type UnionToIntersection<T> = (T extends any ? (k: T) => void : never) extends (k: infer U) => void
+export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never) extends (
+    k: infer U,
+) => unknown
     ? U
     : never;
 
 /**
  * `true` if the given type is an acceptable shape for an event, otherwise `false`;
  */
-export type IsEvent<Event> = Event extends (...args: any[]) => void ? true : false;
+export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
 /**
- * Returns a type which contains only the event-like properties of `Events` (i.e. they satisfy {@link IsEvent}).
+ * Used to specify the kinds of events emitted by an {@link IEventEmitter}.
+ * @example
+ * ```ts
+ * interface MyEvents {
+ *   load: (user: string, data: IUserData) => void;
+ *   error: (errorCode: number) => void;
+ * }
+ * ```
+ * Any object type is a valid {@link Events}, but only the event-like properties of that
+ * type will be included.
  */
-export type EventFilter<Events> = {
-    [P in (string | symbol) & keyof Events as IsEvent<Events[P]> extends true
-        ? P
-        : never]: Events[P];
+export type Events<E> = {
+    [P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
 };
 
 /**
  * Converts an `Events` object (i.e. the event registry for an {@link IEventEmitter}) into a type consumable
- * by an IEventProvider (from `@fluidframework/common-definitions`).
+ * by an IEventProvider from `@fluidframework/common-definitions`.
  * @example
- * ```typescript
+ * ```ts
  * interface MyEvents {
  *   load: (user: string, data: IUserData) => void;
  *   error: (errorCode: number) => void;
@@ -37,62 +48,128 @@ export type EventFilter<Events> = {
  * }
  * ```
  */
-export type TransformEvents<Events extends EventFilter<Events>> = {
-    [P in keyof EventFilter<Events>]: (event: P, listener: Events[P]) => void;
+export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent> = {
+    [P in keyof Events<E>]: (event: P, listener: E[P]) => void;
 } extends Record<any, infer Z>
-    ? UnionToIntersection<Z>
+    ? UnionToIntersection<Z> & Target
     : never;
 
 /**
  * An object which allows the registration of listeners so that subscribers can be notified when an event happens
- * @param Events - All the events that this emitter supports
+ * @param E - All the events that this emitter supports
  * @example
- * ```typescript
+ * ```ts
  * type MyEventEmitter = IEventEmitter<{
  *   load: (user: string, data: IUserData) => void;
  *   error: (errorCode: number) => void;
  * }>
  * ```
  */
-export interface IEventEmitter<Events extends EventFilter<Events>> {
+export interface IEventEmitter<E extends Events<E>> {
     /**
      * Register an event listener
      * @param eventName - the name of the event
      * @param listener - the handler to run when the event is fired by the emitter
      * @returns a function which will deregister the listener when run
      */
-    on<K extends (string | symbol) & keyof EventFilter<Events>>(
-        eventName: K,
-        listener: Events[K],
-    ): () => void;
+    on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
 }
 
 /**
- * A class specifying the minimal operations required to implement an {@link IEventEmitter}.
+ * Provides an API for subscribing to and listening to events.
+ * Classes wishing to emit events may either extend this class:
+ * @example
+ * ```ts
+ * interface MyEvents {
+ *   "loaded": () => void;
+ * }
+ *
+ * class MyClass extends EventEmitter<MyEvents> {
+ *   private load() {
+ *     this.emit("loaded");
+ *   }
+ * }
+ * ```
+ * Or, compose over it:
+ * @example
+ * ```ts
+ * class MyClass extends IEventEmitter<MyEvents> {
+ *   private readonly events = EventEmitter.create<MyEvents>();
+ *
+ *   private load() {
+ *     this.events.emit("loaded");
+ *   }
+ *
+ *   public on<K extends (string | symbol) & keyof MyEvents>(
+ *     eventName: K,
+ *     listener: MyEvents[K],
+ *   ): () => void {
+ *     return events.on(eventName, listener);
+ *   }
+ * }
+ * ```
  */
-export abstract class EventEmitter<Events extends EventFilter<Events>>
-    implements IEventEmitter<Events>
-{
+export class Eventful<E extends Events<E>> implements IEventEmitter<E> {
+    private readonly listeners: Partial<{
+        [P in keyof E]: Set<E[P]>;
+    }> = {};
+
+    /**
+     * Create an instance of an {@link Eventful}.
+     */
+    public static create<E extends Events<E>>() {
+        return new Eventful() as Eventful<E> & {
+            // Expose the `emit` method so that it may be called by the creator.
+            emit: Eventful<E>["emit"];
+        };
+    }
+
+    // The constructor is private to seal the class as well as to require use of the static `create` function
+    private constructor() {}
+
     /**
      * Fire the given event, notifying all subscribers by calling their registered listener functions
      * @param eventName - the name of the event to fire
      * @param args - the arguments passed to the event listener functions
+     * @returns an iterable of the values returned by all listeners that were fired by this event
      */
-    protected abstract emit<K extends (string | symbol) & keyof EventFilter<Events>>(
+    protected *emit<K extends keyof Events<E>>(
         eventName: K,
-        ...args: Parameters<Events[K]>
-    ): void;
+        ...args: Parameters<E[K]>
+    ): IterableIterator<ReturnType<E[K]>> {
+        const listeners = this.listeners[eventName];
+        if (listeners !== undefined) {
+            const argArray: unknown[] = args; // TODO: Current TS (4.5.5) cannot spread `args` into `listener()`, but future versions (e.g. 4.8.4) can.
+            for (const listener of listeners.values()) {
+                yield listener(...argArray);
+            }
+        }
+    }
 
     /**
      * Register an event listener
      * @param eventName - the name of the event
      * @param listener - the handler to run when the event is fired by the emitter
-     * @param persistance - whether or not the listener should be removed after it is fired the first time
-     * @param position - whether the listener should be appended to the beginning or the end of the list of existing listeners. Listeners are fired in the order of the list.
      * @returns a function which will deregister the listener when run
      */
-    public abstract on<K extends (string | symbol) & keyof EventFilter<Events>>(
-        eventName: K,
-        listener: Events[K],
-    ): () => void;
+    public on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void {
+        const listeners = this.listeners[eventName];
+        if (listeners !== undefined) {
+            listeners.add(listener);
+        } else {
+            this.listeners[eventName] = new Set();
+        }
+
+        return this.off.bind(this, eventName, listener);
+    }
+
+    private off<K extends keyof Events<E>>(eventName: K, listener: E[K]): void {
+        const listeners = this.listeners[eventName];
+        if (listeners !== undefined) {
+            listeners.delete(listener);
+            if (listeners.size === 0) {
+                this.listeners[eventName] = undefined;
+            }
+        }
+    }
 }
