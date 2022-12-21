@@ -20,8 +20,9 @@ import {
     splitMarkOnInput,
     splitMarkOnOutput,
     isAttachInGap,
-    isSkipLikeReattach,
     isActiveReattach,
+    isObjMark,
+    isSkipLikeReattach,
 } from "./utils";
 import {
     Attach,
@@ -78,8 +79,18 @@ function rebaseMarkList<TNodeChange>(
     // marks which should have their lineage updated if we encounter a detach.
     const lineageRequests: LineageRequest<TNodeChange>[] = [];
     let baseDetachOffset = 0;
+    // The offset of the next base mark in the input context of the the base change.
+    // This assumes the base changeset is not composite (and asserts if it is).
+    let baseInputOffset = 0;
     while (!queue.isEmpty()) {
         const { baseMark, newMark: currMark } = queue.pop();
+        if (isObjMark(baseMark) && baseMark.type !== "Modify" && baseMark.revision !== undefined) {
+            // TODO support rebasing over composite changeset
+            assert(
+                baseMark.revision === baseRevision,
+                "Unable to keep track of the base input offset in composite changeset",
+            );
+        }
         if (baseMark === undefined) {
             assert(currMark !== undefined, "Non-empty queue should return at least one mark");
             if (isAttach(currMark)) {
@@ -95,7 +106,9 @@ function rebaseMarkList<TNodeChange>(
             }
         } else if (currMark === undefined) {
             if (isDetachMark(baseMark)) {
-                baseDetachOffset += getInputLength(baseMark);
+                const detachLength = getInputLength(baseMark);
+                baseDetachOffset += detachLength;
+                baseInputOffset += detachLength;
             } else if (isAttach(baseMark)) {
                 factory.pushOffset(getOutputLength(baseMark));
             }
@@ -109,11 +122,19 @@ function rebaseMarkList<TNodeChange>(
                 "The two marks should be the same size",
             );
 
-            const rebasedMark = rebaseMark(currMark, baseMark, baseRevision, rebaseChild);
+            const rebasedMark = rebaseMark(
+                currMark,
+                baseMark,
+                baseRevision,
+                baseInputOffset,
+                rebaseChild,
+            );
             factory.push(rebasedMark);
 
+            const detachLength = getInputLength(baseMark);
+            baseInputOffset += detachLength;
             if (isDetachMark(baseMark)) {
-                baseDetachOffset += getInputLength(baseMark);
+                baseDetachOffset += detachLength;
             } else {
                 if (baseDetachOffset > 0 && baseRevision !== undefined) {
                     updateLineage(lineageRequests, baseRevision);
@@ -268,6 +289,7 @@ function rebaseMark<TNodeChange>(
     currMark: NodeSpanningMark<TNodeChange>,
     baseMark: NodeSpanningMark<TNodeChange>,
     baseRevision: RevisionTag | undefined,
+    baseInputOffset: number,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
 ): NodeSpanningMark<TNodeChange> {
     if (isSkipMark(baseMark) || isSkipLikeReattach(baseMark)) {
@@ -279,6 +301,15 @@ function rebaseMark<TNodeChange>(
         case "MDelete": {
             const baseMarkRevision = baseMark.revision ?? baseRevision;
             if (isReattach(currMark)) {
+                if (currMark.isIntention) {
+                    const revive: Reattach | ModifyReattach<TNodeChange> = {
+                        ...(clone(currMark) as Reattach | ModifyReattach<TNodeChange>),
+                        detachedBy: baseMarkRevision,
+                        detachIndex: baseInputOffset,
+                    };
+                    delete revive.mutedBy;
+                    return revive;
+                }
                 if (currMark.mutedBy === baseMarkRevision) {
                     const revive = clone(currMark) as Reattach | ModifyReattach<TNodeChange>;
                     delete revive.mutedBy;
@@ -298,6 +329,16 @@ function rebaseMark<TNodeChange>(
             if (isMuted(baseMark)) {
                 return clone(currMark);
             }
+
+            if (currMark.isIntention) {
+                assert(isActiveReattach(currMark), `Unsupported revive mark overlap`);
+                // The nodes that currMark aims to revive are being revived by baseMark
+                return {
+                    ...clone(currMark),
+                    mutedBy: baseMark.revision ?? baseRevision,
+                };
+            }
+
             if (isActiveReattach(currMark)) {
                 // The nodes that currMark aims to revive are being revived by baseMark
                 return {

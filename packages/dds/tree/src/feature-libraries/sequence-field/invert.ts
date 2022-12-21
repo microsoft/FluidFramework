@@ -81,7 +81,7 @@ function invertMark<TNodeChange>(
                         },
                     ];
                 }
-                if (mark.lastDetachedBy === undefined) {
+                if (mark.isIntention || mark.lastDetachedBy === undefined) {
                     return [mark.count];
                 }
                 return [];

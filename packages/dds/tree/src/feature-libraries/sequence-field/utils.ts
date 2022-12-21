@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/common-utils";
 import { fail } from "../../util";
 import {
     Attach,
@@ -251,10 +251,6 @@ export function splitMarkOnInput<TMark extends InputSpanningMark<unknown>>(
             fail(`Unable to split ${type} mark of length 1`);
         case "Revive":
         case "Return":
-            assert(
-                mark.lastDetachedBy === undefined,
-                "Reattach marks that do not target live cells have no input length",
-            );
             return [
                 { ...markObj, count: length },
                 { ...markObj, count: remainder, detachIndex: mark.detachIndex + length },
@@ -384,6 +380,7 @@ export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boole
             if (
                 rhs.detachedBy === lhsReattach.detachedBy &&
                 rhs.mutedBy === lhsReattach.mutedBy &&
+                rhs.isIntention === lhsReattach.isIntention &&
                 rhs.lastDetachedBy === lhsReattach.lastDetachedBy &&
                 lhsReattach.detachIndex + lhsReattach.count === rhs.detachIndex
             ) {

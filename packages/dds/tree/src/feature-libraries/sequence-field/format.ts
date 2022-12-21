@@ -193,19 +193,29 @@ export interface HasReattachFields extends HasPlaceFields {
      * "Original" here means before the change that detached them was applied.
      */
     detachIndex: number;
-}
 
-export interface Reattach extends HasReattachFields, HasRevisionTag, Mutable {
-    type: "Revive" | "Return";
-    count: NodeCount;
+    /**
+     * When true, the intent is for the target nodes is as follows:
+     * - In a "Revive" mark: the nodes should exist no matter how they were deleted.
+     * - In a "Return" mark: the nodes, if they exist, should be located here no matter how they were moved.
+     * When false, the mark is solely intended to revert a prior change, and will therefore only take effect
+     * if that changes has taken effect.
+     */
+    isIntention?: true;
     /**
      * The changeset that last detached the nodes that this mark intends to revive.
      * For this property to be set, the target nodes must have been revived my another changeset,
      * then detached by a changeset other than `Reattach.detachedBy`.
      *
+     * This property should only be set or read when `Reattach.isIntention` is undefined.
      * This property is `undefined` when it would otherwise be equivalent to `Reattach.detachedBy`.
      */
     lastDetachedBy?: RevisionTag;
+}
+
+export interface Reattach extends HasReattachFields, HasRevisionTag, Mutable {
+    type: "Revive" | "Return";
+    count: NodeCount;
 }
 export interface ModifyReattach<TNodeChange = NodeChangeType>
     extends HasReattachFields,
@@ -213,7 +223,6 @@ export interface ModifyReattach<TNodeChange = NodeChangeType>
         HasChanges<TNodeChange>,
         Mutable {
     type: "MRevive" | "MReturn";
-    lastDetachedBy?: RevisionTag;
 }
 
 /**

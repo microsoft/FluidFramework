@@ -460,6 +460,8 @@ interface HasPlaceFields {
 interface HasReattachFields extends HasPlaceFields {
     detachedBy: RevisionTag | undefined;
     detachIndex: number;
+    isIntention?: true;
+    lastDetachedBy?: RevisionTag;
 }
 
 // @public (undocumented)
@@ -811,8 +813,6 @@ interface ModifyMoveOut<TNodeChange = NodeChangeType> extends HasMoveId, HasRevi
 // @public (undocumented)
 interface ModifyReattach<TNodeChange = NodeChangeType> extends HasReattachFields, HasRevisionTag, HasChanges<TNodeChange>, Mutable {
     // (undocumented)
-    lastDetachedBy?: RevisionTag;
-    // (undocumented)
     type: "MRevive" | "MReturn";
 }
 
@@ -1083,7 +1083,6 @@ export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode> {
 interface Reattach extends HasReattachFields, HasRevisionTag, Mutable {
     // (undocumented)
     count: NodeCount;
-    lastDetachedBy?: RevisionTag;
     // (undocumented)
     type: "Revive" | "Return";
 }
@@ -1247,7 +1246,7 @@ const sequenceFieldEditor: {
     buildChildChange: <TNodeChange = NodeChangeset>(index: number, change: TNodeChange) => Changeset<TNodeChange>;
     insert: (index: number, cursors: ITreeCursor | ITreeCursor[]) => Changeset<never>;
     delete: (index: number, count: number) => Changeset<never>;
-    revive: (index: number, count: number, detachIndex: number, detachedBy: RevisionTag) => Changeset<never>;
+    revive: (index: number, count: number, detachIndex: number, detachedBy: RevisionTag, isIntention?: true | undefined) => Changeset<never>;
 };
 
 // @public (undocumented)

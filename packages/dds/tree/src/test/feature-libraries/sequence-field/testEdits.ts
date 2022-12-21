@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { RevisionTag, TreeSchemaIdentifier } from "../../../core";
@@ -58,15 +59,23 @@ function createReviveChangeset(
     detachIndex: number,
     detachedBy: RevisionTag,
     mutedBy?: RevisionTag,
-    lastDetachedBy?: RevisionTag,
     linage?: SF.LineageEvent[],
+    isIntention?: true,
+    lastDetachedBy?: RevisionTag,
 ): SF.Changeset<never> {
-    const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachIndex, detachedBy);
+    const markList = SF.sequenceFieldEditor.revive(
+        startIndex,
+        count,
+        detachIndex,
+        detachedBy,
+        isIntention,
+    );
     const mark = markList[markList.length - 1] as SF.Reattach;
     if (mutedBy !== undefined) {
         mark.mutedBy = mutedBy;
     }
     if (lastDetachedBy !== undefined) {
+        assert(!isIntention, "Only non-intent-full revives should have a lastDetachedBy");
         mark.lastDetachedBy = lastDetachedBy;
     }
     if (linage !== undefined) {
