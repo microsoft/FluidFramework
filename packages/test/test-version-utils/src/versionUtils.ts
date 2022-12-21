@@ -102,7 +102,7 @@ export function resolveVersion(requested: string, installed: boolean) {
     }
 
     if (installed) {
-        // Check the install directory instad of asking NPM for it.
+        // Check the install directory instead of asking NPM for it.
         const files = readdirSync(baseModulePath, { withFileTypes: true });
         let found: string | undefined;
         files.map((dirent) => {
@@ -126,14 +126,17 @@ export function resolveVersion(requested: string, installed: boolean) {
         }
 
         try {
-            const versions: string | string[] = JSON.parse(result);
+            const versions: string | string[] = result !== "" ? JSON.parse(result) : "";
             const version = Array.isArray(versions) ? versions.sort(semver.rcompare)[0] : versions;
-            if (!version) { throw new Error(`No version found for ${requested}`); }
-            resolutionCache.set(requested, version);
-            return version;
+            if (version) {
+                resolutionCache.set(requested, version);
+                return version;
+            }
         } catch (e) {
             throw new Error(`Error parsing versions for ${requested}`);
         }
+
+        throw new Error(`No version found for ${requested}`);
     }
 }
 

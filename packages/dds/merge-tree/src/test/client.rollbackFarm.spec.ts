@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import random from "random-js";
+import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import {
     annotateRange,
     applyMessages,
@@ -36,8 +36,7 @@ describe("MergeTree.Client", () => {
     doOverRange(defaultOptions.minLength, defaultOptions.growthFunc, (minLength) => {
         doOverRange(defaultOptions.opsPerRollbackRange, defaultOptions.growthFunc, (opsPerRollback) => {
             it(`RollbackFarm_${minLength} OpsPerRollback: ${opsPerRollback}`, async () => {
-                const mt = random.engines.mt19937();
-                mt.seedWithArray([0xDEADBEEF, 0xFEEDBED, minLength, opsPerRollback]);
+                const random = makeRandom(0xDEADBEEF, 0xFEEDBED, minLength, opsPerRollback);
 
                 // A: readonly, B: rollback, C: rollback + edit, D: edit
                 const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C", "D");
@@ -50,7 +49,7 @@ describe("MergeTree.Client", () => {
 
                     // initialize and ack 10 random actions on either C or D
                     const initialMsgs = generateOperationMessagesForClients(
-                        mt,
+                        random,
                         seq,
                         [clients.A, clients.C, clients.D],
                         logger,
@@ -63,7 +62,7 @@ describe("MergeTree.Client", () => {
 
                     // generate messages to rollback on B or C, then rollback
                     const rollbackMsgs = generateOperationMessagesForClients(
-                        mt,
+                        random,
                         seq,
                         [clients.A, clients.B, clients.C],
                         logger,
@@ -76,6 +75,7 @@ describe("MergeTree.Client", () => {
                     }
 
                     logger.validate();
+                    logger.dispose();
                 }
             })
             .timeout(30 * 10000);
