@@ -65,9 +65,7 @@ function generate(
             sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
             closeContainer2 = () => {
                 container2.close();
-                if (container2.dispose) {
-                    container2.dispose();
-                }
+                container2.dispose?.();
             };
 
             // Load the Container that was created by the first client.
