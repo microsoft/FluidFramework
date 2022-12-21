@@ -142,9 +142,7 @@ describe("SharedTreeCore", () => {
         return summaryObject.type === SummaryType.Tree;
     }
 
-    function createTree(
-        indexes?: Index<DefaultChangeset>[],
-    ): SharedTreeCore<DefaultChangeset, DefaultChangeFamily> {
+    function createTree(indexes?: Index[]): SharedTreeCore<DefaultChangeset, DefaultChangeFamily> {
         const runtime = new MockFluidDataStoreRuntime();
         const attributes: IChannelAttributes = {
             type: "TestSharedTree",
@@ -174,10 +172,7 @@ describe("SharedTreeCore", () => {
         (event: "summarize" | "summarizeAttached" | "summarizeAsync" | "gcRequested"): void;
     }
 
-    class MockIndex
-        extends TypedEventEmitter<TestIndexEvents>
-        implements Index<DefaultChangeset>, SummaryElement
-    {
+    class MockIndex extends TypedEventEmitter<TestIndexEvents> implements Index, SummaryElement {
         public static readonly blobKey = "MockIndexBlobKey";
         public static readonly blobContents = "MockIndexBlobContent";
 
