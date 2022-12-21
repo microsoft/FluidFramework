@@ -79,7 +79,7 @@ export class Outbox {
                     /* error */ undefined,
                     {
                         opSize: (message.contents?.length) ?? 0,
-                        batchSize: this.mainBatch.contentSizeInBytes,
+                        batchSize: this.attachFlowBatch.contentSizeInBytes,
                         count: this.attachFlowBatch.length,
                         limit: this.attachFlowBatch.options.hardLimit,
                     });
