@@ -105,11 +105,11 @@ describe("MapWithExpiration", () => {
         map.set(2, "two");
         expected.set(9, "niner");
         expected.set(2, "two");
-        assertMatches(map, expected, "Shouldn't be expired after 5ms");
+        assertMatches(map, expected, "Still shouldn't be expired");
 
         clock.tick(5);
         expected.delete(1);
-        assertMatches(map, expected, "Should be expired after 10ms");
+        assertMatches(map, expected, "Should be expired after 10ms unless set in the interim");
     });
 
     test("delete", (assertMatches: (actual: MapWithExpiration<number, string>, expected: Map<number, string>, message: string) => void) => {
@@ -151,5 +151,5 @@ describe("MapWithExpiration", () => {
     it("toString", () => {
         map = new MapWithExpiration<number, string>(0);
         assert.equal(map.toString(), "[object Map]");
-    })
+    });
 });

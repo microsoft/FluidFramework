@@ -29,7 +29,7 @@ export class InMemoryCache<T> implements ICache<T> {
     }
 }
 
-/** This "cache" does nothing on get/put */
+/** This "cache" does nothing on put, and get always returns undefined */
 export class NullCache<T> implements ICache<T> {
     public async get(key: string): Promise<T | undefined> {
         return undefined;
