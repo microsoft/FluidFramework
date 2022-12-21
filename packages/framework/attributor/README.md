@@ -1,4 +1,4 @@
-# @fluid-internal/attributor
+# @fluidframework/attributor
 
 This package contains definitions and implementations for framework-provided attribution functionality.
 

@@ -1,7 +1,6 @@
 {
-  "name": "@fluid-internal/attributor",
+  "name": "@fluidframework/attributor",
   "version": "2.0.0-internal.2.3.0",
-  "private": true,
   "description": "Operation attributor",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -99,6 +98,7 @@
     "typescript": "~4.5.5"
   },
   "typeValidation": {
+    "disabled": true,
     "version": "2.1.0",
     "broken": {}
   }
