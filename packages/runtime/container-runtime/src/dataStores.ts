@@ -458,7 +458,7 @@ export class DataStores implements IDisposable {
     }
 
     public processSignal(address: string, message: IInboundSignalMessage, local: boolean) {
-        const context = this.contexts.get(address);
+        const context = this.contexts.get(address);  // this line is the secret sauce to locating the address that we want to model after
         if (!context) {
             // Attach message may not have been processed yet
             assert(!local, 0x163 /* "Missing datastore for local signal" */);
