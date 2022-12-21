@@ -275,7 +275,6 @@ declare function get_current_InterfaceDeclaration_IBatchMessage():
 declare function use_old_InterfaceDeclaration_IBatchMessage(
     use: TypeOnly<old.IBatchMessage>);
 use_old_InterfaceDeclaration_IBatchMessage(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IBatchMessage());
 
 /*

@@ -105,7 +105,6 @@ async function updateExistingSession(
                 ...lumberjackProperties,
                 isSessionSticky,
                 sessionHasLocation,
-                // eslint-disable-next-line max-len
                 oldSessionLocation: { ordererUrl: existingSession.ordererUrl, historianUrl: existingSession.historianUrl, deltaStreamUrl: existingSession.deltaStreamUrl },
                 newSessionLocation: { ordererUrl, historianUrl, deltaStreamUrl },
             });

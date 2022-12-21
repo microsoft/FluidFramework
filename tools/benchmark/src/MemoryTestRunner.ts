@@ -39,7 +39,7 @@ export interface MemoryTestData {
 export interface MemoryBenchmarkStats {
     runs: number;
     samples: { before: MemoryTestData; after: MemoryTestData; };
-    stats: Benchmark.Stats | undefined;
+    stats: Benchmark.Stats;
     aborted: boolean;
     error?: Error;
 }
@@ -92,13 +92,13 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions {
      * The max time in seconds to run the benchmark.
      * This is not a guaranteed immediate stop time.
      * Elapsed time gets checked between iterations of the test that is being benchmarked.
-     * Defaults to 10 seconds.
+     * Defaults to 30 seconds.
      */
     maxBenchmarkDurationSeconds?: number;
 
     /**
      * The min sample count to reach.
-     * Defaults to 5.
+     * Defaults to 50.
      *
      * @remarks This takes precedence over {@link MemoryTestObjectProps.maxBenchmarkDurationSeconds}.
      */
@@ -128,7 +128,7 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions {
 
     /**
      * Percentage of samples (0.1 - 1) to use for calculating the statistics.
-     * Defaults to 1.
+     * Defaults to 0.95.
      * Use a lower number to drop the highest/lowest measurements.
      */
     samplePercentageToUse?: number;
@@ -173,13 +173,13 @@ export interface MemoryTestObjectProps extends MochaExclusiveOptions {
 
 export function benchmarkMemory(testObject: IMemoryTestObject): Test {
     const options: Required<MemoryTestObjectProps> = {
-        maxBenchmarkDurationSeconds: testObject.maxBenchmarkDurationSeconds ?? 10,
-        minSampleCount: testObject.minSampleCount ?? 5,
+        maxBenchmarkDurationSeconds: testObject.maxBenchmarkDurationSeconds ?? 30,
+        minSampleCount: testObject.minSampleCount ?? 50,
         maxRelativeMarginOfError: testObject.maxRelativeMarginOfError ?? 2.5,
         only: testObject.only ?? false,
         title: testObject.title,
         type: testObject.type ?? BenchmarkType.Measurement,
-        samplePercentageToUse: testObject.samplePercentageToUse ?? 1,
+        samplePercentageToUse: testObject.samplePercentageToUse ?? 0.95,
         category: testObject.category ?? "",
     };
 
@@ -283,13 +283,29 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
                     heapSpace: [],
                 },
             },
-            stats: undefined,
+            stats: {
+                moe: NaN,
+                rme: NaN,
+                sem: NaN,
+                deviation: NaN,
+                mean: NaN,
+                sample: [],
+                variance: NaN,
+            },
             aborted: false,
         };
 
         try {
             const startTime = performance.now();
-            let heapUsedStats: Benchmark.Stats | undefined;
+            let heapUsedStats: Benchmark.Stats = {
+                moe: NaN,
+                rme: NaN,
+                sem: NaN,
+                deviation: NaN,
+                mean: NaN,
+                sample: [],
+                variance: NaN,
+            };
             do {
                 await testObject.beforeIteration?.();
 
@@ -310,18 +326,18 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 
                 benchmarkStats.runs++;
 
-                // Break if max elapsed time passed, only if we've reached the min sample count
-                if (benchmarkStats.runs >= options.minSampleCount &&
-                    (performance.now() - startTime) / 1000 > options.maxBenchmarkDurationSeconds) {
-                    break;
-                }
-
                 const heapUsedArray: number[] = [];
                 for (let i = 0; i < benchmarkStats.samples.before.memoryUsage.length; i++) {
                     heapUsedArray.push(benchmarkStats.samples.after.memoryUsage[i].heapUsed
                         - benchmarkStats.samples.before.memoryUsage[i].heapUsed);
                 }
                 heapUsedStats = getArrayStatistics(heapUsedArray, options.samplePercentageToUse);
+
+                // Break if max elapsed time passed, only if we've reached the min sample count
+                if (benchmarkStats.runs >= options.minSampleCount &&
+                    (performance.now() - startTime) / 1000 > options.maxBenchmarkDurationSeconds) {
+                    break;
+                }
             } while (benchmarkStats.runs < options.minSampleCount
                 || heapUsedStats.rme > options.maxRelativeMarginOfError);
 

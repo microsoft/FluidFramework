@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-experimental/task-manager",
+  "name": "@fluidframework/task-manager",
   "version": "2.0.0-internal.3.0.0",
   "description": "Distributed data structure for queueing exclusive tasks",
   "homepage": "https://fluidframework.com",
@@ -75,11 +75,12 @@
   },
   "devDependencies": {
     "@fluid-experimental/task-manager-previous": "npm:@fluid-experimental/task-manager@2.0.0-internal.2.1.1",
+    "@fluid-internal/stochastic-test-utils": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluid-internal/test-dds-utils": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
-    "@fluid-tools/build-cli": "^0.6.0-109663",
+    "@fluid-tools/build-cli": "^0.7.0",
     "@fluidframework/build-common": "^1.1.0",
-    "@fluidframework/build-tools": "^0.6.0-109663",
-    "@fluidframework/eslint-config-fluid": "^1.2.0",
+    "@fluidframework/build-tools": "^0.7.0",
+    "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluidframework/test-runtime-utils": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@microsoft/api-extractor": "^7.22.2",
@@ -99,6 +100,7 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.3.0.0",
+    "disabled": true,
     "baselineRange": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
     "baselineVersion": "2.0.0-internal.2.1.1",
     "broken": {}

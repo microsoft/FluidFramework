@@ -4,7 +4,6 @@
  */
 
 import type {
-    AttributionId,
     FinalCompressedId,
     LocalCompressedId,
     OpSpaceCompressedId,
@@ -19,11 +18,6 @@ export type SerializedSessionData = readonly [
      * The ID of the session.
      */
     sessionId: SessionId,
-
-    /**
-     * Index into the serialized AttributionIDs array; points to the attribution ID provided for this session
-     */
-    attributionId?: number,
 ];
 
 export type SerializedClusterOverrides = readonly [
@@ -122,8 +116,6 @@ export interface SerializedIdCompressor extends VersionedSerializedIdCompressor 
     readonly sessions: readonly SerializedSessionData[];
     /** All clusters in the compressor in the order they were created. */
     readonly clusters: readonly SerializedCluster[];
-    /** All attribution IDs for all sessions */
-    readonly attributionIds?: readonly AttributionId[];
 }
 
 /**
@@ -172,7 +164,6 @@ export interface SerializedIdCompressorWithOngoingSession extends SerializedIdCo
 export interface IdCreationRange {
     readonly sessionId: SessionId;
     readonly ids?: IdCreationRange.Ids;
-    readonly attributionId?: AttributionId;
 }
 
 export type UnackedLocalId = LocalCompressedId & OpSpaceCompressedId;

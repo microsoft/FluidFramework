@@ -147,7 +147,6 @@ export class AttachmentTreeEntry {
     }
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 export function addBlobToTree(tree: ITree, blobName: string, content: object) {
     tree.entries.push(
         {

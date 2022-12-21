@@ -4,9 +4,7 @@
  */
 
 /* eslint-disable unicorn/numeric-separators-style */
-/* eslint-disable unicorn/number-literal-case */
 
-// eslint-disable-next-line unicorn/prefer-node-protocol
 import { EventEmitter } from "events";
 
 import { assert } from "@fluidframework/common-utils";
@@ -190,7 +188,6 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
      * @param runtime - data store runtime the quorum belongs to
      * @param id - optional name of the quorum
      */
-    // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
     public constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes, "fluid_quorum_");
 

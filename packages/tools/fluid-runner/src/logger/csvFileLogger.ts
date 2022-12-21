@@ -16,7 +16,7 @@ export class CSVFileLogger extends BaseFileLogger {
     /** Store the column names to write as the CSV header */
     private readonly columns = new Set();
 
-    public async flush(): Promise<void> {
+    protected async flush(): Promise<void> {
         // No flushing is performed since we need all log entries to determine set of CSV columns
     }
 

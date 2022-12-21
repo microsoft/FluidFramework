@@ -652,7 +652,7 @@ function createPositionReference(
     let segoff;
     if (op) {
         assert((refType & ReferenceType.SlideOnRemove) !== 0, 0x2f5 /* op create references must be SlideOnRemove */);
-        segoff = client.getContainingSegment(pos, op);
+        segoff = client.getContainingSegment(pos, { referenceSequenceNumber: op.referenceSequenceNumber, clientId: op.clientId });
         segoff = client.getSlideToSegment(segoff);
     } else {
         assert((refType & ReferenceType.SlideOnRemove) === 0 || !!fromSnapshot,
@@ -1347,6 +1347,31 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             : serializedIntervals.intervals.map((i) => decompressInterval(i, serializedIntervals.label));
     }
 
+    private rebasePositionWithSegmentSlide(
+        pos: number,
+        seqNumberFrom: number,
+        localSeq: number
+    ): number | undefined {
+        if (!this.client) {
+            throw new LoggingError("mergeTree client must exist");
+        }
+        const { clientId } = this.client.getCollabWindow();
+        const { segment, offset } = this.client.getContainingSegment(pos, { referenceSequenceNumber: seqNumberFrom, clientId: this.client.getLongClientId(clientId) }, localSeq);
+
+        // if segment is undefined, it slid off the string
+        assert(segment !== undefined, "No segment found");
+
+        const segoff = this.client.getSlideToSegment({ segment, offset }) ?? segment;
+
+        // case happens when rebasing op, but concurrently entire string has been deleted
+        if (segoff.segment === undefined || segoff.offset === undefined) {
+            return DetachedReferencePosition;
+        }
+
+        assert(offset !== undefined && 0 <= offset && offset < segment.cachedLength, "Invalid offset");
+        return this.client.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
+    }
+
     private computeRebasedPositions(localSeq: number): ISerializedInterval | SerializedIntervalDelta {
         assert(this.client !== undefined, "Client should be defined when computing rebased position");
         const original = this.localSeqToSerializedInterval.get(localSeq);
@@ -1354,10 +1379,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         const rebased = { ...original };
         const { start, end, sequenceNumber } = original;
         if (start !== undefined) {
-            rebased.start = this.client.rebasePosition(start, sequenceNumber, localSeq);
+            rebased.start = this.rebasePositionWithSegmentSlide(start, sequenceNumber, localSeq);
         }
         if (end !== undefined) {
-            rebased.end = this.client.rebasePosition(end, sequenceNumber, localSeq);
+            rebased.end = this.rebasePositionWithSegmentSlide(end, sequenceNumber, localSeq);
         }
         return rebased;
     }

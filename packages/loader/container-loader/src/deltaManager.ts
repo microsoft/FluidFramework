@@ -118,8 +118,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     // There are three numbers we track
     // * lastQueuedSequenceNumber is the last queued sequence number. If there are gaps in seq numbers, then this number
     //   is not updated until we cover that gap, so it increases each time by 1.
-    // * lastObservedSeqNumber is  an estimation of last known sequence number for container in storage. It's initially
-    //   populated at web socket connection time (if storage provides that info) and is  updated once ops shows up.
+    // * lastObservedSeqNumber is an estimation of last known sequence number for container in storage. It's initially
+    //   populated at web socket connection time (if storage provides that info) and is updated once ops shows up.
     //   It's never less than lastQueuedSequenceNumber
     // * lastProcessedSequenceNumber - last processed sequence number
     private lastQueuedSequenceNumber: number = 0;

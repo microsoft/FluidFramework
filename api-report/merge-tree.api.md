@@ -20,6 +20,13 @@ export function addProperties(oldProps: PropertySet | undefined, newProps: Prope
 // @alpha
 export function appendToMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
+// @alpha (undocumented)
+export interface AttributionKey {
+    // (undocumented)
+    seq: number;
+    type: "op";
+}
+
 // @public (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
@@ -29,7 +36,9 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     protected addSerializedProps(jseg: IJSONSegment): void;
     // (undocumented)
-    append(segment: ISegment): void;
+    append(other: ISegment): void;
+    // @alpha (undocumented)
+    attribution?: IAttributionCollection<AttributionKey>;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     // (undocumented)
@@ -115,7 +124,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
-    protected findReconnectionPosition(segment: ISegment, localSeq: number): number;
+    findReconnectionPosition(segment: ISegment, localSeq: number): number;
     // (undocumented)
     findTile(startPos: number, tileLabel: string, preceding?: boolean): {
         tile: ReferencePosition;
@@ -126,7 +135,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     getCollabWindow(): CollaborationWindow;
     // (undocumented)
-    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage, localSeq?: number): {
+    getContainingSegment<T extends ISegment>(pos: number, sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">, localSeq?: number): {
         segment: T | undefined;
         offset: number | undefined;
     };
@@ -182,16 +191,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     maxWindowTime: number;
     // (undocumented)
     measureOps: boolean;
-    // (undocumented)
-    get mergeTreeDeltaCallback(): MergeTreeDeltaCallback | undefined;
-    set mergeTreeDeltaCallback(callback: MergeTreeDeltaCallback | undefined);
-    // (undocumented)
-    get mergeTreeMaintenanceCallback(): MergeTreeMaintenanceCallback | undefined;
-    set mergeTreeMaintenanceCallback(callback: MergeTreeMaintenanceCallback | undefined);
     peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
-    rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number;
-    rebasePositionWithoutSegmentSlide(pos: number, seqNumberFrom: number, localSeq: number): number | undefined;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg;
@@ -302,6 +303,23 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, c
 
 // @public (undocumented)
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T>;
+
+// @alpha (undocumented)
+export interface IAttributionCollection<T> {
+    // @internal (undocumented)
+    append(other: IAttributionCollection<T>): void;
+    // @internal (undocumented)
+    clone(): IAttributionCollection<T>;
+    // @internal
+    getAll(): Iterable<{
+        offset: number;
+        key: T;
+    }>;
+    getAtOffset(offset: number): T;
+    readonly length: number;
+    // @internal (undocumented)
+    splitAt(pos: number): IAttributionCollection<T>;
+}
 
 // @public (undocumented)
 export interface ICombiningOp {
@@ -630,6 +648,8 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
     append(segment: ISegment): void;
+    // @alpha
+    attribution?: IAttributionCollection<AttributionKey>;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     clientId: number;

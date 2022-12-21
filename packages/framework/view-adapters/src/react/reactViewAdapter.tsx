@@ -25,7 +25,7 @@ export class ReactViewAdapter extends React.Component<IReactViewAdapterProps> {
      * Test whether the given Fluid object can be successfully adapted by a ReactViewAdapter.
      * @param view - the fluid object to test if it is adaptable.
      */
-    public static canAdapt(view: FluidObject) {
+    public static canAdapt(view: FluidObject): boolean {
         const maybeView: FluidObject<IFluidHTMLView> = view;
         return (
             React.isValidElement(view)
@@ -55,7 +55,7 @@ export class ReactViewAdapter extends React.Component<IReactViewAdapterProps> {
         this.element = <></>;
     }
 
-    public render() {
+    public render(): JSX.Element {
         return this.element;
     }
 }
@@ -76,13 +76,13 @@ class HTMLViewEmbeddedComponent extends React.Component<IHTMLViewProps> {
         this.ref = React.createRef<HTMLDivElement>();
     }
 
-    public async componentDidMount() {
+    public async componentDidMount(): Promise<void> {
         if (this.ref.current !== null) {
             this.props.htmlView.render(this.ref.current);
         }
     }
 
-    public render() {
+    public render(): React.ReactElement {
         return <div ref={this.ref}></div>;
     }
 }

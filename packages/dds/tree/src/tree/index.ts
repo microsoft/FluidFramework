@@ -20,7 +20,14 @@ export {
     symbolIsFieldKey,
 } from "./globalFieldKeySymbol";
 export { getMapTreeField, MapTree } from "./mapTree";
-export { clonePath, getDepth, UpPath, FieldUpPath } from "./pathTree";
+export {
+    clonePath,
+    getDepth,
+    UpPath,
+    FieldUpPath,
+    compareUpPaths,
+    compareFieldUpPaths,
+} from "./pathTree";
 export {
     FieldMapObject,
     FieldScope,
@@ -50,6 +57,7 @@ export {
     NodeData,
     rootFieldKeySymbol,
     rootField,
+    isLocalKey,
 } from "./types";
 export { DeltaVisitor, visitDelta } from "./visitDelta";
 

@@ -26,6 +26,7 @@ import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { LocalReferencePosition } from "../localReference";
 import { InternalRevertDriver } from "../revertibles";
+import { DetachedReferencePosition } from "../referencePositions";
 import { TestSerializer } from "./testSerializer";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
@@ -116,14 +117,14 @@ export class TestClient extends Client {
         this.textHelper = new MergeTreeTextHelper(this.mergeTree);
 
         // Validate by default
-        this.mergeTree.mergeTreeDeltaCallback = (o, d) => {
+        this.on("delta", (o, d) => {
             // assert.notEqual(d.deltaSegments.length, 0);
             d.deltaSegments.forEach((s) => {
                 if (d.operation === MergeTreeDeltaType.INSERT) {
                     assert.notEqual(s.segment.parent, undefined);
                 }
             });
-        };
+        });
     }
 
     /**
@@ -306,17 +307,28 @@ export class TestClient extends Client {
         return nextWord;
     }
 
-    private findReconnectionPositionSegment?: ISegment;
+    public debugDumpTree(tree: MergeTree) {
+        // want the segment's content and the state of insert/remove
+        const test: string[] = [];
+        walkAllChildSegments(tree.root,
+            (segment) => {
+                const prefixes: (string | undefined | number)[] = [];
+                prefixes.push(segment.seq !== UnassignedSequenceNumber ? segment.seq : `L${segment.localSeq}`);
+                if (segment.removedSeq !== undefined) {
+                    prefixes.push(segment.removedSeq !== UnassignedSequenceNumber
+                        ? segment.removedSeq
+                        : `L${segment.localRemovedSeq}`);
+                }
+                test.push(`${prefixes.join(",")}:${(segment as any).text}`);
+            });
+    }
 
     /**
-     * client.ts has accelerated versions of these methods which leverage the merge-tree's structure.
-     * To help verify their correctness, we additionally perform slow-path computations of the same values
-     * (which involve linear walks of the tree) and assert they match.
+     * Rebases a (local) position from the perspective `{ seq: seqNumberFrom, localSeq }` to the perspective
+     * of the current sequence number. This is desirable when rebasing operations for reconnection. Perform
+     * slow-path computations in this function without leveraging the merge-tree's structure
      */
     public rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number {
-        const fastPathResult = super.rebasePosition(pos, seqNumberFrom, localSeq);
-        const fastPathSegment = this.findReconnectionPositionSegment;
-        this.findReconnectionPositionSegment = undefined;
 
         let segment: ISegment | undefined;
         let posAccumulated = 0;
@@ -345,21 +357,15 @@ export class TestClient extends Client {
         });
 
         assert(segment !== undefined, "No segment found");
-
         const segoff = this.getSlideToSegment({ segment, offset }) ?? segment;
+        if (segoff.segment === undefined || segoff.offset === undefined) {
+            return DetachedReferencePosition;
+        }
 
-        const slowPathResult =
-            segoff.segment !== undefined
-            && segoff.offset !== undefined
-            && this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
-
-        assert.equal(fastPathSegment, segoff.segment ?? undefined, "Unequal rebasePosition computed segments");
-        assert.equal(fastPathResult, slowPathResult, "Unequal rebasePosition results");
-        return fastPathResult;
+        return this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
     }
 
-    protected findReconnectionPosition(segment: ISegment, localSeq: number): number {
-        this.findReconnectionPositionSegment = segment;
+    public findReconnectionPosition(segment: ISegment, localSeq: number): number {
         const fasterComputedPosition = super.findReconnectionPosition(segment, localSeq);
 
         let segmentPosition = 0;
@@ -393,6 +399,32 @@ export class TestClient extends Client {
         assert(fasterComputedPosition === segmentPosition,
             "Expected fast-path computation to match result from walk all segments");
         return segmentPosition;
+    }
+
+    /**
+     * @returns an array of all attribution seq#s from the current perspective.
+     * The `i`th entry of the array is the attribution key for the character at position `i`.
+     * Validates segments either all have attribution information or none of them.
+     * If no segment has attribution information, returns undefined.
+     */
+    public getAllAttributionSeqs(): number[] | undefined {
+        const seqs: number[] | undefined = [];
+        let segmentsWithAttribution = 0;
+        let segmentsWithoutAttribution = 0;
+        this.walkAllSegments((segment) => {
+            if (segment.attribution) {
+                segmentsWithAttribution++;
+                for (let i = 0; i < segment.cachedLength; i++) {
+                    seqs.push(segment.attribution.getAtOffset(i).seq);
+                }
+            } else {
+                segmentsWithoutAttribution++;
+            }
+            return true;
+        });
+
+        assert(segmentsWithAttribution === 0 || segmentsWithoutAttribution === 0);
+        return segmentsWithAttribution !== 0 ? seqs : undefined;
     }
 }
 

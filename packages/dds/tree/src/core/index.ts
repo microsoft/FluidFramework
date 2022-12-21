@@ -64,6 +64,7 @@ export {
     DeltaVisitor,
     SparseNode,
     getDescendant,
+    compareUpPaths,
 } from "../tree";
 
 export {
@@ -99,12 +100,12 @@ export {
     InMemoryStoredSchemaRepository,
     schemaDataIsEmpty,
     fieldSchema,
-    namedTreeSchema,
     lookupTreeSchema,
     lookupGlobalFieldSchema,
     TreeSchemaBuilder,
     emptyMap,
     emptySet,
+    treeSchema,
 } from "../schema-stored";
 
 export {
@@ -150,6 +151,7 @@ export {
     EditManager,
     MutableSummaryData,
     ReadonlySummaryData,
+    SeqNumber,
     SessionId,
 } from "../edit-manager";
 

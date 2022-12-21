@@ -144,6 +144,27 @@
                 "min": 900000,
                 "max": 1800000
             }
+        },
+        "scale_with_signals_concurrent":  {
+            "opRatePerMin":  7,
+            "signalsPerMin":  46,
+            "totalSignalsSendCount":  420000,
+            "progressIntervalMs":  20000,
+            "numClients":  10,
+            "totalSendCount":  70000,
+            "readWriteCycleMs":  30000,
+            "faultInjectionMs": {
+                "min": 900000,
+                "max": 1800000
+            },
+            "optionOverrides":{
+              "odsp":{
+                  "configurations":{
+                      "Fluid.Container.summarizeProtocolTree": [true]
+                  }
+              }
+            },
+            "opsSendType":  "allClientsConcurrentReadWrite"
         }
     }
 }

@@ -143,6 +143,7 @@ export function runMergeTreeOperationRunner(
                 msgs,
                 seq,
             });
+            logger.dispose();
         }
     });
 

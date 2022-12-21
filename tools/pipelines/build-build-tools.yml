@@ -65,7 +65,8 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-    packageManagerInstallCommand: 'npm i -g pnpm && pnpm i'
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    packageManager: pnpm
     buildDirectory: build-tools
     tagName: build-tools
     taskBuild: 'build:full'

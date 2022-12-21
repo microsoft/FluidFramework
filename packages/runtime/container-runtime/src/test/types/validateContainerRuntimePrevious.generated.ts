@@ -84,7 +84,6 @@ declare function get_current_ClassDeclaration_ContainerRuntime():
 declare function use_old_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<old.ContainerRuntime>);
 use_old_ClassDeclaration_ContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -133,6 +132,7 @@ declare function get_current_VariableDeclaration_DefaultSummaryConfiguration():
 declare function use_old_VariableDeclaration_DefaultSummaryConfiguration(
     use: TypeOnly<typeof old.DefaultSummaryConfiguration>);
 use_old_VariableDeclaration_DefaultSummaryConfiguration(
+    // @ts-expect-error compatibility expected to be broken
     get_current_VariableDeclaration_DefaultSummaryConfiguration());
 
 /*
@@ -457,7 +457,6 @@ declare function get_old_InterfaceDeclaration_ICompressionRuntimeOptions():
 declare function use_current_InterfaceDeclaration_ICompressionRuntimeOptions(
     use: TypeOnly<current.ICompressionRuntimeOptions>);
 use_current_InterfaceDeclaration_ICompressionRuntimeOptions(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ICompressionRuntimeOptions());
 
 /*
@@ -470,7 +469,6 @@ declare function get_current_InterfaceDeclaration_ICompressionRuntimeOptions():
 declare function use_old_InterfaceDeclaration_ICompressionRuntimeOptions(
     use: TypeOnly<old.ICompressionRuntimeOptions>);
 use_old_InterfaceDeclaration_ICompressionRuntimeOptions(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ICompressionRuntimeOptions());
 
 /*
@@ -507,7 +505,6 @@ declare function get_old_InterfaceDeclaration_IContainerRuntimeOptions():
 declare function use_current_InterfaceDeclaration_IContainerRuntimeOptions(
     use: TypeOnly<current.IContainerRuntimeOptions>);
 use_current_InterfaceDeclaration_IContainerRuntimeOptions(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerRuntimeOptions());
 
 /*
@@ -520,7 +517,6 @@ declare function get_current_InterfaceDeclaration_IContainerRuntimeOptions():
 declare function use_old_InterfaceDeclaration_IContainerRuntimeOptions(
     use: TypeOnly<old.IContainerRuntimeOptions>);
 use_old_InterfaceDeclaration_IContainerRuntimeOptions(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntimeOptions());
 
 /*
@@ -1195,6 +1191,7 @@ declare function get_current_InterfaceDeclaration_ISummaryBaseConfiguration():
 declare function use_old_InterfaceDeclaration_ISummaryBaseConfiguration(
     use: TypeOnly<old.ISummaryBaseConfiguration>);
 use_old_InterfaceDeclaration_ISummaryBaseConfiguration(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummaryBaseConfiguration());
 
 /*
@@ -1267,6 +1264,7 @@ declare function get_current_TypeAliasDeclaration_ISummaryConfiguration():
 declare function use_old_TypeAliasDeclaration_ISummaryConfiguration(
     use: TypeOnly<old.ISummaryConfiguration>);
 use_old_TypeAliasDeclaration_ISummaryConfiguration(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_ISummaryConfiguration());
 
 /*
@@ -1291,6 +1289,7 @@ declare function get_current_InterfaceDeclaration_ISummaryConfigurationDisableHe
 declare function use_old_InterfaceDeclaration_ISummaryConfigurationDisableHeuristics(
     use: TypeOnly<old.ISummaryConfigurationDisableHeuristics>);
 use_old_InterfaceDeclaration_ISummaryConfigurationDisableHeuristics(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummaryConfigurationDisableHeuristics());
 
 /*
@@ -1339,6 +1338,7 @@ declare function get_current_InterfaceDeclaration_ISummaryConfigurationHeuristic
 declare function use_old_InterfaceDeclaration_ISummaryConfigurationHeuristics(
     use: TypeOnly<old.ISummaryConfigurationHeuristics>);
 use_old_InterfaceDeclaration_ISummaryConfigurationHeuristics(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummaryConfigurationHeuristics());
 
 /*
