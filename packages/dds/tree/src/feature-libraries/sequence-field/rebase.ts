@@ -301,25 +301,26 @@ function rebaseMark<TNodeChange>(
         case "MDelete": {
             const baseMarkRevision = baseMark.revision ?? baseRevision;
             if (isReattach(currMark)) {
-                if (currMark.isIntention) {
-                    const revive: Reattach | ModifyReattach<TNodeChange> = {
+                // TODO: add `addedBy: RevisionTag` to inverses of attaches so we can detect when
+                // currMark is rebased over the undo of currMark.mutedBy.
+                if (currMark.isIntention || currMark.mutedBy === baseMarkRevision) {
+                    const reattach = {
                         ...(clone(currMark) as Reattach | ModifyReattach<TNodeChange>),
+                        // Update the characterization of the deleted content
                         detachedBy: baseMarkRevision,
                         detachIndex: baseInputOffset,
                     };
-                    delete revive.mutedBy;
-                    return revive;
+                    delete reattach.mutedBy;
+                    return reattach;
                 }
-                if (currMark.mutedBy === baseMarkRevision) {
-                    const revive = clone(currMark) as Reattach | ModifyReattach<TNodeChange>;
-                    delete revive.mutedBy;
-                    return revive;
-                } else {
-                    return {
-                        ...clone(currMark),
-                        lastDetachedBy: baseMarkRevision,
-                    };
-                }
+                // The reattach mark remains muted because the deletion was performed by a different change.
+                // The only way to unmute the reattach now is for the nodes to be revived and for the original
+                // deletion (currMark.detachedBy) to be re-applied.
+                return {
+                    ...clone(currMark),
+                    lastDetachedBy: baseMarkRevision,
+                    detachIndex: baseInputOffset,
+                };
             }
             return 0;
         }

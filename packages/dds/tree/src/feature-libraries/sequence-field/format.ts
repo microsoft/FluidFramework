@@ -198,6 +198,7 @@ export interface HasReattachFields extends HasPlaceFields {
      * When true, the intent is for the target nodes is as follows:
      * - In a "Revive" mark: the nodes should exist no matter how they were deleted.
      * - In a "Return" mark: the nodes, if they exist, should be located here no matter how they were moved.
+     *
      * When false, the mark is solely intended to revert a prior change, and will therefore only take effect
      * if that changes has taken effect.
      */

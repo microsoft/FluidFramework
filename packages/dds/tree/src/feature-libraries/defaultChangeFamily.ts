@@ -16,6 +16,7 @@ import {
     Value,
     ITreeCursor,
     ReadonlyRepairDataStore,
+    RevisionTag,
 } from "../core";
 import { brand } from "../util";
 import {
@@ -162,6 +163,24 @@ export class DefaultEditBuilder
                 );
                 this.modularBuilder.submitChange(parent, field, sequence.identifier, change);
             },
+            revive: (
+                index: number,
+                count: number,
+                detachedBy: RevisionTag,
+                detachIndex: number,
+                isIntention?: true,
+            ): void => {
+                const change: FieldChangeset = brand(
+                    sequence.changeHandler.editor.revive(
+                        index,
+                        count,
+                        detachedBy,
+                        detachIndex,
+                        isIntention,
+                    ),
+                );
+                this.modularBuilder.submitChange(parent, field, sequence.identifier, change);
+            },
         };
     }
 
@@ -204,4 +223,21 @@ export interface SequenceFieldEditBuilder {
      * @param count - The number of elements to delete.
      */
     delete(index: number, count: number): void;
+
+    /**
+     * Revives a contiguous range of deleted nodes.
+     * @param index - The index of the node to revive.
+     * @param count - The number of nodes to revive.
+     * @param detachedBy - The revision of the edit that deleted the nodes.
+     * @param detachIndex - The index of the first node to revive in the input context of edit `detachedBy`.
+     * @param isIntention - If true, the node will be revived even if edit `detachedBy` did not ultimately
+     * delete them. If false, only those nodes that were deleted by `detachedBy` (and not revived) will be revived.
+     */
+    revive(
+        index: number,
+        count: number,
+        detachedBy: RevisionTag,
+        detachIndex: number,
+        isIntention?: true,
+    ): void;
 }

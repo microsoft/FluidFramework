@@ -96,7 +96,7 @@ describe("SequenceField - toDelta", () => {
     });
 
     it("revive => insert", () => {
-        const changeset = Change.revive(0, 1, 0, tag);
+        const changeset = Change.revive(0, 1, tag, 0);
         function reviver(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] {
             assert.equal(revision, tag);
             assert.equal(index, 0);

@@ -66,9 +66,9 @@ describe("SequenceField - Rebase", () => {
 
     it("revive ↷ modify", () => {
         const revive = composeAnonChanges([
-            Change.revive(0, 2, 0, tag1),
-            Change.revive(4, 2, 2, tag1),
-            Change.revive(10, 2, 4, tag1),
+            Change.revive(0, 2, tag1, 0),
+            Change.revive(4, 2, tag1, 2),
+            Change.revive(10, 2, tag1, 4),
         ]);
         const mods = composeAnonChanges([
             Change.modify(0, TestChange.mint([0], 1)),
@@ -118,96 +118,96 @@ describe("SequenceField - Rebase", () => {
 
     it("revive ↷ delete", () => {
         const revive = composeAnonChanges([
-            Change.revive(0, 1, 0, tag1),
-            Change.revive(3, 1, 1, tag1),
-            Change.revive(8, 1, 2, tag1),
+            Change.revive(0, 1, tag1, 0),
+            Change.revive(3, 1, tag1, 1),
+            Change.revive(8, 1, tag1, 2),
         ]);
         const deletion = Change.delete(1, 3);
         const actual = rebase(revive, deletion);
         const expected = composeAnonChanges([
             // Earlier revive is unaffected
-            Change.revive(0, 1, 0, tag1),
+            Change.revive(0, 1, tag1, 0),
             // Overlapping revive has its index reduced
-            Change.revive(2, 1, 1, tag1),
+            Change.revive(2, 1, tag1, 1),
             // Later revive has its index reduced
-            Change.revive(5, 1, 2, tag1),
+            Change.revive(5, 1, tag1, 2),
         ]);
         assert.deepEqual(actual, expected);
     });
 
     it("muted revive ↷ related delete", () => {
-        const revive = Change.revive(0, 3, 1, tag1, tag2);
+        const revive = Change.revive(0, 3, tag1, 1, tag2);
         const deletion = Change.delete(1, 1);
         const actual = rebase(revive, deletion, tag2);
         const expected = composeAnonChanges([
             // Earlier revive is unaffected
-            Change.revive(0, 1, 1, tag1, tag2),
+            Change.revive(0, 1, tag1, 1, tag2),
             // Overlapping revive is no longer muted
-            Change.revive(1, 1, 2, tag1),
+            Change.revive(1, 1, tag2, 1),
             // Later revive is unaffected
-            Change.revive(2, 1, 3, tag1, tag2, [{ revision: tag2, offset: 1 }]),
+            Change.revive(2, 1, tag1, 3, tag2, [{ revision: tag2, offset: 1 }]),
         ]);
         assert.deepEqual(actual, expected);
     });
 
     it("muted revive ↷ unrelated delete", () => {
-        const revive = Change.revive(0, 3, 1, tag1, tag2);
+        const revive = Change.revive(0, 3, tag1, 1, tag2);
         const deletion = Change.delete(1, 1);
         const actual = rebase(revive, deletion, tag3);
         const expected = composeAnonChanges([
             // Earlier revive is unaffected
-            Change.revive(0, 1, 1, tag1, tag2),
-            // Overlapping revive is muted and its target is now deleted
-            Change.revive(1, 1, 2, tag1, tag2, undefined, tag3),
+            Change.revive(0, 1, tag1, 1, tag2),
+            // Overlapping revive is now blocked
+            Change.revive(1, 1, tag1, 1, tag2, undefined, tag3),
             // Later revive gets linage
-            Change.revive(2, 1, 3, tag1, tag2, [{ revision: tag3, offset: 1 }]),
+            Change.revive(2, 1, tag1, 3, tag2, [{ revision: tag3, offset: 1 }]),
         ]);
         assert.deepEqual(actual, expected);
     });
 
-    it("muted revive of deleted node ↷ revive of deleted nodes", () => {
-        const revive = Change.revive(0, 3, 1, tag1, tag2, undefined, tag3);
-        const deletion = Change.revive(0, 1, 2, tag3);
+    it("blocked revive ↷ revive", () => {
+        const revive = Change.revive(0, 3, tag1, 1, tag2, undefined, tag3);
+        const deletion = Change.revive(0, 1, tag3, 2);
         const actual = rebase(revive, deletion, tag3);
         const expected = composeAnonChanges([
             // Earlier revive is unaffected
-            Change.revive(0, 1, 1, tag1, tag2, undefined, tag3),
-            // Overlapping revive remains muted but its target is no longer deleted
-            Change.revive(1, 1, 2, tag1, tag2),
+            Change.revive(0, 1, tag1, 1, tag2, undefined, tag3),
+            // Overlapping revive remains muted but is no longer blocked
+            Change.revive(1, 1, tag1, 2, tag2),
             // Later revive is unaffected
-            Change.revive(2, 1, 3, tag1, tag2, undefined, tag3),
+            Change.revive(2, 1, tag1, 3, tag2, undefined, tag3),
         ]);
         assert.deepEqual(actual, expected);
     });
 
     it("muted intent-full revive ↷ related delete", () => {
-        const revive = Change.intentionalRevive(0, 3, 1, tag1, tag2);
+        const revive = Change.intentionalRevive(0, 3, tag1, 1, tag2);
         const deletion = Change.delete(1, 1);
         const actual = rebase(revive, deletion, tag2);
         const expected = composeAnonChanges([
             // Earlier revive is unaffected
-            Change.intentionalRevive(0, 1, 1, tag1, tag2),
+            Change.intentionalRevive(0, 1, tag1, 1, tag2),
             // Overlapping revive is no longer muted.
             // It now references the target node to revive using the latest delete.
-            Change.intentionalRevive(1, 1, 1, tag2),
+            Change.intentionalRevive(1, 1, tag2, 1),
             // Later revive is unaffected aside from lineage
-            Change.intentionalRevive(2, 1, 3, tag1, tag2, [{ revision: tag2, offset: 1 }]),
+            Change.intentionalRevive(2, 1, tag1, 3, tag2, [{ revision: tag2, offset: 1 }]),
         ]);
         assert.deepEqual(actual, expected);
     });
 
     it("muted intent-full revive ↷ unrelated delete", () => {
-        const revive = Change.intentionalRevive(0, 3, 1, tag1, tag2);
+        const revive = Change.intentionalRevive(0, 3, tag1, 1, tag2);
         const deletion = Change.delete(1, 1);
         const actual = rebase(revive, deletion, tag3);
         const expected = composeAnonChanges([
             // Earlier revive is unaffected
-            Change.intentionalRevive(0, 1, 1, tag1, tag2),
+            Change.intentionalRevive(0, 1, tag1, 1, tag2),
             // Overlapping revive is no longer muted.
             // It now references the target node to revive using the latest delete.
-            Change.intentionalRevive(1, 1, 1, tag3),
+            Change.intentionalRevive(1, 1, tag3, 1),
             // Later revive gets linage
-            Change.intentionalRevive(2, 1, 3, tag1, tag2, [{ revision: tag3, offset: 1 }]),
+            Change.intentionalRevive(2, 1, tag1, 3, tag2, [{ revision: tag3, offset: 1 }]),
         ]);
         assert.deepEqual(actual, expected);
     });
@@ -295,28 +295,28 @@ describe("SequenceField - Rebase", () => {
 
     it("revive ↷ insert", () => {
         const revive = composeAnonChanges([
-            Change.revive(0, 1, 0, tag1),
-            Change.revive(3, 2, 1, tag1),
-            Change.revive(7, 1, 3, tag1),
+            Change.revive(0, 1, tag1, 0),
+            Change.revive(3, 2, tag1, 1),
+            Change.revive(7, 1, tag1, 3),
         ]);
         // TODO: test both tiebreak policies
         const insert = Change.insert(2, 1);
         const actual = rebase(revive, insert);
         const expected = composeAnonChanges([
-            Change.revive(0, 1, 0, tag1),
-            Change.revive(3, 2, 1, tag1),
-            Change.revive(8, 1, 3, tag1),
+            Change.revive(0, 1, tag1, 0),
+            Change.revive(3, 2, tag1, 1),
+            Change.revive(8, 1, tag1, 3),
         ]);
         assert.deepEqual(actual, expected);
     });
 
     it("muted revive ↷ insert", () => {
-        const revive = Change.revive(0, 3, 0, tag1, tag2);
+        const revive = Change.revive(0, 3, tag1, 0, tag2);
         const insert = Change.insert(1, 1);
         const actual = rebase(revive, insert);
         const expected = composeAnonChanges([
-            Change.revive(0, 1, 0, tag1, tag2),
-            Change.revive(2, 2, 1, tag1, tag2),
+            Change.revive(0, 1, tag1, 0, tag2),
+            Change.revive(2, 2, tag1, 1, tag2),
         ]);
         assert.deepEqual(actual, expected);
     });
@@ -326,7 +326,7 @@ describe("SequenceField - Rebase", () => {
             Change.modify(0, TestChange.mint([0], 1)),
             Change.modify(3, TestChange.mint([0], 2)),
         ]);
-        const revive = Change.revive(2, 1, 0, tag1);
+        const revive = Change.revive(2, 1, tag1, 0);
         const expected = composeAnonChanges([
             // Modify at earlier index is unaffected
             Change.modify(0, TestChange.mint([0], 1)),
@@ -345,7 +345,7 @@ describe("SequenceField - Rebase", () => {
             Change.delete(2, 1),
         ]);
         // Revives content between C and D
-        const revive = Change.revive(3, 1, 0, tag1);
+        const revive = Change.revive(3, 1, tag1, 0);
         const expected = composeAnonChanges([
             // Delete with earlier index is unaffected
             Change.delete(0, 1),
@@ -361,7 +361,7 @@ describe("SequenceField - Rebase", () => {
 
     it("insert ↷ revive", () => {
         const insert = composeAnonChanges([Change.insert(0, 1, 1), Change.insert(3, 1, 2)]);
-        const revive = Change.revive(1, 1, 0, tag1);
+        const revive = Change.revive(1, 1, tag1, 0);
         const actual = rebase(insert, revive);
         const expected = composeAnonChanges([Change.insert(0, 1, 1), Change.insert(4, 1, 2)]);
         assert.deepEqual(actual, expected);
@@ -369,29 +369,41 @@ describe("SequenceField - Rebase", () => {
 
     it("revive ↷ different revive", () => {
         const reviveA = composeAnonChanges([
-            Change.revive(0, 1, 0, tag1),
-            Change.revive(3, 2, 1, tag1),
-            Change.revive(7, 1, 3, tag1),
+            Change.revive(0, 1, tag1, 0),
+            Change.revive(3, 2, tag1, 1),
+            Change.revive(7, 1, tag1, 3),
         ]);
-        const reviveB = Change.revive(2, 1, 0, tag2);
+        const reviveB = Change.revive(2, 1, tag2, 0);
         const actual = rebase(reviveA, reviveB);
         // TODO: test cases for both ordering of revived data
         const expected = composeAnonChanges([
-            Change.revive(0, 1, 0, tag1),
-            Change.revive(3, 2, 1, tag1),
-            Change.revive(8, 1, 3, tag1),
+            Change.revive(0, 1, tag1, 0),
+            Change.revive(3, 2, tag1, 1),
+            Change.revive(8, 1, tag1, 3),
+        ]);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("intentional revive ↷ same revive", () => {
+        const reviveA = Change.intentionalRevive(0, 3, tag1, 1);
+        const reviveB = Change.revive(0, 1, tag1, 2);
+        const actual = rebase(reviveA, reviveB, tag2);
+        const expected = composeAnonChanges([
+            Change.intentionalRevive(0, 1, tag1, 1),
+            Change.intentionalRevive(1, 1, tag1, 2, tag2),
+            Change.intentionalRevive(2, 1, tag1, 3),
         ]);
         assert.deepEqual(actual, expected);
     });
 
     it("revive ↷ same revive", () => {
-        const reviveA = Change.revive(0, 3, 1, tag1);
-        const reviveB = Change.revive(0, 1, 2, tag1);
+        const reviveA = Change.revive(0, 3, tag1, 1);
+        const reviveB = Change.revive(0, 1, tag1, 2);
         const actual = rebase(reviveA, reviveB, tag2);
         const expected = composeAnonChanges([
-            Change.revive(0, 1, 1, tag1),
-            Change.revive(1, 1, 2, tag1, tag2),
-            Change.revive(2, 1, 3, tag1),
+            Change.revive(0, 1, tag1, 1),
+            Change.revive(1, 1, tag1, 2, tag2),
+            Change.revive(2, 1, tag1, 3),
         ]);
         assert.deepEqual(actual, expected);
     });

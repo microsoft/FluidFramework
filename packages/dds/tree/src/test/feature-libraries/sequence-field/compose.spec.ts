@@ -125,7 +125,7 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ modify", () => {
-        const revive = Change.revive(0, 3, 0, tag1);
+        const revive = Change.revive(0, 3, tag1, 0);
         const modify = Change.modify(0, { valueChange: { value: 2 } });
         const expected: SF.Changeset = [
             {
@@ -284,7 +284,7 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ delete", () => {
-        const revive = Change.revive(0, 5, 0, tag1);
+        const revive = Change.revive(0, 5, tag1, 0);
         const deletion: SF.Changeset = [
             1,
             { type: "Delete", count: 1 },
@@ -343,7 +343,7 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ insert", () => {
-        const revive = Change.revive(0, 5, 0, tag1);
+        const revive = Change.revive(0, 5, tag1, 0);
         const insert = Change.insert(0, 1, 2);
         // TODO: test with merge-right policy as well
         const expected: SF.Changeset = [
@@ -386,7 +386,7 @@ describe("SequenceField - Compose", () => {
 
     it("modify ○ revive", () => {
         const modify = Change.modify(0, { valueChange: { value: 1 } });
-        const revive = Change.revive(0, 2, 0, tag1);
+        const revive = Change.revive(0, 2, tag1, 0);
         const expected: SF.Changeset = [
             { type: "Revive", count: 2, detachedBy: tag1, detachIndex: 0 },
             {
@@ -400,7 +400,7 @@ describe("SequenceField - Compose", () => {
 
     it("delete ○ revive (different nodes)", () => {
         const deletion = Change.delete(0, 3);
-        const revive = Change.revive(0, 2, 0, tag1);
+        const revive = Change.revive(0, 2, tag1, 0);
         // TODO: test with merge-right policy as well
         const expected: SF.Changeset = [
             { type: "Revive", count: 2, detachedBy: tag1, detachIndex: 0 },
@@ -412,15 +412,15 @@ describe("SequenceField - Compose", () => {
 
     it("delete ○ revive (deleted nodes)", () => {
         const deletion = Change.delete(0, 3);
-        const revive = Change.revive(0, 3, 0, tag1);
+        const revive = Change.revive(0, 3, tag1, 0);
         const expected: SF.Changeset = [];
         const actual = shallowCompose([tagChange(deletion, tag1), makeAnonChange(revive)]);
         assert.deepEqual(actual, expected);
     });
 
     it("revive ○ revive", () => {
-        const reviveA = Change.revive(0, 2, 0, tag1);
-        const reviveB = Change.revive(0, 3, 0, tag2);
+        const reviveA = Change.revive(0, 2, tag1, 0);
+        const reviveB = Change.revive(0, 3, tag2, 0);
         // TODO: test with merge-right policy as well
         const expected: SF.Changeset = [
             { type: "Revive", count: 3, detachedBy: tag2, detachIndex: 0 },

@@ -61,13 +61,13 @@ describe("SequenceField - Invert", () => {
 
     it("delete => revive", () => {
         const input = Change.delete(0, 2);
-        const expected = Change.revive(0, 2, 0, tag);
+        const expected = Change.revive(0, 2, tag, 0);
         const actual = shallowInvert(input);
         assert.deepEqual(actual, expected);
     });
 
     it("revive => delete", () => {
-        const input = Change.revive(0, 2, 0, tag);
+        const input = Change.revive(0, 2, tag, 0);
         const expected = Change.delete(0, 2);
         const actual = shallowInvert(input);
         assert.deepEqual(actual, expected);

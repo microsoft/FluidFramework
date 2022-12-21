@@ -14,8 +14,9 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
     revive(
         index: number,
         count: number,
+        detachedBy: RevisionTag,
         detachIndex: number,
-        revision: RevisionTag,
+        isIntention?: true,
     ): Changeset<never>;
 }
 
@@ -36,8 +37,8 @@ export const sequenceFieldEditor = {
     revive: (
         index: number,
         count: number,
-        detachIndex: number,
         detachedBy: RevisionTag,
+        detachIndex: number,
         isIntention?: true,
     ): Changeset<never> => {
         const mark: Reattach = {

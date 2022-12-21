@@ -115,7 +115,9 @@ export function sequenceFieldToDelta<TNodeChange>(
                         const insertMark: Delta.Insert = {
                             type: Delta.MarkType.Insert,
                             content: reviver(
-                                mark.detachedBy ?? fail(ERR_NO_REVISION_ON_REVIVE),
+                                mark.detachedBy ??
+                                    mark.lastDetachedBy ??
+                                    fail(ERR_NO_REVISION_ON_REVIVE),
                                 mark.detachIndex,
                                 mark.count,
                             ),

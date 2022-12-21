@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { RevisionTag, TreeSchemaIdentifier } from "../../../core";
@@ -34,7 +33,7 @@ export const cases: {
         TestChange.compose,
     ),
     delete: createDeleteChangeset(1, 3),
-    revive: createReviveChangeset(2, 2, 0, tag),
+    revive: createReviveChangeset(2, 2, tag, 0),
 };
 
 function createInsertChangeset(
@@ -56,13 +55,13 @@ function createDeleteChangeset(startIndex: number, size: number): SF.Changeset<n
 function createReviveChangeset(
     startIndex: number,
     count: number,
-    detachIndex: number,
     detachedBy: RevisionTag,
+    detachIndex: number,
     mutedBy?: RevisionTag,
     linage?: SF.LineageEvent[],
     lastDetachedBy?: RevisionTag,
 ): SF.Changeset<never> {
-    const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachIndex, detachedBy);
+    const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachedBy, detachIndex);
     const mark = markList[markList.length - 1] as SF.Reattach;
     if (mutedBy !== undefined) {
         mark.mutedBy = mutedBy;
@@ -79,16 +78,16 @@ function createReviveChangeset(
 function createIntentionalReviveChangeset(
     startIndex: number,
     count: number,
-    detachIndex: number,
     detachedBy: RevisionTag,
+    detachIndex: number,
     mutedBy?: RevisionTag,
     linage?: SF.LineageEvent[],
 ): SF.Changeset<never> {
     const markList = SF.sequenceFieldEditor.revive(
         startIndex,
         count,
-        detachIndex,
         detachedBy,
+        detachIndex,
         true,
     );
     const mark = markList[markList.length - 1] as SF.Reattach;
