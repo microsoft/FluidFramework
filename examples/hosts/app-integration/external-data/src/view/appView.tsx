@@ -5,7 +5,7 @@
 
 import React from "react";
 
-import type { IAppModel } from "../modelInterfaces";
+import type { IAppModel } from "../model-interface";
 import { TaskListView } from "./taskListView";
 
 export interface IAppViewProps {
