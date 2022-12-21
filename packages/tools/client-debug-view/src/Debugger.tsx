@@ -7,7 +7,12 @@ import { useId } from "@fluentui/react-hooks";
 import { Resizable } from "re-resizable";
 import React from "react";
 
-import { DebuggerRegistry, IFluidClientDebugger, getFluidClientDebuggers, getDebuggerRegistry } from "@fluid-tools/client-debugger";
+import {
+	DebuggerRegistry,
+	IFluidClientDebugger,
+	getDebuggerRegistry,
+	getFluidClientDebuggers,
+} from "@fluid-tools/client-debugger";
 
 import { HasContainerId } from "./CommonProps";
 import { RenderOptions } from "./RendererOptions";
@@ -35,17 +40,18 @@ export function FluidClientDebugger(props: FluidClientDebuggerProps): React.Reac
 	/**
 	 * This function will retrieve all client debuggers and return the first one.
 	 */
-    const debuggerRegistry: DebuggerRegistry = getDebuggerRegistry();
+	const debuggerRegistry: DebuggerRegistry = getDebuggerRegistry();
 
-    function getFirstDebuggerAsDefault(): IFluidClientDebugger | undefined {
+	function getFirstDebuggerAsDefault(): IFluidClientDebugger | undefined {
 		const clientDebuggers = getFluidClientDebuggers();
-        const selectedDebugger = clientDebuggers.length === 0 ? undefined : clientDebuggers[0];
-        debuggerRegistry.setCurrentDisplayDebugger(selectedDebugger);
+		const selectedDebugger = clientDebuggers.length === 0 ? undefined : clientDebuggers[0];
+		debuggerRegistry.setCurrentDisplayDebugger(selectedDebugger);
 		return selectedDebugger;
 	}
 
 	const [clientDebugger, setClientDebugger] = React.useState<IFluidClientDebugger | undefined>(
-		debuggerRegistry.getCurrentDisplayDebugger() ??  getFirstDebuggerAsDefault(), );
+		debuggerRegistry.getCurrentDisplayDebugger() ?? getFirstDebuggerAsDefault(),
+	);
 
 	const [isContainerDisposed, setIsContainerDisposed] = React.useState<boolean>(
 		clientDebugger?.disposed ?? false,
@@ -68,14 +74,20 @@ export function FluidClientDebugger(props: FluidClientDebuggerProps): React.Reac
 		view = (
 			<NoDebuggerInstance
 				containerId={"No container found"}
-				onRetryDebugger={(): void => debuggerRegistry.getCurrentDisplayDebugger() ?? setClientDebugger(getFirstDebuggerAsDefault())}
+				onRetryDebugger={(): void =>
+					debuggerRegistry.getCurrentDisplayDebugger() ??
+					setClientDebugger(getFirstDebuggerAsDefault())
+				}
 			/>
 		);
 	} else if (isContainerDisposed) {
 		view = (
 			<DebuggerDisposed
 				containerId={clientDebugger.containerId}
-				onRetryDebugger={(): void => debuggerRegistry.getCurrentDisplayDebugger() ?? setClientDebugger(getFirstDebuggerAsDefault())}
+				onRetryDebugger={(): void =>
+					debuggerRegistry.getCurrentDisplayDebugger() ??
+					setClientDebugger(getFirstDebuggerAsDefault())
+				}
 			/>
 		);
 	} else {

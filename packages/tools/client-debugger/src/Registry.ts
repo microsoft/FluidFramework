@@ -75,25 +75,25 @@ export interface DebuggerRegistryEvents extends IEvent {
  */
 export class DebuggerRegistry extends IEventProvider<DebuggerRegistryEvents> {
 	/**
-     * A map of registered debuggers, which debugger monitor one container.
-     */
-    private readonly registeredDebuggers: Map<string, IFluidClientDebugger> = new Map();
+	 * A map of registered debuggers, which debugger monitor one container.
+	 */
+	private readonly registeredDebuggers: Map<string, IFluidClientDebugger> = new Map();
 
-    /**
-     * The debugger is currently displaying.
-     */
-    private currentDisplayDebugger: IFluidClientDebugger;
+	/**
+	 * The debugger is currently displaying.
+	 */
+	private currentDisplayDebugger: IFluidClientDebugger;
 
 	public constructor() {
 		super();
 	}
 
-    /**
-    * Initializes a {@link IFluidClientDebugger} from the provided properties, binding it to the global context. Emit a
-    * debugger registered event.
-    * @public
-    *
-    */
+	/**
+	 * Initializes a {@link IFluidClientDebugger} from the provided properties, binding it to the global context. Emit a
+	 * debugger registered event.
+	 * @public
+	 *
+	 */
 	public initializeDebugger(props: FluidClientDebuggerProps): void {
 		const { containerId } = props;
 		const existingDebugger = this.registeredDebuggers.get(containerId);
@@ -109,12 +109,12 @@ export class DebuggerRegistry extends IEventProvider<DebuggerRegistryEvents> {
 		this.emit("debuggerRegistered", containerId, clientDebugger);
 	}
 
-    /**
-    * Closes ({@link IFluidClientDebugger.dispose | disposes}) a registered client debugger associated with the
-    * provided Container ID. Emit a debugger closed event.
-    *
-    * @public
-    */
+	/**
+	 * Closes ({@link IFluidClientDebugger.dispose | disposes}) a registered client debugger associated with the
+	 * provided Container ID. Emit a debugger closed event.
+	 *
+	 * @public
+	 */
 	public closeDebugger(containerId: string): void {
 		if (this.registeredDebuggers.has(containerId)) {
 			const clientDebugger = this.registeredDebuggers.get(containerId);
@@ -132,10 +132,10 @@ export class DebuggerRegistry extends IEventProvider<DebuggerRegistryEvents> {
 		}
 	}
 
-    /**
-     * Generate a new list of client debugger from global context
-     * @returns client debuggers list.
-     */
+	/**
+	 * Generate a new list of client debugger from global context
+	 * @returns client debuggers list.
+	 */
 	public getRegisteredDebuggers(): IFluidClientDebugger[] {
 		const clientDebuggers: IFluidClientDebugger[] = [];
 		for (const [, clientDebugger] of this.registeredDebuggers) {
@@ -145,21 +145,21 @@ export class DebuggerRegistry extends IEventProvider<DebuggerRegistryEvents> {
 		return clientDebuggers;
 	}
 
-    /**
-     * Get the current display debugger.
-     * @returns the current displaying debugger.
-     */
-    public getCurrentDisplayDebugger(): IFluidClientDebugger {
-        return this.currentDisplayDebugger;
-    }
+	/**
+	 * Get the current display debugger.
+	 * @returns the current displaying debugger.
+	 */
+	public getCurrentDisplayDebugger(): IFluidClientDebugger {
+		return this.currentDisplayDebugger;
+	}
 
-    /**
-     * Update the current display debugger.
-     * @param currentDisplayDebugger the current display debugger.
-     */
-    public setCurrentDisplayDebugger(currentDisplayDebugger: IFluidClientDebugger): void {
-        this.currentDisplayDebugger = currentDisplayDebugger;
-    }
+	/**
+	 * Update the current display debugger.
+	 * @param currentDisplayDebugger - the current display debugger.
+	 */
+	public setCurrentDisplayDebugger(currentDisplayDebugger: IFluidClientDebugger): void {
+		this.currentDisplayDebugger = currentDisplayDebugger;
+	}
 }
 
 /**
