@@ -39,10 +39,10 @@
 		"start:tinylicious": "tinylicious",
 		"test": "start-server-and-test start:tinylicious 7070  test:jest",
 		"test:coverage": "start-server-and-test start:tinylicious 7070  test:jest:coverage",
-		"test:verbose": "start-server-and-test start:tinylicious 7070  test:jest:verbose",
 		"test:jest": "jest --detectOpenHandles",
 		"test:jest:coverage": "jest  --detectOpenHandles --coverage --ci --reporters=default --reporters=jest-junit",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --detectOpenHandles",
+		"test:verbose": "start-server-and-test start:tinylicious 7070  test:jest:verbose",
 		"tsc": "tsc --pretty",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
