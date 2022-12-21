@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { globals } from "../jest.config";
 
 // Tests disabled -- requires Tinylicious to be running, which our test environment doesn't do.

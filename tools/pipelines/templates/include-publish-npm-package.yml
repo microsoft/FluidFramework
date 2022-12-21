@@ -27,6 +27,7 @@ stages:
   - template: include-publish-npm-package-deployment.yml
     parameters:
       namespace: ${{ parameters.namespace }}
+      devFeedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
       feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
       official: false
       environment: test-package-build-feed
@@ -41,6 +42,7 @@ stages:
   - template: include-publish-npm-package-deployment.yml
     parameters:
       namespace: ${{ parameters.namespace }}
+      devFeedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
       feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
       official: false
       environment: package-build-feed
@@ -55,6 +57,9 @@ stages:
   - template: include-publish-npm-package-deployment.yml
     parameters:
       namespace: ${{ parameters.namespace }}
+      # internal/msinternal/example packages are deleted for official releases, but in case something goes wrong with that,
+      # using the `dev` registry is safe.
+      devFeedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
       feedName: https://registry.npmjs.org
       official: true
       environment: package-npmjs-feed

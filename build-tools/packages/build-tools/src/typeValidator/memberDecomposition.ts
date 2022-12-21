@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import {
     CallSignatureDeclaration,
     ClassDeclaration,
@@ -22,7 +21,8 @@ import {
     Type,
     TypeChecker,
 } from "ts-morph";
-import { decomposeType, decomposeTypes, GenericsInfo, typeToString } from "./typeDecomposition";
+
+import { GenericsInfo, decomposeType, decomposeTypes, typeToString } from "./typeDecomposition";
 import { BreakingIncrement, IValidator, log } from "./validatorUtils";
 
 function mergeIntoSet<T>(into: Set<T>, from: Set<T>) {
@@ -32,19 +32,21 @@ function mergeIntoSet<T>(into: Set<T>, from: Set<T>) {
 function getModifiersAndPrefix(member: ModifierableNode): [string, string] {
     const modifierList = member.getModifiers().map((val) => val.getText());
     let propNamePrefix = "";
-    const modifiers = modifierList.filter((modifier) => {
-        switch (modifier) {
-            case Scope.Protected:
-            case "static": {
-                propNamePrefix += `__${modifier}__`;
-                return false;
+    const modifiers = modifierList
+        .filter((modifier) => {
+            switch (modifier) {
+                case Scope.Protected:
+                case "static": {
+                    propNamePrefix += `__${modifier}__`;
+                    return false;
+                }
+                case "async":
+                    return false;
+                default:
+                    return true;
             }
-            case "async":
-                return false;
-            default:
-                return true;
-        }
-    }).join(" ");
+        })
+        .join(" ");
 
     return [modifiers, propNamePrefix];
 }
@@ -66,7 +68,7 @@ function decomposeAndMerge(
  * CallSignature:
  *      TypeParameters_opt ( ParameterList_opt ) TypeAnnotation_opt
  */
- export function getCallSignatureReplacement(
+export function getCallSignatureReplacement(
     typeChecker: TypeChecker,
     requiredGenerics: GenericsInfo,
     replacedTypes: Set<string>,
@@ -87,17 +89,30 @@ function decomposeAndMerge(
 
     // Handle parameters
     let paramsString = "";
-    paramsString = member.getParameters().map((p) => {
-        const subResultType = decomposeAndMerge(typeChecker, requiredGenerics, replacedTypes, p.getType());
+    paramsString = member
+        .getParameters()
+        .map((p) => {
+            const subResultType = decomposeAndMerge(
+                typeChecker,
+                requiredGenerics,
+                replacedTypes,
+                p.getType(),
+            );
 
-        // Convert initializers to q tokens
-        const qToken = p.hasInitializer() ? "?" : "";
+            // Convert initializers to q tokens
+            const qToken = p.hasInitializer() ? "?" : "";
 
-        return `${p.getName()}${qToken}: ${subResultType}`;
-    }).join(", ");
+            return `${p.getName()}${qToken}: ${subResultType}`;
+        })
+        .join(", ");
 
     // Handle return type
-    const returnType = decomposeAndMerge(typeChecker, requiredGenerics, replacedTypes, member.getReturnType());
+    const returnType = decomposeAndMerge(
+        typeChecker,
+        requiredGenerics,
+        replacedTypes,
+        member.getReturnType(),
+    );
 
     const call = `${typeArgsString}(${paramsString}): ${returnType};`;
 
@@ -136,17 +151,30 @@ export function getMethodReplacement(
 
     // Handle parameters
     let paramsString = "";
-    paramsString = member.getParameters().map((p) => {
-        const subResultType = decomposeAndMerge(typeChecker, requiredGenerics, replacedTypes, p.getType());
+    paramsString = member
+        .getParameters()
+        .map((p) => {
+            const subResultType = decomposeAndMerge(
+                typeChecker,
+                requiredGenerics,
+                replacedTypes,
+                p.getType(),
+            );
 
-        // Convert initializers to q tokens
-        const qToken = p.hasInitializer() ? "?" : "";
+            // Convert initializers to q tokens
+            const qToken = p.hasInitializer() ? "?" : "";
 
-        return `${p.getName()}${qToken}: ${subResultType}`;
-    }).join(", ");
+            return `${p.getName()}${qToken}: ${subResultType}`;
+        })
+        .join(", ");
 
     // Handle return type
-    const returnType = decomposeAndMerge(typeChecker, requiredGenerics, replacedTypes, member.getReturnType());
+    const returnType = decomposeAndMerge(
+        typeChecker,
+        requiredGenerics,
+        replacedTypes,
+        member.getReturnType(),
+    );
 
     // Q token
     const qToken = member.hasQuestionToken() ? "?" : "";
@@ -165,7 +193,12 @@ export function getPropertyReplacement(
     // Handle modifiers
     const [modifiers, propNamePrefix] = getModifiersAndPrefix(member);
 
-    const propertyType = decomposeAndMerge(typeChecker, requiredGenerics, replacedTypes, member.getType());
+    const propertyType = decomposeAndMerge(
+        typeChecker,
+        requiredGenerics,
+        replacedTypes,
+        member.getType(),
+    );
     const qToken = member.hasQuestionToken() ? "?" : "";
     const property = `${modifiers} ${propNamePrefix}${member.getName()}${qToken}: ${propertyType};`;
 
@@ -185,25 +218,35 @@ export function getConstructorReplacements(
 
     // Handle parameters
     let paramsString = "";
-    paramsString = member.getParameters().map((p) => {
-        const subResultType = decomposeAndMerge(typeChecker, requiredGenerics, replacedTypes, p.getType());
+    paramsString = member
+        .getParameters()
+        .map((p) => {
+            const subResultType = decomposeAndMerge(
+                typeChecker,
+                requiredGenerics,
+                replacedTypes,
+                p.getType(),
+            );
 
-        // Handle inline property declarations
-        const paramModifiers = p.getModifiers().map((val) => val.getText());
-        if (paramModifiers.length > 0 && paramModifiers.indexOf(Scope.Private) === -1) {
-            let prefix = "__ctorProp__";
-            const protectedIndex = paramModifiers.indexOf(Scope.Protected);
-            if (protectedIndex !== -1) {
-                paramModifiers.splice(protectedIndex, 1);
-                prefix += "__protected__";
+            // Handle inline property declarations
+            const paramModifiers = p.getModifiers().map((val) => val.getText());
+            if (paramModifiers.length > 0 && paramModifiers.indexOf(Scope.Private) === -1) {
+                let prefix = "__ctorProp__";
+                const protectedIndex = paramModifiers.indexOf(Scope.Protected);
+                if (protectedIndex !== -1) {
+                    paramModifiers.splice(protectedIndex, 1);
+                    prefix += "__protected__";
+                }
+                const qToken = p.hasQuestionToken() ? "?" : "";
+                const ctorProperty = `${paramModifiers.join(
+                    " ",
+                )} ${prefix}${p.getName()}${qToken}: ${subResultType};`;
+                replacedMembers.push(ctorProperty);
             }
-            const qToken = p.hasQuestionToken() ? "?" : "";
-            const ctorProperty = `${paramModifiers.join(" ")} ${prefix}${p.getName()}${qToken}: ${subResultType};`;
-            replacedMembers.push(ctorProperty);
-        }
 
-        return `${p.getName()}: ${subResultType}`;
-    }).join(", ");
+            return `${p.getName()}: ${subResultType}`;
+        })
+        .join(", ");
 
     const method = `${modifiers} __ctorDecl__(${paramsString}): void;`;
 
@@ -221,7 +264,12 @@ export function getGetterReplacement(
     const [modifiers, propNamePrefix] = getModifiersAndPrefix(member);
 
     // Handle return type
-    const returnType = decomposeAndMerge(typeChecker, requiredGenerics, replacedTypes, member.getReturnType());
+    const returnType = decomposeAndMerge(
+        typeChecker,
+        requiredGenerics,
+        replacedTypes,
+        member.getReturnType(),
+    );
     const getter = `${modifiers} get ${propNamePrefix}${member.getName()}(): ${returnType}`;
 
     return getter;
@@ -238,7 +286,12 @@ export function getSetterReplacement(
 
     // setter delcaration must always has exactly one param
     const param = member.getParameters()[0];
-    const paramType = decomposeAndMerge(typeChecker, requiredGenerics, replacedTypes, param.getType());
+    const paramType = decomposeAndMerge(
+        typeChecker,
+        requiredGenerics,
+        replacedTypes,
+        param.getType(),
+    );
     const setter = `${modifiers} set ${propNamePrefix}${member.getName()}(${param.getName()}: ${paramType});`;
 
     return setter;
@@ -264,7 +317,12 @@ export function getIndexSignatureReplacement(
     const keyTypeString = typeToString(typeChecker, member.getKeyType());
 
     // Handle return type
-    const returnType = decomposeAndMerge(typeChecker, requiredGenerics, replacedTypes, member.getReturnType());
+    const returnType = decomposeAndMerge(
+        typeChecker,
+        requiredGenerics,
+        replacedTypes,
+        member.getReturnType(),
+    );
 
     const index = `${modifiers} [${member.getKeyName()}: ${keyTypeString}]: ${returnType};`;
 

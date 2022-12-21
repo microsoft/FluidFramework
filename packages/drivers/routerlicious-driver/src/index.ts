@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export * from "./defaultTokenProvider";
-export * from "./deltaStorageService";
-export * from "./documentService";
-export * from "./documentServiceFactory";
-export * from "./documentStorageService";
-export * from "./nullBlobStorageService";
-export * from "./policies";
-export * from "./tokens";
+// Tokens
+export { DefaultTokenProvider } from "./defaultTokenProvider";
+export { ITokenProvider, ITokenResponse, ITokenService } from "./tokens";
+
+// Factory
+export { DocumentPostCreateError, RouterliciousDocumentServiceFactory } from "./documentServiceFactory";
+
+// Configuration
+export { IRouterliciousDriverPolicies } from "./policies";

@@ -94,7 +94,6 @@ describe("SharedOT", () => {
                 }
 
                 // Initialize PRNG with given seed.
-                // eslint-disable-next-line @typescript-eslint/unbound-method
                 const float64 = new Random(seed).float64;
 
                 // Returns a pseudorandom 32b integer in the range [0 .. max).
@@ -104,7 +103,6 @@ describe("SharedOT", () => {
                 const randomText = () => `${float64().toString(36).substr(0, int32(12))}`;
 
                 const insert = (docIndex: number, position: number, text: string) => {
-                    // eslint-disable-next-line max-len
                     trace?.push(`doc${docIndex + 1}.insert(/* position: */ ${position}, /* text: */ ${JSON.stringify(text)});`);
                     docs[docIndex].insert(position, text);
                 };
@@ -180,7 +178,6 @@ describe("SharedOT", () => {
             { numClients: 5, numOps: 200, syncProbability: 0.0, disconnectProbability: 0, seed: 0x2f98736d },
             { numClients: 2, numOps: 1000, syncProbability: 0.3, disconnectProbability: 0.25, seed: 0x84d43a0a },
         ]) {
-            // eslint-disable-next-line max-len
             it(`Stress (numClients=${numClients} numOps=${numOps} syncProbability=${syncProbability} disconnectProbability=${disconnectProbability} seed=0x${seed.toString(16).padStart(8, "0")})`,
                 // Note: Must use 'function' rather than arrow '() => { .. }' in order to set 'this.timeout(..)'
                 async function() {
@@ -216,7 +213,6 @@ describe("SharedOT", () => {
                     ++iterations;
                     const now = Date.now();
                     if (now - lastStatus > 5000) {
-                        // eslint-disable-next-line max-len
                         process.stdout.write(`Stress loop: ${iterations} iterations completed - Total Elapsed: ${((Date.now() - start) / 1000).toFixed(2)}s\n`);
                         lastStatus = now;
                     }

@@ -2,16 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
-import { globFn, toPosixPath } from "../../../common/utils";
-import { TscTask } from "./tscTask";
 import * as path from "path";
 
+import { globFn, toPosixPath } from "../../../common/utils";
+import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
+import { TscTask } from "./tscTask";
+
 interface DoneFileContent {
-    config: { [configFile: string]: string },
-    sources: { [srcFile: string]: string },
-    dependencies: { [pkgName: string]: { [command: string]: any } },
+    config: { [configFile: string]: string };
+    sources: { [srcFile: string]: string };
+    dependencies: { [pkgName: string]: { [command: string]: any } };
 }
 export class WebpackTask extends LeafWithDoneFileTask {
     protected async getDoneFileContent() {
@@ -19,18 +19,24 @@ export class WebpackTask extends LeafWithDoneFileTask {
             const content: DoneFileContent = {
                 config: {},
                 sources: {},
-                dependencies: {}
+                dependencies: {},
             };
             const srcGlob = toPosixPath(this.node.pkg.directory) + "/src/**/*.*";
             const srcFiles = await globFn(srcGlob);
             for (const srcFile of srcFiles) {
-                content.sources[srcFile] = await this.node.buildContext.fileHashCache.getFileHash(srcFile);
+                content.sources[srcFile] = await this.node.buildContext.fileHashCache.getFileHash(
+                    srcFile,
+                );
             }
 
-            const configFiles = await globFn(toPosixPath(this.node.pkg.directory) + "/webpack.*.js");
+            const configFiles = await globFn(
+                toPosixPath(this.node.pkg.directory) + "/webpack.*.js",
+            );
             configFiles.push(this.configFileFullPath);
             for (const configFile of configFiles) {
-                content.config[configFile] = await this.node.buildContext.fileHashCache.getFileHash(configFile);
+                content.config[configFile] = await this.node.buildContext.fileHashCache.getFileHash(
+                    configFile,
+                );
             }
 
             for (const dep of this.allDependentTasks) {

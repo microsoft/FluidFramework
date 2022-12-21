@@ -5,8 +5,10 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ChangeFamily } from "../change-family";
+import { TaggedChange, RevisionTag, tagChange, tagInverse } from "../rebase";
+import { SimpleDependee } from "../dependency-tracking";
 import { AnchorSet, Delta } from "../tree";
-import { Brand, fail, RecursiveReadonly } from "../util";
+import { brand, Brand, fail, RecursiveReadonly } from "../util";
 
 export interface Commit<TChangeset> {
     sessionId: SessionId;
@@ -25,7 +27,10 @@ export type SessionId = string;
 // TODO: Remove commits when they are no longer in the collab window
 // TODO: Try to reduce this to a single type parameter
 // TODO: Move logic into Rebaser if possible
-export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TChangeset>> {
+export class EditManager<
+    TChangeset,
+    TChangeFamily extends ChangeFamily<any, TChangeset>,
+> extends SimpleDependee {
     // The trunk represents the list of received sequenced changes.
     // The change in each commit is rebased onto the previous change in the list.
     private readonly trunk: Commit<TChangeset>[] = [];
@@ -38,18 +43,84 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     // This is the ordered list of changes made by this client which have not yet been confirmed as sequenced changes.
     // The first change in this list is based on the last change in the trunk.
     // Every other change in this list is based on the change preceding it.
-    private localChanges: TChangeset[] = [];
-    private localSessionId: SessionId | undefined;
+    private localChanges: TaggedChange<TChangeset>[] = [];
+
+    // Because we do not have sequence numbers for local changes, we assign them temporary revision tags.
+    // We use negative numbers to avoid collisions with finalized revision tags.
+    // TODO: Eventually we will have to send references to local revision tag (e.g. when undoing a local change)
+    private nextLocalRevision = -1;
+
+    private localSessionId?: SessionId;
+
+    private minimumSequenceNumber: number = -1;
+
+    public readonly computationName: string = "EditManager";
 
     public constructor(
         public readonly changeFamily: TChangeFamily,
         public readonly anchors?: AnchorSet,
-    ) { }
+    ) {
+        super();
+    }
 
-    public setLocalSessionId(id: SessionId) {
-        assert(this.localSessionId === undefined || this.localSessionId === id,
-            0x3a1 /* Local session ID cannot be changed */);
+    /**
+     * Advances the minimum sequence number, and removes all commits from the trunk which lie outside the collaboration window.
+     * @param minimumSequenceNumber - the minimum sequence number for all of the connected clients
+     */
+    public advanceMinimumSequenceNumber(minimumSequenceNumber: number): void {
+        assert(
+            minimumSequenceNumber >= this.minimumSequenceNumber,
+            0x476 /* number must be larger or equal to current minimumSequenceNumber. */,
+        );
+        this.minimumSequenceNumber = minimumSequenceNumber;
+        let commitsToRemove = 0;
+        while (
+            commitsToRemove < this.trunk.length &&
+            this.trunk[commitsToRemove].seqNumber < minimumSequenceNumber
+        ) {
+            commitsToRemove += 1;
+        }
+        this.trunk.splice(0, commitsToRemove);
+    }
+
+    /**
+     * Sets the ID that uniquely identifies the session for the document being edited.
+     * This function must be called before new changes (local or sequenced) are fed to this `EditManager`.
+     * This function must be called exactly once.
+     * @param id - The ID for the session associated with this `EditManager` instance.
+     */
+    public initSessionId(id: SessionId): void {
+        assert(
+            this.localSessionId === undefined,
+            0x427 /* The session ID should only be set once */,
+        );
         this.localSessionId = id;
+    }
+
+    public isEmpty(): boolean {
+        return (
+            this.trunk.length === 0 && this.branches.size === 0 && this.localChanges.length === 0
+        );
+    }
+
+    public getSummaryData(): ReadonlySummaryData<TChangeset> {
+        // The assert below is acceptable at present because summarization only ever occurs on a client with no
+        // local/in-flight changes.
+        // In the future we may wish to relax this constraint. For that to work, the current implementation of
+        // `EditManager` would have to be amended in one of two ways:
+        // A) Changes made by the local session should be represented by a branch in `EditManager.branches`.
+        // B) The contents of such a branch should be computed on demand based on the trunk.
+        // Note that option (A) would be a simple change to `addSequencedChange` whereas (B) would likely require
+        // rebasing trunk changes over the inverse of trunk changes.
+        assert(
+            this.localChanges.length === 0,
+            0x428 /* Clients with local changes cannot be used to generate summaries */,
+        );
+        return { trunk: this.trunk, branches: this.branches };
+    }
+
+    public loadSummaryData(writer: (data: MutableSummaryData<TChangeset>) => void): void {
+        writer({ trunk: this.trunk, branches: this.branches });
     }
 
     public getTrunk(): readonly RecursiveReadonly<Commit<TChangeset>>[] {
@@ -65,10 +136,15 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     public getLocalChanges(): readonly RecursiveReadonly<TChangeset>[] {
-        return this.localChanges;
+        return this.localChanges.map((change) => change.change);
     }
 
     public addSequencedChange(newCommit: Commit<TChangeset>): Delta.Root {
+        assert(
+            this.localSessionId !== undefined,
+            0x429 /* The session ID should be set before processing changes */,
+        );
+
         if (this.trunk.length > 0) {
             const lastSeqNumber = this.trunk[this.trunk.length - 1].seqNumber;
             assert(
@@ -80,10 +156,22 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             // `newCommit` should correspond to the oldest change in `localChanges`, so we move it into trunk.
             // `localChanges` are already rebased to the trunk, so we can use the stored change instead of rebasing the
             // change in the incoming commit.
-            const changeset = this.localChanges.shift() ?? fail(UNEXPECTED_SEQUENCED_LOCAL_EDIT);
+            const change = this.localChanges.shift() ?? fail(UNEXPECTED_SEQUENCED_LOCAL_EDIT);
+
+            // TODO: The local change may contain references to local revision tags.
+            // When other clients rebase this change, they will instead use the corresponding sequence numbers
+            // instead of this client's local revision numbers. Although this need not inherently cause a divergence
+            // in the state of the document, this is potentially dangerous.
+            // This could be solved by one of the following approaches:
+            // A) Maintain a `Branch` of sequenced changes from this client in addition to `localChanges`,
+            //    and only use the rebased changes from that branch when adding to the trunk.
+            // B) Use a UUID as the revision tag for each changeset instead of a sequence number,
+            //    so that we do not need local revision tags.
+            // C) Strip any references to local changes before adding the change to the trunk.
+            //    This would also have to be done on each branch with references to changes local to that branch.
             this.trunk.push({
                 ...newCommit,
-                changeset,
+                changeset: change.change,
             });
             return Delta.empty;
         }
@@ -99,13 +187,15 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             changeset: newChangeFullyRebased,
         });
 
-        return this.changeFamily.intoDelta(this.rebaseLocalBranch(newChangeFullyRebased));
+        return this.changeFamily.intoDelta(
+            this.rebaseLocalBranch(tagChange(newChangeFullyRebased, brand(newCommit.seqNumber))),
+        );
     }
 
     /**
      * Add `newCommit` to the tip of the `branch` and updates the branch's `isDivergent` flag.
      */
-    public addCommitToBranch(branch: Branch<TChangeset>, newCommit: Commit<TChangeset>): void {
+    private addCommitToBranch(branch: Branch<TChangeset>, newCommit: Commit<TChangeset>): void {
         branch.localChanges.push(newCommit);
         const lastCommit = this.getLastCommit();
         if (lastCommit === undefined || newCommit.refNumber === lastCommit.seqNumber) {
@@ -116,7 +206,12 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     public addLocalChange(change: TChangeset): Delta.Root {
-        this.localChanges.push(change);
+        assert(
+            this.localSessionId !== undefined,
+            0x42a /* The session ID should be set before processing changes */,
+        );
+
+        this.localChanges.push(tagChange(change, this.allocateLocalRevisionTag()));
 
         if (this.anchors !== undefined) {
             this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
@@ -125,7 +220,10 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         return this.changeFamily.intoDelta(change);
     }
 
-    private rebaseChangeFromBranchToTrunk(commitToRebase: Commit<TChangeset>, branch: Branch<TChangeset>): TChangeset {
+    private rebaseChangeFromBranchToTrunk(
+        commitToRebase: Commit<TChangeset>,
+        branch: Branch<TChangeset>,
+    ): TChangeset {
         if (!branch.isDivergent && commitToRebase.sessionId === this.getLastCommit()?.sessionId) {
             // The new commit is not divergent and therefore doesn't need to be rebased.
             return commitToRebase.changeset;
@@ -133,7 +231,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
 
         const changeRebasedToRef = branch.localChanges.reduceRight(
             (newChange, branchCommit) =>
-                this.changeFamily.rebaser.rebase(newChange, this.changeFamily.rebaser.invert(branchCommit.changeset)),
+                this.changeFamily.rebaser.rebase(newChange, this.inverseFromCommit(branchCommit)),
             commitToRebase.changeset,
         );
 
@@ -141,20 +239,23 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     // TODO: Try to share more logic between this method and `rebaseBranch`
-    private rebaseLocalBranch(trunkChange: TChangeset): TChangeset {
-        const newBranchChanges: TChangeset[] = [];
-        const inverses: TChangeset[] = [];
+    private rebaseLocalBranch(trunkChange: TaggedChange<TChangeset>): TChangeset {
+        const newBranchChanges: TaggedChange<TChangeset>[] = [];
+        const inverses: TaggedChange<TChangeset>[] = [];
 
         for (const localChange of this.localChanges) {
-            let change = this.rebaseChange(localChange, inverses);
+            let change = this.rebaseChange(localChange.change, inverses);
             change = this.changeFamily.rebaser.rebase(change, trunkChange);
             change = this.rebaseChange(change, newBranchChanges);
 
-            newBranchChanges.push(change);
+            newBranchChanges.push({ ...localChange, change });
 
-            inverses.unshift(this.changeFamily.rebaser.invert(localChange));
+            const inverse = this.changeFamily.rebaser.invert(localChange);
+            inverses.unshift(tagInverse(inverse, localChange.revision));
         }
 
+        // This approach can lead to non-minimal changesets (and therefore deltas) for local inserts because
+        // the rebased local insert does not cancel out with its inverse during composition.
         const netChange = this.changeFamily.rebaser.compose([
             ...inverses,
             trunkChange,
@@ -166,6 +267,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         }
 
         this.localChanges = newBranchChanges;
+
         return netChange;
     }
 
@@ -185,8 +287,9 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             return;
         }
         const newBranchChanges: Commit<TChangeset>[] = [];
-        const inverses: TChangeset[] = [];
+        const inverses: TaggedChange<TChangeset>[] = [];
 
+        let nextTempRevision = -1;
         for (const commit of branch.localChanges) {
             if (commit.seqNumber > newRef) {
                 let change = this.rebaseChange(commit.changeset, inverses);
@@ -199,7 +302,12 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
                 });
             }
 
-            inverses.unshift(this.changeFamily.rebaser.invert(commit.changeset));
+            inverses.unshift(
+                tagChange(
+                    this.changeFamily.rebaser.invert(taggedChangeFromCommit(commit)),
+                    brand(nextTempRevision--),
+                ),
+            );
         }
 
         branch.localChanges = newBranchChanges;
@@ -207,10 +315,13 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     private rebaseOverCommits(changeToRebase: TChangeset, commits: Commit<TChangeset>[]) {
-        return this.rebaseChange(changeToRebase, commits.map((commit) => commit.changeset));
+        return this.rebaseChange(changeToRebase, commits.map(taggedChangeFromCommit));
     }
 
-    private rebaseChange(changeToRebase: TChangeset, changesToRebaseOver: TChangeset[]) {
+    private rebaseChange(
+        changeToRebase: TChangeset,
+        changesToRebaseOver: TaggedChange<TChangeset>[],
+    ) {
         return changesToRebaseOver.reduce(
             (a, b) => this.changeFamily.rebaser.rebase(a, b),
             changeToRebase,
@@ -223,7 +334,10 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
      * @returns The trunk commits with sequence numbers greater than `pred` and smaller or equal to `last`,
      * ordered in sequencing order.
      */
-    private getCommitsAfterAndUpToInclusive(pred: SeqNumber, last: SeqNumber): Commit<TChangeset>[] {
+    private getCommitsAfterAndUpToInclusive(
+        pred: SeqNumber,
+        last: SeqNumber,
+    ): Commit<TChangeset>[] {
         // This check is just a fast-path for the common case where no concurrent edits occurred.
         if (pred === last) {
             return [];
@@ -264,9 +378,24 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         }
         return this.branches.get(sessionId) as Branch<TChangeset>;
     }
+
+    private inverseFromCommit(commit: Commit<TChangeset>): TaggedChange<TChangeset> {
+        return tagInverse(
+            this.changeFamily.rebaser.invert(taggedChangeFromCommit(commit)),
+            brand(commit.seqNumber),
+        );
+    }
+
+    private allocateLocalRevisionTag(): RevisionTag {
+        return brand(this.nextLocalRevision--);
+    }
 }
 
-interface Branch<TChangeset> {
+function taggedChangeFromCommit<T>(commit: Commit<T>): TaggedChange<T> {
+    return tagChange(commit.changeset, brand(commit.seqNumber));
+}
+
+export interface Branch<TChangeset> {
     localChanges: Commit<TChangeset>[];
     refSeq: SeqNumber;
     /**
@@ -294,5 +423,25 @@ interface Branch<TChangeset> {
      */
     isDivergent: boolean;
 }
+
 const UNEXPECTED_SEQUENCED_LOCAL_EDIT =
     "Received a sequenced change from the local session despite having no local changes";
+
+/**
+ * The in-memory data that summaries contain.
+ * Note that this interface gives mutable access to the data.
+ * Passed to {@link loadSummary}.
+ */
+export interface MutableSummaryData<TChangeset> {
+    readonly trunk: Commit<TChangeset>[];
+    readonly branches: Map<SessionId, Branch<TChangeset>>;
+}
+
+/**
+ * The in-memory data that summaries contain.
+ * Passed to {@link encodeSummary}.
+ */
+export interface ReadonlySummaryData<TChangeset> {
+    readonly trunk: readonly Readonly<Commit<TChangeset>>[];
+    readonly branches: ReadonlyMap<SessionId, Readonly<Branch<TChangeset>>>;
+}

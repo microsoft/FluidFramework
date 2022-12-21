@@ -4,7 +4,7 @@
  */
 
 import { ISession, NetworkError } from "@fluidframework/server-services-client";
-import { IDocument, ICollection } from "@fluidframework/server-services-core";
+import { IDocument, ICollection, runWithRetry } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 const defaultSessionStickinessDurationMs = 60 * 60 * 1000; // 60 minutes
@@ -17,6 +17,7 @@ async function createNewSession(
     ordererUrl: string,
     historianUrl: string,
     deltaStreamUrl: string,
+    tenantId,
     documentId,
     documentsCollection: ICollection<IDocument>,
     lumberjackProperties: Record<string, any>,
@@ -31,6 +32,7 @@ async function createNewSession(
     try {
         await documentsCollection.upsert(
             {
+                tenantId,
                 documentId,
             },
             {
@@ -59,7 +61,8 @@ async function updateExistingSession(
     deltaStreamUrl: string,
     document: IDocument,
     existingSession: ISession,
-    documentId,
+    documentId: string,
+    tenantId: string,
     documentsCollection: ICollection<IDocument>,
     sessionStickinessDurationMs: number,
     lumberjackProperties: Record<string, any>,
@@ -74,12 +77,21 @@ async function updateExistingSession(
     // that ops are backed up to a global location before a session is allowed to move.
     // Otherwise, a moved session could end up without access to ops that still only exist in a location's
     // non-global storage.
+    const sessionStickyCalculationTimestamp = Date.now();
     const isSessionSticky = document.lastAccessTime !== undefined
-        ? Date.now() - document.lastAccessTime < sessionStickinessDurationMs
+        ? sessionStickyCalculationTimestamp - document.lastAccessTime < sessionStickinessDurationMs
         : false; // If no session end has been recorded, allow session to move.
     // Allow session stickiness to be overridden by manually deleting a session's orderer/historian urls.
     const sessionHasLocation: boolean =
         !!existingSession.ordererUrl && !!existingSession.historianUrl && !!existingSession.deltaStreamUrl;
+    Lumberjack.info("Calculated isSessionSticky and sessionHasLocation", {
+        ...lumberjackProperties,
+        isSessionSticky,
+        sessionHasLocation,
+        documentLastAccessTime: document.lastAccessTime,
+        sessionStickyCalculationTimestamp,
+        sessionStickinessDurationMs,
+    });
     if (!isSessionSticky || !sessionHasLocation) {
         // Allow session location to be moved.
         if (
@@ -89,10 +101,13 @@ async function updateExistingSession(
         ) {
             // Previous session was in a different location. Move to current location.
             // Reset logOffset, ordererUrl, and historianUrl when moving session location.
-            Lumberjack.info(
-                `Reset logOffset, ordererUrl, and historianUrl when switching cluster.`,
-                lumberjackProperties,
-            );
+            Lumberjack.info("Moving session", {
+                ...lumberjackProperties,
+                isSessionSticky,
+                sessionHasLocation,
+                oldSessionLocation: { ordererUrl: existingSession.ordererUrl, historianUrl: existingSession.historianUrl, deltaStreamUrl: existingSession.deltaStreamUrl },
+                newSessionLocation: { ordererUrl, historianUrl, deltaStreamUrl },
+            });
             updatedOrdererUrl = ordererUrl;
             updatedHistorianUrl = historianUrl;
             updatedDeltaStreamUrl = deltaStreamUrl;
@@ -100,11 +115,13 @@ async function updateExistingSession(
                 const deli = JSON.parse(document.deli);
                 deli.logOffset = -1;
                 updatedDeli = JSON.stringify(deli);
+                Lumberjack.info(`Reset deli logOffset as -1`, lumberjackProperties);
             }
             if (document.scribe !== "") {
                 const scribe = JSON.parse(document.scribe);
                 scribe.logOffset = -1;
                 updatedScribe = JSON.stringify(scribe);
+                Lumberjack.info(`Reset scribe logOffset as -1`, lumberjackProperties);
             }
         }
     }
@@ -119,16 +136,53 @@ async function updateExistingSession(
         isSessionActive: false,
     };
     try {
-        await documentsCollection.upsert(
+        const result = await documentsCollection.findAndUpdate(
             {
+                tenantId,
                 documentId,
+                "session.isSessionAlive": false,
             },
             {
+                createTime: document.createTime,
                 deli: updatedDeli ?? document.deli,
-                scribe: updatedScribe ?? document.scribe,
+                documentId: document.documentId,
                 session: updatedSession,
-            },
-            null);
+                scribe: updatedScribe ?? document.scribe,
+                tenantId: document.tenantId,
+                version: document.version,
+            });
+        Lumberjack.info(
+            `The original document in updateExistingSession: ${JSON.stringify(result)}`,
+            lumberjackProperties,
+        );
+        // There is no document with isSessionAlive as false. It means this session has been discovered by
+        // another call, and there is a race condition with different clients writing truth into the cosmosdb
+        // from different clusters. Thus, let it get the truth from the cosmosdb with isSessionAlive as true.
+        if (!result.existing) {
+            Lumberjack.info(`The document with isSessionAlive as false does not exist`, lumberjackProperties);
+            const doc: IDocument = await runWithRetry(
+                async () => documentsCollection.findOne({ tenantId, documentId, "session.isSessionAlive": true,}),
+                "getDocumentWithAlive",
+                3 /* maxRetries */,
+                1000 /* retryAfterMs */,
+                lumberjackProperties,
+                undefined, /* shouldIgnoreError */
+                (error) => true, /* shouldRetry */
+            );
+            if (!doc && !doc.session) {
+                Lumberjack.error(
+                    `Error running getSession from document: ${JSON.stringify(doc)}`,
+                    lumberjackProperties,
+                );
+                throw new NetworkError(500, "Error running getSession, please try again");
+            }
+            return doc.session;
+        } else {
+            Lumberjack.info(
+                `The Session ${JSON.stringify(updatedSession)} was updated into the documents collection`,
+                lumberjackProperties,
+            );
+        }
     } catch (error) {
         Lumberjack.error("Error persisting update to existing document session", lumberjackProperties, error);
         throw new NetworkError(500, "Failed to persist update to document session");
@@ -176,6 +230,10 @@ export async function getSession(
     }
     // Session can be undefined for documents that existed before the concept of service sessions.
     const existingSession: ISession | undefined = document.session;
+    Lumberjack.info(
+        `The existingSession in getSession: ${JSON.stringify(existingSession)}`,
+        lumberjackProperties,
+    );
 
     if (!existingSession) {
         // Create a new session for the document and persist to DB.
@@ -183,6 +241,7 @@ export async function getSession(
             ordererUrl,
             historianUrl,
             deltaStreamUrl,
+            tenantId,
             documentId,
             documentsCollection,
             lumberjackProperties,
@@ -190,8 +249,8 @@ export async function getSession(
         return convertSessionToFreshSession(newSession, lumberjackProperties);
     }
 
-    if (existingSession.isSessionAlive) {
-        // Existing session is considered alive/discovered, so return to consumer as-is.
+    if (existingSession.isSessionAlive || existingSession.isSessionActive) {
+        // Existing session is considered alive/discovered or active, so return to consumer as-is.
         return existingSession;
     }
 
@@ -203,6 +262,7 @@ export async function getSession(
         document,
         existingSession,
         documentId,
+        tenantId,
         documentsCollection,
         sessionStickinessDurationMs,
         lumberjackProperties,

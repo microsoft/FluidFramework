@@ -11,6 +11,7 @@ import { tryImportNodeRdkafka } from "./tryImport";
 export interface IKafkaBaseOptions {
     numberOfPartitions: number;
     replicationFactor: number;
+    disableTopicCreation?: boolean;
     sslCACertFilePath?: string;
     restartOnKafkaErrorCodes?: number[];
 }
@@ -76,7 +77,10 @@ export abstract class RdkafkaBase extends EventEmitter {
 
     private async initialize() {
         try {
-            await this.ensureTopics();
+            if (!this.options.disableTopicCreation) {
+                await this.ensureTopics();
+            }
+
             this.connect();
         } catch (ex) {
             this.error(ex);
@@ -127,8 +131,7 @@ export abstract class RdkafkaBase extends EventEmitter {
         this.emit("error", error, errorData);
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    private static isObject(value: any): value is object {
+    protected static isObject(value: any): value is object {
         return value !== null && typeof (value) === "object";
     }
 }

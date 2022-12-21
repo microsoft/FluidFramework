@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { BaseSegment, ISegment, Marker } from "./mergeTreeNodes";
+import { assert } from "@fluidframework/common-utils";
+import { BaseSegment, ISegment } from "./mergeTreeNodes";
 import { IJSONSegment } from "./ops";
 import { PropertySet } from "./properties";
-import { LocalReferenceCollection } from "./localReference";
 
 // Maximum length of text segment to be considered to be merged with other segment.
 // Maximum segment length is at least 2x of it (not taking into account initial segment creation).
@@ -81,16 +81,9 @@ export class TextSegment extends BaseSegment {
     }
 
     public append(segment: ISegment) {
-        if (TextSegment.is(segment)) {
-            // Note: Must call 'appendLocalRefs' before modifying this segment's length as
-            // 'this.cachedLength' is used to adjust the offsets of the local refs.
-            LocalReferenceCollection.append(this, segment);
-
-            this.text += segment.text;
-            this.cachedLength = this.text.length;
-        } else {
-            throw new Error("can only append text segment");
-        }
+        assert(TextSegment.is(segment), 0x447 /* can only append text segment */);
+        super.append(segment);
+        this.text += segment.text;
     }
 
     // TODO: retain removed text for undo
@@ -121,12 +114,5 @@ export class TextSegment extends BaseSegment {
 }
 
 export interface IMergeTreeTextHelper{
-    /**
-     * @deprecated If consuming via sequence, use `getTextAndMarkers` exported from `\@fluidframework/sequence`.
-     * Otherwise, define your own accumulation model and use `Client.walkSegments`.
-     */
-    getTextAndMarkers(refSeq: number, clientId: number, label: string, start?: number, end?: number): {
-        parallelText: string[];
-        parallelMarkers: Marker[]; };
     getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
 }

@@ -5,4 +5,4 @@
 
 import { IsomorphicPerformance } from "./performanceIsomorphic";
 
-export const performance: IsomorphicPerformance = window.performance;
+export const performance: IsomorphicPerformance = globalThis.performance;

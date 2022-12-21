@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./reactViewAdapter";
+export { IReactViewAdapterProps, ReactViewAdapter } from "./reactViewAdapter";

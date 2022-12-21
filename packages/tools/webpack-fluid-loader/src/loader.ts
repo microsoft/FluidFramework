@@ -5,7 +5,7 @@
 
 import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
-import { assert, BaseTelemetryNullLogger, Deferred } from "@fluidframework/common-utils";
+import { assert, Deferred } from "@fluidframework/common-utils";
 import {
     AttachState,
     IFluidCodeResolver,
@@ -21,6 +21,7 @@ import { Loader } from "@fluidframework/container-loader";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
 import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
+import { BaseTelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
 import {
@@ -35,7 +36,7 @@ import { RequestParser } from "@fluidframework/runtime-utils";
 import { ensureFluidResolvedUrl, InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { Port } from "webpack-dev-server";
 import { getUrlResolver } from "./getUrlResolver";
-import { deltaConns, getDocumentServiceFactory } from "./getDocumentServiceFactory";
+import { deltaConnectionServer, getDocumentServiceFactory } from "./getDocumentServiceFactory";
 import { OdspPersistentCache } from "./odspPersistantCache";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
@@ -171,7 +172,7 @@ async function createWebLoader(
         odspHostStoragePolicy.fetchBinarySnapshotFormat = true;
     }
     let documentServiceFactory: IDocumentServiceFactory =
-        getDocumentServiceFactory(documentId, options, odspPersistantCache, odspHostStoragePolicy);
+        getDocumentServiceFactory(options, odspPersistantCache, odspHostStoragePolicy);
     // Create the inner document service which will be wrapped inside local driver. The inner document service
     // will be used for ops(like delta connection/delta ops) while for storage, local storage would be used.
     if (testOrderer) {
@@ -183,12 +184,8 @@ async function createWebLoader(
             false, // clientIsSummarizer
         );
 
-        const localDeltaConnectionServer = deltaConns.get(documentId);
-        assert(
-            localDeltaConnectionServer !== undefined,
-            0x319 /* No delta connection server associated with specified document ID */);
         documentServiceFactory = new LocalDocumentServiceFactory(
-            localDeltaConnectionServer,
+            deltaConnectionServer,
             undefined,
             innerDocumentService);
     }

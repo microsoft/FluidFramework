@@ -25,8 +25,9 @@ import {
     DOProviderContainerRuntimeFactory,
     FluidContainer,
     IFluidContainer,
-    RootDataObject,
+    IRootDataObject,
 } from "@fluidframework/fluid-static";
+import { IClient } from "@fluidframework/protocol-definitions";
 import {
     TinyliciousClientProps,
     TinyliciousContainerServices,
@@ -50,10 +51,10 @@ export class TinyliciousClient {
         const tokenProvider = new InsecureTinyliciousTokenProvider();
         this.urlResolver = new InsecureTinyliciousUrlResolver(
             this.props?.connection?.port,
-            this.props?.connection?.domain,
+            this.props?.connection?.domain
         );
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
-            tokenProvider,
+            this.props?.connection?.tokenProvider ?? tokenProvider
         );
     }
 
@@ -63,8 +64,11 @@ export class TinyliciousClient {
      * @returns New detached container instance along with associated services.
      */
     public async createContainer(
-        containerSchema: ContainerSchema,
-    ): Promise<{ container: IFluidContainer; services: TinyliciousContainerServices; }> {
+        containerSchema: ContainerSchema
+    ): Promise<{
+        container: IFluidContainer;
+        services: TinyliciousContainerServices;
+    }> {
         const loader = this.createLoader(containerSchema);
 
         // We're not actually using the code proposal (our code loader always loads the same module
@@ -75,20 +79,29 @@ export class TinyliciousClient {
             config: {},
         });
 
-        const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
+        const rootDataObject = await requestFluidObject<IRootDataObject>(
+            container,
+            "/"
+        );
 
-        const fluidContainer = new (class extends FluidContainer {
-            async attach() {
-                if (this.attachState !== AttachState.Detached) {
-                    throw new Error("Cannot attach container. Container is not in detached state");
-                }
-                const request = createTinyliciousCreateNewRequest();
-                await container.attach(request);
-                const resolved = container.resolvedUrl;
-                ensureFluidResolvedUrl(resolved);
-                return resolved.id;
+        /**
+         * See {@link FluidContainer.attach}
+         */
+        const attach = async (): Promise<string> => {
+            if (container.attachState !== AttachState.Detached) {
+                throw new Error(
+                    "Cannot attach container. Container is not in detached state."
+                );
             }
-        })(container, rootDataObject);
+            const request = createTinyliciousCreateNewRequest();
+            await container.attach(request);
+            const resolved = container.resolvedUrl;
+            ensureFluidResolvedUrl(resolved);
+            return resolved.id;
+        };
+
+        const fluidContainer = new FluidContainer(container, rootDataObject);
+        fluidContainer.attach = attach;
 
         const services = this.getContainerServices(container);
         return { container: fluidContainer, services };
@@ -102,11 +115,17 @@ export class TinyliciousClient {
      */
     public async getContainer(
         id: string,
-        containerSchema: ContainerSchema,
-    ): Promise<{ container: IFluidContainer; services: TinyliciousContainerServices; }> {
+        containerSchema: ContainerSchema
+    ): Promise<{
+        container: IFluidContainer;
+        services: TinyliciousContainerServices;
+    }> {
         const loader = this.createLoader(containerSchema);
         const container = await loader.resolve({ url: id });
-        const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
+        const rootDataObject = await requestFluidObject<IRootDataObject>(
+            container,
+            "/"
+        );
         const fluidContainer = new FluidContainer(container, rootDataObject);
         const services = this.getContainerServices(container);
         return { container: fluidContainer, services };
@@ -114,7 +133,7 @@ export class TinyliciousClient {
 
     // #region private
     private getContainerServices(
-        container: IContainer,
+        container: IContainer
     ): TinyliciousContainerServices {
         return {
             audience: new TinyliciousAudience(container),
@@ -123,7 +142,7 @@ export class TinyliciousClient {
 
     private createLoader(containerSchema: ContainerSchema) {
         const containerRuntimeFactory = new DOProviderContainerRuntimeFactory(
-            containerSchema,
+            containerSchema
         );
         const load = async (): Promise<IFluidModuleWithDetails> => {
             return {
@@ -133,12 +152,24 @@ export class TinyliciousClient {
         };
 
         const codeLoader = { load };
+        const client: IClient = {
+            details: {
+                capabilities: { interactive: true },
+            },
+            permission: [],
+            scopes: [],
+            user: { id: "" },
+            mode: "write",
+        };
+
         const loader = new Loader({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
             logger: this.props?.logger,
+            options: { client },
         });
+
         return loader;
     }
     // #endregion

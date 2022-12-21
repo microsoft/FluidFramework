@@ -64,20 +64,20 @@ export const verboseConsoleLogger: Logger = {
 /**
  * Logs a warning message to the console in yellow, prefixed with "WARNING: ".
  */
-function logWarningToConsole(message: string | Error) {
+function logWarningToConsole(message: string | Error): void {
     console.log(`${chalk.yellow(`WARNING`)}: ${message}`);
 }
 
 /**
  * Logs an error message to the console in red, prefixed with "ERROR: ".
  */
-function logErrorToConsole(message: string | Error) {
+function logErrorToConsole(message: string | Error): void {
     console.log(`${chalk.red(`ERROR`)}: ${message}`);
 }
 
 /**
  * Logs a "success" message to the console in green, prefixed with "SUCCESS: ".
  */
-function logSuccessToConsole(message: string | Error) {
+function logSuccessToConsole(message: string | Error): void {
     console.log(`${chalk.green(`WARNING`)}: ${message}`);
 }

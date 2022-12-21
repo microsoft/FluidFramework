@@ -85,6 +85,14 @@ parameters:
   type: string
   default: repo
 
+- name: packageManager
+  type: string
+  default: npm
+
+- name: packageManagerInstallCommand
+  type: string
+  default: 'npm ci --unsafe-perm'
+
 trigger: none
 
 variables:
@@ -93,6 +101,8 @@ variables:
   # basic ANSI color support though, so force that in the pipeline
   - name: FORCE_COLOR
     value: 1
+  - name: pnpmStorePath
+    value: $(Pipeline.Workspace)/.pnpm-store
   - template: include-vars.yml
     parameters:
       publishOverride: ${{ parameters.publishOverride }}
@@ -112,6 +122,8 @@ stages:
         variables:
           testCoverage: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
           releaseBuildVar: $[variables.releaseBuild]
+          ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+            targetBranchName: $(System.PullRequest.TargetBranch)
         steps:
         # Setup
         - checkout: self
@@ -152,9 +164,13 @@ stages:
                 publish=${{ variables.publish }}
                 canRelease=${{ variables.canRelease }}
                 publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
-                targetBranchName = $(System.PullRequest.TargetBranch)
 
                 release=$(release)"
+
+              # Target Branch variable (PR policy related)
+              if [[ ${{ variables['Build.Reason'] }} == "PullRequest" ]]; then
+                echo "TargetBranchName=$(targetBranchName)"
+              fi
 
               # Error checking
               if [[ "$(release)" == "release" ]]; then
@@ -194,19 +210,37 @@ stages:
           displayName: Use Node 14.x
           inputs:
             version: 14.x
-        - task: Npm@1
-          displayName: npm ci
+
+        - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+          - task: Cache@2
+            displayName: Cache pnpm store
+            inputs:
+              key: '"pnpm-store" | "$(Agent.OS)" | "${{ parameters.tagName }}" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+              path: ${{ variables.pnpmStorePath }}
+
+          - task: Bash@3
+            displayName: Install and configure pnpm
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                npm i -g pnpm
+                pnpm config set store-dir $(pnpmStorePath)
+
+        - task: Bash@3
+          displayName: Install dependencies
           inputs:
-            command: 'custom'
-            workingDir: ${{ parameters.buildDirectory }}
-            customCommand: 'ci --unsafe-perm'
-            customRegistry: 'useNpmrc'
+            targetType: 'inline'
+            workingDirectory: ${{ parameters.buildDirectory }}
+            script: |
+              ${{ parameters.packageManagerInstallCommand }}
 
         # Set version
         - template: include-set-package-version.yml
           parameters:
             buildDirectory: ${{ parameters.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+            buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
             tagName: ${{ parameters.tagName }}
 
         # Build
@@ -305,6 +339,8 @@ stages:
                 mkdir $(Build.ArtifactStagingDirectory)/pack/
                 mkdir $(Build.ArtifactStagingDirectory)/pack/scoped/
                 mkdir $(Build.ArtifactStagingDirectory)/test-files/
+                mkdir $(Build.ArtifactStagingDirectory)/logs/
+                mv ${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log $(Build.ArtifactStagingDirectory)/logs/
                 if [[ "${{ variables.publishNonScopedPackages }}" == "True" ]]; then
                   mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
                 fi
@@ -331,19 +367,26 @@ stages:
                   script: |
                     mv -t $(Build.ArtifactStagingDirectory)/pack/non-scoped/ $(Build.ArtifactStagingDirectory)/pack/scoped/${{parameter}}*.tgz
 
-          - task: PublishBuildArtifacts@1
+          - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - pack
             inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack'
-              ArtifactName: 'pack'
-              publishLocation: 'Container'
+              targetPath: '$(Build.ArtifactStagingDirectory)/pack'
+              artifactName: 'pack'
+              publishLocation: 'pipeline'
 
-          - task: PublishBuildArtifacts@1
+          - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - Test Files
             inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)/test-files'
-              ArtifactName: 'test-files'
-              publishLocation: 'Container'
+              targetPath: '$(Build.ArtifactStagingDirectory)/test-files'
+              artifactName: 'test-files'
+              publishLocation: 'pipeline'
+
+          - task: PublishPipelineArtifact@1
+            displayName: Publish Artifact - Tinylicious Log
+            inputs:
+              targetPath: '$(Build.ArtifactStagingDirectory)/logs'
+              artifactName: 'tinyliciousLog'
+              publishLocation: 'pipeline'
 
         # Collect/publish/run bundle analysis
         - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
@@ -354,6 +397,9 @@ stages:
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run bundle-analysis:collect'
 
+          # NOTE: this task is deliberately not updated to the newer PublishPipelineArtifact because some of our tooling
+          # does not support the newer task.
+          # See the getZipObjectFromArtifact function in @fluidframework/bundle-size-tools for details about the issue.
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifacts - bundle-analysis
             condition:
@@ -373,13 +419,11 @@ stages:
             env:
               ADO_API_TOKEN: $(System.AccessToken)
               DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
-              TARGET_BRANCH_NAME: $(System.PullRequest.TargetBranch)
+              TARGET_BRANCH_NAME: ${{ variables.targetBranchName }}
             inputs:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run bundle-analysis:run'
-              script: |
-                echo $(System.PullRequest.TargetBranch)
 
         # Docs
         - ${{ if ne(parameters.taskBuildDocs, false) }}:
@@ -390,19 +434,32 @@ stages:
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run ci:build:docs'
 
-          - task: PublishBuildArtifacts@1
+          - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - _api-extractor-temp
             inputs:
-              PathtoPublish: '${{ parameters.buildDirectory }}/_api-extractor-temp'
-              ArtifactName: '_api-extractor-temp'
-              publishLocation: 'Container'
+              targetPath: '${{ parameters.buildDirectory }}/_api-extractor-temp'
+              artifactName: '_api-extractor-temp'
+              publishLocation: 'pipeline'
+
+        - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+          # Reset the pnpm-lock.yaml file since it's been modified by the versioning. But for dependency caching we want
+          # the cache key (which is based on the contents of the lockfile) to be the unmodified file. So we reset the
+          # lockfile as the last step so that when the dependency cache is uploaded, the cache key matches what it was
+          # at the beginning of the CI job.
+          - task: Bash@3
+            displayName: Reset lockfile
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                git checkout HEAD -- pnpm-lock.yaml
 
         - task: Bash@3
           displayName: Check for extraneous modified files
           inputs:
             targetType: 'inline'
             script: |
-              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|build-cli/README.md|\(use.*' | grep '^\s' > git_status.log
+              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|build-cli/README.md|build-tools/.npmrc|version-tools/README.md|\(use.*' | grep '^\s' > git_status.log
               if [ `cat git_status.log | wc -l` != "0" ]; then
                 cat git_status.log
                 echo "##vso[task.logissue type=error]Build should not create extraneous files"

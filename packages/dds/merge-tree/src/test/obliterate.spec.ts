@@ -29,133 +29,133 @@ describe.skip("obliterate", () => {
     });
 
     it("removes text", () => {
-        client.obliterateRange(
-            0,
-            client.getLength(),
+        client.obliterateRange({
+            start: 0,
+            end: client.getLength(),
             refSeq,
-            localClientId,
-            refSeq + 1,
-            false,
-            undefined as any,
-        );
+            clientId: localClientId,
+            seq: refSeq + 1,
+            overwrite: false,
+            opArgs: undefined as any,
+        });
         assert.equal(client.getText(), "");
     });
 
     describe("concurrent obliterate and insert", () => {
         it("removes text for obliterate then insert", () => {
-            client.obliterateRange(
-                0,
-                client.getLength(),
+            client.obliterateRange({
+                start: 0,
+                end: client.getLength(),
                 refSeq,
-                remoteClientId,
-                refSeq + 1,
-                false,
-                undefined as any,
-            );
-            insertText(
-                client.mergeTree,
-                0,
+                clientId: remoteClientId,
+                seq: refSeq + 1,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
+            insertText({
+                mergeTree: client.mergeTree,
+                pos: 0,
                 refSeq,
-                remoteClientId + 1,
-                refSeq + 2,
-                "more ",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } },
-            );
+                clientId: remoteClientId + 1,
+                seq: refSeq + 2,
+                text: "more ",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
             assert.equal(client.getText(), "");
         });
         it("removes text for insert then obliterate", () => {
-            insertText(
-                client.mergeTree,
-                0,
+            insertText({
+                mergeTree: client.mergeTree,
+                pos: 0,
                 refSeq,
-                remoteClientId + 1,
-                refSeq + 1,
-                "more ",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } },
-            );
-            client.obliterateRange(
-                0,
-                "hello world".length,
+                clientId: remoteClientId + 1,
+                seq: refSeq + 1,
+                text: "more ",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
+            client.obliterateRange({
+                start: 0,
+                end: "hello world".length,
                 refSeq,
-                remoteClientId,
-                refSeq + 2,
-                false,
-                undefined as any,
-            );
+                clientId: remoteClientId,
+                seq: refSeq + 2,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
             assert.equal(client.getText(), "");
         });
     });
 
     describe("endpoint behavior", () => {
         it("does not expand to include text inserted at start", () => {
-            client.obliterateRange(
-                5,
-                client.getLength(),
+            client.obliterateRange({
+                start: 5,
+                end: client.getLength(),
                 refSeq,
-                remoteClientId,
-                refSeq + 1,
-                false,
-                undefined as any,
-            );
-            insertText(
-                client.mergeTree,
-                5,
+                clientId: remoteClientId,
+                seq: refSeq + 1,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
+            insertText({
+                mergeTree: client.mergeTree,
+                pos: 5,
                 refSeq,
-                remoteClientId + 1,
-                refSeq + 2,
-                " world",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } },
-            );
+                clientId: remoteClientId + 1,
+                seq: refSeq + 2,
+                text: " world",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
             assert.equal(client.getText(), "hello world");
         });
         it("does not expand to include text inserted at end", () => {
-            client.obliterateRange(
-                0,
-                5,
+            client.obliterateRange({
+                start: 0,
+                end: 5,
                 refSeq,
-                remoteClientId,
-                refSeq + 1,
-                false,
-                undefined as any,
-            );
-            insertText(
-                client.mergeTree,
-                5,
+                clientId: remoteClientId,
+                seq: refSeq + 1,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
+            insertText({
+                mergeTree: client.mergeTree,
+                pos: 5,
                 refSeq,
-                remoteClientId + 1,
-                refSeq + 2,
-                "hello",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } },
-            );
+                clientId: remoteClientId + 1,
+                seq: refSeq + 2,
+                text: "hello",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
             assert.equal(client.getText(), "hello world");
         });
     });
 
     describe("local obliterate with concurrent inserts", () => {
         it("removes range when pending local obliterate op", () => {
-            client.obliterateRange(
-                0,
-                "hello world".length,
+            client.obliterateRange({
+                start: 0,
+                end: "hello world".length,
                 refSeq,
-                localClientId,
-                UnassignedSequenceNumber,
-                false,
-                undefined as any,
-            );
-            insertText(
-                client.mergeTree,
-                0,
+                clientId: localClientId,
+                seq: UnassignedSequenceNumber,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
+            insertText({
+                mergeTree: client.mergeTree,
+                pos: 0,
                 refSeq,
-                remoteClientId,
-                refSeq + 2,
-                "more ",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } },
-            );
+                clientId: remoteClientId,
+                seq: refSeq + 2,
+                text: "more ",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
             assert.equal(client.getText(), "");
         });
     });

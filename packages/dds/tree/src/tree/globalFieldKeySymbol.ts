@@ -39,3 +39,10 @@ export function symbolFromKey(key: GlobalFieldKey): GlobalFieldKeySymbol {
 export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey {
     return keyMap.get(key) ?? fail("missing key for symbol");
 }
+
+/**
+ * @returns true iff `key` is a {@link GlobalFieldKeySymbol}.
+ */
+export function symbolIsFieldKey(key: symbol): key is GlobalFieldKeySymbol {
+    return keyMap.has(key as GlobalFieldKeySymbol);
+}

@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { cloneGCData } from "@fluidframework/garbage-collector";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
@@ -15,7 +14,7 @@ import {
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "../summarizerNode/summarizerNodeWithGc";
 import { mergeStats } from "../summaryUtils";

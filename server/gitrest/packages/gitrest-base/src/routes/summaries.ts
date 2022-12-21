@@ -58,6 +58,7 @@ async function getSummary(
             const latestFullSummaryFromStorage = await retrieveLatestFullSummaryFromStorage(
                 fileSystemManager,
                 getFullSummaryDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
+                lumberjackProperties,
             );
             if (latestFullSummaryFromStorage !== undefined) {
                 return latestFullSummaryFromStorage;
@@ -80,6 +81,7 @@ async function getSummary(
     const wholeSummaryManager = new GitWholeSummaryManager(
         repoManagerParams.storageRoutingId.documentId,
         repoManager,
+        lumberjackProperties,
         externalWriterConfig?.enabled ?? false,
     );
     const fullSummary = await wholeSummaryManager.readSummary(sha);
@@ -95,6 +97,7 @@ async function getSummary(
             fileSystemManager,
             getFullSummaryDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
             fullSummary,
+            lumberjackProperties,
         ).catch((error) => {
             Lumberjack.error(
                 "Failed to persist latest full summary to storage during getSummary",
@@ -103,7 +106,7 @@ async function getSummary(
         });
     }
 
-    return wholeSummaryManager.readSummary(sha);
+    return fullSummary;
 }
 
 async function createSummary(
@@ -113,19 +116,24 @@ async function createSummary(
     repoManagerParams: IRepoManagerParams,
     externalWriterConfig?: IExternalWriterConfig,
     persistLatestFullSummary = false,
+    enableLowIoWrite: "initial" | boolean = false
 ): Promise<IWriteSummaryResponse | IWholeFlatSummary> {
-    const wholeSummaryManager = new GitWholeSummaryManager(
-        repoManagerParams.storageRoutingId.documentId,
-        repoManager,
-        externalWriterConfig?.enabled ?? false,
-    );
     const lumberjackProperties = {
         ...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
         [BaseGitRestTelemetryProperties.summaryType]: payload?.type,
     };
+
+    const wholeSummaryManager = new GitWholeSummaryManager(
+        repoManagerParams.storageRoutingId.documentId,
+        repoManager,
+        lumberjackProperties,
+        externalWriterConfig?.enabled ?? false,
+        { enableLowIoWrite },
+    );
+
     Lumberjack.info("Creating summary", lumberjackProperties);
 
-    const {isNew, writeSummaryResponse} = await wholeSummaryManager.writeSummary(payload);
+    const { isNew, writeSummaryResponse } = await wholeSummaryManager.writeSummary(payload);
 
     // Waiting to pre-compute and persist latest summary would slow down document creation,
     // so skip this step if it is a new document.
@@ -148,8 +156,9 @@ async function createSummary(
                         fileSystemManager,
                         getFullSummaryDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
                         latestFullSummary,
+                        lumberjackProperties,
                     );
-                } catch(error) {
+                } catch (error) {
                     Lumberjack.error(
                         "Failed to persist latest full summary to storage during createSummary",
                         lumberjackProperties,
@@ -174,7 +183,7 @@ async function deleteSummary(
     softDelete: boolean,
     repoPerDocEnabled: boolean,
     externalWriterConfig?: IExternalWriterConfig): Promise<void> {
-    if(!repoPerDocEnabled) {
+    if (!repoPerDocEnabled) {
         throw new NetworkError(501, "Not Implemented");
     }
     const lumberjackProperties = {
@@ -199,7 +208,7 @@ async function deleteSummary(
         Lumberjack.info(`Successfully hard-deleted summary data.`, lumberjackProperties);
     } catch (error: any) {
         if (error?.code === "ENOENT" ||
-                (error instanceof NetworkError &&
+            (error instanceof NetworkError &&
                 error?.code === 400 &&
                 error?.message.startsWith("Repo does not exist"))) {
             // File does not exist.
@@ -224,6 +233,7 @@ export function create(
 ): Router {
     const router: Router = Router();
     const persistLatestFullSummary: boolean = store.get("git:persistLatestFullSummary") ?? false;
+    const enableLowIoWrite: "initial" | boolean = store.get("git:enableLowIoWrite") ?? false;
     const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
 
     /**
@@ -277,7 +287,9 @@ export function create(
                     wholeSummaryPayload,
                     repoManagerParams,
                     getExternalWriterParams(request.query?.config as string | undefined),
-                    persistLatestFullSummary);
+                    persistLatestFullSummary,
+                    enableLowIoWrite,
+                );
             }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response, undefined, undefined, 201);
     });

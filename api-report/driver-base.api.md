@@ -6,7 +6,7 @@
 
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
-import { IAnyDriverError } from '@fluidframework/driver-utils';
+import { IAnyDriverError } from '@fluidframework/driver-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IConnect } from '@fluidframework/protocol-definitions';
 import { IConnected } from '@fluidframework/protocol-definitions';
@@ -29,13 +29,14 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     checkpointSequenceNumber: number | undefined;
     get claims(): ITokenClaims;
     get clientId(): string;
+    protected closeSocket(error: IAnyDriverError): void;
     protected createErrorObject(handler: string, error?: any, canRetry?: boolean): IAnyDriverError;
     // (undocumented)
     get details(): IConnected;
-    protected disconnect(socketProtocolError: boolean, reason: IAnyDriverError): void;
-    dispose(): void;
     // (undocumented)
-    protected disposeCore(socketProtocolError: boolean, err: IAnyDriverError): void;
+    protected disconnect(err: IAnyDriverError): void;
+    protected disconnectCore(): void;
+    dispose(): void;
     // (undocumented)
     get disposed(): boolean;
     protected _disposed: boolean;

@@ -21,7 +21,7 @@ import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { IDocumentAttributes, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { IntervalType, SharedString, SparseMatrix } from "@fluidframework/sequence";
+import { IntervalType, SequenceInterval, SharedString } from "@fluidframework/sequence";
 import { SharedCell } from "@fluidframework/cell";
 import { Ink } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -29,11 +29,12 @@ import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/orde
 import { SharedCounter } from "@fluidframework/counter";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeFullCompat, itExpects } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 import {
     getSnapshotTreeFromSerializedContainer,
 // eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-loader/dist/utils";
+import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -423,12 +424,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
         });
 
-        itExpects("Storage in detached container",
-        [
-            { eventName: "fluid:telemetry:Container:NoRealStorageInDetachedContainer" },
-            { eventName: "fluid:telemetry:Container:NoRealStorageInDetachedContainer" },
-        ],
-        async () => {
+        it("Storage in detached container", async () => {
             const { container } =
                 await createDetachedContainerAndGetRootDataStore();
 
@@ -465,8 +461,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const sharedStringBefore = await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
             const intervalsBefore = sharedStringBefore.getIntervalCollection("intervals");
             sharedStringBefore.insertText(0, "Hello");
-            let interval0 = intervalsBefore.add(0, 0, IntervalType.SlideOnRemove);
-            let interval1 = intervalsBefore.add(0, 1, IntervalType.SlideOnRemove);
+            let interval0: SequenceInterval | undefined = intervalsBefore.add(0, 0, IntervalType.SlideOnRemove);
+            let interval1: SequenceInterval | undefined = intervalsBefore.add(0, 1, IntervalType.SlideOnRemove);
             let id0;
             let id1;
 
@@ -495,16 +491,16 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
                 typeof (intervalsAfter.change) === "function") {
                 interval0 = intervalsAfter.getIntervalById(id0);
                 assert.notStrictEqual(interval0, undefined);
-                assert.strictEqual(interval0.start.getOffset(), 2);
-                assert.strictEqual(interval0.end.getOffset(), 3);
+                assert.strictEqual(interval0?.start.getOffset(), 2);
+                assert.strictEqual(interval0?.end.getOffset(), 3);
 
                 interval1 = intervalsAfter.getIntervalById(id1);
                 assert.notStrictEqual(interval1, undefined);
-                assert.strictEqual(interval1.start.getOffset(), 0);
-                assert.strictEqual(interval1.end.getOffset(), 3);
+                assert.strictEqual(interval1?.start.getOffset(), 0);
+                assert.strictEqual(interval1?.end.getOffset(), 3);
             }
             for (const interval of intervalsBefore) {
-                if (typeof (interval.getIntervalId) === "function") {
+                if (typeof (interval?.getIntervalId) === "function") {
                     const id = interval.getIntervalId();
                     assert.strictEqual(typeof (id), "string");
                     if (id) {
@@ -518,7 +514,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             }
             for (const interval of intervalsAfter) {
                 assert.fail(
-                    `Unexpected interval after rehydration: ${interval.start.getOffset()}-${interval.end.getOffset()}`);
+                `Unexpected interval after rehydration: ${interval?.start.getOffset()}-${interval?.end.getOffset()}`,
+                );
             }
         });
 
@@ -565,7 +562,6 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             // Create and reference another dataStore
             const { peerDataStore: dataStore2 } = await createPeerDataStore(defaultDataStore.context.containerRuntime);
             defaultDataStore.root.set("dataStore2", dataStore2.handle);
-            //* Unnecessary?
             await provider.ensureSynchronized();
 
             const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
@@ -612,7 +608,6 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             // Create and reference another dataStore
             const { peerDataStore: dataStore2 } = await createPeerDataStore(defaultDataStore.context.containerRuntime);
             defaultDataStore.root.set("dataStore2", dataStore2.handle);
-            //* Unnecessary?
             await provider.ensureSynchronized(this.timeout() / 3);
 
             const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);

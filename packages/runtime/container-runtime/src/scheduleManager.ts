@@ -9,10 +9,13 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { assert, performance } from "@fluidframework/common-utils";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
-import { DataCorruptionError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
+import {
+    DataCorruptionError,
+    DataProcessingError,
+    extractSafePropertiesFromMessage,
+} from "@fluidframework/container-utils";
 import { DeltaScheduler } from "./deltaScheduler";
 import { pkgVersion } from "./packageVersion";
-import { latencyThreshold } from "./connectionTelemetry";
 
 type IRuntimeMessageMetadata = undefined | {
     batch?: boolean;
@@ -35,13 +38,14 @@ export class ScheduleManager {
     constructor(
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly emitter: EventEmitter,
+        readonly getClientId: () => string | undefined,
         private readonly logger: ITelemetryLogger,
     ) {
         this.deltaScheduler = new DeltaScheduler(
             this.deltaManager,
             ChildLogger.create(this.logger, "DeltaScheduler"),
         );
-        void new ScheduleManagerCore(deltaManager, logger);
+        void new ScheduleManagerCore(deltaManager, getClientId, logger);
     }
 
     public beforeOpProcessing(message: ISequencedDocumentMessage) {
@@ -97,6 +101,7 @@ class ScheduleManagerCore {
 
     constructor(
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+        private readonly getClientId: () => string | undefined,
         private readonly logger: ITelemetryLogger,
     ) {
         // Listen for delta manager sends and add batch metadata to messages
@@ -206,15 +211,6 @@ class ScheduleManagerCore {
 
         this.localPaused = false;
 
-        // Random round number - we want to know when batch waiting paused op processing.
-        if (duration !== undefined && duration > latencyThreshold) {
-            this.logger.sendErrorEvent({
-                eventName: "MaxBatchWaitTimeExceeded",
-                duration,
-                sequenceNumber: endBatch,
-                length: endBatch - startBatch,
-            });
-        }
         this.deltaManager.inbound.resume();
     }
 
@@ -234,7 +230,20 @@ class ScheduleManagerCore {
         // Protocol messages are never part of a runtime batch of messages
         if (!isRuntimeMessage(message)) {
             // Protocol messages should never show up in the middle of the batch!
-            assert(this.currentBatchClientId === undefined, 0x29a /* "System message in the middle of batch!" */);
+            if (this.currentBatchClientId !== undefined) {
+                throw DataProcessingError.create(
+                    "Received a system message during batch processing", // Formerly known as assert 0x29a
+                    "trackPending",
+                    message,
+                    {
+                        runtimeVersion: pkgVersion,
+                        batchClientId: this.currentBatchClientId,
+                        pauseSequenceNumber: this.pauseSequenceNumber,
+                        localBatch: this.currentBatchClientId === this.getClientId(),
+                        messageType: message.type,
+                    });
+            }
+
             assert(batchMetadata === undefined, 0x29b /* "system op in a batch?" */);
             assert(!this.localPaused, 0x29c /* "we should be processing ops when there is no active batch" */);
             return;
@@ -256,6 +265,9 @@ class ScheduleManagerCore {
                     {
                         runtimeVersion: pkgVersion,
                         batchClientId: this.currentBatchClientId,
+                        pauseSequenceNumber: this.pauseSequenceNumber,
+                        localBatch: this.currentBatchClientId === this.getClientId(),
+                        localMessage: message.clientId === this.getClientId(),
                         ...extractSafePropertiesFromMessage(message),
                     });
             }

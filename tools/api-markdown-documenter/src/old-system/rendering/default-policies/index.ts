@@ -7,13 +7,13 @@
  * Default rendering policy implementations.
  */
 
-export * from "./DefaultRenderClass";
-export * from "./DefaultRenderEnum";
-export * from "./DefaultRenderFunctionLike";
-export * from "./DefaultRenderInterface";
-export * from "./DefaultRenderItemWithoutChildren";
-export * from "./DefaultRenderModel";
-export * from "./DefaultRenderModuleLike";
-export * from "./DefaultRenderNamespace";
-export * from "./DefaultRenderPackage";
-export * from "./DefaultRenderSectionBlock";
+export { renderClassSection } from "./DefaultRenderClass";
+export { renderEnumSection } from "./DefaultRenderEnum";
+export { renderFunctionLikeSection } from "./DefaultRenderFunctionLike";
+export { renderInterfaceSection } from "./DefaultRenderInterface";
+export { renderItemWithoutChildren } from "./DefaultRenderItemWithoutChildren";
+export { renderModelSection } from "./DefaultRenderModel";
+export { renderModuleLikeSection } from "./DefaultRenderModuleLike";
+export { renderNamespaceSection } from "./DefaultRenderNamespace";
+export { renderPackageSection } from "./DefaultRenderPackage";
+export { renderChildrenSection } from "./DefaultRenderSectionBlock";

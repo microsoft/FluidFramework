@@ -133,6 +133,12 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
  * any expected events that have not occurred.
  */
 export class EventAndErrorTrackingLogger extends TelemetryLogger {
+    /** Even if these error events are logged, tests should still be allowed to pass */
+    private readonly allowedErrors: string[] = [
+        // This log was removed in current version as unnecessary, but it's still present in previous versions
+        "fluid:telemetry:Container:NoRealStorageInDetachedContainer",
+    ];
+
     constructor(private readonly baseLogger: ITelemetryBaseLogger) {
         super();
     }
@@ -174,7 +180,11 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
             }
         }
         if (event.category === "error") {
-            this.unexpectedErrors.push(event);
+            if (this.allowedErrors.includes(event.eventName)) {
+                event.category = "generic";
+            } else {
+                this.unexpectedErrors.push(event);
+            }
         }
 
         this.baseLogger.send(event);

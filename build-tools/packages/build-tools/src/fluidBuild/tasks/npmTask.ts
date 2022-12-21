@@ -2,15 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import registerDebug from "debug";
 import { AsyncPriorityQueue } from "async";
-import { Task, TaskExec } from "./task";
-import { LeafTask } from "./leaf/leafTask";
-import { defaultLogger } from "../../common/logging";
-import { BuildResult, BuildPackage } from "../buildGraph";
+import registerDebug from "debug";
 
-const {verbose} = defaultLogger;
+import { defaultLogger } from "../../common/logging";
+import { BuildPackage, BuildResult } from "../buildGraph";
+import { LeafTask } from "./leaf/leafTask";
+import { Task, TaskExec } from "./task";
+
+const { verbose } = defaultLogger;
 const traceTaskExec = registerDebug("fluid-build:task:exec");
 
 export class NPMTask extends Task {
@@ -24,13 +24,19 @@ export class NPMTask extends Task {
         }
     }
 
-    public get isLeaf() { return false; }
+    public get isLeaf() {
+        return false;
+    }
 
     public matchTask(command: string, options?: any): Task | undefined {
-        if (command === this.command) { return this; }
+        if (command === this.command) {
+            return this;
+        }
         for (const task of this.subTasks) {
             const t = task.matchTask(command, options);
-            if (t) { return t; }
+            if (t) {
+                return t;
+            }
         }
         return undefined;
     }

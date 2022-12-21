@@ -3,10 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { Dependee, ObservingDependent } from "../dependency-tracking";
+import { assert } from "@fluidframework/common-utils";
+import { Dependee } from "../dependency-tracking";
 import { StoredSchemaRepository } from "../schema-stored";
-import { Anchor, DetachedField } from "../tree";
-import { ITreeCursor, TreeNavigationResult } from "./cursorLegacy";
+import {
+    Anchor,
+    AnchorSet,
+    DetachedField,
+    detachedFieldAsKey,
+    FieldKey,
+    ITreeCursor,
+    rootField,
+} from "../tree";
+import type { IEditableForest } from "./editableForest";
 
 /**
  * APIs for forest designed so the implementation can be copy on write,
@@ -24,10 +33,12 @@ import { ITreeCursor, TreeNavigationResult } from "./cursorLegacy";
  * When invalidating, all outstanding cursors must be freed or cleared.
  */
 export interface IForestSubscription extends Dependee {
-    // We could provide access to this
-    // but then accessing it would reduce the ability to mutate in place as an optimization.
-    // Maybe add an explicit getter with a perf disclaimer? For now just expose subset of functionality:
-    // current(): IForestSnapshot;
+    /**
+     * Create an independent copy of this forest, that uses the provided schema and anchors.
+     *
+     * The new copy will not invalidate observers (dependents) of the old one.
+     */
+    clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
 
     /**
      * Schema used within this forest.
@@ -37,18 +48,10 @@ export interface IForestSubscription extends Dependee {
      */
     readonly schema: StoredSchemaRepository;
 
-    readonly rootField: DetachedField;
-
     /**
      * Allocates a cursor in the "cleared" state.
      */
     allocateCursor(): ITreeSubscriptionCursor;
-
-    /**
-     * Anchor at the beginning of a root field.
-     * Will incur cost to maintain across edits until freed.
-     */
-    root(range: DetachedField): Anchor;
 
     /**
      * Frees an Anchor, stopping tracking its position across edits.
@@ -56,17 +59,62 @@ export interface IForestSubscription extends Dependee {
     forgetAnchor(anchor: Anchor): void;
 
     /**
-     * If observer is provided, it will be invalidated if the value returned from this changes
-     * (including from or to undefined).
-     *
      * It is an error not to free `cursorToMove` before the next edit.
      * Must provide a `cursorToMove` from this subscription (acquired via `allocateCursor`).
      */
-    tryMoveCursorTo(
+    tryMoveCursorToNode(
         destination: Anchor,
         cursorToMove: ITreeSubscriptionCursor,
-        observer?: ObservingDependent
     ): TreeNavigationResult;
+
+    /**
+     * It is an error not to free `cursorToMove` before the next edit.
+     * Must provide a `cursorToMove` from this subscription (acquired via `allocateCursor`).
+     */
+    tryMoveCursorToField(
+        destination: FieldAnchor,
+        cursorToMove: ITreeSubscriptionCursor,
+    ): TreeNavigationResult;
+}
+
+/**
+ * @param field - defaults to {@link rootField}.
+ * @returns anchor to `field`.
+ */
+export function rootAnchor(field: DetachedField = rootField): FieldAnchor {
+    return {
+        parent: undefined,
+        fieldKey: detachedFieldAsKey(field),
+    };
+}
+
+/**
+ * @param field - defaults to {@link rootField}.
+ * @returns anchor to `field`.
+ */
+export function moveToDetachedField(
+    forest: IForestSubscription,
+    cursorToMove: ITreeSubscriptionCursor,
+    field: DetachedField = rootField,
+): void {
+    const result = forest.tryMoveCursorToField(rootAnchor(field), cursorToMove);
+    assert(
+        result === TreeNavigationResult.Ok,
+        0x42d /* Navigation to detached fields should never fail */,
+    );
+}
+
+/**
+ * Anchor to a field.
+ * This is structurally based on the parent, so it will move only as the parent moves.
+ */
+export interface FieldAnchor {
+    /**
+     * Node above this field.
+     * If `undefined`, field is a detached field.
+     */
+    parent: Anchor | undefined;
+    fieldKey: FieldKey;
 }
 
 /**
@@ -74,25 +122,13 @@ export interface IForestSubscription extends Dependee {
  */
 export interface ITreeSubscriptionCursor extends ITreeCursor {
     /**
-     * Where observations get recorded for invalidation.
-     * When modified, future observations will count toward the new one.
-     *
-     * Observations made when in an OutOfDate state will never cause invalidation.
+     * @returns an independent copy of this cursor at the same location in the tree.
      */
-    observer?: ObservingDependent;
-
-    /**
-     * @param observer - sets the starting value for the observer.
-     * If undefined there is no observer for the returned ITreeSubscriptionCursor.
-     *
-     * Doing this has no impact on this.observer.
-     */
-    fork(observer?: ObservingDependent): ITreeSubscriptionCursor;
+    fork(): ITreeSubscriptionCursor;
 
     /**
      * Release any resources this cursor is holding onto.
      * After doing this, further use of this object other than reading `state` is forbidden (undefined behavior).
-     * Invalidation will still happen for the observer: it needs to unsubscribe separately if desired.
      */
     free(): void;
 
@@ -100,15 +136,24 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
      * Release any resources this cursor is holding onto.
      * After doing this, further use of this object other than reading `state` or passing to `tryGet`
      * or calling `free` is forbidden (undefined behavior).
-     * Invalidation will still happen for the observer: it needs to unsubscribe separately if desired.
      */
     clear(): void;
 
     /**
      * Construct an `Anchor` which the IForestSubscription will keep rebased to `current`.
      * Note that maintaining an Anchor has cost: free them to stop incurring that cost.
+     *
+     * Only valid when `mode` is `Nodes`.
      */
     buildAnchor(): Anchor;
+
+    /**
+     * Construct a `FieldAnchor` which the IForestSubscription will keep rebased to `current`.
+     * Note that maintaining an Anchor has cost: free them to stop incurring that cost.
+     *
+     * Only valid when `mode` is `Fields`.
+     */
+    buildFieldAnchor(): FieldAnchor;
 
     /**
      * Current state.
@@ -136,3 +181,26 @@ export enum ITreeSubscriptionCursorState {
      */
     Freed,
 }
+
+export const enum TreeNavigationResult {
+    /**
+     * Attempt to navigate cursor to a key or index that is outside the client's view.
+     */
+    NotFound = -1,
+
+    /**
+     * Attempt to navigate cursor to a portion of the tree that has not yet been loaded.
+     */
+    Pending = 0,
+
+    /**
+     * ITreeReader successfully navigated to the desired node.
+     */
+    Ok = 1,
+}
+
+/**
+ * TreeNavigationResult, but never "Pending".
+ * Can be used when data is never pending.
+ */
+export type SynchronousNavigationResult = TreeNavigationResult.Ok | TreeNavigationResult.NotFound;

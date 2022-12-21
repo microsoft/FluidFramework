@@ -73,7 +73,9 @@ export class DocumentPartition {
         this.q.pause();
 
         this.context.on("error", (error: any, errorData: IContextErrorData) => {
-            if (errorData.restart) {
+            if (errorData.markAsCorrupt) {
+                this.markAsCorrupt(error, errorData.markAsCorrupt);
+            } else if (errorData.restart) {
                 // ensure no more messages are processed by this partition
                 // while the process is restarting / closing
                 this.close(LambdaCloseType.Error);

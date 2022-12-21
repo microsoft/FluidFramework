@@ -9,7 +9,7 @@ import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { TextSegment } from "../textSegment";
 import { MergeTree } from "../mergeTree";
-import { countOperations, insertText } from "./testUtils";
+import { countOperations, insertSegments, insertText, markRangeRemoved } from "./testUtils";
 
 describe("MergeTree", () => {
     let mergeTree: MergeTree;
@@ -17,13 +17,15 @@ describe("MergeTree", () => {
     let currentSequenceNumber: number;
     beforeEach(() => {
         mergeTree = new MergeTree();
-        mergeTree.insertSegments(
-            0,
-            [TextSegment.make("hello world")],
-            UniversalSequenceNumber,
-            LocalClientId,
-            UniversalSequenceNumber,
-            undefined);
+        insertSegments({
+            mergeTree,
+            pos: 0,
+            segments: [TextSegment.make("hello world")],
+            refSeq: UniversalSequenceNumber,
+            clientId: LocalClientId,
+            seq: UniversalSequenceNumber,
+            opArgs: undefined,
+        });
 
         currentSequenceNumber = 0;
         mergeTree.startCollaboration(
@@ -74,15 +76,16 @@ describe("MergeTree", () => {
         });
 
         it("Annotate over local insertion", () => {
-            insertText(
+            insertText({
                 mergeTree,
-                4,
-                currentSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
-                "a",
-                undefined,
-                undefined);
+                pos: 4,
+                refSeq: currentSequenceNumber,
+                clientId: localClientId,
+                seq: UnassignedSequenceNumber,
+                text: "a",
+                props: undefined,
+                opArgs: undefined,
+            });
 
             const count = countOperations(mergeTree);
 
@@ -108,15 +111,16 @@ describe("MergeTree", () => {
             const remoteClientId: number = 35;
             let remoteSequenceNumber = currentSequenceNumber;
 
-            insertText(
+            insertText({
                 mergeTree,
-                4,
-                remoteSequenceNumber,
-                remoteClientId,
-                ++remoteSequenceNumber,
-                "a",
-                undefined,
-                undefined);
+                pos: 4,
+                refSeq: remoteSequenceNumber,
+                clientId: remoteClientId,
+                seq: ++remoteSequenceNumber,
+                text: "a",
+                props: undefined,
+                opArgs: undefined,
+            });
 
             const count = countOperations(mergeTree);
 
@@ -142,14 +146,16 @@ describe("MergeTree", () => {
             const remoteClientId: number = 35;
             let remoteSequenceNumber = currentSequenceNumber;
 
-            mergeTree.markRangeRemoved(
-                4,
-                6,
-                remoteSequenceNumber,
-                remoteClientId,
-                ++remoteSequenceNumber,
-                false,
-                undefined as any);
+            markRangeRemoved({
+                mergeTree,
+                start: 4,
+                end: 6,
+                refSeq: remoteSequenceNumber,
+                clientId: remoteClientId,
+                seq: ++remoteSequenceNumber,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
 
             const count = countOperations(mergeTree);
 
@@ -175,14 +181,16 @@ describe("MergeTree", () => {
             const remoteClientId: number = 35;
             let remoteSequenceNumber = currentSequenceNumber;
 
-            mergeTree.markRangeRemoved(
-                3,
-                8,
-                currentSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
-                false,
-                undefined as any);
+            markRangeRemoved({
+                mergeTree,
+                start: 3,
+                end: 8,
+                refSeq: currentSequenceNumber,
+                clientId: localClientId,
+                seq: UnassignedSequenceNumber,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
 
             const count = countOperations(mergeTree);
 

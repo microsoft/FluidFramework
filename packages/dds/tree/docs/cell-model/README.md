@@ -35,9 +35,9 @@ The outcome we expect from such a session is [A, B, X, C, Y, D].
 
 Traditional models based on insertion and removal may fail to produce this outcome in two ways:
 
-* The order of X relative to Y may not be correct (i.e., Y may appear before X in the list of elements).
+-   The order of X relative to Y may not be correct (i.e., Y may appear before X in the list of elements).
 
-* The order the inserted element relative to the temporarily removed elements may not be correct (yielding either [A, X, Y, B, C, D] or [A, B, C, X, Y, D]).
+-   The order the inserted element relative to the temporarily removed elements may not be correct (yielding either [A, X, Y, B, C, D] or [A, B, C, X, Y, D]).
 
 The first failure stems from the fact that, as the insertion of X and Y are made relative to removed content, information is lost as to their precise insertion point.
 
@@ -47,23 +47,23 @@ This second failure can also occur when elements are moved-out and the move is t
 
 These failures can be addressed by introducing new features:
 
-* Tombstones, which represent removed or moved-out elements
+-   Tombstones, which represent removed or moved-out elements
 
-* The "revive" operation which restores elements in the place of their tombstones
+-   The "revive" operation which restores elements in the place of their tombstones
 
-* The "return" operation which moves elements back in the place of their tombstone.
+-   The "return" operation which moves elements back in the place of their tombstone.
 
 These additions, while effective, have the following drawbacks:
 
-* They increase the complexity of the core editing model
+-   They increase the complexity of the core editing model
 
-* They lead to a set of operations that is not orthogonalized:
+-   They lead to a set of operations that is not orthogonalized:
 
-  - Insert, revive, and return seem to share some common traits, with revive and return being closer to each other.
+    -   Insert, revive, and return seem to share some common traits, with revive and return being closer to each other.
 
-  - It seems like it should be possible to support a "replace" operation that is similar to revive but with new elements instead of resurrecting removed ones, but that too needs to be added as separate operation)
+    -   It seems like it should be possible to support a "replace" operation that is similar to revive but with new elements instead of resurrecting removed ones, but that too needs to be added as separate operation)
 
-- They do not alleviate the complexity of modeling an optional field (clearing the field requires a slice-delete operation over the field, overwriting the field requires that same slice-delete and an insert whose exact position is meaningless).
+*   They do not alleviate the complexity of modeling an optional field (clearing the field requires a slice-delete operation over the field, overwriting the field requires that same slice-delete and an insert whose exact position is meaningless).
 
 The cell model can be thought of as a refactoring of both the traditional editing primitives and the above additions such that the listed drawbacks are avoided.
 
@@ -99,15 +99,15 @@ The model admits the following operations:
 > WIP: An alternative set of operations based on hiding cells instead of clearing them is being considered.
 > The general structure of the model is unaffected.
 
-- <u>Allocate</u> a new cell at a specific location in the sequence
+-   <u>Allocate</u> a new cell at a specific location in the sequence
 
-- <u>Fill</u> a cell with content (overwriting existing content if any)
+-   <u>Fill</u> a cell with content (overwriting existing content if any)
 
-- <u>Clear</u> content from a cell, leaving it empty
+-   <u>Clear</u> content from a cell, leaving it empty
 
-- <u>Add a forwarding annotation</u> to a cell
+-   <u>Add a forwarding annotation</u> to a cell
 
-- <u>Remove a forwarding annotation</u> from a cell
+-   <u>Remove a forwarding annotation</u> from a cell
 
 Note that cells cannot be deallocated (or moved).
 This reflects the fact that a client may perform an edit relative to some content's location at a point in time, even if that content has since been deleted or moved: the client is performing the edit relative to the cell which contained that content.
@@ -120,7 +120,7 @@ We provide here two lists of such low-level edits, one for fields whose number o
 
 Note that the fixed and dynamic characteristics here apply only to the number of cells, not to the number of elements.
 For example, an optional field, which can contain zero or one element, is a fixed-sized field composed of exactly one cell.
-That cell exists even when the field is not populated with an element. 
+That cell exists even when the field is not populated with an element.
 
 The dichotomy has no basis in the cell model but reflects what we think is a sensible separation and matches industry-standard patterns of editing.
 
@@ -131,25 +131,25 @@ Dynamically-sized fields typically start out empty of any cell.
 
 The low-level edits that such fields might support can be decomposed as follows:
 
-- Insert: allocate and fill a cell
+-   Insert: allocate and fill a cell
 
-- Delete/Remove: clear a cell
+-   Delete/Remove: clear a cell
 
-- Revive: fill a (cleared) cell with the contents it contained before
+-   Revive: fill a (cleared) cell with the contents it contained before
 
-- Replace: fill a (filled) cell
+-   Replace: fill a (filled) cell
 
-- Move content from A to B:
-  
-  - A: clear a (filled) cell and add a forwarding annotation to it
-  
-  - B: allocate and fill a cell with the content being moved
+-   Move content from A to B:
 
-- Return content to A from B:
-  
-  - A: remove the forwarding annotation from a cell and fill it with the returned content
-  
-  - B: clear the (filled) cell
+    -   A: clear a (filled) cell and add a forwarding annotation to it
+
+    -   B: allocate and fill a cell with the content being moved
+
+-   Return content to A from B:
+
+    -   A: remove the forwarding annotation from a cell and fill it with the returned content
+
+    -   B: clear the (filled) cell
 
 ### Edits on Fixed-Sized Fields
 
@@ -158,25 +158,25 @@ Fixed-sized fields are populated with their cells (and possibly content) from th
 
 The low-level edits that such fields might support can be decomposed as follows:
 
-- Upsert: fill a (potentially empty) cell
+-   Upsert: fill a (potentially empty) cell
 
-- Populate if empty: fill a cell if the cell is empty
+-   Populate if empty: fill a cell if the cell is empty
 
-- Load-linked store: fill a cell if the cell has not been concurrently filled or cleared
+-   Load-linked store: fill a cell if the cell has not been concurrently filled or cleared
 
-- Clear: clear a cell
+-   Clear: clear a cell
 
-- Move content from A to B:
-  
-  - A: clear a (filled) cell
-  
-  - B: fill a cell with the content being moved
+-   Move content from A to B:
 
-- Return content to A from B:
-  
-  - A: fill a cell with the content being moved
-  
-  - B: clear the (filled) cell
+    -   A: clear a (filled) cell
+
+    -   B: fill a cell with the content being moved
+
+-   Return content to A from B:
+
+    -   A: fill a cell with the content being moved
+
+    -   B: clear the (filled) cell
 
 The Move/Return operations described here assume both the source and the destination of the move are in the same kind of trait. This is not a requirement, though some combinations may be questionable.
 

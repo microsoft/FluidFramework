@@ -3,5 +3,23 @@
  * Licensed under the MIT License.
  */
 
-export * from "./rebaser";
-export * from "./verifyChangeRebaser";
+export {
+    ChangeRebaser,
+    ChangesetFromChangeRebaser,
+    FinalChange,
+    FinalChangeStatus,
+    makeAnonChange,
+    Rebaser,
+    RevisionTag,
+    tagChange,
+    tagInverse,
+    TaggedChange,
+} from "./rebaser";
+export {
+    Exception,
+    Failure,
+    noFailure,
+    OutputType,
+    verifyChangeRebaser,
+    Violation,
+} from "./verifyChangeRebaser";

@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { ILoaderProps } from "@fluidframework/container-loader";
 import {
@@ -20,9 +20,12 @@ import {
     SummarizerStopReason,
     SummaryCollection,
 } from "@fluidframework/container-runtime";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import {
     ITestFluidObject,
     ITestObjectProvider,
@@ -32,8 +35,6 @@ import {
     waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 /**
   * Loads a summarizer client with the given version (if any) and returns its container runtime and summary collection.
@@ -155,12 +156,11 @@ async function submitAndAckSummary(
     const ackedSummary = await summarizerClient.summaryCollection.waitSummaryAck(summarySequenceNumber);
     // Update the container runtime with the given ack. We have to do this manually because there is no summarizer
     // client in these tests that takes care of this.
-    await summarizerClient.containerRuntime.refreshLatestSummaryAck(
-        ackedSummary.summaryOp.contents.handle,
-        ackedSummary.summaryAck.contents.handle,
-        ackedSummary.summaryOp.referenceSequenceNumber,
-        logger,
-    );
+    await summarizerClient.containerRuntime.refreshLatestSummaryAck({
+        proposalHandle: ackedSummary.summaryOp.contents.handle,
+        ackHandle: ackedSummary.summaryAck.contents.handle,
+        summaryRefSeq: ackedSummary.summaryOp.referenceSequenceNumber,
+        summaryLogger: logger });
     return { ackedSummary, summarySequenceNumber };
 }
 
@@ -395,49 +395,6 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
 
             // GC blob expected to be the same as the summary has not changed
             await submitSummaryAndValidateState(summarizerClient2, isTreeHandle);
-        });
-    });
-
-    describe("Stores handle in summary when GC state does not change", () => {
-        it("Rewrites blob when data is not at root", async () => {
-            provider = getTestObjectProvider({ syncSummarizer: true });
-            // Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
-            // time the summarizer client uploads a summary.
-            (provider as any)._documentServiceFactory = wrapDocumentServiceFactory(
-                provider.documentServiceFactory,
-                uploadSummaryCb,
-            );
-            mainContainer = await createContainer();
-            dataStoreA = await requestFluidObject<ITestFluidObject>(mainContainer, "default");
-
-            // Create data stores B and C, and mark them as referenced.
-            dataStoreB = await requestFluidObject<ITestFluidObject>(
-                await dataStoreA.context.containerRuntime.createDataStore(dataObjectFactory.type), "");
-            dataStoreA.root.set("dataStoreB", dataStoreB.handle);
-            dataStoreC = await requestFluidObject<ITestFluidObject>(
-                await dataStoreA.context.containerRuntime.createDataStore(dataObjectFactory.type), "");
-            dataStoreA.root.set("dataStoreC", dataStoreC.handle);
-
-            settings["Fluid.GarbageCollection.WriteDataAtRoot"] = "false";
-            summarizerClient1 = await getNewSummarizer();
-            const summaryResult = await submitAndAckSummary(provider,
-                summarizerClient1,
-                logger,
-                false, // fullTree
-            );
-            assert(latestUploadedSummary !== undefined, "Did not get a summary");
-            assert(latestUploadedSummary.tree[gcTreeKey] === undefined, "Expected gc not to be written at root!");
-
-            // Write data at root
-            settings["Fluid.GarbageCollection.WriteDataAtRoot"] = "true";
-            const summarizerClient2 = await getNewSummarizer(summaryResult.ackedSummary.summaryAck.contents.handle);
-            await submitSummaryAndValidateState(summarizerClient2, isTree);
-        });
-
-        afterEach(() => {
-            latestAckedSummary = undefined;
-            latestSummaryContext = undefined;
-            latestUploadedSummary = undefined;
         });
     });
 });

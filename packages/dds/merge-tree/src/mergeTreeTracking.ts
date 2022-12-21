@@ -3,71 +3,93 @@
  * Licensed under the MIT License.
  */
 
+import { LocalReferencePosition } from "./localReference";
 import { ISegment } from "./mergeTreeNodes";
 import { SortedSegmentSet } from "./sortedSegmentSet";
 
+export type Trackable = ISegment | LocalReferencePosition;
+
 export class TrackingGroup {
-    private readonly segmentSet: SortedSegmentSet;
+    private readonly trackedSet: SortedSegmentSet<Trackable>;
 
     constructor() {
-        this.segmentSet = new SortedSegmentSet();
+        this.trackedSet = new SortedSegmentSet<Trackable>();
     }
 
+    /**
+     * @deprecated - use tracked instead.
+     * For references positions this will return the underlying segment,
+     * which may not match the intention
+     */
     public get segments(): readonly ISegment[] {
-        return this.segmentSet.items;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this.trackedSet.items.map((v) => v.isLeaf() ? v : v.getSegment()!);
+    }
+
+    public get tracked(): readonly Trackable[] {
+        return this.trackedSet.items;
     }
 
     public get size(): number {
-        return this.segmentSet.size;
+        return this.trackedSet.size;
     }
 
-    public has(segment: ISegment): boolean {
-        return this.segmentSet.has(segment);
+    public has(trackable: Trackable): boolean {
+        return this.trackedSet.has(trackable);
     }
 
-    public link(segment: ISegment) {
-        if (!this.segmentSet.has(segment)) {
-            this.segmentSet.addOrUpdate(segment);
-            segment.trackingCollection.link(this);
+    public link(trackable: Trackable) {
+        if (!this.trackedSet.has(trackable)) {
+            this.trackedSet.addOrUpdate(trackable);
+            trackable.trackingCollection.link(this);
         }
     }
 
-    public unlink(segment: ISegment) {
-        if (this.segmentSet.remove(segment)) {
-            segment.trackingCollection.unlink(this);
+    public unlink(trackable: Trackable) {
+        if (this.trackedSet.remove(trackable)) {
+            trackable.trackingCollection.unlink(this);
+            return true;
         }
+        return false;
     }
 }
 
 export class TrackingGroupCollection {
     public readonly trackingGroups: Set<TrackingGroup>;
 
-    constructor(private readonly segment: ISegment) {
+    constructor(private readonly trackable: Trackable) {
         this.trackingGroups = new Set<TrackingGroup>();
     }
 
-    public link(trackingGroup: TrackingGroup) {
+    public link(trackingGroup: TrackingGroup): void {
         if (trackingGroup) {
             if (!this.trackingGroups.has(trackingGroup)) {
                 this.trackingGroups.add(trackingGroup);
             }
 
-            if (!trackingGroup.has(this.segment)) {
-                trackingGroup.link(this.segment);
+            if (!trackingGroup.has(this.trackable)) {
+                trackingGroup.link(this.trackable);
             }
         }
     }
 
-    public unlink(trackingGroup: TrackingGroup) {
-        if (trackingGroup.has(this.segment)) {
-            trackingGroup.unlink(this.segment);
+    public unlink(trackingGroup: TrackingGroup): boolean {
+        if (this.trackingGroups.has(trackingGroup)) {
+            if (trackingGroup.has(this.trackable)) {
+                trackingGroup.unlink(this.trackable);
+            }
+            this.trackingGroups.delete(trackingGroup);
+            return true;
         }
-        this.trackingGroups.delete(trackingGroup);
+
+        return false;
     }
 
-    public copyTo(segment: ISegment) {
+    public copyTo(trackable: Trackable) {
         this.trackingGroups.forEach(
-            (sg) => segment.trackingCollection.link(sg));
+            (sg) => {
+                trackable.trackingCollection.link(sg);
+            });
     }
 
     public get empty(): boolean {

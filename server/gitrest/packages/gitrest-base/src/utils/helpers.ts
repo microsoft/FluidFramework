@@ -14,7 +14,6 @@ import {
 } from "@fluidframework/server-services-client";
 import { BaseTelemetryProperties, HttpProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
-    BaseGitRestTelemetryProperties,
     Constants,
     IExternalWriterConfig,
     IFileSystemManager,
@@ -22,11 +21,15 @@ import {
     IRepositoryManagerFactory,
     IStorageRoutingId,
 } from "./definitions";
+import {
+    BaseGitRestTelemetryProperties,
+    GitRestLumberEventName,
+} from "./gitrestTelemetryDefinitions";
 
 /**
  * Validates that the input encoding is valid
  */
- export function validateBlobEncoding(encoding: BufferEncoding): boolean {
+export function validateBlobEncoding(encoding: BufferEncoding): boolean {
     return encoding === "utf-8" || encoding === "base64";
 }
 
@@ -84,35 +87,60 @@ export async function persistLatestFullSummaryInStorage(
     fileSystemManager: IFileSystemManager,
     storageDirectoryPath: string,
     latestFullSummary: IWholeFlatSummary,
+    lumberjackProperties: Record<string, any>,
 ): Promise<void> {
-    const directoryExists = await exists(fileSystemManager, storageDirectoryPath);
-    if (directoryExists === false) {
-        await fileSystemManager.promises.mkdir(storageDirectoryPath, { recursive: true });
-    } else if (!directoryExists.isDirectory()) {
-        throw new NetworkError(400, "Document storage directory path is not a directory");
+    const persistLatestFullSummaryInStorageMetric = Lumberjack.newLumberMetric(
+        GitRestLumberEventName.PersistLatestFullSummaryInStorage,
+        lumberjackProperties);
+    try {
+        const directoryExists = await exists(fileSystemManager, storageDirectoryPath);
+        persistLatestFullSummaryInStorageMetric.setProperty(
+            BaseGitRestTelemetryProperties.fullSummaryirectoryExists,
+            directoryExists !== false);
+        if (directoryExists === false) {
+            await fileSystemManager.promises.mkdir(storageDirectoryPath, { recursive: true });
+        } else if (!directoryExists.isDirectory()) {
+            throw new NetworkError(400, "Document storage directory path is not a directory");
+        }
+        await fileSystemManager.promises.writeFile(
+            getLatestFullSummaryFilePath(storageDirectoryPath),
+            JSON.stringify(latestFullSummary),
+        );
+        persistLatestFullSummaryInStorageMetric.success("Successfully persisted latest full summary in storage");
+    } catch (error: any) {
+        persistLatestFullSummaryInStorageMetric.error("Failed to persist latest full summary in storage", error);
+        throw error;
     }
-    await fileSystemManager.promises.writeFile(
-        getLatestFullSummaryFilePath(storageDirectoryPath),
-        JSON.stringify(latestFullSummary),
-    );
 }
 
 export async function retrieveLatestFullSummaryFromStorage(
     fileSystemManager: IFileSystemManager,
     storageDirectoryPath: string,
+    lumberjackProperties: Record<string, any>,
 ): Promise<IWholeFlatSummary | undefined> {
+    const retrieveLatestFullSummaryMetric = Lumberjack.newLumberMetric(
+        GitRestLumberEventName.RetrieveLatestFullSummaryFromStorage,
+        lumberjackProperties);
     try {
         const summaryFile = await fileSystemManager.promises.readFile(
             getLatestFullSummaryFilePath(storageDirectoryPath),
         );
         // TODO: This will be converted back to a JSON string for the HTTP response
         const summary: IWholeFlatSummary = JSON.parse(summaryFile.toString());
+        retrieveLatestFullSummaryMetric.setProperty(BaseGitRestTelemetryProperties.emptyFullSummary, false);
+        retrieveLatestFullSummaryMetric.success("Successfully read full summary from storage");
         return summary;
     } catch (error: any) {
         if (error?.code === "ENOENT") {
+            retrieveLatestFullSummaryMetric.setProperty(BaseGitRestTelemetryProperties.emptyFullSummary, true);
+            retrieveLatestFullSummaryMetric.success(
+                "Tried to retrieve latest from summary from storage but it does not exist");
             // File does not exist.
             return undefined;
         }
+        retrieveLatestFullSummaryMetric.error(
+            "Failed to read latest full summary from storage",
+            error);
         throw error;
     }
 }
@@ -150,7 +178,7 @@ export function parseStorageRoutingId(storageRoutingId?: string): IStorageRoutin
     if (!storageRoutingId) {
         return undefined;
     }
-    const [tenantId,documentId] = storageRoutingId.split(":");
+    const [tenantId, documentId] = storageRoutingId.split(":");
     return {
         tenantId,
         documentId,
@@ -196,7 +224,7 @@ export async function getRepoManagerFromWriteAPI(
     repoPerDocEnabled: boolean) {
     try {
         return await repoManagerFactory.open(repoManagerParams);
-    } catch(error: any) {
+    } catch (error: any) {
         // If repoPerDocEnabled is true, we want the behavior to be "open or create" for GitRest Write APIs,
         // creating the repository on the fly. So, if the open operation fails with a 400 code (representing
         // the repo does not exist), we try to create the reposiroty instead.
@@ -204,7 +232,7 @@ export async function getRepoManagerFromWriteAPI(
             error instanceof Error &&
             error?.name === "NetworkError" &&
             (error as NetworkError)?.code === 400) {
-                return repoManagerFactory.create(repoManagerParams);
+            return repoManagerFactory.create(repoManagerParams);
         }
         throw error;
     }

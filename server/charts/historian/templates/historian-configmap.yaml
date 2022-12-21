@@ -40,7 +40,9 @@ data:
             "maxRequestsPerMs": {{ .Values.historian.throttling.maxRequestsPerMs }},
             "maxRequestBurst": {{ .Values.historian.throttling.maxRequestBurst }},
             "minCooldownIntervalInMs": {{ .Values.historian.throttling.minCooldownIntervalInMs }},
-            "minThrottleIntervalInMs": {{ .Values.historian.throttling.minThrottleIntervalInMs }}
+            "minThrottleIntervalInMs": {{ .Values.historian.throttling.minThrottleIntervalInMs }},
+            "maxInMemoryCacheSize": {{ .Values.historian.throttling.maxInMemoryCacheSize }},
+            "maxInMemoryCacheAgeInMs": {{ .Values.historian.throttling.maxInMemoryCacheAgeInMs }}
         },
         "restGitService": {
             "disableGitCache": {{ .Values.historian.restGitService.disableGitCache }}

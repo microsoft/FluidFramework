@@ -2,13 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { strict as assert } from "assert";
 import os from "os";
-import { Project, SourceFile } from "ts-morph"
-import { createSpecificValidator } from "./../../typeValidator/packageValidator";
+import { Project, SourceFile } from "ts-morph";
+
 import { TypeData } from "../../typeValidator/typeData";
-import { BreakingIncrement, enableLogging } from "./../../typeValidator/validatorUtils"
+import { createSpecificValidator } from "./../../typeValidator/packageValidator";
+import { BreakingIncrement, enableLogging } from "./../../typeValidator/validatorUtils";
 
 describe("Class", () => {
     enableLogging(true);
@@ -30,13 +30,14 @@ describe("Class", () => {
         return typeData!;
     }
 
-    function checkIncrement(
-        oldSource: string,
-        newSource: string,
-    ): BreakingIncrement {
-        const oldSourceFile = project.createSourceFile(`${pkgDir}/src/classOld.ts`, oldSource, { overwrite: true });
+    function checkIncrement(oldSource: string, newSource: string): BreakingIncrement {
+        const oldSourceFile = project.createSourceFile(`${pkgDir}/src/classOld.ts`, oldSource, {
+            overwrite: true,
+        });
         const oldTypeData = getTypeDataForSource(oldSourceFile);
-        const newSourceFile = project.createSourceFile(`${pkgDir}/src/classNew.ts`, newSource, { overwrite: true });
+        const newSourceFile = project.createSourceFile(`${pkgDir}/src/classNew.ts`, newSource, {
+            overwrite: true,
+        });
         const newTypeData = getTypeDataForSource(newSourceFile);
 
         const validator = createSpecificValidator(
@@ -53,13 +54,11 @@ describe("Class", () => {
         // scenario: added new method
         // expected result: major breaking change
         it("adds a new method", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass {}
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass {
                 public newMethod() { return false; }
             }
@@ -71,13 +70,11 @@ describe("Class", () => {
 
         // adding an optional method is an incremental change
         it("adds a new optional method", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass {}
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass {
                 public newMethod?() { return false; }
             }
@@ -89,15 +86,13 @@ describe("Class", () => {
 
         // removing a method is a breaking change
         it("removed a method", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass {
                 public oldMethod() { return false; }
             }
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass {}
             `;
 
@@ -107,15 +102,13 @@ describe("Class", () => {
 
         // adding or removing a private method does not affect the api
         it("added and removed a private method", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass {
                 private oldMethod() { return false; }
             }
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass {
                 private newMethod() { return false; }
             }
@@ -128,13 +121,11 @@ describe("Class", () => {
         // protected methods affect the class API and are treated the same as public
         // adding/removing one is a breaking change
         it("added a protected method", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass {}
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass {
                 protected newMethod() { return false; }
             }
@@ -147,13 +138,11 @@ describe("Class", () => {
         // static methods affect the class API and are treated the same as public
         // adding/removing one is a breaking change
         it("added a static method", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass {}
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass {
                 static newMethod() { return false; }
             }
@@ -166,15 +155,13 @@ describe("Class", () => {
         // getters are treated the same as public methods
         // adding/removing one is a breaking change
         it("added a getter", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass {
                 private _testProperty = "sussy baka";
             }
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass {
                 private _testProperty = "sussy baka";
                 get testProperty() { return this._testProperty; }
@@ -188,15 +175,13 @@ describe("Class", () => {
         // setters are treated the same as public methods
         // adding/removing one is a breaking change
         it("added a setter", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass {
                 private _testProperty = "sussy baka";
             }
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass {
                 private _testProperty = "sussy baka";
                 set setTestProperty(newTestProperty: string) {
@@ -211,15 +196,13 @@ describe("Class", () => {
 
         // adding a new required method parameter is a breaking change
         it("added a new required method param", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass {
                 public testMethod() { return false; }
             }
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass {
                 public testMethod(newProp: boolean) { return false; }
             }
@@ -232,15 +215,13 @@ describe("Class", () => {
         // scenario: added new default param (method signature changed but won't break existing code)
         // expected result: minor breaking change
         it("new default value added", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass {
                 public testMethod() { return "minotaur"; }
             }
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass {
                 public testMethod(param1 : string = "target") { return "minotaur"; }
             }
@@ -253,15 +234,13 @@ describe("Class", () => {
         // scenario: new version changes the param to a different type.
         // expected result: A major breaking change
         it("default value type changed", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass {
                 public testMethod(param1 : string = "target") { return "minotaur"; }
             }
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass {
                 public testMethod(param1 : boolean = false) { return "minotaur"; }
             }
@@ -275,15 +254,13 @@ describe("Class", () => {
         // the method signature. (optional param now required)
         // expected result: A major breaking change
         it.skip("default value removed", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass {
                 public testMethod(param1 : string = "target") { return "minotaur"; }
             }
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass {
                 public testMethod(param1 : string) { return "minotaur"; }
             }
@@ -297,8 +274,7 @@ describe("Class", () => {
     describe("constructors", () => {
         // changing constructor params is a breaking change
         it("changed ctor params", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass {
                 constructor(
                     public param1: string,
@@ -307,8 +283,7 @@ describe("Class", () => {
             }
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass {
                 constructor(
                     public param1: string,
@@ -325,8 +300,7 @@ describe("Class", () => {
         // changing inline properties in the constructor is the same as changing properties
         // adding a public property is a breaking change
         it("changed inline ctor properties", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass {
                 constructor(
                     public param1: string,
@@ -335,8 +309,7 @@ describe("Class", () => {
             }
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass {
                 constructor(
                     public param1: string,
@@ -351,8 +324,7 @@ describe("Class", () => {
 
         // changing an inline constructor prop to a normal one should have no effect
         it.skip("changed inline ctor property to normal property", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass {
                 constructor(
                     public param1: string,
@@ -361,8 +333,7 @@ describe("Class", () => {
             }
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass {
                 public param2: number;
                 constructor(
@@ -382,16 +353,14 @@ describe("Class", () => {
     describe("properties", () => {
         // changing private properties has no effect on the class API
         it("changed private properties", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass {
                 public prop1 = 1;
                 private prop2 = 2;
             }
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass {
                 public prop1 = 1;
                 private prop3 = "alpha snorlax";
@@ -406,14 +375,12 @@ describe("Class", () => {
     describe("heritage", () => {
         // extends changes are breaking
         it("changed class extensions", () => {
-            const classOld =
-            `
+            const classOld = `
             class BaseClass<T> extends Promise<T> {}
             export class TestClass extends BaseClass<string> {}
             `;
 
-            const classNew =
-            `
+            const classNew = `
             class BaseClass<T> extends Promise<T> {}
             export class TestClass extends BaseClass<number> {}
             `;
@@ -426,14 +393,12 @@ describe("Class", () => {
         // (this isn't actually breaking but is difficult to handle so we err on the side
         // of over-bumping)
         it("changed class extensions that are structurally identical", () => {
-            const classOld =
-            `
+            const classOld = `
             class BaseClass<T> extends Promise<T> {}
             export class TestClass extends BaseClass<string> {}
             `;
 
-            const classNew =
-            `
+            const classNew = `
             class BaseClass2<T> extends Promise<T> {}
             export class TestClass extends BaseClass2<string> {}
             `;
@@ -446,14 +411,12 @@ describe("Class", () => {
         // (this isn't actually breaking but is difficult to handle and errs on the side
         // of over-bumping)
         it("changed class implementations that are structurally identical", () => {
-            const classOld =
-            `
+            const classOld = `
             interface TestInterface {}
             export class TestClass implements TestInterface {}
             `;
 
-            const classNew =
-            `
+            const classNew = `
             interface TestInterface2 {}
             export class TestClass implements TestInterface2 {}
             `;
@@ -464,15 +427,13 @@ describe("Class", () => {
 
         // reordering implementations is not breaking
         it("reorders changed class implementations", () => {
-            const classOld =
-            `
+            const classOld = `
             interface TestInterface1 {}
             interface TestInterface2 {}
             export class TestClass implements TestInterface1, TestInterface2 {}
             `;
 
-            const classNew =
-            `
+            const classNew = `
             interface TestInterface1 {}
             interface TestInterface2 {}
             export class TestClass implements TestInterface2, TestInterface1 {}
@@ -486,15 +447,13 @@ describe("Class", () => {
     describe("type parameters", () => {
         // removing required class type parameters is a breaking change
         it.skip("removes a required class type parameters", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass<X> {
                 private prop1?: Array<X>;
             }
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass {
                 private prop1?: Array<string>;
             }
@@ -506,15 +465,13 @@ describe("Class", () => {
 
         /// adding required class type parameters is a breaking change
         it.skip("adds a required class type parameter", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass {
                 public prop1?: Array<string>;
             }
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass<X> {
                 public prop1?: Array<X>;
             }
@@ -526,15 +483,13 @@ describe("Class", () => {
 
         // removing optional class type parameters is breaking
         it.skip("removes an optional class type parameter", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass<X = string> {
                 public prop1?: Array<X>;
             }
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass {
                 public prop1?: Array<string>;
             }
@@ -546,15 +501,13 @@ describe("Class", () => {
 
         // adding optional class type parameters is incremental
         it("adds an optional class type parameter", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass {
                 public prop1?: Array<string>;
             }
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass<X = string> {
                 public prop1?: Array<X>;
             }
@@ -566,16 +519,14 @@ describe("Class", () => {
 
         // changing type parameter names is not breaking
         it("renames class type parameters", () => {
-            const classOld =
-            `
+            const classOld = `
             export class TestClass<X, Y> {
                 private prop1?: Array<X>;
                 private prop2?: Array<Y>;
             }
             `;
 
-            const classNew =
-            `
+            const classNew = `
             export class TestClass<XXX, YYY> {
                 private prop1?: Array<XXX>;
                 private prop2?: Array<YYY>;

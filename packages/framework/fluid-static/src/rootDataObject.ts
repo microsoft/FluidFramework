@@ -11,10 +11,10 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ContainerSchema,
     DataObjectClass,
+    IRootDataObject,
     LoadableObjectClass,
     LoadableObjectClassRecord,
     LoadableObjectRecord,
@@ -23,22 +23,22 @@ import {
 import { isDataObjectClass, isSharedObjectClass, parseDataObjectsFromSharedObjects } from "./utils";
 
 /**
- * Input props for {@link RootDataObject.initializingFirstTime}
+ * Input props for {@link RootDataObject.initializingFirstTime}.
  */
 export interface RootDataObjectProps {
     /**
      * Initial object structure with which the {@link RootDataObject} will be first-time initialized.
-     * See {@link RootDataObject.initializingFirstTime}
+     *
+     * @see {@link RootDataObject.initializingFirstTime}
      */
     initialObjects: LoadableObjectClassRecord;
 }
 
 /**
- * The entry-point/root collaborative object of the Fluid Container.
- * This class abstracts the dynamic code required to build a Fluid Container into a static representation
- * for end customers.
+ * The entry-point/root collaborative object of the {@link IFluidContainer | Fluid Container}.
+ * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
  */
-export class RootDataObject extends DataObject<{ InitialState: RootDataObjectProps; }> {
+export class RootDataObject extends DataObject<{ InitialState: RootDataObjectProps; }> implements IRootDataObject {
     private readonly initialObjectsDirKey = "initial-objects-key";
     private readonly _initialObjects: LoadableObjectRecord = {};
 
@@ -54,7 +54,7 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
      * The first time this object is initialized, creates each object identified in
      * {@link RootDataObjectProps.initialObjects} and stores them as unique values in the root directory.
      *
-     * See {@link @fluidframework/aqueduct#PureDataObject.initializingFirstTime}
+     * @see {@link @fluidframework/aqueduct#PureDataObject.initializingFirstTime}
      */
     protected async initializingFirstTime(props: RootDataObjectProps) {
         this.root.createSubDirectory(this.initialObjectsDirKey);
@@ -76,7 +76,7 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
      * Every time an instance is initialized, loads all of the initial objects in the root directory so they can be
      * accessed immediately.
      *
-     * See {@link @fluidframework/aqueduct#PureDataObject.hasInitialized}
+     * @see {@link @fluidframework/aqueduct#PureDataObject.hasInitialized}
      */
     protected async hasInitialized() {
         // We will always load the initial objects so they are available to the developer
@@ -93,8 +93,7 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
     }
 
     /**
-     * Provides a record of the initial objects defined on creation.
-     * See {@link RootDataObject.initializingFirstTime}
+     * {@inheritDoc IRootDataObject.initialObjects}
      */
     public get initialObjects(): LoadableObjectRecord {
         if (Object.keys(this._initialObjects).length === 0) {
@@ -104,8 +103,7 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
     }
 
     /**
-     * Dynamically creates a new detached collaborative object (DDS/DataObject).
-     * @param objectClass - Type of the collaborative object to be created.
+     * {@inheritDoc IRootDataObject.create}
      */
     public async create<T extends IFluidLoadable>(
         objectClass: LoadableObjectClass<T>,
@@ -121,8 +119,9 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
     private async createDataObject<T extends IFluidLoadable>(dataObjectClass: DataObjectClass<T>): Promise<T> {
         const factory = dataObjectClass.factory;
         const packagePath = [...this.context.packagePath, factory.type];
-        const router = await this.context.containerRuntime.createDataStore(packagePath);
-        return requestFluidObject<T>(router, "/");
+        const dataStore = await this.context.containerRuntime.createDataStore(packagePath);
+        const entryPoint = await dataStore.entryPoint?.get();
+        return entryPoint as unknown as T;
     }
 
     private createSharedObject<T extends IFluidLoadable>(
@@ -137,8 +136,12 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
 const rootDataStoreId = "rootDOId";
 
 /**
- * Container code that provides a single {@link RootDataObject}.  This data object is
- * dynamically customized (registry and initial objects) based on the schema provided to the container runtime factory.
+ * Container code that provides a single {@link RootDataObject}.
+ *
+ * @remarks
+ *
+ * This data object is dynamically customized (registry and initial objects) based on the schema provided.
+ * to the container runtime factory.
  */
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     private readonly rootDataObjectFactory: DataObjectFactory<RootDataObject, {

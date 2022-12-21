@@ -58,7 +58,6 @@ describe("Runtime", () => {
             };
             const summaryConfig: ISummaryConfiguration = {
                 state: "enabled",
-                idleTime: 5000, // 5 sec (idle)
                 maxTime: 5000 * 12, // 1 min (active)
                 maxOps: 1000, // 1k ops (active)
                 minOpsForLastSummaryAttempt: 50,
@@ -66,6 +65,7 @@ describe("Runtime", () => {
                 maxIdleTime: 5000, // This must remain the same as minIdleTime for tests to pass nicely
                 nonRuntimeOpWeight: 0.1,
                 runtimeOpWeight: 1.0,
+                nonRuntimeHeuristicThreshold: 20,
                 ...summaryCommon,
             };
             const summaryConfigDisableHeuristics: ISummaryConfiguration = {
@@ -89,6 +89,20 @@ describe("Runtime", () => {
                     sequenceNumber: lastRefSeq,
                     timestamp,
                     type,
+                };
+                mockDeltaManager.emit("op", op);
+                await flushPromises();
+            }
+
+            async function emitNoOp(
+                increment: number = 1,
+            ) {
+                heuristicData.numNonRuntimeOps += increment - 1; // -1 because we emit an op below
+                lastRefSeq += increment;
+                const op: Partial<ISequencedDocumentMessage> = {
+                    sequenceNumber: lastRefSeq,
+                    timestamp: Date.now(),
+                    type: MessageType.NoOp,
                 };
                 mockDeltaManager.emit("op", op);
                 await flushPromises();
@@ -454,6 +468,29 @@ describe("Runtime", () => {
 
                     assert.strictEqual(heuristicData.numRuntimeOps, 0);
                     assert.strictEqual(heuristicData.numNonRuntimeOps, 1);
+                });
+
+                it("Should not summarize on non-runtime op before threshold is reached", async () => {
+                    // Creating RunningSummarizer starts heuristics automatically
+                    await emitNoOp(1);
+                    await tickAndFlushPromises(summaryConfig.minIdleTime);
+                    assertRunCounts(1, 0, 0, "should perform summary");
+                    await emitAck();
+
+                    assert(summaryConfig.nonRuntimeHeuristicThreshold !== undefined,
+                        "Expect nonRuntimeHeuristicThreshold to be provided");
+
+                    await emitNoOp(summaryConfig.nonRuntimeHeuristicThreshold - 2); // SummaryAck is included
+                    await tickAndFlushPromises(summaryConfig.minIdleTime);
+
+                    assertRunCounts(1, 0, 0, "should not perform summary");
+                    assert.strictEqual(heuristicData.numRuntimeOps, 0);
+                    assert.strictEqual(heuristicData.numNonRuntimeOps, summaryConfig.nonRuntimeHeuristicThreshold - 1);
+
+                    await emitNoOp(1);
+                    await tickAndFlushPromises(summaryConfig.minIdleTime);
+
+                    assertRunCounts(2, 0, 0, "should perform summary");
                 });
             });
 

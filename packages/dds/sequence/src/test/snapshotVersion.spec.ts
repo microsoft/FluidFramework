@@ -84,7 +84,7 @@ describe("SharedString Snapshot Version", () => {
         return sharedString;
     }
 
-    function generateSnapshotRebuildTest(name: string, testString: SharedString) {
+    function generateSnapshotRebuildTest(name: string, testString: SharedString, normalized: boolean) {
         it(name, async () => {
             const filename = `${filebase}${name}.json`;
             assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
@@ -117,8 +117,10 @@ describe("SharedString Snapshot Version", () => {
 
     function generateSnapshotRebuildTests() {
         describe("Snapshot rebuild", () => {
-            for (const str of generateStrings()) {
-                generateSnapshotRebuildTest(str[0], str[1]);
+            for (const { snapshotPath, expected, snapshotIsNormalized } of generateStrings()) {
+                if (snapshotIsNormalized || snapshotPath === "v1Intervals/withV1Intervals") {
+                    generateSnapshotRebuildTest(snapshotPath, expected, snapshotIsNormalized);
+                }
             }
         });
     }
@@ -143,7 +145,9 @@ describe("SharedString Snapshot Version", () => {
     function generateSnapshotDiffTests() {
         describe("Snapshot diff", () => {
             for (const str of generateStrings()) {
-                generateSnapshotDiffTest(str[0], str[1]);
+                if (str.snapshotIsNormalized) {
+                    generateSnapshotDiffTest(str.snapshotPath, str.expected);
+                }
             }
         });
     }

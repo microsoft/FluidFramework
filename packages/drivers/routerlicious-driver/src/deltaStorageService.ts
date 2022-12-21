@@ -11,9 +11,8 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { readAndParse, requestOps, emptyMessageStream } from "@fluidframework/driver-utils";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { RestWrapper } from "@fluidframework/server-services-client";
 import { DocumentStorageService } from "./documentStorageService";
 
@@ -27,7 +26,8 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
         private readonly tenantId: string,
         private readonly id: string,
         private readonly deltaStorageService: IDeltaStorageService,
-        private readonly documentStorageService: DocumentStorageService) {
+        private readonly documentStorageService: DocumentStorageService,
+        private readonly logger: ITelemetryLogger) {
     }
 
     private logtailSha: string | undefined = this.documentStorageService.logTailSha;
@@ -62,11 +62,20 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 
         this.logtailSha = undefined;
         if (opsFromLogTail.length > 0) {
-            const messages = opsFromLogTail.filter((op) =>
-                op.sequenceNumber >= from,
-            );
-            if (messages.length > 0) {
-                return { messages, partialResult: true };
+            try {
+                const messages = opsFromLogTail.filter((op, i) => {
+                    // throw if the sequence numbers in logtail are not contiguous
+                    if (i > 0 && op.sequenceNumber !== opsFromLogTail[i - 1].sequenceNumber + 1) {
+                        throw new Error("Log tail ops are not contiguous");
+                    }
+                    return op.sequenceNumber >= from;
+                });
+                
+                if (messages.length > 0 && messages[0].sequenceNumber === from) {
+                    return { messages, partialResult: true };
+                }     
+            } catch (error) {
+                this.logger.sendErrorEvent({ eventName: "LogTailReadError" }, error);
             }
         }
 

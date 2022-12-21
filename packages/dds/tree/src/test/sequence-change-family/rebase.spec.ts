@@ -4,7 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { sequenceChangeRebaser, SequenceChangeset } from "../../feature-libraries";
+import {
+    sequenceChangeRebaser,
+    SequenceChangeset,
+    // eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/sequence-change-family";
+import { makeAnonChange } from "../../rebase";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
@@ -16,7 +21,7 @@ const tomb = "Dummy Changeset Tag";
 function rebase(change: SequenceChangeset, base: SequenceChangeset): SequenceChangeset {
     deepFreeze(change);
     deepFreeze(base);
-    return sequenceChangeRebaser.rebase(change, base);
+    return sequenceChangeRebaser.rebase(change, makeAnonChange(base));
 }
 
 describe("SequenceChangeFamily - Rebase", () => {
@@ -122,10 +127,7 @@ describe("SequenceChangeFamily - Rebase", () => {
         };
         const deletion: SequenceChangeset = {
             marks: {
-                root: [
-                    1,
-                    { type: "Delete", id: 1, count: 3 },
-                ],
+                root: [1, { type: "Delete", id: 1, count: 3 }],
             },
         };
         const actual = rebase(sets, deletion);
@@ -158,10 +160,7 @@ describe("SequenceChangeFamily - Rebase", () => {
         };
         const deletion: SequenceChangeset = {
             marks: {
-                root: [
-                    1,
-                    { type: "Delete", id: 1, count: 3 },
-                ],
+                root: [1, { type: "Delete", id: 1, count: 3 }],
             },
         };
         const actual = rebase(mods, deletion);
@@ -194,10 +193,7 @@ describe("SequenceChangeFamily - Rebase", () => {
         };
         const deletion: SequenceChangeset = {
             marks: {
-                root: [
-                    1,
-                    { type: "Delete", id: 1, count: 3 },
-                ],
+                root: [1, { type: "Delete", id: 1, count: 3 }],
             },
         };
         const actual = rebase(insert, deletion);
@@ -230,10 +226,7 @@ describe("SequenceChangeFamily - Rebase", () => {
         };
         const deletion: SequenceChangeset = {
             marks: {
-                root: [
-                    1,
-                    { type: "Delete", id: 1, count: 3 },
-                ],
+                root: [1, { type: "Delete", id: 1, count: 3 }],
             },
         };
         const actual = rebase(revive, deletion);
@@ -256,10 +249,7 @@ describe("SequenceChangeFamily - Rebase", () => {
         // Deletes ---DEFGH--
         const deleteA: SequenceChangeset = {
             marks: {
-                root: [
-                    3,
-                    { type: "Delete", id: 2, count: 5 },
-                ],
+                root: [3, { type: "Delete", id: 2, count: 5 }],
             },
         };
         // Deletes --CD-F-HI
@@ -279,10 +269,7 @@ describe("SequenceChangeFamily - Rebase", () => {
         // Deletes --E-G
         const expected: SequenceChangeset = {
             marks: {
-                root: [
-                    2,
-                    { type: "Delete", id: 2, count: 2 },
-                ],
+                root: [2, { type: "Delete", id: 2, count: 2 }],
             },
         };
         assert.deepEqual(actual, expected);
@@ -292,28 +279,20 @@ describe("SequenceChangeFamily - Rebase", () => {
         // Deletes ---DE
         const deleteA: SequenceChangeset = {
             marks: {
-                root: [
-                    3,
-                    { type: "Delete", id: 2, count: 2 },
-                ],
+                root: [3, { type: "Delete", id: 2, count: 2 }],
             },
         };
         // Deletes AB--
         const deleteB: SequenceChangeset = {
             marks: {
-                root: [
-                    { type: "Delete", id: 1, count: 2 },
-                ],
+                root: [{ type: "Delete", id: 1, count: 2 }],
             },
         };
         const actual = rebase(deleteA, deleteB);
         // Deletes -DE
         const expected: SequenceChangeset = {
             marks: {
-                root: [
-                    1,
-                    { type: "Delete", id: 2, count: 2 },
-                ],
+                root: [1, { type: "Delete", id: 2, count: 2 }],
             },
         };
         assert.deepEqual(actual, expected);
@@ -323,18 +302,13 @@ describe("SequenceChangeFamily - Rebase", () => {
         // Deletes AB--
         const deleteA: SequenceChangeset = {
             marks: {
-                root: [
-                    { type: "Delete", id: 1, count: 2 },
-                ],
+                root: [{ type: "Delete", id: 1, count: 2 }],
             },
         };
         // Deletes ---DE
         const deleteB: SequenceChangeset = {
             marks: {
-                root: [
-                    2,
-                    { type: "Delete", id: 2, count: 2 },
-                ],
+                root: [2, { type: "Delete", id: 2, count: 2 }],
             },
         };
         const actual = rebase(deleteA, deleteB);
@@ -353,10 +327,7 @@ describe("SequenceChangeFamily - Rebase", () => {
         };
         const insert: SequenceChangeset = {
             marks: {
-                root: [
-                    2,
-                    { type: "Insert", id: 1, content: [{ type, value: 2 }] },
-                ],
+                root: [2, { type: "Insert", id: 1, content: [{ type, value: 2 }] }],
             },
         };
         const expected: SequenceChangeset = {
@@ -386,10 +357,7 @@ describe("SequenceChangeFamily - Rebase", () => {
         };
         const insert: SequenceChangeset = {
             marks: {
-                root: [
-                    2,
-                    { type: "Insert", id: 1, content: [{ type, value: 2 }] },
-                ],
+                root: [2, { type: "Insert", id: 1, content: [{ type, value: 2 }] }],
             },
         };
         const expected: SequenceChangeset = {
@@ -423,10 +391,7 @@ describe("SequenceChangeFamily - Rebase", () => {
         // Inserts between C and D
         const insert: SequenceChangeset = {
             marks: {
-                root: [
-                    3,
-                    { type: "Insert", id: 1, content: [{ type, value: 2 }] },
-                ],
+                root: [3, { type: "Insert", id: 1, content: [{ type, value: 2 }] }],
             },
         };
         const expected: SequenceChangeset = {
@@ -460,10 +425,7 @@ describe("SequenceChangeFamily - Rebase", () => {
         };
         const insertB: SequenceChangeset = {
             marks: {
-                root: [
-                    1,
-                    { type: "Insert", id: 3, content: [{ type, value: 3 }] },
-                ],
+                root: [1, { type: "Insert", id: 3, content: [{ type, value: 3 }] }],
             },
         };
         const actual = rebase(insertA, insertB);
@@ -527,10 +489,7 @@ describe("SequenceChangeFamily - Rebase", () => {
         };
         const revive: SequenceChangeset = {
             marks: {
-                root: [
-                    2,
-                    { type: "Revive", id: 1, count: 1, tomb },
-                ],
+                root: [2, { type: "Revive", id: 1, count: 1, tomb }],
             },
         };
         const expected: SequenceChangeset = {
@@ -560,10 +519,7 @@ describe("SequenceChangeFamily - Rebase", () => {
         };
         const revive: SequenceChangeset = {
             marks: {
-                root: [
-                    2,
-                    { type: "Revive", id: 1, count: 1, tomb },
-                ],
+                root: [2, { type: "Revive", id: 1, count: 1, tomb }],
             },
         };
         const expected: SequenceChangeset = {
@@ -597,10 +553,7 @@ describe("SequenceChangeFamily - Rebase", () => {
         // Revives content between C and D
         const revive: SequenceChangeset = {
             marks: {
-                root: [
-                    3,
-                    { type: "Revive", id: 1, count: 1, tomb },
-                ],
+                root: [3, { type: "Revive", id: 1, count: 1, tomb }],
             },
         };
         const expected: SequenceChangeset = {
@@ -634,10 +587,7 @@ describe("SequenceChangeFamily - Rebase", () => {
         };
         const revive: SequenceChangeset = {
             marks: {
-                root: [
-                    1,
-                    { type: "Revive", id: 1, count: 1, tomb },
-                ],
+                root: [1, { type: "Revive", id: 1, count: 1, tomb }],
             },
         };
         const actual = rebase(insert, revive);
@@ -667,10 +617,7 @@ describe("SequenceChangeFamily - Rebase", () => {
         };
         const reviveB: SequenceChangeset = {
             marks: {
-                root: [
-                    2,
-                    { type: "Revive", id: 1, count: 1, tomb },
-                ],
+                root: [2, { type: "Revive", id: 1, count: 1, tomb }],
             },
         };
         const actual = rebase(reviveA, reviveB);

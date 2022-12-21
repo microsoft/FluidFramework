@@ -37,6 +37,7 @@ export const enum CustomDocNodeKind {
  *
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class CustomDocNodes {
     private static _configuration: TSDocConfiguration | undefined;
 

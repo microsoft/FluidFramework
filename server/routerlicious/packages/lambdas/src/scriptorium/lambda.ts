@@ -12,19 +12,22 @@ import {
     ISequencedOperationMessage,
     SequencedOperationType,
     runWithRetry,
+    isRetryEnabled,
 } from "@fluidframework/server-services-core";
-import { getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { convertNumberArrayToRanges } from "../utils";
 
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();
     private pendingOffset: IQueuedMessage | undefined;
     private current = new Map<string, ISequencedOperationMessage[]>();
+    private readonly clientFacadeRetryEnabled: boolean;
 
     constructor(
         private readonly opCollection: ICollection<any>,
         protected context: IContext,
-        protected readonly tenantId: string,
-        protected readonly documentId: string) {
+        private readonly providerConfig: Record<string, any> | undefined) {
+        this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
     }
 
     public handler(message: IQueuedMessage) {
@@ -90,6 +93,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 this.sendPending();
             },
             (error) => {
+                Lumberjack.error("An error occured in scriptorium, going to restart", {}, error);
                 this.context.error(error, { restart: true });
             });
     }
@@ -103,12 +107,24 @@ export class ScriptoriumLambda implements IPartitionLambda {
             ...message,
             mongoTimestamp: new Date(message.operation.timestamp),
         }));
+
+        const documentId = messages[0]?.documentId ?? "";
+        const tenantId = messages[0]?.tenantId ?? "";
+
+        const sequenceNumbers = messages.map((message) => message.operation.sequenceNumber);
+        const sequenceNumberRanges = convertNumberArrayToRanges(sequenceNumbers);
+
         return runWithRetry(
             async () => this.opCollection.insertMany(dbOps, false),
             "insertOpScriptorium",
             3 /* maxRetries */,
             1000 /* retryAfterMs */,
-            getLumberBaseProperties(this.documentId, this.tenantId),
-            (error) => error.code === 11000 /* shouldIgnoreError */);
+            { ...getLumberBaseProperties(documentId, tenantId), ...{ sequenceNumberRanges }},
+            (error) => error.code === 11000,
+            (error) => !this.clientFacadeRetryEnabled /* shouldRetry */,
+            undefined /* calculateIntervalMs */,
+            undefined /* onErrorFn */,
+            this.providerConfig?.enableRunWithRetryMetricTelemetry,
+        );
     }
 }

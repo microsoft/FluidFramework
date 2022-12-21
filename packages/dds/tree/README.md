@@ -1,6 +1,6 @@
 # @fluid-internal/tree
 
-This DDS is not yet ready for public consumption. See (#8273)[https://github.com/microsoft/FluidFramework/issues/8273].
+This DDS is not yet ready for public consumption. See [roadmap.md](docs/roadmap.md).
 
 ## Motivation
 
@@ -58,6 +58,21 @@ which could make their way back into the framework, enabling some features speci
 From this perspective, this tree serves as a proof of concept for abstractions and features which could benefit the framework, but are easier to implement within a DDS initially.
 This tree serves to get these feature into the hands of users much faster than could be done at the framework level.
 
+## Recommended Developer Workflow
+
+This package can be developed using any of the [regular workflows for working on Fluid Framework](../../../README.md) and/or its Client release group of packages, but for work only touching the tree package, there is an optional workflow that might be more ergonomic:
+
+-   Open the [.vscode/Tree.code-workspace](.vscode/Tree.code-workspace) in VS Code.
+    This will recommend a test runner extension, which should be installed.
+-   Build the Client release group as normal (for example: `npm i && npm run build:fast` in the repository root).
+-   After editing the tree project, run `npm run build` in its directory.
+-   Run tests using the "Testing" side panel in VS Code, or using the inline `Run | Debug` buttons which should show up above tests in the source:
+    both of these are provided by the mocha testing extension thats recommended by the workspace.
+    Note that this does not build the tests, so always be sure to build first.
+
+This package uses [`good-fences`](https://github.com/smikula/good-fences) to manage intra-package dependencies in `fence.json` files.
+If modifying such dependencies, learn how `good-fences` works, and review (and update if needed) the "Architecture" section below.
+
 ## Architecture
 
 This section covers the internal structure of the Tree DDS.
@@ -94,7 +109,7 @@ When nothing in that container references the DDS anymore, it may get garbage co
 The tree DDS itself, or more specifically [`shared-tree-core`](./src/shared-tree-core/README.md) is composed of a collection of indexes (just like a database) which contribute data which get persisted as part of the summary in the container.
 `shared-tree-core` owns these databases, and is responsible for populating them from summaries and updating them when summarizing.
 
-TODO: When support for multiple branches is added, do we want to have indexes for each branch, and if so, maybe their ownership should move to a branch-specific structure (like checkout?).
+See [indexes and branches](./docs/indexes%20and%20branches.md) for details on how this works with branches.
 
 When applications want access to the `tree`'s data, they do so through a [`checkout`](./src/checkout/README.md) which abstracts the indexes into nice application facing APIs.
 Checkouts may also have state from the application, including:
@@ -242,18 +257,18 @@ so its implementation is broken up into several parts which have carefully contr
 The goal of this internal structuring is to make evolution and maintenance easy.
 Some of the principles used to guide this are:
 
-- Avoid cyclic dependencies:
+-   Avoid cyclic dependencies:
 
     Cyclic dependencies can make it hard to learn a codebase incrementally, as well as make it hard to update or replace parts of the codebase incrementally.
     Additionally they can cause runtime issues with initialization.
 
-- Minimize coupling:
+-   Minimize coupling:
 
     Reducing the number and complexity of edges in the dependency graph.
     This often involves approaches like making a component generic instead of depending on a concrete type directly,
     or combining related components that have a lot of coupling.
 
-- Reducing transitive dependencies:
+-   Reducing transitive dependencies:
 
     Try to keep the total number of dependencies of a given component small when possible.
     This applies both at the module level, but also for the actual object defined by those modules.
@@ -305,6 +320,7 @@ flowchart
         shared-tree-->feature
         subgraph feature ["feature-libraries"]
             direction TB
+            editable-tree-->defaultFieldKinds
             defaultRebaser
             defaultSchema-->defaultFieldKinds-->modular-schema
             forestIndex-->treeTextCursor
@@ -320,3 +336,18 @@ flowchart
     end
     package-->runtime["Fluid runtime"]
 ```
+
+# Open Design Questions
+
+The design issues here all impact the architectural role of top-level modules in this package in a way that when fixed will likely require changes to the architectural details covered above.
+Smaller scoped issues which will not impact the overall architecture should be documented in more localized locations.
+
+## How should specialized sub-tree handling compose?
+
+Applications should have a domain model that can mix editable tree nodes with custom implementations as needed.
+Custom implementations should probably be able to be projections of editable trees, the forest content (via cursors), and updated via either regeneration from the input, or updated by a delta.
+This is important for performance/scalability and might be how we do virtualization (maybe subtrees that aren't downloaded are just one custom representation?).
+This might also be the layer at which we hook up schematize.
+Alternatively, it might be an explicitly two-phase setup (schematize then normalize), but we might share logic between the two and have non-copying bypasses.
+
+How all this relates to [dependency-tracking](./src/dependency-tracking/README.md) is to be determined.

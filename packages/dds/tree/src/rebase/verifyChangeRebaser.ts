@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { makeAnonChange } from "./rebaser";
 import { ChangeRebaser } from ".";
 
 export type Failure<TCase> = Violation<TCase> | Exception<TCase>;
@@ -54,7 +55,7 @@ export interface OutputType<TChange> {
      * otherwise a change that violates the axiom.
      */
     composeWithEmptyIsNoOp: Failure<TChange>[];
-     /**
+    /**
      * "Passed" iff `(A ↷ ε) = A`,
      * otherwise a change that violates the axiom.
      */
@@ -64,7 +65,7 @@ export interface OutputType<TChange> {
      * otherwise a change that violates the axiom.
      */
     rebaseEmptyIsEmpty: Failure<TChange>[];
-     /**
+    /**
      * "Passed" iff `ε⁻¹ = ε`,
      * otherwise a change that violates the axiom.
      */
@@ -95,9 +96,10 @@ export function verifyChangeRebaser<TChange>(
     changes: ReadonlySet<TChange>,
     isEquivalent: (a: TChange, b: TChange) => boolean,
 ): OutputType<TChange> {
-    const rebase = rebaser.rebase.bind(rebaser);
-    const compose = rebaser.compose.bind(rebaser);
-    const invert = rebaser.invert.bind(rebaser);
+    const rebase = (change: TChange, over: TChange) => rebaser.rebase(change, makeAnonChange(over));
+    const compose = (changeToCompose: TChange[]) =>
+        rebaser.compose(changeToCompose.map(makeAnonChange));
+    const invert = (change: TChange) => rebaser.invert(makeAnonChange(change));
 
     const output: OutputType<TChange> = {
         rebaseLeftDistributivity: [],
@@ -168,14 +170,8 @@ export function verifyChangeRebaser<TChange>(
         changeC: TChange,
     ): true | Failure<[TChange, TChange, TChange]> {
         try {
-            const rebaseChangeset1 = rebase(
-                changeA,
-                compose([changeB, changeC]),
-            );
-            const rebaseChangeset2 = rebase(
-                rebase(changeA, changeB),
-                changeC,
-            );
+            const rebaseChangeset1 = rebase(changeA, compose([changeB, changeC]));
+            const rebaseChangeset2 = rebase(rebase(changeA, changeB), changeC);
             const equivalent = isEquivalent(rebaseChangeset1, rebaseChangeset2);
             if (equivalent) {
                 return true;
@@ -200,16 +196,11 @@ export function verifyChangeRebaser<TChange>(
         changeC: TChange,
     ): true | Failure<[TChange, TChange, TChange]> {
         try {
-            const changeset1 = compose([
-                changeA,
-                compose([changeB, changeC]),
-            ]);
-            const changeset2 = compose([
-                compose([changeA, changeB]),
-                changeC,
-            ]);
+            const changeset1 = compose([changeA, compose([changeB, changeC])]);
+            const changeset2 = compose([compose([changeA, changeB]), changeC]);
             const changeset3 = compose([changeA, changeB, changeC]);
-            const equivalent = isEquivalent(changeset1, changeset2) && isEquivalent(changeset1, changeset3);
+            const equivalent =
+                isEquivalent(changeset1, changeset2) && isEquivalent(changeset1, changeset3);
             if (equivalent) {
                 return true;
             }
@@ -232,20 +223,10 @@ export function verifyChangeRebaser<TChange>(
         changeC: TChange,
     ): true | Failure<[TChange, TChange, TChange]> {
         try {
-            const changeset1 = rebase(
-                compose([changeA, changeB]),
-                changeC,
-            );
+            const changeset1 = rebase(compose([changeA, changeB]), changeC);
             const changeset2 = compose([
                 rebase(changeA, changeC),
-                rebase(
-                    changeB,
-                    compose([
-                        invert(changeA),
-                        changeC,
-                        rebase(changeA, changeC),
-                    ]),
-                ),
+                rebase(changeB, compose([invert(changeA), changeC, rebase(changeA, changeC)])),
             ]);
             const equivalent = isEquivalent(changeset1, changeset2);
             if (equivalent) {
@@ -320,10 +301,7 @@ export function verifyChangeRebaser<TChange>(
     // requirement for compose of a change with it's inverse.
     function isComposeWithInverseEqualsEmpty(changeA: TChange): true | Failure<TChange> {
         try {
-            const changeset = compose([
-                changeA,
-                invert(changeA),
-            ]);
+            const changeset = compose([changeA, invert(changeA)]);
             const equivalent = isEquivalent(changeset, compose([]));
             return equivalent ? true : { type: "Violation", case: changeA };
         } catch (error) {
@@ -341,7 +319,8 @@ export function verifyChangeRebaser<TChange>(
             const noOp = compose([]);
             const changeset1 = compose([changeA, noOp]);
             const changeset2 = compose([noOp, changeA]);
-            const equivalent = isEquivalent(changeset1, changeset2) && isEquivalent(changeset1, changeA);
+            const equivalent =
+                isEquivalent(changeset1, changeset2) && isEquivalent(changeset1, changeA);
             return equivalent ? true : { type: "Violation", case: changeA };
         } catch (error) {
             return {

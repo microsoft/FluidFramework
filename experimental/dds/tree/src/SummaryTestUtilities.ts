@@ -12,7 +12,7 @@ import type { SharedTree } from './SharedTree';
  * Format used for exporting an uploaded edit chunk and its associated handle path. Primarily used for testing SharedTree summaries.
  * @public
  */
-export interface UploadedEditChunkContents {
+interface UploadedEditChunkContents {
 	/**
 	 * The handle path associated with the edit chunk.
 	 */
@@ -26,6 +26,7 @@ export interface UploadedEditChunkContents {
 /**
  * Returns a list of blob paths and their associated contents for all uploaded edit chunks in the given edit log, in order of edit sequence numbers.
  * The contents will not be decoded from the format used in the blob.
+ * @deprecated Edit virtualization is no longer supported. Do not use this.
  */
 export async function getUploadedEditChunkContents(sharedTree: SharedTree): Promise<UploadedEditChunkContents[]> {
 	const editChunks: UploadedEditChunkContents[] = [];
@@ -47,6 +48,7 @@ export async function getUploadedEditChunkContents(sharedTree: SharedTree): Prom
 
 /**
  * Returns a serialized description of blob paths and their associated contents for all uploaded edit chunks in the given edit log.
+ * @deprecated Edit virtualization is no longer supported. Do not use this.
  * @public
  */
 export async function getSerializedUploadedEditChunkContents(sharedTree: SharedTree): Promise<string> {

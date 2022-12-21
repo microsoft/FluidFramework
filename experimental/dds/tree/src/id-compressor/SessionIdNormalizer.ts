@@ -117,8 +117,8 @@ export class SessionIdNormalizer<TRangeObject> {
 	}
 
 	/**
-	 * Returns the index of the supplied session-space ID in the total range of IDs created by the session, if the ID was created
-	 * by the session for this `SessionIdNormalizer`.
+	 * Returns the index of the local ID corresponding to the supplied final ID in the total range of IDs created by the session,
+	 * if the ID was created by the session for this `SessionIdNormalizer`.
 	 */
 	public getCreationIndex(finalId: FinalCompressedId): number | undefined {
 		const localRange = this.idRanges.getPairOrNextLowerByValue(finalId);

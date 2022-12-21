@@ -37,8 +37,9 @@
     "lerna": "lerna",
     "lint": "lerna run lint --no-sort --stream -- -- -- --color",
     "lint:fix": "lerna run lint:fix --no-sort --stream -- -- -- --color",
-    "policy-check": "fluid-repo-policy-check",
-    "policy-check:fix": "fluid-repo-policy-check -r",
+    "policy-check": "cd .. && npm run policy-check",
+    "policy-check:asserts": "cd .. && npm run policy-check:asserts",
+    "policy-check:fix": "cd .. && npm run policy-check:fix",
     "post-lerna-install:default": "[ -f package-lock.json ] && mv package-lock.json lerna-package-lock.json; [ -f package-lock.json.bak ] && mv package-lock.json.bak package-lock.json; exit 0",
     "post-lerna-install:win32": "if exist package-lock.json move package-lock.json lerna-package-lock.json && if exist package-lock.json.bak move package-lock.json.bak package-lock.json",
     "postinstall:lerna": "run-script-os",
@@ -61,8 +62,6 @@
     "test:report": "npm run test:mocha:report && npm run test:jest:report && npm run test:realsvc:report",
     "tsc": "lerna run tsc --stream",
     "tsc:fast": "fluid-build  --root .. -s tsc",
-    "tsfmt": "lerna run tsfmt:fix --no-sort --stream --no-bail",
-    "tsfmt:fix": "lerna run tsfmt:fix --no-sort --stream --no-bail",
     "typetests:gen": "lerna run typetests:gen --no-sort --stream --no-bail",
     "typetests:prepare": "npm run typetests:gen -- -- -- -p -v",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
@@ -86,17 +85,29 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^1.0.0",
+    "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/build-tools": "^0.4.4000",
     "@fluidframework/test-tools": "^0.2.3074",
     "@microsoft/api-documenter": "^7.17.9",
     "@microsoft/api-extractor": "^7.22.2",
+    "@trivago/prettier-plugin-sort-imports": "^3.3.0",
     "c8": "^7.7.1",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",
-    "lerna": "^4.0.0",
+    "lerna": "^5.1.8",
     "rimraf": "^2.6.2",
     "run-script-os": "^1.1.6",
     "typescript": "~4.5.5"
+  },
+  "engines": {
+    "node": ">=14.13.0",
+    "npm": "^6"
+  },
+  "fluidBuild": {
+    "branchReleaseTypes": {
+      "main": "major",
+      "lts": "minor",
+      "release/azure/*": "patch"
+    }
   }
 }

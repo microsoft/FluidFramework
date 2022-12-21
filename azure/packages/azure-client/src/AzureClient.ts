@@ -2,15 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Loader } from "@fluidframework/container-loader";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import {
     AttachState,
     IContainer,
     IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { Loader } from "@fluidframework/container-loader";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import {
     ContainerSchema,
@@ -19,9 +17,12 @@ import {
     IFluidContainer,
     RootDataObject,
 } from "@fluidframework/fluid-static";
+import { IClient, SummaryType } from "@fluidframework/protocol-definitions";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import { SummaryType } from "@fluidframework/protocol-definitions";
-
+import { AzureAudience } from "./AzureAudience";
+import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
 import {
     AzureClientProps,
     AzureConnectionConfig,
@@ -30,8 +31,6 @@ import {
     AzureGetVersionsOptions,
 } from "./interfaces";
 import { isAzureRemoteConnectionConfig } from "./utils";
-import { AzureAudience } from "./AzureAudience";
-import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
 
 /**
  * Strongly typed id for connecting to a local Azure Fluid Relay.
@@ -57,7 +56,7 @@ export class AzureClient {
      * Creates a new client instance using configuration parameters.
      * @param props - Properties for initializing a new AzureClient instance
      */
-    constructor(private readonly props: AzureClientProps) {
+    public constructor(private readonly props: AzureClientProps) {
         // remove trailing slash from URL if any
         props.connection.endpoint = props.connection.endpoint.replace(/\/$/, "");
         this.urlResolver = new AzureUrlResolver();
@@ -211,11 +210,22 @@ export class AzureClient {
         };
 
         const codeLoader = { load };
+        const client: IClient = {
+            details: {
+                capabilities: { interactive: true },
+            },
+            permission: [],
+            scopes: [],
+            user: { id: "" },
+            mode: "write",
+        };
+
         return new Loader({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
             logger: this.props.logger,
+            options: { client },
         });
     }
 
@@ -229,25 +239,22 @@ export class AzureClient {
         );
 
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
-        return new (class extends FluidContainer {
-            /**
-             * See {@link FluidContainer.attach}
-             *
-             * @remarks This is required since the FluidContainer doesn't have knowledge of how the attach will happen
-             * or the id that will be returned.
-             * This exists because we are projecting a separation of server responsibility to the end developer that
-             * doesn't exist in the framework.
-             */
-            public async attach(): Promise<string> {
-                if (this.attachState !== AttachState.Detached) {
-                    throw new Error("Cannot attach container. Container is not in detached state");
-                }
-                await container.attach(createNewRequest);
-                const resolved = container.resolvedUrl;
-                ensureFluidResolvedUrl(resolved);
-                return resolved.id;
+
+        /**
+         * See {@link FluidContainer.attach}
+         */
+        const attach = async (): Promise<string> => {
+            if (container.attachState !== AttachState.Detached) {
+                throw new Error("Cannot attach container. Container is not in detached state");
             }
-        })(container, rootDataObject);
+            await container.attach(createNewRequest);
+            const resolved = container.resolvedUrl;
+            ensureFluidResolvedUrl(resolved);
+            return resolved.id;
+        };
+        const fluidContainer = new FluidContainer(container, rootDataObject);
+        fluidContainer.attach = attach;
+        return fluidContainer;
     }
     // #endregion
 }

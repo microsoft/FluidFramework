@@ -4,17 +4,17 @@ This package contains utility for analyzing bundle sizes to help catch code size
 
 ## Features of bundle-size-tools
 
-- Accurate comparisons that enables you to see exactly how many bytes a PR adds to relevant bundles
-- APIs for integrating with Azure devops workflows
-- The ability to write comments on pull requests that call out bundle size regressions
-- Extension points so that teams can write their own custom bundle reports
-- Support for monorepos that build many packages with multiple interesting bundles
-- The ability to define custom bundle metrics in a bundle's webpack config
+-   Accurate comparisons that enables you to see exactly how many bytes a PR adds to relevant bundles
+-   APIs for integrating with Azure devops workflows
+-   The ability to write comments on pull requests that call out bundle size regressions
+-   Extension points so that teams can write their own custom bundle reports
+-   Support for monorepos that build many packages with multiple interesting bundles
+-   The ability to define custom bundle metrics in a bundle's webpack config
 
 ## Limitations
 
-- Bundle-size-tools currently only has APIs for working with Azure DevOps.  Additional work will have to be done to support other source control providers like GitHub.  Other tools can be used in conjunction with bundle-size-tools to support hybrid environments.
-- Bundle-size-tools was designed to work with webpack; other bundlers are not supported.
+-   Bundle-size-tools currently only has APIs for working with Azure DevOps. Additional work will have to be done to support other source control providers like GitHub. Other tools can be used in conjunction with bundle-size-tools to support hybrid environments.
+-   Bundle-size-tools was designed to work with webpack; other bundlers are not supported.
 
 # How Bundle-size-tools works
 
@@ -28,8 +28,8 @@ Our recommended approach is to add this to the plugin section of your webpack co
 
 ```javascript
 new BundleComparisonPlugin({
-  // File to create, relative to the webpack build output path:
-  file: resolve(process.cwd(), 'bundleAnalysis/bundleStats.msp.gz')
+    // File to create, relative to the webpack build output path:
+    file: resolve(process.cwd(), "bundleAnalysis/bundleStats.msp.gz"),
 });
 ```
 
@@ -43,8 +43,8 @@ Bundle-size-tool's comparisons are implemented using `WebpackStatsProcessors`, w
 
 ```typescript
 export type WebpackStatsProcessor = (
-  stats: Webpack.StatsCompilation,
-  config: BundleBuddyConfig | undefined
+    stats: Webpack.StatsCompilation,
+    config: BundleBuddyConfig | undefined,
 ) => BundleMetricSet | undefined;
 ```
 
@@ -54,7 +54,7 @@ A `WebpackStatsProcessor` takes a webpack stats object in as input and outputs a
 export type BundleMetricSet = Map<string, BundleMetric>;
 
 export interface BundleMetric {
-  parsedSize: number;
+    parsedSize: number;
 }
 ```
 
@@ -66,9 +66,9 @@ Bundle-size-tools runs the same set of `WebpackStatsProcessors` on both the base
 
 Bundle-size-tools provides the following basic set of `WebpackStatsProcessors`:
 
-- `entryStatsProcessor` - reports the size of the chunks generated for each of the webpack [entry points](https://webpack.js.org/concepts/entry-points/) specified in the webpack config
-- `totalSizeProcessor` - reports the total size of all chunks in the webpack bundle.
-- `bundleBuddyConfigProcessor` - enables analysis of a specific set of chunks for a given bundle. It is expected that a `BundleBuddyConfig` would be specified via the `BundleBuddyConfigWebpackPlugin` in the bundles webpack config
+-   `entryStatsProcessor` - reports the size of the chunks generated for each of the webpack [entry points](https://webpack.js.org/concepts/entry-points/) specified in the webpack config
+-   `totalSizeProcessor` - reports the total size of all chunks in the webpack bundle.
+-   `bundleBuddyConfigProcessor` - enables analysis of a specific set of chunks for a given bundle. It is expected that a `BundleBuddyConfig` would be specified via the `BundleBuddyConfigWebpackPlugin` in the bundles webpack config
 
 # Sample Workflow
 
@@ -76,19 +76,19 @@ This is the workflow the `fluidframework` repository uses for Bundle buddy.
 
 Assumptions
 
-- Monorepo that produces one or more packages.
-- Packages in the repository only produce one bundle that is going to be analyzed by bundle-size-tools.
-- CI builds run and store artifacts in Azure DevOps.
+-   Monorepo that produces one or more packages.
+-   Packages in the repository only produce one bundle that is going to be analyzed by bundle-size-tools.
+-   CI builds run and store artifacts in Azure DevOps.
 
 ## Bundles all generate compressed stats files
 
 Every single bundle in the repository is configured with the [@mixer/webpack-bundle-compare](https://github.com/mixer/webpack-bundle-compare) webpack plugin to generate a compressed stats file named `bundleStats.msp.gz` in a `bundleAnalysis` folder at the root of each package. As an example, say our repository has packages `package1`, `package2`, and `package3` all under a `packages` folder, our build process will generate
 the following files:
 
-- `packages/package1/bundleAnalysis/bundle1/bundleStats.msp.gz`
-- `packages/package1/bundleAnalysis/bundle2/bundleStats.msp.gz`
-- `packages/package2/bundleAnalysis/bundleStats.msp.gz`
-- `packages/package3/bundleAnalysis/bundleStats.msp.gz`
+-   `packages/package1/bundleAnalysis/bundle1/bundleStats.msp.gz`
+-   `packages/package1/bundleAnalysis/bundle2/bundleStats.msp.gz`
+-   `packages/package2/bundleAnalysis/bundleStats.msp.gz`
+-   `packages/package3/bundleAnalysis/bundleStats.msp.gz`
 
 ## Main CI Generates Baseline stats files
 
@@ -96,10 +96,10 @@ There is a continuous integration build that runs on every commit to main and ge
 
 The build process then runs a script that copies all the bundle stats files in the repository and copies them into a single `bundleAnalysis` folder in a temporary directory.
 
-- `/bundleAnalysis/package1/bundle1/bundleStats.msp.gz`
-- `/bundleAnalysis/package1/bundle2/bundleStats.msp.gz`
-- `/bundleAnalysis/package2/bundleStats.msp.gz`
-- `/bundleAnalysis/package3/bundleStats.msp.gz`
+-   `/bundleAnalysis/package1/bundle1/bundleStats.msp.gz`
+-   `/bundleAnalysis/package1/bundle2/bundleStats.msp.gz`
+-   `/bundleAnalysis/package2/bundleStats.msp.gz`
+-   `/bundleAnalysis/package3/bundleStats.msp.gz`
 
 The build process then uploads this folder as an Azure DevOps build artifact names `bundle-analysis-reports`.
 

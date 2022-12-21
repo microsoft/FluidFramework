@@ -16,8 +16,17 @@
 
 import { TinyliciousClient } from "./TinyliciousClient";
 
-export * from "./interfaces";
-export * from "./TinyliciousAudience";
-export * from "./TinyliciousClient";
+export {
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+	ITinyliciousAudience,
+	TinyliciousClientProps,
+	TinyliciousConnectionConfig,
+	TinyliciousContainerServices,
+	TinyliciousMember,
+	TinyliciousUser,
+} from "./interfaces";
+export { TinyliciousAudience } from "./TinyliciousAudience";
+export { TinyliciousClient } from "./TinyliciousClient";
 // eslint-disable-next-line import/no-default-export
 export default TinyliciousClient;

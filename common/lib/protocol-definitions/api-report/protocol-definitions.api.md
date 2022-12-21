@@ -111,6 +111,7 @@ export type ICommittedProposal = {
 // @public
 export interface IConnect {
     client: IClient;
+    driverVersion?: string;
     epoch?: string;
     id: string;
     mode: ConnectionMode;
@@ -159,6 +160,7 @@ export interface IDocumentAttributes {
 // @public
 export interface IDocumentMessage {
     clientSequenceNumber: number;
+    compression?: string;
     contents: any;
     metadata?: any;
     referenceSequenceNumber: number;
@@ -293,7 +295,10 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 export interface ISequencedDocumentMessage {
     clientId: string;
     clientSequenceNumber: number;
+    compression?: string;
     contents: any;
+    // (undocumented)
+    data?: string;
     // @alpha
     expHash1?: string;
     metadata?: any;
@@ -523,6 +528,7 @@ export interface IVersion {
 
 // @public (undocumented)
 export enum MessageType {
+    Accept = "accept",
     ClientJoin = "join",
     ClientLeave = "leave",
     Control = "control",
@@ -555,6 +561,12 @@ export enum ScopeType {
     DocRead = "doc:read",
     DocWrite = "doc:write",
     SummaryWrite = "summary:write"
+}
+
+// @public (undocumented)
+export enum SignalType {
+    ClientJoin = "join",
+    ClientLeave = "leave"
 }
 
 // @public

@@ -82,7 +82,6 @@ export class SummaryWriter implements ISummaryWriter {
      * @returns ISummaryWriteResponse; that represents the success or failure of the write, along with an
      * Ack or Nack message
      */
-    /* eslint-disable max-len */
     public async writeClientSummary(
         op: ISequencedDocumentAugmentedMessage,
         lastSummaryHead: string | undefined,
@@ -280,11 +279,11 @@ export class SummaryWriter implements ISummaryWriter {
                 uploadHandle = commit.sha;
 
                 await (existingRef ? requestWithRetry(
-                        async () => this.summaryStorage.upsertRef(this.documentId, uploadHandle),
-                        "writeClientSummary_upsertRef",
-                        this.lumberProperties,
-                        shouldRetryNetworkError,
-                        this.maxRetriesOnError) : requestWithRetry(
+                    async () => this.summaryStorage.upsertRef(this.documentId, uploadHandle),
+                    "writeClientSummary_upsertRef",
+                    this.lumberProperties,
+                    shouldRetryNetworkError,
+                    this.maxRetriesOnError) : requestWithRetry(
                         async () => this.summaryStorage.createRef(this.documentId, uploadHandle),
                         "writeClientSummary_createRef",
                         this.lumberProperties,
@@ -321,8 +320,6 @@ export class SummaryWriter implements ISummaryWriter {
             throw error;
         }
     }
-
-    /* eslint-enable max-len */
 
     /**
      * Helper function that writes a new summary. Unlike client summaries, service summaries can be
@@ -514,19 +511,27 @@ export class SummaryWriter implements ISummaryWriter {
             (missingOps.concat(logTail)).sort((op1, op2) => op1.sequenceNumber - op2.sequenceNumber) :
             logTail;
 
-        // Check the missing operations in the fullLogTail
-        if (fullLogTail.length !== (to - from - 1)) {
+        // Check the missing operations in the fullLogTail. We would treat
+        // isLogtailEntriesMatch as true when the fullLogTail's length is extact same as the requested range.
+        // As well as the first SN of fullLogTail - 1 is equal to from,
+        // and the last SN of fullLogTail + 1 is equal to to.
+        // For example, from: 2, to: 5, fullLogTail with SN [3, 4] is the true scenario.
+        const isLogtailEntriesMatch = fullLogTail &&
+            fullLogTail.length > 0 &&
+            fullLogTail.length === (to - from - 1) &&
+            from === fullLogTail[0].sequenceNumber - 1 &&
+            to === fullLogTail[fullLogTail.length - 1].sequenceNumber + 1;
+        if (!isLogtailEntriesMatch) {
             const missingOpsSequenceNumbers: number[] = [];
-            const fullLogTailSequenceNumbers = fullLogTail.map((ms) => ms.sequenceNumber);
-            let j = 0;
+            const fullLogTailSequenceNumbersSet = new Set();
+            fullLogTail?.map((op) => fullLogTailSequenceNumbersSet.add(op.sequenceNumber));
             for (let i = from + 1; i < to; i++) {
-                if (i === fullLogTailSequenceNumbers[j]) {
-                    j++;
-                    continue;
+                if (!fullLogTailSequenceNumbersSet.has(i)) {
+                    missingOpsSequenceNumbers.push(i);
                 }
-                missingOpsSequenceNumbers.push(i);
             }
-            Lumberjack.error(`Missing ops in the fullLogTail: ${JSON.stringify(missingOpsSequenceNumbers)}`
+            Lumberjack.info(
+                `FullLogTail missing ops from: ${from} exclusive, to: ${to} exclusive with sequence numbers: ${JSON.stringify(missingOpsSequenceNumbers)}`
                 , this.lumberProperties);
         }
 
@@ -541,6 +546,11 @@ export class SummaryWriter implements ISummaryWriter {
                 },
             },
         ];
+
+        if (fullLogTail.length > 0) {
+            Lumberjack.info(`LogTail of length ${fullLogTail.length} generated from seq no ${fullLogTail[0].sequenceNumber} to ${fullLogTail[fullLogTail.length - 1].sequenceNumber}`, this.lumberProperties);
+        }
+
         return logTailEntries;
     }
 
@@ -556,7 +566,13 @@ export class SummaryWriter implements ISummaryWriter {
         const logtailSequenceNumbers = new Set();
         logTail.forEach((ms) => logtailSequenceNumbers.add(ms.sequenceNumber));
         const missingOps = lastSummaryMessages?.filter((ms) =>
-            !(logtailSequenceNumbers.has(ms.sequenceNumber)));
+            !(logtailSequenceNumbers.has(ms.sequenceNumber)) && ms.sequenceNumber > gt && ms.sequenceNumber < lt);
+        const missingOpsSN: number[] = [];
+        missingOps?.forEach((op) => missingOpsSN.push(op.sequenceNumber));
+        if (missingOpsSN.length > 0) {
+            Lumberjack.info(`Fetched ops gt: ${gt} exclusive, lt: ${lt} exclusive of last summary logtail: ${JSON.stringify(missingOpsSN)}`
+                , this.lumberProperties);
+        }
         return missingOps;
     }
 

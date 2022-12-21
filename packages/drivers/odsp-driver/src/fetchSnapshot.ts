@@ -26,11 +26,12 @@ import {
     getWithRetryForTokenRefresh,
     getWithRetryForTokenRefreshRepeat,
     IOdspResponse,
+    measure,
+    measureP,
 } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser";
-import { currentReadVersion, parseCompactSnapshotResponse } from "./compactSnapshotParser";
-import { ReadBuffer } from "./ReadBufferUtils";
+import { currentReadVersion, ISnapshotContentsWithProps, parseCompactSnapshotResponse } from "./compactSnapshotParser";
 import { EpochTracker } from "./epochTracker";
 import { pkgVersion } from "./packageVersion";
 
@@ -49,6 +50,7 @@ export enum SnapshotFormatSupportType {
  * @param token - token used for authorization in the request
  * @param storageFetchWrapper - Implementation of the get/post methods used to fetch the snapshot
  * @param versionId - id of specific snapshot to be fetched
+ * @param fetchFullSnapshot - whether we want to fetch full snapshot(with blobs)
  * @param forceAccessTokenViaAuthorizationHeader - whether to force passing given token via authorization header
  * @returns A promise of the snapshot and the status code of the response
  */
@@ -56,14 +58,18 @@ export async function fetchSnapshot(
     snapshotUrl: string,
     token: string | null,
     versionId: string,
+    fetchFullSnapshot: boolean,
     forceAccessTokenViaAuthorizationHeader: boolean,
     logger: ITelemetryLogger,
     snapshotDownloader: (url: string, fetchOptions: { [index: string]: any; }) => Promise<IOdspResponse<unknown>>,
 ): Promise<ISnapshotContents> {
     const path = `/trees/${versionId}`;
-    // We just want to fetch tree here. So explicitly set to not fetch blobs and deltas
-    // as by default server will send that.
-    const queryParams: ISnapshotOptions = { deltas: 0, blobs: 0 };
+    let queryParams: ISnapshotOptions = {};
+
+    if (fetchFullSnapshot) {
+        queryParams = versionId !== "latest" ? { blobs: 2 } : { deltas: 1, blobs: 2 };
+    }
+
     const queryString = getQueryString(queryParams);
     const { url, headers } = getUrlAndHeadersWithAuth(
         `${snapshotUrl}${path}${queryString}`, token, forceAccessTokenViaAuthorizationHeader);
@@ -111,10 +117,7 @@ export async function fetchSnapshotWithRedeem(
     ).catch(async (error) => {
         if (enableRedeemFallback && isRedeemSharingLinkError(odspResolvedUrl, error)) {
             // Execute the redeem fallback
-            logger.sendErrorEvent({
-                eventName: "RedeemFallback",
-                errorType: error.errorType,
-            }, error);
+
             await redeemSharingLink(
                 odspResolvedUrl, storageTokenFetcher, logger, forceAccessTokenViaAuthorizationHeader);
             const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl =
@@ -125,6 +128,15 @@ export async function fetchSnapshotWithRedeem(
                     sharingLinkToRedeem: undefined,
                 },
             };
+
+            // Log initial failure only if redeem succeeded - it points out to some bug somewhere
+            // If redeem failed, that most likely means user has no permissions to access a file,
+            // and thus it's not worth it logging extra errors - same error will be logged by end-to-end
+            // flow (container open) based on a failure above.
+            logger.sendErrorEvent({
+                eventName: "RedeemFallback",
+                errorType: error.errorType,
+            }, error);
 
             return fetchLatestSnapshotCore(
                 odspResolvedUrlWithoutShareLink,
@@ -192,14 +204,6 @@ async function fetchLatestSnapshotCore(
         const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest", true);
         assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
 
-        let controller: AbortController | undefined;
-        if (snapshotOptions?.timeout !== undefined) {
-            controller = new AbortController();
-            setTimeout(
-                () => controller!.abort(),
-                snapshotOptions.timeout,
-            );
-        }
         const perfEvent = {
             eventName: "TreesLatest",
             attempts: tokenFetchOptions.refresh ? 2 : 1,
@@ -219,12 +223,28 @@ async function fetchLatestSnapshotCore(
             logger,
             perfEvent,
             async (event) => {
-                const response = await snapshotDownloader(
+                let controller: AbortController | undefined;
+                let fetchTimeout: ReturnType<typeof setTimeout> | undefined;
+                if (snapshotOptions?.timeout !== undefined) {
+                    controller = new AbortController();
+                    fetchTimeout = setTimeout(
+                        () => controller!.abort(),
+                        snapshotOptions.timeout,
+                    );
+                }
+
+                const [response, fetchTime] = await measureP(async () => snapshotDownloader(
                     odspResolvedUrl,
                     storageToken,
                     snapshotOptions,
                     controller,
-                );
+                )).finally(() => {
+                    // Clear the fetchTimeout once the response is fetched.
+                    if (fetchTimeout !== undefined) {
+                        clearTimeout(fetchTimeout);
+                        fetchTimeout = undefined;
+                    }
+                });
 
                 const odspResponse = response.odspResponse;
                 const contentType = odspResponse.headers.get("content-type");
@@ -236,13 +256,7 @@ async function fetchLatestSnapshotCore(
                     driverVersion: pkgVersion,
                 };
 
-                // Measure how much time we spend processing payload
-                const snapshotParseEvent = PerformanceEvent.start(logger, {
-                    eventName: "SnapshotParse",
-                    ...propsToLog,
-                });
-
-                let parsedSnapshotContents: IOdspResponse<ISnapshotContents> | undefined;
+                let parsedSnapshotContents: IOdspResponse<ISnapshotContentsWithProps> | undefined;
                 let contentTypeToRead: string | undefined;
                 if (contentType?.includes("application/ms-fluid")) {
                     contentTypeToRead = "application/ms-fluid";
@@ -250,31 +264,56 @@ async function fetchLatestSnapshotCore(
                     contentTypeToRead = "application/json";
                 }
 
+                let parseTime: number;
+                let receiveContentTime: number;
                 try {
                     switch (contentTypeToRead) {
                         case "application/json": {
-                            const text = await odspResponse.content.text();
+                            let text: string;
+                            [text, receiveContentTime] = await measureP(async () => odspResponse.content.text());
                             propsToLog.bodySize = text.length;
-                            const content: IOdspSnapshot = JSON.parse(text);
+                            let content: IOdspSnapshot;
+                            [content, parseTime] = measure( () => JSON.parse(text) as IOdspSnapshot);
                             validateBlobsAndTrees(content);
                             const snapshotContents: ISnapshotContents =
                                 convertOdspSnapshotToSnapshotTreeAndBlobs(content);
-                            parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
+                            parsedSnapshotContents = {
+                                ...odspResponse,
+                                content: {
+                                    ...snapshotContents,
+                                    telemetryProps: {},
+                                },
+                            };
                             break;
                         }
                         case "application/ms-fluid": {
-                            const content = await odspResponse.content.arrayBuffer();
+                            let content: ArrayBuffer;
+                            [content, receiveContentTime] =
+                                await measureP(async () => odspResponse.content.arrayBuffer());
                             propsToLog.bodySize = content.byteLength;
-                            const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(
-                                new ReadBuffer(new Uint8Array(content)));
+                            let snapshotContents: ISnapshotContentsWithProps;
+                            [snapshotContents, parseTime] = measure(() => parseCompactSnapshotResponse(
+                                new Uint8Array(content),
+                                logger));
                             if (snapshotContents.snapshotTree.trees === undefined ||
-                                snapshotContents.snapshotTree.blobs === undefined) {
-                                    throw new NonRetryableError(
-                                        "Returned odsp snapshot is malformed. No trees or blobs!",
-                                        DriverErrorType.incorrectServerResponse,
-                                        propsToLog,
-                                    );
-                                }
+                                    snapshotContents.snapshotTree.blobs === undefined) {
+                                throw new NonRetryableError(
+                                    "Returned odsp snapshot is malformed. No trees or blobs!",
+                                    DriverErrorType.incorrectServerResponse,
+                                    propsToLog,
+                                );
+                            }
+
+                            const props = snapshotContents.telemetryProps;
+                            const slowTreeParseCodePaths = props.slowTreeStructureCount ?? 0;
+                            const slowBlobParseCodePaths = props.slowBlobStructureCount ?? 0;
+                            if (slowTreeParseCodePaths > 10 || slowBlobParseCodePaths > 10) {
+                                logger.sendErrorEvent({
+                                    eventName: "SlowSnapshotParseCodePaths",
+                                    slowTreeStructureCount: slowTreeParseCodePaths,
+                                    slowBlobStructureCount: slowBlobParseCodePaths,
+                                });
+                            }
                             parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
                             break;
                         }
@@ -331,7 +370,7 @@ async function fetchLatestSnapshotCore(
                 // Usually the latest fetch call is to the end of resources, so we start from the end.
                 for (let i = resources1.length - 1; i > 0; i--) {
                     const indResTime = resources1[i] as PerformanceResourceTiming;
-                    const resource_name = indResTime.name;
+                    const resource_name = indResTime.name.toString();
                     const resource_initiatortype = indResTime.initiatorType;
                     if ((resource_initiatortype.localeCompare("fetch") === 0)
                         && (resource_name.localeCompare(response.requestUrl) === 0)) {
@@ -346,8 +385,7 @@ async function fetchLatestSnapshotCore(
                             (indResTime.responseEnd - indResTime.fetchStart) : undefined;
                         reqStartToResponseEndTime = (indResTime.requestStart > 0) ?
                             (indResTime.responseEnd - indResTime.requestStart) : undefined;
-                        networkTime = (indResTime.startTime > 0) ?
-                            (indResTime.responseEnd - indResTime.fetchStart) : undefined;
+                        networkTime = fetchStartToResponseEndTime;
                         if (spReqDuration !== undefined && networkTime !== undefined) {
                             networkTime = networkTime - parseInt(spReqDuration, 10);
                         }
@@ -384,8 +422,6 @@ async function fetchLatestSnapshotCore(
                     putInCache(valueWithEpoch);
                 }
 
-                snapshotParseEvent.end();
-
                 event.end({
                     trees,
                     blobs: snapshot.blobs?.size ?? 0,
@@ -406,18 +442,37 @@ async function fetchLatestSnapshotCore(
                     // Time from the end of the connection until the inital handshake process to secure the connection.
                     secureConnectionTime,
                     // Interval between the initial fetch until the last byte is received.
+                    // Likely same as fetchTime + receiveContentTime.
                     fetchStartToResponseEndTime,
+                    // reqStartToResponseEndTime = fetchStartToResponseEndTime - <initial TCP handshake>
                     // Interval between starting the request for the resource until receiving the last byte.
                     reqStartToResponseEndTime,
+                    // networkTime = fetchStartToResponseEndTime - sprequestduration
                     // Interval between starting the request for the resource until receiving the last byte but
-                    // excluding the Snaphot request duration indicated on the snapshot response header.
+                    // excluding the snaphot request duration indicated on the snapshot response header.
                     networkTime,
+                    // Measures time to make fetch call. Should be similar to
+                    // fetchStartToResponseEndTime - receiveContentTime, i.e. it looks like it's time till first byte /
+                    // end of response headers
+                    fetchTime,
+                    // time it takes client to parse payload. Same payload as in "SnapshotParse" event, here for
+                    // easier analyzes.
+                    parseTime,
+                    // Time it takes to receive content (text of buffer) from Response object.
+                    // This time likely is very closely correlated with networkTime, i.e. time it takes to receive
+                    // actual content (starting measuring from first bite / end of response header)
+                    receiveContentTime,
                     // Sharing link telemetry regarding sharing link redeem status and performance. Ex: FRL; dur=100,
                     // Azure Fluid Relay service; desc=S, FRP; desc=False. Here, FRL is the duration taken for redeem,
                     // Azure Fluid Relay service is the redeem status (S means success), and FRP is a flag to indicate
                     // if the permission has changed.
                     sltelemetry: odspResponse.headers.get("x-fluid-sltelemetry"),
+                    // All other props
                     ...propsToLog,
+                    // Various perf counters and measures collected by binary parsing code:
+                    // slowTreeStructureCount, slowBlobStructureCount, durationStructure, durationStrings,
+                    // durationSnapshotTree, durationBlobs, etc.
+                    ...parsedSnapshotContents.content.telemetryProps,
                 });
                 return snapshot;
             },

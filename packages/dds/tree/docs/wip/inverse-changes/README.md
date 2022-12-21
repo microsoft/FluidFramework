@@ -1,6 +1,6 @@
 # Inverse Changes
 
-This document is a 
+This document is a
 "[brain dump](https://www.merriam-webster.com/dictionary/brain%20dump)"
 on the topic of inverse changes and undo.
 It is not meant to present a final design,
@@ -24,8 +24,8 @@ Applying a change and applying its inverse immediately after that should leave t
 
 Inverse changes are generated in two cases:
 
-* When an end user performs an undo operation in the Fluid-powered application.
-* When rebasing a changeset that is based on a prior change that has since been rebased.
+-   When an end user performs an undo operation in the Fluid-powered application.
+-   When rebasing a changeset that is based on a prior change that has since been rebased.
 
 ## The Case of Rebase-Induced Inverses
 
@@ -37,7 +37,7 @@ In an asynchronous collaboration session,
 the changes sent over the wire may be the result of rebasing operations.
 This does not however imply that that such changes will contain inverse changes:
 while rebasing sometimes requires the production of inverse changes,
-those inverse changes are always rebased *over* instead of being added to the end product of a rebase.
+those inverse changes are always rebased _over_ instead of being added to the end product of a rebase.
 At most, a change that is rebased over an inverse change may accumulate some information about how that inverse change affected it
 (e.g., by storing tombstones that refer to it), but the inverse changes themselves never make it to the rebased change.
 
@@ -97,14 +97,14 @@ At a high level, we need to have a system for accomplishing the following:
 
 In designing such a system, we need to consider the relevant computational costs and drawbacks:
 
-* Whether the semantics of undo are guaranteed
-* Whether the issuer of the undo can be starved out by edits from peers
-* The size of "normal" (i.e., non-inverse) changes sent over the wire.
-* The size of inverse changes sent over the wire.
-* The size of the local data a client needs in order to issue an inverse change.
-* The size of the local data a peer needs in order to apply an inverse change.
-* The ability for a client to issue an inverse change without needing to make network requests.
-* The ability for peers to apply an inverse change without needing to make network requests.
+-   Whether the semantics of undo are guaranteed
+-   Whether the issuer of the undo can be starved out by edits from peers
+-   The size of "normal" (i.e., non-inverse) changes sent over the wire.
+-   The size of inverse changes sent over the wire.
+-   The size of the local data a client needs in order to issue an inverse change.
+-   The size of the local data a peer needs in order to apply an inverse change.
+-   The ability for a client to issue an inverse change without needing to make network requests.
+-   The ability for peers to apply an inverse change without needing to make network requests.
 
 We need to consider the above for different application profiles.
 Indeed some applications may not want to support undo at all,
@@ -113,19 +113,19 @@ We generalize this by introducing the concept of an "undo window".
 An application can define how far back past operations should be undoable.
 Note that this could be defined in a number of ways:
 
-* A number of local edits made by each client
-* A number of edits across all clients
-* A time window
-* A maximum memory buffer
-* Some combination of the above
+-   A number of local edits made by each client
+-   A number of edits across all clients
+-   A time window
+-   A maximum memory buffer
+-   Some combination of the above
 
 For a given application profile,
 our system may have different requirements depending on different undo scenarios.
 Some key scenarios to consider are:
 
-* Undoing a change that has yet to be sequenced.
-* Undoing a change that has been sequenced but is not yet out of the collaboration window.
-* Undoing a change that is out of the collaboration window.
+-   Undoing a change that has yet to be sequenced.
+-   Undoing a change that has been sequenced but is not yet out of the collaboration window.
+-   Undoing a change that is out of the collaboration window.
 
 Ultimately, designing our undo system requires answering the following questions:
 
@@ -175,7 +175,7 @@ and does not otherwise undo the effects of the original edit on interim edits.
 For example,
 if edit B is an interim edit that was concurrent to and sequenced after edit A,
 and edit B had failed to apply because of the changes introduced by edit A,
-then undoing edit A with patch undo would *not* bring back the effects of edit B.
+then undoing edit A with patch undo would _not_ bring back the effects of edit B.
 
 Option #3 is what we refer to as "Retroactive Undo".
 It undoes all of the effects of the original edit,
@@ -183,7 +183,7 @@ including its effects on interim edits.
 For example,
 if edit B is an interim edit that was concurrent to and sequenced after edit A,
 and edit B had failed to apply because of the changes introduced by edit A,
-then undoing edit A with retroactive undo *would* bring back the effects of edit B.
+then undoing edit A with retroactive undo _would_ bring back the effects of edit B.
 
 For both Patch Undo and Retroactive Undo,
 it seems preferable if a change that is concurrent to
@@ -216,18 +216,19 @@ We must therefore ensure that the relevant data to do so is available.
 
 In order for us to compute the required document changes needed in the face of an undo,
 we need to have access to the following data:
-* The original change to be undone
-* All of the interim changes sequenced since the change to be undone
-* Any document state that we wish to restore as part of the undo,
-but cannot derive from the the original change or interim changes.
+
+-   The original change to be undone
+-   All of the interim changes sequenced since the change to be undone
+-   Any document state that we wish to restore as part of the undo,
+    but cannot derive from the the original change or interim changes.
 
 This last bullet point may not be immediately obvious,
 but it is a critical issue.
 We may need to recover information about the state of the document before the change that we wish to undo
 because changes can be destructive:
 
-* Setting the value on a node loses information about the prior value of that node.
-* Deleting a subtree loses information about the contents of that subtree.
+-   Setting the value on a node loses information about the prior value of that node.
+-   Deleting a subtree loses information about the contents of that subtree.
 
 Such data cannot be derived solely from the original changeset to be undone
 (or interim changes).
@@ -248,8 +249,8 @@ snapshots need to include the adequate data for a new peer to join the collabora
 Some DDSes address the need for repair data by including the matching repair data in each changeset that clients send.
 In practice, this means:
 
-* Each set-value operation carries with it the value being overwritten.
-* Each delete operation carries with it the contents of the subtrees being deleted.
+-   Each set-value operation carries with it the value being overwritten.
+-   Each delete operation carries with it the contents of the subtrees being deleted.
 
 A client that needs to produce an inverse change
 would therefore use that additional information in the changeset in order to produce its inverse.
@@ -275,9 +276,9 @@ as well as the performance of the service as whole (increasing latency and serve
 Clients could maintain a cache of repair data for the extent of the window for which they may need it.
 This would include:
 
-* The value being overwritten by each set-value operation.
-* The subtree being deleted by each delete operation.
-* The subtree being moved by each move operation.
+-   The value being overwritten by each set-value operation.
+-   The subtree being deleted by each delete operation.
+-   The subtree being moved by each move operation.
 
 Note that this data must be maintained for the most rebased version of each edit.
 This ensures that each change's complete impact is being taken into account,
@@ -323,6 +324,7 @@ This is a journey from a very abstract representation ("Undo change foo")
 to a very concrete one (e.g., "set the value of node X to 42").
 
 At a high level, our computation needs to perform the following three steps:
+
 1. Derive an inverse changeset from the changeset being undone.
 2. Reconcile the inverse with interim changes to produce an undo change.
 3. Derive a Delta from the undo change.
@@ -339,46 +341,49 @@ For now, we consider the approach of creating an inverse that is as concrete as 
 ### Deriving an Inverse Changeset
 
 TODO: Expand on...
-* Set Value -> Set Value
-* Insert -> Delete
-* Delete -> Revive
-* Revive -> Delete
-* MoveOut + MoveIn -> Return + MoveOut
-* Return + MoveOut -> MoveOut + Return
-* MoveOut + Return -> Return + MoveOut
-* Forward -> Unforward
-* Scorch -> Heal
+
+-   Set Value -> Set Value
+-   Insert -> Delete
+-   Delete -> Revive
+-   Revive -> Delete
+-   MoveOut + MoveIn -> Return + MoveOut
+-   Return + MoveOut -> MoveOut + Return
+-   MoveOut + Return -> Return + MoveOut
+-   Forward -> Unforward
+-   Scorch -> Heal
 
 ### Reconciling Inverse and Interim Changes
 
 Once we produce an inverse for the original change,
 we need to reconcile it with any interim changes that may have been sequenced since.
 Note that each such interim change could be...
-* concurrent with the original change.
-* concurrent with the inverse change.
+
+-   concurrent with the original change.
+-   concurrent with the inverse change.
 
 For each set of [Undo Semantics](#Undo-Semantics),
 the reconciliation proceeds by composing the following sequences of changes:
 
-* Rewind Undo:
-  * The inverse of each interim change (in reverse order)
-  * The inverse of the original change
-* Patch Undo:
-  * The inverse change rebased over the interim changes
-* Retroactive Undo:
-  * The inverse of each interim change (in reverse order)
-  * The inverse of the original change
-  * The interim changes rebased over the inverse of the original
+-   Rewind Undo:
+    -   The inverse of each interim change (in reverse order)
+    -   The inverse of the original change
+-   Patch Undo:
+    -   The inverse change rebased over the interim changes
+-   Retroactive Undo:
+    -   The inverse of each interim change (in reverse order)
+    -   The inverse of the original change
+    -   The interim changes rebased over the inverse of the original
 
 Composing the above sequences of changes yields a changeset that can be applied to the tip state.
 
 ### Deriving a Delta
 
 TODO: expand on...
-* Revive -> Insert
-* Return -> MoveIn
-* Unforward -> Nil
-* Heal -> Nil
+
+-   Revive -> Insert
+-   Return -> MoveIn
+-   Unforward -> Nil
+-   Heal -> Nil
 
 ## Addressing Concurrency
 
@@ -401,6 +406,7 @@ We consider the following design options:
 
 If the issuer of the undo performs as much of the computation as possible,
 then there are three concurrency cases that may need handling:
+
 1. changes concurrent to and sequenced before the original change and its undo
 2. interim changes sequenced after the original change but concurrent to and sequenced before the undo
 3. changes concurrent to and sequenced after both the original change and its undo
@@ -433,9 +439,10 @@ This may not be so bad in a live collaboration environment where edits are produ
 because the chances of a meaningfully bad merge outcome are low,
 and humans may be able to adjust to it.
 This would be more an issue in scenarios where any of the following is true:
-* The undo semantics are relied on by automated processes
-* Edits are being produced at machine speed
-* We operate in asynchronous collaboration environment where arbitrarily large changes can be produced any time
+
+-   The undo semantics are relied on by automated processes
+-   Edits are being produced at machine speed
+-   We operate in asynchronous collaboration environment where arbitrarily large changes can be produced any time
 
 ##### Validation by Peer
 
@@ -489,10 +496,10 @@ If not, then this case did not materialize and the changeset sent by the issuer 
 
 Note that in the rejection case,
 on the next attempt,
-the issuer is *not* guaranteed to know of all the concurrent changes that will be sequenced prior to its undo.
+the issuer is _not_ guaranteed to know of all the concurrent changes that will be sequenced prior to its undo.
 This means that with this approach,
 as far as this concurrency case is concerned,
-a client *can* get stuck repeatedly trying to undo a change.
+a client _can_ get stuck repeatedly trying to undo a change.
 
 ##### Update by Peer
 
@@ -517,8 +524,9 @@ See [Deriving an Inverse Changeset](#deriving-an-inverse-changeset) for more det
 #### Data Sourcing Needs
 
 The client issuing the undo needs to have access to the following as far back as the undo window extends:
-* The original change to be undone (in its most rebased form to date) and its associated repair data
-* All of the interim changes sequenced since the change to be undone and their associated repair data
+
+-   The original change to be undone (in its most rebased form to date) and its associated repair data
+-   All of the interim changes sequenced since the change to be undone and their associated repair data
 
 In designs where peers accept the undo change as is
 (see "Looser Semantics" under
@@ -544,7 +552,8 @@ and "Update by Peer" under
 [Case #2](#case-2-changes-sequenced-after-the-original-but-concurrent-to-and-sequenced-before-the-undo)
 above),
 peers need to have access to the following as far back as the collaboration window extends:
-* Changes and their associated repair data
+
+-   Changes and their associated repair data
 
 #### Data Communication Needs
 
@@ -579,9 +588,10 @@ Have the issuing client include a precise characterization of what repair data i
 (but not the repair data itself).
 Peers are then responsible for obtaining this data,
 which they could do in a variety of ways:
-* Using a locally maintained cache of such data (synchronous)
-* Querying a document state history service (asynchronous)
-* A mix of the above (asynchronous)
+
+-   Using a locally maintained cache of such data (synchronous)
+-   Querying a document state history service (asynchronous)
+-   A mix of the above (asynchronous)
 
 Note that doing this is similar to the approach described in the
 [Late Repair Data Concretization](#late-repair-data-concretization) section.
@@ -615,23 +625,25 @@ so whatever work it does not perform before sending whatever it sends,
 it will need to perform upon receiving it.
 
 Under such a system, peers need to have access to the following as far back as the undo window extends:
-* The original change to be undone (in its most rebased form to date) and its associated repair data
-* All of the interim changes sequenced since the change to be undone and their associated repair data
+
+-   The original change to be undone (in its most rebased form to date) and its associated repair data
+-   All of the interim changes sequenced since the change to be undone and their associated repair data
 
 Note that unlike in the maximally proactive issuer case,
 the undo window we must consider here is the union of the undo windows across all peers.
 This is non-trivial for two reasons:
-* Determining what this window is may be straightforward if all clients are guaranteed to use the same undo window,
-  but may require distributed consensus in the general case.
-* Depending on how applications define the undo window,
-  it is possible for a single client to increase the data needs of all peers.
-  For example, if a client's undo window is defined based on time elapsed
-  (as measured based on the sequencing service's clock),
-  and that client performs N edits within such a span of time,
-  then all clients have to take care to maintain access to relevant data for all N edits,
-  even though they themselves may not support undo that far back,
-  or may not support undo at all,
-  or may not even support making edits at all.
+
+-   Determining what this window is may be straightforward if all clients are guaranteed to use the same undo window,
+    but may require distributed consensus in the general case.
+-   Depending on how applications define the undo window,
+    it is possible for a single client to increase the data needs of all peers.
+    For example, if a client's undo window is defined based on time elapsed
+    (as measured based on the sequencing service's clock),
+    and that client performs N edits within such a span of time,
+    then all clients have to take care to maintain access to relevant data for all N edits,
+    even though they themselves may not support undo that far back,
+    or may not support undo at all,
+    or may not even support making edits at all.
 
 These issues may be addressable by assuming an infinite undo window
 and relying on a document state history service to provide the repair data for it.
@@ -659,13 +671,13 @@ Generally speaking we strive to meet the following design goals
 (in no particular order):
 
 1. Allow applications not to incur computational costs (whether on the service or on clients)
-  for features they do not wish to use.
+   for features they do not wish to use.
 2. Given the choice to put some computational burden on the broadcasting service or on the clients,
-  put it on the clients.
+   put it on the clients.
 3. Given the choice to put some computational burden on a specific client that wishes to use a feature,
-  or on all peers of such client, put it on the specific client.
-  (Note: this is true when all participants are running the same client application
-  but even more so when they are not).
+   or on all peers of such client, put it on the specific client.
+   (Note: this is true when all participants are running the same client application
+   but even more so when they are not).
 4. Avoid designs that lead to undefined merge semantics.
 5. Avoid designs that can lead to a client being stuck repeatedly trying and failing to accomplish something.
 6. Avoid bloating the edit history with edits that contain redundant data.
@@ -676,27 +688,28 @@ The goals above are not set in stone,
 and may even be contradictory at times.
 
 They interact with the problem at hand in the following ways:
-* Goals #1 and #3 point away from a [maximally inactive issuer](#maximally-inactive-issuer),
-  and towards a [maximally proactive issuer](#maximally-proactive-issuer).
-* Goal #2 and #6 point away from inlining repair data in normal edits
-  and toward having them be maintained locally by clients or fetched from a service.
-* Goal #2 and #6 point away from inlining repair data in undo edits
-  and towards having them be either uploaded by the issuer or having them be fetched from a service.
-* Goal #4 points away from using looser semantics to handle concurrency challenges
-  and towards peer performing validation/computation/update.
-* Goal #5 points away from validation by peers for
-  [concurrency case #2](#case-2-changes-sequenced-after-the-original-but-concurrent-to-and-sequenced-before-the-undo)
-  and towards peer update.
-* Goal #7 points away from having the issuer upload new blobs to communicate repair data in undo changesets
-  and towards having a document state history service provide them instead.
-* Goal #8 points away from having peers fetch the repair data
-  for undo changesets they receive as part of applying the edit
-  and towards inlining repair data in undo changesets
-  (which contradicts goals #2 and #6)
-  or having some way for this fetch to occur as part of the changeset reception.
-* Goal #2 and #8 points away from having peer fetch
-  supplementary repair data as part of the peer computation/update strategy
-  and towards having peers maintain such data locally.
+
+-   Goals #1 and #3 point away from a [maximally inactive issuer](#maximally-inactive-issuer),
+    and towards a [maximally proactive issuer](#maximally-proactive-issuer).
+-   Goal #2 and #6 point away from inlining repair data in normal edits
+    and toward having them be maintained locally by clients or fetched from a service.
+-   Goal #2 and #6 point away from inlining repair data in undo edits
+    and towards having them be either uploaded by the issuer or having them be fetched from a service.
+-   Goal #4 points away from using looser semantics to handle concurrency challenges
+    and towards peer performing validation/computation/update.
+-   Goal #5 points away from validation by peers for
+    [concurrency case #2](#case-2-changes-sequenced-after-the-original-but-concurrent-to-and-sequenced-before-the-undo)
+    and towards peer update.
+-   Goal #7 points away from having the issuer upload new blobs to communicate repair data in undo changesets
+    and towards having a document state history service provide them instead.
+-   Goal #8 points away from having peers fetch the repair data
+    for undo changesets they receive as part of applying the edit
+    and towards inlining repair data in undo changesets
+    (which contradicts goals #2 and #6)
+    or having some way for this fetch to occur as part of the changeset reception.
+-   Goal #2 and #8 points away from having peer fetch
+    supplementary repair data as part of the peer computation/update strategy
+    and towards having peers maintain such data locally.
 
 ### Design A: Sending Concrete Undos
 
@@ -706,25 +719,25 @@ to the extent know by the sender,
 the specific document changes needed to accomplish the undo.
 This design makes undo ops more like normal changesets.
 
-* Don't preemptively include repair data in all changesets.
-* A client that issues an undo needs access to edits and repair data as far back as the undo window extends.
-  The client can either:
-    * Maintain a cache of that data locally
-    * Fetch it asynchronously from a document history server
-* The over-the-wire changeset sent by the issuer can represent repair data in the following ways:
-  * Query details for peers to fetch the relevant data from the document state history service
-  * Direct references to blobs
-  * Inlined if small enough
-* When receiving a changeset,
-  peers are able to asynchronously fetch relevant repair data as part of receiving the edits
-  (as opposed to as part of processing it).
-* When receiving an undo changeset peers may need to re-compute or update the changeset
-  to account for concurrency issues.
-  To do this, they may need the edit and repair data as far back as the collab window extends.
-  Peers already need to cache the edit data for the collab window for general rebasing purposes.
-  For repair data peers can either:
-    * Maintain a cache locally
-    * Fetch it asynchronously from a document history server
+-   Don't preemptively include repair data in all changesets.
+-   A client that issues an undo needs access to edits and repair data as far back as the undo window extends.
+    The client can either:
+    -   Maintain a cache of that data locally
+    -   Fetch it asynchronously from a document history server
+-   The over-the-wire changeset sent by the issuer can represent repair data in the following ways:
+    -   Query details for peers to fetch the relevant data from the document state history service
+    -   Direct references to blobs
+    -   Inlined if small enough
+-   When receiving a changeset,
+    peers are able to asynchronously fetch relevant repair data as part of receiving the edits
+    (as opposed to as part of processing it).
+-   When receiving an undo changeset peers may need to re-compute or update the changeset
+    to account for concurrency issues.
+    To do this, they may need the edit and repair data as far back as the collab window extends.
+    Peers already need to cache the edit data for the collab window for general rebasing purposes.
+    For repair data peers can either:
+    -   Maintain a cache locally
+    -   Fetch it asynchronously from a document history server
 
 When it comes to procuring repair data
 (both for the issuing client and the receiving peers)
@@ -733,21 +746,23 @@ instead of performing asynchronous fetching from the history service.
 This can be a static choice or a dynamic one (e.g., based on memory pressure).
 
 This design has the following noteworthy characteristics:
-* Applications can opt out of undo support on a per-document basis,
-  paying no overhead for its support in other documents.
-* In applications where one can only undo edits from one's own session,
-  participants that do not contribute edits or are unable to issue undos,
-  only need to access repair data as far back as the collaboration window extends.
-* It can be made to work without a document state history service
-  if clients are willing to maintain relevant data locally
-  (see [Stepping Stones](#stepping-stones)).
+
+-   Applications can opt out of undo support on a per-document basis,
+    paying no overhead for its support in other documents.
+-   In applications where one can only undo edits from one's own session,
+    participants that do not contribute edits or are unable to issue undos,
+    only need to access repair data as far back as the collaboration window extends.
+-   It can be made to work without a document state history service
+    if clients are willing to maintain relevant data locally
+    (see [Stepping Stones](#stepping-stones)).
 
 #### Stepping Stones
 
 Some short term shortcuts could be taken to support undo earlier:
-* Force issuing client to locally store edit and repair data as far back as the undo window.
-* Have peers reject undo changes if any concurrency issue arise.
-* Inline all repair data in changesets
+
+-   Force issuing client to locally store edit and repair data as far back as the undo window.
+-   Have peers reject undo changes if any concurrency issue arise.
+-   Inline all repair data in changesets
 
 These keep the format simpler and reduces dependency on functionality and services that do not yet exist.
 
@@ -765,18 +780,19 @@ The specific document changes needed to accomplish the undo are entirely
 left to the receiver to work out.
 This design does not use changesets to encore undo ops.
 
-* Don't preemptively include repair data in all changesets.
-* A client that issues an undo simply sends an op containing the ID of the change they want undone.
-* When processing such an op,
-  peers asynchronously fetch relevant repair and edit data from a document history server
-  and perform the whole undo changeset computation locally.
+-   Don't preemptively include repair data in all changesets.
+-   A client that issues an undo simply sends an op containing the ID of the change they want undone.
+-   When processing such an op,
+    peers asynchronously fetch relevant repair and edit data from a document history server
+    and perform the whole undo changeset computation locally.
 
 This design has the following noteworthy characteristics:
-* Applications can opt out of undo support on a per-document basis,
-  paying no overhead for its support in other documents.
-* As long as *some* undo support may be required by any client for a given document,
-  the document history server has to be able to provide the relevant information.
-* This design is entirely predicated on the existence of such a service.
+
+-   Applications can opt out of undo support on a per-document basis,
+    paying no overhead for its support in other documents.
+-   As long as _some_ undo support may be required by any client for a given document,
+    the document history server has to be able to provide the relevant information.
+-   This design is entirely predicated on the existence of such a service.
 
 ## Misc
 
@@ -791,33 +807,36 @@ that contain repair data for prior edits that have fallen outside of the collabo
 One seemingly wasted opportunity when considering the use of repair data,
 is that we may fetch such data only to later determine that it is not needed.
 This can happen in two ways:
-* The reconciliation process can lead to some repair data being irrelevant.
-  For example, we may fetch a deleted subtree to produce a revive mark,
-  only to rebase this revive over a delete of an ancestor.
-* The client may receive other edits along with the undo,
-  and will not need to derive the Delta for the undo alone
-  (only for the composition of the undo these other changes).
-  These other changes may turn out to make the repair data irrelevant.
+
+-   The reconciliation process can lead to some repair data being irrelevant.
+    For example, we may fetch a deleted subtree to produce a revive mark,
+    only to rebase this revive over a delete of an ancestor.
+-   The client may receive other edits along with the undo,
+    and will not need to derive the Delta for the undo alone
+    (only for the composition of the undo these other changes).
+    These other changes may turn out to make the repair data irrelevant.
 
 Instead of making inverse changes as concrete as possible,
 we could make them as abstract a possible (i.e., containing no repair data),
 and the needed repair data could be fetched as part of the conversion to Delta.
 Such fetching could be done in a variety of ways:
-* Using a locally maintained cache of such data (synchronous)
-* Querying a document state history service (asynchronous)
-* A mix of the above (asynchronous)
+
+-   Using a locally maintained cache of such data (synchronous)
+-   Querying a document state history service (asynchronous)
+-   A mix of the above (asynchronous)
 
 Pros:
-* We avoid possibly expensive repair data fetching form services in cases where it turns out such data is not needed.
-* The undo changeset sent over the wire has the opportunity to be more terse,
-  especially in comparison to a concrete changeset that had the restoration data inlined into it.
-Cons:
-* The burden of accessing the relevant repair data falls onto peers with all the challenges that implies.
-  (See [Maximally Inactive Issuer](#maximally-inactive-issuer).)
-* The logic needed to rebase, inverse, and compose changesets that describe such abstract changes,
-  all without using repair data,
-  may be non-trivial and lead to undesirable bloat in the resulting changesets.
-  It's an open problem how these algorithms would work.
+
+-   We avoid possibly expensive repair data fetching form services in cases where it turns out such data is not needed.
+-   The undo changeset sent over the wire has the opportunity to be more terse,
+    especially in comparison to a concrete changeset that had the restoration data inlined into it.
+    Cons:
+-   The burden of accessing the relevant repair data falls onto peers with all the challenges that implies.
+    (See [Maximally Inactive Issuer](#maximally-inactive-issuer).)
+-   The logic needed to rebase, inverse, and compose changesets that describe such abstract changes,
+    all without using repair data,
+    may be non-trivial and lead to undesirable bloat in the resulting changesets.
+    It's an open problem how these algorithms would work.
 
 ### Asynchronous Change Processing
 

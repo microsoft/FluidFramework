@@ -4,15 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import {
-    ITestFluidObject,
-    ITestObjectProvider,
-    ITestContainerConfig,
-    DataObjectFactoryType,
-} from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+
 import { ContainerErrorType, IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { Loader } from "@fluidframework/container-loader";
 import {
     ContainerMessageType,
     ContainerRuntime,
@@ -20,12 +14,18 @@ import {
     SummaryCollection,
     DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
-import { Loader } from "@fluidframework/container-loader";
-import { UsageError } from "@fluidframework/container-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { UsageError } from "@fluidframework/container-utils";
 import { IFluidRouter } from "@fluidframework/core-interfaces";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ConfigTypes, IConfigProviderBase, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import {
+    ITestFluidObject,
+    ITestObjectProvider,
+    ITestContainerConfig,
+    DataObjectFactoryType,
+} from "@fluidframework/test-utils";
+import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -385,5 +385,48 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                 assert.equal(aliasResult3, "Conflict");
                 assert.ok(await getRootDataStore(dataObject3, alias));
             });
+
+        /**
+         * Aliasing datastores summarized before the alias op is sent and after the attach op is sent
+         * does not cause a datastore corruption issue
+         *
+         * This test validates a bug where the rootiness of a datastore was not set to true in the
+         * above scenario.
+         */
+        it("Aliasing a bound datastore marks it as root correctly", async () => {
+            const containerRuntime1 = runtimeOf(dataObject1);
+            const aliasableDataStore1 = await containerRuntime1.createDataStore(packageName);
+            const aliasedDataStoreResponse1 = await aliasableDataStore1.request({ url: "/" });
+            const aliasedDataStore1 = aliasedDataStoreResponse1.value as ITestFluidObject;
+            // Casting any to repro a race condition where bindToContext is called before summarization,
+            // but aliasing happens afterwards
+            (aliasableDataStore1 as any).fluidDataStoreChannel.bindToContext();
+            await provider.ensureSynchronized();
+
+            const containerRuntime2 = runtimeOf(dataObject2) as ContainerRuntime;
+            let callFailed = false;
+            try {
+                // This executes getInitialSnapshotDetails, a LazyPromise, before the alias op is sent to update
+                // the isRootDataStore property in the dataStoreContext
+                await containerRuntime2.getRootDataStore(aliasedDataStore1.runtime.id);
+            } catch (e) {
+                callFailed = true;
+            }
+            assert(callFailed, "Expected getRootDataStore to fail as the datastore is not yet a root datastore");
+
+            // Alias a datastore
+            const _alias = "alias";
+            const aliasResult1 = await aliasableDataStore1.trySetAlias(_alias);
+            assert(aliasResult1 === "Success", `Expected an successful aliasing. Got: ${aliasResult1}`);
+            await provider.ensureSynchronized();
+
+            // Should be able to retrieve root datastore from remote
+            assert.doesNotThrow(async () =>
+                containerRuntime2.getRootDataStore(_alias), "A remote aliased datastore should be a root datastore");
+
+            // Should be able to retrieve local root datastore
+            assert.doesNotThrow(async () =>
+                containerRuntime1.getRootDataStore(_alias), "A local aliased datastore should be a root datastore");
+        });
     });
 });

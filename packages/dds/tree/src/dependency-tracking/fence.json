@@ -1,5 +1,5 @@
 {
-    "tags": [ "dependency-tracking" ],
-    "exports": [ "index" ],
-    "imports": [ "util" ]
+  "tags": ["dependency-tracking"],
+  "exports": ["index"],
+  "imports": ["util"]
 }

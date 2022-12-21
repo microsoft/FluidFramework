@@ -77,7 +77,6 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
 }
 
 export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
-    waitIntervalCollection(label: string): Promise<IntervalCollection<TInterval>>;
     getIntervalCollection(label: string): IntervalCollection<TInterval>;
 }
 
@@ -125,16 +124,6 @@ export class SharedIntervalCollection
             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
             new IntervalCollectionValueType(),
         );
-    }
-
-    /**
-     * @deprecated `IntervalCollection`s are created on a first-write wins basis, and concurrent creates
-     * are supported. Use {@link SharedIntervalCollection.getIntervalCollection} instead.
-     */
-    public async waitIntervalCollection(
-        label: string,
-    ): Promise<IntervalCollection<Interval>> {
-        return this.intervalCollections.get(this.getIntervalCollectionPath(label));
     }
 
     public getIntervalCollection(label: string): IntervalCollection<Interval> {

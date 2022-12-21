@@ -5,6 +5,7 @@
 
 import { expect } from 'chai';
 import { v4, v5 } from 'uuid';
+import { MockLogger } from '@fluidframework/telemetry-utils';
 import { take } from '@fluid-internal/stochastic-test-utils';
 import {
 	IdCompressor,
@@ -1155,6 +1156,224 @@ describe('IdCompressor', () => {
 			);
 		});
 
+		describe('Telemetry', () => {
+			it('emits first cluster and new cluster telemetry events', () => {
+				const mockLogger = new MockLogger();
+				const compressor = createCompressor(Client.Client1, 5, undefined, mockLogger);
+				const localId1 = compressor.generateCompressedId();
+				expect(isLocalId(localId1)).to.be.true;
+				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+
+				mockLogger.assertMatch([
+					{
+						eventName: 'SharedTreeIdCompressor:FirstCluster',
+						sessionId: '88888888-8888-4888-b088-888888888888',
+					},
+					{
+						eventName: 'SharedTreeIdCompressor:NewCluster',
+						sessionId: '88888888-8888-4888-b088-888888888888',
+						clusterCapacity: 5,
+						clusterCount: 1,
+					},
+					{
+						eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
+						sessionId: '88888888-8888-4888-b088-888888888888',
+						eagerFinalIdCount: 0,
+						overridesCount: 0,
+						localIdCount: 1,
+					},
+				]);
+			});
+
+			it('emits new cluster event on second cluster', () => {
+				// Fill the first cluster
+				const mockLogger = new MockLogger();
+				const compressor = createCompressor(Client.Client1, 5, undefined, mockLogger);
+				for (let i = 0; i < 5; i++) {
+					compressor.generateCompressedId();
+				}
+				const range = compressor.takeNextCreationRange();
+				compressor.finalizeCreationRange(range);
+
+				// Create another cluster with a different client so that expansion doesn't happen
+				const mockLogger2 = new MockLogger();
+				const compressor2 = createCompressor(Client.Client2, 5, undefined, mockLogger2);
+				compressor2.finalizeCreationRange(range);
+				compressor2.generateCompressedId();
+				const range2 = compressor2.takeNextCreationRange();
+				compressor2.finalizeCreationRange(range2);
+				compressor.finalizeCreationRange(range2);
+				// Make sure we emitted the FirstCluster event
+				mockLogger.assertMatchAny([
+					{
+						eventName: 'SharedTreeIdCompressor:FirstCluster',
+					},
+				]);
+				mockLogger.clear();
+
+				// Trigger a new cluster creation and make sure FirstCluster isn't emitted
+				compressor.generateCompressedId();
+				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+				mockLogger.assertMatchAny([
+					{
+						eventName: 'SharedTreeIdCompressor:NewCluster',
+					},
+				]);
+				mockLogger.assertMatchNone([
+					{
+						eventName: 'SharedTreeIdCompressor:FirstCluster',
+					},
+				]);
+			});
+
+			it('correctly logs telemetry events for eager final id allocations', () => {
+				const mockLogger = new MockLogger();
+				const compressor = createCompressor(Client.Client1, 5, undefined, mockLogger);
+				const localId1 = compressor.generateCompressedId();
+				expect(isLocalId(localId1)).to.be.true;
+
+				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+				mockLogger.assertMatchAny([
+					{
+						eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
+						eagerFinalIdCount: 0,
+						localIdCount: 1,
+						overridesCount: 0,
+						sessionId: '88888888-8888-4888-b088-888888888888',
+					},
+				]);
+				mockLogger.clear();
+				const finalId1 = compressor.generateCompressedId();
+				const finalId2 = compressor.generateCompressedId();
+				expect(isFinalId(finalId1)).to.be.true;
+				expect(isFinalId(finalId2)).to.be.true;
+
+				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+				mockLogger.assertMatchAny([
+					{
+						eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
+						eagerFinalIdCount: 2,
+						localIdCount: 0,
+						overridesCount: 0,
+						sessionId: '88888888-8888-4888-b088-888888888888',
+					},
+				]);
+			});
+
+			it('correctly logs telemetry events for expansion case', () => {
+				const mockLogger = new MockLogger();
+				const compressor = createCompressor(Client.Client1, 5, undefined, mockLogger);
+				const localId1 = compressor.generateCompressedId();
+				expect(isLocalId(localId1)).to.be.true;
+
+				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+				mockLogger.assertMatchAny([
+					{
+						eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
+						eagerFinalIdCount: 0,
+						localIdCount: 1,
+						overridesCount: 0,
+						sessionId: '88888888-8888-4888-b088-888888888888',
+					},
+				]);
+				mockLogger.clear();
+
+				for (let i = 0; i < 4; i++) {
+					const id = compressor.generateCompressedId();
+					expect(isFinalId(id)).to.be.true;
+				}
+
+				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+				mockLogger.assertMatchAny([
+					{
+						eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
+						eagerFinalIdCount: 4,
+						localIdCount: 0,
+						overridesCount: 0,
+						sessionId: '88888888-8888-4888-b088-888888888888',
+					},
+				]);
+				mockLogger.clear();
+
+				const expansionId1 = compressor.generateCompressedId();
+				const expansionId2 = compressor.generateCompressedId();
+				expect(isLocalId(expansionId1)).to.be.true;
+				expect(isLocalId(expansionId2)).to.be.true;
+
+				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+				mockLogger.assertMatch([
+					{
+						eventName: 'SharedTreeIdCompressor:ClusterExpansion',
+						sessionId: '88888888-8888-4888-b088-888888888888',
+						previousCapacity: 5,
+						newCapacity: 12,
+						overflow: 2,
+					},
+					{
+						eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
+						eagerFinalIdCount: 2,
+						localIdCount: 0,
+						overridesCount: 0,
+						sessionId: '88888888-8888-4888-b088-888888888888',
+					},
+				]);
+			});
+
+			it('emits correct telemetry status with overrides', () => {
+				const mockLogger = new MockLogger();
+				const compressor = createCompressor(Client.Client1, 5, undefined, mockLogger);
+				const localId1 = compressor.generateCompressedId();
+				expect(isLocalId(localId1)).to.be.true;
+
+				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+				mockLogger.assertMatchAny([
+					{
+						eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
+						eagerFinalIdCount: 0,
+						localIdCount: 1,
+						overridesCount: 0,
+						sessionId: '88888888-8888-4888-b088-888888888888',
+					},
+				]);
+				mockLogger.clear();
+
+				const finalId2 = compressor.generateCompressedId();
+				const overrideId3 = compressor.generateCompressedId('override');
+				expect(isFinalId(finalId2)).to.be.true;
+				expect(isLocalId(overrideId3)).to.be.true;
+
+				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+				mockLogger.assertMatchAny([
+					{
+						eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
+						eagerFinalIdCount: 1,
+						localIdCount: 1,
+						overridesCount: 1,
+						sessionId: '88888888-8888-4888-b088-888888888888',
+					},
+				]);
+			});
+
+			it('emits telemetry when serialized', () => {
+				const mockLogger = new MockLogger();
+				const compressor = createCompressor(Client.Client1, 5, undefined, mockLogger);
+				const localId1 = compressor.generateCompressedId();
+				expect(isLocalId(localId1)).to.be.true;
+
+				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+				compressor.serialize(false);
+
+				mockLogger.assertMatchAny([
+					{
+						eventName: 'SharedTreeIdCompressor:SerializedIdCompressorSize',
+						size: 137,
+						clusterCount: 1,
+						sessionCount: 1,
+					},
+				]);
+			});
+		});
+
 		describe('Eager final ID allocation', () => {
 			it('eagerly allocates final IDs when cluster creation has been finalized', () => {
 				const compressor = createCompressor(Client.Client1, 5);
@@ -1255,6 +1474,37 @@ describe('IdCompressor', () => {
 
 				expect(compressor.normalizeToSessionSpace(opSpaceId1)).to.equal(localId1);
 				expect(compressor.normalizeToSessionSpace(opSpaceId2)).to.equal(localId2);
+			});
+
+			it('generates correct eager finals when there are outstanding locals after cluster expansion', () => {
+				const compressor = createCompressor(Client.Client1, 2);
+
+				// Before cluster expansion
+				expect(isLocalId(compressor.generateCompressedId())).to.be.true;
+				const rangeA = compressor.takeNextCreationRange();
+				compressor.finalizeCreationRange(rangeA);
+				expect(isFinalId(compressor.generateCompressedId())).to.be.true;
+
+				// After cluster expansion
+				expect(isLocalId(compressor.generateCompressedId())).to.be.true;
+				const rangeB = compressor.takeNextCreationRange();
+				const localId = compressor.generateCompressedId();
+				expect(isLocalId(localId)).to.be.true;
+
+				// Take a range that won't be finalized in this test; the finalizing of range B should associate this range with finals
+				const rangeC = compressor.takeNextCreationRange();
+
+				compressor.finalizeCreationRange(rangeB);
+				const eagerId = compressor.generateCompressedId();
+				expect(isFinalId(eagerId)).to.be.true;
+
+				expect(compressor.recompress(compressor.decompress(localId))).to.equal(localId);
+				expect(compressor.recompress(compressor.decompress(eagerId))).to.equal(eagerId);
+
+				compressor.finalizeCreationRange(rangeC);
+
+				expect(compressor.recompress(compressor.decompress(localId))).to.equal(localId);
+				expect(compressor.recompress(compressor.decompress(eagerId))).to.equal(eagerId);
 			});
 		});
 

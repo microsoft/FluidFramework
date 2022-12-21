@@ -41,7 +41,7 @@ export enum DataStoreMessageType {
 
 // @public
 export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
-    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean);
+    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
     // (undocumented)
     get absolutePath(): string;
     // (undocumented)
@@ -52,6 +52,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     bind(handle: IFluidHandle): void;
     bindChannel(channel: IChannel): void;
+    // @deprecated (undocumented)
+    bindToContext(): void;
     // (undocumented)
     get channelsRoutingContext(): this;
     // (undocumented)
@@ -69,6 +71,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
+    readonly entryPoint?: IFluidHandle<FluidObject>;
+    // (undocumented)
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     // (undocumented)
     getAudience(): IAudience;
@@ -85,6 +89,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get IFluidRouter(): this;
     // (undocumented)
     get isAttached(): boolean;
+    // @deprecated (undocumented)
     static load(context: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean): FluidDataStoreRuntime;
     // (undocumented)
     readonly logger: ITelemetryLogger;
@@ -114,7 +119,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     submitSignal(type: string, content: any): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     // (undocumented)
@@ -122,7 +127,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     waitAttached(): Promise<void>;
 }
 
-// @public (undocumented)
+// @public
 export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandle {
     constructor(value: T | Promise<T>, path: string, routeContext: IFluidHandleContext);
     // (undocumented)

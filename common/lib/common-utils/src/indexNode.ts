@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export * from "./bufferNode";
-export * from "./hashFileNode";
-export * from "./performanceNode";
+export {
+    Buffer,
+    bufferToString,
+    IsoBuffer,
+    stringToBuffer,
+    Uint8ArrayToString,
+} from "./bufferNode";
+export { gitHashFile, hashFile } from "./hashFileNode";
+export { performance } from "./performanceNode";

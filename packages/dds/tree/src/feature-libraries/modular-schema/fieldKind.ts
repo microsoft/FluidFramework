@@ -4,10 +4,15 @@
  */
 
 import {
-    FieldSchema, FieldKindIdentifier, TreeSchemaIdentifier, SchemaPolicy, fieldSchema, SchemaData,
-} from "../../schema-stored";
+    FieldSchema,
+    FieldKindIdentifier,
+    TreeSchemaIdentifier,
+    SchemaPolicy,
+    fieldSchema,
+    SchemaData,
+} from "../../core";
 import { isNeverField } from "./comparison";
-import { FieldChangeHandler } from "./fieldChangeHandler";
+import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler";
 
 /**
  * Functionality for FieldKinds that is stable,
@@ -23,7 +28,7 @@ import { FieldChangeHandler } from "./fieldChangeHandler";
  *
  * @sealed
  */
-export class FieldKind {
+export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>> {
     /**
      * @param identifier - Globally scoped identifier.
      * @param multiplicity - bound on the number of children that fields of this kind may have.
@@ -42,11 +47,13 @@ export class FieldKind {
     public constructor(
         public readonly identifier: FieldKindIdentifier,
         public readonly multiplicity: Multiplicity,
-        public readonly changeHandler: FieldChangeHandler<any>,
-        private readonly allowsTreeSupersetOf:
-            (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean,
+        public readonly changeHandler: FieldChangeHandler<any, TEditor>,
+        private readonly allowsTreeSupersetOf: (
+            originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined,
+            superset: FieldSchema,
+        ) => boolean,
         public readonly handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
-        ) {}
+    ) {}
 
     /**
      * @returns true iff `superset` permits a (non-strict) superset of the subtrees
@@ -72,7 +79,7 @@ export class FieldKind {
  * Policy from the app for interpreting the stored schema.
  * The app must ensure consistency for all users of the document.
  */
- export interface FullSchemaPolicy extends SchemaPolicy {
+export interface FullSchemaPolicy extends SchemaPolicy {
     /**
      * Policy information about FieldKinds:
      * This is typically stored as code, not in documents, and defines how to handles fields based on their kind.

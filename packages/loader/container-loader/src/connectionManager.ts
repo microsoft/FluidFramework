@@ -18,6 +18,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
+    IAnyDriverError,
     IDocumentService,
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
@@ -27,7 +28,6 @@ import {
     createWriteError,
     createGenericNetworkError,
     getRetryDelayFromError,
-    IAnyDriverError,
     waitForConnectedState,
     DeltaStreamConnectionForbiddenError,
     logNetworkFailure,
@@ -59,6 +59,7 @@ import {
     IConnectionManagerFactoryArgs,
 } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
+import { SignalType } from "./protocol";
 
 const MaxReconnectDelayInMs = 8000;
 const InitialReconnectDelayInMs = 1000;
@@ -80,10 +81,19 @@ function getNackReconnectInfo(nackContent: INackContent) {
  * Implementation of IDocumentDeltaConnection that does not support submitting
  * or receiving ops. Used in storage-only mode.
  */
+const clientNoDeltaStream: IClient = {
+    mode: "read",
+    details: { capabilities: { interactive: true } },
+    permission: [],
+    user: { id: "storage-only client" }, // we need some "fake" ID here.
+    scopes: [],
+};
+const clientIdNoDeltaStream: string = "storage-only client";
+
 class NoDeltaStream
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
     implements IDocumentDeltaConnection, IDisposable {
-    clientId: string = "storage-only client";
+    clientId = clientIdNoDeltaStream;
     claims: ITokenClaims = {
         scopes: [ScopeType.DocRead],
     } as any;
@@ -93,7 +103,7 @@ class NoDeltaStream
     version: string = "";
     initialMessages: ISequencedDocumentMessage[] = [];
     initialSignals: ISignalMessage[] = [];
-    initialClients: ISignalClient[] = [];
+    initialClients: ISignalClient[] = [{ client: clientNoDeltaStream, clientId: clientIdNoDeltaStream }];
     serviceConfiguration: IClientConfiguration = {
         maxMessageSize: 0,
         blockSize: 0,
@@ -257,7 +267,7 @@ export class ConnectionManager implements IConnectionManager {
      * It is undefined if we have not yet established websocket connection
      * and do not know if user has write access to a file.
      */
-    private get readonly() {
+    private get readonly(): boolean | undefined {
         if (this._forceReadonly) {
             return true;
         }
@@ -570,7 +580,13 @@ export class ConnectionManager implements IConnectionManager {
      * @param args - The connection arguments
      */
     private triggerConnect(connectionMode: ConnectionMode) {
-        assert(this.connection === undefined, 0x239 /* "called only in disconnected state" */);
+        // reconnect() has async await of waitForConnectedState(), and that causes potential race conditions
+        // where we might already have a connection. If it were to happen, it's possible that we will connect
+        // with different mode to `connectionMode`. Glancing through the caller chains, it looks like code should be
+        // fine (if needed, reconnect flow will get triggered again). Places where new mode matters should encode it
+        // directly in connectCore - see this.shouldJoinWrite() test as an example.
+        // assert(this.connection === undefined, 0x239 /* "called only in disconnected state" */);
+
         if (this.reconnectMode !== ReconnectMode.Enabled) {
             return;
         }
@@ -649,6 +665,9 @@ export class ConnectionManager implements IConnectionManager {
         // But if we ask read, server can still give us write.
         const readonly = !connection.claims.scopes.includes(ScopeType.DocWrite);
 
+        if (connection.mode !== requestedMode) {
+            this.logger.sendTelemetryEvent({ eventName: "ConnectionModeMismatch", requestedMode, mode: connection.mode });
+        }
         // This connection mode validation logic is moving to the driver layer in 0.44.  These two asserts can be
         // removed after those packages have released and become ubiquitous.
         assert(requestedMode === "read" || readonly === (this.connectionMode === "read"),
@@ -713,17 +732,43 @@ export class ConnectionManager implements IConnectionManager {
             initialMessages,
             this.connectFirstConnection ? "InitialOps" : "ReconnectOps");
 
-        if (connection.initialSignals !== undefined) {
-            for (const signal of connection.initialSignals) {
-                this.props.signalHandler(signal);
-            }
-        }
-
         const details = ConnectionManager.detailsFromConnection(connection);
         details.checkpointSequenceNumber = checkpointSequenceNumber;
         this.props.connectHandler(details);
 
         this.connectFirstConnection = false;
+
+        // Synthesize clear & join signals out of initialClients state.
+        // This allows us to have single way to process signals, and makes it simpler to initialize
+        // protocol in Container.
+        const clearSignal: ISignalMessage = {
+            clientId: null, // system message
+            content: JSON.stringify({
+                type: SignalType.Clear,
+            }),
+        };
+        this.props.signalHandler(clearSignal);
+
+        for (const priorClient of connection.initialClients ?? []) {
+            const joinSignal: ISignalMessage = {
+                clientId: null, // system signal
+                content: JSON.stringify({
+                    type: SignalType.ClientJoin,
+                    content: priorClient, // ISignalClient
+                }),
+            };
+            this.props.signalHandler(joinSignal);
+        }
+
+        // Unfortunately, there is no defined order between initialSignals (including join & leave signals)
+        // and connection.initialClients. In practice, connection.initialSignals quite often contains join signal
+        // for "self" and connection.initialClients does not contain "self", so we have to process them after
+        // "clear" signal above.
+        if (connection.initialSignals !== undefined) {
+            for (const signal of connection.initialSignals) {
+                this.props.signalHandler(signal);
+            }
+        }
     }
 
     /**

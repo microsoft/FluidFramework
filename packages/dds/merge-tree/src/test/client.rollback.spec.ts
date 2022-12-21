@@ -10,6 +10,7 @@ import { Marker, reservedMarkerIdKey, SegmentGroup } from "../mergeTreeNodes";
 import { MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
+import { insertSegments } from "./testUtils";
 
 describe("client.rollback", () => {
     const localUserLongId = "localUser";
@@ -17,13 +18,15 @@ describe("client.rollback", () => {
 
     beforeEach(() => {
         client = new TestClient();
-        client.mergeTree.insertSegments(
-            0,
-            [TextSegment.make("")],
-            UniversalSequenceNumber,
-            client.getClientId(),
-            UniversalSequenceNumber,
-            undefined);
+        insertSegments({
+            mergeTree: client.mergeTree,
+            pos: 0,
+            segments: [TextSegment.make("")],
+            refSeq: UniversalSequenceNumber,
+            clientId: client.getClientId(),
+            seq: UniversalSequenceNumber,
+            opArgs: undefined,
+        });
         client.startOrUpdateCollaboration(localUserLongId);
     });
 

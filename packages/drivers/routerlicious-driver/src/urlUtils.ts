@@ -21,31 +21,26 @@ export const replaceDocumentIdInPath = (urlPath: string, documentId: string): st
     urlPath.split("/").slice(0, -1).concat([documentId]).join("/");
 
 export const getDiscoveredFluidResolvedUrl = (resolvedUrl: IFluidResolvedUrl, session: ISession): IFluidResolvedUrl => {
-    if (session) {
-        const discoveredOrdererUrl = new URLParse(session.ordererUrl);
-        const deltaStorageUrl = new URLParse(resolvedUrl.endpoints.deltaStorageUrl);
-        deltaStorageUrl.set("host", discoveredOrdererUrl.host);
+    const discoveredOrdererUrl = new URLParse(session.ordererUrl);
+    const deltaStorageUrl = new URLParse(resolvedUrl.endpoints.deltaStorageUrl);
+    deltaStorageUrl.set("host", discoveredOrdererUrl.host);
 
-        const discoveredStorageUrl = new URLParse(session.historianUrl);
-        const storageUrl = new URLParse(resolvedUrl.endpoints.storageUrl);
-        storageUrl.set("host", discoveredStorageUrl.host);
+    const discoveredStorageUrl = new URLParse(session.historianUrl);
+    const storageUrl = new URLParse(resolvedUrl.endpoints.storageUrl);
+    storageUrl.set("host", discoveredStorageUrl.host);
 
-        const parsedUrl = parseFluidUrl(resolvedUrl.url);
-        const discoveredResolvedUrl: IFluidResolvedUrl = {
-            endpoints: {
-                deltaStorageUrl: deltaStorageUrl.toString(),
-                ordererUrl: session.ordererUrl,
-                storageUrl: storageUrl.toString(),
-                deltaStreamUrl: session.deltaStreamUrl,
-            },
-            id: resolvedUrl.id,
-            tokens: resolvedUrl.tokens,
-            type: resolvedUrl.type,
-            url: new URLParse(`fluid://${discoveredOrdererUrl.host}${parsedUrl.pathname}`).toString(),
-        };
-
-        return discoveredResolvedUrl;
-    } else {
-        return resolvedUrl;
-    }
+    const parsedUrl = parseFluidUrl(resolvedUrl.url);
+    const discoveredResolvedUrl: IFluidResolvedUrl = {
+        endpoints: {
+            deltaStorageUrl: deltaStorageUrl.toString(),
+            ordererUrl: session.ordererUrl,
+            deltaStreamUrl: session.deltaStreamUrl,
+            storageUrl: storageUrl.toString(),
+        },
+        id: resolvedUrl.id,
+        tokens: resolvedUrl.tokens,
+        type: resolvedUrl.type,
+        url: new URLParse(`fluid://${discoveredOrdererUrl.host}${parsedUrl.pathname}`).toString(),
+    };
+    return discoveredResolvedUrl;
 };

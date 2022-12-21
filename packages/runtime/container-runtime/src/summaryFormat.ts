@@ -8,7 +8,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { gcTreeKey } from "./garbageCollection";
+import { gcTreeKey } from "./garbageCollectionConstants";
 
 type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 interface IFluidDataStoreAttributes0 {
@@ -99,14 +99,16 @@ export interface IGCMetadata {
      * - A value greater than 0 means GC is enabled.
      */
     readonly gcFeature?: GCVersion;
-    /** If this is present, the session for this container will expire after this time and the container will close */
-    readonly sessionExpiryTimeoutMs?: number;
     /**
      * Tells whether the GC sweep phase is enabled for this container.
      * - True means sweep phase is enabled.
      * - False means sweep phase is disabled. If GC is disabled as per gcFeature, sweep is also disabled.
      */
     readonly sweepEnabled?: boolean;
+    /** If this is present, the session for this container will expire after this time and the container will close */
+    readonly sessionExpiryTimeoutMs?: number;
+    /** How long to wait after an object is unreferenced before deleting it via GC Sweep */
+    readonly sweepTimeoutMs?: number;
 }
 
 /** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */

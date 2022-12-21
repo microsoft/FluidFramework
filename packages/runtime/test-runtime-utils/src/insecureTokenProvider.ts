@@ -25,6 +25,16 @@ export class InsecureTokenProvider implements ITokenProvider {
          * User with whom generated tokens will be associated.
          */
         private readonly user: IUser,
+
+        /**
+         * Optional. Override of scopes. If a param is not provided, InsecureTokenProvider
+         * will use the default scopes which are document read, write and summarizer write.
+         *
+         * @param scopes - See {@link @fluidframework/protocol-definitions#ITokenClaims.scopes}
+         *
+         * @defaultValue - [ ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite ]
+         */
+        private readonly scopes?: ScopeType[],
     ) {
 
     }
@@ -38,7 +48,7 @@ export class InsecureTokenProvider implements ITokenProvider {
             jwt: generateToken(
                 tenantId,
                 this.tenantKey,
-                [
+                this.scopes ?? [
                     ScopeType.DocRead,
                     ScopeType.DocWrite,
                     ScopeType.SummaryWrite,
@@ -58,7 +68,7 @@ export class InsecureTokenProvider implements ITokenProvider {
             jwt: generateToken(
                 tenantId,
                 this.tenantKey,
-                [
+                this.scopes ?? [
                     ScopeType.DocRead,
                     ScopeType.DocWrite,
                     ScopeType.SummaryWrite,

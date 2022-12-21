@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/consistent-type-assertions, max-len, no-bitwise */
+/* eslint-disable @typescript-eslint/consistent-type-assertions, no-bitwise */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
@@ -19,11 +19,9 @@ import {
     KeyComparer,
     Property,
     PropertyAction,
-    ProxString,
     RedBlackTree,
     SortedDictionary,
     Stack,
-    TST,
 } from "../collections";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import {
@@ -48,9 +46,11 @@ import {
 import { reservedRangeLabelsKey, reservedTileLabelsKey } from "../referencePositions";
 import { MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
-import { specToSegment, TestClient } from "./testClient";
+import { JsonSegmentSpecs } from "../snapshotChunks";
+import { getStats, specToSegment, TestClient } from "./testClient";
 import { TestServer } from "./testServer";
 import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils";
+import { ProxString, TST } from "./tst";
 
 function LinearDictionary<TKey, TData>(compareKeys: KeyComparer<TKey>): SortedDictionary<TKey, TData> {
     const props: Property<TKey, TData>[] = [];
@@ -304,8 +304,16 @@ function checkInsertMergeTree(
     let checkText = new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId);
     checkText = editFlat(checkText, pos, 0, textSegment.text);
     const clockStart = clock();
-    insertText(mergeTree, pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber,
-        textSegment.text, undefined, undefined);
+    insertText({
+        mergeTree,
+        pos,
+        refSeq: UniversalSequenceNumber,
+        clientId: LocalClientId,
+        seq: UniversalSequenceNumber,
+        text: textSegment.text,
+        props: undefined,
+        opArgs: undefined,
+    });
     accumTime += elapsedMicroseconds(clockStart);
     const updatedText = new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId);
     const result = (checkText === updatedText);
@@ -336,7 +344,7 @@ function checkMarkRemoveMergeTree(mergeTree: MergeTree, start: number, end: numb
 export function mergeTreeTest1() {
     const mergeTree = new MergeTree();
     mergeTree.insertSegments(0, [TextSegment.make("the cat is on the mat")], UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, undefined);
-    mergeTree.map({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId, undefined);
+    mergeTree.mapRange(printTextSegment, UniversalSequenceNumber, LocalClientId, undefined);
     let fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
     checkInsertMergeTree(mergeTree, 4, fuzzySeg);
     fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
@@ -344,7 +352,7 @@ export function mergeTreeTest1() {
     checkMarkRemoveMergeTree(mergeTree, 4, 13);
     // checkRemoveSegTree(segTree, 4, 13);
     checkInsertMergeTree(mergeTree, 4, makeCollabTextSegment("fi"));
-    mergeTree.map({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId, undefined);
+    mergeTree.mapRange(printTextSegment, UniversalSequenceNumber, LocalClientId, undefined);
     const segoff = mergeTree.getContainingSegment(4, UniversalSequenceNumber, LocalClientId);
     log(mergeTree.getPosition(segoff.segment!, UniversalSequenceNumber, LocalClientId));
     log(new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId));
@@ -379,8 +387,16 @@ export function mergeTreeLargeTest() {
         const preLen = mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
         const pos = random.integer(0, preLen)(mt);
         const clockStart = clock();
-        insertText(mergeTree, pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber,
-            s, undefined, undefined);
+        insertText({
+            mergeTree,
+            pos,
+            refSeq: UniversalSequenceNumber,
+            clientId: LocalClientId,
+            seq: UniversalSequenceNumber,
+            text: s,
+            props: undefined,
+            opArgs: undefined,
+        });
         accumTime += elapsedMicroseconds(clockStart);
         if ((i > 0) && (0 === (i % 50000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
@@ -616,7 +632,7 @@ export function TestPack(verbose = true) {
         }
         const aveTime = (client.accumTime / client.accumOps).toFixed(1);
         const aveLocalTime = (client.localTime / client.localOps).toFixed(1);
-        const stats = client.mergeTree.getStats();
+        const stats = getStats(client.mergeTree);
         const windowTime = stats.windowTime!;
         const packTime = stats.packTime;
         const aveWindowTime = ((windowTime || 0) / (client.accumOps)).toFixed(1);
@@ -882,7 +898,7 @@ export function TestPack(verbose = true) {
             */
             // log(server.getText());
             // log(server.mergeTree.toString());
-            // log(server.mergeTree.getStats());
+            // log(getStats(server.mergeTree));
             if (0 === (roundCount % 100)) {
                 const clockStart = clock();
                 if (checkTextMatch()) {
@@ -894,7 +910,7 @@ export function TestPack(verbose = true) {
                 if (verbose) {
                     log(`wall clock is ${((Date.now() - startTime) / 1000.0).toFixed(1)}`);
                 }
-                const stats = server.mergeTree.getStats();
+                const stats = getStats(server.mergeTree);
                 const liveAve = (stats.liveCount / stats.nodeCount).toFixed(1);
                 const posLeaves = stats.leafCount - stats.removedLeafCount;
                 let aveExtractSnapTime = "off";
@@ -1212,7 +1228,7 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        const segs = <SharedStringJSONSegment[]> new SnapshotLegacy(cli.mergeTree, DebugLogger.create("fluid:snapshot")).extractSync();
+        const segs = <SharedStringJSONSegment[]> new SnapshotLegacy(cli.mergeTree, DebugLogger.create("fluid:snapshot")).extractSync().map((seg) => seg.toJSONObject() as JsonSegmentSpecs);
         if (verbose) {
             for (const seg of segs) {
                 log(`${specToSegment(seg)}`);
@@ -1728,15 +1744,16 @@ function findReplacePerf(filename: string) {
                     1,
                     false,
                     undefined as any);
-                insertText(
-                    client.mergeTree,
-                    pos + i,
-                    UniversalSequenceNumber,
-                    client.getClientId(),
-                    1,
-                    "teh",
-                    undefined,
-                    undefined);
+                insertText({
+                    mergeTree: client.mergeTree,
+                    pos: pos + i,
+                    refSeq: UniversalSequenceNumber,
+                    clientId: client.getClientId(),
+                    seq: 1,
+                    text: "teh",
+                    props: undefined,
+                    opArgs: undefined,
+                });
                 pos = pos + i + 3;
                 cReplaces++;
             } else {

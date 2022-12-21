@@ -2,27 +2,29 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import { assert } from "console";
 import registerDebug from "debug";
-import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
-import { toPosixPath, globFn, unquote, statAsync, readFileAsync } from "../../../common/utils";
+import * as path from "path";
+
 import { defaultLogger } from "../../../common/logging";
 import { ScriptDependencies } from "../../../common/npmPackage";
-import * as path from "path";
+import { globFn, readFileAsync, statAsync, toPosixPath, unquote } from "../../../common/utils";
 import { BuildPackage } from "../../buildGraph";
-import { assert } from "console";
+import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
 /* eslint-disable @typescript-eslint/no-empty-function */
 
-const {verbose} = defaultLogger;
+const { verbose } = defaultLogger;
 
 export class EchoTask extends LeafTask {
-    protected addDependentTasks(dependentTasks: LeafTask[]) { }
-    protected async checkLeafIsUpToDate() { return true; }
+    protected addDependentTasks(dependentTasks: LeafTask[]) {}
+    protected async checkLeafIsUpToDate() {
+        return true;
+    }
 }
 
 export class LesscTask extends LeafTask {
-    protected addDependentTasks(dependentTasks: LeafTask[]) { }
+    protected addDependentTasks(dependentTasks: LeafTask[]) {}
     protected async checkLeafIsUpToDate() {
         // TODO: assume lessc <src> <dst>
         const args = this.command.split(" ");
@@ -112,7 +114,7 @@ export class CopyfilesTask extends LeafWithDoneFileTask {
             const directory = toPosixPath(this.node.pkg.directory);
             const dstPath = directory + "/" + this.copyDstArg;
             const srcFiles = await this.getCopySourceFiles();
-            this._dstFiles = srcFiles.map(match => {
+            this._dstFiles = srcFiles.map((match) => {
                 const relPath = path.relative(directory, match);
                 let currRelPath = relPath;
                 for (let i = 0; i < this.upLevel; i++) {
@@ -145,8 +147,12 @@ export class CopyfilesTask extends LeafWithDoneFileTask {
             const dstTimesP = Promise.all(dstFiles.map((match) => statAsync(match)));
             const [srcTimes, dstTimes] = await Promise.all([srcTimesP, dstTimesP]);
 
-            const srcInfo = srcTimes.map((srcTime) => { return { mtimeMs: srcTime.mtimeMs, size: srcTime.size } });
-            const dstInfo = dstTimes.map((dstTime) => { return { mtimeMs: dstTime.mtimeMs, size: dstTime.size } });
+            const srcInfo = srcTimes.map((srcTime) => {
+                return { mtimeMs: srcTime.mtimeMs, size: srcTime.size };
+            });
+            const dstInfo = dstTimes.map((dstTime) => {
+                return { mtimeMs: dstTime.mtimeMs, size: dstTime.size };
+            });
             return JSON.stringify({ srcFiles, dstFiles, srcInfo, dstInfo });
         } catch (e: any) {
             this.logVerboseTask(`error comparing file times ${e.message}`);
@@ -157,12 +163,14 @@ export class CopyfilesTask extends LeafWithDoneFileTask {
 }
 
 export class GenVerTask extends LeafTask {
-    protected addDependentTasks(dependentTasks: LeafTask[]) { }
+    protected addDependentTasks(dependentTasks: LeafTask[]) {}
     protected async checkLeafIsUpToDate() {
         const file = path.join(this.node.pkg.directory, "src/packageVersion.ts");
         try {
             const content = await readFileAsync(file, "utf8");
-            const match = content.match(/.*\nexport const pkgName = "(.*)";[\n\r]*export const pkgVersion = "([0-9A-Za-z.+-]+)";.*/m);
+            const match = content.match(
+                /.*\nexport const pkgName = "(.*)";[\n\r]*export const pkgVersion = "([0-9A-Za-z.+-]+)";.*/m,
+            );
             if (match === null) {
                 this.logVerboseTrigger("src/packageVersion.ts content not matched");
                 return false;
@@ -177,7 +185,7 @@ export class GenVerTask extends LeafTask {
             }
             return true;
         } catch {
-            this.logVerboseTrigger(`failed to read src/packageVersion.ts`)
+            this.logVerboseTrigger(`failed to read src/packageVersion.ts`);
             return false;
         }
     }
@@ -190,6 +198,5 @@ export abstract class PackageJsonChangedTask extends LeafWithDoneFileTask {
 }
 
 export class TypeValidationTask extends PackageJsonChangedTask {
-    protected addDependentTasks(dependentTasks: LeafTask[]): void {
-    }
+    protected addDependentTasks(dependentTasks: LeafTask[]): void {}
 }

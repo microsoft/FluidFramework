@@ -11,7 +11,7 @@ import { getSchemaString, parseSchemaString } from "../../feature-libraries/sche
 
 import { SchemaData } from "../../schema-stored";
 import { rootFieldKey } from "../../tree";
-import { jsonTypeSchema, jsonRoot } from "../../domains";
+import { jsonSchemaData, jsonRoot } from "../../domains";
 import { defaultSchemaPolicy, allowsRepoSuperset } from "../../feature-libraries";
 
 describe("SchemaIndex", () => {
@@ -20,7 +20,7 @@ describe("SchemaIndex", () => {
         // TODO: add more targeted tests, and tests for more cases.
         const data: SchemaData = {
             globalFieldSchema: new Map([[rootFieldKey, jsonRoot]]),
-            treeSchema: jsonTypeSchema,
+            treeSchema: jsonSchemaData.treeSchema,
         };
         const s = getSchemaString(data);
         const parsed = parseSchemaString(s);

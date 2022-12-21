@@ -33,6 +33,11 @@ export enum MessageType {
     Reject = "reject",
 
     /**
+     * Message sent by client accepting proposal
+     */
+    Accept = "accept",
+
+    /**
      * Summary operation (op).
      */
     Summarize = "summarize",
@@ -71,6 +76,18 @@ export enum MessageType {
      * Service specific control messages that are never sequenced.
      */
     Control = "control",
+}
+
+export enum SignalType {
+    /**
+     * System signal sent to indicate a new client has joined the collaboration.
+     */
+    ClientJoin = "join",
+
+    /**
+     * System signal sent to indicate a client has left the collaboration.
+     */
+    ClientLeave = "leave",
 }
 
 /**
@@ -154,6 +171,12 @@ export interface IDocumentMessage {
      * Traces related to the packet.
      */
     traces?: ITrace[];
+
+    /**
+     * The compression algorithm that was used to compress contents of this op.
+     * @experimental Not ready for use
+     */
+    compression?: string;
 }
 
 /**
@@ -260,11 +283,20 @@ export interface ISequencedDocumentMessage {
      */
     timestamp: number;
 
+    // Data provided by service. Only present in service generated messages.
+    data?: string;
+
     /**
      * Experimental field for storing the rolling hash at sequence number.
      * @alpha
      */
     expHash1?: string;
+
+    /**
+     * The compression algorithm that was used to compress contents of this op.
+     * @experimental Not ready for use.
+     */
+    compression?: string;
 }
 
 export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {

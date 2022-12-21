@@ -8,11 +8,11 @@
 import { strict as assert } from "assert";
 import * as fs from "fs";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
 import random from "random-js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTreeNodes";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
@@ -30,7 +30,7 @@ export const insertAtRefPos: TestOperation =
     (client: TestClient, opStart: number, opEnd: number, mt: random.Engine) => {
         const segs: ISegment[] = [];
         // gather all the segments at the pos, including removed segments
-        client.mergeTree.walkAllSegments(client.mergeTree.root, (seg) => {
+        walkAllChildSegments(client.mergeTree.root, (seg) => {
             const pos = client.getPosition(seg);
             if (pos >= opStart) {
                 if (pos <= opStart) {
@@ -65,7 +65,16 @@ export function doOverRange(
     range: IConfigRange,
     growthFunc: (input: number) => number,
     doAction: (current: number) => void) {
+    let lastCurrent = Number.NaN;
     for (let current = range.min; current <= range.max; current = growthFunc(current)) {
+        // let growth funcs be simple
+        // especially around 0 and 1
+        // if the value didn't change,
+        // just increment it
+        if (current === lastCurrent) {
+            current++;
+        }
+        lastCurrent = current;
         doAction(current);
     }
 }
@@ -154,7 +163,7 @@ export function generateOperationMessagesForClients(
         // and is our baseline
         const client = clients[random.integer(1, clients.length - 1)(mt)];
         const len = client.getLength();
-        const sg = client.mergeTree.pendingSegments?.last();
+        const sg = client.peekPendingSegmentGroups();
         let op: IMergeTreeOp | undefined;
         if (len === 0 || len < minLength) {
             const text = client.longClientId!.repeat(random.integer(1, 3)(mt));
@@ -174,10 +183,10 @@ export function generateOperationMessagesForClients(
         }
         if (op !== undefined) {
             // Pre-check to avoid logger.toString() in the string template
-            if (sg === client.mergeTree.pendingSegments?.last()) {
+            if (sg === client.peekPendingSegmentGroups()) {
                 assert.notEqual(
                     sg,
-                    client.mergeTree.pendingSegments?.last(),
+                    client.peekPendingSegmentGroups(),
                     `op created but segment group not enqueued.${logger}`);
             }
             const message = client.makeOpMessage(op, --tempSeq);
@@ -220,13 +229,7 @@ export function applyMessages(
             clients.forEach((c) => c.applyMsg(message));
         }
     } catch (e) {
-        if (e instanceof Error) {
-            e.message += `\n${logger.toString()}`;
-        }
-        if (typeof e === "string") {
-            throw new LoggingError(`${e}\n${logger.toString()}`);
-        }
-        throw e;
+        throw logger.addLogsToError(e);
     }
     return seq;
 }

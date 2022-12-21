@@ -49,7 +49,6 @@ export class ForemanLambda implements core.IPartitionLambda {
                 const sequencedMessage = baseMessage as core.ISequencedOperationMessage;
                 // Only process "Help" messages.
                 if (sequencedMessage.operation.type === MessageType.RemoteHelp) {
-                    // eslint-disable-next-line max-len
                     const helpMessage: IHelpMessage = JSON.parse((sequencedMessage.operation as ISequencedDocumentSystemMessage).data);
                     // Back-compat to play well with older client.
                     const helpContent = helpMessage.version

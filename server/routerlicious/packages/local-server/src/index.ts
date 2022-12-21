@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./localDeltaConnectionServer";
-export * from "./localOrdererManager";
-export * from "./localWebSocketServer";
+export { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "./localDeltaConnectionServer";
+export { LocalOrdererManager } from "./localOrdererManager";
+export { LocalWebSocket, LocalWebSocketServer } from "./localWebSocketServer";

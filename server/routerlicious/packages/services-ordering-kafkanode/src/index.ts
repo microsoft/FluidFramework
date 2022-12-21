@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./kafkaNodeConsumer";
-export * from "./kafkaNodeProducer";
-export * from "./resourcesFactory";
+export { KafkaNodeConsumer } from "./kafkaNodeConsumer";
+export { KafkaNodeProducer } from "./kafkaNodeProducer";
+export { IKafkaResources, KafkaResources, KafkaResourcesFactory } from "./resourcesFactory";

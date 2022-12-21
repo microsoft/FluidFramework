@@ -5,16 +5,31 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    IChannelAttributes, IChannelStorageService, IFluidDataStoreRuntime,
+    IChannelAttributes,
+    IChannelStorageService,
+    IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { ITelemetryContext, ISummaryTreeWithStats, IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import {
+    ISequencedDocumentMessage,
+    ISummaryTree,
+    SummaryType,
+} from "@fluidframework/protocol-definitions";
+import {
+    ITelemetryContext,
+    ISummaryTreeWithStats,
+    IGarbageCollectionData,
+} from "@fluidframework/runtime-definitions";
 import { mergeStats } from "@fluidframework/runtime-utils";
-import { IFluidSerializer, ISharedObjectEvents, SharedObject } from "@fluidframework/shared-object-base";
+import {
+    IFluidSerializer,
+    ISharedObjectEvents,
+    SharedObject,
+} from "@fluidframework/shared-object-base";
+import { v4 as uuid } from "uuid";
 import { ChangeFamily } from "../change-family";
-import { Commit, EditManager } from "../edit-manager";
+import { Commit, EditManager, SeqNumber } from "../edit-manager";
 import { AnchorSet, Delta } from "../tree";
-import { brand } from "../util";
+import { brand, JsonCompatibleReadOnly } from "../util";
 
 /**
  * The events emitted by a {@link SharedTreeCore}
@@ -34,14 +49,29 @@ const formatVersion = 0;
  * TODO: actually implement
  * TODO: is history policy a detail of what indexes are used, or is there something else to it?
  */
-export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TChange>>
-    extends SharedObject<ISharedTreeCoreEvents> {
-    public readonly editManager: EditManager<TChange, TChangeFamily>;
+export class SharedTreeCore<
+    TChange,
+    TChangeFamily extends ChangeFamily<any, TChange>,
+> extends SharedObject<ISharedTreeCoreEvents> {
+    /**
+     * A random ID that uniquely identifies this client in the collab session.
+     * This is sent alongside every op to identify which client the op originated from.
+     *
+     * This is needed because the client ID given by the Fluid protocol is not stable across reconnections.
+     */
+    private readonly stableId: string;
 
     /**
      * All {@link SummaryElement}s that are present on any {@link Index}es in this DDS
      */
     private readonly summaryElements: SummaryElement[];
+
+    /**
+     * The sequence number that this instance is at.
+     * This is number is artificial in that it is made up by this instance as opposed to being provided by the runtime.
+     * Is `undefined` after (and only after) this instance is attached.
+     */
+    private detachedRevision: SeqNumber | undefined = brand(Number.MIN_SAFE_INTEGER);
 
     /**
      * @param id - The id of the shared object
@@ -51,23 +81,22 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
     public constructor(
         private readonly indexes: Index<TChange>[],
         public readonly changeFamily: TChangeFamily,
+        public readonly editManager: EditManager<TChange, TChangeFamily>,
         anchors: AnchorSet,
 
         // Base class arguments
         id: string,
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
-        telemetryContextPrefix: string) {
+        telemetryContextPrefix: string,
+    ) {
         super(id, runtime, attributes, telemetryContextPrefix);
 
-        // TODO: clientId may not exist at SharedTree creation.
-        // Should we change EditManager to not need the client ID? Can we create the edit manager once we are connected?
-        this.editManager = new EditManager(changeFamily, anchors);
-        if (this.runtime.clientId !== undefined) {
-            this.editManager.setLocalSessionId(this.runtime.clientId);
-        }
-
-        this.summaryElements = indexes.map((i) => i.summaryElement).filter((e): e is SummaryElement => e !== undefined);
+        this.stableId = uuid();
+        editManager.initSessionId(this.stableId);
+        this.summaryElements = indexes
+            .map((i) => i.summaryElement)
+            .filter((e): e is SummaryElement => e !== undefined);
         assert(
             new Set(this.summaryElements.map((e) => e.key)).size === this.summaryElements.length,
             0x350 /* Index summary element keys must be unique */,
@@ -76,7 +105,10 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
 
     // TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
     // We might want to not subclass it, or override/reimplement most of its functionality.
-    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
+    protected summarizeCore(
+        serializer: IFluidSerializer,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats {
         let stats = mergeStats();
         const summary: ISummaryTree = {
             type: SummaryType.Tree,
@@ -87,12 +119,13 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
         // Merge the summaries of all indexes together under a single ISummaryTree
         const indexSummaryTree: ISummaryTree["tree"] = {};
         for (const summaryElement of this.summaryElements) {
-            const { stats: elementStats, summary: elementSummary } = summaryElement.getAttachSummary(
-                (contents) => serializer.stringify(contents, this.handle),
-                undefined,
-                undefined,
-                telemetryContext,
-            );
+            const { stats: elementStats, summary: elementSummary } =
+                summaryElement.getAttachSummary(
+                    (contents) => serializer.stringify(contents, this.handle),
+                    undefined,
+                    undefined,
+                    telemetryContext,
+                );
             indexSummaryTree[summaryElement.key] = elementSummary;
             stats = mergeStats(stats, elementStats);
         }
@@ -110,34 +143,53 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     protected async loadCore(services: IChannelStorageService): Promise<void> {
-        const loadIndexes = this.summaryElements
-            .map(async (summaryElement) => summaryElement.load(
+        const loadIndexes = this.summaryElements.map(async (summaryElement) =>
+            summaryElement.load(
                 scopeStorageService(services, "indexes", summaryElement.key),
                 (contents) => this.serializer.parse(contents),
-            ));
+            ),
+        );
 
         await Promise.all(loadIndexes);
     }
 
-    protected onConnect() {
-        assert(this.runtime.clientId !== undefined, 0x3a5 /* Expected clientId to be defined once connected */);
-        this.editManager.setLocalSessionId(this.runtime.clientId);
-    }
-
     public submitEdit(edit: TChange): void {
         const delta = this.editManager.addLocalChange(edit);
+        // Edits performed before the first attach are treated as sequenced because they will be included
+        // in the attach summary that is uploaded to the service.
+        // Until this attach workflow happens, this instance essentially behaves as a centralized data structure.
+        if (this.detachedRevision !== undefined) {
+            const newRevision: SeqNumber = brand((this.detachedRevision as number) + 1);
+            const commit: Commit<TChange> = {
+                changeset: edit,
+                refNumber: this.detachedRevision,
+                seqNumber: newRevision,
+                sessionId: this.stableId,
+            };
+            this.detachedRevision = newRevision;
+            this.editManager.addSequencedChange(commit);
+        }
         for (const index of this.indexes) {
             index.newLocalChange?.(edit);
             index.newLocalState?.(delta);
         }
 
-        this.submitLocalMessage(this.changeFamily.encoder.encodeForJson(formatVersion, edit));
+        const message: Message = {
+            originatorId: this.stableId,
+            changeset: this.changeFamily.encoder.encodeForJson(formatVersion, edit),
+        };
+        this.submitLocalMessage(message);
     }
 
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        const changes = this.changeFamily.encoder.decodeJson(formatVersion, message.contents);
+    protected processCore(
+        message: ISequencedDocumentMessage,
+        local: boolean,
+        localOpMetadata: unknown,
+    ) {
+        const { originatorId: stableClientId, changeset } = message.contents as Message;
+        const changes = this.changeFamily.encoder.decodeJson(formatVersion, changeset);
         const commit: Commit<TChange> = {
-            sessionId: message.clientId,
+            sessionId: stableClientId,
             seqNumber: brand(message.sequenceNumber),
             refNumber: brand(message.referenceSequenceNumber),
             changeset: changes,
@@ -149,10 +201,15 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
             index.sequencedChange?.(sequencedChange);
             index.newLocalState?.(delta);
         }
+        this.editManager.advanceMinimumSequenceNumber(message.minimumSequenceNumber);
     }
 
-    protected onDisconnect() {
-        throw new Error("Method not implemented.");
+    protected onDisconnect() {}
+
+    protected didAttach(): void {
+        if (this.detachedRevision !== undefined) {
+            this.detachedRevision = undefined;
+        }
     }
 
     protected applyStashedOp(content: any): unknown {
@@ -174,6 +231,20 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
             gcNodes,
         };
     }
+}
+
+/**
+ * The format of messages that SharedTree sends and receives.
+ */
+interface Message {
+    /**
+     * The stable ID that identifies the originator of the message.
+     */
+    readonly originatorId: string;
+    /**
+     * The changeset to be applied.
+     */
+    readonly changeset: JsonCompatibleReadOnly;
 }
 
 /**
@@ -266,7 +337,10 @@ export type SummaryElementParser = (contents: string) => unknown;
 /**
  * Compose an {@link IChannelStorageService} which prefixes all paths before forwarding them to the original service
  */
-function scopeStorageService(service: IChannelStorageService, ...pathElements: string[]): IChannelStorageService {
+function scopeStorageService(
+    service: IChannelStorageService,
+    ...pathElements: string[]
+): IChannelStorageService {
     const scope = `${pathElements.join("/")}/`;
 
     return {

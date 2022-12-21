@@ -5,6 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+    FluidObject,
     IFluidHandle,
     IFluidHandleContext,
     IRequest,
@@ -40,6 +41,7 @@ import {
     IQuorumClients,
 } from "@fluidframework/protocol-definitions";
 import {
+    BindState,
     CreateSummarizerNodeSource,
     IAttachMessage,
     IEnvelope,
@@ -61,6 +63,7 @@ import {
     create404Response,
     createResponseError,
     exceptionToResponse,
+    requestFluidObject,
 } from "@fluidframework/runtime-utils";
 import {
     IChannel,
@@ -78,6 +81,7 @@ import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import { LocalChannelContext, LocalChannelContextBase, RehydratedLocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
+import { FluidObjectHandle } from "./fluidHandle";
 
 export enum DataStoreMessageType {
     // Creates a new channel
@@ -98,6 +102,8 @@ export class FluidDataStoreRuntime extends
 TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements
 IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     /**
+     * @deprecated - Instantiate the class using its constructor instead.
+     *
      * Loads the data store runtime
      * @param context - The data store context
      * @param sharedObjectRegistry - The registry of shared objects used by this data store
@@ -108,8 +114,17 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         sharedObjectRegistry: ISharedObjectRegistry,
         existing: boolean,
     ): FluidDataStoreRuntime {
-        return new FluidDataStoreRuntime(context, sharedObjectRegistry, existing);
+        return new FluidDataStoreRuntime(
+            context,
+            sharedObjectRegistry,
+            existing,
+            async (dataStoreRuntime) => requestFluidObject(dataStoreRuntime, "/"));
     }
+
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entryPoint}
+     */
+    public readonly entryPoint?: IFluidHandle<FluidObject>;
 
     public get IFluidRouter() { return this; }
 
@@ -154,6 +169,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private readonly pendingAttach = new Map<string, IAttachMessage>();
 
+    private bindState: BindState;
     private readonly deferredAttached = new Deferred<void>();
     private readonly localChannelContextQueue = new Map<string, LocalChannelContextBase>();
     private readonly notBoundedChannelContextSet = new Set<string>();
@@ -174,10 +190,22 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     // channel contexts.
     private readonly channelsBaseGCDetails: LazyPromise<Map<string, IGarbageCollectionDetailsBase>>;
 
+    /**
+     * Create an instance of a DataStore runtime.
+     *
+     * @param dataStoreContext - Context object for the runtime.
+     * @param sharedObjectRegistry - The registry of shared objects that this data store will be able to instantiate.
+     * @param existing - Pass 'true' if loading this datastore from an existing file; pass 'false' otherwise.
+     * @param initializeEntryPoint - Function to initialize the entryPoint object for the data store runtime. The
+     * handle to this data store runtime will point to the object returned by this function. If this function is not
+     * provided, the handle will be left undefined. This is here so we can start making handles a first-class citizen
+     * and the primary way of interacting with some Fluid objects, and should be used if possible.
+     */
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
         existing: boolean,
+        initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
     ) {
         super();
 
@@ -199,8 +227,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         const tree = dataStoreContext.baseSnapshot;
 
         this.channelsBaseGCDetails = new LazyPromise(async () => {
-            const baseGCDetails = await
-                (this.dataStoreContext.getBaseGCDetails?.() ?? this.dataStoreContext.getInitialGCSummaryDetails());
+            const baseGCDetails = await this.dataStoreContext.getBaseGCDetails();
             return unpackChildNodesGCDetails(baseGCDetails);
         });
 
@@ -263,7 +290,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             });
         }
 
+        if (initializeEntryPoint) {
+            const promise = new LazyPromise(async () => initializeEntryPoint(this));
+            this.entryPoint = new FluidObjectHandle<FluidObject>(promise, "", this.objectsRoutingContext);
+        }
+
         this.attachListener();
+        // If exists on storage or loaded from a snapshot, it should already be bound.
+        this.bindState = existing ? BindState.Bound : BindState.NotBound;
         this._attachState = dataStoreContext.attachState;
 
         /**
@@ -439,7 +473,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             handle.attachGraph();
         });
         this.pendingHandlesToMakeVisible.clear();
-        this.dataStoreContext.makeLocallyVisible();
+        this.bindToContext();
     }
 
     /**
@@ -447,6 +481,22 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      */
     public attachGraph() {
         this.makeVisibleAndAttachGraph();
+    }
+
+    /**
+     * @deprecated - Not necessary if consumers add a new dataStore to the container by storing its handle.
+     * Binds this runtime to the container
+     * This includes the following:
+     * 1. Sending an Attach op that includes all existing state
+     * 2. Attaching the graph if the data store becomes attached.
+     */
+    public bindToContext() {
+        if (this.bindState !== BindState.NotBound) {
+            return;
+        }
+        this.bindState = BindState.Binding;
+        this.dataStoreContext.bindToContext();
+        this.bindState = BindState.Bound;
     }
 
     public bind(handle: IFluidHandle): void {
@@ -638,10 +688,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * After GC has run, called to notify this channel of routes that are used in it. It calls the child contexts to
      * update their used routes.
      * @param usedRoutes - The routes that are used in all contexts in this channel.
-     * @param gcTimestamp - The time when GC was run that generated these used routes. If any node becomes unreferenced
-     * as part of this GC run, this should be used to update the time when it happens.
      */
-    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
+    public updateUsedRoutes(usedRoutes: string[]) {
         // Get a map of channel ids to routes used in it.
         const usedContextRoutes = unpackChildNodesUsedRoutes(usedRoutes);
 
@@ -652,7 +700,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         // Update the used routes in each context. Used routes is empty for unused context.
         for (const [contextId, context] of this.contexts) {
-            context.updateUsedRoutes(usedContextRoutes.get(contextId) ?? [], gcTimestamp);
+            context.updateUsedRoutes(usedContextRoutes.get(contextId) ?? []);
         }
     }
 

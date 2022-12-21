@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TaggedChange } from "../../core";
 import { fail } from "../../util";
 import { ChangesetTag, isSkipMark, OpId, Transposed as T } from "./changeset";
 import { SequenceChangeset } from "./sequenceChangeset";
@@ -11,7 +12,7 @@ import { SequenceChangeset } from "./sequenceChangeset";
  * Dummy value used in place of the actual tag.
  * TODO: give `invert` access real tag data.
  */
- export const DUMMY_INVERT_TAG: ChangesetTag = "Dummy Invert Changeset Tag";
+export const DUMMY_INVERT_TAG: ChangesetTag = "Dummy Invert Changeset Tag";
 
 /**
  * Dummy value used in place of actual repair data.
@@ -33,13 +34,13 @@ export const DUMMY_INVERSE_VALUE = "Dummy inverse value";
  *
  * - Support for slices is not implemented.
  */
-export function invert(change: SequenceChangeset): SequenceChangeset {
+export function invert(change: TaggedChange<SequenceChangeset>): SequenceChangeset {
     // TODO: support the input change being a squash
     const opIdToTag = (id: OpId): ChangesetTag => {
         return DUMMY_INVERT_TAG;
     };
     return {
-        marks: invertFieldMarks(change.marks, opIdToTag),
+        marks: invertFieldMarks(change.change.marks, opIdToTag),
     };
 }
 
@@ -70,26 +71,32 @@ function invertMark(mark: T.Mark, opIdToTag: IdToTagLookup): T.Mark[] {
         switch (mark.type) {
             case "Insert":
             case "MInsert": {
-                return [{
-                    type: "Delete",
-                    id: mark.id,
-                    count: mark.type === "Insert" ? mark.content.length : 1,
-                }];
+                return [
+                    {
+                        type: "Delete",
+                        id: mark.id,
+                        count: mark.type === "Insert" ? mark.content.length : 1,
+                    },
+                ];
             }
             case "Delete": {
-                return [{
-                    type: "Revive",
-                    id: mark.id,
-                    tomb: opIdToTag(mark.id),
-                    count: mark.count,
-                }];
+                return [
+                    {
+                        type: "Revive",
+                        id: mark.id,
+                        tomb: opIdToTag(mark.id),
+                        count: mark.count,
+                    },
+                ];
             }
             case "Revive": {
-                return [{
-                    type: "Delete",
-                    id: mark.id,
-                    count: mark.count,
-                }];
+                return [
+                    {
+                        type: "Delete",
+                        id: mark.id,
+                        count: mark.count,
+                    },
+                ];
             }
             case "Modify": {
                 const modify: T.Modify = {
@@ -106,7 +113,8 @@ function invertMark(mark: T.Mark, opIdToTag: IdToTagLookup): T.Mark[] {
                 }
                 return [modify];
             }
-            default: fail("Not implemented");
+            default:
+                fail("Not implemented");
         }
     }
 }

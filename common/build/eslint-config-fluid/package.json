@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/eslint-config-fluid",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Shareable ESLint config for the Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -12,6 +12,7 @@
   "author": "Microsoft and contributors",
   "main": "index.js",
   "scripts": {
+    "build": "npm run print-config",
     "cleanup-printed-configs": "node ./scripts/cleanup-printed-configs.js ./printed-configs",
     "format": "npm run prettier:fix",
     "lint": "npm run prettier",
@@ -31,6 +32,7 @@
     "@rushstack/eslint-plugin-security": "~0.2.5",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
+    "eslint-config-prettier": "~8.5.0",
     "eslint-plugin-editorconfig": "~3.2.0",
     "eslint-plugin-eslint-comments": "~3.2.0",
     "eslint-plugin-import": "~2.25.4",

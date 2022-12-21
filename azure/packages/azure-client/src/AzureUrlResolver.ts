@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
     DriverHeader,
@@ -19,7 +18,7 @@ import {
  * providers that fulfill the {@link @fluidframework/routerlicious-driver#ITokenProvider} interface.
  */
 export class AzureUrlResolver implements IUrlResolver {
-    constructor() {}
+    public constructor() {}
 
     public async resolve(request: IRequest): Promise<IFluidResolvedUrl> {
         const { ordererUrl, storageUrl, tenantId, containerId } = decodeAzureUrl(request.url);
@@ -94,6 +93,13 @@ function decodeAzureUrl(urlString: string): {
     };
 }
 
+/**
+ * Creates a request object that can be passed to {@link @fluidframework/fluid-static#IFluidContainer.attach} to
+ * request creation of a new Fluid Container on the Azure service.
+ *
+ * @param endpointUrl - URI to the Azure Fluid Relay service discovery endpoint.
+ * @param tenantId - Unique tenant identifier.
+ */
 export const createAzureCreateNewRequest = (endpointUrl: string, tenantId: string): IRequest => {
     const url = new URL(endpointUrl);
     url.searchParams.append("storage", encodeURIComponent(endpointUrl));

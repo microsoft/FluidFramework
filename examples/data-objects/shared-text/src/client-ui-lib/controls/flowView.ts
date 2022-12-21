@@ -12,7 +12,7 @@ import { performance } from "@fluidframework/common-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import * as types from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
-import { refHasRangeLabel, refHasTileLabel } from "@fluidframework/merge-tree";
+import { debugMarkerToString, Marker, refHasRangeLabel, refHasTileLabel } from "@fluidframework/merge-tree";
 import { IClient, ISequencedDocumentMessage, IUser } from "@fluidframework/protocol-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import * as Sequence from "@fluidframework/sequence";
@@ -72,11 +72,9 @@ interface IRangeInfo {
     offset: number;
 }
 
-type Alt = MergeTree.ProxString<number>;
 // TODO: mechanism for intelligent services to publish interfaces like this
 interface ITextErrorInfo {
     text: string;
-    alternates: Alt[];
     color?: string;
 }
 
@@ -371,7 +369,6 @@ function makeContentDiv(r: ui.Rectangle, lineFontstr) {
     contentDiv.onclick = (e) => {
         const targetDiv = e.target as HTMLDivElement;
         if (targetDiv.lastElementChild) {
-            // eslint-disable-next-line max-len
             console.log(`div click at ${e.clientX},${e.clientY} rightmost span with text ${targetDiv.lastElementChild.innerHTML}`);
         }
     };
@@ -628,7 +625,7 @@ function showCell(pos: number, flowView: FlowView) {
         const start = getPosition(flowView.sharedString, cellMarker);
         const endMarker = cellMarker.cell!.endMarker;
         const end = getPosition(flowView.sharedString, endMarker) + 1;
-        // eslint-disable-next-line max-len
+        setLongStringRepresentationOnMarkers(flowView);
         console.log(`cell ${cellMarker.getId()} seq ${cellMarker.seq} clid ${cellMarker.clientId} at [${start},${end})`);
         console.log(`cell contents: ${flowView.sharedString.getTextRangeWithMarkers(start, end)}`);
     }
@@ -641,9 +638,19 @@ function showTable(pos: number, flowView: FlowView) {
         const start = getPosition(flowView.sharedString, tableMarker);
         const endMarker = tableMarker.table!.endTableMarker;
         const end = getPosition(flowView.sharedString, endMarker) + 1;
+        setLongStringRepresentationOnMarkers(flowView);
         console.log(`table ${tableMarker.getId()} at [${start},${end})`);
         console.log(`table contents: ${flowView.sharedString.getTextRangeWithMarkers(start, end)}`);
     }
+}
+
+function setLongStringRepresentationOnMarkers(flowView: FlowView) {
+    flowView.sharedString.walkSegments((segment) => {
+        if (Marker.is(segment)) {
+            segment.toString = () => debugMarkerToString(segment);
+        }
+        return true;
+    });
 }
 
 function renderTree(
@@ -1113,7 +1120,7 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
             segoff = getContainingSegment(flowView.sharedString, currentPos);
         }
         if (fetchLog) {
-            console.log(`got segment ${segoff.segment.toString()}`);
+            console.log(`got segment ${segoff.segment?.toString()}`);
         }
         if (!segoff.segment) {
             break;
@@ -1151,8 +1158,8 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
                 curPGMarkerPos = currentPos;
             } else {
                 const curTilePos = findTile(flowView.sharedString, currentPos, "pg", false);
-                curPGMarker = curTilePos.tile as Paragraph.IParagraphMarker;
-                curPGMarkerPos = curTilePos.pos;
+                curPGMarker = curTilePos?.tile as Paragraph.IParagraphMarker;
+                curPGMarkerPos = curTilePos?.pos ?? 0;
             }
             itemsContext.curPGMarker = curPGMarker;
             // TODO: only set this to undefined if text changed
@@ -1193,8 +1200,7 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
 
                 if (currentPos < totalLength) {
                     segoff = getContainingSegment(flowView.sharedString, currentPos);
-                    if (MergeTree.Marker.is(segoff.segment)) {
-                        // eslint-disable-next-line max-len
+                    if (segoff.segment && MergeTree.Marker.is(segoff.segment)) {
                         if (refHasRangeLabel(segoff.segment, "cell") && (segoff.segment.refType & MergeTree.ReferenceType.NestEnd)) {
                             break;
                         }
@@ -1482,8 +1488,8 @@ interface IRemotePresenceInfo extends IRemotePresenceBase {
 }
 
 interface ISegmentOffset {
-    segment: MergeTree.ISegment;
-    offset: number;
+    segment: MergeTree.ISegment | undefined;
+    offset: number | undefined;
 }
 
 interface IWordRange {
@@ -1523,16 +1529,16 @@ function getCurrentWord(pos: number, sharedString: Sequence.SharedString) {
 
     const segoff = sharedString.getContainingSegment(pos);
     if (segoff.segment && (MergeTree.TextSegment.is(segoff.segment))) {
-        const maxWord = maximalWord(segoff.segment, segoff.offset);
+        const maxWord = maximalWord(segoff.segment, segoff.offset ?? 0);
         if (maxWord.wordStart < maxWord.wordEnd) {
-            const segStartPos = pos - segoff.offset;
+            const segStartPos = pos - (segoff.offset ?? 0);
             wordStart = segStartPos + maxWord.wordStart;
             wordEnd = segStartPos + maxWord.wordEnd;
             if (maxWord.wordStart === 0) {
                 // Expand word backward
                 let leftPos = segStartPos;
                 while (leftPos > 0 && leftPos === wordStart) {
-                    const leftSeg = sharedString.getContainingSegment(leftPos - 1).segment;
+                    const leftSeg = sharedString.getContainingSegment(leftPos - 1).segment!;
                     if (MergeTree.TextSegment.is(leftSeg)) {
                         const mword = maximalWord(leftSeg, leftSeg.cachedLength - 1);
                         wordStart -= mword.wordEnd - mword.wordStart;
@@ -1544,7 +1550,7 @@ function getCurrentWord(pos: number, sharedString: Sequence.SharedString) {
                 // Expand word forward
                 let rightPos = segStartPos + segoff.segment.cachedLength;
                 while (rightPos < sharedString.getLength() && rightPos === wordEnd) {
-                    const rightSeg = sharedString.getContainingSegment(rightPos).segment;
+                    const rightSeg = sharedString.getContainingSegment(rightPos).segment!;
                     if (MergeTree.TextSegment.is(rightSeg)) {
                         const mword = maximalWord(rightSeg, 0);
                         wordEnd += mword.wordEnd;
@@ -2003,7 +2009,7 @@ export class FlowView extends ui.Component {
 
     private checkRow(
         lineDiv: ILineDiv,
-        fn: (lineDiv: ILineDiv) => ILineDiv | undefined | null,
+        fn: (lineDiv: ILineDiv) => ILineDiv | undefined,
         rev?: boolean,
     ): ILineDiv | undefined {
         let _lineDiv: ILineDiv | undefined = lineDiv;
@@ -2027,7 +2033,7 @@ export class FlowView extends ui.Component {
     }
 
     public lineDivSelect(
-        fn: (lineDiv: ILineDiv) => ILineDiv | undefined | null,
+        fn: (lineDiv: ILineDiv) => ILineDiv | undefined,
         viewportDiv: IViewportDiv,
         dive = false,
         rev?: boolean,
@@ -2183,7 +2189,7 @@ export class FlowView extends ui.Component {
                 this.cursor.pos--;
             }
             const segoff = getContainingSegment(this.sharedString, this.cursor.pos);
-            if (MergeTree.Marker.is(segoff.segment)) {
+            if (segoff.segment && MergeTree.Marker.is(segoff.segment)) {
                 const marker = segoff.segment;
                 if (marker.refType & MergeTree.ReferenceType.Tile) {
                     if (refHasTileLabel(marker, "pg")) {
@@ -2216,7 +2222,7 @@ export class FlowView extends ui.Component {
             this.cursor.pos++;
 
             const segoff = this.sharedString.getContainingSegment(this.cursor.pos);
-            if (MergeTree.Marker.is(segoff.segment)) {
+            if (segoff.segment && MergeTree.Marker.is(segoff.segment)) {
                 // REVIEW: assume marker for now
                 const marker = segoff.segment;
                 if (marker.refType & MergeTree.ReferenceType.Tile) {
@@ -2432,7 +2438,6 @@ export class FlowView extends ui.Component {
                 let inputDelta = e.wheelDelta;
                 inputDelta = Math.abs(e.wheelDelta) === 120 ? e.wheelDelta / 6 : e.wheelDelta / 2;
                 const delta = factor * inputDelta;
-                // eslint-disable-next-line max-len
                 // console.log(`top char: ${this.topChar - delta} factor ${factor}; delta: ${delta} wheel: ${e.wheelDeltaY} ${e.wheelDelta} ${e.detail}`);
                 setTimeout(() => {
                     this.render(Math.floor(this.topChar - delta));
@@ -2446,8 +2451,8 @@ export class FlowView extends ui.Component {
             e.returnValue = false;
         };
 
-        // The logic below is complex enough that using switches makes the code far less readable.
         /* eslint-disable unicorn/prefer-switch */
+        // The logic below is complex enough that using switches makes the code far less readable.
         const keydownHandler = (e: KeyboardEvent) => {
             if (this.focusChild) {
                 this.focusChild.keydownHandler!(e);
@@ -3055,7 +3060,6 @@ export class FlowView extends ui.Component {
     public loadFinished(clockStart = 0) {
         this.render(0, true);
         if (clockStart > 0) {
-            // eslint-disable-next-line max-len
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.getLength()} - ${performance.now()}`);
         }
 
@@ -3126,8 +3130,8 @@ export class FlowView extends ui.Component {
 
     private insertParagraph(pos: number) {
         const curTilePos = findTile(this.sharedString, pos, "pg", false);
-        const pgMarker = curTilePos.tile as Paragraph.IParagraphMarker;
-        const pgPos = curTilePos.pos;
+        const pgMarker = curTilePos?.tile as Paragraph.IParagraphMarker;
+        const pgPos = curTilePos?.pos ?? 0;
         Paragraph.clearContentCaches(pgMarker);
         const curProps = pgMarker.properties!;
         const newProps = MergeTree.createMap<any>();
@@ -3183,7 +3187,7 @@ export class FlowView extends ui.Component {
         const rempos = this.sharedString.resolveRemoteClientPosition(
             remotePresenceInfo.origPos,
             remotePresenceInfo.refseq,
-            clientId);
+            clientId)!;
         const segoff = this.sharedString.getContainingSegment(rempos);
 
         if (segoff.segment) {
@@ -3193,7 +3197,7 @@ export class FlowView extends ui.Component {
                     clientId,
                     fresh: true,
                     localRef: this.sharedString.createLocalReferencePosition(
-                        segoff.segment, segoff.offset, MergeTree.ReferenceType.SlideOnRemove, undefined),
+                        segoff.segment, segoff.offset!, MergeTree.ReferenceType.SlideOnRemove, undefined),
                     presenceColor: this.presenceVector.has(clientId) ?
                         this.presenceVector.get(clientId)!.presenceColor :
                         presenceColors[this.presenceVector.size % presenceColors.length],
@@ -3206,7 +3210,7 @@ export class FlowView extends ui.Component {
                     if (markSegoff.segment) {
                         localPresenceInfo.markLocalRef =
                             this.sharedString.createLocalReferencePosition(markSegoff.segment,
-                                markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove, undefined);
+                                markSegoff.offset!, MergeTree.ReferenceType.SlideOnRemove, undefined);
                     }
                 }
                 this.updatePresenceVector(localPresenceInfo);

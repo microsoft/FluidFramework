@@ -482,6 +482,9 @@ export interface IWriteSummaryResponse {
 }
 
 // @public
+export const LatestSummaryId = "latest";
+
+// @public
 export class NetworkError extends Error {
     constructor(
     code: number,

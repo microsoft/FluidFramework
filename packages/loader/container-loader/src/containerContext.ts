@@ -46,7 +46,7 @@ import {
     ISummaryContent,
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { Container } from "./container";
+import { Container, ReportIfTooLong } from "./container";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
@@ -243,8 +243,8 @@ export class ContainerContext implements IContainerContext {
         runtime.setConnectionState(connected, clientId);
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        this.runtime.process(message, local, context);
+    public process(message: ISequencedDocumentMessage, local: boolean) {
+        this.runtime.process(message, local);
     }
 
     public processSignal(message: ISignalMessage, local: boolean) {
@@ -324,7 +324,13 @@ export class ContainerContext implements IContainerContext {
 
     private async instantiateRuntime(existing: boolean) {
         const runtimeFactory = await this.getRuntimeFactory();
-        this._runtime = await runtimeFactory.instantiateRuntime(this, existing);
+        await ReportIfTooLong(
+            this.taggedLogger,
+            "instantiateRuntime",
+            async () => {
+                this._runtime = await runtimeFactory.instantiateRuntime(this, existing);
+                return {};
+            });
     }
 
     private attachListener() {

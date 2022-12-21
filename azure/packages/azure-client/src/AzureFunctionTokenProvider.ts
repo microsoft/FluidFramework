@@ -2,9 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import axios from "axios";
 
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
-import axios from "axios";
+
 import { AzureMember } from "./interfaces";
 
 /**
@@ -17,7 +18,7 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
      * @param azFunctionUrl - URL to Azure Function endpoint
      * @param user - User object
      */
-    constructor(
+    public constructor(
         private readonly azFunctionUrl: string,
         private readonly user?: Pick<AzureMember, "userId" | "userName" | "additionalDetails">,
     ) {}

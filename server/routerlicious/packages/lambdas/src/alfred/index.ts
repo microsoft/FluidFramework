@@ -11,7 +11,6 @@ import {
     IDocumentMessage,
     INack,
     ISignalMessage,
-    MessageType,
     NackErrorType,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
@@ -90,6 +89,7 @@ function sanitizeMessage(message: any): IDocumentMessage {
         referenceSequenceNumber: message.referenceSequenceNumber,
         traces: message.traces,
         type: message.type,
+        compression: message.compression,
     };
 
     return sanitizedMessage;
@@ -272,7 +272,7 @@ export function configureWebSocketServices(
                 }
                 // We don't understand the error, so it is likely an internal service error.
                 const errMsg = `Could not verify connect document token. Error: ${safeStringify(error, undefined, 2)}`;
-                return handleServerError(logger, errMsg, claims.tenantId, claims.documentId);
+                return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
             }
 
             const clientId = generateClientId();
@@ -323,14 +323,22 @@ export function configureWebSocketServices(
             if (!version) {
                 throw new NetworkError(
                     400,
-                    // eslint-disable-next-line max-len
                     `Unsupported client protocol. Server: ${protocolVersions}. Client: ${JSON.stringify(connectVersions)}`,
                 );
             }
 
+            const lumberjackProperties = getLumberBaseProperties(claims.documentId, claims.tenantId);
+
+            const connectDocumentGetClientsMetric =
+                Lumberjack.newLumberMetric(LumberEventName.ConnectDocumentGetClients, lumberjackProperties);
             const clients = await clientManager.getClients(claims.tenantId, claims.documentId)
+                .then((response) => {
+                    connectDocumentGetClientsMetric.success("Successfully got clients from client manager");
+                    return response;
+                })
                 .catch(async (err) => {
                     const errMsg = `Failed to get clients. Error: ${safeStringify(err, undefined, 2)}`;
+                    connectDocumentGetClientsMetric.error("Failed to get clients during connectDocument", err);
                     return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
                 });
 
@@ -344,14 +352,18 @@ export function configureWebSocketServices(
                 );
             }
 
+            const connectDocumentAddClientMetric =
+                Lumberjack.newLumberMetric(LumberEventName.ConnectDocumentAddClient, lumberjackProperties);
             try {
                 await clientManager.addClient(
                     claims.tenantId,
                     claims.documentId,
                     clientId,
                     messageClient as IClient);
+                connectDocumentAddClientMetric.success("Successfully added client");
             } catch (err) {
                 const errMsg = `Could not add client. Error: ${safeStringify(err, undefined, 2)}`;
+                connectDocumentAddClientMetric.error("Error adding client during connectDocument", err);
                 return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
             }
 
@@ -362,15 +374,19 @@ export function configureWebSocketServices(
 
             let connectedMessage: IConnected;
             if (isWriter(messageClient.scopes, message.mode)) {
+                const connectDocumentOrdererConnectionMetric =
+                    Lumberjack.newLumberMetric(LumberEventName.ConnectDocumentOrdererConnection, lumberjackProperties);
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId)
                     .catch(async (err) => {
                         const errMsg = `Failed to get orderer manager. Error: ${safeStringify(err, undefined, 2)}`;
+                        connectDocumentOrdererConnectionMetric.error("Failed to get orderer manager", err);
                         return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
                     });
 
                 const connection = await orderer.connect(socket, clientId, messageClient as IClient)
                     .catch(async (err) => {
                         const errMsg = `Failed to connect to orderer. Error: ${safeStringify(err, undefined, 2)}`;
+                        connectDocumentOrdererConnectionMetric.error("Failed to connect to orderer", err);
                         return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
                     });
 
@@ -378,7 +394,6 @@ export function configureWebSocketServices(
                 connection.once("error", (error) => {
                     const messageMetaData = getMessageMetadata(connection.documentId, connection.tenantId);
 
-                    // eslint-disable-next-line max-len
                     logger.error(`Disconnecting socket on connection error: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
                     Lumberjack.error(
                         `Disconnecting socket on connection error`,
@@ -391,12 +406,14 @@ export function configureWebSocketServices(
 
                 connection.connect()
                     .catch(async (err) => {
-                        // eslint-disable-next-line max-len
                         const errMsg = `Failed to connect to the orderer connection. Error: ${safeStringify(err, undefined, 2)}`;
+                        connectDocumentOrdererConnectionMetric.error("Failed to establish orderer connection", err);
                         return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
                     });
 
                 connectionsMap.set(clientId, connection);
+
+                connectDocumentOrdererConnectionMetric.success("Successfully established orderer connection");
 
                 connectedMessage = {
                     claims,
@@ -535,19 +552,6 @@ export function configureWebSocketServices(
                         try {
                             const sanitized = messages
                                 .filter((message) => {
-                                    if (message.type === MessageType.RoundTrip) {
-                                        if (message.traces) {
-                                            // End of tracking. Write traces.
-                                            // TODO: add Lumber metric here?
-                                            metricLogger.writeLatencyMetric("latency", message.traces).catch(
-                                                (error) => {
-                                                    logger.error(error.stack);
-                                                    Lumberjack.error(error.stack);
-                                                });
-                                        }
-                                        return false;
-                                    }
-
                                     if (verifyMaxMessageSize === true) {
                                         // Local tests show `JSON.stringify` to be fast
                                         // - <1ms for JSONs <100kb
@@ -566,13 +570,13 @@ export function configureWebSocketServices(
 
                                     return true;
                                 })
-                              .map((message) => {
-                                  const sanitizedMessage: IDocumentMessage = sanitizeMessage(message);
-                                  const sanitizedMessageWithTrace = addAlfredTrace(sanitizedMessage,
-                                      numberOfMessagesPerTrace, connection.clientId,
-                                      connection.tenantId, connection.documentId);
-                                  return sanitizedMessageWithTrace;
-                              });
+                                .map((message) => {
+                                    const sanitizedMessage: IDocumentMessage = sanitizeMessage(message);
+                                    const sanitizedMessageWithTrace = addAlfredTrace(sanitizedMessage,
+                                        numberOfMessagesPerTrace, connection.clientId,
+                                        connection.tenantId, connection.documentId);
+                                    return sanitizedMessageWithTrace;
+                                });
 
                             if (sanitized.length > 0) {
                                 // Cannot await this order call without delaying other message batches in this submitOp.
@@ -682,11 +686,11 @@ function addAlfredTrace(message: IDocumentMessage, numberOfMessagesPerTrace: num
             message.traces = [];
         }
         message.traces.push(
-        {
-            action: "start",
-            service: "alfred",
-            timestamp: Date.now(),
-        });
+            {
+                action: "start",
+                service: "alfred",
+                timestamp: Date.now(),
+            });
 
         const lumberjackProperties = {
             [BaseTelemetryProperties.tenantId]: tenantId,

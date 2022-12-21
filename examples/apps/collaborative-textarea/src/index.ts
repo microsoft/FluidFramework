@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./fluid-object";
-export * from "./view";
+export { CollaborativeText } from "./fluid-object";
+export { CollaborativeTextView } from "./view";

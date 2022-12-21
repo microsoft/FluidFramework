@@ -9,11 +9,11 @@ import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { LocalResolver, LocalDocumentServiceFactory, LocalSessionStorageDbFactory } from "@fluidframework/local-driver";
 
-// The deltaConnection needs to be shared across the Loader instances for collaboration to happen
-const deltaConnectionMap = new Map<string, ILocalDeltaConnectionServer>();
+// The deltaConnectionServer needs to be shared across the Loader instances for collaboration to happen
+const deltaConnectionServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
 
 const urlResolver = new LocalResolver();
 
@@ -27,13 +27,7 @@ export async function getSessionStorageContainer(
     containerRuntimeFactory: IRuntimeFactory,
     createNew: boolean,
 ): Promise<IContainer> {
-    let deltaConnection = deltaConnectionMap.get(documentId);
-    if (deltaConnection === undefined) {
-        deltaConnection = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory(documentId));
-        deltaConnectionMap.set(documentId, deltaConnection);
-    }
-
-    const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnection);
+    const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
     const url = `${window.location.origin}/${documentId}`;
 
     // To bypass proposal-based loading, we need a codeLoader that will return our already-in-memory container factory.

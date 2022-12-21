@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import fs from "fs";
 
 /**
@@ -11,17 +10,17 @@ import fs from "fs";
  * the resolver function (optional) can attempt to resolve the failed validation
  */
 export interface Handler {
-  name: string,
-  match: RegExp,
-  handler: (file: string, root: string) => string | undefined,
-  resolver?: (file: string, root: string) => { resolved: boolean, message?: string };
-  final?: (root: string, resolve: boolean) => { error?: string } | undefined;
+    name: string;
+    match: RegExp;
+    handler: (file: string, root: string) => string | undefined;
+    resolver?: (file: string, root: string) => { resolved: boolean; message?: string };
+    final?: (root: string, resolve: boolean) => { error?: string } | undefined;
 }
 
 export function readFile(file: string) {
-  return fs.readFileSync(file, { encoding: "utf8" });
+    return fs.readFileSync(file, { encoding: "utf8" });
 }
 
 export function writeFile(file: string, data: string) {
-  fs.writeFileSync(file, data, { encoding: "utf8" });
+    fs.writeFileSync(file, data, { encoding: "utf8" });
 }

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TaggedChange } from "../../core";
 import { clone, fail, StackyIterator } from "../../util";
 import {
     getInputLength,
@@ -36,8 +37,11 @@ import { SequenceChangeset } from "./sequenceChangeset";
  *
  * - Support for slices is not implemented.
  */
-export function rebase(change: SequenceChangeset, base: SequenceChangeset): SequenceChangeset {
-    const fields = rebaseFieldMarks(change.marks, base.marks);
+export function rebase(
+    change: SequenceChangeset,
+    base: TaggedChange<SequenceChangeset>,
+): SequenceChangeset {
+    const fields = rebaseFieldMarks(change.marks, base.change.marks);
     return {
         marks: fields,
     };
@@ -140,6 +144,7 @@ function rebaseMark(currMark: T.SizedMark, baseMark: T.SizedMark): T.SizedMark {
             return 0;
         case "Modify":
             return clone(currMark);
-        default: fail("Not implemented");
+        default:
+            fail("Not implemented");
     }
 }

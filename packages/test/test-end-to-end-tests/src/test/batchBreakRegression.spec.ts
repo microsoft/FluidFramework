@@ -12,6 +12,7 @@ import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils"
 import { isILoggingError } from "@fluidframework/telemetry-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ISequencedDocumentSystemMessage } from "@fluidframework/protocol-definitions";
+import { DataProcessingError } from "@fluidframework/container-utils";
 
 /**
  * In all cases we end up with a permanently corrupt file.
@@ -122,7 +123,7 @@ async function runAndValidateBatch(
     }
 }
 
-describeNoCompat("Batching failures", (getTestObjectProvider) => {
+describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
     it("working proxy",
     async function() {
         const provider = getTestObjectProvider({ resetAfterEach: true });
@@ -147,7 +148,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
         await runAndValidateBatch(provider, provider.documentServiceFactory, this.timeout());
     });
     describe("client sends invalid batches ", () => {
-        itExpects("Batch end without start",
+        itExpects.skip("Batch end without start",
         [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "OpBatchIncomplete" },
         ],
@@ -252,9 +253,12 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
             await runAndValidateBatch(provider, proxyDsf, this.timeout());
         });
 
-        itExpects("force nack",
+        itExpects.skip("force nack",
         [
-            { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x29a" },
+            {
+                eventName: "fluid:telemetry:Container:ContainerClose",
+                error: "Received a system message during batch processing",
+            },
         ],
         async function() {
             const provider = getTestObjectProvider({ resetAfterEach: true });
@@ -268,8 +272,9 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                                 const newMessages = [...messages];
                                 const batchEndIndex = newMessages.findIndex((m) => m.metadata?.batch === false);
                                 if (batchEndIndex >= 1) {
+                                    // set reference seq number to below min seq so the server nacks the batch
                                     newMessages[batchEndIndex] =
-                                        { ... newMessages[batchEndIndex], referenceSequenceNumber: 0 };
+                                        { ... newMessages[batchEndIndex], referenceSequenceNumber: -1 };
                                     ds.submit(newMessages);
                                 } else {
                                     ds.submit(newMessages);
@@ -283,14 +288,17 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                 assert.fail("expected error");
             } catch (e) {
                 assert(isILoggingError(e), `${e}`);
-                assert.equal(e.message, "0x29a", e);
+                assert(e instanceof DataProcessingError);
             }
         });
     });
     describe("server sends invalid batch", () => {
         itExpects("interleave system message",
         [
-            { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x29a" },
+            {
+                eventName: "fluid:telemetry:Container:ContainerClose",
+                error: "Received a system message during batch processing",
+            },
         ],
         async function() {
             const provider = getTestObjectProvider({ resetAfterEach: true });
@@ -309,7 +317,6 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                                     && args.length >= 2
                                     && Array.isArray(args[1])) {
                                         // this code adds a join message in the middle of a batch
-                                        // eslint-disable-next-line max-len
                                         const newMessages: (ISequencedDocumentMessage | ISequencedDocumentSystemMessage)[]
                                             = [...args[1]];
                                         const batchEndIndex = newMessages.findIndex((m) => m.metadata?.batch === false);
@@ -324,7 +331,6 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                                                     contents: null,
                                                     referenceSequenceNumber: -1,
                                                     type: "join",
-                                                    // eslint-disable-next-line max-len
                                                     data: "{\"clientId\":\"fake_client\",\"detail\":{\"user\":{\"id\":\"fake_user\"},\"scopes\":[\"doc:read\",\"doc:write\"],\"permission\":[],\"details\":{\"capabilities\":{\"interactive\":true}},\"mode\":\"write\"}}",
 
                                                 })
@@ -344,7 +350,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                 assert.fail("expected error");
             } catch (e) {
                 assert(isILoggingError(e), `${e}`);
-                assert.equal(e.message, "0x29a", e);
+                assert(e instanceof DataProcessingError);
             }
         });
     });

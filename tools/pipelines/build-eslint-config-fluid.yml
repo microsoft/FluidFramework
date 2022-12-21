@@ -69,7 +69,7 @@ extends:
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: common/build/eslint-config-fluid
     tagName: eslint-config-fluid
-    taskBuild: print-config
+    taskBuild: build
     taskBuildDocs: false
     taskLint: false
     taskTest: [] # no tests

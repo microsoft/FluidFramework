@@ -13,6 +13,9 @@ parameters:
 - name: feedName
   type: string
 
+- name: devFeedName
+  type: string
+
 - name: environment
   type: string
 
@@ -60,6 +63,7 @@ jobs:
             parameters:
               namespace: ${{ parameters.namespace }}
               artifactPath: scoped
+              devFeedName: ${{ parameters.devFeedName }}
               feedName: ${{ parameters.feedName }}
               customEndPoint: ${{ parameters.customEndPoint }}
               official: ${{ parameters.official }}
@@ -69,6 +73,7 @@ jobs:
               parameters:
                 namespace: false
                 artifactPath: non-scoped
+                devFeedName: ${{ parameters.devFeedName }}
                 feedName: ${{ parameters.feedName }}
                 official: ${{ parameters.official }}
                 customEndPoint: ${{ parameters.customEndPoint }}

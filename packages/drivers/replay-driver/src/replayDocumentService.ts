@@ -14,6 +14,7 @@ import { ReplayDocumentDeltaConnection } from "./replayDocumentDeltaConnection";
  * Delta connection simulates the socket by fetching the ops from delta storage
  * and emitting them with a pre determined delay
  */
+// eslint-disable-next-line import/namespace
 export class ReplayDocumentService implements api.IDocumentService {
     public static async create(
         documentService: api.IDocumentService,

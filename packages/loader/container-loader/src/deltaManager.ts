@@ -25,8 +25,6 @@ import {
     normalizeError,
     logIfFalse,
     safeRaiseEvent,
-    MonitoringContext,
-    loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
@@ -42,20 +40,20 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     NonRetryableError,
-    isClientMessage,
+    isRuntimeMessage,
+    MessageType2,
 } from "@fluidframework/driver-utils";
 import {
     ThrottlingWarning,
     DataCorruptionError,
     extractSafePropertiesFromMessage,
     DataProcessingError,
-    UsageError,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
 import {
     IConnectionManagerFactoryArgs,
     IConnectionManager,
- } from "./contracts";
+} from "./contracts";
 
 export interface IConnectionArgs {
     mode?: ConnectionMode;
@@ -70,6 +68,25 @@ export interface IConnectionArgs {
 export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
     (event: "throttled", listener: (error: IThrottlingWarning) => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
+}
+
+/**
+ * Determines if message was sent by client, not service
+ */
+function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean {
+    if (isRuntimeMessage(message)) {
+        return true;
+    }
+    switch (message.type) {
+        case MessageType.Propose:
+        case MessageType.Reject:
+        case MessageType.NoOp:
+        case MessageType2.Accept:
+        case MessageType.Summarize:
+            return true;
+        default:
+            return false;
+    }
 }
 
 /**
@@ -92,14 +109,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private pending: ISequencedDocumentMessage[] = [];
     private fetchReason: string | undefined;
 
-    private readonly mc: MonitoringContext;
-
     // A boolean used to assert that ops are not being sent while processing another op.
     private currentlyProcessingOps: boolean = false;
-
-    // Feature gate that closes a container when sending an op if the container is
-    // concurrently processing another op
-    private readonly preventConcurrentOpSend: boolean = true;
 
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;
@@ -107,8 +118,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     // There are three numbers we track
     // * lastQueuedSequenceNumber is the last queued sequence number. If there are gaps in seq numbers, then this number
     //   is not updated until we cover that gap, so it increases each time by 1.
-    // * lastObservedSeqNumber is  an estimation of last known sequence number for container in storage. It's initially
-    //   populated at web socket connection time (if storage provides that info) and is  updated once ops shows up.
+    // * lastObservedSeqNumber is an estimation of last known sequence number for container in storage. It's initially
+    //   populated at web socket connection time (if storage provides that info) and is updated once ops shows up.
     //   It's never less than lastQueuedSequenceNumber
     // * lastProcessedSequenceNumber - last processed sequence number
     private lastQueuedSequenceNumber: number = 0;
@@ -185,7 +196,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
      * Tells if  current connection has checkpoint information.
      * I.e. we know how far behind the client was at the time of establishing connection
      */
-     public get hasCheckpointSequenceNumber() {
+    public get hasCheckpointSequenceNumber() {
         // Valid to be called only if we have active connection.
         assert(this.connectionManager.connected, 0x0df /* "Missing active connection" */);
         return this._checkpointSequenceNumber !== undefined;
@@ -199,15 +210,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get readOnlyInfo() { return this.connectionManager.readOnlyInfo; }
     public get clientDetails() { return this.connectionManager.clientDetails; }
 
-    public submit(type: MessageType, contents?: string, batch = false, metadata?: any) {
-        if (this.currentlyProcessingOps && this.preventConcurrentOpSend) {
-            this.close(new UsageError("Making changes to data model is disallowed while processing ops."));
-        }
+    public submit(type: MessageType, contents?: string, batch = false, metadata?: any, compression?: string) {
         const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
             contents,
             metadata,
             referenceSequenceNumber: this.lastProcessedSequenceNumber,
             type,
+            compression,
         };
 
         if (!batch) {
@@ -217,6 +226,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         if (message === undefined) {
             return -1;
         }
+
+        assert(isClientMessage(message), 0x419 /* client sends non-client message */);
 
         if (contents !== undefined) {
             this.opsSize += contents.length;
@@ -321,8 +332,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         };
 
         this.connectionManager = createConnectionManager(props);
-        this.mc = loggerToMonitoringContext(logger);
-        this.preventConcurrentOpSend = this.mc.config.getBoolean("Fluid.Container.ConcurrentOpSend") === true;
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op) => {
                 this.processInboundMessage(op);
@@ -390,7 +399,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             if (checkpointSequenceNumber > this.lastQueuedSequenceNumber) {
                 this.fetchMissingDeltas("AfterConnection");
             }
-        // we do not know the gap, and we will not learn about it if socket is quite - have to ask.
+            // we do not know the gap, and we will not learn about it if socket is quite - have to ask.
         } else if (connection.mode === "read") {
             this.fetchMissingDeltas("AfterReadConnection");
         }
@@ -708,9 +717,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             // Report if we found some issues
             if (duplicate !== 0 || gap !== 0 && !allowGaps || initialGap > 0 && this.fetchReason === undefined) {
                 eventName = "enqueueMessages";
-            // Also report if we are fetching ops, and same range comes in, thus making this fetch obsolete.
+                // Also report if we are fetching ops, and same range comes in, thus making this fetch obsolete.
             } else if (this.fetchReason !== undefined && this.fetchReason !== reason &&
-                    (from <= this.lastQueuedSequenceNumber + 1 && last > this.lastQueuedSequenceNumber)) {
+                (from <= this.lastQueuedSequenceNumber + 1 && last > this.lastQueuedSequenceNumber)) {
                 eventName = "enqueueMessagesExtraFetch";
             }
 
@@ -795,13 +804,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         this.currentlyProcessingOps = true;
         this.lastProcessedMessage = message;
 
-        // All non-system messages are coming from some client, and should have clientId
-        // System messages may have no clientId (but some do, like propose, noop, summarize)
-        assert(
-            message.clientId !== undefined
-            || !(isClientMessage(message)),
-            0x0ed /* "non-system message have to have clientId" */,
-        );
+        const isString = typeof message.clientId === "string";
+        assert(message.clientId === null || isString, 0x41a /* undefined or string */);
+        // All client messages are coming from some client, and should have clientId,
+        // and non-client message should not have clientId. But, there are two exceptions:
+        // 1. (Legacy) We can see message.type === "attach" or "chunkedOp" for legacy files before RTM
+        // 2. Non-immediate noops (contents: null) can be sent by service without clientId
+        if (!isString && isClientMessage(message) && message.type !== MessageType.NoOp) {
+            throw new DataCorruptionError("Mismatch in clientId",
+                { ...extractSafePropertiesFromMessage(message), messageType: message.type });
+        }
 
         // TODO Remove after SPO picks up the latest build.
         if (
@@ -822,6 +834,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 clientId: this.connectionManager.clientId,
             });
         }
+
+        // Client ops: MSN has to be lower than sequence #, as client can continue to send ops with same
+        // reference sequence number as this op.
+        // System ops (when no clients are connected) are the only ops where equation is possible.
+        const diff = message.sequenceNumber - message.minimumSequenceNumber;
+        if (diff < 0 || diff === 0 && message.clientId !== null) {
+            throw new DataCorruptionError("MSN has to be lower than sequence #",
+                extractSafePropertiesFromMessage(message));
+        }
+
         this.minSequenceNumber = message.minimumSequenceNumber;
 
         if (message.sequenceNumber !== this.lastProcessedSequenceNumber + 1) {
@@ -858,15 +880,15 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     /**
      * Retrieves the missing deltas between the given sequence numbers
      */
-     private fetchMissingDeltas(reasonArg: string, to?: number) {
-         this.fetchMissingDeltasCore(reasonArg, false /* cacheOnly */, to).catch((error) => {
-             this.logger.sendErrorEvent({ eventName: "fetchMissingDeltasException" }, error);
-         });
-     }
+    private fetchMissingDeltas(reasonArg: string, to?: number) {
+        this.fetchMissingDeltasCore(reasonArg, false /* cacheOnly */, to).catch((error) => {
+            this.logger.sendErrorEvent({ eventName: "fetchMissingDeltasException" }, error);
+        });
+    }
 
-     /**
-     * Retrieves the missing deltas between the given sequence numbers
-     */
+    /**
+    * Retrieves the missing deltas between the given sequence numbers
+    */
     private async fetchMissingDeltasCore(
         reason: string,
         cacheOnly: boolean,

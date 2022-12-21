@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -18,6 +18,7 @@ import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merg
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { SharedString } from "@fluidframework/sequence";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
@@ -158,79 +159,63 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
     });
 
     describe("SharedMatrix", () => {
-        it("should reflect handle updates with undo / redo immediately in the next summary", async () => {
+        it("should reflect undo / redo of data stores in the next summary", async () => {
             // Create a second data store (dataStore2).
 
             const dataStore2 = await factory.createInstance(containerRuntime);
             // Add the handle of dataStore2 to the matrix to mark it as referenced.
-            {
-                mainDataStore.matrix.setCell(0, 0, dataStore2.handle);
-                await validateDataStoreInSummary(dataStore2.id, true /* referenced */);
-                mainDataStore.undoRedoStackManager.closeCurrentOperation();
-            }
+            mainDataStore.matrix.setCell(0, 0, dataStore2.handle);
+            await validateDataStoreInSummary(dataStore2.id, true /* referenced */);
+            mainDataStore.undoRedoStackManager.closeCurrentOperation();
 
             // Remove its handle and verify its marked as unreferenced.
-            {
-                mainDataStore.matrix.removeCols(0, 1);
-                await validateDataStoreInSummary(dataStore2.id, false /* referenced */);
-            }
+            mainDataStore.matrix.removeCols(0, 1);
+            await validateDataStoreInSummary(dataStore2.id, false /* referenced */);
 
             // Undo column remove so that its marked as referenced again.
-            {
-                mainDataStore.undoRedoStackManager.undoOperation();
-                await validateDataStoreInSummary(dataStore2.id, true /* referenced */);
-            }
+            mainDataStore.undoRedoStackManager.undoOperation();
+            await validateDataStoreInSummary(dataStore2.id, true /* referenced */);
 
             // Redo column remove so that its marked as unreferenced again.
-            {
-                mainDataStore.undoRedoStackManager.redoOperation();
-                await validateDataStoreInSummary(dataStore2.id, false /* referenced */);
-            }
+            mainDataStore.undoRedoStackManager.redoOperation();
+            await validateDataStoreInSummary(dataStore2.id, false /* referenced */);
         });
     });
 
     describe("SharedString", () => {
-        it("should reflect handle updates immediately in the next summary", async () => {
+        it("should reflect unreferenced data stores in the next summary", async () => {
             // Create a second data store (dataStore2).
             const dataStore2 = await factory.createInstance(containerRuntime);
 
             // Add the handle of dataStore2 to the shared string to mark it as referenced.
-            {
-                mainDataStore.sharedString.insertText(0, "Hello");
-                mainDataStore.sharedString.insertMarker(
-                    0,
-                    ReferenceType.Simple,
-                    {
-                        [reservedMarkerIdKey]: "markerId",
-                        ["handle"]: dataStore2.handle,
-                    },
-                );
-                await validateDataStoreInSummary(dataStore2.id, true /* referenced */);
-            }
+            mainDataStore.sharedString.insertText(0, "Hello");
+            mainDataStore.sharedString.insertMarker(
+                0,
+                ReferenceType.Simple,
+                {
+                    [reservedMarkerIdKey]: "markerId",
+                    ["handle"]: dataStore2.handle,
+                },
+            );
+            await validateDataStoreInSummary(dataStore2.id, true /* referenced */);
 
             // Remove its handle and verify its marked as unreferenced.
-            {
-                const marker = mainDataStore.sharedString.getMarkerFromId("markerId") as Marker;
-                mainDataStore.sharedString.annotateMarker(
-                    marker,
-                    {
-                        ["handle"]: "",
-                    },
-                );
-                await validateDataStoreInSummary(dataStore2.id, false /* referenced */);
-            }
+            mainDataStore.sharedString.annotateMarker(
+                mainDataStore.sharedString.getMarkerFromId("markerId") as Marker,
+                {
+                    ["handle"]: "",
+                },
+            );
+            await validateDataStoreInSummary(dataStore2.id, false /* referenced */);
 
             // Add the handle back and verify its marked as referenced.
-            {
-                const marker = mainDataStore.sharedString.getMarkerFromId("markerId") as Marker;
-                mainDataStore.sharedString.annotateMarker(
-                    marker,
-                    {
-                        ["handle"]: dataStore2.handle,
-                    },
-                );
-                await validateDataStoreInSummary(dataStore2.id, true /* referenced */);
-            }
+            mainDataStore.sharedString.annotateMarker(
+                mainDataStore.sharedString.getMarkerFromId("markerId") as Marker,
+                {
+                    ["handle"]: dataStore2.handle,
+                },
+            );
+            await validateDataStoreInSummary(dataStore2.id, true /* referenced */);
         });
     });
 });

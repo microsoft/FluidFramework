@@ -10,7 +10,6 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     BaseSegment,
     ISegment,
-    LocalReferenceCollection,
     Client,
     IMergeTreeDeltaOpArgs,
     IMergeTreeDeltaCallbackArgs,
@@ -23,6 +22,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { HandleTable, Handle, isHandleValid } from "./handletable";
 import { deserializeBlob } from "./serialization";
 import { HandleCache } from "./handlecache";
@@ -111,14 +111,6 @@ export class PermutationSegment extends BaseSegment {
         return this.start === Handle.unallocated
             ? asPerm.start === Handle.unallocated
             : asPerm.start === this.start + this.cachedLength;
-    }
-
-    public append(segment: ISegment) {
-        // Note: Must call 'LocalReferenceCollection.append(..)' before modifying this segment's length as
-        //       'this.cachedLength' is used to adjust the offsets of the local refs.
-        LocalReferenceCollection.append(this, segment);
-
-        this.cachedLength += segment.cachedLength;
     }
 
     protected createSplitSegmentAt(pos: number) {
@@ -214,8 +206,8 @@ export class PermutationVector extends Client {
         return handle;
     }
 
-    public adjustPosition(pos: number, fromSeq: number, clientId: number) {
-        const { segment, offset } = this.mergeTree.getContainingSegment(pos, fromSeq, clientId);
+    public adjustPosition(pos: number, op: ISequencedDocumentMessage) {
+        const { segment, offset } = this.getContainingSegment(pos, op);
 
         // Note that until the MergeTree GCs, the segment is still reachable via `getContainingSegment()` with
         // a `refSeq` in the past.  Prevent remote ops from accidentally allocating or using recycled handles
@@ -228,17 +220,17 @@ export class PermutationVector extends Client {
         return this.getPosition(segment) + offset!;
     }
 
-    public handleToPosition(handle: Handle, localSeq = this.mergeTree.collabWindow.localSeq) {
-        assert(localSeq <= this.mergeTree.collabWindow.localSeq,
+    public handleToPosition(handle: Handle, localSeq = this.getCollabWindow().localSeq) {
+        assert(localSeq <= this.getCollabWindow().localSeq,
             0x028 /* "'localSeq' for op being resubmitted must be <= the 'localSeq' of the last submitted op." */);
 
         // TODO: In theory, the MergeTree should be able to map the (position, refSeq, localSeq) from
-        //       the original operation to the current position for resubmitting.  This is probably the
+        //       the original operation to the current position for undo/redo scenarios.  This is probably the
         //       ideal solution, as we would no longer need to store row/col handles in the op metadata.
         //
         //       Failing that, we could avoid the O(n) search below by building a temporary map in the
         //       opposite direction from the handle to either it's current position or segment + offset
-        //       and reuse it for the duration of resubmission.  (Ideally, we would know when resubmission
+        //       and reuse it for the duration of undo/redo.  (Ideally, we would know when the undo/redo
         //       ended so we could discard this map.)
         //
         //       If we find that we frequently need a reverse handle -> position lookup, we could maintain
@@ -246,8 +238,7 @@ export class PermutationVector extends Client {
         let containingSegment!: PermutationSegment;
         let containingOffset: number;
 
-        this.mergeTree.walkAllSegments(
-            this.mergeTree.root,
+        this.walkAllSegments(
             (segment) => {
                 const { start, cachedLength } = segment as PermutationSegment;
 

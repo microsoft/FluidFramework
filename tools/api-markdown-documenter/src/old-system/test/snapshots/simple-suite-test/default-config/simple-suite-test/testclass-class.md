@@ -52,7 +52,7 @@ Here are some remarks about the class
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [abstractPropertyGetter](./simple-suite-test/testclass-class#abstractpropertygetter-property) | <code>readonly</code> | [TestMappedType](./simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-|  [testClassGetterProperty](./simple-suite-test/testclass-class#testclassgetterproperty-property) | <code>readonly</code><code>virtual</code> | number | Test class getter-only property |
+|  [testClassGetterProperty](./simple-suite-test/testclass-class#testclassgetterproperty-property) | <code>readonly</code>, <code>virtual</code> | number | Test class getter-only property |
 |  [testClassProperty](./simple-suite-test/testclass-class#testclassproperty-property) | <code>readonly</code> | TTypeParameterB | Test class property |
 
 ## Methods

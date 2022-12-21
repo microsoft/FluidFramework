@@ -39,7 +39,9 @@ steps:
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
         pushd "$(Build.SourcesDirectory)/build-tools"
-        npm ci
+        npm i -g pnpm
+        pnpm i
+        npm run build:compile
         popd
 
 - ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:
@@ -50,6 +52,7 @@ steps:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
+        echo "${{ parameters.buildToolsVersionToInstall }}"
         npm install --global "@fluid-tools/build-cli@${{ parameters.buildToolsVersionToInstall }}"
 
 - task: Bash@3
@@ -85,26 +88,52 @@ steps:
       echo VERSION_PATCH=$VERSION_PATCH
       echo VERSION_INCLUDE_INTERNAL_VERSIONS=$VERSION_INCLUDE_INTERNAL_VERSIONS
 
-      # Generate the build version
+      # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
+      # These are referenced in following steps prefixed by this task name. E.g. SetVersion.version
       flub generate buildVersion
 
-- task: Bash@3
-  displayName: Update Package Version
-  env:
-    VERSION_RELEASE: $(release)
-  inputs:
-    targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
-    script: |
-      echo SETVERSION_VERSION=$SETVERSION_VERSION
-      echo SETVERSION_CODEVERSION=$SETVERSION_CODEVERSION
+# TODO: AB#2415
+# Only use `flub` for the client build, because there are issues with `flub` in the other cases and only the client
+# build uses a version scheme that lerna and npm don't handle correctly.
+- ${{ if eq(parameters.tagName, 'client') }}:
+  - task: Bash@3
+    displayName: Update Package Version (flub)
+    env:
+      VERSION_RELEASE: $(release)
+      RELEASE_GROUP: ${{ parameters.tagName }}
+    inputs:
+      targetType: 'inline'
+      workingDirectory: ${{ parameters.buildDirectory }}
+      script: |
+        echo SETVERSION_VERSION=$SETVERSION_VERSION
+        echo SETVERSION_CODEVERSION=$SETVERSION_CODEVERSION
+        echo RELEASE_GROUP=$RELEASE_GROUP
+        echo command="flub bump $RELEASE_GROUP --exact $(SetVersion.version) -xv"
 
-      if [ -f "lerna.json" ]; then
-        if [ "$VERSION_RELEASE" = "release" ]; then
-          npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes
+        if [ -f "lerna.json" ]; then
+          flub bump $RELEASE_GROUP --exact $(SetVersion.version) -xv
         else
-          npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes --exact
+          npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
         fi
-      else
-        npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
-      fi
+
+- ${{ if ne(parameters.tagName, 'client') }}:
+  - task: Bash@3
+    displayName: Update Package Version (lerna)
+    env:
+      VERSION_RELEASE: $(release)
+      RELEASE_GROUP: ${{ parameters.tagName }}
+    inputs:
+      targetType: 'inline'
+      workingDirectory: ${{ parameters.buildDirectory }}
+      script: |
+        echo SETVERSION_VERSION=$SETVERSION_VERSION
+        if [ -f "lerna.json" ]; then
+          if [ "$VERSION_RELEASE" = "release" ]; then
+            # no need to run anything here, as the version in the package should be correct
+            npx lerna exec "if [ \`npm -s run env echo '\$npm_package_version'\` != '$(SetVersion.version)' ]; then ( exit 1 ) fi"
+            exit $?
+          fi
+          npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes --exact
+        else
+          npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
+        fi

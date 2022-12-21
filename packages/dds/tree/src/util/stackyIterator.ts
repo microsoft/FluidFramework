@@ -43,4 +43,11 @@ export class StackyIterator<T> implements Iterator<T>, Iterable<T> {
         }
         return this.list[this.index++];
     }
+
+    public peek(): T | undefined {
+        if (this.stack.length > 0) {
+            return this.stack[this.stack.length - 1];
+        }
+        return this.list[this.index];
+    }
 }

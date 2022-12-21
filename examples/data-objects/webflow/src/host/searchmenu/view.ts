@@ -57,8 +57,11 @@ export abstract class View<TInit extends TProps, TProps = {} | undefined>
     protected abstract onUpdate(props: Readonly<TProps>): void;
     protected abstract onDetach(): void;
 
-    // eslint-disable-next-line max-len
-    protected onDom<K extends keyof HTMLElementEventMap>(target: EventTarget, type: K | string, listener: (ev: HTMLElementEventMap[K]) => any) {
+    protected onDom<K extends keyof HTMLElementEventMap>(
+        target: EventTarget,
+        type: K | string,
+        listener: (ev: HTMLElementEventMap[K]) => any
+    ) {
         const eventListener = listener as EventListener;
         const registration: IListenerRegistration = { target, type, listener: eventListener };
         const listeners = this.listeners;

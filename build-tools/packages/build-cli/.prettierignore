@@ -1,8 +1,10 @@
 /api-report
 /dist
+/lib
 _api-extractor-temp/
 nyc/
 oclif.manifest.json
 README.md
 /api-report
 _api-extractor-temp/
+/docs/*.md

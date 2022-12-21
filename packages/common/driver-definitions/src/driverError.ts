@@ -71,30 +71,64 @@ export enum DriverErrorType {
      * and storage / driver / loader detects such mismatch.
      * When it's hit, client needs to forget all the knowlege about this file and start over.
      */
-     fileOverwrittenInStorage = "fileOverwrittenInStorage",
+    fileOverwrittenInStorage = "fileOverwrittenInStorage",
 
-     /**
-      * The document is read-only and delta stream connection is forbidden.
-      */
-     deltaStreamConnectionForbidden = "deltaStreamConnectionForbidden",
+    /**
+     * The document is read-only and delta stream connection is forbidden.
+     */
+    deltaStreamConnectionForbidden = "deltaStreamConnectionForbidden",
 
     /**
      * The location of file/container can change on server. So if the file location moves and we try to access the old
      * location, then this error is thrown to let the client know about the new location info.
      */
     locationRedirection = "locationRedirection",
+
+    /**
+     * When a file is not a Fluid file, but has Fluid extension such as ".note",
+     * server won't be able to open it and will return this error. The innerMostErrorCode will be
+     * "fluidInvalidSchema"
+     */
+    fluidInvalidSchema = "fluidInvalidSchema",
+    /**
+     * Error indicating an API is being used improperly resulting in an invalid operation.
+     * ! Should match the value of ContainerErrorType.usageError
+    */
+    usageError = "usageError",
+}
+
+/**
+ * Interface describing errors and warnings raised by any driver code.
+ * Not expected to be implemented by a class or an object literal, but rather used in place of
+ * any or unknown in various function signatures that pass errors around.
+ *
+ * "Any" in the interface name is a nod to the fact that errorType has lost its type constraint.
+ * It will be either DriverErrorType or the specific driver's specialized error type enum,
+ * but we can't reference a specific driver's error type enum in this code.
+ */
+export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
+    readonly errorType: string;
 }
 
 /**
  * Base interface for all errors and warnings
  */
 export interface IDriverErrorBase {
-    /** Classification of what type of error this is, used programmatically by consumers to interpret the error */
+    /**
+     * Classification of what type of error this is, used programmatically by consumers to interpret the error
+     */
     readonly errorType: DriverErrorType;
-    /** Free-form error message */
+
+    /**
+     * Free-form error message
+     */
     readonly message: string;
-    /** True indicates the caller may retry the failed action. False indicates it's a fatal error */
+
+    /**
+     * True indicates the caller may retry the failed action. False indicates it's a fatal error
+     */
     canRetry: boolean;
+
     /**
      * Best guess as to network conditions (online/offline) when the error arose.
      * See OnlineStatus enum in driver-utils package for expected values.
@@ -136,7 +170,9 @@ export interface IDriverBasicError extends IDriverErrorBase {
     | DriverErrorType.writeError
     | DriverErrorType.fetchFailure
     | DriverErrorType.incorrectServerResponse
-    | DriverErrorType.fileOverwrittenInStorage;
+    | DriverErrorType.fileOverwrittenInStorage
+    | DriverErrorType.fluidInvalidSchema
+    | DriverErrorType.usageError;
     readonly statusCode?: number;
 }
 

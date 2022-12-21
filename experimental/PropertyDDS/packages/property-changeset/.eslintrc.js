@@ -5,7 +5,7 @@
 
 module.exports = {
     "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid")
+        require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"
     ],
     "parserOptions": {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
@@ -35,16 +35,13 @@ module.exports = {
         "@typescript-eslint/restrict-plus-operands": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
         "@typescript-eslint/unbound-method": "off",
-        "@typescript-eslint/unified-signatures": "off",
         "eqeqeq": "off",
         "import/no-internal-modules": "off",
-        "max-len": "off",
         "no-case-declarations": "off",
         "no-inner-declarations": "off",
         "no-multi-spaces": "off",
         "no-param-reassign": "off",
         "no-prototype-builtins": "off",
-        "no-restricted-syntax": "off",
         "no-useless-escape": "off",
         "no-var": "off",
         "prefer-arrow-callback": "off",

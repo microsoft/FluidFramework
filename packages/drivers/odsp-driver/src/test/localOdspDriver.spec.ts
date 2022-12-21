@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import { strict as assert } from "assert";
-import { IStream } from "@fluidframework/driver-definitions";
+import { DriverErrorType, IStream } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import {
     IClient,
@@ -49,7 +49,7 @@ describe("Local Odsp driver", () => {
     );
 
     async function assertThrowsUsageError(fn: () => Promise<any>) {
-        await assert.rejects(fn, (e) => e.errorType === "usageError");
+        await assert.rejects(fn, (e) => e.errorType === DriverErrorType.usageError);
     }
 
     describe("Local Odsp document service factory", () => {
@@ -108,21 +108,43 @@ describe("Local Odsp driver", () => {
 
         it("Can get resolvedUrl", () => {
             const resolvedUrl = fakeOdspResolvedUrl;
-            const service = new LocalOdspDocumentService(resolvedUrl, new MockLogger(), "sample data");
+            const service = new LocalOdspDocumentService(resolvedUrl, new MockLogger(), localSnapshot);
             assert.strictEqual(service.resolvedUrl, resolvedUrl);
         });
 
         it("Delta storage service returns no messages", async () => {
-            const service = new LocalOdspDocumentService(fakeOdspResolvedUrl, new MockLogger(), "sample data");
+            const service = new LocalOdspDocumentService(fakeOdspResolvedUrl, new MockLogger(), localSnapshot);
+
+            // Load snapshot
+            const storage = await service.connectToStorage();
+            await storage.getVersions(null, 1);
+
             const deltaStorageService = await service.connectToDeltaStorage();
 
-            const allOps = await readAll(deltaStorageService.fetchMessages(1, 2));
+            const allOps = await readAll(deltaStorageService.fetchMessages(0, undefined));
             assert.strictEqual(allOps.length, 0, "There should be no messages");
+        });
+
+        it("Delta storage service returns trailing ops", async () => {
+            const snapshotWithTrailingOps = fs.readFileSync(
+                `${__dirname}/../../src/test/localSnapshots/localSnapshot2.json`,
+                { encoding: "utf8" },
+            );
+            const service = new LocalOdspDocumentService(fakeOdspResolvedUrl, new MockLogger(), snapshotWithTrailingOps);
+
+            // Load snapshot
+            const storage = await service.connectToStorage();
+            await storage.getVersions(null, 1);
+
+            const deltaStorageService = await service.connectToDeltaStorage();
+
+            const allOps = await readAll(deltaStorageService.fetchMessages(179, undefined));
+            assert.strictEqual(allOps.length, 13, "There should be 13 messages");
         });
 
         it("connectToDeltaStream throws error", async () => {
             const mockLogger = new MockLogger();
-            const service = new LocalOdspDocumentService(fakeOdspResolvedUrl, mockLogger, "sample data");
+            const service = new LocalOdspDocumentService(fakeOdspResolvedUrl, mockLogger, localSnapshot);
 
             const client: IClient = {
                 mode: "read",
@@ -139,7 +161,7 @@ describe("Local Odsp driver", () => {
         });
 
         it("Dispose does not throw", () => {
-            const service = new LocalOdspDocumentService(fakeOdspResolvedUrl, new MockLogger(), "sample data");
+            const service = new LocalOdspDocumentService(fakeOdspResolvedUrl, new MockLogger(), localSnapshot);
             assert.doesNotThrow(() => service.dispose());
             assert.doesNotThrow(() => service.dispose(null));
             assert.doesNotThrow(() => service.dispose(undefined));

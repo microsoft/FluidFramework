@@ -5,7 +5,7 @@
 
 import { assert, stringToBuffer } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/protocol-definitions";
-import { IOdspSnapshot, IOdspSnapshotCommit, ISnapshotTreeEx } from "./contracts";
+import { IOdspSnapshot, IOdspSnapshotCommit } from "./contracts";
 import { ISnapshotContents } from "./odspPublicUtils";
 
 /**
@@ -18,7 +18,7 @@ import { ISnapshotContents } from "./odspPublicUtils";
 function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
     const lookup: { [path: string]: api.ISnapshotTree; } = {};
     // id is required for root tree as it will be used to determine the version we loaded from.
-    const root: ISnapshotTreeEx = { id: flatTree.id, blobs: {}, commits: {}, trees: {} };
+    const root: api.ISnapshotTree = { id: flatTree.id, blobs: {}, trees: {} };
     lookup[""] = root;
 
     for (const entry of flatTree.entries) {
@@ -31,10 +31,9 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
 
         // Add in either the blob or tree
         if (entry.type === "tree") {
-            const newTree: ISnapshotTreeEx = {
+            const newTree: api.ISnapshotTree = {
                 blobs: {},
                 trees: {},
-                commits: {},
                 unreferenced: entry.unreferenced,
             };
             node.trees[decodeURIComponent(entryPathBase)] = newTree;

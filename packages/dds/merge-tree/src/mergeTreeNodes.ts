@@ -5,9 +5,10 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-/* eslint-disable @typescript-eslint/prefer-optional-chain, no-bitwise */
+/* eslint-disable @typescript-eslint/prefer-optional-chain */
 
 import { assert } from "@fluidframework/common-utils";
+import { IAttributionCollection } from "./attributionCollection";
 import {
     LocalClientId,
     UnassignedSequenceNumber,
@@ -15,9 +16,7 @@ import {
 } from "./constants";
 import {
      LocalReferenceCollection,
-     LocalReferencePosition,
 } from "./localReference";
-import { MergeTree } from "./mergeTree";
 import {
     IMergeTreeDeltaOpArgs,
 } from "./mergeTreeDeltaCallback";
@@ -29,6 +28,7 @@ import {
     MergeTreeDeltaType,
     ReferenceType,
 } from "./ops";
+import { computeHierarchicalOrdinal } from "./ordinal";
 import { PartialSequenceLengths } from "./partialLengths";
 import {
     clone,
@@ -45,6 +45,28 @@ import {
  } from "./referencePositions";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager";
+
+// TODO: this should reference a shared interface in @fluidframework/runtime-definitions so it's usable from
+// here and @fluid-internal/attributor
+/**
+ * @alpha
+ * @remarks - This will eventually be exported by a different package. Its export will be removed.
+ */
+export interface AttributionKey {
+    /**
+     * The type of attribution this key corresponds to.
+     * 
+     * Keys currently all represent op-based attribution, so have the form `{ type: "op", key: sequenceNumber }`.
+     * Thus, they can be used with an `OpStreamAttributor` to recover timestamp/user information.
+     * 
+     * @remarks - If we want to support different types of attribution, a reasonable extensibility point is to make
+     * AttributionKey a discriminated union on the 'type' field. This would empower
+     * consumers with the ability to implement different attribution policies.
+    */
+    type: "op";
+
+    seq: number;
+}
 
 /**
  * Common properties for a node in a merge tree.
@@ -101,17 +123,8 @@ export interface IMergeBlock extends IMergeNodeCommon {
 
 export interface IHierBlock extends IMergeBlock {
     hierToString(indentCount: number): string;
-    /**
-     * @deprecated  for internal use only. public export will be removed.
-     * @internal
-     */
-    addNodeReferences(mergeTree: MergeTree, node: IMergeNode): void;
     rightmostTiles: MapLike<ReferencePosition>;
     leftmostTiles: MapLike<ReferencePosition>;
-    /**
-     * @deprecated  for internal use only. public export will be removed.
-     * @internal
-     */
     rangeStacks: RangeStackMap;
 }
 
@@ -152,6 +165,26 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     readonly type: string;
     readonly segmentGroups: SegmentGroupCollection;
     readonly trackingCollection: TrackingGroupCollection;
+
+    /**
+     * Stores attribution keys associated with offsets of this segment.
+     * This data is only persisted if MergeTree's `attributions.track` flag is set to true.
+     * Pending segments (i.e. ones that only exist locally and haven't been acked by the server) also have
+     * `attribution === undefined` until ack.
+     * 
+     * Keys can be used opaquely with an IAttributor or a container runtime that provides attribution.
+     * 
+     * @alpha
+     * 
+     * @remarks - There are plans to make the shape of the data stored extensible in a couple ways:
+     * 
+     * 1. Injection of custom attribution information associated with the segment (ex: copy-paste of
+     * content but keeping the old attribution information).
+     * 2. Storage of multiple "channels" of information (ex: track property changes separately from insertion,
+     * or only attribute certain property modifications, etc.)
+     */
+    attribution?: IAttributionCollection<AttributionKey>;
+
     /**
      * Manages pending local state for properties on this segment.
      */
@@ -201,18 +234,16 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     /**
      * Acks the current segment against the segment group, op, and merge tree.
      *
-     * Throws error if the segment state doesn't match segment group or op.
-     * E.g. Segment group not first is pending queue.
-     * Inserted segment does not have unassigned sequence number.
-     *
-     * Returns true if the op  modifies the segment, otherwise false.
+     * @param segmentGroup - Pending segment group associated with this op.
+     * @param opArgs - Information about the op that was acked
+     * @returns - true if the op modifies the segment, otherwise false.
      * The only current false case is overlapping remove, where a segment is removed
      * by a previously sequenced operation before the current operation is acked.
-     *
-     * @deprecated  for internal use only. public export will be removed.
-     * @internal
+     * @throws - error if the segment state doesn't match segment group or op.
+     * E.g. if the segment group is not first in the pending queue, or
+     * an inserted segment does not have unassigned sequence number.
      */
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean;
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
 }
 
 export interface IMarkerModifiedAction {
@@ -312,7 +343,6 @@ export interface MergeTreeStats {
 export interface SegmentGroup {
     segments: ISegment[];
     previousProps?: PropertySet[];
-    removedReferences?: LocalReferencePosition[];
     localSeq: number;
 }
 
@@ -354,28 +384,15 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
     }
 
     public setOrdinal(child: IMergeNode, index: number) {
-        let childCount = this.childCount;
-        if (childCount === 8) {
-            childCount = 7;
-        }
-        assert((childCount >= 1) && (childCount <= 7), 0x040 /* "Child count is not within [1,7] range!" */);
-        let localOrdinal: number;
-        const ordinalWidth = 1 << (MaxNodesInBlock - (childCount + 1));
-        if (index === 0) {
-            localOrdinal = ordinalWidth - 1;
-        } else {
-            const prevOrd = this.children[index - 1].ordinal;
-            const prevOrdCode = prevOrd.charCodeAt(prevOrd.length - 1);
-            localOrdinal = prevOrdCode + ordinalWidth;
-        }
-        child.ordinal = this.ordinal + String.fromCharCode(localOrdinal);
-        assert(child.ordinal.length === (this.ordinal.length + 1), 0x041 /* "Unexpected child ordinal length!" */);
-        if (index > 0) {
-            assert(
-                child.ordinal > this.children[index - 1].ordinal,
-                0x042, /* "Child ordinal <= previous sibling ordinal!" */
+        const childCount = this.childCount;
+        assert((childCount >= 1) && (childCount <= MaxNodesInBlock),
+            0x040 /* "Child count is not within [1,8] range!" */);
+        child.ordinal = computeHierarchicalOrdinal(
+            MaxNodesInBlock,
+            childCount,
+            this.ordinal,
+            index === 0 ? undefined : this.children[index - 1]?.ordinal,
             );
-        }
     }
 
     public assignChild(child: IMergeNode, index: number, updateOrdinal = true) {
@@ -395,6 +412,10 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     public removedClientIds?: number[];
     public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
     public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
+    /**
+     * @alpha
+     */
+    public attribution?: IAttributionCollection<AttributionKey>;
     public propertyManager?: PropertiesManager;
     public properties?: PropertySet;
     public localRefs?: LocalReferenceCollection;
@@ -436,6 +457,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         // TODO: copy removed client overlap and branch removal info
         b.removedSeq = this.removedSeq;
         b.seq = this.seq;
+        b.attribution = this.attribution?.clone();
     }
 
     public canAppend(segment: ISegment): boolean {
@@ -450,11 +472,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
     public abstract toJSONObject(): any;
 
-    /**
-     * @deprecated  for internal use only. public export will be removed.
-     * @internal
-     */
-    public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean {
+    public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
         const currentSegmentGroup = this.segmentGroups.dequeue();
         assert(currentSegmentGroup === segmentGroup, 0x043 /* "On ack, unexpected segmentGroup!" */);
         switch (opArgs.op.type) {
@@ -507,6 +525,9 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 if (this.localRefs) {
                     this.localRefs.split(pos, leafSegment);
                 }
+                if (this.attribution) {
+                    leafSegment.attribution = this.attribution.splitAt(pos);
+                }
             }
             return leafSegment;
         }
@@ -526,7 +547,21 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     }
 
     public abstract clone(): ISegment;
-    public abstract append(segment: ISegment): void;
+
+    public append(other: ISegment): void {
+        // Note: Must call 'appendLocalRefs' before modifying this segment's length as
+        //       'this.cachedLength' is used to adjust the offsets of the local refs.
+        LocalReferenceCollection.append(this, other);
+        if (this.attribution) {
+            assert(other.attribution !== undefined, "attribution should be set on appendee");
+            this.attribution.append(other.attribution);
+        } else {
+            assert(other.attribution === undefined, "attribution should not be set on appendee");
+        }
+
+        this.cachedLength += other.cachedLength;
+    }
+
     protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
 }
 
@@ -603,71 +638,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
     }
 
     toString() {
-        let bbuf = "";
-        if (refTypeIncludesFlag(this, ReferenceType.Tile)) {
-            bbuf += "Tile";
-        }
-        if (refTypeIncludesFlag(this, ReferenceType.NestBegin)) {
-            if (bbuf.length > 0) {
-                bbuf += "; ";
-            }
-            bbuf += "RangeBegin";
-        }
-        if (refTypeIncludesFlag(this, ReferenceType.NestEnd)) {
-            if (bbuf.length > 0) {
-                bbuf += "; ";
-            }
-            bbuf += "RangeEnd";
-        }
-        let lbuf = "";
-        const id = this.getId();
-        if (id) {
-            bbuf += ` (${id}) `;
-        }
-        const tileLabels = refGetTileLabels(this);
-        if (tileLabels) {
-            lbuf += "tile -- ";
-            for (let i = 0, len = tileLabels.length; i < len; i++) {
-                const tileLabel = tileLabels[i];
-                if (i > 0) {
-                    lbuf += "; ";
-                }
-                lbuf += tileLabel;
-            }
-        }
-        const rangeLabels = refGetRangeLabels(this);
-        if (rangeLabels) {
-            let rangeKind = "begin";
-            if (refTypeIncludesFlag(this, ReferenceType.NestEnd)) {
-                rangeKind = "end";
-            }
-            if (tileLabels) {
-                lbuf += " ";
-            }
-            lbuf += `range ${rangeKind} -- `;
-            const labels = rangeLabels;
-            for (let i = 0, len = labels.length; i < len; i++) {
-                const rangeLabel = labels[i];
-                if (i > 0) {
-                    lbuf += "; ";
-                }
-                lbuf += rangeLabel;
-            }
-        }
-        let pbuf = "";
-        if (this.properties) {
-            pbuf += JSON.stringify(this.properties, (key, value) => {
-                // Avoid circular reference when stringifying makers containing handles.
-                // (Substitute a debug string instead.)
-                const handle = !!value && value.IFluidHandle;
-
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return handle
-                    ? `#Handle(${handle.routeContext.path}/${handle.path})`
-                    : value;
-            });
-        }
-        return `M ${bbuf}: ${lbuf} ${pbuf}`;
+        return `M${this.getId()}`;
     }
 
     protected createSplitSegmentAt(pos: number) {
@@ -749,4 +720,72 @@ export interface SegmentAccumulator {
 export interface MinListener {
     minRequired: number;
     onMinGE(minSeq: number): void;
+}
+
+export function debugMarkerToString(marker: Marker): string {
+    let bbuf = "";
+    if (refTypeIncludesFlag(marker, ReferenceType.Tile)) {
+        bbuf += "Tile";
+    }
+    if (refTypeIncludesFlag(marker, ReferenceType.NestBegin)) {
+        if (bbuf.length > 0) {
+            bbuf += "; ";
+        }
+        bbuf += "RangeBegin";
+    }
+    if (refTypeIncludesFlag(marker, ReferenceType.NestEnd)) {
+        if (bbuf.length > 0) {
+            bbuf += "; ";
+        }
+        bbuf += "RangeEnd";
+    }
+    let lbuf = "";
+    const id = marker.getId();
+    if (id) {
+        bbuf += ` (${id}) `;
+    }
+    const tileLabels = refGetTileLabels(marker);
+    if (tileLabels) {
+        lbuf += "tile -- ";
+        for (let i = 0, len = tileLabels.length; i < len; i++) {
+            const tileLabel = tileLabels[i];
+            if (i > 0) {
+                lbuf += "; ";
+            }
+            lbuf += tileLabel;
+        }
+    }
+    const rangeLabels = refGetRangeLabels(marker);
+    if (rangeLabels) {
+        let rangeKind = "begin";
+        if (refTypeIncludesFlag(marker, ReferenceType.NestEnd)) {
+            rangeKind = "end";
+        }
+        if (tileLabels) {
+            lbuf += " ";
+        }
+        lbuf += `range ${rangeKind} -- `;
+        const labels = rangeLabels;
+        for (let i = 0, len = labels.length; i < len; i++) {
+            const rangeLabel = labels[i];
+            if (i > 0) {
+                lbuf += "; ";
+            }
+            lbuf += rangeLabel;
+        }
+    }
+    let pbuf = "";
+    if (marker.properties) {
+        pbuf += JSON.stringify(marker.properties, (key, value) => {
+            // Avoid circular reference when stringifying makers containing handles.
+            // (Substitute a debug string instead.)
+            const handle = !!value && value.IFluidHandle;
+
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return handle
+                ? `#Handle(${handle.routeContext.path}/${handle.path})`
+                : value;
+        });
+    }
+    return `M ${bbuf}: ${lbuf} ${pbuf}`;
 }

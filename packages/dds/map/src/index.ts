@@ -15,7 +15,32 @@
  * @packageDocumentation
  */
 
-export * from "./interfaces";
-export * from "./map";
-export * from "./directory";
+export {
+	DirectoryFactory,
+	IDirectoryClearOperation,
+	IDirectoryCreateSubDirectoryOperation,
+	IDirectoryDataObject,
+	IDirectoryDeleteOperation,
+	IDirectoryDeleteSubDirectoryOperation,
+	IDirectoryKeyOperation,
+	IDirectoryNewStorageFormat,
+	IDirectoryOperation,
+	IDirectorySetOperation,
+	IDirectoryStorageOperation,
+	IDirectorySubDirectoryOperation,
+	SharedDirectory,
+} from "./directory";
+export {
+	IDirectory,
+	IDirectoryEvents,
+	IDirectoryValueChanged,
+	ISerializableValue,
+	ISerializedValue,
+	ISharedDirectory,
+	ISharedDirectoryEvents,
+	ISharedMap,
+	ISharedMapEvents,
+	IValueChanged,
+} from "./interfaces";
 export { LocalValueMaker, ILocalValue } from "./localValues";
+export { MapFactory, SharedMap } from "./map";

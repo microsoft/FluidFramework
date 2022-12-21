@@ -176,6 +176,7 @@ export class OdspDocumentService implements IDocumentService {
                 this.odspResolvedUrl,
                 this.getStorageToken,
                 this.mc.logger,
+                true,
                 this.cache,
                 this.hostPolicy,
                 this.epochTracker,
@@ -187,8 +188,6 @@ export class OdspDocumentService implements IDocumentService {
                     throw new Error("Disconnected while uploading summary (attempt to perform flush())");
                 },
                 () => {
-                    assert(this.relayServiceTenantAndSessionId !== undefined,
-                        0x37b /* relayServiceTenantAndSessionId should be present */);
                     return this.relayServiceTenantAndSessionId;
                 },
                 this.mc.config.getNumber("Fluid.Driver.Odsp.snapshotFormatFetchType"),
@@ -252,6 +251,7 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document delta stream service for onedrive/sharepoint driver.
      */
     public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+        assert(this.currentConnection === undefined, 0x4ad /* Should not be called when connection is already present! */);
         // Attempt to connect twice, in case we used expired token.
         return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (options) => {
             // Presence of getWebsocketToken callback dictates whether callback is used for fetching
@@ -297,13 +297,17 @@ export class OdspDocumentService implements IDocumentService {
                 });
                 // On disconnect with 401/403 error code, we can just clear the joinSession cache as we will again
                 // get the auth error on reconnecting and face latency.
-                connection.on("disconnect", (error: any) => {
+                connection.once("disconnect", (error: any) => {
                     // Clear the join session refresh timer so that it can be restarted on reconnection.
                     this.clearJoinSessionTimer();
                     if (typeof error === "object" && error !== null
                         && error.errorType === DriverErrorType.authorizationError) {
                         this.cache.sessionJoinCache.remove(this.joinSessionKey);
                     }
+                    // If we hit this assert, it means that "disconnect" event is emitted before the connection went through
+                    // dispose flow which is not correct and could lead to a bunch of erros.
+                    assert(connection.disposed, 0x4ae /* Connection should be disposed by now */);
+                    this.currentConnection = undefined;
                 });
                 this.currentConnection = connection;
                 return connection;
@@ -504,6 +508,9 @@ export class OdspDocumentService implements IDocumentService {
             this._opsCache?.flushOps();
         }
         this._opsCache?.dispose();
+        this.clearJoinSessionTimer();
+        this.currentConnection?.dispose();
+        this.currentConnection = undefined;
     }
 
     protected get opsCache() {

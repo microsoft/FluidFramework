@@ -21,7 +21,7 @@ const config: webpack.Configuration = {
         rules: [
             {
                 test: /\.tsx?$/,
-                use: require.resolve("ts-loader"),
+                use: "ts-loader",
                 exclude: /node_modules/,
             },
         ],
@@ -49,6 +49,8 @@ describe("Local server", () => {
             webpack(config, (err, stats) => {
                 if (err) {
                     assert.fail(err);
+                } else if (stats === undefined) {
+                    assert.fail(new Error("No stats"));
                 } else if (stats.hasErrors()) {
                     assert.fail(stats.compilation.errors.map((value) => value.stack).join("\n"));
                 } else {

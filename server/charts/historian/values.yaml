@@ -26,6 +26,8 @@ historian:
     maxRequestBurst: 1000000
     minCooldownIntervalInMs: 1000000
     minThrottleIntervalInMs: 1000000
+    maxInMemoryCacheSize: 1000
+    maxInMemoryCacheAgeInMs: 60000
   restGitService:
     disableGitCache: false
 
@@ -41,7 +43,9 @@ gitrest:
     lib:
       name: nodegit
     persistLatestFullSummary: false
+    enableLowIoWrite: false
     repoPerDocEnabled: false
+    enableRepositoryManagerMetrics: false
 
 gitssh:
   name: gitssh

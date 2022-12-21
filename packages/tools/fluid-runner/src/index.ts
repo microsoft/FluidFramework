@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-internal-modules */
 export { ICodeLoaderBundle, IFluidFileConverter } from "./codeLoaderBundle";
-export * from "./exportFile";
+export { createContainerAndExecute, exportFile, IExportFileResponse } from "./exportFile";
 export { fluidRunner } from "./fluidRunner";
-// eslint-disable-next-line import/no-internal-modules
-export * from "./logger/FileLogger";
-export * from "./parseBundleAndExportFile";
+export { OutputFormat } from "./logger/fileLogger";
+export { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils";
+export { parseBundleAndExportFile } from "./parseBundleAndExportFile";
+export { getSnapshotFileContent } from "./utils";
+/* eslint-enable import/no-internal-modules */
