@@ -209,7 +209,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         session?: ISession,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
-
         const parsedUrl = parseFluidUrl(resolvedUrl.url);
         const [, tenantId, documentId] = parsedUrl.pathname.split("/");
         if (!documentId || !tenantId) {
@@ -218,20 +217,20 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         }
         const logger2 = ChildLogger.create(logger, "RouterliciousDriver", { all: { driverVersion } });
 
+        const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
+        const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+            tenantId,
+            documentId,
+            this.tokenProvider,
+            logger2,
+            rateLimiter,
+            this.driverPolicies.enableRestLess,
+        );
+
         const discoverFluidResolvedUrl = async (): Promise<IFluidResolvedUrl> => {
             if (!this.driverPolicies.enableDiscovery) {
                 return resolvedUrl;
             }
-            const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-            const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
-                tenantId,
-                documentId,
-                this.tokenProvider,
-                logger2,
-                rateLimiter,
-                this.driverPolicies.enableRestLess,
-                resolvedUrl.endpoints.ordererUrl,
-            );
 
             const discoveredSession = await PerformanceEvent.timedExecAsync(
                 logger2,
@@ -242,7 +241,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 async () => {
                     // The service responds with the current document session associated with the container.
                     return ordererRestWrapper.get<ISession>(
-                        `/documents/${tenantId}/session/${documentId}`);
+                        `${resolvedUrl.endpoints.ordererUrl}/documents/${tenantId}/session/${documentId}`);
                 });
             return getDiscoveredFluidResolvedUrl(resolvedUrl, discoveredSession);
         };
@@ -269,6 +268,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             this.tokenProvider,
             tenantId,
             documentId,
+            ordererRestWrapper,
             this.driverPolicies,
             this.blobCache,
             this.snapshotTreeCache,

@@ -4,17 +4,26 @@
 
 ```ts
 
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { ContainerRuntime } from '@fluidframework/container-runtime';
+import { IAudience } from '@fluidframework/container-definitions';
+import { IDeltaManager } from '@fluidframework/container-definitions';
+import { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
-import { Jsonable } from '@fluidframework/datastore-definitions';
 
-// @public
+// @alpha
 export interface AttributionInfo {
     timestamp: number;
     user: IUser;
 }
 
-// @public
+// @alpha
+export interface AttributionKey {
+    seq: number;
+    type: "op";
+}
+
+// @alpha
 export class Attributor implements IAttributor {
     constructor(initialEntries?: Iterable<[number, AttributionInfo]>);
     // (undocumented)
@@ -26,34 +35,10 @@ export class Attributor implements IAttributor {
     tryGetAttributionInfo(key: number): AttributionInfo | undefined;
 }
 
-// @public (undocumented)
-export class AttributorSerializer implements IAttributorSerializer {
-    constructor(makeAttributor: (entries: Iterable<[number, AttributionInfo]>) => IAttributor, timestampEncoder: TimestampEncoder);
-    // Warning: (ae-incompatible-release-tags) The symbol "decode" is marked as @public, but its signature references "SerializedAttributor" which is marked as @internal
-    //
-    // (undocumented)
-    decode(encoded: SerializedAttributor): IAttributor;
-    // Warning: (ae-incompatible-release-tags) The symbol "encode" is marked as @public, but its signature references "SerializedAttributor" which is marked as @internal
-    //
-    // (undocumented)
-    encode(attributor: IAttributor): SerializedAttributor;
-}
+// @alpha (undocumented)
+export function createRuntimeAttributor(): IRuntimeAttributor;
 
-// @public (undocumented)
-export const chain: <T1, T2, T3>(a: Encoder<T1, T2>, b: Encoder<T2, T3>) => Encoder<T1, T3>;
-
-// @public (undocumented)
-export const deltaEncoder: TimestampEncoder;
-
-// @public (undocumented)
-export interface Encoder<TDecoded, TEncoded> {
-    // (undocumented)
-    decode(encoded: TEncoded): TDecoded;
-    // (undocumented)
-    encode(decoded: TDecoded): TEncoded;
-}
-
-// @public
+// @alpha
 export interface IAttributor {
     // (undocumented)
     entries(): IterableIterator<[number, AttributionInfo]>;
@@ -62,61 +47,30 @@ export interface IAttributor {
     tryGetAttributionInfo(key: number): AttributionInfo | undefined;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "IAttributorSerializer" is marked as @public, but its signature references "SerializedAttributor" which is marked as @internal
-//
-// @public (undocumented)
-export type IAttributorSerializer = Encoder<IAttributor, SerializedAttributor>;
-
-// @public
-export type InternedStringId = number & {
-    readonly InternedStringId: "e221abc9-9d17-4493-8db0-70c871a1c27c";
-};
-
-// @public (undocumented)
-export function makeLZ4Encoder<T>(): Encoder<Jsonable<T>, string>;
-
-// @public
-export class MutableStringInterner implements StringInterner {
-    constructor(inputStrings?: readonly string[]);
+// @alpha (undocumented)
+export interface IProvideRuntimeAttributor {
     // (undocumented)
-    getInternedId(input: string): InternedStringId | undefined;
-    // (undocumented)
-    getOrCreateInternedId(input: string): InternedStringId;
-    // (undocumented)
-    getSerializable(): readonly string[];
-    // (undocumented)
-    getString(internId: number): string;
+    readonly IRuntimeAttributor: IRuntimeAttributor;
 }
 
-// @public
+// @alpha (undocumented)
+export const IRuntimeAttributor: keyof IProvideRuntimeAttributor;
+
+// @alpha @sealed
+export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
+    // (undocumented)
+    get(key: AttributionKey): AttributionInfo;
+    // (undocumented)
+    has(key: AttributionKey): boolean;
+}
+
+// @alpha
+export const mixinAttributor: (Base?: typeof ContainerRuntime) => typeof ContainerRuntime;
+
+// @alpha
 export class OpStreamAttributor extends Attributor implements IAttributor {
-    constructor(runtime: IFluidDataStoreRuntime, initialEntries?: Iterable<[number, AttributionInfo]>);
+    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, audience: IAudience, initialEntries?: Iterable<[number, AttributionInfo]>);
 }
-
-// @internal (undocumented)
-export interface SerializedAttributor {
-    // (undocumented)
-    attributionRefs: InternedStringId[];
-    // (undocumented)
-    interner: readonly string[];
-    // (undocumented)
-    keys: number[];
-    // (undocumented)
-    timestamps: number[];
-}
-
-// @public
-export interface StringInterner {
-    // (undocumented)
-    getInternedId(input: string): InternedStringId | undefined;
-    // (undocumented)
-    getSerializable(): readonly string[];
-    // (undocumented)
-    getString(internedId: number): string;
-}
-
-// @public (undocumented)
-export type TimestampEncoder = Encoder<number[], number[]>;
 
 // (No @packageDocumentation comment for this package)
 

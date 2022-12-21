@@ -153,16 +153,17 @@
             "numClients":  10,
             "totalSendCount":  70000,
             "readWriteCycleMs":  30000,
-            "faultInjectionMinMs":  900000,
-            "faultInjectionMaxMs":  1800000,
+            "faultInjectionMs": {
+                "min": 900000,
+                "max": 1800000
+            },
             "optionOverrides":{
               "odsp":{
                   "configurations":{
                       "Fluid.Container.summarizeProtocolTree": [true]
                   }
               }
-
-          },
+            },
             "opsSendType":  "allClientsConcurrentReadWrite"
         }
     }

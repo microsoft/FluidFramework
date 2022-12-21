@@ -5,6 +5,10 @@
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
+    generatePairwiseOptions,
+} from "@fluidframework/test-pairwise-generator";
+import { ReferenceType } from "../ops";
+import {
     appendToMergeTreeDeltaRevertibles,
     MergeTreeDeltaRevertible,
     revertMergeTreeDeltaRevertibles,
@@ -234,5 +238,108 @@ describe("MergeTree.Revertibles", () => {
         }
 
         logger.validate();
+    });
+
+    describe("Revertibles work as expected when a pair of markers and text is involved", ()=>{
+
+        generatePairwiseOptions({
+            revertMarkerInsert:[true, undefined],
+            ackMarkerInsert:[true, undefined], 
+            splitInsertTextRevertible:[true,undefined],
+            ackTextInsert:[true, undefined], 
+            splitRemoveRevertible:[true, undefined],
+            ackTextRemove:[true, undefined], 
+            ackUndo:[true, undefined]
+        }).forEach((options)=>{
+            it(JSON.stringify(options) , () => {
+                const clients = createClientsAtInitialState(
+                    { initialState: "", options: { mergeTreeUseNewLengthCalculations: true } },
+                    "A", "B");
+        
+                const logger = new TestClientLogger(clients.all);
+                let seq = 0;
+                const ops: ISequencedDocumentMessage[] = [];
+        
+                const clientB_Revertibles: MergeTreeDeltaRevertible[][] = [];
+                const openNewUndoRedoTransaction = () => clientB_Revertibles.unshift([])
+                // the test logger uses these callbacks, so preserve it
+                const old = clients.B.mergeTreeDeltaCallback;
+                const clientBDriver = createRevertDriver(clients.B);
+                clientBDriver.submitOpCallback = (op) => ops.push(clients.B.makeOpMessage(op, ++seq));
+                clients.B.mergeTreeDeltaCallback = (op, delta) => {
+                    old?.(op, delta);
+                    if (op.sequencedMessage === undefined && clientB_Revertibles.length > 0) {
+                         appendToMergeTreeDeltaRevertibles(
+                            clientBDriver, 
+                            delta, 
+                            clientB_Revertibles[0]);
+                    }
+                };
+                let afterUndoBaseText: string | undefined;
+                if(options.revertMarkerInsert){
+                    openNewUndoRedoTransaction();
+                    afterUndoBaseText ??= clients.B.getText();
+                }
+                ops.push(clients.B.makeOpMessage(clients.B.insertMarkerLocal(0,ReferenceType.Simple), ++seq));
+                ops.push(clients.B.makeOpMessage(clients.B.insertMarkerLocal(1,ReferenceType.Simple), ++seq));
+        
+                if(options.ackMarkerInsert){
+                    ops.splice(0).forEach((op) => clients.all.forEach((c) => c.applyMsg(op)));
+                    logger.validate({baseText: afterUndoBaseText});   
+                }
+
+                if(options.splitInsertTextRevertible){
+                    openNewUndoRedoTransaction()
+                    afterUndoBaseText ??= clients.B.getText();
+                }
+                ops.push(clients.B.makeOpMessage(clients.B.insertTextLocal(1,"B"), ++seq));
+                if(options.ackTextInsert){
+                    ops.splice(0).forEach((op) => clients.all.forEach((c) => c.applyMsg(op)));
+                    logger.validate({baseText: "B"});
+                }
+
+                if(options.splitRemoveRevertible){
+                    openNewUndoRedoTransaction();
+                    afterUndoBaseText ??= clients.B.getText();
+                }
+
+                ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(1,2), ++seq));
+                if(options.ackTextRemove){
+                    ops.splice(0).forEach((op) => clients.all.forEach((c) => c.applyMsg(op)));
+                    logger.validate({baseText: ""});
+                }
+
+                const afterRevertBaseTest = clients.B.getText();
+                try {
+                    const reverts = clientB_Revertibles.splice(0);
+                    reverts.forEach((revert)=>{
+                        openNewUndoRedoTransaction();
+                        revertMergeTreeDeltaRevertibles(clientBDriver, revert);
+                    });
+                } catch (e) {
+                    throw logger.addLogsToError(e);
+                }
+
+                if(options.ackUndo){
+                    ops.splice(0).forEach((op) => clients.all.forEach((c) => c.applyMsg(op)));
+                    logger.validate({ baseText: afterUndoBaseText});   
+                }
+
+
+                try {
+                    const reverts = clientB_Revertibles.splice(0);
+                    reverts.forEach((revert)=>{
+                        revertMergeTreeDeltaRevertibles(clientBDriver, revert);
+                    });
+                } catch (e) {
+                    throw logger.addLogsToError(e);
+                }
+
+
+                ops.splice(0).forEach((op) => clients.all.forEach((c) => c.applyMsg(op)));
+                logger.validate({baseText: afterRevertBaseTest});  
+            });
+        });
+
     });
 });

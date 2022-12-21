@@ -66,6 +66,12 @@ parameters:
   type: string
   default: '@ff-internal/aria-logger'
 
+# Custom steps specified by the "caller" of this template, for any additional things that need to be done
+# after the steps in this template complete.
+- name: additionalSteps
+  type: stepList
+  default: []
+
 jobs:
   - ${{ each variant in parameters.splitTestVariants }}:
     - job:
@@ -318,3 +324,5 @@ jobs:
           searchFolder: ${{ variables.testPackageDir }}/nyc
           mergeTestResults: false
         condition: succeededOrFailed()
+
+      - ${{ parameters.additionalSteps }}
