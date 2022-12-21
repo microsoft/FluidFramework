@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { CodeSpanNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
 import { getTableEscapedText } from "./Utilities";
@@ -17,14 +21,12 @@ export function CodeSpanToMarkdown(
     const childContents = renderer.renderNodes(codeSpanNode.children);
 
     let output: string[] = [];
-    if (renderer.isInsideTable) {
-        output = [
-            "<code>",
-            getTableEscapedText(childContents).split(/\r?\n/g).join("</code><br/><code>"),
-            "</code>",
-        ];
-    } else {
-        output = ["`", childContents, "`"];
-    }
+    output = renderer.isInsideTable
+        ? [
+              "<code>",
+              getTableEscapedText(childContents).split(/\r?\n/g).join("</code><br/><code>"),
+              "</code>",
+          ]
+        : ["`", childContents, "`"];
     return output.join("");
 }

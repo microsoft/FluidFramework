@@ -312,13 +312,14 @@ export function createExcerptSpanWithHyperlinks(
         // Markdown doesn't provide a standardized syntax for hyperlinks inside code spans, so we will render
         // the type expression as DocPlainText.  Instead of creating multiple DocParagraphs, we can simply
         // discard any newlines and let the renderer do normal word-wrapping.
-        const unwrappedTokenText: string = token.text.replace(/[\r\n]+/g, " ");
+        const unwrappedTokenText: string = token.text.replace(/[\n\r]+/g, " ");
 
         let wroteHyperlink = false;
 
         // If it's hyperlink-able, then append a DocLinkTag
         if (token.kind === ExcerptTokenKind.Reference && token.canonicalReference) {
             const apiItemResult: IResolveDeclarationReferenceResult =
+                // eslint-disable-next-line unicorn/no-useless-undefined
                 config.apiModel.resolveDeclarationReference(token.canonicalReference, undefined);
 
             if (apiItemResult.resolvedApiItem) {
@@ -370,9 +371,7 @@ export function createBreadcrumbParagraph(
         if (writtenAnythingYet) {
             contents.push(breadcrumbSeparator);
         }
-
-        const link = getLinkForApiItem(hierarchyItem, config);
-        contents.push(LinkNode.createFromPlainTextLink(link));
+        contents.push(LinkNode.createFromPlainTextLink(getLinkForApiItem(hierarchyItem, config)));
 
         writtenAnythingYet = true;
     }
@@ -381,8 +380,7 @@ export function createBreadcrumbParagraph(
     if (writtenAnythingYet) {
         contents.push(breadcrumbSeparator);
     }
-    const link = getLinkForApiItem(apiItem, config);
-    contents.push(LinkNode.createFromPlainTextLink(link));
+    contents.push(LinkNode.createFromPlainTextLink(getLinkForApiItem(apiItem, config)));
 
     return new ParagraphNode(contents);
 }
@@ -550,12 +548,9 @@ export function createExamplesSection(
     }
 
     const exampleSections: HierarchicalSectionNode[] = [];
-    for (let i = 0; i < exampleBlocks.length; i++) {
+    for (const [i, exampleBlock] of exampleBlocks.entries()) {
         exampleSections.push(
-            createExampleSection(
-                { apiItem, content: exampleBlocks[i], exampleNumber: i + 1 },
-                config,
-            ),
+            createExampleSection({ apiItem, content: exampleBlock, exampleNumber: i + 1 }, config),
         );
     }
 
@@ -668,6 +663,7 @@ export function createReturnsSection(
     if (ApiReturnTypeMixin.isBaseClassOf(apiItem) && apiItem.returnTypeExcerpt.text.trim() !== "") {
         // Special case to detect when the return type is `void`.
         // We will skip declaring the return type in this case.
+        // eslint-disable-next-line unicorn/no-lonely-if
         if (apiItem.returnTypeExcerpt.text.trim() !== "void") {
             const typeExcerptSpan = createExcerptSpanWithHyperlinks(
                 apiItem.returnTypeExcerpt,
@@ -742,10 +738,13 @@ export function createChildDetailsSection(
         // Also only render the section if it actually has contents to render (to avoid empty headings).
         if (
             !doesItemKindRequireOwnDocument(childItem.itemKind, config.documentBoundaries) &&
-            childItem.items.length !== 0
+            childItem.items.length > 0
         ) {
             sections.push(
-                wrapInSection(childItem.items.map(createChildContent), childItem.heading),
+                wrapInSection(
+                    childItem.items.map((element) => createChildContent(element)),
+                    childItem.heading,
+                ),
             );
         }
     }

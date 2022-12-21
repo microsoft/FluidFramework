@@ -4,7 +4,13 @@
  */
 
 module.exports = {
-    extends: [require.resolve("@fluidframework/eslint-config-fluid/strict")],
+    extends: [
+        require.resolve("@fluidframework/eslint-config-fluid/strict"),
+        "plugin:chai-expect/recommended",
+        "plugin:chai-friendly/recommended",
+        "prettier",
+    ],
+    plugins: ["chai-expect", "chai-friendly"],
     parserOptions: {
         project: ["./tsconfig.json"],
     },
@@ -24,23 +30,28 @@ module.exports = {
 
         "unicorn/prefer-module": "off",
         "unicorn/prefer-negative-index": "off",
+        "unicorn/no-array-push-push": "off",
 
         // This package is exclusively used in a Node.js context
         "import/no-nodejs-modules": "off",
 
-        // TODO: remove once dependency on base config has been updated.
-        "@typescript-eslint/explicit-member-accessibility": [
-            "error",
-            {
-                accessibility: "explicit",
-                overrides: {
-                    accessors: "explicit",
-                    constructors: "explicit",
-                    methods: "explicit",
-                    properties: "explicit",
-                    parameterProperties: "explicit",
-                },
-            },
-        ],
+        // TODO: remove before merging
+        "jsdoc/require-jsdoc": "warn",
     },
+    overrides: [
+        {
+            files: ["**/test/*"],
+            rules: {
+                "import/no-extraneous-dependencies": [
+                    "error",
+                    {
+                        devDependencies: true,
+                    },
+                ],
+
+                // Conflicts with chai expect patterns
+                "@typescript-eslint/no-unused-expressions": "off",
+            },
+        },
+    ],
 };

@@ -23,34 +23,33 @@ import { createChildDetailsSection, createMemberTables } from "../helpers";
  *
  * @remarks Format:
  *
- * - Tables
+ * Tables
  *
- *   - constructor-signatures
+ * - constructor-signatures
  *
- *   - event properties
+ * - event properties
  *
- *   - properties
+ * - properties
  *
- *   - methods
+ * - methods
  *
- *   - call-signatures
+ * - call-signatures
  *
- *   - index-signatures
+ * - index-signatures
  *
- * - Details (for any types not rendered to their own documents - see
- *   {@link PolicyOptions.documentBoundaries})
+ * Details (for any types not rendered to their own documents - see {@link PolicyOptions.documentBoundaries})
  *
- *   - constructor-signatures
+ * - constructor-signatures
  *
- *   - event properties
+ * - event properties
  *
- *   - properties
+ * - properties
  *
- *   - methods
+ * - methods
  *
- *   - call-signatures
+ * - call-signatures
  *
- *   - index-signatures
+ * - index-signatures
  */
 export function transformApiInterface(
     apiInterface: ApiInterface,
@@ -59,7 +58,7 @@ export function transformApiInterface(
 ): HierarchicalSectionNode {
     const childSections: HierarchicalSectionNode[] = [];
 
-    const hasAnyChildren = apiInterface.members.length !== 0;
+    const hasAnyChildren = apiInterface.members.length > 0;
 
     if (hasAnyChildren) {
         // Accumulate child items

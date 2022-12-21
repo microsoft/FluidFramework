@@ -15,7 +15,7 @@ export function FencedCodeBlockToMarkdown(
 ): string {
     const output = [
         addNewlineOrBlank(renderer.countTrailingNewlines < 1),
-        "```" + blockNode.language,
+        `\`\`\`${blockNode.language}`,
         standardEOL,
     ];
     renderer.setInsideCodeBlock();

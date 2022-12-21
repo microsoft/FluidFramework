@@ -1,3 +1,10 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+// TODO: fix before merging
+// eslint-disable-next-line no-restricted-syntax
 export * from "./DocumentationNodeRenderer";
 export { AlertToMarkdown } from "./AlertToMd";
 export { BlockQuoteToMarkdown } from "./BlockQuoteToMd";
@@ -14,3 +21,4 @@ export { TableCellToMarkdown } from "./TableCellToMd";
 export { TableRowToMarkdown } from "./TableRowToMd";
 export { TableToMarkdown } from "./TableToMd";
 export { UnorderedListToMarkdown } from "./UnorderedListToMd";
+export { standardEOL } from "./Utilities";

@@ -14,7 +14,8 @@ export function getDocNodeTransformationOptions(
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocNodeTransformOptions {
     return {
-        resolveApiReference: (codeDestination) => resolveSymbolicLink(codeDestination, config),
+        resolveApiReference: (codeDestination): string | undefined =>
+            resolveSymbolicLink(codeDestination, config),
         logger: config.logger,
     };
 }
@@ -28,6 +29,7 @@ function resolveSymbolicLink(
     const resolvedReference: IResolveDeclarationReferenceResult =
         apiModel.resolveDeclarationReference(
             codeDestination,
+            // eslint-disable-next-line unicorn/no-useless-undefined
             undefined, // TODO: is this okay?
         );
 

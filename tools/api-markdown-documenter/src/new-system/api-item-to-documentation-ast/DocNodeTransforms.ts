@@ -160,7 +160,7 @@ export function transformLinkTag(
 }
 
 /**
- * Helper function for creating {@link {ParagraphNode}s from input nodes that simply wrap child contents.
+ * Helper function for creating {@link ParagraphNode}s from input nodes that simply wrap child contents.
  *
  * Also performs the following cleanup steps:
  *
@@ -233,7 +233,7 @@ function transformChildren(
     let filteredChildren = collapseAdjacentLineBreaks(transformedChildren);
 
     // Remove line breaks adjacent to paragraphs, as they are redundant
-    filterNewlinesAdjacentToParagraphs(filteredChildren);
+    filteredChildren = filterNewlinesAdjacentToParagraphs(filteredChildren);
 
     return filteredChildren;
 }
@@ -282,8 +282,8 @@ function trimLeadingAndTrailingLineBreaks(
     let startIndex = 0;
     let endIndex = nodes.length - 1;
 
-    for (let i = 0; i < nodes.length; i++) {
-        if (nodes[i].type === DocumentationNodeType.LineBreak) {
+    for (const node of nodes) {
+        if (node.type === DocumentationNodeType.LineBreak) {
             startIndex++;
         } else {
             break;

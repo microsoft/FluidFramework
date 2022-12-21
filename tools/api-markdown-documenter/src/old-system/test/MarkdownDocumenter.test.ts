@@ -83,9 +83,6 @@ async function snapshotTest(
 
     // If this fails, then the docs build has generated new content.
     // View the diff in git and determine if the changes are appropriate or not.
-
-    // False positive
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     expect(result.same).to.be.true;
 }
 

@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { expect } from "chai";
-import * as os from "os";
+import * as os from "node:os";
 
-import { ParagraphNode } from "../../documentation-domain/ParagraphNode";
-import { PlainTextNode } from "../../documentation-domain/PlainTextNode";
+import { expect } from "chai";
+
+import { ParagraphNode, PlainTextNode } from "../../documentation-domain";
 import { DocumentationNodeRenderer } from "../md-transformers";
 
 describe("Paragraph markdown tests", () => {

@@ -13,7 +13,7 @@ export class PlainTextNode implements LiteralNode<string>, SingleLineElementNode
     public readonly value: string;
 
     public constructor(value: string) {
-        if (value.indexOf("\n") >= 0) {
+        if (value.includes("\n")) {
             throw new Error("Invalid value: Plain text nodes may not contain newline characters");
         }
         this.value = value;

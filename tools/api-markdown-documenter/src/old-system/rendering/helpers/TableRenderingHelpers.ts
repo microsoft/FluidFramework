@@ -18,7 +18,6 @@ import {
 import { DocCodeSpan, DocNode, DocParagraph, DocPlainText, DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../../Configuration";
-import { DocEmphasisSpan, DocTable, DocTableCell } from "../../doc-nodes";
 import {
     ApiFunctionLike,
     ApiModifier,
@@ -26,8 +25,9 @@ import {
     getLinkForApiItem,
     getModifiers,
     isDeprecated,
-    mergeSections,
-} from "../../utilities";
+} from "../../../utilities";
+import { DocEmphasisSpan, DocTable, DocTableCell } from "../../doc-nodes";
+import { mergeSections } from "../../utilities";
 import { renderExcerptWithHyperlinks, renderHeading, renderLink } from "./RenderingHelpers";
 
 /**

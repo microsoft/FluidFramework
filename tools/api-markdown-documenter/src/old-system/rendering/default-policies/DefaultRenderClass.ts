@@ -15,7 +15,8 @@ import {
 import { DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../../Configuration";
-import { ApiModifier, filterByKind, isStatic, mergeSections } from "../../utilities";
+import { ApiModifier, filterByKind, isStatic } from "../../../utilities";
+import { mergeSections } from "../../utilities";
 import { renderChildDetailsSection, renderMemberTables } from "../helpers";
 
 /**

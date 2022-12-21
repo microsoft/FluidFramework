@@ -20,6 +20,7 @@ import {
     markdownDocumenterConfigurationWithDefaults,
 } from "../Configuration";
 import { Logger } from "../Logging";
+import { getLinkUrlForApiItem } from "../utilities";
 import { MarkdownDocument } from "./MarkdownDocument";
 import {
     CustomDocNodeKind,
@@ -32,7 +33,6 @@ import {
     DocTableCell,
     ListKind,
 } from "./doc-nodes";
-import { getLinkUrlForApiItem } from "./utilities";
 
 /**
  * Maximum heading level supported by most systems.

@@ -15,7 +15,8 @@ import {
 import { DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../../Configuration";
-import { filterByKind, mergeSections } from "../../utilities";
+import { filterByKind } from "../../../utilities";
+import { mergeSections } from "../../utilities";
 import { renderChildDetailsSection, renderMemberTables } from "../helpers";
 
 /**

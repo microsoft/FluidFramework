@@ -39,7 +39,7 @@ import { addNewlineOrBlank, countTrailingNewlines, standardEOL } from "./Utiliti
 /**
  * All known node types this renderer supports by default
  */
-export type NodeRenderers = {
+export interface NodeRenderers {
     [DocumentationNodeType.Alert]: (
         node: AlertNode,
         subtreeRenderer: DocumentationNodeRenderer,
@@ -104,31 +104,31 @@ export type NodeRenderers = {
         node: UnorderedListNode,
         subtreeRenderer: DocumentationNodeRenderer,
     ) => string;
-};
+}
 
 /**
  * Simple class which provides default rendering implementations for nodes
  */
 export class DefaultNodeRenderers {
-    [DocumentationNodeType.Alert] = AlertToMarkdown;
-    [DocumentationNodeType.BlockQuote] = BlockQuoteToMarkdown;
-    [DocumentationNodeType.CodeSpan] = CodeSpanToMarkdown;
-    [DocumentationNodeType.FencedCode] = FencedCodeBlockToMarkdown;
-    [DocumentationNodeType.Heading] = HeadingToMarkdown;
-    [DocumentationNodeType.LineBreak] = (
+    public [DocumentationNodeType.Alert] = AlertToMarkdown;
+    public [DocumentationNodeType.BlockQuote] = BlockQuoteToMarkdown;
+    public [DocumentationNodeType.CodeSpan] = CodeSpanToMarkdown;
+    public [DocumentationNodeType.FencedCode] = FencedCodeBlockToMarkdown;
+    public [DocumentationNodeType.Heading] = HeadingToMarkdown;
+    public [DocumentationNodeType.LineBreak] = (
         node: LineBreakNode,
         subtreeRenderer: DocumentationNodeRenderer,
-    ) => (subtreeRenderer.isInsideCodeBlock ? `<br/>` : standardEOL);
-    [DocumentationNodeType.Link] = LinkToMarkdown;
-    [DocumentationNodeType.HierarchicalSection] = HierarchicalSectionToMarkdown;
-    [DocumentationNodeType.OrderedList] = OrderedListToMarkdown;
-    [DocumentationNodeType.Paragraph] = ParagraphToMarkdown;
-    [DocumentationNodeType.PlainText] = PlainTextToMarkdown;
-    [DocumentationNodeType.Span] = SpanToMarkdown;
-    [DocumentationNodeType.Table] = TableToMarkdown;
-    [DocumentationNodeType.TableCell] = TableCellToMarkdown;
-    [DocumentationNodeType.TableRow] = TableRowToMarkdown;
-    [DocumentationNodeType.UnorderedList] = UnorderedListToMarkdown;
+    ): string => (subtreeRenderer.isInsideCodeBlock ? `<br/>` : standardEOL);
+    public [DocumentationNodeType.Link] = LinkToMarkdown;
+    public [DocumentationNodeType.HierarchicalSection] = HierarchicalSectionToMarkdown;
+    public [DocumentationNodeType.OrderedList] = OrderedListToMarkdown;
+    public [DocumentationNodeType.Paragraph] = ParagraphToMarkdown;
+    public [DocumentationNodeType.PlainText] = PlainTextToMarkdown;
+    public [DocumentationNodeType.Span] = SpanToMarkdown;
+    public [DocumentationNodeType.Table] = TableToMarkdown;
+    public [DocumentationNodeType.TableCell] = TableCellToMarkdown;
+    public [DocumentationNodeType.TableRow] = TableRowToMarkdown;
+    public [DocumentationNodeType.UnorderedList] = UnorderedListToMarkdown;
 }
 
 /**
@@ -143,7 +143,7 @@ export const DefaultRenderers = new DefaultNodeRenderers();
  */
 export class DocumentationNodeRenderer {
     private trailingNewlinesCount = 1; // Start the document at 1 so elements don't unnecessarily prepend newlines
-    private renderers: NodeRenderers = DefaultRenderers;
+    private readonly renderers: NodeRenderers = DefaultRenderers;
     private renderingContext = {
         bold: false,
         strikethrough: false,
@@ -275,17 +275,19 @@ export class DocumentationNodeRenderer {
                 );
                 break;
             default:
+                // eslint-disable-next-line no-case-declarations
                 const rendererForNode = this.renderers[node.type] as unknown;
-                if (rendererForNode && typeof rendererForNode === "function") {
+                if (rendererForNode !== undefined && typeof rendererForNode === "function") {
                     // We don't recognize this node type, but a renderer was given to us (probably from custom renderers). We'll invoke it and hope for the best
-                    renderedNode = rendererForNode(node, this);
+                    renderedNode = rendererForNode(node, this) as string;
                 }
                 break;
         }
         this.renderingContext = prevRenderingContext;
-        this.trailingNewlinesCount = renderedNode.length
-            ? countTrailingNewlines(renderedNode)
-            : this.trailingNewlinesCount;
+        this.trailingNewlinesCount =
+            renderedNode.length > 0
+                ? countTrailingNewlines(renderedNode)
+                : this.trailingNewlinesCount;
         return renderedNode;
     }
 
@@ -344,42 +346,42 @@ export class DocumentationNodeRenderer {
     /**
      * True if the subtree should apply bold styles to rendered content
      */
-    public get applyingBold() {
+    public get applyingBold(): boolean {
         return this.renderingContext.bold;
     }
 
     /**
      * True if the subtree should apply italic styles to rendered content
      */
-    public get applyingItalic() {
+    public get applyingItalic(): boolean {
         return this.renderingContext.italic;
     }
 
     /**
      * True if the subtree should apply strikethrough styles to rendered content
      */
-    public get applyingStrikethrough() {
+    public get applyingStrikethrough(): boolean {
         return this.renderingContext.strikethrough;
     }
 
     /**
      * True if the current node is being rendered inside of a table
      */
-    public get isInsideTable() {
+    public get isInsideTable(): boolean {
         return this.renderingContext.insideTable;
     }
 
     /**
      * True if the current node is being rendered inside of a code block
      */
-    public get isInsideCodeBlock() {
+    public get isInsideCodeBlock(): boolean {
         return this.renderingContext.insideCodeBlock;
     }
 
     /**
      * Returns how deep into nested HierarchicalSectionNodes the renderer currently is
      */
-    public get hierarchyDepth() {
+    public get hierarchyDepth(): number {
         return this.renderingContext.depth;
     }
 
@@ -414,20 +416,19 @@ export class DocumentationNodeRenderer {
  *
  * @param node - Node to convert into narkdown
  * @param customRenderers - Optional custom node renderers
- * @returns
  */
 export function markdownFromDocumentNode(
     node: DocumentNode,
     customRenderers?: CustomNodeRenderers,
 ): string {
-    // todo: configurability of individual node renderers
+    // TODO: configurability of individual node renderers
     const renderer = new DocumentationNodeRenderer(customRenderers);
     const output: string[] = [];
 
-    if (node.frontMatter) {
+    if (node.frontMatter !== undefined) {
         output.push(`${node.frontMatter}${standardEOL}`);
     }
-    if (node.title) {
+    if (node.title !== undefined) {
         output.push(`# ${node.title}${standardEOL}${standardEOL}`);
     }
     if (node.header) {

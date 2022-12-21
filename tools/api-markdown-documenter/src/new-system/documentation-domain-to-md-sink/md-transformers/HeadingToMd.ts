@@ -37,7 +37,7 @@ export function HeadingToMarkdown(
 
     headerLine.push(renderer.renderNodes(headingNode.children));
 
-    if (renderAsMarkdownHeading && headingNode.id) {
+    if (renderAsMarkdownHeading && headingNode.id !== undefined) {
         headerLine.push(`{#${headingNode.id}}`);
     }
 

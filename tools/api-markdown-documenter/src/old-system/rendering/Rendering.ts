@@ -26,8 +26,8 @@ import {
 import { DocNode, DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
+import { doesItemRequireOwnDocument, getFilePathForApiItem } from "../../utilities";
 import { MarkdownDocument } from "../MarkdownDocument";
-import { doesItemRequireOwnDocument, getFilePathForApiItem } from "../utilities";
 import { renderBreadcrumb, renderHeadingForApiItem } from "./helpers";
 
 /**

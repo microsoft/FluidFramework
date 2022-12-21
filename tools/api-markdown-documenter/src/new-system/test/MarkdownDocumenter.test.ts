@@ -2,20 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import * as Path from "node:path";
+
 import { ApiItem, ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { compare } from "dir-compare";
 import { Suite } from "mocha";
-import * as Path from "path";
 
 import {
     MarkdownDocumenterConfiguration,
     markdownDocumenterConfigurationWithDefaults,
 } from "../../Configuration";
 import { createDocuments, renderFiles } from "../MarkdownDocumenter";
-import { apiPackageToDocument } from "../api-item-to-documentation-ast";
-import { apiModelToDocument } from "../api-item-to-documentation-ast/TransformModel";
+import { apiModelToDocument, apiPackageToDocument } from "../api-item-to-documentation-ast";
 import { DocumentNode } from "../documentation-domain";
 
 /**
@@ -120,7 +120,7 @@ function apiTestSuite(
 ): Suite {
     return describe(modelName, () => {
         for (const configProps of configs) {
-            describe(configProps.configName, async () => {
+            describe(configProps.configName, () => {
                 /**
                  * Complete config generated in `before` hook.
                  */
@@ -238,7 +238,7 @@ describe("api-markdown-documenter full-suite tests", () => {
         {
             configName: "flat-config",
             configLessApiModel: flatConfig,
-            generateFrontMatter: (apiItem) =>
+            generateFrontMatter: (apiItem): string =>
                 `<!--- This is sample front-matter for API item "${apiItem.displayName}" -->`,
         },
         {

@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { AlertNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
 import { standardEOL } from "./Utilities";
@@ -11,7 +15,7 @@ import { standardEOL } from "./Utilities";
  */
 export function AlertToMarkdown(alertNode: AlertNode, renderer: DocumentationNodeRenderer): string {
     let headerText = `<bold> [${alertNode.alertKind}]`;
-    if (alertNode.title) {
+    if (alertNode.title !== undefined) {
         headerText += `: ${alertNode.title}`;
     }
     headerText += ` </bold>${standardEOL}`;

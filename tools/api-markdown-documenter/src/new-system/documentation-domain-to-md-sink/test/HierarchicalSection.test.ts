@@ -5,8 +5,7 @@
 import { expect } from "chai";
 
 import { HeadingNode, HierarchicalSectionNode, PlainTextNode } from "../../documentation-domain";
-import { DocumentationNodeRenderer } from "../md-transformers";
-import { standardEOL } from "../md-transformers/Utilities";
+import { DocumentationNodeRenderer, standardEOL } from "../md-transformers";
 
 describe("HierarchicalSectionNode markdown tests", () => {
     it("Creates a hierarchical section with sensible default depth when none is provided", () => {

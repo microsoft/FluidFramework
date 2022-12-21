@@ -76,7 +76,7 @@ export function apiItemToDocument(
 
     // Render breadcrumb
     if (config.includeBreadcrumb) {
-        sections.push(wrapInSection([createBreadcrumbParagraph(apiItem, config)], undefined));
+        sections.push(wrapInSection([createBreadcrumbParagraph(apiItem, config)]));
     }
 
     // Render body content for the item

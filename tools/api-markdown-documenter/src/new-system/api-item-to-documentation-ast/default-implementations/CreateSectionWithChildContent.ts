@@ -47,19 +47,19 @@ export function createSectionWithChildContent(
 
     // Render beta warning if applicable
     if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
-        sections.push(wrapInSection([betaAlert], undefined));
+        sections.push(wrapInSection([betaAlert]));
     }
 
     // Render deprecation notice (if any)
     const deprecationNotice = createDeprecationNoticeSection(apiItem, config);
     if (deprecationNotice !== undefined) {
-        sections.push(wrapInSection([deprecationNotice], undefined));
+        sections.push(wrapInSection([deprecationNotice]));
     }
 
     // Render summary comment (if any)
     const summary = createSummaryParagraph(apiItem, config);
     if (summary !== undefined) {
-        sections.push(wrapInSection([summary], undefined));
+        sections.push(wrapInSection([summary]));
     }
 
     // Render signature (if any)
@@ -100,6 +100,6 @@ export function createSectionWithChildContent(
     // Add heading to top of section only if this is being rendered to a parent item.
     // Document items have their headings handled specially.
     return doesItemRequireOwnDocument(apiItem, config.documentBoundaries)
-        ? wrapInSection(sections, undefined) // TODO: this probably messes up hierarchy stuff
+        ? wrapInSection(sections)
         : wrapInSection(sections, getHeadingForApiItem(apiItem, config));
 }

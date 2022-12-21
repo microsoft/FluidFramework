@@ -5,7 +5,8 @@
 import { DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../../Configuration";
-import { ApiFunctionLike, mergeSections } from "../../utilities";
+import { ApiFunctionLike } from "../../../utilities";
+import { mergeSections } from "../../utilities";
 import { renderParametersSection, renderReturnsSection } from "../helpers";
 
 /**

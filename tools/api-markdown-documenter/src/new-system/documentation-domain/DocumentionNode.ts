@@ -1,4 +1,4 @@
-import {
+import type {
     Data as UnistData,
     Literal as UnistLiteral,
     Node as UnistNode,
@@ -23,7 +23,7 @@ export interface DocumentationNode<TData extends object = UnistData> extends Uni
 /**
  * Represents a documentation node that is contractually rendered to a single line (no line breaks allowed).
  */
-export interface SingleLineElementNode extends DocumentationNode {}
+export type SingleLineElementNode = DocumentationNode;
 
 /**
  * A documentation node that has child nodes.

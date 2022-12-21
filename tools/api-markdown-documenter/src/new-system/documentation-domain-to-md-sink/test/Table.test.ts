@@ -5,8 +5,7 @@
 import { expect } from "chai";
 
 import { PlainTextNode, TableCellNode, TableNode, TableRowNode } from "../../documentation-domain";
-import { DocumentationNodeRenderer } from "../md-transformers";
-import { standardEOL } from "../md-transformers/Utilities";
+import { DocumentationNodeRenderer, standardEOL } from "../md-transformers";
 
 describe("Table markdown tests", () => {
     it("Can render a table row, and includes a default heading row when none is supplied", () => {

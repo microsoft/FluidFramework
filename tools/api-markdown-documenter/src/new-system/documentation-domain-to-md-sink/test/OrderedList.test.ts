@@ -5,8 +5,7 @@
 import { expect } from "chai";
 
 import { OrderedListNode, PlainTextNode } from "../../documentation-domain";
-import { DocumentationNodeRenderer } from "../md-transformers";
-import { standardEOL } from "../md-transformers/Utilities";
+import { DocumentationNodeRenderer, standardEOL } from "../md-transformers";
 
 describe("OrderedList markdown tests", () => {
     it("Does nothing with an empty list", () => {

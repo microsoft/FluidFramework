@@ -8,7 +8,7 @@ function getTableMaxColumns(tableNode: TableNode): number {
     if (tableNode.headingRow) {
         max = tableNode.headingRow.children.length;
     }
-    for (let row of tableNode.children) {
+    for (const row of tableNode.children) {
         max = Math.max(row.children.length, max);
     }
     return max;

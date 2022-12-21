@@ -11,8 +11,7 @@ import {
     ParagraphNode,
     PlainTextNode,
 } from "../../documentation-domain";
-import { markdownFromDocumentNode } from "../md-transformers";
-import { standardEOL } from "../md-transformers/Utilities";
+import { markdownFromDocumentNode, standardEOL } from "../md-transformers";
 
 describe("Document markdown tests", () => {
     it("Renders a simple document", () => {

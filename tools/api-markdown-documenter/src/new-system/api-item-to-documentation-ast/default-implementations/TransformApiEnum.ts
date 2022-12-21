@@ -19,7 +19,7 @@ export function transformApiEnum(
 ): HierarchicalSectionNode {
     const sections: HierarchicalSectionNode[] = [];
 
-    const hasAnyChildren = apiEnum.members.length !== 0;
+    const hasAnyChildren = apiEnum.members.length > 0;
 
     if (hasAnyChildren) {
         // Accumulate child items
@@ -43,8 +43,10 @@ export function transformApiEnum(
         }
 
         // Render individual flag details
-        if (flags.length !== 0) {
-            const detailsSection = wrapInSection(flags.map(generateChildContent));
+        if (flags.length > 0) {
+            const detailsSection = wrapInSection(
+                flags.map((element) => generateChildContent(element)),
+            );
             sections.push(detailsSection);
         }
     }

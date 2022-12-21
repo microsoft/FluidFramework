@@ -11,8 +11,7 @@ import {
     TableNode,
     TableRowNode,
 } from "../../documentation-domain";
-import { DocumentationNodeRenderer } from "../md-transformers";
-import { standardEOL } from "../md-transformers/Utilities";
+import { DocumentationNodeRenderer, standardEOL } from "../md-transformers";
 
 describe("CodeSpan markdown tests", () => {
     it("Can render a simple CodeSpan", () => {

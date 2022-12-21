@@ -2,9 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import * as Path from "node:path";
+
 import { ApiItem } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
-import * as Path from "path";
 
 import {
     MarkdownDocumenterConfiguration,
@@ -55,7 +56,7 @@ export function createDocuments(partialConfig: MarkdownDocumenterConfiguration):
     const filteredPackages = apiModel.packages.filter(
         (apiPackage) => !config.packageFilterPolicy(apiPackage),
     );
-    if (filteredPackages.length !== 0) {
+    if (filteredPackages.length > 0) {
         // For each package, walk the child graph to find API items which should be rendered to their own document
         // per provided policy.
 

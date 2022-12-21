@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { HierarchicalSectionNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
 import { addNewlineOrBlank } from "./Utilities";
@@ -21,7 +25,7 @@ export function HierarchicalSectionToMarkdown(
         output.push(renderer.renderNode(sectionNode.heading));
     }
 
-    if (sectionNode.children.length) {
+    if (sectionNode.children.length > 0) {
         output.push(addNewlineOrBlank(renderer.countTrailingNewlines < 1));
         output.push(renderer.renderNodes(sectionNode.children));
         output.push(addNewlineOrBlank(renderer.countTrailingNewlines < 1)); // Add a line if the last content element didn't

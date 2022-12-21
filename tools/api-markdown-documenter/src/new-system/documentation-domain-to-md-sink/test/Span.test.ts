@@ -4,8 +4,7 @@
  */
 import { expect } from "chai";
 
-import { SpanNode } from "../../documentation-domain";
-import { PlainTextNode } from "../../documentation-domain/PlainTextNode";
+import { PlainTextNode, SpanNode } from "../../documentation-domain";
 import { DocumentationNodeRenderer } from "../md-transformers";
 
 describe("Span markdown tests", () => {

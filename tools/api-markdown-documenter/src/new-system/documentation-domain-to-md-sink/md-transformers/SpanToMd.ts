@@ -9,21 +9,21 @@ import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
  * @returns The markdown representation of the SpanNode as a string
  */
 export function SpanToMarkdown(span: SpanNode, renderer: DocumentationNodeRenderer): string {
-    let output: string[] = [];
+    const output: string[] = [];
     if (span.textFormatting) {
         const { bold, italic, strikethrough } = span.textFormatting;
-        if (bold) {
+        if (bold === true) {
             renderer.setBold();
         }
-        if (italic) {
+        if (italic === true) {
             renderer.setItalic();
         }
-        if (strikethrough) {
+        if (strikethrough === true) {
             renderer.setStrikethrough();
         }
     }
 
-    if (span.children && span.children.length) {
+    if (span.children.length > 0) {
         output.push(...span.children.map((child) => renderer.renderNode(child)));
     }
 

@@ -7,6 +7,9 @@
  * Default {@link @microsoft/api-extractor-model#ApiItem} transformation implementations.
  */
 
+// TODO: fix before merging
+/* eslint-disable no-restricted-syntax */
+
 export * from "./TransformApiClass";
 export * from "./TransformApiEnum";
 export * from "./TransformApiFunctionLike";
@@ -17,3 +20,5 @@ export * from "./TransformApiModuleLike";
 export * from "./TransformApiNamespace";
 export * from "./TransformApiPackage";
 export * from "./CreateSectionWithChildContent";
+
+/* eslint-enable no-restricted-syntax */

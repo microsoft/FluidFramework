@@ -16,14 +16,14 @@ export function PlainTextToMarkdown(
     // TODO: Include leading whitespace but trim trailing
     const output: string[] = [""];
 
-    let tagsChecked = [
+    const tagsChecked = [
         { predicate: renderer.applyingBold, enter: "<b>", exit: "</b>" },
         { predicate: renderer.applyingItalic, enter: "<i>", exit: "</i>" },
         { predicate: renderer.applyingStrikethrough, enter: "<strike>", exit: "</strike>" },
     ];
 
     // Add bold, underline, strikethrough entry tags
-    for (let tag of tagsChecked) {
+    for (const tag of tagsChecked) {
         if (tag.predicate) {
             output.push(tag.enter);
         }
@@ -33,7 +33,7 @@ export function PlainTextToMarkdown(
     output.push(textNode.value);
 
     // Add bold, underline, strikethrough exit tags
-    for (let tag of tagsChecked) {
+    for (const tag of tagsChecked) {
         if (tag.predicate) {
             output.push(tag.exit);
         }

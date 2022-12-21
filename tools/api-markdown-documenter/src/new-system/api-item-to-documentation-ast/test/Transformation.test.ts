@@ -2,6 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import * as Path from "node:path";
+
 import {
     ApiFunction,
     ApiInterface,
@@ -11,7 +13,6 @@ import {
     ApiVariable,
 } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
-import * as Path from "path";
 
 import {
     MarkdownDocumenterConfiguration,
@@ -77,7 +78,7 @@ function findApiMember(
 function createConfig(
     partialConfig: Omit<MarkdownDocumenterConfiguration, "apiModel">,
     apiModel: ApiModel,
-) {
+): Required<MarkdownDocumenterConfiguration> {
     return markdownDocumenterConfigurationWithDefaults({
         ...partialConfig,
         apiModel,

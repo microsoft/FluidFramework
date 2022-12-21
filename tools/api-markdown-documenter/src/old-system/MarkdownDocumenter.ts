@@ -12,10 +12,10 @@ import {
     MarkdownDocumenterConfiguration,
     markdownDocumenterConfigurationWithDefaults,
 } from "../Configuration";
+import { doesItemRequireOwnDocument, getLinkUrlForApiItem } from "../utilities";
 import { MarkdownDocument } from "./MarkdownDocument";
 import { MarkdownEmitter } from "./MarkdownEmitter";
 import { renderApiItemDocument, renderModelDocument, renderPackageDocument } from "./rendering";
-import { doesItemRequireOwnDocument, getLinkUrlForApiItem } from "./utilities";
 
 /**
  * This module contains the primary rendering entrypoints to the system.

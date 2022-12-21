@@ -29,14 +29,6 @@ import { MarkdownDocumenterConfiguration } from "../../../Configuration";
 import { Heading } from "../../../Heading";
 import { Link } from "../../../Link";
 import {
-    DocAlert,
-    DocAlertType,
-    DocEmphasisSpan,
-    DocHeading,
-    DocList,
-    ListKind,
-} from "../../doc-nodes";
-import {
     ApiFunctionLike,
     doesItemKindRequireOwnDocument,
     doesItemRequireOwnDocument,
@@ -49,8 +41,16 @@ import {
     getReturnsBlock,
     getSeeBlocks,
     getThrowsBlocks,
-    mergeSections,
-} from "../../utilities";
+} from "../../../utilities";
+import {
+    DocAlert,
+    DocAlertType,
+    DocEmphasisSpan,
+    DocHeading,
+    DocList,
+    ListKind,
+} from "../../doc-nodes";
+import { mergeSections } from "../../utilities";
 import { renderParametersSummaryTable } from "./TableRenderingHelpers";
 
 /**

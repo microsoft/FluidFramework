@@ -12,8 +12,8 @@ export function compareNodeArrays<TNode extends DocumentationNode>(
         return false;
     }
 
-    for (let i = 0; i < arrayA.length; i++) {
-        if (!arrayA[i].equals(arrayB[i])) {
+    for (const [i, element] of arrayA.entries()) {
+        if (!element.equals(arrayB[i])) {
             return false;
         }
     }

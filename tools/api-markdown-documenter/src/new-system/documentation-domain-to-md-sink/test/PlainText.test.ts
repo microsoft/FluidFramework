@@ -4,7 +4,7 @@
  */
 import { expect } from "chai";
 
-import { PlainTextNode } from "../../documentation-domain/PlainTextNode";
+import { PlainTextNode } from "../../documentation-domain";
 import { DocumentationNodeRenderer } from "../md-transformers";
 
 describe("PlainText markdown tests", () => {

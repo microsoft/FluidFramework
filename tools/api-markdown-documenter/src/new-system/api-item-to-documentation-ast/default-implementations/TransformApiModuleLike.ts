@@ -24,40 +24,37 @@ import { createChildDetailsSection, createMemberTables } from "../helpers";
  *
  * @remarks Format:
  *
- * - Tables
+ * Tables
  *
- *   - interfaces
+ * - interfaces
  *
- *   - classes
+ * - classes
  *
- *   - enums
+ * - enums
  *
- *   - type-aliases
+ * - type-aliases
  *
- *   - functions
+ * - functions
  *
- *   - variables
+ * - variables
  *
- *   - namespaces
+ * - namespaces
  *
- * - Details (for any types not rendered to their own documents - see
- *   {@link PolicyOptions.documentBoundaries})
+ * Details (for any types not rendered to their own documents - see {@link PolicyOptions.documentBoundaries})
  *
- * - Tables
+ * - interfaces
  *
- *   - interfaces
+ * - classes
  *
- *   - classes
+ * - enums
  *
- *   - enums
+ * - type-aliases
  *
- *   - type-aliases
+ * - functions
  *
- *   - functions
+ * - variables
  *
- *   - variables
- *
- *   - namespaces
+ * - namespaces
  */
 export function transformApiModuleLike(
     apiItem: ApiModuleLike,
@@ -67,36 +64,36 @@ export function transformApiModuleLike(
 ): HierarchicalSectionNode {
     const children: HierarchicalSectionNode[] = [];
 
-    const hasAnyChildren = apiItem.members.length !== 0;
+    const hasAnyChildren = apiItem.members.length > 0;
 
     if (hasAnyChildren) {
         // Accumulate child items
         const interfaces = filterByKind(childItems, [ApiItemKind.Interface]).map(
-            (apiItem) => apiItem as ApiInterface,
+            (_apiItem) => _apiItem as ApiInterface,
         );
 
         const classes = filterByKind(childItems, [ApiItemKind.Class]).map(
-            (apiItem) => apiItem as ApiClass,
+            (_apiItem) => _apiItem as ApiClass,
         );
 
         const namespaces = filterByKind(childItems, [ApiItemKind.Namespace]).map(
-            (apiItem) => apiItem as ApiNamespace,
+            (_apiItem) => _apiItem as ApiNamespace,
         );
 
         const types = filterByKind(childItems, [ApiItemKind.TypeAlias]).map(
-            (apiItem) => apiItem as ApiTypeAlias,
+            (_apiItem) => _apiItem as ApiTypeAlias,
         );
 
         const functions = filterByKind(childItems, [ApiItemKind.Function]).map(
-            (apiItem) => apiItem as ApiFunction,
+            (_apiItem) => _apiItem as ApiFunction,
         );
 
         const enums = filterByKind(childItems, [ApiItemKind.Enum]).map(
-            (apiItem) => apiItem as ApiEnum,
+            (_apiItem) => _apiItem as ApiEnum,
         );
 
         const variables = filterByKind(childItems, [ApiItemKind.Variable]).map(
-            (apiItem) => apiItem as ApiVariable,
+            (_apiItem) => _apiItem as ApiVariable,
         );
 
         // Render summary tables

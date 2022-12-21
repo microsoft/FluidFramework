@@ -23,40 +23,39 @@ import { createChildDetailsSection, createMemberTables } from "../helpers";
  *
  * @remarks Format:
  *
- * - Tables
+ * Tables
  *
- *   - constructors
+ * - constructors
  *
- *   - (static) event properties
+ * - (static) event properties
  *
- *   - (static) properties
+ * - (static) properties
  *
- *   - (static) methods
+ * - (static) methods
  *
- *   - (non-static) event properties
+ * - (non-static) event properties
  *
- *   - (non-static) properties
+ * - (non-static) properties
  *
- *   - (non-static) methods
+ * - (non-static) methods
  *
- *   - call-signatures
+ * - call-signatures
  *
- *   - index-signatures
+ * - index-signatures
  *
- * - Details (for any types not rendered to their own documents - see
- *   {@link PolicyOptions.documentBoundaries})
+ * Details (for any types not rendered to their own documents - see {@link PolicyOptions.documentBoundaries})
  *
- *   - constructors
+ * - constructors
  *
- *   - event properties
+ * - event properties
  *
- *   - properties
+ * - properties
  *
- *   - methods
+ * - methods
  *
- *   - call-signatures
+ * - call-signatures
  *
- *   - index-signatures
+ * - index-signatures
  */
 export function transformApiClass(
     apiClass: ApiClass,
@@ -65,7 +64,7 @@ export function transformApiClass(
 ): HierarchicalSectionNode {
     const sections: HierarchicalSectionNode[] = [];
 
-    const hasAnyChildren = apiClass.members.length !== 0;
+    const hasAnyChildren = apiClass.members.length > 0;
 
     if (hasAnyChildren) {
         // Accumulate child items
@@ -225,7 +224,7 @@ export function transformApiClass(
             generateChildContent,
         );
 
-        if (detailsSections !== undefined && detailsSections.length !== 0) {
+        if (detailsSections !== undefined && detailsSections.length > 0) {
             sections.push(...detailsSections);
         }
     }
