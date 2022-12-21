@@ -14,9 +14,6 @@ import {
     LineageEvent,
     Mark,
     Modify,
-    ModifyDetach,
-    ModifyingMark,
-    ModifyReattach,
     MoveIn,
     NewAttach,
     ObjectMark,
@@ -32,29 +29,8 @@ export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<T
     return isObjMark(mark) && mark.type === "Modify";
 }
 
-export function isModifyingMark<TNodeChange>(
-    mark: Mark<TNodeChange>,
-): mark is ModifyingMark<TNodeChange> {
-    return (
-        isObjMark(mark) &&
-        (mark.type === "Modify" ||
-            mark.type === "MInsert" ||
-            mark.type === "MRevive" ||
-            mark.type === "MMoveIn" ||
-            mark.type === "MReturn" ||
-            mark.type === "MDelete" ||
-            mark.type === "MMoveOut")
-    );
-}
-
 export function isNewAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is NewAttach<TNodeChange> {
-    return (
-        isObjMark(mark) &&
-        (mark.type === "Insert" ||
-            mark.type === "MInsert" ||
-            mark.type === "MoveIn" ||
-            mark.type === "MMoveIn")
-    );
+    return isObjMark(mark) && (mark.type === "Insert" || mark.type === "MoveIn");
 }
 
 export function isAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is Attach<TNodeChange> {
@@ -65,40 +41,32 @@ export function isAttachInGap<TNodeChange>(mark: Mark<TNodeChange>): mark is Att
     return isNewAttach(mark) || isActiveReattach(mark) || isBlockedReattach(mark);
 }
 
-export function isReattach<TNodeChange>(
-    mark: Mark<TNodeChange>,
-): mark is Reattach | ModifyReattach<TNodeChange> {
-    return (
-        isObjMark(mark) &&
-        (mark.type === "Revive" ||
-            mark.type === "MRevive" ||
-            mark.type === "Return" ||
-            mark.type === "MReturn")
-    );
+export function isReattach<TNodeChange>(mark: Mark<TNodeChange>): mark is Reattach<TNodeChange> {
+    return isObjMark(mark) && (mark.type === "Revive" || mark.type === "Return");
 }
 
 export function isActiveReattach<TNodeChange>(
     mark: Mark<TNodeChange>,
-): mark is (Reattach | ModifyReattach<TNodeChange>) & Muted {
+): mark is Reattach<TNodeChange> & Muted {
     // No need to check Reattach.lastDeletedBy because it can only be set if the mark is muted
     return isReattach(mark) && !isMuted(mark);
 }
 
 export function isMutedReattach<TNodeChange>(
     mark: Mark<TNodeChange>,
-): mark is (Reattach | ModifyReattach<TNodeChange>) & Muted {
+): mark is Reattach<TNodeChange> & Muted {
     return isReattach(mark) && isMuted(mark);
 }
 
 export function isSkipLikeReattach<TNodeChange>(
     mark: Mark<TNodeChange>,
-): mark is (Reattach | ModifyReattach<TNodeChange>) & Muted {
+): mark is Reattach<TNodeChange> & Muted {
     return isMutedReattach(mark) && mark.lastDetachedBy === undefined;
 }
 
 export function isBlockedReattach<TNodeChange>(
     mark: Mark<TNodeChange>,
-): mark is (Reattach | ModifyReattach<TNodeChange>) & Muted {
+): mark is Reattach<TNodeChange> & Muted {
     return isMutedReattach(mark) && mark.lastDetachedBy !== undefined;
 }
 
@@ -109,11 +77,6 @@ export function isMuted(mark: Mutable): mark is Muted {
 export function getAttachLength(attach: Attach): number {
     const type = attach.type;
     switch (type) {
-        case "MInsert":
-        case "MMoveIn":
-        case "MRevive":
-        case "MReturn":
-            return 1;
         case "Insert":
             return attach.content.length;
         case "MoveIn":
@@ -171,16 +134,10 @@ export function getOutputLength(mark: Mark<unknown>): number {
             return mark.count;
         case "Insert":
             return mark.content.length;
-        case "MInsert":
-        case "MMoveIn":
-        case "MReturn":
-        case "MRevive":
         case "Modify":
             return 1;
         case "Delete":
-        case "MDelete":
         case "MoveOut":
-        case "MMoveOut":
             return 0;
         default:
             unreachableCase(type);
@@ -207,8 +164,6 @@ export function getInputLength(mark: Mark<unknown>): number {
         case "MoveOut":
             return mark.count;
         case "Modify":
-        case "MDelete":
-        case "MMoveOut":
             return 1;
         default:
             unreachableCase(type);
@@ -244,10 +199,6 @@ export function splitMarkOnInput<TMark extends InputSpanningMark<unknown>>(
     const type = mark.type;
     switch (type) {
         case "Modify":
-        case "MDelete":
-        case "MMoveOut":
-        case "MRevive":
-        case "MReturn":
             fail(`Unable to split ${type} mark of length 1`);
         case "Revive":
         case "Return":
@@ -291,10 +242,6 @@ export function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(
     const type = markObj.type;
     switch (type) {
         case "Modify":
-        case "MReturn":
-        case "MRevive":
-        case "MInsert":
-        case "MMoveIn":
             fail(`Unable to split ${type} mark of length 1`);
         case "Insert":
             return [
@@ -319,10 +266,10 @@ export function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(
 
 export function isDetachMark<TNodeChange>(
     mark: Mark<TNodeChange> | undefined,
-): mark is Detach | ModifyDetach<TNodeChange> {
+): mark is Detach<TNodeChange> {
     if (isObjMark(mark)) {
         const type = mark.type;
-        return type === "Delete" || type === "MDelete" || type === "MoveOut" || type === "MMoveOut";
+        return type === "Delete" || type === "MoveOut";
     }
     return false;
 }
@@ -346,6 +293,13 @@ export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boole
     }
     const type = rhs.type;
     if (type !== "Modify" && rhs.revision !== (lhs as HasRevisionTag).revision) {
+        return false;
+    }
+
+    if (
+        (type !== "MoveIn" && rhs.changes !== undefined) ||
+        (lhs.type !== "MoveIn" && lhs.changes !== undefined)
+    ) {
         return false;
     }
 

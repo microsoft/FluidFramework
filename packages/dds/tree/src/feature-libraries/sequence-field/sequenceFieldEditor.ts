@@ -41,7 +41,7 @@ export const sequenceFieldEditor = {
         detachIndex: number,
         isIntention?: true,
     ): Changeset<never> => {
-        const mark: Reattach = {
+        const mark: Reattach<never> = {
             type: "Revive",
             count,
             detachedBy,

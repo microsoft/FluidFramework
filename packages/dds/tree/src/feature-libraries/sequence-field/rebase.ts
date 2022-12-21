@@ -31,7 +31,6 @@ import {
     Mark,
     MarkList,
     Reattach,
-    ModifyReattach,
     NodeSpanningMark,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
@@ -297,15 +296,14 @@ function rebaseMark<TNodeChange>(
     }
     const baseType = baseMark.type;
     switch (baseType) {
-        case "Delete":
-        case "MDelete": {
+        case "Delete": {
             const baseMarkRevision = baseMark.revision ?? baseRevision;
             if (isReattach(currMark)) {
                 // TODO: add `addedBy: RevisionTag` to inverses of attaches so we can detect when
                 // currMark is rebased over the undo of currMark.mutedBy.
                 if (currMark.isIntention || currMark.mutedBy === baseMarkRevision) {
                     const reattach = {
-                        ...(clone(currMark) as Reattach | ModifyReattach<TNodeChange>),
+                        ...(clone(currMark) as Reattach<TNodeChange>),
                         // Update the characterization of the deleted content
                         detachedBy: baseMarkRevision,
                         detachIndex: baseInputOffset,
@@ -324,7 +322,6 @@ function rebaseMark<TNodeChange>(
             }
             return 0;
         }
-        case "MRevive":
         case "Revive": {
             assert(isReattach(currMark), "Only a reattach can overlap with a non-inert reattach");
             if (isMuted(baseMark)) {
@@ -354,7 +351,7 @@ function rebaseMark<TNodeChange>(
                 currMark.lastDetachedBy === baseMark.detachedBy,
                 `Unexpected revive mark overlap`,
             );
-            const revive = clone(currMark) as Reattach;
+            const revive = clone(currMark);
             delete revive.lastDetachedBy;
             return revive;
         }

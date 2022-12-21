@@ -20,7 +20,10 @@ const tag3: RevisionTag = brand(43);
 
 const testMarks: [string, SF.Mark<TestChange>][] = [
     ["SetValue", { type: "Modify", changes: TestChange.mint([], 1) }],
-    ["MInsert", { type: "MInsert", content: { type, value: 42 }, changes: TestChange.mint([], 2) }],
+    [
+        "MInsert",
+        { type: "Insert", content: [{ type, value: 42 }], changes: TestChange.mint([], 2) },
+    ],
     [
         "Insert",
         {

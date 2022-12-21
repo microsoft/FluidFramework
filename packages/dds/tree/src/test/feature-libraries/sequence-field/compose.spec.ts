@@ -72,8 +72,8 @@ describe("SequenceField - Compose", () => {
         const modify = Change.modify(0, TestChange.mint([], 42));
         const expected: TestChangeset = [
             {
-                type: "MInsert",
-                content: { type, value: 0 },
+                type: "Insert",
+                content: [{ type, value: 0 }],
                 changes: TestChange.mint([], 42),
             },
             { type: "Insert", content: [{ type, value: 1 }] },
@@ -91,18 +91,18 @@ describe("SequenceField - Compose", () => {
         ]);
         const insert: TestChangeset = [
             {
-                type: "MInsert",
+                type: "Insert",
                 revision: tag1,
-                content: { type, value: 1 },
+                content: [{ type, value: 1 }],
                 changes: childChangeA,
             },
         ];
         const modify = Change.modify(0, childChangeB);
         const expected: TestChangeset = [
             {
-                type: "MInsert",
+                type: "Insert",
                 revision: tag1,
-                content: { type, value: 1 },
+                content: [{ type, value: 1 }],
                 changes: childChangeAB,
             },
         ];
@@ -129,7 +129,8 @@ describe("SequenceField - Compose", () => {
         const modify = Change.modify(0, { valueChange: { value: 2 } });
         const expected: SF.Changeset = [
             {
-                type: "MRevive",
+                type: "Revive",
+                count: 1,
                 detachedBy: tag1,
                 detachIndex: 0,
                 changes: { valueChange: { value: 2 } },
@@ -149,7 +150,8 @@ describe("SequenceField - Compose", () => {
         ]);
         const revive: TestChangeset = [
             {
-                type: "MRevive",
+                type: "Revive",
+                count: 1,
                 detachedBy: tag1,
                 detachIndex: 0,
                 changes: childChangeA,
@@ -163,7 +165,8 @@ describe("SequenceField - Compose", () => {
         ];
         const expected: TestChangeset = [
             {
-                type: "MRevive",
+                type: "Revive",
+                count: 1,
                 detachedBy: tag1,
                 detachIndex: 0,
                 changes: childChangeAB,
@@ -303,7 +306,8 @@ describe("SequenceField - Compose", () => {
     it("revive and modify ○ delete", () => {
         const revive: SF.Changeset = [
             {
-                type: "MRevive",
+                type: "Revive",
+                count: 1,
                 revision: tag1,
                 detachedBy: tag1,
                 detachIndex: 0,

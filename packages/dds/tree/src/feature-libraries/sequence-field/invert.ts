@@ -53,8 +53,7 @@ function invertMark<TNodeChange>(
         return [mark];
     } else {
         switch (mark.type) {
-            case "Insert":
-            case "MInsert": {
+            case "Insert": {
                 return [
                     {
                         type: "Delete",
