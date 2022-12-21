@@ -327,7 +327,7 @@ export class ConnectionManager implements IConnectionManager {
         });
     }
 
-    public dispose(error?: ICriticalContainerError, switchToReadonly?: boolean) {
+    public dispose(error?: ICriticalContainerError, switchToReadonly: boolean = true) {
         if (this._disposed) {
             return;
         }
@@ -347,7 +347,7 @@ export class ConnectionManager implements IConnectionManager {
         // This raises "disconnect" event if we have active connection.
         this.disconnectFromDeltaStream(disconnectReason);
 
-        if (switchToReadonly === true) {
+        if (switchToReadonly) {
             // Notify everyone we are in read-only state.
             // Useful for data stores in case we hit some critical error,
             // to switch to a mode where user edits are not accepted
