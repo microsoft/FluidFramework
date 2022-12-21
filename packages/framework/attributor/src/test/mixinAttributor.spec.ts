@@ -19,7 +19,12 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { createRuntimeAttributor, IProvideRuntimeAttributor, mixinAttributor } from "../mixinAttributor";
+import {
+    createRuntimeAttributor,
+    enableOnNewFileKey,
+    IProvideRuntimeAttributor,
+    mixinAttributor
+} from "../mixinAttributor";
 import { Attributor } from "../attributor";
 import { makeLZ4Encoder } from "../lz4Encoder";
 import { AttributorSerializer, chain, deltaEncoder } from "../encoders";
@@ -28,8 +33,6 @@ import { makeMockAudience } from "./utils";
 type Mutable<T> = {
     -readonly[P in keyof T]: T[P]
 };
-
-const enableOnNewSetting = "Fluid.Attribution.EnableOnNewFile";
 
 describe("mixinAttributor", () => {
     const clientId = "mock client id";
@@ -67,7 +70,7 @@ describe("mixinAttributor", () => {
     });
 
     const setEnableOnNew = (val: boolean) => {
-        injectedSettings[enableOnNewSetting] = val;
+        injectedSettings[enableOnNewFileKey] = val;
     }
 
     const AttributingContainerRuntime = mixinAttributor();
@@ -210,13 +213,13 @@ describe("mixinAttributor", () => {
                 }
             },
             {
-                testName: "for new documents with Fluid.Attribution.EnableOnNew unset",
+                testName: `for new documents with ${enableOnNewFileKey} unset`,
                 getContext: () => {
                     return getMockContext() as IContainerContext;
                 }
             },
             {
-                testName: "for new documents with Fluid.Attribution.EnableOnNew set to false",
+                testName: `for new documents with ${enableOnNewFileKey} set to false`,
                 getContext: () => {
                     setEnableOnNew(false);
                     const context = getMockContext() as Mutable<IContainerContext>;

@@ -25,6 +25,14 @@ const opBlobName = "op";
 
 /**
  * @alpha
+ * Feature Gate Key -
+ * Whether or not a container runtime instantiated using `mixinAttributor`'s load should generate an attributor on
+ * new files. See package README for more notes on integration.
+ */
+export const enableOnNewFileKey = "Fluid.Attribution.EnableOnNewFile";
+
+/**
+ * @alpha
  */
 export const IRuntimeAttributor: keyof IProvideRuntimeAttributor = "IRuntimeAttributor";
 
@@ -118,7 +126,7 @@ export const mixinAttributor = (
                 audience,
                 baseSnapshot,
                 async (id) => runtime.storage.readBlob(id),
-                mc.config.getBoolean("Fluid.Attribution.EnableOnNewFile") ?? false
+                mc.config.getBoolean(enableOnNewFileKey) ?? false
             );
             return runtime;
         }
