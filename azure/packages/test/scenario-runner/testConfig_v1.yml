@@ -25,7 +25,7 @@ stages:
       params:
           connectionConfig: ${connectionConfig}
           schema: ${schema}
-          numDocs: 10
+          numDocs: 1
           clientStartDelayMs: 500
       out: ${docIds}
     - stage-3:
@@ -34,7 +34,7 @@ stages:
       package: doc-loader
       params:
           connectionConfig: ${connectionConfig}
-          numOfLoads: 20
+          numOfLoads: 5
           schema: ${schema}
           docIds: ${docIds}
           clientStartDelayMs: 500
