@@ -1880,7 +1880,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (batch: IBatchMessage[]) => this.submitBatch(batch),
             (message) => this.submitSignal(message),
             (error?: ICriticalContainerError) => this.dispose(error),
-            (error?: ICriticalContainerError) => this.close(error),
+            // ! TODO: remove dispose call in 2.0.0-internal.4.0.0
+            (error?: ICriticalContainerError) => { this.close(error); this.dispose(error); },
             Container.version,
             (dirty: boolean) => this.updateDirtyContainerState(dirty),
             existing,

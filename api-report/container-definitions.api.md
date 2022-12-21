@@ -169,7 +169,7 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
-    readonly disposeFn: (error?: ICriticalContainerError) => void;
+    readonly disposeFn?: (error?: ICriticalContainerError) => void;
     // @deprecated (undocumented)
     readonly existing: boolean | undefined;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;

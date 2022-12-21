@@ -842,14 +842,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public get closeFn(): (error?: ICriticalContainerError) => void {
-        if (this.context.disposeFn) {
-            // Also call disposeFn to retain functionality of runtime being disposed on close
-            return (error?: ICriticalContainerError) => {
-                this.context.closeFn(error);
-                this.context.disposeFn(error);
-            };
-        }
-        return this.context.closeFn;
+        // Also call disposeFn to retain functionality of runtime being disposed on close
+        return (error?: ICriticalContainerError) => {
+            this.context.closeFn(error);
+            this.context.disposeFn?.(error);
+        };
     }
 
     public get flushMode(): FlushMode {
