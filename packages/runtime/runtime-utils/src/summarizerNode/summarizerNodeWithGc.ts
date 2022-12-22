@@ -137,13 +137,16 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         }
         this.baseGCDetailsLoaded = true;
 
+        // Update GC data, used routes and reference used routes. The used routes are sorted because they are compared
+        // across GC runs to check if they changed. Sorting ensures that the elements are in the same order.
         // If the GC details has GC data, initialize our GC data from it.
         if (baseGCDetails.gcData !== undefined) {
             this.gcData = cloneGCData(baseGCDetails.gcData);
         }
-        // Sort the used routes because we compare them with the current used routes to check if they changed between
-        // summaries. Both are sorted so that the order of elements is the same.
-        this.referenceUsedRoutes = baseGCDetails.usedRoutes ? Array.from(baseGCDetails.usedRoutes).sort() : undefined;
+        if (baseGCDetails.usedRoutes !== undefined) {
+            this.usedRoutes = Array.from(baseGCDetails.usedRoutes).sort();
+            this.referenceUsedRoutes = Array.from(baseGCDetails.usedRoutes).sort()
+        }
     }
 
     public async summarize(
@@ -273,14 +276,15 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     ): Promise<void> {
         // If GC is disabled, skip updating GC state since we are not tracking GC state.
         if (!this.gcDisabled) {
+            // Load the base GC details before proceeding because if that happens later it can overwrite the GC details
+            // written by the following code.
+            await this.loadBaseGCDetails();
+
             // Possible re-entrancy. If we have already seen a summary later than this one, ignore it.
             if (this.referenceSequenceNumber >= referenceSequenceNumber) {
                 return;
             }
 
-            // Load the base GC details before proceeding because if that happens later it can overwrite the GC details
-            // written by the following code.
-            await this.loadBaseGCDetails();
             /**
              * GC data is written at root of the snapshot tree under "gc" sub-tree. This data needs to be propagated to
              * all the nodes in the container.

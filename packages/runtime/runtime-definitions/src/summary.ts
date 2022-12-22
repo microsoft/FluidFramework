@@ -111,7 +111,7 @@ export interface IGarbageCollectionSummaryDetailsLegacy {
     unrefTimestamp?: number;
 }
 
-/*
+/**
  * The GC data that is read from a snapshot. It contains the Garbage CollectionState state and tombstone state.
  */
 export interface IGarbageCollectionSnapshotData {
