@@ -87,7 +87,7 @@ export const VisibilityState = {
 };
 export type VisibilityState = typeof VisibilityState[keyof typeof VisibilityState];
 
-export interface IContainerRuntimeBaseEvents extends IEvent{
+export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void);
     /**
      * @param runtimeMessage - tells if op is runtime op. If it is, it was unpacked, i.e. it's type and content
@@ -398,6 +398,16 @@ export interface IFluidDataStoreContext extends
      * Returns the current audience.
      */
     getAudience(): IAudience;
+
+    /**
+     * Invokes the given callback and expects that no ops are submitted
+     * until execution finishes. If an op is submitted, an error will be raised.
+     *
+     * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
+     *
+     * @param callback - the callback to be invoked
+     */
+    ensureNoDataModelChanges<T>(callback: () => T): T;
 
     /**
      * Submits the message to be sent to other clients.
