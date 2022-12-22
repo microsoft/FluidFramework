@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+// https://www.typescriptlang.org/play?#code/MYewdgzgLgBANiA5jAvDUkRwKYDoGIDcAUBtDGAajABRgBcFArgLYBG2ATgJSoB8tAB6MAhmACevFALJY8BGgAMA2gBIA3mAC+AXRgbBWxdxKlw5FgEZGAWREAHADxhWHTgBpm7LgLRhsAO4wdvY0JsRWuBDYUDSW7pbhEZa4AGYgnACiIsAAFjSpTGDAUACW4LQAbp4A1p4svOrEMC3wSDRQuaUQtZ7VMA0kWp4ARAAqABIAkgDKI0kKIyjLK6trKPOmwHAiEBAwAGIgIDBNrTDCXm7UlgBMAMwk58BsNP11A43N560Knd29GD9QbfFpaYhaUyRdJZHL5QrFMoVGi4VEiTiICCNCiBQ7HMK4F4otEYrEwYYwEYTTIAGRpAHlNsk0hlsnkCkUSuUwLRUbh0Zjsf4gkcQASXrg2KUwAATGgjABC9IAqgA5AAi82J-NJvApVNpDKZ0NZcI5iO5vJJgtOOJF+O4hLYkulcsVKo18xdsvlqvpAAVMlq+QKyfrqXTGQt2kt1nHlkzmTC2fDOUieW9AQ1TqC2ogOl0ejAPsDwvrJrNE2RYKlqAiucjsX9CyZySRUvz7PY4OJ5QBBf3+mlTTKa7jEYiLAB+M9nc-ns8TJth7JomeL9SkAjOv3a-yLJc3Q0dUp9I3pAGl5qMK3MkpOY-H40ygA
+
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { MapWithExpiration } from "../mapWithExpiration";
 
 describe("MapWithExpiration", () => {
     let clock: SinonFakeTimers;
-    let map: MapWithExpiration<number, string>;
 
     before(() => {
         clock = useFakeTimers();
@@ -89,7 +90,7 @@ describe("MapWithExpiration", () => {
 
     test("Basic expiry", (assertMatches: (actual: MapWithExpiration<number, string>, expected: Map<number, string>, message: string) => void) => {
         const expiryMs = 10;
-        map = new MapWithExpiration<number, string>(expiryMs);
+        const map = new MapWithExpiration<number, string>(expiryMs);
         const expected = new Map<number, string>();
 
         map.set(1, "one");
@@ -114,7 +115,7 @@ describe("MapWithExpiration", () => {
 
     test("delete", (assertMatches: (actual: MapWithExpiration<number, string>, expected: Map<number, string>, message: string) => void) => {
         const expiryMs = 10;
-        map = new MapWithExpiration<number, string>(expiryMs);
+        const map = new MapWithExpiration<number, string>(expiryMs);
         const expected = new Map<number, string>();
 
         map.set(1, "one");
@@ -132,7 +133,7 @@ describe("MapWithExpiration", () => {
 
     test("clear", (assertMatches: (actual: MapWithExpiration<number, string>, expected: Map<number, string>, message: string) => void) => {
         const expiryMs = 10;
-        map = new MapWithExpiration<number, string>(expiryMs);
+        const map = new MapWithExpiration<number, string>(expiryMs);
         const expected = new Map<number, string>();
 
         map.set(1, "one");
@@ -148,8 +149,106 @@ describe("MapWithExpiration", () => {
         assertMatches(map, expected, "Should be empty after clear");
     });
 
+    //* ONLY
+    describe.only("forEach thisArg", () => {
+        function runTests(testName: string, testFn: (maps: Map<any, any>[], thisArgs: any[]) => void) {
+            it(testName, () => { testFn([new Map(), new MapWithExpiration(10)], ["THIS", undefined]); })
+        }
+
+        runTests("inline function callback", (maps, thisArgs) => {
+            for (const thisArg of thisArgs) {
+                for (const map of maps) {
+                    map.set(1, "one");
+                    map.forEach(function (this: any, value: string, key: number, m: Map<number, string>) {
+                        assert.equal(this, thisArg, "Incorrect value for 'this'");
+                    }, thisArg);
+                }
+            }
+        });
+
+        // function testForEachThisArg(testName: string, thisArg: any) {
+        //     it(testName, () => {
+        //         const plainMap = new Map();
+        //         const mapWithExpiration = new MapWithExpiration(10);
+
+        //         plainMap.set(1, "one");
+        //         mapWithExpiration.set(1, "one");
+
+        //         plainMap.forEach(function (this: any, value: string, key: number, m: Map<number, string>) {
+        //             assert.equal(this, thisArg, `1 Incorrect value for 'this' (passed in ${thisArg})`);
+        //         }, thisArg);
+        //         mapWithExpiration.forEach(function (this: any, value: string, key: number, m: Map<number, string>) {
+        //             assert.equal(this, thisArg, `2 Incorrect value for 'this' (passed in ${thisArg})`);
+        //         }, thisArg);
+        //     });
+        // }
+
+        // testForEachThisArg("string thisArg", "THIS");
+        // testForEachThisArg("undefined thisArg", undefined);
+
+        class Foo {
+            cb(this: any, valueWhichIsExpectedThis, k, m) {
+                assert.equal(this, valueWhichIsExpectedThis, "Incorrect value for 'this'");
+            }
+        };
+
+        function testForEachThisArg2(testName: string, thisArg: any) {
+            it(testName, () => {
+                const foo = new Foo();
+
+                const plainMap2 = new Map();
+                const mapWithExpiration2 = new MapWithExpiration(10);
+
+                plainMap2.set(1, thisArg);
+                mapWithExpiration2.set(1, thisArg);
+
+                plainMap2.forEach(foo.cb, thisArg);
+                mapWithExpiration2.forEach(foo.cb, thisArg);
+            });
+        }
+
+        testForEachThisArg2("string thisArg", "THIS");
+        testForEachThisArg2("undefined thisArg", undefined);
+
+        function testForEachThisArg3(testName: string, thisArg: any) {
+            it(testName, () => {
+                const foo = new Foo();
+
+                const plainMap2 = new Map();
+                const mapWithExpiration2 = new MapWithExpiration(10);
+
+                plainMap2.set(1, "BOUND");
+                mapWithExpiration2.set(1, "BOUND");
+
+                plainMap2.forEach(foo.cb.bind("BOUND"), thisArg);
+                mapWithExpiration2.forEach(foo.cb.bind("BOUND"), thisArg);
+            });
+        }
+
+        testForEachThisArg3("string thisArg", "THIS");
+        testForEachThisArg3("undefined thisArg", undefined);
+
+        function testForEachThisArg4(testName: string, thisArg: any) {
+            it(testName, () => {
+                const plainMap2 = new Map();
+                const mapWithExpiration2 = new MapWithExpiration(10);
+
+                plainMap2.set(1, "THIS");
+                mapWithExpiration2.set(1, "THIS");
+
+                // @ts-expect-error Testing out improper usage of 'this'
+                plainMap2.forEach(() => { assert.equal(this, undefined, "Expected 'this' to be undefined for arrow fn")}, thisArg);
+                // @ts-expect-error Testing out improper usage of 'this'
+                mapWithExpiration2.forEach(() => { assert.equal(this, undefined, "Expected 'this' to be undefined for arrow fn")}, thisArg);
+            });
+        }
+
+        testForEachThisArg4("string thisArg", "THIS");
+        testForEachThisArg4("undefined thisArg", undefined);
+    });
+
     it("toString", () => {
-        map = new MapWithExpiration<number, string>(0);
+        const map = new MapWithExpiration<number, string>(0);
         assert.equal(map.toString(), "[object Map]");
     });
 });

@@ -9,7 +9,7 @@ import { assert } from "@fluidframework/common-utils";
  * An extension of Map that expires (deletes) entries after a period of inactivity.
  * The policy is based on the last time a key was written to.
  */
-export class MapWithExpiration<TKey, TValue> extends Map<TKey, TValue> {
+export class MapWithExpiration<TKey = any, TValue = any> extends Map<TKey, TValue> {
     /** Timestamps (as epoch ms numbers) of when each key was last refreshed */
     private readonly lastRefreshedTimes = new Map<TKey, number>();
 
@@ -83,9 +83,11 @@ export class MapWithExpiration<TKey, TValue> extends Map<TKey, TValue> {
             if (this.checkExpiry(k) === true) {
                 expiredKeys.push(k);
             } else {
-                callbackfn(v, k, m);
+                callbackfn.bind(thisArg)(v, k, m);
             }
-        }, thisArg);
+        },
+        // Note we don't pass thisArg here, since we bind it directly to callbackFn and don't need it otherwise
+        );
 
         // Clean up keys we know are expired now that we're done iterating
         expiredKeys.forEach((key: TKey) => { this.delete(key); });
