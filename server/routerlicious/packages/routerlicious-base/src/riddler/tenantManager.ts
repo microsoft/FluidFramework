@@ -70,6 +70,7 @@ export class TenantManager {
     public async validateToken(tenantId: string, token: string, includeDisabledTenant = false): Promise<void> {
         const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId };
         const tenantKeys = await this.getTenantKeys(tenantId, includeDisabledTenant);
+        console.log(`TENANT KEYS: ${tenantKeys}`);
 
         return jwt.verify(token, tenantKeys.key1, (error1) => {
             if (!error1) {
@@ -335,7 +336,8 @@ export class TenantManager {
         }
 
         // Delete old key from the cache
-        await this.cache.delete(tenantId)
+        Lumberjack.info(`Deleting old key from cache`, { [BaseTelemetryProperties.tenantId]: tenantId });
+        await this.cache.delete(tenantId);
 
         const tenantKeys = await this.getUpdatedTenantKeys(
             tenantDocument.key,
@@ -378,7 +380,7 @@ export class TenantManager {
                 key2
             });
 
-            await this.cache.set(tenantId, cacheKeys)
+            await this.cache.set(tenantId, cacheKeys);
 
             return {
                 key1: decryptedTenantKey1,
@@ -397,7 +399,7 @@ export class TenantManager {
                 key2: "",
             });
 
-            await this.cache.set(tenantId, cacheKey1)
+            await this.cache.set(tenantId, cacheKey1);
 
             return {
                 key1: newTenantKey,
