@@ -30,6 +30,17 @@ function getOpString(msg: ISequencedDocumentMessage | undefined) {
     return `${seq}:${ref}:${client}${opType}${opPos}`;
 }
 
+function arePropsEmpty(props: PropertySet | undefined) {
+    return props === undefined || Object.entries(props).length === 0;
+}
+
+/**
+ * Compare properties, allowing empty to match undefined
+ */
+function matchPropertiesHandleEmpty(a: PropertySet | undefined, b: PropertySet | undefined) {
+    return matchProperties(a, b) || (arePropsEmpty(a) && arePropsEmpty(b));
+}
+
 type ClientMap = Partial<Record<"A" | "B" | "C" | "D" | "E", TestClient>>;
 
 export function createClientsAtInitialState<TClients extends ClientMap>(
@@ -215,7 +226,7 @@ export class TestClientLogger {
                         if (toRemovalInfo(seg) === undefined) {
                             const segProps = seg.properties;
                             for (let i = 0; i < seg.cachedLength; i++) {
-                                if (!matchProperties(segProps, properties[pos + i])) {
+                                if (!matchPropertiesHandleEmpty(segProps, properties[pos + i])) {
                                     assert.deepStrictEqual(
                                         segProps,
                                         properties[pos + i],

@@ -247,7 +247,6 @@ export interface IGarbageCollectionData {
 // @public
 export interface IGarbageCollectionDetailsBase {
     gcData?: IGarbageCollectionData;
-    unrefTimestamp?: number;
     usedRoutes?: string[];
 }
 
@@ -263,6 +262,13 @@ export interface IGarbageCollectionState {
     gcNodes: {
         [id: string]: IGarbageCollectionNodeData;
     };
+}
+
+// @public @deprecated (undocumented)
+export interface IGarbageCollectionSummaryDetailsLegacy {
+    gcData?: IGarbageCollectionData;
+    unrefTimestamp?: number;
+    usedRoutes?: string[];
 }
 
 // @public
