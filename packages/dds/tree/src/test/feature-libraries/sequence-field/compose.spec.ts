@@ -12,7 +12,7 @@ import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
-import { getMaxIdTagged, normalizeMoveIds } from "./utils";
+import { continuingAllocator, normalizeMoveIds } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = brand(1);
@@ -22,11 +22,7 @@ const tag4: RevisionTag = brand(4);
 
 function compose(changes: TaggedChange<TestChangeset>[]): TestChangeset {
     changes.forEach(deepFreeze);
-    return SF.compose(
-        changes,
-        TestChange.compose,
-        TestChange.newIdAllocator(getMaxIdTagged(changes)),
-    );
+    return SF.compose(changes, TestChange.compose, continuingAllocator(changes));
 }
 
 function composeNoVerify(changes: TaggedChange<TestChangeset>[]): TestChangeset {
@@ -34,7 +30,7 @@ function composeNoVerify(changes: TaggedChange<TestChangeset>[]): TestChangeset 
     return SF.compose(
         changes,
         (cs: TaggedChange<TestChange>[]) => TestChange.compose(cs, false),
-        TestChange.newIdAllocator(getMaxIdTagged(changes)),
+        continuingAllocator(changes),
     );
 }
 
@@ -46,7 +42,7 @@ function shallowCompose(changes: TaggedChange<SF.Changeset>[]): SF.Changeset {
             assert(children.length === 1, "Should only have one child to compose");
             return children[0].change;
         },
-        TestChange.newIdAllocator(getMaxIdTagged(changes)),
+        continuingAllocator(changes),
     );
 }
 

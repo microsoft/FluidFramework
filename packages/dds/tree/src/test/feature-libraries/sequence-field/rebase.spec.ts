@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { idAllocatorFromMaxId, SequenceField as SF } from "../../../feature-libraries";
 import { RevisionTag, tagChange } from "../../../rebase";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
@@ -29,7 +29,7 @@ function rebase(change: TestChangeset, base: TestChangeset, baseRev?: RevisionTa
         change,
         tagChange(base, baseRev),
         TestChange.rebase,
-        TestChange.newIdAllocator(getMaxId(change, base)),
+        idAllocatorFromMaxId(getMaxId(change, base)),
     );
 }
 
@@ -426,7 +426,7 @@ describe("SequenceField - Rebase", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("revive ↷ same revive", () => {
+    it("revive ↷ same revive (base within curr)", () => {
         const reviveA = Change.revive(0, 3, tag1, 1);
         const reviveB = Change.revive(0, 1, tag1, 2);
         const actual = rebase(reviveA, reviveB, tag2);
@@ -435,6 +435,14 @@ describe("SequenceField - Rebase", () => {
             Change.revive(1, 1, tag1, 2, tag2),
             Change.revive(2, 1, tag1, 3),
         ]);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("revive ↷ same revive (curr within base)", () => {
+        const reviveA = Change.revive(0, 1, tag1, 2);
+        const reviveB = Change.revive(0, 3, tag1, 1);
+        const actual = rebase(reviveA, reviveB, tag2);
+        const expected = Change.revive(1, 1, tag1, 2, tag2);
         assert.deepEqual(actual, expected);
     });
 

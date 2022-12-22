@@ -4,8 +4,8 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { RevisionTag } from "../../core";
-import { clone, fail } from "../../util";
+import { RevisionTag, TaggedChange } from "../../core";
+import { clone, fail, StackyIterator } from "../../util";
 import { IdAllocator } from "../modular-schema";
 import {
     Attach,
@@ -30,7 +30,10 @@ import {
     Muted,
     Mutable,
     OutputSpanningMark,
+    Changeset,
+    HasReattachFields,
 } from "./format";
+import { MarkListFactory } from "./markListFactory";
 
 export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<TNodeChange> {
     return isObjMark(mark) && mark.type === "Modify";
@@ -283,7 +286,14 @@ export function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(
             ]);
             return [
                 { ...markObj, count: length },
-                { ...markObj, id: newId, count: remainder },
+                type === "MoveIn"
+                    ? { ...markObj, id: newId, count: remainder }
+                    : {
+                          ...markObj,
+                          id: newId,
+                          count: remainder,
+                          detachIndex: markObj.detachIndex + length,
+                      },
             ] as [TMark, TMark];
         }
         case "Revive":
@@ -465,6 +475,7 @@ export interface MovePartition<TNodeChange> {
     count?: number;
     replaceWith?: Mark<TNodeChange>[];
     modifyAfter?: TNodeChange;
+    mute?: RevisionTag;
 }
 
 export function splitMoveSrc<T>(
@@ -627,6 +638,24 @@ export function replaceMoveSrc<T>(
     }
 }
 
+export function muteMoveSrc<T>(
+    table: MoveEffectTable<T>,
+    id: MoveId,
+    mutedBy: RevisionTag | undefined,
+): void {
+    const origId = table.splitIdToOrigId.get(id);
+    if (origId !== undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const effect = table.srcEffects.get(origId)!;
+        const index = effect.findIndex((p) => p.id === id);
+        assert(effect[index].mute === undefined, "Move source already muted");
+        effect[index].mute = mutedBy;
+    } else {
+        table.srcEffects.set(id, [{ id, mute: mutedBy }]);
+        table.splitIdToOrigId.set(id, id);
+    }
+}
+
 export function removeMoveSrc(table: MoveEffectTable<unknown>, id: MoveId): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
@@ -744,6 +773,10 @@ export function splitMoveOut<T>(
                     delete splitMark.changes;
                 }
             }
+            if (part.mute !== undefined) {
+                assert(splitMark.type === "ReturnFrom", "Only ReturnFrom marks can be muted");
+                splitMark.mutedBy = part.mute;
+            }
             result.push(splitMark);
         }
     }
@@ -819,4 +852,126 @@ export function getUniqueMoveId<T>(
         return newId;
     }
     return mark.id;
+}
+
+interface DetachedNode {
+    rev: RevisionTag;
+    index: number;
+}
+
+/**
+ * Keeps track of the different ways detached nodes may be referred to.
+ * Allows updating changesets so they refer to a detached node by the details
+ * of the last detach that affected them.
+ */
+export class DetachedNodeTracker {
+    private nodes: Map<number, DetachedNode> = new Map();
+    private readonly equivalences: { old: DetachedNode; new: DetachedNode }[] = [];
+
+    public constructor() {}
+
+    public apply(change: TaggedChange<Changeset<unknown>>): void {
+        let index = 0;
+        for (const mark of change.change) {
+            const inputLength: number = getInputLength(mark);
+            if (isDetachMark(mark)) {
+                const newNodes: Map<number, DetachedNode> = new Map();
+                const after = index + inputLength;
+                for (const [k, v] of this.nodes) {
+                    if (k >= index) {
+                        if (k >= after) {
+                            newNodes.set(k - inputLength, v);
+                        } else {
+                            // The node is removed
+                            this.equivalences.push({
+                                old: v,
+                                new: {
+                                    rev:
+                                        mark.revision ??
+                                        change.revision ??
+                                        fail("Unable to track detached nodes"),
+                                    index: k,
+                                },
+                            });
+                        }
+                    } else {
+                        newNodes.set(k, v);
+                    }
+                }
+                this.nodes = newNodes;
+            }
+            if (isActiveReattach(mark)) {
+                const newNodes: Map<number, DetachedNode> = new Map();
+                for (const [k, v] of this.nodes) {
+                    if (k >= index) {
+                        newNodes.set(k + inputLength, v);
+                    } else {
+                        newNodes.set(k, v);
+                    }
+                }
+                for (let i = 0; i < mark.count; ++i) {
+                    newNodes.set(index + i, {
+                        rev: mark.detachedBy ?? fail("Unable to track detached nodes"),
+                        index: mark.detachIndex + i,
+                    });
+                }
+                this.nodes = newNodes;
+            }
+            index += inputLength;
+        }
+    }
+
+    public update<T>(
+        change: TaggedChange<Changeset<T>>,
+        genId: IdAllocator,
+    ): TaggedChange<Changeset<T>> {
+        const moveEffects = newMoveEffectTable<T>();
+        const factory = new MarkListFactory<T>(moveEffects);
+        const iter = new StackyIterator(change.change);
+        while (!iter.done) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const preSplit = iter.pop()!;
+            const splitMarks = applyMoveEffectsToMark(
+                preSplit,
+                undefined,
+                moveEffects,
+                genId,
+                false,
+            );
+
+            const mark = splitMarks[0];
+            for (let i = splitMarks.length - 1; i >= 0; i--) {
+                iter.push(splitMarks[i]);
+                moveEffects.validatedMarks.add(splitMarks[i]);
+            }
+            iter.pop();
+            const cloned = clone(mark);
+            if (isReattach(cloned)) {
+                let remainder: Reattach<T> = cloned;
+                for (let i = 1; i < cloned.count; ++i) {
+                    const [head, tail] = splitMarkOnOutput(remainder, 1, genId, moveEffects);
+                    this.updateMark(head);
+                    factory.push(head);
+                    remainder = tail;
+                }
+                this.updateMark(remainder);
+                factory.push(remainder);
+            } else {
+                factory.push(cloned);
+            }
+        }
+        return {
+            ...change,
+            change: factory.list,
+        };
+    }
+
+    private updateMark(mark: HasReattachFields): void {
+        for (const eq of this.equivalences) {
+            if (mark.detachedBy === eq.old.rev && mark.detachIndex === eq.old.index) {
+                mark.detachedBy = eq.new.rev;
+                mark.detachIndex = eq.new.index;
+            }
+        }
+    }
 }

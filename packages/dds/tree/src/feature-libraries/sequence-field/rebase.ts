@@ -37,6 +37,7 @@ import {
     MarkList,
     Reattach,
     NodeSpanningMark,
+    Mutable,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
@@ -439,31 +440,32 @@ function rebaseMark<TNodeChange>(
             }
             return 0;
         }
-        case "Revive": {
+        case "Revive":
+        case "ReturnTo": {
             assert(isReattach(currMark), "Only a reattach can overlap with a non-inert reattach");
             if (isMuted(baseMark)) {
                 return clone(currMark);
             }
-
+            const baseMarkRevision = baseMark.revision ?? baseRevision;
             if (currMark.isIntention) {
-                assert(isActiveReattach(currMark), `Unsupported revive mark overlap`);
-                // The nodes that currMark aims to revive are being revived by baseMark
+                assert(isActiveReattach(currMark), `Unsupported reattach mark overlap`);
+                // The nodes that currMark aims to reattach are being reattached by baseMark
                 return {
                     ...clone(currMark),
-                    mutedBy: baseMark.revision ?? baseRevision,
+                    mutedBy: baseMarkRevision,
                 };
             }
 
             if (isActiveReattach(currMark)) {
-                // The nodes that currMark aims to revive are being revived by baseMark
+                // The nodes that currMark aims to reattach are being reattached by baseMark
                 return {
                     ...clone(currMark),
-                    mutedBy: baseMark.revision ?? baseRevision,
+                    mutedBy: baseMarkRevision,
                 };
             }
-            assert(!isSkipLikeReattach(currMark), `Unsupported revive mark overlap`);
-            // The nodes that currMark aims to revive and were deleted by `currMark.lastDetachedBy`
-            // are being revived by baseMark.
+            assert(!isSkipLikeReattach(currMark), `Unsupported reattach mark overlap`);
+            // The nodes that currMark aims to reattach and were detached by `currMark.lastDetachedBy`
+            // are being reattached by baseMark.
             assert(
                 currMark.lastDetachedBy === baseMark.detachedBy,
                 `Unexpected revive mark overlap`,
@@ -484,7 +486,24 @@ function rebaseMark<TNodeChange>(
         case "MoveOut":
         case "ReturnFrom": {
             if (!isSkipMark(currMark)) {
-                getOrAddEmptyToMap(moveEffects.movedMarks, baseMark.id).push(clone(currMark));
+                const baseMarkRevision = baseMark.revision ?? baseRevision;
+                const newCurrMark = clone(currMark);
+                if (newCurrMark.type === "ReturnFrom") {
+                    newCurrMark.mutedBy = baseMarkRevision;
+                } else if (newCurrMark.type === "ReturnTo") {
+                    assert(
+                        isSkipLikeReattach(newCurrMark),
+                        "Only a skip-like reattach can overlap with a ReturnFrom",
+                    );
+                    if (
+                        baseMark.type === "ReturnFrom" &&
+                        newCurrMark.mutedBy === baseMark.detachedBy
+                    ) {
+                        delete (newCurrMark as Mutable).mutedBy;
+                    }
+                }
+
+                getOrAddEmptyToMap(moveEffects.movedMarks, baseMark.id).push(newCurrMark);
             }
             return 0;
         }

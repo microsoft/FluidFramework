@@ -154,6 +154,7 @@ export interface HasReattachFields extends HasPlaceFields {
      * It is invalid to try convert such a reattach mark to a delta.
      */
     detachedBy: RevisionTag | undefined;
+
     /**
      * The original field index of the detached node(s).
      * "Original" here means before the change that detached them was applied.
@@ -169,6 +170,7 @@ export interface HasReattachFields extends HasPlaceFields {
      * if that changes has taken effect.
      */
     isIntention?: true;
+
     /**
      * The changeset that last detached the nodes that this mark intends to revive.
      * For this property to be set, the target nodes must have been revived my another changeset,
@@ -197,7 +199,8 @@ export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId, 
 export interface ReturnFrom<TNodeChange = NodeChangeType>
     extends HasRevisionTag,
         HasMoveId,
-        HasChanges<TNodeChange> {
+        HasChanges<TNodeChange>,
+        Mutable {
     type: "ReturnFrom";
     count: NodeCount;
     detachedBy: RevisionTag | undefined;

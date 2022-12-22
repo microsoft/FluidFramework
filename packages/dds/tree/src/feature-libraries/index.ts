@@ -70,6 +70,7 @@ export {
     ToDelta,
     ModularChangeset,
     IdAllocator,
+    idAllocatorFromMaxId,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,

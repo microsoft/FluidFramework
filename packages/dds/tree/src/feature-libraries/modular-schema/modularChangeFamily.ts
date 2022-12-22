@@ -32,10 +32,10 @@ import {
     ValueChange,
     ModularChangeset,
     ChangesetLocalId,
-    IdAllocator,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { convertGenericChange, GenericChangeset, genericFieldKind } from "./genericFieldKind";
+import { IdAllocator } from "./idAllocator";
 import { decodeJsonFormat0, encodeForJsonFormat0 } from "./modularChangeEncoding";
 
 /**

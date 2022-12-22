@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
+import {
+    idAllocatorFromMaxId,
+    SequenceField as SF,
+    singleTextCursor,
+} from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { RevisionTag, TreeSchemaIdentifier } from "../../../core";
 import { TestChange } from "../../testChange";
@@ -33,7 +37,7 @@ export const cases: {
             makeAnonChange(createModifyChangeset(1, TestChange.mint([], 2))),
         ],
         TestChange.compose,
-        TestChange.newIdAllocator(),
+        idAllocatorFromMaxId(),
     ),
     delete: createDeleteChangeset(1, 3),
     revive: createReviveChangeset(2, 2, tag, 0),

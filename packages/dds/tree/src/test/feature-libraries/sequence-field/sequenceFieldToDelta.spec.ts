@@ -10,6 +10,7 @@ import {
     ChangesetLocalId,
     FieldChange,
     FieldKinds,
+    idAllocatorFromMaxId,
     NodeChangeset,
     NodeReviver,
     SequenceField as SF,
@@ -194,7 +195,7 @@ describe("SequenceField - toDelta", () => {
                 makeAnonChange(Change.modify(5, TestChange.mint([0], 1))),
             ],
             TestChange.compose,
-            TestChange.newIdAllocator(),
+            idAllocatorFromMaxId(),
         );
         const del: Delta.Delete = {
             type: Delta.MarkType.Delete,
@@ -220,7 +221,7 @@ describe("SequenceField - toDelta", () => {
                 makeAnonChange(Change.modify(0, TestChange.mint([0], 1))),
             ],
             TestChange.compose,
-            TestChange.newIdAllocator(),
+            idAllocatorFromMaxId(),
         );
         const mark: Delta.Insert = {
             type: Delta.MarkType.Insert,
@@ -243,7 +244,7 @@ describe("SequenceField - toDelta", () => {
                 makeAnonChange(Change.delete(0, 1)),
             ],
             TestChange.compose,
-            TestChange.newIdAllocator(),
+            idAllocatorFromMaxId(),
         );
         const mark: Delta.Delete = {
             type: Delta.MarkType.Delete,
