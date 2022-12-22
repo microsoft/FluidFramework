@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// https://www.typescriptlang.org/play?#code/MYewdgzgLgBANiA5jAvDUkRwKYDoGIDcAUBtDGAajABRgBcFArgLYBG2ATgJSoB8tAB6MAhmACevFALJY8BGgAMA2gBIA3mAC+AXRgbBWxdxKlw5FgEZGAWREAHADxhWHTgBpm7LgLRhsAO4wdvY0JsRWuBDYUDSW7pbhEZa4AGYgnACiIsAAFjSpTGDAUACW4LQAbp4A1p4svOrEMC3wSDRQuaUQtZ7VMA0kWp4ARAAqABIAkgDKI0kKIyjLK6trKPOmwHAiEBAwAGIgIDBNrTDCXm7UlgBMAMwk58BsNP11A43N560Knd29GD9QbfFpaYhaUyRdJZHL5QrFMoVGi4VEiTiICCNCiBQ7HMK4F4otEYrEwYYwEYTTIAGRpAHlNsk0hlsnkCkUSuUwLRUbh0Zjsf4gkcQASXrg2KUwAATGgjABC9IAqgA5AAi82J-NJvApVNpDKZ0NZcI5iO5vJJgtOOJF+O4hLYkulcsVKo18xdsvlqvpAAVMlq+QKyfrqXTGQt2kt1nHlkzmTC2fDOUieW9AQ1TqC2ogOl0ejAPsDwvrJrNE2RYKlqAiucjsX9CyZySRUvz7PY4OJ5QBBf3+mlTTKa7jEYiLAB+M9nc-ns8TJth7JomeL9SkAjOv3a-yLJc3Q0dUp9I3pAGl5qMK3MkpOY-H40ygA
-
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { MapWithExpiration } from "../mapWithExpiration";

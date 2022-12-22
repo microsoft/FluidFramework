@@ -273,7 +273,7 @@ export class LocationRedirectionError extends LoggingError implements ILocationR
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any): void;
 
 // @public
-export class MapWithExpiration<TKey, TValue> extends Map<TKey, TValue> {
+export class MapWithExpiration<TKey = any, TValue = any> extends Map<TKey, TValue> {
     // (undocumented)
     [Symbol.iterator](): IterableIterator<[TKey, TValue]>;
     constructor(expiryMs: number);
