@@ -15,6 +15,10 @@ describe("InMemoryCache", () => {
         clock = useFakeTimers();
     });
 
+    afterEach(() => {
+        clock.reset();
+    });
+
     after(() => {
         clock.restore();
     });
@@ -39,12 +43,12 @@ describe("InMemoryCache", () => {
         assert.equal(await cache.get("one"), 1, "'one' shouldn't be expired after 5ms");
         assert.equal(await cache.get("two"), 2, "'two' shouldn't be expired after 5ms");
 
-        await cache.get("one"); // Should NOT reset the expiry, only put does
+        assert.equal(await cache.get("one"), 1); // Should NOT reset the expiry, only put does
         await cache.put("two", 2.1);
         await cache.put("three", 3);
 
         clock.tick(5);
-        assert.equal(await cache.get("one"), 1, "'one' should be expired after 10ms");
+        assert.equal(await cache.get("one"), undefined, "'one' should be expired after 10ms");
         assert.equal(await cache.get("two"), 2.1, "'two' shouldn't be expired after 5ms");
         assert.equal(await cache.get("three"), 3, "'three' shouldn't be expired after 5ms");
     });

@@ -16,6 +16,10 @@ describe("MapWithExpiration", () => {
         clock = useFakeTimers();
     });
 
+    afterEach(() => {
+        clock.reset();
+    });
+
     after(() => {
         clock.restore();
     });
@@ -149,8 +153,7 @@ describe("MapWithExpiration", () => {
         assertMatches(map, expected, "Should be empty after clear");
     });
 
-    //* ONLY
-    describe.only("forEach thisArg", () => {
+    describe("forEach thisArg", () => {
         function testForEachCases(testName: string, testFn: (maps: Map<any, any>[], thisArgs: any[]) => void) {
             it(
                 testName,
