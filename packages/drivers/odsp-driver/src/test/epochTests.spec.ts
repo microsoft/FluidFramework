@@ -51,7 +51,7 @@ describe("Tests for Epoch Tracker", () => {
     it("defaultCacheExpiryTimeoutMs <= maximumCacheDurationMs policy", () => {
         // This is the maximum allowed value per the policy - 5 days
         const maximumCacheDurationMs: Exclude<IDocumentStorageServicePolicies["maximumCacheDurationMs"], undefined> =
-            432_000_000;
+            432000000;
 
         assert(defaultCacheExpiryTimeoutMs <= maximumCacheDurationMs, "Actual cache expiry used must meet the policy");
     });

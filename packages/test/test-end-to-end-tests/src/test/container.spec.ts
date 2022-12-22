@@ -60,7 +60,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         // TODO: Convert these to mocked unit test. These are all API tests and doesn't
         // need the service.  For new disable the tests other than local driver
         if (provider.driver.type !== "local") {
-            //* this.skip();
+            this.skip();
         }
     });
     before(async () => {
@@ -521,12 +521,16 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             );
         });
     });
+});
 
+describeNoCompat("Driver", (getTestObjectProvider) => {
     it.only("Driver Storage Policy Values", async () => {
+        const provider = getTestObjectProvider();
         const fiveDaysMs: FiveDaysMs = 432_000_000;
+
         const expectedPolicyValue = provider.driver.type === "local" ? undefined : fiveDaysMs;
 
         const container = await provider.makeTestContainer() as Container;
         assert.equal(container.storage.policies?.maximumCacheDurationMs, expectedPolicyValue);
-    })
+    });
 });
