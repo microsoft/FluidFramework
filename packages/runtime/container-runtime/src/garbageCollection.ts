@@ -803,6 +803,17 @@ export class GarbageCollector implements IGarbageCollector {
         snapshotData: IGarbageCollectionSnapshotData | undefined,
         currentReferenceTimestampMs: number,
     ) {
+        /**
+         * Note: "newReferencesSinceLastRun" is not reset here. This is done because there may be references since the
+         * snapshot that we are updating state from. For example, this client may have processed ops till seq#1000 and
+         * its refreshing state from a summary that happened at seq#900. In this case, there may be references between
+         * seq#901 and seq#1000 that we don't want to reset.
+         * Unfortunately, there is no way to track the seq# of ops that add references, so we choose to not reset any
+         * references here. This should be fine because, in the worst case, we may end up updating the unreferenced
+         * timestamp of a node which will delay its deletion. Although not ideal, this will only happen in rare
+         * scenarios, so it should be okay.
+         */
+
         // Clear all existing unreferenced state tracking.
         for (const [, nodeStateTracker] of this.unreferencedNodesState) {
             nodeStateTracker.stopTracking();
@@ -815,9 +826,6 @@ export class GarbageCollector implements IGarbageCollector {
             this.tombstones = snapshotData?.tombstones ? Array.from(snapshotData.tombstones) : [];
             this.runtime.updateTombstonedRoutes(this.tombstones);
         }
-
-        // Clear references since last run. All new references will now be relative to this snapshot.
-        this.newReferencesSinceLastRun.clear();
 
         // If there is no snapshot data, it means this snapshot was generated with GC disabled. Unset all GC state.
         if (snapshotData === undefined) {
