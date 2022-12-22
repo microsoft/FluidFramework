@@ -290,7 +290,7 @@ export class RunningSummarizer implements IDisposable {
      */
     public async lockedRefreshSummaryAckAction<T>(action: () => Promise<T>) {
         assert(this.refreshSummaryAckLock === undefined,
-            "Refresh Summary Ack - Caller is responsible for checking lock");
+            0x34c /* Refresh Summary Ack - Caller is responsible for checking lock */);
 
         const refreshSummaryAckLock = new Deferred<void>();
         this.refreshSummaryAckLock = refreshSummaryAckLock.promise;
