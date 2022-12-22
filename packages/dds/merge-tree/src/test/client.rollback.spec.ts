@@ -74,6 +74,7 @@ describe("client.rollback", () => {
         client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 
         assert.equal(client.getText(), "aefg");
+        validatePartialLengths(client.getClientId(), client.mergeTree);
     });
     it("Should zamboni rolled back insert", () => {
         client.insertTextLocal(0, "aefg");
