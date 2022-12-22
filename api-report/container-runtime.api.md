@@ -308,6 +308,10 @@ export interface IChunkedOp {
     // (undocumented)
     contents: string;
     // (undocumented)
+    originalCompression?: string;
+    // (undocumented)
+    originalMetadata?: Record<string, unknown>;
+    // (undocumented)
     originalType: MessageType | ContainerMessageType;
     // (undocumented)
     totalChunks: number;
@@ -343,6 +347,7 @@ export interface IConnectableRuntime {
 
 // @public
 export interface IContainerRuntimeOptions {
+    readonly chunkSizeInBytes?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
     readonly enableOfflineLoad?: boolean;
     readonly enableOpReentryCheck?: boolean;

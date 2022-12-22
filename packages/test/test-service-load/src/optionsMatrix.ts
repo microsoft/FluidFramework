@@ -78,6 +78,7 @@ export function generateRuntimeOptions(
         flushMode: [undefined],
         compressionOptions: [{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 }],
         maxBatchSizeInBytes: [undefined],
+        chunkSizeInBytes: [undefined],
         enableOpReentryCheck: [undefined],
     };
 
