@@ -151,11 +151,18 @@ describe("MapWithExpiration", () => {
 
     //* ONLY
     describe.only("forEach thisArg", () => {
-        function runTests(testName: string, testFn: (maps: Map<any, any>[], thisArgs: any[]) => void) {
-            it(testName, () => { testFn([new Map(), new MapWithExpiration(10)], ["THIS", undefined]); })
+        function testForEachCases(testName: string, testFn: (maps: Map<any, any>[], thisArgs: any[]) => void) {
+            it(
+                testName,
+                () => {
+                    testFn(
+                        [new Map(), new MapWithExpiration(10)], // We run plain Map and MapWithExpiration through to ensure matching behavior
+                        ["THIS", undefined],
+                    );
+                });
         }
 
-        runTests("inline function callback", (maps, thisArgs) => {
+        testForEachCases("Inline function callback should use thisArg for 'this'", (maps, thisArgs) => {
             for (const thisArg of thisArgs) {
                 for (const map of maps) {
                     map.set(1, "one");
@@ -166,85 +173,43 @@ describe("MapWithExpiration", () => {
             }
         });
 
-        // function testForEachThisArg(testName: string, thisArg: any) {
-        //     it(testName, () => {
-        //         const plainMap = new Map();
-        //         const mapWithExpiration = new MapWithExpiration(10);
-
-        //         plainMap.set(1, "one");
-        //         mapWithExpiration.set(1, "one");
-
-        //         plainMap.forEach(function (this: any, value: string, key: number, m: Map<number, string>) {
-        //             assert.equal(this, thisArg, `1 Incorrect value for 'this' (passed in ${thisArg})`);
-        //         }, thisArg);
-        //         mapWithExpiration.forEach(function (this: any, value: string, key: number, m: Map<number, string>) {
-        //             assert.equal(this, thisArg, `2 Incorrect value for 'this' (passed in ${thisArg})`);
-        //         }, thisArg);
-        //     });
-        // }
-
-        // testForEachThisArg("string thisArg", "THIS");
-        // testForEachThisArg("undefined thisArg", undefined);
+        testForEachCases(".bind on an inline function callback should supersede thisArg", (maps, thisArgs) => {
+            for (const thisArg of thisArgs) {
+                for (const map of maps) {
+                    map.set(1, "one");
+                    map.forEach((function (this: any, value: string, key: number, m: Map<number, string>) {
+                        assert.equal(this, "BOUND", "Incorrect value for 'this'");
+                    }).bind("BOUND"), thisArg);
+                }
+            }
+        });
 
         class Foo {
             cb(this: any, valueWhichIsExpectedThis, k, m) {
+                assert(!(this instanceof Foo), "'this' should not be a Foo, it should have been overridden");
                 assert.equal(this, valueWhichIsExpectedThis, "Incorrect value for 'this'");
             }
         };
 
-        function testForEachThisArg2(testName: string, thisArg: any) {
-            it(testName, () => {
-                const foo = new Foo();
+        testForEachCases("Class function callback should use thisArg not the class instance", (maps, thisArgs) => {
+            const foo = new Foo();
+            for (const thisArg of thisArgs) {
+                for (const map of maps) {
+                    map.set(1, thisArg); // We will sneak in thisArg as the value to let us assert about it in cb
+                    map.forEach(foo.cb, thisArg);
+                }
+            }
+        });
 
-                const plainMap2 = new Map();
-                const mapWithExpiration2 = new MapWithExpiration(10);
-
-                plainMap2.set(1, thisArg);
-                mapWithExpiration2.set(1, thisArg);
-
-                plainMap2.forEach(foo.cb, thisArg);
-                mapWithExpiration2.forEach(foo.cb, thisArg);
-            });
-        }
-
-        testForEachThisArg2("string thisArg", "THIS");
-        testForEachThisArg2("undefined thisArg", undefined);
-
-        function testForEachThisArg3(testName: string, thisArg: any) {
-            it(testName, () => {
-                const foo = new Foo();
-
-                const plainMap2 = new Map();
-                const mapWithExpiration2 = new MapWithExpiration(10);
-
-                plainMap2.set(1, "BOUND");
-                mapWithExpiration2.set(1, "BOUND");
-
-                plainMap2.forEach(foo.cb.bind("BOUND"), thisArg);
-                mapWithExpiration2.forEach(foo.cb.bind("BOUND"), thisArg);
-            });
-        }
-
-        testForEachThisArg3("string thisArg", "THIS");
-        testForEachThisArg3("undefined thisArg", undefined);
-
-        function testForEachThisArg4(testName: string, thisArg: any) {
-            it(testName, () => {
-                const plainMap2 = new Map();
-                const mapWithExpiration2 = new MapWithExpiration(10);
-
-                plainMap2.set(1, "THIS");
-                mapWithExpiration2.set(1, "THIS");
-
-                // @ts-expect-error Testing out improper usage of 'this'
-                plainMap2.forEach(() => { assert.equal(this, undefined, "Expected 'this' to be undefined for arrow fn")}, thisArg);
-                // @ts-expect-error Testing out improper usage of 'this'
-                mapWithExpiration2.forEach(() => { assert.equal(this, undefined, "Expected 'this' to be undefined for arrow fn")}, thisArg);
-            });
-        }
-
-        testForEachThisArg4("string thisArg", "THIS");
-        testForEachThisArg4("undefined thisArg", undefined);
+        testForEachCases(".bind on a class function callback should supersede thisArg", (maps, thisArgs) => {
+            const foo = new Foo();
+            for (const thisArg of thisArgs) {
+                for (const map of maps) {
+                    map.set(1, "BOUND"); // We will sneak in thisArg as the value to let us assert about it in cb
+                    map.forEach(foo.cb.bind("BOUND"), thisArg);
+                }
+            }
+        });
     });
 
     it("toString", () => {
