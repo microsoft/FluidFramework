@@ -155,7 +155,12 @@ export interface IGarbageCollector {
     /** Returns a map of each node id to its base GC details in the base summary. */
     getBaseGCDetails(): Promise<Map<string, IGarbageCollectionDetailsBase>>;
     /** Called when the latest summary of the system has been refreshed. */
-    latestSummaryStateRefreshed(result: RefreshSummaryResult, readAndParseBlob: ReadAndParseBlob): Promise<void>;
+    refreshLatestSummary(
+        result: RefreshSummaryResult,
+        proposalHandle: string | undefined,
+        summaryRefSeq: number,
+        readAndParseBlob: ReadAndParseBlob,
+    ): Promise<void>;
     /** Called when a node is updated. Used to detect and log when an inactive node is changed or loaded. */
     nodeUpdated(
         nodePath: string,
@@ -706,6 +711,23 @@ export class GarbageCollector implements IGarbageCollector {
          */
         this.initializeGCStateFromBaseSnapshotP = new LazyPromise<void>(async () => {
             /**
+             * If there is no current reference timestamp, skip initialization. We need the current timestamp to track
+             * how long objects have been unreferenced and if they can be deleted.
+             *
+             * Note that the only scenario where there is no reference timestamp is when no ops have ever been processed
+             * for this container and it is in read mode. In this scenario, there is no point in running GC anyway
+             * because references in the container do not change without any ops, i.e., there is nothing to collect.
+             */
+            const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
+            if (currentReferenceTimestampMs === undefined) {
+                // Log an event so we can evaluate how often we run into this scenario.
+                this.mc.logger.sendErrorEvent({
+                    eventName: "GarbageCollectorInitializedWithoutTimestamp",
+                    gcConfigs: JSON.stringify(this.configs),
+                });
+                return;
+            }
+            /**
              * The base snapshot data will not be present if the container is loaded from:
              * 1. The first summary created by the detached container.
              * 2. A summary that was generated with GC disabled.
@@ -715,7 +737,7 @@ export class GarbageCollector implements IGarbageCollector {
             if (baseSnapshotData === undefined) {
                 return;
             }
-            this.updateStateFromSnapshotData(baseSnapshotData);
+            this.updateStateFromSnapshotData(baseSnapshotData, currentReferenceTimestampMs);
         });
 
         // Get the GC details for each node from the GC state in the base summary. This is returned in getBaseGCDetails
@@ -771,31 +793,38 @@ export class GarbageCollector implements IGarbageCollector {
 
     /**
      * Update state from the given snapshot data. This is done during load and during refreshing state from a snapshot.
+     * All current tracking is reset and updated from the data in the snapshot.
+     * @param snapshotData - The snapshot data to update state from. If this is undefined, all GC state and tracking
+     * is reset.
+     * @param currentReferenceTimestampMs - The current reference timestamp for marking unreferenced nodes' unreferenced
+     * timestamp.
      */
-    private updateStateFromSnapshotData(snapshotData: IGCSnapshotData) {
-        const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
-        /**
-         * If there is no current reference timestamp, skip the update. We need the current timestamp to track
-         * how long objects have been unreferenced and if they can be deleted.
-         *
-         * Note that the only scenario where there is no reference timestamp is when no ops have ever been processed
-         * for this container and it is in read mode. In this scenario, there is no point in running GC anyway
-         * because references in the container do not change without any ops, i.e., there is nothing to collect.
-         */
-        if (currentReferenceTimestampMs === undefined) {
-            // Log an event so we can evaluate how often we run into this scenario.
-            this.mc.logger.sendErrorEvent({
-                eventName: "GCStateUpdatedWithoutTimestamp",
-                gcConfigs: JSON.stringify(this.configs),
-            });
-            return;
+    private updateStateFromSnapshotData(
+        snapshotData: IGCSnapshotData | undefined,
+        currentReferenceTimestampMs: number,
+    ) {
+        // Clear all existing unreferenced state tracking.
+        for (const [, nodeStateTracker] of this.unreferencedNodesState) {
+            nodeStateTracker.stopTracking();
+        };
+        this.unreferencedNodesState.clear();
+
+        // If tombstone mode is enabled, update tombstone information and also update all tombstoned nodes in the
+        // container as per the state in the snapshot data.
+        if (this.tombstoneMode) {
+            this.tombstones = snapshotData?.tombstones ? Array.from(snapshotData.tombstones) : [];
+            this.runtime.updateTombstonedRoutes(this.tombstones);
         }
 
-        // Clear all existing unreferenced state tracking.
-        this.unreferencedNodesState.forEach((nodeStateTracker: UnreferencedStateTracker) => {
-            nodeStateTracker.stopTracking();
-        });
-        this.unreferencedNodesState.clear();
+        // Clear references since last run. All new references will now be relative to this snapshot.
+        this.newReferencesSinceLastRun.clear();
+
+        // If there is no snapshot data, it means this snapshot was generated with GC disabled. Unset all GC state.
+        if (snapshotData === undefined) {
+            this.gcDataFromLastRun = undefined;
+            this.latestSummaryData = undefined;
+            return;
+        }
 
         // Update unreferenced state tracking as per the GC state in the snapshot data and update gcDataFromLastRun
         // to the GC data from the snapshot data.
@@ -815,13 +844,6 @@ export class GarbageCollector implements IGarbageCollector {
             gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
         }
         this.gcDataFromLastRun = { gcNodes };
-
-        // If tombstone mode is enabled, update tombstone information and also update all tombstoned nodes in the
-        // container as per the state in the snapshot data.
-        if (this.tombstoneMode) {
-            this.tombstones = snapshotData.tombstones ? Array.from(snapshotData.tombstones) : [];
-            this.runtime.updateTombstonedRoutes(this.tombstones);
-        }
 
         // If tracking state across summaries, update latest summary data from the snapshot's GC data.
         if (this.trackGCState) {
@@ -1073,11 +1095,13 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Called when the latest summary of the system has been refreshed. This will be used to update the state of the
-     * latest summary tracked.
+     * Called to refresh the latest summary state. This happens when either a pending summary is acked or a snapshot
+     * is downloaded and should be used to update the state.
      */
-    public async latestSummaryStateRefreshed(
+    public async refreshLatestSummary(
         result: RefreshSummaryResult,
+        proposalHandle: string | undefined,
+        summaryRefSeq: number,
         readAndParseBlob: ReadAndParseBlob,
     ): Promise<void> {
         if (!this.shouldRunGC || !result.latestSummaryUpdated) {
@@ -1095,8 +1119,8 @@ export class GarbageCollector implements IGarbageCollector {
             }
             return;
         }
-        // If the summary was not tracked by this client, update latest GC version and blob from the snapshot in the
-        // result as that is now the latest summary.
+
+        // If the summary was not tracked by this client, the state should be updated from the downloaded snapshot.
         const snapshot = result.snapshot;
         const metadataBlobId = snapshot.blobs[metadataBlobName];
         if (metadataBlobId) {
@@ -1104,17 +1128,26 @@ export class GarbageCollector implements IGarbageCollector {
             this.latestSummaryGCVersion = getGCVersion(metadata);
         }
 
+        // The current reference timestamp should be available if we are refreshing state from a snapshot. There has
+        // to be at least one op (summary op / ack, if nothing else) if a snapshot was taken.
+        const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
+        if (currentReferenceTimestampMs === undefined) {
+            throw DataProcessingError.create(
+                "No reference timestamp when updating GC state from snapshot",
+                "refreshLatestSummary",
+                undefined,
+                { proposalHandle, summaryRefSeq, details: JSON.stringify(this.configs) },
+            );
+        }
         const gcSnapshotTree = snapshot.trees[gcTreeKey];
+        let latestGCData: IGCSnapshotData | undefined;
         if (gcSnapshotTree !== undefined) {
-            const latestGCData = await getGCDataFromSnapshot(
+            latestGCData = await getGCDataFromSnapshot(
                 gcSnapshotTree,
                 readAndParseBlob,
             );
-            this.updateStateFromSnapshotData(latestGCData);
-        } else {
-            this.latestSummaryData = undefined;
-            this.gcDataFromLastRun = undefined;
         }
+        this.updateStateFromSnapshotData(latestGCData, currentReferenceTimestampMs);
         this.pendingSummaryData = undefined;
     }
 
