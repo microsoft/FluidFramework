@@ -77,7 +77,7 @@
     "@fluid-example/example-utils": "^1.4.0",
     "@fluidframework/aqueduct": "^1.4.0",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/common-utils": "^0.32.1",
+    "@fluidframework/common-utils": "^0.32.2",
     "@fluidframework/core-interfaces": "^1.4.0",
     "@fluidframework/data-object-base": "^1.4.0",
     "@fluidframework/map": "^1.4.0",
