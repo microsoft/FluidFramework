@@ -800,7 +800,7 @@ export class GarbageCollector implements IGarbageCollector {
      * timestamp.
      */
     private updateStateFromSnapshotData(
-        snapshotData: IGCSnapshotData | undefined,
+        snapshotData: IGarbageCollectionSnapshotData | undefined,
         currentReferenceTimestampMs: number,
     ) {
         // Clear all existing unreferenced state tracking.
@@ -1140,7 +1140,7 @@ export class GarbageCollector implements IGarbageCollector {
             );
         }
         const gcSnapshotTree = snapshot.trees[gcTreeKey];
-        let latestGCData: IGCSnapshotData | undefined;
+        let latestGCData: IGarbageCollectionSnapshotData | undefined;
         if (gcSnapshotTree !== undefined) {
             latestGCData = await getGCDataFromSnapshot(
                 gcSnapshotTree,
