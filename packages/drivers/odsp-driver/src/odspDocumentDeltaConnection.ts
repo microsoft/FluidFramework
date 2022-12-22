@@ -161,7 +161,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
         const socket = this._socket;
         this._socket = undefined;
 
-        // Let all connections know they need to go through disconnect flow
+        // Let all connections know they need to go through disconnect flow.
         this.emit("disconnect",
             error ?? createGenericNetworkError(
                 "Socket closed without error",
