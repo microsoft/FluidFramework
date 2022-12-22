@@ -34,19 +34,24 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
         id: string,
         manager: GitManager,
         logger: ITelemetryLogger,
-        policies: IDocumentStorageServicePolicies,
+        policies: Partial<IDocumentStorageServicePolicies>,
         driverPolicies?: IRouterliciousDriverPolicies,
         blobCache?: ICache<ArrayBufferLike>,
         snapshotTreeCache?: ICache<ISnapshotTreeVersion>,
         noCacheGitManager?: GitManager,
         getStorageManager?: (disableCache?: boolean) => Promise<GitManager>,
     ): IDocumentStorageService {
+        // maximumCacheDurationMs is considered required
+        const storagePolicies: IDocumentStorageServicePolicies = {
+            ...policies,
+            maximumCacheDurationMs: 432_000_000, // Five Day in MS
+        };
         const storageService = driverPolicies?.enableWholeSummaryUpload ?
             new WholeSummaryDocumentStorageService(
                 id,
                 manager,
                 logger,
-                policies,
+                storagePolicies,
                 driverPolicies,
                 blobCache,
                 snapshotTreeCache,
@@ -57,7 +62,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
                 id,
                 manager,
                 logger,
-                policies,
+                storagePolicies,
                 driverPolicies,
                 blobCache,
                 snapshotTreeCache,
@@ -74,7 +79,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
         public readonly id: string,
         public manager: GitManager,
         logger: ITelemetryLogger,
-        policies: IDocumentStorageServicePolicies = {},
+        policies: Partial<IDocumentStorageServicePolicies> = {},
         driverPolicies?: IRouterliciousDriverPolicies,
         blobCache?: ICache<ArrayBufferLike>,
         snapshotTreeCache?: ICache<ISnapshotTreeVersion>,

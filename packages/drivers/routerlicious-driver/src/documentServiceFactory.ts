@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    FiveDaysMs,
     IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -27,9 +26,7 @@ import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
-import { ICache, InMemoryCache, NullCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
-import { ISnapshotTreeVersion } from "./definitions";
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
@@ -49,24 +46,15 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid:";
     private readonly driverPolicies: IRouterliciousDriverPolicies;
-    private readonly blobCache: ICache<ArrayBufferLike>;
-    private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>;
 
     constructor(
         private readonly tokenProvider: ITokenProvider,
         driverPolicies: Partial<IRouterliciousDriverPolicies> = {},
     ) {
-        // 5 days is the max allowed value per the IDocumentStorageServicePolicies.maximumCacheDurationMs policy
-        const snapshotCacheExpiryMs: FiveDaysMs = 432_000_000;
-
         this.driverPolicies = {
             ...defaultRouterliciousDriverPolicies,
             ...driverPolicies,
         };
-        this.blobCache = new InMemoryCache<ArrayBufferLike>();
-        this.snapshotTreeCache = this.driverPolicies.enableInternalSummaryCaching
-            ? new InMemoryCache<ISnapshotTreeVersion>(snapshotCacheExpiryMs)
-            : new NullCache<ISnapshotTreeVersion>();
     }
 
     /**
@@ -274,8 +262,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             documentId,
             ordererRestWrapper,
             this.driverPolicies,
-            this.blobCache,
-            this.snapshotTreeCache,
             discoverFluidResolvedUrl);
     }
 }
