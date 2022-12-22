@@ -11,7 +11,7 @@ import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
 /**
  * Decides whether or not to send an error event or a generic event for gc tombstone scenarios
  *
- * @param throwOnTombstoneUsage - only send error events when throwing on tombstone usage.
+ * Adds isSummarizerClient, packagePath, and error to telemetry properties.
  */
 export function sendGCTombstoneEvent(
     mc: MonitoringContext,

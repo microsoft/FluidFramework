@@ -698,23 +698,12 @@ export class DataStores implements IDisposable {
     /**
      * Called by GC to retrieve the package path of a data store node with the given path.
      */
-    public async getDataStorePackagePathAsync(nodePath: string): Promise<readonly string[] | undefined> {
+    public async getDataStorePackagePath(nodePath: string): Promise<readonly string[] | undefined> {
         // If the node belongs to a data store, return its package path. For DDSes, we return the package path of the
         // data store that contains it.
         const context = this.contexts.get(nodePath.split("/")[1]);
         return (await context?.getInitialSnapshotDetails())?.pkg;
     }
-
-    /**
-     * Called by GC to retrieve the package path of a data store node with the given path. To make this non-async,
-     * The context does not read the package information from the snapshot if it hasn't already.
-     */
-        public getDataStorePackagePath(nodePath: string): readonly string[] | undefined {
-            // If the node belongs to a data store, return its package path. For DDSes, we return the package path of the
-            // data store that contains it.
-            const context = this.contexts.get(nodePath.split("/")[1]);
-            return context?.packagePath;
-        }
 
     /**
      * Called by GC to determine if a node is for a data store or for an object within a data store (for e.g. DDS).

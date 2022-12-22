@@ -179,8 +179,7 @@ export interface IGarbageCollectorCreateParams {
     readonly createContainerMetadata: ICreateContainerMetadata;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly isSummarizerClient: boolean;
-    readonly getNodePackagePathAsync: (nodePath: string) => Promise<readonly string[] | undefined>;
-    readonly getNodePackagePath: (nodePath: string) => readonly string[] | undefined;
+    readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
     readonly getLastSummaryTimestampMs: () => number | undefined;
     readonly readAndParseBlob: ReadAndParseBlob;
     readonly activeConnection: () => boolean;
@@ -457,12 +456,7 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly sweepTimeoutMs: number | undefined;
 
     /** For a given node path, returns the node's package path. */
-    private readonly getNodePackagePathAsync: (nodePath: string) => Promise<readonly string[] | undefined>;
-    /**
-     * For a given node path, returns the node's package path. Since this is sync, this has the disadvantage
-     * of not always being able to retrieve the package path if the datastore hasn't been realized.
-     */
-    private readonly getNodePackagePath: (nodePath: string) => readonly string[] | undefined;
+    private readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
     /** Returns the timestamp of the last summary generated for this container. */
     private readonly getLastSummaryTimestampMs: () => number | undefined;
     /** Returns true if connection is active, i.e. it's "write" connection and the runtime is connected. */
@@ -493,7 +487,6 @@ export class GarbageCollector implements IGarbageCollector {
         this.isSummarizerClient = createParams.isSummarizerClient;
         this.gcOptions = createParams.gcOptions;
         this.createContainerMetadata = createParams.createContainerMetadata;
-        this.getNodePackagePathAsync = createParams.getNodePackagePathAsync;
         this.getNodePackagePath = createParams.getNodePackagePath;
         this.getLastSummaryTimestampMs = createParams.getLastSummaryTimestampMs;
         this.activeConnection = createParams.activeConnection;
@@ -1191,7 +1184,6 @@ export class GarbageCollector implements IGarbageCollector {
             this.mc.logger.sendTelemetryEvent({
                 eventName,
                 isSummarizerClient: this.isSummarizerClient,
-                pkg: packagePathToTelemetryProperty(this.getNodePackagePath(toNodePath)),
                 url: trimLeadingSlashes(toNodePath),
                 nodeType,
                 throwOnTombstoneUsage: this.mc.config.getBoolean(throwOnTombstoneUsageKey) ?? false,
@@ -1606,8 +1598,8 @@ export class GarbageCollector implements IGarbageCollector {
             const nodeStateTracker = this.unreferencedNodesState.get(eventProps.id);
             const active = nodeStateTracker === undefined || nodeStateTracker.state === UnreferencedState.Active;
             if ((usageType === "Revived") === active) {
-                const pkg = await this.getNodePackagePathAsync(eventProps.id);
-                const fromPkg = eventProps.fromId ? await this.getNodePackagePathAsync(eventProps.fromId) : undefined;
+                const pkg = await this.getNodePackagePath(eventProps.id);
+                const fromPkg = eventProps.fromId ? await this.getNodePackagePath(eventProps.fromId) : undefined;
                 const event = {
                     ...propsToLog,
                     eventName: `${state}Object_${usageType}`,
