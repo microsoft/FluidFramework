@@ -35,7 +35,10 @@ export {
     NodeSpanningMark,
     InputSpanningMark,
     OutputSpanningMark,
-    SkipLikeReattach as InputSpanningReattach,
+    SkipLikeReattach,
+    ReturnFrom,
+    ReturnTo,
+    Revive,
     Tiebreak,
     Tombstones,
     TreeForestPath,
@@ -65,3 +68,4 @@ export { MarkListFactory } from "./markListFactory";
 export { NodeChangeRebaser, rebase } from "./rebase";
 export { invert, NodeChangeInverter } from "./invert";
 export { compose, NodeChangeComposer } from "./compose";
+export { isMoveMark, MoveMark, MoveEffectTable, MovePartition, newMoveEffectTable } from "./utils";

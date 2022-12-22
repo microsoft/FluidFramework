@@ -163,6 +163,18 @@ export class DefaultEditBuilder
                 );
                 this.modularBuilder.submitChange(parent, field, sequence.identifier, change);
             },
+            move: (sourceIndex: number, count: number, destIndex: number): void => {
+                const change: FieldChangeset = brand(
+                    sequence.changeHandler.editor.move(sourceIndex, count, destIndex),
+                );
+                this.modularBuilder.submitChange(
+                    parent,
+                    field,
+                    sequence.identifier,
+                    change,
+                    brand(0),
+                );
+            },
             revive: (
                 index: number,
                 count: number,
@@ -223,6 +235,14 @@ export interface SequenceFieldEditBuilder {
      * @param count - The number of elements to delete.
      */
     delete(index: number, count: number): void;
+
+    /**
+     * Issues a change which moves `count` elements starting at `sourceIndex` to `destIndex`.
+     * @param sourceIndex - the index of the first moved element.
+     * @param count - the number of elements to move.
+     * @param destIndex - the index the elements are moved to, interpreted after removing the moving elements.
+     */
+    move(sourceIndex: number, count: number, destIndex: number): void;
 
     /**
      * Revives a contiguous range of deleted nodes.

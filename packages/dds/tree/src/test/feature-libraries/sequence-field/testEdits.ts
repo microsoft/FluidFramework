@@ -21,6 +21,8 @@ export const cases: {
     modify_insert: TestChangeset;
     delete: TestChangeset;
     revive: TestChangeset;
+    move: TestChangeset;
+    return: TestChangeset;
 } = {
     no_change: [],
     insert: createInsertChangeset(1, 2, 1),
@@ -31,9 +33,12 @@ export const cases: {
             makeAnonChange(createModifyChangeset(1, TestChange.mint([], 2))),
         ],
         TestChange.compose,
+        TestChange.newIdAllocator(),
     ),
     delete: createDeleteChangeset(1, 3),
     revive: createReviveChangeset(2, 2, tag, 0),
+    move: createMoveChangeset(1, 2, 2),
+    return: createReturnChangeset(1, 3, 0, tag, 0),
 };
 
 function createInsertChangeset(
@@ -100,6 +105,24 @@ function createIntentionalReviveChangeset(
     return markList;
 }
 
+function createMoveChangeset(
+    sourceIndex: number,
+    count: number,
+    destIndex: number,
+): SF.Changeset<never> {
+    return SF.sequenceFieldEditor.move(sourceIndex, count, destIndex);
+}
+
+function createReturnChangeset(
+    sourceIndex: number,
+    count: number,
+    destIndex: number,
+    detachedBy: RevisionTag,
+    detachIndex: number,
+): SF.Changeset<never> {
+    return SF.sequenceFieldEditor.return(sourceIndex, count, destIndex, detachedBy, detachIndex);
+}
+
 function createModifyChangeset<TNodeChange>(
     index: number,
     change: TNodeChange,
@@ -112,5 +135,7 @@ export const ChangeMaker = {
     delete: createDeleteChangeset,
     revive: createReviveChangeset,
     intentionalRevive: createIntentionalReviveChangeset,
+    move: createMoveChangeset,
+    return: createReturnChangeset,
     modify: createModifyChangeset,
 };

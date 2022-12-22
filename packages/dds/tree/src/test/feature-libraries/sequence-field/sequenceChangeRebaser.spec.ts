@@ -5,58 +5,55 @@
 
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
-import { makeAnonChange, RevisionTag, tagChange, tagInverse } from "../../../rebase";
-import { TreeSchemaIdentifier } from "../../../schema-stored";
+import { RevisionTag, tagChange, tagInverse } from "../../../rebase";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
-import { checkDeltaEquality, rebaseTagged, toDelta } from "./utils";
+import {
+    checkDeltaEquality,
+    composeAnonChanges,
+    getMaxIdTagged,
+    normalizeMoveIds,
+    rebaseTagged,
+    toDelta,
+} from "./utils";
 import { ChangeMaker as Change } from "./testEdits";
 
-const type: TreeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = brand(41);
 const tag2: RevisionTag = brand(42);
-const tag3: RevisionTag = brand(43);
 
-const testMarks: [string, SF.Mark<TestChange>][] = [
-    ["SetValue", { type: "Modify", changes: TestChange.mint([], 1) }],
+const testChanges: [string, (index: number) => SF.Changeset<TestChange>][] = [
+    ["SetValue", (i) => Change.modify(i, TestChange.mint([], 1))],
     [
         "MInsert",
-        { type: "Insert", content: [{ type, value: 42 }], changes: TestChange.mint([], 2) },
+        (i) =>
+            composeAnonChanges([Change.insert(i, 1, 42), Change.modify(i, TestChange.mint([], 2))]),
     ],
-    [
-        "Insert",
-        {
-            type: "Insert",
-            content: [
-                { type, value: 42 },
-                { type, value: 43 },
-            ],
-        },
-    ],
-    ["Delete", { type: "Delete", count: 2 }],
-    ["Revive", { type: "Revive", count: 2, detachedBy: tag1, detachIndex: 0 }],
-    [
-        "MutedRevive",
-        {
-            type: "Revive",
-            count: 2,
-            detachedBy: tag2,
-            detachIndex: 0,
-            mutedBy: tag3,
-        },
-    ],
+    ["Insert", (i) => Change.insert(i, 2, 42)],
+    ["Delete", (i) => Change.delete(i, 2)],
+    ["Revive", (i) => Change.revive(i, 2, tag1, 0)],
+    ["MutedRevive", (i) => Change.revive(i, 2, tag1, 0, tag2)],
+    ["MoveOut", (i) => Change.move(i, 2, 1)],
+    ["MoveIn", (i) => Change.move(1, 2, i)],
+    ["ReturnFrom", (i) => Change.return(i, 2, 1, tag1, 0)],
+    ["ReturnTo", (i) => Change.return(1, 2, i, tag1, 0)],
 ];
-deepFreeze(testMarks);
+deepFreeze(testChanges);
 
+// TODO: Refactor these tests to support moves
 describe("SequenceField - Rebaser Axioms", () => {
     /**
      * This test simulates rebasing over an do-undo pair.
      */
     describe("A ↷ [B, B⁻¹] === A", () => {
-        for (const [name1, mark1] of testMarks) {
-            for (const [name2, mark2] of testMarks) {
-                if (name2 === "Delete" && ["SetValue", "Delete"].includes(name1)) {
+        for (const [name1, makeChange1] of testChanges) {
+            for (const [name2, makeChange2] of testChanges) {
+                if (
+                    name2 === "Delete" &&
+                    ["SetValue", "Delete", "MoveOut", "MoveIn", "ReturnFrom", "ReturnTo"].includes(
+                        name1,
+                    )
+                ) {
                     it.skip(`(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`, () => {
                         /**
                          * These cases are currently disabled because marks that affect existing content are removed
@@ -68,14 +65,15 @@ describe("SequenceField - Rebaser Axioms", () => {
                     it(`(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`, () => {
                         for (let offset1 = 1; offset1 <= 4; ++offset1) {
                             for (let offset2 = 1; offset2 <= 4; ++offset2) {
-                                const change1 = tagChange([offset1, mark1], brand(1));
-                                const change2 = tagChange([offset2, mark2], brand(2));
+                                const change1 = tagChange(makeChange1(offset1), brand(1));
+                                const change2 = tagChange(makeChange2(offset2), brand(2));
                                 const inv = tagInverse(
                                     SF.invert(change2, TestChange.invert),
                                     change2.revision,
                                 );
                                 const r1 = rebaseTagged(change1, change2);
                                 const r2 = rebaseTagged(r1, inv);
+                                normalizeMoveIds(r2.change);
                                 checkDeltaEquality(r2.change, change1.change);
                             }
                         }
@@ -94,21 +92,22 @@ describe("SequenceField - Rebaser Axioms", () => {
      * apply the inverse of some change.
      */
     describe("(A ↷ B) ↷ [B⁻¹, B] === A ↷ B", () => {
-        for (const [name1, mark1] of testMarks) {
-            for (const [name2, mark2] of testMarks) {
+        for (const [name1, makeChange1] of testChanges) {
+            for (const [name2, makeChange2] of testChanges) {
                 it(`${name1} ↷ [${name2}, ${name2}⁻¹, ${name2}] => ${name1} ↷ ${name2}`, () => {
                     for (let offset1 = 1; offset1 <= 4; ++offset1) {
                         for (let offset2 = 1; offset2 <= 4; ++offset2) {
-                            const change1 = [offset1, mark1];
-                            const change2 = [offset2, mark2];
-                            const inverse2 = SF.invert(makeAnonChange(change2), TestChange.invert);
-                            const r1 = SF.rebase(
-                                change1,
-                                makeAnonChange(change2),
-                                TestChange.rebase,
+                            const change1 = tagChange(makeChange1(offset1), brand(1));
+                            const change2 = tagChange(makeChange2(offset2), brand(2));
+                            const inverse2 = tagInverse(
+                                SF.invert(change2, TestChange.invert),
+                                change2.revision,
                             );
-                            const r2 = SF.rebase(r1, makeAnonChange(inverse2), TestChange.rebase);
-                            const r3 = SF.rebase(r2, makeAnonChange(change2), TestChange.rebase);
+                            const r1 = rebaseTagged(change1, change2);
+                            normalizeMoveIds(r1.change);
+                            const r2 = rebaseTagged(r1, inverse2);
+                            const r3 = rebaseTagged(r2, change2);
+                            normalizeMoveIds(r3.change);
                             assert.deepEqual(r3, r1);
                         }
                     }
@@ -118,14 +117,16 @@ describe("SequenceField - Rebaser Axioms", () => {
     });
 
     describe("A ○ A⁻¹ === ε", () => {
-        for (const [name, mark] of testMarks) {
+        for (const [name, makeChange] of testChanges) {
             it(`${name} ○ ${name}⁻¹ === ε`, () => {
-                const change = [mark];
+                const change = makeChange(0);
                 const taggedChange = tagChange(change, brand(1));
                 const inv = SF.invert(taggedChange, TestChange.invert);
+                const changes = [taggedChange, tagInverse(inv, taggedChange.revision)];
                 const actual = SF.compose(
-                    [taggedChange, tagInverse(inv, taggedChange.revision)],
+                    changes,
                     TestChange.compose,
+                    TestChange.newIdAllocator(getMaxIdTagged(changes)),
                 );
                 const delta = toDelta(actual);
                 assert.deepEqual(delta, []);
@@ -134,19 +135,21 @@ describe("SequenceField - Rebaser Axioms", () => {
     });
 
     describe("A⁻¹ ○ A === ε", () => {
-        for (const [name, mark] of testMarks) {
+        for (const [name, makeChange] of testChanges) {
             if (name === "Insert" || name === "MInsert") {
                 // A⁻¹ ○ A === ε cannot be true for Insert/MInsert:
                 // Re-inserting nodes after deleting them is different from not having deleted them in the first place.
                 // We may reconsider this in the future in order to minimize the deltas produced when rebasing local changes.
             } else {
                 it(`${name}⁻¹ ○ ${name} === ε`, () => {
-                    const change = [mark];
+                    const change = makeChange(0);
                     const taggedChange = tagChange(change, brand(1));
                     const inv = SF.invert(taggedChange, TestChange.invert);
+                    const changes = [tagInverse(inv, taggedChange.revision), taggedChange];
                     const actual = SF.compose(
-                        [tagInverse(inv, taggedChange.revision), taggedChange],
+                        changes,
                         TestChange.compose,
+                        TestChange.newIdAllocator(getMaxIdTagged(changes)),
                     );
                     const delta = toDelta(actual);
                     assert.deepEqual(delta, []);
@@ -187,7 +190,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
         const revABC2 = rebaseTagged(revABC, tagInverse(invDelABC, delABC2.revision));
         const revABC3 = rebaseTagged(revABC2, delB);
         const revABC4 = rebaseTagged(revABC3, delABC2);
-        const actual = SF.compose([delABC2, revABC4], TestChange.compose);
+        const actual = SF.compose([delABC2, revABC4], TestChange.compose, TestChange.newIdAllocator(getMaxIdTagged([delABC2, revABC4]));
         const delta = toDelta(actual);
         assert.deepEqual(delta, []);
     });
@@ -201,7 +204,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
         const revAC2 = rebaseTagged(revAC, tagInverse(invDelAC, delAC2.revision));
         const revAC3 = rebaseTagged(revAC2, addB);
         const revAC4 = rebaseTagged(revAC3, delAC2);
-        const actual = SF.compose([delAC2, revAC4], TestChange.compose);
+        const actual = SF.compose([delAC2, revAC4], TestChange.compose, TestChange.newIdAllocator(getMaxIdTagged([delAC2, revAC4]));
         const delta = toDelta(actual);
         assert.deepEqual(delta, []);
     });

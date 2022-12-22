@@ -4,9 +4,11 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { clone, fail, StackyIterator } from "../../util";
+import { clone, fail, getOrAddEmptyToMap, StackyIterator } from "../../util";
 import { RevisionTag, TaggedChange } from "../../core";
+import { IdAllocator } from "../modular-schema";
 import {
+    applyMoveEffectsToMark,
     getInputLength,
     getOutputLength,
     isAttach,
@@ -15,8 +17,11 @@ import {
     isMuted,
     isMutedReattach,
     isReattach,
-    isSkipMark,
     isNewAttach,
+    isSkipMark,
+    MoveEffectTable,
+    newMoveEffectTable,
+    removeMoveDest,
     splitMarkOnInput,
     splitMarkOnOutput,
     isAttachInGap,
@@ -34,6 +39,7 @@ import {
     NodeSpanningMark,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
+import { ComposeQueue } from "./compose";
 
 /**
  * Rebases `change` over `base` assuming they both apply to the same initial state.
@@ -54,8 +60,32 @@ export function rebase<TNodeChange>(
     change: Changeset<TNodeChange>,
     base: TaggedChange<Changeset<TNodeChange>>,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
+    genId: IdAllocator,
 ): Changeset<TNodeChange> {
-    return rebaseMarkList(change, base.change, base.revision, rebaseChild);
+    // TODO: New and base move IDs can collide. Should be distinguishable by revision, but this is not implemented, and base is not currently guaranteed to have a revision.
+    // We could use separate move tables for new and base, or we could reassign the new move IDs.
+    const moveEffects = newMoveEffectTable<TNodeChange>();
+
+    // Necessary so we don't have to re-split any marks when applying move effects.
+    moveEffects.allowMerges = false;
+    const [rebased, splitBase] = rebaseMarkList(
+        change,
+        base.change,
+        base.revision,
+        rebaseChild,
+        genId,
+        moveEffects,
+    );
+    moveEffects.allowMerges = true;
+    const pass2 = applyMoveEffects(splitBase, rebased, moveEffects, genId);
+
+    // We may have discovered new mergeable marks while applying move effects, as we may have moved a MoveOut next to another MoveOut.
+    // A second pass through MarkListFactory will handle any remaining merges.
+    const factory = new MarkListFactory<TNodeChange>(moveEffects);
+    for (const mark of pass2) {
+        factory.push(mark);
+    }
+    return factory.list;
 }
 
 export type NodeChangeRebaser<TNodeChange> = (
@@ -68,9 +98,12 @@ function rebaseMarkList<TNodeChange>(
     baseMarkList: MarkList<TNodeChange>,
     baseRevision: RevisionTag | undefined,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
-): MarkList<TNodeChange> {
-    const factory = new MarkListFactory<TNodeChange>();
-    const queue = new RebaseQueue(baseRevision, baseMarkList, currMarkList);
+    genId: IdAllocator,
+    moveEffects: MoveEffectTable<TNodeChange>,
+): [MarkList<TNodeChange>, MarkList<TNodeChange>] {
+    const factory = new MarkListFactory<TNodeChange>(moveEffects);
+    const splitBaseMarks: MarkList<TNodeChange> = [];
+    const queue = new RebaseQueue(baseRevision, baseMarkList, currMarkList, genId, moveEffects);
 
     // Each attach mark in `currMarkList` should have a lineage event added for `baseRevision` if a node adjacent to
     // the attach position was detached by `baseMarkList`.
@@ -101,7 +134,7 @@ function rebaseMarkList<TNodeChange>(
                     baseRevision,
                 );
             } else {
-                factory.push(currMark);
+                factory.push(clone(currMark));
             }
         } else if (currMark === undefined) {
             if (isDetachMark(baseMark)) {
@@ -127,6 +160,7 @@ function rebaseMarkList<TNodeChange>(
                 baseRevision,
                 baseInputOffset,
                 rebaseChild,
+                moveEffects,
             );
             factory.push(rebasedMark);
 
@@ -143,13 +177,16 @@ function rebaseMarkList<TNodeChange>(
                 baseDetachOffset = 0;
             }
         }
+        if (baseMark !== undefined) {
+            splitBaseMarks.push(baseMark);
+        }
     }
 
     if (baseDetachOffset > 0 && baseRevision !== undefined) {
         updateLineage(lineageRequests, baseRevision);
     }
 
-    return factory.list;
+    return [factory.list, splitBaseMarks];
 }
 
 class RebaseQueue<T> {
@@ -161,18 +198,20 @@ class RebaseQueue<T> {
         private readonly baseRevision: RevisionTag | undefined,
         baseMarks: Changeset<T>,
         newMarks: Changeset<T>,
+        private readonly genId: IdAllocator,
+        readonly moveEffects: MoveEffectTable<T>,
     ) {
         this.baseMarks = new StackyIterator(baseMarks);
         this.newMarks = new StackyIterator(newMarks);
     }
 
     public isEmpty(): boolean {
-        return this.baseMarks.done && this.newMarks.done;
+        return (this.getNextBaseMark() ?? this.getNextNewMark()) === undefined;
     }
 
     public pop(): RebaseMarks<T> {
-        const baseMark = this.baseMarks.peek();
-        const newMark = this.newMarks.peek();
+        const baseMark = this.getNextBaseMark();
+        const newMark = this.getNextNewMark();
 
         if (baseMark === undefined || newMark === undefined) {
             return {
@@ -193,11 +232,21 @@ class RebaseQueue<T> {
                     this.baseMarks.pop();
                     this.newMarks.pop();
                     if (newMarkLength < baseMarkLength) {
-                        const [baseMark1, baseMark2] = splitMarkOnOutput(baseMark, newMarkLength);
+                        const [baseMark1, baseMark2] = splitMarkOnOutput(
+                            baseMark,
+                            newMarkLength,
+                            this.genId,
+                            this.moveEffects,
+                        );
                         this.baseMarks.push(baseMark2);
                         return { baseMark: baseMark1, newMark };
                     } else if (newMarkLength > baseMarkLength) {
-                        const [newMark1, newMark2] = splitMarkOnOutput(newMark, baseMarkLength);
+                        const [newMark1, newMark2] = splitMarkOnOutput(
+                            newMark,
+                            baseMarkLength,
+                            this.genId,
+                            this.moveEffects,
+                        );
                         this.newMarks.push(newMark2);
                         return { baseMark, newMark: newMark1 };
                     } else {
@@ -211,6 +260,8 @@ class RebaseQueue<T> {
                     const [newMark1, newMark2] = splitMarkOnOutput(
                         newMark,
                         baseMark.detachIndex - newMark.detachIndex,
+                        this.genId,
+                        this.moveEffects,
                     );
                     this.newMarks.push(newMark2);
                     return { newMark: newMark1 };
@@ -222,6 +273,8 @@ class RebaseQueue<T> {
                     const [baseMark1, baseMark2] = splitMarkOnOutput(
                         baseMark,
                         newMark.detachIndex - baseMark.detachIndex,
+                        this.genId,
+                        this.moveEffects,
                     );
                     this.baseMarks.push(baseMark2);
                     return { baseMark: baseMark1 };
@@ -231,14 +284,21 @@ class RebaseQueue<T> {
             const reattachOffset = getOffsetInReattach(newMark.lineage, revision);
             if (reattachOffset !== undefined) {
                 const offset = reattachOffset - this.reattachOffset;
-                this.reattachOffset = reattachOffset;
                 if (offset === 0) {
                     return { newMark: this.newMarks.pop() };
                 } else if (offset >= getOutputLength(baseMark)) {
+                    this.reattachOffset += getOutputLength(baseMark);
                     return { baseMark: this.baseMarks.pop() };
                 } else {
-                    const [baseMark1, baseMark2] = splitMarkOnOutput(baseMark, offset);
+                    // TODO: Splitting base moves seems problematic
+                    const [baseMark1, baseMark2] = splitMarkOnOutput(
+                        baseMark,
+                        offset,
+                        this.genId,
+                        this.moveEffects,
+                    );
                     this.baseMarks.push(baseMark2);
+                    this.reattachOffset += offset;
                     return { baseMark: baseMark1 };
                 }
             } else if (isAttachAfterBaseAttach(newMark, baseMark) || isMutedReattach(newMark)) {
@@ -261,17 +321,67 @@ class RebaseQueue<T> {
             const newMarkLength = getInputLength(newMark);
             const baseMarkLength = getInputLength(baseMark);
             if (newMarkLength < baseMarkLength) {
-                const [baseMark1, baseMark2] = splitMarkOnInput(baseMark, newMarkLength);
+                const [baseMark1, baseMark2] = splitMarkOnInput(
+                    baseMark,
+                    newMarkLength,
+                    this.genId,
+                    this.moveEffects,
+                );
                 this.baseMarks.push(baseMark2);
                 return { baseMark: baseMark1, newMark };
             } else if (newMarkLength > baseMarkLength) {
-                const [newMark1, newMark2] = splitMarkOnInput(newMark, baseMarkLength);
+                const [newMark1, newMark2] = splitMarkOnInput(
+                    newMark,
+                    baseMarkLength,
+                    this.genId,
+                    this.moveEffects,
+                );
                 this.newMarks.push(newMark2);
+                this.moveEffects.validatedMarks.add(newMark1);
+                this.moveEffects.validatedMarks.add(newMark2);
                 return { baseMark, newMark: newMark1 };
             } else {
                 return { baseMark, newMark };
             }
         }
+    }
+
+    private getNextBaseMark(): Mark<T> | undefined {
+        return this.getNextMark(this.baseMarks, false, undefined);
+    }
+
+    private getNextNewMark(): Mark<T> | undefined {
+        return this.getNextMark(this.newMarks, true, undefined);
+    }
+
+    private getNextMark(
+        marks: StackyIterator<Mark<T>>,
+        reassignMoveIds: boolean,
+        revision: RevisionTag | undefined,
+    ): Mark<T> | undefined {
+        let mark: Mark<T> | undefined;
+        while (mark === undefined) {
+            mark = marks.pop();
+            if (mark === undefined) {
+                return undefined;
+            }
+
+            const splitMarks = applyMoveEffectsToMark(
+                mark,
+                revision,
+                this.moveEffects,
+                this.genId,
+                reassignMoveIds,
+            );
+
+            mark = splitMarks[0];
+            for (let i = splitMarks.length - 1; i >= 0; i--) {
+                marks.push(splitMarks[i]);
+                this.moveEffects.validatedMarks.add(splitMarks[i]);
+            }
+        }
+
+        return mark;
     }
 }
 
@@ -290,6 +400,7 @@ function rebaseMark<TNodeChange>(
     baseRevision: RevisionTag | undefined,
     baseInputOffset: number,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
+    moveEffects: MoveEffectTable<TNodeChange>,
 ): NodeSpanningMark<TNodeChange> {
     if (isSkipMark(baseMark) || isSkipLikeReattach(baseMark)) {
         return clone(currMark);
@@ -319,6 +430,12 @@ function rebaseMark<TNodeChange>(
                     lastDetachedBy: baseMarkRevision,
                     detachIndex: baseInputOffset,
                 };
+            }
+            if (
+                isObjMark(currMark) &&
+                (currMark.type === "MoveOut" || currMark.type === "ReturnFrom")
+            ) {
+                removeMoveDest(moveEffects, currMark.id);
             }
             return 0;
         }
@@ -364,9 +481,64 @@ function rebaseMark<TNodeChange>(
             }
             return clone(currMark);
         }
+        case "MoveOut":
+        case "ReturnFrom": {
+            if (!isSkipMark(currMark)) {
+                getOrAddEmptyToMap(moveEffects.movedMarks, baseMark.id).push(clone(currMark));
+            }
+            return 0;
+        }
         default:
             fail(`Unsupported mark type: ${baseType}`);
     }
+}
+
+function applyMoveEffects<TNodeChange>(
+    baseMarks: MarkList<TNodeChange>,
+    rebasedMarks: MarkList<TNodeChange>,
+    moveEffects: MoveEffectTable<TNodeChange>,
+    genId: IdAllocator,
+): Changeset<TNodeChange> {
+    const queue = new ComposeQueue<TNodeChange>(
+        baseMarks,
+        undefined,
+        rebasedMarks,
+        () => fail("Should not split moves while applying move effects"),
+        moveEffects,
+        false,
+    );
+    const factory = new MarkListFactory<TNodeChange>(moveEffects);
+
+    let offset = 0;
+    while (!queue.isEmpty()) {
+        const { baseMark, newMark } = queue.pop();
+        if (isObjMark(baseMark) && (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")) {
+            const movedMarks = moveEffects.movedMarks.get(baseMark.id);
+            if (movedMarks !== undefined) {
+                factory.pushOffset(offset);
+                offset = 0;
+
+                // TODO: Do moved marks ever need to be split?
+                factory.push(...movedMarks);
+                const size = movedMarks.reduce<number>(
+                    (count, mark) => count + getInputLength(mark),
+                    0,
+                );
+                factory.pushOffset(-size);
+            }
+        }
+        if (newMark === undefined) {
+            assert(baseMark !== undefined, "Non-empty RebaseQueue should return at least one mark");
+            offset += getOutputLength(baseMark);
+            continue;
+        }
+
+        // TODO: Offset wouldn't be needed if queue returned skip instead of undefined in cases where it should return two marks
+        offset = 0;
+        factory.push(newMark);
+    }
+
+    return factory.list;
 }
 
 function handleCurrAttach<T>(
