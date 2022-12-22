@@ -522,7 +522,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 });
 
 describeNoCompat("Driver", (getTestObjectProvider) => {
-    it.only("Driver Storage Policy Values", async () => {
+    it("Driver Storage Policy Values", async () => {
         const provider = getTestObjectProvider();
         const fiveDaysMs: FiveDaysMs = 432_000_000;
 
