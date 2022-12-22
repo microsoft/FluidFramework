@@ -406,6 +406,12 @@ export class DocumentDeltaConnection
                 let isWebSocketTransportError = false;
                 try {
                     const description = error?.description;
+                    const responseText = error?.context?.responseText;
+
+                    if (responseText?.includes("Error: self signed certificate")) {
+                        failAndCloseSocket(this.createErrorObject("connect_error", error, false));
+                    }
+
                     if (description && typeof description === "object") {
                         if (error.type === "TransportError") {
                             isWebSocketTransportError = true;
