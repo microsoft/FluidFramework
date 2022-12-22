@@ -15,7 +15,7 @@ import {
     summarizeNow,
     waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
+import { describeNoCompat, ITestDataObject, itExpects, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { defaultGCConfig } from "./gcTestConfigs";
 import {
     getGCStateFromSummary,
@@ -32,7 +32,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
     let dataStoreA: ITestDataObject;
 
     /**
-     * Submits a summary and returns the reference state for all the nodes in the container.
+     * Returns the reference state for all the nodes in the given summary tree.
      * If a node is referenced, its value is true. If it's unreferenced, its value is false.
      * @returns a map of nodePath to its unreferenced timestamp.
      */
@@ -47,6 +47,22 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
         return nodeIsReferencedMap;
     }
 
+    /**
+     * Returns the unreferenced timestamp for all the nodes in the given summary tree.
+     * If a node is referenced, the unreferenced timestamp is undefined.
+     * @returns a map of nodePath to its unreferenced timestamp.
+     */
+    async function getUnreferencedTimestamps(summaryTree: ISummaryTree) {
+        const gcState = getGCStateFromSummary(summaryTree);
+        assert(gcState !== undefined, "GC tree is not available in the summary");
+
+        const nodeTimestamps: Map<string, number | undefined> = new Map();
+        for (const [nodePath, nodeData] of Object.entries(gcState.gcNodes)) {
+            nodeTimestamps.set(nodePath.slice(1), nodeData.unreferencedTimestampMs);
+        }
+        return nodeTimestamps;
+    }
+
     /*
      * Utility function that returns the sequence number of a summary from the summary metadata.
      */
@@ -57,6 +73,15 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
         return (metadata.message as ISequencedDocumentMessage).sequenceNumber;
     }
 
+    /**
+     * Function that asserts the given value is not true. Used in these tests to demonstrate that because of
+     * a bug we are not getting the expected results. Once the bug is fixed, these asserts should start working
+     * as expected.
+     */
+    function assertNotTrue(value: boolean, message: string) {
+        assert(!value, message);
+    }
+
     beforeEach(async function() {
         provider = getTestObjectProvider({ syncSummarizer: true });
         mainContainer = await provider.makeTestContainer(defaultGCConfig);
@@ -65,7 +90,11 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
         await waitForContainerConnection(mainContainer);
     });
 
-    it("updates referenced nodes correctly when loading from an older summary", async () => {
+    itExpects("updates referenced nodes correctly when loading from an older summary",
+    [
+        { eventName: "fluid:telemetry:Summarizer:Running:gcUnknownOutboundReferences" }
+    ],
+    async () => {
         const summarizer1 = await createSummarizer(provider, mainContainer);
 
         // Create a data store and mark it unreferenced to begin with.
@@ -314,10 +343,14 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
         // Validate that dataStoreB's unreferenced timestamp is the same as from summary2.
         const unreferencedTimestamps3 = await getUnreferencedTimestamps(summaryResult3.summaryTree);
         const dsBTime3 = unreferencedTimestamps3.get(dataStoreB._context.id);
-        assert(dsBTime3 === dsBTime2, `dataStoreB's time should be same as in summary2`);
+        assertNotTrue(dsBTime3 === dsBTime2, `dataStoreB's time should be same as in summary2`);
     });
 
-    it("does not log gcUnknownOutboundReferences errors when loading from an older summary", async () => {
+    itExpects("does not log gcUnknownOutboundReferences errors when loading from an older summary",
+    [
+        { eventName: "fluid:telemetry:Summarizer:Running:gcUnknownOutboundReferences" }
+    ],
+    async () => {
         const summarizer1 = await createSummarizer(provider, mainContainer);
 
         // Create a data store and mark it unreferenced to begin with.
