@@ -80,7 +80,8 @@ export function generateRuntimeOptions(
         enableOfflineLoad: [undefined],
         flushMode: [undefined],
         compressionOptions: [{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 }],
-        maxBatchSizeInBytes: [972800],
+        maxBatchSizeInBytes: [undefined],
+        // Compressed payloads over 1MB will be split into chunked ops of this size
         chunkSizeInBytes: [614400],
     };
 
