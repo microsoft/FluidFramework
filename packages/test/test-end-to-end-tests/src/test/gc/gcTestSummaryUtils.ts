@@ -4,14 +4,12 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { concatGarbageCollectionStates } from "@fluidframework/garbage-collector";
+import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
     gcBlobPrefix,
     gcTombstoneBlobKey,
     gcTreeKey,
-} from "@fluidframework/container-runtime";
-import { concatGarbageCollectionStates } from "@fluidframework/garbage-collector";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import {
     IGarbageCollectionState,
 } from "@fluidframework/runtime-definitions";
 

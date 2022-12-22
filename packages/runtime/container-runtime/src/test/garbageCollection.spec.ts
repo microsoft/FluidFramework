@@ -12,7 +12,8 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { concatGarbageCollectionStates } from "@fluidframework/garbage-collector";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
-    gcBlobKey,
+    gcBlobPrefix,
+    gcTreeKey,
     IGarbageCollectionData,
     IGarbageCollectionNodeData,
     IGarbageCollectionState,
@@ -37,8 +38,6 @@ import {
 } from "../garbageCollection";
 import {
     defaultSessionExpiryDurationMs,
-    gcBlobPrefix,
-    gcTreeKey,
     runSessionExpiryKey,
     oneDayMs,
     runGCKey,
@@ -781,7 +780,7 @@ describe("Garbage Collection Tests", () => {
                 const node3Snapshot = getDummySnapshotTree();
                 const gcBlobId = "node3GCDetails";
                 const attributesBlobId = "attributesBlob";
-                node3Snapshot.blobs[gcBlobKey] = gcBlobId;
+                node3Snapshot.blobs[gcTreeKey] = gcBlobId;
                 node3Snapshot.blobs[dataStoreAttributesBlobName] = attributesBlobId;
 
                 // Create a base snapshot that contains snapshot tree of node 3.

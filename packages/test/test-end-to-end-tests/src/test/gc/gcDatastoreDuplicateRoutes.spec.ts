@@ -13,10 +13,10 @@ import {
     waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
-import { gcBlobPrefix, gcTreeKey, ISummarizer } from "@fluidframework/container-runtime";
+import { ISummarizer } from "@fluidframework/container-runtime";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { SharedMap } from "@fluidframework/map";
-import { IGarbageCollectionState } from "@fluidframework/runtime-definitions";
+import { gcTreeKey, gcBlobPrefix, IGarbageCollectionState } from "@fluidframework/runtime-definitions";
 import { defaultGCConfig } from "./gcTestConfigs";
 
 /**
