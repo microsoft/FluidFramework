@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ClientSessionExpiredError, DataProcessingError, UsageError } from "@fluidframework/container-utils";
@@ -1243,12 +1243,11 @@ export class GarbageCollector implements IGarbageCollector {
 
         if (missingExplicitReferences.length > 0) {
             missingExplicitReferences.forEach((missingExplicitReference) => {
-                const event: ITelemetryPerformanceEvent = {
+                logger.sendErrorEvent({
                     eventName: "gcUnknownOutboundReferences",
                     gcNodeId: missingExplicitReference[0],
                     gcRoutes: JSON.stringify(missingExplicitReference[1]),
-                };
-                logger.sendPerformanceEvent(event);
+                });
             });
         }
 
