@@ -24,8 +24,8 @@ const allOperations: TestOperation[] = [
 ];
 
 const defaultOptions = {
-    minLength: { min: 1, max: 16 /* 32 */ },
-    opsPerRollbackRange: { min: 1, max: 16 /* 32 */ }, // Bug AB1809: fail to insert in rollback client after many ops
+    minLength: { min: 1, max: 32 },
+    opsPerRollbackRange: { min: 1, max: 32 }, // Bug AB1809: fail to insert in rollback client after many ops
     rounds: 10,
     opsPerRound: 10,
     operations: allOperations,
@@ -40,7 +40,7 @@ describe("MergeTree.Client", () => {
                 mt.seedWithArray([0xDEADBEEF, 0xFEEDBED, minLength, opsPerRollback]);
 
                 // A: readonly, B: rollback, C: rollback + edit, D: edit
-                const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C", "D");
+                const clients = createClientsAtInitialState({ initialState: "", options: {mergeTreeUseNewLengthCalculations: true} }, "A", "B", "C", "D");
                 let seq = 0;
 
                 for (let round = 0; round < defaultOptions.rounds; round++) {
