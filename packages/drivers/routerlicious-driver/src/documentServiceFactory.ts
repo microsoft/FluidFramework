@@ -5,10 +5,13 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
+    FiveDaysMs,
     IDocumentService,
     IDocumentServiceFactory,
+    IDocumentStorageServicePolicies,
     IFluidResolvedUrl,
     IResolvedUrl,
+    LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
@@ -26,7 +29,11 @@ import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
+import { ICache, InMemoryCache, NullCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
+import { ISnapshotTreeVersion } from "./definitions";
+
+const maximumSnapshotCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
@@ -46,15 +53,24 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid:";
     private readonly driverPolicies: IRouterliciousDriverPolicies;
+    private readonly blobCache: ICache<ArrayBufferLike>;
+    private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>;
 
     constructor(
         private readonly tokenProvider: ITokenProvider,
         driverPolicies: Partial<IRouterliciousDriverPolicies> = {},
     ) {
+        // Use the maximum allowed by the policy (IDocumentStorageServicePolicies.maximumCacheDurationMs set below)
+        const snapshotCacheExpiryMs: FiveDaysMs = maximumSnapshotCacheDurationMs;
+
         this.driverPolicies = {
             ...defaultRouterliciousDriverPolicies,
             ...driverPolicies,
         };
+        this.blobCache = new InMemoryCache<ArrayBufferLike>();
+        this.snapshotTreeCache = this.driverPolicies.enableInternalSummaryCaching
+            ? new InMemoryCache<ISnapshotTreeVersion>(snapshotCacheExpiryMs)
+            : new NullCache<ISnapshotTreeVersion>();
     }
 
     /**
@@ -250,6 +266,14 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 `All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
         }
 
+        const documentStorageServicePolicies: IDocumentStorageServicePolicies = {
+            caching: this.driverPolicies.enablePrefetch
+                ? LoaderCachingPolicy.Prefetch
+                : LoaderCachingPolicy.NoCaching,
+            minBlobSize: this.driverPolicies.aggregateBlobsSmallerThanBytes,
+            maximumCacheDurationMs: maximumSnapshotCacheDurationMs,
+        };
+
         return new DocumentService(
             fluidResolvedUrl,
             ordererUrl,
@@ -261,7 +285,10 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             tenantId,
             documentId,
             ordererRestWrapper,
+            documentStorageServicePolicies,
             this.driverPolicies,
+            this.blobCache,
+            this.snapshotTreeCache,
             discoverFluidResolvedUrl);
     }
 }

@@ -18,7 +18,7 @@ import { NullBlobStorageService } from "./nullBlobStorageService";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper, RouterliciousStorageRestWrapper } from "./restWrapper";
 import { IRouterliciousDriverPolicies } from "./policies";
-import { ICache, InMemoryCache, NullCache } from "./cache";
+import { ICache } from "./cache";
 import { ISnapshotTreeVersion } from "./definitions";
 
 /**
@@ -28,8 +28,6 @@ import { ISnapshotTreeVersion } from "./definitions";
  * In the future, we likely want to retrieve this information from service's "inactive session" definition.
  */
 const RediscoverAfterTimeSinceDiscoveryMs = 5 * 60000; // 5 minute
-
-const maximumSnapshotCacheDurationMs: api.FiveDaysMs = 432_000_000; // 5 days in ms
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -42,9 +40,6 @@ export class DocumentService implements api.IDocumentService {
 
     private storageManager: GitManager | undefined;
     private noCacheStorageManager: GitManager | undefined;
-
-    private readonly blobCache: ICache<ArrayBufferLike>;
-    private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>;
 
     public get resolvedUrl() {
         return this._resolvedUrl;
@@ -61,16 +56,12 @@ export class DocumentService implements api.IDocumentService {
         protected tenantId: string,
         protected documentId: string,
         protected ordererRestWrapper: RouterliciousOrdererRestWrapper,
+        private readonly documentStorageServicePolicies: api.IDocumentStorageServicePolicies,
         private readonly driverPolicies: IRouterliciousDriverPolicies,
+        private readonly blobCache: ICache<ArrayBufferLike>,
+        private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>,
         private readonly discoverFluidResolvedUrl: () => Promise<api.IFluidResolvedUrl>,
     ) {
-        // Use the maximum allowed by the policy (IDocumentStorageServicePolicies.maximumCacheDurationMs set below)
-        const snapshotCacheExpiryMs: api.FiveDaysMs = maximumSnapshotCacheDurationMs;
-
-        this.blobCache = new InMemoryCache<ArrayBufferLike>();
-        this.snapshotTreeCache = this.driverPolicies.enableInternalSummaryCaching
-            ? new InMemoryCache<ISnapshotTreeVersion>(snapshotCacheExpiryMs)
-            : new NullCache<ISnapshotTreeVersion>();
     }
 
     private documentStorageService: DocumentStorageService | undefined;
@@ -126,19 +117,11 @@ export class DocumentService implements api.IDocumentService {
         // Initialize storageManager and noCacheStorageManager
         const storageManager = await getStorageManager();
         const noCacheStorageManager = await getStorageManager(true);
-        const documentStorageServicePolicies: api.IDocumentStorageServicePolicies = {
-            caching: this.driverPolicies.enablePrefetch
-                ? api.LoaderCachingPolicy.Prefetch
-                : api.LoaderCachingPolicy.NoCaching,
-            minBlobSize: this.driverPolicies.aggregateBlobsSmallerThanBytes,
-            maximumCacheDurationMs: maximumSnapshotCacheDurationMs,
-        };
-
         this.documentStorageService = new DocumentStorageService(
             this.documentId,
             storageManager,
             this.logger,
-            documentStorageServicePolicies,
+            this.documentStorageServicePolicies,
             this.driverPolicies,
             this.blobCache,
             this.snapshotTreeCache,
