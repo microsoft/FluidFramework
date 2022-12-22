@@ -57,7 +57,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         driverPolicies: Partial<IRouterliciousDriverPolicies> = {},
     ) {
         // 5 days is the max allowed value per the IDocumentStorageServicePolicies.maximumCacheDurationMs policy
-        const snapshotCacheExpiryMs: FiveDaysMs = 432000000;
+        const snapshotCacheExpiryMs: FiveDaysMs = 432_000_000;
 
         this.driverPolicies = {
             ...defaultRouterliciousDriverPolicies,

@@ -523,7 +523,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     });
 
     it.only("Driver Storage Policy Values", async () => {
-        const fiveDaysMs: FiveDaysMs = 432000000;
+        const fiveDaysMs: FiveDaysMs = 432_000_000;
         const expectedPolicyValue = provider.driver.type === "local" ? undefined : fiveDaysMs;
 
         const container = await provider.makeTestContainer() as Container;
