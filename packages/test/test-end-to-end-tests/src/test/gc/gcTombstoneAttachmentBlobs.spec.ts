@@ -270,11 +270,10 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
         });
 
         /**
-         * Function that inverses the does not reject condition, i.e., asserts for reject instead. Used in these tests
-         * to demonstrate that because of a bug we are not getting the expected results. Once the bug is fixed, these
-         * asserts should start working as expected.
+         * Function that rejects instead of not rejecting. Used in these tests to demonstrate that because of a bug we
+         * are not getting the expected results. Once the bug is fixed, these asserts should start working as expected.
          */
-        async function assertDoesNotRejectInverse(block: Promise<any>, message?: string | Error) {
+        async function assertWronglyRejects(block: Promise<any>, message?: string | Error) {
             return assert.rejects(block, message);
         };
 
@@ -282,7 +281,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
          * This test validates that when blobs are de-duped in different containers, these containers can use these
          * blobs irrespective of whether the original blob is tombstoned. Basically, after uploading a blob, a container
          * should be able to use it the same way whether it was de-duped or not.
-         * Note: Currently this fails because the behavior is not as expected and so it's expecting an error.
          */
         itExpects("should allow access to blobs that are de-duped in different containers",
         [
@@ -314,7 +312,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
                 await container2MainDataStore._runtime.uploadBlob(stringToBuffer(blobContents, "utf-8"));
 
             // Wait for sweep timeout so that the blob uploaded by the first container is tombstoned.
-            await delay(sweepTimeoutMs + 10);
+            await delay(sweepTimeoutMs / 2 + 10);
 
             // Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
             mainDataStore._root.set("key", "value");
@@ -333,13 +331,15 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
                 await container3MainDataStore._runtime.uploadBlob(stringToBuffer(blobContents, "utf-8"));
             // Ideally, this should not reject but currently it will because of a bug with how blob de-dup interacts
             // with GC.
-            await assertDoesNotRejectInverse(container3BlobHandle.get(), "Container3 should be able to use the blob");
+            await assertWronglyRejects(container3BlobHandle.get(), "Container3 should be able to get the blob");
 
-            // Reference the blob in container2 and container3 which should be valid. There should not be any asserts or
+            // Reference the blob in container2 and container3 which should be valid. There should not be any asserts
             // or errors logged in any container because of this.
             container2MainDataStore._root.set("container2BlobHandle", container2BlobHandle);
             container3MainDataStore._root.set("container3BlobHandle", container3BlobHandle);
 
+            // Wait for the above ops to be processed. They should not result in errors in containers where the blob
+            // is tombstoned.
             await provider.ensureSynchronized();
         });
     });
