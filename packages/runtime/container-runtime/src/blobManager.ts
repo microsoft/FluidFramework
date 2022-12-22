@@ -552,9 +552,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
           * The node path is of the format `/_blobs/blobId`. This path must match the path of the blob handle returned
           * by the createBlob API because blobs are marked referenced by storing these handles in a referenced DDS.
           */
-        this.storageIds.forEach((blobId: string) => {
+        for (const blobId of this.storageIds) {
             gcData.gcNodes[this.getBlobGCNodePath(blobId)] = [];
-        });
+        }
 
         // For some blobs, the handle returned on creation is based off of the localId. So, these
         // nodes can be referenced by storing the localId handle. When that happens, the corresponding storageId node
@@ -615,10 +615,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
                 this.tombstonedBlobs.delete(blobId);
             }
         }
+
         // Mark blobs that are now tombstoned.
-        tombstonedBlobsSet.forEach((blobId: string) => {
+        for (const blobId of tombstonedBlobsSet) {
             this.tombstonedBlobs.add(blobId);
-        });
+        }
     }
 
     public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
