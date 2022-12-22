@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
+    FiveDaysMs,
     IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -55,13 +56,16 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         private readonly tokenProvider: ITokenProvider,
         driverPolicies: Partial<IRouterliciousDriverPolicies> = {},
     ) {
+        // 5 days is the max allowed value per the IDocumentStorageServicePolicies.maximumCacheDurationMs policy
+        const snapshotCacheExpiryMs: FiveDaysMs = 432000000;
+
         this.driverPolicies = {
             ...defaultRouterliciousDriverPolicies,
             ...driverPolicies,
         };
         this.blobCache = new InMemoryCache<ArrayBufferLike>();
         this.snapshotTreeCache = this.driverPolicies.enableInternalSummaryCaching
-            ? new InMemoryCache<ISnapshotTreeVersion>()
+            ? new InMemoryCache<ISnapshotTreeVersion>(snapshotCacheExpiryMs)
             : new NullCache<ISnapshotTreeVersion>();
     }
 
