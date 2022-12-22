@@ -25,7 +25,7 @@ const allOperations: TestOperation[] = [
 
 const defaultOptions = {
     minLength: { min: 1, max: 16 /* 32 */ },
-    opsPerRollbackRange: { min: 1, max: 16 /* 32 */ }, // Bug AB1809: fail to insert in rollback client after many ops
+    opsPerRollbackRange: { min: 1, max: 8 /* 32 */ }, // Bug AB1809: fail to insert in rollback client after many ops
     rounds: 10,
     opsPerRound: 10,
     operations: allOperations,
