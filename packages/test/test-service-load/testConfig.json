@@ -166,15 +166,15 @@
             },
             "opsSendType":  "allClientsConcurrentReadWrite"
         },
-        "scale_with_chunked_compression": {
-            "opRatePerMin": 60,
-            "progressIntervalMs": 20000,
-            "numClients": 10,
-            "totalSendCount": 70000,
+        "ci_with_chunked_compression": {
+            "opRatePerMin": 10,
+            "progressIntervalMs": 15000,
+            "numClients": 120,
+            "totalSendCount": 10000,
             "readWriteCycleMs": 30000,
             "faultInjectionMs": {
-                "min": 900000,
-                "max": 1800000
+                "min": 0,
+                "max": 150000
             },
             "useRandomContent": true,
             "useVariableOpSize": true,
