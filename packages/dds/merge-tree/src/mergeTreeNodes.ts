@@ -47,7 +47,7 @@ import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager";
 
 // TODO: this should reference a shared interface in @fluidframework/runtime-definitions so it's usable from
-// here and @fluid-internal/attributor
+// here and @fluidframework/attributor
 /**
  * @alpha
  * @remarks - This will eventually be exported by a different package. Its export will be removed.

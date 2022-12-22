@@ -30,18 +30,41 @@ import { ChangeFamily } from "../change-family";
 import { Commit, EditManager, SeqNumber } from "../edit-manager";
 import { AnchorSet, Delta } from "../tree";
 import { brand, JsonCompatibleReadOnly } from "../util";
+import { EventEmitter, IEventEmitter, TransformEvents } from "../events";
 
 /**
  * The events emitted by a {@link SharedTreeCore}
  *
  * TODO: Add/remove events
  */
-export interface ISharedTreeCoreEvents extends ISharedObjectEvents {
-    (event: "updated", listener: () => void): unknown;
+export interface ISharedTreeCoreEvents {
+    updated: () => void;
 }
 
 // TODO: How should the format version be determined?
 const formatVersion = 0;
+
+export interface IndexEvents<TChangeset> {
+    /**
+     * @param change - change that was just sequenced.
+     * @param derivedFromLocal - iff provided, change was a local change (from this session)
+     * which is now sequenced (and thus no longer local).
+     */
+    newSequencedChange: (change: TChangeset, derivedFromLocal?: TChangeset) => void;
+
+    /**
+     * @param change - change that was just applied locally.
+     */
+    newLocalChange: (change: TChangeset) => void;
+
+    /**
+     * @param changeDelta - composed changeset from previous local state
+     * (state after all sequenced then local changes are accounted for) to current local state.
+     * May involve effects of a new sequenced change (including rebasing of local changes onto it),
+     * or a new local change. Called after either sequencedChange or newLocalChange.
+     */
+    newLocalState: (changeDelta: Delta.Root) => void;
+}
 
 /**
  * Generic shared tree, which needs to be configured with indexes, field kinds and a history policy to be used.
@@ -52,7 +75,7 @@ const formatVersion = 0;
 export class SharedTreeCore<
     TChange,
     TChangeFamily extends ChangeFamily<any, TChange>,
-> extends SharedObject<ISharedTreeCoreEvents> {
+> extends SharedObject<TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>> {
     /**
      * A random ID that uniquely identifies this client in the collab session.
      * This is sent alongside every op to identify which client the op originated from.
@@ -74,12 +97,22 @@ export class SharedTreeCore<
     private detachedRevision: SeqNumber | undefined = brand(Number.MIN_SAFE_INTEGER);
 
     /**
+     * Provides events that indexes can subscribe to
+     */
+    private readonly indexEventEmitter = EventEmitter.create<IndexEvents<TChange>>();
+
+    /**
+     * @param indexes - A list of indexes, either as an array or as a factory function
+     * @param changeFamily - The change family
+     * @param editManager - The edit manager
+     * @param anchors - The anchor set
      * @param id - The id of the shared object
      * @param runtime - The IFluidDataStoreRuntime which contains the shared object
      * @param attributes - Attributes of the shared object
+     * @param telemetryContextPrefix - the context for any telemetry logs/errors emitted
      */
     public constructor(
-        private readonly indexes: Index<TChange>[],
+        indexes: Index[] | ((events: IEventEmitter<IndexEvents<TChange>>) => Index[]),
         public readonly changeFamily: TChangeFamily,
         public readonly editManager: EditManager<TChange, TChangeFamily>,
         anchors: AnchorSet,
@@ -94,7 +127,7 @@ export class SharedTreeCore<
 
         this.stableId = uuid();
         editManager.initSessionId(this.stableId);
-        this.summaryElements = indexes
+        this.summaryElements = (Array.isArray(indexes) ? indexes : indexes(this.indexEventEmitter))
             .map((i) => i.summaryElement)
             .filter((e): e is SummaryElement => e !== undefined);
         assert(
@@ -169,11 +202,8 @@ export class SharedTreeCore<
             this.detachedRevision = newRevision;
             this.editManager.addSequencedChange(commit);
         }
-        for (const index of this.indexes) {
-            index.newLocalChange?.(edit);
-            index.newLocalState?.(delta);
-        }
-
+        this.indexEventEmitter.emit("newLocalChange", edit);
+        this.indexEventEmitter.emit("newLocalState", delta);
         const message: Message = {
             originatorId: this.stableId,
             changeset: this.changeFamily.encoder.encodeForJson(formatVersion, edit),
@@ -197,10 +227,8 @@ export class SharedTreeCore<
 
         const delta = this.editManager.addSequencedChange(commit);
         const sequencedChange = this.editManager.getLastSequencedChange();
-        for (const index of this.indexes) {
-            index.sequencedChange?.(sequencedChange);
-            index.newLocalState?.(delta);
-        }
+        this.indexEventEmitter.emit("newSequencedChange", sequencedChange);
+        this.indexEventEmitter.emit("newLocalState", delta);
         this.editManager.advanceMinimumSequenceNumber(message.minimumSequenceNumber);
     }
 
@@ -250,24 +278,7 @@ interface Message {
 /**
  * Observes Changesets (after rebase), after writes data into summaries when requested.
  */
-export interface Index<TChangeset> {
-    /**
-     * @param change - change that was just sequenced.
-     * @param derivedFromLocal - iff provided, change was a local change (from this session)
-     * which is now sequenced (and thus no longer local).
-     */
-    sequencedChange?(change: TChangeset, derivedFromLocal?: TChangeset): void;
-
-    newLocalChange?(change: TChangeset): void;
-
-    /**
-     * @param changeDelta - composed changeset from previous local state
-     * (state after all sequenced then local changes are accounted for) to current local state.
-     * May involve effects of a new sequenced change (including rebasing of local changes onto it),
-     * or a new local change. Called after either sequencedChange or newLocalChange.
-     */
-    newLocalState?(changeDelta: Delta.Root): void;
-
+export interface Index {
     /**
      * If provided, records data into summaries.
      */
