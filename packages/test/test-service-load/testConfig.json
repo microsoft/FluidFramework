@@ -166,10 +166,10 @@
             },
             "opsSendType":  "allClientsConcurrentReadWrite"
         },
-        "ci_with_chunked_compression": {
+        "ci_with_large_payloads": {
             "opRatePerMin": 10,
             "progressIntervalMs": 15000,
-            "numClients": 120,
+            "numClients": 100,
             "totalSendCount": 10000,
             "readWriteCycleMs": 30000,
             "faultInjectionMs": {

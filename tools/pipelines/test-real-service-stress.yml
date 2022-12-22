@@ -135,7 +135,7 @@ stages:
         testWorkspace: ${{ variables.testWorkspace }}
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 120
-        testCommand: start:chunking:odsp
+        testCommand: start:odsp:large
         env:
           login__microsoft__clientId: $(login-microsoft-clientId)
           login__microsoft__secret: $(login-microsoft-secret)
@@ -157,7 +157,7 @@ stages:
         testWorkspace: ${{ variables.testWorkspace }}
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 120
-        testCommand: start:chunking:frs
+        testCommand: start:frs:large
         env:
           fluid__test__driver__frs: $(automation-fluid-test-driver-frs-stress-test)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
