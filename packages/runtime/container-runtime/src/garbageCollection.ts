@@ -15,6 +15,7 @@ import {
     IGCResult,
     runGarbageCollection,
     unpackChildNodesGCDetails,
+    trimLeadingSlashes,
 } from "@fluidframework/garbage-collector";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
@@ -59,6 +60,7 @@ import {
     runGCKey,
     runSessionExpiryKey,
     runSweepKey,
+    throwOnTombstoneUsageKey,
     trackGCStateKey
 } from "./garbageCollectionConstants";
 import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
@@ -1150,6 +1152,25 @@ export class GarbageCollector implements IGarbageCollector {
         if (nodeStateTracker && nodeStateTracker.state !== UnreferencedState.Active) {
             this.inactiveNodeUsed("Revived", toNodePath, nodeStateTracker, fromNodePath);
         }
+
+        if (this.tombstones.includes(toNodePath)) {
+            const nodeType = this.runtime.getNodeType(toNodePath)
+
+            let eventName = "GC_Tombstone_SubDatastore_Revived";
+            if (nodeType === GCNodeType.DataStore) {
+                eventName = "GC_Tombstone_Datastore_Revived";
+            } else if (nodeType === GCNodeType.Blob) {
+                eventName = "GC_Tombstone_Blob_Revived";
+            }
+
+            this.mc.logger.sendTelemetryEvent({
+                eventName,
+                isSummarizerClient: this.isSummarizerClient,
+                url: trimLeadingSlashes(toNodePath),
+                nodeType,
+                throwOnTombstoneUsage: this.mc.config.getBoolean(throwOnTombstoneUsageKey) ?? false,
+            });
+        }
     }
 
     public dispose(): void {
@@ -1560,7 +1581,6 @@ export class GarbageCollector implements IGarbageCollector {
             if ((usageType === "Revived") === active) {
                 const pkg = await this.getNodePackagePath(eventProps.id);
                 const fromPkg = eventProps.fromId ? await this.getNodePackagePath(eventProps.fromId) : undefined;
-
                 const event = {
                     ...propsToLog,
                     eventName: `${state}Object_${usageType}`,

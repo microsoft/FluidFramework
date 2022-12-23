@@ -2219,7 +2219,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined> {
         switch (this.getNodeType(nodePath)) {
             case GCNodeType.Blob:
-                return ["_blobs"];
+                return [BlobManager.basePath];
             case GCNodeType.DataStore:
             case GCNodeType.SubDataStore:
                 return this.dataStores.getDataStorePackagePath(nodePath);
