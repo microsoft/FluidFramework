@@ -624,11 +624,6 @@ export class DataStores implements IDisposable {
         // Verify that the used routes are correct.
         for (const [id] of usedDataStoreRoutes) {
             assert(this.contexts.has(id), 0x167 /* "Used route does not belong to any known data store" */);
-
-            // Revive datastores regardless of whether or not tombstone the tombstone flag is flipped
-            const dataStore = this.contexts.get(id);
-            assert(dataStore !== undefined, 0x46e /* No data store retrieved with specified id */);
-            dataStore.setTombstone(false /* tombstone */);
         }
 
         // Update the used routes in each data store. Used routes is empty for unused data stores.
@@ -638,13 +633,10 @@ export class DataStores implements IDisposable {
     }
 
     /**
-     * This is called to update objects whose routes are unused. The unused objects are either deleted or marked as
-     * tombstones.
+     * This is called to update objects whose routes are unused. The unused objects are deleted.
      * @param unusedRoutes - The routes that are unused in all data stores in this Container.
-     * @param tombstone - if true, the objects corresponding to unused routes are marked tombstones. Otherwise, they
-     * are deleted.
      */
-    public updateUnusedRoutes(unusedRoutes: string[], tombstone: boolean) {
+    public updateUnusedRoutes(unusedRoutes: string[]) {
         for (const route of unusedRoutes) {
             const pathParts = route.split("/");
             // Delete data store only if its route (/datastoreId) is in unusedRoutes. We don't want to delete a data
@@ -654,23 +646,34 @@ export class DataStores implements IDisposable {
             }
             const dataStoreId = pathParts[1];
             assert(this.contexts.has(dataStoreId), 0x2d7 /* No data store with specified id */);
-
-            /**
-             * When running GC in tombstone mode, datastore contexts are tombstoned. Tombstoned datastore contexts
-             * enable testing scenarios with accessing deleted content without actually deleting content from
-             * summaries.
-             */
-            if (tombstone) {
-                const dataStore = this.contexts.get(dataStoreId);
-                assert(dataStore !== undefined, 0x442 /* No data store retrieved with specified id */);
-                dataStore.setTombstone(true /* tombstone */);
-                continue;
-            }
-
             // Delete the contexts of unused data stores.
             this.contexts.delete(dataStoreId);
             // Delete the summarizer node of the unused data stores.
             this.deleteChildSummarizerNodeFn(dataStoreId);
+        }
+    }
+
+    /**
+     * This is called to update objects whose routes are tombstones. Tombstoned datastore contexts enable testing
+     * scenarios with accessing deleted content without actually deleting content from summaries.
+     * @param tombstonedRoutes - The routes that are tombstones in all data stores in this Container.
+     */
+    public updateTombstonedRoutes(tombstonedRoutes: string[]) {
+        const tombstonedDataStoresSet: Set<string> = new Set();
+        for (const route of tombstonedRoutes) {
+            const pathParts = route.split("/");
+            // Tombstone data store only if its route (/datastoreId) is directly in tombstoneRoutes.
+            if (pathParts.length > 2) {
+                continue;
+            }
+            const dataStoreId = pathParts[1];
+            assert(this.contexts.has(dataStoreId), "No data store with specified id");
+            tombstonedDataStoresSet.add(dataStoreId);
+        }
+
+        // Update the used routes in each data store. Used routes is empty for unused data stores.
+        for (const [contextId, context] of this.contexts) {
+            context.setTombstone(tombstonedDataStoresSet.has(contextId));
         }
     }
 

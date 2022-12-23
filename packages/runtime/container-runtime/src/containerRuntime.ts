@@ -2136,40 +2136,28 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // always referenced, so the used routes is only self-route (empty string).
         this.summarizerNode.updateUsedRoutes([""]);
 
-        const blobManagerUsedRoutes: string[] = [];
-        const dataStoreUsedRoutes: string[] = [];
-        for (const route of usedRoutes) {
-            if (this.isBlobPath(route)) {
-                blobManagerUsedRoutes.push(route);
-            } else {
-                dataStoreUsedRoutes.push(route);
-            }
-        }
-
-        this.blobManager.updateUsedRoutes(blobManagerUsedRoutes);
-        this.dataStores.updateUsedRoutes(dataStoreUsedRoutes);
+        const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(usedRoutes);
+        this.dataStores.updateUsedRoutes(dataStoreRoutes);
     }
 
     /**
-     * This is called to update objects whose routes are unused. The unused objects are either deleted or marked as
-     * tombstones.
-     * @param unusedRoutes - The routes that are unused in all data stores and attachment blobs in this Container.
-     * @param tombstone - if true, the objects corresponding to unused routes are marked tombstones. Otherwise, they
-     * are deleted.
+     * This is called to update objects whose routes are unused.
+     * @param unusedRoutes - Data store and attachment blob routes that are unused in this Container.
      */
-    public updateUnusedRoutes(unusedRoutes: string[], tombstone: boolean) {
-        const blobManagerUnusedRoutes: string[] = [];
-        const dataStoreUnusedRoutes: string[] = [];
-        for (const route of unusedRoutes) {
-            if (this.isBlobPath(route)) {
-                blobManagerUnusedRoutes.push(route);
-            } else {
-                dataStoreUnusedRoutes.push(route);
-            }
-        }
+    public updateUnusedRoutes(unusedRoutes: string[]) {
+        const { blobManagerRoutes, dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
+        this.blobManager.updateUnusedRoutes(blobManagerRoutes);
+        this.dataStores.updateUnusedRoutes(dataStoreRoutes);
+    }
 
-        this.blobManager.updateUnusedRoutes(blobManagerUnusedRoutes, tombstone);
-        this.dataStores.updateUnusedRoutes(dataStoreUnusedRoutes, tombstone);
+    /**
+     * This is called to update objects that are tombstones.
+     * @param tombstonedRoutes - Data store and attachment blob routes that are tombstones in this Container.
+     */
+    public updateTombstonedRoutes(tombstonedRoutes: string[]) {
+        const { blobManagerRoutes, dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(tombstonedRoutes);
+        this.blobManager.updateTombstonedRoutes(blobManagerRoutes);
+        this.dataStores.updateTombstonedRoutes(dataStoreRoutes);
     }
 
     /**
@@ -2217,6 +2205,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return false;
         }
         return true;
+    }
+
+    /**
+     * From a given list of routes, separate and return routes that belong to blob manager and data stores.
+     * @param routes - A list of routes that can belong to data stores or blob manager.
+     * @returns - Two route lists - One that contains routes for blob manager and another one that contains routes
+     * for data stores.
+     */
+    private getDataStoreAndBlobManagerRoutes(routes: string[]) {
+        const blobManagerRoutes: string[] = [];
+        const dataStoreRoutes: string[] = [];
+        for (const route of routes) {
+            if (this.isBlobPath(route)) {
+                blobManagerRoutes.push(route);
+            } else {
+                dataStoreRoutes.push(route);
+            }
+        }
+        return { blobManagerRoutes, dataStoreRoutes };
     }
 
     /**
@@ -2742,7 +2749,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         );
 
         // Notify the garbage collector so it can update its latest summary state.
-        await this.garbageCollector.latestSummaryStateRefreshed(result, readAndParseBlob);
+        await this.garbageCollector.refreshLatestSummary(
+            result,
+            proposalHandle,
+            summaryRefSeq,
+            readAndParseBlob,
+        );
     }
 
     /**
@@ -2773,7 +2785,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         );
 
         // Notify the garbage collector so it can update its latest summary state.
-        await this.garbageCollector.latestSummaryStateRefreshed(result, readAndParseBlob);
+        await this.garbageCollector.refreshLatestSummary(
+            result,
+            undefined,
+            latestSnapshotRefSeq,
+            readAndParseBlob,
+        )
 
         return { latestSnapshotRefSeq, latestSnapshotVersionId: versionId };
     }

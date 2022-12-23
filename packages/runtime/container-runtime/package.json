@@ -122,6 +122,9 @@
       "RemovedVariableDeclaration_gcTreeKey": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "ClassDeclaration_ContainerRuntime": {
+        "forwardCompat": false
       }
     }
   }
