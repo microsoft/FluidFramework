@@ -107,7 +107,8 @@ describe("Garbage Collection Tests", () => {
             updateStateBeforeGC: async () => {},
             getGCData: async (fullGC?: boolean) => defaultGCData,
             updateUsedRoutes: (usedRoutes: string[]) => { return { totalNodeCount: 0, unusedNodeCount: 0 }; },
-            updateUnusedRoutes: (unusedRoutes: string[], tombstone: boolean) => {},
+            updateUnusedRoutes: (unusedRoutes: string[]) => {},
+            updateTombstonedRoutes: (tombstoneRoutes: string[]) => {},
             getNodeType,
             getCurrentReferenceTimestampMs: () => Date.now(),
             closeFn,
@@ -1620,7 +1621,7 @@ describe("Garbage Collection Tests", () => {
             );
         };
 
-        it("No changes to GC between summaries creates a blob handle when no version specified", async () => {
+        it("creates a blob handle when no version specified", async () => {
             garbageCollector = createGarbageCollector();
 
             await garbageCollector.collectGarbage({});
@@ -1628,8 +1629,10 @@ describe("Garbage Collection Tests", () => {
 
             checkGCSummaryType(tree1, SummaryType.Tree, "first");
 
-            await garbageCollector.latestSummaryStateRefreshed(
+            await garbageCollector.refreshLatestSummary(
                 { wasSummaryTracked: true, latestSummaryUpdated: true },
+                undefined,
+                0,
                 parseNothing,
             );
 
