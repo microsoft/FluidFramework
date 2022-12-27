@@ -74,6 +74,15 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
         return (metadata.message as ISequencedDocumentMessage).sequenceNumber;
     }
 
+    /**
+     * Function that asserts the given value is not true. Used in these tests to demonstrate that because of
+     * a bug we are not getting the expected results. Once the bug is fixed, these asserts should start working
+     * as expected.
+     */
+    function assertNotTrue(value: boolean, message: string) {
+        assert(!value, message);
+    }
+
     beforeEach(async function() {
         provider = getTestObjectProvider({ syncSummarizer: true });
         mainContainer = await provider.makeTestContainer(defaultGCConfig);
@@ -286,7 +295,7 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
         const dsAReferenceState3 = referenceState3.get(dataStoreA._context.id);
         assert(dsAReferenceState3 === true, `dataStoreA should still be referenced`);
         const dsBReferenceState3 = referenceState3.get(dataStoreB._context.id);
-        assert(dsBReferenceState3 === true, `dataStoreB should still be referenced on loading from old summary`);
+        assertNotTrue(dsBReferenceState3 === true, `dataStoreB should still be referenced on loading from old summary`);
     });
 
     it("updates unreferenced timestamps correctly when loading from an older summary", async () => {
