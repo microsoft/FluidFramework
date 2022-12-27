@@ -1415,17 +1415,19 @@ export class GarbageCollector implements IGarbageCollector {
             const previousRoutes = previousGCData.gcNodes[nodeId] ?? [];
             const explicitRoutes = explicitReferences.get(nodeId) ?? [];
             const missingExplicitRoutes: string[] = [];
+
+            /**
+             * 1. For routes in the current GC data, routes that were not present in previous GC data and did not have
+             * explicit references should be added to missing explicit routes list.
+             * 2. Only include data store and blob routes since GC only works for these two.
+             * Note: Due to a bug with de-duped blobs, only adding data store routes for now.
+             * 3. Ignore DDS routes to their parent datastores since those were added implicitly. So, there won't be
+             * explicit routes to them.
+             */
             currentOutboundRoutes.forEach((route) => {
-                const isBlobOrDataStoreRoute =
-                    this.runtime.getNodeType(route) === GCNodeType.Blob ||
-                    this.runtime.getNodeType(route) === GCNodeType.DataStore;
-                // Ignore implicitly added DDS routes to their parent datastores
-                const notRouteFromDDSToParentDataStore = !nodeId.startsWith(route);
-                if (
-                    isBlobOrDataStoreRoute &&
-                    notRouteFromDDSToParentDataStore &&
-                    (!previousRoutes.includes(route) && !explicitRoutes.includes(route))
-                ) {
+                if (this.runtime.getNodeType(route) === GCNodeType.DataStore
+                    && !nodeId.startsWith(route)
+                    && (!previousRoutes.includes(route) && !explicitRoutes.includes(route))) {
                     missingExplicitRoutes.push(route);
                 }
             });
