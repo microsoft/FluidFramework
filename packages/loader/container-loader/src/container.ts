@@ -748,7 +748,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public dispose(error?: ICriticalContainerError) {
-        this._deltaManager.close(error, true);
+        this._deltaManager.close(error, true /* emitDisposed */);
         this.verifyClosed();
     }
 
