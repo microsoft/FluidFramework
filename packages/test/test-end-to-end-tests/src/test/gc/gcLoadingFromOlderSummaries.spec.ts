@@ -23,8 +23,9 @@ import {
 } from "./gcTestSummaryUtils";
 
 /**
- * Validates that that reference state of nodes is correct irrespective of whether a summarizer loads from the
- * latest summary or an older summary.
+ * Validates that that reference state of nodes is correct irrespective of whether a summarizer loads from the latest
+ * summary or an older summary. When a summarizer loads from an older summary, it gets the ack for newer summaries and
+ * refreshes its state from the newer summary. These tests validates that the GC state is correctly refreshed.
  */
 describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
