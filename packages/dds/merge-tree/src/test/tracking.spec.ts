@@ -31,10 +31,9 @@ describe("MergeTree.tracking", () => {
         () => {
             const trackingGroup = new TrackingGroup();
 
-            testClient.mergeTree.mergeTreeDeltaCallback =
-                (opArgs, deltaArgs) => {
-                    deltaArgs.deltaSegments.forEach((sg) => sg.segment.trackingCollection.link(trackingGroup));
-                };
+            testClient.on("delta", (opArgs, deltaArgs) => {
+                deltaArgs.deltaSegments.forEach((sg) => sg.segment.trackingCollection.link(trackingGroup));
+            });
 
             testClient.insertTextLocal(0, "abc");
 
@@ -53,14 +52,13 @@ describe("MergeTree.tracking", () => {
         () => {
             const trackingGroup = new TrackingGroup();
 
-            testClient.mergeTree.mergeTreeDeltaCallback =
-                (opArgs, deltaArgs) => {
-                    deltaArgs.deltaSegments.forEach((sg) => sg.segment.trackingCollection.link(trackingGroup));
-                };
+            testClient.on("delta", (opArgs, deltaArgs) => {
+                deltaArgs.deltaSegments.forEach((sg) => sg.segment.trackingCollection.link(trackingGroup));
+            });
 
             const ops = [testClient.insertTextLocal(0, "abc")];
 
-            testClient.mergeTree.mergeTreeDeltaCallback = undefined;
+            testClient.removeAllListeners("delta");
             assert.equal(trackingGroup.size, 1);
 
             ops.push(testClient.insertTextLocal(1, "z"));
@@ -75,10 +73,9 @@ describe("MergeTree.tracking", () => {
         () => {
             const trackingGroup = new TrackingGroup();
 
-            testClient.mergeTree.mergeTreeDeltaCallback =
-                (opArgs, deltaArgs) => {
-                    deltaArgs.deltaSegments.forEach((sg) => sg.segment.trackingCollection.link(trackingGroup));
-                };
+            testClient.on("delta", (opArgs, deltaArgs) => {
+                deltaArgs.deltaSegments.forEach((sg) => sg.segment.trackingCollection.link(trackingGroup));
+            });
 
             const ops = [testClient.insertTextLocal(0, "abc")];
 
