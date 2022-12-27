@@ -11,7 +11,6 @@ import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/conta
 import { ILoaderProps } from "@fluidframework/container-loader";
 import {
     ContainerRuntime,
-    gcTreeKey,
     IAckedSummary,
     IContainerRuntimeOptions,
     ISummaryCancellationToken,
@@ -23,7 +22,7 @@ import {
 import { IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { gcTreeKey, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import {

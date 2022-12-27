@@ -112,6 +112,17 @@
     "baselineRange": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
     "baselineVersion": "2.0.0-internal.2.2.0",
     "broken": {
+      "RemovedVariableDeclaration_gcBlobPrefix": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedVariableDeclaration_gcTombstoneBlobKey": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedVariableDeclaration_gcTreeKey": {
+        "forwardCompat": false
+      },
       "VariableDeclaration_DefaultSummaryConfiguration": {
         "backCompat": false
       },

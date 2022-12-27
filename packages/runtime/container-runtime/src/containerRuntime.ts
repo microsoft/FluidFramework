@@ -69,6 +69,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     FlushMode,
+    gcTreeKey,
     InboundAttachMessage,
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
@@ -154,9 +155,6 @@ import {
     IGarbageCollector,
     IGCStats,
 } from "./garbageCollection";
-import {
-    gcTreeKey,
-} from "./garbageCollectionConstants";
 import {
     channelToDataStore,
     IDataStoreAliasMessage,

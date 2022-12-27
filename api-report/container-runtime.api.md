@@ -246,15 +246,6 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
     get IFluidDataStoreRegistry(): this;
 }
 
-// @public (undocumented)
-export const gcBlobPrefix = "__gc";
-
-// @public (undocumented)
-export const gcTombstoneBlobKey = "__tombstones";
-
-// @public (undocumented)
-export const gcTreeKey = "gc";
-
 // @public
 export interface IAckedSummary {
     // (undocumented)

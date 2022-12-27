@@ -83,7 +83,13 @@ export enum FlushMode {
 }
 
 // @public (undocumented)
-export const gcBlobKey = "gc";
+export const gcBlobPrefix = "__gc";
+
+// @public (undocumented)
+export const gcTombstoneBlobKey = "__tombstones";
+
+// @public (undocumented)
+export const gcTreeKey = "gc";
 
 // @public
 export interface IAttachMessage {
@@ -254,6 +260,14 @@ export interface IGarbageCollectionDetailsBase {
 export interface IGarbageCollectionNodeData {
     outboundRoutes: string[];
     unreferencedTimestampMs?: number;
+}
+
+// @public
+export interface IGarbageCollectionSnapshotData {
+    // (undocumented)
+    gcState: IGarbageCollectionState;
+    // (undocumented)
+    tombstones: string[] | undefined;
 }
 
 // @public
