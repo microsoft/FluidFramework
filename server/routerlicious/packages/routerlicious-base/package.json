@@ -96,7 +96,7 @@
     "@types/cors": "^2.8.4",
     "@types/ioredis": "^4.22.0",
     "@types/json-stringify-safe": "^5.0.0",
-    "@types/jsonwebtoken": "^8.5.9",
+    "@types/jsonwebtoken": "^9.0.0",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^10.0.0",
     "@types/nconf": "^0.10.2",
