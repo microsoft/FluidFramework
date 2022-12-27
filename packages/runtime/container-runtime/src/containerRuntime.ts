@@ -1096,6 +1096,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // If GC should not run, let the summarizer node know so that it does not track GC state.
                 gcDisabled: !this.garbageCollector.shouldRunGC,
             },
+            // Function to get GC data if needed. This will always be called by the root summarizer node to get GC data.
+            async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
+            // Function to get the GC details from the base snapshot we loaded from.
+            async () => this.garbageCollector.getBaseGCDetails(),
         );
 
         if (baseSnapshot) {
@@ -1109,7 +1113,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (id: string, createParam: CreateChildSummarizerNodeParam) => (
                 summarizeInternal: SummarizeInternalFn,
                 getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-                getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
+                getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
             ) => this.summarizerNode.createChild(
                 summarizeInternal,
                 id,
@@ -2130,6 +2134,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.dataStores.updateStateBeforeGC();
     }
 
+    private async getGCDataInternal(fullGC?: boolean): Promise<IGarbageCollectionData> {
+        return this.dataStores.getGCData(fullGC);
+    }
+
     /**
      * Implementation of IGarbageCollectionRuntime::getGCData.
      * Generates and returns the GC data for this container.
@@ -2137,7 +2145,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public async getGCData(fullGC?: boolean): Promise<IGarbageCollectionData> {
         const builder = new GCDataBuilder();
-        const dsGCData = await this.dataStores.getGCData(fullGC);
+        const dsGCData = await this.summarizerNode.getGCData(fullGC);
         builder.addNodes(dsGCData.gcNodes);
 
         const blobsGCData = this.blobManager.getGCData(fullGC);
