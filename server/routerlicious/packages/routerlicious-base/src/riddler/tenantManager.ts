@@ -70,7 +70,6 @@ export class TenantManager {
     public async validateToken(tenantId: string, token: string, includeDisabledTenant = false): Promise<void> {
         const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId };
         const tenantKeys = await this.getTenantKeys(tenantId, includeDisabledTenant);
-        console.log(`TENANT KEYS: ${tenantKeys}`);
 
         return jwt.verify(token, tenantKeys.key1, (error1) => {
             if (!error1) {
@@ -309,7 +308,7 @@ export class TenantManager {
         });
 
         await this.cache.set(tenantId, cacheKeys);
-        Lumberjack.info(`Added keys to cache.`, lumberProperties);
+        Lumberjack.info(`Added tenant keys to cache.`, lumberProperties);
 
         return {
             key1: tenantKey1,
@@ -377,7 +376,7 @@ export class TenantManager {
 
             const cacheKeys = JSON.stringify({
                 key1,
-                key2
+                key2: this.secretManager.encryptSecret(newTenantKey)
             });
 
             await this.cache.set(tenantId, cacheKeys);
@@ -395,7 +394,7 @@ export class TenantManager {
             Lumberjack.info("Tenant key2 doesn't exist.", { [BaseTelemetryProperties.tenantId]: tenantId });
 
             const cacheKey1 = JSON.stringify({
-                key1,
+                key1: this.secretManager.encryptSecret(newTenantKey),
                 key2: "",
             });
 
