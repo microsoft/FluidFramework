@@ -6,7 +6,7 @@
 import { unreachableCase } from "@fluidframework/common-utils";
 import { JsonCompatible, JsonCompatibleReadOnly } from "../../util";
 import { FieldChangeEncoder } from "../modular-schema";
-import { Changeset } from "./format";
+import { Changeset, Mark } from "./format";
 import { isSkipMark } from "./utils";
 
 export const sequenceFieldChangeEncoder: FieldChangeEncoder<Changeset> = {
@@ -29,24 +29,29 @@ export function encodeForJson<TNodeChange>(
         } else {
             const type = mark.type;
             switch (type) {
+                case "Insert":
+                case "Delete":
+                case "MoveOut":
+                case "ReturnFrom":
+                case "Revive":
+                    if (mark.changes !== undefined) {
+                        jsonMarks.push({
+                            ...mark,
+                            changes: encodeChild(mark.changes),
+                        } as unknown as JsonCompatible);
+                    } else {
+                        jsonMarks.push(mark as Mark<TNodeChange> & JsonCompatible);
+                    }
+
+                    break;
                 case "Modify":
-                case "MDelete":
-                case "MInsert":
-                case "MMoveIn":
-                case "MMoveOut":
-                case "MReturn":
-                case "MRevive":
                     jsonMarks.push({
                         ...mark,
                         changes: encodeChild(mark.changes),
                     } as unknown as JsonCompatible);
                     break;
-                case "Delete":
-                case "Insert":
                 case "MoveIn":
-                case "MoveOut":
-                case "Return":
-                case "Revive":
+                case "ReturnTo":
                     jsonMarks.push(mark as unknown as JsonCompatible);
                     break;
                 default:
@@ -70,24 +75,30 @@ export function decodeJson<TNodeChange>(
         } else {
             const type = mark.type;
             switch (type) {
-                case "Modify":
-                case "MDelete":
-                case "MInsert":
-                case "MMoveIn":
-                case "MMoveOut":
-                case "MReturn":
-                case "MRevive":
+                case "Modify": {
                     marks.push({
                         ...mark,
                         changes: decodeChild(mark.changes),
                     });
                     break;
-                case "Delete":
+                }
                 case "Insert":
-                case "MoveIn":
+                case "Delete":
                 case "MoveOut":
-                case "Return":
-                case "Revive":
+                case "ReturnFrom":
+                case "Revive": {
+                    if (mark.changes !== undefined) {
+                        marks.push({
+                            ...mark,
+                            changes: decodeChild(mark.changes),
+                        });
+                    } else {
+                        marks.push(mark as Mark<TNodeChange>);
+                    }
+                    break;
+                }
+                case "MoveIn":
+                case "ReturnTo":
                     marks.push(mark);
                     break;
                 default:

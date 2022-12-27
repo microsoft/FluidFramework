@@ -30,6 +30,17 @@ function getOpString(msg: ISequencedDocumentMessage | undefined) {
     return `${seq}:${ref}:${client}${opType}${opPos}`;
 }
 
+function arePropsEmpty(props: PropertySet | undefined) {
+    return props === undefined || Object.entries(props).length === 0;
+}
+
+/**
+ * Compare properties, allowing empty to match undefined
+ */
+function matchPropertiesHandleEmpty(a: PropertySet | undefined, b: PropertySet | undefined) {
+    return matchProperties(a, b) || (arePropsEmpty(a) && arePropsEmpty(b));
+}
+
 type ClientMap = Partial<Record<"A" | "B" | "C" | "D" | "E", TestClient>>;
 
 export function createClientsAtInitialState<TClients extends ClientMap>(
@@ -183,7 +194,6 @@ export class TestClientLogger {
                     assert.equal(
                         c.getText(),
                         baseText,
-                        // eslint-disable-next-line max-len
                         `${errorPrefix}\n${this.toString()}\nClient ${c.longClientId} does not match client ${opts?.baseText ? "baseText" : this.clients[0].longClientId}`);
                 }
 
@@ -197,11 +207,10 @@ export class TestClientLogger {
                         if (toRemovalInfo(seg) === undefined) {
                             const segProps = seg.properties;
                             for (let i = 0; i < seg.cachedLength; i++) {
-                                if (!matchProperties(segProps, properties[pos + i])) {
+                                if (!matchPropertiesHandleEmpty(segProps, properties[pos + i])) {
                                     assert.deepStrictEqual(
                                         segProps,
                                         properties[pos + i],
-                                        // eslint-disable-next-line max-len
                                         `${errorPrefix}\n${this.toString()}\nClient ${c.longClientId} does not match client ${this.clients[0].longClientId} properties at pos ${pos + i}`);
                                 }
                             }

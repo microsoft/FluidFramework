@@ -21,12 +21,6 @@ export {
     Mark,
     MarkList,
     Modify,
-    ModifyDelete,
-    ModifyDetach,
-    ModifyInsert,
-    ModifyMoveIn,
-    ModifyMoveOut,
-    ModifyReattach,
     MoveIn,
     MoveOut,
     NodeChangeType,
@@ -37,6 +31,9 @@ export {
     ProtoNode,
     RangeType,
     Reattach,
+    ReturnFrom,
+    ReturnTo,
+    Revive,
     SizedMark,
     SizedObjectMark,
     Tiebreak,
@@ -65,3 +62,4 @@ export { MarkListFactory } from "./markListFactory";
 export { NodeChangeRebaser, rebase } from "./rebase";
 export { invert, NodeChangeInverter } from "./invert";
 export { compose, NodeChangeComposer } from "./compose";
+export { isMoveMark, MoveMark, MoveEffectTable, MovePartition, newMoveEffectTable } from "./utils";

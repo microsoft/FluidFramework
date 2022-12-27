@@ -202,7 +202,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
     updateStateBeforeGC(): Promise<void>;
-    updateUnusedRoutes(unusedRoutes: string[], tombstone: boolean): void;
+    updateTombstonedRoutes(tombstonedRoutes: string[]): void;
+    updateUnusedRoutes(unusedRoutes: string[]): void;
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
@@ -238,15 +239,6 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
     // (undocumented)
     get IFluidDataStoreRegistry(): this;
 }
-
-// @public (undocumented)
-export const gcBlobPrefix = "__gc";
-
-// @public (undocumented)
-export const gcTombstoneBlobKey = "__tombstones";
-
-// @public (undocumented)
-export const gcTreeKey = "gc";
 
 // @public
 export interface IAckedSummary {
@@ -301,6 +293,10 @@ export interface IChunkedOp {
     // (undocumented)
     contents: string;
     // (undocumented)
+    originalCompression?: string;
+    // (undocumented)
+    originalMetadata?: Record<string, unknown>;
+    // (undocumented)
     originalType: MessageType | ContainerMessageType;
     // (undocumented)
     totalChunks: number;
@@ -336,6 +332,7 @@ export interface IConnectableRuntime {
 
 // @public
 export interface IContainerRuntimeOptions {
+    readonly chunkSizeInBytes?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
     readonly enableOfflineLoad?: boolean;
     readonly flushMode?: FlushMode;

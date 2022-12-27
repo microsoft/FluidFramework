@@ -81,7 +81,7 @@ export class OldestClientObserver extends TypedEventEmitter<IOldestClientObserve
         return this.currentIsOldest;
     }
 
-    private readonly updateOldest = () => {
+    private readonly updateOldest = (): void => {
         const oldest = this.computeIsOldest();
         if (this.currentIsOldest !== oldest) {
             this.currentIsOldest = oldest;
@@ -104,6 +104,8 @@ export class OldestClientObserver extends TypedEventEmitter<IOldestClientObserve
             return false;
         }
 
+        // TODO: Clean up error code linter violations repo-wide.
+        // eslint-disable-next-line unicorn/numeric-separators-style
         assert(this.observable.clientId !== undefined, 0x1da /* "Client id should be set if connected" */);
 
         const selfSequencedClient = this.quorum.getMember(this.observable.clientId);

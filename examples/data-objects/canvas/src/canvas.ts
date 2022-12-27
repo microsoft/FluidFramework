@@ -10,18 +10,18 @@ import { IInk, Ink } from "@fluidframework/ink";
 export class Canvas extends DataObject {
     private _ink: IInk | undefined;
 
-    public get ink() {
+    public get ink(): IInk {
         if (this._ink === undefined) {
             throw new Error("Ink should be defined before access");
         }
         return this._ink;
     }
 
-    protected async initializingFirstTime() {
+    protected async initializingFirstTime(): Promise<void> {
         this.root.set("ink", Ink.create(this.runtime).handle);
     }
 
-    protected async hasInitialized() {
+    protected async hasInitialized(): Promise<void> {
         // Wait here for the ink
         const handle = this.root.get<IFluidHandle<IInk>>("ink");
         if (handle === undefined) {

@@ -21,7 +21,6 @@ import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager";
  * undo redo stack manager
  */
 export class SharedSegmentSequenceUndoRedoHandler {
-    // eslint-disable-next-line max-len
     private readonly sequences = new Map<SharedSegmentSequence<ISegment>, SharedSegmentSequenceRevertible | undefined>();
 
     constructor(private readonly stackManager: UndoRedoStackManager) {
