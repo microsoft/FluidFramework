@@ -117,6 +117,12 @@
     "version": "2.0.0-internal.2.3.0",
     "baselineRange": ">=2.0.0-internal.2.2.0 <2.0.0-internal.2.3.0",
     "baselineVersion": "2.0.0-internal.2.2.0",
-    "broken": {}
+    "broken": {
+      "InterfaceDeclaration_ISharedString": { "forwardCompat": false },
+      "ClassDeclaration_SharedSegmentSequence": { "forwardCompat": false },
+      "ClassDeclaration_SharedSequence": { "forwardCompat": false },
+      "ClassDeclaration_SharedString": { "forwardCompat": false },
+      "ClassDeclaration_SharedIntervalCollection": { "forwardCompat": false }
+    }
   }
 }
