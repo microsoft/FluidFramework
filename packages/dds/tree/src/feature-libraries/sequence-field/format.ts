@@ -131,7 +131,8 @@ export type Reattach<TNodeChange = NodeChangeType> = Revive<TNodeChange> | Retur
 
 export interface Delete<TNodeChange = NodeChangeType>
     extends HasRevisionTag,
-        HasChanges<TNodeChange> {
+        HasChanges<TNodeChange>,
+        Mutable {
     type: "Delete";
     tomb?: RevisionTag;
     count: NodeCount;
@@ -140,7 +141,8 @@ export interface Delete<TNodeChange = NodeChangeType>
 export interface MoveOut<TNodeChange = NodeChangeType>
     extends HasRevisionTag,
         HasMoveId,
-        HasChanges<TNodeChange> {
+        HasChanges<TNodeChange>,
+        Mutable {
     type: "MoveOut";
     count: NodeCount;
     tomb?: RevisionTag;
@@ -203,7 +205,16 @@ export interface ReturnFrom<TNodeChange = NodeChangeType>
         Mutable {
     type: "ReturnFrom";
     count: NodeCount;
+    /**
+     * Needed for the following operations:
+     * - Inverting this mark
+     * - Canceling-out this mark with its inverse
+     * - Detecting when this muted mark should be unmuted
+     *
+     * Always kept consistent with `ReturnTo.detachedBy`.
+     */
     detachedBy: RevisionTag | undefined;
+    detachIndex?: number;
     tomb?: RevisionTag;
 }
 

@@ -31,7 +31,6 @@ import {
     Mutable,
     OutputSpanningMark,
     Changeset,
-    HasReattachFields,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 
@@ -66,6 +65,12 @@ export function isMutedReattach<TNodeChange>(
     mark: Mark<TNodeChange>,
 ): mark is Reattach<TNodeChange> & Muted {
     return isReattach(mark) && isMuted(mark);
+}
+
+export function isMutedDetach<TNodeChange>(
+    mark: Mark<TNodeChange>,
+): mark is Detach<TNodeChange> & Muted {
+    return isDetachMark(mark) && isMuted(mark);
 }
 
 export function isSkipLikeReattach<TNodeChange>(
@@ -174,7 +179,7 @@ export function getInputLength(mark: Mark<unknown>): number {
         case "Delete":
         case "MoveOut":
         case "ReturnFrom":
-            return mark.count;
+            return isMuted(mark) ? 0 : mark.count;
         case "Modify":
             return 1;
         default:
@@ -476,6 +481,7 @@ export interface MovePartition<TNodeChange> {
     replaceWith?: Mark<TNodeChange>[];
     modifyAfter?: TNodeChange;
     mute?: RevisionTag;
+    detachedBy?: RevisionTag;
 }
 
 export function splitMoveSrc<T>(
@@ -656,6 +662,23 @@ export function muteMoveSrc<T>(
     }
 }
 
+export function updateMoveSrcDetacher<T>(
+    table: MoveEffectTable<T>,
+    id: MoveId,
+    detachedBy: RevisionTag | undefined,
+): void {
+    const origId = table.splitIdToOrigId.get(id);
+    if (origId !== undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const effect = table.srcEffects.get(origId)!;
+        const index = effect.findIndex((p) => p.id === id);
+        effect[index].detachedBy = detachedBy;
+    } else {
+        table.srcEffects.set(id, [{ id, detachedBy }]);
+        table.splitIdToOrigId.set(id, id);
+    }
+}
+
 export function removeMoveSrc(table: MoveEffectTable<unknown>, id: MoveId): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
@@ -776,6 +799,13 @@ export function splitMoveOut<T>(
             if (part.mute !== undefined) {
                 assert(splitMark.type === "ReturnFrom", "Only ReturnFrom marks can be muted");
                 splitMark.mutedBy = part.mute;
+            }
+            if (part.detachedBy !== undefined) {
+                assert(
+                    splitMark.type === "ReturnFrom",
+                    "Only ReturnFrom marks can have their detachBy field set",
+                );
+                splitMark.detachedBy = part.detachedBy;
             }
             result.push(splitMark);
         }
@@ -950,11 +980,11 @@ export class DetachedNodeTracker {
                 let remainder: Reattach<T> = cloned;
                 for (let i = 1; i < cloned.count; ++i) {
                     const [head, tail] = splitMarkOnOutput(remainder, 1, genId, moveEffects);
-                    this.updateMark(head);
+                    this.updateMark(head, moveEffects);
                     factory.push(head);
                     remainder = tail;
                 }
-                this.updateMark(remainder);
+                this.updateMark(remainder, moveEffects);
                 factory.push(remainder);
             } else {
                 factory.push(cloned);
@@ -966,12 +996,17 @@ export class DetachedNodeTracker {
         };
     }
 
-    private updateMark(mark: HasReattachFields): void {
+    private updateMark(mark: Reattach<unknown>, moveEffects: MoveEffectTable<unknown>): void {
+        let didUpdate = false;
         for (const eq of this.equivalences) {
             if (mark.detachedBy === eq.old.rev && mark.detachIndex === eq.old.index) {
                 mark.detachedBy = eq.new.rev;
                 mark.detachIndex = eq.new.index;
+                didUpdate = true;
             }
+        }
+        if (didUpdate && mark.type === "ReturnTo") {
+            updateMoveSrcDetacher(moveEffects, mark.id, mark.detachedBy);
         }
     }
 }

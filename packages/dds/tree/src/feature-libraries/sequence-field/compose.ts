@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { isReattach } from ".";
 import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
 import { clone, fail, StackyIterator } from "../../util";
 import { IdAllocator } from "../modular-schema";
@@ -511,6 +512,66 @@ export class ComposeQueue<T> {
                         newMark,
                         areInverses,
                     };
+                }
+            }
+            if (
+                isReattach(newMark) &&
+                isReattach(baseMark) &&
+                (baseMark.mutedBy ?? newMark.mutedBy) !== undefined &&
+                newMark.detachedBy === baseMark.detachedBy
+            ) {
+                const newMarkLength = newMark.count;
+                const baseMarkLength = baseMark.count;
+                if (newMark.detachIndex === baseMark.detachIndex) {
+                    this.baseMarks.pop();
+                    this.newMarks.pop();
+                    if (newMarkLength < baseMarkLength) {
+                        const [baseMark1, baseMark2] = splitMarkOnOutput(
+                            baseMark,
+                            newMarkLength,
+                            this.genId,
+                            this.moveEffects,
+                        );
+                        this.baseMarks.push(baseMark2);
+                        return { baseMark: baseMark1, newMark };
+                    } else if (newMarkLength > baseMarkLength) {
+                        const [newMark1, newMark2] = splitMarkOnOutput(
+                            newMark,
+                            baseMarkLength,
+                            this.genId,
+                            this.moveEffects,
+                        );
+                        this.newMarks.push(newMark2);
+                        return { baseMark, newMark: newMark1 };
+                    } else {
+                        return { baseMark, newMark };
+                    }
+                } else if (newMark.detachIndex < baseMark.detachIndex) {
+                    this.newMarks.pop();
+                    if (newMark.detachIndex + newMarkLength <= baseMark.detachIndex) {
+                        return { newMark };
+                    }
+                    const [newMark1, newMark2] = splitMarkOnOutput(
+                        newMark,
+                        baseMark.detachIndex - newMark.detachIndex,
+                        this.genId,
+                        this.moveEffects,
+                    );
+                    this.newMarks.push(newMark2);
+                    return { newMark: newMark1 };
+                } else {
+                    this.baseMarks.pop();
+                    if (baseMark.detachIndex + baseMarkLength <= newMark.detachIndex) {
+                        return { baseMark };
+                    }
+                    const [baseMark1, baseMark2] = splitMarkOnOutput(
+                        baseMark,
+                        newMark.detachIndex - baseMark.detachIndex,
+                        this.genId,
+                        this.moveEffects,
+                    );
+                    this.baseMarks.push(baseMark2);
+                    return { baseMark: baseMark1 };
                 }
             }
             return { newMark: this.newMarks.pop() };
