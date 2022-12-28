@@ -65,7 +65,9 @@
       "RemovedVariableDeclaration_gcBlobKey": {
         "forwardCompat": false,
         "backCompat": false
-      }
+      },
+      "InterfaceDeclaration_IFluidDataStoreContextDetached": {"forwardCompat": false},
+      "InterfaceDeclaration_IFluidDataStoreContext": {"forwardCompat": false}
     }
   }
 }

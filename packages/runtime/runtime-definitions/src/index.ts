@@ -54,3 +54,6 @@ export {
 	SummarizeInternalFn,
 	totalBlobSizePropertyName,
 } from "./summary";
+export {
+    IIdCompressor
+} from "./idCompressor";

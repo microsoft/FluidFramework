@@ -400,6 +400,11 @@ export interface IFluidDataStoreContext extends
     getAudience(): IAudience;
 
     /**
+     * Returns the active IdCompressor.
+     */
+    getIdCompressor(): any;
+
+    /**
      * Submits the message to be sent to other clients.
      * @param type - Type of the message.
      * @param content - Content of the message.

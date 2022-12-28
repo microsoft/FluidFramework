@@ -193,6 +193,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     getCreateChildSummarizerNodeFn(
     id: string,
     createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
+    getIdCompressor(): any;
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
@@ -282,6 +283,12 @@ export interface IGarbageCollectionSummaryDetailsLegacy {
     gcData?: IGarbageCollectionData;
     unrefTimestamp?: number;
     usedRoutes?: string[];
+}
+
+// @public (undocumented)
+export interface IIdCompressor {
+    // (undocumented)
+    generateCompressedId(): number;
 }
 
 // @public
