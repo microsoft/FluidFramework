@@ -119,7 +119,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             assert(container2.closed !== true, "Container should not have closed");
         });
 
-        itExpects("fails retrieval of de-duped attachment blobs that are tombstoned",
+        itExpects("fails retrieval of blobs that are de-duped in same container and are tombstoned",
         [
             {
                 eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
@@ -267,6 +267,80 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             const response = await container2.request({ url: blobHandle.absolutePath });
             assert.strictEqual(response?.status, 200, `Expecting a 200 response`);
             assert(container2.closed !== true, "Container should not have closed");
+        });
+
+        /**
+         * Function that rejects instead of not rejecting. Used in these tests to demonstrate that because of a bug we
+         * are not getting the expected results. Once the bug is fixed, these asserts should start working as expected.
+         */
+        async function assertWronglyRejects(block: Promise<any>, message?: string | Error) {
+            return assert.rejects(block, message);
+        };
+
+        /**
+         * This test validates that when blobs are de-duped in different containers, these containers can use these
+         * blobs irrespective of whether the original blob is tombstoned. Basically, after uploading a blob, a container
+         * should be able to use it the same way whether it was de-duped or not.
+         */
+        itExpects("should allow access to blobs that are de-duped in different containers",
+        [
+            { eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested" }
+        ],
+        async () => {
+            const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
+
+            // Upload an attachment blob.
+            const blobContents = "Blob contents";
+            const blobHandle = await mainDataStore._runtime.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+
+            // Reference and then unreference the blob so that it's unreferenced in the next summary.
+            mainDataStore._root.set("blob1", blobHandle);
+            mainDataStore._root.delete("blob1");
+
+            // Summarize so that the above attachment blobs are marked unreferenced.
+            await provider.ensureSynchronized();
+            const summary1 = await summarizeNow(summarizer);
+
+            // Wait for half sweep timeout and load a container. This container will upload a blob with the same content
+            // as above so that it is de-duped. This container should be able to use this blob until its session
+            // expires.
+            await delay(sweepTimeoutMs / 2);
+            const container2 = await loadContainer(summary1.summaryVersion);
+            const container2MainDataStore = await requestFluidObject<ITestDataObject>(container2, "default");
+            // Upload the blob and keep the handle around until the blob uploaded by first container is tombstoned.
+            const container2BlobHandle =
+                await container2MainDataStore._runtime.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+
+            // Wait for sweep timeout so that the blob uploaded by the first container is tombstoned.
+            await delay(sweepTimeoutMs / 2 + 10);
+
+            // Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
+            mainDataStore._root.set("key", "value");
+            await provider.ensureSynchronized();
+
+            // Summarize so that the tombstoned blob is now part of the summary.
+            const summary2 = await summarizeNow(summarizer);
+
+            // Load a container from this summary and upload a blob with the same content as the tombstoned blob.
+            // This blob will get de-duped but it should be fine to use it because from this container's perspective
+            // it uploaded a brand new blob.
+            const container3 = await loadContainer(summary2.summaryVersion);
+            const container3MainDataStore = await requestFluidObject<ITestDataObject>(container3, "default");
+
+            const container3BlobHandle =
+                await container3MainDataStore._runtime.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+            // Ideally, this should not reject but currently it will because of a bug with how blob de-dup interacts
+            // with GC.
+            await assertWronglyRejects(container3BlobHandle.get(), "Container3 should be able to get the blob");
+
+            // Reference the blob in container2 and container3 which should be valid. There should not be any asserts
+            // or errors logged in any container because of this.
+            container2MainDataStore._root.set("container2BlobHandle", container2BlobHandle);
+            container3MainDataStore._root.set("container3BlobHandle", container3BlobHandle);
+
+            // Wait for the above ops to be processed. They should not result in errors in containers where the blob
+            // is tombstoned.
+            await provider.ensureSynchronized();
         });
     });
 
