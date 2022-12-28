@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { Container } from "@fluidframework/container-loader";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import {
     requestFluidObject } from "@fluidframework/runtime-utils";
@@ -17,7 +18,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, itExpects } from "@fluidframework/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
-import { LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { getUrlFromItemId, MockDetachedBlobStorage } from "../mockDetachedBlobStorage";
 
@@ -345,19 +346,22 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
     });
 
     describe("Attachment blobs in detached container", () => {
-        async function createContainerAndDataStore() {
+        /**
+         * Creates a detached container and returns it along with the default data store.
+         */
+        async function createDetachedContainerAndDataStore() {
             const detachedBlobStorage = new MockDetachedBlobStorage();
             const loader = provider.makeTestLoader({
                 ...testContainerConfig,
                 loaderProps: { ...testContainerConfig.loaderProps, detachedBlobStorage },
             });
-            const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-            const dataStore = await requestFluidObject<ITestDataObject>(container, "/");
-            return { container, dataStore };
+            const mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
+            const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "/");
+            return { mainContainer, mainDataStore };
         }
 
         beforeEach(async function() {
-            provider = getTestObjectProvider();
+            provider = getTestObjectProvider({ syncSummarizer: true });
             if (provider.driver.type !== "odsp") {
                 this.skip();
             }
@@ -373,7 +377,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             },
         ],
         async () => {
-            const { container: mainContainer, dataStore: mainDataStore } = await createContainerAndDataStore();
+            const { mainContainer, mainDataStore } = await createDetachedContainerAndDataStore();
 
             // Upload an attachment blob and mark it referenced by storing its handle in a DDS.
             const blobContents = "Blob contents";
@@ -437,7 +441,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             }
         ],
         async () => {
-            const { container: mainContainer, dataStore: mainDataStore } = await createContainerAndDataStore();
+            const { mainContainer, mainDataStore } = await createDetachedContainerAndDataStore();
 
             // Upload an attachment blob. We should get a handle with a localId for the blob. Mark it referenced by
             // storing its handle in a DDS.
@@ -516,7 +520,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             }
         ],
         async () => {
-            const { container: mainContainer, dataStore: mainDataStore } = await createContainerAndDataStore();
+            const { mainContainer, mainDataStore } = await createDetachedContainerAndDataStore();
 
             // Upload couple of attachment blobs with the same content. When these blobs are uploaded to the server,
             // they will be de-duped and redirect to the same storageId.
@@ -573,6 +577,246 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
                 url,
                 headers: { [LoaderHeader.version]: summary2.summaryVersion },
             });
+
+            // Retrieving the blob via any of the handles should fail. Note that the blob is requested via its url since
+            // this container does not have access to the blob's handle.
+            const localResponse1 = await container2.request({ url: localHandle1.absolutePath });
+            assert.strictEqual(localResponse1?.status, 404, `Expecting a 404 response for local handle 1`);
+            assert(localResponse1.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 1`);
+
+            const localResponse2 = await container2.request({ url: localHandle2.absolutePath });
+            assert.strictEqual(localResponse2?.status, 404, `Expecting a 404 response for local handle 2`);
+            assert(localResponse2.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 2`);
+
+            const storageResponse = await container2.request({ url: storageHandle.absolutePath });
+            assert.strictEqual(storageResponse?.status, 404, `Expecting a 404 response for storage handle`);
+            assert(storageResponse.value.startsWith("Blob removed by gc:"), `Unexpected value for storage handle`);
+        });
+    });
+
+    describe("Attachment blobs in disconnected container", () => {
+        /**
+         * Creates a container and returns it along with the default data store.
+         */
+        async function createContainerAndDataStore() {
+            const mainContainer = await provider.makeTestContainer(testContainerConfig);
+            const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "/");
+            await waitForContainerConnection(mainContainer);
+            return { mainContainer, mainDataStore };
+        }
+
+        /**
+         * Creates a summarizer, does an initial summary and returns the summarizer. The initial summary is done so
+         * that GarbageCollector has initial GC data. When GC runs next with the attachment blobs, it has a previous
+         * GC data to validate references against and ensure that gcUnknownOutboundReferences error is not logged.
+         */
+        async function createSummarizerWithInitialSummary(container: IContainer) {
+            const summarizer = await createSummarizer(
+                provider,
+                container,
+                undefined /* summaryVersion */,
+                gcOptions,
+                mockConfigProvider(settings),
+            );
+            await provider.ensureSynchronized();
+            await summarizeNow(summarizer);
+            return summarizer;
+        }
+
+        const ensureContainerConnectedWriteMode = async (container: IContainer) => {
+            const resolveIfActive = (res: () => void) => { if (container.deltaManager.active) { res(); } };
+            if (!container.deltaManager.active) {
+                await new Promise<void>((resolve) => container.on("connected", () => resolveIfActive(resolve)));
+                (container as Container).off("connected", resolveIfActive);
+            }
+        };
+
+        beforeEach(async function() {
+            provider = getTestObjectProvider({ syncSummarizer: true });
+            if (provider.driver.type !== "local") {
+                this.skip();
+            }
+
+            settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
+            settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
+        });
+
+        itExpects("tombstones blobs uploaded in disconnected container",
+        [
+            {
+                eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+            },
+        ],
+        async () => {
+            const { mainContainer, mainDataStore } = await createContainerAndDataStore();
+
+            // Create a summarizer which does an initial summary.
+            const summarizer = await createSummarizerWithInitialSummary(mainContainer);
+
+            // Disconnect the main container, upload an attachment blob and mark it referenced.
+            mainContainer.disconnect();
+            const blobContents = "Blob contents";
+            const blobHandle = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+            mainDataStore._root.set("blob", blobHandle);
+
+            // Connect the container after the blob is uploaded. Send an op to transition it to write mode.
+            mainContainer.connect();
+            mainDataStore._root.set("transition to write", "true");
+            await ensureContainerConnectedWriteMode(mainContainer);
+
+            // Remove the blob's handle to unreference it.
+            mainDataStore._root.delete("blob");
+
+            // Summarize so that the above attachment blob is marked unreferenced.
+            await provider.ensureSynchronized();
+            await summarizeNow(summarizer);
+
+            // Wait for sweep timeout so that the blob is tombstoned.
+            await delay(sweepTimeoutMs + 10);
+
+            // Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
+            mainDataStore._root.set("key", "value");
+            await provider.ensureSynchronized();
+
+            // Summarize so that the tombstoned blob should are now part of the summary.
+            const summary2 = await summarizeNow(summarizer);
+
+            // Load a new container from the above summary which should have the blob tombstoned.
+            const container2 = await loadContainer(summary2.summaryVersion);
+
+            // Retrieving the blob should fail. Note that the blob is requested via its url since this container does
+            // not have access to the blob's handle.
+            const response = await container2.request({ url: blobHandle.absolutePath });
+            assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
+            assert(response.value.startsWith("Blob removed by gc:"), `Unexpected response value`);
+            assert(container2.closed !== true, "Container should not have closed");
+        });
+
+        itExpects("tombstones blobs uploaded in disconnected and de-duped in connected container",
+        [
+            {
+                eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+            },
+            {
+                eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+            }
+        ],
+        async () => {
+            const { mainContainer, mainDataStore } = await createContainerAndDataStore();
+
+            // Create a summarizer which does an initial summary.
+            const summarizer = await createSummarizerWithInitialSummary(mainContainer);
+
+            // Disconnect the main container, upload an attachment blob and mark it referenced. We should get a handle
+            // with a localId for the blob.
+            mainContainer.disconnect();
+            const blobContents = "Blob contents";
+            const localHandle = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+            mainDataStore._root.set("localBlob", localHandle);
+
+            // Connect the container after the blob is uploaded. Send an op to transition the container to write mode.
+            mainContainer.connect();
+            mainDataStore._root.set("transition to write", "true");
+            await ensureContainerConnectedWriteMode(mainContainer);
+
+            // Upload the same blob. This will get de-duped and we will get back a handle with the storageId instead of
+            // the localId that we got when uploading in detached container.
+            const storageHandle = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+            assert.notStrictEqual(
+                localHandle.absolutePath, storageHandle.absolutePath, "local and storage handles should be different");
+
+            // Remove the blob's handle to unreference it.
+            mainDataStore._root.delete("localBlob");
+
+            // Summarize so that the above attachment blob is marked unreferenced.
+            await provider.ensureSynchronized();
+            await summarizeNow(summarizer);
+
+            // Wait for sweep timeout so that the blob is tombstoned.
+            await delay(sweepTimeoutMs + 10);
+
+            // Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
+            mainDataStore._root.set("key", "value");
+            await provider.ensureSynchronized();
+
+            // Summarize so that the tombstoned blob is now  part of the summary.
+            const summary2 = await summarizeNow(summarizer);
+
+            // Load a new container from the above summary which should have the blob tombstoned.
+            const container2 = await loadContainer(summary2.summaryVersion);
+
+            // Retrieving the blob via any of the handles should fail. Note that the blob is requested via its url since
+            // this container does not have access to the blob's handle.
+            const localResponse = await container2.request({ url: localHandle.absolutePath });
+            assert.strictEqual(localResponse?.status, 404, `Expecting a 404 response for local handle`);
+            assert(localResponse.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 1`);
+
+            // Retrieving the blob via the storage handle should fail as well.
+            const storageResponse = await container2.request({ url: storageHandle.absolutePath });
+            assert.strictEqual(storageResponse?.status, 404, `Expecting a 404 response for storage handle`);
+            assert(storageResponse.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 2`);
+        });
+
+        itExpects("tombstones blobs uploaded and de-duped in disconnected container",
+        [
+            {
+                eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+            },
+            {
+                eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+            },
+            {
+                eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+            }
+        ],
+        async () => {
+            const { mainContainer, mainDataStore } = await createContainerAndDataStore();
+
+            const summarizer = await createSummarizerWithInitialSummary(mainContainer);
+
+            // Disconnect the main container, upload couple of attachment blobs with same content and mark them
+            // referenced. We should get a handle. When these blobs are uploaded to the server, they will be
+            // de-duped and redirect to the same storageId.
+            mainContainer.disconnect();
+            const blobContents = "Blob contents";
+            const localHandle1 = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+            const localHandle2 = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+
+            // Connect the container after the blob is uploaded. Send an op to transition the container to write mode.
+            mainContainer.connect();
+            mainDataStore._root.set("transition to write", "true");
+            await ensureContainerConnectedWriteMode(mainContainer);
+
+            // Add the blob's local handles to reference them.
+            mainDataStore._root.set("localBlob1", localHandle1);
+            mainDataStore._root.set("localBlob2", localHandle2);
+
+            // Upload the same blob. This will get de-duped and we will get back a handle with the storageId instead of
+            // the localId that we got when uploading in detached container.
+            const storageHandle = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+            assert.notStrictEqual(
+                localHandle1.absolutePath, storageHandle.absolutePath, "local and storage handles should be different");
+
+            // Remove the blob's local handles to unreference them.
+            mainDataStore._root.delete("localBlob1");
+            mainDataStore._root.delete("localBlob2");
+
+            // Summarize so that the above attachment blobs are marked unreferenced.
+            await provider.ensureSynchronized();
+            await summarizeNow(summarizer);
+
+            // Wait for sweep timeout so that the blob is tombstoned.
+            await delay(sweepTimeoutMs + 10);
+
+            // Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
+            mainDataStore._root.set("key", "value");
+            await provider.ensureSynchronized();
+
+            // Summarize so that the tombstoned blobs are now part of the summary.
+            const summary2 = await summarizeNow(summarizer);
+
+            // Load a new container from the above summary which should have the blobs tombstoned.
+            const container2 = await loadContainer(summary2.summaryVersion);
 
             // Retrieving the blob via any of the handles should fail. Note that the blob is requested via its url since
             // this container does not have access to the blob's handle.
