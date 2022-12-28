@@ -799,36 +799,41 @@ export class MergeTree {
             // Will replace this block with a packed block
             childBlock.parent = undefined;
         }
-        const totalNodeCount = holdNodes.length;
-        const halfOfMaxNodeCount = MaxNodesInBlock / 2;
-        let childCount = Math.min(MaxNodesInBlock - 1, Math.floor(totalNodeCount / halfOfMaxNodeCount));
-        if (childCount < 1) {
-            childCount = 1;
-        }
-        const baseNodesInBlockCount = Math.floor(totalNodeCount / childCount);
-        let remainderCount = totalNodeCount % childCount;
-        const packedBlocks = new Array<IMergeBlock>(MaxNodesInBlock);
-        let childrenPackedCount = 0;
-        for (let nodeIndex = 0; nodeIndex < childCount; nodeIndex++) {
-            let nodeCount = baseNodesInBlockCount;
-            if (remainderCount > 0) {
-                nodeCount++;
-                remainderCount--;
+        if (holdNodes.length > 0) {
+            const totalNodeCount = holdNodes.length;
+            const halfOfMaxNodeCount = MaxNodesInBlock / 2;
+            let childCount = Math.min(MaxNodesInBlock - 1, Math.floor(totalNodeCount / halfOfMaxNodeCount));
+            if (childCount < 1) {
+                childCount = 1;
             }
-            const packedBlock = this.makeBlock(nodeCount);
-            for (let packedNodeIndex = 0; packedNodeIndex < nodeCount; packedNodeIndex++) {
-                const nodeToPack = holdNodes[childrenPackedCount++];
-                packedBlock.assignChild(nodeToPack, packedNodeIndex, false);
+            const baseNodesInBlockCount = Math.floor(totalNodeCount / childCount);
+            let remainderCount = totalNodeCount % childCount;
+            const packedBlocks = new Array<IMergeBlock>(MaxNodesInBlock);
+            let childrenPackedCount = 0;
+            for (let nodeIndex = 0; nodeIndex < childCount; nodeIndex++) {
+                let nodeCount = baseNodesInBlockCount;
+                if (remainderCount > 0) {
+                    nodeCount++;
+                    remainderCount--;
+                }
+                const packedBlock = this.makeBlock(nodeCount);
+                for (let packedNodeIndex = 0; packedNodeIndex < nodeCount; packedNodeIndex++) {
+                    const nodeToPack = holdNodes[childrenPackedCount++];
+                    packedBlock.assignChild(nodeToPack, packedNodeIndex, false);
+                }
+                packedBlock.parent = parent;
+                packedBlocks[nodeIndex] = packedBlock;
+                this.nodeUpdateLengthNewStructure(packedBlock);
             }
-            packedBlock.parent = parent;
-            packedBlocks[nodeIndex] = packedBlock;
-            this.nodeUpdateLengthNewStructure(packedBlock);
+            parent.children = packedBlocks;
+            for (let j = 0; j < childCount; j++) {
+                parent.assignChild(packedBlocks[j], j, false);
+            }
+            parent.childCount = childCount;
+        } else {
+            parent.children = [];
+            parent.childCount = 0;
         }
-        parent.children = packedBlocks;
-        for (let j = 0; j < childCount; j++) {
-            parent.assignChild(packedBlocks[j], j, false);
-        }
-        parent.childCount = childCount;
         if (this.underflow(parent) && (parent.parent)) {
             this.packParent(parent.parent);
         } else {
