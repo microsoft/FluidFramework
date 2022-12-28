@@ -137,14 +137,14 @@ function areSameLineage(lineage1: LineageEvent[], lineage2: LineageEvent[]): boo
  * @param mark - The mark to get the length of.
  * @returns The number of nodes within the output context of the mark.
  */
-export function getOutputLength(mark: Mark<unknown>): number {
+export function getOutputLength(mark: Mark<unknown>, preserveUnpaired: boolean = false): number {
     if (isSkipMark(mark)) {
         return mark;
     }
     const type = mark.type;
     switch (type) {
         case "ReturnTo":
-            return mark.blocked ? 0 : mark.count;
+            return mark.unpaired && !preserveUnpaired ? 0 : mark.count;
         case "Revive":
         case "MoveIn":
             return mark.count;
@@ -153,7 +153,7 @@ export function getOutputLength(mark: Mark<unknown>): number {
         case "Modify":
             return 1;
         case "ReturnFrom":
-            return mark.blocked ? mark.count : 0;
+            return mark.unpaired && !preserveUnpaired ? mark.count : 0;
         case "Delete":
         case "MoveOut":
             return 0;
@@ -262,8 +262,9 @@ export function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(
     length: number,
     genId: IdAllocator,
     moveEffects: MoveEffectTable<unknown>,
+    allowUnpairedMark: boolean = false,
 ): [TMark, TMark] {
-    const markLength = getOutputLength(mark);
+    const markLength = getOutputLength(mark, allowUnpairedMark);
     const remainder = markLength - length;
     if (length < 1 || remainder < 1) {
         fail(
@@ -501,7 +502,7 @@ export interface MovePartition<TNodeChange> {
     count?: number;
     replaceWith?: Mark<TNodeChange>[];
     modifyAfter?: TNodeChange;
-    block?: boolean;
+    pairing?: boolean;
     detachedBy?: RevisionTag;
 }
 
@@ -659,40 +660,44 @@ export function replaceMoveSrc<T>(
     }
 }
 
-export function updateMoveSrcBlock<T>(table: MoveEffectTable<T>, id: MoveId, block: boolean): void {
+export function updateMoveSrcPairing<T>(
+    table: MoveEffectTable<T>,
+    id: MoveId,
+    pairing: boolean,
+): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
         const effect = getOrAddEmptyToMap(table.srcEffects, origId);
         const index = effect.findIndex((p) => p.id === id);
-        assert(effect[index].block === undefined, "Move source already being blocked/unblocked");
-        effect[index].block = block;
+        assert(effect[index].pairing === undefined, "Move source already being blocked/unblocked");
+        effect[index].pairing = pairing;
     } else {
-        table.srcEffects.set(id, [{ id, block }]);
+        table.srcEffects.set(id, [{ id, pairing }]);
         table.splitIdToOrigId.set(id, id);
     }
 }
 
-export function updateMoveDestBlock<T>(
+export function updateMoveDestPairing<T>(
     table: MoveEffectTable<T>,
     id: MoveId,
-    block: boolean,
+    pairing: boolean,
 ): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
         const effect = getOrAddEmptyToMap(table.dstEffects, origId);
         const index = effect.findIndex((p) => p.id === id);
         if (index === -1) {
-            effect.push({ id, block });
+            effect.push({ id, pairing });
         } else {
             assert(
-                effect[index].block === undefined,
+                effect[index].pairing === undefined,
                 "Move source already being blocked/unblocked",
             );
-            effect[index].block = block;
+            effect[index].pairing = pairing;
         }
     } else {
         assert(!table.dstEffects.has(id), "This MoveId cannot be replaced");
-        table.dstEffects.set(id, [{ id, block }]);
+        table.dstEffects.set(id, [{ id, pairing }]);
     }
 }
 
@@ -805,11 +810,11 @@ export function splitMoveIn<T>(
                 const returnTo = portion as ReturnTo;
                 returnTo.detachIndex = mark.detachIndex + cumulativeCount;
                 cumulativeCount += portion.count;
-                if (blockMarks && part.block !== undefined) {
-                    if (part.block) {
-                        returnTo.blocked = true;
+                if (blockMarks && part.pairing !== undefined) {
+                    if (part.pairing) {
+                        returnTo.unpaired = true;
                     } else {
-                        delete returnTo.blocked;
+                        delete returnTo.unpaired;
                     }
                 }
             }
@@ -825,6 +830,7 @@ export function splitMoveOut<T>(
     composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
     const result: Mark<T>[] = [];
+    let cumulativeCount = 0;
     for (const part of parts) {
         if (part.replaceWith !== undefined) {
             result.push(...part.replaceWith);
@@ -846,16 +852,16 @@ export function splitMoveOut<T>(
                     delete splitMark.changes;
                 }
             }
-            if (blockMarks && part.block !== undefined) {
+            if (blockMarks && part.pairing !== undefined) {
                 // TODO: support blocking for move
                 assert(
                     splitMark.type === "ReturnFrom",
                     "Only ReturnFrom marks can be blocked through move effects",
                 );
-                if (part.block) {
-                    splitMark.blocked = true;
+                if (part.pairing) {
+                    splitMark.unpaired = true;
                 } else {
-                    delete splitMark.blocked;
+                    delete splitMark.unpaired;
                 }
             }
             if (part.detachedBy !== undefined) {
@@ -864,6 +870,15 @@ export function splitMoveOut<T>(
                     "Only ReturnFrom marks can have their detachBy field set",
                 );
                 splitMark.detachedBy = part.detachedBy;
+            }
+            if (mark.type === "ReturnFrom" && isMuted(mark)) {
+                assert(
+                    mark.detachIndex !== undefined,
+                    "Muted ReturnFrom should have a detachIndex",
+                );
+                const returnFrom = splitMark as ReturnFrom;
+                returnFrom.detachIndex = mark.detachIndex + cumulativeCount;
+                cumulativeCount += splitMark.count;
             }
             result.push(splitMark);
         }
@@ -1046,7 +1061,7 @@ export class DetachedNodeTracker {
             if (isReattach(cloned)) {
                 let remainder: Reattach<T> = cloned;
                 for (let i = 1; i < cloned.count; ++i) {
-                    const [head, tail] = splitMarkOnOutput(remainder, 1, genId, moveEffects);
+                    const [head, tail] = splitMarkOnOutput(remainder, 1, genId, moveEffects, true);
                     this.updateMark(head, moveEffects);
                     factory.push(head);
                     remainder = tail;

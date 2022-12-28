@@ -30,8 +30,8 @@ import {
     isSkipLikeReattach,
     isMutedDetach,
     updateMoveSrcDetacher,
-    updateMoveSrcBlock,
-    updateMoveDestBlock,
+    updateMoveSrcPairing,
+    updateMoveDestPairing,
 } from "./utils";
 import {
     Attach,
@@ -529,7 +529,7 @@ function rebaseMark<TNodeChange>(
                     const newCurrMark = clone(currMark) as ReturnFrom<TNodeChange>;
                     delete newCurrMark.mutedBy;
                     delete newCurrMark.detachIndex;
-                    updateMoveDestBlock(moveEffects, newCurrMark.id, false);
+                    updateMoveDestPairing(moveEffects, newCurrMark.id, false);
                     return newCurrMark;
                 }
             }
@@ -546,7 +546,7 @@ function rebaseMark<TNodeChange>(
             if (isActiveReattach(currMark)) {
                 // The nodes that currMark aims to reattach are being reattached by baseMark
                 if (currMark.type === "ReturnTo") {
-                    updateMoveSrcBlock(moveEffects, currMark.id, true);
+                    updateMoveSrcPairing(moveEffects, currMark.id, true);
                 }
                 return {
                     ...clone(currMark),
@@ -581,7 +581,7 @@ function rebaseMark<TNodeChange>(
                 if (newCurrMark.type === "ReturnFrom") {
                     newCurrMark.mutedBy = baseMarkRevision;
                     newCurrMark.detachIndex = baseInputOffset;
-                    updateMoveDestBlock(moveEffects, newCurrMark.id, true);
+                    updateMoveDestPairing(moveEffects, newCurrMark.id, true);
                     return newCurrMark;
                 } else if (newCurrMark.type === "ReturnTo") {
                     assert(
@@ -598,8 +598,19 @@ function rebaseMark<TNodeChange>(
                         newCurrMark.detachIndex = baseInputOffset;
                         delete (newCurrMark as Mutable).mutedBy;
                         updateMoveSrcDetacher(moveEffects, newCurrMark.id, baseMarkRevision);
-                        updateMoveSrcBlock(moveEffects, newCurrMark.id, false);
+                        updateMoveSrcPairing(moveEffects, newCurrMark.id, false);
                     }
+                    return newCurrMark;
+                } else if (newCurrMark.type === "Revive" && !newCurrMark.isIntention) {
+                    assert(
+                        isSkipLikeReattach(newCurrMark),
+                        "Only a skip-like reattach can overlap with a ReturnFrom",
+                    );
+                    // The reattach mark remains muted because the detach was performed by a different change.
+                    // The only way to unmute the reattach now is for the nodes to be returned and for the original
+                    // deletion (currMark.detachedBy) to be re-applied.
+                    newCurrMark.lastDetachedBy = baseMarkRevision;
+                    newCurrMark.detachIndex = baseInputOffset;
                     return newCurrMark;
                 } else {
                     getOrAddEmptyToMap(moveEffects.movedMarks, baseMark.id).push(newCurrMark);

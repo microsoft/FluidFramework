@@ -199,7 +199,7 @@ export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId, 
      * When true, the corresponding ReturnFrom has been muted.
      * This is independent of whether this mark is muted.
      */
-    blocked?: true;
+    unpaired?: true;
     count: NodeCount;
 }
 
@@ -246,7 +246,7 @@ export interface ReturnFrom<TNodeChange = NodeChangeType>
      * When true, the corresponding ReturnTo has been muted.
      * This is independent of whether this mark is muted.
      */
-    blocked?: true;
+    unpaired?: true;
     tomb?: RevisionTag;
 }
 
