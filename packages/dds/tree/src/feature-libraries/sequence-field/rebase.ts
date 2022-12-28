@@ -442,6 +442,7 @@ class RebaseQueue<T> {
                 this.moveEffects,
                 this.genId,
                 reassignMoveIds,
+                false,
             );
 
             mark = splitMarks[0];
@@ -624,6 +625,7 @@ function applyMoveEffects<TNodeChange>(
         () => fail("Should not split moves while applying move effects"),
         moveEffects,
         false,
+        true,
     );
     const factory = new MarkListFactory<TNodeChange>(moveEffects);
 

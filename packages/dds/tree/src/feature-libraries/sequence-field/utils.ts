@@ -783,7 +783,11 @@ export function isMoveMark<T>(mark: Mark<T>): mark is MoveMark<T> {
     }
 }
 
-export function splitMoveIn<T>(mark: MoveIn | ReturnTo, parts: MovePartition<T>[]): Mark<T>[] {
+export function splitMoveIn<T>(
+    mark: MoveIn | ReturnTo,
+    blockMarks: boolean,
+    parts: MovePartition<T>[],
+): Mark<T>[] {
     const result: Mark<T>[] = [];
     let cumulativeCount = 0;
     for (const part of parts) {
@@ -801,7 +805,7 @@ export function splitMoveIn<T>(mark: MoveIn | ReturnTo, parts: MovePartition<T>[
                 const returnTo = portion as ReturnTo;
                 returnTo.detachIndex = mark.detachIndex + cumulativeCount;
                 cumulativeCount += portion.count;
-                if (part.block !== undefined) {
+                if (blockMarks && part.block !== undefined) {
                     if (part.block) {
                         returnTo.blocked = true;
                     } else {
@@ -817,6 +821,7 @@ export function splitMoveIn<T>(mark: MoveIn | ReturnTo, parts: MovePartition<T>[
 export function splitMoveOut<T>(
     mark: MoveOut<T> | ReturnFrom<T>,
     parts: MovePartition<T>[],
+    blockMarks: boolean,
     composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
     const result: Mark<T>[] = [];
@@ -841,7 +846,7 @@ export function splitMoveOut<T>(
                     delete splitMark.changes;
                 }
             }
-            if (part.block !== undefined) {
+            if (blockMarks && part.block !== undefined) {
                 // TODO: support blocking for move
                 assert(
                     splitMark.type === "ReturnFrom",
@@ -872,6 +877,7 @@ export function applyMoveEffectsToMark<T>(
     moveEffects: MoveEffectTable<T>,
     genId: IdAllocator,
     reassignIds: boolean,
+    blockMarks: boolean,
     composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
     let mark = inputMark;
@@ -892,7 +898,7 @@ export function applyMoveEffectsToMark<T>(
                 const effect = moveEffects.srcEffects.get(mark.id);
                 if (effect !== undefined) {
                     moveEffects.srcEffects.delete(mark.id);
-                    const splitMarks = splitMoveOut(mark, effect, composeChildren);
+                    const splitMarks = splitMoveOut(mark, effect, blockMarks, composeChildren);
                     for (const splitMark of splitMarks) {
                         moveEffects.validatedMarks.add(splitMark);
                     }
@@ -905,7 +911,7 @@ export function applyMoveEffectsToMark<T>(
                 const effect = moveEffects.dstEffects.get(mark.id);
                 if (effect !== undefined) {
                     moveEffects.dstEffects.delete(mark.id);
-                    const splitMarks = splitMoveIn(mark, effect);
+                    const splitMarks = splitMoveIn(mark, blockMarks, effect);
                     for (const splitMark of splitMarks) {
                         moveEffects.validatedMarks.add(splitMark);
                     }
@@ -1026,6 +1032,7 @@ export class DetachedNodeTracker {
                 undefined,
                 moveEffects,
                 genId,
+                false,
                 false,
             );
 

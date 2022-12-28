@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { isReattach } from ".";
 import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
 import { clone, fail, StackyIterator } from "../../util";
 import { IdAllocator } from "../modular-schema";
@@ -39,6 +38,7 @@ import {
     applyMoveEffectsToMark,
     modifyMoveSrc,
     isMutedDetach,
+    isReattach,
 } from "./utils";
 
 export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
@@ -92,6 +92,7 @@ function composeMarkLists<TNodeChange>(
         newMarkList,
         genId,
         moveEffects,
+        true,
         true,
         (a, b) => composeChildChanges(a, b, newRev, composeChild),
     );
@@ -434,6 +435,7 @@ function applyMoveEffects<TNodeChange>(
             moveEffects,
             () => fail("Should not generate IDs"),
             false,
+            false,
             // TODO: Should pass in revision for new changes
             (a, b) => composeChildChanges(a, b, undefined, composeChild),
         );
@@ -457,6 +459,7 @@ export class ComposeQueue<T> {
         private readonly genId: IdAllocator,
         private readonly moveEffects: MoveEffectTable<T>,
         private readonly reassignNewMoveIds: boolean = true,
+        private readonly blockMarks: boolean = true,
         private readonly composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
     ) {
         this.baseMarks = new StackyIterator(baseMarks);
@@ -619,16 +622,22 @@ export class ComposeQueue<T> {
     }
 
     private getNextBaseMark(): Mark<T> | undefined {
-        return this.getNextMark(this.baseMarks, false, undefined);
+        return this.getNextMark(this.baseMarks, false, false, undefined);
     }
 
     private getNextNewMark(): Mark<T> | undefined {
-        return this.getNextMark(this.newMarks, this.reassignNewMoveIds, this.newRevision);
+        return this.getNextMark(
+            this.newMarks,
+            this.reassignNewMoveIds,
+            this.blockMarks,
+            this.newRevision,
+        );
     }
 
     private getNextMark(
         marks: StackyIterator<Mark<T>>,
         reassignMoveIds: boolean,
+        blockMarks: boolean,
         revision: RevisionTag | undefined,
     ): Mark<T> | undefined {
         let mark: Mark<T> | undefined;
@@ -644,6 +653,7 @@ export class ComposeQueue<T> {
                 this.moveEffects,
                 this.genId,
                 reassignMoveIds,
+                blockMarks,
                 this.composeChanges,
             );
 
