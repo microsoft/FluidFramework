@@ -8,6 +8,7 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ITestObjectProvider,
@@ -22,8 +23,9 @@ import {
 } from "./gcTestSummaryUtils";
 
 /**
- * Validates that that reference state of nodes is correct irrespective of whether a summarizer loads from the
- * latest summary or an older summary.
+ * Validates that that reference state of nodes is correct irrespective of whether a summarizer loads from the latest
+ * summary or an older summary. When a summarizer loads from an older summary, it gets the ack for newer summaries and
+ * refreshes its state from the newer summary. These tests validates that the GC state is correctly refreshed.
  */
 describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -85,8 +87,19 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
     beforeEach(async function() {
         provider = getTestObjectProvider({ syncSummarizer: true });
         mainContainer = await provider.makeTestContainer(defaultGCConfig);
-        dataStoreA = await requestFluidObject<ITestDataObject>(mainContainer, "default");
-        containerRuntime = dataStoreA._context.containerRuntime as IContainerRuntime;
+        const defaultDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+        containerRuntime = defaultDataStore._context.containerRuntime as IContainerRuntime;
+
+        // Create data store B and mark it referenced. This will be used to manage reference of another data store.
+        // We create a new data store because the default data store and is always realized by the test infrastructure.
+        // In these tests, the data store managing referencing should not be realized by default.
+        const dataStoreAHandle =
+            (await containerRuntime.createDataStore(TestDataObjectType)).entryPoint as IFluidHandle<ITestDataObject>;
+        assert(dataStoreAHandle !== undefined, "data store does not have a handle");
+        dataStoreA = await dataStoreAHandle.get();
+        defaultDataStore._root.set("dataStoreA", dataStoreAHandle);
+
+        await provider.ensureSynchronized();
         await waitForContainerConnection(mainContainer);
     });
 
