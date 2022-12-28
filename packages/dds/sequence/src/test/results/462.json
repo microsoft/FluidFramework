@@ -1,0 +1,128 @@
+[
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "nCS",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "jHq57SnEj",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 4,
+        "content": "f",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 3,
+        "content": "m59QhdLbPB",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 2,
+        "content": "Js1",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 6,
+        "content": "WVYoBnX",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 7,
+        "content": "Bh",
+        "stringId": "C"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 11,
+        "end": 16,
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 11,
+        "content": "3jQVV",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "MQpzbmA",
+        "stringId": "A"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "addText",
+        "index": 39,
+        "content": "WvDCxy1ddW",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 27,
+        "content": "JmiY",
+        "stringId": "B"
+    },
+    {
+        "type": "removeRange",
+        "start": 11,
+        "end": 12,
+        "stringId": "C"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 8,
+        "end": 35,
+        "stringId": "A"
+    },
+    {
+        "type": "removeRange",
+        "start": 38,
+        "end": 40,
+        "stringId": "B"
+    },
+    {
+        "type": "removeRange",
+        "start": 6,
+        "end": 31,
+        "stringId": "B"
+    },
+    {
+        "type": "removeRange",
+        "start": 18,
+        "end": 19,
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 14,
+        "content": "QBaC4AnLnH",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 40,
+        "content": "",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 30,
+        "content": "oDGN",
+        "stringId": "C"
+    },
+    {
+        "type": "synchronize"
+    }
+]

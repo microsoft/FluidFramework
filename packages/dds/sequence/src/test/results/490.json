@@ -1,0 +1,128 @@
+[
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "x",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "2k",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "BRjhm",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 1,
+        "content": "SWtfpQ4eGw",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 10,
+        "content": "4735t",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 8,
+        "content": "ufqMLY1e7",
+        "stringId": "B"
+    },
+    {
+        "type": "removeRange",
+        "start": 1,
+        "end": 2,
+        "stringId": "A"
+    },
+    {
+        "type": "removeRange",
+        "start": 13,
+        "end": 16,
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 18,
+        "content": "Nw35WStJC",
+        "stringId": "B"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "removeRange",
+        "start": 13,
+        "end": 33,
+        "stringId": "C"
+    },
+    {
+        "type": "removeRange",
+        "start": 21,
+        "end": 30,
+        "stringId": "A"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 3,
+        "end": 17,
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 25,
+        "content": "w9uMhSrV",
+        "stringId": "A"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 4,
+        "end": 27,
+        "stringId": "A"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 2,
+        "end": 23,
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 2,
+        "content": "cefoQVG3",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 10,
+        "content": "XJ2K",
+        "stringId": "A"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 1,
+        "end": 10,
+        "stringId": "C"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 7,
+        "end": 15,
+        "stringId": "A"
+    },
+    {
+        "type": "synchronize"
+    }
+]

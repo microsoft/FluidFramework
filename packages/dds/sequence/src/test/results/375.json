@@ -1,0 +1,128 @@
+[
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "S",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "RnbbWPL2",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "FxP",
+        "stringId": "C"
+    },
+    {
+        "type": "removeRange",
+        "start": 3,
+        "end": 6,
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "fV4zGD",
+        "stringId": "B"
+    },
+    {
+        "type": "removeRange",
+        "start": 4,
+        "end": 5,
+        "stringId": "A"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 2,
+        "end": 5,
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 1,
+        "content": "",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "7kXi6",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "",
+        "stringId": "B"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 2,
+        "end": 13,
+        "stringId": "C"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 10,
+        "end": 13,
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 5,
+        "content": "p4e91FagxS",
+        "stringId": "A"
+    },
+    {
+        "type": "removeRange",
+        "start": 2,
+        "end": 4,
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 18,
+        "content": "uftTemu",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 3,
+        "content": "35F86tu",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 10,
+        "content": "V",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 24,
+        "content": "64MW989Lu",
+        "stringId": "A"
+    },
+    {
+        "type": "removeRange",
+        "start": 20,
+        "end": 26,
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 2,
+        "content": "",
+        "stringId": "A"
+    },
+    {
+        "type": "synchronize"
+    }
+]

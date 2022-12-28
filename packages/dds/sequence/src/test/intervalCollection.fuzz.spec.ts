@@ -294,11 +294,11 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         [addText, 2, isShorterThanMaxLength],
         [removeRange, 1, hasNonzeroLength],
         [obliterateRange, 1, hasNonzeroLength],
-        [addInterval, 2, all(hasNotTooManyIntervals, hasNonzeroLength)],
-        [deleteInterval, 2, hasAnInterval],
-        [changeInterval, 2, all(hasAnInterval, hasNonzeroLength)],
-        [changeProperties, 2, hasAnInterval],
-        [changeConnectionState, 1],
+        [addInterval, 0, all(hasNotTooManyIntervals, hasNonzeroLength)],
+        [deleteInterval, 0, hasAnInterval],
+        [changeInterval, 0, all(hasAnInterval, hasNonzeroLength)],
+        [changeProperties, 0, hasAnInterval],
+        [changeConnectionState, 0],
     ]);
 
     const clientOperationGenerator = (state: FuzzTestState) =>
@@ -426,7 +426,6 @@ function getPath(seed: number): string {
     return path.join(directory, `${seed}.json`);
 }
 
-// const describeFuzz = createFuzzDescribe({ defaultTestCount: 1000 });
 const describeFuzz = createFuzzDescribe({ defaultTestCount: 100 });
 
 describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
@@ -498,16 +497,49 @@ describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
         runTests(seed, generator, loggingInfo);
     }
 
+    function minimizeTestFromFailureFile(seed: number, loggingInfo?: LoggingInfo) {
+        it("foo", () => {
+        const filepath = getPath(seed);
+        let operations: Operation[];
+        try {
+            operations = JSON.parse(readFileSync(filepath).toString());
+        } catch (err: any) {
+            // Mocha executes skipped suite creation blocks, but whoever's running this suite only cares if
+            // the containing block isn't skipped. Report the original error to them from inside a test.
+            if (err.message.includes("ENOENT")) {
+                it(`with default config, seed ${seed}`, () => {
+                    throw err;
+                });
+                return;
+            }
+            throw err;
+        }
+
+            const pass_manager = new PassManager(operations, seed);
+
+            pass_manager.deleteOps();
+
+            for (let i = 0; i < 2500; i+=1) {
+                pass_manager.applyRandomPass();
+                pass_manager.applyTwoRandomlySingle();
+                pass_manager.applyThreeRandomlySingle();
+            }
+
+            pass_manager.deleteOps();
+
+            throw new Error(JSON.stringify(pass_manager.operations));
+        });
+        }
+
     for (let i = 0; i < testCount; i++) {
-        const generator = take(100, makeOperationGenerator({ validateInterval: 10 }));
+        const generator = take(31, makeOperationGenerator({ validateInterval: 10 }));
         runTests(i, generator);
     }
 
     // Change this seed and unskip the block to replay the actions from JSON on disk.
     // This can be useful for quickly minimizing failure json while attempting to root-cause a failure.
     describe.skip("replay specific seed", () => {
-        // const seedToReplay = 8; // 870, 991,
-        const seedToReplay = 38;
+        const seedToReplay = 0;
         replayTestFromFailureFile(
             seedToReplay,
             // "1fd4dbfc-79b1-4b84-aa92-147923d11754",
@@ -516,4 +548,308 @@ describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
             // { intervalId: "", clientIds: ["A", "B", "C"] },
         );
     });
+
+    describe.only("minimize seed", () => {
+        const seedToMinimize = 651;
+        minimizeTestFromFailureFile(seedToMinimize);
+    });
 });
+
+interface Pass {
+    apply: (op: Operation) => void;
+    undo: (op: Operation) => void;
+}
+
+class PassManager {
+    constructor(readonly original_operations: Operation[], readonly seed: number) {}
+
+    static cloneArray<T>(arr: T[]): T[] {
+        return JSON.parse(JSON.stringify(arr)) as T[];
+    }
+
+    static randInt(max: number): number {
+        return Math.floor(Math.random() * max)
+    }
+
+    operations: Operation[] = PassManager.cloneArray(this.original_operations);
+
+    applyRandomPass() {
+        const passes = [this.deleteOps.bind(this), this.reduceStrings.bind(this), this.shiftDown.bind(this), this.shrinkRange.bind(this), this.swapOps.bind(this)];
+
+        const pass = passes[PassManager.randInt(passes.length)];
+
+        pass()
+    }
+
+    applyTwoRandomlySingle() {
+        const op1 = this.operations[PassManager.randInt(this.operations.length)] as any as Operation;
+        const op2 = this.operations[PassManager.randInt(this.operations.length)] as any as Operation;
+
+        if (op1 === op2) {
+            this.applyTwoRandomlySingle();
+            return;
+        }
+
+        const passes = [this._reduceString, this._shiftDown, this._shrinkRange];
+
+        const pass1 = passes[PassManager.randInt(passes.length)];
+        const pass2 = passes[PassManager.randInt(passes.length)];
+
+        pass1.apply(op1);
+        pass2.apply(op2);
+
+        if (!this.runTest()) {
+            pass1.undo(op1);
+            pass2.undo(op2);
+        }
+    }
+
+    applyThreeRandomlySingle() {
+        const op1 = this.operations[PassManager.randInt(this.operations.length)] as any as Operation;
+        const op2 = this.operations[PassManager.randInt(this.operations.length)] as any as Operation;
+        const op3 = this.operations[PassManager.randInt(this.operations.length)] as any as Operation;
+
+        if (op1 === op2 || op1 === op3 || op2 === op3) {
+            this.applyThreeRandomlySingle();
+            return;
+        }
+
+        const passes = [this._reduceString, this._shiftDown, this._shrinkRange];
+
+        const pass1 = passes[PassManager.randInt(passes.length)];
+        const pass2 = passes[PassManager.randInt(passes.length)];
+        const pass3 = passes[PassManager.randInt(passes.length)];
+
+        pass1.apply(op1);
+        pass2.apply(op2);
+        pass3.apply(op3);
+
+        if (!this.runTest()) {
+            pass1.undo(op1);
+            pass2.undo(op2);
+            pass3.undo(op3);
+        }
+    }
+
+    /**
+     * Remove ops to see if the error continues to reproduce
+     */
+    deleteOps() {
+        let idx = this.operations.length - 1;
+
+        while (idx > 0) {
+            const deletedOp = this.operations.splice(idx, 1)[0];
+
+            if (!this.runTest()) {
+                this.operations.splice(idx, 0, deletedOp);
+            }
+
+            idx -= 1;
+        }
+    }
+
+    reduceStrings() {
+        for (const op of this.operations) {
+            this.reduceStringSingle(op);
+        }
+    }
+
+    _reduceString: Pass = {
+        apply: (op: Operation) => {
+            if (op.type !== "addText") {
+                return;
+            }
+
+            op.content = op.content.slice(1);
+        },
+        undo: (op: Operation) => {
+            if (op.type !== "addText") {
+                return;
+            }
+
+            op.content += "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"[PassManager.randInt("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".length)];
+        }
+    }
+
+    _shiftDown: Pass = {
+        apply(op) {
+            switch (op.type) {
+                case "addText":
+                    op.index -= 1
+                    break;
+                case "removeRange":
+                case "obliterateRange":
+                    op.start -= 1;
+                    op.end -= 1;
+                    break;
+                default:
+                    break;
+            }
+        },
+        undo(op) {
+            switch (op.type) {
+                case "addText":
+                    op.index += 1
+                    break;
+                case "removeRange":
+                case "obliterateRange":
+                    op.start += 1;
+                    op.end += 1;
+                    break;
+                default:
+                    break;
+            }
+        },
+    };
+
+    _shrinkRange: Pass = {
+        apply(op) {
+            if (op.type !== "removeRange" && op.type !== "obliterateRange") {
+                return;
+            }
+
+            op.end -= 1;
+        },
+        undo(op) {
+            if (op.type !== "removeRange" && op.type !== "obliterateRange") {
+                return;
+            }
+            op.end += 1;
+        },
+    };
+
+    reduceStringSingle(op: Operation) {
+        if (op.type !== "addText") {
+            return;
+        }
+
+        while (op.content.length > 0) {
+            const oldText = op.content;
+            op.content = op.content.slice(1);
+
+            if (!this.runTest()) {
+                op.content = oldText;
+                break;
+            }
+        }
+    }
+
+    swapOps() {
+        const op1 = PassManager.randInt(this.operations.length - 1);
+        const op2 = PassManager.randInt(this.operations.length - 1);
+
+        this.operations[op1] = this.operations.splice(op2, 1, this.operations[op1])[0];
+
+        if (!this.runTest()) {
+            this.operations[op1] = this.operations.splice(op2, 1, this.operations[op1])[0];
+        }
+    }
+
+    shiftDown() {
+        for (const op of this.operations) {
+            this.shiftDownSingle(op);
+        }
+    }
+
+    shiftDownSingle(op: Operation) {
+        switch (op.type) {
+            case "addText":
+                while (op.index > 0) {
+                    op.index -= 1;
+                    if (!this.runTest()) {
+                        op.index += 1;
+                        break;
+                    }
+                }
+                break;
+            case "removeRange":
+            case "obliterateRange":
+                while (op.start > 0) {
+                    op.start -= 1;
+                    op.end -= 1;
+                    if (!this.runTest()) {
+                        op.start += 1;
+                        op.end += 1;
+                        break;
+                    }
+                }
+            default:
+                break;
+        }
+    }
+
+    shrinkRange() {
+        for (const op of this.operations) {
+            this.shrinkRangeSingle(op);
+        }
+    }
+
+    shrinkRangeSingle(op: Operation) {
+        if (op.type === "removeRange" || op.type === "obliterateRange") {
+            while (op.start < op.end) {
+                op.end -= 1;
+                if (!this.runTest()) {
+                    op.end += 1;
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns whether it reproduces crash
+     */
+    runTest(): boolean {
+        const { generator, initialState } = this.setUpState();
+
+        try {
+            runIntervalCollectionFuzz(
+                generator,
+                initialState,
+                { saveOnFailure: false, filepath: this.path },
+                // this.loggingInfo,
+            );
+            return false;
+        } catch (e: any) {
+            if (e?.message === "RangeOutOfBounds") {
+                return false;
+            }
+            return true;
+        }
+    }
+
+    random = makeRandom(this.seed);
+    numClients = 3;
+    path = getPath(this.seed);
+
+    setUpState() {
+        const generator = generatorFromArray(this.operations);
+
+        const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+        const clients = Array.from({ length: this.numClients }, (_, index) => {
+            const dataStoreRuntime = new MockFluidDataStoreRuntime();
+            const sharedString = new SharedString(
+                dataStoreRuntime,
+                String.fromCharCode(index + 65),
+                SharedStringFactory.Attributes,
+            );
+            const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+            const services: IChannelServices = {
+                deltaConnection: containerRuntime.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+
+            sharedString.initializeLocal();
+            sharedString.connect(services);
+            return { containerRuntime, sharedString };
+        });
+
+        const initialState: FuzzTestState = {
+            clients,
+            containerRuntimeFactory,
+            random: this.random,
+        };
+
+        return { generator, initialState }
+    }
+}

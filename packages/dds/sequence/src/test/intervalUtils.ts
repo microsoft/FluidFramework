@@ -24,12 +24,12 @@ export function assertConsistent(clients: Client[]): void {
     }
     const first = connectedClients[0].sharedString;
     for (const { sharedString: other } of connectedClients.slice(1)) {
-        assert.equal(first.getLength(), other.getLength());
         assert.equal(
             first.getText(),
             other.getText(),
             `Non-equal text between strings ${first.id} and ${other.id}.`,
         );
+        assert.equal(first.getLength(), other.getLength());
         const firstLabels = Array.from(first.getIntervalCollectionLabels()).sort();
         const otherLabels = Array.from(other.getIntervalCollectionLabels()).sort();
         assert.deepEqual(

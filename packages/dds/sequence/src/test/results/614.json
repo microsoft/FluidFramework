@@ -1,0 +1,128 @@
+[
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "StP",
+        "stringId": "C"
+    },
+    {
+        "type": "removeRange",
+        "start": 2,
+        "end": 3,
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "KnAX",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "b",
+        "stringId": "A"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 0,
+        "end": 1,
+        "stringId": "A"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 1,
+        "end": 2,
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "bJHt9skQ7",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "gV1",
+        "stringId": "A"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 2,
+        "end": 4,
+        "stringId": "B"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 0,
+        "end": 3,
+        "stringId": "A"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "addText",
+        "index": 12,
+        "content": "fTPwW",
+        "stringId": "B"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 4,
+        "end": 7,
+        "stringId": "C"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 2,
+        "end": 11,
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 3,
+        "content": "6atMBTqfJS",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "KhU1LF",
+        "stringId": "B"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 3,
+        "end": 7,
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 9,
+        "content": "",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "FaX",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "zc",
+        "stringId": "A"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 10,
+        "end": 13,
+        "stringId": "B"
+    },
+    {
+        "type": "synchronize"
+    }
+]

@@ -1,0 +1,128 @@
+[
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "jrqTHt3",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 5,
+        "content": "x7zr",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "Bcw",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 3,
+        "content": "2sLK3Q5oAt",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "rj3mxZQ",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 7,
+        "content": "t",
+        "stringId": "A"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 4,
+        "end": 7,
+        "stringId": "C"
+    },
+    {
+        "type": "removeRange",
+        "start": 1,
+        "end": 9,
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 4,
+        "content": "M",
+        "stringId": "A"
+    },
+    {
+        "type": "removeRange",
+        "start": 2,
+        "end": 7,
+        "stringId": "C"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "removeRange",
+        "start": 8,
+        "end": 13,
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 14,
+        "content": "3ZLDaBnvWr",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 12,
+        "content": "TnQVjK",
+        "stringId": "A"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 9,
+        "end": 14,
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 9,
+        "content": "1vYVnzE",
+        "stringId": "B"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 18,
+        "end": 19,
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 7,
+        "content": "Xr854nDN",
+        "stringId": "B"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 4,
+        "end": 5,
+        "stringId": "A"
+    },
+    {
+        "type": "removeRange",
+        "start": 23,
+        "end": 24,
+        "stringId": "C"
+    },
+    {
+        "type": "removeRange",
+        "start": 12,
+        "end": 14,
+        "stringId": "C"
+    },
+    {
+        "type": "synchronize"
+    }
+]

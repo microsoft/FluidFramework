@@ -1,0 +1,128 @@
+[
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "tB",
+        "stringId": "A"
+    },
+    {
+        "type": "removeRange",
+        "start": 0,
+        "end": 2,
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "SD2isa6fq",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "LuV9BkhGQM",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 6,
+        "content": "WvXn4",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "hi7UooJ",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 2,
+        "content": "5aNTWvn",
+        "stringId": "B"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 8,
+        "end": 9,
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 12,
+        "content": "JE6dPKAK",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 1,
+        "content": "EiFW",
+        "stringId": "B"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "addText",
+        "index": 23,
+        "content": "Q4KVkq4t",
+        "stringId": "A"
+    },
+    {
+        "type": "removeRange",
+        "start": 17,
+        "end": 57,
+        "stringId": "A"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 0,
+        "end": 2,
+        "stringId": "A"
+    },
+    {
+        "type": "removeRange",
+        "start": 21,
+        "end": 23,
+        "stringId": "B"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 3,
+        "end": 46,
+        "stringId": "C"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 43,
+        "end": 44,
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 3,
+        "content": "czBW6f3i8B",
+        "stringId": "A"
+    },
+    {
+        "type": "removeRange",
+        "start": 5,
+        "end": 6,
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 1,
+        "content": "Zi71gm",
+        "stringId": "C"
+    },
+    {
+        "type": "removeRange",
+        "start": 6,
+        "end": 7,
+        "stringId": "C"
+    },
+    {
+        "type": "synchronize"
+    }
+]

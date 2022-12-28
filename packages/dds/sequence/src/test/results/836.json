@@ -1,0 +1,128 @@
+[
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "9i",
+        "stringId": "A"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 0,
+        "end": 1,
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "5Cg6UEHv",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "CnE42t7vB",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 7,
+        "content": "W",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 4,
+        "content": "6Em",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "f73JBpbr",
+        "stringId": "B"
+    },
+    {
+        "type": "removeRange",
+        "start": 7,
+        "end": 14,
+        "stringId": "A"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 16,
+        "end": 18,
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 9,
+        "content": "RVesT",
+        "stringId": "B"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 0,
+        "end": 11,
+        "stringId": "A"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 9,
+        "end": 16,
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 9,
+        "content": "uYfrdkQqu",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 2,
+        "content": "KzDGqD",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 29,
+        "content": "9f9JDSsB4",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 3,
+        "content": "Hr",
+        "stringId": "B"
+    },
+    {
+        "type": "removeRange",
+        "start": 22,
+        "end": 23,
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 26,
+        "content": "33",
+        "stringId": "C"
+    },
+    {
+        "type": "synchronize"
+    }
+]

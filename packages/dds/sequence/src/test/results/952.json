@@ -1,0 +1,128 @@
+[
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "PdXcm1cK",
+        "stringId": "B"
+    },
+    {
+        "type": "removeRange",
+        "start": 3,
+        "end": 4,
+        "stringId": "B"
+    },
+    {
+        "type": "removeRange",
+        "start": 5,
+        "end": 6,
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "M",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 4,
+        "content": "oL",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 4,
+        "content": "mTVrmTbS",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 1,
+        "content": "qyocuPNr",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 4,
+        "content": "aekqxZMA2j",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 19,
+        "content": "JhUZq",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 12,
+        "content": "as8U",
+        "stringId": "A"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "addText",
+        "index": 28,
+        "content": "hqs72PDiy",
+        "stringId": "B"
+    },
+    {
+        "type": "removeRange",
+        "start": 38,
+        "end": 39,
+        "stringId": "C"
+    },
+    {
+        "type": "removeRange",
+        "start": 30,
+        "end": 33,
+        "stringId": "C"
+    },
+    {
+        "type": "removeRange",
+        "start": 21,
+        "end": 29,
+        "stringId": "C"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 2,
+        "end": 18,
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 2,
+        "content": "Aw7YfGqyX",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 9,
+        "content": "iLs",
+        "stringId": "A"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 42,
+        "end": 60,
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 5,
+        "content": "PVXp3",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 31,
+        "content": "",
+        "stringId": "A"
+    },
+    {
+        "type": "synchronize"
+    }
+]

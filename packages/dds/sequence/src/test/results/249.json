@@ -1,0 +1,128 @@
+[
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "ooiXA",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "MNu8YRtKH",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "",
+        "stringId": "C"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 8,
+        "end": 9,
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "R",
+        "stringId": "C"
+    },
+    {
+        "type": "removeRange",
+        "start": 5,
+        "end": 6,
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 2,
+        "content": "mxj82AhK",
+        "stringId": "B"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 4,
+        "end": 5,
+        "stringId": "A"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 5,
+        "end": 8,
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "Q",
+        "stringId": "C"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "addText",
+        "index": 1,
+        "content": "rLXvCy",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 1,
+        "content": "Y",
+        "stringId": "A"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 9,
+        "end": 15,
+        "stringId": "B"
+    },
+    {
+        "type": "removeRange",
+        "start": 5,
+        "end": 15,
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 12,
+        "content": "jyEG",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 10,
+        "content": "",
+        "stringId": "B"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 4,
+        "end": 7,
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 10,
+        "content": "ph",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 10,
+        "content": "jeaf57sPK",
+        "stringId": "B"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 22,
+        "end": 29,
+        "stringId": "B"
+    },
+    {
+        "type": "synchronize"
+    }
+]

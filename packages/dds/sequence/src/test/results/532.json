@@ -1,0 +1,128 @@
+[
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "tx9XWfsrv",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "R9WeWJx3",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "iVyJM5U",
+        "stringId": "C"
+    },
+    {
+        "type": "removeRange",
+        "start": 5,
+        "end": 6,
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 7,
+        "content": "",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 6,
+        "content": "WrVZdc",
+        "stringId": "A"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 1,
+        "end": 5,
+        "stringId": "C"
+    },
+    {
+        "type": "removeRange",
+        "start": 4,
+        "end": 10,
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 2,
+        "content": "aabYRAZFXT",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 5,
+        "content": "Dby",
+        "stringId": "B"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "addText",
+        "index": 25,
+        "content": "qFK33aA",
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 13,
+        "content": "ZnNNJukBo",
+        "stringId": "B"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 9,
+        "end": 28,
+        "stringId": "C"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 9,
+        "end": 12,
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 26,
+        "content": "",
+        "stringId": "A"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 26,
+        "end": 30,
+        "stringId": "B"
+    },
+    {
+        "type": "obliterateRange",
+        "start": 5,
+        "end": 31,
+        "stringId": "B"
+    },
+    {
+        "type": "removeRange",
+        "start": 6,
+        "end": 7,
+        "stringId": "C"
+    },
+    {
+        "type": "removeRange",
+        "start": 3,
+        "end": 36,
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 5,
+        "content": "Zp",
+        "stringId": "C"
+    },
+    {
+        "type": "synchronize"
+    }
+]
