@@ -9,7 +9,7 @@ class MongoNetworkTransientTransactionError extends BaseMongoExceptionRetryRule 
     protected defaultRetryDecision: boolean = true;
 
     constructor(retryRuleOverride: Map<string, boolean>) {
-        super(MongoNetworkTransientTransactionError.constructor.name, retryRuleOverride);
+        super("MongoNetworkTransientTransactionError", retryRuleOverride);
     }
 
     public match(error: any): boolean {

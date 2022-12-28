@@ -18,7 +18,6 @@ import {
     IForestSubscription,
     StoredSchemaRepository,
     InMemoryStoredSchemaRepository,
-    Index,
     SharedTreeCore,
     Checkout as TransactionCheckout,
     Anchor,
@@ -129,13 +128,12 @@ class SharedTree
             defaultChangeFamily,
             anchors,
         );
-        const indexes: Index<DefaultChangeset>[] = [
-            new SchemaIndex(runtime, schema),
-            new ForestIndex(runtime, forest),
-            new EditManagerIndex(runtime, editManager),
-        ];
         super(
-            indexes,
+            (events) => [
+                new SchemaIndex(runtime, events, schema),
+                new ForestIndex(runtime, events, forest),
+                new EditManagerIndex(runtime, editManager),
+            ],
             defaultChangeFamily,
             editManager,
             anchors,

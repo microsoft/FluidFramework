@@ -153,7 +153,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                 // is okay. Conceptually this is similar to default checkpoint where logOffset is -1. In this case,
                 // the sequence number is 'n' rather than '0'.
                 lastCheckpoint.logOffset = -1;
-                const checkpointMessage = JSON.stringify(lastCheckpoint);
+                const checkpointMessage = `Restoring checkpoint from latest summary. Seq number: ${lastCheckpoint.sequenceNumber}`;
                 context.log?.info(checkpointMessage, { messageMetaData });
                 Lumberjack.info(checkpointMessage, getLumberBaseProperties(documentId, tenantId));
             }

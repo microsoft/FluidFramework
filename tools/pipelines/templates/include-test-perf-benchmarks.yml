@@ -1,0 +1,111 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+parameters:
+- name: poolBuild
+  type: object
+  default: Large
+
+- name: testWorkspace
+  type: string
+
+# Name of the pipeline from which artifacts will be dowloaded
+- name: artifactPipeline
+  type: string
+
+# Custom steps specified by the "caller" of this template, to actually run perf tests
+- name: customSteps
+  type: stepList
+
+jobs:
+  - job: runTests
+    displayName: Run tests
+    pool: ${{ parameters.poolBuild }}
+    variables:
+      feed: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
+
+    steps:
+    # Setup. Need to checkout the repo in order to run @fluid-tools/telemetry-generator which we don't publish right now.
+    - checkout: self
+      clean: true
+
+    # Install
+    - task: UseNode@1
+      displayName: Use Node 14.x
+      inputs:
+        version: 14.x
+
+    - task: Bash@3
+      displayName: Create test directory
+      inputs:
+        targetType: 'inline'
+        script: |
+          mkdir ${{ parameters.testWorkspace }}
+
+    - task: Bash@3
+      displayName: Initialize npmrc
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.testWorkspace }}
+        script: |
+          echo Initialize package
+          npm init --yes
+
+          echo Generating .npmrc
+          echo "registry=https://registry.npmjs.org" >> ./.npmrc
+          echo "always-auth=false" >> ./.npmrc
+
+          echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
+          echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
+          echo "@fluid-internal:registry=${{ variables.feed }}" >> ./.npmrc
+          echo "@fluid-tools:registry=${{ variables.feed }}" >> ./.npmrc
+          echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
+          echo "@microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
+          echo "always-auth=true" >> ./.npmrc
+          cat .npmrc
+
+    # Auth to internal feed
+    - task: npmAuthenticate@0
+      displayName: 'npm authenticate (internal feed)'
+      inputs:
+        workingFile: ${{ parameters.testWorkspace }}/.npmrc
+
+    # Auth to Office feed
+    - task: npmAuthenticate@0
+      displayName: 'npm authenticate (office feed)'
+      inputs:
+        workingFile: ${{ parameters.testWorkspace }}/.npmrc
+        customEndpoint: 'Office Packages - Readonly'
+
+    - task: Bash@3
+      displayName: Print Parameters
+      inputs:
+        targetType: 'inline'
+        # Some of the variables
+        script: |
+          echo "
+          Pipeline Parameters:
+            poolBuild=${{ parameters.poolBuild }}
+
+          Task Variables:
+            toolAbsolutePath=$(toolAbsolutePath)
+            artifactPipeline=${{ parameters.artifactPipeline}}
+            feed=$(feed)
+            testWorkspace=${{ parameters.testWorkspace }}
+
+          Build Params
+            SourceBranch=$(Build.SourceBranch)
+          "
+
+    - task: Bash@3
+      displayName: 'Prepare telemetry-generator'
+      inputs:
+        targetType: 'inline'
+        workingDirectory: $(toolAbsolutePath)
+        script: |
+          cp ${{ parameters.testWorkspace }}/.npmrc . ;
+          npm install @ff-internal/aria-logger;
+          npm i;
+          npm run build:compile;
+
+    - ${{ parameters.customSteps }}
