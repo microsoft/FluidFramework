@@ -1072,9 +1072,24 @@ export class DetachedNodeTracker {
                 factory.push(cloned);
             }
         }
+
+        // We may need to apply the effects of updateMoveSrcDetacher for some marks if those were located
+        // before their corresponding detach mark.
+        const factory2 = new MarkListFactory<T>(moveEffects);
+        for (const mark of factory.list) {
+            const splitMarks = applyMoveEffectsToMark(
+                mark,
+                undefined,
+                moveEffects,
+                genId,
+                false,
+                false,
+            );
+            factory2.push(...splitMarks);
+        }
         return {
             ...change,
-            change: factory.list,
+            change: factory2.list,
         };
     }
 
