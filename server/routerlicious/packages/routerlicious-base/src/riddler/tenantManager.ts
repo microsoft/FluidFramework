@@ -249,14 +249,14 @@ export class TenantManager {
     public async getTenantKeys(tenantId: string, includeDisabledTenant = false): Promise<ITenantKeys> {
         const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId };
 
-        // Read from cache first - Decrypt and return keys if present
+        // Read from cache first
         const cachedKey = await this.cache.get(tenantId);
         if (cachedKey) {
             Lumberjack.info(`Tenant key(s) found in cache`, lumberProperties);
             return this.decryptCachedKeys(cachedKey);
         }
 
-        // Read from database since keys aren't in the cache
+        // Read from database if keys aren't found in the cache
         const tenantDocument = await this.getTenantDocument(tenantId, includeDisabledTenant);
 
         if (!tenantDocument) {
@@ -308,7 +308,7 @@ export class TenantManager {
         });
 
         await this.cache.set(tenantId, cacheKeys);
-        Lumberjack.info(`Added tenant keys to cache.`, lumberProperties);
+        Lumberjack.info(`Added new tenant keys to cache.`, lumberProperties);
 
         return {
             key1: tenantKey1,
@@ -380,6 +380,7 @@ export class TenantManager {
             });
 
             await this.cache.set(tenantId, cacheKeys);
+            Lumberjack.info(`Added new key to cache.`);
 
             return {
                 key1: decryptedTenantKey1,
@@ -399,6 +400,7 @@ export class TenantManager {
             });
 
             await this.cache.set(tenantId, cacheKey1);
+            Lumberjack.info(`Added new key to cache.`);
 
             return {
                 key1: newTenantKey,
