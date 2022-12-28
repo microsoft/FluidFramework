@@ -401,7 +401,12 @@ export function tryExtendMark(
         case "ReturnFrom": {
             // TODO: Handle reattach fields
             const lhsMoveOut = lhs as MoveOut | ReturnFrom;
-            if (rhs.tomb === lhsMoveOut.tomb && moveEffects !== undefined) {
+            if (
+                rhs.tomb === lhsMoveOut.tomb &&
+                moveEffects !== undefined &&
+                (lhsMoveOut.type === "MoveOut" ||
+                    areMergeableReturnFrom(lhs as ReturnFrom, rhs as ReturnFrom))
+            ) {
                 const prevMerge = moveEffects.srcMergeable.get(lhsMoveOut.id);
                 if (prevMerge !== undefined) {
                     moveEffects.srcMergeable.set(prevMerge, rhs.id);
@@ -441,6 +446,20 @@ export function tryExtendMark(
             break;
     }
     return false;
+}
+
+function areMergeableReturnFrom(lhs: ReturnFrom, rhs: ReturnFrom): boolean {
+    if (
+        lhs.detachedBy !== rhs.detachedBy ||
+        lhs.mutedBy !== rhs.mutedBy ||
+        lhs.revision !== rhs.revision
+    ) {
+        return false;
+    }
+    if (lhs.detachIndex !== undefined) {
+        return lhs.detachIndex + 1 === rhs.detachIndex;
+    }
+    return rhs.detachIndex === undefined;
 }
 
 export interface MoveEffectTable<T> {
@@ -930,6 +949,11 @@ export class DetachedNodeTracker {
                 }
                 this.nodes = newNodes;
             }
+            index += inputLength;
+        }
+        index = 0;
+        for (const mark of change.change) {
+            const inputLength: number = getInputLength(mark);
             if (isActiveReattach(mark)) {
                 const newNodes: Map<number, DetachedNode> = new Map();
                 for (const [k, v] of this.nodes) {
@@ -947,7 +971,9 @@ export class DetachedNodeTracker {
                 }
                 this.nodes = newNodes;
             }
-            index += inputLength;
+            if (!isDetachMark(mark)) {
+                index += inputLength;
+            }
         }
     }
 

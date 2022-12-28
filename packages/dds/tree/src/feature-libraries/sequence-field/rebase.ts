@@ -29,6 +29,8 @@ import {
     isObjMark,
     isSkipLikeReattach,
     isMutedDetach,
+    updateMoveSrcDetacher,
+    muteMoveSrc,
 } from "./utils";
 import {
     Attach,
@@ -316,8 +318,7 @@ class RebaseQueue<T> {
             isMutedDetach(newMark) &&
             // TODO: support muting/unmuting other detach mark types
             newMark.type === "ReturnFrom" &&
-            baseMark.detachedBy === newMark.mutedBy &&
-            baseMark.detachedBy === newMark.detachedBy
+            baseMark.detachedBy === newMark.mutedBy
         ) {
             assert(
                 newMark.detachIndex !== undefined,
@@ -524,6 +525,7 @@ function rebaseMark<TNodeChange>(
                 );
                 if (currMark.mutedBy === baseMarkRevision) {
                     const newCurrMark = clone(currMark) as ReturnFrom<TNodeChange>;
+                    newCurrMark.detachedBy = baseMarkRevision;
                     delete newCurrMark.mutedBy;
                     delete newCurrMark.detachIndex;
                     return newCurrMark;
@@ -541,6 +543,16 @@ function rebaseMark<TNodeChange>(
 
             if (isActiveReattach(currMark)) {
                 // The nodes that currMark aims to reattach are being reattached by baseMark
+                if (currMark.type === "ReturnTo") {
+                    // This causes the move src to become muted before it is rebased over the mark that
+                    // would otherwise mute it.
+                    // So we want to ensure it becomes muted if it doesn't get rebased over a mark that would
+                    // mute it and we want to ensure it isn't already muted by the time we rebase it.
+                    // Perhaps we should differentiate the two source of muting and have a flag for each.
+                    // Note that note that the flags will have different effects on getInputLength/getOutputLength
+                    // Also note that only the mutation on the source that comes from the source itself need the detachIndex.
+                    muteMoveSrc(moveEffects, currMark.id, baseMarkRevision);
+                }
                 return {
                     ...clone(currMark),
                     mutedBy: baseMarkRevision,
@@ -573,7 +585,6 @@ function rebaseMark<TNodeChange>(
                 const newCurrMark = clone(currMark);
                 if (newCurrMark.type === "ReturnFrom") {
                     newCurrMark.mutedBy = baseMarkRevision;
-                    newCurrMark.detachedBy = baseMarkRevision;
                     newCurrMark.detachIndex = baseInputOffset;
                     return newCurrMark;
                 } else if (newCurrMark.type === "ReturnTo") {
@@ -590,6 +601,7 @@ function rebaseMark<TNodeChange>(
                         newCurrMark.detachedBy = baseMarkRevision;
                         newCurrMark.detachIndex = baseInputOffset;
                         delete (newCurrMark as Mutable).mutedBy;
+                        updateMoveSrcDetacher(moveEffects, newCurrMark.id, baseMarkRevision);
                     }
                     return newCurrMark;
                 } else {

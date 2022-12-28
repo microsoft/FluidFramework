@@ -214,6 +214,12 @@ export interface ReturnFrom<TNodeChange = NodeChangeType>
      * Always kept consistent with `ReturnTo.detachedBy`.
      */
     detachedBy: RevisionTag | undefined;
+    /**
+     * Only needed when the mark is muted.
+     * Indicates the index of the detach in the input context of `mutedBy`.
+     * Left undefined when the mark is only muted because of the matching ReturnTo being muted,
+     * without this mark's target nodes being detached.
+     */
     detachIndex?: number;
     tomb?: RevisionTag;
 }
