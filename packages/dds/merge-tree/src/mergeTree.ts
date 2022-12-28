@@ -113,8 +113,10 @@ function wasRemovedAfter(seg: ISegment, seq: number): boolean {
 function markSegmentMoved(seg: ISegment, moveInfo: IMoveInfo): void {
     seg.moveDst = moveInfo.moveDst;
     seg.movedClientIds = moveInfo.movedClientIds.slice();
+    seg.movedSeqs = moveInfo.movedSeq === -1 ? [] : [moveInfo.movedSeq];
     seg.movedSeq = moveInfo.movedSeq;
     seg.localMovedSeq = moveInfo.localMovedSeq;
+    seg.localMovedSeqs = moveInfo.localMovedSeqs?.slice();
 }
 
 function minMoveDist(a: IMoveInfo | undefined, b: IMoveInfo | undefined): IMoveInfo | undefined {
@@ -589,6 +591,7 @@ export class MergeTree {
         const moveInfo = toMoveInfo(segment);
         if (localSeq === undefined) {
             if (removalInfo !== undefined) {
+                // todo: we require this to be true for obliterate
                 if (this.options?.mergeTreeUseNewLengthCalculations !== true) {
                     const normalizedRemovedSeq = removalInfo.removedSeq === UnassignedSequenceNumber
                         ? Number.MAX_SAFE_INTEGER
@@ -603,6 +606,7 @@ export class MergeTree {
                 }
                 return 0;
             } else if (moveInfo !== undefined) {
+                // todo: we require this to be true for obliterate
                 if (this.options?.mergeTreeUseNewLengthCalculations !== true) {
                     const normalizedMovedSeq = moveInfo.movedSeq === UnassignedSequenceNumber
                         ? Number.MAX_SAFE_INTEGER
@@ -1056,6 +1060,8 @@ export class MergeTree {
                 const segment = node;
                 const removalInfo = toRemovalInfo(segment);
                 const moveInfo = toMoveInfo(segment);
+
+                // todo: we require this to be true for obliterate
                 if (this.options?.mergeTreeUseNewLengthCalculations === true) {
                     // normalize the seq numbers
                     // if the remove is local (UnassignedSequenceNumber) give it the highest possible
@@ -1384,13 +1390,21 @@ export class MergeTree {
                         const moveInfo = toMoveInfo(seg);
                         if (
                             !moveInfo
-                            || moveInfo.localMovedSeq !== localMovedSeq
-                            || moveInfo.movedSeq !== UnassignedSequenceNumber
+                            || (localMovedSeq !== undefined && !moveInfo.localMovedSeqs.includes(localMovedSeq))
+                            || (moveInfo.movedSeq !== UnassignedSequenceNumber && moveInfo.localMovedSeqs.length === 0)
                         ) {
                             return false;
                         }
 
                         moveInfo.localMovedSeq = undefined;
+                        if (localMovedSeq !== undefined) {
+                            moveInfo.localMovedSeqs = moveInfo.localMovedSeqs.filter((localSeq) => localSeq !== localMovedSeq);
+                        }
+
+                        if (!moveInfo.movedSeqs.includes(seq)) {
+                            moveInfo.movedSeqs.push(seq);
+                        }
+
                         if (moveInfo.movedSeq === UnassignedSequenceNumber) {
                             moveInfo.movedSeq = seq;
                             return true;
@@ -1798,11 +1812,17 @@ export class MergeTree {
                 const leftLocalSegments: Record<number, ISegment> = {};
 
                 const findLeftMovedSegment = (seg: ISegment) => {
-                    if ((seg.movedSeq !== undefined && seg.movedSeq !== -1 && seg.movedSeq >= refSeq)) {
-                        leftAckedSegments[seg.movedSeq] = seg;
-                        return true;
-                    } else if (seg.localMovedSeq !== undefined) {
-                        leftLocalSegments[seg.localMovedSeq] = seg;
+                    const movedSeqs = seg.movedSeqs?.filter((movedSeq) => movedSeq >= refSeq) ?? [];
+                    const localMovedSeqs = seg.localMovedSeqs ?? [];
+                    for (const movedSeq of movedSeqs) {
+                        leftAckedSegments[movedSeq] = seg;
+                    }
+
+                    for (const localMovedSeq of localMovedSeqs) {
+                        leftLocalSegments[localMovedSeq] = seg;
+                    }
+
+                    if (movedSeqs.length > 0 || localMovedSeqs.length > 0) {
                         return true;
                     }
 
@@ -1815,21 +1835,28 @@ export class MergeTree {
                 };
 
                 const findRightMovedSegment = (seg: ISegment) => {
-                    if ((seg.movedSeq !== undefined && seg.movedSeq !== -1 && seg.movedSeq >= refSeq)) {
-                        const left = leftAckedSegments[seg.movedSeq];
+                    const movedSeqs = seg.movedSeqs?.filter((movedSeq) => movedSeq >= refSeq) ?? [];
+                    const localMovedSeqs = seg.localMovedSeqs ?? [];
+
+                    for (const movedSeq of movedSeqs) {
+                        const left = leftAckedSegments[movedSeq];
                         if (left) {
                             leftMovedSegment = left;
                             rightMovedSegment = seg;
                             return false;
                         }
-                        return true;
-                    } else if (seg.localMovedSeq !== undefined) {
-                        const left = leftLocalSegments[seg.localMovedSeq];
+                    }
+
+                    for (const localMovedSeq of localMovedSeqs) {
+                        const left = leftLocalSegments[localMovedSeq];
                         if (left) {
                             leftMovedSegment = left;
                             rightMovedSegment = seg;
                             return false;
                         }
+                    }
+
+                    if (movedSeqs.length > 0 || localMovedSeqs.length > 0) {
                         return true;
                     }
 
@@ -2154,17 +2181,21 @@ export class MergeTree {
                     existingMoveInfo.movedClientIds.unshift(clientId);
 
                     existingMoveInfo.movedSeq = seq;
+                    existingMoveInfo.movedSeqs.unshift(seq);
                     if (segment.localRefs?.empty === false) {
                         localOverlapWithRefs.push(segment);
                     }
                 } else {
                     // Do not replace earlier sequence number for move
                     existingMoveInfo.movedClientIds.push(clientId);
+                    existingMoveInfo.movedSeqs.push(seq);
                 }
             } else {
                 segment.movedClientIds = [clientId];
                 segment.movedSeq = seq;
                 segment.localMovedSeq = localSeq;
+                segment.localMovedSeqs = localSeq === undefined ? [] : [localSeq];
+                segment.movedSeqs = seq === -1 ? [] : [seq];
 
                 movedSegments.push({ segment });
             }

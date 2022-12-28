@@ -173,11 +173,20 @@ export interface IMoveInfo {
      * acked. Only set on the tombstone "source" segment of the move.
      */
     localMovedSeq?: number;
+    localMovedSeqs: number[];
     /**
      * Seq at which this segment was moved. Only set on the tombstone "source"
      * segment of the move.
      */
     movedSeq: number;
+
+    /**
+     * All seqs at which this segment was moved. Contains multiple seqs in the
+     * case of overlapping, concurrent moves
+     *
+     * movedSeqs[i] corresponds to movedClientIds[i]
+     */
+    movedSeqs: number[];
     /**
      * A reference to the inserted destination segment corresponding to this
      * segment's move.
@@ -455,6 +464,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     public removedSeq?: number;
     public removedClientIds?: number[];
     public movedSeq?: number;
+    public movedSeqs?: number[];
     public movedClientIds?: number[];
     public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
     public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
@@ -469,6 +479,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     public localSeq?: number;
     public localRemovedSeq?: number;
     public localMovedSeq?: number;
+    public localMovedSeqs?: number[];
 
     public addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number,
         collabWindow?: CollaborationWindow, rollback: PropertiesRollback = PropertiesRollback.None) {
@@ -547,9 +558,16 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
             case MergeTreeDeltaType.OBLITERATE:
                 const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
                 assert(moveInfo !== undefined, "On obliterate ack, missing move info!");
+                const localMovedSeq = this.localMovedSeq;
                 this.localMovedSeq = undefined;
                 if (moveInfo.movedSeq === UnassignedSequenceNumber) {
                     moveInfo.movedSeq = opArgs.sequencedMessage!.sequenceNumber;
+                    moveInfo.movedSeqs.push(opArgs.sequencedMessage!.sequenceNumber)
+
+                    if (localMovedSeq !== undefined) {
+                        moveInfo.localMovedSeqs = moveInfo.localMovedSeqs.filter((localSeq) => localSeq !== localMovedSeq);
+                    }
+
                     return true;
                 }
                 return false;
@@ -579,7 +597,9 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 leafSegment.clientId = this.clientId;
                 leafSegment.movedClientIds = this.movedClientIds?.slice();
                 leafSegment.movedSeq = this.movedSeq;
+                leafSegment.movedSeqs = this.movedSeqs?.slice();
                 leafSegment.localMovedSeq = this.localMovedSeq;
+                leafSegment.localMovedSeqs = this.localMovedSeqs?.slice();
                 this.segmentGroups.copyTo(leafSegment);
                 this.trackingCollection.copyTo(leafSegment);
                 if (this.localRefs) {
