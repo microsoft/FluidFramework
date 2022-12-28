@@ -70,6 +70,9 @@ describe("SequenceField - Rebaser Axioms", () => {
                                 const tracker = new SF.DetachedNodeTracker();
                                 const change1 = tagChange(makeChange1(offset1), brand(1));
                                 const change2 = tagChange(makeChange2(offset2), brand(2));
+                                if (!SF.areCompatibleReattaches(change1.change, change2.change)) {
+                                    continue;
+                                }
                                 const inv = tagInverse(
                                     SF.invert(change2, TestChange.invert),
                                     change2.revision,

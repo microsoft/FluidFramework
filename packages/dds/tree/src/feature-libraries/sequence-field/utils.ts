@@ -1046,3 +1046,62 @@ export class DetachedNodeTracker {
         }
     }
 }
+
+export function areCompatibleReattaches(a: Changeset<unknown>, b: Changeset<unknown>): boolean {
+    const indexToReattach: Map<number, string[]> = new Map();
+    const reattachToIndex: Map<string, number> = new Map();
+    let index = 0;
+    for (const mark of a) {
+        if (isActiveReattach(mark)) {
+            const list = getOrAddEmptyToMap(indexToReattach, index);
+            for (let i = 0; i < mark.count; ++i) {
+                const entry = {
+                    rev: mark.detachedBy ?? fail("Unable to track detached nodes"),
+                    index: mark.detachIndex + i,
+                };
+                const key = `${entry.rev}|${entry.index}`;
+                assert(
+                    !reattachToIndex.has(key),
+                    "First changeset as inconsistent characterization of detached nodes",
+                );
+                list.push(key);
+                reattachToIndex.set(key, index);
+            }
+        }
+        index += getInputLength(mark);
+    }
+    index = 0;
+    let listIndex = 0;
+    for (const mark of b) {
+        if (isActiveReattach(mark)) {
+            const list = getOrAddEmptyToMap(indexToReattach, index);
+            for (let i = 0; i < mark.count; ++i) {
+                const entry = {
+                    rev: mark.detachedBy ?? fail("Unable to track detached nodes"),
+                    index: mark.detachIndex + i,
+                };
+                const key = `${entry.rev}|${entry.index}`;
+                const indexInA = reattachToIndex.get(key);
+                if (indexInA !== undefined && indexInA !== index) {
+                    // change b tries to reattach the same content as change a but in a different location
+                    return false;
+                }
+                if (list.includes(key)) {
+                    while (list[listIndex] !== undefined && list[listIndex] !== key) {
+                        ++listIndex;
+                    }
+                    if (list.slice(0, listIndex).includes(key)) {
+                        // change b tries to reattach the same content as change a but in a different order
+                        return false;
+                    }
+                }
+            }
+        }
+        const inputLength = getInputLength(mark);
+        if (inputLength > 0) {
+            listIndex = 0;
+        }
+        index += inputLength;
+    }
+    return true;
+}

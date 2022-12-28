@@ -38,6 +38,7 @@ import {
     getUniqueMoveId,
     applyMoveEffectsToMark,
     modifyMoveSrc,
+    isMutedDetach,
 } from "./utils";
 
 export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
@@ -577,6 +578,8 @@ export class ComposeQueue<T> {
             return { newMark: this.newMarks.pop() };
         } else if (isDetachMark(baseMark)) {
             return { baseMark: this.baseMarks.pop() };
+        } else if (isMutedDetach(newMark)) {
+            return { newMark: this.newMarks.pop() };
         } else {
             // If we've reached this branch then `baseMark` and `newMark` start at the same location
             // in the document field at the revision after the base changes and before the new changes.
