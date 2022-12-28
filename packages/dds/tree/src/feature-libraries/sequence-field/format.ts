@@ -164,12 +164,12 @@ export interface HasReattachFields extends HasPlaceFields {
     detachIndex: number;
 
     /**
-     * When true, the intent is for the target nodes is as follows:
+     * When true, the intent for the target nodes is as follows:
      * - In a "Revive" mark: the nodes should exist no matter how they were deleted.
      * - In a "Return" mark: the nodes, if they exist, should be located here no matter how they were moved.
      *
-     * When false, the mark is solely intended to revert a prior change, and will therefore only take effect
-     * if that changes has taken effect.
+     * When undefined, the mark is solely intended to revert a prior change, and will therefore only take effect
+     * if that change has taken effect.
      */
     isIntention?: true;
 
@@ -195,6 +195,11 @@ export interface Revive<TNodeChange = NodeChangeType>
 
 export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId, Mutable {
     type: "ReturnTo";
+    /**
+     * When true, the corresponding ReturnFrom has been muted.
+     * This is independent of whether this mark is muted.
+     */
+    blocked?: true;
     count: NodeCount;
 }
 
@@ -206,14 +211,32 @@ export interface ReturnFrom<TNodeChange = NodeChangeType>
     type: "ReturnFrom";
     count: NodeCount;
     /**
-     * Needed for the following operations:
-     * - Inverting this mark
-     * - Canceling-out this mark with its inverse
-     * - Detecting when this muted mark should be unmuted
+     * Needed for detecting the following:
+     * - The mark is being composed with its inverse
+     * - The mark should be unmuted
      *
      * Always kept consistent with `ReturnTo.detachedBy`.
      */
     detachedBy: RevisionTag | undefined;
+
+    // /**
+    //  * When true, the intent if for the target nodes to be moved to the desired location,
+    //  * no matter where those nodes were moved.
+    //  *
+    //  * When undefined, the mark is solely intended to revert a prior change, and will therefore only take effect
+    //  * if that change has taken effect.
+    //  */
+    // isIntention?: true;
+
+    // /**
+    //  * The changeset (other than `ReturnFrom.detachedBy`) that last detached the nodes that this mark intends
+    //  * to detach.
+    //  *
+    //  * This property should only be set or read when `ReturnFrom.isIntention` is undefined.
+    //  * This property is `undefined` when it would otherwise be equivalent to `ReturnFrom.detachedBy`.
+    //  */
+    // lastDetachedBy?: RevisionTag;
+
     /**
      * Only populated when the mark is muted.
      * Indicates the index of the detach in the input context of `mutedBy`.

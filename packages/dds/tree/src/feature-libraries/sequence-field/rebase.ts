@@ -31,6 +31,7 @@ import {
     isMutedDetach,
     updateMoveSrcDetacher,
     updateMoveSrcBlock,
+    updateMoveDestBlock,
 } from "./utils";
 import {
     Attach,
@@ -525,9 +526,9 @@ function rebaseMark<TNodeChange>(
                 );
                 if (currMark.mutedBy === baseMarkRevision) {
                     const newCurrMark = clone(currMark) as ReturnFrom<TNodeChange>;
-                    newCurrMark.detachedBy = baseMarkRevision;
                     delete newCurrMark.mutedBy;
                     delete newCurrMark.detachIndex;
+                    updateMoveDestBlock(moveEffects, newCurrMark.id, false);
                     return newCurrMark;
                 }
             }
@@ -579,6 +580,7 @@ function rebaseMark<TNodeChange>(
                 if (newCurrMark.type === "ReturnFrom") {
                     newCurrMark.mutedBy = baseMarkRevision;
                     newCurrMark.detachIndex = baseInputOffset;
+                    updateMoveDestBlock(moveEffects, newCurrMark.id, true);
                     return newCurrMark;
                 } else if (newCurrMark.type === "ReturnTo") {
                     assert(

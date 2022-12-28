@@ -143,8 +143,9 @@ export function getOutputLength(mark: Mark<unknown>): number {
     }
     const type = mark.type;
     switch (type) {
-        case "Revive":
         case "ReturnTo":
+            return mark.blocked ? 0 : mark.count;
+        case "Revive":
         case "MoveIn":
             return mark.count;
         case "Insert":
@@ -512,8 +513,7 @@ export function splitMoveSrc<T>(
     // TODO: Do we need a separate splitIdToOrigId for src and dst? Or do we need to eagerly apply splits when processing?
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.srcEffects.get(origId)!;
+        const effect = getOrAddEmptyToMap(table.srcEffects, origId);
         const index = effect.findIndex((p) => p.id === id);
 
         // TODO: Assert that the sums of the partition sizes match
@@ -595,8 +595,7 @@ export function splitMoveDest<T>(
 export function replaceMoveDest<T>(table: MoveEffectTable<T>, id: MoveId, mark: Attach<T>): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.dstEffects.get(origId)!;
+        const effect = getOrAddEmptyToMap(table.dstEffects, origId);
         const index = effect.findIndex((p) => p.id === id);
         assert(effect[index].replaceWith === undefined, "Move dest already replaced");
         effect[index].replaceWith = [mark];
@@ -609,8 +608,7 @@ export function replaceMoveDest<T>(table: MoveEffectTable<T>, id: MoveId, mark: 
 export function removeMoveDest(table: MoveEffectTable<unknown>, id: MoveId): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.dstEffects.get(origId)!;
+        const effect = getOrAddEmptyToMap(table.dstEffects, origId);
         const index = effect.findIndex((p) => p.id === id);
         effect.splice(index, 1);
     } else {
@@ -628,8 +626,7 @@ export function removeMoveDest(table: MoveEffectTable<unknown>, id: MoveId): voi
 export function modifyMoveSrc<T>(table: MoveEffectTable<T>, id: MoveId, change: T): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.srcEffects.get(origId)!;
+        const effect = getOrAddEmptyToMap(table.srcEffects, origId);
         const index = effect.findIndex((p) => p.id === id);
         assert(effect[index].replaceWith === undefined, "Move source already replaced");
         assert(effect[index].modifyAfter === undefined, "Move source already been modified");
@@ -652,8 +649,7 @@ export function replaceMoveSrc<T>(
 ): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.srcEffects.get(origId)!;
+        const effect = getOrAddEmptyToMap(table.srcEffects, origId);
         const index = effect.findIndex((p) => p.id === id);
         assert(effect[index].replaceWith === undefined, "Move source already replaced");
         effect[index].replaceWith = [mark];
@@ -666,14 +662,37 @@ export function replaceMoveSrc<T>(
 export function updateMoveSrcBlock<T>(table: MoveEffectTable<T>, id: MoveId, block: boolean): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.srcEffects.get(origId)!;
+        const effect = getOrAddEmptyToMap(table.srcEffects, origId);
         const index = effect.findIndex((p) => p.id === id);
         assert(effect[index].block === undefined, "Move source already being blocked/unblocked");
         effect[index].block = block;
     } else {
         table.srcEffects.set(id, [{ id, block }]);
         table.splitIdToOrigId.set(id, id);
+    }
+}
+
+export function updateMoveDestBlock<T>(
+    table: MoveEffectTable<T>,
+    id: MoveId,
+    block: boolean,
+): void {
+    const origId = table.splitIdToOrigId.get(id);
+    if (origId !== undefined) {
+        const effect = getOrAddEmptyToMap(table.dstEffects, origId);
+        const index = effect.findIndex((p) => p.id === id);
+        if (index === -1) {
+            effect.push({ id, block });
+        } else {
+            assert(
+                effect[index].block === undefined,
+                "Move source already being blocked/unblocked",
+            );
+            effect[index].block = block;
+        }
+    } else {
+        assert(!table.dstEffects.has(id), "This MoveId cannot be replaced");
+        table.dstEffects.set(id, [{ id, block }]);
     }
 }
 
@@ -684,8 +703,7 @@ export function updateMoveSrcDetacher<T>(
 ): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.srcEffects.get(origId)!;
+        const effect = getOrAddEmptyToMap(table.srcEffects, origId);
         const index = effect.findIndex((p) => p.id === id);
         effect[index].detachedBy = detachedBy;
     } else {
@@ -697,8 +715,7 @@ export function updateMoveSrcDetacher<T>(
 export function removeMoveSrc(table: MoveEffectTable<unknown>, id: MoveId): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.srcEffects.get(origId)!;
+        const effect = getOrAddEmptyToMap(table.srcEffects, origId);
         const index = effect.findIndex((p) => p.id === id);
         effect.splice(index, 1);
     } else {
@@ -730,8 +747,7 @@ export function findKey<K, V>(map: Map<K, V>, value: V): K | undefined {
 export function changeSrcMoveId<T>(table: MoveEffectTable<T>, id: MoveId, newId: MoveId): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.srcEffects.get(origId)!;
+        const effect = getOrAddEmptyToMap(table.srcEffects, origId);
         const index = effect.findIndex((p) => p.id === id);
         effect[index].id = newId;
         // TODO: Need to update splitIdToOrigId?
@@ -782,8 +798,16 @@ export function splitMoveIn<T>(mark: MoveIn | ReturnTo, parts: MovePartition<T>[
             };
             result.push(portion);
             if (mark.type === "ReturnTo") {
-                (portion as ReturnTo).detachIndex = mark.detachIndex + cumulativeCount;
+                const returnTo = portion as ReturnTo;
+                returnTo.detachIndex = mark.detachIndex + cumulativeCount;
                 cumulativeCount += portion.count;
+                if (part.block !== undefined) {
+                    if (part.block) {
+                        returnTo.blocked = true;
+                    } else {
+                        delete returnTo.blocked;
+                    }
+                }
             }
         }
     }
