@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
-import { clone, fail, StackyIterator } from "../../util";
+import { clone, fail, getOrAddEmptyToMap, StackyIterator } from "../../util";
 import { IdAllocator } from "../modular-schema";
 import {
     Attach,
@@ -151,9 +151,10 @@ export function getOutputLength(mark: Mark<unknown>): number {
             return mark.content.length;
         case "Modify":
             return 1;
+        case "ReturnFrom":
+            return mark.blocked ? mark.count : 0;
         case "Delete":
         case "MoveOut":
-        case "ReturnFrom":
             return 0;
         default:
             unreachableCase(type);
@@ -499,7 +500,7 @@ export interface MovePartition<TNodeChange> {
     count?: number;
     replaceWith?: Mark<TNodeChange>[];
     modifyAfter?: TNodeChange;
-    mute?: RevisionTag;
+    block?: boolean;
     detachedBy?: RevisionTag;
 }
 
@@ -556,8 +557,7 @@ export function splitMoveDest<T>(
     // TODO: What if source has been deleted?
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.dstEffects.get(origId)!;
+        const effect = getOrAddEmptyToMap(table.dstEffects, origId);
         const index = effect.findIndex((p) => p.id === id);
 
         effect.splice(index, 1, ...parts);
@@ -663,20 +663,16 @@ export function replaceMoveSrc<T>(
     }
 }
 
-export function muteMoveSrc<T>(
-    table: MoveEffectTable<T>,
-    id: MoveId,
-    mutedBy: RevisionTag | undefined,
-): void {
+export function updateMoveSrcBlock<T>(table: MoveEffectTable<T>, id: MoveId, block: boolean): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const effect = table.srcEffects.get(origId)!;
         const index = effect.findIndex((p) => p.id === id);
-        assert(effect[index].mute === undefined, "Move source already muted");
-        effect[index].mute = mutedBy;
+        assert(effect[index].block === undefined, "Move source already being blocked/unblocked");
+        effect[index].block = block;
     } else {
-        table.srcEffects.set(id, [{ id, mute: mutedBy }]);
+        table.srcEffects.set(id, [{ id, block }]);
         table.splitIdToOrigId.set(id, id);
     }
 }
@@ -773,16 +769,22 @@ export function isMoveMark<T>(mark: Mark<T>): mark is MoveMark<T> {
 
 export function splitMoveIn<T>(mark: MoveIn | ReturnTo, parts: MovePartition<T>[]): Mark<T>[] {
     const result: Mark<T>[] = [];
+    let cumulativeCount = 0;
     for (const part of parts) {
         assert(part.modifyAfter === undefined, "Cannot modify move destination");
         if (part.replaceWith !== undefined) {
             result.push(...part.replaceWith);
         } else {
-            result.push({
+            const portion = {
                 ...mark,
                 id: part.id,
                 count: part.count ?? mark.count,
-            });
+            };
+            result.push(portion);
+            if (mark.type === "ReturnTo") {
+                (portion as ReturnTo).detachIndex = mark.detachIndex + cumulativeCount;
+                cumulativeCount += portion.count;
+            }
         }
     }
     return result;
@@ -815,9 +817,17 @@ export function splitMoveOut<T>(
                     delete splitMark.changes;
                 }
             }
-            if (part.mute !== undefined) {
-                assert(splitMark.type === "ReturnFrom", "Only ReturnFrom marks can be muted");
-                splitMark.mutedBy = part.mute;
+            if (part.block !== undefined) {
+                // TODO: support blocking for move
+                assert(
+                    splitMark.type === "ReturnFrom",
+                    "Only ReturnFrom marks can be blocked through move effects",
+                );
+                if (part.block) {
+                    splitMark.blocked = true;
+                } else {
+                    delete splitMark.blocked;
+                }
             }
             if (part.detachedBy !== undefined) {
                 assert(

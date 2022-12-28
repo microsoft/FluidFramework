@@ -30,7 +30,7 @@ import {
     isSkipLikeReattach,
     isMutedDetach,
     updateMoveSrcDetacher,
-    muteMoveSrc,
+    updateMoveSrcBlock,
 } from "./utils";
 import {
     Attach,
@@ -544,14 +544,7 @@ function rebaseMark<TNodeChange>(
             if (isActiveReattach(currMark)) {
                 // The nodes that currMark aims to reattach are being reattached by baseMark
                 if (currMark.type === "ReturnTo") {
-                    // This causes the move src to become muted before it is rebased over the mark that
-                    // would otherwise mute it.
-                    // So we want to ensure it becomes muted if it doesn't get rebased over a mark that would
-                    // mute it and we want to ensure it isn't already muted by the time we rebase it.
-                    // Perhaps we should differentiate the two source of muting and have a flag for each.
-                    // Note that note that the flags will have different effects on getInputLength/getOutputLength
-                    // Also note that only the mutation on the source that comes from the source itself need the detachIndex.
-                    muteMoveSrc(moveEffects, currMark.id, baseMarkRevision);
+                    updateMoveSrcBlock(moveEffects, currMark.id, true);
                 }
                 return {
                     ...clone(currMark),
@@ -602,6 +595,7 @@ function rebaseMark<TNodeChange>(
                         newCurrMark.detachIndex = baseInputOffset;
                         delete (newCurrMark as Mutable).mutedBy;
                         updateMoveSrcDetacher(moveEffects, newCurrMark.id, baseMarkRevision);
+                        updateMoveSrcBlock(moveEffects, newCurrMark.id, false);
                     }
                     return newCurrMark;
                 } else {

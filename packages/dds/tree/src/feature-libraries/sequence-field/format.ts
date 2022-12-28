@@ -215,12 +215,15 @@ export interface ReturnFrom<TNodeChange = NodeChangeType>
      */
     detachedBy: RevisionTag | undefined;
     /**
-     * Only needed when the mark is muted.
+     * Only populated when the mark is muted.
      * Indicates the index of the detach in the input context of `mutedBy`.
-     * Left undefined when the mark is only muted because of the matching ReturnTo being muted,
-     * without this mark's target nodes being detached.
      */
     detachIndex?: number;
+    /**
+     * When true, the corresponding ReturnTo has been muted.
+     * This is independent of whether this mark is muted.
+     */
+    blocked?: true;
     tomb?: RevisionTag;
 }
 
