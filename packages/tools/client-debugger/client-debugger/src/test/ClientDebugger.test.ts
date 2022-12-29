@@ -2,126 +2,118 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { expect } from "chai";
-
 import { SharedCounter } from "@fluidframework/counter";
-import { ContainerSchema, FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
-import {
-	TinyliciousClient,
-	TinyliciousContainerServices,
-} from "@fluidframework/tinylicious-client";
+import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
-import { IFluidClientDebugger } from "../IFluidClientDebugger";
+import { clearDebuggerRegistry, getDebuggerRegistry, getFluidClientDebugger } from "../Registry";
 import {
-	FluidClientDebuggerProps,
-	clearDebuggerRegistry,
+	ContainerInfo,
 	closeFluidClientDebugger,
-	getDebuggerRegistry,
-	getFluidClientDebugger,
+	createFluidContainer,
 	initializeFluidClientDebugger,
-} from "../Registry";
+} from "./ClientUtilities";
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-/**
- * Type returned from when creating / loading the Container.
- */
-interface ContainerLoadResult {
-	container: IFluidContainer;
-	services: TinyliciousContainerServices;
-}
-
-/**
- * Schema used by the app.
- */
-const containerSchema: ContainerSchema = {
-	initialObjects: {
-		counter: SharedCounter,
-	},
-};
-
 describe("ClientDebugger unit tests", () => {
-	let _debuggerProps: FluidClientDebuggerProps | undefined;
+	let containerInfo: ContainerInfo | undefined;
+	let containerId: string | undefined;
+	let containerInfoOther: ContainerInfo | undefined;
+	let containerIdOther: string | undefined;
 
 	beforeEach(async () => {
 		const client = new TinyliciousClient();
 
 		// Create the container
 		console.log("Creating new container...");
-		let createContainerResult: ContainerLoadResult;
+
 		try {
-			createContainerResult = await client.createContainer(containerSchema);
+			containerInfo = await createFluidContainer(client, {
+				initialObjects: {
+					counter: SharedCounter,
+				},
+				dynamicObjectTypes: [SharedCounter],
+			});
+
+			containerInfoOther = await createFluidContainer(client, {
+				initialObjects: {
+					counter: SharedCounter,
+				},
+				dynamicObjectTypes: [SharedCounter],
+			});
 		} catch (error) {
 			console.error(`Encountered error creating Fluid container: "${error}".`);
 			throw error;
 		}
 		console.log("Container created!");
 
-		const { container: tinyliciousContainer } = createContainerResult;
+		const { container: tinyliciousContainer } = containerInfo;
+		const { container: tinyliciousContainerOther } = containerInfoOther;
 
 		// Attach container
-		let containerId: string;
 		console.log("Awaiting container attach...");
 		try {
 			containerId = await tinyliciousContainer.attach();
+			containerIdOther = await tinyliciousContainerOther.attach();
 		} catch (error) {
 			console.error(`Encountered error attaching Fluid container: "${error}".`);
 			throw error;
 		}
 		console.log("Fluid container attached!");
-
-		_debuggerProps = {
-			containerId,
-			container: (tinyliciousContainer as FluidContainer).INTERNAL_CONTAINER_DO_NOT_USE!(),
-			containerData: tinyliciousContainer.initialObjects,
-		};
 	});
 
 	afterEach(() => {
 		clearDebuggerRegistry();
+		closeFluidClientDebugger(containerInfo!.containerId);
+		containerInfo!.container.dispose();
+		containerInfo = undefined;
 	});
 
-	function getDebuggerProps(): FluidClientDebuggerProps {
-		if (_debuggerProps === undefined) {
-			expect.fail("Container initialization failed.");
-		}
-		return _debuggerProps;
-	}
-
-	function initializeDebugger(props: FluidClientDebuggerProps): IFluidClientDebugger {
-		initializeFluidClientDebugger(props);
-		return getFluidClientDebugger(props.containerId)!;
-	}
-
-	it("Initializing debugger populates global (window) registry", () => {
+	it("Initializing multi-debugger populates global (window) registry", () => {
 		let debuggerRegistry = getDebuggerRegistry();
-		expect(debuggerRegistry.size).to.equal(0); // There should be no registered debuggers yet.
+		expect(debuggerRegistry.size).toEqual(0); // There should be no registered debuggers yet.
 
-		initializeDebugger(getDebuggerProps());
+		initializeFluidClientDebugger(containerInfo);
+		initializeFluidClientDebugger(containerInfoOther);
 
 		debuggerRegistry = getDebuggerRegistry();
-		expect(debuggerRegistry.size).to.equal(1);
+		expect(debuggerRegistry.size).toEqual(2);
 	});
 
-	it("Closing debugger removes it from global (window) registry and disposes it.", () => {
-		const debuggerProps = getDebuggerProps();
-		const { containerId } = debuggerProps;
-
-		const clientDebugger = initializeDebugger(debuggerProps);
-
+	it("Validate multi-debugger contents are as expected", () => {
+		const clientDebugger = getFluidClientDebugger(containerId);
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		expect(clientDebugger.disposed).to.be.false;
+		expect(clientDebugger?.disposed).toBe(false);
 
+		const clientDebuggerOther = getFluidClientDebugger(containerIdOther);
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		expect(clientDebuggerOther?.disposed).toBe(false);
+	});
+
+	it("Validate debugger audiences are not null", () => {
+		const clientDebugger = getFluidClientDebugger(containerId);
+		expect(clientDebugger.audience).not.toBeNull();
+
+		const clientDebuggerOther = getFluidClientDebugger(containerIdOther);
+		expect(clientDebuggerOther.audience).not.toBeNull();
+	});
+
+	it("Closing multi-debugger removes it from global (window) registry and disposes it.", () => {
 		let debuggerRegistry = getDebuggerRegistry();
-		expect(debuggerRegistry.size).to.equal(1);
+		const clientDebugger = getFluidClientDebugger(containerId);
+		const clientDebuggerOther = getFluidClientDebugger(containerIdOther);
+
+		expect(debuggerRegistry.size).toEqual(2);
 
 		closeFluidClientDebugger(containerId);
+		closeFluidClientDebugger(containerIdOther);
 
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		expect(clientDebugger.disposed).to.be.true;
+		expect(clientDebugger?.disposed).toBe(true);
+		expect(clientDebuggerOther?.disposed).toBe(true);
 
 		debuggerRegistry = getDebuggerRegistry();
-		expect(debuggerRegistry.size).to.equal(0);
+		expect(debuggerRegistry.size).toEqual(0);
 	});
 });
 
