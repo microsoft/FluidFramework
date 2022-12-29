@@ -200,7 +200,7 @@ function composeMarks<TNodeChange>(
                 case "Delete": {
                     // For now the deletion obliterates all other modifications.
                     // In the long run we want to preserve them.
-                    return clone(newMark);
+                    return clone(composeMark(newMark, newRev, composeChild, genId, moveEffects));
                 }
                 case "MoveOut":
                 case "ReturnFrom": {
@@ -259,7 +259,7 @@ function composeMarks<TNodeChange>(
                     return baseMark;
                 }
                 case "Delete": {
-                    replaceMoveSrc(moveEffects, baseMark.id, newMark);
+                    replaceMoveSrc(moveEffects, baseMark.id, composeMark(newMark, newRev, composeChild, genId, moveEffects));
                     return 0;
                 }
                 case "MoveOut": {
