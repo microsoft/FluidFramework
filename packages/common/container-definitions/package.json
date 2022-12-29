@@ -66,7 +66,6 @@
     "baselineRange": ">=2.0.0-internal.2.2.0 <2.0.0-internal.2.3.0",
     "baselineVersion": "2.0.0-internal.2.2.0",
     "broken": {
-      "InterfaceDeclaration_IBatchMessage": { "backCompat": false }
     }
   }
 }

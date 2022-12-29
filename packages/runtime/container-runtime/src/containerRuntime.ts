@@ -492,6 +492,12 @@ export interface IContainerRuntimeOptions {
      * @experimental Not ready for use.
      */
     readonly chunkSizeInBytes?: number;
+
+    /**
+     * Enable the IdCompressor in the runtime.
+     * @experimental Not ready for use.
+     */
+    readonly enableRuntimeCompressor?: boolean;
 }
 
 /**
@@ -673,6 +679,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
             maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
             chunkSizeInBytes = Number.POSITIVE_INFINITY,
+            enableRuntimeCompressor = false
         } = runtimeOptions;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -752,6 +759,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 compressionOptions,
                 maxBatchSizeInBytes,
                 chunkSizeInBytes,
+                enableRuntimeCompressor
             },
             containerScope,
             logger,
@@ -956,8 +964,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             : 0;
     }
 
-    private readonly idCompressor: IdCompressor;
-    public getIdCompressor(): IdCompressor {
+    private readonly idCompressor?: IdCompressor;
+    public getIdCompressor(): IdCompressor | undefined {
         return this.idCompressor;
     }
 
@@ -1052,7 +1060,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summarizerClientElectionEnabled = this.isSummarizerClientElectionEnabled();
         this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
         this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
-        this.idCompressor = idCompressorSnapshot !== undefined ? IdCompressor.deserialize(idCompressorSnapshot, createSessionId()) : new IdCompressor(createSessionId(), 10, this.logger);
+        if (this.runtimeOptions.enableRuntimeCompressor) {
+            this.idCompressor = idCompressorSnapshot !== undefined ? IdCompressor.deserialize(idCompressorSnapshot, createSessionId()) : new IdCompressor(createSessionId(), 10, this.logger);
+        }
 
         this.maxConsecutiveReconnects =
             this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? this.defaultMaxConsecutiveReconnects;
@@ -1496,8 +1506,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ) {
         this.addMetadataToSummary(summaryTree);
 
-        const idCompressorState = JSON.stringify(this.idCompressor.serialize(false));
-        addBlobToSummary(summaryTree, '.idCompressor', idCompressorState);
+        if (this.runtimeOptions.enableRuntimeCompressor && this.idCompressor !== undefined) {
+            const idCompressorState = JSON.stringify(this.idCompressor.serialize(false));
+            addBlobToSummary(summaryTree, '.idCompressor', idCompressorState);
+        }
 
         if (this.remoteMessageProcessor.partialMessages.size > 0) {
             const content = JSON.stringify([...this.remoteMessageProcessor.partialMessages]);
@@ -1713,8 +1725,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // messages once a batch has been fully processed.
         this.scheduleManager.beforeOpProcessing(message);
 
-        if (message.type === ContainerMessageType.FluidDataStoreOp) {
-            this.idCompressor.finalizeCreationRange(message.contents.contents.idRange);
+        if (this.runtimeOptions.enableRuntimeCompressor
+            && message.type === ContainerMessageType.FluidDataStoreOp) {
+            this.idCompressor?.finalizeCreationRange(message.contents.contents.idRange);
         }
 
         try {
@@ -2547,7 +2560,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         id: string,
         contents: any,
         localOpMetadata: unknown = undefined): void {
-        contents.idRange = this.idCompressor.takeNextCreationRange();
+        if (this.runtimeOptions.enableRuntimeCompressor && this.idCompressor !== undefined) {
+            contents.idRange = this.idCompressor.takeNextCreationRange();
+        }
         const envelope: IEnvelope = {
             address: id,
             contents,

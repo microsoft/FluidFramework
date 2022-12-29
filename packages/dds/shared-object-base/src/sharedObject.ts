@@ -123,9 +123,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         this.attachListeners();
     }
 
-    public generateCompressedId() {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return (this.runtime as any).idCompressor.generateCompressedId();
+    public generateCompressedId(): number | undefined {
+        return this.runtime.idCompressor?.generateCompressedId();
     }
 
     /**

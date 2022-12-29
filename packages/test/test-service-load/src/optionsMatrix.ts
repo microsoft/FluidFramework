@@ -82,6 +82,7 @@ export function generateRuntimeOptions(
         compressionOptions: [{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 }],
         maxBatchSizeInBytes: [undefined],
         chunkSizeInBytes: [undefined],
+        enableRuntimeCompressor: [undefined]
     };
 
     return generatePairwiseOptions<IContainerRuntimeOptions>(

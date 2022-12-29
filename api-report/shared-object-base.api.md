@@ -114,7 +114,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     // @internal
     emit(event: EventEmitterEventType, ...args: any[]): boolean;
     // (undocumented)
-    generateCompressedId(): any;
+    generateCompressedId(): number | undefined;
     // (undocumented)
     abstract getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     abstract getGCData(fullGC?: boolean): IGarbageCollectionData;

@@ -471,7 +471,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.getAudience();
     }
 
-    public getIdCompressor(): IdCompressor {
+    public getIdCompressor(): IdCompressor | undefined {
         return this._containerRuntime.getIdCompressor();
     }
 
