@@ -120,6 +120,7 @@ export class BatchManager {
             messageReferenceSequenceNumber: message.referenceSequenceNumber,
             type: message.deserializedContent.type,
             length: this.pendingBatch.length,
+            enableOpReentryCheck: this.options.enableOpReentryCheck === true,
         };
         const error = new GenericError(
             "Submission of an out of order message",

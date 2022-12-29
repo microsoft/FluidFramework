@@ -186,6 +186,7 @@ describe("BatchManager", () => {
         mockLogger.assertMatch(new Array(5).fill({
             eventName: "BatchManager:Submission of an out of order message",
             category: "error",
+            enableOpReentryCheck: false,
         }));
     });
 
@@ -201,6 +202,7 @@ describe("BatchManager", () => {
         mockLogger.assertMatch(new Array(10).fill({
             eventName: "BatchManager:Submission of an out of order message",
             category: "error",
+            enableOpReentryCheck: true,
         }));
     });
 });
