@@ -51,7 +51,7 @@ export class RiddlerResources implements IResources {
 export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResources> {
     public async create(config: Provider): Promise<RiddlerResources> {
         // Cache connection
-        const redisConfig = await config.get("redis");
+        const redisConfig = config.get("redisForTenantCache");
         const redisOptions: Redis.RedisOptions = {
             host: redisConfig.host,
             port: redisConfig.port,
@@ -67,7 +67,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
         };
         const redisClient = new Redis(redisOptions);
 
-        const cache = new RedisCache(redisClient, redisParams)
+        const cache = new RedisCache(redisClient, redisParams);
 
         // Database connection
         const factory = await services.getDbFactory(config);
