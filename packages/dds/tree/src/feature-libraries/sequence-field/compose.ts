@@ -220,7 +220,7 @@ function composeMarks<TNodeChange>(
         case "MoveIn": {
             switch (newType) {
                 case "Delete": {
-                    replaceMoveSrc(moveEffects, baseMark.id, newMark);
+                    replaceMoveSrc(moveEffects, baseMark.id, composeMark(newMark, newRev, composeChild, genId, moveEffects));
                     return 0;
                 }
                 case "MoveOut": {
