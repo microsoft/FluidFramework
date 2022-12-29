@@ -406,8 +406,8 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
     }
 
     assert(!isSkipMark(cloned), "Cloned should be same type as input mark");
-    if (revision !== undefined && cloned.type !== "Modify") {
-        cloned.revision = revision; // Won't this overwrite the existing revision on the mark if there is one?
+    if (cloned.type !== "Modify" && cloned.revision === undefined && revision !== undefined) {
+        cloned.revision = revision;
     }
 
     if (isMoveMark(cloned)) {
