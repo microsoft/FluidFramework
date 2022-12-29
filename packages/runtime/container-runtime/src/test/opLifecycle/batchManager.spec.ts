@@ -179,33 +179,28 @@ describe("BatchManager", () => {
         assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
         assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
 
-        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
-        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
-        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 2 }), true);
-        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
-        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
-        assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 2 }), true);
+        for (let i = 0; i < 10; i++) {
+            assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }), true);
+        }
 
-        mockLogger.assertMatch([{
+        mockLogger.assertMatch(new Array(5).fill({
             eventName: "BatchManager:Submission of an out of order message",
-        }, {
-            eventName: "BatchManager:Submission of an out of order message",
-        }, {
-            eventName: "BatchManager:Submission of an out of order message",
-        }, {
-            eventName: "BatchManager:Submission of an out of order message",
-        }, {
-            eventName: "BatchManager:Submission of an out of order message",
-        }]);
+            category: "error",
+        }));
     });
 
-    it("Verify op ordering if requested", () => {
+    it("Verify op ordering if requested and log all instances before throwing", () => {
         const batchManager = new BatchManager({ enableOpReentryCheck: true, hardLimit }, mockLogger);
         assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
         assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 0 }), true);
-        assert.throws(() => batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }));
-        mockLogger.assertMatchNone([{
+
+        for (let i = 0; i < 10; i++) {
+            assert.throws(() => batchManager.push({ ...smallMessage(), referenceSequenceNumber: 1 }));
+        }
+
+        mockLogger.assertMatch(new Array(10).fill({
             eventName: "BatchManager:Submission of an out of order message",
-        }]);
+            category: "error",
+        }));
     });
 });

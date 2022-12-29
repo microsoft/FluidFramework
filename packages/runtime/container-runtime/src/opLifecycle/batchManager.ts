@@ -24,12 +24,13 @@ export class BatchManager {
     private pendingBatch: BatchMessage[] = [];
     private batchContentSize = 0;
     /**
-    * Tracks the number of ops which were detected to have a mismatched
+    * Track the number of ops which were detected to have a mismatched
     * reference sequence number, in order to self-throttle the telemetry events.
     *
     * This should be removed as part of ADO:2322
     */
-    private baselineMismatchedOpsToReport = 5;
+    private readonly maxMismatchedOpsToReport = 5;
+    private mismatchedOpsReported = 0;
 
 
     public get length() { return this.pendingBatch.length; }
@@ -125,17 +126,24 @@ export class BatchManager {
                 /* error */ undefined,
             telemetryProperties);
 
-
         if (this.options.enableOpReentryCheck === true) {
-            throw error;
-        }
-
-        if (this.baselineMismatchedOpsToReport > 0) {
-            this.logger.sendTelemetryEvent(
+            this.logger.sendErrorEvent(
                 { eventName: "Submission of an out of order message", ...telemetryProperties },
                 error,
             );
-            this.baselineMismatchedOpsToReport--;
+            throw error;
+        }
+
+        if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
+            this.logger.sendErrorEvent(
+                {
+                    eventName: "Submission of an out of order message",
+                    ...telemetryProperties,
+                    ops: this.mismatchedOpsReported,
+                    maxOps: this.maxMismatchedOpsToReport,
+                },
+                error,
+            );
         }
     }
 }
