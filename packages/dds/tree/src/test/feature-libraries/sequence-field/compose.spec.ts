@@ -50,18 +50,28 @@ describe("SequenceField - Compose", () => {
     describe("associativity of triplets", () => {
         const entries = Object.entries(cases);
         for (const a of entries) {
+            const taggedA = tagChange(a[1], brand(1));
             for (const b of entries) {
+                const taggedB = tagChange(b[1], brand(2));
                 for (const c of entries) {
-                    it(`((${a[0]}, ${b[0]}), ${c[0]}) === (${a[0]}, (${b[0]}, ${c[0]}))`, () => {
-                        const ab = composeNoVerify([makeAnonChange(a[1]), makeAnonChange(b[1])]);
-                        const left = composeNoVerify([makeAnonChange(ab), makeAnonChange(c[1])]);
-                        const bc = composeNoVerify([makeAnonChange(b[1]), makeAnonChange(c[1])]);
-                        const right = composeNoVerify([makeAnonChange(a[1]), makeAnonChange(bc)]);
+                    const taggedC = tagChange(c[1], brand(3));
+                    const title = `((${a[0]}, ${b[0]}), ${c[0]}) === (${a[0]}, (${b[0]}, ${c[0]}))`;
+                    if (SF.areComposable([taggedA, taggedB, taggedC])) {
+                        it(title, () => {
+                            const ab = composeNoVerify([taggedA, taggedB]);
+                            const left = composeNoVerify([makeAnonChange(ab), taggedC]);
+                            const bc = composeNoVerify([taggedB, taggedC]);
+                            const right = composeNoVerify([taggedA, makeAnonChange(bc)]);
 
-                        normalizeMoveIds(left);
-                        normalizeMoveIds(right);
-                        assert.deepEqual(left, right);
-                    });
+                            normalizeMoveIds(left);
+                            normalizeMoveIds(right);
+                            assert.deepEqual(left, right);
+                        });
+                    } else {
+                        it.skip(title, () => {
+                            // Those change contradict one-another
+                        });
+                    }
                 }
             }
         }

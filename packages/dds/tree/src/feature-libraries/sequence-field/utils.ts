@@ -597,9 +597,9 @@ export function replaceMoveDest<T>(table: MoveEffectTable<T>, id: MoveId, mark: 
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
         const effect = getOrAddEmptyToMap(table.dstEffects, origId);
-        const index = effect.findIndex((p) => p.id === id);
-        assert(effect[index].replaceWith === undefined, "Move dest already replaced");
-        effect[index].replaceWith = [mark];
+        const partition = getOrAddMovePartition(effect, id);
+        assert(partition.replaceWith === undefined, "Move dest already replaced");
+        partition.replaceWith = [mark];
     } else {
         assert(!table.dstEffects.has(id), "This MoveId cannot be replaced");
         table.dstEffects.set(id, [{ id, replaceWith: [mark] }]);
@@ -628,10 +628,10 @@ export function modifyMoveSrc<T>(table: MoveEffectTable<T>, id: MoveId, change: 
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
         const effect = getOrAddEmptyToMap(table.srcEffects, origId);
-        const index = effect.findIndex((p) => p.id === id);
-        assert(effect[index].replaceWith === undefined, "Move source already replaced");
-        assert(effect[index].modifyAfter === undefined, "Move source already been modified");
-        effect[index].modifyAfter = change;
+        const partition = getOrAddMovePartition(effect, id);
+        assert(partition.replaceWith === undefined, "Move source already replaced");
+        assert(partition.modifyAfter === undefined, "Move source already been modified");
+        partition.modifyAfter = change;
     } else {
         table.srcEffects.set(id, [{ id, modifyAfter: change }]);
     }
@@ -651,9 +651,9 @@ export function replaceMoveSrc<T>(
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
         const effect = getOrAddEmptyToMap(table.srcEffects, origId);
-        const index = effect.findIndex((p) => p.id === id);
-        assert(effect[index].replaceWith === undefined, "Move source already replaced");
-        effect[index].replaceWith = [mark];
+        const partition = getOrAddMovePartition(effect, id);
+        assert(partition.replaceWith === undefined, "Move source already replaced");
+        partition.replaceWith = [mark];
     } else {
         table.srcEffects.set(id, [{ id, replaceWith: [mark] }]);
         table.splitIdToOrigId.set(id, id);
@@ -668,9 +668,9 @@ export function updateMoveSrcPairing<T>(
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
         const effect = getOrAddEmptyToMap(table.srcEffects, origId);
-        const index = effect.findIndex((p) => p.id === id);
-        assert(effect[index].pairing === undefined, "Move source already being blocked/unblocked");
-        effect[index].pairing = pairing;
+        const partition = getOrAddMovePartition(effect, id);
+        assert(partition.pairing === undefined, "Move source already being blocked/unblocked");
+        partition.pairing = pairing;
     } else {
         table.srcEffects.set(id, [{ id, pairing }]);
         table.splitIdToOrigId.set(id, id);
@@ -685,16 +685,9 @@ export function updateMoveDestPairing<T>(
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
         const effect = getOrAddEmptyToMap(table.dstEffects, origId);
-        const index = effect.findIndex((p) => p.id === id);
-        if (index === -1) {
-            effect.push({ id, pairing });
-        } else {
-            assert(
-                effect[index].pairing === undefined,
-                "Move source already being blocked/unblocked",
-            );
-            effect[index].pairing = pairing;
-        }
+        const partition = getOrAddMovePartition(effect, id);
+        assert(partition.pairing === undefined, "Move source already being blocked/unblocked");
+        partition.pairing = pairing;
     } else {
         assert(!table.dstEffects.has(id), "This MoveId cannot be replaced");
         table.dstEffects.set(id, [{ id, pairing }]);
@@ -709,8 +702,8 @@ export function updateMoveSrcDetacher<T>(
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
         const effect = getOrAddEmptyToMap(table.srcEffects, origId);
-        const index = effect.findIndex((p) => p.id === id);
-        effect[index].detachedBy = detachedBy;
+        const partition = getOrAddMovePartition(effect, id);
+        partition.detachedBy = detachedBy;
     } else {
         table.srcEffects.set(id, [{ id, detachedBy }]);
         table.splitIdToOrigId.set(id, id);
@@ -753,8 +746,8 @@ export function changeSrcMoveId<T>(table: MoveEffectTable<T>, id: MoveId, newId:
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
         const effect = getOrAddEmptyToMap(table.srcEffects, origId);
-        const index = effect.findIndex((p) => p.id === id);
-        effect[index].id = newId;
+        const partition = getOrAddMovePartition(effect, id);
+        partition.id = newId;
         // TODO: Need to update splitIdToOrigId?
     } else {
         table.srcEffects.set(id, [{ id: newId }]);
@@ -769,6 +762,16 @@ export function changeSrcMoveId<T>(table: MoveEffectTable<T>, id: MoveId, newId:
     if (leftId !== undefined) {
         table.srcMergeable.set(leftId, newId);
     }
+}
+
+function getOrAddMovePartition<T>(partitions: MovePartition<T>[], id: MoveId): MovePartition<T> {
+    const index = partitions.findIndex((p) => p.id === id);
+    if (index === -1) {
+        const partition = { id };
+        partitions.push(partition);
+        return partition;
+    }
+    return partitions[index];
 }
 
 export type MoveMark<T> = MoveOut<T> | MoveIn | ReturnFrom<T> | ReturnTo;
@@ -949,7 +952,8 @@ export function getUniqueMoveId<T>(
     genId: IdAllocator,
     moveEffects: MoveEffectTable<T>,
 ): MoveId {
-    if (!moveEffects.validatedMarks.has(mark) && (mark.revision ?? revision === undefined)) {
+    // TODO: avoid reassigning IDs when the revision ID already makes the ID unique
+    if (!moveEffects.validatedMarks.has(mark)) {
         let newId = moveEffects.idRemappings.get(mark.id);
         if (newId === undefined) {
             newId = genId();
@@ -1034,6 +1038,27 @@ export class DetachedNodeTracker {
         }
     }
 
+    public isApplicable(change: Changeset<unknown>): boolean {
+        for (const mark of change) {
+            if (isActiveReattach(mark)) {
+                const rev = mark.detachedBy ?? fail("Unable to track detached nodes");
+                for (let i = 0; i < mark.count; ++i) {
+                    const index = mark.detachIndex + i;
+                    const original = { rev, index };
+                    const updated = this.getUpdatedDetach(original);
+                    for (const detached of this.nodes.values()) {
+                        if (updated.rev === detached.rev && updated.index === detached.index) {
+                            // The new change is attempting to reattach nodes in a location that has already been
+                            // filled by a prior reattach.
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
     public update<T>(
         change: TaggedChange<Changeset<T>>,
         genId: IdAllocator,
@@ -1096,21 +1121,30 @@ export class DetachedNodeTracker {
     }
 
     private updateMark(mark: Reattach<unknown>, moveEffects: MoveEffectTable<unknown>): void {
-        let didUpdate = false;
-        for (const eq of this.equivalences) {
-            if (mark.detachedBy === eq.old.rev && mark.detachIndex === eq.old.index) {
-                mark.detachedBy = eq.new.rev;
-                mark.detachIndex = eq.new.index;
-                didUpdate = true;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const original = { rev: mark.detachedBy!, index: mark.detachIndex };
+        const updated = this.getUpdatedDetach(original);
+        if (updated.rev !== original.rev || updated.index !== original.index) {
+            mark.detachedBy = updated.rev;
+            mark.detachIndex = updated.index;
+            if (mark.type === "ReturnTo") {
+                updateMoveSrcDetacher(moveEffects, mark.id, mark.detachedBy);
             }
         }
-        if (didUpdate && mark.type === "ReturnTo") {
-            updateMoveSrcDetacher(moveEffects, mark.id, mark.detachedBy);
+    }
+
+    private getUpdatedDetach(detach: DetachedNode): DetachedNode {
+        let curr = detach;
+        for (const eq of this.equivalences) {
+            if (curr.rev === eq.old.rev && curr.index === eq.old.index) {
+                curr = eq.new;
+            }
         }
+        return curr;
     }
 }
 
-export function areCompatibleReattaches(a: Changeset<unknown>, b: Changeset<unknown>): boolean {
+export function areRebasable(a: Changeset<unknown>, b: Changeset<unknown>): boolean {
     const indexToReattach: Map<number, string[]> = new Map();
     const reattachToIndex: Map<string, number> = new Map();
     let index = 0;
@@ -1165,6 +1199,17 @@ export function areCompatibleReattaches(a: Changeset<unknown>, b: Changeset<unkn
             listIndex = 0;
         }
         index += inputLength;
+    }
+    return true;
+}
+
+export function areComposable(changes: TaggedChange<Changeset<unknown>>[]): boolean {
+    const tracker = new DetachedNodeTracker();
+    for (const change of changes) {
+        if (!tracker.isApplicable(change.change)) {
+            return false;
+        }
+        tracker.apply(change);
     }
     return true;
 }

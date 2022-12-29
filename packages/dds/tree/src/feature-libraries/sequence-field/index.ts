@@ -69,7 +69,8 @@ export { NodeChangeRebaser, rebase } from "./rebase";
 export { invert, NodeChangeInverter } from "./invert";
 export { compose, NodeChangeComposer } from "./compose";
 export {
-    areCompatibleReattaches,
+    areComposable,
+    areRebasable,
     isActiveReattach,
     getInputLength,
     isMoveMark,
