@@ -799,6 +799,7 @@ export function splitMoveIn<T>(
         assert(part.modifyAfter === undefined, "Cannot modify move destination");
         if (part.replaceWith !== undefined) {
             result.push(...part.replaceWith);
+            cumulativeCount += part.count ?? mark.count;
         } else {
             const portion = {
                 ...mark,
@@ -834,6 +835,7 @@ export function splitMoveOut<T>(
     for (const part of parts) {
         if (part.replaceWith !== undefined) {
             result.push(...part.replaceWith);
+            cumulativeCount += part.count ?? mark.count;
         } else {
             const splitMark: MoveOut<T> | ReturnFrom<T> = {
                 ...mark,
