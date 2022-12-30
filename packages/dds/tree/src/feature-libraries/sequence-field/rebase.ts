@@ -250,17 +250,16 @@ class RebaseQueue<T> {
     }
 
     private getNextBaseMark(): Mark<T> | undefined {
-        return this.getNextMark(this.baseMarks, false, undefined);
+        return this.getNextMark(this.baseMarks, false);
     }
 
     private getNextNewMark(): Mark<T> | undefined {
-        return this.getNextMark(this.newMarks, true, undefined);
+        return this.getNextMark(this.newMarks, true);
     }
 
     private getNextMark(
         marks: StackyIterator<Mark<T>>,
         reassignMoveIds: boolean,
-        revision: RevisionTag | undefined,
     ): Mark<T> | undefined {
         let mark: Mark<T> | undefined;
         while (mark === undefined) {
@@ -271,7 +270,7 @@ class RebaseQueue<T> {
 
             const splitMarks = applyMoveEffectsToMark(
                 mark,
-                revision,
+                undefined,
                 this.moveEffects,
                 this.genId,
                 reassignMoveIds,
