@@ -139,7 +139,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
      * Track ops in flight for online flow. Used to avoid searching pendingBlobs since BlobAttach ops
      * don't include local ID in online flow.
      */
-    private readonly opsInFlight: Map<string, string[]> = new Map();
+    // private readonly opsInFlight: Map<string, string[]> = new Map();
 
     private readonly retryThrottler = new CancellableThrottler(new Throttler(
         60 * 1000, // 60 sec delay window
@@ -166,14 +166,15 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
          * will then not delete the blob as long as it is listed as referenced in future summaries.
          * The summarizing client will know to include the storage ID in the summary when it sees the op.
          *
-         * The op may also include a local ID to inform all clients of the relation to the storage
+         * The op will also include a local ID to inform all clients of the relation to the storage
          * ID, without knowledge of which they cannot request the blob from storage. This is also
          * included in the redirect table in the summary.
          */
-        private readonly sendBlobAttachOp: (storageId?: string, localId?: string) => void,
+        private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void,
         // To be called when a blob node is requested. blobPath is the path of the blob's node in GC's graph. It's
         // of the format `/<BlobManager.basePath>/<blobId>`.
-        private readonly gcNodeUpdated: (blobPath: string) => void,
+        private readonly blobRequested: (blobPath: string) => void,
+        private readonly addedBlobReference: (fromId: string, toId: string) => void,
         private readonly runtime: IBlobManagerRuntime,
         stashedBlobs: IPendingBlobs = {},
     ) {
@@ -298,8 +299,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
             assert(!!storageId, 0x11f /* "requesting unknown blobs" */);
         }
 
-        // When a GC-able (not pending) blob is retrieved, let runtime know that the corresponding GC node got updated.
-        this.gcNodeUpdated(this.getBlobGCNodePath(blobId));
+        // Let runtime know that the corresponding GC node was requested.
+        this.blobRequested(this.getBlobGCNodePath(blobId));
 
         return PerformanceEvent.timedExecAsync(
             this.mc.logger,
@@ -367,6 +368,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         );
     }
 
+    private setRedirection(fromId: string, toId: string) {
+        this.redirectTable.set(fromId, toId);
+        this.addedBlobReference(fromId, toId);
+    }
+
     private deleteAndEmitsIfEmpty(id: string) {
         this.pendingBlobs.delete(id);
         if (!this.hasPendingBlobs) {
@@ -380,19 +386,17 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
             entry?.status === PendingBlobStatus.OfflinePendingUpload,
             0x386 /* Must have pending blob entry for uploaded blob */);
         entry.storageId = response.id;
+        assert(localId !== undefined, "localId not available");
         if (this.runtime.connected) {
             if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
+                this.sendBlobAttachOp(localId, response.id);
                 if (this.storageIds.has(response.id)) {
                     // Storage may dedupe blobs and give us an ID we already know
-                    // no need to submit BlobAttach op in this case
-                    entry.handleP.resolve(this.getBlobHandle(response.id));
+                    this.setRedirection(localId, response.id);
+                    entry.handleP.resolve(this.getBlobHandle(localId));
                     this.deleteAndEmitsIfEmpty(localId);
                 } else {
                     // Check for still-pending duplicates too; if an op is already in flight we can wait for that one
-                    if (!this.opsInFlight.has(response.id)) {
-                        this.sendBlobAttachOp(response.id);
-                    }
-                    this.opsInFlight.set(response.id, (this.opsInFlight.get(response.id) ?? []).concat(localId));
                     entry.status = PendingBlobStatus.OnlinePendingOp;
                 }
             } else if (entry.status === PendingBlobStatus.OfflinePendingUpload) {
@@ -442,7 +446,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         // added to the document if the ops are not all successfully submitted upon reconnection.
         // storageId may be undefined but since we are not connected we will have a chance to add it when reSubmit()
         // is called
-        this.sendBlobAttachOp(entry.storageId, localId);
+        this.sendBlobAttachOp(localId, entry.storageId);
         entry.handleP.resolve(this.getBlobHandle(localId));
     }
 
@@ -454,48 +458,33 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     public reSubmit(metadata: Record<string, unknown> | undefined) {
         assert(!!metadata, 0x38b /* Resubmitted ops must have metadata */);
         const { blobId, localId }: { blobId?: string; localId?: string; } = metadata;
+        assert(localId !== undefined, "localId not available on reSubmit");
         if (!blobId) {
             assert(!!localId, 0x38c /* Submitted BlobAttach ops must have a blobId or localId */);
             // We submitted this op while offline. The blob should have been uploaded by now.
             const pendingEntry = this.pendingBlobs.get(localId);
             assert(pendingEntry?.status === PendingBlobStatus.OfflinePendingOp &&
                 !!pendingEntry?.storageId, 0x38d /* blob must be uploaded before resubmitting BlobAttach op */);
-            return this.sendBlobAttachOp(pendingEntry.storageId, localId);
+            return this.sendBlobAttachOp(localId, pendingEntry.storageId);
         }
-        return this.sendBlobAttachOp(blobId, localId);
+        return this.sendBlobAttachOp(localId, blobId);
     }
 
     public processBlobAttachOp(message: ISequencedDocumentMessage, local: boolean) {
         assert(message?.metadata?.blobId, 0x12a /* "Missing blob id on metadata" */);
-        if (message.metadata.localId !== undefined) {
-            this.redirectTable.set(message.metadata.localId, message.metadata.blobId);
-        }
+        const localId = message.metadata.localId;
+        assert(localId !== undefined, "localId not present in blob attach message");
+        this.setRedirection(message.metadata.localId, message.metadata.blobId);
         // set identity (id -> id) entry
-        this.redirectTable.set(message.metadata.blobId, message.metadata.blobId);
+        this.setRedirection(message.metadata.blobId, message.metadata.blobId);
 
         if (local) {
-            if (message.metadata.localId === undefined) {
-                // Since there is no local ID, we know this op was submitted while online.
-                const waitingBlobs = this.opsInFlight.get(message.metadata.blobId);
-                assert(!!waitingBlobs, 0x38e /* local online BlobAttach op with no pending blob */);
-                waitingBlobs.forEach((localId) => {
-                    const pendingBlobEntry = this.pendingBlobs.get(localId);
-                    assert(
-                        pendingBlobEntry !== undefined,
-                        0x38f, /* local online BlobAttach op with no pending blob entry */
-                    );
-
-                    // It's possible we transitioned to offline flow while waiting for this op.
-                    if (pendingBlobEntry.status === PendingBlobStatus.OnlinePendingOp) {
-                        pendingBlobEntry.handleP.resolve(this.getBlobHandle(message.metadata.blobId));
-                        this.deleteAndEmitsIfEmpty(localId);
-                    }
-                });
-            } else {
-                // Each local ID is unique; get the pending blob entry and delete it
-                assert(this.pendingBlobs.get(message.metadata.localId)?.status === PendingBlobStatus.OfflinePendingOp,
-                    0x1f8 /* "local BlobAttach op with no pending blob" */);
-                    this.deleteAndEmitsIfEmpty(message.metadata.localId);
+            const pendingEntry = this.pendingBlobs.get(localId);
+            if (pendingEntry !== undefined) {
+                if (pendingEntry.status === PendingBlobStatus.OnlinePendingOp) {
+                    pendingEntry.handleP.resolve(this.getBlobHandle(localId));
+                }
+                this.deleteAndEmitsIfEmpty(localId);
             }
         }
     }
@@ -550,14 +539,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
      */
     public getGCData(fullGC: boolean = false): IGarbageCollectionData {
         const gcData: IGarbageCollectionData = { gcNodes: {} };
-        /**
-          * The node path is of the format `/_blobs/blobId`. This path must match the path of the blob handle returned
-          * by the createBlob API because blobs are marked referenced by storing these handles in a referenced DDS.
-          */
-        for (const blobId of this.storageIds) {
-            gcData.gcNodes[this.getBlobGCNodePath(blobId)] = [];
-        }
-
         // For some blobs, the handle returned on creation is based off of the localId. So, these
         // nodes can be referenced by storing the localId handle. When that happens, the corresponding storageId node
         // must also be marked referenced. So, we add a route from the localId node to the storageId node.
@@ -652,9 +633,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
             0x391 /* Redirect table size must match BlobManager's local ID count */);
         for (const [localId, storageId] of table) {
             assert(this.redirectTable.has(localId), 0x254 /* "unrecognized id in redirect table" */);
-            this.redirectTable.set(localId, storageId);
+            this.setRedirection(localId, storageId);
             // set identity (id -> id) entry
-            this.redirectTable.set(storageId, storageId);
+            this.setRedirection(storageId, storageId);
         }
     }
 

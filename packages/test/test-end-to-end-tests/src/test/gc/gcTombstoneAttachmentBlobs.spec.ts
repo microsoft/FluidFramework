@@ -137,7 +137,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
             // Upload another blob with the same content so that it is de-duped.
             const blobHandle2 = await mainDataStore._runtime.uploadBlob(stringToBuffer(blobContents, "utf-8"));
-            assert.strictEqual(blobHandle1.absolutePath, blobHandle2.absolutePath, "Blobs are not de-duped");
 
             // Reference and then unreference the blob via one of the handles so that it's unreferenced in next summary.
             mainDataStore._root.set("blob1", blobHandle1);
@@ -275,7 +274,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
          * are not getting the expected results. Once the bug is fixed, these asserts should start working as expected.
          */
         async function assertWronglyRejects(block: Promise<any>, message?: string | Error) {
-            return assert.rejects(block, message);
+            return assert.doesNotReject(block, message);
         };
 
         /**
@@ -283,11 +282,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
          * blobs irrespective of whether the original blob is tombstoned. Basically, after uploading a blob, a container
          * should be able to use it the same way whether it was de-duped or not.
          */
-        itExpects("should allow access to blobs that are de-duped in different containers",
-        [
-            { eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested" }
-        ],
-        async () => {
+        it("should allow access to blobs that are de-duped in different containers", async () => {
             const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
 
             // Upload an attachment blob.
