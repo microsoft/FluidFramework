@@ -136,10 +136,16 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     private readonly pendingBlobs: Map<string, PendingBlob> = new Map();
 
     /**
+     * Track ops in flight for online flow. This is used for an optimization where if we receive an ack for a storageId,
+     * we can resolve all pending blobs with the same storageId even though they may have different localIds. That's
+     * because we know that the server will not delete the blob corresponding to that storageId.
+     */
+    private readonly opsInFlight: Map<string, string[]> = new Map();
+
+    /**
      * Track ops in flight for online flow. Used to avoid searching pendingBlobs since BlobAttach ops
      * don't include local ID in online flow.
      */
-    // private readonly opsInFlight: Map<string, string[]> = new Map();
 
     private readonly retryThrottler = new CancellableThrottler(new Throttler(
         60 * 1000, // 60 sec delay window
@@ -326,7 +332,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         // Blobs created while the container is detached are stored in IDetachedBlobStorage.
         // The 'IDocumentStorageService.createBlob()' call below will respond with a localId.
         const response = await this.getStorage().createBlob(blob);
-        this.redirectTable.set(response.id, undefined);
+        this.setRedirection(response.id, undefined);
         return this.getBlobHandle(response.id);
     }
 
@@ -368,15 +374,19 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         );
     }
 
-    private setRedirection(fromId: string, toId: string) {
+    private setRedirection(fromId: string, toId: string | undefined) {
         this.redirectTable.set(fromId, toId);
-        this.addedBlobReference(fromId, toId);
+        if (toId !== undefined) {
+            this.addedBlobReference(fromId, toId);
+        }
     }
 
     private deleteAndEmitsIfEmpty(id: string) {
-        this.pendingBlobs.delete(id);
-        if (!this.hasPendingBlobs) {
-            this.emit("noPendingBlobs");
+        if (this.pendingBlobs.has(id)) {
+            this.pendingBlobs.delete(id);
+            if (!this.hasPendingBlobs) {
+                this.emit("noPendingBlobs");
+            }
         }
     }
 
@@ -396,6 +406,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
                     entry.handleP.resolve(this.getBlobHandle(localId));
                     this.deleteAndEmitsIfEmpty(localId);
                 } else {
+                    this.opsInFlight.set(response.id, (this.opsInFlight.get(response.id) ?? []).concat(localId));
                     // Check for still-pending duplicates too; if an op is already in flight we can wait for that one
                     entry.status = PendingBlobStatus.OnlinePendingOp;
                 }
@@ -471,21 +482,35 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     }
 
     public processBlobAttachOp(message: ISequencedDocumentMessage, local: boolean) {
-        assert(message?.metadata?.blobId, 0x12a /* "Missing blob id on metadata" */);
-        const localId = message.metadata.localId;
-        assert(localId !== undefined, "localId not present in blob attach message");
-        this.setRedirection(message.metadata.localId, message.metadata.blobId);
+        const blobId = message.metadata?.blobId;
+        assert(blobId !== undefined, 0x12a /* "Missing blob id on metadata" */);
+        if (message.metadata?.localId !== undefined) {
+            this.setRedirection(message.metadata.localId, message.metadata.blobId);
+        }
         // set identity (id -> id) entry
-        this.setRedirection(message.metadata.blobId, message.metadata.blobId);
+        this.setRedirection(blobId, message.metadata.blobId);
 
         if (local) {
-            const pendingEntry = this.pendingBlobs.get(localId);
-            if (pendingEntry !== undefined) {
-                if (pendingEntry.status === PendingBlobStatus.OnlinePendingOp) {
-                    pendingEntry.handleP.resolve(this.getBlobHandle(localId));
-                }
-                this.deleteAndEmitsIfEmpty(localId);
+            assert(message.metadata?.localId !== undefined, "localId not present in blob attach message");
+            const waitingBlobs = this.opsInFlight.get(blobId);
+            if (waitingBlobs !== undefined) {
+                waitingBlobs.forEach((localId) => {
+                    const pendingBlobEntry = this.pendingBlobs.get(localId);
+                    assert(
+                        pendingBlobEntry !== undefined,
+                        0x38f, /* local online BlobAttach op with no pending blob entry */
+                    );
+
+                    // It's possible we transitioned to offline flow while waiting for this op.
+                    if (pendingBlobEntry.status === PendingBlobStatus.OnlinePendingOp) {
+                        this.setRedirection(localId, blobId);
+                        pendingBlobEntry.handleP.resolve(this.getBlobHandle(localId));
+                        this.deleteAndEmitsIfEmpty(localId);
+                    }
+                });
+                this.opsInFlight.delete(blobId);
             }
+            this.deleteAndEmitsIfEmpty(message.metadata?.localId);
         }
     }
 
