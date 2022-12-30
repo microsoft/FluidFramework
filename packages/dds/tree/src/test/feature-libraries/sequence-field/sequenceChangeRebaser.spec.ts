@@ -238,7 +238,9 @@ describe("SequenceField - Sandwich Rebasing", () => {
         const retABC2 = rebaseTagged(retABC, tagInverse(invMovABC, movABC2.revision));
         const retABC3 = rebaseTagged(retABC2, delB);
         // This next rebase fails for two reasons:
-        // 1:
+        // 1: The current rebase code assumes new attach marks will always be independent.
+        // This is violated by the needs of sandwich rebasing: the ReturnFrom of retABC3
+        // is needs to be matched up with the MoveIn of movABC2 for it to be unmuted.
         // 2: The 2nd count of movABC2 is interpreted as overlapping with
         // the second ReturnFrom (which corresponding to the deleted node B) when it should to be
         // interpreted as overlapping with the third ReturnFrom.
