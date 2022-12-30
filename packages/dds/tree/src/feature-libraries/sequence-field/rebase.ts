@@ -315,19 +315,23 @@ class RebaseQueue<T> {
         } else if (isAttachInGap(newMark)) {
             return { newMark: this.newMarks.pop() };
         } else if (
-            isActiveReattach(baseMark) &&
+            isAttach(baseMark) &&
+            // The `isNewAttach(baseMark)` bit is needed because of the way sandwich rebasing makes
+            // the rebased local new attaches relevant to later local changes.
+            (isNewAttach(baseMark) || isActiveReattach(baseMark)) &&
             isMutedDetach(newMark) &&
             // TODO: support muting/unmuting other detach mark types
             newMark.type === "ReturnFrom" &&
-            baseMark.detachedBy === newMark.mutedBy
+            ((isActiveReattach(baseMark) && baseMark.detachedBy === newMark.mutedBy) ||
+                (baseMark.revision ?? this.baseRevision) === newMark.mutedBy)
         ) {
             assert(
                 newMark.detachIndex !== undefined,
                 "A muted ReturnFrom should have a detachIndex",
             );
             const newMarkLength = newMark.count;
-            const baseMarkLength = baseMark.count;
-            if (newMark.detachIndex === baseMark.detachIndex) {
+            const baseMarkLength = getOutputLength(baseMark);
+            if (isNewAttach(baseMark) || newMark.detachIndex === baseMark.detachIndex) {
                 this.baseMarks.pop();
                 this.newMarks.pop();
                 if (newMarkLength < baseMarkLength) {
@@ -442,7 +446,7 @@ class RebaseQueue<T> {
                 this.moveEffects,
                 this.genId,
                 reassignMoveIds,
-                false,
+                true,
             );
 
             mark = splitMarks[0];
@@ -589,8 +593,9 @@ function rebaseMark<TNodeChange>(
                         "Only a skip-like reattach can overlap with a ReturnFrom",
                     );
                     if (
-                        baseMark.type === "ReturnFrom" &&
-                        newCurrMark.mutedBy === baseMark.detachedBy
+                        newCurrMark.mutedBy === baseMarkRevision ||
+                        (baseMark.type === "ReturnFrom" &&
+                            newCurrMark.mutedBy === baseMark.detachedBy)
                     ) {
                         // The content that the currMark wanted to return to here is being detached
                         // from here by base mark.

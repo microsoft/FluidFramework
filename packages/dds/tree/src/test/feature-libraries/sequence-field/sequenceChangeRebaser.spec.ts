@@ -229,6 +229,31 @@ describe("SequenceField - Sandwich Rebasing", () => {
         assert.deepEqual(delta, []);
     });
 
+    it.skip("[Move ABC, Return ABC] ↷ Delete B", () => {
+        const delB = tagChange(Change.delete(1, 1), brand(1));
+        const movABC = tagChange(Change.move(0, 3, 1), brand(2));
+        const retABC = tagChange(Change.return(1, 3, 0, brand(2), 0), brand(3));
+        const movABC2 = rebaseTagged(movABC, delB);
+        const invMovABC = SF.invert(movABC, TestChange.invert);
+        const retABC2 = rebaseTagged(retABC, tagInverse(invMovABC, movABC2.revision));
+        const retABC3 = rebaseTagged(retABC2, delB);
+        // This next rebase fails for two reasons:
+        // 1:
+        // 2: The 2nd count of movABC2 is interpreted as overlapping with
+        // the second ReturnFrom (which corresponding to the deleted node B) when it should to be
+        // interpreted as overlapping with the third ReturnFrom.
+        // This will be easier to rectify once movABC2 carries (muted) marks for B as opposed to those marks
+        // being deleted when rebasing over the deleted of B.
+        const retABC4 = rebaseTagged(retABC3, movABC2);
+        const actual = SF.compose(
+            [movABC2, retABC4],
+            TestChange.compose,
+            continuingAllocator([movABC2, retABC4]),
+        );
+        const delta = toDelta(actual);
+        assert.deepEqual(delta, []);
+    });
+
     it("[Delete AC, Revive AC] ↷ Insert B", () => {
         const addB = tagChange(Change.insert(1, 1), brand(1));
         const delAC = tagChange(Change.delete(0, 2), brand(2));

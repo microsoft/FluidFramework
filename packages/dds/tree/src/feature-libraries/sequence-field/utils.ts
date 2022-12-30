@@ -221,8 +221,18 @@ export function splitMarkOnInput<TMark extends InputSpanningMark<unknown>>(
     switch (type) {
         case "Modify":
             fail(`Unable to split ${type} mark of length 1`);
+        case "ReturnTo": {
+            const newId = genId();
+            splitMoveSrc(moveEffects, mark.id, [
+                { id: mark.id, count: length },
+                { id: newId, count: remainder },
+            ]);
+            return [
+                { ...markObj, count: length },
+                { ...markObj, id: newId, count: remainder, detachIndex: mark.detachIndex + length },
+            ] as [TMark, TMark];
+        }
         case "Revive":
-        case "ReturnTo":
             return [
                 { ...markObj, count: length },
                 { ...markObj, count: remainder, detachIndex: mark.detachIndex + length },
@@ -368,9 +378,19 @@ export function tryExtendMark(
         }
         case "MoveIn":
         case "ReturnTo": {
-            // TODO: Handle reattach fields
             const lhsMoveIn = lhs as MoveIn | ReturnTo;
             if (isEqualPlace(lhsMoveIn, rhs) && moveEffects !== undefined) {
+                if (lhsMoveIn.type === "ReturnTo") {
+                    // Verify that the ReturnTo fields line up
+                    const rhsReturnTo = rhs as ReturnTo;
+                    if (
+                        lhsMoveIn.detachedBy !== rhsReturnTo.detachedBy ||
+                        lhsMoveIn.lastDetachedBy !== rhsReturnTo.lastDetachedBy ||
+                        lhsMoveIn.detachIndex + lhsMoveIn.count !== rhsReturnTo.detachIndex
+                    ) {
+                        break;
+                    }
+                }
                 const prevMerge = moveEffects.dstMergeable.get(lhsMoveIn.id);
                 if (prevMerge !== undefined) {
                     moveEffects.dstMergeable.set(prevMerge, rhs.id);
