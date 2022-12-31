@@ -1425,7 +1425,8 @@ export class GarbageCollector implements IGarbageCollector {
              * explicit routes to them.
              */
             currentOutboundRoutes.forEach((route) => {
-                if (this.runtime.getNodeType(route) === GCNodeType.DataStore
+                const nodeType = this.runtime.getNodeType(route);
+                if ((nodeType === GCNodeType.DataStore || nodeType === GCNodeType.Blob)
                     && !nodeId.startsWith(route)
                     && (!previousRoutes.includes(route) && !explicitRoutes.includes(route))) {
                     missingExplicitRoutes.push(route);

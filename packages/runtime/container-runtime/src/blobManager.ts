@@ -180,7 +180,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         // To be called when a blob node is requested. blobPath is the path of the blob's node in GC's graph. It's
         // of the format `/<BlobManager.basePath>/<blobId>`.
         private readonly blobRequested: (blobPath: string) => void,
-        private readonly addedBlobReference: (fromId: string, toId: string) => void,
+        private readonly addedBlobReference: (fromNodePath: string, toNodePath: string) => void,
         private readonly runtime: IBlobManagerRuntime,
         stashedBlobs: IPendingBlobs = {},
     ) {
@@ -377,7 +377,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     private setRedirection(fromId: string, toId: string | undefined) {
         this.redirectTable.set(fromId, toId);
         if (toId !== undefined) {
-            this.addedBlobReference(fromId, toId);
+            this.addedBlobReference(this.getBlobGCNodePath(fromId), this.getBlobGCNodePath(toId));
         }
     }
 

@@ -1140,7 +1140,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 }
             },
             (blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
-            (fromId: string, toId: string) => this.garbageCollector.addedOutboundReference(fromId, toId),
+            (fromPath: string, toPath: string) => this.garbageCollector.addedOutboundReference(fromPath, toPath),
             this,
             pendingRuntimeState?.pendingAttachmentBlobs,
         );
