@@ -344,7 +344,7 @@ stages:
               targetType: inline
               script: |
                 npm i xml2js
-              workingDirectory: tools/helper
+              workingDirectory: tools/report-parser
             condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
 
           # Console Log Failed Tests
@@ -354,7 +354,7 @@ stages:
               targetType: inline
               script: |
                 node printReports.js '$(Build.ArtifactStagingDirectory)/testFiles'
-              workingDirectory: tools/helper
+              workingDirectory: tools/report-parser
             condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
 
         # Pack
