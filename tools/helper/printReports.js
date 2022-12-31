@@ -34,7 +34,7 @@ const parseTestReport = (filename) => {
         })
 
         failedTests?.forEach((test) => {
-            console.log(test)
+            console.error(test)
         });
 
         return failedTests;
