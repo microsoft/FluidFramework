@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import { IRandom, makeRandom } from "@fluid-internal/stochastic-test-utils";
 import {
     FieldKinds,
     singleTextCursor,
@@ -31,7 +32,8 @@ import {
     SchemaData,
     SharedTreeCore,
 } from "../../core";
-import { IRandom, makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { getRandomNodePosition } from "./treeGenerator";
+import { makeEditGenerator } from "./generator";
 
 const fooKey: FieldKey = brand("foo");
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
@@ -532,48 +534,56 @@ describe("SharedTree", () => {
             const paths = new Map<string, number>();
             const random = makeRandom(0);
             const testerKey: FieldKey = brand("asdfasdfasdfasdfasdfas");
-            for (let i=0; i<1000; i++){
-                const {path, nodeField, nodeIndex, newPath} = getRandomNodePosition(tree, random)
-                const key = JSON.stringify(path)
-                if(paths.get(key) === undefined) {
-                    paths.set(key, 0)
+            for (let i = 0; i < 1000; i++) {
+                const { path, nodeField, nodeIndex, isNewPath } = getRandomNodePosition(
+                    tree,
+                    random,
+                );
+                const key = JSON.stringify(path);
+                if (paths.get(key) === undefined) {
+                    paths.set(key, 0);
                 } else {
-                    let count = paths.get(key)
+                    let count = paths.get(key);
                     if (count === undefined) {
-                        count = 0
+                        count = 0;
                     }
-                    paths.set(key, count+1)
+                    paths.set(key, count + 1);
                 }
-                if (nodeField !== undefined && nodeIndex !== undefined){
+                if (nodeField !== undefined && nodeIndex !== undefined) {
                     tree.runTransaction((forest, editor) => {
                         const field = editor.sequenceField(path, nodeField);
-                        field.insert(nodeIndex, singleTextCursor({ type: brand("Test"), value: 1 }));
+                        field.insert(
+                            nodeIndex,
+                            singleTextCursor({ type: brand("Test"), value: 1 }),
+                        );
                         return TransactionResult.Apply;
                     });
                 }
             }
 
-            assert.equal(1, paths)
+            const generator = await makeEditGenerator();
+
+            assert.equal(1, paths);
         });
     });
 });
 
 interface NodeLocation {
-    path: UpPath | undefined,
-    nodeField: FieldKey | undefined,
-    nodeIndex: number | undefined,
-    newPath: boolean,
+    path: UpPath | undefined;
+    nodeField: FieldKey | undefined;
+    nodeIndex: number | undefined;
+    newPath: boolean;
 }
 
-function getRandomNodePosition(tree:ISharedTree, random:IRandom): NodeLocation{
+function getRandomNodePosition2(tree: ISharedTree, random: IRandom): NodeLocation {
     const moves = {
-        "field": ["enterNode", "nextField"],
-        "nodes": ["stop", "firstField"]
-    }
+        field: ["enterNode", "nextField"],
+        nodes: ["stop", "firstField"],
+    };
     const cursor = tree.forest.allocateCursor();
-    moveToDetachedField(tree.forest, cursor)
+    moveToDetachedField(tree.forest, cursor);
 
-    let currentMove = "enterNode"
+    let currentMove = "enterNode";
     let path: UpPath | undefined;
     let nodeField: FieldKey | undefined;
     let nodeIndex: number | undefined;
@@ -581,51 +591,51 @@ function getRandomNodePosition(tree:ISharedTree, random:IRandom): NodeLocation{
     let newPath: boolean = false;
     const testerKey: FieldKey = brand("Test");
 
-    while (currentMove !== 'stop') {
+    while (currentMove !== "stop") {
         switch (currentMove) {
             case "enterNode":
                 if (fieldNodes > 0) {
-                    nodeIndex = random.integer(0, fieldNodes-1)
-                    cursor.enterNode(nodeIndex)
-                    path = cursor.getPath()
-                    nodeField = cursor.getFieldKey()
-                    currentMove = random.pick(moves.nodes)
-                    if (currentMove === 'stop'){
-                        cursor.enterField(nodeField)
-                        nodeIndex = cursor.getFieldLength()
+                    nodeIndex = random.integer(0, fieldNodes - 1);
+                    cursor.enterNode(nodeIndex);
+                    path = cursor.getPath();
+                    nodeField = cursor.getFieldKey();
+                    currentMove = random.pick(moves.nodes);
+                    if (currentMove === "stop") {
+                        cursor.enterField(nodeField);
+                        nodeIndex = cursor.getFieldLength();
                     }
                 } else {
-                    currentMove = random.pick(moves.nodes)
+                    currentMove = random.pick(moves.nodes);
                 }
-                break
+                break;
             case "firstField":
                 if (cursor.firstField()) {
-                    currentMove = random.pick(moves.field)
-                    fieldNodes = cursor.getFieldLength()
+                    currentMove = random.pick(moves.field);
+                    fieldNodes = cursor.getFieldLength();
                 } else {
-                    currentMove = 'stop';
-                    nodeField = testerKey
-                    nodeIndex = 0
+                    currentMove = "stop";
+                    nodeField = testerKey;
+                    nodeIndex = 0;
                     newPath = true;
                 }
-                break
+                break;
             case "nextField":
                 if (cursor.nextField()) {
-                    currentMove = random.pick(moves.field)
-                    fieldNodes = cursor.getFieldLength()
+                    currentMove = random.pick(moves.field);
+                    fieldNodes = cursor.getFieldLength();
                 } else {
-                    currentMove = 'stop';
-                    nodeField = testerKey
-                    nodeIndex = 0
+                    currentMove = "stop";
+                    nodeField = testerKey;
+                    nodeIndex = 0;
                     newPath = true;
                 }
-                break
+                break;
             default:
                 fail(`Unexpected move ${currentMove}`);
         }
     }
-    cursor.free()
-    return { path, nodeField, nodeIndex, newPath}
+    cursor.free();
+    return { path, nodeField, nodeIndex, newPath };
 }
 
 const rootFieldSchema = fieldSchema(FieldKinds.value);
