@@ -1396,6 +1396,13 @@ export class MergeTree {
                             return false;
                         }
 
+                        // if we are going to visit this segment anyway, exit
+                        // traversal early to avoid removing local move seq
+                        // information from this segment
+                        if (pendingSegmentGroup.segments.includes(pendingSegment)) {
+                            return true;
+                        }
+
                         moveInfo.localMovedSeq = undefined;
                         if (localMovedSeq !== undefined) {
                             moveInfo.localMovedSeqs = moveInfo.localMovedSeqs.filter((localSeq) => localSeq !== localMovedSeq);

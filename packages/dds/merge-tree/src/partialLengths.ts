@@ -396,7 +396,6 @@ export class PartialSequenceLengths {
         for (const partial of seqPartials.items) {
             partial.len = prevLen + partial.seglen;
             prevLen = partial.len;
-            // two guys obliterated it, but only the first one gets it added to client seq number
             combinedPartialLengths.addClientSeqNumberFromPartial(partial);
         }
         prevLen = 0;
@@ -788,7 +787,7 @@ export class PartialSequenceLengths {
                 ) {
                     // if segment was obliterated before insertion -- as a result
                     // of being inserted into a concurrently obliterated range --
-                    // only the segment that inserted it considers the segment for
+                    // only the client that inserted it considers the segment for
                     // length calculations
                     if (segment.seq === seq && clientId === segment.clientId) {
                         remoteObliteratedLen += segment.cachedLength;
