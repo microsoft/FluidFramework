@@ -60,7 +60,7 @@ export function rebase<TNodeChange>(
         moveEffects,
     );
     moveEffects.allowMerges = true;
-    const pass2 = applyMoveEffects(splitBase, rebased, moveEffects, genId);
+    const pass2 = applyMoveEffects(splitBase, rebased, moveEffects);
 
     // We may have discovered new mergeable marks while applying move effects, as we may have moved a MoveOut next to another MoveOut.
     // A second pass through MarkListFactory will handle any remaining merges.
@@ -337,7 +337,6 @@ function applyMoveEffects<TNodeChange>(
     baseMarks: MarkList<TNodeChange>,
     rebasedMarks: MarkList<TNodeChange>,
     moveEffects: MoveEffectTable<TNodeChange>,
-    genId: IdAllocator,
 ): Changeset<TNodeChange> {
     const queue = new ComposeQueue<TNodeChange>(
         baseMarks,
