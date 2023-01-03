@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { brand } from "../util";
+import { brand } from "../../util";
 import {
     FieldKindIdentifier,
     FieldSchema,

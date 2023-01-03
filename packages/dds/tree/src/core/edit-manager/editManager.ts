@@ -8,7 +8,7 @@ import { ChangeFamily } from "../change-family";
 import { TaggedChange, RevisionTag, tagChange, tagInverse } from "../rebase";
 import { SimpleDependee } from "../dependency-tracking";
 import { AnchorSet, Delta } from "../tree";
-import { brand, Brand, fail, RecursiveReadonly } from "../util";
+import { brand, Brand, fail, RecursiveReadonly } from "../../util";
 
 export interface Commit<TChangeset> {
     sessionId: SessionId;
