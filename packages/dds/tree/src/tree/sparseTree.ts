@@ -58,7 +58,7 @@ export class SparseNode<TData> implements UpPath {
     public get parent(): SparseNode<TData> | undefined {
         assert(
             this.parentPath !== undefined,
-            "SparseNode.parent is an UpPath API and thus should never be called on the root SparseNode.",
+            0x4a4 /* SparseNode.parent is an UpPath API and thus should never be called on the root SparseNode. */,
         );
         // Root SparseNode corresponds to the undefined root for UpPath API.
         if (this.parentPath.isRoot()) {
@@ -112,7 +112,7 @@ export class SparseNode<TData> implements UpPath {
         // TODO: should do more optimized search (ex: binary search or better) using child.parentIndex()
         // Note that this is the index in the list of child paths, not the index within the field
         const childIndex = field?.indexOf(child) ?? -1;
-        assert(childIndex !== -1, "child must be parented to be removed");
+        assert(childIndex !== -1, 0x4a5 /* child must be parented to be removed */);
         field?.splice(childIndex, 1);
         if (field?.length === 0) {
             this.afterEmptyField(key);
@@ -150,10 +150,10 @@ export function getDescendant<TData>(
     let curr = ancestor;
     for (const hop of topDown) {
         const field = curr.children.get(hop.parentField);
-        assert(field !== undefined, "Field not present in sparse node");
+        assert(field !== undefined, 0x4a6 /* Field not present in sparse node */);
         // TODO: should do more optimized search (ex: binary search).
         const child = field.find((c) => c.parentIndex === hop.parentIndex);
-        assert(child !== undefined, "Child not present in sparse node field");
+        assert(child !== undefined, 0x4a7 /* Child not present in sparse node field */);
         curr = child;
     }
     return curr;

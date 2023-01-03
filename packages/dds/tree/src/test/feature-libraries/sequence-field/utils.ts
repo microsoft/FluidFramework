@@ -3,81 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceField as SF } from "../../../feature-libraries";
-import { brand } from "../../../util";
-import { Delta, RevisionTag, TaggedChange, TreeSchemaIdentifier } from "../../../core";
+import { ChangesetLocalId, SequenceField as SF } from "../../../feature-libraries";
+import { Delta, TaggedChange } from "../../../core";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze, fakeRepair } from "../../utils";
-import { tagChange } from "../../../rebase";
+import { makeAnonChange, tagChange } from "../../../rebase";
+import { brand } from "../../../util";
+import { TestChangeset } from "./testEdits";
 
-const type: TreeSchemaIdentifier = brand("Node");
-const detachedBy: RevisionTag = brand(42);
-
-export type TestChangeset = SF.Changeset<TestChange>;
-
-export const cases: {
-    no_change: TestChangeset;
-    insert: TestChangeset;
-    modify: TestChangeset;
-    modify_insert: TestChangeset;
-    delete: TestChangeset;
-    revive: TestChangeset;
-} = {
-    no_change: [],
-    insert: [
-        1,
-        {
-            type: "Insert",
-            id: 1,
-            content: [
-                { type, value: 1 },
-                { type, value: 2 },
-            ],
-        },
-    ],
-    modify: [{ type: "Modify", changes: TestChange.mint([], 1) }],
-    modify_insert: [
-        1,
-        {
-            type: "MInsert",
-            id: 1,
-            content: { type, value: 1 },
-            changes: TestChange.mint([], 2),
-        },
-    ],
-    delete: [1, { type: "Delete", id: 1, count: 3 }],
-    revive: [2, { type: "Revive", id: 1, count: 2, detachedBy, detachIndex: 0 }],
-};
-
-export function createInsertChangeset(index: number, size: number): TestChangeset {
-    const content = [];
-    while (content.length < size) {
-        content.push({ type, value: content.length });
-    }
-
-    const insertMark: SF.Insert = {
-        type: "Insert",
-        id: 0,
-        content,
-    };
-
-    const factory = new SF.MarkListFactory<TestChange>();
-    factory.pushOffset(index);
-    factory.pushContent(insertMark);
-    return factory.list;
-}
-
-export function createDeleteChangeset(startIndex: number, size: number): TestChangeset {
-    const deleteMark: SF.Detach = {
-        type: "Delete",
-        id: 0,
-        count: size,
-    };
-
-    const factory = new SF.MarkListFactory<TestChange>();
-    factory.pushOffset(startIndex);
-    factory.pushContent(deleteMark);
-    return factory.list;
+export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
+    const taggedChanges = changes.map(makeAnonChange);
+    return SF.sequenceFieldChangeRebaser.compose(
+        taggedChanges,
+        TestChange.compose,
+        TestChange.newIdAllocator(getMaxIdTagged(taggedChanges)),
+    );
 }
 
 export function rebaseTagged(
@@ -90,7 +30,12 @@ export function rebaseTagged(
     let currChange = change;
     for (const baseChange of base) {
         currChange = tagChange(
-            SF.rebase(currChange.change, baseChange, TestChange.rebase),
+            SF.rebase(
+                currChange.change,
+                baseChange,
+                TestChange.rebase,
+                TestChange.newIdAllocator(getMaxId(currChange.change, baseChange.change)),
+            ),
             change.revision,
         );
     }
@@ -103,4 +48,40 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 
 function toDelta(change: TestChangeset): Delta.MarkList {
     return SF.sequenceFieldToDelta(change, TestChange.toDelta, fakeRepair);
+}
+
+export function getMaxId(...changes: SF.Changeset<unknown>[]): ChangesetLocalId | undefined {
+    let max: ChangesetLocalId | undefined;
+    for (const change of changes) {
+        for (const mark of change) {
+            if (SF.isMoveMark(mark)) {
+                max = max === undefined ? mark.id : brand(Math.max(max, mark.id));
+            }
+        }
+    }
+
+    return max;
+}
+
+export function getMaxIdTagged(
+    changes: TaggedChange<SF.Changeset<unknown>>[],
+): ChangesetLocalId | undefined {
+    return getMaxId(...changes.map((c) => c.change));
+}
+
+export function normalizeMoveIds(change: SF.Changeset<unknown>): void {
+    let nextId = 0;
+    const mappings = new Map<SF.MoveId, SF.MoveId>();
+    for (const mark of change) {
+        if (SF.isMoveMark(mark)) {
+            let newId = mappings.get(mark.id);
+            if (newId === undefined) {
+                newId = brand(nextId++);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                mappings.set(mark.id, newId!);
+            }
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            mark.id = newId!;
+        }
+    }
 }

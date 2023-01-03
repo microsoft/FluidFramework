@@ -73,12 +73,12 @@
     "mocha": "^10.0.0",
     "sinon": "^7.4.2",
     "start-server-and-test": "^1.11.7",
-    "tinylicious": "^0.4.89251",
+    "tinylicious": "0.4.89251",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.1.0",
-    "@fluidframework/eslint-config-fluid": "^1.1.0",
+    "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
     "@types/nock": "^9.3.0",

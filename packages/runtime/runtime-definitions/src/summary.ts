@@ -35,7 +35,9 @@ export interface ISummaryStats {
  * will be taking part of the summarization process.
  */
 export interface ISummaryTreeWithStats {
-    /** Represents an aggregation of node counts and blob sizes associated to the current summary information */
+    /**
+     * Represents an aggregation of node counts and blob sizes associated to the current summary information
+     */
     stats: ISummaryStats;
     /**
      * A recursive data structure that will be converted to a snapshot tree and uploaded
@@ -68,15 +70,23 @@ export interface ISummarizeResult {
  */
 export interface ISummarizeInternalResult extends ISummarizeResult {
     id: string;
-    /** Additional path parts between this node's ID and its children's IDs. */
+    /**
+     * Additional path parts between this node's ID and its children's IDs.
+     */
     pathPartsForChildren?: string[];
 }
 
-/** The garbage collection data of each node in the reference graph. */
+/**
+ * The garbage collection data of each node in the reference graph.
+ */
 export interface IGarbageCollectionNodeData {
-    /** The set of routes to other nodes in the graph. */
+    /**
+     * The set of routes to other nodes in the graph.
+     */
     outboundRoutes: string[];
-    /** If the node is unreferenced, the timestamp of when it was marked unreferenced. */
+    /**
+     * If the node is unreferenced, the timestamp of when it was marked unreferenced.
+     */
     unreferencedTimestampMs?: number;
 }
 
@@ -87,6 +97,28 @@ export interface IGarbageCollectionNodeData {
 export interface IGarbageCollectionState {
     gcNodes: { [ id: string ]: IGarbageCollectionNodeData; };
 }
+
+/**
+ * @deprecated - IGarbageCollectionState is written in the root of the summary now.
+ * Legacy GC details from when the GC details were written at the data store's summary tree.
+ */
+export interface IGarbageCollectionSummaryDetailsLegacy {
+    /** A list of routes to Fluid objects that are used in this node. */
+    usedRoutes?: string[];
+    /** The GC data of this node. */
+    gcData?: IGarbageCollectionData;
+    /** If this node is unreferenced, the time when it was marked as such. */
+    unrefTimestamp?: number;
+}
+
+/**
+ * The GC data that is read from a snapshot. It contains the Garbage CollectionState state and tombstone state.
+ */
+export interface IGarbageCollectionSnapshotData {
+    gcState: IGarbageCollectionState;
+    tombstones: string[] | undefined;
+}
+
 
 export type SummarizeInternalFn = (
     fullTree: boolean,
@@ -136,7 +168,9 @@ export type CreateChildSummarizerNodeParam = {
 };
 
 export interface ISummarizerNode {
-    /** Latest successfully acked summary reference sequence number */
+    /**
+     * Latest successfully acked summary reference sequence number
+     */
     readonly referenceSequenceNumber: number;
     /**
      * Marks the node as having a change with the given sequence number.
@@ -173,9 +207,13 @@ export interface ISummarizerNode {
     recordChange(op: ISequencedDocumentMessage): void;
 
     createChild(
-        /** Summarize function */
+        /**
+         * Summarize function
+         */
         summarizeInternalFn: SummarizeInternalFn,
-        /** Initial id or path part of this node */
+        /**
+         * Initial id or path part of this node
+         */
         id: string,
         /**
          * Information needed to create the node.
@@ -184,7 +222,9 @@ export interface ISummarizerNode {
          * If it is local, it will throw unsupported errors on calls to summarize.
          */
         createParam: CreateChildSummarizerNodeParam,
-        /** Optional configuration affecting summarize behavior */
+        /**
+         * Optional configuration affecting summarize behavior
+         */
         config?: ISummarizerNodeConfig,
     ): ISummarizerNode;
 
@@ -215,9 +255,13 @@ export interface ISummarizerNode {
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
     createChild(
-        /** Summarize function */
+        /**
+         * Summarize function
+         */
         summarizeInternalFn: SummarizeInternalFn,
-        /** Initial id or path part of this node */
+        /**
+         * Initial id or path part of this node
+         */
         id: string,
         /**
          * Information needed to create the node.
@@ -226,7 +270,9 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
          * If it is local, it will throw unsupported errors on calls to summarize.
          */
         createParam: CreateChildSummarizerNodeParam,
-        /** Optional configuration affecting summarize behavior */
+        /**
+         * Optional configuration affecting summarize behavior
+         */
         config?: ISummarizerNodeConfigWithGC,
         getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
         getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
@@ -246,7 +292,9 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
      */
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
 
-    /** Tells whether this node is being referenced in this document or not. Unreferenced node will get GC'd */
+    /**
+     * Tells whether this node is being referenced in this document or not. Unreferenced node will get GC'd
+     */
     isReferenced(): boolean;
 
     /**

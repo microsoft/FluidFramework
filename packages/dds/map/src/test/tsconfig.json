@@ -9,7 +9,8 @@
             "node",
             "mocha"
         ],
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "noUnusedLocals": false,
     },
     "include": [
         "./**/*"

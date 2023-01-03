@@ -18,6 +18,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import type { Socket, io as SocketIOClientStatic } from "socket.io-client";
 import { v4 as uuid } from "uuid";
+import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import { IOdspSocketError, IGetOpsResponse, IFlushOpsResponse } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { errorObjectFromSocketError } from "./odspError";
@@ -160,8 +161,13 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
         const socket = this._socket;
         this._socket = undefined;
 
-        // Let all connections know they need to go through disconnect flow
-        this.emit("disconnect", error, undefined /* clientId */);
+        // Let all connections know they need to go through disconnect flow.
+        this.emit("disconnect",
+            error ?? createGenericNetworkError(
+                "Socket closed without error",
+                { canRetry: true },
+                { driverVersion: pkgVersion }),
+            undefined /* clientId */);
 
         // We should not have any users now, assuming synchronous disconnect flow in response to
         // "disconnect" event
@@ -454,8 +460,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
     protected disconnectHandler = (error: IFluidErrorBase & OdspError, clientId?: string) => {
         if (clientId === undefined || clientId === this.clientId) {
+            this.logger.sendTelemetryEvent({ eventName: "ServerDisconnect", clientId: this.hasDetails ? this.clientId : undefined }, error);
             this.disconnect(error);
-            this.logger.sendTelemetryEvent({ eventName: "ServerDisconnect", clientId: this.clientId }, error);
         }
     };
 

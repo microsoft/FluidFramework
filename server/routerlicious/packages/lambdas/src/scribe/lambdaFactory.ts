@@ -25,7 +25,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { IDocumentSystemMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
-import { LumberEventName } from "@fluidframework/server-services-telemetry";
+import { getLumberBaseProperties, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { CheckpointManager } from "./checkpointManager";
 import { ScribeLambda } from "./lambda";
@@ -92,10 +92,12 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             if (!isDocumentValid(document)) {
                 // Document sessions can be joined (via Alfred) after a document is functionally deleted.
                 // If the document doesn't exist or is marked for deletion then we trivially accept every message.
+                const errorMessage = `Received attempt to connect to a missing/deleted document.`;
                 context.log?.error(
-                    `Received attempt to connect to a missing/deleted document.`,
+                    errorMessage,
                     { messageMetaData },
                 );
+                Lumberjack.error(errorMessage, getLumberBaseProperties(documentId, tenantId));
                 return new NoOpLambda(context);
             }
             if (!isDocumentSessionValid(document, this.serviceConfiguration)) {
@@ -103,6 +105,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                 const errMsg =
                     `Received attempt to connect to invalid session: ${JSON.stringify(document.session)}`;
                 context.log?.error(errMsg, { messageMetaData });
+                Lumberjack.error(errMsg, getLumberBaseProperties(documentId, tenantId));
                 if (this.serviceConfiguration.enforceDiscoveryFlow) {
                     // This can/will prevent any users from creating a valid session in this location
                     // for the liftime of this NoOpLambda. This is not ideal; however, throwing an error
@@ -116,7 +119,9 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                 await this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 });
             opMessages = dbMessages.map((message) => message.operation);
         } catch (error) {
-            context.log?.error(`Scribe lambda creation failed. Exception: ${inspect(error)}`);
+            const errorMessage = "Scribe lambda creation failed.";
+            context.log?.error(`${errorMessage} Exception: ${inspect(error)}`, { messageMetaData });
+            Lumberjack.error(errorMessage, getLumberBaseProperties(documentId, tenantId), error);
             await this.sendLambdaStartResult(tenantId, documentId, { lambdaName: LambdaName.Scribe, success: false });
             scribeSessionMetric?.error("Scribe lambda creation failed", error);
 
@@ -126,13 +131,18 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         // Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
         // both to be safe. Empty sring denotes a cache that was cleared due to a service summary
         if (document.scribe === undefined || document.scribe === null) {
-            context.log?.info(`New document. Setting empty scribe checkpoint`, { messageMetaData });
+            const message = "New document. Setting empty scribe checkpoint";
+            context.log?.info(message, { messageMetaData });
+            Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
             lastCheckpoint = DefaultScribe;
             opMessages = [];
         } else if (document.scribe === "") {
-            context.log?.info(`Existing document. Fetching checkpoint from summary`, { messageMetaData });
+            const message = "Existing document. Fetching checkpoint from summary";
+            context.log?.info(message, { messageMetaData });
+            Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
             if (!latestSummary.fromSummary) {
                 context.log?.error(`Summary can't be fetched`, { messageMetaData });
+                Lumberjack.error(`Summary can't be fetched`, getLumberBaseProperties(documentId, tenantId));
                 lastCheckpoint = DefaultScribe;
                 opMessages = [];
             } else {
@@ -143,11 +153,15 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                 // is okay. Conceptually this is similar to default checkpoint where logOffset is -1. In this case,
                 // the sequence number is 'n' rather than '0'.
                 lastCheckpoint.logOffset = -1;
-                context.log?.info(JSON.stringify(lastCheckpoint));
+                const checkpointMessage = `Restoring checkpoint from latest summary. Seq number: ${lastCheckpoint.sequenceNumber}`;
+                context.log?.info(checkpointMessage, { messageMetaData });
+                Lumberjack.info(checkpointMessage, getLumberBaseProperties(documentId, tenantId));
             }
         } else {
             lastCheckpoint = JSON.parse(document.scribe);
-            context.log?.info(`Restoring checkpoint from db. Seq no: ${lastCheckpoint.sequenceNumber}`);
+            const message = `Restoring checkpoint from db. Seq no: ${lastCheckpoint.sequenceNumber}`;
+            context.log?.info(message, { messageMetaData });
+            Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
         }
 
         // Filter and keep ops after protocol state

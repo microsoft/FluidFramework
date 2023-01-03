@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/build-tools",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Fluid Build tools",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -52,10 +52,10 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-tools/version-tools": "^0.6.0",
-    "@fluidframework/bundle-size-tools": "^0.6.0",
+    "@fluid-tools/version-tools": "^0.7.0",
+    "@fluidframework/bundle-size-tools": "^0.7.0",
     "@rushstack/node-core-library": "^3.51.1",
-    "async": "^3.2.0",
+    "async": "^3.2.2",
     "chalk": "^2.4.2",
     "commander": "^6.2.1",
     "danger": "^10.9.0",
@@ -80,7 +80,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.1.0",
-    "@fluidframework/eslint-config-fluid": "^1.1.0",
+    "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@trivago/prettier-plugin-sort-imports": "^3.3.0",
     "@types/async": "^3.2.6",
     "@types/fs-extra": "^8.1.0",

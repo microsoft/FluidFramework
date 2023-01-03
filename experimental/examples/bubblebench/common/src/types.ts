@@ -32,7 +32,7 @@ export interface IAppState {
     applyEdits(): void;
 }
 
-export function makeBubble(stageWidth: number, stageHeight: number) {
+export function makeBubble(stageWidth: number, stageHeight: number): IBubble {
     const radius = Math.max((normal() * 10) + 10, 3);
     const maxSpeed = 4;
     const diameter = radius * 2;
@@ -46,10 +46,8 @@ export function makeBubble(stageWidth: number, stageHeight: number) {
     };
 }
 
-export const makeClient = (stageWidth: number, stageHeight: number, numBubbles: number) => ({
+export const makeClient = (stageWidth: number, stageHeight: number, numBubbles: number): IClient => ({
     clientId: "pending",
     color: randomColor(),
-    bubbles: new Array(numBubbles)
-        .fill(undefined)
-        .map(() => makeBubble(stageWidth, stageHeight)),
+    bubbles: Array.from({length: numBubbles}).map(() => makeBubble(stageWidth, stageHeight)),
 });
