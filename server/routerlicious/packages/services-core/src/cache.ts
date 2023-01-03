@@ -20,6 +20,6 @@ export interface ICache {
     /**
      * Deletes a cache value
      */
-     delete(key: string): Promise<boolean>;
+     delete?(key: string): Promise<boolean>;
 
 }

@@ -32,8 +32,12 @@ export class RedisCache implements ICache {
         });
     }
     public async delete(key: string): Promise<boolean> {
-        const result = await this.client.del(this.getKey(key));
-        return result === 1;
+        try {
+            await this.client.del(this.getKey(key));
+            return true;
+        } catch {
+            return false;
+        }
     }
 
     public async get(key: string): Promise<string> {
