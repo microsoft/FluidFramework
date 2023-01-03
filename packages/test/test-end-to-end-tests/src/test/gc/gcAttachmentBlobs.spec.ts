@@ -76,6 +76,26 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
         }
 
         /**
+         * Retrieves the storage Id from the given reference map of blobIds. Note that this only works if the given
+         * localId blobs are mapped to the same storageId.
+         */
+        function getStorageIdFromReferenceMap(
+            referenceNodeStateMap: Map<string, "referenced" | "unreferenced">,
+            localBlobIds: string[],
+        ): string {
+            let storageId: string | undefined;
+            referenceNodeStateMap.forEach((state, nodePath) => {
+                if (localBlobIds.includes(nodePath)) {
+                    return;
+                }
+                assert(storageId === undefined, "Unexpected blob node in reference state map");
+                storageId = nodePath;
+            });
+            assert(storageId !== undefined, "No storage id node in reference state map");
+            return storageId;
+        }
+
+        /**
          * Loads a container from the itemId of the container. We need to do this instead of loading a container
          * normally because - When a detached container is attached after attachment blobs have been added, a .tmp
          * extension is added to the end of the filename. Since the ODSP test driver assumes the filename will always
@@ -93,22 +113,6 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             const summarizerContainer = await loadContainer();
             const summarizerDefaultDataStore = await requestFluidObject<ITestDataObject>(summarizerContainer, "/");
             return summarizerDefaultDataStore._context.containerRuntime as ContainerRuntime;
-        }
-
-        function getStorageIdFromReferenceMap(
-            referenceNodeStateMap: Map<string, "referenced" | "unreferenced">,
-            localBlobIds: string[],
-        ): string {
-            let storageId: string | undefined;
-            referenceNodeStateMap.forEach((state, nodePath) => {
-                if (localBlobIds.includes(nodePath)) {
-                    return;
-                }
-                assert(storageId === undefined, "Unexpected blob node in reference state map");
-                storageId = nodePath;
-            });
-            assert(storageId !== undefined, "No storage id node in reference state map");
-            return storageId;
         }
 
         beforeEach(async function() {
@@ -171,8 +175,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             const container2 = await loadContainer();
             const defaultDataStore2 = await requestFluidObject<ITestDataObject>(container2, "/");
 
-            // Validate the blob handle's path is the same as the one in the first container. This is to validate that
-            // we don't expose the storageId for the blob's uploaded in detached container.
+            // Validate the blob handle's path is the same as the one in the first container.
             const blobHandle2 = defaultDataStore2._root.get<IFluidHandle<ArrayBufferLike>>("blob");
             assert.strictEqual(blobHandle.absolutePath, blobHandle2?.absolutePath,
                     "The blob handle has a different path in remote container.");
@@ -214,8 +217,8 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             // Make sure we are connected or we may get a local ID handle
             await ensureContainerConnectedWriteMode(container as Container);
 
-            // Upload the same blob. This will get de-duped and we will get back a handle with the storageId instead of
-            // the localId that we got when uploading in detached container.
+            // Upload the same blob. This will get de-duped and we will get back a handle with another localId. Both of
+            // these blobs should be mapped to the same storageId.
             const localHandle2 = await defaultDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
             defaultDataStore._root.set("local2", localHandle2);
 
@@ -228,8 +231,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             assert(s1.get(localHandle2.absolutePath) === "referenced", "local id 2 blob should be referenced");
             assert(s1.get(storageId) === "referenced", "storage id blob should also be referenced (1)");
 
-            // Replace the localId handle with the storageId handle. The storageId node should be referenced but the
-            // localId node should be unreferenced. Basically, the alias is deleted.
+            // Delete blob localId handles. This should make the localId and storageId nodes unreferenced.
             defaultDataStore._root.delete("local1");
             defaultDataStore._root.delete("local2");
             const s2 = await summarizeAndGetUnreferencedNodeStates(summarizerRuntime);
@@ -237,8 +239,8 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             assert(s2.get(localHandle2.absolutePath) === "unreferenced", "local id 2 blob should be unreferenced");
             assert(s2.get(storageId) === "unreferenced", "storage id blob should be unreferenced");
 
-            // Add the localId handle back. If deleteUnreferencedContent is true, both the nodes would have been
-            // deleted from the GC state. Else, they would both be referenced.
+            // Add the localId1 handle back. If deleteUnreferencedContent is true, all the nodes would have been
+            // deleted from the GC state. Else, localId1 nad storageId would be referenced and localId2 unreferenced.
             defaultDataStore._root.set("local1", localHandle1);
             const s3 = await summarizeAndGetUnreferencedNodeStates(summarizerRuntime);
             if (deleteUnreferencedContent) {
@@ -254,7 +256,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 
         it("collects blobs uploaded and de-duped in detached container", async () => {
             // Upload couple of attachment blobs with the same content. When these blobs are uploaded to the server,
-            // they will be de-duped and redirect to the same storageId.
+            // they will be de-duped and redirected to the same storageId.
             const blobContents = "Blob contents";
             const localHandle1 = await defaultDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
             const localHandle2 = await defaultDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
@@ -270,11 +272,12 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             // Make sure we are connected or we may get a local ID handle
             await ensureContainerConnectedWriteMode(container as Container);
 
-            // Upload the same blob. This will get de-duped and we will get back a handle with the storageId instead of
-            // the localId that we got when uploading in detached container.
+            // Upload the same blob. This will get de-duped and we will get back a handle with another localId. This and
+            // the blobs uploaded in detached mode should map to the same storageId.
             const localHandle3 = await defaultDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
 
-            // Store the localId1 and localId2 handles. This would make the localId nodes and storageId node referenced.
+            // Validate that storing the localId handles makes both the localId and storageId nodes as referenced since
+            // localId is simply an alias to the storageId.
             defaultDataStore._root.set("local1", localHandle1);
             defaultDataStore._root.set("local2", localHandle2);
             defaultDataStore._root.set("local3", localHandle3);
@@ -289,7 +292,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             assert(s1.get(localHandle3.absolutePath) === "referenced", "local id 3 blob should be referenced (1)");
             assert(s1.get(storageId) === "referenced", "storage id blob should be referenced (1)");
 
-            // Delete the localId1 handle. This would make localId1 node unreferenced.
+            // Delete the localId handles. This would make localId1 node unreferenced.
             defaultDataStore._root.delete("local1");
             defaultDataStore._root.delete("local2");
             defaultDataStore._root.delete("local3");
@@ -299,8 +302,8 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             assert(s2.get(localHandle3.absolutePath) === "unreferenced", "local id 3 blob should be referenced (2)");
             assert(s2.get(storageId) === "unreferenced", "storage id blob should be referenced (2)");
 
-            // Add the localId handle back. If deleteUnreferencedContent is true, both the nodes would have been
-            // deleted from the GC state. Else, they would both be referenced.
+            // Add the localId1 handle back. If deleteUnreferencedContent is true, all the nodes would have been
+            // deleted from the GC state. Else, localId1 and storageId nodes will be referenced and others unreferenced.
             defaultDataStore._root.set("local1", localHandle1);
             const s3 = await summarizeAndGetUnreferencedNodeStates(summarizerRuntime);
             if (deleteUnreferencedContent) {
@@ -344,30 +347,29 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             container2.connect();
             await waitForContainerConnection(container2);
 
-            // Validate that the localId is referenced. This should not log any gcUnknownOutboundReferences error as a
-            // reference from localId to storageId would be created.
+            // Validate that the localId and storageId nodes are referenced. This should not log any
+            // gcUnknownOutboundReferences error when a reference from localId to storageId would be created.
             const s1 = await summarizeAndGetUnreferencedNodeStates(summarizerRuntime);
             assert.strictEqual(s1.size, 2, "There should be 2 blob entries in GC data");
             const storageId = getStorageIdFromReferenceMap(s1, [localHandle1.absolutePath]);
             assert(s1.get(localHandle1.absolutePath) === "referenced", "local id blob should be referenced");
             assert(s1.get(storageId) === "referenced", "storage id blob should be referenced");
 
-            // Upload the same blob. This will get de-duped and we will get back a handle with the storageId instead of
-            // the localId that we got when uploading in disconnected container.
+            // Upload the same blob. This will get de-duped and we will get back a handle with another localId. This and
+            // the blob uploaded in disconnected mode should map to the same storageId.
             const localHandle2 = await defaultDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+
+            // Add the localId2 handle and remove the localId1 handle. Validate that localId2 and storageId nodes are
+            // referenced and localId1 node is unreferenced.
             defaultDataStore._root.set("local2", localHandle2);
-
             defaultDataStore._root.delete("local1");
-
-            // Validate that storing the localId handle makes both the localId and storageId nodes as referenced since
-            // localId is simply an alias to the storageId.
             const s2 = await summarizeAndGetUnreferencedNodeStates(summarizerRuntime);
             assert(s2.get(localHandle1.absolutePath) === "unreferenced", "local id 1 blob should be referenced");
             assert(s2.get(localHandle2.absolutePath) === "referenced", "local id 2 blob should be referenced");
             assert(s2.get(storageId) === "referenced", "storage id blob should also be referenced (1)");
 
-            // Replace the localId handle with the storageId handle. The storageId node should be referenced but the
-            // localId node should be unreferenced. Basically, the alias is deleted.
+            // Remove the localId2 handle. Validate that localId2 and storageId nodes are now unreferenced. Also, if
+            // deleteUnreferencedContent is true, localId1 node would have been deleted.
             defaultDataStore._root.delete("local2");
             const s3 = await summarizeAndGetUnreferencedNodeStates(summarizerRuntime);
             if (deleteUnreferencedContent) {

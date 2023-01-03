@@ -441,8 +441,8 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             // Upload an attachment blob. We should get a handle with a localId for the blob. Mark it referenced by
             // storing its handle in a DDS.
             const blobContents = "Blob contents";
-            const localHandle = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
-            mainDataStore._root.set("localBlob", localHandle);
+            const localHandle1 = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+            mainDataStore._root.set("local1", localHandle1);
 
             // Attach the container after the blob is uploaded.
             await mainContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
@@ -451,6 +451,17 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             mainDataStore._root.set("transition to write", "true");
             await waitForContainerConnection(mainContainer);
 
+            // Upload the same blob. This will get de-duped and we will get back another local handle. Both the these
+            // localIds should be mapped to the same storageId.
+            const localHandle2 = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+            assert.notStrictEqual(
+                localHandle1.absolutePath, localHandle2.absolutePath, "The two local ids should be different");
+
+            // Add the new local handle and then remove both the handles to unreference the blob.
+            mainDataStore._root.set("local2", localHandle2);
+            mainDataStore._root.delete("local1");
+            mainDataStore._root.delete("local2");
+
             const summarizer = await createSummarizer(
                 provider,
                 mainContainer,
@@ -458,16 +469,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
                 gcOptions,
                 mockConfigProvider(settings),
             );
-
-
-            // Upload the same blob. This will get de-duped and we will get back a handle with the storageId instead of
-            // the localId that we got when uploading in detached container.
-            const storageHandle = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
-            assert.notStrictEqual(
-                localHandle.absolutePath, storageHandle.absolutePath, "local and storage handles should be different");
-
-            // Remove the blob's handle to unreference it.
-            mainDataStore._root.delete("localBlob");
 
             // Summarize so that the above attachment blob is marked unreferenced.
             await provider.ensureSynchronized();
@@ -492,14 +493,13 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
             // Retrieving the blob via any of the handles should fail. Note that the blob is requested via its url since
             // this container does not have access to the blob's handle.
-            const localResponse = await container2.request({ url: localHandle.absolutePath });
-            assert.strictEqual(localResponse?.status, 404, `Expecting a 404 response for local handle`);
-            assert(localResponse.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 1`);
+            const localResponse1 = await container2.request({ url: localHandle1.absolutePath });
+            assert.strictEqual(localResponse1?.status, 404, `Expecting a 404 response for local handle`);
+            assert(localResponse1.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 1`);
 
-            // Retrieving the blob via the storage handle should fail as well.
-            const storageResponse = await container2.request({ url: storageHandle.absolutePath });
-            assert.strictEqual(storageResponse?.status, 404, `Expecting a 404 response for storage handle`);
-            assert(storageResponse.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 2`);
+            const localResponse2 = await container2.request({ url: localHandle2.absolutePath });
+            assert.strictEqual(localResponse2?.status, 404, `Expecting a 404 response for storage handle`);
+            assert(localResponse2.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 2`);
         });
 
         itExpects("tombstones blobs uploaded and de-duped in detached container",
@@ -539,18 +539,20 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             );
 
             // Add the blob's local handles to reference them.
-            mainDataStore._root.set("localBlob1", localHandle1);
-            mainDataStore._root.set("localBlob2", localHandle2);
+            mainDataStore._root.set("local1", localHandle1);
+            mainDataStore._root.set("local2", localHandle2);
 
-            // Upload the same blob. This will get de-duped and we will get back a handle with the storageId instead of
-            // the localId that we got when uploading in detached container.
-            const storageHandle = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+            // Upload the same blob. This will get de-duped and we will get back another local handle. Both this and
+            // the blob uploaded in detached mode should be mapped to the same storageId.
+            const localHandle3 = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
             assert.notStrictEqual(
-                localHandle1.absolutePath, storageHandle.absolutePath, "local and storage handles should be different");
+                localHandle1.absolutePath, localHandle3.absolutePath, "local handles should be different");
+            mainDataStore._root.set("local3", localHandle3);
 
             // Remove the blob's local handles to unreference them.
-            mainDataStore._root.delete("localBlob1");
-            mainDataStore._root.delete("localBlob2");
+            mainDataStore._root.delete("local1");
+            mainDataStore._root.delete("local2");
+            mainDataStore._root.delete("local3");
 
             // Summarize so that the above attachment blobs are marked unreferenced.
             await provider.ensureSynchronized();
@@ -583,9 +585,9 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             assert.strictEqual(localResponse2?.status, 404, `Expecting a 404 response for local handle 2`);
             assert(localResponse2.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 2`);
 
-            const storageResponse = await container2.request({ url: storageHandle.absolutePath });
-            assert.strictEqual(storageResponse?.status, 404, `Expecting a 404 response for storage handle`);
-            assert(storageResponse.value.startsWith("Blob removed by gc:"), `Unexpected value for storage handle`);
+            const localResponse3 = await container2.request({ url: localHandle3.absolutePath });
+            assert.strictEqual(localResponse3?.status, 404, `Expecting a 404 response for storage handle`);
+            assert(localResponse3.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 3`);
         });
     });
 
@@ -706,22 +708,24 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             // with a localId for the blob.
             mainContainer.disconnect();
             const blobContents = "Blob contents";
-            const localHandle = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
-            mainDataStore._root.set("localBlob", localHandle);
+            const localHandle1 = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+            mainDataStore._root.set("local1", localHandle1);
 
             // Connect the container after the blob is uploaded. Send an op to transition the container to write mode.
             mainContainer.connect();
             mainDataStore._root.set("transition to write", "true");
             await ensureContainerConnectedWriteMode(mainContainer);
 
-            // Upload the same blob. This will get de-duped and we will get back a handle with the storageId instead of
-            // the localId that we got when uploading in detached container.
-            const storageHandle = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+            // Upload the same blob. This will get de-duped and we will get back another local handle. Both this and
+            // the blob uploaded in disconnected mode should be mapped to the same storageId.
+            const localHandle2 = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
             assert.notStrictEqual(
-                localHandle.absolutePath, storageHandle.absolutePath, "local and storage handles should be different");
+                localHandle1.absolutePath, localHandle2.absolutePath, "local handles should be different");
 
-            // Remove the blob's handle to unreference it.
-            mainDataStore._root.delete("localBlob");
+            // Add the new local handle and then remove both the handles to unreference the blob.
+            mainDataStore._root.set("local2", localHandle2);
+            mainDataStore._root.delete("local1");
+            mainDataStore._root.delete("local2");
 
             // Summarize so that the above attachment blob is marked unreferenced.
             await provider.ensureSynchronized();
@@ -742,14 +746,13 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
             // Retrieving the blob via any of the handles should fail. Note that the blob is requested via its url since
             // this container does not have access to the blob's handle.
-            const localResponse = await container2.request({ url: localHandle.absolutePath });
-            assert.strictEqual(localResponse?.status, 404, `Expecting a 404 response for local handle`);
-            assert(localResponse.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 1`);
+            const localResponse1 = await container2.request({ url: localHandle1.absolutePath });
+            assert.strictEqual(localResponse1?.status, 404, `Expecting a 404 response for local handle`);
+            assert(localResponse1.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 1`);
 
-            // Retrieving the blob via the storage handle should fail as well.
-            const storageResponse = await container2.request({ url: storageHandle.absolutePath });
-            assert.strictEqual(storageResponse?.status, 404, `Expecting a 404 response for storage handle`);
-            assert(storageResponse.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 2`);
+            const localResponse2 = await container2.request({ url: localHandle2.absolutePath });
+            assert.strictEqual(localResponse2?.status, 404, `Expecting a 404 response for storage handle`);
+            assert(localResponse2.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 2`);
         });
 
         itExpects("tombstones blobs uploaded and de-duped in disconnected container",
@@ -769,9 +772,8 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
             const summarizer = await createSummarizerWithInitialSummary(mainContainer);
 
-            // Disconnect the main container, upload couple of attachment blobs with same content and mark them
-            // referenced. We should get a handle. When these blobs are uploaded to the server, they will be
-            // de-duped and redirect to the same storageId.
+            // Disconnect the main container, upload couple of blobs with same content and mark them referenced. When
+            // these blobs are uploaded to the server, they will be de-duped and redirect to the same storageId.
             mainContainer.disconnect();
             const blobContents = "Blob contents";
             const localHandle1 = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
@@ -783,18 +785,20 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             await ensureContainerConnectedWriteMode(mainContainer);
 
             // Add the blob's local handles to reference them.
-            mainDataStore._root.set("localBlob1", localHandle1);
-            mainDataStore._root.set("localBlob2", localHandle2);
+            mainDataStore._root.set("local1", localHandle1);
+            mainDataStore._root.set("local2", localHandle2);
 
-            // Upload the same blob. This will get de-duped and we will get back a handle with the storageId instead of
-            // the localId that we got when uploading in detached container.
-            const storageHandle = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+            // Upload the same blob. This will get de-duped and we will get back another local handle. Both this and
+            // the blobs uploaded in disconnected mode should be mapped to the same storageId.
+            const localHandle3 = await mainDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
             assert.notStrictEqual(
-                localHandle1.absolutePath, storageHandle.absolutePath, "local and storage handles should be different");
+                localHandle1.absolutePath, localHandle3.absolutePath, "local handles should be different");
 
-            // Remove the blob's local handles to unreference them.
-            mainDataStore._root.delete("localBlob1");
-            mainDataStore._root.delete("localBlob2");
+            // Add the new local handle and then remove all the local handles to unreference the blob.
+            mainDataStore._root.set("local3", localHandle2);
+            mainDataStore._root.delete("local1");
+            mainDataStore._root.delete("local2");
+            mainDataStore._root.delete("local3");
 
             // Summarize so that the above attachment blobs are marked unreferenced.
             await provider.ensureSynchronized();
@@ -823,9 +827,9 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             assert.strictEqual(localResponse2?.status, 404, `Expecting a 404 response for local handle 2`);
             assert(localResponse2.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 2`);
 
-            const storageResponse = await container2.request({ url: storageHandle.absolutePath });
-            assert.strictEqual(storageResponse?.status, 404, `Expecting a 404 response for storage handle`);
-            assert(storageResponse.value.startsWith("Blob removed by gc:"), `Unexpected value for storage handle`);
+            const localResponse3 = await container2.request({ url: localHandle3.absolutePath });
+            assert.strictEqual(localResponse3?.status, 404, `Expecting a 404 response for storage handle`);
+            assert(localResponse3.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 2`);
         });
     });
 });

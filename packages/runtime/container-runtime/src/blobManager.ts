@@ -121,10 +121,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     private readonly mc: MonitoringContext;
 
     /**
-     * Map of local (offline/detached) IDs to storage IDs. Contains identity entries
-     * (id → id) for storage IDs, so all requested IDs should be a key in this map.
-     * Blobs created while the container is detached are stored in IDetachedBlobStorage
-     * which gives local IDs; the storage IDs are filled in at attach time.
+     * Map of local IDs to storage IDs. Contains identity entries (id → id) for storage IDs. All request3ed IDs should
+     * be a key in this map. Blobs created while the container is detached are stored in IDetachedBlobStorage which
+     * gives local IDs; the storage IDs are filled in at attach time.
      */
     private readonly redirectTable: Map<string, string | undefined>;
 
@@ -136,16 +135,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     private readonly pendingBlobs: Map<string, PendingBlob> = new Map();
 
     /**
-     * Track ops in flight for online flow. This is used for an optimization where if we receive an ack for a storageId,
-     * we can resolve all pending blobs with the same storageId even though they may have different localIds. That's
-     * because we know that the server will not delete the blob corresponding to that storageId.
+     * Track ops in flight for online flow. This is used for optimizations where if we receive an ack for a storage ID,
+     * we can resolve all pending blobs with the same storage ID even though they may have different local IDs. That's
+     * because we know that the server will not delete the blob corresponding to that storage ID.
      */
     private readonly opsInFlight: Map<string, string[]> = new Map();
-
-    /**
-     * Track ops in flight for online flow. Used to avoid searching pendingBlobs since BlobAttach ops
-     * don't include local ID in online flow.
-     */
 
     private readonly retryThrottler = new CancellableThrottler(new Throttler(
         60 * 1000, // 60 sec delay window
@@ -157,7 +151,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     /** If true, throw an error when a tombstone attachment blob is retrieved. */
     private readonly throwOnTombstoneUsage: boolean;
     /**
-     * This stores ides of tombstoned blobs.
+     * This stores IDs of tombstoned blobs.
      * Tombstone is a temporary feature that imitates a blob getting swept by garbage collection.
      */
     private readonly tombstonedBlobs: Set<string> = new Set();
@@ -293,7 +287,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         if (pending) {
             return pending.blob;
         }
-        let storageId;
+        let storageId: string;
         if (this.runtime.attachState === AttachState.Detached) {
             assert(this.redirectTable.has(blobId), 0x383 /* requesting unknown blobs */);
 
@@ -301,8 +295,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
             // The 'IDocumentStorageService.readBlob()' call below will retrieve these via localId.
             storageId = blobId;
         } else {
-            storageId = this.redirectTable.get(blobId);
-            assert(!!storageId, 0x11f /* "requesting unknown blobs" */);
+            const attachedStorageId = this.redirectTable.get(blobId);
+            assert(!!attachedStorageId, 0x11f /* "requesting unknown blobs" */);
+            storageId = attachedStorageId;
         }
 
         // Let runtime know that the corresponding GC node was requested.
@@ -348,8 +343,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         assert(this.runtime.attachState === AttachState.Attached,
             0x385 /* For clarity and paranoid defense against adding future attachment states */);
 
-        // Create a local ID for each blob. This is used to support blobs if/when the client goes
-        // offline since we don't have the ID from storage yet. If online flow succeeds this won't be used.
+        // Create a local ID for the blob. When the blob is uploaded and resolved, a local ID to storage ID mapping
+        // is created and the local ID is returned to the caller.
         const localId = uuid();
         const pendingEntry: PendingBlob = {
             blob,
@@ -374,8 +369,14 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         );
     }
 
+    /**
+     * Set up a mapping in the redirect table from fromId to toId. Also, notify the runtime that a reference is added
+     * which is required for GC.
+     */
     private setRedirection(fromId: string, toId: string | undefined) {
         this.redirectTable.set(fromId, toId);
+        // Notify runtime of a reference added if toId is not undefined. It can be undefined when a blob is uploaded in
+        // detached mode. In this case, the entry will be updated when the blob is updated.
         if (toId !== undefined) {
             this.addedBlobReference(this.getBlobGCNodePath(fromId), this.getBlobGCNodePath(toId));
         }
@@ -391,23 +392,32 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     }
 
     private onUploadResolve(localId: string, response: ICreateBlobResponse) {
+        assert(localId !== undefined, "local ID not available");
         const entry = this.pendingBlobs.get(localId);
         assert(entry?.status === PendingBlobStatus.OnlinePendingUpload ||
             entry?.status === PendingBlobStatus.OfflinePendingUpload,
             0x386 /* Must have pending blob entry for uploaded blob */);
         entry.storageId = response.id;
-        assert(localId !== undefined, "localId not available");
         if (this.runtime.connected) {
             if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
+                // Send a blob attach op. This serves two purposes:
+                // 1. If its a new blob, i.e., it isn't de-duped, the server will keep the blob alive if it sees this op
+                //    until its storage ID is added to the next summary.
+                // 2. It will create a local ID to storage ID mapping in all clients which is needed to retrieve the
+                //    blob from the server via the storage ID.
                 this.sendBlobAttachOp(localId, response.id);
                 if (this.storageIds.has(response.id)) {
-                    // Storage may dedupe blobs and give us an ID we already know
+                    // The blob is de-duped. Set up a local ID to storage ID mapping and return the blob. Since this is
+                    // an existing blob, we don't have to wait for the op to be ack'd since this step has already
+                    // happened before and so, the server won't delete it.
                     this.setRedirection(localId, response.id);
                     entry.handleP.resolve(this.getBlobHandle(localId));
                     this.deleteAndEmitsIfEmpty(localId);
                 } else {
+                    // If there is already an op for this storage ID, append the local ID to the list. Once any op for
+                    // this storage ID is ack'd, all pending blobs for it can be resolved since the op will keep the
+                    // blob alive in storage.
                     this.opsInFlight.set(response.id, (this.opsInFlight.get(response.id) ?? []).concat(localId));
-                    // Check for still-pending duplicates too; if an op is already in flight we can wait for that one
                     entry.status = PendingBlobStatus.OnlinePendingOp;
                 }
             } else if (entry.status === PendingBlobStatus.OfflinePendingUpload) {
@@ -468,10 +478,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
      */
     public reSubmit(metadata: Record<string, unknown> | undefined) {
         assert(!!metadata, 0x38b /* Resubmitted ops must have metadata */);
-        const { blobId, localId }: { blobId?: string; localId?: string; } = metadata;
-        assert(localId !== undefined, "localId not available on reSubmit");
+        const { localId, blobId }: { localId?: string; blobId?: string } = metadata;
+        assert(localId !== undefined, "local ID not available on reSubmit");
         if (!blobId) {
-            assert(!!localId, 0x38c /* Submitted BlobAttach ops must have a blobId or localId */);
             // We submitted this op while offline. The blob should have been uploaded by now.
             const pendingEntry = this.pendingBlobs.get(localId);
             assert(pendingEntry?.status === PendingBlobStatus.OfflinePendingOp &&
@@ -484,6 +493,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     public processBlobAttachOp(message: ISequencedDocumentMessage, local: boolean) {
         const blobId = message.metadata?.blobId;
         assert(blobId !== undefined, 0x12a /* "Missing blob id on metadata" */);
+
+        // Set up a mapping from local ID to storage ID. This is crucial since without this the blob cannot be
+        // requested from the server.
         if (message.metadata?.localId !== undefined) {
             this.setRedirection(message.metadata.localId, message.metadata.blobId);
         }
@@ -491,9 +503,12 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         this.setRedirection(blobId, message.metadata.blobId);
 
         if (local) {
-            assert(message.metadata?.localId !== undefined, "localId not present in blob attach message");
+            assert(message.metadata?.localId !== undefined, "local ID not present in blob attach message");
             const waitingBlobs = this.opsInFlight.get(blobId);
             if (waitingBlobs !== undefined) {
+                // For each op corresponding to this storage ID that we are waiting for, resolve the pending blob.
+                // This is safe because the server will keep the blob alive and the op containing the local ID to
+                // storage ID is already in flight and any op containing this local ID will be sequenced after that.
                 waitingBlobs.forEach((localId) => {
                     const pendingBlobEntry = this.pendingBlobs.get(localId);
                     assert(
@@ -510,7 +525,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
                 });
                 this.opsInFlight.delete(blobId);
             }
-            this.deleteAndEmitsIfEmpty(message.metadata?.localId);
+            // For blobs that were transitioned to offline flow while waiting for this op, the entry should be deleted.
+            this.deleteAndEmitsIfEmpty(message.metadata.localId);
         }
     }
 
@@ -564,23 +580,15 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
      */
     public getGCData(fullGC: boolean = false): IGarbageCollectionData {
         const gcData: IGarbageCollectionData = { gcNodes: {} };
-        // For some blobs, the handle returned on creation is based off of the localId. So, these
-        // nodes can be referenced by storing the localId handle. When that happens, the corresponding storageId node
-        // must also be marked referenced. So, we add a route from the localId node to the storageId node.
-        // Note that because of de-duping, there can be multiple localIds that all redirect to the same storageId or
-        // a blob may be referenced via its storageId handle.
         for (const [localId, storageId] of this.redirectTable) {
             assert(!!storageId, 0x390 /* Must be attached to get GC data */);
-            // Add node for the localId and add a route to the storageId node. The storageId node will have been
-            // added above when adding nodes for this.blobIds.
             gcData.gcNodes[this.getBlobGCNodePath(localId)] = [this.getBlobGCNodePath(storageId)];
         }
-
         return gcData;
     }
 
     /**
-     * This is called to update blobs whose routes are unused. The unused blobs are either deleted.
+     * This is called to update blobs whose routes are unused. The unused blobs are deleted.
      * @param unusedRoutes - The routes of the blob nodes that are unused.
      */
     public updateUnusedRoutes(unusedRoutes: string[]): void {
@@ -593,8 +601,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
                 0x2d5 /* "Invalid blob node id in unused routes." */,
             );
             const blobId = pathParts[2];
-            // The unused blobId could be a localId. If so, remove it from the redirect table and continue. The
-            // corresponding storageId may still be used either directly or via other localIds.
             this.redirectTable.delete(blobId);
         }
     }
@@ -617,14 +623,14 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
             tombstonedBlobsSet.add(pathParts[2]);
         }
 
-        // Remove blobs that were tombstoned but aren't anymore as per the tombstoneRoutes.
+        // Remove blobs from the tombstone list that were tombstoned but aren't anymore as per the tombstoneRoutes.
         for (const blobId of this.tombstonedBlobs) {
             if (!tombstonedBlobsSet.has(blobId)) {
                 this.tombstonedBlobs.delete(blobId);
             }
         }
 
-        // Mark blobs that are now tombstoned.
+        // Mark blobs that are now tombstoned by adding them to the tombstone list.
         for (const blobId of tombstonedBlobsSet) {
             this.tombstonedBlobs.add(blobId);
         }
