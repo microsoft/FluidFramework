@@ -240,6 +240,10 @@ export function createOdspNetworkError(
             error = new NonRetryableError(
                 errorMessage, OdspErrorType.invalidFileNameError, driverProps);
             break;
+        case 423: // File locked
+            error = new NonRetryableError(
+                errorMessage, OdspErrorType.fileIsLocked, driverProps);
+            break;
         case 500:
             error = new RetryableError(
                 errorMessage, DriverErrorType.genericNetworkError, driverProps);
