@@ -17,7 +17,7 @@ import { ISharedCounter, SharedCounter } from "..";
 import { CounterFactory } from "../counterFactory";
 
 class TestSharedCounter extends SharedCounter {
-    public testApplyStashedOp(content: unknown): void {
+    public testApplyStashedOp(content: unknown) {
         this.applyStashedOp(content);
     }
 }
@@ -135,7 +135,7 @@ describe("SharedCounter", () => {
 
                 containerRuntimeFactory.processAllMessages();
 
-                assert.equal(testCounter.value, "failTest", "Could not increment with positive value");
+                assert.equal(testCounter.value, 20, "Could not increment with positive value");
                 assert.equal(testCounter2.value, 20, "Could not increment with positive value");
 
                 testCounter.increment(-30);

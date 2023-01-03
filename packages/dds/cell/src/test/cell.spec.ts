@@ -64,7 +64,7 @@ describe("Cell", () => {
 
             it("Can set and get cell data", () => {
                 cell.set("testValue");
-                assert.equal(cell.get(), "failTest", "Could not retrieve cell value");
+                assert.equal(cell.get(), "testValue", "Could not retrieve cell value");
             });
 
             it("can delete cell data", () => {
