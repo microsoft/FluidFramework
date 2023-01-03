@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { GenericError } from "@fluidframework/container-utils";
+import { UsageError } from "@fluidframework/driver-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions";
@@ -122,10 +122,7 @@ export class BatchManager {
             length: this.pendingBatch.length,
             enableOpReentryCheck: this.options.enableOpReentryCheck === true,
         };
-        const error = new GenericError(
-            "Submission of an out of order message",
-                /* error */ undefined,
-            telemetryProperties);
+        const error = new UsageError("Submission of an out of order message");
 
         if (this.options.enableOpReentryCheck === true) {
             this.logger.sendErrorEvent(
