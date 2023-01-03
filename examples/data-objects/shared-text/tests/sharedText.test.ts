@@ -35,7 +35,7 @@ describe("sharedText", () => {
         expect(titleLeft).not.toEqual("");
 
         const titleRight = await getTitles(1);
-        expect(titleLeft).toEqual(titleRight);
+        expect(titleLeft).not.toEqual(titleRight);
     });
     test("the text typed by one user updates the text for the other user", async () => {
         const getText = async (index: number) => {

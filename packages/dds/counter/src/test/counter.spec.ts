@@ -135,7 +135,7 @@ describe("SharedCounter", () => {
 
                 containerRuntimeFactory.processAllMessages();
 
-                assert.equal(testCounter.value, 20, "Could not increment with positive value");
+                assert.equal(testCounter.value, "failTest", "Could not increment with positive value");
                 assert.equal(testCounter2.value, 20, "Could not increment with positive value");
 
                 testCounter.increment(-30);
