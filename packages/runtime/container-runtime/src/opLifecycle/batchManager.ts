@@ -123,10 +123,11 @@ export class BatchManager {
             enableOpReentryCheck: this.options.enableOpReentryCheck === true,
         };
         const error = new UsageError("Submission of an out of order message");
+        const eventName = "ReferenceSequenceNumberMismatch";
 
         if (this.options.enableOpReentryCheck === true) {
             this.logger.sendErrorEvent(
-                { eventName: "Submission of an out of order message", ...telemetryProperties },
+                { eventName, ...telemetryProperties },
                 error,
             );
             throw error;
@@ -135,7 +136,7 @@ export class BatchManager {
         if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
             this.logger.sendErrorEvent(
                 {
-                    eventName: "Submission of an out of order message",
+                    eventName,
                     ...telemetryProperties,
                     ops: this.mismatchedOpsReported,
                     maxOps: this.maxMismatchedOpsToReport,
