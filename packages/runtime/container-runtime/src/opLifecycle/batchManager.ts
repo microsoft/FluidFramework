@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { UsageError } from "@fluidframework/driver-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions";
 
 export interface IBatchManagerOptions {
+    readonly enableOpReentryCheck?: boolean;
     readonly hardLimit: number;
     readonly softLimit?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
@@ -16,15 +20,32 @@ export interface IBatchManagerOptions {
  * Helper class that manages partial batch & rollback.
  */
 export class BatchManager {
+    private readonly logger;
     private pendingBatch: BatchMessage[] = [];
     private batchContentSize = 0;
+    /**
+    * Track the number of ops which were detected to have a mismatched
+    * reference sequence number, in order to self-throttle the telemetry events.
+    *
+    * This should be removed as part of ADO:2322
+    */
+    private readonly maxMismatchedOpsToReport = 5;
+    private mismatchedOpsReported = 0;
+
 
     public get length() { return this.pendingBatch.length; }
     public get contentSizeInBytes() { return this.batchContentSize; }
 
-    constructor(public readonly options: IBatchManagerOptions) { }
+    constructor(
+        public readonly options: IBatchManagerOptions,
+        logger: ITelemetryLogger,
+    ) {
+        this.logger = ChildLogger.create(logger, "BatchManager");
+    }
 
     public push(message: BatchMessage): boolean {
+        this.checkReferenceSequenceNumber(message);
+
         const contentSize = this.batchContentSize + (message.contents?.length ?? 0);
         const opCount = this.pendingBatch.length;
 
@@ -86,6 +107,43 @@ export class BatchManager {
                 this.pendingBatch.length = startPoint;
             },
         };
+    }
+
+    private checkReferenceSequenceNumber(message: BatchMessage) {
+        if (this.pendingBatch.length === 0 || message.referenceSequenceNumber === this.pendingBatch[0].referenceSequenceNumber) {
+            // The reference sequence numbers are stable
+            return;
+        }
+
+        const telemetryProperties = {
+            referenceSequenceNumber: this.pendingBatch[0].referenceSequenceNumber,
+            messageReferenceSequenceNumber: message.referenceSequenceNumber,
+            type: message.deserializedContent.type,
+            length: this.pendingBatch.length,
+            enableOpReentryCheck: this.options.enableOpReentryCheck === true,
+        };
+        const error = new UsageError("Submission of an out of order message");
+        const eventName = "ReferenceSequenceNumberMismatch";
+
+        if (this.options.enableOpReentryCheck === true) {
+            this.logger.sendErrorEvent(
+                { eventName, ...telemetryProperties },
+                error,
+            );
+            throw error;
+        }
+
+        if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
+            this.logger.sendErrorEvent(
+                {
+                    eventName,
+                    ...telemetryProperties,
+                    ops: this.mismatchedOpsReported,
+                    maxOps: this.maxMismatchedOpsToReport,
+                },
+                error,
+            );
+        }
     }
 }
 
