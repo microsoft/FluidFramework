@@ -163,7 +163,6 @@ function measureFetch(startFile: string, withBookmarks = false) {
         }
     }
     let et = elapsedMicroseconds(clockStart);
-    // eslint-disable-next-line max-len
     console.log(`fetch of ${count / reps} runs over ${client.getLength()} total chars took ${(et / count).toFixed(1)} microseconds per run`);
     // Bonus: measure clone
     clockStart = clock();

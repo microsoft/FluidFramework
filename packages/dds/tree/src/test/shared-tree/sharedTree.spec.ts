@@ -9,14 +9,12 @@ import {
     getSchemaString,
     jsonableTreeFromCursor,
     emptyField,
+    namedTreeSchema,
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import {
-<<<<<<< HEAD
-    EmptyKey,
-=======
     compareUpPaths,
->>>>>>> 4cebde53048e4a51af7bb5adb7d47582d091f53d
+    EmptyKey,
     FieldKey,
     JsonableTree,
     mapCursorField,
@@ -36,26 +34,24 @@ import {
 } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import { TransactionResult } from "../../checkout";
-<<<<<<< HEAD
 import {
     fieldSchema,
     GlobalFieldKey,
-    namedTreeSchema,
     SchemaData,
     ValueSchema,
 } from "../../schema-stored";
+
 /* eslint-disable import/no-internal-modules */
+import { SharedTreeCore } from "../../shared-tree-core";
 import { SharedTreeNodeHelper } from "./bubble-bench/SharedTreeNodeHelper";
 import { SharedTreeSequenceHelper } from "./bubble-bench/SharedTreeSequenceHelper";
 import { AppState } from "./bubble-bench/AppState";
 import { Bubblebench } from "./bubble-bench/Bubblebench";
 import { Bubble } from "./bubble-bench/Bubble";
 import { AppStateSchemaData } from "./bubble-bench/schema";
+
+
 /* eslint-enable import/no-internal-modules */
-=======
-import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData } from "../../schema-stored";
-import { SharedTreeCore } from "../../shared-tree-core";
->>>>>>> 4cebde53048e4a51af7bb5adb7d47582d091f53d
 
 const fooKey: FieldKey = brand("foo");
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
@@ -249,8 +245,8 @@ describe("SharedTree", () => {
         // It's not clear if we'll ever want to expose the EditManager to ISharedTree consumers or
         // if we'll ever expose some memory stats in which the trunk length would be included.
         // If we do then this test should be updated to use that code path.
-        const t1 = tree1 as unknown as SharedTreeCore<unknown, any>;
-        const t2 = tree2 as unknown as SharedTreeCore<unknown, any>;
+        const t1 = tree1 as unknown as SharedTreeCore<unknown, any, any>;
+        const t2 = tree2 as unknown as SharedTreeCore<unknown, any, any>;
         assert(t1.editManager.getTrunk().length < 10);
         assert(t2.editManager.getTrunk().length < 10);
     });

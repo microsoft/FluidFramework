@@ -10,7 +10,7 @@ import { applyModifyToTree } from "../deltaUtils";
 import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
 import { singleTextCursor } from "../treeTextCursor";
 import { NodeReviver } from "../modular-schema";
-import { MarkList, ModifyInsert } from "./format";
+import { MarkList, ProtoNode } from "./format";
 import { getInputLength, isSkipMark } from "./utils";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange, index: number | undefined) => Delta.Modify;
@@ -33,31 +33,16 @@ export function sequenceFieldToDelta<TNodeChange>(
             const type = mark.type;
             switch (type) {
                 case "Insert": {
-                    const insertMark: Delta.Insert = {
-                        type: Delta.MarkType.Insert,
-                        content: mark.content.map(singleTextCursor),
-                    };
+                    const insertMark: Delta.Mark = makeDeltaInsert(
+                        mark.content,
+                        mark.changes,
+                        deltaFromChild,
+                    );
                     out.pushContent(insertMark);
                     break;
                 }
-                case "MInsert": {
-                    const cloned = cloneAndModify(mark, deltaFromChild);
-                    if (cloned.fields.size > 0) {
-                        const insertMark: Delta.InsertAndModify = {
-                            type: Delta.MarkType.InsertAndModify,
-                            ...cloned,
-                        };
-                        out.pushContent(insertMark);
-                    } else {
-                        const insertMark: Delta.Insert = {
-                            type: Delta.MarkType.Insert,
-                            content: [cloned.content],
-                        };
-                        out.pushContent(insertMark);
-                    }
-                    break;
-                }
-                case "MoveIn": {
+                case "MoveIn":
+                case "ReturnTo": {
                     const moveMark: Delta.MoveIn = {
                         type: Delta.MarkType.MoveIn,
                         moveId: brandOpaque<Delta.MoveId>(mark.id),
@@ -84,24 +69,8 @@ export function sequenceFieldToDelta<TNodeChange>(
                     out.pushContent(deleteMark);
                     break;
                 }
-                case "MDelete": {
-                    const modify = deltaFromChild(mark.changes, inputIndex);
-                    if (modify.fields !== undefined) {
-                        const deleteMark: Delta.ModifyAndDelete = {
-                            type: Delta.MarkType.ModifyAndDelete,
-                            fields: modify.fields,
-                        };
-                        out.pushContent(deleteMark);
-                    } else {
-                        const deleteMark: Delta.Delete = {
-                            type: Delta.MarkType.Delete,
-                            count: 1,
-                        };
-                        out.pushContent(deleteMark);
-                    }
-                    break;
-                }
-                case "MoveOut": {
+                case "MoveOut":
+                case "ReturnFrom": {
                     const moveMark: Delta.MoveOut = {
                         type: Delta.MarkType.MoveOut,
                         moveId: brandOpaque<Delta.MoveId>(mark.id),
@@ -122,38 +91,6 @@ export function sequenceFieldToDelta<TNodeChange>(
                     out.pushContent(insertMark);
                     break;
                 }
-                case "MRevive": {
-                    const modify = deltaFromChild(mark.changes, inputIndex);
-                    const revived = reviver(
-                        mark.detachedBy ?? fail(ERR_NO_REVISION_ON_REVIVE),
-                        mark.detachIndex,
-                        1,
-                    )[0];
-                    const mutableTree = mapTreeFromCursor(revived);
-                    const outModifications = applyModifyToTree(mutableTree, modify);
-                    const content = singleMapTreeCursor(mutableTree);
-                    if (outModifications.size === 0) {
-                        const insertMark: Delta.Insert = {
-                            type: Delta.MarkType.Insert,
-                            content: [content],
-                        };
-                        out.pushContent(insertMark);
-                    } else {
-                        const insertMark: Delta.InsertAndModify = {
-                            type: Delta.MarkType.InsertAndModify,
-                            content,
-                            fields: outModifications,
-                        };
-                        out.pushContent(insertMark);
-                    }
-
-                    break;
-                }
-                case "MMoveIn":
-                case "MMoveOut":
-                case "Return":
-                case "MReturn":
-                    fail(ERR_NOT_IMPLEMENTED);
                 default:
                     unreachableCase(type);
             }
@@ -169,33 +106,25 @@ export function sequenceFieldToDelta<TNodeChange>(
  *
  * The returned `fields` map may be empty if all modifications are applied by the function.
  */
-function cloneAndModify<TNodeChange>(
-    insert: ModifyInsert<TNodeChange>,
+function makeDeltaInsert<TNodeChange>(
+    content: ProtoNode[],
+    changes: TNodeChange | undefined,
     deltaFromChild: ToDelta<TNodeChange>,
-): DeltaInsertModification {
+): Delta.Insert | Delta.InsertAndModify {
     // TODO: consider processing modifications at the same time as cloning to avoid unnecessary cloning
-    const cursor = singleTextCursor(insert.content);
-    const mutableTree = mapTreeFromCursor(cursor);
-    const outModifications = applyModifyToTree(
-        mutableTree,
-        deltaFromChild(insert.changes, undefined),
-    );
-    return { content: singleMapTreeCursor(mutableTree), fields: outModifications };
+    const cursors = content.map(singleTextCursor);
+    if (changes !== undefined) {
+        const mutableTree = mapTreeFromCursor(cursors[0]);
+        const outModifications = applyModifyToTree(mutableTree, deltaFromChild(changes, undefined));
+        const cursor = singleMapTreeCursor(mutableTree);
+        return outModifications.size > 0
+            ? {
+                  type: Delta.MarkType.InsertAndModify,
+                  content: singleMapTreeCursor(mutableTree),
+                  fields: outModifications,
+              }
+            : { type: Delta.MarkType.Insert, content: [cursor] };
+    } else {
+        return { type: Delta.MarkType.Insert, content: cursors };
+    }
 }
-
-/**
- * Modifications to be applied to an inserted tree in a Delta.
- */
-interface DeltaInsertModification {
-    /**
-     * The subtree to be inserted.
-     */
-    content: Delta.ProtoNode;
-    /**
-     * The modifications to make to the inserted subtree.
-     * May be empty.
-     */
-    fields: Delta.FieldMarks;
-}
-
-const ERR_NOT_IMPLEMENTED = "Not implemented";

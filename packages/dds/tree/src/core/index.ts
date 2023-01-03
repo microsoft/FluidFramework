@@ -65,6 +65,7 @@ export {
     DeltaVisitor,
     SparseNode,
     getDescendant,
+    compareUpPaths,
 } from "../tree";
 
 export {
@@ -100,12 +101,12 @@ export {
     InMemoryStoredSchemaRepository,
     schemaDataIsEmpty,
     fieldSchema,
-    namedTreeSchema,
     lookupTreeSchema,
     lookupGlobalFieldSchema,
     TreeSchemaBuilder,
     emptyMap,
     emptySet,
+    treeSchema,
 } from "../schema-stored";
 
 export {
@@ -131,6 +132,7 @@ export { Checkout } from "../transaction";
 
 export {
     Index,
+    IndexEvents,
     SharedTreeCore,
     SummaryElement,
     SummaryElementParser,

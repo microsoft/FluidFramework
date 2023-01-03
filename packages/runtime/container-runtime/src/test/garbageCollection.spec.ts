@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable max-len */
-
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
@@ -12,11 +10,13 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { concatGarbageCollectionStates } from "@fluidframework/garbage-collector";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
-    gcBlobKey,
+    gcBlobPrefix,
+    gcTreeKey,
     IGarbageCollectionData,
     IGarbageCollectionNodeData,
     IGarbageCollectionState,
     IGarbageCollectionDetailsBase,
+    IGarbageCollectionSummaryDetailsLegacy,
     ISummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import {
@@ -36,8 +36,6 @@ import {
 } from "../garbageCollection";
 import {
     defaultSessionExpiryDurationMs,
-    gcBlobPrefix,
-    gcTreeKey,
     runSessionExpiryKey,
     oneDayMs,
     runGCKey,
@@ -109,7 +107,8 @@ describe("Garbage Collection Tests", () => {
             updateStateBeforeGC: async () => {},
             getGCData: async (fullGC?: boolean) => defaultGCData,
             updateUsedRoutes: (usedRoutes: string[]) => { return { totalNodeCount: 0, unusedNodeCount: 0 }; },
-            updateUnusedRoutes: (unusedRoutes: string[], tombstone: boolean) => {},
+            updateUnusedRoutes: (unusedRoutes: string[]) => {},
+            updateTombstonedRoutes: (tombstoneRoutes: string[]) => {},
             getNodeType,
             getCurrentReferenceTimestampMs: () => Date.now(),
             closeFn,
@@ -773,14 +772,14 @@ describe("Garbage Collection Tests", () => {
             it("generates events for nodes that time out on load - old snapshot format", async () => {
                 // Create GC details for node 3's GC blob whose unreferenced time was > timeout ms ago.
                 // This means this node should time out as soon as its data is loaded.
-                const node3GCDetails: IGarbageCollectionDetailsBase = {
+                const node3GCDetails: IGarbageCollectionSummaryDetailsLegacy = {
                     gcData: { gcNodes: { "/": [] } },
                     unrefTimestamp: Date.now() - (timeout + 100),
                 };
                 const node3Snapshot = getDummySnapshotTree();
                 const gcBlobId = "node3GCDetails";
                 const attributesBlobId = "attributesBlob";
-                node3Snapshot.blobs[gcBlobKey] = gcBlobId;
+                node3Snapshot.blobs[gcTreeKey] = gcBlobId;
                 node3Snapshot.blobs[dataStoreAttributesBlobName] = attributesBlobId;
 
                 // Create a base snapshot that contains snapshot tree of node 3.
@@ -1460,15 +1459,6 @@ describe("Garbage Collection Tests", () => {
 
         describe("References to unreferenced nodes", () => {
             /**
-             * Function that asserts the given value is not true. Used in these tests to demonstrate that because of
-             * a bug we are not getting the expected results. Once the bug is fixed, these asserts should start working
-             * as expected.
-             */
-            function assertNotTrue(value: boolean, message: string) {
-                assert(!value, message);
-            }
-
-            /**
              * Validates that we can detect references that are added from an unreferenced node to another.
              * 1. Summary 1 at t1. V = [A*, B, C]. E = []. B and C have unreferenced time t1.
              * 2. Reference from B to C. E = [B -\> C].
@@ -1502,7 +1492,7 @@ describe("Garbage Collection Tests", () => {
                 const nodeBTime2 = timestamps2.get(nodeB);
                 const nodeCTime2 = timestamps2.get(nodeC);
                 assert(nodeBTime2 === nodeBTime1, "B's timestamp should be unchanged");
-                assertNotTrue(nodeCTime2 !== undefined && nodeCTime2 > nodeCTime1, "C's timestamp should have updated");
+                assert(nodeCTime2 !== undefined && nodeCTime2 > nodeCTime1, "C's timestamp should have updated");
             });
 
             /*
@@ -1544,8 +1534,8 @@ describe("Garbage Collection Tests", () => {
                 const nodeCTime2 = timestamps2.get(nodeC);
                 const nodeDTime2 = timestamps2.get(nodeD);
                 assert(nodeBTime2 === nodeBTime1, "B's timestamp should be unchanged");
-                assertNotTrue(nodeCTime2 !== undefined && nodeCTime2 > nodeCTime1, "C's timestamp should have updated");
-                assertNotTrue(nodeDTime2 !== undefined && nodeDTime2 > nodeDTime1, "D's timestamp should have updated");
+                assert(nodeCTime2 !== undefined && nodeCTime2 > nodeCTime1, "C's timestamp should have updated");
+                assert(nodeDTime2 !== undefined && nodeDTime2 > nodeDTime1, "D's timestamp should have updated");
             });
 
             /*
@@ -1558,7 +1548,7 @@ describe("Garbage Collection Tests", () => {
              * 4. Summary 2 at t2. V = [A*, B, C]. E = [B -> C]. C and D have unreferenced time t2.
              * Validates that the unreferenced time for C and D is t2 which is > t1.
              */
-            it(`Scenario 2 - Reference added to a list of unreferenced nodes and a reference is removed`, async () => {
+            it(`Scenario 3 - Reference added to a list of unreferenced nodes and a reference is removed`, async () => {
                 // Initialize nodes A, B and C.
                 defaultGCData.gcNodes["/"] = [nodeA];
                 defaultGCData.gcNodes[nodeA] = [];
@@ -1592,8 +1582,8 @@ describe("Garbage Collection Tests", () => {
                 const nodeCTime2 = timestamps2.get(nodeC);
                 const nodeDTime2 = timestamps2.get(nodeD);
                 assert(nodeBTime2 === nodeBTime1, "B's timestamp should be unchanged");
-                assertNotTrue(nodeCTime2 !== undefined && nodeCTime2 > nodeCTime1, "C's timestamp should have updated");
-                assertNotTrue(nodeDTime2 !== undefined && nodeDTime2 > nodeDTime1, "D's timestamp should have updated");
+                assert(nodeCTime2 !== undefined && nodeCTime2 > nodeCTime1, "C's timestamp should have updated");
+                assert(nodeDTime2 !== undefined && nodeDTime2 > nodeDTime1, "D's timestamp should have updated");
             });
         });
     });
@@ -1631,7 +1621,7 @@ describe("Garbage Collection Tests", () => {
             );
         };
 
-        it("No changes to GC between summaries creates a blob handle when no version specified", async () => {
+        it("creates a blob handle when no version specified", async () => {
             garbageCollector = createGarbageCollector();
 
             await garbageCollector.collectGarbage({});
@@ -1639,8 +1629,10 @@ describe("Garbage Collection Tests", () => {
 
             checkGCSummaryType(tree1, SummaryType.Tree, "first");
 
-            await garbageCollector.latestSummaryStateRefreshed(
+            await garbageCollector.refreshLatestSummary(
                 { wasSummaryTracked: true, latestSummaryUpdated: true },
+                undefined,
+                0,
                 parseNothing,
             );
 

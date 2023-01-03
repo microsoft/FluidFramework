@@ -7,7 +7,7 @@
 
 import random from "random-js";
 import {
-    // annotateRange,
+    annotateRange,
     applyMessages,
     doOverRange,
     generateOperationMessagesForClients,
@@ -19,13 +19,13 @@ import { createClientsAtInitialState, TestClientLogger } from "./testClientLogge
 
 const allOperations: TestOperation[] = [
     removeRange,
-    // annotateRange, // Bug AB2724: properties in rollback client don't match oracle
+    annotateRange,
     insertAtRefPos,
 ];
 
 const defaultOptions = {
     minLength: { min: 1, max: 32 },
-    opsPerRollbackRange: { min: 1, max: 16 /* 32 */ }, // Bug AB1809: fail to insert in rollback client after many ops
+    opsPerRollbackRange: { min: 1, max: 32 },
     rounds: 10,
     opsPerRound: 10,
     operations: allOperations,
@@ -65,7 +65,7 @@ describe("MergeTree.Client", () => {
                     const rollbackMsgs = generateOperationMessagesForClients(
                         mt,
                         seq,
-                        [clients.A, clients.B, clients.C ],
+                        [clients.A, clients.B, clients.C],
                         logger,
                         opsPerRollback,
                         minLength,
