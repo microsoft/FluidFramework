@@ -57,26 +57,16 @@ describe("client.getPosition", () => {
         assert.strictEqual(pos, -1);
     });
 
-    it("hold nodes = 0?", () => {
+    it("All Segments Removed", () => {
         client.applyMsg(client.makeOpMessage(client.removeRangeLocal(0, client.getLength()-1), 1));
-        // do some work and move the client's min seq forward, so zamboni runs
-        // for (const c of "hello world") {
+        // get packParent to run without preserving any of the children segments
         client.applyMsg(
             client.makeOpMessage(
-                client.removeRangeLocal(0, client.getLength()), // length should be 1 at this point
-                client.getCurrentSeq() + 1,
-                client.getCurrentSeq(),
-                undefined,
-                client.getCurrentSeq()));
-
-        client.applyMsg(
-            client.makeOpMessage(
-                client.insertTextLocal(0, "a"),
+                client.removeRangeLocal(0, client.getLength()),
                 client.getCurrentSeq(),
                 client.getCurrentSeq(),
                 undefined,
                 client.getCurrentSeq()));
-        // }
 
         assert.notStrictEqual(segment.removedSeq, undefined);
 
