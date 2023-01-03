@@ -4,6 +4,7 @@
  */
 
 import * as fs from "fs";
+import * as util from "util";
 import * as path from "path";
 import * as parser from "xml2js";
 
@@ -24,22 +25,6 @@ const getFilesRecursively = (directory) => {
   }
 
 getFilesRecursively(directory);
-
-const parseTestReport = (filename) => {
-    fs.readFile(filename,  'utf8', (err, data) => {
-        let failedTests;
-        parser.parseString(data, { mergeAttrs: true }, (err, res) => {
-            // console.log("READ FILE RESULTS: ", res)
-            failedTests = findFailedTests(res);
-        })
-
-        failedTests?.forEach((test) => {
-            console.error(test)
-        });
-
-        return failedTests;
-    });
-}
 
 const findFailedTests = (obj) => {
     let testCases = [];
@@ -63,6 +48,15 @@ const findFailedTests = (obj) => {
     }
 };
 
-files.forEach((filename) => {
-    parseTestReport(filename);
-})
+let output = [];
+for(const filename of files) {
+    const xmlData = fs.readFileSync(filename,  'utf8');
+
+    const failedTests = parser.parseStringPromise(xmlData, { mergeAttrs: true }).then((res) => {
+        return findFailedTests(res);
+    })
+
+    output.push(await failedTests)
+}
+
+console.log(util.inspect(output, false, null, true))
