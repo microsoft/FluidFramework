@@ -131,6 +131,7 @@ export { Checkout } from "../transaction";
 
 export {
     Index,
+    IndexEvents,
     SharedTreeCore,
     SummaryElement,
     SummaryElementParser,

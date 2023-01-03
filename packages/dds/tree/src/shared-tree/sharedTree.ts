@@ -18,7 +18,6 @@ import {
     IForestSubscription,
     StoredSchemaRepository,
     InMemoryStoredSchemaRepository,
-    Index,
     SharedTreeCore,
     Checkout as TransactionCheckout,
     Anchor,
@@ -44,6 +43,7 @@ import {
     runSynchronousTransaction,
     buildForest,
     ContextuallyTypedNodeData,
+    ModularChangeset,
 } from "../feature-libraries";
 
 /**
@@ -104,7 +104,11 @@ export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObje
  * TODO: expose or implement Checkout.
  */
 class SharedTree
-    extends SharedTreeCore<DefaultChangeset, DefaultChangeFamily>
+    extends SharedTreeCore<
+        DefaultChangeset,
+        DefaultChangeFamily,
+        [SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset, DefaultChangeFamily>]
+    >
     implements ISharedTree
 {
     public readonly context: EditableTreeContext;
@@ -129,13 +133,12 @@ class SharedTree
             defaultChangeFamily,
             anchors,
         );
-        const indexes: Index<DefaultChangeset>[] = [
-            new SchemaIndex(runtime, schema),
-            new ForestIndex(runtime, forest),
-            new EditManagerIndex(runtime, editManager),
-        ];
         super(
-            indexes,
+            (events) => [
+                new SchemaIndex(runtime, events, schema),
+                new ForestIndex(runtime, events, forest),
+                new EditManagerIndex(runtime, editManager),
+            ],
             defaultChangeFamily,
             editManager,
             anchors,
