@@ -35,7 +35,8 @@ export class RedisCache implements ICache {
         try {
             await this.client.del(this.getKey(key));
             return true;
-        } catch {
+        } catch (error) {
+            Lumberjack.error(`Error deleting from cache.`, undefined, error);
             return false;
         }
     }
