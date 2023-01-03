@@ -53,6 +53,7 @@ for(const filename of files) {
     const xmlData = fs.readFileSync(filename,  'utf8');
 
     const failedTests = parser.parseStringPromise(xmlData, { mergeAttrs: true }).then((res) => {
+        console.log(findFailedTests(res))
         return findFailedTests(res);
     })
 
