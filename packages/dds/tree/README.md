@@ -303,7 +303,6 @@ flowchart
         subgraph core ["core libraries"]
             direction TB
             checkout-->forest
-            shared-tree-core-->change-family
             forest-->schema-stored
             change-family-->repair
             edit-manager-->change-family
@@ -318,7 +317,9 @@ flowchart
         end
         core-->events
         core-->util
-        feature-->core
+        id-compressor-->util
+        feature-->shared-tree-core
+        shared-tree-core-->core
         shared-tree-->feature
         subgraph feature ["feature-libraries"]
             direction TB
