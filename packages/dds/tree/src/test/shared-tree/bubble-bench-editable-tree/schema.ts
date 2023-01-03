@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EditableTree, emptyField, FieldKinds } from "../../../feature-libraries";
-import { fieldSchema, namedTreeSchema, SchemaData, ValueSchema } from "../../../schema-stored";
+import { EditableTree, emptyField, FieldKinds, namedTreeSchema } from "../../../feature-libraries";
+import { fieldSchema, SchemaData, ValueSchema } from "../../../schema-stored";
 import { EmptyKey, JsonableTree, rootFieldKey } from "../../../tree";
 import { brand } from "../../../util";
 

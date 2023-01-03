@@ -76,7 +76,6 @@ export {
     moveToDetachedField,
     rootField,
     rootFieldKeySymbol,
-    namedTreeSchema,
     TreeSchemaBuilder,
     fieldSchema,
     RepairDataStore,
@@ -178,6 +177,7 @@ export {
     SequenceField,
     singleTextCursor,
     FieldKinds,
+    namedTreeSchema,
 } from "./feature-libraries";
 
 export { ISharedTree, SharedTreeFactory } from "./shared-tree";

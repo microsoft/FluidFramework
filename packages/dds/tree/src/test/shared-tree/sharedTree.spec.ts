@@ -34,12 +34,7 @@ import {
 } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import { TransactionResult } from "../../checkout";
-import {
-    fieldSchema,
-    GlobalFieldKey,
-    SchemaData,
-    ValueSchema,
-} from "../../schema-stored";
+import { fieldSchema, GlobalFieldKey, SchemaData, ValueSchema } from "../../schema-stored";
 
 /* eslint-disable import/no-internal-modules */
 import { SharedTreeCore } from "../../shared-tree-core";
@@ -49,7 +44,6 @@ import { AppState } from "./bubble-bench/AppState";
 import { Bubblebench } from "./bubble-bench/Bubblebench";
 import { Bubble } from "./bubble-bench/Bubble";
 import { AppStateSchemaData } from "./bubble-bench/schema";
-
 
 /* eslint-enable import/no-internal-modules */
 
