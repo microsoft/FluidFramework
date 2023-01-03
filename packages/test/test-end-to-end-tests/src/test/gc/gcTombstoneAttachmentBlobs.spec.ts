@@ -270,14 +270,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
         });
 
         /**
-         * Function that rejects instead of not rejecting. Used in these tests to demonstrate that because of a bug we
-         * are not getting the expected results. Once the bug is fixed, these asserts should start working as expected.
-         */
-        async function assertWronglyRejects(block: Promise<any>, message?: string | Error) {
-            return assert.doesNotReject(block, message);
-        };
-
-        /**
          * This test validates that when blobs are de-duped in different containers, these containers can use these
          * blobs irrespective of whether the original blob is tombstoned. Basically, after uploading a blob, a container
          * should be able to use it the same way whether it was de-duped or not.
@@ -327,7 +319,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
                 await container3MainDataStore._runtime.uploadBlob(stringToBuffer(blobContents, "utf-8"));
             // Ideally, this should not reject but currently it will because of a bug with how blob de-dup interacts
             // with GC.
-            await assertWronglyRejects(container3BlobHandle.get(), "Container3 should be able to get the blob");
+            await assert.doesNotReject(container3BlobHandle.get(), "Container3 should be able to get the blob");
 
             // Reference the blob in container2 and container3 which should be valid. There should not be any asserts
             // or errors logged in any container because of this.

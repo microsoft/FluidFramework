@@ -121,7 +121,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     private readonly mc: MonitoringContext;
 
     /**
-     * Map of local IDs to storage IDs. Contains identity entries (id → id) for storage IDs. All request3ed IDs should
+     * Map of local IDs to storage IDs. Contains identity entries (id → id) for storage IDs. All requested IDs should
      * be a key in this map. Blobs created while the container is detached are stored in IDetachedBlobStorage which
      * gives local IDs; the storage IDs are filled in at attach time.
      */
@@ -500,7 +500,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
             this.setRedirection(message.metadata.localId, message.metadata.blobId);
         }
         // set identity (id -> id) entry
-        this.setRedirection(blobId, message.metadata.blobId);
+        this.setRedirection(blobId, blobId);
 
         if (local) {
             assert(message.metadata?.localId !== undefined, "local ID not present in blob attach message");

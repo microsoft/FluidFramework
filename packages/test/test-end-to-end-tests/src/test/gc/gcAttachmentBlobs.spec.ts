@@ -298,9 +298,9 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             defaultDataStore._root.delete("local3");
             const s2 = await summarizeAndGetUnreferencedNodeStates(summarizerRuntime);
             assert(s2.get(localHandle1.absolutePath) === "unreferenced", "local id 1 blob should be unreferenced");
-            assert(s2.get(localHandle2.absolutePath) === "unreferenced", "local id 2 blob should be referenced (2)");
-            assert(s2.get(localHandle3.absolutePath) === "unreferenced", "local id 3 blob should be referenced (2)");
-            assert(s2.get(storageId) === "unreferenced", "storage id blob should be referenced (2)");
+            assert(s2.get(localHandle2.absolutePath) === "unreferenced", "local id 2 blob should be unreferenced");
+            assert(s2.get(localHandle3.absolutePath) === "unreferenced", "local id 3 blob should be unreferenced");
+            assert(s2.get(storageId) === "unreferenced", "storage id blob should be unreferenced");
 
             // Add the localId1 handle back. If deleteUnreferencedContent is true, all the nodes would have been
             // deleted from the GC state. Else, localId1 and storageId nodes will be referenced and others unreferenced.
@@ -309,12 +309,12 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             if (deleteUnreferencedContent) {
                 assert(s3.get(localHandle1.absolutePath) === undefined, "local id 1 blob should not have a GC entry");
                 assert(s3.get(localHandle2.absolutePath) === undefined, "local id 2 blob should not have a GC entry");
-                assert(s3.get(localHandle3.absolutePath) === undefined, "local id 2 blob should not have a GC entry");
+                assert(s3.get(localHandle3.absolutePath) === undefined, "local id 3 blob should not have a GC entry");
                 assert(s3.get(storageId) === undefined, "storage id blob should not have a GC entry");
             } else {
                 assert(s3.get(localHandle1.absolutePath) === "referenced", "local id 1 blob should be re-referenced");
                 assert(s3.get(localHandle2.absolutePath) === "unreferenced", "local id 2 blob should still be unreferenced");
-                assert(s3.get(localHandle3.absolutePath) === "unreferenced", "local id 2 blob should still be unreferenced");
+                assert(s3.get(localHandle3.absolutePath) === "unreferenced", "local id 3 blob should still be unreferenced");
                 assert(s3.get(storageId) === "referenced", "storage id blob should be re-referenced");
             }
         });
@@ -364,9 +364,9 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             defaultDataStore._root.set("local2", localHandle2);
             defaultDataStore._root.delete("local1");
             const s2 = await summarizeAndGetUnreferencedNodeStates(summarizerRuntime);
-            assert(s2.get(localHandle1.absolutePath) === "unreferenced", "local id 1 blob should be referenced");
+            assert(s2.get(localHandle1.absolutePath) === "unreferenced", "local id 1 blob should be unreferenced");
             assert(s2.get(localHandle2.absolutePath) === "referenced", "local id 2 blob should be referenced");
-            assert(s2.get(storageId) === "referenced", "storage id blob should also be referenced (1)");
+            assert(s2.get(storageId) === "referenced", "storage id blob should also be referenced");
 
             // Remove the localId2 handle. Validate that localId2 and storageId nodes are now unreferenced. Also, if
             // deleteUnreferencedContent is true, localId1 node would have been deleted.
@@ -375,10 +375,10 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             if (deleteUnreferencedContent) {
                 assert(s3.get(localHandle1.absolutePath) === undefined, "local id 1 blob should not have a GC entry");
             } else {
-                assert(s3.get(localHandle1.absolutePath) === "unreferenced", "local id 1 blob should be re-referenced");
+                assert(s3.get(localHandle1.absolutePath) === "unreferenced", "local id 1 blob should still be unreferenced");
             }
             assert(s3.get(localHandle2.absolutePath) === "unreferenced", "local id 2 blob should still be unreferenced");
-            assert(s3.get(storageId) === "unreferenced", "storage id blob should be re-referenced");
+            assert(s3.get(storageId) === "unreferenced", "storage id blob should still be unreferenced");
         });
     };
 
