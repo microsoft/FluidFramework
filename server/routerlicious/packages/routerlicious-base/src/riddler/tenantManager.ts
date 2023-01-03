@@ -276,10 +276,10 @@ export class TenantManager {
             winston.info("Tenant key2 doesn't exist.");
             Lumberjack.info("Tenant key2 doesn't exist.", { [BaseTelemetryProperties.tenantId]: tenantId });
 
-            const cacheKey1 = JSON.stringify({
+            const cacheKey1 = {
                 key1: encryptedTenantKey1,
                 key2: "",
-            });
+            };
 
             await this.setCacheKey(tenantId, cacheKey1);
             Lumberjack.info(`Added key to cache.`, lumberProperties);
@@ -297,10 +297,10 @@ export class TenantManager {
             throw new NetworkError(500, "Tenant key2 decryption failed.");
         }
 
-        const cacheKeys = JSON.stringify({
+        const cacheKeys = {
             key1: encryptedTenantKey1,
             key2: encryptedTenantKey2,
-        });
+        };
 
         await this.setCacheKey(tenantId, cacheKeys);
         Lumberjack.info(`Added new tenant keys to cache.`, lumberProperties);
@@ -370,10 +370,10 @@ export class TenantManager {
                 throw new NetworkError(500, "Tenant key1 decryption failed.");
             }
 
-            const cacheKeys = JSON.stringify({
+            const cacheKeys = {
                 key1,
                 key2: this.secretManager.encryptSecret(newTenantKey)
-            });
+            };
 
             await this.setCacheKey(tenantId, cacheKeys);
             Lumberjack.info(`Added new key to cache.`, lumberProperties);
@@ -390,10 +390,10 @@ export class TenantManager {
             winston.info("Tenant key2 doesn't exist.");
             Lumberjack.info("Tenant key2 doesn't exist.", { [BaseTelemetryProperties.tenantId]: tenantId });
 
-            const cacheKey1 = JSON.stringify({
+            const cacheKey1 = {
                 key1: this.secretManager.encryptSecret(newTenantKey),
                 key2: "",
-            });
+            };
 
             await this.setCacheKey(tenantId, cacheKey1);
             Lumberjack.info(`Added new key to cache.`, lumberProperties);
@@ -526,16 +526,16 @@ export class TenantManager {
     }
 
     private async getCacheKey(tenantId: string): Promise<string> {
-        return this.cache.get(`tenantKeys:${tenantId}`);
+        return this.cache?.get(`tenantKeys:${tenantId}`);
     }
 
     private async deleteCacheKey(tenantId: string): Promise<boolean> {
-        return this.cache.delete(`tenantKeys:${tenantId}`);
+        return this.cache?.delete(`tenantKeys:${tenantId}`);
     }
 
-    private async setCacheKey(tenantId: string, value: string): Promise<void> {
+    private async setCacheKey(tenantId: string, value: ITenantKeys): Promise<void> {
         const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId };
-        await this.cache.set(`tenantKeys:${tenantId}`, value).catch((error)=>{
+        await this.cache?.set(`tenantKeys:${tenantId}`, JSON.stringify(value)).catch((error)=>{
             Lumberjack.error(`Error adding keys to cache.`, lumberProperties, error)
         });
     }
