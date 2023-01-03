@@ -331,6 +331,7 @@ export interface IContainerRuntimeOptions {
     readonly chunkSizeInBytes?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
     readonly enableOfflineLoad?: boolean;
+    readonly enableOpReentryCheck?: boolean;
     readonly flushMode?: FlushMode;
     // (undocumented)
     readonly gcOptions?: IGCRuntimeOptions;
