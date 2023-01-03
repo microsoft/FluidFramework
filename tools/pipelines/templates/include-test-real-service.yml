@@ -318,3 +318,48 @@ jobs:
           searchFolder: ${{ variables.testPackageDir }}/nyc
           mergeTestResults: false
         condition: succeededOrFailed()
+
+      # Check Published Tests
+      - task: Bash@3
+        displayName: 'Check for nyc directory'
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ parameters.buildDirectory }}
+          script: |
+            test -d nyc && echo '##vso[task.setvariable variable=TestReportsExists;]true' || echo 'No nyc directory'
+        condition: succeededOrFailed()
+
+      # Copy Test Reports
+      - task: CopyFiles@2
+        displayName: Copy Test Reports
+        inputs:
+          SourceFolder: ${{ parameters.buildDirectory }}/nyc
+          Contents: '**/*junit-report.xml'
+          TargetFolder: '$(Build.ArtifactStagingDirectory)/testFiles'
+        condition: and(succeededOrFailed(), eq(variables['TestReportsExists'], 'true'))
+
+      # Install parser library
+      - task: Bash@3
+        displayName: Install xml2js
+        inputs:
+          targetType: inline
+          script: |
+            npm i xml2js
+          workingDirectory: tools/report-parser
+        condition: and(succeededOrFailed(), eq(variables['TestReportsExists'], 'true'))
+
+      # Console Log Failed Tests
+      - task: Bash@3
+        displayName: Log Failed Tests
+        inputs:
+          targetType: inline
+          script: |
+            failedTests=$(node printReports.js '$(Build.ArtifactStagingDirectory)/testFiles')
+            if [ $failedTests == [] ]
+            then
+              echo "No failed tests."
+            else
+              echo "##[error] $failedTests"
+            fi
+          workingDirectory: tools/report-parser
+        condition: and(succeededOrFailed(), eq(variables['TestReportsExists'], 'true'))
