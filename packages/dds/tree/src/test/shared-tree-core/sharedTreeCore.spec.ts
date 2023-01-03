@@ -34,7 +34,7 @@ import { EditManager } from "../../edit-manager";
 
 describe("SharedTreeCore", () => {
     it("summarizes without indexes", async () => {
-        const tree = createTree();
+        const tree = createTree([]);
         const { summary, stats } = await tree.summarize();
         assert(summary);
         assert(stats);
@@ -48,7 +48,8 @@ describe("SharedTreeCore", () => {
             const index = new MockIndex();
             let loaded = false;
             index.on("loaded", () => (loaded = true));
-            const tree = createTree([index]);
+            const indexes = [index] as const;
+            const tree = createTree(indexes);
             await tree.load(new MockSharedObjectServices({}));
             assert(loaded, "Expected index to load");
         });
@@ -61,7 +62,8 @@ describe("SharedTreeCore", () => {
                     loadedBlob = true;
                 }
             });
-            const tree = createTree([index]);
+            const indexes = [index] as const;
+            const tree = createTree(indexes);
             const { summary } = await tree.summarize();
             await tree.load(MockSharedObjectServices.createFromSummary(summary));
             assert.equal(loadedBlob, true);
@@ -74,7 +76,7 @@ describe("SharedTreeCore", () => {
             const indexB = new MockIndex("Index B");
             let summarizedIndexB = false;
             indexB.on("summarizeAttached", () => (summarizedIndexB = true));
-            const indexes = [indexA, indexB];
+            const indexes = [indexA, indexB] as const;
             const tree = createTree(indexes);
             const { summary, stats } = tree.getAttachSummary();
             assert(summarizedIndexA, "Expected Index A to summarize");
@@ -132,7 +134,8 @@ describe("SharedTreeCore", () => {
             const index = new MockIndex("Index");
             let requestedGC = false;
             index.on("gcRequested", () => (requestedGC = true));
-            const tree = createTree([index]);
+            const indexes = [index] as const;
+            const tree = createTree(indexes);
             tree.getGCData();
             assert(requestedGC, "Expected SharedTree to ask index for GC");
         });
@@ -142,7 +145,9 @@ describe("SharedTreeCore", () => {
         return summaryObject.type === SummaryType.Tree;
     }
 
-    function createTree(indexes?: Index[]): SharedTreeCore<DefaultChangeset, DefaultChangeFamily> {
+    function createTree<TIndexes extends readonly Index[]>(
+        indexes: TIndexes,
+    ): SharedTreeCore<DefaultChangeset, DefaultChangeFamily, TIndexes> {
         const runtime = new MockFluidDataStoreRuntime();
         const attributes: IChannelAttributes = {
             type: "TestSharedTree",
@@ -156,7 +161,7 @@ describe("SharedTreeCore", () => {
         );
 
         return new SharedTreeCore(
-            indexes ?? [],
+            indexes,
             defaultChangeFamily,
             editManager,
             anchors,
