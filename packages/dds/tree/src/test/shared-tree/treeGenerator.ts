@@ -1,3 +1,4 @@
+import { strict as assert } from "assert";
 import { IRandom } from "@fluid-internal/stochastic-test-utils";
 import { moveToDetachedField } from "../../forest";
 import { ISharedTree } from "../../shared-tree";
@@ -11,20 +12,29 @@ export interface NodeLocation {
     isNewPath: boolean;
 }
 
-export function getRandomNodePosition(tree: ISharedTree, random: IRandom): NodeLocation {
+export function getRandomNodePosition(tree: ISharedTree, random: IRandom, existingPath = false): NodeLocation {
     const moves = {
         field: ["enterNode", "nextField"],
         nodes: ["stop", "firstField"],
     };
     const cursor = tree.forest.allocateCursor();
     moveToDetachedField(tree.forest, cursor);
+    const firstNode = cursor.firstNode();
+    cursor.firstField();
+    const firstField = cursor.getFieldKey();
+    const firstFieldNodes = cursor.getFieldLength();
+
+    assert(firstNode !== undefined, "tree must contain at least one node");
+    assert(firstField !== undefined);
+    assert(firstFieldNodes > 0);
+
+    let fieldNodes: number = firstFieldNodes;
+    let path: UpPath | undefined;
+    let nodeField: FieldKey = firstField;
+    let nodeIndex: number = fieldNodes;
+    let isNewPath: boolean = false;
 
     let currentMove = "enterNode";
-    let path: UpPath | undefined;
-    let nodeField: FieldKey | undefined;
-    let nodeIndex: number | undefined;
-    let fieldNodes: number = cursor.getFieldLength();
-    let isNewPath: boolean = false;
     const testerKey: FieldKey = brand("Test");
 
     while (currentMove !== "stop") {
@@ -50,9 +60,11 @@ export function getRandomNodePosition(tree: ISharedTree, random: IRandom): NodeL
                     fieldNodes = cursor.getFieldLength();
                 } else {
                     currentMove = "stop";
-                    nodeField = testerKey;
-                    nodeIndex = 0;
-                    isNewPath = true;
+                    if (!existingPath) {
+                        nodeField = testerKey;
+                        nodeIndex = 0;
+                        isNewPath = true;
+                    }
                 }
                 break;
             case "nextField":
@@ -61,9 +73,11 @@ export function getRandomNodePosition(tree: ISharedTree, random: IRandom): NodeL
                     fieldNodes = cursor.getFieldLength();
                 } else {
                     currentMove = "stop";
-                    nodeField = testerKey;
-                    nodeIndex = 0;
-                    isNewPath = true;
+                    if (!existingPath) {
+                        nodeField = testerKey;
+                        nodeIndex = 0;
+                        isNewPath = true;
+                    }
                 }
                 break;
             default:
