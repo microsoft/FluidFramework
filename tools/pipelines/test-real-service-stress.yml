@@ -89,6 +89,9 @@ stages:
         testCommand: start:t9s
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+          # Disable colorization for tinylicious logs (not useful when printing to a file)
+          logger__colorize: false
+          logger__morganFormat: tiny
         additionalSteps:
 
         # Publish the tinylicious log
