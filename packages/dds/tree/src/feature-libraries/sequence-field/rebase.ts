@@ -32,6 +32,7 @@ import {
     updateMoveSrcDetacher,
     updateMoveSrcPairing,
     updateMoveDestPairing,
+    PairedMarkUpdate,
 } from "./utils";
 import {
     Attach,
@@ -533,7 +534,11 @@ function rebaseMark<TNodeChange>(
                     const newCurrMark = clone(currMark) as ReturnFrom<TNodeChange>;
                     delete newCurrMark.mutedBy;
                     delete newCurrMark.detachIndex;
-                    updateMoveDestPairing(moveEffects, newCurrMark.id, false);
+                    updateMoveDestPairing(
+                        moveEffects,
+                        newCurrMark.id,
+                        PairedMarkUpdate.Reactivated,
+                    );
                     return newCurrMark;
                 }
             }
@@ -550,7 +555,7 @@ function rebaseMark<TNodeChange>(
             if (isActiveReattach(currMark)) {
                 // The nodes that currMark aims to reattach are being reattached by baseMark
                 if (currMark.type === "ReturnTo") {
-                    updateMoveSrcPairing(moveEffects, currMark.id, true);
+                    updateMoveSrcPairing(moveEffects, currMark.id, PairedMarkUpdate.Deactivated);
                 }
                 return {
                     ...clone(currMark),
@@ -585,7 +590,11 @@ function rebaseMark<TNodeChange>(
                 if (newCurrMark.type === "ReturnFrom") {
                     newCurrMark.mutedBy = baseMarkRevision;
                     newCurrMark.detachIndex = baseInputOffset;
-                    updateMoveDestPairing(moveEffects, newCurrMark.id, true);
+                    updateMoveDestPairing(
+                        moveEffects,
+                        newCurrMark.id,
+                        PairedMarkUpdate.Deactivated,
+                    );
                     return newCurrMark;
                 } else if (newCurrMark.type === "ReturnTo") {
                     assert(
@@ -603,7 +612,11 @@ function rebaseMark<TNodeChange>(
                         newCurrMark.detachIndex = baseInputOffset;
                         delete (newCurrMark as Mutable).mutedBy;
                         updateMoveSrcDetacher(moveEffects, newCurrMark.id, baseMarkRevision);
-                        updateMoveSrcPairing(moveEffects, newCurrMark.id, false);
+                        updateMoveSrcPairing(
+                            moveEffects,
+                            newCurrMark.id,
+                            PairedMarkUpdate.Reactivated,
+                        );
                     }
                     return newCurrMark;
                 } else if (newCurrMark.type === "Revive" && !newCurrMark.isIntention) {

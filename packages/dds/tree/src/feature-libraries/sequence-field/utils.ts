@@ -135,16 +135,18 @@ function areSameLineage(lineage1: LineageEvent[], lineage2: LineageEvent[]): boo
 
 /**
  * @param mark - The mark to get the length of.
+ * @param ignorePairing - When true, the length of a src or dst mark is whose matching src or dst is not active
+ * will be treated the same as if that matching src or dst were active.
  * @returns The number of nodes within the output context of the mark.
  */
-export function getOutputLength(mark: Mark<unknown>, preserveUnpaired: boolean = false): number {
+export function getOutputLength(mark: Mark<unknown>, ignorePairing: boolean = false): number {
     if (isSkipMark(mark)) {
         return mark;
     }
     const type = mark.type;
     switch (type) {
         case "ReturnTo":
-            return mark.unpaired && !preserveUnpaired ? 0 : mark.count;
+            return mark.isSrcMuted && !ignorePairing ? 0 : mark.count;
         case "Revive":
         case "MoveIn":
             return mark.count;
@@ -153,7 +155,7 @@ export function getOutputLength(mark: Mark<unknown>, preserveUnpaired: boolean =
         case "Modify":
             return 1;
         case "ReturnFrom":
-            return mark.unpaired && !preserveUnpaired ? mark.count : 0;
+            return mark.isDstMuted && !ignorePairing ? mark.count : 0;
         case "Delete":
         case "MoveOut":
             return 0;
@@ -172,7 +174,7 @@ export function getInputLength(mark: Mark<unknown>): number {
     }
     if (isAttach(mark)) {
         if (isSkipLikeReattach(mark)) {
-            return "count" in mark ? mark.count : 1;
+            return mark.count;
         }
         return 0;
     }
@@ -422,14 +424,14 @@ export function tryExtendMark(
         }
         case "MoveOut":
         case "ReturnFrom": {
-            // TODO: Handle reattach fields
             const lhsMoveOut = lhs as MoveOut | ReturnFrom;
-            if (
-                rhs.tomb === lhsMoveOut.tomb &&
-                moveEffects !== undefined &&
-                (lhsMoveOut.type === "MoveOut" ||
-                    areMergeableReturnFrom(lhs as ReturnFrom, rhs as ReturnFrom))
-            ) {
+            if (rhs.tomb === lhsMoveOut.tomb && moveEffects !== undefined) {
+                if (
+                    lhsMoveOut.type === "ReturnFrom" &&
+                    !areMergeableReturnFrom(lhs as ReturnFrom, rhs as ReturnFrom)
+                ) {
+                    break;
+                }
                 const prevMerge = moveEffects.srcMergeable.get(lhsMoveOut.id);
                 if (prevMerge !== undefined) {
                     moveEffects.srcMergeable.set(prevMerge, rhs.id);
@@ -515,6 +517,17 @@ export function newMoveEffectTable<T>(): MoveEffectTable<T> {
     };
 }
 
+export enum PairedMarkUpdate {
+    /**
+     * Indicates that the mark's matching mark is now inactive.
+     */
+    Deactivated,
+    /**
+     * Indicates that the mark's matching mark is now active.
+     */
+    Reactivated,
+}
+
 export interface MovePartition<TNodeChange> {
     id: MoveId;
 
@@ -522,7 +535,13 @@ export interface MovePartition<TNodeChange> {
     count?: number;
     replaceWith?: Mark<TNodeChange>[];
     modifyAfter?: TNodeChange;
-    pairing?: boolean;
+    /**
+     * When set, updates the mark's paired mark status.
+     */
+    pairedMarkStatus?: PairedMarkUpdate;
+    /**
+     * When set, updates the mark's `detachedBy` field.
+     */
     detachedBy?: RevisionTag;
 }
 
@@ -683,16 +702,15 @@ export function replaceMoveSrc<T>(
 export function updateMoveSrcPairing<T>(
     table: MoveEffectTable<T>,
     id: MoveId,
-    pairing: boolean,
+    pairedMarkStatus: PairedMarkUpdate,
 ): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
         const effect = getOrAddEmptyToMap(table.srcEffects, origId);
         const partition = getOrAddMovePartition(effect, id);
-        assert(partition.pairing === undefined, "Move source already being blocked/unblocked");
-        partition.pairing = pairing;
+        partition.pairedMarkStatus = pairedMarkStatus;
     } else {
-        table.srcEffects.set(id, [{ id, pairing }]);
+        table.srcEffects.set(id, [{ id, pairedMarkStatus }]);
         table.splitIdToOrigId.set(id, id);
     }
 }
@@ -700,17 +718,16 @@ export function updateMoveSrcPairing<T>(
 export function updateMoveDestPairing<T>(
     table: MoveEffectTable<T>,
     id: MoveId,
-    pairing: boolean,
+    pairedMarkStatus: PairedMarkUpdate,
 ): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
         const effect = getOrAddEmptyToMap(table.dstEffects, origId);
         const partition = getOrAddMovePartition(effect, id);
-        assert(partition.pairing === undefined, "Move source already being blocked/unblocked");
-        partition.pairing = pairing;
+        partition.pairedMarkStatus = pairedMarkStatus;
     } else {
         assert(!table.dstEffects.has(id), "This MoveId cannot be replaced");
-        table.dstEffects.set(id, [{ id, pairing }]);
+        table.dstEffects.set(id, [{ id, pairedMarkStatus }]);
     }
 }
 
@@ -813,7 +830,7 @@ export function isMoveMark<T>(mark: Mark<T>): mark is MoveMark<T> {
 
 export function splitMoveIn<T>(
     mark: MoveIn | ReturnTo,
-    blockMarks: boolean,
+    updatePairedMarkStatus: boolean,
     parts: MovePartition<T>[],
 ): Mark<T>[] {
     const result: Mark<T>[] = [];
@@ -834,11 +851,11 @@ export function splitMoveIn<T>(
                 const returnTo = portion as ReturnTo;
                 returnTo.detachIndex = mark.detachIndex + cumulativeCount;
                 cumulativeCount += portion.count;
-                if (blockMarks && part.pairing !== undefined) {
-                    if (part.pairing) {
-                        returnTo.unpaired = true;
+                if (updatePairedMarkStatus && part.pairedMarkStatus !== undefined) {
+                    if (part.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
+                        returnTo.isSrcMuted = true;
                     } else {
-                        delete returnTo.unpaired;
+                        delete returnTo.isSrcMuted;
                     }
                 }
             }
@@ -850,7 +867,7 @@ export function splitMoveIn<T>(
 export function splitMoveOut<T>(
     mark: MoveOut<T> | ReturnFrom<T>,
     parts: MovePartition<T>[],
-    blockMarks: boolean,
+    updatePairedMarkStatus: boolean,
     composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
     const result: Mark<T>[] = [];
@@ -877,16 +894,16 @@ export function splitMoveOut<T>(
                     delete splitMark.changes;
                 }
             }
-            if (blockMarks && part.pairing !== undefined) {
-                // TODO: support blocking for move
+            if (updatePairedMarkStatus && part.pairedMarkStatus !== undefined) {
+                // TODO: support unpairing for move
                 assert(
                     splitMark.type === "ReturnFrom",
-                    "Only ReturnFrom marks can be blocked through move effects",
+                    "Only ReturnFrom marks can be unpaired through move effects",
                 );
-                if (part.pairing) {
-                    splitMark.unpaired = true;
+                if (part.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
+                    splitMark.isDstMuted = true;
                 } else {
-                    delete splitMark.unpaired;
+                    delete splitMark.isDstMuted;
                 }
             }
             if (part.detachedBy !== undefined) {
@@ -917,7 +934,7 @@ export function applyMoveEffectsToMark<T>(
     moveEffects: MoveEffectTable<T>,
     genId: IdAllocator,
     reassignIds: boolean,
-    blockMarks: boolean,
+    updatePairedMarkStatus: boolean,
     composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
     let mark = inputMark;
@@ -938,7 +955,12 @@ export function applyMoveEffectsToMark<T>(
                 const effect = moveEffects.srcEffects.get(mark.id);
                 if (effect !== undefined) {
                     moveEffects.srcEffects.delete(mark.id);
-                    const splitMarks = splitMoveOut(mark, effect, blockMarks, composeChildren);
+                    const splitMarks = splitMoveOut(
+                        mark,
+                        effect,
+                        updatePairedMarkStatus,
+                        composeChildren,
+                    );
                     for (const splitMark of splitMarks) {
                         moveEffects.validatedMarks.add(splitMark);
                     }
@@ -951,7 +973,7 @@ export function applyMoveEffectsToMark<T>(
                 const effect = moveEffects.dstEffects.get(mark.id);
                 if (effect !== undefined) {
                     moveEffects.dstEffects.delete(mark.id);
-                    const splitMarks = splitMoveIn(mark, blockMarks, effect);
+                    const splitMarks = splitMoveIn(mark, updatePairedMarkStatus, effect);
                     for (const splitMark of splitMarks) {
                         moveEffects.validatedMarks.add(splitMark);
                     }

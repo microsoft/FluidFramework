@@ -220,7 +220,11 @@ function composeMarks<TNodeChange>(
         case "MoveIn": {
             switch (newType) {
                 case "Delete": {
-                    replaceMoveSrc(moveEffects, baseMark.id, composeMark(newMark, newRev, composeChild, genId, moveEffects));
+                    replaceMoveSrc(
+                        moveEffects,
+                        baseMark.id,
+                        composeMark(newMark, newRev, composeChild, genId, moveEffects),
+                    );
                     return 0;
                 }
                 case "MoveOut": {
@@ -259,7 +263,11 @@ function composeMarks<TNodeChange>(
                     return baseMark;
                 }
                 case "Delete": {
-                    replaceMoveSrc(moveEffects, baseMark.id, composeMark(newMark, newRev, composeChild, genId, moveEffects));
+                    replaceMoveSrc(
+                        moveEffects,
+                        baseMark.id,
+                        composeMark(newMark, newRev, composeChild, genId, moveEffects),
+                    );
                     return 0;
                 }
                 case "MoveOut": {
@@ -459,7 +467,7 @@ export class ComposeQueue<T> {
         private readonly genId: IdAllocator,
         private readonly moveEffects: MoveEffectTable<T>,
         private readonly reassignNewMoveIds: boolean = true,
-        private readonly blockMarks: boolean = true,
+        private readonly updatePairedMarkStatus: boolean = true,
         private readonly composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
     ) {
         this.baseMarks = new StackyIterator(baseMarks);
@@ -629,7 +637,7 @@ export class ComposeQueue<T> {
         return this.getNextMark(
             this.newMarks,
             this.reassignNewMoveIds,
-            this.blockMarks,
+            this.updatePairedMarkStatus,
             this.newRevision,
         );
     }
@@ -637,7 +645,7 @@ export class ComposeQueue<T> {
     private getNextMark(
         marks: StackyIterator<Mark<T>>,
         reassignMoveIds: boolean,
-        blockMarks: boolean,
+        updatePairedMarkStatus: boolean,
         revision: RevisionTag | undefined,
     ): Mark<T> | undefined {
         let mark: Mark<T> | undefined;
@@ -653,7 +661,7 @@ export class ComposeQueue<T> {
                 this.moveEffects,
                 this.genId,
                 reassignMoveIds,
-                blockMarks,
+                updatePairedMarkStatus,
                 this.composeChanges,
             );
 
