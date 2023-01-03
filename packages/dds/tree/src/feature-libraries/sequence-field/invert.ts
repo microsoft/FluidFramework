@@ -16,9 +16,6 @@ export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChan
  * @returns The inverse of the given `change` such that the inverse can be applied after `change`.
  *
  * WARNING! This implementation is incomplete:
- * - It is unable to produce adequate inverses for set-value and delete operations.
- * This is because changesets are not given IDs.
- * - Support for moves is not implemented.
  * - Support for slices is not implemented.
  */
 export function invert<TNodeChange>(
@@ -53,8 +50,7 @@ function invertMark<TNodeChange>(
         return [mark];
     } else {
         switch (mark.type) {
-            case "Insert":
-            case "MInsert": {
+            case "Insert": {
                 return [
                     {
                         type: "Delete",
@@ -85,6 +81,29 @@ function invertMark<TNodeChange>(
                     {
                         type: "Modify",
                         changes: invertChild(mark.changes),
+                    },
+                ];
+            }
+            case "MoveOut":
+            case "ReturnFrom": {
+                return [
+                    {
+                        type: "ReturnTo",
+                        id: mark.id,
+                        count: mark.count,
+                        detachedBy: mark.revision ?? revision,
+                        detachIndex: inputIndex,
+                    },
+                ];
+            }
+            case "MoveIn":
+            case "ReturnTo": {
+                return [
+                    {
+                        type: "ReturnFrom",
+                        id: mark.id,
+                        count: mark.count,
+                        detachedBy: mark.revision ?? revision,
                     },
                 ];
             }

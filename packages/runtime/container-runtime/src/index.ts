@@ -29,11 +29,6 @@ export {
     IGCStats,
 } from "./garbageCollection";
 export {
-    gcBlobPrefix,
-    gcTombstoneBlobKey,
-    gcTreeKey,
-} from "./garbageCollectionConstants";
-export {
     IPendingFlush,
     IPendingLocalState,
     IPendingMessage,

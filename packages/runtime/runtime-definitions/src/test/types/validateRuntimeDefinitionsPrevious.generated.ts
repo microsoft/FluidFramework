@@ -232,26 +232,14 @@ use_old_EnumDeclaration_FlushMode(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcBlobKey": {"forwardCompat": false}
+* "RemovedVariableDeclaration_gcBlobKey": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_gcBlobKey():
-    TypeOnly<typeof old.gcBlobKey>;
-declare function use_current_VariableDeclaration_gcBlobKey(
-    use: TypeOnly<typeof current.gcBlobKey>);
-use_current_VariableDeclaration_gcBlobKey(
-    get_old_VariableDeclaration_gcBlobKey());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcBlobKey": {"backCompat": false}
+* "RemovedVariableDeclaration_gcBlobKey": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_gcBlobKey():
-    TypeOnly<typeof current.gcBlobKey>;
-declare function use_old_VariableDeclaration_gcBlobKey(
-    use: TypeOnly<typeof old.gcBlobKey>);
-use_old_VariableDeclaration_gcBlobKey(
-    get_current_VariableDeclaration_gcBlobKey());
 
 /*
 * Validate forward compat by using old type in place of current type

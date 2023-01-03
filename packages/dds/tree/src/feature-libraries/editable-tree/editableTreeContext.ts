@@ -27,7 +27,9 @@ import {
 } from "../../core";
 import { DefaultChangeset, DefaultEditBuilder } from "../defaultChangeFamily";
 import { runSynchronousTransaction } from "../defaultTransaction";
+import { singleMapTreeCursor } from "../mapTreeCursor";
 import { ProxyTarget, EditableField, proxifyField, UnwrappedEditableField } from "./editableTree";
+import { applyFieldTypesFromContext, ContextuallyTypedNodeData } from "./utilities";
 
 /**
  * A common context of a "forest" of EditableTrees.
@@ -35,25 +37,50 @@ import { ProxyTarget, EditableField, proxifyField, UnwrappedEditableField } from
  */
 export interface EditableTreeContext {
     /**
-     * Gets a Javascript Proxy providing a JavaScript object like API for interacting with the tree.
+     * Gets or sets the root field of the tree.
      *
-     * Use built-in JS functions to get more information about the data stored e.g.
-     * ```
-     * for (const key of Object.keys(context.root)) { ... }
-     * // OR
-     * if ("foo" in data) { ... }
-     * context.free();
-     * ```
+     * When using its setter, the input data must be formed depending
+     * on a multiplicity of the field, on if it's polymorphic or not and, for non-sequence multiplicities,
+     * on if the field's node declares its primary function by means of a primary field (see `getPrimaryField`):
+     * - For `Sequence` multiplicities and "primary fielded" nodes, an array of a {@link ContextuallyTypedNodeData}
+     * or an {@link EditableField} is expected.
+     * Use an empty array to delete all nodes of a sequence field.
+     * - For `Optional` multiplicities, `ContextuallyTypedNodeDataObject | undefined` is expected.
+     * If the input data is `undefined`, the field node will be deleted if it exists.
+     * - For `Value` multiplicities, `ContextuallyTypedNodeDataObject` is expected.
      *
-     * Not (yet) supported: create properties, set values and delete properties.
+     * A `PrimitiveValue` can be used instead of a `ContextuallyTypedNodeDataObject`
+     * to create/replace or to set the value of the primitive node
+     * if the field is a non-sequence and some of its types declare to follow
+     * the `String`, `Number` or `Boolean` value schema (see `ValueSchema`).
+     * For this to work, it must be possible to resolve the node type by unambiguously matching
+     * a basic TypeScript type of the input data to one of the types allowed by the field,
+     * or, if the field types are undefined, to one of the types available in the global tree schema.
+     * If it's not possible, a `ContextuallyTypedNodeDataObject` with an explicitly provided
+     * type and a value (using a `typeNameSymbol` and a `valueSymbol`) must be used instead.
+     *
+     * Note that currently a setter implementation replaces the nodes and not the field itself,
+     * as this is the only option available in the low-level editing API.
+     * Replacing the nodes has different merge semantics than replacing the field:
+     * it should not overwrite concurrently inserted content while replacing the field should.
+     * This might be changed in the future once the low-level editing API is available.
      */
-    readonly root: EditableField;
+    get root(): EditableField;
+
+    set root(data: ContextuallyTypedNodeData | undefined);
 
     /**
-     * Same as `root`, but with unwrapped fields.
-     * See ${@link UnwrappedEditableField} for what is unwrapped.
+     * Gets or sets the root field of the tree.
+     *
+     * When using its getter, see {@link UnwrappedEditableField} for what is unwrapped.
+     *
+     * Currently, its setter works exactly the same way as {@link EditableTreeContext.root},
+     * but it might be changed in the future once the low-level editing API
+     * for `replaceField` will become available.
      */
-    readonly unwrappedRoot: UnwrappedEditableField;
+    get unwrappedRoot(): UnwrappedEditableField;
+
+    set unwrappedRoot(data: ContextuallyTypedNodeData | undefined);
 
     /**
      * Schema used within this context.
@@ -154,8 +181,30 @@ export class ProxyContext implements EditableTreeContext {
         return this.getRoot(true);
     }
 
+    public set unwrappedRoot(value: ContextuallyTypedNodeData | undefined) {
+        // Note that an implementation of `set root` might change in the future,
+        // see a comment in there regarding the `replaceNodes` and `replaceField` semantics.
+        // This setter might want to keep the `replaceNodes` semantics for the cases when the root is unwrapped,
+        // and use `replaceField` only if the root is a sequence field i.e.
+        // it's unwrapped to the field itself.
+        // TODO: update implementation once the low-level editing API is available.
+        this.root = value;
+    }
+
     public get root(): EditableField {
         return this.getRoot(false);
+    }
+
+    public set root(value: ContextuallyTypedNodeData | undefined) {
+        const rootField = this.getRoot(false);
+        const mapTrees = applyFieldTypesFromContext(this.schema, rootField.fieldSchema, value);
+        const cursors = mapTrees.map(singleMapTreeCursor);
+        // `replaceNodes` has different merge semantics than the `replaceField` would ideally offer:
+        // `replaceNodes` should not overwrite concurrently inserted content while `replaceField` should.
+        // We currently use `replaceNodes` here because the low-level editing API
+        // for the desired `replaceField` semantics is not yet avaialble.
+        // TODO: update implementation once the low-level editing API is available.
+        rootField.replaceNodes(0, cursors);
     }
 
     private getRoot(unwrap: false): EditableField;
@@ -187,6 +236,17 @@ export class ProxyContext implements EditableTreeContext {
 
     public setNodeValue(path: UpPath, value: Value): boolean {
         return this.runTransaction((editor) => editor.setValue(path, value));
+    }
+
+    public setValueField(
+        path: UpPath | undefined,
+        fieldKey: FieldKey,
+        newContent: ITreeCursor,
+    ): boolean {
+        return this.runTransaction((editor) => {
+            const field = editor.valueField(path, fieldKey);
+            field.set(newContent);
+        });
     }
 
     public setOptionalField(
@@ -222,6 +282,20 @@ export class ProxyContext implements EditableTreeContext {
         return this.runTransaction((editor) => {
             const field = editor.sequenceField(path, fieldKey);
             field.delete(index, count);
+        });
+    }
+
+    public replaceNodes(
+        path: UpPath | undefined,
+        fieldKey: FieldKey,
+        index: number,
+        count: number,
+        newContent: ITreeCursor | ITreeCursor[],
+    ): boolean {
+        return this.runTransaction((editor) => {
+            const field = editor.sequenceField(path, fieldKey);
+            field.delete(index, count);
+            field.insert(index, newContent);
         });
     }
 

@@ -22,7 +22,7 @@ import {
     ValueSchema,
     LocalFieldKey,
 } from "../../../core";
-import { brand, clone } from "../../../util";
+import { brand, clone, isAssignableTo, requireTrue } from "../../../util";
 import {
     defaultSchemaPolicy,
     getEditableTreeContext,
@@ -45,6 +45,9 @@ import {
     indexSymbol,
     getPrimaryField,
     namedTreeSchema,
+    ContextuallyTypedNodeData,
+    ContextuallyTypedNodeDataObject,
+    MarkedArrayLike,
 } from "../../../feature-libraries";
 
 import {
@@ -631,6 +634,9 @@ describe("editable-tree: read-only", () => {
             {
                 number: "012345",
                 prefix: "0123",
+                extraPhones: {
+                    "0": "91919191",
+                },
             },
             ["112", "113"],
         ];
@@ -720,3 +726,24 @@ describe("editable-tree: read-only", () => {
         }
     });
 });
+
+// This is only to cover the type checking, consider as a helper to properly define the contextually typed API
+{
+    type _checkTree = requireTrue<isAssignableTo<EditableTree, ContextuallyTypedNodeDataObject>>;
+    type _checkUnwrappedTree = requireTrue<
+        isAssignableTo<UnwrappedEditableTree, ContextuallyTypedNodeData>
+    >;
+    type _checkField = requireTrue<
+        isAssignableTo<ContextuallyTypedNodeData | undefined, UnwrappedEditableField>
+    >;
+    const x: ContextuallyTypedNodeDataObject = 0 as any as EditableTree;
+    const xx: MarkedArrayLike<ContextuallyTypedNodeData> = 0 as any as EditableField;
+
+    // TODO: there seems to be a bug in TypeCheck library, since
+    // this should fail, but it does not (undefined should break it).
+    type _checkFail = requireTrue<
+        isAssignableTo<UnwrappedEditableField, ContextuallyTypedNodeData>
+    >;
+    // This does fail, but it should check the same as the above
+    // const _dummyValue: ContextuallyTypedNodeData = 0 as any as UnwrappedEditableField;
+}

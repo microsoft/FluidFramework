@@ -10,8 +10,8 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedMap } from "@fluidframework/map";
 
-import { externalDataSource, parseStringData } from "../externalData";
-import type { ITask, ITaskEvents, ITaskList } from "../modelInterfaces";
+import { customerServicePort, ParsedTaskData, parseStringData } from "../mock-service-interface";
+import type { ITask, ITaskEvents, ITaskList } from "../model-interface";
 
 class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
     public get id(): string {
@@ -101,7 +101,7 @@ export class TaskList extends DataObject implements ITaskList {
         const draftNameString = SharedString.create(this.runtime);
 
         // TODO: addTask will be called for tasks added in Fluid. Should only write to the draftMap directly here
-        // savedMAp will get updated when the data syncs back
+        // savedMap will get updated when the data syncs back
         savedNameString.insertText(0, name);
         draftNameString.insertText(0, name);
 
@@ -130,7 +130,7 @@ export class TaskList extends DataObject implements ITaskList {
     };
 
     public readonly deleteTask = (id: string): void => {
-        this.root.delete(id);
+        this.handleTaskDeleted(id);
     };
 
     public readonly getTasks = (): Task[] => {
@@ -168,42 +168,98 @@ export class TaskList extends DataObject implements ITaskList {
         this.emit("taskDeleted", deletedTask);
     };
 
-    // TODO: Is it useful to block further changes during the sync'ing process?  Consider implementing a state to
-    // put the data object in while import is occurring (e.g. to disable input, etc.).
-    // TODO: Consider performing the update in 2 phases (fetch, merge) to enable some nice conflict UI
-    // TODO: Guard against reentrancy
-    // TODO: Use leader election to reduce noise from competing clients
+    /**
+     * Fetch any updated data from the external data source and sync local state to it.
+     *
+     * @returns A promise that resolves when the external data fetch and Fluid data update complete.
+     *
+     * @privateRemarks
+     *
+     * TODO: Make this method private - should only be triggered when incoming signal/op indicates that the data
+     * was updated.
+     *
+     * TODO: Is it useful to block further changes during the sync'ing process?
+     * Consider implementing a state to put the data object in while import is occurring (e.g. to disable input, etc.).
+     *
+     * TODO: Consider performing the update in 2 phases (fetch, merge) to enable some nice conflict UI
+     *
+     * TODO: Guard against reentrancy
+     *
+     * TODO: Use leader election to reduce noise from competing clients
+     */
     public async importExternalData(): Promise<void> {
-        console.log('Kicking off fetching external data from TaskList');
-        const externalData = await externalDataSource.fetchData();
-        const parsedTaskData = parseStringData(externalData);
+        console.log('TASK-LIST: Fetching external data from service...');
+
+        let updatedExternalData: ParsedTaskData[] | undefined;
+        try {
+            const response = await fetch(
+                `http://localhost:${customerServicePort}/fetch-tasks`,
+                {
+                    method: 'GET',
+                    headers: {
+                        "Access-Control-Allow-Origin": "*",
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+
+            const responseBody = await response.json() as Record<string, unknown>;
+            const data = responseBody.taskList as string;
+            if(data === undefined) {
+                throw new Error("Task list fetch returned no data.");
+            }
+
+            updatedExternalData = parseStringData(data);
+            console.log("TASK-LIST: Data imported from service.", updatedExternalData);
+        } catch (error) {
+            console.error(`Task list fetch failed due to an error:\n${error}`);
+
+            // TODO: Display error status to user? Attempt some number of retries on failure?
+
+            return;
+        }
+
         // TODO: Delete any items that are in the root but missing from the external data
-        const updateTaskPs = parsedTaskData.map(async ({ id, name, priority }) => {
-            const currentTask = this.tasks.get(id);
+        const updateTaskPs = updatedExternalData.map(async ({ id, name, priority }) => {
+            const currentTask = this.draftData.get<PersistedTask>(id);
+            // Write external data into savedData map.
+            this.savedData.set(id, currentTask);
+
             if (currentTask === undefined) {
                 // A new task was added from external source, add it to the Fluid data.
                 this.addTask(id, name, priority);
                 return;
             }
-            if (currentTask.name.getText() !== name) {
-                // TODO: Name has changed from external source, update the Fluid data
-                // For a first approach it's probably fine to stomp the Fluid data.  But eventually this is where
+            const [currName, currPriority] = await Promise.all([
+                currentTask.name.get(),
+                currentTask.priority.get(),
+            ]);
+            if (currName.getText() !== name) {
+                // TODO: Currently replacing existing Fluid data.  But eventually this is where
                 // we'd want conflict resolution UX.
+                currName.replaceText(0, currName.getLength(), name);
             }
-            if (currentTask.priority !== priority) {
-                // TODO: Priority has changed from external source, update the Fluid data
-                // For a first approach it's probably fine to stomp the Fluid data.  But eventually this is where
+            if (currPriority.get() !== priority) {
+                // TODO: Currently replacing existing Fluid data. But eventually this is where
                 // we'd want conflict resolution UX.
+                currPriority.set(priority);
             }
+            // Saved updated Fluid data with
+            this.draftData.set(id, currentTask);
         });
+
         await Promise.all(updateTaskPs);
     }
 
     /**
      * Save the current data in the container back to the external data source.
-     * @remarks This method is public, and would map to clicking a "Save" button in some UX.  For more-automatic
-     * sync'ing this method probably wouldn't exist.
-     * @returns A promise that resolves when the write completes
+     *
+     * @remarks
+     *
+     * This method is public, and would map to clicking a "Save" button in some UX.
+     * For more-automatic sync'ing this method probably wouldn't exist.
+     *
+     * @returns A promise that resolves when the write completes.
      */
     public readonly saveChanges = async (): Promise<void> => {
         // TODO: Consider this.getTasks() will include local (un-ack'd) changes to the Fluid data as well.  In
@@ -216,8 +272,23 @@ export class TaskList extends DataObject implements ITaskList {
         });
         const stringDataToWrite = `${taskStrings.join("\n")}`;
 
-        // TODO: Do something reasonable to handle failure, retry, etc.
-        return externalDataSource.writeData(stringDataToWrite);
+        try {
+            await fetch(
+                `http://localhost:${customerServicePort}/set-tasks`,
+                {
+                    method: 'POST',
+                    headers: {
+                        "Access-Control-Allow-Origin": "*",
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ taskList: stringDataToWrite }),
+                }
+            );
+        } catch (error) {
+            console.error(`Task list submition failed due to an error:\n${error}`);
+
+            // TODO: display error status to user?
+        }
     };
 
     protected async initializingFirstTime(): Promise<void> {

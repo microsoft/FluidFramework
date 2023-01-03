@@ -224,8 +224,8 @@ describe("SharedTree", () => {
         // It's not clear if we'll ever want to expose the EditManager to ISharedTree consumers or
         // if we'll ever expose some memory stats in which the trunk length would be included.
         // If we do then this test should be updated to use that code path.
-        const t1 = tree1 as unknown as SharedTreeCore<unknown, any>;
-        const t2 = tree2 as unknown as SharedTreeCore<unknown, any>;
+        const t1 = tree1 as unknown as SharedTreeCore<unknown, any, any>;
+        const t2 = tree2 as unknown as SharedTreeCore<unknown, any, any>;
         assert(t1.editManager.getTrunk().length < 10);
         assert(t2.editManager.getTrunk().length < 10);
     });

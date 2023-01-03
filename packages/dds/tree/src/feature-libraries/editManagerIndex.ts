@@ -49,7 +49,7 @@ const stringKey = "String";
 // TODO: Try to reduce this to a single type parameter
 // TODO: Move logic into Rebaser if possible
 export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any, TChangeset>>
-    implements Index<TChangeset>, SummaryElement
+    implements Index, SummaryElement
 {
     public readonly summaryElement?: SummaryElement = this;
     public readonly key = "EditManager";

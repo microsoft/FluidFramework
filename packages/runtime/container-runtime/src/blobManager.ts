@@ -25,6 +25,7 @@ import {
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summarizerClientElection";
 import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
+import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
 
 /**
  * This class represents blob (long string)
@@ -110,7 +111,11 @@ interface PendingBlob {
 
 export interface IPendingBlobs { [id: string]: { blob: string; }; }
 
-export class BlobManager {
+export interface IBlobManagerEvents {
+    (event: "noPendingBlobs", listener: () => void);
+}
+
+export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     public static readonly basePath = "_blobs";
     private static readonly redirectTableBlobName = ".redirectTable";
     private readonly mc: MonitoringContext;
@@ -172,6 +177,7 @@ export class BlobManager {
         private readonly runtime: IBlobManagerRuntime,
         stashedBlobs: IPendingBlobs = {},
     ) {
+        super();
         this.mc = loggerToMonitoringContext(ChildLogger.create(this.runtime.logger, "BlobManager"));
         // Read the feature flag that tells whether to throw when a tombstone blob is requested.
         this.throwOnTombstoneUsage =
@@ -200,6 +206,11 @@ export class BlobManager {
 
     public get hasPendingOfflineUploads(): boolean {
         return this.pendingOfflineUploads.length > 0;
+    }
+
+    public get hasPendingBlobs(): boolean {
+        return (this.runtime.attachState !== AttachState.Attached && this.redirectTable.size > 0)
+        || this.pendingBlobs.size > 0;
     }
 
     /**
@@ -261,10 +272,11 @@ export class BlobManager {
         const request = { url: blobId };
         if (this.tombstonedBlobs.has(blobId) ) {
             const error = responseToException(createResponseError(404, "Blob removed by gc", request), request);
-            this.mc.logger.sendErrorEvent({
+            const event = {
                 eventName: "GC_Tombstone_Blob_Requested",
                 url: request.url,
-            }, error);
+            };
+            sendGCTombstoneEvent(this.mc, event, this.runtime.clientDetails.type === summarizerClientType, [BlobManager.basePath], error);
             if (this.throwOnTombstoneUsage) {
                 throw error;
             }
@@ -355,6 +367,13 @@ export class BlobManager {
         );
     }
 
+    private deleteAndEmitsIfEmpty(id: string) {
+        this.pendingBlobs.delete(id);
+        if (!this.hasPendingBlobs) {
+            this.emit("noPendingBlobs");
+        }
+    }
+
     private onUploadResolve(localId: string, response: ICreateBlobResponse) {
         const entry = this.pendingBlobs.get(localId);
         assert(entry?.status === PendingBlobStatus.OnlinePendingUpload ||
@@ -367,7 +386,7 @@ export class BlobManager {
                     // Storage may dedupe blobs and give us an ID we already know
                     // no need to submit BlobAttach op in this case
                     entry.handleP.resolve(this.getBlobHandle(response.id));
-                    this.pendingBlobs.delete(localId);
+                    this.deleteAndEmitsIfEmpty(localId);
                 } else {
                     // Check for still-pending duplicates too; if an op is already in flight we can wait for that one
                     if (!this.opsInFlight.has(response.id)) {
@@ -469,14 +488,14 @@ export class BlobManager {
                     // It's possible we transitioned to offline flow while waiting for this op.
                     if (pendingBlobEntry.status === PendingBlobStatus.OnlinePendingOp) {
                         pendingBlobEntry.handleP.resolve(this.getBlobHandle(message.metadata.blobId));
-                        this.pendingBlobs.delete(localId);
+                        this.deleteAndEmitsIfEmpty(localId);
                     }
                 });
             } else {
                 // Each local ID is unique; get the pending blob entry and delete it
                 assert(this.pendingBlobs.get(message.metadata.localId)?.status === PendingBlobStatus.OfflinePendingOp,
                     0x1f8 /* "local BlobAttach op with no pending blob" */);
-                this.pendingBlobs.delete(message.metadata.localId);
+                    this.deleteAndEmitsIfEmpty(message.metadata.localId);
             }
         }
     }
@@ -535,9 +554,9 @@ export class BlobManager {
           * The node path is of the format `/_blobs/blobId`. This path must match the path of the blob handle returned
           * by the createBlob API because blobs are marked referenced by storing these handles in a referenced DDS.
           */
-        this.storageIds.forEach((blobId: string) => {
+        for (const blobId of this.storageIds) {
             gcData.gcNodes[this.getBlobGCNodePath(blobId)] = [];
-        });
+        }
 
         // For some blobs, the handle returned on creation is based off of the localId. So, these
         // nodes can be referenced by storing the localId handle. When that happens, the corresponding storageId node
@@ -555,32 +574,10 @@ export class BlobManager {
     }
 
     /**
-     * This is called to update blobs whose routes are used. The used blobs are removed from the tombstone list.
-     * @param usedRoutes - The routes of the blob nodes that are used.
-     */
-    public updateUsedRoutes(usedRoutes: string[]) {
-        // The routes or blob node paths are in the same format as returned in getGCData -
-        // `/<BlobManager.basePath>/<blobId>`.
-        for (const route of usedRoutes) {
-            const pathParts = route.split("/");
-            assert(
-                pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
-                0x4bc /* Invalid blob node id in used routes. */,
-            );
-            const blobId = pathParts[2];
-            // Un-tombstone the blob if it was marked tombstone.
-            this.tombstonedBlobs.delete(blobId);
-        }
-    }
-
-    /**
-     * This is called to update blobs whose routes are unused. The unused blobs are either deleted or marked as
-     * tombstones.
+     * This is called to update blobs whose routes are unused. The unused blobs are either deleted.
      * @param unusedRoutes - The routes of the blob nodes that are unused.
-     * @param tombstone - if true, the objects corresponding to unused routes are marked tombstones. Otherwise, they
-     * are deleted.
      */
-    public updateUnusedRoutes(unusedRoutes: string[], tombstone: boolean): void {
+    public updateUnusedRoutes(unusedRoutes: string[]): void {
         // The routes or blob node paths are in the same format as returned in getGCData -
         // `/<BlobManager.basePath>/<blobId>`.
         for (const route of unusedRoutes) {
@@ -590,15 +587,40 @@ export class BlobManager {
                 0x2d5 /* "Invalid blob node id in unused routes." */,
             );
             const blobId = pathParts[2];
+            // The unused blobId could be a localId. If so, remove it from the redirect table and continue. The
+            // corresponding storageId may still be used either directly or via other localIds.
+            this.redirectTable.delete(blobId);
+        }
+    }
 
-            if (tombstone) {
-                // If tombstone is set, add this blob to the tombstone list.
-                this.tombstonedBlobs.add(blobId);
-            } else {
-                // The unused blobId could be a localId. If so, remove it from the redirect table and continue. The
-                // corresponding storageId may still be used either directly or via other localIds.
-                this.redirectTable.delete(blobId);
+    /**
+     * This is called to update blobs whose routes are tombstones. Tombstoned blobs enable testing scenarios with
+     * accessing deleted content without actually deleting content from summaries.
+     * @param tombstonedRoutes - The routes of blob nodes that are tombstones.
+     */
+    public updateTombstonedRoutes(tombstonedRoutes: string[]) {
+        const tombstonedBlobsSet: Set<string> = new Set();
+        // The routes or blob node paths are in the same format as returned in getGCData -
+        // `/<BlobManager.basePath>/<blobId>`.
+        for (const route of tombstonedRoutes) {
+            const pathParts = route.split("/");
+            assert(
+                pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
+                "Invalid blob node id in tombstoned routes.",
+            );
+            tombstonedBlobsSet.add(pathParts[2]);
+        }
+
+        // Remove blobs that were tombstoned but aren't anymore as per the tombstoneRoutes.
+        for (const blobId of this.tombstonedBlobs) {
+            if (!tombstonedBlobsSet.has(blobId)) {
+                this.tombstonedBlobs.delete(blobId);
             }
+        }
+
+        // Mark blobs that are now tombstoned.
+        for (const blobId of tombstonedBlobsSet) {
+            this.tombstonedBlobs.add(blobId);
         }
     }
 
