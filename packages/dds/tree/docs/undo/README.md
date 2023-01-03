@@ -6,11 +6,11 @@ It should be updated once more progress is made on the implementation.
 ## Undo Model and Semantics
 
 There are several different choices for what the semantics of undo could be.
-At the same time, there are several different undo-related workflows that consuming application may want to support.
+At the same time, there are several different undo-related workflows that consuming applications may want to support.
 Understanding those workflows and uncovering what undo semantics would best serve them is still a work in progress,
 but two key points have emerged in that space:
 
-1. Undo as a feature very important in that it is likely to be the only/primary way that end users access document history.
+1. Undo as a feature is very important in that it is likely to be the only/primary way that end users access document history.
 2. While we can offer advanced/powerful undo semantics,
    most applications are likely to adopt a workflow that
    is simple for users to grasp,
