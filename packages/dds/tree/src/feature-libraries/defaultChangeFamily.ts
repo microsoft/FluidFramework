@@ -246,7 +246,7 @@ export interface SequenceFieldEditBuilder {
 
     /**
      * Revives a contiguous range of deleted nodes.
-     * @param index - The index of the node to revive.
+     * @param index - The index at which to revive the node (this will become the index of the first revived node).
      * @param count - The number of nodes to revive.
      * @param detachedBy - The revision of the edit that deleted the nodes.
      * @param detachIndex - The index of the first node to revive in the input context of edit `detachedBy`.
