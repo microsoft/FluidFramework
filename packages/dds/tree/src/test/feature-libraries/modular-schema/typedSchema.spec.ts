@@ -12,7 +12,7 @@ import {
     /* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/modular-schema/typedSchema";
 
-import { ValueSchema } from "../../../schema-stored";
+import { ValueSchema } from "../../../core";
 import { brand, requireTrue } from "../../../util";
 import { FieldKinds } from "../../../feature-libraries";
 

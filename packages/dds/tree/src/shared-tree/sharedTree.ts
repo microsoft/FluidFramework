@@ -18,7 +18,6 @@ import {
     IForestSubscription,
     StoredSchemaRepository,
     InMemoryStoredSchemaRepository,
-    SharedTreeCore,
     Checkout as TransactionCheckout,
     Anchor,
     AnchorLocator,
@@ -26,6 +25,7 @@ import {
     UpPath,
     EditManager,
 } from "../core";
+import { SharedTreeCore } from "../shared-tree-core";
 import {
     defaultSchemaPolicy,
     EditableTreeContext,
