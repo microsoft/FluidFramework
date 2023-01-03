@@ -364,12 +364,7 @@ stages:
               targetType: inline
               script: |
                 failedTests=$(node printReports.js '$(Build.ArtifactStagingDirectory)/testFiles')
-                if [$failedTests]
-                then
-                  echo "##[error] $failedTests"
-                else
-                  echo "No failed tests."
-                fi
+                echo "##[error] $failedTests"
               workingDirectory: tools/report-parser
             condition: and(succeededOrFailed(), eq(variables['TestReportsExists'], 'true'))
 
