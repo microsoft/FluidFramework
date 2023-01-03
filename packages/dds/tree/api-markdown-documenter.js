@@ -117,12 +117,11 @@ function frontMatterFromApiItem(apiItem, config) {
 }
 
 async function main() {
-    await cpy(originalPath, apiReportsDirectoryPath)
-        .on("progress", (progress) => {
-            if (progress.percent === 1) {
-                console.log(`\tCopied ${progress.totalFiles} files.`);
-            }
-        });
+    await cpy(originalPath, apiReportsDirectoryPath).on("progress", (progress) => {
+        if (progress.percent === 1) {
+            console.log(`\tCopied ${progress.totalFiles} files.`);
+        }
+    });
 
     // Delete existing documentation output
     console.log("Removing existing generated API docs...");
