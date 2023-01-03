@@ -5,8 +5,10 @@ This package contains a shared ESLint config used by all the packages in the Flu
 It exports the following shared ESLint configs:
 
 -   `minimal`: The minimal config for Fluid Framework packages.
+    Only intended for internal-only packages, test libraries, etc.
+    Whenever possible, the `recommended` or `strict` configs should be used instead.
 -   `recommended`: (default) The recommended config for Fluid Framework packages.
--   `strict`: The strictest config; intended for packages with public facing APIs.
+-   `strict`: The strictest config; intended for packages with public facing APIs, and those used as external-facing examples (e.g. those mentioned on `fluidframework.com`).
 
 ## Changing the lint config
 

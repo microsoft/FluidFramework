@@ -3,6 +3,16 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * "Strict" eslint configuration.
+ *
+ * This configuration is recommended, in particular, for packages whose APIs are expected to be used externally.
+ * It is additionally recommended for the following scenarios:
+ *
+ * * Critical libraries - those where particular attention to code quality might prevent severe issues.
+ *
+ * * Publicized examples - any libraries, sample applications, etc. we expect external consumers to use for reference.
+ */
 module.exports = {
     extends: ["./recommended.js"],
     rules: {
