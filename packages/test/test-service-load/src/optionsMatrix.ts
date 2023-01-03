@@ -80,7 +80,6 @@ export function generateRuntimeOptions(
         maxBatchSizeInBytes: [undefined],
         enableOpReentryCheck: [true],
         chunkSizeInBytes: [undefined],
-        enableOpReentryCheck: [undefined],
     };
 
     return generatePairwiseOptions<IContainerRuntimeOptions>(
