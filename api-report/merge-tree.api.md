@@ -452,6 +452,11 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 }
 
 // @public (undocumented)
+export interface IMergeTreeAttributionOptions {
+    track?: boolean;
+}
+
+// @public (undocumented)
 export interface IMergeTreeClientSequenceArgs {
     // (undocumented)
     readonly clientId: number;
@@ -514,6 +519,17 @@ export interface IMergeTreeMaintenanceCallbackArgs extends IMergeTreeDeltaCallba
 
 // @public (undocumented)
 export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;
+
+// @public (undocumented)
+export interface IMergeTreeOptions {
+    attribution?: IMergeTreeAttributionOptions;
+    // (undocumented)
+    catchUpBlobName?: string;
+    // (undocumented)
+    mergeTreeSnapshotChunkSize?: number;
+    mergeTreeUseNewLengthCalculations?: boolean;
+    newMergeTreeSnapshotFormat?: boolean;
+}
 
 // @public (undocumented)
 export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {

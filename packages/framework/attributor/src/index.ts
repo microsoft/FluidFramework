@@ -11,6 +11,7 @@ export {
 } from "./attributor";
 export {
 	createRuntimeAttributor,
+	enableOnNewFileKey,
 	IProvideRuntimeAttributor,
 	IRuntimeAttributor,
 	mixinAttributor,
