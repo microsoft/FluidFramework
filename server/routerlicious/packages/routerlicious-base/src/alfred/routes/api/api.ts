@@ -168,11 +168,14 @@ const verifyRequest = async (
     tenantManager: core.ITenantManager,
     storage: core.IDocumentStorage,
     maxTokenLifetimeSec: number,
-    // eslint-disable-next-line max-len
     isTokenExpiryEnabled: boolean) => Promise.all([verifyToken(request, tenantManager, maxTokenLifetimeSec, isTokenExpiryEnabled), checkDocumentExistence(request, storage)]);
 
-// eslint-disable-next-line max-len
-async function verifyToken(request: Request, tenantManager: core.ITenantManager, maxTokenLifetimeSec: number, isTokenExpiryEnabled: boolean): Promise<void> {
+async function verifyToken(
+    request: Request,
+    tenantManager: core.ITenantManager,
+    maxTokenLifetimeSec: number,
+    isTokenExpiryEnabled: boolean
+): Promise<void> {
     const token = request.headers["access-token"] as string;
     if (!token) {
         return Promise.reject(new Error("Missing access token"));

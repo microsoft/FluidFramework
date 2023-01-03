@@ -7,6 +7,7 @@ import { decompress } from "lz4js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { CompressionAlgorithms } from "../containerRuntime";
+import { IMessageProcessingResult } from "./definitions";
 
 /**
  * State machine that "unrolls" contents of compressed batches of ops after decompressing them.
@@ -21,7 +22,7 @@ export class OpDecompressor {
     private rootMessageContents: any | undefined;
     private processedCount = 0;
 
-    public processMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage {
+    public processMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
         // We're checking for compression = true or top level compression property so
         // that we can enable compression without waiting on all ordering services
         // to pick up protocol change. Eventually only the top level property should
@@ -44,26 +45,34 @@ export class OpDecompressor {
             const asObj = JSON.parse(intoString);
             this.rootMessageContents = asObj;
 
-            return { ...message, contents: this.rootMessageContents[this.processedCount++] };
+            return {
+                message: newMessage(message, this.rootMessageContents[this.processedCount++]),
+                state: "Accepted",
+            };
         }
 
         if (this.rootMessageContents !== undefined && message.metadata?.batch === undefined && this.activeBatch) {
+            assert(message.contents === undefined, "Expecting empty message");
+
             // Continuation of compressed batch
-            return { ...message, contents: this.rootMessageContents[this.processedCount++] };
+            return {
+                message: newMessage(message, this.rootMessageContents[this.processedCount++]),
+                state: "Accepted",
+            };
         }
 
         if (this.rootMessageContents !== undefined && message.metadata?.batch === false) {
             // End of compressed batch
-            const returnMessage = {
-                ...message,
-                contents: this.rootMessageContents[this.processedCount++]
-            };
+            const returnMessage = newMessage(message, this.rootMessageContents[this.processedCount++]);
 
             this.activeBatch = false;
             this.rootMessageContents = undefined;
             this.processedCount = 0;
 
-            return returnMessage;
+            return {
+                message: returnMessage,
+                state: "Processed",
+            };
         }
 
         if (message.metadata?.batch === undefined &&
@@ -76,9 +85,40 @@ export class OpDecompressor {
             const intoString = new TextDecoder().decode(decompressedMessage);
             const asObj = JSON.parse(intoString);
 
-            return { ...message, contents: asObj[0] };
+            return {
+                message: newMessage(message, asObj[0]),
+                state: "Processed",
+            };
         }
 
-        return message;
+        return {
+            message,
+            state: "Skipped",
+        };
     }
 }
+
+// We should not be mutating the input message nor its metadata
+const newMessage = (originalMessage: ISequencedDocumentMessage, contents: any): ISequencedDocumentMessage =>
+    stripCompressionMarkers({
+        ...originalMessage,
+        contents,
+        metadata: { ...originalMessage.metadata },
+    });
+
+// After compression, it is irrelevant to the other layers whether or not the
+// original message was compressed, so in the interest of both correctness and safety
+// we should remove all compression markers after we decompress.
+const stripCompressionMarkers = (message: ISequencedDocumentMessage): ISequencedDocumentMessage => {
+    message.compression = undefined;
+
+    if (message.metadata?.compressed === true) {
+        message.metadata.compressed = undefined;
+
+        if (Object.keys(message.metadata).length === 0) {
+            message.metadata = undefined;
+        }
+    }
+
+    return message;
+};

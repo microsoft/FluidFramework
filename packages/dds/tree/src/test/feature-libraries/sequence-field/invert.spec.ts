@@ -72,4 +72,18 @@ describe("SequenceField - Invert", () => {
         const actual = shallowInvert(input);
         assert.deepEqual(actual, expected);
     });
+
+    it("move => return", () => {
+        const input = Change.move(0, 2, 3);
+        const expected = Change.return(3, 2, 0, tag, 0);
+        const actual = shallowInvert(input);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("return => return", () => {
+        const input = Change.return(0, 2, 3, brand(41), 0);
+        const expected = Change.return(3, 2, 0, tag, 0);
+        const actual = shallowInvert(input);
+        assert.deepEqual(actual, expected);
+    });
 });

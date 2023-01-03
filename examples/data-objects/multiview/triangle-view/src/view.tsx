@@ -10,7 +10,7 @@ import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
 
-const renderTriangleToCanvas = (ctx: CanvasRenderingContext2D, c1: ICoordinate, c2: ICoordinate, c3: ICoordinate) => {
+const renderTriangleToCanvas = (ctx: CanvasRenderingContext2D, c1: ICoordinate, c2: ICoordinate, c3: ICoordinate): void => {
     ctx.clearRect(0, 0, 100, 100);
     ctx.fillStyle = "#ff0000";
     ctx.beginPath();
@@ -32,7 +32,7 @@ interface ITriangleViewProps {
  */
 export const TriangleView: React.FC<ITriangleViewProps> = (props: ITriangleViewProps) => {
     const canvasRef = React.createRef<HTMLCanvasElement>();
-    const rerenderCanvas = () => {
+    const rerenderCanvas = (): void => {
         if (canvasRef.current !== null) {
             const ctx = canvasRef.current.getContext("2d");
             if (ctx !== null) {
@@ -51,7 +51,7 @@ export const TriangleView: React.FC<ITriangleViewProps> = (props: ITriangleViewP
         props.coordinate1.on("coordinateChanged", rerenderCanvas);
         props.coordinate2.on("coordinateChanged", rerenderCanvas);
         props.coordinate3.on("coordinateChanged", rerenderCanvas);
-        return () => {
+        return (): void => {
             props.coordinate1.off("coordinateChanged", rerenderCanvas);
             props.coordinate2.off("coordinateChanged", rerenderCanvas);
             props.coordinate3.off("coordinateChanged", rerenderCanvas);

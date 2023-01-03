@@ -315,6 +315,7 @@ flowchart
             dependency-tracking
             forest-->tree
         end
+        core-->events
         core-->util
         feature-->core
         shared-tree-->feature
