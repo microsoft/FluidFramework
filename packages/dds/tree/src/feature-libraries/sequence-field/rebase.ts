@@ -47,8 +47,6 @@ export function rebase<TNodeChange>(
     rebaseChild: NodeChangeRebaser<TNodeChange>,
     genId: IdAllocator,
 ): Changeset<TNodeChange> {
-    // TODO: New and base move IDs can collide. Should be distinguishable by revision, but this is not implemented, and base is not currently guaranteed to have a revision.
-    // We could use separate move tables for new and base, or we could reassign the new move IDs.
     const moveEffects = newMoveEffectTable<TNodeChange>();
 
     // Necessary so we don't have to re-split any marks when applying move effects.
@@ -193,7 +191,6 @@ class RebaseQueue<T> {
                     this.reattachOffset += getOutputLength(baseMark);
                     return { baseMark: this.baseMarks.pop() };
                 } else {
-                    // TODO: Splitting base moves seems problematic
                     const [baseMark1, baseMark2] = splitMarkOnOutput(
                         baseMark,
                         offset,
@@ -360,8 +357,6 @@ function applyMoveEffects<TNodeChange>(
             if (movedMarks !== undefined) {
                 factory.pushOffset(offset);
                 offset = 0;
-
-                // TODO: Do moved marks ever need to be split?
                 factory.push(...movedMarks);
                 const size = movedMarks.reduce<number>(
                     (count, mark) => count + getInputLength(mark),
