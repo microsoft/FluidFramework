@@ -50,15 +50,13 @@ const findFailedTests = (obj) => {
 
 let output = [];
 for(const filename of files) {
-    console.log("file name:")
-    console.log(filename)
     const xmlData = fs.readFileSync(filename,  'utf8');
 
     const failedTests = parser.parseStringPromise(xmlData, { mergeAttrs: true }).then((res) => {
         return findFailedTests(res);
     })
 
-    output.push(await failedTests)
+    if (await failedTests) output.push(await failedTests)
 }
 
 console.log(util.inspect(output, false, null, true))
