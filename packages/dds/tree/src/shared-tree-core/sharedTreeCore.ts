@@ -29,7 +29,7 @@ import { v4 as uuid } from "uuid";
 import { ChangeFamily } from "../change-family";
 import { Commit, EditManager, SeqNumber } from "../edit-manager";
 import { AnchorSet, Delta } from "../tree";
-import { brand, JsonCompatibleReadOnly } from "../util";
+import { brand, isReadonlyArray, JsonCompatibleReadOnly } from "../util";
 import { EventEmitter, IEventEmitter, TransformEvents } from "../events";
 
 /**
@@ -75,6 +75,7 @@ export interface IndexEvents<TChangeset> {
 export class SharedTreeCore<
     TChange,
     TChangeFamily extends ChangeFamily<any, TChange>,
+    TIndexes extends readonly Index[],
 > extends SharedObject<TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>> {
     /**
      * A random ID that uniquely identifies this client in the collab session.
@@ -97,6 +98,12 @@ export class SharedTreeCore<
     private detachedRevision: SeqNumber | undefined = brand(Number.MIN_SAFE_INTEGER);
 
     /**
+     * The indexes available to this tree.
+     * These are declared at construction time.
+     */
+    protected readonly indexes: TIndexes;
+
+    /**
      * Provides events that indexes can subscribe to
      */
     private readonly indexEventEmitter = EventEmitter.create<IndexEvents<TChange>>();
@@ -112,7 +119,7 @@ export class SharedTreeCore<
      * @param telemetryContextPrefix - the context for any telemetry logs/errors emitted
      */
     public constructor(
-        indexes: Index[] | ((events: IEventEmitter<IndexEvents<TChange>>) => Index[]),
+        indexes: TIndexes | ((events: IEventEmitter<IndexEvents<TChange>>) => TIndexes),
         public readonly changeFamily: TChangeFamily,
         public readonly editManager: EditManager<TChange, TChangeFamily>,
         anchors: AnchorSet,
@@ -127,7 +134,8 @@ export class SharedTreeCore<
 
         this.stableId = uuid();
         editManager.initSessionId(this.stableId);
-        this.summaryElements = (Array.isArray(indexes) ? indexes : indexes(this.indexEventEmitter))
+        this.indexes = isReadonlyArray(indexes) ? indexes : indexes(this.indexEventEmitter);
+        this.summaryElements = this.indexes
             .map((i) => i.summaryElement)
             .filter((e): e is SummaryElement => e !== undefined);
         assert(
