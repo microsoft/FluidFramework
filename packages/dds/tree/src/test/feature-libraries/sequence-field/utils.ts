@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    ChangesetLocalId,
-    IdAllocator,
-    idAllocatorFromMaxId,
-    SequenceField as SF,
-} from "../../../feature-libraries";
+import { ChangesetLocalId, IdAllocator, SequenceField as SF } from "../../../feature-libraries";
 import { Delta, TaggedChange } from "../../../core";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze, fakeRepair } from "../../utils";
@@ -93,4 +88,11 @@ export function normalizeMoveIds(change: SF.Changeset<unknown>): void {
             mark.id = newId!;
         }
     }
+}
+
+export function idAllocatorFromMaxId(maxId: ChangesetLocalId | undefined = undefined): IdAllocator {
+    let currId = maxId ?? -1;
+    return () => {
+        return brand(++currId);
+    };
 }

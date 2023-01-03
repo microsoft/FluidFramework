@@ -5,7 +5,6 @@
 
 import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange, RevisionTag } from "../../core";
 import { Brand, Invariant, JsonCompatibleReadOnly } from "../../util";
-import { IdAllocator } from "./idAllocator";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -121,6 +120,8 @@ export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => Nod
 
 export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnly;
 export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
+
+export type IdAllocator = () => ChangesetLocalId;
 
 /**
  * An ID which is unique within a revision of a `ModularChangeset`.

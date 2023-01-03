@@ -14,9 +14,9 @@ import {
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
+    IdAllocator,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
-import { IdAllocator } from "./idAllocator";
 
 /**
  * A field-kind-agnostic change to a single node within a field.

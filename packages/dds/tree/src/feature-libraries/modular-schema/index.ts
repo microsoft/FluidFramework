@@ -12,9 +12,9 @@ export {
     allowsTreeSuperset,
 } from "./comparison";
 export { FieldKind, FullSchemaPolicy, Multiplicity } from "./fieldKind";
-export { IdAllocator, idAllocatorFromMaxId } from "./idAllocator";
 export {
     ChangesetLocalId,
+    IdAllocator,
     FieldChange,
     FieldChangeEncoder,
     FieldChangeHandler,

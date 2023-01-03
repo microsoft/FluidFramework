@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { idAllocatorFromMaxId, SequenceField as SF } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import { RevisionTag, tagChange } from "../../../rebase";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
@@ -13,6 +13,7 @@ import {
     checkDeltaEquality,
     composeAnonChanges,
     getMaxId,
+    idAllocatorFromMaxId,
     normalizeMoveIds,
     rebaseTagged,
 } from "./utils";

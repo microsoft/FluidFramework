@@ -3,15 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
-    idAllocatorFromMaxId,
-    SequenceField as SF,
-    singleTextCursor,
-} from "../../../feature-libraries";
+import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { RevisionTag, TreeSchemaIdentifier } from "../../../core";
 import { TestChange } from "../../testChange";
 import { makeAnonChange } from "../../../rebase";
+import { idAllocatorFromMaxId } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag: RevisionTag = brand(42);

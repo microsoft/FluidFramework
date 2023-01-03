@@ -10,7 +10,6 @@ import {
     ChangesetLocalId,
     FieldChange,
     FieldKinds,
-    idAllocatorFromMaxId,
     NodeChangeset,
     NodeReviver,
     SequenceField as SF,
@@ -21,6 +20,7 @@ import { brand, brandOpaque, makeArray } from "../../../util";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze, noRepair } from "../../utils";
 import { ChangeMaker as Change, TestChangeset } from "./testEdits";
+import { idAllocatorFromMaxId } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const nodeX = { type, value: 0 };
