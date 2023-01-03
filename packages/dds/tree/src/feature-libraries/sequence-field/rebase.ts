@@ -47,28 +47,7 @@ export function rebase<TNodeChange>(
     rebaseChild: NodeChangeRebaser<TNodeChange>,
     genId: IdAllocator,
 ): Changeset<TNodeChange> {
-    const moveEffects = newMoveEffectTable<TNodeChange>();
-
-    // Necessary so we don't have to re-split any marks when applying move effects.
-    moveEffects.allowMerges = false;
-    const [rebased, splitBase] = rebaseMarkList(
-        change,
-        base.change,
-        base.revision,
-        rebaseChild,
-        genId,
-        moveEffects,
-    );
-    moveEffects.allowMerges = true;
-    const pass2 = applyMoveEffects(splitBase, rebased, moveEffects);
-
-    // We may have discovered new mergeable marks while applying move effects, as we may have moved a MoveOut next to another MoveOut.
-    // A second pass through MarkListFactory will handle any remaining merges.
-    const factory = new MarkListFactory<TNodeChange>(moveEffects);
-    for (const mark of pass2) {
-        factory.push(mark);
-    }
-    return factory.list;
+    return rebaseMarkList(change, base.change, base.revision, rebaseChild, genId);
 }
 
 export type NodeChangeRebaser<TNodeChange> = (
@@ -82,9 +61,13 @@ function rebaseMarkList<TNodeChange>(
     baseRevision: RevisionTag | undefined,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
     genId: IdAllocator,
-    moveEffects: MoveEffectTable<TNodeChange>,
-): [MarkList<TNodeChange>, MarkList<TNodeChange>] {
+): MarkList<TNodeChange> {
+    const moveEffects = newMoveEffectTable<TNodeChange>();
+
+    // Necessary so we don't have to re-split any marks when applying move effects.
+    moveEffects.allowMerges = false;
     const factory = new MarkListFactory<TNodeChange>(moveEffects);
+
     const splitBaseMarks: MarkList<TNodeChange> = [];
     const queue = new RebaseQueue(baseRevision, baseMarkList, currMarkList, genId, moveEffects);
 
@@ -148,7 +131,8 @@ function rebaseMarkList<TNodeChange>(
         updateLineage(lineageRequests, baseRevision);
     }
 
-    return [factory.list, splitBaseMarks];
+    moveEffects.allowMerges = true;
+    return applyMoveEffects(splitBaseMarks, factory.list, moveEffects);
 }
 
 class RebaseQueue<T> {
@@ -375,7 +359,13 @@ function applyMoveEffects<TNodeChange>(
         factory.push(newMark);
     }
 
-    return factory.list;
+    // We may have discovered new mergeable marks while applying move effects, as we may have moved a MoveOut next to another MoveOut.
+    // A second pass through MarkListFactory will handle any remaining merges.
+    const factory2 = new MarkListFactory<TNodeChange>(moveEffects);
+    for (const mark of factory.list) {
+        factory2.push(mark);
+    }
+    return factory2.list;
 }
 
 function handleCurrAttach<T>(
