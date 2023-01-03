@@ -132,8 +132,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private noOpCount: number = 0;
     /** Track clientSequenceNumber of the last op */
     private lastClientSequenceNumber: number | undefined;
-    /** track clientId used last time when we sent any ops */
-    private readonly lastSubmittedClientId: string | undefined;
 
     /**
      * Track down the ops size.
@@ -343,7 +341,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         };
 
         this.connectionManager = createConnectionManager(props);
-        this.lastSubmittedClientId = this.connectionManager.lastSubmittedClientId;
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op) => {
                 this.processInboundMessage(op);
@@ -395,6 +392,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         assert(this.messageBuffer.length === 0, 0x0e9 /* "messageBuffer is not empty on new connection" */);
 
         this.opsSize = 0;
+        this.noOpCount = 0;
 
         this.emit(
             "connect",
@@ -838,7 +836,11 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         // validate client sequence number has no gap. If there is gap, check if there were noops
         // if there were noops, decrement the gap by number of noops and continue
-        if (this.lastClientSequenceNumber !== undefined && this.lastSubmittedClientId !== undefined && this.lastSubmittedClientId === message.clientId) {
+        if (this.connectionManager.lastSubmittedClientId !== undefined && this.connectionManager.lastSubmittedClientId === message.clientId) {
+            assert(this.lastClientSequenceNumber !== undefined, "lastClientSequenceNumber should not be undefined");
+            if (message.type === MessageType.NoOp){
+                this.noOpCount--;
+            }
             const clientSeqNumGap = message.clientSequenceNumber - this.lastClientSequenceNumber - 1;
             if (clientSeqNumGap > 0) {
                 if (this.noOpCount > 0) {
@@ -846,8 +848,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 } else {
                     throw new Error(`gap in client sequence number :${clientSeqNumGap}`);
                 }
-            } else if (message.type === MessageType.NoOp){
-                this.noOpCount--;
             }
         }
         this.lastClientSequenceNumber = message.clientSequenceNumber;
