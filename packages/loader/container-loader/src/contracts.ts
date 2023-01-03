@@ -66,6 +66,8 @@ export interface IConnectionManager {
     // Contains details information, like sequence numbers at connection time, initial ops info, etc.
     readonly connectionVerboseProps: ITelemetryProperties;
 
+    // exposing to use in deltaManager. Tracking client id of the last client that sent any ops.
+    readonly lastSubmittedClientId: string | undefined;
     /**
      * Prepares message to be sent. Fills in clientSequenceNumber.
      * Called only when active connection is present.
@@ -103,7 +105,6 @@ export interface IConnectionManager {
     dispose(error?: ICriticalContainerError): void;
 
     get connectionMode(): ConnectionMode;
-    readonly lastSubmittedClientId: string | undefined;
 }
 
 /**
