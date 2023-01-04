@@ -42,7 +42,7 @@ function invertMarkList<TNodeChange>(
         inputIndex += getInputLength(mark);
     }
 
-    transferMovedChanges(inverseMarkList.list, movedChanges);
+    transferMovedChanges(inverseMarkList.list, movedChanges, invertChild);
     return inverseMarkList.list;
 }
 
@@ -88,13 +88,12 @@ function invertMark<TNodeChange>(
                     // The nodes were already revived, so the revive mark did not affect them.
                     return mark.changes === undefined
                         ? [mark.count]
-                        : invertMark(
-                              { type: "Modify", changes: mark.changes },
-                              inputIndex,
-                              revision,
-                              invertChild,
-                              movedChanges,
-                          );
+                        : [
+                              {
+                                  type: "Modify",
+                                  changes: invertChild(mark.changes),
+                              },
+                          ];
                 }
                 // The node were not revived and could not be revived.
                 return [];
@@ -121,13 +120,12 @@ function invertMark<TNodeChange>(
                     // The nodes were present but the destination was muted, the mark had no effect on the nodes.
                     return mark.changes === undefined
                         ? [mark.count]
-                        : invertMark(
-                              { type: "Modify", changes: mark.changes },
-                              inputIndex,
-                              revision,
-                              invertChild,
-                              movedChanges,
-                          );
+                        : [
+                              {
+                                  type: "Modify",
+                                  changes: invertChild(mark.changes),
+                              },
+                          ];
                 }
                 if (mark.changes !== undefined) {
                     movedChanges.set(mark.id, mark.changes);
@@ -158,7 +156,7 @@ function invertMark<TNodeChange>(
                         },
                     ];
                 }
-                if (mark.lastDetachedBy === undefined) {
+                if (mark.type === "ReturnTo" && mark.lastDetachedBy === undefined) {
                     // The nodes were already attached, so the mark did not affect them.
                     return [mark.count];
                 }
@@ -174,12 +172,13 @@ function invertMark<TNodeChange>(
 function transferMovedChanges<TNodeChange>(
     marks: MarkList<TNodeChange>,
     movedChanges: Map<MoveId, TNodeChange>,
+    invertChild: NodeChangeInverter<TNodeChange>,
 ): void {
     for (const mark of marks) {
         if (isObjMark(mark) && (mark.type === "MoveOut" || mark.type === "ReturnFrom")) {
             const change = movedChanges.get(mark.id);
             if (change !== undefined) {
-                mark.changes = change;
+                mark.changes = invertChild(change);
             }
         }
     }

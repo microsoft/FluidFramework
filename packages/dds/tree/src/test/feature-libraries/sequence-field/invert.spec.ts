@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
-import { makeAnonChange, RevisionTag, tagChange } from "../../../core";
+import { RevisionTag, tagChange } from "../../../core";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
@@ -14,7 +14,7 @@ import { ChangeMaker as Change, TestChangeset } from "./testEdits";
 
 function invert(change: TestChangeset): TestChangeset {
     deepFreeze(change);
-    return SF.invert(makeAnonChange(change), TestChange.invert);
+    return SF.invert(tagChange(change, tag), TestChange.invert);
 }
 
 const tag: RevisionTag = brand(41);
@@ -30,8 +30,10 @@ function shallowInvert(change: SF.Changeset<unknown>): SF.Changeset<unknown> {
 
 const childChange1 = TestChange.mint([0], 1);
 const childChange2 = TestChange.mint([1], 2);
+const childChange3 = TestChange.mint([2], 3);
 const inverseChildChange1 = TestChange.invert(childChange1);
 const inverseChildChange2 = TestChange.invert(childChange2);
+const inverseChildChange3 = TestChange.invert(childChange3);
 
 describe("SequenceField - Invert", () => {
     it("no changes", () => {
@@ -72,21 +74,37 @@ describe("SequenceField - Invert", () => {
     });
 
     it("revert-only active revive => delete", () => {
-        const input = Change.revive(0, 2, tag, 0);
+        const revive = Change.revive(0, 2, tag, 0);
+        const modify = Change.modify(0, TestChange.mint([], 42));
+        const input = composeAnonChanges([revive, modify]);
         const expected = Change.delete(0, 2);
         const actual = shallowInvert(input);
         assert.deepEqual(actual, expected);
     });
 
     it("revert-only muted revive => skip", () => {
-        const input = composeAnonChanges([
-            Change.modify(0, childChange1),
-            Change.revive(0, 2, tag, 0, tag2),
-            Change.modify(0, childChange2),
-        ]);
+        const input: TestChangeset = [
+            {
+                type: "Modify",
+                changes: childChange1,
+            },
+            {
+                type: "Revive",
+                count: 1,
+                detachedBy: tag,
+                detachIndex: 0,
+                mutedBy: tag2,
+                changes: childChange2,
+            },
+            {
+                type: "Modify",
+                changes: childChange3,
+            },
+        ];
         const expected = composeAnonChanges([
-            Change.modify(0, inverseChildChange2),
-            Change.modify(2, inverseChildChange1),
+            Change.modify(0, inverseChildChange1),
+            Change.modify(1, inverseChildChange2),
+            Change.modify(2, inverseChildChange3),
         ]);
         const actual = invert(input);
         assert.deepEqual(actual, expected);
@@ -125,21 +143,30 @@ describe("SequenceField - Invert", () => {
     });
 
     it("move => return", () => {
-        const input = Change.move(0, 2, 3);
-        const expected = Change.return(3, 2, 0, tag, 0);
-        const actual = shallowInvert(input);
+        const input = composeAnonChanges([Change.modify(0, childChange1), Change.move(0, 2, 3)]);
+        const expected = composeAnonChanges([
+            Change.modify(3, inverseChildChange1),
+            Change.return(3, 2, 0, tag, 0),
+        ]);
+        const actual = invert(input);
         assert.deepEqual(actual, expected);
     });
 
     it("return => return", () => {
-        const input = Change.return(0, 2, 3, brand(41), 0);
-        const expected = Change.return(3, 2, 0, tag, 0);
-        const actual = shallowInvert(input);
+        const input = composeAnonChanges([
+            Change.modify(0, childChange1),
+            Change.return(0, 2, 3, brand(41), 0),
+        ]);
+        const expected = composeAnonChanges([
+            Change.modify(3, inverseChildChange1),
+            Change.return(3, 2, 0, tag, 0),
+        ]);
+        const actual = invert(input);
         assert.deepEqual(actual, expected);
     });
 
     it("muted-move out + move-in => nil + nil", () => {
-        const input: SF.Changeset<never> = [
+        const input: TestChangeset = [
             {
                 type: "MoveOut",
                 count: 1,
@@ -152,13 +179,18 @@ describe("SequenceField - Invert", () => {
                 id: brand(0),
                 isSrcMuted: true,
             },
+            {
+                type: "Modify",
+                changes: childChange2,
+            },
         ];
-        const actual = shallowInvert(input);
-        assert.deepEqual(actual, []);
+        const actual = invert(input);
+        const expected = Change.modify(0, inverseChildChange2);
+        assert.deepEqual(actual, expected);
     });
 
     it("muted return-from + return-to => nil + nil", () => {
-        const input: SF.Changeset<never> = [
+        const input: TestChangeset = [
             {
                 type: "ReturnFrom",
                 count: 1,
@@ -174,9 +206,14 @@ describe("SequenceField - Invert", () => {
                 detachIndex: 0,
                 isSrcMuted: true,
             },
+            {
+                type: "Modify",
+                changes: childChange2,
+            },
         ];
-        const actual = shallowInvert(input);
-        assert.deepEqual(actual, []);
+        const actual = invert(input);
+        const expected = Change.modify(0, inverseChildChange2);
+        assert.deepEqual(actual, expected);
     });
 
     it("move-out + muted move-in => skip + skip", () => {
@@ -186,6 +223,7 @@ describe("SequenceField - Invert", () => {
                 count: 1,
                 id: brand(0),
                 isDstMuted: true,
+                changes: childChange1,
             },
             {
                 type: "MoveIn",
@@ -195,11 +233,14 @@ describe("SequenceField - Invert", () => {
             },
             {
                 type: "Modify",
-                changes: childChange1,
+                changes: childChange2,
             },
         ];
         const actual = invert(input);
-        const expected = Change.modify(2, inverseChildChange1);
+        const expected = composeAnonChanges([
+            Change.modify(0, inverseChildChange1),
+            Change.modify(1, inverseChildChange2),
+        ]);
         assert.deepEqual(actual, expected);
     });
 
@@ -211,6 +252,7 @@ describe("SequenceField - Invert", () => {
                 id: brand(0),
                 detachedBy: tag2,
                 isDstMuted: true,
+                changes: childChange1,
             },
             {
                 type: "ReturnTo",
@@ -222,11 +264,14 @@ describe("SequenceField - Invert", () => {
             },
             {
                 type: "Modify",
-                changes: childChange1,
+                changes: childChange2,
             },
         ];
         const actual = invert(input);
-        const expected = Change.modify(2, inverseChildChange1);
+        const expected = composeAnonChanges([
+            Change.modify(0, inverseChildChange1),
+            Change.modify(2, inverseChildChange2),
+        ]);
         assert.deepEqual(actual, expected);
     });
 
@@ -258,7 +303,7 @@ describe("SequenceField - Invert", () => {
         const actual = invert(input);
         const expected = composeAnonChanges([
             Change.modify(0, inverseChildChange1),
-            Change.modify(2, inverseChildChange2),
+            Change.modify(1, inverseChildChange2),
         ]);
         assert.deepEqual(actual, expected);
     });
@@ -307,10 +352,11 @@ describe("SequenceField - Invert", () => {
                 id: brand(0),
                 detachedBy: tag2,
                 isDstMuted: true,
+                changes: childChange1,
             },
             {
                 type: "Modify",
-                changes: childChange1,
+                changes: childChange2,
             },
             {
                 type: "ReturnTo",
@@ -323,13 +369,14 @@ describe("SequenceField - Invert", () => {
             },
             {
                 type: "Modify",
-                changes: childChange2,
+                changes: childChange3,
             },
         ];
         const actual = invert(input);
         const expected = composeAnonChanges([
-            Change.modify(1, inverseChildChange1),
-            Change.modify(2, inverseChildChange2),
+            Change.modify(0, inverseChildChange1),
+            Change.modify(1, inverseChildChange2),
+            Change.modify(2, inverseChildChange3),
         ]);
         assert.deepEqual(actual, expected);
     });
