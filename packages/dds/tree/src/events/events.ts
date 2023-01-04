@@ -59,7 +59,10 @@ export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent>
     : never;
 
 /**
- * An object which allows the registration of listeners so that subscribers can be notified when an event happens
+ * An object which allows the registration of listeners so that subscribers can be notified when an event happens.
+ * Clients can subscribe to events via the `on` method and unsubscribe by invoking the return value of `on`.
+ * Classes wishing to emit events via this interface may implement this interface by creating a private {@link EventEmitter}
+ * or by extending {@link EventEmitter} directly.
  * @param E - All the events that this emitter supports
  * @example
  * ```ts
@@ -97,26 +100,24 @@ export interface IEventEmitter<E extends Events<E>> {
  * Or, compose over it:
  * @example
  * ```ts
- * class MyClass extends IEventEmitter<MyEvents> {
+ * class MyClass implements IEventEmitter<MyEvents> {
  *   private readonly events = EventEmitter.create<MyEvents>();
  *
  *   private load() {
  *     this.events.emit("loaded");
  *   }
  *
- *   public on<K extends (string | symbol) & keyof MyEvents>(
+ *   public on<K extends keyof MyEvents>(
  *     eventName: K,
  *     listener: MyEvents[K],
  *   ): () => void {
- *     return events.on(eventName, listener);
+ *     return this.events.on(eventName, listener);
  *   }
  * }
  * ```
  */
 export class EventEmitter<E extends Events<E>> implements IEventEmitter<E> {
-    private readonly listeners: Partial<{
-        [P in keyof E]: Set<E[P]>;
-    }> = {};
+    private readonly listeners = new Map<keyof E, Set<(...args: unknown[]) => void>>();
 
     /**
      * Create an instance of an {@link EventEmitter}.
@@ -128,8 +129,8 @@ export class EventEmitter<E extends Events<E>> implements IEventEmitter<E> {
         };
     }
 
-    // The constructor is private to seal the class as well as to require use of the static `create` function
-    private constructor() {}
+    // The constructor is protected so as to require use of the static `create` function
+    protected constructor() {}
 
     /**
      * Fire the given event, notifying all subscribers by calling their registered listener functions
@@ -137,7 +138,7 @@ export class EventEmitter<E extends Events<E>> implements IEventEmitter<E> {
      * @param args - the arguments passed to the event listener functions
      */
     protected emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {
-        const listeners = this.listeners[eventName];
+        const listeners = this.listeners.get(eventName);
         if (listeners !== undefined) {
             const argArray: unknown[] = args; // TODO: Current TS (4.5.5) cannot spread `args` into `listener()`, but future versions (e.g. 4.8.4) can.
             for (const listener of listeners.values()) {
@@ -153,22 +154,22 @@ export class EventEmitter<E extends Events<E>> implements IEventEmitter<E> {
      * @returns a function which will deregister the listener when run
      */
     public on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void {
-        const listeners = this.listeners[eventName];
+        const listeners = this.listeners.get(eventName);
         if (listeners !== undefined) {
             listeners.add(listener);
         } else {
-            this.listeners[eventName] = new Set([listener]);
+            this.listeners.set(eventName, new Set([listener]));
         }
 
         return this.off.bind(this, eventName, listener);
     }
 
     private off<K extends keyof Events<E>>(eventName: K, listener: E[K]): void {
-        const listeners = this.listeners[eventName];
+        const listeners = this.listeners.get(eventName);
         if (listeners !== undefined) {
             listeners.delete(listener);
             if (listeners.size === 0) {
-                this.listeners[eventName] = undefined;
+                this.listeners.delete(eventName);
             }
         }
     }

@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { EventEmitter } from "../../events";
+import { EventEmitter, IEventEmitter } from "../../events";
 
 interface TestEvents {
     open: () => void;
@@ -93,3 +93,27 @@ describe("EventEmitter", () => {
         assert.strictEqual(count, 1);
     });
 });
+
+interface MyEvents {
+    loaded: () => void;
+}
+
+// The below classes correspond to the examples given in the doc comment of `EventEmitter` to ensure that they compile
+
+class MyInheritanceClass extends EventEmitter<MyEvents> {
+    private load() {
+        this.emit("loaded");
+    }
+}
+
+class MyCompositionClass implements IEventEmitter<MyEvents> {
+    private readonly events = EventEmitter.create<MyEvents>();
+
+    private load() {
+        this.events.emit("loaded");
+    }
+
+    public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
+        return this.events.on(eventName, listener);
+    }
+}
