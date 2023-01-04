@@ -125,12 +125,17 @@ export interface Insert<TNodeChange = NodeChangeType>
     content: ProtoNode[];
 }
 
-export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag {
+export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag, Mutable {
     type: "MoveIn";
     /**
      * The actual number of nodes being moved-in. This count excludes nodes that were concurrently deleted.
      */
     count: NodeCount;
+    /**
+     * When true, the corresponding MoveOut has been muted.
+     * This is independent of whether this mark is muted.
+     */
+    isSrcMuted?: true;
 }
 
 /**
@@ -164,6 +169,11 @@ export interface MoveOut<TNodeChange = NodeChangeType>
     type: "MoveOut";
     count: NodeCount;
     tomb?: RevisionTag;
+    /**
+     * When true, the corresponding MoveIn has been muted.
+     * This is independent of whether this mark is muted.
+     */
+    isDstMuted?: true;
 }
 
 export interface HasReattachFields extends HasPlaceFields {
@@ -213,12 +223,12 @@ export interface Revive<TNodeChange = NodeChangeType>
 
 export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId, Mutable {
     type: "ReturnTo";
+    count: NodeCount;
     /**
      * When true, the corresponding ReturnFrom has been muted.
      * This is independent of whether this mark is muted.
      */
     isSrcMuted?: true;
-    count: NodeCount;
 }
 
 export interface ReturnFrom<TNodeChange = NodeChangeType>

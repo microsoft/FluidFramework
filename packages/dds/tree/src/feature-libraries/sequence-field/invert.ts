@@ -6,7 +6,8 @@
 import { RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
 import { Changeset, Mark, MarkList } from "./format";
-import { getInputLength, isSkipMark } from "./utils";
+import { MarkListFactory } from "./markListFactory";
+import { getInputLength, isMuted, isSkipMark } from "./utils";
 
 export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChange;
 
@@ -30,14 +31,14 @@ function invertMarkList<TNodeChange>(
     revision: RevisionTag | undefined,
     invertChild: NodeChangeInverter<TNodeChange>,
 ): MarkList<TNodeChange> {
-    const inverseMarkList: MarkList<TNodeChange> = [];
+    const inverseMarkList = new MarkListFactory<TNodeChange>();
     let inputIndex = 0;
     for (const mark of markList) {
         const inverseMarks = invertMark(mark, inputIndex, revision, invertChild);
         inverseMarkList.push(...inverseMarks);
         inputIndex += getInputLength(mark);
     }
-    return inverseMarkList;
+    return inverseMarkList.list;
 }
 
 function invertMark<TNodeChange>(
@@ -69,7 +70,7 @@ function invertMark<TNodeChange>(
                 ];
             }
             case "Revive": {
-                if (mark.mutedBy === undefined) {
+                if (!isMuted(mark)) {
                     return [
                         {
                             type: "Delete",
@@ -101,6 +102,14 @@ function invertMark<TNodeChange>(
             }
             case "MoveOut":
             case "ReturnFrom": {
+                if (isMuted(mark)) {
+                    // The nodes were already detached so the mark had no effect
+                    return [];
+                }
+                if (mark.isDstMuted) {
+                    // The nodes were present but the destination was muted, the mark had no effect on the nodes.
+                    return [mark.count];
+                }
                 return [
                     {
                         type: "ReturnTo",
@@ -113,14 +122,26 @@ function invertMark<TNodeChange>(
             }
             case "MoveIn":
             case "ReturnTo": {
-                return [
-                    {
-                        type: "ReturnFrom",
-                        id: mark.id,
-                        count: mark.count,
-                        detachedBy: mark.revision ?? revision,
-                    },
-                ];
+                if (!isMuted(mark)) {
+                    if (mark.isSrcMuted) {
+                        // The node could have been attached but were not because of the source.
+                        return [];
+                    }
+                    return [
+                        {
+                            type: "ReturnFrom",
+                            id: mark.id,
+                            count: mark.count,
+                            detachedBy: mark.revision ?? revision,
+                        },
+                    ];
+                }
+                if (mark.lastDetachedBy === undefined) {
+                    // The nodes were already attached, so the mark did not affect them.
+                    return [mark.count];
+                }
+                // The node were not attached and could not be attached.
+                return [];
             }
             default:
                 fail("Not implemented");
