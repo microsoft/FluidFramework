@@ -5,8 +5,8 @@
 import { strict as assert } from "assert";
 import { singleTextCursor } from "../../feature-libraries";
 import { jsonString } from "../../domains";
-import { rootFieldKeySymbol } from "../../tree";
 import { brand, JsonCompatible } from "../../util";
+import { rootFieldKeySymbol } from "../../core";
 import { Sequencer, TestTree, TestTreeEdit } from "./testTree";
 
 describe("Editing", () => {

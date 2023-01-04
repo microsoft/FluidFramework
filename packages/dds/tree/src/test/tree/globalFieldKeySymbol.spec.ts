@@ -4,8 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { GlobalFieldKey } from "../../schema-stored";
-import { keyFromSymbol, symbolFromKey, symbolIsFieldKey } from "../../tree";
+import { GlobalFieldKey, keyFromSymbol, symbolFromKey, symbolIsFieldKey } from "../../core";
 import { brand } from "../../util";
 
 const key1 = brand<GlobalFieldKey>("testKey");

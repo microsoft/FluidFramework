@@ -72,7 +72,6 @@ export function compose<TNodeChange>(
             genId,
             moveEffects,
         );
-        composed = applyMoveEffects(composed, composeChild, moveEffects);
     }
     return composed;
 }
@@ -125,7 +124,8 @@ function composeMarkLists<TNodeChange>(
             factory.push(composedMark);
         }
     }
-    return factory.list;
+
+    return applyMoveEffects(factory.list, composeChild, moveEffects);
 }
 
 /**
@@ -414,7 +414,7 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
     }
 
     assert(!isSkipMark(cloned), "Cloned should be same type as input mark");
-    if (cloned.type !== "Modify" && cloned.revision === undefined && revision !== undefined) {
+    if (revision !== undefined && cloned.type !== "Modify" && cloned.revision === undefined) {
         cloned.revision = revision;
     }
 

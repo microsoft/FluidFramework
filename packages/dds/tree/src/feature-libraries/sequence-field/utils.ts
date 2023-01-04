@@ -992,6 +992,8 @@ export function getUniqueMoveId<T>(
     moveEffects: MoveEffectTable<T>,
 ): MoveId {
     // TODO: avoid reassigning IDs when the revision ID already makes the ID unique
+    // This should be the case when (mark.revision ?? revision) !== undefined but
+    // this revision-based uniqueness is not yet supported everywhere.
     if (!moveEffects.validatedMarks.has(mark)) {
         let newId = moveEffects.idRemappings.get(mark.id);
         if (newId === undefined) {

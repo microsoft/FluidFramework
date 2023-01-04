@@ -69,30 +69,7 @@ export function rebase<TNodeChange>(
     rebaseChild: NodeChangeRebaser<TNodeChange>,
     genId: IdAllocator,
 ): Changeset<TNodeChange> {
-    // TODO: New and base move IDs can collide. Should be distinguishable by revision, but this is not implemented, and base is not currently guaranteed to have a revision.
-    // We could use separate move tables for new and base, or we could reassign the new move IDs.
-    const moveEffects = newMoveEffectTable<TNodeChange>();
-
-    // Necessary so we don't have to re-split any marks when applying move effects.
-    moveEffects.allowMerges = false;
-    const [rebased, splitBase] = rebaseMarkList(
-        change,
-        base.change,
-        base.revision,
-        rebaseChild,
-        genId,
-        moveEffects,
-    );
-    moveEffects.allowMerges = true;
-    const pass2 = applyMoveEffects(splitBase, rebased, moveEffects, genId);
-
-    // We may have discovered new mergeable marks while applying move effects, as we may have moved a MoveOut next to another MoveOut.
-    // A second pass through MarkListFactory will handle any remaining merges.
-    const factory = new MarkListFactory<TNodeChange>(moveEffects);
-    for (const mark of pass2) {
-        factory.push(mark);
-    }
-    return factory.list;
+    return rebaseMarkList(change, base.change, base.revision, rebaseChild, genId);
 }
 
 export type NodeChangeRebaser<TNodeChange> = (
@@ -106,9 +83,13 @@ function rebaseMarkList<TNodeChange>(
     baseRevision: RevisionTag | undefined,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
     genId: IdAllocator,
-    moveEffects: MoveEffectTable<TNodeChange>,
-): [MarkList<TNodeChange>, MarkList<TNodeChange>] {
+): MarkList<TNodeChange> {
+    const moveEffects = newMoveEffectTable<TNodeChange>();
+
+    // Necessary so we don't have to re-split any marks when applying move effects.
+    moveEffects.allowMerges = false;
     const factory = new MarkListFactory<TNodeChange>(moveEffects);
+
     const splitBaseMarks: MarkList<TNodeChange> = [];
     const queue = new RebaseQueue(baseRevision, baseMarkList, currMarkList, genId, moveEffects);
 
@@ -193,7 +174,8 @@ function rebaseMarkList<TNodeChange>(
         updateLineage(lineageRequests, baseRevision);
     }
 
-    return [factory.list, splitBaseMarks];
+    moveEffects.allowMerges = true;
+    return applyMoveEffects(splitBaseMarks, factory.list, moveEffects);
 }
 
 class RebaseQueue<T> {
@@ -297,7 +279,6 @@ class RebaseQueue<T> {
                     this.reattachOffset += getOutputLength(baseMark);
                     return { baseMark: this.baseMarks.pop() };
                 } else {
-                    // TODO: Splitting base moves seems problematic
                     const [baseMark1, baseMark2] = splitMarkOnOutput(
                         baseMark,
                         offset,
@@ -422,17 +403,16 @@ class RebaseQueue<T> {
     }
 
     private getNextBaseMark(): Mark<T> | undefined {
-        return this.getNextMark(this.baseMarks, false, undefined);
+        return this.getNextMark(this.baseMarks, false);
     }
 
     private getNextNewMark(): Mark<T> | undefined {
-        return this.getNextMark(this.newMarks, true, undefined);
+        return this.getNextMark(this.newMarks, true);
     }
 
     private getNextMark(
         marks: StackyIterator<Mark<T>>,
         reassignMoveIds: boolean,
-        revision: RevisionTag | undefined,
     ): Mark<T> | undefined {
         let mark: Mark<T> | undefined;
         while (mark === undefined) {
@@ -443,7 +423,7 @@ class RebaseQueue<T> {
 
             const splitMarks = applyMoveEffectsToMark(
                 mark,
-                revision,
+                undefined,
                 this.moveEffects,
                 this.genId,
                 reassignMoveIds,
@@ -647,7 +627,6 @@ function applyMoveEffects<TNodeChange>(
     baseMarks: MarkList<TNodeChange>,
     rebasedMarks: MarkList<TNodeChange>,
     moveEffects: MoveEffectTable<TNodeChange>,
-    genId: IdAllocator,
 ): Changeset<TNodeChange> {
     const queue = new ComposeQueue<TNodeChange>(
         baseMarks,
@@ -668,8 +647,6 @@ function applyMoveEffects<TNodeChange>(
             if (movedMarks !== undefined) {
                 factory.pushOffset(offset);
                 offset = 0;
-
-                // TODO: Do moved marks ever need to be split?
                 factory.push(...movedMarks);
                 const size = movedMarks.reduce<number>(
                     (count, mark) => count + getInputLength(mark),
@@ -689,7 +666,13 @@ function applyMoveEffects<TNodeChange>(
         factory.push(newMark);
     }
 
-    return factory.list;
+    // We may have discovered new mergeable marks while applying move effects, as we may have moved a MoveOut next to another MoveOut.
+    // A second pass through MarkListFactory will handle any remaining merges.
+    const factory2 = new MarkListFactory<TNodeChange>(moveEffects);
+    for (const mark of factory.list) {
+        factory2.push(mark);
+    }
+    return factory2.list;
 }
 
 function handleCurrAttach<T>(

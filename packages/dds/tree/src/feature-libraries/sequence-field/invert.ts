@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
-import { Changeset, Mark, MarkList } from "./format";
+import { Changeset, Mark, MarkList, MoveId } from "./format";
 import { MarkListFactory } from "./markListFactory";
-import { getInputLength, isMuted, isSkipMark } from "./utils";
+import { getInputLength, isMuted, isObjMark, isSkipMark } from "./utils";
 
 export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChange;
 
@@ -33,11 +34,15 @@ function invertMarkList<TNodeChange>(
 ): MarkList<TNodeChange> {
     const inverseMarkList = new MarkListFactory<TNodeChange>();
     let inputIndex = 0;
+    const movedChanges = new Map<MoveId, TNodeChange>();
+
     for (const mark of markList) {
-        const inverseMarks = invertMark(mark, inputIndex, revision, invertChild);
+        const inverseMarks = invertMark(mark, inputIndex, revision, invertChild, movedChanges);
         inverseMarkList.push(...inverseMarks);
         inputIndex += getInputLength(mark);
     }
+
+    transferMovedChanges(inverseMarkList.list, movedChanges);
     return inverseMarkList.list;
 }
 
@@ -46,6 +51,7 @@ function invertMark<TNodeChange>(
     inputIndex: number,
     revision: RevisionTag | undefined,
     invertChild: NodeChangeInverter<TNodeChange>,
+    movedChanges: Map<MoveId, TNodeChange>,
 ): Mark<TNodeChange>[] {
     if (isSkipMark(mark)) {
         return [mark];
@@ -87,6 +93,7 @@ function invertMark<TNodeChange>(
                               inputIndex,
                               revision,
                               invertChild,
+                              movedChanges,
                           );
                 }
                 // The node were not revived and could not be revived.
@@ -103,12 +110,27 @@ function invertMark<TNodeChange>(
             case "MoveOut":
             case "ReturnFrom": {
                 if (isMuted(mark)) {
+                    assert(
+                        mark.changes === undefined,
+                        "Nested changes should have been moved to the destination of the move/return that detached them",
+                    );
                     // The nodes were already detached so the mark had no effect
                     return [];
                 }
                 if (mark.isDstMuted) {
                     // The nodes were present but the destination was muted, the mark had no effect on the nodes.
-                    return [mark.count];
+                    return mark.changes === undefined
+                        ? [mark.count]
+                        : invertMark(
+                              { type: "Modify", changes: mark.changes },
+                              inputIndex,
+                              revision,
+                              invertChild,
+                              movedChanges,
+                          );
+                }
+                if (mark.changes !== undefined) {
+                    movedChanges.set(mark.id, mark.changes);
                 }
                 return [
                     {
@@ -145,6 +167,20 @@ function invertMark<TNodeChange>(
             }
             default:
                 fail("Not implemented");
+        }
+    }
+}
+
+function transferMovedChanges<TNodeChange>(
+    marks: MarkList<TNodeChange>,
+    movedChanges: Map<MoveId, TNodeChange>,
+): void {
+    for (const mark of marks) {
+        if (isObjMark(mark) && (mark.type === "MoveOut" || mark.type === "ReturnFrom")) {
+            const change = movedChanges.get(mark.id);
+            if (change !== undefined) {
+                mark.changes = change;
+            }
         }
     }
 }

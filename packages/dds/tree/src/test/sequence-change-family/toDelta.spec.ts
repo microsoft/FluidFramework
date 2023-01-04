@@ -11,8 +11,7 @@ import {
     Transposed as T,
     // eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/sequence-change-family";
-import { TreeSchemaIdentifier } from "../../schema-stored";
-import { FieldKey, Delta, ITreeCursorSynchronous } from "../../tree";
+import { TreeSchemaIdentifier, FieldKey, Delta, ITreeCursorSynchronous } from "../../core";
 import { brand, brandOpaque } from "../../util";
 import { deepFreeze, assertMarkListEqual } from "../utils";
 

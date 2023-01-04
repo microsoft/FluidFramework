@@ -1,7 +1,6 @@
 {
-  "name": "@fluid-internal/attributor",
+  "name": "@fluidframework/attributor",
   "version": "2.0.0-internal.2.3.0",
-  "private": true,
   "description": "Operation attributor",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -72,6 +71,7 @@
     "@fluidframework/protocol-definitions": "^1.1.0",
     "@fluidframework/runtime-definitions": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@fluidframework/runtime-utils": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
+    "@fluidframework/telemetry-utils": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
     "lz4js": "^0.2.0"
   },
   "devDependencies": {
@@ -82,7 +82,6 @@
     "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
     "@fluidframework/sequence": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/telemetry-utils": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
     "@fluidframework/test-runtime-utils": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
@@ -99,6 +98,7 @@
     "typescript": "~4.5.5"
   },
   "typeValidation": {
+    "disabled": true,
     "version": "2.1.0",
     "broken": {}
   }
