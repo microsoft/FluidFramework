@@ -5,10 +5,13 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IsoBuffer } from "@fluidframework/common-utils";
+import { UsageError } from "@fluidframework/container-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { compress } from "lz4js";
 import { CompressionAlgorithms, ContainerRuntimeMessage } from "../containerRuntime";
 import { IBatch, BatchMessage } from "./definitions";
+
+const maxSupportedSizeInBytes = 500 * 1024 * 1024; // 500 MB
 
 /**
  * Compresses batches of ops. It generates a single compressed op that contains
@@ -23,6 +26,20 @@ export class OpCompressor {
     }
 
     public compressBatch(batch: IBatch): IBatch {
+        if (batch.contentSizeInBytes > maxSupportedSizeInBytes) {
+            const error = new UsageError("Payload too large");
+            this.logger.sendErrorEvent(
+                {
+                    eventName: "BatchTooLarge",
+                    size: batch.contentSizeInBytes,
+                    length: batch.content.length,
+                    limit: maxSupportedSizeInBytes,
+                },
+                error,
+            );
+            throw error;
+        }
+
         const messages: BatchMessage[] = [];
         const contentToCompress: ContainerRuntimeMessage[] = [];
         for (const message of batch.content) {
