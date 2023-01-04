@@ -6,15 +6,28 @@
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import { Serializable } from "@fluidframework/datastore-definitions";
 
+/**
+ * Events emitted by {@link ISharedCell}.
+ */
 export interface ISharedCellEvents<T> extends ISharedObjectEvents {
+    /**
+     * Emitted when the value has changed.
+     *
+     * @remarks Event paramters:
+     *
+     * - `value`: The new value of the cell.
+     */
     (event: "valueChanged", listener: (value: Serializable<T>) => void);
+
+    /**
+     * Emitted when the value has been deleted.
+     */
     (event: "delete", listener: () => void);
 }
 
 /**
- * Shared cell interface
+ * Distributed Data Structure (DDS), which stores a single shared value that can be edited or deleted.
  */
-
 export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>> {
     /**
      * Retrieves the cell value.
