@@ -328,7 +328,8 @@ flowchart
             defaultSchema-->defaultFieldKinds-->modular-schema
             forestIndex-->treeTextCursor
             modular-schema
-            object-forest-->treeTextCursor
+            object-forest-->mapTreeCursor-->treeCursorUtils
+            chunked-forest-->treeCursorUtils
             schemaIndex
             sequence-change-family-->treeTextCursor
         end

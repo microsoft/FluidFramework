@@ -4,11 +4,13 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { IEventEmitter } from "../../events";
 import { Dependee } from "../dependency-tracking";
 import { StoredSchemaRepository } from "../schema-stored";
 import {
     Anchor,
     AnchorSet,
+    Delta,
     DetachedField,
     detachedFieldAsKey,
     FieldKey,
@@ -25,6 +27,23 @@ import type { IEditableForest } from "./editableForest";
  * but makes it practical to provide highly optimized implementations,
  * for example WASM powered binary formats that can track reference counts and only copy when needed.
  */
+
+/**
+ * Events for {@link IForestSubscription}.
+ *
+ * TODO: consider having before and after events per subtree instead while applying anchor (and this just shows what happens at the root).
+ */
+export interface ForestEvents {
+    /**
+     * Delta is about to be applied to forest.
+     */
+    beforeDelta(delta: Delta.Root): void;
+
+    /**
+     * Delta was just applied to forest.
+     */
+    afterDelta(delta: Delta.Root): void;
+}
 
 /**
  * Invalidates whenever `current` changes.
@@ -47,6 +66,11 @@ export interface IForestSubscription extends Dependee {
      * The root's schema is tracked under {@link rootFieldKey}.
      */
     readonly schema: StoredSchemaRepository;
+
+    /**
+     * Emitter for events.
+     */
+    readonly emitter: IEventEmitter<ForestEvents>;
 
     /**
      * Allocates a cursor in the "cleared" state.

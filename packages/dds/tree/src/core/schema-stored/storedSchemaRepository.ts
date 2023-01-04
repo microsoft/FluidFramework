@@ -4,6 +4,7 @@
  */
 
 import { Dependee, SimpleDependee } from "../dependency-tracking";
+import { EventEmitter, IEventEmitter } from "../../events";
 import {
     GlobalFieldKey,
     FieldSchema,
@@ -25,6 +26,23 @@ export interface SchemaDataAndPolicy<TPolicy extends SchemaPolicy = SchemaPolicy
 }
 
 /**
+ * Events for {@link StoredSchemaRepository}.
+ *
+ * TODO: consider having before and after events per subtree instead while applying anchor (and this just shows what happens at the root).
+ */
+export interface SchemaEvents {
+    /**
+     * Schema change is about to be applied.
+     */
+    beforeSchemaChange(newSchema: SchemaData): void;
+
+    /**
+     * Schema change was just applied.
+     */
+    afterSchemaChange(newSchema: SchemaData): void;
+}
+
+/**
  * Mutable collection of stored schema.
  *
  * TODO: could implement more fine grained dependency tracking.
@@ -36,6 +54,11 @@ export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPol
      * Add the provided schema, possibly over-writing preexisting schema.
      */
     update(newSchema: SchemaData): void;
+
+    /**
+     * Emitter for events.
+     */
+    readonly emitter: IEventEmitter<SchemaEvents>;
 }
 
 /**
@@ -48,6 +71,8 @@ export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = Schem
 {
     readonly computationName: string = "StoredSchemaRepository";
     protected readonly data: MutableSchemaData;
+    public readonly emitter = EventEmitter.create<SchemaEvents>();
+
     /**
      * For now, the schema are just scored in maps.
      * There are a couple reasons we might not want this simple solution long term:
@@ -80,23 +105,8 @@ export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = Schem
         return this.data.treeSchema;
     }
 
-    /**
-     * Updates the specified schema.
-     */
-    public updateFieldSchema(identifier: GlobalFieldKey, schema: FieldSchema): void {
-        this.data.globalFieldSchema.set(identifier, schema);
-        this.invalidateDependents();
-    }
-
-    /**
-     * Updates the specified schema.
-     */
-    public updateTreeSchema(identifier: TreeSchemaIdentifier, schema: TreeSchema): void {
-        this.data.treeSchema.set(identifier, schema);
-        this.invalidateDependents();
-    }
-
     public update(newSchema: SchemaData): void {
+        this.emitter.emit("beforeSchemaChange", newSchema);
         for (const [name, schema] of newSchema.globalFieldSchema) {
             this.data.globalFieldSchema.set(name, schema);
         }
@@ -104,6 +114,7 @@ export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = Schem
             this.data.treeSchema.set(name, schema);
         }
         this.invalidateDependents();
+        this.emitter.emit("afterSchemaChange", newSchema);
     }
 }
 

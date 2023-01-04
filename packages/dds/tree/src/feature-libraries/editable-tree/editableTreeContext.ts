@@ -18,13 +18,10 @@ import {
     Checkout as TransactionCheckout,
     UpPath,
     FieldKey,
-    SimpleObservingDependent,
-    InvalidationToken,
-    Delta,
-    Dependent,
-    afterChangeToken,
     SchemaDataAndPolicy,
+    ForestEvents,
 } from "../../core";
+import { IEventEmitter } from "../../events";
 import { DefaultChangeset, DefaultEditBuilder } from "../defaultChangeFamily";
 import { runSynchronousTransaction } from "../defaultTransaction";
 import { singleMapTreeCursor } from "../mapTreeCursor";
@@ -113,11 +110,9 @@ export interface EditableTreeContext {
     clear(): void;
 
     /**
-     * Attaches the handler to be called after a transaction, initiated by
-     * either this context or any other context or client using this document,
-     * is committed successfully.
+     * Emitter for events.
      */
-    attachAfterChangeHandler(afterChangeHandler: (context: EditableTreeContext) => void): void;
+    readonly emitter: IEventEmitter<ForestEvents>;
 }
 
 /**
@@ -128,8 +123,11 @@ export interface EditableTreeContext {
 export class ProxyContext implements EditableTreeContext {
     public readonly withCursors: Set<ProxyTarget<Anchor | FieldAnchor>> = new Set();
     public readonly withAnchors: Set<ProxyTarget<Anchor | FieldAnchor>> = new Set();
-    private readonly observer: Dependent;
-    private readonly afterChangeHandlers: Set<(context: EditableTreeContext) => void> = new Set();
+    public get emitter(): IEventEmitter<ForestEvents> {
+        return this.forest.emitter;
+    }
+
+    private readonly eventUnregister: (() => void)[];
 
     /**
      * @param forest - the Forest
@@ -142,16 +140,11 @@ export class ProxyContext implements EditableTreeContext {
             DefaultChangeset
         >,
     ) {
-        this.observer = new SimpleObservingDependent(
-            (token?: InvalidationToken, delta?: Delta.Root): void => {
-                if (token === afterChangeToken) {
-                    this.handleAfterChange();
-                } else {
-                    this.prepareForEdit();
-                }
-            },
-        );
-        this.forest.registerDependent(this.observer);
+        this.eventUnregister = [
+            this.forest.emitter.on("beforeDelta", () => {
+                this.prepareForEdit();
+            }),
+        ];
     }
 
     public prepareForEdit(): void {
@@ -163,7 +156,10 @@ export class ProxyContext implements EditableTreeContext {
 
     public free(): void {
         this.clear();
-        this.forest.removeDependent(this.observer);
+        for (const unregister of this.eventUnregister) {
+            unregister();
+        }
+        this.eventUnregister.length = 0;
     }
 
     public clear(): void {
@@ -220,18 +216,6 @@ export class ProxyContext implements EditableTreeContext {
 
     public get schema(): SchemaDataAndPolicy {
         return this.forest.schema;
-    }
-
-    public attachAfterChangeHandler(
-        afterChangeHandler: (context: EditableTreeContext) => void,
-    ): void {
-        this.afterChangeHandlers.add(afterChangeHandler);
-    }
-
-    private handleAfterChange(): void {
-        for (const afterChangeHandler of this.afterChangeHandlers) {
-            afterChangeHandler(this);
-        }
     }
 
     public setNodeValue(path: UpPath, value: Value): boolean {

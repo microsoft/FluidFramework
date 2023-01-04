@@ -75,6 +75,8 @@ export {
     TaggedChange,
     RepairDataStore,
     ReadonlyRepairDataStore,
+    SchemaEvents,
+    ForestEvents,
 } from "./core";
 
 export {
@@ -96,6 +98,8 @@ export {
     JsonCompatible,
     JsonCompatibleObject,
 } from "./util";
+
+export { Events, IEventEmitter, IsEvent } from "./events";
 
 export {
     cursorToJsonObject,

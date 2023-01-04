@@ -29,12 +29,13 @@ import {
     MapTree,
     getMapTreeField,
     FieldAnchor,
-    afterChangeToken,
     FieldUpPath,
+    ForestEvents,
 } from "../../core";
 import { brand, fail } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
 import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
+import { EventEmitter } from "../../events";
 
 function makeRoot(): MapTree {
     return {
@@ -56,6 +57,8 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 
     // All cursors that are in the "Current" state. Must be empty when editing.
     public readonly currentCursors: Set<Cursor> = new Set();
+
+    public readonly emitter = EventEmitter.create<ForestEvents>();
 
     public constructor(
         public readonly schema: StoredSchemaRepository,
@@ -85,7 +88,12 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
     }
 
     applyDelta(delta: Delta.Root): void {
-        this.beforeChange();
+        this.emitter.emit("beforeDelta", delta);
+        this.invalidateDependents();
+        assert(
+            this.currentCursors.size === 0,
+            0x374 /* No cursors can be current when modifying forest */,
+        );
 
         // Note: This code uses cursors, however it also modifies the tree.
         // In general this is not safe, but this code happens to only modify the tree below the current cursor location,
@@ -151,6 +159,8 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
         };
         visitDelta(delta, visitor);
         cursor.free();
+
+        this.emitter.emit("afterDelta", delta);
     }
 
     private nextRange = 0;
@@ -193,19 +203,6 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 
     allocateCursor(): Cursor {
         return new Cursor(this);
-    }
-
-    private beforeChange(): void {
-        this.invalidateDependents();
-        assert(
-            this.currentCursors.size === 0,
-            0x374 /* No cursors can be current when modifying forest */,
-        );
-    }
-
-    // TODO: remove this workaround as soon as notification/eventing will be supported.
-    afterChange(): void {
-        this.invalidateDependents(afterChangeToken);
     }
 
     tryMoveCursorToNode(
@@ -467,10 +464,4 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
  */
 export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest {
     return new ObjectForest(schema, anchors);
-}
-
-// This must be used only in forestIndex and should never be exported elsewhere.
-// TODO: remove this workaround as soon as notification/eventing will be supported.
-export function afterChangeForest(forest: IEditableForest): void {
-    (forest as ObjectForest).afterChange();
 }
