@@ -50,27 +50,28 @@ const snapshotFileName = "header";
  */
 // TODO: use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
-    implements ISharedCell<T> {
+export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> implements ISharedCell<T> {
     /**
-     * Create a new shared cell
+     * Create a new `SharedCell`.
      *
-     * @param runtime - data store runtime the new shared map belongs to
-     * @param id - optional name of the shared map
-     * @returns newly create shared map (but not attached yet)
+     * @param runtime - The data store runtime to which the `SharedCell` belongs.
+     * @param id - Unique identifier for the `SharedCell`.
+     *
+     * @returns The newly create `SharedCell`. Note that it will not yet be attached.
      */
     public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCell {
         return runtime.createChannel(id, CellFactory.Type) as SharedCell;
     }
 
     /**
-     * Get a factory for SharedCell to register with the data store.
+     * Gets the factory for the `SharedCell` to register with the data store.
      *
-     * @returns a factory that creates and load SharedCell
+     * @returns A factory that creates and loads `SharedCell`s.
      */
     public static getFactory(): IChannelFactory {
         return new CellFactory();
     }
+
     /**
      * The data held by this cell.
      */
@@ -91,13 +92,13 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     private readonly pendingMessageIds: number[] = [];
 
     /**
-     * Constructs a new shared cell. If the object is non-local an id and service interfaces will
-     * be provided
+     * Constructs a new `SharedCell`.
+     * If the object is non-local an id and service interfaces will be provided.
      *
-     * @param runtime - data store runtime the shared map belongs to
-     * @param id - optional name of the shared map
+     * @param runtime - The data store runtime to which the `SharedCell` belongs.
+     * @param id - Unique identifier for the `SharedCell`.
      */
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
+    public constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes, "fluid_cell_");
     }
 
@@ -158,9 +159,9 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     }
 
     /**
-     * Create a summary for the cell
+     * Creates a summary for the Cell.
      *
-     * @returns the summary of the current state of the cell
+     * @returns The summary of the current state of the Cell.
      */
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         const content: ICellValue = { value: this.data };
@@ -177,19 +178,20 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     }
 
     /**
-     * Initialize a local instance of cell
+     * Initialize a local instance of cell.
      */
     protected initializeLocalCore(): void {
         this.data = undefined;
     }
 
     /**
-     * Call back on disconnect
+     * Call back on disconnect.
      */
     protected onDisconnect(): void { }
 
     /**
-     * Apply inner op
+     * Apply inner op.
+     *
      * @param content - ICellOperation content
      */
     private applyInnerOp(content: ICellOperation): Serializable<T> | undefined {
@@ -206,12 +208,12 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     }
 
     /**
-     * Process a cell operation
+     * Process a cell operation (op).
      *
-     * @param message - the message to prepare
-     * @param local - whether the message was sent by the local client
+     * @param message - The message to prepare.
+     * @param local - Whether or not the message was sent by the local client.
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-     * For messages from a remote client, this will be undefined.
+     * For messages from a remote client, this will be `undefined`.
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         const cellOpMetadata = localOpMetadata as ICellLocalOpMetadata;
@@ -267,6 +269,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
+     *
      * @internal
      */
     protected applyStashedOp(content: unknown): unknown {
@@ -276,8 +279,9 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     }
 
     /**
-     * Rollback a local op
-     * @param content - The operation to rollback
+     * Rollback a local op.
+     *
+     * @param content - The operation to rollback.
      * @param localOpMetadata - The local metadata associated with the op.
      */
     // TODO: use `unknown` instead (breaking change).
@@ -303,8 +307,9 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
 
      /**
      * Submit a cell message to remote clients.
-     * @param op - The cell message
-     * @param previousValue - The value of the cell before this op
+     *
+     * @param op - The cell message.
+     * @param previousValue - The value of the cell before this op.
      */
     private submitCellMessage(op: ICellOperation, previousValue?: Serializable<T>): void {
         const localMetadata = this.createLocalOpMetadata(op, previousValue);

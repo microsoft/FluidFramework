@@ -19,8 +19,14 @@ import { pkgVersion } from "./packageVersion";
  * @sealed
  */
 export class CellFactory implements IChannelFactory {
+    /**
+     * {@inheritDoc CellFactory."type"}
+     */
     public static readonly Type = "https://graph.microsoft.com/types/cell";
 
+    /**
+     * {@inheritDoc CellFactory.attributes}
+     */
     public static readonly Attributes: IChannelAttributes = {
         type: CellFactory.Type,
         snapshotFormatVersion: "0.1",

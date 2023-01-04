@@ -103,9 +103,19 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
     delete(): void;
 }
 
+/**
+ * Describes a local Cell operation (op).
+ */
 // TODO: use `unknown` instead.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ICellLocalOpMetadata<T = any> {
+    /**
+     * Unique identifier for this local operation (op).
+     */
     pendingMessageId: number;
+
+    /**
+     * The value of the {@link ISharedCell} prior to this operation (op).
+     */
     previousValue?: Serializable<T> ;
 }

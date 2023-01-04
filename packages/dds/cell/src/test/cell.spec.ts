@@ -311,7 +311,7 @@ describe("Cell", () => {
             private readonly cell2: ISharedCell;
             private readonly containerRuntimeFactory: MockContainerRuntimeFactory;
 
-            constructor() {
+            public constructor() {
                 this.containerRuntimeFactory = new MockContainerRuntimeFactory();
                 this.cell1 = createConnectedCell("cell1", this.containerRuntimeFactory);
                 this.cell2 = createConnectedCell("cell2", this.containerRuntimeFactory);
