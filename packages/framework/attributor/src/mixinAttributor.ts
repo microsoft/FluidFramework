@@ -12,6 +12,9 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import { assert, bufferToString, unreachableCase } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
+import {
+    loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { AttributionInfo, AttributionKey, Attributor, IAttributor, OpStreamAttributor } from "./attributor";
 import { AttributorSerializer, chain, deltaEncoder, Encoder } from "./encoders";
 import { makeLZ4Encoder } from "./lz4Encoder";
@@ -19,6 +22,14 @@ import { makeLZ4Encoder } from "./lz4Encoder";
 // Summary tree keys
 const attributorTreeName = ".attributor";
 const opBlobName = "op";
+
+/**
+ * @alpha
+ * Feature Gate Key -
+ * Whether or not a container runtime instantiated using `mixinAttributor`'s load should generate an attributor on
+ * new files. See package README for more notes on integration.
+ */
+export const enableOnNewFileKey = "Fluid.Attribution.EnableOnNewFile";
 
 /**
  * @alpha
@@ -104,6 +115,8 @@ export const mixinAttributor = (
             ) as ContainerRuntimeWithAttributor;
             runtime.runtimeAttributor = runtimeAttributor as RuntimeAttributor;
 
+            const mc = loggerToMonitoringContext(runtime.logger);
+
             // Note: this fetches attribution blobs relatively eagerly in the load flow; we may want to optimize
             // this to avoid blocking on such information until application actually requests some op-based attribution
             // info or we need to summarize. All that really needs to happen immediately is to start recording
@@ -112,7 +125,8 @@ export const mixinAttributor = (
                 deltaManager,
                 audience,
                 baseSnapshot,
-                async (id) => runtime.storage.readBlob(id)
+                async (id) => runtime.storage.readBlob(id),
+                mc.config.getBoolean(enableOnNewFileKey) ?? false
             );
             return runtime;
         }
@@ -162,11 +176,13 @@ class RuntimeAttributor implements IRuntimeAttributor {
         audience: IAudience,
         baseSnapshot: ISnapshotTree | undefined,
         readBlob: (id: string) => Promise<ArrayBufferLike>,
+        shouldAddAttributorOnNewFile: boolean,
     ): Promise<void> {
         const attributorTree = baseSnapshot?.trees[attributorTreeName];
         // Existing documents that don't already have a snapshot containing runtime attribution info shouldn't
         // inject any for now--this causes some back-compat integration problems that aren't fully worked out.
-        const shouldExcludeAttributor = baseSnapshot !== undefined && attributorTree === undefined;
+        const shouldExcludeAttributor = (baseSnapshot !== undefined && attributorTree === undefined)
+            || (baseSnapshot === undefined && !shouldAddAttributorOnNewFile);
         if (shouldExcludeAttributor) {
             // This gives a consistent error for calls to `get` on keys that don't exist.
             this.opAttributor = new Attributor();

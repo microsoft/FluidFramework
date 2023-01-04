@@ -5,8 +5,13 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { SchemaDataAndPolicy } from "../../../schema-stored";
-import { FieldKey, genericTreeKeys, getGenericTreeField, JsonableTree } from "../../../tree";
+import {
+    SchemaDataAndPolicy,
+    FieldKey,
+    genericTreeKeys,
+    getGenericTreeField,
+    JsonableTree,
+} from "../../../core";
 import { fail, brand } from "../../../util";
 import {
     UnwrappedEditableField,

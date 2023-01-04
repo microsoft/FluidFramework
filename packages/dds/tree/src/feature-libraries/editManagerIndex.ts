@@ -24,15 +24,17 @@ import {
     Commit,
     EditManager,
     ICachedValue,
-    Index,
     MutableSummaryData,
     ReadonlySummaryData,
     recordDependency,
     SessionId,
+} from "../core";
+import {
+    Index,
     SummaryElement,
     SummaryElementParser,
     SummaryElementStringifier,
-} from "../core";
+} from "../shared-tree-core";
 
 /**
  * The storage key for the blob in the summary containing EditManager data

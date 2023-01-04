@@ -19,11 +19,6 @@ import {
     IEditableForest,
     initializeForest,
     ITreeSubscriptionCursor,
-    Index,
-    IndexEvents,
-    SummaryElement,
-    SummaryElementParser,
-    SummaryElementStringifier,
     cachedValue,
     ICachedValue,
     recordDependency,
@@ -31,6 +26,13 @@ import {
     mapCursorField,
     moveToDetachedField,
 } from "../core";
+import {
+    Index,
+    SummaryElement,
+    SummaryElementParser,
+    SummaryElementStringifier,
+    IndexEvents,
+} from "../shared-tree-core";
 import { IEventEmitter } from "../events";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 import { afterChangeForest } from "./object-forest";

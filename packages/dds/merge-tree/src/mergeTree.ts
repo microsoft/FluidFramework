@@ -388,29 +388,29 @@ export interface IMergeTreeOptions {
     /**
      * Whether to enable the length calculations implemented in
      * https://github.com/microsoft/FluidFramework/pull/11678
-     * 
+     *
      * These calculations resolve bugginess that causes eventual consistency issues in certain conflicting
      * removal cases, but regress some index-based undo-redo implementations. The suggested path for
-     * consumers is to switch to LocalReference-based undo-redo implementation (see 
+     * consumers is to switch to LocalReference-based undo-redo implementation (see
      * https://github.com/microsoft/FluidFramework/pull/11899) and enable this feature flag.
-     * 
+     *
      * default: false
      */
     mergeTreeUseNewLengthCalculations?: boolean;
     mergeTreeSnapshotChunkSize?: number;
     /**
      * Whether to use the SnapshotV1 format over SnapshotLegacy.
-     * 
+     *
      * SnapshotV1 stores a view of the merge-tree at the current sequence number, preserving merge metadata
      * (e.g. clientId, seq, etc.) only for segment changes within the collab window.
-     * 
+     *
      * SnapshotLegacy stores a view of the merge-tree at the minimum sequence number along with the ops between
      * the minimum sequence number and the current sequence number.
-     * 
+     *
      * Both formats merge segments where possible (see {@link ISegment.canAppend})
-     * 
+     *
      * default: false
-     * 
+     *
      * @remarks
      * Despite the "legacy"/"V1" naming, both formats are actively used at the time of writing. SharedString
      * uses legacy and Matrix uses V1.
@@ -427,10 +427,10 @@ export interface IMergeTreeAttributionOptions {
     /**
      * If enabled, segments will store attribution keys which can be used with the runtime to determine
      * attribution information (i.e. who created the content and when it was created).
-     * 
+     *
      * This flag only applied to new documents: if a snapshot is loaded, whether or not attribution keys
      * are tracked is determined by the presence of existing attribution keys in the snapshot.
-     * 
+     *
      * default: false
      */
     track?: boolean;
@@ -1294,7 +1294,7 @@ export class MergeTree {
                         pendingSegment.cachedLength
                     );
                 }
-    
+
                 overwrite = overlappingRemove || overwrite;
 
                 if (!overlappingRemove && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
@@ -1736,6 +1736,8 @@ export class MergeTree {
                 // if the seg len in undefined, the segment
                 // will be removed, so should just be skipped for now
                 continue;
+            } else {
+                assert(len >= 0, "Length should not be negative");
             }
 
             if ((_pos < len) || ((_pos === len) && this.breakTie(_pos, child, seq))) {
@@ -2044,6 +2046,8 @@ export class MergeTree {
 
                 const start = this.findRollbackPosition(segment);
                 if (op.type === MergeTreeDeltaType.INSERT) {
+                    segment.seq = UniversalSequenceNumber;
+                    segment.localSeq = undefined;
                     const removeOp = createRemoveRangeOp(start, start + segment.cachedLength);
                     this.markRangeRemoved(
                         start,

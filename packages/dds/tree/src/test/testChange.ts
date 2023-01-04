@@ -4,10 +4,15 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { ChangeEncoder, ChangeFamily } from "../change-family";
+import {
+    ChangeEncoder,
+    ChangeFamily,
+    ChangeRebaser,
+    TaggedChange,
+    AnchorSet,
+    Delta,
+} from "../core";
 import { ChangesetLocalId, IdAllocator } from "../feature-libraries";
-import { ChangeRebaser, TaggedChange } from "../rebase";
-import { AnchorSet, Delta } from "../tree";
 import { brand, JsonCompatible, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
 import { deepFreeze } from "./utils";
 

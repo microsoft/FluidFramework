@@ -4,7 +4,7 @@
  */
 
 import { bufferToString, IsoBuffer } from "@fluidframework/common-utils";
-import { JsonCompatibleReadOnly } from "../util";
+import { JsonCompatibleReadOnly } from "../../util";
 
 /**
  * Serializes and deserializes changes.

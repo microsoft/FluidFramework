@@ -18,7 +18,6 @@ import {
     IForestSubscription,
     StoredSchemaRepository,
     InMemoryStoredSchemaRepository,
-    SharedTreeCore,
     Checkout as TransactionCheckout,
     Anchor,
     AnchorLocator,
@@ -26,6 +25,7 @@ import {
     UpPath,
     EditManager,
 } from "../core";
+import { SharedTreeCore } from "../shared-tree-core";
 import {
     defaultSchemaPolicy,
     EditableTreeContext,
@@ -43,6 +43,7 @@ import {
     runSynchronousTransaction,
     buildForest,
     ContextuallyTypedNodeData,
+    ModularChangeset,
 } from "../feature-libraries";
 
 /**
@@ -103,7 +104,11 @@ export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObje
  * TODO: expose or implement Checkout.
  */
 class SharedTree
-    extends SharedTreeCore<DefaultChangeset, DefaultChangeFamily>
+    extends SharedTreeCore<
+        DefaultChangeset,
+        DefaultChangeFamily,
+        [SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset, DefaultChangeFamily>]
+    >
     implements ISharedTree
 {
     public readonly context: EditableTreeContext;

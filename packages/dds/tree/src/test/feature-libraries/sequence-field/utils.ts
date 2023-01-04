@@ -4,10 +4,9 @@
  */
 
 import { ChangesetLocalId, SequenceField as SF } from "../../../feature-libraries";
-import { Delta, TaggedChange } from "../../../core";
+import { Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze, fakeRepair } from "../../utils";
-import { makeAnonChange, tagChange } from "../../../rebase";
 import { brand } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
