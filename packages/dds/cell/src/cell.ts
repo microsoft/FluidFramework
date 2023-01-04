@@ -46,52 +46,10 @@ interface ICellValue {
 const snapshotFileName = "header";
 
 /**
- * The SharedCell distributed data structure can be used to store a single serializable value.
- *
- * @remarks
- * ### Creation
- *
- * To create a `SharedCell`, call the static create method:
- *
- * ```typescript
- * const myCell = SharedCell.create(this.runtime, id);
- * ```
- *
- * ### Usage
- *
- * The value stored in the cell can be set with the `.set()` method and retrieved with the `.get()` method:
- *
- * ```typescript
- * myCell.set(3);
- * console.log(myCell.get()); // 3
- * ```
- *
- * The value must only be plain JS objects or `SharedObject` handles (e.g. to another DDS or Fluid object).
- * In collaborative scenarios, the value is settled with a policy of _last write wins_.
- *
- * The `.delete()` method will delete the stored value from the cell:
- *
- * ```typescript
- * myCell.delete();
- * console.log(myCell.get()); // undefined
- * ```
- *
- * The `.empty()` method will check if the value is undefined.
- *
- * ```typescript
- * if (myCell.empty()) {
- *   // myCell.get() will return undefined
- * } else {
- *   // myCell.get() will return a non-undefined value
- * }
- * ```
- *
- * ### Eventing
- *
- * `SharedCell` is an `EventEmitter`, and will emit events when other clients make modifications. You should
- * register for these events and respond appropriately as the data is modified. `valueChanged` will be emitted
- * in response to a `set`, and `delete` will be emitted in response to a `delete`.
+ * {@inheritDoc ISharedCell}
  */
+// TODO: use `unknown` instead (breaking change).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     implements ISharedCell<T> {
     /**
@@ -101,7 +59,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * @param id - optional name of the shared map
      * @returns newly create shared map (but not attached yet)
      */
-    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCell {
         return runtime.createChannel(id, CellFactory.Type) as SharedCell;
     }
 
@@ -153,7 +111,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     /**
      * {@inheritDoc ISharedCell.set}
      */
-    public set(value: Serializable<T>) {
+    public set(value: Serializable<T>): void {
         // Serialize the value if required.
         const operationValue: ICellValue = {
             value: this.serializer.encode(value, this.handle),
@@ -177,7 +135,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     /**
      * {@inheritDoc ISharedCell.delete}
      */
-    public delete() {
+    public delete(): void {
         // Delete the value locally.
         const previousValue = this.deleteCore();
 
@@ -195,7 +153,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     /**
      * {@inheritDoc ISharedCell.empty}
      */
-    public empty() {
+    public empty(): boolean {
         return this.data === undefined;
     }
 
@@ -221,20 +179,20 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     /**
      * Initialize a local instance of cell
      */
-    protected initializeLocalCore() {
+    protected initializeLocalCore(): void {
         this.data = undefined;
     }
 
     /**
      * Call back on disconnect
      */
-    protected onDisconnect() { }
+    protected onDisconnect(): void { }
 
     /**
      * Apply inner op
      * @param content - ICellOperation content
      */
-    private applyInnerOp(content: ICellOperation) {
+    private applyInnerOp(content: ICellOperation): Serializable<T> | undefined {
         switch (content.type) {
             case "setCell":
                 return this.setCore(this.decode(content.value));
@@ -255,7 +213,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         const cellOpMetadata = localOpMetadata as ICellLocalOpMetadata;
         if (this.messageId !== this.messageIdObserved) {
             // We are waiting for an ACK on our change to this cell - we will ignore all messages until we get it.
@@ -293,10 +251,9 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
         return previousLocalValue;
     }
 
-    private decode(cellValue: ICellValue) {
+    private decode(cellValue: ICellValue): Serializable<T> {
         const value = cellValue.value;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.serializer.decode(value);
+        return this.serializer.decode(value) as Serializable<T> ;
     }
 
     private createLocalOpMetadata(op: ICellOperation, previousValue?: Serializable<T>): ICellLocalOpMetadata {
@@ -323,13 +280,16 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * @param content - The operation to rollback
      * @param localOpMetadata - The local metadata associated with the op.
      */
-    protected rollback(content: any, localOpMetadata: unknown) {
+    // TODO: use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+    protected rollback(content: any, localOpMetadata: unknown): void {
         const cellOpMetadata = localOpMetadata as ICellLocalOpMetadata;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (content.type === "setCell" || content.type === "deleteCell") {
             if (cellOpMetadata.previousValue === undefined) {
                 this.deleteCore();
             } else {
-                this.setCore(cellOpMetadata.previousValue);
+                this.setCore(cellOpMetadata.previousValue as Serializable<T>);
             }
 
             const lastPendingMessageId = this.pendingMessageIds.pop();
@@ -346,7 +306,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * @param op - The cell message
      * @param previousValue - The value of the cell before this op
      */
-    private submitCellMessage(op: ICellOperation, previousValue?: any): void {
+    private submitCellMessage(op: ICellOperation, previousValue?: Serializable<T>): void {
         const localMetadata = this.createLocalOpMetadata(op, previousValue);
         this.submitLocalMessage(op, localMetadata);
     }
