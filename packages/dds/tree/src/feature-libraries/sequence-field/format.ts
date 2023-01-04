@@ -16,20 +16,35 @@ export type Mark<TNodeChange = NodeChangeType> =
     | OutputSpanningMark<TNodeChange>;
 
 export type ObjectMark<TNodeChange = NodeChangeType> = Exclude<Mark<TNodeChange>, Skip>;
-export type NodeSpanningMark<TNodeChange> = Exclude<Mark<TNodeChange>, NewAttach<TNodeChange>>;
 
+/**
+ * A mark that spans one or more cells.
+ * The spanned cells may be populated (e.g., "Delete") or not (e.g., "Revive").
+ */
+export type CellSpanningMark<TNodeChange> = Exclude<Mark<TNodeChange>, NewAttach<TNodeChange>>;
+
+/**
+ * A mark that spans one or more nodes in the input context of its changeset.
+ */
 export type InputSpanningMark<TNodeChange> =
     | Skip
     | Detach<TNodeChange>
     | Modify<TNodeChange>
     | SkipLikeReattach<TNodeChange>;
 
+/**
+ * A mark that spans one or more nodes in the output context of its changeset.
+ */
 export type OutputSpanningMark<TNodeChange> =
     | Skip
     | NewAttach<TNodeChange>
     | Modify<TNodeChange>
     | Reattach<TNodeChange>;
 
+/**
+ * A Reattach whose target nodes are already reattached and have not been detached by some other change.
+ * Such a Reattach has no effect when applied and is therefore akin to a Skip mark.
+ */
 export type SkipLikeReattach<TNodeChange> = Reattach<TNodeChange> &
     Muted & {
         lastDeletedBy?: never;
@@ -118,6 +133,9 @@ export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag {
     count: NodeCount;
 }
 
+/**
+ * An attach mark that allocates new cells.
+ */
 export type NewAttach<TNodeChange = NodeChangeType> = Insert<TNodeChange> | MoveIn;
 
 export type Attach<TNodeChange = NodeChangeType> = NewAttach<TNodeChange> | Reattach<TNodeChange>;
@@ -175,11 +193,11 @@ export interface HasReattachFields extends HasPlaceFields {
 
     /**
      * The changeset that last detached the nodes that this mark intends to revive.
-     * For this property to be set, the target nodes must have been revived my another changeset,
+     * For this property to be set, the target nodes must have been reattached my another changeset,
      * then detached by a changeset other than `Reattach.detachedBy`.
      *
      * This property should only be set or read when `Reattach.isIntention` is undefined.
-     * This property is `undefined` when it would otherwise be equivalent to `Reattach.detachedBy`.
+     * This property should be `undefined` when it would otherwise be equivalent to `Reattach.detachedBy`.
      */
     lastDetachedBy?: RevisionTag;
 }
@@ -219,35 +237,17 @@ export interface ReturnFrom<TNodeChange = NodeChangeType>
      */
     detachedBy: RevisionTag | undefined;
 
-    // /**
-    //  * When true, the intent if for the target nodes to be moved to the desired location,
-    //  * no matter where those nodes were moved.
-    //  *
-    //  * When undefined, the mark is solely intended to revert a prior change, and will therefore only take effect
-    //  * if that change has taken effect.
-    //  */
-    // isIntention?: true;
-
-    // /**
-    //  * The changeset (other than `ReturnFrom.detachedBy`) that last detached the nodes that this mark intends
-    //  * to detach.
-    //  *
-    //  * This property should only be set or read when `ReturnFrom.isIntention` is undefined.
-    //  * This property is `undefined` when it would otherwise be equivalent to `ReturnFrom.detachedBy`.
-    //  */
-    // lastDetachedBy?: RevisionTag;
-
     /**
      * Only populated when the mark is muted.
      * Indicates the index of the detach in the input context of `mutedBy`.
      */
     detachIndex?: number;
+
     /**
      * When true, the corresponding ReturnTo has been muted.
      * This is independent of whether this mark is muted.
      */
     isDstMuted?: true;
-    tomb?: RevisionTag;
 }
 
 /**

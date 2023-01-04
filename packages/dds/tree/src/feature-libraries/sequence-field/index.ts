@@ -32,7 +32,7 @@ export {
     ProtoNode,
     RangeType,
     Reattach,
-    NodeSpanningMark,
+    CellSpanningMark,
     InputSpanningMark,
     OutputSpanningMark,
     SkipLikeReattach,

@@ -416,16 +416,13 @@ export function tryExtendMark(
         }
         case "Delete": {
             const lhsDetach = lhs as Detach;
-            if (rhs.tomb === lhsDetach.tomb) {
-                lhsDetach.count += rhs.count;
-                return true;
-            }
-            break;
+            lhsDetach.count += rhs.count;
+            return true;
         }
         case "MoveOut":
         case "ReturnFrom": {
             const lhsMoveOut = lhs as MoveOut | ReturnFrom;
-            if (rhs.tomb === lhsMoveOut.tomb && moveEffects !== undefined) {
+            if (moveEffects !== undefined) {
                 if (
                     lhsMoveOut.type === "ReturnFrom" &&
                     !areMergeableReturnFrom(lhs as ReturnFrom, rhs as ReturnFrom)

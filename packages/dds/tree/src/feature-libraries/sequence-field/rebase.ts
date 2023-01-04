@@ -41,7 +41,7 @@ import {
     Mark,
     MarkList,
     Reattach,
-    NodeSpanningMark,
+    CellSpanningMark,
     Mutable,
     ReturnFrom,
 } from "./format";
@@ -471,13 +471,13 @@ interface RebaseMarks<T> {
 }
 
 function rebaseMark<TNodeChange>(
-    currMark: NodeSpanningMark<TNodeChange>,
-    baseMark: NodeSpanningMark<TNodeChange>,
+    currMark: CellSpanningMark<TNodeChange>,
+    baseMark: CellSpanningMark<TNodeChange>,
     baseRevision: RevisionTag | undefined,
     baseInputOffset: number,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
     moveEffects: MoveEffectTable<TNodeChange>,
-): NodeSpanningMark<TNodeChange> {
+): CellSpanningMark<TNodeChange> {
     if (isSkipMark(baseMark) || isSkipLikeReattach(baseMark)) {
         return clone(currMark);
     }
