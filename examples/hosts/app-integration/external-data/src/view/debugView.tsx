@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
-import type { IAppModel } from "../model-interface";
+import { CollaborativeInput } from "@fluid-experimental/react-inputs";
+import type { IAppModel, ITask } from "../model-interface";
 import { customerServicePort, parseStringData } from "../mock-service-interface";
 
 /**
@@ -29,12 +30,15 @@ export interface IDebugViewProps {
  * For the purposes of this test app, it is useful to be able to see both data sources side-by-side.
  */
 export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
+    const { model } = props;
+
     return (
         <div>
-            <h2 style={{ textDecoration: "underline" }}>Debug info</h2>
+            <h2 style={{ textDecoration: "underline" }}>External Data Server App</h2>
+            <TaskListView model={ model }/>
             <ExternalDataView />
             <SyncStatusView />
-            <ControlsView model={ props.model }/>
+            <ControlsView model={ model }/>
         </div>
     );
 };
@@ -99,7 +103,7 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
 
     return (
         <div>
-            <h3>External Data:</h3>
+            <h3>External Data Server:</h3>
             <div style={{ margin: "10px 0" }}>
                 <table>
                     <thead>
@@ -125,12 +129,12 @@ interface ISyncStatusViewProps { }
 const SyncStatusView: React.FC<ISyncStatusViewProps> = (props: ISyncStatusViewProps) => {
     return (
         <div>
-            <h3>Sync status</h3>
+            {/* <h3>Sync status</h3>
             <div style={{ margin: "10px 0" }}>
                 Fluid has [no] unsync'd changes (not implemented)<br />
                 External data source has [no] unsync'd changes (not implemented)<br />
                 Current sync activity: [idle | fetching | writing | resolving conflicts?] (not implemented)<br />
-            </div>
+            </div> */}
         </div>
     );
 };
@@ -168,6 +172,116 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
                 <button onClick={ debugResetExternalData }>Reset external data</button><br />
                 <button onClick={ props.model.debugSendCustomSignal }>Trigger external data change signal</button><br />
             </div>
+        </div>
+    );
+};
+
+interface ITaskRowProps {
+    readonly task: ITask;
+    readonly deleteTask: () => void;
+}
+
+/**
+ * The view for a single task in the TaskListView, as a table row.
+ */
+const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
+    const { task, deleteTask } = props;
+    const priorityRef = useRef<HTMLInputElement>(null);
+    useEffect(() => {
+        const updateFromRemotePriority = (): void => {
+            if (priorityRef.current !== null) {
+                priorityRef.current.value = task.priority.toString();
+            }
+        };
+        task.on("priorityChanged", updateFromRemotePriority);
+        updateFromRemotePriority();
+        return (): void => {
+            task.off("priorityChanged", updateFromRemotePriority);
+        };
+    }, [task]);
+
+    const inputHandler = (e: React.FormEvent): void => {
+        const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
+        task.priority = newValue;
+    };
+
+    return (
+        <tr>
+            <td>{ task.id }</td>
+            <td>
+                <CollaborativeInput
+                    sharedString={ task.name }
+                    style={{ width: "200px" }}
+                ></CollaborativeInput>
+            </td>
+            <td>
+                <input
+                    ref={ priorityRef }
+                    onInput={ inputHandler }
+                    type="number"
+                    style={{ width: "50px" }}
+                ></input>
+            </td>
+            <td>
+                <button
+                    onClick={ deleteTask }
+                    style={{ background: "none", border: "none" }}
+                >
+                    ❌
+                </button>
+            </td>
+        </tr>
+    );
+};
+
+/**
+ * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
+ */
+export const TaskListView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
+    const { model } = props;
+
+    const taskList = model.taskList;
+
+    const [tasks, setTasks] = useState<ITask[]>(taskList.getTasks());
+    useEffect(() => {
+        const updateTasks = (): void => {
+            setTasks(taskList.getTasks());
+        };
+        taskList.on("taskAdded", updateTasks);
+        taskList.on("taskDeleted", updateTasks);
+
+        return (): void => {
+            taskList.off("taskAdded", updateTasks);
+            taskList.off("taskDeleted", updateTasks);
+        };
+    }, [taskList]);
+
+    const taskRows = tasks.map((task) => (
+        <TaskRow
+            key={ task.id }
+            task={ task }
+            deleteTask={ (): void => taskList.deleteTask(task.id) }
+        />
+    ));
+
+    return (
+        // TODO: Gray button if not "authenticated" via debug controls
+        // TODO: Conflict UI
+        <div>
+            <h3>External Server App Form</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <td>ID</td>
+                        <td>Title</td>
+                        <td>Priority</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    { taskRows }
+                </tbody>
+            </table>
+            <button onClick={ taskList.saveChanges }>Save changes</button>
         </div>
     );
 };
