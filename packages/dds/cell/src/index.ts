@@ -4,7 +4,7 @@
  */
 
 /**
- * The `SharedCell` Distributed Data Structure (DDS)  stores a single, shared value that can be edited or deleted.
+ * The `SharedCell` Distributed Data Structure (DDS) stores a single, shared value that can be edited or deleted.
  *
  * @packageDocumentation
  */
