@@ -18,25 +18,27 @@ import {
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
+    applyMoveEffectsToMark,
+    changeSrcMoveId,
+    getUniqueMoveId,
+    isMoveMark,
+    modifyMoveSrc,
+    MoveEffectTable,
+    newMoveEffectTable,
+    removeMoveDest,
+    removeMoveSrc,
+    replaceMoveDest,
     replaceMoveSrc,
+    splitMarkOnInput,
+    splitMarkOnOutput,
+} from "./moveEffectTable";
+import {
     getInputLength,
     getOutputLength,
     isAttach,
     isDetachMark,
     isReattach,
     isSkipMark,
-    MoveEffectTable,
-    replaceMoveDest,
-    splitMarkOnInput,
-    splitMarkOnOutput,
-    newMoveEffectTable,
-    changeSrcMoveId,
-    removeMoveDest,
-    removeMoveSrc,
-    isMoveMark,
-    getUniqueMoveId,
-    applyMoveEffectsToMark,
-    modifyMoveSrc,
 } from "./utils";
 
 export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;

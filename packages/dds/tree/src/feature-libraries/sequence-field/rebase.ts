@@ -8,7 +8,6 @@ import { clone, fail, getOrAddEmptyToMap, StackyIterator } from "../../util";
 import { RevisionTag, TaggedChange } from "../../core";
 import { IdAllocator } from "../modular-schema";
 import {
-    applyMoveEffectsToMark,
     getInputLength,
     getOutputLength,
     isAttach,
@@ -16,15 +15,18 @@ import {
     isModify,
     isObjMark,
     isSkipMark,
+} from "./utils";
+import { Attach, Changeset, LineageEvent, Mark, MarkList, SizedMark } from "./format";
+import { MarkListFactory } from "./markListFactory";
+import { ComposeQueue } from "./compose";
+import {
+    applyMoveEffectsToMark,
     MoveEffectTable,
     newMoveEffectTable,
     removeMoveDest,
     splitMarkOnInput,
     splitMarkOnOutput,
-} from "./utils";
-import { Attach, Changeset, LineageEvent, Mark, MarkList, SizedMark } from "./format";
-import { MarkListFactory } from "./markListFactory";
-import { ComposeQueue } from "./compose";
+} from "./moveEffectTable";
 
 /**
  * Rebases `change` over `base` assuming they both apply to the same initial state.
@@ -132,6 +134,8 @@ function rebaseMarkList<TNodeChange>(
     }
 
     moveEffects.allowMerges = true;
+
+    // TODO: It's not convenient to store splitBaseMarks for cross-field move effects.
     return applyMoveEffects(splitBaseMarks, factory.list, moveEffects);
 }
 
