@@ -4,9 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { RevisionTag } from "../../../core";
+import { RevisionTag, TreeSchemaIdentifier } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
-import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 
 const dummyMark: SF.Detach = { type: "Delete", count: 1 };

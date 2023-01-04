@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail, unreachableCase } from "../util";
+import { fail, unreachableCase } from "../../util";
 import { FieldKey, Value } from "./types";
 import * as Delta from "./delta";
 

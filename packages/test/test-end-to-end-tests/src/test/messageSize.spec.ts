@@ -222,7 +222,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
                 `${config.messagesInBatch} messages of ${config.messageSize}b == ` +
                 `${(config.messagesInBatch * config.messageSize / (1024 * 1024)).toFixed(2)} MB`, async function() {
                     // This is not supported by the local server. See ADO:2690
-                    if (provider.driver.type === "local") {
+                    // This test is flaky on tinylicious. See ADO:2964
+                    if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
                         this.skip();
                     }
 
@@ -277,7 +278,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
                 it("Reconnects while processing chunks", async function() {
                     // This is not supported by the local server. See ADO:2690
-                    if (provider.driver.type === "local") {
+                    // This test is flaky on tinylicious. See ADO:2964
+                    if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
                         this.skip();
                     }
 
@@ -294,7 +296,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
                 it("Reconnects while processing compressed batch", async function() {
                     // This is not supported by the local server. See ADO:2690
-                    if (provider.driver.type === "local") {
+                    // This test is flaky on tinylicious. See ADO:2964
+                    if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
                         this.skip();
                     }
 

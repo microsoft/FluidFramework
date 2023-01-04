@@ -61,7 +61,6 @@ import {
 import {
     addBlobToSummary,
     convertSummaryTreeToITree,
-    packagePathToTelemetryProperty,
 } from "@fluidframework/runtime-utils";
 import {
     ChildLogger,
@@ -88,6 +87,7 @@ import {
     getFluidDataStoreAttributes,
 } from "./summaryFormat";
 import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
+import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
 import { summarizerClientType } from "./summarizerClientElection";
 
 function createAttributes(
@@ -782,11 +782,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
             // Always log an error when tombstoned data store is used. However, throw an error only if
             // throwOnTombstoneUsage is set.
-            this.mc.logger.sendErrorEvent({
+            const event = {
                 eventName: "GC_Tombstone_DataStore_Changed",
                 callSite,
-                pkg: packagePathToTelemetryProperty(this.pkg),
-            }, error);
+            };
+            sendGCTombstoneEvent(this.mc, event, this.clientDetails.type === summarizerClientType, this.pkg, error);
             // Always log an error when tombstoned data store is used. However, throw an error only if
             // throwOnTombstoneUsage is set and the client is not a summarizer.
             if (this.throwOnTombstoneUsage) {

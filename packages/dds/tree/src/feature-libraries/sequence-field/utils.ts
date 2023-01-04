@@ -764,7 +764,7 @@ export function getUniqueMoveId<T>(
     genId: IdAllocator,
     moveEffects: MoveEffectTable<T>,
 ): MoveId {
-    if (!moveEffects.validatedMarks.has(mark) && (mark.revision ?? revision === undefined)) {
+    if (!moveEffects.validatedMarks.has(mark) && (mark.revision ?? revision) === undefined) {
         let newId = moveEffects.idRemappings.get(mark.id);
         if (newId === undefined) {
             newId = genId();
