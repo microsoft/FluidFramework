@@ -18,6 +18,8 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 # 2.0.0-internal.2.2.0
 
 ## 2.0.0-internal.2.2.0 Upcoming changes
+- [Deprecated events and event parameters on IContainer and IDeltaManager](#deprecated-events-and-event-parameters-on-icontainer-and-ideltamanager)
+- [Added fileIsLocked errorType to DriverErrorType enum](#Added-fileIsLocked-errorType-to-DriverErrorType-enum)
 
 ### Deprecated events and event parameters on IContainer and IDeltaManager
 
@@ -48,6 +50,12 @@ The following legacy events and event parameters have been marked as deprecated 
         - This event has been unused and unsupported for some time.
           No replacement API recommended.
 
+
+
+
+### Added fileIsLocked errorType to DriverErrorType enum
+Added `fileIsLocked` errorType in DriverErrorType enum. This error happens when file is locked and we have status code 423.
+This is not breaking change yet. But if clients do not add handling for this error, their existing version of applications may start receiving this error in the future, and may not handle it correctly.
 # 2.0.0-internal.2.1.0
 
 ## 2.0.0-internal.2.1.0 Upcoming changes
