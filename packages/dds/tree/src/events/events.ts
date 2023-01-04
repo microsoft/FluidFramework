@@ -60,9 +60,8 @@ export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent>
 
 /**
  * An object which allows the registration of listeners so that subscribers can be notified when an event happens.
- * Clients can subscribe to events via the `on` method and unsubscribe by invoking the return value of `on`.
- * Classes wishing to emit events via this interface may implement this interface by creating a private {@link EventEmitter}
- * or by extending {@link EventEmitter} directly.
+ *
+ * {@link EventEmitter} can help implement this interface via delegation or extension.
  * @param E - All the events that this emitter supports
  * @example
  * ```ts
@@ -74,7 +73,7 @@ export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent>
  */
 export interface IEventEmitter<E extends Events<E>> {
     /**
-     * Register an event listener
+     * Register an event listener.
      * @param eventName - the name of the event
      * @param listener - the handler to run when the event is fired by the emitter
      * @returns a function which will deregister the listener when run
@@ -107,10 +106,7 @@ export interface IEventEmitter<E extends Events<E>> {
  *     this.events.emit("loaded");
  *   }
  *
- *   public on<K extends keyof MyEvents>(
- *     eventName: K,
- *     listener: MyEvents[K],
- *   ): () => void {
+ *   public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
  *     return this.events.on(eventName, listener);
  *   }
  * }
@@ -133,7 +129,7 @@ export class EventEmitter<E extends Events<E>> implements IEventEmitter<E> {
     protected constructor() {}
 
     /**
-     * Fire the given event, notifying all subscribers by calling their registered listener functions
+     * Fire the given event, notifying all subscribers by calling their registered listener functions.
      * @param eventName - the name of the event to fire
      * @param args - the arguments passed to the event listener functions
      */
@@ -147,12 +143,6 @@ export class EventEmitter<E extends Events<E>> implements IEventEmitter<E> {
         }
     }
 
-    /**
-     * Register an event listener
-     * @param eventName - the name of the event
-     * @param listener - the handler to run when the event is fired by the emitter
-     * @returns a function which will deregister the listener when run
-     */
     public on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void {
         const listeners = this.listeners.get(eventName);
         if (listeners !== undefined) {
