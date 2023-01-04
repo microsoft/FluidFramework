@@ -17,7 +17,7 @@ import { SharedCell } from "../cell";
 import { CellFactory } from "../cellFactory";
 import { ISharedCell } from "../interfaces";
 
-function createConnectedCell(id: string, runtimeFactory: MockContainerRuntimeFactory) {
+function createConnectedCell(id: string, runtimeFactory: MockContainerRuntimeFactory): ISharedCell {
     // Create and connect a second SharedCell.
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
     const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
@@ -31,12 +31,15 @@ function createConnectedCell(id: string, runtimeFactory: MockContainerRuntimeFac
     return cell;
 }
 
-function createLocalCell(id: string) {
+function createLocalCell(id: string): ISharedCell {
     const subCell = new SharedCell("cell", new MockFluidDataStoreRuntime(), CellFactory.Attributes);
     return subCell;
 }
 
-function createCellForReconnection(id: string, runtimeFactory: MockContainerRuntimeFactoryForReconnection) {
+function createCellForReconnection(
+    id: string,
+    runtimeFactory: MockContainerRuntimeFactoryForReconnection
+): { cell: ISharedCell, containerRuntime: MockContainerRuntimeForReconnection } {
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
     const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
     const services = {
@@ -51,7 +54,7 @@ function createCellForReconnection(id: string, runtimeFactory: MockContainerRunt
 
 describe("Cell", () => {
     describe("Local state", () => {
-        let cell: SharedCell;
+        let cell: ISharedCell;
 
         beforeEach(() => {
             cell = createLocalCell("cell");
@@ -314,29 +317,44 @@ describe("Cell", () => {
                 this.cell2 = createConnectedCell("cell2", this.containerRuntimeFactory);
             }
 
-            public get sharedObject() {
+            /**
+             * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.sharedObject}
+             */
+            public get sharedObject(): ISharedCell {
                 // Return the remote SharedCell because we want to verify its summary data.
                 return this.cell2;
             }
 
-            public get expectedOutboundRoutes() {
+            /**
+             * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.expectedOutboundRoutes}
+             */
+            public get expectedOutboundRoutes(): string[] {
                 return this._expectedRoutes;
             }
 
-            public async addOutboundRoutes() {
+            /**
+             * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.addOutboundRoutes}
+             */
+            public async addOutboundRoutes(): Promise<void> {
                 const newSubCell = createLocalCell(`subCell-${++this.subCellCount}`);
                 this.cell1.set(newSubCell.handle);
                 this._expectedRoutes = [newSubCell.handle.absolutePath];
                 this.containerRuntimeFactory.processAllMessages();
             }
 
-            public async deleteOutboundRoutes() {
+            /**
+             * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.deleteOutboundRoutes}
+             */
+            public async deleteOutboundRoutes(): Promise<void> {
                 this.cell2.delete();
                 this._expectedRoutes = [];
                 this.containerRuntimeFactory.processAllMessages();
             }
 
-            public async addNestedHandles() {
+            /**
+             * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.addNestedHandles}
+             */
+            public async addNestedHandles(): Promise<void> {
                 const newSubCell = createLocalCell(`subCell-${++this.subCellCount}`);
                 const newSubCell2 = createLocalCell(`subCell-${++this.subCellCount}`);
                 const containingObject = {
