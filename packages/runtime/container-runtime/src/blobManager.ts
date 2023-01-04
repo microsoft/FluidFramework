@@ -124,6 +124,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
      * Map of local IDs to storage IDs. Contains identity entries (id → id) for storage IDs. All requested IDs should
      * be a key in this map. Blobs created while the container is detached are stored in IDetachedBlobStorage which
      * gives local IDs; the storage IDs are filled in at attach time.
+     * Note: It contains mappings from all clients, i.e., from remote clients as well. local ID comes from the client
+     * that uploaded the blob but its mapping to storage ID is needed in all clients in order to retrieve the blob.
      */
     private readonly redirectTable: Map<string, string | undefined>;
 
@@ -161,14 +163,14 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         snapshot: IBlobManagerLoadInfo,
         private readonly getStorage: () => IDocumentStorageService,
         /**
-         * Submit a BlobAttach op. When a blob is uploaded, there is a short grace period before which
-         * the blob is deleted. The BlobAttach op notifies the server that blob is in use. The server
-         * will then not delete the blob as long as it is listed as referenced in future summaries.
-         * The summarizing client will know to include the storage ID in the summary when it sees the op.
+         * Submit a BlobAttach op. When a blob is uploaded, there is a short grace period before which the blob is
+         * deleted. The BlobAttach op notifies the server that blob is in use. The server will then node delete the
+         * the blob as long as it is listed as referenced in future summaries. The summarizing client will know to
+         * include the storage ID in the summary when it sees the op.
          *
-         * The op will also include a local ID to inform all clients of the relation to the storage
-         * ID, without knowledge of which they cannot request the blob from storage. This is also
-         * included in the redirect table in the summary.
+         * The op will also include a local ID to inform all clients of the relation to the storage ID, without
+         * knowledge of which they cannot request the blob from storage. It's important that this op is sequenced
+         * before any ops that reference the local ID, otherwise, an invalid handle could be added to the document.
          */
         private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void,
         // To be called when a blob node is requested. blobPath is the path of the blob's node in GC's graph. It's
@@ -462,12 +464,17 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
             ? PendingBlobStatus.OfflinePendingUpload
             : PendingBlobStatus.OfflinePendingOp;
 
-        // Submit a BlobAttach op. It's important we submit this op now before returning the blob handle so the
-        // BlobAttach op is sequenced prior to any ops referencing the handle. Otherwise an invalid handle could be
-        // added to the document if the ops are not all successfully submitted upon reconnection.
-        // storageId may be undefined but since we are not connected we will have a chance to add it when reSubmit()
-        // is called
-        this.sendBlobAttachOp(localId, entry.storageId);
+        /**
+         * If we haven't already submitted a BlobAttach op for this localId and storageId combination, send it before
+         * returning the blob handle. This will make sure that the BlobAttach op is sequenced prior to any ops
+         * referencing the handle, otherwise, an invalid handle could be added to the document.
+         * storageId may be undefined but since we are not connected we will have a chance to add it when reSubmit()
+         * is called on reconnection.
+         */
+        if (entry.storageId === undefined || this.opsInFlight.get(entry.storageId)?.includes(localId) !== true) {
+            this.sendBlobAttachOp(localId, entry.storageId);
+        }
+
         entry.handleP.resolve(this.getBlobHandle(localId));
     }
 
