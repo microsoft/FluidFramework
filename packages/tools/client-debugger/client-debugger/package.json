@@ -35,13 +35,11 @@
     "prettier:fix": "prettier --write .",
     "start:tinylicious": "tinylicious",
     "test": "npm run test:realsvc",
-    "test:coverage": "npm run test:realsvc:coverage",
-    "test:realsvc": "npm run test:realsvc:tinylicious",
-    "test:realsvc:coverage": "npm run test:realsvc:tinylicious:coverage",
-    "test:realsvc:tinylicious": "start-server-and-test start:tinylicious 7070 test:realsvc:tinylicious:run",
-    "test:realsvc:tinylicious:coverage": "start-server-and-test start:tinylicious 7070 test:realsvc:tinylicious:run:coverage",
-    "test:realsvc:tinylicious:run": "mocha dist/**/*.test.js --unhandled-rejections=strict --exit",
-    "test:realsvc:tinylicious:run:coverage": "nyc npm run mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+    "test:coverage": "start-server-and-test start:tinylicious 7070 test:realsvc:coverage",
+    "test:realsvc": "start-server-and-test start:tinylicious 7070 test:realsvc:run",
+    "test:realsvc:coverage": "npm run test:realsvc:run:coverage",
+    "test:realsvc:run": "mocha dist/**/*.test.js --unhandled-rejections=strict --exit",
+    "test:realsvc:run:coverage": "nyc npm run mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "tsc": "tsc --pretty"
   },
   "nyc": {
