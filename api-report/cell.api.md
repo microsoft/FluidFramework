@@ -50,6 +50,4 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }
 
-// (No @packageDocumentation comment for this package)
-
 ```
