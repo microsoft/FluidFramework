@@ -406,19 +406,20 @@ export class DocumentDeltaConnection
                 let isWebSocketTransportError = false;
                 try {
                     const description = error?.description;
-                    const responseText = error?.context?.responseText;
+                    // const responseText = error?.context?.responseText;
 
                     if (description.message?.includes("self signed certificate")) {
                         failAndCloseSocket(this.createErrorObject("connect_error", error, false));
                         return;
                     }
 
-                    console.log('Error: ', error);
-                    console.log('Description:', description);
-                    console.log('Description Message: ', description.message);
-                    console.log("ResponseText:", responseText);
+                    // console.log('Error: ', error);
+                    // console.log('Description:', description);
+                    // console.log('Description Message: ', description.message);
+                    // console.log("ResponseText:", responseText);
 
                     // if (responseText?.includes("Error: self signed certificate")) {
+                    //     console.log('RESPONSE TEXT HIT');
                     //     failAndCloseSocket(this.createErrorObject("connect_error", error, false));
                     //     return;
                     // }
