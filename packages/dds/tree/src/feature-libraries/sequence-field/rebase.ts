@@ -118,7 +118,7 @@ function rebaseMarkList<TNodeChange>(
     // marks which should have their lineage updated if we encounter a detach.
     const lineageRequests: LineageRequest<TNodeChange>[] = [];
     let baseDetachOffset = 0;
-    // The offset of the next base mark in the input context of the the base change.
+    // The offset of the next base mark in the input context of the base change.
     // This assumes the base changeset is not composite (and asserts if it is).
     let baseInputOffset = 0;
     while (!queue.isEmpty()) {
@@ -487,7 +487,9 @@ function rebaseMark<TNodeChange>(
             const baseMarkRevision = baseMark.revision ?? baseRevision;
             if (isReattach(currMark)) {
                 // TODO: add `addedBy: RevisionTag` to inverses of attaches so we can detect when
-                // currMark is rebased over the undo of currMark.mutedBy.
+                // baseMark.addedBy === currMark.mutedBy, which indicates the deletion is the undo of the reattach that
+                // muted currMark. When that's the case, the mark should be unmuted.
+                // See skipped test: Revive ↷ [Revive, undo(Revive)] => Revive
                 if (currMark.isIntention || currMark.mutedBy === baseMarkRevision) {
                     const reattach = {
                         ...(clone(currMark) as Reattach<TNodeChange>),

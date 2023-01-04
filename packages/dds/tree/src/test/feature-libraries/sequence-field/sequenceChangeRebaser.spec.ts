@@ -45,7 +45,7 @@ deepFreeze(testChanges);
 // TODO: Refactor these tests to support moves
 describe("SequenceField - Rebaser Axioms", () => {
     /**
-     * This test simulates rebasing over an do-undo pair.
+     * This test simulates rebasing over an do-inverse pair.
      */
     describe("A ↷ [B, B⁻¹] === A", () => {
         for (const [name1, makeChange1] of testChanges) {
@@ -76,6 +76,59 @@ describe("SequenceField - Rebaser Axioms", () => {
                                 const inv = tagInverse(
                                     SF.invert(change2, TestChange.invert),
                                     change2.revision,
+                                );
+                                const r1 = rebaseTagged(change1, change2);
+                                tracker.apply(change2);
+                                const r2 = rebaseTagged(r1, inv);
+                                tracker.apply(inv);
+                                const change1Updated = tracker.update(
+                                    change1,
+                                    continuingAllocator([change1]),
+                                );
+                                normalizeMoveIds(r2.change);
+                                normalizeMoveIds(change1Updated.change);
+                                checkDeltaEquality(r2.change, change1Updated.change);
+                            }
+                        }
+                    });
+                }
+            }
+        }
+    });
+
+    /**
+     * This test simulates rebasing over an do-undo pair.
+     */
+    describe.skip("A ↷ [B, undo(B)] => A", () => {
+        for (const [name1, makeChange1] of testChanges) {
+            for (const [name2, makeChange2] of testChanges) {
+                const title = `${name1} ↷ [${name2}), undo(${name2}] => ${name1}`;
+                if (
+                    name2 === "Delete" &&
+                    ["SetValue", "Delete", "MoveOut", "MoveIn", "ReturnFrom", "ReturnTo"].includes(
+                        name1,
+                    )
+                ) {
+                    it.skip(title, () => {
+                        /**
+                         * These cases are currently disabled because marks that affect existing content are removed
+                         * instead of muted when rebased over the deletion of that content.
+                         * This prevents us from then reinstating the mark when rebasing over the revive.
+                         */
+                    });
+                } else {
+                    it(title, () => {
+                        for (let offset1 = 1; offset1 <= 4; ++offset1) {
+                            for (let offset2 = 1; offset2 <= 4; ++offset2) {
+                                const tracker = new SF.DetachedNodeTracker();
+                                const change1 = tagChange(makeChange1(offset1), brand(1));
+                                const change2 = tagChange(makeChange2(offset2), brand(2));
+                                if (!SF.areRebasable(change1.change, change2.change)) {
+                                    continue;
+                                }
+                                const inv = tagChange(
+                                    SF.invert(change2, TestChange.invert),
+                                    brand(3),
                                 );
                                 const r1 = rebaseTagged(change1, change2);
                                 tracker.apply(change2);
