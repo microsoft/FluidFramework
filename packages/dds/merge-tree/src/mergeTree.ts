@@ -74,7 +74,7 @@ import {
     createMap,
     extend,
     MapLike,
-    matchProperties,
+    // matchProperties,
     PropertySet,
 } from "./properties";
 import {
@@ -95,6 +95,7 @@ import {
     NodeAction,
     walkAllChildSegments,
 } from "./mergeTreeNodeWalk";
+import { zamboniSegments } from "./zamboni";
 
 const minListenerComparer: Comparer<MinListener> = {
     min: { minRequired: Number.MIN_VALUE, onMinGE: () => { assert(false, 0x048 /* "onMinGE()" */); } },
@@ -503,7 +504,6 @@ export interface IRootMergeBlock extends IMergeBlock {
  * @internal
  */
 export class MergeTree {
-    static readonly zamboniSegmentsMaxCount = 2;
     public static readonly options = {
         incrementalUpdate: true,
         insertAfterRemovedSegs: true,
@@ -517,7 +517,7 @@ export class MergeTree {
     public readonly collabWindow = new CollaborationWindow();
 
     public pendingSegments: List<SegmentGroup> | undefined;
-    public segmentsToScour: Heap<LRUSegment> | undefined;
+    private segmentsToScour: Heap<LRUSegment> | undefined;
     /**
      * Whether or not all blocks in the mergeTree currently have information about local partial lengths computed.
      * This information is only necessary on reconnect, and otherwise costly to bookkeep.
@@ -577,6 +577,16 @@ export class MergeTree {
         this.nodeUpdateOrdinals(bBlock);
         return bBlock;
     }
+
+    public callback = {
+        updateLengthsAndOrdinals: (block: IMergeBlock) => {
+        this.nodeUpdateOrdinals(block);
+        this.blockUpdatePathLengths(block, UnassignedSequenceNumber, -1, true);
+    }, makeBlock: (nodeCount: number) => {
+        return this.makeBlock(nodeCount);
+    }, updateLengthNew: (block: IMergeBlock) => {
+        this.nodeUpdateLengthNewStructure(block);
+    }};
 
     private segmentClone(segment: ISegment) {
         const b = segment.clone();
@@ -714,9 +724,9 @@ export class MergeTree {
         }
     }
 
-    public underflow(node: IMergeBlock) {
-        return node.childCount < (MaxNodesInBlock / 2);
-    }
+    // private underflow(node: IMergeBlock) {
+    //     return node.childCount < (MaxNodesInBlock / 2);
+    // }
 
     // public scourNode(node: IMergeBlock, holdNodes: IMergeNode[]) {
     //     let prevSegment: ISegment | undefined;
@@ -1844,7 +1854,7 @@ export class MergeTree {
         return newNode;
     }
 
-    public nodeUpdateOrdinals(block: IMergeBlock) {
+    private nodeUpdateOrdinals(block: IMergeBlock) {
         for (let i = 0; i < block.childCount; i++) {
             const child = block.children[i];
             block.setOrdinal(child, i);
@@ -2173,7 +2183,7 @@ export class MergeTree {
         block.cachedLength = len;
     }
 
-    public blockUpdatePathLengths(
+    private blockUpdatePathLengths(
         startBlock: IMergeBlock | undefined,
         seq: number,
         clientId: number,
