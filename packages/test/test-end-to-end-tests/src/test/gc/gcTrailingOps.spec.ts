@@ -6,16 +6,15 @@
 import { strict as assert } from "assert";
 import {
     ITestObjectProvider,
-    mockConfigProvider,
     waitForContainerConnection,
     createSummarizer,
     summarizeNow,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils";
 import { stringToBuffer } from "@fluidframework/common-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils";
 import { defaultGCConfig } from "./gcTestConfigs";
 
 describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
