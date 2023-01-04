@@ -77,9 +77,18 @@ function invertMark<TNodeChange>(
                         },
                     ];
                 }
-                if (mark.isIntention || mark.lastDetachedBy === undefined) {
-                    return [mark.count];
+                if (mark.lastDetachedBy === undefined) {
+                    // The nodes were already revived, so the revive mark did not affect them.
+                    return mark.changes === undefined
+                        ? [mark.count]
+                        : invertMark(
+                              { type: "Modify", changes: mark.changes },
+                              inputIndex,
+                              revision,
+                              invertChild,
+                          );
                 }
+                // The node were not revived and could not be revived.
                 return [];
             }
             case "Modify": {

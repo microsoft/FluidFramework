@@ -17,7 +17,9 @@ function invert(change: TestChangeset): TestChangeset {
     return SF.invert(makeAnonChange(change), TestChange.invert);
 }
 
-const tag: RevisionTag = brand(42);
+const tag: RevisionTag = brand(41);
+const tag2: RevisionTag = brand(42);
+const tag3: RevisionTag = brand(43);
 
 function shallowInvert(change: SF.Changeset<unknown>): SF.Changeset<unknown> {
     deepFreeze(change);
@@ -25,6 +27,11 @@ function shallowInvert(change: SF.Changeset<unknown>): SF.Changeset<unknown> {
         assert.fail("Unexpected call to child inverter"),
     );
 }
+
+const childChange1 = TestChange.mint([0], 1);
+const childChange2 = TestChange.mint([1], 2);
+const inverseChildChange1 = TestChange.invert(childChange1);
+const inverseChildChange2 = TestChange.invert(childChange2);
 
 describe("SequenceField - Invert", () => {
     it("no changes", () => {
@@ -35,10 +42,8 @@ describe("SequenceField - Invert", () => {
     });
 
     it("child changes", () => {
-        const childChange = TestChange.mint([0], 1);
-        const inverseChildChange = TestChange.invert(childChange);
-        const input = Change.modify(0, childChange);
-        const expected = Change.modify(0, inverseChildChange);
+        const input = Change.modify(0, childChange1);
+        const expected = Change.modify(0, inverseChildChange1);
         const actual = invert(input);
         assert.deepEqual(actual, expected);
     });
@@ -66,10 +71,56 @@ describe("SequenceField - Invert", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("revive => delete", () => {
+    it("revert-only active revive => delete", () => {
         const input = Change.revive(0, 2, tag, 0);
         const expected = Change.delete(0, 2);
         const actual = shallowInvert(input);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("revert-only muted revive => skip", () => {
+        const input = composeAnonChanges([
+            Change.modify(0, childChange1),
+            Change.revive(0, 2, tag, 0, tag2),
+            Change.modify(0, childChange2),
+        ]);
+        const expected = composeAnonChanges([
+            Change.modify(0, inverseChildChange2),
+            Change.modify(2, inverseChildChange1),
+        ]);
+        const actual = invert(input);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("revert-only blocked revive => no-op", () => {
+        const input = composeAnonChanges([
+            Change.modify(0, childChange1),
+            Change.revive(0, 2, tag, 0, tag2, undefined, tag3),
+            Change.modify(0, childChange2),
+        ]);
+        const expected = composeAnonChanges([Change.modify(0, inverseChildChange1)]);
+        const actual = invert(input);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("intentional active revive => delete", () => {
+        const input = Change.intentionalRevive(0, 2, tag, 0);
+        const expected = Change.delete(0, 2);
+        const actual = shallowInvert(input);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("intentional muted revive => skip", () => {
+        const input = composeAnonChanges([
+            Change.modify(0, childChange1),
+            Change.intentionalRevive(0, 2, tag, 0, tag2),
+            Change.modify(0, childChange2),
+        ]);
+        const expected = composeAnonChanges([
+            Change.modify(0, inverseChildChange2),
+            Change.modify(2, inverseChildChange1),
+        ]);
+        const actual = invert(input);
         assert.deepEqual(actual, expected);
     });
 
