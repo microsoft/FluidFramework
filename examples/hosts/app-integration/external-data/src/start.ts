@@ -20,11 +20,11 @@ const updateTabForId = (id: string): void => {
     document.title = id;
 };
 
-const render = (model: IAppModel): void => {
+const render = (ffModel: IAppModel, externalModel: IAppModel): void => {
     const appDiv = document.querySelector("#app") as HTMLDivElement;
     ReactDOM.unmountComponentAtNode(appDiv);
     ReactDOM.render(
-        React.createElement(AppView, { model }),
+        React.createElement(AppView, { model: ffModel }),
         appDiv,
     );
 
@@ -33,7 +33,7 @@ const render = (model: IAppModel): void => {
     const debugDiv = document.querySelector("#debug") as HTMLDivElement;
     ReactDOM.unmountComponentAtNode(debugDiv);
     ReactDOM.render(
-        React.createElement(DebugView, { model }),
+        React.createElement(DebugView, {  model: externalModel }),
         debugDiv,
     );
 };
@@ -44,22 +44,29 @@ async function start(): Promise<void> {
     );
 
     let id: string;
-    let model: IAppModel;
+    let ffModel: IAppModel;
 
     if (location.hash.length === 0) {
         // Normally our code loader is expected to match up with the version passed here.
         // But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
         // the version doesn't actually matter.
         const createResponse = await tinyliciousModelLoader.createDetached("one");
-        model = createResponse.model;
+        ffModel = createResponse.model;
 
         id = await createResponse.attach();
     } else {
         id = location.hash.slice(1);
-        model = await tinyliciousModelLoader.loadExisting(id);
+        ffModel = await tinyliciousModelLoader.loadExisting(id);
     }
 
-    render(model);
+    const tinyliciousExternalModelLoader = new TinyliciousModelLoader<IAppModel>(
+        new StaticCodeLoader(new TaskListContainerRuntimeFactory()),
+    );
+    const externalCreateResponse = await tinyliciousExternalModelLoader.createDetached("one");
+    const externalModel: IAppModel = externalCreateResponse.model;
+    await externalCreateResponse.attach();
+
+    render(ffModel, externalModel);
     updateTabForId(id);
 }
 

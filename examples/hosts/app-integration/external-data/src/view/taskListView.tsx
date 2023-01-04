@@ -106,6 +106,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
         // TODO: Gray button if not "authenticated" via debug controls
         // TODO: Conflict UI
         <div>
+            <h2 style={{ textDecoration: "underline" }}>Client App</h2>
             <table>
                 <thead>
                     <tr>
