@@ -16,12 +16,8 @@ describe("OpCompressor", () => {
         mockLogger.clear();
     });
 
-    const createBatch = (length: number, messageSize: number, actualData: boolean = true) => actualData ?
-        messagesToBatch(new Array(length).fill(createMessage(generateStringOfSize(messageSize)))) :
-        {
-            content: new Array(length).fill(createMessage(generateStringOfSize(0))),
-            contentSizeInBytes: length * messageSize,
-        };
+    const createBatch = (length: number, messageSize: number) =>
+        messagesToBatch(new Array(length).fill(createMessage(generateStringOfSize(messageSize))));
     const messagesToBatch = (messages: BatchMessage[]): IBatch => ({
         content: messages,
         contentSizeInBytes: messages.map((message) => JSON.stringify(message).length).reduce((a, b) => a + b),
@@ -44,7 +40,7 @@ describe("OpCompressor", () => {
         // small batch with small messages
         createBatch(10, 100 * 1024),
         // small batch with large messages
-        createBatch(4, 100 * 1024 * 1024),
+        createBatch(2, 100 * 1024 * 1024),
         // large batch with small messages
         createBatch(1000, 100 * 1024),
     ].forEach((batch) => {
@@ -63,9 +59,9 @@ describe("OpCompressor", () => {
 
     describe("Unsupported batches", () => [
         // large batch with small messages
-        createBatch(10000, 100 * 1024, false),
+        createBatch(6000, 100 * 1024),
         // small batch with large messages
-        createBatch(6, 100 * 1024 * 1024, false),
+        createBatch(6, 100 * 1024 * 1024),
     ].forEach((batch) => {
         it(`Not compressing batch of ${batch.content.length} ops of total size ${toMB(batch.contentSizeInBytes)} MB`, () => {
             assert.throws(() => compressor.compressBatch(batch));
@@ -74,7 +70,6 @@ describe("OpCompressor", () => {
                 category: "error",
                 length: batch.content.length,
                 size: batch.contentSizeInBytes,
-                limit: 500 * 1024 * 1024,
             }]);
         });
     }));
