@@ -326,6 +326,64 @@ export function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(
     }
 }
 
+export function lineUpRelatedReattaches<T>(
+    newMark: Reattach<T>,
+    baseMark: Reattach<T>,
+    genId: IdAllocator,
+    moveEffects: MoveEffectTable<T>,
+): {
+    newMarkHead?: Reattach<T>;
+    newMarkTail?: Reattach<T>;
+    baseMarkHead?: Reattach<T>;
+    baseMarkTail?: Reattach<T>;
+} {
+    const newMarkLength = newMark.count;
+    const baseMarkLength = baseMark.count;
+    if (newMark.detachIndex === baseMark.detachIndex) {
+        if (newMarkLength < baseMarkLength) {
+            const [baseMarkHead, baseMarkTail] = splitMarkOnOutput(
+                baseMark,
+                newMarkLength,
+                genId,
+                moveEffects,
+            );
+            return { baseMarkHead, baseMarkTail, newMarkHead: newMark };
+        } else if (newMarkLength > baseMarkLength) {
+            const [newMarkHead, newMarkTail] = splitMarkOnOutput(
+                newMark,
+                baseMarkLength,
+                genId,
+                moveEffects,
+            );
+            return { baseMarkHead: baseMark, newMarkHead, newMarkTail };
+        } else {
+            return { baseMarkHead: baseMark, newMarkHead: newMark };
+        }
+    } else if (newMark.detachIndex < baseMark.detachIndex) {
+        if (newMark.detachIndex + newMarkLength <= baseMark.detachIndex) {
+            return { newMarkHead: newMark, baseMarkTail: baseMark };
+        }
+        const [newMarkHead, newMarkTail] = splitMarkOnOutput(
+            newMark,
+            baseMark.detachIndex - newMark.detachIndex,
+            genId,
+            moveEffects,
+        );
+        return { newMarkHead, newMarkTail, baseMarkTail: baseMark };
+    } else {
+        if (baseMark.detachIndex + baseMarkLength <= newMark.detachIndex) {
+            return { baseMarkHead: baseMark, newMarkTail: newMark };
+        }
+        const [baseMarkHead, baseMarkTail] = splitMarkOnOutput(
+            baseMark,
+            newMark.detachIndex - baseMark.detachIndex,
+            genId,
+            moveEffects,
+        );
+        return { baseMarkHead, baseMarkTail, newMarkTail: newMark };
+    }
+}
+
 export function isDetachMark<TNodeChange>(
     mark: Mark<TNodeChange> | undefined,
 ): mark is Detach<TNodeChange> {

@@ -15,6 +15,7 @@ import {
     MarkList,
     InputSpanningMark,
     ObjectMark,
+    Reattach,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
@@ -39,6 +40,7 @@ import {
     modifyMoveSrc,
     isMutedDetach,
     isReattach,
+    lineUpRelatedReattaches,
 } from "./utils";
 
 export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
@@ -529,62 +531,19 @@ export class ComposeQueue<T> {
             if (
                 isReattach(newMark) &&
                 isReattach(baseMark) &&
-                (baseMark.mutedBy ?? newMark.mutedBy) !== undefined &&
-                newMark.detachedBy === baseMark.detachedBy
+                areRelatedReattaches(baseMark, newMark)
             ) {
-                const newMarkLength = newMark.count;
-                const baseMarkLength = baseMark.count;
-                if (newMark.detachIndex === baseMark.detachIndex) {
-                    this.baseMarks.pop();
-                    this.newMarks.pop();
-                    if (newMarkLength < baseMarkLength) {
-                        const [baseMark1, baseMark2] = splitMarkOnOutput(
-                            baseMark,
-                            newMarkLength,
-                            this.genId,
-                            this.moveEffects,
-                        );
-                        this.baseMarks.push(baseMark2);
-                        return { baseMark: baseMark1, newMark };
-                    } else if (newMarkLength > baseMarkLength) {
-                        const [newMark1, newMark2] = splitMarkOnOutput(
-                            newMark,
-                            baseMarkLength,
-                            this.genId,
-                            this.moveEffects,
-                        );
-                        this.newMarks.push(newMark2);
-                        return { baseMark, newMark: newMark1 };
-                    } else {
-                        return { baseMark, newMark };
-                    }
-                } else if (newMark.detachIndex < baseMark.detachIndex) {
-                    this.newMarks.pop();
-                    if (newMark.detachIndex + newMarkLength <= baseMark.detachIndex) {
-                        return { newMark };
-                    }
-                    const [newMark1, newMark2] = splitMarkOnOutput(
-                        newMark,
-                        baseMark.detachIndex - newMark.detachIndex,
-                        this.genId,
-                        this.moveEffects,
-                    );
-                    this.newMarks.push(newMark2);
-                    return { newMark: newMark1 };
-                } else {
-                    this.baseMarks.pop();
-                    if (baseMark.detachIndex + baseMarkLength <= newMark.detachIndex) {
-                        return { baseMark };
-                    }
-                    const [baseMark1, baseMark2] = splitMarkOnOutput(
-                        baseMark,
-                        newMark.detachIndex - baseMark.detachIndex,
-                        this.genId,
-                        this.moveEffects,
-                    );
-                    this.baseMarks.push(baseMark2);
-                    return { baseMark: baseMark1 };
+                const { newMarkHead, newMarkTail, baseMarkHead, baseMarkTail } =
+                    lineUpRelatedReattaches(newMark, baseMark, this.genId, this.moveEffects);
+                this.newMarks.pop();
+                if (newMarkTail !== undefined) {
+                    this.newMarks.push(newMarkTail);
                 }
+                this.baseMarks.pop();
+                if (baseMarkTail !== undefined) {
+                    this.baseMarks.push(baseMarkTail);
+                }
+                return { newMark: newMarkHead, baseMark: baseMarkHead };
             }
             return { newMark: this.newMarks.pop() };
         } else if (isDetachMark(baseMark)) {
@@ -680,4 +639,17 @@ interface ComposeMarks<T> {
     baseMark?: Mark<T>;
     newMark?: Mark<T>;
     areInverses?: boolean;
+}
+
+/**
+ * @returns true iff both reattaches target cells that were affected by the same detach.
+ * The target cells may or may not overlap depending on detach index information.
+ *
+ * Only valid in the context of a compose (i.e., the output context of `baseMarks` is the input context of `newMark`).
+ */
+function areRelatedReattaches<T>(baseMark: Reattach<T>, newMark: Reattach<T>): boolean {
+    return (
+        (baseMark.mutedBy ?? newMark.mutedBy) !== undefined &&
+        newMark.detachedBy === baseMark.detachedBy
+    );
 }

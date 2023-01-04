@@ -33,6 +33,7 @@ import {
     updateMoveSrcPairing,
     updateMoveDestPairing,
     PairedMarkUpdate,
+    lineUpRelatedReattaches,
 } from "./utils";
 import {
     Attach,
@@ -211,63 +212,19 @@ class RebaseQueue<T> {
             if (
                 isReattach(baseMark) &&
                 isReattach(newMark) &&
-                baseMark.detachedBy !== undefined &&
-                (baseMark.detachedBy === newMark.detachedBy ||
-                    baseMark.detachedBy === newMark.lastDetachedBy)
+                areRelatedReattaches(baseMark, newMark)
             ) {
-                const newMarkLength = getOutputLength(newMark);
-                const baseMarkLength = getOutputLength(baseMark);
-                if (newMark.detachIndex === baseMark.detachIndex) {
-                    this.baseMarks.pop();
-                    this.newMarks.pop();
-                    if (newMarkLength < baseMarkLength) {
-                        const [baseMark1, baseMark2] = splitMarkOnOutput(
-                            baseMark,
-                            newMarkLength,
-                            this.genId,
-                            this.moveEffects,
-                        );
-                        this.baseMarks.push(baseMark2);
-                        return { baseMark: baseMark1, newMark };
-                    } else if (newMarkLength > baseMarkLength) {
-                        const [newMark1, newMark2] = splitMarkOnOutput(
-                            newMark,
-                            baseMarkLength,
-                            this.genId,
-                            this.moveEffects,
-                        );
-                        this.newMarks.push(newMark2);
-                        return { baseMark, newMark: newMark1 };
-                    } else {
-                        return { baseMark, newMark };
-                    }
-                } else if (newMark.detachIndex < baseMark.detachIndex) {
-                    this.newMarks.pop();
-                    if (newMark.detachIndex + newMarkLength <= baseMark.detachIndex) {
-                        return { newMark };
-                    }
-                    const [newMark1, newMark2] = splitMarkOnOutput(
-                        newMark,
-                        baseMark.detachIndex - newMark.detachIndex,
-                        this.genId,
-                        this.moveEffects,
-                    );
-                    this.newMarks.push(newMark2);
-                    return { newMark: newMark1 };
-                } else {
-                    this.baseMarks.pop();
-                    if (baseMark.detachIndex + baseMarkLength <= newMark.detachIndex) {
-                        return { baseMark };
-                    }
-                    const [baseMark1, baseMark2] = splitMarkOnOutput(
-                        baseMark,
-                        newMark.detachIndex - baseMark.detachIndex,
-                        this.genId,
-                        this.moveEffects,
-                    );
-                    this.baseMarks.push(baseMark2);
-                    return { baseMark: baseMark1 };
+                const { newMarkHead, newMarkTail, baseMarkHead, baseMarkTail } =
+                    lineUpRelatedReattaches(newMark, baseMark, this.genId, this.moveEffects);
+                this.newMarks.pop();
+                if (newMarkTail !== undefined) {
+                    this.newMarks.push(newMarkTail);
                 }
+                this.baseMarks.pop();
+                if (baseMarkTail !== undefined) {
+                    this.baseMarks.push(baseMarkTail);
+                }
+                return { newMark: newMarkHead, baseMark: baseMarkHead };
             }
             const revision = baseMark.revision ?? this.baseRevision;
             const reattachOffset = getOffsetInReattach(newMark.lineage, revision);
@@ -786,4 +743,18 @@ function tryRemoveLineageEvent<T>(mark: Attach<T>, revisionToRemove: RevisionTag
             delete mark.lineage;
         }
     }
+}
+
+/**
+ * @returns true iff both reattaches target cells that were affected by the same detach.
+ * The target cells may or may not overlap depending on detach index information.
+ *
+ * Only valid in the context of a rebase (i.e., both marks have the same input context).
+ */
+function areRelatedReattaches<T>(baseMark: Reattach<T>, newMark: Reattach<T>): boolean {
+    return (
+        baseMark.detachedBy !== undefined &&
+        (baseMark.detachedBy === newMark.detachedBy ||
+            baseMark.detachedBy === newMark.lastDetachedBy)
+    );
 }
