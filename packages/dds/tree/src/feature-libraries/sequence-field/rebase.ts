@@ -447,7 +447,7 @@ class RebaseQueue<T> {
                 this.moveEffects,
                 this.genId,
                 reassignMoveIds,
-                true,
+                false,
             );
 
             mark = splitMarks[0];
