@@ -21,6 +21,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
 
@@ -104,6 +105,7 @@ export async function createSummarizer(
     summaryVersion?: string,
     gcOptions?: IGCRuntimeOptions,
     configProvider: IConfigProviderBase = mockConfigProvider(),
+    logger?: ITelemetryBaseLogger,
 ): Promise<ISummarizer> {
     const absoluteUrl = await container.getAbsoluteUrl("");
     return (await createSummarizerWithContainer(
@@ -112,6 +114,7 @@ export async function createSummarizer(
         summaryVersion,
         gcOptions,
         configProvider,
+        logger,
     )).summarizer;
 }
 
@@ -121,13 +124,14 @@ export async function createSummarizerWithContainer(
     summaryVersion?: string,
     gcOptions?: IGCRuntimeOptions,
     configProvider: IConfigProviderBase = mockConfigProvider(),
+    logger?: ITelemetryBaseLogger,
 ): Promise<{ container: IContainer; summarizer: ISummarizer; }> {
     const testContainerConfig: ITestContainerConfig = {
         runtimeOptions: {
             summaryOptions: defaultSummaryOptions,
             gcOptions,
         },
-        loaderProps: { configProvider },
+        loaderProps: { configProvider, logger },
     };
     const loader = provider.makeTestLoader(testContainerConfig);
     return createSummarizerCore(absoluteUrl, loader, summaryVersion);
