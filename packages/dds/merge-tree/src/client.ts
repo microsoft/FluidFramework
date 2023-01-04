@@ -334,7 +334,7 @@ export class Client {
     }
 
     public getCollabWindow(): CollaborationWindow {
-        return this._mergeTree.getCollabWindow();
+        return this._mergeTree.collabWindow;
     }
 
     /**

@@ -837,10 +837,6 @@ export class MergeTree {
         }
     }
 
-    public getCollabWindow() {
-        return this.collabWindow;
-    }
-
     public getLength(refSeq: number, clientId: number) {
         return this.blockLength(this.root, refSeq, clientId);
     }
