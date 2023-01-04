@@ -836,21 +836,18 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         // validate client sequence number has no gap. If there is gap, check if there were noops
         // if there were noops, decrement the gap by number of noops and continue
-        if (this.connectionManager.lastSubmittedClientId !== undefined && this.connectionManager.lastSubmittedClientId === message.clientId) {
+        if (this.connectionManager.clientId !== undefined && this.connectionManager.clientId === message.clientId) {
             assert(this.lastClientSequenceNumber !== undefined, "lastClientSequenceNumber should not be undefined");
             if (message.type === MessageType.NoOp){
                 this.noOpCount--;
             }
             const clientSeqNumGap = message.clientSequenceNumber - this.lastClientSequenceNumber - 1;
-            if (clientSeqNumGap > 0) {
-                if (this.noOpCount > 0) {
-                    this.noOpCount -= clientSeqNumGap;
-                } else {
-                    throw new Error(`gap in client sequence number :${clientSeqNumGap}`);
-                }
+            this.noOpCount -= clientSeqNumGap;
+            if (this.noOpCount < 0) {
+                throw new Error(`gap in client sequence number :${clientSeqNumGap}`);
             }
+            this.lastClientSequenceNumber = message.clientSequenceNumber;
         }
-        this.lastClientSequenceNumber = message.clientSequenceNumber;
 
         this.connectionManager.beforeProcessingIncomingOp(message);
 
