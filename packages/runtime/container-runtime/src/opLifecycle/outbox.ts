@@ -162,11 +162,6 @@ export class Outbox {
             // Legacy path - supporting old loader versions. Can be removed only when LTS moves above
             // version that has support for batches (submitBatchFn)
             for (const message of batch.content) {
-                // Legacy path doesn't support compressed payloads and will submit uncompressed payload anyways
-                if (message.metadata?.compressed) {
-                    delete message.metadata.compressed;
-                }
-
                 clientSequenceNumber = this.params.containerContext.submitFn(
                     MessageType.Operation,
                     message.deserializedContent,
@@ -178,7 +173,11 @@ export class Outbox {
         } else {
             // returns clientSequenceNumber of last message in a batch
             clientSequenceNumber = this.params.containerContext.submitBatchFn(
-                batch.content.map((message) => ({ contents: message.contents, metadata: message.metadata })));
+                batch.content.map((message) => ({
+                    contents: message.contents,
+                    metadata: message.metadata,
+                    compression: message.compression,
+                })));
         }
 
         // Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.

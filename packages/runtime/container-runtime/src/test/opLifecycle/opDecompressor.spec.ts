@@ -35,10 +35,6 @@ function generateCompressedBatchMessage(length: number, metadata = true): ISeque
         compression: "lz4",
     };
 
-    if (metadata) {
-        messageBase.metadata = { ...messageBase.metadata, compressed: true };
-    }
-
     // Single compressed message won't have batch metadata
     if (length === 1) {
         return messageBase;

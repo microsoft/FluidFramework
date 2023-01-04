@@ -46,7 +46,7 @@ export class OpCompressor {
 
         messages.push({
             ...batch.content[0], contents: JSON.stringify({ packedContents: compressedContent }),
-            metadata: { ...batch.content[0].metadata, compressed: true },
+            metadata: batch.content[0].metadata,
             compression: CompressionAlgorithms.lz4,
         });
 
