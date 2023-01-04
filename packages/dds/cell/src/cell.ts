@@ -37,8 +37,10 @@ interface IDeleteCellOperation {
 }
 
 interface ICellValue {
-    // The actual value contained in the cell which needs to be wrapped to handle undefined
-    value: any;
+    /**
+     * The actual value contained in the `Cell`, which needs to be wrapped to handle `undefined`.
+     */
+    value: unknown;
 }
 
 const snapshotFileName = "header";
