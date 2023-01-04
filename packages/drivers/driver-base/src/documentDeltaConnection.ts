@@ -408,9 +408,20 @@ export class DocumentDeltaConnection
                     const description = error?.description;
                     const responseText = error?.context?.responseText;
 
-                    if (responseText?.includes("Error: self signed certificate")) {
+                    if (description.message?.includes("self signed certificate")) {
                         failAndCloseSocket(this.createErrorObject("connect_error", error, false));
+                        return;
                     }
+
+                    console.log('Error: ', error);
+                    console.log('Description:', description);
+                    console.log('Description Message: ', description.message);
+                    console.log("ResponseText:", responseText);
+
+                    // if (responseText?.includes("Error: self signed certificate")) {
+                    //     failAndCloseSocket(this.createErrorObject("connect_error", error, false));
+                    //     return;
+                    // }
 
                     if (description && typeof description === "object") {
                         if (error.type === "TransportError") {

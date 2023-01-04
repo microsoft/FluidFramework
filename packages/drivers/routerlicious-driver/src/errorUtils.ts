@@ -66,6 +66,7 @@ export function createR11sNetworkError(
             // If a service is temporarily down or a browser resource limit is reached, RestWrapper will throw
             // a network error with no status code (e.g. err:ERR_CONN_REFUSED or err:ERR_FAILED) and
             // the error message will start with NetworkError as defined in restWrapper.ts
+            // If there exists a self-signed SSL certificates error, throw a NonRetryableError
             if (errorMessage.includes("failed, reason: self signed certificate")) {
                 return new NonRetryableError(errorMessage, R11sErrorType.sslCertError, props);
             }
