@@ -1015,6 +1015,10 @@ interface DetachedNode {
  * Keeps track of the different ways detached nodes may be referred to.
  * Allows updating changesets so they refer to a detached node by the details
  * of the last detach that affected them.
+ *
+ * WARNING: this code consumes O(N) space and time for marks that affect N nodes.
+ * This is code is currently meant for usage in tests.
+ * It should be tested and made more efficient before production use.
  */
 export class DetachedNodeTracker {
     private nodes: Map<number, DetachedNode> = new Map();
@@ -1022,6 +1026,11 @@ export class DetachedNodeTracker {
 
     public constructor() {}
 
+    /**
+     * Updates the internals of this instance to account for `change` having been applied.
+     * @param change - The change that is being applied. Not mutated.
+     * Must be applicable (i.e., `isApplicable(change)` must be true).
+     */
     public apply(change: TaggedChange<Changeset<unknown>>): void {
         let index = 0;
         for (const mark of change.change) {
@@ -1080,6 +1089,12 @@ export class DetachedNodeTracker {
         }
     }
 
+    /**
+     * Checks whether the given `change` is applicable based on previous changes.
+     * @param change - The change to verify the applicability of. Not mutated.
+     * @returns false iff `change`'s description of detached nodes is inconsistent with that of changes applied
+     * earlier. Returns true otherwise.
+     */
     public isApplicable(change: Changeset<unknown>): boolean {
         for (const mark of change) {
             if (isActiveReattach(mark)) {
@@ -1101,6 +1116,15 @@ export class DetachedNodeTracker {
         return true;
     }
 
+    /**
+     * Creates an updated representation of the given `change` so that it refers to detached nodes using the revision
+     * that last detached them.
+     * @param change - The change to update. Not mutated.
+     * Must be applicable (i.e., `isApplicable(change)` must be true).
+     * @param genId - An ID allocator that produces ID unique within this changeset.
+     * @returns A change equivalent to `change` that refers to detached nodes using the revision that last detached
+     * them. May reuse parts of the input `change` structure.
+     */
     public update<T>(
         change: TaggedChange<Changeset<T>>,
         genId: IdAllocator,
@@ -1186,11 +1210,23 @@ export class DetachedNodeTracker {
     }
 }
 
-export function areRebasable(a: Changeset<unknown>, b: Changeset<unknown>): boolean {
+/**
+ * Checks whether `branch` changeset is consistent with a `target` changeset that is may be rebased over.
+ *
+ * WARNING: this code consumes O(N) space and time for marks that affect N nodes.
+ * This is code is currently meant for usage in tests.
+ * It should be tested and made more efficient before production use.
+ *
+ * @param branch - The changeset that would be rebased over `target`.
+ * @param target - The changeset that `branch` would be rebased over.
+ * @returns false iff `branch`'s description of detached nodes is inconsistent with that of `target`.
+ * Returns true otherwise.
+ */
+export function areRebasable(branch: Changeset<unknown>, target: Changeset<unknown>): boolean {
     const indexToReattach: Map<number, string[]> = new Map();
     const reattachToIndex: Map<string, number> = new Map();
     let index = 0;
-    for (const mark of a) {
+    for (const mark of branch) {
         if (isActiveReattach(mark)) {
             const list = getOrAddEmptyToMap(indexToReattach, index);
             for (let i = 0; i < mark.count; ++i) {
@@ -1211,7 +1247,7 @@ export function areRebasable(a: Changeset<unknown>, b: Changeset<unknown>): bool
     }
     index = 0;
     let listIndex = 0;
-    for (const mark of b) {
+    for (const mark of target) {
         if (isActiveReattach(mark)) {
             const list = getOrAddEmptyToMap(indexToReattach, index);
             for (let i = 0; i < mark.count; ++i) {
@@ -1245,6 +1281,17 @@ export function areRebasable(a: Changeset<unknown>, b: Changeset<unknown>): bool
     return true;
 }
 
+/**
+ * Checks whether sequential changesets are consistent.
+ *
+ * WARNING: this code consumes O(N) space and time for marks that affect N nodes.
+ * This is code is currently meant for usage in tests.
+ * It should be tested and made more efficient before production use.
+ *
+ * @param changes - The changesets that would be composed together.
+ * @returns false iff the changesets in `changes` are inconsistent/incompatible in their description of detached nodes.
+ * Returns true otherwise.
+ */
 export function areComposable(changes: TaggedChange<Changeset<unknown>>[]): boolean {
     const tracker = new DetachedNodeTracker();
     for (const change of changes) {
