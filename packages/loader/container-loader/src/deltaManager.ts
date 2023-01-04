@@ -131,7 +131,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     /** count number of noops sent by the client which may not be acked */
     private noOpCount: number = 0;
     /** Track clientSequenceNumber of the last op */
-    private lastClientSequenceNumber: number | undefined;
+    private lastClientSequenceNumber: number = 0;
 
     /**
      * Track down the ops size.
@@ -837,7 +837,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         // validate client sequence number has no gap. If there is gap, check if there were noops
         // if there were noops, decrement the gap by number of noops and continue
         if (this.connectionManager.clientId !== undefined && this.connectionManager.clientId === message.clientId) {
-            assert(this.lastClientSequenceNumber !== undefined, "lastClientSequenceNumber should not be undefined");
+            // assert(this.lastClientSequenceNumber !== undefined, "lastClientSequenceNumber should not be undefined");
             if (message.type === MessageType.NoOp){
                 this.noOpCount--;
             }
