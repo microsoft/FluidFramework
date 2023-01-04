@@ -102,7 +102,10 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
      */
     delete(): void;
 }
-export interface ICellLocalOpMetadata {
+
+// TODO: use `unknown` instead.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface ICellLocalOpMetadata<T = any> {
     pendingMessageId: number;
-    previousValue?: any;
+    previousValue?: Serializable<T> ;
 }
