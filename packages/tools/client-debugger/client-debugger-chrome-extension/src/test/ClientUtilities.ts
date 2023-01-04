@@ -5,9 +5,9 @@
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
 import {
-	ITinyliciousAudience,
-	TinyliciousClient,
-	TinyliciousContainerServices,
+    ITinyliciousAudience,
+    TinyliciousClient,
+    TinyliciousContainerServices,
 } from "@fluidframework/tinylicious-client";
 
 import { initializeFluidClientDebugger as initializeFluidClientDebuggerBase } from "@fluid-tools/client-debugger";
@@ -20,17 +20,17 @@ import { initializeFluidClientDebugger as initializeFluidClientDebuggerBase } fr
  * Type returned from when creating / loading the Container.
  */
 export interface ContainerLoadResult {
-	container: IFluidContainer;
-	services: TinyliciousContainerServices;
+    container: IFluidContainer;
+    services: TinyliciousContainerServices;
 }
 
 /**
  * Basic information about the container, as well as the associated audience.
  */
 export interface ContainerInfo {
-	containerId: string;
-	container: IFluidContainer;
-	audience: ITinyliciousAudience;
+    containerId: string;
+    container: IFluidContainer;
+    audience: ITinyliciousAudience;
 }
 
 /**
@@ -42,34 +42,34 @@ export interface ContainerInfo {
  * @throws If container creation or attaching fails for any reason.
  */
 export async function createFluidContainer(
-	client: TinyliciousClient,
-	containerSchema: ContainerSchema,
+    client: TinyliciousClient,
+    containerSchema: ContainerSchema,
 ): Promise<ContainerInfo> {
-	// Create the container
-	let createContainerResult: ContainerLoadResult;
-	try {
-		createContainerResult = await client.createContainer(containerSchema);
-	} catch (error) {
-		console.error(`Encountered error creating Fluid container: "${error}".`);
-		throw error;
-	}
+    // Create the container
+    let createContainerResult: ContainerLoadResult;
+    try {
+        createContainerResult = await client.createContainer(containerSchema);
+    } catch (error) {
+        console.error(`Encountered error creating Fluid container: "${error}".`);
+        throw error;
+    }
 
-	const { container, services } = createContainerResult;
+    const { container, services } = createContainerResult;
 
-	// Attach container
-	let containerId: string;
-	try {
-		containerId = await container.attach();
-	} catch (error) {
-		console.error(`Encountered error attaching Fluid container: "${error}".`);
-		throw error;
-	}
+    // Attach container
+    let containerId: string;
+    try {
+        containerId = await container.attach();
+    } catch (error) {
+        console.error(`Encountered error attaching Fluid container: "${error}".`);
+        throw error;
+    }
 
-	return {
-		container,
-		containerId,
-		audience: services.audience,
-	};
+    return {
+        container,
+        containerId,
+        audience: services.audience,
+    };
 }
 
 /**
@@ -78,33 +78,33 @@ export async function createFluidContainer(
  * @throws If no container exists with the specified ID, or if loading / connecting fails for any reason.
  */
 export async function loadExistingFluidContainer(
-	client: TinyliciousClient,
-	containerId: string,
-	containerSchema: ContainerSchema,
+    client: TinyliciousClient,
+    containerId: string,
+    containerSchema: ContainerSchema,
 ): Promise<ContainerInfo> {
-	let getContainerResult: ContainerLoadResult;
-	try {
-		getContainerResult = await client.getContainer(containerId, containerSchema);
-	} catch (error) {
-		console.error(`Encountered error loading Fluid container: "${error}".`);
-		throw error;
-	}
+    let getContainerResult: ContainerLoadResult;
+    try {
+        getContainerResult = await client.getContainer(containerId, containerSchema);
+    } catch (error) {
+        console.error(`Encountered error loading Fluid container: "${error}".`);
+        throw error;
+    }
 
-	const { container, services } = getContainerResult;
+    const { container, services } = getContainerResult;
 
-	if (container.connectionState !== ConnectionState.Connected) {
-		await new Promise<void>((resolve) => {
-			container.once("connected", () => {
-				resolve();
-			});
-		});
-	}
+    if (container.connectionState !== ConnectionState.Connected) {
+        await new Promise<void>((resolve) => {
+            container.once("connected", () => {
+                resolve();
+            });
+        });
+    }
 
-	return {
-		container,
-		containerId,
-		audience: services.audience,
-	};
+    return {
+        container,
+        containerId,
+        audience: services.audience,
+    };
 }
 
 /**
@@ -114,13 +114,13 @@ export async function loadExistingFluidContainer(
  * not here.
  */
 export function initializeFluidClientDebugger(containerInfo: ContainerInfo): void {
-	/* eslint-disable @typescript-eslint/no-non-null-assertion */
-	initializeFluidClientDebuggerBase({
-		containerId: containerInfo.containerId,
-		container: (containerInfo.container as FluidContainer).INTERNAL_CONTAINER_DO_NOT_USE!(),
-		containerData: containerInfo.container.initialObjects,
-	});
-	/* eslint-enable @typescript-eslint/no-non-null-assertion */
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
+    initializeFluidClientDebuggerBase({
+        containerId: containerInfo.containerId,
+        container: (containerInfo.container as FluidContainer).INTERNAL_CONTAINER_DO_NOT_USE!(),
+        containerData: containerInfo.container.initialObjects,
+    });
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
 }
 
 // Convenience re-export, since no adapter logic is required for clean-up
