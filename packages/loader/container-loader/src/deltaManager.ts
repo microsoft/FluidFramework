@@ -834,10 +834,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             message.contents = JSON.parse(message.contents);
         }
 
-        // validate client sequence number has no gap. If there is gap, check if there were noops
-        // if there were noops, decrement the gap by number of noops and continue
+        // Validate client sequence number has no gap. Decrement the noOpCount by gap
+        // If the count ends up negative, that means we have a real gap and throw error
         if (this.connectionManager.clientId !== undefined && this.connectionManager.clientId === message.clientId) {
-            // assert(this.lastClientSequenceNumber !== undefined, "lastClientSequenceNumber should not be undefined");
             if (message.type === MessageType.NoOp){
                 this.noOpCount--;
             }
