@@ -4,7 +4,7 @@
  */
 
 import { JsonableTree, RevisionTag } from "../../core";
-import { NodeChangeset } from "../modular-schema";
+import { ChangesetLocalId, NodeChangeset } from "../modular-schema";
 
 export type NodeChangeType = NodeChangeset;
 export type Changeset<TNodeChange = NodeChangeType> = MarkList<TNodeChange>;
@@ -99,7 +99,12 @@ export type Attach<TNodeChange = NodeChangeType> =
     | MoveIn
     | Reattach<TNodeChange>;
 
-export type Detach<TNodeChange = NodeChangeType> = Delete<TNodeChange> | MoveOut<TNodeChange>;
+export type Detach<TNodeChange = NodeChangeType> =
+    | Delete<TNodeChange>
+    | MoveOut<TNodeChange>
+    | ReturnFrom<TNodeChange>;
+
+export type Reattach<TNodeChange = NodeChangeType> = Revive<TNodeChange> | ReturnTo;
 
 export interface Delete<TNodeChange = NodeChangeType>
     extends HasRevisionTag,
@@ -133,12 +138,27 @@ export interface HasReattachFields extends HasPlaceFields {
     detachIndex: number;
 }
 
-export interface Reattach<TNodeChange = NodeChangeType>
+export interface Revive<TNodeChange = NodeChangeType>
     extends HasReattachFields,
         HasRevisionTag,
         HasChanges<TNodeChange> {
-    type: "Revive" | "Return";
+    type: "Revive";
     count: NodeCount;
+}
+
+export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId {
+    type: "ReturnTo";
+    count: NodeCount;
+}
+
+export interface ReturnFrom<TNodeChange = NodeChangeType>
+    extends HasRevisionTag,
+        HasMoveId,
+        HasChanges<TNodeChange> {
+    type: "ReturnFrom";
+    count: NodeCount;
+    detachedBy: RevisionTag | undefined;
+    tomb?: RevisionTag;
 }
 
 /**
@@ -192,7 +212,7 @@ export interface HasRevisionTag {
  *
  * The uniqueness of IDs is leveraged to uniquely identify the matching move-out for a move-in/return and vice-versa.
  */
-export type MoveId = number;
+export type MoveId = ChangesetLocalId;
 
 export interface HasMoveId {
     /**

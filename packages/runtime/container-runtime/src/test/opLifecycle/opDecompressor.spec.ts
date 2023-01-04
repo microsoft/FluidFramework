@@ -23,6 +23,7 @@ function generateCompressedBatchMessage(length: number, metadata = true): ISeque
 
     const messageBase: ISequencedDocumentMessage = {
         contents: { packedContents: compressedContent },
+        metadata: { meta: "data" },
         clientId: "clientId",
         sequenceNumber: 1,
         term: 1,
@@ -34,27 +35,23 @@ function generateCompressedBatchMessage(length: number, metadata = true): ISeque
         compression: "lz4",
     };
 
-    let opMetadata;
     if (metadata) {
-        opMetadata = { compressed: true };
+        messageBase.metadata = { ...messageBase.metadata, compressed: true };
     }
 
     // Single compressed message won't have batch metadata
     if (length === 1) {
-        return {
-            ...messageBase,
-            metadata: opMetadata,
-        };
+        return messageBase;
     }
 
     return {
         ...messageBase,
-        metadata: { ...opMetadata, batch: true },
+        metadata: { ...messageBase.metadata, batch: true },
     };
 }
 
 const emptyMessage: ISequencedDocumentMessage = {
-    contents: {},
+    contents: undefined,
     clientId: "clientId",
     sequenceNumber: 1,
     term: 1,
@@ -85,52 +82,91 @@ describe("OpDecompressor", () => {
     });
 
     it("Processes single compressed op", () => {
-        const message = decompressor.processMessage(generateCompressedBatchMessage(1));
-        assert.strictEqual(message.contents.contents, "value0");
+        const result = decompressor.processMessage(generateCompressedBatchMessage(1));
+        assert.equal(result.state, "Processed");
+        assert.strictEqual(result.message.contents.contents, "value0");
+        assert.strictEqual(result.message.metadata?.compressed, undefined);
+        assert.strictEqual(result.message.compression, undefined);
     });
 
     it("Processes multiple compressed ops", () => {
         const rootMessage = generateCompressedBatchMessage(5);
-        const firstMessage = decompressor.processMessage(rootMessage);
+        const firstMessageResult = decompressor.processMessage(rootMessage);
 
-        assert.strictEqual(firstMessage.contents.contents, "value0");
+        assert.equal(firstMessageResult.state, "Accepted");
+        assert.strictEqual(firstMessageResult.message.contents.contents, "value0");
+        assert.strictEqual(firstMessageResult.message.metadata?.compressed, undefined);
+        assert.strictEqual(firstMessageResult.message.compression, undefined);
 
         for (let i = 1; i < 4; i++) {
-            const message = decompressor.processMessage(emptyMessage);
-            assert.strictEqual(message.contents.contents, `value${i}`);
+            const result = decompressor.processMessage(emptyMessage);
+            assert.equal(result.state, "Accepted");
+            assert.strictEqual(result.message.contents.contents, `value${i}`);
+            assert.strictEqual(result.message.metadata?.compressed, undefined);
+            assert.strictEqual(result.message.compression, undefined);
         }
 
-        assert.strictEqual(decompressor.processMessage(endBatchEmptyMessage).contents.contents, "value4");
+        const lastMessageResult = decompressor.processMessage(endBatchEmptyMessage);
+        assert.equal(lastMessageResult.state, "Processed");
+        assert.strictEqual(lastMessageResult.message.contents.contents, "value4");
+        assert.strictEqual(lastMessageResult.message.metadata?.compressed, undefined);
+        assert.strictEqual(lastMessageResult.message.compression, undefined);
+    });
+
+    it("Expecting empty messages in the middle of the compressed batch", () => {
+        const rootMessage = generateCompressedBatchMessage(5);
+        const firstMessageResult = decompressor.processMessage(rootMessage);
+
+        assert.equal(firstMessageResult.state, "Accepted");
+        assert.strictEqual(firstMessageResult.message.contents.contents, "value0");
+
+        assert.throws(() => decompressor.processMessage({ ...emptyMessage, contents: {} }));
     });
 
     it("Processes multiple batches of compressed ops", () => {
         const rootMessage = generateCompressedBatchMessage(5);
-        const firstMessage = decompressor.processMessage(rootMessage);
+        const firstMessageResult = decompressor.processMessage(rootMessage);
 
-        assert.strictEqual(firstMessage.contents.contents, "value0");
+        assert.equal(firstMessageResult.state, "Accepted");
+        assert.strictEqual(firstMessageResult.message.contents.contents, "value0");
 
         for (let i = 1; i < 4; i++) {
-            const message = decompressor.processMessage(emptyMessage);
-            assert.strictEqual(message.contents.contents, `value${i}`);
+            const result = decompressor.processMessage(emptyMessage);
+            assert.equal(result.state, "Accepted");
+            assert.strictEqual(result.message.contents.contents, `value${i}`);
         }
 
-        assert.strictEqual(decompressor.processMessage(endBatchEmptyMessage).contents.contents, "value4");
+        const lastMessageResult = decompressor.processMessage(endBatchEmptyMessage);
+        assert.equal(lastMessageResult.state, "Processed");
+        assert.strictEqual(lastMessageResult.message.contents.contents, "value4");
 
         const nextRootMessage = generateCompressedBatchMessage(3);
-        const nextFirstMessage = decompressor.processMessage(nextRootMessage);
+        const nextFirstMessageResult = decompressor.processMessage(nextRootMessage);
+        assert.equal(nextFirstMessageResult.state, "Accepted");
+        assert.strictEqual(nextFirstMessageResult.message.contents.contents, "value0");
 
-        assert.strictEqual(nextFirstMessage.contents.contents, "value0");
+        const middleMessageResult = decompressor.processMessage(emptyMessage);
+        assert.equal(middleMessageResult.state, "Accepted");
+        assert.strictEqual(middleMessageResult.message.contents.contents, "value1");
 
-        const middleMessage = decompressor.processMessage(emptyMessage);
-        assert.strictEqual(middleMessage.contents.contents, "value1");
-
-        assert.strictEqual(decompressor.processMessage(endBatchEmptyMessage).contents.contents, "value2");
+        const endBatchEmptyMessageResult = decompressor.processMessage(endBatchEmptyMessage);
+        assert.equal(endBatchEmptyMessageResult.state, "Processed");
+        assert.strictEqual(endBatchEmptyMessageResult.message.contents.contents, "value2");
     });
 
     it("Processes single compressed op wth only protocol property", () => {
         const rootMessage = generateCompressedBatchMessage(5, false);
-        const firstMessage = decompressor.processMessage(rootMessage);
+        const firstMessageResult = decompressor.processMessage(rootMessage);
 
-        assert.strictEqual(firstMessage.contents.contents, "value0");
+        assert.equal(firstMessageResult.state, "Accepted");
+        assert.strictEqual(firstMessageResult.message.contents.contents, "value0");
+    });
+
+    it("Ignores ops without compression", () => {
+        const rootMessage = { ...generateCompressedBatchMessage(5), metadata: undefined, compression: undefined };
+        const firstMessageResult = decompressor.processMessage(rootMessage);
+
+        assert.equal(firstMessageResult.state, "Skipped");
+        assert.deepStrictEqual(firstMessageResult.message, rootMessage);
     });
 });

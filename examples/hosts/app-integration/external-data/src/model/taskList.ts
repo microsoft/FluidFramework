@@ -130,7 +130,7 @@ export class TaskList extends DataObject implements ITaskList {
     };
 
     public readonly deleteTask = (id: string): void => {
-        this.root.delete(id);
+        this.handleTaskDeleted(id);
     };
 
     public readonly getTasks = (): Task[] => {

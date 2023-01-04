@@ -17,10 +17,6 @@ import {
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
-    Index,
-    SummaryElement,
-    SummaryElementParser,
-    SummaryElementStringifier,
     cachedValue,
     Dependee,
     Dependent,
@@ -40,7 +36,15 @@ import {
     ValueSchema,
     schemaDataIsEmpty,
 } from "../core";
+import {
+    Index,
+    IndexEvents,
+    SummaryElement,
+    SummaryElementParser,
+    SummaryElementStringifier,
+} from "../shared-tree-core";
 import { brand, isJsonObject, JsonCompatibleReadOnly } from "../util";
+import { IEventEmitter } from "../events";
 
 /**
  * The storage key for the blob in the summary containing schema data
@@ -210,7 +214,7 @@ export function parseSchemaString(data: string): SchemaData {
  *
  * Used to capture snapshots of schema for summaries, as well as for anything else needing access to stored schema.
  */
-export class SchemaIndex implements Index<unknown>, SummaryElement {
+export class SchemaIndex implements Index, SummaryElement {
     public readonly key = "Schema";
 
     public readonly summaryElement?: SummaryElement = this;
@@ -219,6 +223,7 @@ export class SchemaIndex implements Index<unknown>, SummaryElement {
 
     public constructor(
         private readonly runtime: IFluidDataStoreRuntime,
+        events: IEventEmitter<IndexEvents<unknown>>,
         private readonly schema: StoredSchemaRepository,
     ) {
         this.schemaBlob = cachedValue(async (observer) => {
@@ -227,6 +232,10 @@ export class SchemaIndex implements Index<unknown>, SummaryElement {
 
             // For now we are not chunking the the schema, but still put it in a reusable blob:
             return this.runtime.uploadBlob(IsoBuffer.from(schemaText));
+        });
+        events.on("newLocalState", (changeDelta) => {
+            // TODO: apply schema changes.
+            // Extend delta to include them, or maybe have some higher level edit type that includes them and deltas?
         });
     }
 

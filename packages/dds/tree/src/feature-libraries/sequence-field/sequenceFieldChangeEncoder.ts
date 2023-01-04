@@ -32,7 +32,7 @@ export function encodeForJson<TNodeChange>(
                 case "Insert":
                 case "Delete":
                 case "MoveOut":
-                case "Return":
+                case "ReturnFrom":
                 case "Revive":
                     if (mark.changes !== undefined) {
                         jsonMarks.push({
@@ -51,6 +51,7 @@ export function encodeForJson<TNodeChange>(
                     } as unknown as JsonCompatible);
                     break;
                 case "MoveIn":
+                case "ReturnTo":
                     jsonMarks.push(mark as unknown as JsonCompatible);
                     break;
                 default:
@@ -84,7 +85,7 @@ export function decodeJson<TNodeChange>(
                 case "Insert":
                 case "Delete":
                 case "MoveOut":
-                case "Return":
+                case "ReturnFrom":
                 case "Revive": {
                     if (mark.changes !== undefined) {
                         marks.push({
@@ -97,6 +98,7 @@ export function decodeJson<TNodeChange>(
                     break;
                 }
                 case "MoveIn":
+                case "ReturnTo":
                     marks.push(mark);
                     break;
                 default:

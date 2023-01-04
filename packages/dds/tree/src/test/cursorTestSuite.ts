@@ -5,9 +5,9 @@
 
 import { strict as assert } from "assert";
 import { jsonableTreeFromCursor, singleTextCursor } from "../feature-libraries";
-import { GlobalFieldKey, LocalFieldKey } from "../schema-stored";
-
 import {
+    GlobalFieldKey,
+    LocalFieldKey,
     EmptyKey,
     FieldKey,
     JsonableTree,
@@ -21,7 +21,7 @@ import {
     compareUpPaths,
     compareFieldUpPaths,
     clonePath,
-} from "../tree";
+} from "../core";
 import { brand } from "../util";
 
 export const testTrees: readonly (readonly [string, JsonableTree])[] = [
