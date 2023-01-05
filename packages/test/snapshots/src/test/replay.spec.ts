@@ -28,7 +28,7 @@ describe("Snapshots", function() {
         await processContent(Mode.Compare);
     });
 
-    it.only("loads snapshots in old format", async () => {
+    it("loads snapshots in old format", async () => {
         await processContent(Mode.Validate);
     });
 
