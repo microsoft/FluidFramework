@@ -26,6 +26,7 @@ import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { LocalReferencePosition } from "../localReference";
 import { InternalRevertDriver } from "../revertibles";
+import { DetachedReferencePosition } from "../referencePositions";
 import { TestSerializer } from "./testSerializer";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
@@ -116,14 +117,14 @@ export class TestClient extends Client {
         this.textHelper = new MergeTreeTextHelper(this.mergeTree);
 
         // Validate by default
-        this.mergeTree.mergeTreeDeltaCallback = (o, d) => {
+        this.on("delta", (o, d) => {
             // assert.notEqual(d.deltaSegments.length, 0);
             d.deltaSegments.forEach((s) => {
                 if (d.operation === MergeTreeDeltaType.INSERT) {
                     assert.notEqual(s.segment.parent, undefined);
                 }
             });
-        };
+        });
     }
 
     /**
@@ -322,17 +323,12 @@ export class TestClient extends Client {
             });
     }
 
-    private findReconnectionPositionSegment?: ISegment;
-
     /**
-     * client.ts has accelerated versions of these methods which leverage the merge-tree's structure.
-     * To help verify their correctness, we additionally perform slow-path computations of the same values
-     * (which involve linear walks of the tree) and assert they match.
+     * Rebases a (local) position from the perspective `{ seq: seqNumberFrom, localSeq }` to the perspective
+     * of the current sequence number. This is desirable when rebasing operations for reconnection. Perform
+     * slow-path computations in this function without leveraging the merge-tree's structure
      */
     public rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number {
-        const fastPathResult = super.rebasePosition(pos, seqNumberFrom, localSeq);
-        const fastPathSegment = this.findReconnectionPositionSegment;
-        this.findReconnectionPositionSegment = undefined;
 
         let segment: ISegment | undefined;
         let posAccumulated = 0;
@@ -361,21 +357,15 @@ export class TestClient extends Client {
         });
 
         assert(segment !== undefined, "No segment found");
-
         const segoff = this.getSlideToSegment({ segment, offset }) ?? segment;
+        if (segoff.segment === undefined || segoff.offset === undefined) {
+            return DetachedReferencePosition;
+        }
 
-        const slowPathResult =
-            segoff.segment !== undefined
-            && segoff.offset !== undefined
-            && this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
-
-        assert.equal(fastPathSegment, segoff.segment ?? undefined, "Unequal rebasePosition computed segments");
-        assert.equal(fastPathResult, slowPathResult, "Unequal rebasePosition results");
-        return fastPathResult;
+        return this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
     }
 
-    protected findReconnectionPosition(segment: ISegment, localSeq: number): number {
-        this.findReconnectionPositionSegment = segment;
+    public findReconnectionPosition(segment: ISegment, localSeq: number): number {
         const fasterComputedPosition = super.findReconnectionPosition(segment, localSeq);
 
         let segmentPosition = 0;
