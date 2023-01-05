@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { EventEmitter, ISubscribable } from "../../events";
+import { createEmitter, EventEmitter, ISubscribable } from "../../events";
 
 interface TestEvents {
     open: () => void;
@@ -14,7 +14,7 @@ interface TestEvents {
 
 describe("EventEmitter", () => {
     it("emits events", () => {
-        const emitter = EventEmitter.create<TestEvents>();
+        const emitter = createEmitter<TestEvents>();
         let opened = false;
         emitter.on("open", () => {
             assert(!opened, "Event should only be fired once");
@@ -25,7 +25,7 @@ describe("EventEmitter", () => {
     });
 
     it("passes arguments to events", () => {
-        const emitter = EventEmitter.create<TestEvents>();
+        const emitter = createEmitter<TestEvents>();
         let error = false;
         emitter.on("close", (e: boolean) => {
             error = e;
@@ -35,7 +35,7 @@ describe("EventEmitter", () => {
     });
 
     it("emits multiple events", () => {
-        const emitter = EventEmitter.create<TestEvents>();
+        const emitter = createEmitter<TestEvents>();
         let opened = false;
         let closed = false;
         emitter.on("open", () => {
@@ -53,7 +53,7 @@ describe("EventEmitter", () => {
     });
 
     it("deregisters events", () => {
-        const emitter = EventEmitter.create<TestEvents>();
+        const emitter = createEmitter<TestEvents>();
         let error = false;
         const deregister = emitter.on("close", (e: boolean) => {
             error = e;
@@ -64,7 +64,7 @@ describe("EventEmitter", () => {
     });
 
     it("deregisters multiple events", () => {
-        const emitter = EventEmitter.create<TestEvents>();
+        const emitter = createEmitter<TestEvents>();
         let opened = false;
         let closed = false;
         const deregisterOpen = emitter.on("open", () => {
@@ -84,7 +84,7 @@ describe("EventEmitter", () => {
     });
 
     it("ignores duplicate events", () => {
-        const emitter = EventEmitter.create<TestEvents>();
+        const emitter = createEmitter<TestEvents>();
         let count = 0;
         const listener = () => (count += 1);
         emitter.on("open", listener);
@@ -95,7 +95,7 @@ describe("EventEmitter", () => {
     });
 
     it("fails on duplicate deregistrations", () => {
-        const emitter = EventEmitter.create<TestEvents>();
+        const emitter = createEmitter<TestEvents>();
         const deregister = emitter.on("open", () => {});
         const deregisterB = emitter.on("open", () => {});
         deregister();
@@ -132,7 +132,7 @@ class MyInheritanceClass extends EventEmitter<MyEvents> {
 }
 
 class MyCompositionClass implements ISubscribable<MyEvents> {
-    private readonly events = EventEmitter.create<MyEvents>();
+    private readonly events = createEmitter<MyEvents>();
 
     private load() {
         this.events.emit("loaded");

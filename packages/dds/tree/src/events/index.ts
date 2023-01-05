@@ -4,6 +4,7 @@
  */
 
 export {
+    createEmitter,
     EventEmitter,
     Events,
     ISubscribable,

@@ -97,6 +97,14 @@ export interface IEmitter<E extends Events<E>> {
 }
 
 /**
+ * Create an instance of an {@link EventEmitter} that can be instructed to emit events. This is useful
+ * for classes that wish to compose over an {@link EventEmitter} rather than inheriting from it.
+ */
+export function createEmitter<E extends Events<E>>(): EventEmitter<E> & IEmitter<E> {
+    return new ComposableEventEmitter<E>();
+}
+
+/**
  * Provides an API for subscribing to and listening to events.
  * Classes wishing to emit events may either extend this class:
  * @example
@@ -130,15 +138,8 @@ export interface IEmitter<E extends Events<E>> {
 export class EventEmitter<E extends Events<E>> implements ISubscribable<E> {
     private readonly listeners = new Map<keyof E, Set<(...args: unknown[]) => void>>();
 
-    /**
-     * Create an instance of an {@link EventEmitter} that can be told to emit events. This is useful
-     * for classes that wish to compose over an {@link EventEmitter} rather than inheriting from it.
-     */
-    public static create<E extends Events<E>>(): EventEmitter<E> & IEmitter<E> {
-        return new ComposableEventEmitter<E>();
-    }
-
-    // The constructor is protected so as to require use of the static `create` function
+    // Because this is protected and not public, calling this externally (not from a subclass) makes sending events to the constructed instance impossible.
+    // Instead, use the static `create` function to get an instance which allows emitting events.
     protected constructor() {}
 
     protected emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {
@@ -179,8 +180,12 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E> {
     }
 }
 
-// This class exposes the `emit` method of `EventEmitter`, elevating it from protected to public
+// This class exposes the constructor and the `emit` method of `EventEmitter`, elevating them from protected to public
 class ComposableEventEmitter<E extends Events<E>> extends EventEmitter<E> implements IEmitter<E> {
+    public constructor() {
+        super();
+    }
+
     public emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {
         return super.emit(eventName, ...args);
     }
