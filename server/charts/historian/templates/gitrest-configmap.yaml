@@ -32,6 +32,8 @@ data:
                 "name": "{{ .Values.gitrest.git.lib.name }}"
             },
             "persistLatestFullSummary": {{ .Values.gitrest.git.persistLatestFullSummary }},
-            "repoPerDocEnabled": {{ .Values.gitrest.git.repoPerDocEnabled }}
+            "enableLowIoWrite": {{ .Values.gitrest.git.enableLowIoWrite }},
+            "repoPerDocEnabled": {{ .Values.gitrest.git.repoPerDocEnabled }},
+            "enableRepositoryManagerMetrics": {{ .Values.gitrest.git.enableRepositoryManagerMetrics }}
         }
     }

@@ -31,7 +31,6 @@ export class CheckpointContext {
         }
 
         // Check if a checkpoint is in progress - if so store the pending checkpoint
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (this.pendingUpdateP) {
             this.pendingCheckpoint = checkpoint;
             return;
@@ -95,7 +94,6 @@ export class CheckpointContext {
         this.closed = true;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private checkpointCore(checkpoint: ICheckpointParams) {
         // Exit early if already closed
         if (this.closed) {

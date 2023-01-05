@@ -104,12 +104,16 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         );
     }
 
-    private checkStorageDisposed() {
+    private checkStorageDisposed(callName: string, error: unknown) {
         if (this._disposed) {
+            this.logger.sendTelemetryEvent({
+                eventName: `${callName}_abortedStorageDisposed`,
+                fetchCallName: callName, // fetchCallName matches logs in runWithRetry.ts
+            }, error);
             // pre-0.58 error message: storageServiceDisposedCannotRetry
             throw new GenericError("Storage Service is disposed. Cannot retry", { canRetry: false });
         }
-        return undefined;
+        return;
     }
 
     private async runWithRetry<T>(api: () => Promise<T>, callName: string): Promise<T> {
@@ -118,7 +122,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
             callName,
             this.logger,
             {
-                onRetry: () => this.checkStorageDisposed(),
+                onRetry: (_delayInMs: number, error: unknown) => this.checkStorageDisposed(callName, error),
             },
         );
     }

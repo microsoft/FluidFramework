@@ -50,7 +50,7 @@ export const blobCountPropertyName = "BlobCount";
 export const channelsTreeName = ".channels";
 
 // @public (undocumented)
-export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>) => ISummarizerNodeWithGC;
+export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>) => ISummarizerNodeWithGC;
 
 // @public (undocumented)
 export type CreateChildSummarizerNodeParam = {
@@ -83,7 +83,13 @@ export enum FlushMode {
 }
 
 // @public (undocumented)
-export const gcBlobKey = "gc";
+export const gcBlobPrefix = "__gc";
+
+// @public (undocumented)
+export const gcTombstoneBlobKey = "__tombstones";
+
+// @public (undocumented)
+export const gcTreeKey = "gc";
 
 // @public
 export interface IAttachMessage {
@@ -107,8 +113,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     readonly logger: ITelemetryBaseLogger;
     orderSequentially(callback: () => void): void;
     request(request: IRequest): Promise<IResponse>;
-    // @deprecated
-    setFlushMode(mode: FlushMode): void;
     submitSignal(type: string, content: any): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
@@ -128,6 +132,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 
 // @public
 export interface IDataStore extends IFluidRouter {
+    readonly entryPoint?: IFluidHandle<FluidObject>;
     trySetAlias(alias: string): Promise<AliasResult>;
 }
 
@@ -144,6 +149,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     // @deprecated
     attachGraph(): void;
     readonly attachState: AttachState;
+    readonly entryPoint?: IFluidHandle<FluidObject>;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
@@ -155,7 +161,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
     setConnectionState(connected: boolean, clientId?: string): any;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     readonly visibilityState?: VisibilityState_2;
 }
@@ -182,13 +188,11 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
-    getBaseGCDetails?(): Promise<IGarbageCollectionDetailsBase>;
+    getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
     // (undocumented)
     getCreateChildSummarizerNodeFn(
     id: string,
     createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
-    // @deprecated (undocumented)
-    getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
@@ -248,7 +252,6 @@ export interface IGarbageCollectionData {
 // @public
 export interface IGarbageCollectionDetailsBase {
     gcData?: IGarbageCollectionData;
-    unrefTimestamp?: number;
     usedRoutes?: string[];
 }
 
@@ -256,6 +259,14 @@ export interface IGarbageCollectionDetailsBase {
 export interface IGarbageCollectionNodeData {
     outboundRoutes: string[];
     unreferencedTimestampMs?: number;
+}
+
+// @public
+export interface IGarbageCollectionSnapshotData {
+    // (undocumented)
+    gcState: IGarbageCollectionState;
+    // (undocumented)
+    tombstones: string[] | undefined;
 }
 
 // @public
@@ -267,7 +278,11 @@ export interface IGarbageCollectionState {
 }
 
 // @public @deprecated (undocumented)
-export type IGarbageCollectionSummaryDetails = IGarbageCollectionDetailsBase;
+export interface IGarbageCollectionSummaryDetailsLegacy {
+    gcData?: IGarbageCollectionData;
+    unrefTimestamp?: number;
+    usedRoutes?: string[];
+}
 
 // @public
 export interface IInboundSignalMessage extends ISignalMessage {
@@ -328,11 +343,10 @@ export interface ISummarizerNode {
     // (undocumented)
     getChild(id: string): ISummarizerNode | undefined;
     invalidate(sequenceNumber: number): void;
-    loadBaseSummary(snapshot: ISnapshotTree, readAndParseBlob: <T>(id: string) => Promise<T>): Promise<ISnapshotTree>;
-    loadBaseSummaryWithoutDifferential(snapshot: ISnapshotTree): void;
     recordChange(op: ISequencedDocumentMessage): void;
     readonly referenceSequenceNumber: number;
     summarize(fullTree: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
+    updateBaseSummaryState(snapshot: ISnapshotTree): void;
 }
 
 // @public (undocumented)
@@ -353,16 +367,13 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     summarizeInternalFn: SummarizeInternalFn,
     id: string,
     createParam: CreateChildSummarizerNodeParam,
-    config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>): ISummarizerNodeWithGC;
+    config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>): ISummarizerNodeWithGC;
     deleteChild(id: string): void;
-    getBaseGCDetails?(): IGarbageCollectionDetailsBase;
     // (undocumented)
     getChild(id: string): ISummarizerNodeWithGC | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
-    // @deprecated
-    getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
     isReferenced(): boolean;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 // @public

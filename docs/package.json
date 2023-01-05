@@ -33,7 +33,7 @@
     "start": "hugo server"
   },
   "dependencies": {
-    "@fluid-tools/api-markdown-documenter": "^0.4.0",
+    "@fluid-tools/api-markdown-documenter": "^0.5.0",
     "@microsoft/api-extractor-model": "^7.23.0",
     "@tylerbu/dl-cli": "1.1.2-tylerbu-0",
     "@tylerbu/markdown-magic": "^2.4.0-tylerbu-1",
@@ -58,7 +58,7 @@
     "node-fetch": "^2.6.7",
     "replace-in-file": "^6.2.0",
     "rimraf": "^2.6.2",
-    "serve": "^13.0.2",
+    "serve": "^14.1.2",
     "shelljs": "^0.8.5"
   }
 }

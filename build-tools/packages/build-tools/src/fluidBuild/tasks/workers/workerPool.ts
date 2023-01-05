@@ -2,16 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { ChildProcess, fork } from "child_process";
 import { EventEmitter } from "events";
 import { Readable } from "stream";
 import { Worker } from "worker_threads";
-import { WorkerMessage, WorkerExecResult } from "./worker";
+
+import { WorkerExecResult, WorkerMessage } from "./worker";
 
 export interface WorkerExecResultWithOutput extends WorkerExecResult {
-    stdout: string,
-    stderr: string,
+    stdout: string;
+    stderr: string;
 }
 
 export class WorkerPool {
@@ -20,8 +20,7 @@ export class WorkerPool {
     constructor(
         public readonly useWorkerThreads: boolean,
         private readonly memoryUsageLimit: number,
-    ) {
-    }
+    ) {}
 
     private getThreadWorker() {
         let worker: Worker | undefined = this.threadWorkerPool.pop();
@@ -34,36 +33,52 @@ export class WorkerPool {
     private getProcessWorker() {
         let worker: ChildProcess | undefined = this.processWorkerPool.pop();
         if (!worker) {
-            worker = fork(`${__dirname}/worker.js`,
+            worker = fork(
+                `${__dirname}/worker.js`,
                 this.memoryUsageLimit !== -1 ? ["--memoryUsage"] : undefined,
-                { silent: true }
+                { silent: true },
             );
         }
         return worker;
     }
 
-    public async runOnWorker(workerName: string, command: string, cwd: string): Promise<WorkerExecResultWithOutput> {
+    public async runOnWorker(
+        workerName: string,
+        command: string,
+        cwd: string,
+    ): Promise<WorkerExecResultWithOutput> {
         const workerMessage: WorkerMessage = { workerName, command, cwd };
         const cleanup: (() => void)[] = [];
-        const installTemporaryListener = (object: EventEmitter | Readable, event: string, handler: any) => {
+        const installTemporaryListener = (
+            object: EventEmitter | Readable,
+            event: string,
+            handler: any,
+        ) => {
             object.on(event, handler);
             cleanup.push(() => object.off(event, handler));
-        }
-        const setupWorker = (worker: Worker | ChildProcess, res: (value: WorkerExecResultWithOutput) => void) => {
+        };
+        const setupWorker = (
+            worker: Worker | ChildProcess,
+            res: (value: WorkerExecResultWithOutput) => void,
+        ) => {
             let stdout = "";
             let stderr = "";
 
             if (worker.stdout) {
-                installTemporaryListener(worker.stdout, "data", (chunk: any) => { stdout += chunk; });
+                installTemporaryListener(worker.stdout, "data", (chunk: any) => {
+                    stdout += chunk;
+                });
             }
             if (worker.stderr) {
-                installTemporaryListener(worker.stderr, "data", (chunk: any) => { stderr += chunk; });
+                installTemporaryListener(worker.stderr, "data", (chunk: any) => {
+                    stderr += chunk;
+                });
             }
 
             worker.once("message", (result: WorkerExecResult) => {
                 res({ ...result, stdout, stderr });
             });
-        }
+        };
         try {
             if (this.useWorkerThreads) {
                 const worker = this.getThreadWorker();
@@ -77,8 +92,10 @@ export class WorkerPool {
                 const worker = this.getProcessWorker();
                 const res = await new Promise<WorkerExecResultWithOutput>((res, rej) => {
                     const setupErrorListener = (event: string) => {
-                        installTemporaryListener(worker, event, () => { rej(new Error(`Worker ${event}`)); });
-                    }
+                        installTemporaryListener(worker, event, () => {
+                            rej(new Error(`Worker ${event}`));
+                        });
+                    };
 
                     setupWorker(worker, res);
 
@@ -89,7 +106,10 @@ export class WorkerPool {
                     worker.send(workerMessage);
                 });
 
-                if (this.memoryUsageLimit >= 0 && (res.memoryUsage?.rss ?? 0) > this.memoryUsageLimit) {
+                if (
+                    this.memoryUsageLimit >= 0 &&
+                    (res.memoryUsage?.rss ?? 0) > this.memoryUsageLimit
+                ) {
                     // Don't keep worker using more then 1GB of memory
                     worker.kill();
                 } else {
@@ -98,7 +118,7 @@ export class WorkerPool {
                 return res;
             }
         } finally {
-            cleanup.forEach(value => value());
+            cleanup.forEach((value) => value());
         }
     }
 

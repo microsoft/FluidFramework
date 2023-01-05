@@ -14,7 +14,6 @@ import {
 import {
     IGarbageCollectionData,
     IGarbageCollectionDetailsBase,
-    IGarbageCollectionSummaryDetails,
 } from "./garbageCollection";
 
 /**
@@ -36,7 +35,9 @@ export interface ISummaryStats {
  * will be taking part of the summarization process.
  */
 export interface ISummaryTreeWithStats {
-    /** Represents an aggregation of node counts and blob sizes associated to the current summary information */
+    /**
+     * Represents an aggregation of node counts and blob sizes associated to the current summary information
+     */
     stats: ISummaryStats;
     /**
      * A recursive data structure that will be converted to a snapshot tree and uploaded
@@ -69,15 +70,23 @@ export interface ISummarizeResult {
  */
 export interface ISummarizeInternalResult extends ISummarizeResult {
     id: string;
-    /** Additional path parts between this node's ID and its children's IDs. */
+    /**
+     * Additional path parts between this node's ID and its children's IDs.
+     */
     pathPartsForChildren?: string[];
 }
 
-/** The garbage collection data of each node in the reference graph. */
+/**
+ * The garbage collection data of each node in the reference graph.
+ */
 export interface IGarbageCollectionNodeData {
-    /** The set of routes to other nodes in the graph. */
+    /**
+     * The set of routes to other nodes in the graph.
+     */
     outboundRoutes: string[];
-    /** If the node is unreferenced, the timestamp of when it was marked unreferenced. */
+    /**
+     * If the node is unreferenced, the timestamp of when it was marked unreferenced.
+     */
     unreferencedTimestampMs?: number;
 }
 
@@ -88,6 +97,28 @@ export interface IGarbageCollectionNodeData {
 export interface IGarbageCollectionState {
     gcNodes: { [ id: string ]: IGarbageCollectionNodeData; };
 }
+
+/**
+ * @deprecated - IGarbageCollectionState is written in the root of the summary now.
+ * Legacy GC details from when the GC details were written at the data store's summary tree.
+ */
+export interface IGarbageCollectionSummaryDetailsLegacy {
+    /** A list of routes to Fluid objects that are used in this node. */
+    usedRoutes?: string[];
+    /** The GC data of this node. */
+    gcData?: IGarbageCollectionData;
+    /** If this node is unreferenced, the time when it was marked as such. */
+    unrefTimestamp?: number;
+}
+
+/**
+ * The GC data that is read from a snapshot. It contains the Garbage CollectionState state and tombstone state.
+ */
+export interface IGarbageCollectionSnapshotData {
+    gcState: IGarbageCollectionState;
+    tombstones: string[] | undefined;
+}
+
 
 export type SummarizeInternalFn = (
     fullTree: boolean,
@@ -137,7 +168,9 @@ export type CreateChildSummarizerNodeParam = {
 };
 
 export interface ISummarizerNode {
-    /** Latest successfully acked summary reference sequence number */
+    /**
+     * Latest successfully acked summary reference sequence number
+     */
     readonly referenceSequenceNumber: number;
     /**
      * Marks the node as having a change with the given sequence number.
@@ -166,20 +199,7 @@ export interface ISummarizerNode {
      * path is "/a/.channels/b", then the additional path part is ".channels".
      * @param snapshot - the base summary to parse
      */
-    loadBaseSummaryWithoutDifferential(snapshot: ISnapshotTree): void;
-    /**
-     * Does all the work of loadBaseSummaryWithoutDifferential. Additionally if
-     * the base summary is a differential summary containing handle + outstanding ops blob,
-     * then this will return the innermost base summary, and update the state by
-     * tracking the outstanding ops.
-     * @param snapshot - the base summary to parse
-     * @param readAndParseBlob - function to read and parse blobs from storage
-     * @returns the base summary to be used
-     */
-    loadBaseSummary(
-        snapshot: ISnapshotTree,
-        readAndParseBlob: <T>(id: string) => Promise<T>,
-    ): Promise<ISnapshotTree>;
+    updateBaseSummaryState(snapshot: ISnapshotTree): void;
     /**
      * Records an op representing a change to this node/subtree.
      * @param op - op of change to record
@@ -187,9 +207,13 @@ export interface ISummarizerNode {
     recordChange(op: ISequencedDocumentMessage): void;
 
     createChild(
-        /** Summarize function */
+        /**
+         * Summarize function
+         */
         summarizeInternalFn: SummarizeInternalFn,
-        /** Initial id or path part of this node */
+        /**
+         * Initial id or path part of this node
+         */
         id: string,
         /**
          * Information needed to create the node.
@@ -198,7 +222,9 @@ export interface ISummarizerNode {
          * If it is local, it will throw unsupported errors on calls to summarize.
          */
         createParam: CreateChildSummarizerNodeParam,
-        /** Optional configuration affecting summarize behavior */
+        /**
+         * Optional configuration affecting summarize behavior
+         */
         config?: ISummarizerNodeConfig,
     ): ISummarizerNode;
 
@@ -229,9 +255,13 @@ export interface ISummarizerNode {
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
     createChild(
-        /** Summarize function */
+        /**
+         * Summarize function
+         */
         summarizeInternalFn: SummarizeInternalFn,
-        /** Initial id or path part of this node */
+        /**
+         * Initial id or path part of this node
+         */
         id: string,
         /**
          * Information needed to create the node.
@@ -240,10 +270,12 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
          * If it is local, it will throw unsupported errors on calls to summarize.
          */
         createParam: CreateChildSummarizerNodeParam,
-        /** Optional configuration affecting summarize behavior */
+        /**
+         * Optional configuration affecting summarize behavior
+         */
         config?: ISummarizerNodeConfigWithGC,
         getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-        getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
+        getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
     ): ISummarizerNodeWithGC;
 
     /**
@@ -260,7 +292,9 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
      */
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
 
-    /** Tells whether this node is being referenced in this document or not. Unreferenced node will get GC'd */
+    /**
+     * Tells whether this node is being referenced in this document or not. Unreferenced node will get GC'd
+     */
     isReferenced(): boolean;
 
     /**
@@ -269,20 +303,8 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
      * 2. To identify if this node or any of its children's used routes changed since last summary.
      *
      * @param usedRoutes - The routes that are used in this node.
-     * @param gcTimestamp - The time when GC was run that generated these used routes. If a node becomes unreferenced
-     * as part of this GC run, this timestamp is used to update the time when it happens.
      */
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
-
-    /**
-     * Returns the GC details that may be added to this node's summary.
-     *
-     * @deprecated Renamed to {@link ISummarizerNodeWithGC.getBaseGCDetails}.
-     */
-    getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
-
-    /** Returns the GC details to be added to this node's summary and is used to initialize new nodes' GC state. */
-    getBaseGCDetails?(): IGarbageCollectionDetailsBase;
+    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 export const channelsTreeName = ".channels";

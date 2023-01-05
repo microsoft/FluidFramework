@@ -62,6 +62,12 @@ export interface IOdspSocketError {
      * The client should wait this many seconds before retrying its request
      */
     retryAfter?: number;
+
+    /**
+     * Any error supplied by the socket containing codes and inner errors with further
+     * details about the error.
+     */
+    error?: any;
 }
 
 /**

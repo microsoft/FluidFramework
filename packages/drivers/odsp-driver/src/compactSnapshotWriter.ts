@@ -143,9 +143,11 @@ export function convertToCompactSnapshot(snapshotContents: ISnapshotContents): U
     const rootNode = builder.addNode();
     assert(snapshotContents.sequenceNumber !== undefined, 0x21c /* "Seq number should be provided" */);
 
-    const latestSequenceNumber = snapshotContents.latestSequenceNumber ??
-        snapshotContents.ops.length > 0 ?
-        snapshotContents.ops[snapshotContents.ops.length - 1].sequenceNumber : snapshotContents.sequenceNumber;
+    let latestSequenceNumber = snapshotContents.latestSequenceNumber;
+    if (latestSequenceNumber === undefined) {
+        latestSequenceNumber = snapshotContents.ops.length > 0 ?
+            snapshotContents.ops[snapshotContents.ops.length - 1].sequenceNumber : snapshotContents.sequenceNumber;
+    }
 
     writeSnapshotProps(rootNode, latestSequenceNumber);
 

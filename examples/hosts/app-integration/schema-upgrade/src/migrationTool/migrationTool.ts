@@ -4,7 +4,7 @@
  */
 
 import { IQuorum, Quorum } from "@fluid-experimental/quorum";
-import { ITaskManager, TaskManager } from "@fluid-experimental/task-manager";
+import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ConsensusRegisterCollection, IConsensusRegisterCollection } from "@fluidframework/register-collection";
@@ -98,12 +98,16 @@ export class MigrationTool extends DataObject implements IMigrationTool {
         this.quorum.set(newVersionKey, newVersion);
     };
 
-    public async volunteerForMigration(): Promise<void> {
-        return this.taskManager.lockTask(migrateTaskName);
+    public async volunteerForMigration(): Promise<boolean> {
+        return this.taskManager.volunteerForTask(migrateTaskName);
     }
 
     public haveMigrationTask(): boolean {
-        return this.taskManager.haveTaskLock(migrateTaskName);
+        return this.taskManager.assigned(migrateTaskName);
+    }
+
+    public completeMigrationTask(): void {
+        this.taskManager.complete(migrateTaskName);
     }
 
     protected async initializingFirstTime() {

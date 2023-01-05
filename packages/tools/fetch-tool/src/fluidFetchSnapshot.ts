@@ -5,16 +5,19 @@
 
 import fs from "fs";
 import util from "util";
-import { bufferToString, stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
+
+import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
 } from "@fluidframework/driver-definitions";
+import { BlobAggregationStorage } from "@fluidframework/driver-utils";
 import {
     ISnapshotTree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
-import { BlobAggregationStorage } from "@fluidframework/driver-utils";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+
 import { formatNumber } from "./fluidAnalyzeMessages";
 import {
     dumpSnapshotStats,
@@ -173,7 +176,6 @@ async function dumpSnapshotTreeVerbose(name: string, fetchedData: IFetchedData[]
             continue;
         }
         const blob = bufferToString(buffer, "utf8");
-        // eslint-disable-next-line max-len
         console.log(`${item.treePath.padEnd(nameLength)} |    ${item.reused ? "X" : " "}   | ${formatNumber(blob.length).padStart(10)}`);
         size += blob.length;
     }

@@ -1,5 +1,0 @@
-{
-    "tags": [ "transaction" ],
-    "exports": [ "index"],
-    "imports": ["util","forest","change-family","checkout"]
-}

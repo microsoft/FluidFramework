@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "node:assert";
+
+import { AzureClient } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
-import { AzureClient } from "@fluidframework/azure-client";
+
 import { createAzureClient } from "./AzureClientFactory";
 
 describe("Container create scenarios", () => {
@@ -25,23 +27,6 @@ describe("Container create scenarios", () => {
     });
 
     /**
-     * Scenario: test when Azure Client is instantiated correctly, it can create
-     * a container successfully.
-     *
-     * Expected behavior: an error should not be thrown nor should a rejected promise
-     * be returned.
-     */
-    it("can create new Azure Fluid Relay container successfully", async () => {
-        const resourcesP = client.createContainer(schema);
-
-        await assert.doesNotReject(
-            resourcesP,
-            () => true,
-            "container cannot be created in Azure Fluid Relay",
-        );
-    });
-
-    /**
      * Scenario: test when an Azure Client container is created,
      * it is initially detached.
      *
@@ -55,6 +40,10 @@ describe("Container create scenarios", () => {
             AttachState.Detached,
             "Container should be detached",
         );
+
+        // Make sure we can attach.
+        const containerId = await container.attach();
+        assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
     });
 
     /**
@@ -139,6 +128,11 @@ describe("Container create scenarios", () => {
 
         const errorFn = (error: Error): boolean => {
             assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
+            assert.strictEqual(
+                error.message,
+                "R11s fetch error: Document is deleted and cannot be accessed.",
+                `Unexpected error: ${error.message}`,
+            );
             return true;
         };
 
@@ -147,6 +141,7 @@ describe("Container create scenarios", () => {
             errorFn,
             "Azure Client can load a non-existent container",
         );
+        // eslint-disable-next-line require-atomic-updates
         console.error = consoleErrorFn;
     });
 });

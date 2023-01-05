@@ -5,7 +5,6 @@
 
 export {
     ContainerMessageType,
-    IChunkedOp,
     ContainerRuntimeMessage,
     IGCRuntimeOptions,
     ISummaryRuntimeOptions,
@@ -17,29 +16,24 @@ export {
     IRootSummaryTreeWithStats,
     isRuntimeMessage,
     RuntimeMessage,
-    unpackRuntimeMessage,
     agentSchedulerId,
     ContainerRuntime,
     RuntimeHeaders,
     ISummaryConfiguration,
     DefaultSummaryConfiguration,
+    ICompressionRuntimeOptions,
+    CompressionAlgorithms,
 } from "./containerRuntime";
-export { DeltaScheduler } from "./deltaScheduler";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
 export {
-    gcBlobPrefix,
-    gcTreeKey,
-    IGarbageCollectionRuntime,
     IGCStats,
 } from "./garbageCollection";
 export {
     IPendingFlush,
-    IPendingFlushMode,
     IPendingLocalState,
     IPendingMessage,
     IPendingState,
 } from "./pendingStateManager";
-export { ScheduleManager } from "./scheduleManager";
 export { Summarizer } from "./summarizer";
 export {
     EnqueueSummarizeResult,
@@ -54,6 +48,7 @@ export {
     INackSummaryResult,
     IOnDemandSummarizeOptions,
     IProvideSummarizer,
+    IRefreshSummaryAckOptions,
     ISubmitSummaryOpResult,
     ISubmitSummaryOptions,
     ISummarizeOptions,
@@ -82,3 +77,4 @@ export {
     SummaryCollection,
 } from "./summaryCollection";
 export { ICancellableSummarizerController, neverCancelledSummaryToken } from "./runWhileConnectedCoordinator";
+export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle";

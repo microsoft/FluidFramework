@@ -5,6 +5,7 @@
 
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import {
+    FetchSource,
     IDocumentStorageService,
     IDocumentStorageServicePolicies,
     ISummaryContext,
@@ -53,9 +54,14 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
         );
     }
 
-    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+    public async getVersions(
+        versionId: string | null,
+        count: number,
+        scenarioName?: string,
+        fetchSource?: FetchSource,
+    ): Promise<IVersion[]> {
         return this.runWithRetry(
-            async () => this.internalStorageService.getVersions(versionId, count),
+            async () => this.internalStorageService.getVersions(versionId, count, scenarioName, fetchSource),
             "storage_getVersions",
         );
     }

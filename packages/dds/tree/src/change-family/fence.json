@@ -1,5 +1,0 @@
-{
-    "tags": [ "change-family" ],
-    "exports": [ "index" ],
-    "imports": [ "rebase", "tree", "util" ]
-}

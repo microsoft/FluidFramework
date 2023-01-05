@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./mockDocumentService";
-export * from "./mockDeltaStorage";
-export * from "./mockDocumentDeltaConnection";
+export { MockDocumentDeltaStorageService } from "./mockDeltaStorage";
+export { MockDocumentService } from "./mockDocumentService";
+export { MockDocumentDeltaConnection } from "./mockDocumentDeltaConnection";

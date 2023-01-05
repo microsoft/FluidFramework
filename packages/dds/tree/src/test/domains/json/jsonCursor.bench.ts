@@ -7,12 +7,25 @@ import { strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import {
-    ITreeCursorNew, jsonableTreeFromCursor, singleTextCursorNew, EmptyKey,
+    ITreeCursor,
+    singleJsonCursor,
+    jsonableTreeFromCursor,
+    EmptyKey,
+    cursorToJsonObject,
+    jsonSchemaData,
 } from "../../..";
-// Allow importing from this specific file which is being tested:
-/* eslint-disable-next-line import/no-internal-modules */
-import { JsonCursor } from "../../../domains/json/jsonCursor";
-import { jsonableTreeFromCursorNew, mapTreeFromCursor, singleMapTreeCursor } from "../../../feature-libraries";
+import {
+    buildForest,
+    defaultSchemaPolicy,
+    mapTreeFromCursor,
+    singleMapTreeCursor,
+    singleTextCursor,
+} from "../../../feature-libraries";
+import {
+    initializeForest,
+    InMemoryStoredSchemaRepository,
+    moveToDetachedField,
+} from "../../../core";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
 import { generateTwitterJsonByByteSize, TwitterStatus } from "./twitter";
@@ -28,7 +41,13 @@ function cloneObject<T, J = Jsonable<T>>(obj: J): J {
         // PERF: Nested array allocs make 'Object.entries()' ~2.4x slower than reading
         //       value via 'value[key]', even when destructuring. (node 14 x64)
         for (const key of Object.keys(obj)) {
-            result[key] = clone((obj as any)[key]);
+            // Like `result[key] = clone((obj as any)[key]);` but safe for when key == "__proto__"
+            Object.defineProperty(result, key, {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: clone((obj as any)[key]),
+            });
         }
         return result as J;
     }
@@ -40,9 +59,7 @@ function cloneObject<T, J = Jsonable<T>>(obj: J): J {
 function clone<T>(value: Jsonable<T>): Jsonable<T> {
     // PERF: Separate clone vs. cloneObject yields an ~11% speedup in 'canada.json',
     //       likely due to inlining short-circuiting recursing at leaves (node 14 x64).
-    return typeof value !== "object" || value === null
-        ? value
-        : cloneObject(value);
+    return typeof value !== "object" || value === null ? value : cloneObject(value);
 }
 
 /**
@@ -52,51 +69,65 @@ function bench(
     data: {
         name: string;
         getJson: () => any;
-        dataConsumer: (cursor: ITreeCursorNew, calculate: (...operands: any[]) => void) => any;
+        dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any;
     }[],
 ) {
     for (const { name, getJson, dataConsumer } of data) {
         const json = getJson();
-        const encodedTree = jsonableTreeFromCursor(new JsonCursor(json));
+        const encodedTree = jsonableTreeFromCursor(singleJsonCursor(json));
+        const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData);
 
         benchmark({
             type: BenchmarkType.Measurement,
-            title: `Direct: '${name}'`,
+            title: `Clone JS Object: '${name}'`,
             before: () => {
                 const cloned = clone(json);
-                assert.deepEqual(cloned, json,
-                    "clone() must return an equivalent tree.");
-                assert.notEqual(cloned, json,
-                    "clone() must not return the same tree instance.");
+                assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
+                assert.notEqual(cloned, json, "clone() must not return the same tree instance.");
             },
             benchmarkFn: () => {
                 clone(json);
             },
         });
 
-        const cursorFactories: [string, () => ITreeCursorNew][] = [
-            ["TextCursor", () => singleTextCursorNew(encodedTree)],
-            ["MapCursor", () => singleMapTreeCursor(mapTreeFromCursor(singleTextCursorNew(encodedTree)))],
+        const cursorFactories: [string, () => ITreeCursor][] = [
+            ["JsonCursor", () => singleJsonCursor(json)],
+            ["TextCursor", () => singleTextCursor(encodedTree)],
+            [
+                "MapCursor",
+                () => singleMapTreeCursor(mapTreeFromCursor(singleTextCursor(encodedTree))),
+            ],
+            [
+                "object-forest Cursor",
+                () => {
+                    const forest = buildForest(schema);
+                    initializeForest(forest, [singleTextCursor(encodedTree)]);
+                    const cursor = forest.allocateCursor();
+                    moveToDetachedField(forest, cursor);
+                    assert(cursor.firstNode());
+                    return cursor;
+                },
+            ],
         ];
 
         const consumers: [
             string,
-            (cursor: ITreeCursorNew,
-                dataConsumer: (cursor: ITreeCursorNew, calculate: (...operands: any[]) => void) => any
+            (
+                cursor: ITreeCursor,
+                dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any,
             ) => void,
         ][] = [
-                // TODO: finish porting other cursor code and enable this.
-                // ["cursorToJsonObject", cursorToJsonObjectNew],
-                ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
-                ["mapTreeFromCursor", mapTreeFromCursor],
-                ["sum", sum],
-                ["sum-map", sumMap],
-                ["averageTwoValues", averageTwoValues],
-            ];
+            ["cursorToJsonObject", cursorToJsonObject],
+            ["jsonableTreeFromCursor", jsonableTreeFromCursor],
+            ["mapTreeFromCursor", mapTreeFromCursor],
+            ["sum", sum],
+            ["sum-map", sumMap],
+            ["averageTwoValues", averageTwoValues],
+        ];
 
         for (const [consumerName, consumer] of consumers) {
             for (const [factoryName, factory] of cursorFactories) {
-                let cursor: ITreeCursorNew;
+                let cursor: ITreeCursor;
                 benchmark({
                     type: BenchmarkType.Measurement,
                     title: `${consumerName}(${factoryName}): '${name}'`,
@@ -118,11 +149,13 @@ function bench(
 
 const canada = generateCanada(
     // Use the default (large) data set for benchmarking, otherwise use a small dataset.
-    isInPerformanceTestingMode
-        ? undefined
-        : [2, 10]);
+    isInPerformanceTestingMode ? undefined : [2, 10],
+);
 
-function extractCoordinatesFromCanada(cursor: ITreeCursorNew, calculate: (x: number, y: number) => void): void {
+function extractCoordinatesFromCanada(
+    cursor: ITreeCursor,
+    calculate: (x: number, y: number) => void,
+): void {
     cursor.enterField(Canada.FeatureKey);
     cursor.enterNode(0);
     cursor.enterField(EmptyKey);
@@ -166,7 +199,10 @@ function extractCoordinatesFromCanada(cursor: ITreeCursorNew, calculate: (x: num
     cursor.exitField();
 }
 
-function extractAvgValsFromTwitter(cursor: ITreeCursorNew, calculate: (x: number, y: number) => void): void {
+function extractAvgValsFromTwitter(
+    cursor: ITreeCursor,
+    calculate: (x: number, y: number) => void,
+): void {
     cursor.enterField(TwitterStatus.statusesKey); // move from root to field
     cursor.enterNode(0); // move from field to node at 0 (which is an object of type array)
     cursor.enterField(EmptyKey); // enter the array field at the node,

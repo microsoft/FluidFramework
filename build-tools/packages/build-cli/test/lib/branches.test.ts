@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { assert } from "chai";
 
 import { MonoRepoKind } from "@fluidframework/build-tools";
-import { assert } from "chai";
+
 import {
-    generateBumpVersionBranchName,
     generateBumpDepsBranchName,
+    generateBumpVersionBranchName,
     generateReleaseBranchName,
     getDefaultBumpTypeForBranch,
 } from "../../src/lib/branches";

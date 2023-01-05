@@ -5,6 +5,7 @@
 
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
+    FluidObject,
     IFluidHandle,
     IRequest,
 } from "@fluidframework/core-interfaces";
@@ -22,7 +23,6 @@ import {
     IFluidDataStoreFactory,
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
 
@@ -75,6 +75,7 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
     }
 
     public get IAgentScheduler() { return this; }
+    public get IFluidLoadable() { return this; }
 
     private get clientId(): string {
         if (this.runtime.attachState === AttachState.Detached) {
@@ -257,7 +258,14 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
             if (this.isActive() && currentClient === this.clientId) {
                 this.onNewTaskAssigned(key);
             } else {
-                await this.onTaskReassigned(key, currentClient);
+                // The call below mutates the consensusRegisterCollection in
+                // its event handler, which is not safe.
+                // We need to force this to be part of a different batch of ops by
+                // scheduling a microtask in order to work around the current validations.
+                // This is not recommended and should be avoided.
+                await Promise.resolve().then(async () => {
+                    await this.onTaskReassigned(key, currentClient);
+                });
             }
         });
 
@@ -306,7 +314,6 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
             this.emit("released", key);
         }
         assert(currentClient !== undefined, 0x11e /* "client is undefined" */);
-        /* eslint-disable @typescript-eslint/brace-style */
         if (this.isActive()) {
             // attempt to pick up task if we are connected.
             // If not, initializeCore() will do it when connected
@@ -322,7 +329,6 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
                 await this.writeCore(key, null);
             }
         }
-        /* eslint-enable @typescript-eslint/brace-style */
     }
 
     private isActive() {
@@ -387,20 +393,25 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
 }
 
 class AgentSchedulerRuntime extends FluidDataStoreRuntime {
-    private readonly agentSchedulerP: Promise<AgentScheduler>;
     constructor(
         dataStoreContext: IFluidDataStoreContext,
         sharedObjectRegistry: ISharedObjectRegistry,
         existing: boolean,
     ) {
-        super(dataStoreContext, sharedObjectRegistry, existing);
-        this.agentSchedulerP = AgentScheduler.load(this, dataStoreContext, existing);
+        super(
+            dataStoreContext,
+            sharedObjectRegistry,
+            existing,
+            async () => AgentScheduler.load(this, dataStoreContext, existing));
     }
     public async request(request: IRequest) {
         const response = await super.request(request);
         if (response.status === 404) {
             if (request.url === "" || request.url === "/") {
-                const agentScheduler = await this.agentSchedulerP;
+                const agentScheduler = await this.entryPoint?.get();
+                assert(agentScheduler !== undefined,
+                    0x466 /* entryPoint for AgentSchedulerRuntime should have been initialized by now */);
+
                 return { status: 200, mimeType: "fluid/object", value: agentScheduler };
             }
         }
@@ -420,8 +431,14 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
 
     public static async createChildInstance(parentContext: IFluidDataStoreContext): Promise<AgentScheduler> {
         const packagePath = [...parentContext.packagePath, AgentSchedulerFactory.type];
-        const router = await parentContext.containerRuntime.createDataStore(packagePath);
-        return requestFluidObject<AgentScheduler>(router, "/");
+        const dataStore = await parentContext.containerRuntime.createDataStore(packagePath);
+        const entryPoint: FluidObject<IAgentScheduler> | undefined = await dataStore.entryPoint?.get();
+
+        // AgentSchedulerRuntime always puts an AgentScheduler object in the data store's entryPoint, but double-check
+        // while we plumb entryPoints correctly everywhere, so we can be sure the cast below is fine.
+        assert(entryPoint?.IAgentScheduler !== undefined,
+            0x467 /* The data store's entryPoint is not an AgentScheduler! */);
+        return entryPoint as unknown as AgentScheduler;
     }
 
     public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {

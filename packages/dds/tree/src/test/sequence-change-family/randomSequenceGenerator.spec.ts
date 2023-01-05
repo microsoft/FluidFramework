@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { FieldKey } from "../../tree";
+import { FieldKey } from "../../core";
 import { brand } from "../../util";
 import { generateRandomUpPath, generateRandomChange } from "./randomSequenceGenerator";
 
@@ -58,7 +58,7 @@ describe("generateRandomChange", () => {
                                 {
                                     type: "Modify",
                                     fields: {
-                                            foo: [
+                                        foo: [
                                             1,
                                             {
                                                 type: "Delete",

@@ -2,17 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { Context, getResolvedFluidRoot, GitRepo } from "@fluidframework/build-tools";
 import { Command, Flags } from "@oclif/core";
 import {
     FlagInput,
     OutputFlags,
     ParserOutput,
     PrettyPrintableError,
-    // eslint-disable-next-line import/no-internal-modules
 } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
+
+import { Context, GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
+
 import { rootPathFlag } from "./flags";
 import { indentString } from "./lib";
 import { CommandLogger } from "./logging";
@@ -46,21 +46,27 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
         }),
     };
 
-    protected parsedOutput?: ParserOutput<any, any>;
+    protected parsedOutput?: ParserOutput;
 
-    /** The processed arguments that were passed to the CLI. */
+    /**
+     * The processed arguments that were passed to the CLI.
+     */
     get processedArgs(): { [name: string]: any } {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.parsedOutput?.args ?? {};
     }
 
-    /** The processed flags that were passed to the CLI. */
+    /**
+     * The processed flags that were passed to the CLI.
+     */
     get processedFlags(): InferredFlagsType<T> {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.parsedOutput?.flags ?? {};
     }
 
-    /** The flags defined on the base class. */
+    /**
+     * The flags defined on the base class.
+     */
     private get baseFlags() {
         return this.processedFlags as Partial<OutputFlags<typeof BaseCommand.flags>>;
     }
@@ -68,8 +74,21 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
     private _context: Context | undefined;
     private _logger: CommandLogger | undefined;
 
+    /**
+     * Parses the command arguments and stores them in parsedOutput.
+     *
+     * @remarks
+     *
+     * This function does nothing if parsedOutput is already defined.
+     */
+    protected async parseCmdArgs() {
+        if (this.parsedOutput === undefined) {
+            this.parsedOutput = await this.parse(this.ctor);
+        }
+    }
+
     async init() {
-        this.parsedOutput = await this.parse(this.ctor);
+        await this.parseCmdArgs();
     }
 
     async catch(err: any) {
@@ -90,16 +109,11 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
     protected get logger(): CommandLogger {
         if (this._logger === undefined) {
             this._logger = {
-                info: (msg: string | Error) => {
-                    this.log(msg.toString());
-                },
+                log: this.log.bind(this),
+                info: this.info.bind(this),
                 warning: this.warning.bind(this),
-                errorLog: (msg: string | Error) => {
-                    this.errorLog(msg);
-                },
-                verbose: (msg: string | Error) => {
-                    this.verbose(msg);
-                },
+                errorLog: this.errorLog.bind(this),
+                verbose: this.verbose.bind(this),
                 logHr: this.logHr.bind(this),
                 logIndent: this.logIndent.bind(this),
             };
@@ -146,29 +160,28 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
      */
     public logIndent(input: string, indentNumber = 2) {
         const message = indentString(input, indentNumber);
-        this.info(message);
+        this.log(message);
     }
 
     /**
      * Logs an informational message.
      */
-    public info(message: string | Error) {
+    public info(message: string | Error | undefined) {
         this.log(`INFO: ${message}`);
     }
 
     /**
      * Logs an error without exiting.
      */
-    public errorLog(message: string | Error) {
+    public errorLog(message: string | Error | undefined) {
         this.log(chalk.red(`ERROR: ${message}`));
     }
 
     /**
      * Logs a warning.
      */
-    public warning(message: string | Error): string | Error {
+    public warning(message: string | Error | undefined): void {
         this.log(chalk.yellow(`WARNING: ${message}`));
-        return message;
     }
 
     /**
@@ -179,7 +192,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
     }
 
     /**
-     * @deprecated Use {@link BaseCommand.warning}  or {@link BaseCommand.warningWithDebugTrace} instead.
+     * @deprecated Use {@link BaseCommand.warning} or {@link BaseCommand.warningWithDebugTrace} instead.
      */
     public warn(input: string | Error): string | Error {
         return super.warn(input);
@@ -238,8 +251,10 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
         return super.error(input as Error, options as any);
     }
 
-    /** Logs a verbose log statement. */
-    public verbose(message: string | Error): string | Error {
+    /**
+     * Logs a verbose log statement.
+     */
+    public verbose(message: string | Error | undefined): void {
         if (this.baseFlags.verbose === true) {
             if (typeof message === "string") {
                 this.log(chalk.grey(`VERBOSE: ${message}`));
@@ -247,7 +262,5 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
                 this.log(chalk.red(`VERBOSE: ${message}`));
             }
         }
-
-        return message;
     }
 }

@@ -10,6 +10,7 @@ import { Marker, reservedMarkerIdKey, SegmentGroup } from "../mergeTreeNodes";
 import { MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
+import { insertSegments, validatePartialLengths } from "./testUtils";
 
 describe("client.rollback", () => {
     const localUserLongId = "localUser";
@@ -17,13 +18,15 @@ describe("client.rollback", () => {
 
     beforeEach(() => {
         client = new TestClient();
-        client.mergeTree.insertSegments(
-            0,
-            [TextSegment.make("")],
-            UniversalSequenceNumber,
-            client.getClientId(),
-            UniversalSequenceNumber,
-            undefined);
+        insertSegments({
+            mergeTree: client.mergeTree,
+            pos: 0,
+            segments: [TextSegment.make("")],
+            refSeq: UniversalSequenceNumber,
+            clientId: client.getClientId(),
+            seq: UniversalSequenceNumber,
+            opArgs: undefined,
+        });
         client.startOrUpdateCollaboration(localUserLongId);
     });
 
@@ -48,6 +51,21 @@ describe("client.rollback", () => {
         const marker = client.getMarkerFromId("markerId");
         assert.notEqual(marker?.removedSeq, undefined);
     });
+    it("Should rollback insert and validate the partial lengths", () => {
+        client.insertTextLocal(0, "ghi");
+        client.insertTextLocal(0, "def");
+        client.insertTextLocal(0, "abc");
+
+        client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+
+        assert.equal(client.getText(), "defghi");
+        validatePartialLengths(client.getClientId(), client.mergeTree);
+
+        client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+
+        assert.equal(client.getText(), "ghi");
+        validatePartialLengths(client.getClientId(), client.mergeTree);
+    });
     it("Should rollback multiple inserts with split segments", () => {
         client.insertTextLocal(0, "aefg");
         client.insertTextLocal(1, "bd");
@@ -56,6 +74,7 @@ describe("client.rollback", () => {
         client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 
         assert.equal(client.getText(), "aefg");
+        validatePartialLengths(client.getClientId(), client.mergeTree);
     });
     it("Should zamboni rolled back insert", () => {
         client.insertTextLocal(0, "aefg");

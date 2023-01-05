@@ -2,31 +2,46 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { readFileAsync } from "../common/utils";
-import { Package } from "../common/npmPackage";
 import { defaultLogger } from "../common/logging";
+import { Package } from "../common/npmPackage";
+import { readFileAsync } from "../common/utils";
 
-const {verbose} = defaultLogger;
+const { verbose } = defaultLogger;
 
 interface DepCheckRecord {
-    name: string,
-    import: RegExp,
-    declare: RegExp,
-    peerImport?: RegExp,
-    peerDeclare?: RegExp,
-    found: boolean,
+    name: string;
+    import: RegExp;
+    declare: RegExp;
+    peerImport?: RegExp;
+    peerDeclare?: RegExp;
+    found: boolean;
 }
 
 export class NpmDepChecker {
-    private readonly foundTypes: string[] = ["@types/node", "@types/expect-puppeteer", "@types/jest-environment-puppeteer"];
+    private readonly foundTypes: string[] = [
+        "@types/node",
+        "@types/expect-puppeteer",
+        "@types/jest-environment-puppeteer",
+    ];
     // hjs is implicitly used
     private readonly ignored = ["hjs", ...this.foundTypes];
     // list of packages that should always in the devDependencies
-    private readonly dev = ["@fluidframework/build-common", "nyc", "typescript", "eslint", "mocha-junit-reporter", "mocha", "url-loader", "style-loader"];
+    private readonly dev = [
+        "@fluidframework/build-common",
+        "nyc",
+        "typescript",
+        "eslint",
+        "mocha-junit-reporter",
+        "mocha",
+        "url-loader",
+        "style-loader",
+    ];
     private readonly records: DepCheckRecord[] = [];
     private readonly altTyping = new Map<string, string>([["ws", "isomorphic-ws"]]);
-    private readonly peerDependencies = new Map<string, string>([["ws", "socket.io-client"], ["@angular/compiler", "@angular/platform-browser-dynamic"]]);
+    private readonly peerDependencies = new Map<string, string>([
+        ["ws", "socket.io-client"],
+        ["@angular/compiler", "@angular/platform-browser-dynamic"],
+    ]);
 
     constructor(private readonly pkg: Package, private readonly checkFiles: string[]) {
         if (checkFiles.length !== 0) {
@@ -40,12 +55,15 @@ export class NpmDepChecker {
                     packageName = name.substring("@types/".length);
                 }
                 const peerPackage = this.peerDependencies.get(name);
-                const packageMatch = peerPackage? `(${packageName}|${peerPackage})` : packageName;
+                const packageMatch = peerPackage ? `(${packageName}|${peerPackage})` : packageName;
                 // These regexp doesn't aim to be totally accurate, but try to avoid false positives.
                 // These can definitely be improved
                 this.records.push({
                     name,
-                    import: new RegExp(`(import|require)[^;]+[\`'"](blob-url-loader.*)?${packageMatch}.*[\`'"]`, "m"),
+                    import: new RegExp(
+                        `(import|require)[^;]+[\`'"](blob-url-loader.*)?${packageMatch}.*[\`'"]`,
+                        "m",
+                    ),
                     declare: new RegExp(`declare[\\s]+module[\\s]+['"]${packageMatch}['"]`, "m"),
                     found: false,
                 });
@@ -61,7 +79,7 @@ export class NpmDepChecker {
     private async check() {
         let count = 0;
         for (const tsFile of this.checkFiles) {
-            const content = await readFileAsync(tsFile, 'utf-8');
+            const content = await readFileAsync(tsFile, "utf-8");
             for (const record of this.records) {
                 if (record.found) {
                     continue;
@@ -89,7 +107,8 @@ export class NpmDepChecker {
             } else if (!depCheckRecord.found) {
                 if (this.dev.indexOf(name) != -1) {
                     console.warn(`${this.pkg.nameColored}: warning: misplaced dependency ${name}`);
-                    this.pkg.packageJson.devDependencies[name] = this.pkg.packageJson.dependencies[name];
+                    this.pkg.packageJson.devDependencies[name] =
+                        this.pkg.packageJson.dependencies[name];
                 } else {
                     console.warn(`${this.pkg.nameColored}: warning: unused dependency ${name}`);
                 }
@@ -102,8 +121,12 @@ export class NpmDepChecker {
     }
 
     private isInDependencies(name: string) {
-        return (this.pkg.packageJson.dependencies && this.pkg.packageJson.dependencies[name] !== undefined)
-            || (this.pkg.packageJson.devDependencies && this.pkg.packageJson.devDependencies[name] !== undefined);
+        return (
+            (this.pkg.packageJson.dependencies &&
+                this.pkg.packageJson.dependencies[name] !== undefined) ||
+            (this.pkg.packageJson.devDependencies &&
+                this.pkg.packageJson.devDependencies[name] !== undefined)
+        );
     }
 
     private depcheckTypes() {
@@ -112,7 +135,12 @@ export class NpmDepChecker {
             if (dep.startsWith("@types/") && this.foundTypes.indexOf(dep) === -1) {
                 const typePkgName = dep.substring("@types/".length);
                 const altName = this.altTyping.get(typePkgName);
-                if (!(this.isInDependencies(typePkgName) || (altName && this.isInDependencies(altName)))) {
+                if (
+                    !(
+                        this.isInDependencies(typePkgName) ||
+                        (altName && this.isInDependencies(altName))
+                    )
+                ) {
                     console.warn(`${this.pkg.nameColored}: warning: unused type dependency ${dep}`);
                     if (this.pkg.packageJson.devDependencies) {
                         delete this.pkg.packageJson.devDependencies[dep];
@@ -134,7 +162,9 @@ export class NpmDepChecker {
         let changed = false;
         for (const name of Object.keys(this.pkg.packageJson.dependencies)) {
             if (this.pkg.packageJson.devDependencies[name] != undefined) {
-                console.warn(`${this.pkg.nameColored}: warning: ${name} already in production dependency, deleting dev dependency`);
+                console.warn(
+                    `${this.pkg.nameColored}: warning: ${name} already in production dependency, deleting dev dependency`,
+                );
                 delete this.pkg.packageJson.devDependencies[name];
                 changed = true;
             }

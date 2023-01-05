@@ -35,8 +35,8 @@ import {
     TestHistorian,
     TestTenantManager,
 } from "@fluidframework/server-test-utils";
-import { LocalWebSocketServer } from "./localWebSocketServer";
 import { LocalOrdererManager } from "./localOrdererManager";
+import { LocalWebSocketServer } from "./localWebSocketServer";
 
 /**
  * Items needed for handling deltas.
@@ -83,7 +83,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
         const databaseManager = new MongoDatabaseManager(
             false,
             mongoManager,
-            null,
+            mongoManager,
             nodesCollectionName,
             documentsCollectionName,
             deltasCollectionName,

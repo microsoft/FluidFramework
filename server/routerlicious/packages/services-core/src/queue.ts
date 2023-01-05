@@ -102,9 +102,9 @@ export interface IProducer<T = ITicketedMessage> {
     /**
      * Event handlers
      */
-    on(event: "connected" | "disconnected" | "closed" | "produced" | "throttled" | "error",
+    on(event: "connected" | "disconnected" | "closed" | "produced" | "throttled" | "log" | "error",
         listener: (...args: any[]) => void): this;
-    once(event: "connected" | "disconnected" | "closed" | "produced" | "throttled" | "error",
+    once(event: "connected" | "disconnected" | "closed" | "produced" | "throttled" | "log" | "error",
         listener: (...args: any[]) => void): this;
 }
 

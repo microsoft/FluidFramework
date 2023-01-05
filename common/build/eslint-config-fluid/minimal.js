@@ -15,6 +15,7 @@ module.exports = {
         "plugin:import/errors",
         "plugin:import/warnings",
         "plugin:import/typescript",
+        "prettier",
     ],
     globals: {
         Atomics: "readonly",
@@ -50,14 +51,25 @@ module.exports = {
         "unicorn",
     ],
     reportUnusedDisableDirectives: true,
+    ignorePatterns: [
+        // Don't lint generated packageVersion files.
+        "**/packageVersion.ts"
+    ],
     rules: {
-        // The @rushstack rules are documented in the package README:
-        // https://www.npmjs.com/package/@rushstack/eslint-plugin
+        /**
+         * The @rushstack rules are documented in the package README:
+         * {@link https://www.npmjs.com/package/@rushstack/eslint-plugin}
+         */
         "@rushstack/no-new-null": "warn",
 
-        // RATIONALE: Harmless.  Our guideline is to only use leading underscores on private members
-        //            when required to avoid a conflict between private fields and a public property.
-        // Docs: https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/naming-convention.md
+        /**
+         * RATIONALE: Harmless.
+         *
+         * Our guideline is to only use leading underscores on private members when required to avoid a conflict
+         * between private fields and a public property.
+         *
+         * Docs: {@link https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/naming-convention.md}
+         */
         "@typescript-eslint/naming-convention": [
             "error",
             {
@@ -68,7 +80,9 @@ module.exports = {
             },
         ],
 
-        // Encourages minimal disabling of eslint rules, while still permitting whole-file exclusions.
+        /**
+         * Encourages minimal disabling of eslint rules, while still permitting whole-file exclusions.
+         */
         "eslint-comments/disable-enable-pair": [
             "error",
             {
@@ -85,9 +99,12 @@ module.exports = {
         "max-len": [
             "error",
             {
-                ignoreRegExpLiterals: false,
-                ignoreStrings: false,
                 code: 120,
+                ignoreTrailingComments: true,
+                ignoreUrls: true,
+                ignoreStrings: true,
+                ignoreTemplateLiterals: true,
+                ignoreRegExpLiterals: true,
             },
         ],
         "no-multi-spaces": [
@@ -97,14 +114,18 @@ module.exports = {
             },
         ],
 
-        // Note: this can be replaced altogether by `@typescript-eslint/no-unused-vars`,
-        // but that rule covers many more scenarios than this one does, and there are many violations,
-        // currently in the repository, so it has not been enabled yet.
+        /**
+         * Note: this can be replaced altogether by `@typescript-eslint/no-unused-vars`,
+         * but that rule covers many more scenarios than this one does, and there are many violations
+         * currently in the repository, so it has not been enabled yet.
+         */
         "unused-imports/no-unused-imports": "error",
 
         "valid-typeof": "error",
 
-        // Catches a common coding mistake where "resolve" and "reject" are confused.
+        /**
+         * Catches a common coding mistake where "resolve" and "reject" are confused.
+         */
         "promise/param-names": "warn",
 
         "unicorn/better-regex": "error",
@@ -123,26 +144,56 @@ module.exports = {
         "unicorn/prefer-ternary": "error",
         "unicorn/prefer-type-error": "error",
 
-        // DISABLED INTENTIONALLY
-        // Disabled because we don't require that all variable declarations be explicitly typed.
+        // #region DISABLED INTENTIONALLY
+
+        /**
+         * Disabled because we don't require that all variable declarations be explicitly typed.
+         */
         "@rushstack/typedef-var": "off",
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/explicit-member-accessibility": "off",
-        "@typescript-eslint/indent": "off", // Off because it conflicts with typescript-formatter
+
+        /**
+         * Disabled because we will lean on the formatter (i.e. prettier) to enforce indentation policy.
+         */
+        "@typescript-eslint/indent": "off",
         "@typescript-eslint/member-ordering": "off",
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-parameter-properties": "off",
         "@typescript-eslint/no-unused-vars": "off",
         "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/typedef": "off",
+
+        /**
+         * Disabled because we will lean on the formatter (i.e. prettier) to enforce indentation policy.
+         * @remarks This rule also directly conflicts with prettier's formatting of nested ternary expressions.
+         */
+        "unicorn/no-nested-ternary": "off",
+
+        /**
+         * Disabled because we want to encourage documenting different events separately.
+         */
+        "@typescript-eslint/unified-signatures": "off",
+
         "func-call-spacing": "off", // Off because it conflicts with typescript-formatter
         "no-empty": "off",
         "no-void": "off",
         "require-atomic-updates": "off",
-        "dot-notation": "off", // Superseded by @typescript-eslint/dot-notation
-        "no-unused-expressions": "off", // Superseded by @typescript-eslint/no-unused-expressions
 
-        // FORMATTING RULES
+        /**
+         * Superseded by `@typescript-eslint/dot-notation`.
+         */
+        "dot-notation": "off",
+
+        /**
+         * Superseded by `@typescript-eslint/no-unused-expressions`.
+         */
+        "no-unused-expressions": "off",
+
+        // #endregion
+
+        // #region FORMATTING RULES
+
         "@typescript-eslint/brace-style": [
             "error",
             "1tbs",
@@ -188,7 +239,13 @@ module.exports = {
         "space-unary-ops": "error",
         "switch-colon-spacing": "error",
 
-        // This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
+        // #endregion
+
+        // #region DOCUMENTATION RULES
+
+        /**
+         * This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
+         */
         "tsdoc/syntax": "error",
 
         // #region eslint-plugin-jsdoc rules
@@ -261,15 +318,22 @@ module.exports = {
 
         // #endregion
 
+        // #endregion
+
         "@typescript-eslint/prefer-includes": "error",
         "@typescript-eslint/prefer-nullish-coalescing": "error",
         "@typescript-eslint/prefer-optional-chain": "error",
 
         /**
-         * By default libraries should not take dependencies on node libraries. This rule can be disabled at the project
-         * level for libraries that are intended to be used only in node.
+         * By default, libraries should not take dependencies on node libraries.
+         * This rule can be disabled at the project level for libraries that are intended to be used only in node.
+         *
+         * @remarks
+         *
+         * Note: "events" has been allow-listed here due to the sheer number of uses across the codebase.
+         * We may wish to address this in the future.
          */
-        "import/no-nodejs-modules": "warn",
+        "import/no-nodejs-modules": ["error", { allow: ["events"] }],
     },
     overrides: [
         {
@@ -291,11 +355,12 @@ module.exports = {
             rules: {
                 "@typescript-eslint/no-invalid-this": "off",
                 "@typescript-eslint/unbound-method": "off", // This rule has false positives in many of our test projects.
+                "import/no-nodejs-modules": "off", // Node libraries are OK for test files.
             },
         },
         {
             // Rules only for type validation files
-            files: ["**/types/*validate*Previous.ts"],
+            files: ["**/types/*validate*Previous*.ts"],
             rules: {
                 "@typescript-eslint/comma-spacing": "off",
                 "@typescript-eslint/consistent-type-imports": "off",

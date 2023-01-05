@@ -61,12 +61,7 @@ export interface ISummarizerInternalsProvider {
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
 
     /** Callback whenever a new SummaryAck is received, to update internal tracking state */
-    refreshLatestSummaryAck(
-        proposalHandle: string,
-        ackHandle: string,
-        summaryRefSeq: number,
-        summaryLogger: ITelemetryLogger,
-    ): Promise<void>;
+    refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
 }
 
 /**
@@ -112,6 +107,20 @@ export interface ISummarizeOptions {
     readonly fullTree?: boolean;
     /** True to ask the server what the latest summary is first; defaults to false */
     readonly refreshLatestAck?: boolean;
+}
+
+/**
+ * Data required to update internal tracking state after receiving a Summary Ack.
+ */
+ export interface IRefreshSummaryAckOptions {
+    /** Handle from the ack's summary op. */
+    readonly proposalHandle: string | undefined;
+    /** Handle from the summary ack just received */
+    readonly ackHandle: string;
+    /** Reference sequence number from the ack's summary op */
+    readonly summaryRefSeq: number;
+    /** Telemetry logger to which telemetry events will be forwarded. */
+    readonly summaryLogger: ITelemetryLogger;
 }
 
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
@@ -292,7 +301,11 @@ export type SummarizerStopReason =
      * client to no longer be elected as responsible for summaries. Then it
      * tries to stop its spawned summarizer client.
      */
-    | "parentShouldNotSummarize"
+    | "notElectedParent"
+    /**
+     * We are not already running the summarizer and we are not the current elected client id.
+     */
+    | "notElectedClient"
     /** Summarizer client was disconnected */
     | "summarizerClientDisconnected"
     /* running summarizer threw an exception */

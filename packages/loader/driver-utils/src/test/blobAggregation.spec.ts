@@ -4,10 +4,11 @@
  */
 
 import { strict as assert } from "assert";
+import { bufferToString } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { TelemetryNullLogger, bufferToString } from "@fluidframework/common-utils";
 import { ISummaryTree, SummaryType, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { BlobAggregationStorage } from "../blobAggregationStorage";
 import { buildSnapshotTree } from "../buildSnapshotTree";
 

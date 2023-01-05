@@ -4,131 +4,32 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { Jsonable } from "@fluidframework/datastore-definitions";
-import { LocalFieldKey } from "../../schema-stored";
-import { JsonCompatible, JsonCompatibleObject } from "../../util";
 import {
+    LocalFieldKey,
     ITreeCursor,
-    mapCursorField,
-    TreeNavigationResult,
-    SynchronousNavigationResult,
-} from "../../forest";
-import {
     EmptyKey,
     FieldKey,
-    TreeType,
-    Value,
-} from "../../tree";
-
+    mapCursorField,
+    mapCursorFields,
+    ITreeCursorSynchronous,
+} from "../../core";
+import { JsonCompatible } from "../../util";
+import { CursorAdapter, isPrimitiveValue, singleStackTreeCursor } from "../../feature-libraries";
 import {
-    jsonArray, jsonBoolean, jsonNull, jsonNumber, jsonObject, jsonString,
+    jsonArray,
+    jsonBoolean,
+    jsonNull,
+    jsonNumber,
+    jsonObject,
+    jsonString,
 } from "./jsonDomainSchema";
 
-/**
- * An ITreeCursor implementation used to read a Jsonable tree for testing and benchmarking.
- *
- * @sealed
- */
-export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
-    // PERF: JsonCursor maintains a stack of nodes/edges traversed.  This stack is
-    //       partitioned across 3 arrays, with the top of the stack stored in fields.
-    //       This design was advantageous in a similar tree visitor, but should
-    //       be measured again to see if this still provides an advantage.
-
-    private currentNode: JsonCompatible;   // The node currently being visited.
-    private currentKey?: FieldKey;  // The parent key used to navigate to this node.
-    private currentIndex: number;   // The parent index used to navigate to this node.
-
-    private readonly parentStack: JsonCompatible[] = [];  // Ancestors traversed to visit this node.
-
-    // Keys/indices traversed to visit the current node, excluding the most recent,
-    // which are maintained in the current key/index fields.
-    private readonly keyStack: (FieldKey | undefined)[] = [];
-    private readonly indexStack: number[] = [];
-
-    constructor(root: Jsonable<T>) {
-        this.currentNode = root as JsonCompatible;
-        this.currentKey = undefined;
-        this.currentIndex = -1;
-    }
-
-    public seek(offset: number): SynchronousNavigationResult {
-        if (offset === 0) {
-            return TreeNavigationResult.Ok;
-        }
-
-        // TODO: Measure if maintaining immediate parent in a field improves seek
-        //       performance.
-        const parent = this.parentStack[this.parentStack.length - 1];
-
-        // The only seekable key is the 'EmptyKey' of an array.
-        if (this.currentKey !== EmptyKey || !Array.isArray(parent)) {
-            return TreeNavigationResult.NotFound;
-        }
-
-        const newIndex = this.currentIndex + offset;
-        const newChild = parent[newIndex];
-
-        if (newChild === undefined) {
-            // In JSON, arrays must be dense and may not contain 'undefined' values
-            // ('undefined' items are implicitly coerced to 'null' by stringify()).
-            assert(0 > newIndex || newIndex >= parent.length,
-                0x35f /* JSON arrays must be dense / contain no 'undefined' items. */);
-
-            return TreeNavigationResult.NotFound;
-        } else {
-            this.currentNode = newChild;
-            this.currentIndex = newIndex;
-            return TreeNavigationResult.Ok;
-        }
-    }
-
-    public down(key: FieldKey, index: number): SynchronousNavigationResult {
-        const parentNode = this.currentNode;
-        let childNode: JsonCompatible;
-
-        if (key === EmptyKey && Array.isArray(parentNode)) {
-            childNode = parentNode[index];
-        } else if (index === 0) {
-            childNode = (parentNode as JsonCompatibleObject)[key as LocalFieldKey];
-        } else {
-            return TreeNavigationResult.NotFound;
-        }
-
-        // Like JSON, we model 'undefined' values by omitting the field.
-        if (childNode === undefined) {
-            return TreeNavigationResult.NotFound;
-        }
-
-        this.parentStack.push(parentNode);
-        this.currentNode = childNode;
-
-        this.keyStack.push(this.currentKey);
-        this.currentKey = key;
-
-        this.indexStack.push(this.currentIndex);
-        this.currentIndex = index;
-
-        return TreeNavigationResult.Ok;
-    }
-
-    public up(): SynchronousNavigationResult {
-        // TODO: Should benchmark vs. detecting via returned 'undefined' from 'pop()'.
-        if (this.parentStack.length < 1) {
-            return TreeNavigationResult.NotFound;
-        }
-
-        /* eslint-disable @typescript-eslint/no-non-null-assertion */
-        this.currentNode = this.parentStack.pop()!;
-        this.currentKey = this.keyStack.pop()!;
-        this.currentIndex = this.indexStack.pop()!;
-        /* eslint-enable @typescript-eslint/no-non-null-assertion */
-
-        return TreeNavigationResult.Ok;
-    }
-
-    public get type(): TreeType {
-        const node = this.currentNode;
+const adapter: CursorAdapter<JsonCompatible> = {
+    value: (node: JsonCompatible) =>
+        typeof node === "object"
+            ? undefined // null, arrays, and objects have no defined value
+            : node, // boolean, numbers, and strings are their own value
+    type: (node: JsonCompatible) => {
         const type = typeof node;
 
         switch (type) {
@@ -147,46 +48,59 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
                     return jsonObject.name;
                 }
         }
-    }
-
-    public get keys(): Iterable<FieldKey> {
-        const node = this.currentNode;
-        const type = typeof node;
-
-        switch (type) {
+    },
+    keysFromNode: (node: JsonCompatible): readonly FieldKey[] => {
+        switch (typeof node) {
             case "object":
                 if (node === null) {
                     return [];
                 } else if (Array.isArray(node)) {
-                    return [EmptyKey];
+                    return node.length === 0 ? [] : [EmptyKey];
                 } else {
-                    return Object.keys(node as object) as Iterable<FieldKey>;
+                    return (Object.keys(node) as FieldKey[]).filter((key) => {
+                        const value = node[key as LocalFieldKey];
+                        return !Array.isArray(value) || value.length !== 0;
+                    });
                 }
             default:
-               return [];
+                return [];
         }
-    }
-
-    public length(key: FieldKey): number {
-        const node = this.currentNode;
-
-        // The 'Empty' field is used to access the indexer of array nodes.
-        if (key === EmptyKey && Array.isArray(node)) {
-            return node.length;
+    },
+    getFieldFromNode: (node: JsonCompatible, key: FieldKey): readonly JsonCompatible[] => {
+        // Object.prototype.hasOwnProperty can return true for strings (ex: with key "0"), so we have to filter them out.
+        // Rather than just special casing strings, we can handle them with an early return for all primitives.
+        if (typeof node !== "object") {
+            return [];
         }
 
-        return (node as JsonCompatibleObject)[key as LocalFieldKey] === undefined
-            ? 0     // A field with an undefined value has 0 length
-            : 1;    // All other fields have a length of 1
-    }
+        if (node === null) {
+            return [];
+        }
 
-    public get value(): Value {
-        const node = this.currentNode;
+        if (Array.isArray(node)) {
+            return key === EmptyKey ? node : [];
+        }
 
-        return typeof (node) === "object"
-            ? undefined     // null, arrays, and objects have no defined value
-            : node;         // boolean, numbers, and strings are their own value
-    }
+        if (Object.prototype.hasOwnProperty.call(node, key)) {
+            const field = node[key as LocalFieldKey];
+            assert(
+                field !== undefined,
+                0x41e /* explicit undefined fields should not be preserved in JSON */,
+            );
+            return [field];
+        }
+
+        return [];
+    },
+};
+
+/**
+ * Used to read a Jsonable tree for testing and benchmarking.
+ *
+ * @returns an {@link ITreeCursorSynchronous} for a single {@link JsonCompatible}.
+ */
+export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous {
+    return singleStackTreeCursor(root, adapter);
 }
 
 /**
@@ -200,22 +114,32 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
         case jsonNumber.name:
         case jsonBoolean.name:
         case jsonString.name:
-            return reader.value as number | boolean | string;
+            assert(isPrimitiveValue(reader.value), 0x41f /* expected a primitive value */);
+            return reader.value as JsonCompatible;
         case jsonArray.name: {
-            const result = mapCursorField(reader, EmptyKey, cursorToJsonObject);
+            reader.enterField(EmptyKey);
+            const result = mapCursorField(reader, cursorToJsonObject);
+            reader.exitField();
             return result;
         }
         case jsonObject.name: {
             const result: JsonCompatible = {};
-            for (const key of reader.keys) {
-                assert(reader.down(key, 0) === TreeNavigationResult.Ok, 0x360 /* expected navigation ok */);
-                result[key as LocalFieldKey] = cursorToJsonObject(reader);
-                assert(reader.up() === TreeNavigationResult.Ok, 0x361 /* expected navigation ok */);
-            }
+            mapCursorFields(reader, (cursor) => {
+                const key = cursor.getFieldKey() as LocalFieldKey;
+                assert(cursor.firstNode(), 0x420 /* expected non-empty field */);
+                // like `result[key] = cursorToJsonObject(reader);` except safe when keyString == "__proto__".
+                Object.defineProperty(result, key, {
+                    enumerable: true,
+                    configurable: true,
+                    writable: true,
+                    value: cursorToJsonObject(reader),
+                });
+                assert(!cursor.nextNode(), 0x421 /* expected exactly one node */);
+            });
             return result;
         }
         default: {
-            assert(type === jsonNull.name, 0x362 /* unexpected type */);
+            assert(type === jsonNull.name, 0x422 /* unexpected type */);
             return null;
         }
     }

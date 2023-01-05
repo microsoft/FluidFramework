@@ -39,7 +39,6 @@ export function createProducer(
                 pollIntervalMs,
                 numberOfPartitions,
                 replicationFactor,
-                maxBatchSize,
                 maxMessageSize: MaxKafkaMessageSize,
                 sslCACertFilePath,
             });

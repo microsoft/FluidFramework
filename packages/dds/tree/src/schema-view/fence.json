@@ -1,5 +1,0 @@
-{
-    "tags": ["schema-view"],
-    "exports": ["index"],
-    "imports": ["util","dependency-tracking","schema-stored"]
-}

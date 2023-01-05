@@ -143,7 +143,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
         return this.channel.getGCData(fullGC);
     }
 
-    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
+    public updateUsedRoutes(usedRoutes: string[]) {
         /**
          * Currently, DDSes are always considered referenced and are not garbage collected.
          * Once we have GC at DDS level, this channel context's used routes will be updated as per the passed

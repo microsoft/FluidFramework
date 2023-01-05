@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+  "extends": "@fluidframework/build-common/api-extractor-common-report.json",
+  "messages": {
+    "extractorMessageReporting": {
+      "ae-internal-missing-underscore": {
+        "logLevel": "none",
+        "addToApiReportFile": false
+      }
+    }
+  }
+}

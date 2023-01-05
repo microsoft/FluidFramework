@@ -6,15 +6,16 @@
 /**
  * Supports distributed data structures which are list-like.
  *
- * This library's main export is {@link SharedSequence}, a DDS for storing and simultaneously editing a sequence of
+ * This library's main export is {@link SharedString}, a DDS for storing and simultaneously editing a sequence of
  * text.
  *
+ * See the package's README for a high-level introduction to `SharedString`'s feature set.
  * @remarks Note that SharedString is a sequence DDS but it has additional specialized features and behaviors for
  * working with text.
  *
  * @packageDocumentation
  */
-
+export { IMapMessageLocalMetadata, IValueOpEmitter } from "./defaultMapInterfaces";
 export {
     DeserializeCallback,
     IIntervalCollectionEvent,
@@ -30,17 +31,16 @@ export {
     SequenceInterval,
     ISerializedIntervalCollectionV2,
     CompressedSerializedInterval,
+    SerializedIntervalDelta,
 } from "./intervalCollection";
+export { IInterval, IntervalConflictResolver } from "./intervalTree";
+export { ISharedSegmentSequenceEvents, SharedSegmentSequence } from "./sequence";
+export { ISequenceDeltaRange, SequenceDeltaEvent, SequenceEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
+export { SharedStringFactory } from "./sequenceFactory";
+export { getTextAndMarkers, ISharedString, SharedString, SharedStringSegment } from "./sharedString";
 export {
-    IMapMessageLocalMetadata,
-    IValueOpEmitter,
-} from "./defaultMapInterfaces";
-export * from "./sharedString";
-export * from "./sequence";
-export * from "./sequenceFactory";
-export * from "./sequenceDeltaEvent";
-export * from "./sharedSequence";
-export * from "./sharedObjectSequence";
-export * from "./sharedNumberSequence";
-export * from "./sparsematrix";
-export * from "./sharedIntervalCollection";
+	ISharedIntervalCollection,
+	SharedIntervalCollection,
+	SharedIntervalCollectionFactory,
+} from "./sharedIntervalCollection";
+export { IJSONRunSegment, SharedSequence, SubSequence } from "./sharedSequence";

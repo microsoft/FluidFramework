@@ -1,5 +1,0 @@
-{
-    "tags": [ "forest" ],
-    "exports": [ "index"],
-    "imports": ["schema-stored","tree","dependency-tracking","util"]
-}

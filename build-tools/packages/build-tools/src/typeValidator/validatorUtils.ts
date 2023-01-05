@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { Project } from "ts-morph";
 
 let shouldLog = false;
@@ -24,7 +23,7 @@ export function log(output: any) {
 export enum BreakingIncrement {
     none = 0,
     minor = 1,
-    major = minor << 1 | minor,
+    major = (minor << 1) | minor,
 }
 
 export interface IValidator {
@@ -34,5 +33,5 @@ export interface IValidator {
      * @param pkgDir - The dir for the Project which may be used to create temporary
      *      source files
      */
-    validate(project: Project, pkgDir: string) : BreakingIncrement;
+    validate(project: Project, pkgDir: string): BreakingIncrement;
 }

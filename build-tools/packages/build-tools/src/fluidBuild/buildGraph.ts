@@ -2,20 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { AsyncPriorityQueue } from "async";
+import chalk from "chalk";
+import * as semver from "semver";
+
+import { FileHashCache } from "../common/fileHashCache";
 import { defaultLogger } from "../common/logging";
 import { Package, Packages } from "../common/npmPackage";
+import { Timer } from "../common/timer";
+import { options } from "./options";
 import { Task, TaskExec } from "./tasks/task";
 import { TaskFactory } from "./tasks/taskFactory";
-import { Timer } from '../common/timer';
-import { FileHashCache } from "../common/fileHashCache";
-import chalk from "chalk";
-import { options } from "./options";
-import * as semver from "semver";
 import { WorkerPool } from "./tasks/workers/workerPool";
 
-const {info, verbose} = defaultLogger;
+const { info, verbose } = defaultLogger;
 
 export enum BuildResult {
     Success,
@@ -48,7 +48,7 @@ class BuildContext {
     public readonly fileHashCache = new FileHashCache();
     public readonly taskStats = new TaskStats();
     public readonly failedTaskLines: string[] = [];
-    constructor(public readonly workerPool?: WorkerPool) { }
+    constructor(public readonly workerPool?: WorkerPool) {}
 }
 
 export class BuildPackage {
@@ -59,8 +59,12 @@ export class BuildPackage {
     public level: number = -1;
     private buildP?: Promise<BuildResult>;
 
-    constructor(public readonly buildContext: BuildContext, public readonly pkg: Package, buildScriptNames: string[]) {
-        this.buildScriptNames = buildScriptNames.filter(name => this.pkg.getScript(name));
+    constructor(
+        public readonly buildContext: BuildContext,
+        public readonly pkg: Package,
+        buildScriptNames: string[],
+    ) {
+        this.buildScriptNames = buildScriptNames.filter((name) => this.pkg.getScript(name));
     }
 
     public get task(): Task | undefined {
@@ -72,7 +76,9 @@ export class BuildPackage {
 
     public findTask(command: string, options?: any): Task | undefined {
         const task = this.task;
-        if (!task) { return undefined; }
+        if (!task) {
+            return undefined;
+        }
         return task.matchTask(command, options);
     }
 
@@ -97,15 +103,21 @@ export class BuildPackage {
 export class BuildGraph {
     public readonly buildPackages = new Map<string, BuildPackage>();
     private readonly buildContext = new BuildContext(
-        options.worker ? new WorkerPool(options.workerThreads, options.workerMemoryLimit) : undefined);
+        options.worker
+            ? new WorkerPool(options.workerThreads, options.workerMemoryLimit)
+            : undefined,
+    );
 
     public constructor(
         private readonly packages: Package[],
         private readonly buildScriptNames: string[],
-        getDepFilter: (pkg: Package) => (dep: Package) => boolean) {
-
+        getDepFilter: (pkg: Package) => (dep: Package) => boolean,
+    ) {
         packages.forEach((value) =>
-            this.buildPackages.set(value.name, new BuildPackage(this.buildContext, value, buildScriptNames))
+            this.buildPackages.set(
+                value.name,
+                new BuildPackage(this.buildContext, value, buildScriptNames),
+            ),
         );
 
         const needPropagate = this.buildDependencies(getDepFilter);
@@ -126,7 +138,7 @@ export class BuildGraph {
     public async checkInstall() {
         let succeeded = true;
         for (const buildPackage of this.buildPackages.values()) {
-            if (!await buildPackage.pkg.checkInstall()) {
+            if (!(await buildPackage.pkg.checkInstall())) {
                 succeeded = false;
             }
         }
@@ -138,7 +150,11 @@ export class BuildGraph {
         const isUpToDate = await this.isUpToDate();
         if (timer) timer.time(`Check up to date completed`);
 
-        info(`Starting npm script "${chalk.cyanBright(this.buildScriptNames.join(" && "))}" for ${this.buildPackages.size} packages, ${this.buildContext.taskStats.leafTotalCount} tasks`);
+        info(
+            `Starting npm script "${chalk.cyanBright(this.buildScriptNames.join(" && "))}" for ${
+                this.buildPackages.size
+            } packages, ${this.buildContext.taskStats.leafTotalCount} tasks`,
+        );
         if (isUpToDate) {
             return BuildResult.UpToDate;
         }
@@ -183,7 +199,10 @@ export class BuildGraph {
             return "";
         }
         const summaryLines = this.buildContext.failedTaskLines;
-        const notRunCount = this.buildContext.taskStats.leafTotalCount - this.buildContext.taskStats.leafUpToDateCount - this.buildContext.taskStats.leafBuiltCount;
+        const notRunCount =
+            this.buildContext.taskStats.leafTotalCount -
+            this.buildContext.taskStats.leafUpToDateCount -
+            this.buildContext.taskStats.leafBuiltCount;
         summaryLines.unshift(chalk.redBright("Failed Tasks:"));
         summaryLines.push(chalk.yellow(`Did not run ${notRunCount} tasks due to prior failures.`));
         return summaryLines.join("\n");
@@ -192,21 +211,29 @@ export class BuildGraph {
     private buildDependencies(getDepFilter: (pkg: Package) => (dep: Package) => boolean) {
         const needPropagate: BuildPackage[] = [];
         this.buildPackages.forEach((node) => {
-            if (node.pkg.markForBuild) { needPropagate.push(node); }
+            if (node.pkg.markForBuild) {
+                needPropagate.push(node);
+            }
             const depFilter = getDepFilter(node.pkg);
             for (const { name, version } of node.pkg.combinedDependencies) {
                 const child = this.buildPackages.get(name);
                 if (child) {
                     if (semver.satisfies(child.pkg.version, version)) {
                         if (depFilter(child.pkg)) {
-                            verbose(`Package dependency: ${node.pkg.nameColored} => ${child.pkg.nameColored}`);
+                            verbose(
+                                `Package dependency: ${node.pkg.nameColored} => ${child.pkg.nameColored}`,
+                            );
                             node.dependentPackages.push(child);
                             child.parents.push(node);
                         } else {
-                            verbose(`Package dependency skipped: ${node.pkg.nameColored} => ${child.pkg.nameColored}`);
+                            verbose(
+                                `Package dependency skipped: ${node.pkg.nameColored} => ${child.pkg.nameColored}`,
+                            );
                         }
                     } else {
-                        verbose(`Package dependency version mismatch: ${node.pkg.nameColored} => ${child.pkg.nameColored}`);
+                        verbose(
+                            `Package dependency version mismatch: ${node.pkg.nameColored} => ${child.pkg.nameColored}`,
+                        );
                     }
                 }
             }
@@ -218,8 +245,16 @@ export class BuildGraph {
     private populateLevel() {
         // level is not strictly necessary, except for circular reference.
         const getLevel = (node: BuildPackage, parent?: BuildPackage) => {
-            if (node.level === -2) { throw new Error(`Circular Reference detected ${parent ? parent.pkg.nameColored : "<none>"} -> ${node.pkg.nameColored}`); }
-            if (node.level !== -1) { return node.level; } // populated
+            if (node.level === -2) {
+                throw new Error(
+                    `Circular Reference detected ${parent ? parent.pkg.nameColored : "<none>"} -> ${
+                        node.pkg.nameColored
+                    }`,
+                );
+            }
+            if (node.level !== -1) {
+                return node.level;
+            } // populated
             node.level = -2;
             let maxChildrenLevel = -1;
             node.dependentPackages.forEach((child) => {
@@ -227,7 +262,7 @@ export class BuildGraph {
             });
             node.level = maxChildrenLevel + 1;
             return maxChildrenLevel + 1;
-        }
+        };
 
         this.buildPackages.forEach((node) => {
             getLevel(node);

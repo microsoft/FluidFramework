@@ -12,6 +12,7 @@ resources:
   pipelines:
   - pipeline: client   # Name of the pipeline resource
     source: Build - client packages
+    branch: main # Default branch for manual/scheduled triggers if none is selected
     trigger:
       branches:
       - release/*
@@ -23,7 +24,11 @@ variables:
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
+- name: testPackage
+  value: "@fluidframework/test-end-to-end-tests"
+  readonly: true
 
+lockBehavior: sequential
 stages:
   # end-to-end tests local server
   - stage:
@@ -33,8 +38,9 @@ stages:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Small
-        testPackage: "@fluidframework/test-end-to-end-tests"
+        testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         testCommand: test:realsvc:local:report
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
@@ -47,31 +53,49 @@ stages:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Small
-        testPackage: "@fluidframework/test-end-to-end-tests"
+        testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         testCommand: test:realsvc:tinylicious:report
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+          # Disable colorization for tinylicious logs (not useful when printing to a file)
+          logger__colorize: false
+          logger__morganFormat: tiny
+        additionalSteps:
+
+        # Publish the tinylicious log
+        - task: PublishPipelineArtifact@1
+          displayName: Publish Artifact - Tinylicious Log
+          inputs:
+            # NOTE: this depends on knowledge of what the template does and where it puts things.
+            # If the template changes its logic, we might need to adjust this path.
+            targetPath: '${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}/tinylicious.log'
+            artifactName: 'tinyliciousLog'
+            publishLocation: 'pipeline'
 
   # end-to-end tests routerlicious
   - stage:
     displayName: e2e - routerlicious
     dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: e2e-r11s-lock
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Small
-        testPackage: "@fluidframework/test-end-to-end-tests"
+        testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         testCommand: test:realsvc:routerlicious:report
         continueOnError: true
+        r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
         splitTestVariants:
           - name: Non-compat
             flags: --compatVersion=0
           - name: N-1
             flags: --compatVersion=-1
-          - name: N-2
-            flags: --compatVersion=-2
           - name: LTS
             flags: --compatVersion=LTS
         env:
@@ -82,12 +106,16 @@ stages:
   - stage:
     displayName: e2e - frs
     dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: e2e-frs-lock
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Small
-        testPackage: "@fluidframework/test-end-to-end-tests"
+        testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 360
         continueOnError: true
         testCommand: test:realsvc:frs:report
@@ -96,8 +124,6 @@ stages:
             flags: --compatVersion=0
           - name: N-1
             flags: --compatVersion=-1
-          - name: N-2
-            flags: --compatVersion=-2
           - name: LTS
             flags: --compatVersion=LTS
         env:
@@ -108,12 +134,16 @@ stages:
   - stage:
     displayName:  e2e - odsp
     dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: e2e-odsp-lock
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Small
-        testPackage: "@fluidframework/test-end-to-end-tests"
+        testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 360
         continueOnError: true
         testCommand: test:realsvc:odsp:report
@@ -122,10 +152,8 @@ stages:
             flags: --compatVersion=0 --tenantIndex=0
           - name: N-1
             flags: --compatVersion=-1 --tenantIndex=1
-          - name: N-2
-            flags: --compatVersion=-2 --tenantIndex=2
           - name: LTS
-            flags: --compatVersion=LTS --tenantIndex=3
+            flags: --compatVersion=LTS --tenantIndex=2
         env:
           login__microsoft__clientId: $(login-microsoft-clientId)
           login__microsoft__secret: $(login-microsoft-secret)

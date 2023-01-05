@@ -2,17 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import {
-    Handler,
-    readFile,
-    writeFile,
-} from "../common";
+import { Handler, readFile, writeFile } from "../common";
 
 export const handler: Handler = {
     name: "fluid-case",
     match: /(^|\/)[^/]+\.([tj]s?|html|md|json)$/i,
-    handler: file => {
+    handler: (file) => {
         const content = readFile(file);
         // search for Fluid Framework
         if (content.search(/[Ff]luid framework/) !== -1) {
@@ -23,10 +18,10 @@ export const handler: Handler = {
             return `'fluid' needs to be capitalized in prose`;
         }
     },
-    resolver: file => {
+    resolver: (file) => {
         const content = readFile(file);
         const newContent = content.replace(/([a-z]) fluid ([a-z])/g, "$1 Fluid $2");
         writeFile(file, newContent.replace(/[Ff]luid framework/g, "Fluid Framework"));
         return { resolved: true };
-    }
+    },
 };

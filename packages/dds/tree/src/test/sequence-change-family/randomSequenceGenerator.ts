@@ -5,8 +5,13 @@
 
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { unreachableCase } from "@fluidframework/common-utils";
-import { AnchorSet, FieldKey, UpPath } from "../../tree";
-import { SequenceEditBuilder, singleTextCursor, Transposed as T } from "../../feature-libraries";
+import { AnchorSet, FieldKey, UpPath } from "../../core";
+import { singleTextCursor } from "../../feature-libraries";
+import {
+    SequenceEditBuilder,
+    Transposed as T,
+    // eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/sequence-change-family";
 import { jsonNumber } from "../../domains";
 
 /**
@@ -53,7 +58,10 @@ enum Operation {
  * @param pathGenerator - Generator of random path.
  * @returns Randomly generated change.
  */
-export function generateRandomChange(seed: number, pathGenerator: (seed: number) => UpPath): T.LocalChangeset {
+export function generateRandomChange(
+    seed: number,
+    pathGenerator: (seed: number) => UpPath,
+): T.LocalChangeset {
     const random = makeRandom(seed);
     const builder = new SequenceEditBuilder(() => {}, new AnchorSet());
     const operation = random.integer(Operation.SetValue, Operation.Insert) as Operation;
@@ -67,7 +75,10 @@ export function generateRandomChange(seed: number, pathGenerator: (seed: number)
         case Operation.Insert:
             builder.insert(
                 pathGenerator(random.integer(0, Number.MAX_SAFE_INTEGER)),
-                singleTextCursor({ type: jsonNumber.name, value: random.integer(0, Number.MAX_SAFE_INTEGER) }),
+                singleTextCursor({
+                    type: jsonNumber.name,
+                    value: random.integer(0, Number.MAX_SAFE_INTEGER),
+                }),
             );
             break;
         case Operation.Delete:
@@ -76,7 +87,8 @@ export function generateRandomChange(seed: number, pathGenerator: (seed: number)
                 random.integer(1, 10),
             );
             break;
-        default: unreachableCase(operation);
+        default:
+            unreachableCase(operation);
     }
 
     return builder.getChanges()[0];

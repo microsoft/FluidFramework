@@ -7,7 +7,7 @@ import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
-import { IFluidErrorBase } from "@fluidframework/telemetry-utils";
+import { getCircularReplacer, IFluidErrorBase } from "@fluidframework/telemetry-utils";
 import { IOdspSocketError } from "./contracts";
 import { pkgVersion as driverVersion } from "./packageVersion";
 
@@ -23,7 +23,11 @@ export function errorObjectFromSocketError(socketError: IOdspSocketError, handle
         const error = createOdspNetworkError(
             message,
             socketError.code,
-            socketError.retryAfter);
+            socketError.retryAfter,
+            undefined, // response from http request
+            socketError.error ?
+                JSON.stringify({ error: socketError.error }, getCircularReplacer()) : undefined, // responseText
+        );
 
         error.addTelemetryProperties({ odspError: true, relayServiceError: true });
         return error;

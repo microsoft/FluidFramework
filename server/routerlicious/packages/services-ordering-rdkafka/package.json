@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-services-ordering-rdkafka",
-  "version": "0.1038.2000",
+  "version": "0.1038.3000",
   "description": "Fluid server services rdkafka orderer implementation",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -21,38 +21,39 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+    "format": "npm run prettier:fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "tsc": "tsc",
-    "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
+    "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+    "tsc": "tsc"
   },
   "dependencies": {
     "@fluidframework/common-utils": "^1.0.0",
-    "@fluidframework/server-services-client": "^0.1038.2000",
-    "@fluidframework/server-services-core": "^0.1038.2000",
+    "@fluidframework/server-services-client": "^0.1038.3000",
+    "@fluidframework/server-services-core": "^0.1038.3000",
     "nconf": "^0.12.0",
-    "node-rdkafka": "^2.13.0",
+    "node-rdkafka": "^2.14.0",
     "sillyname": "^0.1.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/eslint-config-fluid": "^1.0.0",
-    "@fluidframework/server-test-utils": "^0.1038.2000",
-    "@rushstack/eslint-config": "^2.5.1",
+    "@fluidframework/build-common": "^1.1.0",
+    "@fluidframework/eslint-config-fluid": "^2.0.0",
+    "@fluidframework/server-test-utils": "^0.1038.3000",
+    "@rushstack/eslint-config": "^2.6.1",
     "@types/amqplib": "^0.5.17",
     "@types/debug": "^4.1.5",
     "@types/lru-cache": "^5.1.0",
-    "@types/mocha": "^9.1.1",
+    "@types/mocha": "^10.0.0",
     "@types/node": "^14.18.0",
     "@types/sinon": "^9.0.9",
-    "concurrently": "^6.2.0",
-    "eslint": "~8.6.0",
-    "mocha": "^10.0.0",
-    "nyc": "^15.0.0",
-    "rimraf": "^2.6.2",
+    "concurrently": "^7.5.0",
+    "eslint": "~8.27.0",
+    "mocha": "^10.1.0",
+    "nyc": "^15.1.0",
+    "prettier": "~2.6.2",
+    "rimraf": "^3.0.2",
     "sinon": "^9.2.1",
-    "typescript": "~4.5.5",
-    "typescript-formatter": "7.1.0"
+    "typescript": "~4.5.5"
   }
 }

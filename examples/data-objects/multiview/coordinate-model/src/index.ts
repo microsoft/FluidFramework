@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./model";
+export { Coordinate } from "./model";

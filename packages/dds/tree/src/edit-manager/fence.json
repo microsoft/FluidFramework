@@ -1,5 +1,0 @@
-{
-    "tags": [ "edit-manager" ],
-    "exports": [ "index" ],
-    "imports": [ "change-family", "tree", "util" ]
-}

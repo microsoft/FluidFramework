@@ -3,4 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export * from "./error";
+export {
+	ClientSessionExpiredError,
+	DataCorruptionError,
+	DataProcessingError,
+	extractSafePropertiesFromMessage,
+	GenericError,
+	ThrottlingWarning,
+	UsageError,
+} from "./error";

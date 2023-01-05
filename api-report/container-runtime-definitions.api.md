@@ -39,8 +39,6 @@ export interface IContainerRuntime extends IProvideContainerRuntime, IProvideFlu
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // @deprecated
-    flush(): void;
     // (undocumented)
     readonly flushMode: FlushMode;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;

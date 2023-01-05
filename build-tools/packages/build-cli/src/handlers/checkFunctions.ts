@@ -2,16 +2,21 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { strict as assert } from "assert";
-import path from "path";
-import { bumpVersionScheme } from "@fluid-tools/version-tools";
-import { exec, MonoRepoKind } from "@fluidframework/build-tools";
 import inquirer from "inquirer";
 import { Machine } from "jssm";
+import path from "path";
+
+import { MonoRepoKind } from "@fluidframework/build-tools";
+
+import { bumpVersionScheme } from "@fluid-tools/version-tools";
+
+import { CheckPolicy } from "../commands/check/policy";
 import {
     generateBumpDepsBranchName,
+    generateBumpDepsCommitMessage,
     generateBumpVersionBranchName,
+    generateBumpVersionCommitMessage,
     generateReleaseBranchName,
     getPreReleaseDependencies,
     getReleaseSourceForReleaseGroup,
@@ -20,8 +25,9 @@ import {
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
 import { isReleaseGroup } from "../releaseGroups";
+import { branchesRunDefaultPolicy } from "../repoConfig";
 import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
-import { StateHandlerFunction, BaseStateHandler } from "./stateHandlers";
+import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
 
 /**
  * Checks that the current branch matches the expected branch for a release.
@@ -72,6 +78,10 @@ export const checkBranchName: StateHandlerFunction = async (
                     return true;
                 }
             }
+
+            default: {
+                log.errorLog(`Unexpected bump type: ${bumpType}`);
+            }
         }
     } else {
         log.warning(
@@ -108,6 +118,7 @@ export const checkBranchUpToDate: StateHandlerFunction = async (
     const remote = await context.gitRepo.getRemote(context.originRemotePartialUrl);
     const isBranchUpToDate = await context.gitRepo.isBranchUpToDate(
         context.originalBranchName,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         remote!,
     );
     if (shouldCheckBranchUpdate === true) {
@@ -242,6 +253,7 @@ export const checkInstallBuildTools: StateHandlerFunction = async (
     const answer = await inquirer.prompt(installQuestion);
     if (answer.install === true) {
         log.info(`Installing build-tools so we can run build:genver`);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const buildToolsMonoRepo = context.repo.releaseGroups.get(MonoRepoKind.BuildTools)!;
         const ret = await buildToolsMonoRepo.install();
         if (ret.error) {
@@ -275,22 +287,17 @@ export const checkMainNextIntegrated: StateHandlerFunction = async (
 ): Promise<boolean> => {
     if (testMode) return true;
 
-    const { bumpType, shouldCheckMainNextIntegrated } = data;
+    const { bumpType, context, shouldCheckMainNextIntegrated } = data;
+    assert(context !== undefined, "Context is undefined.");
 
-    // TODO: Implement this
     if (bumpType === "major") {
         if (shouldCheckMainNextIntegrated === true) {
-            log.warning(`Automated main/next integration check not yet implemented.`);
-            log.warning(`Make sure next has been integrated into main before continuing.`);
+            const [main, next] = await Promise.all([
+                context.gitRepo.getShaForBranch("main"),
+                context.gitRepo.getShaForBranch("next"),
+            ]);
 
-            const confirmIntegratedQuestion: inquirer.ConfirmQuestion = {
-                type: "confirm",
-                name: "integrated",
-                message: `Has next has been integrated into main?`,
-            };
-
-            const answers = await inquirer.prompt(confirmIntegratedQuestion);
-            if (answers.integrated !== true) {
+            if (main !== next) {
                 BaseStateHandler.signalFailure(machine, state);
             }
         } else {
@@ -326,6 +333,7 @@ export const checkOnReleaseBranch: StateHandlerFunction = async (
     assert(isReleaseGroup(releaseGroup), `Not a release group: ${releaseGroup}`);
 
     const currentBranch = await context.gitRepo.getCurrentBranchName();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const releaseBranch = generateReleaseBranchName(releaseGroup, releaseVersion!);
 
     if (currentBranch === releaseBranch) {
@@ -394,38 +402,27 @@ export const checkPolicy: StateHandlerFunction = async (
     assert(context !== undefined, "Context is undefined.");
 
     if (shouldCheckPolicy === true) {
-        if (context.originalBranchName !== "main") {
+        if (!branchesRunDefaultPolicy.includes(context.originalBranchName)) {
             log.warning(
-                "WARNING: Policy check fixes are not expected outside of main branch!  Make sure you know what you are doing.",
+                `Policy check fixes are not expected on the ${context.originalBranchName} branch! Make sure you know what you are doing.`,
             );
         }
 
-        // await CheckPolicy.run([
-        //     "--fix",
-        //     "--exclusions",
-        //     path.join(
-        //         context.gitRepo.resolvedRoot,
-        //         "build-tools",
-        //         "packages",
-        //         "build-tools",
-        //         "data",
-        //         "exclusions.json"
-        //     )
-        // ]);
-
-        await exec(
-            `node ${path.join(
+        // oclif docs suggest using proper function calls into underlying APIs rather than calling a command directly
+        // but it's very convenient in this case. check policy is a command where the CLI is the "best" interface; it doesn't
+        // expose a better programmatic API and making one just to make it cleaner to call here seems unnecessary.
+        await CheckPolicy.run([
+            "--fix",
+            "--exclusions",
+            path.join(
                 context.gitRepo.resolvedRoot,
                 "build-tools",
                 "packages",
                 "build-tools",
-                "dist",
-                "repoPolicyCheck",
-                "repoPolicyCheck.js",
-            )} -r`,
-            context.gitRepo.resolvedRoot,
-            "policy-check:fix failed",
-        );
+                "data",
+                "exclusions.json",
+            ),
+        ]);
 
         // check for policy check violation
         const afterPolicyCheckStatus = await context.gitRepo.getStatus();
@@ -436,6 +433,11 @@ export const checkPolicy: StateHandlerFunction = async (
             );
             BaseStateHandler.signalFailure(machine, state);
         }
+        // eslint-disable-next-line no-negated-condition
+    } else if (!branchesRunDefaultPolicy.includes(context.originalBranchName)) {
+        log.verbose(
+            `Skipping policy check because it does not run on the ${context.originalBranchName} branch by default. Pass --policyCheck to force it to run.`,
+        );
     } else {
         log.warning("Skipping policy check.");
     }
@@ -467,6 +469,7 @@ export const checkReleaseBranchExists: StateHandlerFunction = async (
     assert(context !== undefined, "Context is undefined.");
     assert(isReleaseGroup(releaseGroup), `Not a release group: ${releaseGroup}`);
 
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const releaseBranch = generateReleaseBranchName(releaseGroup, releaseVersion!);
 
     const commit = await context.gitRepo.getShaForBranch(releaseBranch);
@@ -539,6 +542,7 @@ export const checkReleaseIsDone: StateHandlerFunction = async (
     const { context, releaseGroup, releaseVersion } = data;
     assert(context !== undefined, "Context is undefined.");
 
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const wasReleased = await isReleased(context, releaseGroup!, releaseVersion!);
     if (wasReleased) {
         BaseStateHandler.signalSuccess(machine, state);
@@ -576,16 +580,14 @@ export const checkShouldCommit: StateHandlerFunction = async (
         return true;
     }
 
-    const version = releaseVersion;
-    const newVersion = bumpVersionScheme(version, bumpType!);
-
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const branchName = generateBumpVersionBranchName(releaseGroup!, bumpType!, releaseVersion!);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const commitMsg = generateBumpVersionCommitMessage(releaseGroup!, bumpType!, releaseVersion!);
 
     await context.createBranch(branchName);
-
     log.verbose(`Created bump branch: ${branchName}`);
 
-    const commitMsg = `[bump] ${releaseGroup}: ${version} => ${newVersion} (${bumpType})\n\nPost-release ${bumpType} bump of ${releaseGroup}.`;
     await context.gitRepo.commit(commitMsg, `Error committing to ${branchName}`);
     BaseStateHandler.signalSuccess(machine, state);
     return true;
@@ -622,9 +624,9 @@ export const checkShouldCommitReleasedDepsBump: StateHandlerFunction = async (
     await context.gitRepo.createBranch(branchName);
 
     log.verbose(`Created bump branch: ${branchName}`);
-    log.info(`BUMP: ${releaseGroup}: Bumped prerelease dependencies to release versions.`);
+    log.info(`${releaseGroup}: Bumped prerelease dependencies to release versions.`);
 
-    const commitMsg = `[bump] ${releaseGroup}: update prerelease dependencies to release versions`;
+    const commitMsg = generateBumpDepsCommitMessage("prerelease", "latest", releaseGroup);
     await context.gitRepo.commit(commitMsg, `Error committing to ${branchName}`);
     BaseStateHandler.signalSuccess(machine, state);
     return true;
@@ -758,7 +760,7 @@ export const checkValidReleaseGroup: StateHandlerFunction = async (
 
     if (isReleaseGroup(releaseGroup)) {
         BaseStateHandler.signalSuccess(machine, state);
-        // eslint-disable-next-line no-negated-condition
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, no-negated-condition
     } else if (context.fullPackageMap.get(releaseGroup!) !== undefined) {
         BaseStateHandler.signalSuccess(machine, state);
     } else {

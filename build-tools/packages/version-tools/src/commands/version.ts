@@ -2,18 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { Command, Flags } from "@oclif/core";
 import * as semver from "semver";
 import { table } from "table";
+
 import { isVersionBumpTypeExtended } from "../bumpTypes";
 import {
-    bumpInternalVersion,
     MINIMUM_PUBLIC_VERSION,
+    bumpInternalVersion,
     fromInternalScheme,
-    toInternalScheme,
     getVersionRange,
     isInternalVersionScheme,
+    toInternalScheme,
 } from "../internalVersionScheme";
 
 interface VersionScheme {

@@ -9,10 +9,24 @@
  * @packageDocumentation
  */
 
-export * from "./AzureAudience";
-export * from "./AzureClient";
-export * from "./AzureFunctionTokenProvider";
-export * from "./interfaces";
+export { AzureAudience } from "./AzureAudience";
+export { AzureClient } from "./AzureClient";
+export { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider";
+export {
+    AzureClientProps,
+    AzureConnectionConfig,
+    AzureConnectionConfigType,
+    AzureContainerServices,
+    AzureContainerVersion,
+    AzureGetVersionsOptions,
+    AzureLocalConnectionConfig,
+    AzureMember,
+    AzureRemoteConnectionConfig,
+    AzureUser,
+    IAzureAudience,
+    ITelemetryBaseEvent,
+    ITelemetryBaseLogger,
+} from "./interfaces";
 
 export { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
-export { ScopeType, ITokenClaims, IUser } from "@fluidframework/protocol-definitions";
+export { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";

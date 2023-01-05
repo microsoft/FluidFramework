@@ -3,19 +3,11 @@
  * Licensed under the MIT License.
  */
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export interface Comparer<T> {
     compare(a: T, b: T): number;
     min: T;
 }
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export class Heap<T> {
     private L: T[];
     public count() {

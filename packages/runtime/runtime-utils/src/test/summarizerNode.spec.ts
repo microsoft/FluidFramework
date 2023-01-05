@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
+
+import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
     channelsTreeName,
     CreateChildSummarizerNodeParam,
@@ -12,14 +13,15 @@ import {
     ISummarizerNode,
     ISummarizerNodeConfig,
 } from "@fluidframework/runtime-definitions";
-import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+
 import {
     createRootSummarizerNode,
     IRootSummarizerNode,
 } from "../summarizerNode";
-import { mergeStats } from "../summaryUtils";
 // eslint-disable-next-line import/no-internal-modules
 import { SummarizerNode } from "../summarizerNode/summarizerNode";
+import { mergeStats } from "../summaryUtils";
 
 describe("Runtime", () => {
     describe("Summarization", () => {
@@ -173,31 +175,9 @@ describe("Runtime", () => {
             });
 
             describe("Load Base Summary", () => {
-                it("Load base summary without differential should do nothing for simple snapshot", async () => {
-                    createRoot({ refSeq: 1 });
-                    rootNode.loadBaseSummaryWithoutDifferential(simpleSnapshot);
-
-                    const latestSummary = (rootNode as SummarizerNode).latestSummary;
-                    assert(latestSummary !== undefined, "latest summary should exist");
-                    assert.strictEqual(latestSummary.additionalPath?.path, undefined,
-                        "should not have any path parts for children");
-                });
-
-                it("Load base summary without differential should strip channels subtree", async () => {
-                    createRoot({ refSeq: 1 });
-                    rootNode.loadBaseSummaryWithoutDifferential(channelsSnapshot);
-
-                    const latestSummary = (rootNode as SummarizerNode).latestSummary;
-                    assert(latestSummary !== undefined, "latest summary should exist");
-                    assert.strictEqual(latestSummary.additionalPath?.path, channelsTreeName,
-                        "should have channels path for children");
-                });
-
                 it("Load base summary should do nothing for simple snapshot", async () => {
                     createRoot({ refSeq: 1 });
-                    const baseSummary = await rootNode.loadBaseSummary(simpleSnapshot, readAndParseBlob);
-                    assert.strictEqual(Object.keys(baseSummary.trees).length, 2, "only 2 subtrees");
-                    assert(baseSummary.trees[ids[1]] !== undefined, "mid subtree");
+                    rootNode.updateBaseSummaryState(simpleSnapshot);
 
                     const latestSummary = (rootNode as SummarizerNode).latestSummary;
                     assert(latestSummary !== undefined, "latest summary should exist");
@@ -207,9 +187,7 @@ describe("Runtime", () => {
 
                 it("Load base summary should strip channels subtree", async () => {
                     createRoot({ refSeq: 1 });
-                    const baseSummary = await rootNode.loadBaseSummary(channelsSnapshot, readAndParseBlob);
-                    assert.strictEqual(Object.keys(baseSummary.trees).length, 2, "only 2 subtrees");
-                    assert(baseSummary.trees[channelsTreeName] !== undefined, "channels subtree");
+                    rootNode.updateBaseSummaryState(channelsSnapshot);
 
                     const latestSummary = (rootNode as SummarizerNode).latestSummary;
                     assert(latestSummary !== undefined, "latest summary should exist");

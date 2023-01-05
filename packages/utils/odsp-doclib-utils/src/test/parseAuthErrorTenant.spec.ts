@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable max-len */
-
 import assert from "assert";
 import { parseAuthErrorTenant } from "../parseAuthErrorTenant";
 

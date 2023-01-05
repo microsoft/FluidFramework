@@ -5,7 +5,7 @@
 
 module.exports = {
     "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid")
+        require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"
     ],
     "parserOptions": {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
@@ -46,7 +46,6 @@ module.exports = {
         "no-new-func": "off",
         "no-param-reassign": "off",
         "no-prototype-builtins": "off",
-        "no-restricted-syntax": "off",
         "no-undef": "off",
         "no-undef-init": "off",
         "no-var": "off",

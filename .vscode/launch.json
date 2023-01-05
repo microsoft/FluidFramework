@@ -5,6 +5,22 @@
     "version": "0.2.0",
     "configurations": [
         {
+            // Update /build-tools/packages/bundle-size-tools/src/utilities/gitCommands.ts to your remote (i.e. upstream instead of main)
+            // Don't forget to run `npm run bundle-analysis:collect`
+            // Reminder, update the command values
+            "command": "npx danger pr https://github.com/microsoft/FluidFramework/pull/{A-RECENT-PR-HERE} -d {WORKSPACE WITH /'s}/build-tools/packages/build-tools/dist/bundleSizeAnalysis/dangerfile.js",
+            "name": "bundleSizeAnalysis",
+            "request": "launch",
+            "type": "node-terminal",
+            "env": {
+                // Your ADO PAT (Personal Access Token) User settings > Personal Access Tokens > New Token (check read permissions, likely Build, Release, Packaging, and Test Management)
+                "ADO_API_TOKEN": "",
+                // Your Github PAT (Personal Access Token) Your Icon > Settings > Developer settings > Personal Access Tokens > Fine-grained tokens (Public Repositories (read-only) should be enough)
+                "DANGER_GITHUB_API_TOKEN": "",
+                "TARGET_BRANCH_NAME": "main"
+            }
+        },
+        {
             "name": "npm test build-cli",
             "cwd": "${workspaceFolder}/build-tools/packages/build-cli",
             "request": "launch",
@@ -33,6 +49,23 @@
                 "client",
                 "-v",
                 "--no-policyCheck",
+            ],
+        },
+        {
+            // Runs the `flub release report --all` command with a debugger attached.
+            "name": "flub release report",
+            "program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
+            "cwd": "${workspaceFolder}",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
+            "args": [
+                "release",
+                "report",
+                "--all",
+                "-v",
             ],
         },
         {

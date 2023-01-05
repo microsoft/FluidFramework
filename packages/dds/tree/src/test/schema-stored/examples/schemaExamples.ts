@@ -19,7 +19,7 @@ import {
     emptyMap,
     emptySet,
     fieldSchema,
-} from "../../../schema-stored";
+} from "../../../core";
 import { brand } from "../../../util";
 
 export const codePoint: NamedTreeSchema = {
@@ -38,11 +38,6 @@ export const string: TreeSchema = {
     globalFields: emptySet,
     extraLocalFields: emptyField,
     extraGlobalFields: false,
-    localFields: new Map([
-        [
-            brand("children"),
-            fieldSchema(FieldKinds.sequence, [codePoint.name]),
-        ],
-    ]),
+    localFields: new Map([[brand("children"), fieldSchema(FieldKinds.sequence, [codePoint.name])]]),
     value: ValueSchema.Nothing,
 };

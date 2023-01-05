@@ -2,16 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { strict as assert } from "assert";
-import { bumpVersionScheme, detectVersionScheme } from "@fluid-tools/version-tools";
-import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 import chalk from "chalk";
 import { Machine } from "jssm";
+
+import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
+
+import { bumpVersionScheme, detectVersionScheme } from "@fluid-tools/version-tools";
+
 import { bumpReleaseGroup, difference, getPreReleaseDependencies, npmCheckUpdates } from "../lib";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
-import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
+import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
 import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
 import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
 
@@ -39,6 +41,7 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
 
     const { releaseGroups, packages, isEmpty } = await getPreReleaseDependencies(
         context,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         releaseGroup!,
     );
 
@@ -146,8 +149,12 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
     assert(bumpType !== undefined, `bumpType is undefined.`);
 
     const rgRepo = isReleaseGroup(releaseGroup)
-        ? context.repo.releaseGroups.get(releaseGroup)!
-        : context.fullPackageMap.get(releaseGroup!)!;
+        ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          context.repo.releaseGroups.get(releaseGroup)!
+        : // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          context.fullPackageMap.get(releaseGroup!)!;
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const scheme = detectVersionScheme(releaseVersion!);
     const newVersion = bumpVersionScheme(releaseVersion, bumpType, scheme);
     const packages = rgRepo instanceof MonoRepo ? rgRepo.packages : [rgRepo];

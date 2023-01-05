@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./agent";
+export { IAgentScheduler, IAgentSchedulerEvents, IProvideAgentScheduler } from "./agent";
 export { AgentSchedulerFactory } from "./scheduler";
-export * from "./taskSubscription";
+export { ITaskSubscriptionEvents, TaskSubscription } from "./taskSubscription";

@@ -4,12 +4,15 @@
  */
 
 import {
-    typedTreeSchema, typedFieldSchema, FieldInfo, TypeInfo,
-// Allow importing from this specific file which is being tested:
-/* eslint-disable-next-line import/no-internal-modules */
+    typedTreeSchema,
+    typedFieldSchema,
+    FieldInfo,
+    TypeInfo,
+    // Allow importing from this specific file which is being tested:
+    /* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/modular-schema/typedSchema";
 
-import { ValueSchema } from "../../../schema-stored";
+import { ValueSchema } from "../../../core";
 import { brand, requireTrue } from "../../../util";
 import { FieldKinds } from "../../../feature-libraries";
 

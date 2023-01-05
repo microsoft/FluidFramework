@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
+    FiveDaysMs,
     IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -18,7 +19,7 @@ import {
     getQuorumValuesFromProtocolSummary,
     RateLimiter,
 } from "@fluidframework/driver-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISession } from "@fluidframework/server-services-client";
 import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
@@ -55,13 +56,16 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         private readonly tokenProvider: ITokenProvider,
         driverPolicies: Partial<IRouterliciousDriverPolicies> = {},
     ) {
+        // 5 days is the max allowed value per the IDocumentStorageServicePolicies.maximumCacheDurationMs policy
+        const snapshotCacheExpiryMs: FiveDaysMs = 432000000;
+
         this.driverPolicies = {
             ...defaultRouterliciousDriverPolicies,
             ...driverPolicies,
         };
         this.blobCache = new InMemoryCache<ArrayBufferLike>();
         this.snapshotTreeCache = this.driverPolicies.enableInternalSummaryCaching
-            ? new InMemoryCache<ISnapshotTreeVersion>()
+            ? new InMemoryCache<ISnapshotTreeVersion>(snapshotCacheExpiryMs)
             : new NullCache<ISnapshotTreeVersion>();
     }
 
@@ -108,16 +112,34 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             resolvedUrl.endpoints.ordererUrl,
         );
 
-        // @TODO: Remove returned "string" type when removing back-compat code
-        const res = await ordererRestWrapper.post<{ id: string; token?: string; session?: ISession; } | string>(
-            `/documents/${tenantId}`,
+        const res = await PerformanceEvent.timedExecAsync(
+            logger2,
             {
-                summary: convertSummaryToCreateNewSummary(appSummary),
-                sequenceNumber: documentAttributes.sequenceNumber,
-                values: quorumValues,
-                enableDiscovery: this.driverPolicies.enableDiscovery,
-                generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
+                eventName: "CreateNew",
+                details: JSON.stringify({
+                    enableDiscovery: this.driverPolicies.enableDiscovery,
+                    sequenceNumber: documentAttributes.sequenceNumber,
+                }),
             },
+            async (event) => {
+                // @TODO: Remove returned "string" type when removing back-compat code
+                const postRes = await ordererRestWrapper.post<
+                    { id: string; token?: string; session?: ISession; } | string
+                >(`/documents/${tenantId}`, {
+                    summary: convertSummaryToCreateNewSummary(appSummary),
+                    sequenceNumber: documentAttributes.sequenceNumber,
+                    values: quorumValues,
+                    enableDiscovery: this.driverPolicies.enableDiscovery,
+                    generateToken:
+                        this.tokenProvider.documentPostCreateCallback !==
+                        undefined,
+                });
+
+                event.end({
+                    docId: typeof postRes === "string" ? postRes : postRes.id,
+                });
+                return postRes;
+            }
         );
 
         // For supporting backward compatibility, when the request has generateToken === true, it will return
@@ -138,12 +160,20 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 
         // @TODO: Remove token from the condition, checking the documentPostCreateCallback !== undefined
         // is sufficient to determine if the token will be undefined or not.
-        if (token && this.tokenProvider.documentPostCreateCallback !== undefined) {
-            try {
-                await this.tokenProvider.documentPostCreateCallback(documentId, token);
-            } catch (error: any) {
-                throw new DocumentPostCreateError(error);
-            }
+        try {
+            await PerformanceEvent.timedExecAsync(
+                logger2,
+                {
+                    eventName: "DocPostCreateCallback",
+                    docId: documentId,
+                },
+                async () => {
+                    if (token && this.tokenProvider.documentPostCreateCallback !== undefined) {
+                        return this.tokenProvider.documentPostCreateCallback(documentId, token);
+                    }
+                });
+        } catch (error: any) {
+            throw new DocumentPostCreateError(error);
         }
 
         parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, documentId));
@@ -183,7 +213,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         session?: ISession,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
-
         const parsedUrl = parseFluidUrl(resolvedUrl.url);
         const [, tenantId, documentId] = parsedUrl.pathname.split("/");
         if (!documentId || !tenantId) {
@@ -192,24 +221,32 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         }
         const logger2 = ChildLogger.create(logger, "RouterliciousDriver", { all: { driverVersion } });
 
+        const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
+        const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+            tenantId,
+            documentId,
+            this.tokenProvider,
+            logger2,
+            rateLimiter,
+            this.driverPolicies.enableRestLess,
+        );
+
         const discoverFluidResolvedUrl = async (): Promise<IFluidResolvedUrl> => {
             if (!this.driverPolicies.enableDiscovery) {
                 return resolvedUrl;
             }
-            const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-            const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
-                tenantId,
-                documentId,
-                this.tokenProvider,
+
+            const discoveredSession = await PerformanceEvent.timedExecAsync(
                 logger2,
-                rateLimiter,
-                this.driverPolicies.enableRestLess,
-                resolvedUrl.endpoints.ordererUrl,
-            );
-            // The service responds with the current document session associated with the container.
-            const discoveredSession = await ordererRestWrapper.get<ISession>(
-                `/documents/${tenantId}/session/${documentId}`,
-            );
+                {
+                    eventName: "DiscoverSession",
+                    docId: documentId,
+                },
+                async () => {
+                    // The service responds with the current document session associated with the container.
+                    return ordererRestWrapper.get<ISession>(
+                        `${resolvedUrl.endpoints.ordererUrl}/documents/${tenantId}/session/${documentId}`);
+                });
             return getDiscoveredFluidResolvedUrl(resolvedUrl, discoveredSession);
         };
         const fluidResolvedUrl: IFluidResolvedUrl = session !== undefined
@@ -235,6 +272,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             this.tokenProvider,
             tenantId,
             documentId,
+            ordererRestWrapper,
             this.driverPolicies,
             this.blobCache,
             this.snapshotTreeCache,

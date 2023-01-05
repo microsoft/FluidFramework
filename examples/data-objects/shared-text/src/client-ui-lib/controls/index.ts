@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export * from "./dockPanel";
-export * from "./flowContainer";
-export * from "./flowView";
-export * from "./layout";
+export { DockPanel } from "./dockPanel";
+export { FlowContainer } from "./flowContainer";
+export { FlowView, IDocumentContext } from "./flowView";
+export { CursorDirection, IProvideViewCursor, IProvideViewLayout, IViewCursor, IViewLayout } from "./layout";
 // eslint-disable-next-line import/no-internal-modules
-export * from "../text/characterCodes";
-export * from "./keycode";
-export * from "./domutils";
-export * from "./title";
+export { CharacterCodes } from "../text/characterCodes";
+export { KeyCode } from "./keycode";
+export { clearSubtree, getLineHeight, getTextHeight, getTextWidth } from "./domutils";
+export { Title } from "./title";

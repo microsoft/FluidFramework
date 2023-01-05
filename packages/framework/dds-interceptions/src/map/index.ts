@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./sharedDirectoryWithInterception";
-export * from "./sharedMapWithInterception";
+export { createDirectoryWithInterception } from "./sharedDirectoryWithInterception";
+export { createSharedMapWithInterception } from "./sharedMapWithInterception";

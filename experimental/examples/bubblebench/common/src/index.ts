@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from "./view";
-export * from "./types";
-export * from "./rnd";
-export * from "./stats";
+export { AppView } from "./view";
+export { IAppState, IArrayish, IBubble, IClient, makeBubble, makeClient } from "./types";
+export { normal, randomColor, rnd } from "./rnd";
+export { Stats } from "./stats";

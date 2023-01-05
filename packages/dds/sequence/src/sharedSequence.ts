@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
-    BaseSegment, IJSONSegment, ISegment, PropertySet, LocalReferenceCollection,
+    BaseSegment, IJSONSegment, ISegment, PropertySet,
 } from "@fluidframework/merge-tree";
 import { IChannelAttributes, IFluidDataStoreRuntime, Serializable } from "@fluidframework/datastore-definitions";
 import { SharedSegmentSequence } from "./sequence";
@@ -61,16 +62,9 @@ export class SubSequence<T> extends BaseSegment {
     }
 
     public append(segment: ISegment) {
-        if (!SubSequence.is(segment)) {
-            throw new Error("can only append another run segment");
-        }
-
-        // Note: Must call 'appendLocalRefs' before modifying this segment's length as
-        //       'this.cachedLength' is used to adjust the offsets of the local refs.
-        LocalReferenceCollection.append(this, segment);
-
+        assert(SubSequence.is(segment), 0x448 /* can only append to another run segment */);
+        super.append(segment);
         this.items = this.items.concat(segment.items);
-        this.cachedLength = this.items.length;
     }
 
     // TODO: retain removed items for undo

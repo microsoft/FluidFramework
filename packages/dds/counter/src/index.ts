@@ -10,5 +10,5 @@
  * @packageDocumentation
  */
 
-export * from "./counter";
-export * from "./interfaces";
+export { SharedCounter } from "./counter";
+export { ISharedCounter, ISharedCounterEvents } from "./interfaces";

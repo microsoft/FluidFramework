@@ -283,7 +283,7 @@ describe("MergeTree.Client", () => {
         client2.applyMsg(remove);
 
         assert.equal(client1.localReferencePositionToPosition(c1LocalRef), DetachedReferencePosition);
-        assert.equal(c1LocalRef.getSegment(), undefined);
+        assert.notEqual(c1LocalRef.getSegment(), undefined);
     });
 
     it("References can have offsets on removed segment", () => {
@@ -428,7 +428,7 @@ describe("MergeTree.Client", () => {
     });
 
     it("Split segment with no references and append to segment with references", () => {
-        const clients = createClientsAtInitialState("", "A", "B");
+        const clients = createClientsAtInitialState({ initialState: "" }, "A", "B");
 
         const messages: ISequencedDocumentMessage[] = [];
         let seq = 0;

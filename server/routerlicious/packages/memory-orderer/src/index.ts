@@ -3,13 +3,23 @@
  * Licensed under the MIT License.
  */
 
-export * from "./interfaces";
-export * from "./localContext";
-export * from "./localKafka";
-export * from "./localLambdaController";
-export * from "./localNodeFactory";
-export * from "./localOrderer";
-export * from "./localOrderManager";
-export * from "./nodeManager";
-export * from "./pubsub";
-export * from "./reservationManager";
+export {
+	IConcreteNode,
+	IConcreteNodeFactory,
+	IConnectedMessage,
+	IConnectMessage,
+	IKafkaSubscriber,
+	ILocalOrdererSetup,
+	INodeMessage,
+	IOpMessage,
+	IReservationManager,
+} from "./interfaces";
+export { LocalContext } from "./localContext";
+export { LocalKafka } from "./localKafka";
+export { LocalLambdaController, LocalLambdaControllerState } from "./localLambdaController";
+export { LocalNodeFactory } from "./localNodeFactory";
+export { LocalOrderer } from "./localOrderer";
+export { LocalOrderManager } from "./localOrderManager";
+export { NodeManager } from "./nodeManager";
+export { IPubSub, ISubscriber, PubSub, WebSocketSubscriber } from "./pubsub";
+export { IReservation, ReservationManager } from "./reservationManager";

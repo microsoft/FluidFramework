@@ -165,7 +165,6 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
      *
      * - `target` - The {@link ISharedDirectory} itself.
      */
-    // eslint-disable-next-line @typescript-eslint/unified-signatures
     (event: "subDirectoryDeleted", listener: (
         path: string,
         local: boolean,
@@ -226,7 +225,6 @@ export interface IDirectoryEvents extends IEvent {
      *
      * - `target` - The {@link ISharedDirectory} itself.
      */
-    // eslint-disable-next-line @typescript-eslint/unified-signatures
     (event: "subDirectoryDeleted", listener: (
         path: string,
         local: boolean,
@@ -308,7 +306,7 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  * and retrieving values that JavaScript developers are accustomed to with the
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map | Map} built-in object.
  * However, the keys of a SharedMap must be strings, and the values must either be a JSON-serializable object or a
- * {@link @fluidframework/shared-object-base#SharedObjectHandle}.
+ * {@link @fluidframework/datastore#FluidObjectHandle}.
  *
  * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
  */

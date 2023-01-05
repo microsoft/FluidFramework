@@ -18,7 +18,7 @@ module.exports = env => {
         module: {
             rules: [{
                 test: /\.tsx?$/,
-                loader: require.resolve("ts-loader")
+                loader: "ts-loader"
             },
             {
                 test: /\.css$/i,

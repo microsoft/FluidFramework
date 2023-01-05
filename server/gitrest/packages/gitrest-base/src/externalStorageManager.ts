@@ -66,7 +66,7 @@ export class ExternalStorageManager implements IExternalStorageManager {
             [BaseGitRestTelemetryProperties.ref]: ref,
             [BaseGitRestTelemetryProperties.sha]: sha,
             update,
-         };
+        };
         if (!this.config.get("externalStorage:enabled")) {
             Lumberjack.info("External storage is not enabled", lumberjackProperties);
             return;
@@ -87,4 +87,17 @@ export class ExternalStorageManager implements IExternalStorageManager {
                 throw error;
             });
     }
+}
+
+/**
+ * Throws away calls to external storage.
+ * For use in places where ExternalStorageManagement is explicitly not supported or does not make sense,
+ * but the manager is needed for compatibility with interface definitions.
+ */
+export class NullExternalStorageManager implements IExternalStorageManager {
+    public async read(tenantId: string, documentId: string): Promise<boolean> {
+        return false;
+    }
+
+    public async write(tenantId: string, ref: string, sha: string, update: boolean): Promise<void> { }
 }

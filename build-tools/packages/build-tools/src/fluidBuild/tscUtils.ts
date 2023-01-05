@@ -2,9 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import * as ts from "typescript";
 import * as path from "path";
+import * as ts from "typescript";
 
 const defaultTscUtil = getTscUtil(ts);
 export const parseCommandLine = defaultTscUtil.parseCommandLine;
@@ -79,7 +78,7 @@ const incrementalOptions = [
     "skipLibCheck",
     "skipdefaultlibcheck",
     "strict",
-].sort();  // sort it so that the result of the filter is sorted as well.
+].sort(); // sort it so that the result of the filter is sorted as well.
 
 export function filterIncrementalOptions(options: any) {
     const newOptions: any = {};
@@ -96,7 +95,14 @@ export function convertToOptionsWithAbsolutePath(options: ts.CompilerOptions, cw
     const result = { ...options };
 
     // Expand 'string' properties that potentially contain relative paths.
-    for (const key of ["baseUrl", "configFilePath", "declarationDir", "outDir", "rootDir", "project"]) {
+    for (const key of [
+        "baseUrl",
+        "configFilePath",
+        "declarationDir",
+        "outDir",
+        "rootDir",
+        "project",
+    ]) {
         const value = result[key] as string;
         if (value !== undefined) {
             result[key] = path.resolve(cwd, value);
@@ -134,7 +140,11 @@ export function getTscUtil(tsLib: typeof ts) {
             if (project !== undefined) {
                 tsConfigFullPath = path.resolve(directory, project);
             } else {
-                const foundConfigFile = tsLib.findConfigFile(directory, tsLib.sys.fileExists, "tsconfig.json");
+                const foundConfigFile = tsLib.findConfigFile(
+                    directory,
+                    tsLib.sys.fileExists,
+                    "tsconfig.json",
+                );
                 if (foundConfigFile) {
                     tsConfigFullPath = foundConfigFile;
                 } else {
@@ -152,5 +162,5 @@ export function getTscUtil(tsLib: typeof ts) {
             return configFile.config;
         },
         convertToOptionsWithAbsolutePath,
-    }
+    };
 }

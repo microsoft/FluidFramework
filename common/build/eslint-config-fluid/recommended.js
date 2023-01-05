@@ -33,6 +33,12 @@ module.exports = {
         "unicorn/prevent-abbreviations": "off",
 
         /**
+         * "node:" imports are not supported prior to Node.js v16.
+         * TODO: re-enable this (remove override) once the repo has been updated to v16.
+         */
+        "unicorn/prefer-node-protocol": "off",
+
+        /**
          * Disallows the `any` type.
          * Using the `any` type defeats the purpose of using TypeScript.
          * When `any` is used, all compiler type checks around that value are ignored.
@@ -94,7 +100,7 @@ module.exports = {
          * Require the description (summary) component in JSDoc/TSDoc comments
          * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-description>
          */
-        "jsdoc/require-description": "error",
+        "jsdoc/require-description": ["error", { checkConstructors: false }],
 
         // #endregion
     },
@@ -103,12 +109,12 @@ module.exports = {
             // Rules only for TypeScript files
             files: ["**/*.{ts,tsx}"],
             rules: {
-                "editorconfig/indent": "off", // We use tsfmt for "official" formatting.
+                "editorconfig/indent": "off",
             },
         },
         {
             // Rules only for type validation files
-            files: ["**/types/*validate*Previous.ts"],
+            files: ["**/types/*validate*Previous*.ts"],
             rules: {
                 "@typescript-eslint/no-explicit-any": "off",
                 "@typescript-eslint/no-unsafe-argument": "off",

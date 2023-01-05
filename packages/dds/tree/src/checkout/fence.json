@@ -1,5 +1,0 @@
-{
-    "tags": [ "checkout" ],
-    "exports": ["index"],
-    "imports": ["forest"]
-}

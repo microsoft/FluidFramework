@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable max-len */
-
 import { strict as assert } from "assert";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { loggerToMonitoringContext, MockLogger, sessionStorageConfigProvider, ConfigTypes } from "@fluidframework/telemetry-utils";
@@ -14,7 +12,7 @@ import {
     closuresMapLocalStorageKey,
     SweepReadyUsageDetectionHandler,
 } from "../gcSweepReadyUsageDetection";
-import { oneDayMs } from "../garbageCollection";
+import { oneDayMs } from "../garbageCollectionConstants";
 
 describe("Garbage Collection Tests", () => {
     let clock: SinonFakeTimers;

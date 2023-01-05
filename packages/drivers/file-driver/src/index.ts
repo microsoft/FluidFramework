@@ -3,8 +3,15 @@
  * Licensed under the MIT License.
  */
 
-export * from "./fileDeltaStorageService";
-export * from "./fileDocumentService";
-export * from "./fileDocumentServiceFactory";
-export * from "./fileDocumentDeltaConnection";
-export * from "./fileDocumentStorageService";
+export { FileDeltaStorageService } from "./fileDeltaStorageService";
+export { FileDocumentService } from "./fileDocumentService";
+export { FileDocumentServiceFactory } from "./fileDocumentServiceFactory";
+export { Replayer, ReplayFileDeltaConnection } from "./fileDocumentDeltaConnection";
+export {
+	FileSnapshotWriterClassFactory,
+	FileStorageDocumentName,
+	FluidFetchReader,
+	FluidFetchReaderFileSnapshotWriter,
+	ISnapshotWriterStorage,
+	ReaderConstructor,
+} from "./fileDocumentStorageService";

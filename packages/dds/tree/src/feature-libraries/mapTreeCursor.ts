@@ -4,26 +4,21 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import {
-    FieldKey,
-    MapTree,
-    ITreeCursorNew as ITreeCursor,
-    CursorLocationType,
-    mapCursorFieldNew as mapCursorField,
-    ITreeCursorSynchronous,
-} from "../tree";
-import { CursorAdapter, singleStackTreeCursor } from "./treeCursorUtils";
+import { FieldKey, MapTree, ITreeCursor, CursorLocationType, mapCursorField } from "../core";
+import { CursorAdapter, CursorWithNode, singleStackTreeCursor } from "./treeCursorUtils";
 
 /**
-* @returns an ITreeCursorSynchronous for a single MapTree.
-*/
-export function singleMapTreeCursor(root: MapTree): ITreeCursorSynchronous {
-   return singleStackTreeCursor(root, adapter);
+ * @returns an ITreeCursorSynchronous for a single MapTree.
+ */
+export function singleMapTreeCursor(root: MapTree): CursorWithNode<MapTree> {
+    return singleStackTreeCursor(root, adapter);
 }
 
 const adapter: CursorAdapter<MapTree> = {
-   keysFromNode: (node) => [...node.fields.keys()], // TODO: don't convert this to array here.
-   getFieldFromNode: (node, key) => node.fields.get(key) ?? [],
+    value: (node) => node.value,
+    type: (node) => node.type,
+    keysFromNode: (node) => [...node.fields.keys()], // TODO: don't convert this to array here.
+    getFieldFromNode: (node, key) => node.fields.get(key) ?? [],
 };
 
 /**

@@ -78,14 +78,23 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
         const throttleMaxRequestBurst = config.get("throttling:maxRequestBurst") as number | undefined;
         const throttleMinCooldownIntervalInMs = config.get("throttling:minCooldownIntervalInMs") as number | undefined;
         const minThrottleIntervalInMs = config.get("throttling:minThrottleIntervalInMs") as number | undefined;
+        const maxInMemoryCacheSize = config.get("throttling:maxInMemoryCacheSize") as number | undefined;
+        const maxInMemoryCacheAgeInMs = config.get("throttling:maxInMemoryCacheAgeInMs") as number | undefined;
         const throttleStorageManager =
             new services.RedisThrottleAndUsageStorageManager(redisClientForThrottling, redisParamsForThrottling);
         const throttlerHelper = new services.ThrottlerHelper(
             throttleStorageManager,
             throttleMaxRequestsPerMs,
             throttleMaxRequestBurst,
-            throttleMinCooldownIntervalInMs);
-        const throttler = new services.Throttler(throttlerHelper, minThrottleIntervalInMs, winston);
+            throttleMinCooldownIntervalInMs,
+        );
+        const throttler = new services.Throttler(
+            throttlerHelper,
+            minThrottleIntervalInMs,
+            winston,
+            maxInMemoryCacheSize,
+            maxInMemoryCacheAgeInMs,
+        );
 
         const port = normalizePort(process.env.PORT || "3000");
 

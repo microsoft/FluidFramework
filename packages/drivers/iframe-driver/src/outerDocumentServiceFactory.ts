@@ -36,49 +36,95 @@ const socketIOEvents = [
     "signal",
 ];
 
+/**
+ * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+ */
 export interface ICombinedDriver {
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     clientId: string;
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     stream: IOuterDocumentDeltaConnectionProxy;
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     deltaStorage: IDocumentDeltaStorageService;
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     storage: IDocumentStorageService;
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     logger: ITelemetryBaseLogger;
 }
 
+/**
+ * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+ */
 export interface IDocumentServiceFactoryProxy {
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     clients: {
         [clientId: string]: ICombinedDriver;
     };
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     createDocumentService(
         resolvedUrlFn: () => Promise<IResolvedUrl>,
         // TODO: Create proxy ITelemetryBaseLogger (wrapping in getter fn is
         // insufficient) or never accept logger arg here
     ): Promise<string>;
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     createContainer(
         createNewSummaryFn: () => Promise<ISummaryTree>,
         resolvedUrlFn: () => Promise<IResolvedUrl>,
         // TODO: Create proxy ITelemetryBaseLogger (wrapping in getter fn is
         // insufficient) or never accept logger arg here
     ): Promise<string>;
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     connected(): Promise<void>;
 }
 
+/**
+ * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+ */
 export const IDocumentServiceFactoryProxyKey = "IDocumentServiceFactoryProxy";
 
 /**
  * Proxy of the Document Service Factory that gets sent to the innerFrame
+ * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
  */
 export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy {
     private _clients: {
         [clientId: string]: ICombinedDriver;
     } = {};
 
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     public get clients() { return Comlink.proxy(this._clients); }
 
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     constructor(
         private readonly documentServiceFactory: IDocumentServiceFactory,
         private readonly options: any,
     ) { }
 
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     public async createDocumentService(
         resolvedUrlFn: () => Promise<IResolvedUrl>,
     ): Promise<string> {
@@ -94,6 +140,9 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         return this.getDocumentServiceProxy(connectedDocumentService, resolvedUrl, outerProxyLogger);
     }
 
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     public async createContainer(
         createNewSummaryFn: () => Promise<ISummaryTree>,
         resolvedUrlFn: () => Promise<IResolvedUrl>,
@@ -107,10 +156,16 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         return this.getDocumentServiceProxy(connectedDocumentService, resolvedUrl, outerProxyLogger);
     }
 
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     public async connected(): Promise<void> {
         return;
     }
 
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     public createProxy(): IDocumentServiceFactoryProxy {
         const proxy: IDocumentServiceFactoryProxy = {
             connected: Comlink.proxy(async () => this.connected()),

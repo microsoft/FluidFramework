@@ -1,5 +1,0 @@
-{
-    "tags": [ "tree" ],
-    "exports": [ "index"],
-    "imports": ["schema-stored", "util"]
-}
