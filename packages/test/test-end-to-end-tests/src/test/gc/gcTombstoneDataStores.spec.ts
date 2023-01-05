@@ -844,7 +844,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             mainDataStore._root.set("newDataStore", newDataStore.handle);
             mainDataStore._root.set("blob", blobHandle);
             await provider.ensureSynchronized();
-            mockLogger.matchEvents([
+            mockLogger.assertMatch([
                 { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Datastore_Revived" },
                 { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Revived" },
             ]);
