@@ -4,9 +4,8 @@
  */
 
 import React, { useEffect, useState } from "react";
-
 import type { IAppModel } from "../model-interface";
-import { customerServicePort, parseStringData } from "../mock-service-interface";
+import { customerServicePort, parseTaskData } from "../mock-service-interface";
 
 /**
  * {@link DebugView} input props.
@@ -39,11 +38,33 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
     );
 };
 
+function isDeepEqual(obj1: object, obj2: object): boolean {
+    if (obj1 === obj2) {
+      return true;
+    }
+    if (typeof obj1 !== typeof obj2) {
+      return false;
+    }
+    if (typeof obj1 !== 'object') {
+      return obj1 === obj2;
+    }
+    if (Object.keys(obj1).length !== Object.keys(obj2).length) {
+      return false;
+    }
+    for (const key of Object.keys(obj1)) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      if (!isDeepEqual(obj1[key], obj2[key])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface IExternalDataViewProps {}
 
 const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalDataViewProps) => {
-    const [externalData, setExternalData] = useState<string | undefined>();
+    const [externalData, setExternalData] = useState({});
     useEffect(() => {
         // HACK: Once we have external changes triggering the appropriate Fluid signal, we can simply listen
         // for changes coming into the model that way.
@@ -62,9 +83,8 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
                 );
 
                 const responseBody = await response.json() as Record<string, unknown>;
-
-                const newData = responseBody.taskList as string;
-                if(newData !== undefined && newData !== externalData) {
+                const newData = responseBody.taskList as object;
+                if(newData !== undefined && !isDeepEqual(newData,externalData)) {
                     console.log("APP: External data has changed. Updating local state with:\n", newData)
                     setExternalData(newData);
                 }
@@ -83,12 +103,9 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
             clearInterval(timer);
         }
     }, [externalData, setExternalData]);
-
-    const parsedExternalData = externalData === undefined
+    const parsedExternalData = isDeepEqual(externalData, {})
         ? []
-        : parseStringData(externalData);
-
-    console.log(parsedExternalData);
+        : parseTaskData(externalData);
     const taskRows = parsedExternalData.map(({ id, name, priority }) => (
         <tr key={ id }>
             <td>{ id }</td>

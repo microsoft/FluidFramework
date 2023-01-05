@@ -4,4 +4,4 @@
  */
 
 export { customerServicePort } from "./constants";
-export { parseStringData, ParsedTaskData } from "./dataParsing";
+export { parseTaskData, ParsedTaskData } from "./dataParsing";

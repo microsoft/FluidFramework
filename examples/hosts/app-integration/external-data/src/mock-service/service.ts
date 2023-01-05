@@ -19,8 +19,7 @@ import cors from "cors";
 import express from "express";
 import type { Express } from "express";
 import { isWebUri } from "valid-url";
-
-import { ExternalDataSource } from './externalData';
+import { ExternalDataSource, TaskData } from './externalData';
 import { MockWebhook } from './webhook';
 
 /**
@@ -54,7 +53,7 @@ export interface ServiceProps {
 export async function initializeCustomerService(props: ServiceProps): Promise<Server> {
     const { externalDataSource, port } = props;
 
-    if(expressApp !== undefined) {
+    if (expressApp !== undefined) {
         throw new Error("Customer service has already been initialized.");
     }
 
@@ -99,7 +98,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
             result.status(400).json({message: "Provided subscription URL is invalid."})
         } else {
             console.log(`SERVICE: Registering for webhook notifications at URL: "${subscriberUrl}".`);
-            if(webhook === undefined) {
+            if (webhook === undefined) {
                 webhook = new MockWebhook(externalDataSource);
             }
             webhook.registerSubscriber(subscriberUrl);
@@ -115,14 +114,13 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
         externalDataSource.fetchData().then(
             (data) => {
                 console.log(`SERVICE: Returning current task list:\n"${data}".`);
-                result.send({taskList: data});
+                result.send({taskList: JSON.parse(data.body.toString()) as object});
             },
             (error) => {
                 console.error(`SERVICE: Encountered an error while reading mock external data file:\n${error}`);
                 result.status(500).json({ message: "Failed to fetch task data." });
             }
-        );
-    });
+    )});
 
     /**
      * Updates external data store with new tasks list (complete override).
@@ -141,7 +139,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
             result.status(400).json({message: "Client failed to provide task list to set."});
         } else {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            const taskList = request.body.taskList as string;
+            const taskList = request.body.taskList as TaskData;
             console.log(`SERVICE: Setting task list to "${taskList}"...`);
             externalDataSource.writeData(taskList).then(
                 () => {

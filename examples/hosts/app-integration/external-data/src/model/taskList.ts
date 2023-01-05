@@ -10,7 +10,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedMap } from "@fluidframework/map";
 
-import { customerServicePort, ParsedTaskData, parseStringData } from "../mock-service-interface";
+import { customerServicePort, ParsedTaskData, parseTaskData } from "../mock-service-interface";
 import type { ITask, ITaskEvents, ITaskList } from "../model-interface";
 
 class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
@@ -204,12 +204,12 @@ export class TaskList extends DataObject implements ITaskList {
             );
 
             const responseBody = await response.json() as Record<string, unknown>;
-            const data = responseBody.taskList as string;
+            const data = responseBody.taskList as object;
             if(data === undefined) {
                 throw new Error("Task list fetch returned no data.");
             }
 
-            updatedExternalData = parseStringData(data);
+            updatedExternalData = parseTaskData(data);
             console.log("TASK-LIST: Data imported from service.", updatedExternalData);
         } catch (error) {
             console.error(`Task list fetch failed due to an error:\n${error}`);
@@ -267,11 +267,13 @@ export class TaskList extends DataObject implements ITaskList {
         // sync'ing perhaps this should only include ack'd changes (by spinning up a second local client same
         // as what we do for summarization).
         const tasks = this.getTasks();
-        const taskStrings = tasks.map((task) => {
-            return `${task.id}:${task.name.getText()}:${task.priority.toString()}`;
-        });
-        const stringDataToWrite = `${taskStrings.join("\n")}`;
-
+        const formattedTasks = {}
+        tasks.map((task) => {
+            formattedTasks[task.id] = {
+              name: task.name.getText(),
+              priority: task.priority,
+            };
+          });
         try {
             await fetch(
                 `http://localhost:${customerServicePort}/set-tasks`,
@@ -281,7 +283,7 @@ export class TaskList extends DataObject implements ITaskList {
                         "Access-Control-Allow-Origin": "*",
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({ taskList: stringDataToWrite }),
+                    body: JSON.stringify({ taskList: formattedTasks}),
                 }
             );
         } catch (error) {
