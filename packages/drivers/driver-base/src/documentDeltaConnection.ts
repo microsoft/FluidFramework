@@ -406,28 +406,27 @@ export class DocumentDeltaConnection
                 let isWebSocketTransportError = false;
                 try {
                     const description = error?.description;
-                    // const responseText = error?.context?.responseText;
+                    const context = error?.context;
 
-                    if (description.message?.includes("self signed certificate")) {
-                        failAndCloseSocket(this.createErrorObject("connect_error", error, false));
-                        return;
+                    if (context && typeof context === "object") {
+                        const statusText = error.context.statusText.code;
+
+                        // Self-Signed Certificate ErrorCode
+                        if (statusText === "DEPTH_ZERO_SELF_SIGNED_CERT") {
+                            failAndCloseSocket(this.createErrorObject("connect_error", error, false));
+                            return;
+                        }
                     }
+                    else if (description && typeof description === "object") {
+                        if (description.message?.includes("self signed certificate")) {
+                            failAndCloseSocket(this.createErrorObject("connect_error", error, false));
+                            return;
+                        }
 
-                    // console.log('Error: ', error);
-                    // console.log('Description:', description);
-                    // console.log('Description Message: ', description.message);
-                    // console.log("ResponseText:", responseText);
-
-                    // if (responseText?.includes("Error: self signed certificate")) {
-                    //     console.log('RESPONSE TEXT HIT');
-                    //     failAndCloseSocket(this.createErrorObject("connect_error", error, false));
-                    //     return;
-                    // }
-
-                    if (description && typeof description === "object") {
                         if (error.type === "TransportError") {
                             isWebSocketTransportError = true;
                         }
+
                         // That's a WebSocket. Clear it as we can't log it.
                         description.target = undefined;
                     }
