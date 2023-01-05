@@ -123,8 +123,8 @@ export class EditManager<
         writer({ trunk: this.trunk, branches: this.branches });
     }
 
-    public getTrunk(): readonly RecursiveReadonly<Commit<RecursiveReadonly<TChangeset>>>[] {
-        return this.trunk as RecursiveReadonly<Commit<RecursiveReadonly<TChangeset>>>[];
+    public getTrunk(): readonly RecursiveReadonly<Commit<TChangeset>>[] {
+        return this.trunk as RecursiveReadonly<Commit<TChangeset>>[];
     }
 
     public getLastSequencedChange(): TChangeset {
