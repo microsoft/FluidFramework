@@ -5,9 +5,8 @@
 
 import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { RevisionTag, TreeSchemaIdentifier } from "../../../core";
+import { RevisionTag, TreeSchemaIdentifier, makeAnonChange } from "../../../core";
 import { TestChange } from "../../testChange";
-import { makeAnonChange } from "../../../rebase";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag: RevisionTag = brand(42);

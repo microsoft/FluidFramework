@@ -480,7 +480,6 @@ export interface IContainerRuntimeOptions {
      * @experimental This config should be driven by the connection with the service and will be moved in the future.
      */
     readonly maxBatchSizeInBytes?: number;
-
     /**
      * If the op payload needs to be chunked in order to work around the maximum size of the batch, this value represents
      * how large the individual chunks will be. This is only supported when compression is enabled.
@@ -491,6 +490,15 @@ export interface IContainerRuntimeOptions {
      * @experimental Not ready for use.
      */
     readonly chunkSizeInBytes?: number;
+    /**
+     * If enabled, the runtime will block all attempts to send an op with a different reference sequence number
+     * from the previous ops submitted in the same JS turn. This happens when ops are reentrant (an op is created as a
+     * response to another op, likely from an event handler).
+     *
+     * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableOpReentryCheck`
+     * can be used to disable it at runtime.
+     */
+    readonly enableOpReentryCheck?: boolean;
 }
 
 /**
@@ -672,6 +680,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
             maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
             chunkSizeInBytes = Number.POSITIVE_INFINITY,
+            enableOpReentryCheck = false,
         } = runtimeOptions;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -750,6 +759,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 compressionOptions,
                 maxBatchSizeInBytes,
                 chunkSizeInBytes,
+                enableOpReentryCheck,
             },
             containerScope,
             logger,
@@ -874,6 +884,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private dirtyContainer: boolean;
     private emitDirtyDocumentEvent = true;
+    private readonly enableOpReentryCheck: boolean;
 
     private readonly defaultTelemetrySignalSampleCount = 100;
     private _perfSignalData: IPerfSignalReport = {
@@ -1038,6 +1049,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
         }
 
+        this.enableOpReentryCheck = (runtimeOptions.enableOpReentryCheck === true
+            // If compression is enabled, we need to disallow op reentry as it is required that
+            // ops within the same batch have the same reference sequence number.
+            || runtimeOptions.compressionOptions.minimumBatchSizeInBytes !== Number.POSITIVE_INFINITY)
+            // Allow for a break-glass config to override the options
+            && this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableOpReentryCheck") !== true;
+
         this.summariesDisabled = this.isSummariesDisabled();
         this.heuristicsDisabled = this.isHeuristicsDisabled();
         this.summarizerClientElectionEnabled = this.isSummarizerClientElectionEnabled();
@@ -1173,7 +1191,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             config: {
                 compressionOptions: runtimeOptions.compressionOptions,
                 maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
+                enableOpReentryCheck: this.enableOpReentryCheck,
             },
+            logger: this.mc.logger,
         });
 
         this.context.quorum.on("removeMember", (clientId: string) => {

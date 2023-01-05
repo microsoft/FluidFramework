@@ -4,7 +4,7 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { Brand, Opaque } from "../util";
+import { Brand, Opaque } from "../../util";
 import { ITreeCursorSynchronous } from "./cursor";
 import { FieldKey, Value } from "./types";
 

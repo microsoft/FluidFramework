@@ -4,7 +4,7 @@
  */
 
 import { GlobalFieldKey } from "../schema-stored";
-import { brand, Brand, fail } from "../util";
+import { brand, Brand, fail } from "../../util";
 
 /**
  * Symbol which can be used to lookup a global field.

@@ -5,7 +5,7 @@
 import { strict as assert } from "assert";
 import { singleTextCursor } from "../../feature-libraries";
 import { jsonString } from "../../domains";
-import { rootFieldKeySymbol } from "../../tree";
+import { rootFieldKeySymbol } from "../../core";
 import { JsonCompatible } from "../../util";
 import { Sequencer, TestTree, TestTreeEdit } from "./testTree";
 
