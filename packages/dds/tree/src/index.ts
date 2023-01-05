@@ -99,7 +99,7 @@ export {
     JsonCompatibleObject,
 } from "./util";
 
-export { Events, IEventEmitter, IsEvent } from "./events";
+export { Events, IsEvent, ISubscribable, createEmitter, IEmitter } from "./events";
 
 export {
     cursorToJsonObject,

@@ -4,7 +4,7 @@
  */
 
 import { Dependee, SimpleDependee } from "../dependency-tracking";
-import { EventEmitter, IEventEmitter } from "../../events";
+import { createEmitter, ISubscribable } from "../../events";
 import {
     GlobalFieldKey,
     FieldSchema,
@@ -49,16 +49,12 @@ export interface SchemaEvents {
  */
 export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy>
     extends Dependee,
+        ISubscribable<SchemaEvents>,
         SchemaDataAndPolicy<TPolicy> {
     /**
      * Add the provided schema, possibly over-writing preexisting schema.
      */
     update(newSchema: SchemaData): void;
-
-    /**
-     * Emitter for events.
-     */
-    readonly emitter: IEventEmitter<SchemaEvents>;
 }
 
 /**
@@ -71,7 +67,7 @@ export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = Schem
 {
     readonly computationName: string = "StoredSchemaRepository";
     protected readonly data: MutableSchemaData;
-    public readonly emitter = EventEmitter.create<SchemaEvents>();
+    private readonly events = createEmitter<SchemaEvents>();
 
     /**
      * For now, the schema are just scored in maps.
@@ -93,6 +89,10 @@ export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = Schem
         };
     }
 
+    public on<K extends keyof SchemaEvents>(eventName: K, listener: SchemaEvents[K]): () => void {
+        return this.events.on(eventName, listener);
+    }
+
     public clone(): InMemoryStoredSchemaRepository {
         return new InMemoryStoredSchemaRepository(this.policy, this.data);
     }
@@ -106,7 +106,7 @@ export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = Schem
     }
 
     public update(newSchema: SchemaData): void {
-        this.emitter.emit("beforeSchemaChange", newSchema);
+        this.events.emit("beforeSchemaChange", newSchema);
         for (const [name, schema] of newSchema.globalFieldSchema) {
             this.data.globalFieldSchema.set(name, schema);
         }
@@ -114,7 +114,7 @@ export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = Schem
             this.data.treeSchema.set(name, schema);
         }
         this.invalidateDependents();
-        this.emitter.emit("afterSchemaChange", newSchema);
+        this.events.emit("afterSchemaChange", newSchema);
     }
 }
 

@@ -35,7 +35,7 @@ import {
 import { brand, fail } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
 import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
-import { EventEmitter } from "../../events";
+import { createEmitter } from "../../events";
 
 function makeRoot(): MapTree {
     return {
@@ -58,7 +58,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
     // All cursors that are in the "Current" state. Must be empty when editing.
     public readonly currentCursors: Set<Cursor> = new Set();
 
-    public readonly emitter = EventEmitter.create<ForestEvents>();
+    private readonly events = createEmitter<ForestEvents>();
 
     public constructor(
         public readonly schema: StoredSchemaRepository,
@@ -67,6 +67,10 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
         super("object-forest.ObjectForest");
         // Invalidate forest if schema change.
         recordDependency(this.dependent, this.schema);
+    }
+
+    public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
+        return this.events.on(eventName, listener);
     }
 
     clone(schema: StoredSchemaRepository, anchors: AnchorSet): ObjectForest {
@@ -88,7 +92,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
     }
 
     applyDelta(delta: Delta.Root): void {
-        this.emitter.emit("beforeDelta", delta);
+        this.events.emit("beforeDelta", delta);
         this.invalidateDependents();
         assert(
             this.currentCursors.size === 0,
@@ -160,7 +164,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
         visitDelta(delta, visitor);
         cursor.free();
 
-        this.emitter.emit("afterDelta", delta);
+        this.events.emit("afterDelta", delta);
     }
 
     private nextRange = 0;

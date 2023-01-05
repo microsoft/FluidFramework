@@ -21,7 +21,7 @@ import {
     SchemaDataAndPolicy,
     ForestEvents,
 } from "../../core";
-import { IEventEmitter } from "../../events";
+import { ISubscribable } from "../../events";
 import { DefaultChangeset, DefaultEditBuilder } from "../defaultChangeFamily";
 import { runSynchronousTransaction } from "../defaultTransaction";
 import { singleMapTreeCursor } from "../mapTreeCursor";
@@ -32,7 +32,7 @@ import { applyFieldTypesFromContext, ContextuallyTypedNodeData } from "./utiliti
  * A common context of a "forest" of EditableTrees.
  * It handles group operations like transforming cursors into anchors for edits.
  */
-export interface EditableTreeContext {
+export interface EditableTreeContext extends ISubscribable<ForestEvents> {
     /**
      * Gets or sets the root field of the tree.
      *
@@ -108,11 +108,6 @@ export interface EditableTreeContext {
      * to create new trees starting from the root.
      */
     clear(): void;
-
-    /**
-     * Emitter for events.
-     */
-    readonly emitter: IEventEmitter<ForestEvents>;
 }
 
 /**
@@ -123,9 +118,6 @@ export interface EditableTreeContext {
 export class ProxyContext implements EditableTreeContext {
     public readonly withCursors: Set<ProxyTarget<Anchor | FieldAnchor>> = new Set();
     public readonly withAnchors: Set<ProxyTarget<Anchor | FieldAnchor>> = new Set();
-    public get emitter(): IEventEmitter<ForestEvents> {
-        return this.forest.emitter;
-    }
 
     private readonly eventUnregister: (() => void)[];
 
@@ -141,7 +133,7 @@ export class ProxyContext implements EditableTreeContext {
         >,
     ) {
         this.eventUnregister = [
-            this.forest.emitter.on("beforeDelta", () => {
+            this.forest.on("beforeDelta", () => {
                 this.prepareForEdit();
             }),
         ];
@@ -296,6 +288,10 @@ export class ProxyContext implements EditableTreeContext {
             },
         );
         return result === TransactionResult.Apply;
+    }
+
+    public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
+        return this.forest.on(eventName, listener);
     }
 }
 

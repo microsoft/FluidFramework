@@ -328,8 +328,8 @@ export class SchemaEditor implements StoredSchemaRepository {
         private readonly submit: (op: SchemaOp) => void,
     ) {}
 
-    public get emitter(): IEventEmitter<SchemaEvents> {
-        return this.inner.emitter;
+    public on<K extends keyof SchemaEvents>(eventName: K, listener: SchemaEvents[K]): () => void {
+        return this.inner.on(eventName, listener);
     }
 
     /**

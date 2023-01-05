@@ -133,6 +133,9 @@ export interface Covariant<T> {
 }
 
 // @public
+export function createEmitter<E extends Events<E>>(): ISubscribable<E> & IEmitter<E>;
+
+// @public
 export const createField: unique symbol;
 
 // @public (undocumented)
@@ -241,9 +244,8 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 }
 
 // @public
-export interface EditableTreeContext {
+export interface EditableTreeContext extends ISubscribable<ForestEvents> {
     clear(): void;
-    readonly emitter: IEventEmitter<ForestEvents>;
     free(): void;
     prepareForEdit(): void;
     get root(): EditableField;
@@ -518,15 +520,14 @@ export interface IEditableForest extends IForestSubscription {
 }
 
 // @public
-export interface IEventEmitter<E extends Events<E>> {
-    on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
+export interface IEmitter<E extends Events<E>> {
+    emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void;
 }
 
 // @public
-export interface IForestSubscription extends Dependee {
+export interface IForestSubscription extends Dependee, ISubscribable<ForestEvents> {
     allocateCursor(): ITreeSubscriptionCursor;
     clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
-    readonly emitter: IEventEmitter<ForestEvents>;
     forgetAnchor(anchor: Anchor): void;
     readonly schema: StoredSchemaRepository;
     tryMoveCursorToField(destination: FieldAnchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
@@ -620,6 +621,11 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
 
 // @public (undocumented)
 function isSkipMark(mark: Mark<unknown>): mark is Skip;
+
+// @public
+export interface ISubscribable<E extends Events<E>> {
+    on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
+}
 
 // @public
 export function isUnwrappedNode(field: UnwrappedEditableField): field is EditableTree;
@@ -1355,8 +1361,7 @@ type Skip = number;
 type Skip_2 = number;
 
 // @public
-export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, SchemaDataAndPolicy<TPolicy> {
-    readonly emitter: IEventEmitter<SchemaEvents>;
+export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, ISubscribable<SchemaEvents>, SchemaDataAndPolicy<TPolicy> {
     update(newSchema: SchemaData): void;
 }
 

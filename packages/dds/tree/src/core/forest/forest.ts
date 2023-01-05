@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IEventEmitter } from "../../events";
+import { ISubscribable } from "../../events";
 import { Dependee } from "../dependency-tracking";
 import { StoredSchemaRepository } from "../schema-stored";
 import {
@@ -51,7 +51,7 @@ export interface ForestEvents {
  *
  * When invalidating, all outstanding cursors must be freed or cleared.
  */
-export interface IForestSubscription extends Dependee {
+export interface IForestSubscription extends Dependee, ISubscribable<ForestEvents> {
     /**
      * Create an independent copy of this forest, that uses the provided schema and anchors.
      *
@@ -66,11 +66,6 @@ export interface IForestSubscription extends Dependee {
      * The root's schema is tracked under {@link rootFieldKey}.
      */
     readonly schema: StoredSchemaRepository;
-
-    /**
-     * Emitter for events.
-     */
-    readonly emitter: IEventEmitter<ForestEvents>;
 
     /**
      * Allocates a cursor in the "cleared" state.

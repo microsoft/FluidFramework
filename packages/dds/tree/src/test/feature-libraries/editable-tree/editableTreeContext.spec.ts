@@ -52,7 +52,7 @@ describe("editable-tree context", () => {
         const person1 = tree1.root as Person;
 
         let person2 = tree2.root as Person;
-        context2.emitter.on("afterDelta", () => {
+        context2.on("afterDelta", () => {
             context2.clear();
             person2 = tree2.root as Person;
         });
@@ -78,7 +78,7 @@ describe("editable-tree context", () => {
         const ageField: FieldKey = brand("age");
         const [, [tree]] = await createSharedTrees(fullSchemaData, [personData]);
 
-        tree.context.emitter.on("afterDelta", () => {
+        tree.context.on("afterDelta", () => {
             tree.context.clear();
         });
 

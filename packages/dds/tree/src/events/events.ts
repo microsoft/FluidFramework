@@ -63,7 +63,8 @@ export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent>
 /**
  * An object which allows the registration of listeners so that subscribers can be notified when an event happens.
  *
- * {@link EventEmitter} can help implement this interface via delegation or extension.
+ * {@link createEmitter} can help implement this interface via delegation.
+ * `EventEmitter` can be used as a base class to implement this via extension.
  * @param E - All the events that this emitter supports
  * @example
  * ```ts
@@ -97,10 +98,12 @@ export interface IEmitter<E extends Events<E>> {
 }
 
 /**
- * Create an instance of an {@link EventEmitter} that can be instructed to emit events. This is useful
- * for classes that wish to compose over an {@link EventEmitter} rather than inheriting from it.
+ * Create an {@link ISubscribable} that can be instructed to emit events via the {@link IEmitter} interface.
+ *
+ * A class can delegate handling {@link ISubscribable} to the returned value while using it to emit the events.
+ * See also `EventEmitter` which be used as a base class to implement {@link ISubscribable} via extension.
  */
-export function createEmitter<E extends Events<E>>(): EventEmitter<E> & IEmitter<E> {
+export function createEmitter<E extends Events<E>>(): ISubscribable<E> & IEmitter<E> {
     return new ComposableEventEmitter<E>();
 }
 
