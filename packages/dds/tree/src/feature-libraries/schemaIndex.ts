@@ -45,7 +45,7 @@ import {
     SummaryElementStringifier,
 } from "../shared-tree-core";
 import { brand, isJsonObject, JsonCompatibleReadOnly } from "../util";
-import { IEventEmitter } from "../events";
+import { ISubscribable } from "../events";
 
 /**
  * The storage key for the blob in the summary containing schema data
@@ -224,7 +224,7 @@ export class SchemaIndex implements Index, SummaryElement {
 
     public constructor(
         private readonly runtime: IFluidDataStoreRuntime,
-        events: IEventEmitter<IndexEvents<unknown>>,
+        events: ISubscribable<IndexEvents<unknown>>,
         private readonly schema: StoredSchemaRepository,
     ) {
         this.schemaBlob = cachedValue(async (observer) => {

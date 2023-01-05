@@ -315,8 +315,7 @@ flowchart
             dependency-tracking
             forest-->tree
         end
-        core-->events
-        core-->util
+        core-->events-->util
         id-compressor-->util
         feature-->shared-tree-core
         shared-tree-core-->core
