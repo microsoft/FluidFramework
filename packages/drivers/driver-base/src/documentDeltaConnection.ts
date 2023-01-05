@@ -419,7 +419,7 @@ export class DocumentDeltaConnection
                         }
                     }
                     else if (description && typeof description === "object") {
-                        const errorCode = description.error.code;
+                        const errorCode = description.error?.code;
 
                         // Self-Signed Certificate ErrorCode Found in error.description
                         if (errorCode === "DEPTH_ZERO_SELF_SIGNED_CERT") {
