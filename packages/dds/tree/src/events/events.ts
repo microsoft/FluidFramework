@@ -4,6 +4,8 @@
  */
 
 import type { IEvent } from "@fluidframework/common-definitions";
+import { assert } from "@fluidframework/common-utils";
+import { fail, getOrCreate } from "../util";
 
 /**
  * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
@@ -20,7 +22,7 @@ export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never)
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
 /**
- * Used to specify the kinds of events emitted by an {@link IEventEmitter}.
+ * Used to specify the kinds of events emitted by an {@link ISubscribable}.
  * @example
  * ```ts
  * interface MyEvents {
@@ -36,7 +38,7 @@ export type Events<E> = {
 };
 
 /**
- * Converts an `Events` type (i.e. the event registry for an {@link IEventEmitter}) into a type consumable
+ * Converts an `Events` type (i.e. the event registry for an {@link ISubscribable}) into a type consumable
  * by an IEventProvider from `@fluidframework/common-definitions`.
  * @param E - the `Events` type to transform
  * @param Target - an optional `IEvent` type that will be merged into the result along with the transformed `E`
@@ -71,14 +73,27 @@ export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent>
  * }>
  * ```
  */
-export interface IEventEmitter<E extends Events<E>> {
+export interface ISubscribable<E extends Events<E>> {
     /**
      * Register an event listener.
      * @param eventName - the name of the event
      * @param listener - the handler to run when the event is fired by the emitter
-     * @returns a function which will deregister the listener when run
+     * @returns a function which will deregister the listener when run. This function has undefined behavior
+     * if called more than once.
      */
     on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
+}
+
+/**
+ * An object which can emit events to subscribed listeners.
+ */
+export interface IEmitter<E extends Events<E>> {
+    /**
+     * Fire the given event, notifying all subscribers by calling their registered listener functions.
+     * @param eventName - the name of the event to fire
+     * @param args - the arguments passed to the event listener functions
+     */
+    emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void;
 }
 
 /**
@@ -99,7 +114,7 @@ export interface IEventEmitter<E extends Events<E>> {
  * Or, compose over it:
  * @example
  * ```ts
- * class MyClass implements IEventEmitter<MyEvents> {
+ * class MyClass implements ISubscribable<MyEvents> {
  *   private readonly events = EventEmitter.create<MyEvents>();
  *
  *   private load() {
@@ -112,27 +127,20 @@ export interface IEventEmitter<E extends Events<E>> {
  * }
  * ```
  */
-export class EventEmitter<E extends Events<E>> implements IEventEmitter<E> {
+export class EventEmitter<E extends Events<E>> implements ISubscribable<E> {
     private readonly listeners = new Map<keyof E, Set<(...args: unknown[]) => void>>();
 
     /**
-     * Create an instance of an {@link EventEmitter}.
+     * Create an instance of an {@link EventEmitter} that can be told to emit events. This is useful
+     * for classes that wish to compose over an {@link EventEmitter} rather than inheriting from it.
      */
-    public static create<E extends Events<E>>() {
-        return new EventEmitter() as EventEmitter<E> & {
-            // Expose the `emit` method so that it may be called by the creator.
-            emit: EventEmitter<E>["emit"];
-        };
+    public static create<E extends Events<E>>(): EventEmitter<E> & IEmitter<E> {
+        return new ComposableEventEmitter<E>();
     }
 
     // The constructor is protected so as to require use of the static `create` function
     protected constructor() {}
 
-    /**
-     * Fire the given event, notifying all subscribers by calling their registered listener functions.
-     * @param eventName - the name of the event to fire
-     * @param args - the arguments passed to the event listener functions
-     */
     protected emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {
         const listeners = this.listeners.get(eventName);
         if (listeners !== undefined) {
@@ -143,24 +151,37 @@ export class EventEmitter<E extends Events<E>> implements IEventEmitter<E> {
         }
     }
 
+    /**
+     * Register an event listener.
+     * @param eventName - the name of the event
+     * @param listener - the handler to run when the event is fired by the emitter
+     * @returns a function which will deregister the listener when run.
+     * This function will error if called more than once.
+     */
     public on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void {
-        const listeners = this.listeners.get(eventName);
-        if (listeners !== undefined) {
-            listeners.add(listener);
-        } else {
-            this.listeners.set(eventName, new Set([listener]));
-        }
-
-        return this.off.bind(this, eventName, listener);
+        getOrCreate(this.listeners, eventName, () => new Set()).add(listener);
+        return () => this.off(eventName, listener);
     }
 
     private off<K extends keyof Events<E>>(eventName: K, listener: E[K]): void {
-        const listeners = this.listeners.get(eventName);
-        if (listeners !== undefined) {
-            listeners.delete(listener);
-            if (listeners.size === 0) {
-                this.listeners.delete(eventName);
-            }
+        const listeners =
+            this.listeners.get(eventName) ??
+            fail(
+                "Event has no listeners. Event deregistration functions may only be invoked once.",
+            );
+        assert(
+            listeners.delete(listener),
+            "Listener does not exist. Event deregistration functions may only be invoked once.",
+        );
+        if (listeners.size === 0) {
+            this.listeners.delete(eventName);
         }
+    }
+}
+
+// This class exposes the `emit` method of `EventEmitter`, elevating it from protected to public
+class ComposableEventEmitter<E extends Events<E>> extends EventEmitter<E> implements IEmitter<E> {
+    public emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {
+        return super.emit(eventName, ...args);
     }
 }

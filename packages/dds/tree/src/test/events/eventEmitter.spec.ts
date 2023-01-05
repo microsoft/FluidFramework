@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { EventEmitter, IEventEmitter } from "../../events";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+import { EventEmitter, ISubscribable } from "../../events";
 
 interface TestEvents {
     open: () => void;
@@ -92,6 +93,30 @@ describe("EventEmitter", () => {
         // Count should be 1, not 2, even though `listener` was registered twice
         assert.strictEqual(count, 1);
     });
+
+    it("fails on duplicate deregistrations", () => {
+        const emitter = EventEmitter.create<TestEvents>();
+        const deregister = emitter.on("open", () => {});
+        const deregisterB = emitter.on("open", () => {});
+        deregister();
+        assert.throws(
+            () => deregister(),
+            (e) =>
+                validateAssertionError(
+                    e,
+                    "Listener does not exist. Event deregistration functions may only be invoked once.",
+                ),
+        );
+        deregisterB();
+        assert.throws(
+            () => deregister(),
+            (e) =>
+                validateAssertionError(
+                    e,
+                    "Event has no listeners. Event deregistration functions may only be invoked once.",
+                ),
+        );
+    });
 });
 
 interface MyEvents {
@@ -106,7 +131,7 @@ class MyInheritanceClass extends EventEmitter<MyEvents> {
     }
 }
 
-class MyCompositionClass implements IEventEmitter<MyEvents> {
+class MyCompositionClass implements ISubscribable<MyEvents> {
     private readonly events = EventEmitter.create<MyEvents>();
 
     private load() {
