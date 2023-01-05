@@ -19,7 +19,6 @@ import {
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
 import {
-    applyMoveEffectsToMark,
     changeSrcMoveId,
     modifyMoveSrc,
     MoveEffectTable,
@@ -374,21 +373,18 @@ function applyMoveEffects<TNodeChange>(
     moveEffects: MoveEffectTable<TNodeChange>,
 ): MarkList<TNodeChange> {
     const factory = new MarkListFactory<TNodeChange>(moveEffects);
-    // TODO: Use MarkQueue here
-    for (const mark of marks) {
-        const splitMarks = applyMoveEffectsToMark(
-            mark,
-            undefined,
-            moveEffects,
-            () => fail("Should not generate IDs"),
-            false,
-            // TODO: Should pass in revision for new changes
-            (a, b) => composeChildChanges(a, b, undefined, composeChild),
-        );
+    const queue = new MarkQueue(
+        marks,
+        undefined,
+        moveEffects,
+        () => fail("Should not generate IDs"),
+        false,
+        // TODO: Should pass in revision for new changes
+        (a, b) => composeChildChanges(a, b, undefined, composeChild),
+    );
 
-        for (const splitMark of splitMarks) {
-            factory.push(splitMark);
-        }
+    while (!queue.isEmpty()) {
+        factory.push(queue.dequeue() as Mark<TNodeChange>);
     }
 
     return factory.list;
@@ -433,7 +429,7 @@ export class ComposeQueue<T> {
         let baseMark = this.baseMarks.peek();
         let newMark = this.newMarks.peek();
         if (baseMark === undefined || newMark === undefined) {
-            return { baseMark: this.baseMarks.pop(), newMark: this.newMarks.pop() };
+            return { baseMark: this.baseMarks.dequeue(), newMark: this.newMarks.dequeue() };
         } else if (isAttach(newMark)) {
             const newRev = newMark.revision ?? this.newMarks.revision;
             if (
@@ -448,15 +444,15 @@ export class ComposeQueue<T> {
                     0x4ac /* Inverse marks should be the same length */,
                 );
                 return {
-                    baseMark: this.baseMarks.pop(),
-                    newMark: this.newMarks.pop(),
+                    baseMark: this.baseMarks.dequeue(),
+                    newMark: this.newMarks.dequeue(),
                     areInverses: true,
                 };
             } else {
-                return { newMark: this.newMarks.pop() };
+                return { newMark: this.newMarks.dequeue() };
             }
         } else if (isDetachMark(baseMark)) {
-            return { baseMark: this.baseMarks.pop() };
+            return { baseMark: this.baseMarks.dequeue() };
         } else {
             // If we've reached this branch then `baseMark` and `newMark` start at the same location
             // in the document field at the revision after the base changes and before the new changes.
@@ -466,14 +462,14 @@ export class ComposeQueue<T> {
             const newMarkLength = getInputLength(newMark);
             const baseMarkLength = getOutputLength(baseMark);
             if (newMarkLength < baseMarkLength) {
-                this.newMarks.pop();
-                baseMark = this.baseMarks.takeOutput(newMarkLength);
+                this.newMarks.dequeue();
+                baseMark = this.baseMarks.splitOutputAndDequeue(newMarkLength);
             } else if (newMarkLength > baseMarkLength) {
-                this.baseMarks.pop();
-                newMark = this.newMarks.takeInput(baseMarkLength);
+                this.baseMarks.dequeue();
+                newMark = this.newMarks.splitInputAndDequeue(baseMarkLength);
             } else {
-                this.baseMarks.pop();
-                this.newMarks.pop();
+                this.baseMarks.dequeue();
+                this.newMarks.dequeue();
             }
             // Past this point, we are guaranteed that `newMark` and `baseMark` have the same length and
             // start at the same location in the revision after the base changes.

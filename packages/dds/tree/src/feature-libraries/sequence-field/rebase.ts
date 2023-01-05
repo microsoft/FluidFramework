@@ -159,8 +159,8 @@ class RebaseQueue<T> {
 
         if (baseMark === undefined || newMark === undefined) {
             return {
-                baseMark: this.baseMarks.pop(),
-                newMark: this.newMarks.pop(),
+                baseMark: this.baseMarks.dequeue(),
+                newMark: this.newMarks.dequeue(),
             };
         } else if (isAttach(baseMark) && isAttach(newMark)) {
             const revision = baseMark.revision ?? this.baseMarks.revision;
@@ -168,44 +168,44 @@ class RebaseQueue<T> {
             if (reattachOffset !== undefined) {
                 const offset = reattachOffset - this.reattachOffset;
                 if (offset === 0) {
-                    return { newMark: this.newMarks.pop() };
+                    return { newMark: this.newMarks.dequeue() };
                 } else if (offset >= getOutputLength(baseMark)) {
                     this.reattachOffset += getOutputLength(baseMark);
-                    return { baseMark: this.baseMarks.pop() };
+                    return { baseMark: this.baseMarks.dequeue() };
                 } else {
-                    const splitBaseMark = this.baseMarks.takeOutput(offset);
+                    const splitBaseMark = this.baseMarks.splitOutputAndDequeue(offset);
                     this.reattachOffset += offset;
                     return { baseMark: splitBaseMark };
                 }
             } else if (isAttachAfterBaseAttach(newMark, baseMark)) {
-                return { baseMark: this.baseMarks.pop() };
+                return { baseMark: this.baseMarks.dequeue() };
             } else {
-                return { newMark: this.newMarks.pop() };
+                return { newMark: this.newMarks.dequeue() };
             }
         } else if (isAttach(newMark)) {
-            return { newMark: this.newMarks.pop() };
+            return { newMark: this.newMarks.dequeue() };
         }
 
         // TODO: Handle case where `baseMarks` has adjacent or nested inverse reattaches from multiple revisions
         this.reattachOffset = 0;
         if (isAttach(baseMark)) {
-            return { baseMark: this.baseMarks.pop() };
+            return { baseMark: this.baseMarks.dequeue() };
         } else {
             this.reattachOffset = 0;
             const newMarkLength = getInputLength(newMark);
             const baseMarkLength = getInputLength(baseMark);
             if (newMarkLength < baseMarkLength) {
                 return {
-                    baseMark: this.baseMarks.takeInput(newMarkLength),
-                    newMark: this.newMarks.pop(),
+                    baseMark: this.baseMarks.splitInputAndDequeue(newMarkLength),
+                    newMark: this.newMarks.dequeue(),
                 };
             } else if (newMarkLength > baseMarkLength) {
                 return {
-                    baseMark: this.baseMarks.pop(),
-                    newMark: this.newMarks.takeInput(baseMarkLength),
+                    baseMark: this.baseMarks.dequeue(),
+                    newMark: this.newMarks.splitInputAndDequeue(baseMarkLength),
                 };
             } else {
-                return { baseMark: this.baseMarks.pop(), newMark: this.newMarks.pop() };
+                return { baseMark: this.baseMarks.dequeue(), newMark: this.newMarks.dequeue() };
             }
         }
     }

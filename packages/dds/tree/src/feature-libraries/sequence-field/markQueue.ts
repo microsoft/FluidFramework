@@ -34,8 +34,8 @@ export class MarkQueue<T> {
         return this.peek() === undefined;
     }
 
-    public takeInput(length: number): SizedMark<T> | undefined {
-        const mark = this.pop();
+    public splitInputAndDequeue(length: number): SizedMark<T> | undefined {
+        const mark = this.dequeue();
         if (mark === undefined) {
             return undefined;
         }
@@ -50,8 +50,8 @@ export class MarkQueue<T> {
         return mark1;
     }
 
-    public takeOutput(length: number): Mark<T> | undefined {
-        const mark = this.pop();
+    public splitOutputAndDequeue(length: number): Mark<T> | undefined {
+        const mark = this.dequeue();
         if (mark === undefined) {
             return undefined;
         }
@@ -66,14 +66,14 @@ export class MarkQueue<T> {
     }
 
     public peek(): Mark<T> | undefined {
-        const mark = this.pop();
+        const mark = this.dequeue();
         if (mark !== undefined) {
             this.stack.push(mark);
         }
         return mark;
     }
 
-    public pop(): Mark<T> | undefined {
+    public dequeue(): Mark<T> | undefined {
         let reassignMoveIds = this.reassignMoveIds;
         let mark: Mark<T> | undefined;
         if (this.stack.length > 0) {
