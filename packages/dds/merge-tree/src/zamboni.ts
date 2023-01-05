@@ -11,23 +11,23 @@ import { IMergeBlock, IMergeNode, ISegment, MaxNodesInBlock } from "./mergeTreeN
 import { matchProperties } from "./properties";
 
 export class Zamboni {
-    private static readonly zamboniSegmentsMaxCount = 2;
+    public constructor() {}
 
     private underflow(node: IMergeBlock) {
         return node.childCount < (MaxNodesInBlock / 2);
     }
 
-    public zamboniSegments(mergeTree: MergeTree, zamboniSegmentsMaxCount = Zamboni.zamboniSegmentsMaxCount) {
+    public zamboniSegments(mergeTree: MergeTree, zamboniSegmentsMaxCount = MergeTree.zamboniSegmentsMaxCount) {
         if (!mergeTree.collabWindow.collaborating) {
             return;
         }
 
         for (let i = 0; i < zamboniSegmentsMaxCount; i++) {
-            let segmentToScour = mergeTree.segmentsToScour!.peek();
+            let segmentToScour = mergeTree.getSegmentsToScour!.peek();
             if (!segmentToScour || segmentToScour.maxSeq > mergeTree.collabWindow.minSeq) {
                 break;
             }
-            segmentToScour = mergeTree.segmentsToScour!.get();
+            segmentToScour = mergeTree.getSegmentsToScour!.get();
             // Only skip scouring if needs scour is explicitly false, not true or undefined
             if (segmentToScour.segment!.parent && segmentToScour.segment!.parent.needsScour !== false) {
                 const block = segmentToScour.segment!.parent;
