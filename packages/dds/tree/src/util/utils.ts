@@ -4,13 +4,34 @@
  */
 
 import structuredClone from "@ungap/structured-clone";
+import { Brand, Opaque } from "./brand";
 
 /**
  * Make all transitive properties in T readonly
  */
-export type RecursiveReadonly<T> = {
-    readonly [P in keyof T]: RecursiveReadonly<T[P]>;
-};
+export type RecursiveReadonly<T> = T extends
+    | undefined
+    // eslint-disable-next-line @rushstack/no-new-null
+    | null
+    | boolean
+    | string
+    | number
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    | Function
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    | Symbol
+    ? T
+    : T extends Opaque<Brand<any, string>>
+    ? T
+    : T extends Map<infer K, infer V>
+    ? ReadonlyMap<RecursiveReadonly<K>, RecursiveReadonly<V>>
+    : T extends Set<infer K>
+    ? ReadonlySet<RecursiveReadonly<K>>
+    : T extends (infer V)[]
+    ? readonly RecursiveReadonly<V>[]
+    : {
+          readonly [K in keyof T]: RecursiveReadonly<T[K]>;
+      };
 
 /**
  * Remove `readonly` from all fields.

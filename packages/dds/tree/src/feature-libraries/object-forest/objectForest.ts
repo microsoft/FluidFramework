@@ -32,7 +32,7 @@ import {
     afterChangeToken,
     FieldUpPath,
 } from "../../core";
-import { brand, fail } from "../../util";
+import { brand, fail, RecursiveReadonly } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
 import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
 
@@ -84,7 +84,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
         this.anchors.forget(anchor);
     }
 
-    applyDelta(delta: Delta.Root): void {
+    applyDelta(delta: RecursiveReadonly<Delta.Root>): void {
         this.beforeChange();
 
         // Note: This code uses cursors, however it also modifies the tree.

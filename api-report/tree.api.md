@@ -22,7 +22,7 @@ export interface AnchorLocator {
 
 // @public @sealed
 export class AnchorSet {
-    applyDelta(delta: Delta.Root): void;
+    applyDelta(delta: RecursiveReadonly<Delta.Root>): void;
     // (undocumented)
     forget(anchor: Anchor): void;
     isEmpty(): boolean;
@@ -503,7 +503,7 @@ export interface IDefaultEditBuilder {
 // @public
 export interface IEditableForest extends IForestSubscription {
     readonly anchors: AnchorSet;
-    applyDelta(delta: Delta.Root): void;
+    applyDelta(delta: RecursiveReadonly<Delta.Root>): void;
 }
 
 // @public
@@ -1095,8 +1095,13 @@ function rebase<TNodeChange>(change: Changeset<TNodeChange>, base: TaggedChange<
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
 
 // @public
+export type RecursiveReadonly<T> = T extends undefined | null | boolean | string | number | Function | Symbol ? T : T extends Opaque<Brand<any, string>> ? T : T extends Map<infer K, infer V> ? ReadonlyMap<RecursiveReadonly<K>, RecursiveReadonly<V>> : T extends Set<infer K> ? ReadonlySet<RecursiveReadonly<K>> : T extends (infer V)[] ? readonly RecursiveReadonly<V>[] : {
+    readonly [K in keyof T]: RecursiveReadonly<T[K]>;
+};
+
+// @public
 export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepairDataStore<TTree> {
-    capture(change: Delta.Root, revision: RevisionTag): void;
+    capture(change: RecursiveReadonly<Delta.Root>, revision: RevisionTag): void;
 }
 
 // @public

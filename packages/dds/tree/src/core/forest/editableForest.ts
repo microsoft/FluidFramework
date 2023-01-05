@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { RecursiveReadonly } from "../../util";
 import { InvalidationToken } from "../dependency-tracking";
 import {
     AnchorSet,
@@ -33,7 +34,7 @@ export interface IEditableForest extends IForestSubscription {
      * Applies the supplied Delta to the forest.
      * Does NOT update anchors.
      */
-    applyDelta(delta: Delta.Root): void;
+    applyDelta(delta: RecursiveReadonly<Delta.Root>): void;
 }
 
 /**

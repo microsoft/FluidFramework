@@ -27,7 +27,7 @@ import {
 } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import { ChangeFamily, Commit, EditManager, SeqNumber, AnchorSet, Delta } from "../core";
-import { brand, isReadonlyArray, JsonCompatibleReadOnly } from "../util";
+import { brand, isReadonlyArray, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
 import { EventEmitter, IEventEmitter, TransformEvents } from "../events";
 
 /**
@@ -61,7 +61,7 @@ export interface IndexEvents<TChangeset> {
      * May involve effects of a new sequenced change (including rebasing of local changes onto it),
      * or a new local change. Called after either sequencedChange or newLocalChange.
      */
-    newLocalState: (changeDelta: Delta.Root) => void;
+    newLocalState: (changeDelta: RecursiveReadonly<Delta.Root>) => void;
 }
 
 /**

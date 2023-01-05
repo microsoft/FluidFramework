@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { RecursiveReadonly } from "../../util";
 import { RevisionTag } from "../rebase";
 import { Value, Delta, UpPath, FieldKey } from "../tree";
 
@@ -50,5 +51,5 @@ export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepair
      * @param change - A change that may be deleting document data that this store should retain.
      * @param revision - The revision associated with the change.
      */
-    capture(change: Delta.Root, revision: RevisionTag): void;
+    capture(change: RecursiveReadonly<Delta.Root>, revision: RevisionTag): void;
 }

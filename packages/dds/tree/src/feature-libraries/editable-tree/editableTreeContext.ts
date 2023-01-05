@@ -25,6 +25,7 @@ import {
     afterChangeToken,
     SchemaDataAndPolicy,
 } from "../../core";
+import { RecursiveReadonly } from "../../util";
 import { DefaultChangeset, DefaultEditBuilder } from "../defaultChangeFamily";
 import { runSynchronousTransaction } from "../defaultTransaction";
 import { singleMapTreeCursor } from "../mapTreeCursor";
@@ -143,7 +144,7 @@ export class ProxyContext implements EditableTreeContext {
         >,
     ) {
         this.observer = new SimpleObservingDependent(
-            (token?: InvalidationToken, delta?: Delta.Root): void => {
+            (token?: InvalidationToken, delta?: RecursiveReadonly<Delta.Root>): void => {
                 if (token === afterChangeToken) {
                     this.handleAfterChange();
                 } else {

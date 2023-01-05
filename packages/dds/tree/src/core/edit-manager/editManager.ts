@@ -123,8 +123,8 @@ export class EditManager<
         writer({ trunk: this.trunk, branches: this.branches });
     }
 
-    public getTrunk(): readonly RecursiveReadonly<Commit<TChangeset>>[] {
-        return this.trunk;
+    public getTrunk(): readonly RecursiveReadonly<Commit<RecursiveReadonly<TChangeset>>>[] {
+        return this.trunk as RecursiveReadonly<Commit<RecursiveReadonly<TChangeset>>>[];
     }
 
     public getLastSequencedChange(): TChangeset {
@@ -136,7 +136,7 @@ export class EditManager<
     }
 
     public getLocalChanges(): readonly RecursiveReadonly<TChangeset>[] {
-        return this.localChanges.map((change) => change.change);
+        return this.localChanges.map((change) => change.change) as RecursiveReadonly<TChangeset>[];
     }
 
     public addSequencedChange(newCommit: Commit<TChangeset>): Delta.Root {

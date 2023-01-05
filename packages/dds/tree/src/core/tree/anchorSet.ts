@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { brand, Brand, fail } from "../../util";
+import { brand, Brand, fail, RecursiveReadonly } from "../../util";
 import { FieldKey, EmptyKey, Delta, visitDelta } from "../tree";
 import { UpPath } from "./pathTree";
 import { Value } from "./types";
@@ -299,7 +299,7 @@ export class AnchorSet {
     /**
      * Updates the anchors according to the changes described in the given delta
      */
-    public applyDelta(delta: Delta.Root): void {
+    public applyDelta(delta: RecursiveReadonly<Delta.Root>): void {
         let parentField: FieldKey | undefined;
         let parent: UpPath | undefined;
         const moveTable = new Map<Delta.MoveId, UpPath>();

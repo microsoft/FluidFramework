@@ -43,7 +43,7 @@ import {
     SummaryElementParser,
     SummaryElementStringifier,
 } from "../shared-tree-core";
-import { brand, isJsonObject, JsonCompatibleReadOnly } from "../util";
+import { brand, isJsonObject, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
 import { IEventEmitter } from "../events";
 
 /**
@@ -239,7 +239,7 @@ export class SchemaIndex implements Index, SummaryElement {
         });
     }
 
-    newLocalState(changeDelta: Delta.Root): void {
+    newLocalState(changeDelta: RecursiveReadonly<Delta.Root>): void {
         // TODO: apply schema changes.
         // Extend delta to include them, or maybe have some higher level edit type that includes them and deltas?
     }

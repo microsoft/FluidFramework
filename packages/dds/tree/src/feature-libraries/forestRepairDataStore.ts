@@ -20,7 +20,7 @@ import {
     UpPath,
     Value,
 } from "../core";
-import { unreachableCase } from "../util";
+import { RecursiveReadonly, unreachableCase } from "../util";
 import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
 
 interface RepairData {
@@ -41,11 +41,14 @@ export class ForestRepairDataStore implements RepairDataStore {
         this.root = new SparseNode<RepairData | undefined>(EmptyKey, 0, undefined, undefined);
     }
 
-    public capture(change: Delta.Root, revision: RevisionTag): void {
+    public capture(change: RecursiveReadonly<Delta.Root>, revision: RevisionTag): void {
         const forest = this.forestProvider(revision);
         const cursor = forest.allocateCursor();
 
-        const visitFieldMarks = (fields: Delta.FieldMarks, parent: RepairDataNode): void => {
+        const visitFieldMarks = (
+            fields: RecursiveReadonly<Delta.FieldMarks>,
+            parent: RepairDataNode,
+        ): void => {
             for (const [key, field] of fields) {
                 if (parent !== this.root) {
                     cursor.enterField(key);
@@ -59,7 +62,11 @@ export class ForestRepairDataStore implements RepairDataStore {
             }
         };
 
-        function visitField(delta: Delta.MarkList, parent: RepairDataNode, key: FieldKey): void {
+        function visitField(
+            delta: RecursiveReadonly<Delta.MarkList>,
+            parent: RepairDataNode,
+            key: FieldKey,
+        ): void {
             let index = 0;
             for (const mark of delta) {
                 if (typeof mark === "number") {
@@ -103,7 +110,7 @@ export class ForestRepairDataStore implements RepairDataStore {
             }
         }
 
-        function visitModify(modify: ModifyLike, node: RepairDataNode): void {
+        function visitModify(modify: RecursiveReadonly<ModifyLike>, node: RepairDataNode): void {
             // Note that the `in` operator return true for properties that are present on the object even if they
             // are set to `undefined. This is leveraged here to represent the fact that the value should be set to
             // `undefined` as opposed to leaving the value untouched.

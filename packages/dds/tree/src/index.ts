@@ -95,6 +95,7 @@ export {
     JsonCompatibleReadOnly,
     JsonCompatible,
     JsonCompatibleObject,
+    RecursiveReadonly,
 } from "./util";
 
 export {

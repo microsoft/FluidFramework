@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail, unreachableCase } from "../../util";
+import { fail, RecursiveReadonly, unreachableCase } from "../../util";
 import { FieldKey, Value } from "./types";
 import * as Delta from "./delta";
 
@@ -65,7 +65,7 @@ import * as Delta from "./delta";
  * @param delta - The delta to be crawled.
  * @param visitor - The object to notify of the changes encountered.
  */
-export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
+export function visitDelta(delta: RecursiveReadonly<Delta.Root>, visitor: DeltaVisitor): void {
     const moveInfo: MoveOutInfo = new Map();
     const props = { visitor, moveInfo };
     visitFieldMarks(delta, props, firstPass);
@@ -76,7 +76,7 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
 
 export interface DeltaVisitor {
     onDelete(index: number, count: number): void;
-    onInsert(index: number, content: Delta.ProtoNode[]): void;
+    onInsert(index: number, content: RecursiveReadonly<Delta.ProtoNode[]>): void;
     onMoveOut(index: number, count: number, id: Delta.MoveId): void;
     onMoveIn(index: number, count: number, id: Delta.MoveId): void;
     onSetValue(value: Value): void;
@@ -90,7 +90,7 @@ export interface DeltaVisitor {
     exitField(key: FieldKey): void;
 }
 
-type MoveOutInfo = Map<Delta.MoveId, Delta.MoveOut>;
+type MoveOutInfo = Map<Delta.MoveId, RecursiveReadonly<Delta.MoveOut>>;
 
 interface PassProps {
     /**
@@ -101,14 +101,18 @@ interface PassProps {
     moveInfo: MoveOutInfo;
 }
 
-type Pass = (delta: Delta.MarkList, props: PassProps) => void;
+type Pass = (delta: RecursiveReadonly<Delta.MarkList>, props: PassProps) => void;
 
 interface ModifyLike {
     setValue?: Value;
     fields?: Delta.FieldMarks;
 }
 
-function visitFieldMarks(fields: Delta.FieldMarks, props: PassProps, func: Pass): void {
+function visitFieldMarks(
+    fields: RecursiveReadonly<Delta.FieldMarks>,
+    props: PassProps,
+    func: Pass,
+): void {
     for (const [key, field] of fields) {
         props.visitor.enterField(key);
         func(field, { ...props, startIndex: 0 });
@@ -116,7 +120,7 @@ function visitFieldMarks(fields: Delta.FieldMarks, props: PassProps, func: Pass)
     }
 }
 
-function visitModify(modify: ModifyLike, props: PassProps, func: Pass): void {
+function visitModify(modify: RecursiveReadonly<ModifyLike>, props: PassProps, func: Pass): void {
     const { startIndex, visitor } = props;
     visitor.enterNode(startIndex ?? 0);
     // Note that the `in` operator return true for properties that are present on the object even if they
@@ -131,7 +135,7 @@ function visitModify(modify: ModifyLike, props: PassProps, func: Pass): void {
     visitor.exitNode(startIndex ?? 0);
 }
 
-function firstPass(delta: Delta.MarkList, props: PassProps): void {
+function firstPass(delta: RecursiveReadonly<Delta.MarkList>, props: PassProps): void {
     const { startIndex, visitor, moveInfo } = props;
     let index = startIndex ?? 0;
     for (const mark of delta) {
@@ -185,7 +189,7 @@ function firstPass(delta: Delta.MarkList, props: PassProps): void {
 const NO_MATCHING_MOVE_OUT_ERR =
     "Encountered a MoveIn mark for which there is not corresponding MoveOut mark";
 
-function secondPass(delta: Delta.MarkList, props: PassProps): void {
+function secondPass(delta: RecursiveReadonly<Delta.MarkList>, props: PassProps): void {
     const { startIndex, visitor, moveInfo } = props;
     let index = startIndex ?? 0;
     for (const mark of delta) {
