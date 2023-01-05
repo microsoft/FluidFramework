@@ -14,7 +14,6 @@ import {
     getGCDataFromSnapshot,
     IGCResult,
     runGarbageCollection,
-    unpackChildNodesGCDetails,
 } from "@fluidframework/garbage-collector";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
@@ -152,8 +151,8 @@ export interface IGarbageCollector {
     ): ISummarizeResult | undefined;
     /** Returns the garbage collector specific metadata to be written into the summary. */
     getMetadata(): IGCMetadata;
-    /** Returns a map of each node id to its base GC details in the base summary. */
-    getBaseGCDetails(): Promise<Map<string, IGarbageCollectionDetailsBase>>;
+    /** Returns the GC details generated from the base snapshot. */
+    getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
     /** Called when the latest summary of the system has been refreshed. */
     refreshLatestSummary(
         result: RefreshSummaryResult,
@@ -425,8 +424,8 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly baseSnapshotDataP: Promise<IGarbageCollectionSnapshotData | undefined>;
     // Promise when resolved initializes the GC state from the data in the base snapshot.
     private readonly initializeGCStateFromBaseSnapshotP: Promise<void>;
-    // The map of data store ids to their GC details in the base summary returned in getDataStoreGCDetails().
-    private readonly baseGCDetailsP: Promise<Map<string, IGarbageCollectionDetailsBase>>;
+    // The GC details generated from the base snapshot.
+    private readonly baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
     // Map of node ids to their unreferenced state tracker.
     private readonly unreferencedNodesState: Map<string, UnreferencedStateTracker> = new Map();
     // The Timer responsible for closing the container when the session has expired
@@ -740,12 +739,12 @@ export class GarbageCollector implements IGarbageCollector {
             this.updateStateFromSnapshotData(baseSnapshotData, currentReferenceTimestampMs);
         });
 
-        // Get the GC details for each node from the GC state in the base summary. This is returned in getBaseGCDetails
-        // which the caller uses to initialize each node's GC state.
-        this.baseGCDetailsP = new LazyPromise<Map<string, IGarbageCollectionDetailsBase>>(async () => {
+        // Get the GC details from the GC state in the base summary. This is returned in getBaseGCDetails which is
+        // used to initialize the GC state of all the nodes in the container.
+        this.baseGCDetailsP = new LazyPromise<IGarbageCollectionDetailsBase>(async () => {
             const baseSnapshotData = await this.baseSnapshotDataP;
             if (baseSnapshotData === undefined) {
-                return new Map();
+                return {};
             }
 
             const gcNodes: { [id: string]: string[]; } = {};
@@ -757,7 +756,7 @@ export class GarbageCollector implements IGarbageCollector {
             // each node in the summary.
             const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
 
-            return unpackChildNodesGCDetails({ gcData: { gcNodes }, usedRoutes });
+            return { gcData: { gcNodes }, usedRoutes };
         });
 
         // Log all the GC options and the state determined by the garbage collector. This is interesting only for the
@@ -1095,10 +1094,10 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Returns a map of node ids to their base GC details generated from the base summary. This is used by the caller
-     * to initialize the GC state of the nodes.
+     * Returns a the GC details generated from the base summary. This is used to initialize the GC state of the nodes
+     * in the container.
      */
-    public async getBaseGCDetails(): Promise<Map<string, IGarbageCollectionDetailsBase>> {
+    public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
         return this.baseGCDetailsP;
     }
 

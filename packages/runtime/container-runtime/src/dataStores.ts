@@ -42,7 +42,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { BlobCacheStorageService, buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy, LazyPromise } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
-import { GCDataBuilder, unpackChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
+import { GCDataBuilder, unpackChildNodesGCDetails, unpackChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
 import { ContainerRuntime } from "./containerRuntime";
 import {
@@ -99,7 +99,7 @@ export class DataStores implements IDisposable {
             (id: string, createParam: CreateChildSummarizerNodeParam) => CreateChildSummarizerNodeFn,
         private readonly deleteChildSummarizerNodeFn: (id: string) => void,
         baseLogger: ITelemetryBaseLogger,
-        getBaseGCDetails: () => Promise<Map<string, IGarbageCollectionDetailsBase>>,
+        getBaseGCDetails: () => Promise<IGarbageCollectionDetailsBase>,
         private readonly gcNodeUpdated: (
             nodePath: string, timestampMs: number, packagePath?: readonly string[]) => void,
         private readonly aliasMap: Map<string, string>,
@@ -109,7 +109,8 @@ export class DataStores implements IDisposable {
         this.containerRuntimeHandle = new FluidObjectHandle(this.runtime, "/", this.runtime.IFluidHandleContext);
 
         const baseGCDetailsP = new LazyPromise(async () => {
-            return getBaseGCDetails();
+            const baseGCDetails = await getBaseGCDetails();
+            return unpackChildNodesGCDetails(baseGCDetails);
         });
         // Returns the base GC details for the data store with the given id.
         const dataStoreBaseGCDetails = async (dataStoreId: string) => {

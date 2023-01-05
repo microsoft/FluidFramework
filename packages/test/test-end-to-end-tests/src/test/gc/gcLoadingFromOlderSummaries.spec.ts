@@ -187,6 +187,80 @@ describeNoCompat("GC loading from older summaries", (getTestObjectProvider) => {
             dsBReferenceState3 === false, `dataStoreB should still be unreferenced on loading from old summary`);
     });
 
+    /**
+     * In this test, the data store containing references to another data store is changed after loading from an older
+     * summary. But the DDS in the data store containing the references is not changed. This validates that the GC data
+     * in older summary is correctly propagated to DDS as well.
+     */
+    it("updates unreferenced nodes correctly when DDS is unchanged after loading from older summary", async () => {
+        const summarizer1 = await createSummarizer(provider, mainContainer);
+
+        // Create a second DDS in dataStoreA. This will be changed after loading from old summary so that the data store
+        // changes but the root DDS containing references is unchanged.
+        const dataStoreAdds2 = SharedMap.create(dataStoreA._runtime);
+        dataStoreA._root.set("dds2", dataStoreAdds2.handle);
+
+        const dataStoreBHandle =
+            (await containerRuntime.createDataStore(TestDataObjectType)).entryPoint as IFluidHandle<ITestDataObject>;
+        assert(dataStoreBHandle !== undefined, "New data store does not have a handle");
+        const dataStoreB = await dataStoreBHandle.get();
+        dataStoreA._root.set("dataStoreB", dataStoreBHandle);
+        dataStoreA._root.delete("dataStoreB");
+
+        await provider.ensureSynchronized();
+
+        // Summarize - summary1. dataStoreB should be unreferenced.
+        const summaryResult1 = await summarizeNow(summarizer1);
+        const referenceState1 = await getReferenceState(summaryResult1.summaryTree);
+        const dsAReferenceState1 = referenceState1.get(dataStoreA._context.id);
+        assert(dsAReferenceState1 === true, `dataStoreA should be referenced`);
+        const dsBReferenceState1 = referenceState1.get(dataStoreB._context.id);
+        assert(dsBReferenceState1 === false, `dataStoreB should be unreferenced`);
+
+        // Reference dataStoreB now.
+        dataStoreA._root.set("dataStoreB", dataStoreB.handle);
+
+        // Summarize - summary2. dataStoreB should now be referenced.
+        await provider.ensureSynchronized();
+        const summaryResult2 = await summarizeNow(summarizer1);
+        const referenceState2 = await getReferenceState(summaryResult2.summaryTree);
+        const dsAReferenceState2 = referenceState2.get(dataStoreA._context.id);
+        assert(dsAReferenceState2 === true, `dataStoreA should still be referenced`);
+        const dsBReferenceState2 = referenceState2.get(dataStoreB._context.id);
+        assert(dsBReferenceState2 === true, `dataStoreB should now be referenced`);
+
+        // Load a new summarizer from the summary1 and summarize - summary3. Before it summarizes, it will catch up
+        // to latest and so the reference state of the data stores should be the same as in summary2.
+        // Also, note that while catching up, it will download summary2 and update state from it.
+        summarizer1.close();
+        const summarizer2 = await createSummarizer(provider, mainContainer, summaryResult1.summaryVersion);
+
+        // Create a new alias data store so that the GC data changes without changing the GC state of existing data
+        // stores. This is to write the GC tree in summary (instead of handle) which is used for validation.
+        const ds2 = await containerRuntime.createDataStore(TestDataObjectType);
+        const aliasResult = await ds2.trySetAlias("root2");
+        assert.strictEqual(aliasResult, "Success", "Failed to alias data store");
+
+        // Change the second DDS in dataStoreA. This will change dataStoreA but the root DDS that contains references
+        // to dataStoreB is unchanged.
+        dataStoreAdds2.set("key", "value");
+
+        await provider.ensureSynchronized();
+        const summaryResult3 = await summarizeNow(summarizer2);
+
+        // Validate that summary3 is same or newer than summary2. This is to ensure that it has the latest GC state.
+        const summary2SequenceNumber = getSummarySequenceNumber(summaryResult2.summaryTree);
+        const summary3SequenceNumber = getSummarySequenceNumber(summaryResult3.summaryTree);
+        assert(summary3SequenceNumber >= summary2SequenceNumber, "Summary 3 should be same or newer than summary 2");
+
+        // Validate that dataStoreB is still referenced in this summary.
+        const referenceState3 = await getReferenceState(summaryResult3.summaryTree);
+        const dsAReferenceState3 = referenceState3.get(dataStoreA._context.id);
+        assert(dsAReferenceState3 === true, `dataStoreA should still be referenced`);
+        const dsBReferenceState3 = referenceState3.get(dataStoreB._context.id);
+        assert(dsBReferenceState3 === true, `dataStoreB should still be referenced on loading from old summary`);
+    });
+
     it("updates unreferenced timestamps correctly when loading from an older summary", async () => {
         const summarizer1 = await createSummarizer(provider, mainContainer);
 
