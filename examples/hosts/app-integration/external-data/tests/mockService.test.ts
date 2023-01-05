@@ -52,15 +52,24 @@ describe("mockCustomerService", () => {
     /* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 
     it("fetch-tasks: Ensure server yields the data we expect", async () => {
-        const expectedData = await externalDataSource!.fetchData();
+        const expectedData = await externalDataSource!.fetchData().then((data)=>{
+            return JSON.parse(data.body.toString()) as object
+        });
         await request(server!).get("/fetch-tasks").expect(200, {taskList: expectedData});
     });
 
     it("set-tasks: Ensure external data is updated with provided data", async () => {
-        const newData = "42:Determine meaning of life:37";
-        await request(server!).post("/set-tasks").send({taskList: newData}).expect(200);
+        const newData = {
+            42: {
+                name: "Determine meaning of life",
+                priority: 37
+            }
+        };
 
-        const externalData = await externalDataSource!.fetchData();
+        await request(server!).post("/set-tasks").send({ taskList: newData }).expect(200);
+        const externalData = await externalDataSource!.fetchData().then((data) => {
+            return JSON.parse(data.body.toString()) as object
+        });
         expect(externalData).toEqual(newData);
     });
 
