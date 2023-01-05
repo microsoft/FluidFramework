@@ -258,19 +258,22 @@ export async function checkSoftDeleted(
         GitRestLumberEventName.CheckSoftDeleted,
         lumberjackProperties);
     const softDeletedMarkerPath = getSoftDeletedMarkerPath(repoPath);
+
+    let softDeleted = false;
     try {
         const softDeleteBlobExists = await exists(fileSystemManager, softDeletedMarkerPath);
-        const softDeleted = softDeleteBlobExists !== false && softDeleteBlobExists.isFile();
+        softDeleted = softDeleteBlobExists !== false && softDeleteBlobExists.isFile();
         metric.setProperties({ softDeleted });
         metric.success("Checked if document is soft-deleted.");
-        if (softDeleted) {
-            const error = new NetworkError(410, "The requested resource has been deleted.");
-            Lumberjack.error("Attempted to retrieve soft-deleted document.", lumberjackProperties, error);
-            throw error;
-        }
     } catch (e) {
         metric.error("Failed to check if document is soft-deleted.", e);
         throw e;
+    }
+
+    if (softDeleted) {
+        const error = new NetworkError(410, "The requested resource has been deleted.");
+        Lumberjack.error("Attempted to retrieve soft-deleted document.", lumberjackProperties, error);
+        throw error;
     }
 }
 
