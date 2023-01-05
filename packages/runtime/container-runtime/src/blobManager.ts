@@ -164,7 +164,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         private readonly getStorage: () => IDocumentStorageService,
         /**
          * Submit a BlobAttach op. When a blob is uploaded, there is a short grace period before which the blob is
-         * deleted. The BlobAttach op notifies the server that blob is in use. The server will then node delete the
+         * deleted. The BlobAttach op notifies the server that blob is in use. The server will then not delete the
          * the blob as long as it is listed as referenced in future summaries. The summarizing client will know to
          * include the storage ID in the summary when it sees the op.
          *
@@ -460,20 +460,20 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         assert([PendingBlobStatus.OnlinePendingUpload, PendingBlobStatus.OnlinePendingOp].includes(entry.status),
             0x38a /* Blob must be in online flow to transition to offline flow */);
 
-        entry.status = entry.status === PendingBlobStatus.OnlinePendingUpload
-            ? PendingBlobStatus.OfflinePendingUpload
-            : PendingBlobStatus.OfflinePendingOp;
-
         /**
-         * If we haven't already submitted a BlobAttach op for this localId and storageId combination, send it before
-         * returning the blob handle. This will make sure that the BlobAttach op is sequenced prior to any ops
-         * referencing the handle, otherwise, an invalid handle could be added to the document.
+         * If we haven't already submitted a BlobAttach op for this entry, send it before returning the blob handle.
+         * This will make sure that the BlobAttach op is sequenced prior to any ops referencing the handle, otherwise
+         * otherwise, an invalid handle could be added to the document.
          * storageId may be undefined but since we are not connected we will have a chance to add it when reSubmit()
          * is called on reconnection.
          */
-        if (entry.storageId === undefined || this.opsInFlight.get(entry.storageId)?.includes(localId) !== true) {
+        if (entry.status !== PendingBlobStatus.OnlinePendingOp && entry.status !== PendingBlobStatus.OfflinePendingOp) {
             this.sendBlobAttachOp(localId, entry.storageId);
         }
+
+        entry.status = entry.status === PendingBlobStatus.OnlinePendingUpload
+            ? PendingBlobStatus.OfflinePendingUpload
+            : PendingBlobStatus.OfflinePendingOp;
 
         entry.handleP.resolve(this.getBlobHandle(localId));
     }
