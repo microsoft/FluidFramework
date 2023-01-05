@@ -26,7 +26,7 @@ import {
     fieldSchema,
     InMemoryStoredSchemaRepository,
     lookupTreeSchema,
-} from "../../../schema-stored";
+} from "../../../core";
 import { brand } from "../../../util";
 import {
     defaultSchemaPolicy,

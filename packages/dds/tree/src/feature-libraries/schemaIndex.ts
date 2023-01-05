@@ -17,11 +17,6 @@ import {
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
-    Index,
-    IndexEvents,
-    SummaryElement,
-    SummaryElementParser,
-    SummaryElementStringifier,
     cachedValue,
     Dependee,
     Dependent,
@@ -41,6 +36,13 @@ import {
     ValueSchema,
     schemaDataIsEmpty,
 } from "../core";
+import {
+    Index,
+    IndexEvents,
+    SummaryElement,
+    SummaryElementParser,
+    SummaryElementStringifier,
+} from "../shared-tree-core";
 import { brand, isJsonObject, JsonCompatibleReadOnly } from "../util";
 import { IEventEmitter } from "../events";
 
