@@ -4,9 +4,10 @@
  */
 
 export {
+    createEmitter,
     EventEmitter,
     Events,
-    IEventEmitter,
+    ISubscribable,
     IsEvent,
     TransformEvents,
     UnionToIntersection,
