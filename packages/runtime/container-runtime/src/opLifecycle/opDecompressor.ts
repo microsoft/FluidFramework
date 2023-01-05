@@ -26,7 +26,7 @@ export class OpDecompressor {
         // We're checking for compression = true or top level compression property so
         // that we can enable compression without waiting on all ordering services
         // to pick up protocol change. Eventually only the top level property should
-        // be used.
+        // be used. ADO:2942
         if (message.metadata?.batch === true
             && (message.metadata?.compressed || message.compression !== undefined)) {
             // Beginning of a compressed batch

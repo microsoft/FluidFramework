@@ -162,6 +162,11 @@ export class Outbox {
             // Legacy path - supporting old loader versions. Can be removed only when LTS moves above
             // version that has support for batches (submitBatchFn)
             for (const message of batch.content) {
+                // Legacy path doesn't support compressed payloads and will submit uncompressed payload anyways
+                if (message.metadata?.compressed) {
+                    delete message.metadata.compressed;
+                }
+
                 clientSequenceNumber = this.params.containerContext.submitFn(
                     MessageType.Operation,
                     message.deserializedContent,
