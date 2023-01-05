@@ -8,6 +8,9 @@ parameters:
 variables:
   - name: skipComponentGovernanceDetection
     value: true
+  - name: packagedChartFolder
+    value: $(Build.ArtifactStagingDirectory)/chart
+    readonly: true
 
 jobs:
 - job: package_chart
@@ -34,10 +37,10 @@ jobs:
     inputs:
       command: package
       chartPath: ${{ parameters.chartPath }}
-      destination: $(Build.ArtifactStagingDirectory)
+      destination: $(packagedChartFolder)
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish Artifact: chart'
     inputs:
-      targetPath: $(Build.ArtifactStagingDirectory)
+      targetPath: $(packagedChartFolder)
       artifactName: chart
