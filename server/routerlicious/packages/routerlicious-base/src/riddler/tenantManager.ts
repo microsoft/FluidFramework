@@ -16,7 +16,7 @@ import {
     ICache,
 } from "@fluidframework/server-services-core";
 import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
 import * as winston from "winston";
@@ -280,13 +280,20 @@ export class TenantManager {
      */
     public async getTenantKeys(tenantId: string, includeDisabledTenant = false, disableCache=false): Promise<ITenantKeys> {
         const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId, includeDisabledTenant };
+        const fetchTenantKeyMetric = Lumberjack.newLumberMetric(LumberEventName.RiddlerFetchTenantKey);
+        let retrievedFrom = "database";
+
 
         if(!disableCache) {
             // Read from cache first
-            const cachedKey = await this.getCacheKey(tenantId);
+            const cachedKey = await this.getCacheKey(tenantId).catch((error) => {
+                fetchTenantKeyMetric.error(`Error requesting tenant keys from cache.`, error);
+            });
 
             if (cachedKey) {
-                Lumberjack.info(`Tenant key(s) found in cache`, lumberProperties);
+                retrievedFrom = "cache";
+                fetchTenantKeyMetric.setProperties({ [BaseTelemetryProperties.tenantId]: tenantId, includeDisabledTenant, retrievedFrom });
+                fetchTenantKeyMetric.success(`Tenant key(s) found in cache`);
                 return this.decryptCachedKeys(cachedKey);
             }
 
@@ -294,8 +301,11 @@ export class TenantManager {
             Lumberjack.info(`Tenant key not found in cache.`, lumberProperties);
         }
 
-        Lumberjack.info(`Retrieving tenant key from database.`, lumberProperties);
-        const tenantDocument = await this.getTenantDocument(tenantId, includeDisabledTenant);
+        fetchTenantKeyMetric.setProperties({ [BaseTelemetryProperties.tenantId]: tenantId, includeDisabledTenant, retrievedFrom });
+
+        const tenantDocument = await this.getTenantDocument(tenantId, includeDisabledTenant).catch((error) => {
+            fetchTenantKeyMetric.error(`Error retrieving tenant keys from database.`, error);
+        });
 
         if (!tenantDocument) {
             winston.error(`No tenant found when retrieving keys for tenant id ${tenantId}`);
@@ -306,18 +316,20 @@ export class TenantManager {
             throw new NetworkError(403, `Tenant, ${tenantId}, does not exist.`);
         }
 
+        fetchTenantKeyMetric.success(`Retrieved tenant keys from the database.`);
+
         const encryptedTenantKey1 = tenantDocument.key;
         const tenantKey1 = this.secretManager.decryptSecret(encryptedTenantKey1);
         if (tenantKey1 == null) {
             winston.error("Tenant key1 decryption failed.");
-            Lumberjack.error("Tenant key1 decryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
+            Lumberjack.error("Tenant key1 decryption failed.", lumberProperties);
             throw new NetworkError(500, "Tenant key1 decryption failed.");
         }
 
         const encryptedTenantKey2 = tenantDocument.secondaryKey;
         if (!encryptedTenantKey2) {
             winston.info("Tenant key2 doesn't exist.");
-            Lumberjack.info("Tenant key2 doesn't exist.", { [BaseTelemetryProperties.tenantId]: tenantId });
+            Lumberjack.info("Tenant key2 doesn't exist.", lumberProperties);
 
             const cacheKey1 = {
                 key1: encryptedTenantKey1,
