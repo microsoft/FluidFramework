@@ -32,7 +32,9 @@ type _check =
     | requireTrue<areSafelyAssignable<ExtractFromOpaque<O2>, T2>>
     | requireTrue<areSafelyAssignable<ExtractFromOpaque<O3>, T3>>
     | requireFalse<isAssignableTo<O1, O2>>
-    | requireFalse<isAssignableTo<T1, T2>>;
+    | requireFalse<isAssignableTo<T1, T2>>
+    | requireFalse<isAssignableTo<{ readonly a: number }, { a: number }>>
+    | requireFalse<isAssignableTo<{ a: 42 }, { a: number }>>;
 
 const _branded: T1 = brand(0);
 const _opaque: O1 = brandOpaque<O1>(0);
