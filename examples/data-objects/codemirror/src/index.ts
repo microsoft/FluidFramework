@@ -15,7 +15,6 @@ import {
     RuntimeFactoryHelper,
 } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
-import { FluidObject, IProvideFluidRouter } from "@fluidframework/core-interfaces";
 import {
     CodeMirrorComponent,
     SmdeFactory,
@@ -37,25 +36,13 @@ const defaultComponentId = "default";
 const smde = new SmdeFactory();
 
 const viewRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
-    const entryPoint: FluidObject<IProvideFluidRouter> | undefined = await runtime.entryPoint?.get();
-
-    // We know that the ProseMirrorRuntimeFactory below sets the entryPoint of the ContainerRuntime,
-    // and furthermore that it sets it to an object that implements IFluidRouter, but best practice is
-    // to check explicitly anyway.
-    if (entryPoint === undefined) {
-        throw new Error("entryPoint for the Container Runtime was not set");
-    }
-    if (entryPoint.IFluidRouter === undefined) {
-        throw new Error("entryPoint for the Container Runtime does not implement IFluidRouter");
-    }
-
     if (request.pathParts.length === 0) {
         const objectRequest = RequestParser.create({
             url: ``,
             headers: request.headers,
         });
         const codeMirror = await requestFluidObject<CodeMirrorComponent>(
-            entryPoint.IFluidRouter,
+            await runtime.getRootDataStore(defaultComponentId),
             objectRequest);
         return {
             status: 200,
@@ -88,8 +75,6 @@ class CodeMirrorFactory extends RuntimeFactoryHelper {
             undefined, // runtimeOptions
             undefined, // containerScope
             existing,
-            undefined, // containerRuntimeCtor
-            async (containerRuntime: IContainerRuntime) => containerRuntime.getRootDataStore(defaultComponentId),
         );
 
         return runtime;

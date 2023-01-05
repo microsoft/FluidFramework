@@ -14,7 +14,6 @@ import {
     IResponse,
     IFluidRouter,
     FluidObject,
-    IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -85,21 +84,6 @@ export interface IContainerRuntime extends
      * Indicates the attachment state of the container to a host service.
      */
     readonly attachState: AttachState;
-
-    /**
-     * Exposes a handle to the root object / entryPoint of the container.
-     * Use this as the primary way of getting access to the user-defined logic within the container.
-     * If this property is undefined (meaning that exposing the entryPoint hasn't been implemented in a particular
-     * scenario) fall back to the current approach of requesting the root object of the container through the request
-     * pattern.
-     *
-     * See {@link @fluidframework/common-definitions#IContainer.entryPoint}
-     *
-     * @remarks The plan is that eventually IContainerRuntime will no longer have a resolveHandle() method, this property
-     * will become non-optional and return an IFluidHandle (no undefined), and it will become the only way to access
-     * the handle to the entryPoint for the container.
-     */
-    readonly entryPoint?: IFluidHandle<FluidObject>;
 
     /**
      * Returns the runtime of the data store.
