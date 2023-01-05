@@ -20,6 +20,7 @@ import {
     Reattach,
     ReturnFrom,
     ReturnTo,
+    SizedMark,
     Skip,
 } from "./format";
 import { MoveEffectTable } from "./moveEffectTable";
@@ -151,6 +152,10 @@ export function isObjMark<TNodeChange>(
     mark: Mark<TNodeChange> | undefined,
 ): mark is ObjectMark<TNodeChange> {
     return typeof mark === "object";
+}
+
+export function isSizedMark<TNodeChange>(mark: Mark<TNodeChange>): mark is SizedMark<TNodeChange> {
+    return isSkipMark(mark) || mark.type === "Modify" || isDetachMark(mark);
 }
 
 /**
