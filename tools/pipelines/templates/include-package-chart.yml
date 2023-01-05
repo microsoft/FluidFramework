@@ -10,20 +10,34 @@ variables:
     value: true
 
 jobs:
-- job: Job_1
-  displayName: Agent job 1
+- job: package_chart
+  displayName: Package chart
   pool:
     vmImage: ubuntu-latest
   steps:
   - checkout: self
     clean: true
     fetchDepth: 1
+
   - task: ComponentGovernanceComponentDetection@0
     displayName: Component Detection
     inputs:
       sourceScanPath: ${{ parameters.chartPath }}
-  - task: PublishPipelineArtifact@1
-    displayName: Publish Pipeline Artifact
+
+  - task: HelmInstaller@1
+    displayName: Install Helm
     inputs:
-      targetPath: ${{ parameters.chartPath }}
+      helmVersionToInstall: latest
+
+  - task: HelmDeploy@0
+    displayName: Package Helm chart
+    inputs:
+      command: package
+      chartPath: ${{ parameters.chartPath }}
+      destination: $(Build.ArtifactStagingDirectory)
+
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish Artifact: chart'
+    inputs:
+      targetPath: $(Build.ArtifactStagingDirectory)
       artifactName: chart

@@ -6,13 +6,13 @@ trigger:
   branches:
     include:
     - main
-    - next
-    - lts
   paths:
     include:
     - server/charts/historian
+    - tools/pipelines/chart-historian.yml
+    - tools/pipelines/templates/include-package-chart.yml
 
 extends:
-  template: templates/include-copy-chart.yml
+  template: templates/include-package-chart.yml
   parameters:
     chartPath: server/charts/historian
