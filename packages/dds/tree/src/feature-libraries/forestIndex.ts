@@ -19,18 +19,21 @@ import {
     IEditableForest,
     initializeForest,
     ITreeSubscriptionCursor,
-    Index,
-    SummaryElement,
-    SummaryElementParser,
-    SummaryElementStringifier,
     cachedValue,
     ICachedValue,
     recordDependency,
     JsonableTree,
-    Delta,
     mapCursorField,
     moveToDetachedField,
 } from "../core";
+import {
+    Index,
+    SummaryElement,
+    SummaryElementParser,
+    SummaryElementStringifier,
+    IndexEvents,
+} from "../shared-tree-core";
+import { IEventEmitter } from "../events";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 import { afterChangeForest } from "./object-forest";
 
@@ -48,7 +51,7 @@ const treeBlobKey = "ForestTree";
  *
  * Used to capture snapshots of document for summaries.
  */
-export class ForestIndex implements Index<unknown>, SummaryElement {
+export class ForestIndex implements Index, SummaryElement {
     public readonly key = "Forest";
 
     public readonly summaryElement?: SummaryElement = this;
@@ -60,6 +63,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
 
     public constructor(
         private readonly runtime: IFluidDataStoreRuntime,
+        events: IEventEmitter<IndexEvents<unknown>>,
         private readonly forest: IEditableForest,
     ) {
         this.cursor = this.forest.allocateCursor();
@@ -72,12 +76,11 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
             // TODO: use lower level API to avoid blob manager?
             return this.runtime.uploadBlob(IsoBuffer.from(treeText));
         });
-    }
-
-    newLocalState(changeDelta: Delta.Root): void {
-        this.forest.applyDelta(changeDelta);
-        // TODO: remove this workaround as soon as notification/eventing will be supported.
-        afterChangeForest(this.forest);
+        events.on("newLocalState", (changeDelta) => {
+            this.forest.applyDelta(changeDelta);
+            // TODO: remove this workaround as soon as notification/eventing will be supported.
+            afterChangeForest(this.forest);
+        });
     }
 
     /**

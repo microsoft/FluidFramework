@@ -5,8 +5,8 @@
 
 import { RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
-import { Changeset, Mark, MarkList } from "./format";
-import { getInputLength, isSkipMark } from "./utils";
+import { Changeset, Mark, MarkList, MoveId } from "./format";
+import { getInputLength, isObjMark, isSkipMark } from "./utils";
 
 export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChange;
 
@@ -32,11 +32,15 @@ function invertMarkList<TNodeChange>(
 ): MarkList<TNodeChange> {
     const inverseMarkList: MarkList<TNodeChange> = [];
     let inputIndex = 0;
+    const movedChanges = new Map<MoveId, TNodeChange>();
+
     for (const mark of markList) {
-        const inverseMarks = invertMark(mark, inputIndex, revision, invertChild);
+        const inverseMarks = invertMark(mark, inputIndex, revision, invertChild, movedChanges);
         inverseMarkList.push(...inverseMarks);
         inputIndex += getInputLength(mark);
     }
+
+    transferMovedChanges(inverseMarkList, movedChanges);
     return inverseMarkList;
 }
 
@@ -45,6 +49,7 @@ function invertMark<TNodeChange>(
     inputIndex: number,
     revision: RevisionTag | undefined,
     invertChild: NodeChangeInverter<TNodeChange>,
+    movedChanges: Map<MoveId, TNodeChange>,
 ): Mark<TNodeChange>[] {
     if (isSkipMark(mark)) {
         return [mark];
@@ -86,6 +91,9 @@ function invertMark<TNodeChange>(
             }
             case "MoveOut":
             case "ReturnFrom": {
+                if (mark.changes !== undefined) {
+                    movedChanges.set(mark.id, mark.changes);
+                }
                 return [
                     {
                         type: "ReturnTo",
@@ -109,6 +117,20 @@ function invertMark<TNodeChange>(
             }
             default:
                 fail("Not implemented");
+        }
+    }
+}
+
+function transferMovedChanges<TNodeChange>(
+    marks: MarkList<TNodeChange>,
+    movedChanges: Map<MoveId, TNodeChange>,
+): void {
+    for (const mark of marks) {
+        if (isObjMark(mark) && (mark.type === "MoveOut" || mark.type === "ReturnFrom")) {
+            const change = movedChanges.get(mark.id);
+            if (change !== undefined) {
+                mark.changes = change;
+            }
         }
     }
 }

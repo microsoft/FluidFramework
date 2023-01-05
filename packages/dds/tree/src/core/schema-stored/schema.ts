@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Brand } from "../util";
+import { Brand } from "../../util";
 
 /**
  * Example internal schema representation types.

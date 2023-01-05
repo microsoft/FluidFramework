@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { singleTextCursor } from "../../feature-libraries";
-import { Anchor, AnchorSet, clonePath, Delta, FieldKey, JsonableTree, UpPath } from "../../tree";
+import { Anchor, AnchorSet, Delta, FieldKey, JsonableTree, UpPath, clonePath } from "../../core";
 import { brand } from "../../util";
 
 const fieldFoo: FieldKey = brand("foo");
