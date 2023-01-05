@@ -409,7 +409,7 @@ export class DocumentDeltaConnection
                     const context = error?.context;
 
                     if (context && typeof context === "object") {
-                        const statusText = error.context.statusText.code;
+                        const statusText = context.statusText.code;
 
                         // Self-Signed Certificate ErrorCode
                         if (statusText === "DEPTH_ZERO_SELF_SIGNED_CERT") {
