@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { GenericError } from "@fluidframework/container-utils";
@@ -28,6 +29,7 @@ export interface IOutboxParameters {
     readonly config: IOutboxConfig,
     readonly compressor: OpCompressor;
     readonly splitter: OpSplitter;
+    readonly logger: ITelemetryLogger;
 }
 
 export class Outbox {
@@ -45,11 +47,11 @@ export class Outbox {
             hardLimit,
             softLimit,
             enableOpReentryCheck: params.config.enableOpReentryCheck,
-        });
+        }, params.logger);
         this.mainBatch = new BatchManager({
             hardLimit,
             enableOpReentryCheck: params.config.enableOpReentryCheck,
-        });
+        }, params.logger);
     }
 
     public get isEmpty(): boolean {
