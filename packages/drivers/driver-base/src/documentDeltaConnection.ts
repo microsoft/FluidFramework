@@ -411,14 +411,18 @@ export class DocumentDeltaConnection
                     if (context && typeof context === "object") {
                         const statusText = context.statusText.code;
 
-                        // Self-Signed Certificate ErrorCode
+                        // Instead of string-matching the ErrorMessage, Filter the Error Based on the ErrorCode: "DEPTH_ZERO_SELF_SIGNED_CERT"
+                        // Self-Signed Certificate ErrorCode Found in error.context
                         if (statusText === "DEPTH_ZERO_SELF_SIGNED_CERT") {
                             failAndCloseSocket(this.createErrorObject("connect_error", error, false));
                             return;
                         }
                     }
                     else if (description && typeof description === "object") {
-                        if (description.message?.includes("self signed certificate")) {
+                        const errorCode = description.error.code;
+
+                        // Self-Signed Certificate ErrorCode Found in error.description
+                        if (errorCode === "DEPTH_ZERO_SELF_SIGNED_CERT") {
                             failAndCloseSocket(this.createErrorObject("connect_error", error, false));
                             return;
                         }
