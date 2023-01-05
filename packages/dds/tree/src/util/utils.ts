@@ -21,6 +21,8 @@ export type RecursiveReadonly<T> = T extends
     // eslint-disable-next-line @typescript-eslint/ban-types
     | Symbol
     ? T
+    : T extends Brand<infer V, string>
+    ? Brand<RecursiveReadonly<V>, string>
     : T extends Opaque<Brand<any, string>>
     ? T
     : T extends Map<infer K, infer V>
