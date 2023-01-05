@@ -16,7 +16,6 @@ import {
     IRequest,
     IResponse,
     IFluidRouter,
-    FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -555,6 +554,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public readonly options: ILoaderOptions;
     private get scope() { return this.loader.services.scope; }
     private get codeLoader() { return this.loader.services.codeLoader; }
+
+    /**
+     * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
+     */
+    public get entryPoint() {
+        return this.context.entryPoint;
+    }
 
     constructor(
         private readonly loader: Loader,

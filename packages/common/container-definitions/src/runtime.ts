@@ -6,6 +6,7 @@
 import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     FluidObject,
+    IFluidHandle,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -102,6 +103,21 @@ export interface IRuntime extends IDisposable {
      * @param snapshot - snapshot created at attach time
      */
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
+
+    /**
+     * FluidHandle to the root object / entryPoint of the container.
+     * Use this as the primary way of getting access to the user-defined logic within the container runtime.
+     * If this property is undefined (meaning that exposing the entryPoint hasn't been implemented in a particular
+     * scenario) fall back to the current approach of requesting the root object of the container through the request
+     * pattern.
+     *
+     * See {@link @fluidframework/common-definitions#IContainer.entryPoint}
+     *
+     * @remarks The plan is that eventually IRuntime will no longer have a request() method, this property
+     * will become non-optional and return an IFluidHandle (no undefined), and it will become the only way to access
+     * the handle to the entryPoint for the runtime.
+     */
+    readonly entryPoint?: IFluidHandle<FluidObject>;
 }
 
 /**
@@ -182,6 +198,16 @@ export interface IContainerContext extends IDisposable {
      * and scenarios which can change in the future.
      */
     readonly id: string;
+
+    /**
+     * Proxy for {@link IRuntime.entryPoint}, the entryPoint defined in the container's runtime.
+     *
+     * @remarks
+     *
+     * See {@link @fluidframework/common-definitions#IContainer.entryPoint}
+     *
+     */
+    readonly entryPoint?: IFluidHandle<FluidObject>;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";

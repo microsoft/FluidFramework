@@ -169,6 +169,7 @@ export interface IContainerContext extends IDisposable {
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     readonly disposeFn?: (error?: ICriticalContainerError) => void;
+    readonly entryPoint?: IFluidHandle<FluidObject>;
     // @deprecated (undocumented)
     readonly existing: boolean | undefined;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
@@ -481,6 +482,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 // @public
 export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
+    readonly entryPoint?: IFluidHandle<FluidObject>;
     getPendingLocalState(): unknown;
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     process(message: ISequencedDocumentMessage, local: boolean): any;

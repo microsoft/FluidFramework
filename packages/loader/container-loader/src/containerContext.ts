@@ -169,6 +169,13 @@ export class ContainerContext implements IContainerContext {
 
     private readonly _fluidModuleP: Promise<IFluidModuleWithDetails>;
 
+    /**
+     * {@inheritDoc @fluidframework/container-definitions#IContainerContext.entryPoint}
+     */
+    public get entryPoint() {
+        return this.runtime.entryPoint;
+    }
+
     constructor(
         private readonly container: Container,
         public readonly scope: FluidObject,

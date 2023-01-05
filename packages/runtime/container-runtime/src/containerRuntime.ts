@@ -658,7 +658,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         containerScope: FluidObject = context.scope,
         existing?: boolean,
         containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime,
-        initializeEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>,
+        initializeEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject> =
+            async (containerRuntime: IContainerRuntime) => containerRuntime,
     ): Promise<ContainerRuntime> {
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45

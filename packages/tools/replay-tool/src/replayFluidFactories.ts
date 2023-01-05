@@ -6,7 +6,6 @@
 import { SharedCell } from "@fluidframework/cell";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { Ink } from "@fluidframework/ink";
@@ -60,8 +59,6 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
             this.runtimeOptions,
             undefined, // containerScope
             existing,
-            undefined, // containerRuntimeCtor
-            async (runtime: IContainerRuntime) => runtime
         );
     }
 }
