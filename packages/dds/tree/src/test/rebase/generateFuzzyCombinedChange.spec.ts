@@ -4,8 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangeRebaser, TaggedChange } from "../../rebase";
-import { AnchorSet } from "../../tree";
+import { ChangeRebaser, TaggedChange, AnchorSet } from "../../core";
 import { generateFuzzyCombinedChange } from "./fuzz";
 
 const testSeed = 432167897;

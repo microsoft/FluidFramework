@@ -15,7 +15,7 @@ export {
     ICachedValue,
     DisposingDependee,
     SimpleObservingDependent,
-} from "../dependency-tracking";
+} from "./dependency-tracking";
 
 export {
     EmptyKey,
@@ -65,7 +65,12 @@ export {
     SparseNode,
     getDescendant,
     compareUpPaths,
-} from "../tree";
+    clonePath,
+    isLocalKey,
+    compareFieldUpPaths,
+    forEachNode,
+    forEachField,
+} from "./tree";
 
 export {
     TreeNavigationResult,
@@ -80,7 +85,7 @@ export {
     FieldAnchor,
     moveToDetachedField,
     afterChangeToken,
-} from "../forest";
+} from "./forest";
 
 export {
     LocalFieldKey,
@@ -106,14 +111,14 @@ export {
     emptyMap,
     emptySet,
     treeSchema,
-} from "../schema-stored";
+} from "./schema-stored";
 
 export {
     ChangeEncoder,
     ChangeFamily,
     ProgressiveEditBuilder,
     ProgressiveEditBuilderBase,
-} from "../change-family";
+} from "./change-family";
 
 export {
     Rebaser,
@@ -123,20 +128,15 @@ export {
     ChangesetFromChangeRebaser,
     makeAnonChange,
     tagChange,
-} from "../rebase";
+    noFailure,
+    OutputType,
+    verifyChangeRebaser,
+    tagInverse,
+} from "./rebase";
 
-export { ICheckout, TransactionResult } from "../checkout";
+export { ICheckout, TransactionResult } from "./checkout";
 
-export { Checkout } from "../transaction";
-
-export {
-    Index,
-    IndexEvents,
-    SharedTreeCore,
-    SummaryElement,
-    SummaryElementParser,
-    SummaryElementStringifier,
-} from "../shared-tree-core";
+export { Checkout } from "./transaction";
 
 export {
     Adapters,
@@ -144,7 +144,8 @@ export {
     AdaptedViewSchema,
     Compatibility,
     FieldAdapter,
-} from "../schema-view";
+    TreeAdapter,
+} from "./schema-view";
 
 export {
     Branch,
@@ -154,6 +155,6 @@ export {
     ReadonlySummaryData,
     SeqNumber,
     SessionId,
-} from "../edit-manager";
+} from "./edit-manager";
 
-export { RepairDataStore, ReadonlyRepairDataStore } from "../repair";
+export { RepairDataStore, ReadonlyRepairDataStore } from "./repair";

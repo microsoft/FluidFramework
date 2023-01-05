@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { brand, Brand, Invariant } from "../util";
+import { brand, Brand, Invariant } from "../../util";
 import { AnchorSet } from "../tree";
 
 /**

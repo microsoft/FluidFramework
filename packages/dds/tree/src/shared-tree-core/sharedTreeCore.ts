@@ -26,9 +26,7 @@ import {
     SharedObject,
 } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
-import { ChangeFamily } from "../change-family";
-import { Commit, EditManager, SeqNumber } from "../edit-manager";
-import { AnchorSet, Delta } from "../tree";
+import { ChangeFamily, Commit, EditManager, SeqNumber, AnchorSet, Delta } from "../core";
 import { brand, isReadonlyArray, JsonCompatibleReadOnly } from "../util";
 import { EventEmitter, IEventEmitter, TransformEvents } from "../events";
 
