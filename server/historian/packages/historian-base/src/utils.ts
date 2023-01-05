@@ -11,7 +11,7 @@ import { getParam } from "@fluidframework/server-services-utils";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import * as jwt from "jsonwebtoken";
+import { decode } from "jsonwebtoken";
 import winston from "winston";
 import safeStringify from "json-stringify-safe";
 
@@ -33,7 +33,7 @@ export function normalizePort(val) {
 }
 
 export function getTokenLifetimeInSec(token: string): number {
-    const claims = jwt.decode(token) as ITokenClaims;
+    const claims = decode(token) as ITokenClaims;
     if (claims?.exp) {
         return (claims.exp - Math.round((new Date().getTime()) / 1000));
     }
@@ -56,7 +56,7 @@ export function getTenantIdFromRequest(params: Params) {
 export function getDocumentIdFromRequest(tenantId: string, authorization: string) {
     try {
         const token = parseToken(tenantId, authorization);
-        const decoded = jwt.decode(token) as ITokenClaims;
+        const decoded = decode(token) as ITokenClaims;
         return decoded.documentId;
     } catch (err) {
         return "-";

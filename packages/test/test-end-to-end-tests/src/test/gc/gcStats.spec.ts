@@ -11,7 +11,7 @@ import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions"
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { calculateStats, mergeStats, requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
+import { describeNoCompat, ITestDataObject, itExpects, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { defaultGCConfig } from "./gcTestConfigs";
 
 const ensureContainerConnectedWriteMode = async (container: Container) => {
@@ -260,7 +260,11 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         assert.strictEqual(summarizeResult.stats.unreferencedBlobSize, 0, "There shouldn't be unreferenced blobs");
     });
 
-    it("can correctly generate GC stats when reference state changes between GC runs", async () => {
+    itExpects("can correctly generate GC stats when reference state changes between GC runs",
+    [
+        { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:gcUnknownOutboundReferences" },
+    ],
+    async () => {
         const dataStore1 = await requestFluidObject<ITestDataObject>(
             await containerRuntime.createDataStore(TestDataObjectType), "");
         const dataStore2 = await requestFluidObject<ITestDataObject>(
@@ -311,6 +315,8 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         expectedGCStats.unrefNodeCount = 0;
         expectedGCStats.unrefDataStoreCount = 0;
 
+        // Note that this will result in a "gcUnknownOutboundReferences" error. Since the same client is creating and
+        // adding the handle, the handle is not decoded and it will not result in GC detecting the referenced.
         gcStats = await containerRuntime.collectGarbage({});
         assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
     });
