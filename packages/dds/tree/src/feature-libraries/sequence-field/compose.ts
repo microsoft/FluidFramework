@@ -17,10 +17,10 @@ import {
     SizedObjectMark,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
+import { MarkQueue } from "./markQueue";
 import {
     applyMoveEffectsToMark,
     changeSrcMoveId,
-    MarkQueue,
     modifyMoveSrc,
     MoveEffectTable,
     newMoveEffectTable,

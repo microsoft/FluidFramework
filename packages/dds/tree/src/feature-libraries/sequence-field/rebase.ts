@@ -19,7 +19,8 @@ import {
 import { Attach, Changeset, LineageEvent, Mark, MarkList, SizedMark } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
-import { MarkQueue, MoveEffectTable, newMoveEffectTable, removeMoveDest } from "./moveEffectTable";
+import { MoveEffectTable, newMoveEffectTable, removeMoveDest } from "./moveEffectTable";
+import { MarkQueue } from "./markQueue";
 
 /**
  * Rebases `change` over `base` assuming they both apply to the same initial state.
