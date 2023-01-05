@@ -59,6 +59,7 @@ async function start(): Promise<void> {
         ffModel = await tinyliciousModelLoader.loadExisting(id);
     }
 
+    // Create a different model to represent the external data view
     const tinyliciousExternalModelLoader = new TinyliciousModelLoader<IAppModel>(
         new StaticCodeLoader(new TaskListContainerRuntimeFactory()),
     );
