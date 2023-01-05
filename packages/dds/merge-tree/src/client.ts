@@ -250,23 +250,23 @@ export class Client extends TypedEventEmitter<IClientEvents> {
             segment);
 
         const opArgs = { op };
+        this.traceOp(
+            opArgs, 
+            () => this._mergeTree.insertAtReferencePosition(refPos, segment, opArgs)
+        );
+
+        return op;
+    }
+
+    private traceOp(opArgs: IMergeTreeDeltaOpArgs, applyOp: () => void): void {
         let traceStart: Trace | undefined;
         if (this.measureOps) {
             traceStart = Trace.start();
         }
 
-        this._mergeTree.insertAtReferencePosition(
-            refPos,
-            segment,
-            opArgs);
+        applyOp();
 
-        this.completeAndLogOp(
-            opArgs,
-            this.getClientSequenceArgs(opArgs),
-            { start: op.pos1 },
-            traceStart);
-
-        return op;
+        this.completeAndLogOp(opArgs, traceStart);
     }
 
     public walkSegments<TClientData>(
@@ -412,22 +412,18 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         const op = opArgs.op;
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);
-
-        let traceStart: Trace | undefined;
-        if (this.measureOps) {
-            traceStart = Trace.start();
-        }
-
-        this._mergeTree.markRangeRemoved(
-            range.start,
-            range.end,
-            clientArgs.referenceSequenceNumber,
-            clientArgs.clientId,
-            clientArgs.sequenceNumber,
-            false,
-            opArgs);
-
-        this.completeAndLogOp(opArgs, clientArgs, range, traceStart);
+        this.traceOp(
+            opArgs,
+            () => this._mergeTree.markRangeRemoved(
+                range.start,
+                range.end,
+                clientArgs.referenceSequenceNumber,
+                clientArgs.clientId,
+                clientArgs.sequenceNumber,
+                false,
+                opArgs
+            )
+        );
 
         return true;
     }
@@ -447,22 +443,19 @@ export class Client extends TypedEventEmitter<IClientEvents> {
             return false;
         }
 
-        let traceStart: Trace | undefined;
-        if (this.measureOps) {
-            traceStart = Trace.start();
-        }
-
-        this._mergeTree.annotateRange(
-            range.start,
-            range.end,
-            op.props,
-            op.combiningOp,
-            clientArgs.referenceSequenceNumber,
-            clientArgs.clientId,
-            clientArgs.sequenceNumber,
-            opArgs);
-
-        this.completeAndLogOp(opArgs, clientArgs, range, traceStart);
+        this.traceOp(
+            opArgs,
+            () => this._mergeTree.annotateRange(
+                range.start,
+                range.end,
+                op.props,
+                op.combiningOp,
+                clientArgs.referenceSequenceNumber,
+                clientArgs.clientId,
+                clientArgs.sequenceNumber,
+                opArgs
+            )
+        );
 
         return true;
     }
@@ -491,20 +484,17 @@ export class Client extends TypedEventEmitter<IClientEvents> {
             return false;
         }
 
-        let traceStart: Trace | undefined;
-        if (this.measureOps) {
-            traceStart = Trace.start();
-        }
-
-        this._mergeTree.insertSegments(
-            range.start,
-            segments,
-            clientArgs.referenceSequenceNumber,
-            clientArgs.clientId,
-            clientArgs.sequenceNumber,
-            opArgs);
-
-        this.completeAndLogOp(opArgs, clientArgs, range, traceStart);
+        this.traceOp(
+            opArgs,
+            () => this._mergeTree.insertSegments(
+                range.start,
+                segments!,
+                clientArgs.referenceSequenceNumber,
+                clientArgs.clientId,
+                clientArgs.sequenceNumber,
+                opArgs
+            )
+        );
 
         return true;
     }
@@ -518,8 +508,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
      */
     private completeAndLogOp(
         opArgs: IMergeTreeDeltaOpArgs,
-        clientArgs: IMergeTreeClientSequenceArgs,
-        range: Partial<IIntegerRange>,
         traceStart?: Trace) {
         if (!opArgs.sequencedMessage) {
             if (traceStart) {
@@ -527,9 +515,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
                 this.localOps++;
             }
         } else {
-            assert(this._mergeTree.getCollabWindow().currentSeq < clientArgs.sequenceNumber,
+            const { currentSeq, minSeq } = this.getCollabWindow();
+            const { minimumSequenceNumber, sequenceNumber } = opArgs.sequencedMessage;
+            assert(currentSeq < sequenceNumber,
                 0x030 /* "Incoming remote op sequence# <= local collabWindow's currentSequence#" */);
-            assert(this._mergeTree.getCollabWindow().minSeq <= opArgs.sequencedMessage.minimumSequenceNumber,
+            assert(minSeq <= minimumSequenceNumber,
                 0x031 /* "Incoming remote op minSequence# < local collabWindow's minSequence#" */);
             if (traceStart) {
                 this.accumTime += elapsedMicroseconds(traceStart);
