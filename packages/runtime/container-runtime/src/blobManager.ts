@@ -467,7 +467,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
          * storageId may be undefined but since we are not connected we will have a chance to add it when reSubmit()
          * is called on reconnection.
          */
-        if (entry.status !== PendingBlobStatus.OnlinePendingOp && entry.status !== PendingBlobStatus.OfflinePendingOp) {
+        if (entry.status !== PendingBlobStatus.OnlinePendingOp) {
             this.sendBlobAttachOp(localId, entry.storageId);
         }
 
