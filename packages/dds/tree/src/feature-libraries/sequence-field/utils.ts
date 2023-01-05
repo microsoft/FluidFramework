@@ -4,8 +4,8 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { RevisionTag } from "../../core";
-import { clone, fail } from "../../util";
+import { RevisionTag, TaggedChange } from "../../core";
+import { clone, fail, getOrAddEmptyToMap, StackyIterator } from "../../util";
 import { IdAllocator } from "../modular-schema";
 import {
     Attach,
@@ -19,28 +19,74 @@ import {
     Modify,
     MoveId,
     MoveIn,
+    NewAttach,
     MoveOut,
     ObjectMark,
+    InputSpanningMark,
     Reattach,
     ReturnFrom,
     ReturnTo,
-    SizedMark,
-    SizedObjectMark,
     Skip,
+    Muted,
+    Mutable,
+    OutputSpanningMark,
+    Changeset,
 } from "./format";
+import { MarkListFactory } from "./markListFactory";
 
 export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<TNodeChange> {
     return isObjMark(mark) && mark.type === "Modify";
 }
 
+export function isNewAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is NewAttach<TNodeChange> {
+    return isObjMark(mark) && (mark.type === "Insert" || mark.type === "MoveIn");
+}
+
 export function isAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is Attach<TNodeChange> {
-    return (
-        (isObjMark(mark) && (mark.type === "Insert" || mark.type === "MoveIn")) || isReattach(mark)
-    );
+    return isNewAttach(mark) || isReattach(mark);
+}
+
+export function isAttachInGap<TNodeChange>(mark: Mark<TNodeChange>): mark is Attach<TNodeChange> {
+    return isNewAttach(mark) || isActiveReattach(mark) || isBlockedReattach(mark);
 }
 
 export function isReattach<TNodeChange>(mark: Mark<TNodeChange>): mark is Reattach<TNodeChange> {
     return isObjMark(mark) && (mark.type === "Revive" || mark.type === "ReturnTo");
+}
+
+export function isActiveReattach<TNodeChange>(
+    mark: Mark<TNodeChange>,
+): mark is Reattach<TNodeChange> & Muted {
+    // No need to check Reattach.lastDeletedBy because it can only be set if the mark is muted
+    return isReattach(mark) && !isMuted(mark);
+}
+
+export function isMutedReattach<TNodeChange>(
+    mark: Mark<TNodeChange>,
+): mark is Reattach<TNodeChange> & Muted {
+    return isReattach(mark) && isMuted(mark);
+}
+
+export function isMutedDetach<TNodeChange>(
+    mark: Mark<TNodeChange>,
+): mark is Detach<TNodeChange> & Muted {
+    return isDetachMark(mark) && isMuted(mark);
+}
+
+export function isSkipLikeReattach<TNodeChange>(
+    mark: Mark<TNodeChange>,
+): mark is Reattach<TNodeChange> & Muted {
+    return isMutedReattach(mark) && mark.lastDetachedBy === undefined;
+}
+
+export function isBlockedReattach<TNodeChange>(
+    mark: Mark<TNodeChange>,
+): mark is Reattach<TNodeChange> & Muted {
+    return isMutedReattach(mark) && mark.lastDetachedBy !== undefined;
+}
+
+export function isMuted(mark: Mutable): mark is Muted {
+    return mark.mutedBy !== undefined;
 }
 
 export function getAttachLength(attach: Attach): number {
@@ -89,25 +135,29 @@ function areSameLineage(lineage1: LineageEvent[], lineage2: LineageEvent[]): boo
 
 /**
  * @param mark - The mark to get the length of.
+ * @param ignorePairing - When true, the length of a src or dst mark is whose matching src or dst is not active
+ * will be treated the same as if that matching src or dst were active.
  * @returns The number of nodes within the output context of the mark.
  */
-export function getOutputLength(mark: Mark<unknown>): number {
+export function getOutputLength(mark: Mark<unknown>, ignorePairing: boolean = false): number {
     if (isSkipMark(mark)) {
         return mark;
     }
     const type = mark.type;
     switch (type) {
-        case "Revive":
         case "ReturnTo":
+            return mark.isSrcMuted && !ignorePairing ? 0 : mark.count;
+        case "Revive":
         case "MoveIn":
             return mark.count;
         case "Insert":
             return mark.content.length;
         case "Modify":
             return 1;
+        case "ReturnFrom":
+            return mark.isDstMuted && !ignorePairing ? mark.count : 0;
         case "Delete":
         case "MoveOut":
-        case "ReturnFrom":
             return 0;
         default:
             unreachableCase(type);
@@ -123,6 +173,9 @@ export function getInputLength(mark: Mark<unknown>): number {
         return mark;
     }
     if (isAttach(mark)) {
+        if (isSkipLikeReattach(mark)) {
+            return mark.count;
+        }
         return 0;
     }
     const type = mark.type;
@@ -130,7 +183,7 @@ export function getInputLength(mark: Mark<unknown>): number {
         case "Delete":
         case "MoveOut":
         case "ReturnFrom":
-            return mark.count;
+            return isMuted(mark) ? 0 : mark.count;
         case "Modify":
             return 1;
         default:
@@ -149,7 +202,7 @@ export function isSkipMark(mark: Mark<unknown>): mark is Skip {
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has input length `length`.
  */
-export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
+export function splitMarkOnInput<TMark extends InputSpanningMark<unknown>>(
     mark: TMark,
     length: number,
     genId: IdAllocator,
@@ -165,11 +218,27 @@ export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
     if (isSkipMark(mark)) {
         return [length, remainder] as [TMark, TMark];
     }
-    const markObj = mark as SizedObjectMark;
+    const markObj = mark as Exclude<TMark, Skip>;
     const type = mark.type;
     switch (type) {
         case "Modify":
             fail(`Unable to split ${type} mark of length 1`);
+        case "ReturnTo": {
+            const newId = genId();
+            splitMoveSrc(moveEffects, mark.id, [
+                { id: mark.id, count: length },
+                { id: newId, count: remainder },
+            ]);
+            return [
+                { ...markObj, count: length },
+                { ...markObj, id: newId, count: remainder, detachIndex: mark.detachIndex + length },
+            ] as [TMark, TMark];
+        }
+        case "Revive":
+            return [
+                { ...markObj, count: length },
+                { ...markObj, count: remainder, detachIndex: mark.detachIndex + length },
+            ] as [TMark, TMark];
         case "Delete":
             return [
                 { ...markObj, count: length },
@@ -200,13 +269,14 @@ export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has output length `length`.
  */
-export function splitMarkOnOutput<TMark extends Mark<unknown>>(
+export function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(
     mark: TMark,
     length: number,
     genId: IdAllocator,
     moveEffects: MoveEffectTable<unknown>,
+    allowUnpairedMark: boolean = false,
 ): [TMark, TMark] {
-    const markLength = getOutputLength(mark);
+    const markLength = getOutputLength(mark, allowUnpairedMark);
     const remainder = markLength - length;
     if (length < 1 || remainder < 1) {
         fail(
@@ -216,15 +286,11 @@ export function splitMarkOnOutput<TMark extends Mark<unknown>>(
     if (isSkipMark(mark)) {
         return [length, remainder] as [TMark, TMark];
     }
-    const markObj = mark as ObjectMark;
+    const markObj = mark as Exclude<TMark, Skip>;
     const type = markObj.type;
     switch (type) {
         case "Modify":
             fail(`Unable to split ${type} mark of length 1`);
-        case "Delete":
-        case "MoveOut":
-        case "ReturnFrom":
-            fail(`Unable to split ${type} mark of length 0`);
         case "Insert":
             return [
                 { ...markObj, content: markObj.content.slice(0, length) },
@@ -240,7 +306,14 @@ export function splitMarkOnOutput<TMark extends Mark<unknown>>(
             ]);
             return [
                 { ...markObj, count: length },
-                { ...markObj, id: newId, count: remainder },
+                type === "MoveIn"
+                    ? { ...markObj, id: newId, count: remainder }
+                    : {
+                          ...markObj,
+                          id: newId,
+                          count: remainder,
+                          detachIndex: markObj.detachIndex + length,
+                      },
             ] as [TMark, TMark];
         }
         case "Revive":
@@ -250,6 +323,64 @@ export function splitMarkOnOutput<TMark extends Mark<unknown>>(
             ] as [TMark, TMark];
         default:
             unreachableCase(type);
+    }
+}
+
+export function lineUpRelatedReattaches<T>(
+    newMark: Reattach<T>,
+    baseMark: Reattach<T>,
+    genId: IdAllocator,
+    moveEffects: MoveEffectTable<T>,
+): {
+    newMarkHead?: Reattach<T>;
+    newMarkTail?: Reattach<T>;
+    baseMarkHead?: Reattach<T>;
+    baseMarkTail?: Reattach<T>;
+} {
+    const newMarkLength = newMark.count;
+    const baseMarkLength = baseMark.count;
+    if (newMark.detachIndex === baseMark.detachIndex) {
+        if (newMarkLength < baseMarkLength) {
+            const [baseMarkHead, baseMarkTail] = splitMarkOnOutput(
+                baseMark,
+                newMarkLength,
+                genId,
+                moveEffects,
+            );
+            return { baseMarkHead, baseMarkTail, newMarkHead: newMark };
+        } else if (newMarkLength > baseMarkLength) {
+            const [newMarkHead, newMarkTail] = splitMarkOnOutput(
+                newMark,
+                baseMarkLength,
+                genId,
+                moveEffects,
+            );
+            return { baseMarkHead: baseMark, newMarkHead, newMarkTail };
+        } else {
+            return { baseMarkHead: baseMark, newMarkHead: newMark };
+        }
+    } else if (newMark.detachIndex < baseMark.detachIndex) {
+        if (newMark.detachIndex + newMarkLength <= baseMark.detachIndex) {
+            return { newMarkHead: newMark, baseMarkTail: baseMark };
+        }
+        const [newMarkHead, newMarkTail] = splitMarkOnOutput(
+            newMark,
+            baseMark.detachIndex - newMark.detachIndex,
+            genId,
+            moveEffects,
+        );
+        return { newMarkHead, newMarkTail, baseMarkTail: baseMark };
+    } else {
+        if (baseMark.detachIndex + baseMarkLength <= newMark.detachIndex) {
+            return { baseMarkHead: baseMark, newMarkTail: newMark };
+        }
+        const [baseMarkHead, baseMarkTail] = splitMarkOnOutput(
+            baseMark,
+            newMark.detachIndex - baseMark.detachIndex,
+            genId,
+            moveEffects,
+        );
+        return { baseMarkHead, baseMarkTail, newMarkTail: newMark };
     }
 }
 
@@ -307,9 +438,19 @@ export function tryExtendMark(
         }
         case "MoveIn":
         case "ReturnTo": {
-            // TODO: Handle reattach fields
             const lhsMoveIn = lhs as MoveIn | ReturnTo;
             if (isEqualPlace(lhsMoveIn, rhs) && moveEffects !== undefined) {
+                if (lhsMoveIn.type === "ReturnTo") {
+                    // Verify that the ReturnTo fields line up
+                    const rhsReturnTo = rhs as ReturnTo;
+                    if (
+                        lhsMoveIn.detachedBy !== rhsReturnTo.detachedBy ||
+                        lhsMoveIn.lastDetachedBy !== rhsReturnTo.lastDetachedBy ||
+                        lhsMoveIn.detachIndex + lhsMoveIn.count !== rhsReturnTo.detachIndex
+                    ) {
+                        break;
+                    }
+                }
                 const prevMerge = moveEffects.dstMergeable.get(lhsMoveIn.id);
                 if (prevMerge !== undefined) {
                     moveEffects.dstMergeable.set(prevMerge, rhs.id);
@@ -333,17 +474,19 @@ export function tryExtendMark(
         }
         case "Delete": {
             const lhsDetach = lhs as Detach;
-            if (rhs.tomb === lhsDetach.tomb) {
-                lhsDetach.count += rhs.count;
-                return true;
-            }
-            break;
+            lhsDetach.count += rhs.count;
+            return true;
         }
         case "MoveOut":
         case "ReturnFrom": {
-            // TODO: Handle reattach fields
             const lhsMoveOut = lhs as MoveOut | ReturnFrom;
-            if (rhs.tomb === lhsMoveOut.tomb && moveEffects !== undefined) {
+            if (moveEffects !== undefined) {
+                if (
+                    lhsMoveOut.type === "ReturnFrom" &&
+                    !areMergeableReturnFrom(lhs as ReturnFrom, rhs as ReturnFrom)
+                ) {
+                    break;
+                }
                 const prevMerge = moveEffects.srcMergeable.get(lhsMoveOut.id);
                 if (prevMerge !== undefined) {
                     moveEffects.srcMergeable.set(prevMerge, rhs.id);
@@ -369,6 +512,9 @@ export function tryExtendMark(
             const lhsReattach = lhs as Reattach;
             if (
                 rhs.detachedBy === lhsReattach.detachedBy &&
+                rhs.mutedBy === lhsReattach.mutedBy &&
+                rhs.isIntention === lhsReattach.isIntention &&
+                rhs.lastDetachedBy === lhsReattach.lastDetachedBy &&
                 lhsReattach.detachIndex + lhsReattach.count === rhs.detachIndex
             ) {
                 lhsReattach.count += rhs.count;
@@ -380,6 +526,20 @@ export function tryExtendMark(
             break;
     }
     return false;
+}
+
+function areMergeableReturnFrom(lhs: ReturnFrom, rhs: ReturnFrom): boolean {
+    if (
+        lhs.detachedBy !== rhs.detachedBy ||
+        lhs.mutedBy !== rhs.mutedBy ||
+        lhs.revision !== rhs.revision
+    ) {
+        return false;
+    }
+    if (lhs.detachIndex !== undefined) {
+        return lhs.detachIndex + 1 === rhs.detachIndex;
+    }
+    return rhs.detachIndex === undefined;
 }
 
 export interface MoveEffectTable<T> {
@@ -412,6 +572,17 @@ export function newMoveEffectTable<T>(): MoveEffectTable<T> {
     };
 }
 
+export enum PairedMarkUpdate {
+    /**
+     * Indicates that the mark's matching mark is now inactive.
+     */
+    Deactivated,
+    /**
+     * Indicates that the mark's matching mark is now active.
+     */
+    Reactivated,
+}
+
 export interface MovePartition<TNodeChange> {
     id: MoveId;
 
@@ -419,6 +590,14 @@ export interface MovePartition<TNodeChange> {
     count?: number;
     replaceWith?: Mark<TNodeChange>[];
     modifyAfter?: TNodeChange;
+    /**
+     * When set, updates the mark's paired mark status.
+     */
+    pairedMarkStatus?: PairedMarkUpdate;
+    /**
+     * When set, updates the mark's `detachedBy` field.
+     */
+    detachedBy?: RevisionTag;
 }
 
 export function splitMoveSrc<T>(
@@ -429,8 +608,7 @@ export function splitMoveSrc<T>(
     // TODO: Do we need a separate splitIdToOrigId for src and dst? Or do we need to eagerly apply splits when processing?
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.srcEffects.get(origId)!;
+        const effect = getOrAddEmptyToMap(table.srcEffects, origId);
         const index = effect.findIndex((p) => p.id === id);
 
         // TODO: Assert that the sums of the partition sizes match
@@ -474,8 +652,7 @@ export function splitMoveDest<T>(
     // TODO: What if source has been deleted?
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.dstEffects.get(origId)!;
+        const effect = getOrAddEmptyToMap(table.dstEffects, origId);
         const index = effect.findIndex((p) => p.id === id);
 
         effect.splice(index, 1, ...parts);
@@ -513,11 +690,10 @@ export function splitMoveDest<T>(
 export function replaceMoveDest<T>(table: MoveEffectTable<T>, id: MoveId, mark: Attach<T>): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.dstEffects.get(origId)!;
-        const index = effect.findIndex((p) => p.id === id);
-        assert(effect[index].replaceWith === undefined, "Move dest already replaced");
-        effect[index].replaceWith = [mark];
+        const effect = getOrAddEmptyToMap(table.dstEffects, origId);
+        const partition = getOrAddMovePartition(effect, id);
+        assert(partition.replaceWith === undefined, "Move dest already replaced");
+        partition.replaceWith = [mark];
     } else {
         assert(!table.dstEffects.has(id), "This MoveId cannot be replaced");
         table.dstEffects.set(id, [{ id, replaceWith: [mark] }]);
@@ -527,8 +703,7 @@ export function replaceMoveDest<T>(table: MoveEffectTable<T>, id: MoveId, mark: 
 export function removeMoveDest(table: MoveEffectTable<unknown>, id: MoveId): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.dstEffects.get(origId)!;
+        const effect = getOrAddEmptyToMap(table.dstEffects, origId);
         const index = effect.findIndex((p) => p.id === id);
         effect.splice(index, 1);
     } else {
@@ -546,12 +721,11 @@ export function removeMoveDest(table: MoveEffectTable<unknown>, id: MoveId): voi
 export function modifyMoveSrc<T>(table: MoveEffectTable<T>, id: MoveId, change: T): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.srcEffects.get(origId)!;
-        const index = effect.findIndex((p) => p.id === id);
-        assert(effect[index].replaceWith === undefined, "Move source already replaced");
-        assert(effect[index].modifyAfter === undefined, "Move source already been modified");
-        effect[index].modifyAfter = change;
+        const effect = getOrAddEmptyToMap(table.srcEffects, origId);
+        const partition = getOrAddMovePartition(effect, id);
+        assert(partition.replaceWith === undefined, "Move source already replaced");
+        assert(partition.modifyAfter === undefined, "Move source already been modified");
+        partition.modifyAfter = change;
     } else {
         table.srcEffects.set(id, [{ id, modifyAfter: change }]);
     }
@@ -566,17 +740,64 @@ export function modifyMoveSrc<T>(table: MoveEffectTable<T>, id: MoveId, change: 
 export function replaceMoveSrc<T>(
     table: MoveEffectTable<T>,
     id: MoveId,
-    mark: SizedObjectMark<T>,
+    mark: InputSpanningMark<T>,
 ): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.srcEffects.get(origId)!;
-        const index = effect.findIndex((p) => p.id === id);
-        assert(effect[index].replaceWith === undefined, "Move source already replaced");
-        effect[index].replaceWith = [mark];
+        const effect = getOrAddEmptyToMap(table.srcEffects, origId);
+        const partition = getOrAddMovePartition(effect, id);
+        assert(partition.replaceWith === undefined, "Move source already replaced");
+        partition.replaceWith = [mark];
     } else {
         table.srcEffects.set(id, [{ id, replaceWith: [mark] }]);
+        table.splitIdToOrigId.set(id, id);
+    }
+}
+
+export function updateMoveSrcPairing<T>(
+    table: MoveEffectTable<T>,
+    id: MoveId,
+    pairedMarkStatus: PairedMarkUpdate,
+): void {
+    const origId = table.splitIdToOrigId.get(id);
+    if (origId !== undefined) {
+        const effect = getOrAddEmptyToMap(table.srcEffects, origId);
+        const partition = getOrAddMovePartition(effect, id);
+        partition.pairedMarkStatus = pairedMarkStatus;
+    } else {
+        table.srcEffects.set(id, [{ id, pairedMarkStatus }]);
+        table.splitIdToOrigId.set(id, id);
+    }
+}
+
+export function updateMoveDestPairing<T>(
+    table: MoveEffectTable<T>,
+    id: MoveId,
+    pairedMarkStatus: PairedMarkUpdate,
+): void {
+    const origId = table.splitIdToOrigId.get(id);
+    if (origId !== undefined) {
+        const effect = getOrAddEmptyToMap(table.dstEffects, origId);
+        const partition = getOrAddMovePartition(effect, id);
+        partition.pairedMarkStatus = pairedMarkStatus;
+    } else {
+        assert(!table.dstEffects.has(id), "This MoveId cannot be replaced");
+        table.dstEffects.set(id, [{ id, pairedMarkStatus }]);
+    }
+}
+
+export function updateMoveSrcDetacher<T>(
+    table: MoveEffectTable<T>,
+    id: MoveId,
+    detachedBy: RevisionTag | undefined,
+): void {
+    const origId = table.splitIdToOrigId.get(id);
+    if (origId !== undefined) {
+        const effect = getOrAddEmptyToMap(table.srcEffects, origId);
+        const partition = getOrAddMovePartition(effect, id);
+        partition.detachedBy = detachedBy;
+    } else {
+        table.srcEffects.set(id, [{ id, detachedBy }]);
         table.splitIdToOrigId.set(id, id);
     }
 }
@@ -584,8 +805,7 @@ export function replaceMoveSrc<T>(
 export function removeMoveSrc(table: MoveEffectTable<unknown>, id: MoveId): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.srcEffects.get(origId)!;
+        const effect = getOrAddEmptyToMap(table.srcEffects, origId);
         const index = effect.findIndex((p) => p.id === id);
         effect.splice(index, 1);
     } else {
@@ -617,10 +837,9 @@ export function findKey<K, V>(map: Map<K, V>, value: V): K | undefined {
 export function changeSrcMoveId<T>(table: MoveEffectTable<T>, id: MoveId, newId: MoveId): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.srcEffects.get(origId)!;
-        const index = effect.findIndex((p) => p.id === id);
-        effect[index].id = newId;
+        const effect = getOrAddEmptyToMap(table.srcEffects, origId);
+        const partition = getOrAddMovePartition(effect, id);
+        partition.id = newId;
         // TODO: Need to update splitIdToOrigId?
     } else {
         table.srcEffects.set(id, [{ id: newId }]);
@@ -635,6 +854,16 @@ export function changeSrcMoveId<T>(table: MoveEffectTable<T>, id: MoveId, newId:
     if (leftId !== undefined) {
         table.srcMergeable.set(leftId, newId);
     }
+}
+
+function getOrAddMovePartition<T>(partitions: MovePartition<T>[], id: MoveId): MovePartition<T> {
+    const index = partitions.findIndex((p) => p.id === id);
+    if (index === -1) {
+        const partition = { id };
+        partitions.push(partition);
+        return partition;
+    }
+    return partitions[index];
 }
 
 export type MoveMark<T> = MoveOut<T> | MoveIn | ReturnFrom<T> | ReturnTo;
@@ -654,18 +883,37 @@ export function isMoveMark<T>(mark: Mark<T>): mark is MoveMark<T> {
     }
 }
 
-export function splitMoveIn<T>(mark: MoveIn | ReturnTo, parts: MovePartition<T>[]): Mark<T>[] {
+export function splitMoveIn<T>(
+    mark: MoveIn | ReturnTo,
+    updatePairedMarkStatus: boolean,
+    parts: MovePartition<T>[],
+): Mark<T>[] {
     const result: Mark<T>[] = [];
+    let cumulativeCount = 0;
     for (const part of parts) {
         assert(part.modifyAfter === undefined, "Cannot modify move destination");
         if (part.replaceWith !== undefined) {
             result.push(...part.replaceWith);
+            cumulativeCount += part.count ?? mark.count;
         } else {
-            result.push({
+            const portion = {
                 ...mark,
                 id: part.id,
                 count: part.count ?? mark.count,
-            });
+            };
+            result.push(portion);
+            if (mark.type === "ReturnTo") {
+                const returnTo = portion as ReturnTo;
+                returnTo.detachIndex = mark.detachIndex + cumulativeCount;
+                cumulativeCount += portion.count;
+                if (updatePairedMarkStatus && part.pairedMarkStatus !== undefined) {
+                    if (part.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
+                        returnTo.isSrcMuted = true;
+                    } else {
+                        delete returnTo.isSrcMuted;
+                    }
+                }
+            }
         }
     }
     return result;
@@ -674,12 +922,15 @@ export function splitMoveIn<T>(mark: MoveIn | ReturnTo, parts: MovePartition<T>[
 export function splitMoveOut<T>(
     mark: MoveOut<T> | ReturnFrom<T>,
     parts: MovePartition<T>[],
+    updatePairedMarkStatus: boolean,
     composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
     const result: Mark<T>[] = [];
+    let cumulativeCount = 0;
     for (const part of parts) {
         if (part.replaceWith !== undefined) {
             result.push(...part.replaceWith);
+            cumulativeCount += part.count ?? mark.count;
         } else {
             const splitMark: MoveOut<T> | ReturnFrom<T> = {
                 ...mark,
@@ -698,6 +949,34 @@ export function splitMoveOut<T>(
                     delete splitMark.changes;
                 }
             }
+            if (updatePairedMarkStatus && part.pairedMarkStatus !== undefined) {
+                // TODO: support unpairing for move
+                assert(
+                    splitMark.type === "ReturnFrom",
+                    "Only ReturnFrom marks can be unpaired through move effects",
+                );
+                if (part.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
+                    splitMark.isDstMuted = true;
+                } else {
+                    delete splitMark.isDstMuted;
+                }
+            }
+            if (part.detachedBy !== undefined) {
+                assert(
+                    splitMark.type === "ReturnFrom",
+                    "Only ReturnFrom marks can have their detachBy field set",
+                );
+                splitMark.detachedBy = part.detachedBy;
+            }
+            if (mark.type === "ReturnFrom" && isMuted(mark)) {
+                assert(
+                    mark.detachIndex !== undefined,
+                    "Muted ReturnFrom should have a detachIndex",
+                );
+                const returnFrom = splitMark as ReturnFrom;
+                returnFrom.detachIndex = mark.detachIndex + cumulativeCount;
+                cumulativeCount += splitMark.count;
+            }
             result.push(splitMark);
         }
     }
@@ -710,6 +989,7 @@ export function applyMoveEffectsToMark<T>(
     moveEffects: MoveEffectTable<T>,
     genId: IdAllocator,
     reassignIds: boolean,
+    updatePairedMarkStatus: boolean,
     composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
     let mark = inputMark;
@@ -730,7 +1010,12 @@ export function applyMoveEffectsToMark<T>(
                 const effect = moveEffects.srcEffects.get(mark.id);
                 if (effect !== undefined) {
                     moveEffects.srcEffects.delete(mark.id);
-                    const splitMarks = splitMoveOut(mark, effect, composeChildren);
+                    const splitMarks = splitMoveOut(
+                        mark,
+                        effect,
+                        updatePairedMarkStatus,
+                        composeChildren,
+                    );
                     for (const splitMark of splitMarks) {
                         moveEffects.validatedMarks.add(splitMark);
                     }
@@ -743,7 +1028,7 @@ export function applyMoveEffectsToMark<T>(
                 const effect = moveEffects.dstEffects.get(mark.id);
                 if (effect !== undefined) {
                     moveEffects.dstEffects.delete(mark.id);
-                    const splitMarks = splitMoveIn(mark, effect);
+                    const splitMarks = splitMoveIn(mark, updatePairedMarkStatus, effect);
                     for (const splitMark of splitMarks) {
                         moveEffects.validatedMarks.add(splitMark);
                     }
@@ -764,7 +1049,10 @@ export function getUniqueMoveId<T>(
     genId: IdAllocator,
     moveEffects: MoveEffectTable<T>,
 ): MoveId {
-    if (!moveEffects.validatedMarks.has(mark) && (mark.revision ?? revision) === undefined) {
+    // TODO: avoid reassigning IDs when the revision ID already makes the ID unique
+    // This should be the case when (mark.revision ?? revision) !== undefined but
+    // this revision-based uniqueness is not yet supported everywhere.
+    if (!moveEffects.validatedMarks.has(mark)) {
         let newId = moveEffects.idRemappings.get(mark.id);
         if (newId === undefined) {
             newId = genId();
@@ -773,4 +1061,301 @@ export function getUniqueMoveId<T>(
         return newId;
     }
     return mark.id;
+}
+
+interface DetachedNode {
+    rev: RevisionTag;
+    index: number;
+}
+
+/**
+ * Keeps track of the different ways detached nodes may be referred to.
+ * Allows updating changesets so they refer to a detached node by the details
+ * of the last detach that affected them.
+ *
+ * WARNING: this code consumes O(N) space and time for marks that affect N nodes.
+ * This is code is currently meant for usage in tests.
+ * It should be tested and made more efficient before production use.
+ */
+export class DetachedNodeTracker {
+    private nodes: Map<number, DetachedNode> = new Map();
+    private readonly equivalences: { old: DetachedNode; new: DetachedNode }[] = [];
+
+    public constructor() {}
+
+    /**
+     * Updates the internals of this instance to account for `change` having been applied.
+     * @param change - The change that is being applied. Not mutated.
+     * Must be applicable (i.e., `isApplicable(change)` must be true).
+     */
+    public apply(change: TaggedChange<Changeset<unknown>>): void {
+        let index = 0;
+        for (const mark of change.change) {
+            const inputLength: number = getInputLength(mark);
+            if (isDetachMark(mark)) {
+                const newNodes: Map<number, DetachedNode> = new Map();
+                const after = index + inputLength;
+                for (const [k, v] of this.nodes) {
+                    if (k >= index) {
+                        if (k >= after) {
+                            newNodes.set(k - inputLength, v);
+                        } else {
+                            // The node is removed
+                            this.equivalences.push({
+                                old: v,
+                                new: {
+                                    rev:
+                                        mark.revision ??
+                                        change.revision ??
+                                        fail("Unable to track detached nodes"),
+                                    index: k,
+                                },
+                            });
+                        }
+                    } else {
+                        newNodes.set(k, v);
+                    }
+                }
+                this.nodes = newNodes;
+            }
+            index += inputLength;
+        }
+        index = 0;
+        for (const mark of change.change) {
+            const inputLength: number = getInputLength(mark);
+            if (isActiveReattach(mark)) {
+                const newNodes: Map<number, DetachedNode> = new Map();
+                for (const [k, v] of this.nodes) {
+                    if (k >= index) {
+                        newNodes.set(k + inputLength, v);
+                    } else {
+                        newNodes.set(k, v);
+                    }
+                }
+                for (let i = 0; i < mark.count; ++i) {
+                    newNodes.set(index + i, {
+                        rev: mark.detachedBy ?? fail("Unable to track detached nodes"),
+                        index: mark.detachIndex + i,
+                    });
+                }
+                this.nodes = newNodes;
+            }
+            if (!isDetachMark(mark)) {
+                index += inputLength;
+            }
+        }
+    }
+
+    /**
+     * Checks whether the given `change` is applicable based on previous changes.
+     * @param change - The change to verify the applicability of. Not mutated.
+     * @returns false iff `change`'s description of detached nodes is inconsistent with that of changes applied
+     * earlier. Returns true otherwise.
+     */
+    public isApplicable(change: Changeset<unknown>): boolean {
+        for (const mark of change) {
+            if (isActiveReattach(mark)) {
+                const rev = mark.detachedBy ?? fail("Unable to track detached nodes");
+                for (let i = 0; i < mark.count; ++i) {
+                    const index = mark.detachIndex + i;
+                    const original = { rev, index };
+                    const updated = this.getUpdatedDetach(original);
+                    for (const detached of this.nodes.values()) {
+                        if (updated.rev === detached.rev && updated.index === detached.index) {
+                            // The new change is attempting to reattach nodes in a location that has already been
+                            // filled by a prior reattach.
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Creates an updated representation of the given `change` so that it refers to detached nodes using the revision
+     * that last detached them.
+     * @param change - The change to update. Not mutated.
+     * Must be applicable (i.e., `isApplicable(change)` must be true).
+     * @param genId - An ID allocator that produces ID unique within this changeset.
+     * @returns A change equivalent to `change` that refers to detached nodes using the revision that last detached
+     * them. May reuse parts of the input `change` structure.
+     */
+    public update<T>(
+        change: TaggedChange<Changeset<T>>,
+        genId: IdAllocator,
+    ): TaggedChange<Changeset<T>> {
+        const moveEffects = newMoveEffectTable<T>();
+        const factory = new MarkListFactory<T>(moveEffects);
+        const iter = new StackyIterator(change.change);
+        while (!iter.done) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const preSplit = iter.pop()!;
+            const splitMarks = applyMoveEffectsToMark(
+                preSplit,
+                undefined,
+                moveEffects,
+                genId,
+                false,
+                false,
+            );
+
+            const mark = splitMarks[0];
+            for (let i = splitMarks.length - 1; i >= 0; i--) {
+                iter.push(splitMarks[i]);
+                moveEffects.validatedMarks.add(splitMarks[i]);
+            }
+            iter.pop();
+            const cloned = clone(mark);
+            if (isReattach(cloned)) {
+                let remainder: Reattach<T> = cloned;
+                for (let i = 1; i < cloned.count; ++i) {
+                    const [head, tail] = splitMarkOnOutput(remainder, 1, genId, moveEffects, true);
+                    this.updateMark(head, moveEffects);
+                    factory.push(head);
+                    remainder = tail;
+                }
+                this.updateMark(remainder, moveEffects);
+                factory.push(remainder);
+            } else {
+                factory.push(cloned);
+            }
+        }
+
+        // We may need to apply the effects of updateMoveSrcDetacher for some marks if those were located
+        // before their corresponding detach mark.
+        const factory2 = new MarkListFactory<T>(moveEffects);
+        for (const mark of factory.list) {
+            const splitMarks = applyMoveEffectsToMark(
+                mark,
+                undefined,
+                moveEffects,
+                genId,
+                false,
+                false,
+            );
+            factory2.push(...splitMarks);
+        }
+        return {
+            ...change,
+            change: factory2.list,
+        };
+    }
+
+    private updateMark(mark: Reattach<unknown>, moveEffects: MoveEffectTable<unknown>): void {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const original = { rev: mark.detachedBy!, index: mark.detachIndex };
+        const updated = this.getUpdatedDetach(original);
+        if (updated.rev !== original.rev || updated.index !== original.index) {
+            mark.detachedBy = updated.rev;
+            mark.detachIndex = updated.index;
+            if (mark.type === "ReturnTo") {
+                updateMoveSrcDetacher(moveEffects, mark.id, mark.detachedBy);
+            }
+        }
+    }
+
+    private getUpdatedDetach(detach: DetachedNode): DetachedNode {
+        let curr = detach;
+        for (const eq of this.equivalences) {
+            if (curr.rev === eq.old.rev && curr.index === eq.old.index) {
+                curr = eq.new;
+            }
+        }
+        return curr;
+    }
+}
+
+/**
+ * Checks whether `branch` changeset is consistent with a `target` changeset that is may be rebased over.
+ *
+ * WARNING: this code consumes O(N) space and time for marks that affect N nodes.
+ * This is code is currently meant for usage in tests.
+ * It should be tested and made more efficient before production use.
+ *
+ * @param branch - The changeset that would be rebased over `target`.
+ * @param target - The changeset that `branch` would be rebased over.
+ * @returns false iff `branch`'s description of detached nodes is inconsistent with that of `target`.
+ * Returns true otherwise.
+ */
+export function areRebasable(branch: Changeset<unknown>, target: Changeset<unknown>): boolean {
+    const indexToReattach: Map<number, string[]> = new Map();
+    const reattachToIndex: Map<string, number> = new Map();
+    let index = 0;
+    for (const mark of branch) {
+        if (isActiveReattach(mark)) {
+            const list = getOrAddEmptyToMap(indexToReattach, index);
+            for (let i = 0; i < mark.count; ++i) {
+                const entry = {
+                    rev: mark.detachedBy ?? fail("Unable to track detached nodes"),
+                    index: mark.detachIndex + i,
+                };
+                const key = `${entry.rev}|${entry.index}`;
+                assert(
+                    !reattachToIndex.has(key),
+                    "First changeset as inconsistent characterization of detached nodes",
+                );
+                list.push(key);
+                reattachToIndex.set(key, index);
+            }
+        }
+        index += getInputLength(mark);
+    }
+    index = 0;
+    let listIndex = 0;
+    for (const mark of target) {
+        if (isActiveReattach(mark)) {
+            const list = getOrAddEmptyToMap(indexToReattach, index);
+            for (let i = 0; i < mark.count; ++i) {
+                const entry = {
+                    rev: mark.detachedBy ?? fail("Unable to track detached nodes"),
+                    index: mark.detachIndex + i,
+                };
+                const key = `${entry.rev}|${entry.index}`;
+                const indexInA = reattachToIndex.get(key);
+                if (indexInA !== undefined && indexInA !== index) {
+                    // change b tries to reattach the same content as change a but in a different location
+                    return false;
+                }
+                if (list.includes(key)) {
+                    while (list[listIndex] !== undefined && list[listIndex] !== key) {
+                        ++listIndex;
+                    }
+                    if (list.slice(0, listIndex).includes(key)) {
+                        // change b tries to reattach the same content as change a but in a different order
+                        return false;
+                    }
+                }
+            }
+        }
+        const inputLength = getInputLength(mark);
+        if (inputLength > 0) {
+            listIndex = 0;
+        }
+        index += inputLength;
+    }
+    return true;
+}
+
+/**
+ * Checks whether sequential changesets are consistent.
+ *
+ * WARNING: this code consumes O(N) space and time for marks that affect N nodes.
+ * This is code is currently meant for usage in tests.
+ * It should be tested and made more efficient before production use.
+ *
+ * @param changes - The changesets that would be composed together.
+ * @returns false iff the changesets in `changes` are inconsistent/incompatible in their description of detached nodes.
+ * Returns true otherwise.
+ */
+export function areComposable(changes: TaggedChange<Changeset<unknown>>[]): boolean {
+    const tracker = new DetachedNodeTracker();
+    for (const change of changes) {
+        if (!tracker.isApplicable(change.change)) {
+            return false;
+        }
+        tracker.apply(change);
+    }
+    return true;
 }

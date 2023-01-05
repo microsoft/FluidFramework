@@ -16,7 +16,7 @@ import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
-import { getMaxIdTagged, normalizeMoveIds } from "./utils";
+import { continuingAllocator, normalizeMoveIds } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = brand(1);
@@ -26,11 +26,7 @@ const tag4: RevisionTag = brand(4);
 
 function compose(changes: TaggedChange<TestChangeset>[]): TestChangeset {
     changes.forEach(deepFreeze);
-    return SF.compose(
-        changes,
-        TestChange.compose,
-        TestChange.newIdAllocator(getMaxIdTagged(changes)),
-    );
+    return SF.compose(changes, TestChange.compose, continuingAllocator(changes));
 }
 
 function composeNoVerify(changes: TaggedChange<TestChangeset>[]): TestChangeset {
@@ -38,7 +34,7 @@ function composeNoVerify(changes: TaggedChange<TestChangeset>[]): TestChangeset 
     return SF.compose(
         changes,
         (cs: TaggedChange<TestChange>[]) => TestChange.compose(cs, false),
-        TestChange.newIdAllocator(getMaxIdTagged(changes)),
+        continuingAllocator(changes),
     );
 }
 
@@ -50,7 +46,7 @@ function shallowCompose(changes: TaggedChange<SF.Changeset>[]): SF.Changeset {
             assert(children.length === 1, "Should only have one child to compose");
             return children[0].change;
         },
-        TestChange.newIdAllocator(getMaxIdTagged(changes)),
+        continuingAllocator(changes),
     );
 }
 
@@ -58,18 +54,28 @@ describe("SequenceField - Compose", () => {
     describe("associativity of triplets", () => {
         const entries = Object.entries(cases);
         for (const a of entries) {
+            const taggedA = tagChange(a[1], brand(1));
             for (const b of entries) {
+                const taggedB = tagChange(b[1], brand(2));
                 for (const c of entries) {
-                    it(`((${a[0]}, ${b[0]}), ${c[0]}) === (${a[0]}, (${b[0]}, ${c[0]}))`, () => {
-                        const ab = composeNoVerify([makeAnonChange(a[1]), makeAnonChange(b[1])]);
-                        const left = composeNoVerify([makeAnonChange(ab), makeAnonChange(c[1])]);
-                        const bc = composeNoVerify([makeAnonChange(b[1]), makeAnonChange(c[1])]);
-                        const right = composeNoVerify([makeAnonChange(a[1]), makeAnonChange(bc)]);
+                    const taggedC = tagChange(c[1], brand(3));
+                    const title = `((${a[0]}, ${b[0]}), ${c[0]}) === (${a[0]}, (${b[0]}, ${c[0]}))`;
+                    if (SF.areComposable([taggedA, taggedB, taggedC])) {
+                        it(title, () => {
+                            const ab = composeNoVerify([taggedA, taggedB]);
+                            const left = composeNoVerify([makeAnonChange(ab), taggedC]);
+                            const bc = composeNoVerify([taggedB, taggedC]);
+                            const right = composeNoVerify([taggedA, makeAnonChange(bc)]);
 
-                        normalizeMoveIds(left);
-                        normalizeMoveIds(right);
-                        assert.deepEqual(left, right);
-                    });
+                            normalizeMoveIds(left);
+                            normalizeMoveIds(right);
+                            assert.deepEqual(left, right);
+                        });
+                    } else {
+                        it.skip(title, () => {
+                            // Those change contradict one-another
+                        });
+                    }
                 }
             }
         }
@@ -145,7 +151,7 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ modify", () => {
-        const revive = Change.revive(0, 3, 0, tag1);
+        const revive = Change.revive(0, 3, tag1, 0);
         const modify = Change.modify(0, { valueChange: { value: 2 } });
         const expected: SF.Changeset = [
             {
@@ -380,7 +386,7 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ delete", () => {
-        const revive = Change.revive(0, 5, 0, tag1);
+        const revive = Change.revive(0, 5, tag1, 0);
         const deletion: SF.Changeset = [
             1,
             { type: "Delete", count: 1 },
@@ -440,7 +446,7 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ insert", () => {
-        const revive = Change.revive(0, 5, 0, tag1);
+        const revive = Change.revive(0, 5, tag1, 0);
         const insert = Change.insert(0, 1, 2);
         // TODO: test with merge-right policy as well
         const expected: SF.Changeset = [
@@ -483,7 +489,7 @@ describe("SequenceField - Compose", () => {
 
     it("modify ○ revive", () => {
         const modify = Change.modify(0, { valueChange: { value: 1 } });
-        const revive = Change.revive(0, 2, 0, tag1);
+        const revive = Change.revive(0, 2, tag1, 0);
         const expected: SF.Changeset = [
             { type: "Revive", count: 2, detachedBy: tag1, detachIndex: 0 },
             {
@@ -495,9 +501,9 @@ describe("SequenceField - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("delete ○ revive", () => {
+    it("delete ○ revive (different nodes)", () => {
         const deletion = Change.delete(0, 3);
-        const revive = Change.revive(0, 2, 0, tag1);
+        const revive = Change.revive(0, 2, tag1, 0);
         // TODO: test with merge-right policy as well
         const expected: SF.Changeset = [
             { type: "Revive", count: 2, detachedBy: tag1, detachIndex: 0 },
@@ -507,9 +513,17 @@ describe("SequenceField - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
+    it("delete ○ revive (deleted nodes)", () => {
+        const deletion = Change.delete(0, 3);
+        const revive = Change.revive(0, 3, tag1, 0);
+        const expected: SF.Changeset = [];
+        const actual = shallowCompose([tagChange(deletion, tag1), makeAnonChange(revive)]);
+        assert.deepEqual(actual, expected);
+    });
+
     it("revive ○ revive", () => {
-        const reviveA = Change.revive(0, 2, 0, tag1);
-        const reviveB = Change.revive(0, 3, 0, tag2);
+        const reviveA = Change.revive(0, 2, tag1, 0);
+        const reviveB = Change.revive(0, 3, tag2, 0);
         // TODO: test with merge-right policy as well
         const expected: SF.Changeset = [
             { type: "Revive", count: 3, detachedBy: tag2, detachIndex: 0 },

@@ -80,15 +80,21 @@ export function sequenceFieldToDelta<TNodeChange>(
                     break;
                 }
                 case "Revive": {
-                    const insertMark: Delta.Insert = {
-                        type: Delta.MarkType.Insert,
-                        content: reviver(
-                            mark.detachedBy ?? fail(ERR_NO_REVISION_ON_REVIVE),
-                            mark.detachIndex,
-                            mark.count,
-                        ),
-                    };
-                    out.pushContent(insertMark);
+                    if (mark.mutedBy === undefined) {
+                        const insertMark: Delta.Insert = {
+                            type: Delta.MarkType.Insert,
+                            content: reviver(
+                                mark.detachedBy ??
+                                    mark.lastDetachedBy ??
+                                    fail(ERR_NO_REVISION_ON_REVIVE),
+                                mark.detachIndex,
+                                mark.count,
+                            ),
+                        };
+                        out.pushContent(insertMark);
+                    } else if (mark.lastDetachedBy === undefined) {
+                        out.pushOffset(mark.count);
+                    }
                     break;
                 }
                 default:

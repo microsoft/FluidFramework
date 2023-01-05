@@ -11,17 +11,56 @@ export type Changeset<TNodeChange = NodeChangeType> = MarkList<TNodeChange>;
 
 export type MarkList<TNodeChange = NodeChangeType, TMark = Mark<TNodeChange>> = TMark[];
 
-export type Mark<TNodeChange = NodeChangeType> = SizedMark<TNodeChange> | Attach<TNodeChange>;
+export type Mark<TNodeChange = NodeChangeType> =
+    | InputSpanningMark<TNodeChange>
+    | OutputSpanningMark<TNodeChange>;
 
-export type ObjectMark<TNodeChange = NodeChangeType> =
-    | SizedObjectMark<TNodeChange>
-    | Attach<TNodeChange>;
+export type ObjectMark<TNodeChange = NodeChangeType> = Exclude<Mark<TNodeChange>, Skip>;
 
-export type SizedMark<TNodeChange = NodeChangeType> = Skip | SizedObjectMark<TNodeChange>;
+/**
+ * A mark that spans one or more cells.
+ * The spanned cells may be populated (e.g., "Delete") or not (e.g., "Revive").
+ */
+export type CellSpanningMark<TNodeChange> = Exclude<Mark<TNodeChange>, NewAttach<TNodeChange>>;
 
-export type SizedObjectMark<TNodeChange = NodeChangeType> =
+/**
+ * A mark that spans one or more nodes in the input context of its changeset.
+ */
+export type InputSpanningMark<TNodeChange> =
+    | Skip
+    | Detach<TNodeChange>
     | Modify<TNodeChange>
-    | Detach<TNodeChange>;
+    | SkipLikeReattach<TNodeChange>;
+
+/**
+ * A mark that spans one or more nodes in the output context of its changeset.
+ */
+export type OutputSpanningMark<TNodeChange> =
+    | Skip
+    | NewAttach<TNodeChange>
+    | Modify<TNodeChange>
+    | Reattach<TNodeChange>;
+
+/**
+ * A Reattach whose target nodes are already reattached and have not been detached by some other change.
+ * Such a Reattach has no effect when applied and is therefore akin to a Skip mark.
+ */
+export type SkipLikeReattach<TNodeChange> = Reattach<TNodeChange> &
+    Muted & {
+        lastDeletedBy?: never;
+    };
+
+export interface Mutable {
+    mutedBy?: RevisionTag;
+}
+
+export interface Muted {
+    mutedBy: RevisionTag;
+}
+
+export interface Active {
+    mutedBy?: undefined;
+}
 
 export interface Modify<TNodeChange = NodeChangeType> {
     type: "Modify";
@@ -86,18 +125,25 @@ export interface Insert<TNodeChange = NodeChangeType>
     content: ProtoNode[];
 }
 
-export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag {
+export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag, Mutable {
     type: "MoveIn";
     /**
      * The actual number of nodes being moved-in. This count excludes nodes that were concurrently deleted.
      */
     count: NodeCount;
+    /**
+     * When true, the corresponding MoveOut has been muted.
+     * This is independent of whether this mark is muted.
+     */
+    isSrcMuted?: true;
 }
 
-export type Attach<TNodeChange = NodeChangeType> =
-    | Insert<TNodeChange>
-    | MoveIn
-    | Reattach<TNodeChange>;
+/**
+ * An attach mark that allocates new cells.
+ */
+export type NewAttach<TNodeChange = NodeChangeType> = Insert<TNodeChange> | MoveIn;
+
+export type Attach<TNodeChange = NodeChangeType> = NewAttach<TNodeChange> | Reattach<TNodeChange>;
 
 export type Detach<TNodeChange = NodeChangeType> =
     | Delete<TNodeChange>
@@ -108,7 +154,8 @@ export type Reattach<TNodeChange = NodeChangeType> = Revive<TNodeChange> | Retur
 
 export interface Delete<TNodeChange = NodeChangeType>
     extends HasRevisionTag,
-        HasChanges<TNodeChange> {
+        HasChanges<TNodeChange>,
+        Mutable {
     type: "Delete";
     tomb?: RevisionTag;
     count: NodeCount;
@@ -117,10 +164,16 @@ export interface Delete<TNodeChange = NodeChangeType>
 export interface MoveOut<TNodeChange = NodeChangeType>
     extends HasRevisionTag,
         HasMoveId,
-        HasChanges<TNodeChange> {
+        HasChanges<TNodeChange>,
+        Mutable {
     type: "MoveOut";
     count: NodeCount;
     tomb?: RevisionTag;
+    /**
+     * When true, the corresponding MoveIn has been muted.
+     * This is independent of whether this mark is muted.
+     */
+    isDstMuted?: true;
 }
 
 export interface HasReattachFields extends HasPlaceFields {
@@ -131,34 +184,80 @@ export interface HasReattachFields extends HasPlaceFields {
      * It is invalid to try convert such a reattach mark to a delta.
      */
     detachedBy: RevisionTag | undefined;
+
     /**
      * The original field index of the detached node(s).
      * "Original" here means before the change that detached them was applied.
      */
     detachIndex: number;
+
+    /**
+     * When true, the intent for the target nodes is as follows:
+     * - In a "Revive" mark: the nodes should exist no matter how they were deleted.
+     * - In a "Return" mark: the nodes, if they exist, should be located here no matter how they were moved.
+     *
+     * When undefined, the mark is solely intended to revert a prior change, and will therefore only take effect
+     * if that change has taken effect.
+     */
+    isIntention?: true;
+
+    /**
+     * The changeset that last detached the nodes that this mark intends to revive.
+     * For this property to be set, the target nodes must have been reattached my another changeset,
+     * then detached by a changeset other than `Reattach.detachedBy`.
+     *
+     * This property should only be set or read when `Reattach.isIntention` is undefined.
+     * This property should be `undefined` when it would otherwise be equivalent to `Reattach.detachedBy`.
+     */
+    lastDetachedBy?: RevisionTag;
 }
 
 export interface Revive<TNodeChange = NodeChangeType>
     extends HasReattachFields,
         HasRevisionTag,
-        HasChanges<TNodeChange> {
+        HasChanges<TNodeChange>,
+        Mutable {
     type: "Revive";
     count: NodeCount;
 }
 
-export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId {
+export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId, Mutable {
     type: "ReturnTo";
     count: NodeCount;
+    /**
+     * When true, the corresponding ReturnFrom has been muted.
+     * This is independent of whether this mark is muted.
+     */
+    isSrcMuted?: true;
 }
 
 export interface ReturnFrom<TNodeChange = NodeChangeType>
     extends HasRevisionTag,
         HasMoveId,
-        HasChanges<TNodeChange> {
+        HasChanges<TNodeChange>,
+        Mutable {
     type: "ReturnFrom";
     count: NodeCount;
+    /**
+     * Needed for detecting the following:
+     * - The mark is being composed with its inverse
+     * - The mark should be unmuted
+     *
+     * Always kept consistent with `ReturnTo.detachedBy`.
+     */
     detachedBy: RevisionTag | undefined;
-    tomb?: RevisionTag;
+
+    /**
+     * Only populated when the mark is muted.
+     * Indicates the index of the detach in the input context of `mutedBy`.
+     */
+    detachIndex?: number;
+
+    /**
+     * When true, the corresponding ReturnTo has been muted.
+     * This is independent of whether this mark is muted.
+     */
+    isDstMuted?: true;
 }
 
 /**

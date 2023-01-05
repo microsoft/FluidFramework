@@ -14,15 +14,41 @@ import {
     isAttach,
     isDetachMark,
     isModify,
-    isObjMark,
+    isMuted,
+    isMutedReattach,
+    isReattach,
+    isNewAttach,
     isSkipMark,
     MoveEffectTable,
     newMoveEffectTable,
     removeMoveDest,
     splitMarkOnInput,
     splitMarkOnOutput,
+    isAttachInGap,
+    isActiveReattach,
+    isObjMark,
+    isSkipLikeReattach,
+    isMutedDetach,
+    updateMoveSrcDetacher,
+    updateMoveSrcPairing,
+    updateMoveDestPairing,
+    PairedMarkUpdate,
+    lineUpRelatedReattaches,
 } from "./utils";
-import { Attach, Changeset, LineageEvent, Mark, MarkList, SizedMark } from "./format";
+import {
+    Attach,
+    Changeset,
+    LineageEvent,
+    Mark,
+    MarkList,
+    Reattach,
+    CellSpanningMark,
+    Mutable,
+    ReturnFrom,
+    Muted,
+    Detach,
+    NewAttach,
+} from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
 
@@ -77,8 +103,18 @@ function rebaseMarkList<TNodeChange>(
     // marks which should have their lineage updated if we encounter a detach.
     const lineageRequests: LineageRequest<TNodeChange>[] = [];
     let baseDetachOffset = 0;
+    // The offset of the next base mark in the input context of the base change.
+    // This assumes the base changeset is not composite (and asserts if it is).
+    let baseInputOffset = 0;
     while (!queue.isEmpty()) {
         const { baseMark, newMark: currMark } = queue.pop();
+        if (isObjMark(baseMark) && baseMark.type !== "Modify" && baseMark.revision !== undefined) {
+            // TODO support rebasing over composite changeset
+            assert(
+                baseMark.revision === baseRevision,
+                "Unable to keep track of the base input offset in composite changeset",
+            );
+        }
         if (baseMark === undefined) {
             assert(currMark !== undefined, "Non-empty queue should return at least one mark");
             if (isAttach(currMark)) {
@@ -94,25 +130,36 @@ function rebaseMarkList<TNodeChange>(
             }
         } else if (currMark === undefined) {
             if (isDetachMark(baseMark)) {
-                baseDetachOffset += getInputLength(baseMark);
+                const detachLength = getInputLength(baseMark);
+                baseDetachOffset += detachLength;
+                baseInputOffset += detachLength;
             } else if (isAttach(baseMark)) {
                 factory.pushOffset(getOutputLength(baseMark));
             }
         } else {
             assert(
-                !isAttach(baseMark) && !isAttach(currMark),
-                "An attach cannot be at the same position as another mark",
+                !isNewAttach(baseMark) && !isNewAttach(currMark),
+                "A new attach cannot be at the same position as another mark",
             );
             assert(
                 getInputLength(baseMark) === getInputLength(currMark),
                 "The two marks should be the same size",
             );
 
-            const rebasedMark = rebaseMark(currMark, baseMark, rebaseChild, moveEffects);
+            const rebasedMark = rebaseMark(
+                currMark,
+                baseMark,
+                baseRevision,
+                baseInputOffset,
+                rebaseChild,
+                moveEffects,
+            );
             factory.push(rebasedMark);
 
+            const detachLength = getInputLength(baseMark);
+            baseInputOffset += detachLength;
             if (isDetachMark(baseMark)) {
-                baseDetachOffset += getInputLength(baseMark);
+                baseDetachOffset += detachLength;
             } else {
                 if (baseDetachOffset > 0 && baseRevision !== undefined) {
                     updateLineage(lineageRequests, baseRevision);
@@ -165,6 +212,23 @@ class RebaseQueue<T> {
                 newMark: this.newMarks.pop(),
             };
         } else if (isAttach(baseMark) && isAttach(newMark)) {
+            if (
+                isReattach(baseMark) &&
+                isReattach(newMark) &&
+                areRelatedReattaches(baseMark, newMark)
+            ) {
+                const { newMarkHead, newMarkTail, baseMarkHead, baseMarkTail } =
+                    lineUpRelatedReattaches(newMark, baseMark, this.genId, this.moveEffects);
+                this.newMarks.pop();
+                if (newMarkTail !== undefined) {
+                    this.newMarks.push(newMarkTail);
+                }
+                this.baseMarks.pop();
+                if (baseMarkTail !== undefined) {
+                    this.baseMarks.push(baseMarkTail);
+                }
+                return { newMark: newMarkHead, baseMark: baseMarkHead };
+            }
             const revision = baseMark.revision ?? this.baseRevision;
             const reattachOffset = getOffsetInReattach(newMark.lineage, revision);
             if (reattachOffset !== undefined) {
@@ -185,18 +249,85 @@ class RebaseQueue<T> {
                     this.reattachOffset += offset;
                     return { baseMark: baseMark1 };
                 }
-            } else if (isAttachAfterBaseAttach(newMark, baseMark)) {
+            } else if (isAttachAfterBaseAttach(newMark, baseMark) || isMutedReattach(newMark)) {
                 return { baseMark: this.baseMarks.pop() };
             } else {
                 return { newMark: this.newMarks.pop() };
             }
-        } else if (isAttach(newMark)) {
+        } else if (isAttachInGap(newMark)) {
             return { newMark: this.newMarks.pop() };
+        } else if (
+            isAttach(baseMark) &&
+            // The `isNewAttach(baseMark)` bit is needed because of the way sandwich rebasing makes
+            // the rebased local new attaches relevant to later local changes.
+            (isNewAttach(baseMark) || isActiveReattach(baseMark)) &&
+            isMutedDetach(newMark) &&
+            // TODO: support muting/unmuting other detach mark types
+            newMark.type === "ReturnFrom" &&
+            isBaseAttachRelatedToMutedDetach(baseMark, newMark, this.baseRevision)
+        ) {
+            assert(
+                newMark.detachIndex !== undefined,
+                "A muted ReturnFrom should have a detachIndex",
+            );
+            const newMarkLength = newMark.count;
+            const baseMarkLength = getOutputLength(baseMark);
+            if (isNewAttach(baseMark) || newMark.detachIndex === baseMark.detachIndex) {
+                this.baseMarks.pop();
+                this.newMarks.pop();
+                if (newMarkLength < baseMarkLength) {
+                    const [baseMark1, baseMark2] = splitMarkOnOutput(
+                        baseMark,
+                        newMarkLength,
+                        this.genId,
+                        this.moveEffects,
+                    );
+                    this.baseMarks.push(baseMark2);
+                    return { baseMark: baseMark1, newMark };
+                } else if (newMarkLength > baseMarkLength) {
+                    const [newMark1, newMark2] = splitMarkOnInput(
+                        newMark,
+                        baseMarkLength,
+                        this.genId,
+                        this.moveEffects,
+                    );
+                    this.newMarks.push(newMark2);
+                    return { baseMark, newMark: newMark1 };
+                } else {
+                    return { baseMark, newMark };
+                }
+            } else if (newMark.detachIndex < baseMark.detachIndex) {
+                this.newMarks.pop();
+                if (newMark.detachIndex + newMarkLength <= baseMark.detachIndex) {
+                    return { newMark };
+                }
+                const [newMark1, newMark2] = splitMarkOnInput(
+                    newMark,
+                    baseMark.detachIndex - newMark.detachIndex,
+                    this.genId,
+                    this.moveEffects,
+                );
+                this.newMarks.push(newMark2);
+                return { newMark: newMark1 };
+            } else {
+                this.baseMarks.pop();
+                if (baseMark.detachIndex + baseMarkLength <= newMark.detachIndex) {
+                    return { baseMark };
+                }
+                const [baseMark1, baseMark2] = splitMarkOnOutput(
+                    baseMark,
+                    newMark.detachIndex - baseMark.detachIndex,
+                    this.genId,
+                    this.moveEffects,
+                );
+                this.baseMarks.push(baseMark2);
+                return { baseMark: baseMark1 };
+            }
         }
 
         // TODO: Handle case where `baseMarks` has adjacent or nested inverse reattaches from multiple revisions
         this.reattachOffset = 0;
-        if (isAttach(baseMark)) {
+        if (isAttachInGap(baseMark)) {
             return { baseMark: this.baseMarks.pop() };
         } else {
             this.reattachOffset = 0;
@@ -255,6 +386,7 @@ class RebaseQueue<T> {
                 this.moveEffects,
                 this.genId,
                 reassignMoveIds,
+                false,
             );
 
             mark = splitMarks[0];
@@ -278,17 +410,44 @@ interface RebaseMarks<T> {
 }
 
 function rebaseMark<TNodeChange>(
-    currMark: SizedMark<TNodeChange>,
-    baseMark: SizedMark<TNodeChange>,
+    currMark: CellSpanningMark<TNodeChange>,
+    baseMark: CellSpanningMark<TNodeChange>,
+    baseRevision: RevisionTag | undefined,
+    baseInputOffset: number,
     rebaseChild: NodeChangeRebaser<TNodeChange>,
     moveEffects: MoveEffectTable<TNodeChange>,
-): SizedMark<TNodeChange> {
-    if (isSkipMark(baseMark)) {
+): CellSpanningMark<TNodeChange> {
+    if (isSkipMark(baseMark) || isSkipLikeReattach(baseMark)) {
         return clone(currMark);
     }
     const baseType = baseMark.type;
     switch (baseType) {
-        case "Delete":
+        case "Delete": {
+            const baseMarkRevision = baseMark.revision ?? baseRevision;
+            if (isReattach(currMark)) {
+                // TODO: add `addedBy: RevisionTag` to inverses of attaches so we can detect when
+                // baseMark.addedBy === currMark.mutedBy, which indicates the deletion is the undo of the reattach that
+                // muted currMark. When that's the case, the mark should be unmuted.
+                // See skipped test: Revive ↷ [Revive, undo(Revive)] => Revive
+                if (currMark.isIntention || currMark.mutedBy === baseMarkRevision) {
+                    const reattach = {
+                        ...(clone(currMark) as Reattach<TNodeChange>),
+                        // Update the characterization of the deleted content
+                        detachedBy: baseMarkRevision,
+                        detachIndex: baseInputOffset,
+                    };
+                    delete reattach.mutedBy;
+                    return reattach;
+                }
+                // The reattach mark remains muted because the deletion was performed by a different change.
+                // The only way to unmute the reattach now is for the nodes to be revived and for the original
+                // deletion (currMark.detachedBy) to be re-applied.
+                return {
+                    ...clone(currMark),
+                    lastDetachedBy: baseMarkRevision,
+                    detachIndex: baseInputOffset,
+                };
+            }
             if (
                 isObjMark(currMark) &&
                 (currMark.type === "MoveOut" || currMark.type === "ReturnFrom")
@@ -296,6 +455,57 @@ function rebaseMark<TNodeChange>(
                 removeMoveDest(moveEffects, currMark.id);
             }
             return 0;
+        }
+        case "Revive":
+        case "ReturnTo": {
+            const baseMarkRevision = baseMark.revision ?? baseRevision;
+            assert(
+                isDetachMark(currMark) || isReattach(currMark),
+                "Only a detach or a reattach can overlap with a non-inert reattach",
+            );
+            if (isDetachMark(currMark)) {
+                assert(
+                    currMark.type === "ReturnFrom",
+                    "TODO: support mute/unmute for other detach marks",
+                );
+                assert(
+                    isMuted(currMark) && currMark.mutedBy === baseMarkRevision,
+                    "Invalid reattach mark overlap",
+                );
+                // The nodes that currMark aims to detach are being reattached by baseMark
+                const newCurrMark = clone(currMark) as ReturnFrom<TNodeChange>;
+                delete newCurrMark.mutedBy;
+                delete newCurrMark.detachIndex;
+                updateMoveDestPairing(moveEffects, newCurrMark.id, PairedMarkUpdate.Reactivated);
+                return newCurrMark;
+            }
+            if (currMark.isIntention) {
+                assert(isActiveReattach(currMark), `Invalid reattach mark overlap`);
+                // The nodes that currMark aims to reattach are being reattached by baseMark
+                return {
+                    ...clone(currMark),
+                    mutedBy: baseMarkRevision,
+                };
+            }
+
+            if (isActiveReattach(currMark)) {
+                // The nodes that currMark aims to reattach are being reattached by baseMark
+                if (currMark.type === "ReturnTo") {
+                    updateMoveSrcPairing(moveEffects, currMark.id, PairedMarkUpdate.Deactivated);
+                }
+                return {
+                    ...clone(currMark),
+                    mutedBy: baseMarkRevision,
+                };
+            }
+            assert(!isSkipLikeReattach(currMark), `Unsupported reattach mark overlap`);
+            // The nodes that currMark aims to reattach and were detached by `currMark.lastDetachedBy`
+            // are being reattached by baseMark.
+            assert(currMark.lastDetachedBy === baseMark.detachedBy, `Invalid revive mark overlap`);
+            const revive = clone(currMark);
+            delete revive.lastDetachedBy;
+            return revive;
+        }
         case "Modify": {
             if (isModify(currMark)) {
                 return {
@@ -308,7 +518,60 @@ function rebaseMark<TNodeChange>(
         case "MoveOut":
         case "ReturnFrom": {
             if (!isSkipMark(currMark)) {
-                getOrAddEmptyToMap(moveEffects.movedMarks, baseMark.id).push(clone(currMark));
+                const baseMarkRevision = baseMark.revision ?? baseRevision;
+                const newCurrMark = clone(currMark);
+                if (newCurrMark.type === "ReturnFrom") {
+                    // The nodes that currMark aims to detach are being detached by baseMark
+                    newCurrMark.mutedBy = baseMarkRevision;
+                    newCurrMark.detachIndex = baseInputOffset;
+                    updateMoveDestPairing(
+                        moveEffects,
+                        newCurrMark.id,
+                        PairedMarkUpdate.Deactivated,
+                    );
+                    return newCurrMark;
+                } else if (newCurrMark.type === "ReturnTo") {
+                    assert(
+                        isSkipLikeReattach(newCurrMark),
+                        "Only a skip-like reattach can overlap with a ReturnFrom",
+                    );
+                    if (
+                        newCurrMark.mutedBy === baseMarkRevision ||
+                        (baseMark.type === "ReturnFrom" &&
+                            newCurrMark.mutedBy === baseMark.detachedBy)
+                    ) {
+                        // The already populated cells that currMark aimed to reattach content into
+                        // are having their contents detached by baseMark.
+                        // This makes it possible for currMark to be active again.
+                        newCurrMark.detachedBy = baseMarkRevision;
+                        newCurrMark.detachIndex = baseInputOffset;
+                        delete (newCurrMark as Mutable).mutedBy;
+                        updateMoveSrcDetacher(moveEffects, newCurrMark.id, baseMarkRevision);
+                        updateMoveSrcPairing(
+                            moveEffects,
+                            newCurrMark.id,
+                            PairedMarkUpdate.Reactivated,
+                        );
+                    }
+                    return newCurrMark;
+                } else if (newCurrMark.type === "Revive" && !newCurrMark.isIntention) {
+                    assert(
+                        isSkipLikeReattach(newCurrMark),
+                        "Only a skip-like reattach can overlap with a ReturnFrom",
+                    );
+                    // The already populated cells that currMark aimed to revive content into
+                    // are having their contents detached by baseMark.
+                    // The revive mark remains muted because the detach was performed by a different change than the
+                    // change the revive aims to revert.
+                    // The only way to unmute the reattach now is for the nodes to be returned and for the original
+                    // deletion (currMark.detachedBy) to be re-applied.
+                    // Update the characterization of the deleted content
+                    newCurrMark.lastDetachedBy = baseMarkRevision;
+                    newCurrMark.detachIndex = baseInputOffset;
+                    return newCurrMark;
+                } else {
+                    getOrAddEmptyToMap(moveEffects.movedMarks, baseMark.id).push(newCurrMark);
+                }
             }
             return 0;
         }
@@ -329,6 +592,7 @@ function applyMoveEffects<TNodeChange>(
         () => fail("Should not split moves while applying move effects"),
         moveEffects,
         false,
+        true,
     );
     const factory = new MarkListFactory<TNodeChange>(moveEffects);
 
@@ -479,4 +743,34 @@ function tryRemoveLineageEvent<T>(mark: Attach<T>, revisionToRemove: RevisionTag
             delete mark.lineage;
         }
     }
+}
+
+/**
+ * @returns true iff both reattaches target cells that were affected by the same detach.
+ * The target cells may or may not overlap depending on detach index information.
+ *
+ * Only valid in the context of a rebase (i.e., both marks have the same input context).
+ */
+function areRelatedReattaches<T>(baseMark: Reattach<T>, newMark: Reattach<T>): boolean {
+    return (
+        baseMark.detachedBy !== undefined &&
+        (baseMark.detachedBy === newMark.detachedBy ||
+            baseMark.detachedBy === newMark.lastDetachedBy)
+    );
+}
+
+/**
+ * @returns true iff `baseMark` attaches nodes in cells whose contents were detached by the same change
+ * that detached muted `newMark`.
+ * The target cells may or may not overlap depending on detach index information.
+ */
+function isBaseAttachRelatedToMutedDetach<T>(
+    baseMark: NewAttach<T> | Reattach<T>,
+    newMark: Detach<T> & Muted,
+    baseRevision: RevisionTag | undefined,
+): boolean {
+    return (
+        (isActiveReattach(baseMark) && baseMark.detachedBy === newMark.mutedBy) ||
+        (baseMark.revision ?? baseRevision) === newMark.mutedBy
+    );
 }

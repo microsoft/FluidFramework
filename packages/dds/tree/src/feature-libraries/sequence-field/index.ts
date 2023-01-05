@@ -5,6 +5,7 @@
 
 export {
     Attach,
+    NewAttach,
     Changeset,
     ClientId,
     Delete,
@@ -31,11 +32,13 @@ export {
     ProtoNode,
     RangeType,
     Reattach,
+    CellSpanningMark,
+    InputSpanningMark,
+    OutputSpanningMark,
+    SkipLikeReattach,
     ReturnFrom,
     ReturnTo,
     Revive,
-    SizedMark,
-    SizedObjectMark,
     Tiebreak,
     Tombstones,
     TreeForestPath,
@@ -43,6 +46,9 @@ export {
     Skip,
     LineageEvent,
     HasReattachFields,
+    Active,
+    Muted,
+    Mutable,
 } from "./format";
 export {
     SequenceFieldChangeHandler,
@@ -62,4 +68,19 @@ export { MarkListFactory } from "./markListFactory";
 export { NodeChangeRebaser, rebase } from "./rebase";
 export { invert, NodeChangeInverter } from "./invert";
 export { compose, NodeChangeComposer } from "./compose";
-export { isMoveMark, MoveMark, MoveEffectTable, MovePartition, newMoveEffectTable } from "./utils";
+export {
+    areComposable,
+    areRebasable,
+    isActiveReattach,
+    getInputLength,
+    isMoveMark,
+    isDetachMark,
+    isReattach,
+    MoveMark,
+    MoveEffectTable,
+    MovePartition,
+    newMoveEffectTable,
+    PairedMarkUpdate,
+    splitMarkOnOutput,
+    DetachedNodeTracker,
+} from "./utils";
