@@ -119,6 +119,7 @@ The vast majority of these options have default values that have been crafted to
 
 ### Known Bugs
 
+-   Example titles are not respected. See TSDoc [@example spec](https://tsdoc.org/pages/tags/example/) - text on the same line as the tag should be treated as the example title.
 -   Types that extend or implement types with generic parameters result in signatures rendered with missing closing `>`s.
 
 ### Documentation Improvements
