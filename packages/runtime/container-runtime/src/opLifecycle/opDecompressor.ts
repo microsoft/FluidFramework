@@ -23,7 +23,12 @@ export class OpDecompressor {
     private processedCount = 0;
 
     public processMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
-        if (message.metadata?.batch === true && message.compression !== undefined) {
+        // We're checking for compression = true or top level compression property so
+        // that we can enable compression without waiting on all ordering services
+        // to pick up protocol change. Eventually only the top level property should
+        // be used.
+        if (message.metadata?.batch === true
+            && (message.metadata?.compressed || message.compression !== undefined)) {
             // Beginning of a compressed batch
             assert(this.activeBatch === false, 0x4b8 /* shouldn't have multiple active batches */);
             if (message.compression) {
@@ -94,9 +99,26 @@ export class OpDecompressor {
 }
 
 // We should not be mutating the input message nor its metadata
-const newMessage = (originalMessage: ISequencedDocumentMessage, contents: any): ISequencedDocumentMessage => ({
-    ...originalMessage,
-    contents,
-    metadata: { ...originalMessage.metadata },
-    compression: undefined,
-});
+const newMessage = (originalMessage: ISequencedDocumentMessage, contents: any): ISequencedDocumentMessage =>
+    stripCompressionMarkers({
+        ...originalMessage,
+        contents,
+        metadata: { ...originalMessage.metadata },
+    });
+
+// After compression, it is irrelevant to the other layers whether or not the
+// original message was compressed, so in the interest of both correctness and safety
+// we should remove all compression markers after we decompress.
+const stripCompressionMarkers = (message: ISequencedDocumentMessage): ISequencedDocumentMessage => {
+    message.compression = undefined;
+
+    if (message.metadata?.compressed === true) {
+        message.metadata.compressed = undefined;
+
+        if (Object.keys(message.metadata).length === 0) {
+            message.metadata = undefined;
+        }
+    }
+
+    return message;
+};
