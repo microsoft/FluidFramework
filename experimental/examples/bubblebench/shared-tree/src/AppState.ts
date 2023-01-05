@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IAppState, makeBubble, randomColor } from "@fluid-example/bubblebench-common";
-import { brand, IDefaultEditBuilder, ISharedTree, JsonableTree, moveToDetachedField, TransactionResult } from "@fluid-internal/tree";
+import { Anchor, brand, IDefaultEditBuilder, ISharedTree, JsonableTree, moveToDetachedField, TransactionResult } from "@fluid-internal/tree";
 import { Client } from "./Client";
 import {
     iBubbleSchema,
@@ -20,6 +20,7 @@ import { SharedTreeSequenceHelper } from "./tree-utils/SharedTreeSequenceHelper"
 export class AppState implements IAppState {
     readonly clientsSequenceHelper: SharedTreeSequenceHelper;
     readonly editBuilderCallbacks: ((editor: IDefaultEditBuilder) => void)[] = [];
+    readonly shortTermSpawnedAnchors: Set<Anchor> = new Set();
     readonly localClientNode: SharedTreeNodeHelper;
     readonly localClientId: string;
 
@@ -60,25 +61,38 @@ export class AppState implements IAppState {
 
     public get localClient() {
         // return new Client(this.tree, this.localClientNode.anchor, this.editBuilderCallbacks);
-        const localClientNode = this.clientsSequenceHelper
-        .getAll()
+
+        const treeNodes = this.clientsSequenceHelper.getAll();
+        treeNodes.forEach(treeNode => this.shortTermSpawnedAnchors.add(treeNode.anchor));
+
+        const localClientNode = treeNodes
         .filter(treeNode => treeNode.getFieldValue(Client.clientIdFieldKey) === this.localClientId);
 
         if (localClientNode.length < 1) {
            throw new Error('Failed to retreieve local client node');
         }
 
-        return new Client(this.tree, localClientNode[0].anchor, this.editBuilderCallbacks);
+        return new Client(this.tree, localClientNode[0].anchor, this.editBuilderCallbacks, this.shortTermSpawnedAnchors);
     }
 
     public applyEdits() {
         // console.log(`AppState applied ${this.editBuilderCallbacks.length} in bulk!`);
-        this.tree.runTransaction((forest, editor) => {
-            this.tree.context.prepareForEdit();
-            this.editBuilderCallbacks.forEach((editCallback) => editCallback(editor));
-            return TransactionResult.Apply;
+        if (this.editBuilderCallbacks.length > 0) {
+            this.tree.runTransaction((forest, editor) => {
+                this.tree.context.prepareForEdit();
+                this.editBuilderCallbacks.forEach((editCallback) => editCallback(editor));
+                return TransactionResult.Apply;
+            });
+            this.editBuilderCallbacks.length = 0;
+        }
+        this.shortTermSpawnedAnchors.forEach(anchor => {
+            try {
+                this.tree.forest.forgetAnchor(anchor);
+                // console.log('successfully forget anchor')
+            } catch (e) {
+                // console.log("failed to forget anchor.", e)
+            }
         });
-        this.editBuilderCallbacks.length = 0;
     }
 
     makeClientInitialJsonTree(numBubbles: number) {
@@ -117,9 +131,10 @@ export class AppState implements IAppState {
     }
 
     public get clients() {
-        return this.clientsSequenceHelper
-            .getAll()
-            .map((treeNode) => new Client(this.tree, treeNode.anchor, this.editBuilderCallbacks));
+        const treeNodes = this.clientsSequenceHelper.getAll();
+        treeNodes.forEach(treeNode => this.shortTermSpawnedAnchors.add(treeNode.anchor));
+        return treeNodes
+            .map((treeNode) => new Client(this.tree, treeNode.anchor, this.editBuilderCallbacks, this.shortTermSpawnedAnchors));
     }
 
     public get width() {

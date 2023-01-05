@@ -379,6 +379,7 @@ declare namespace FieldKinds {
         noChangeHandler,
         counterHandle,
         counter,
+        NodeUpdate,
         ValueChangeset,
         ValueFieldEditor,
         value,
@@ -977,6 +978,9 @@ interface MovePartition<TNodeChange> {
     replaceWith?: Mark_2<TNodeChange>[];
 }
 
+// @public (undocumented)
+export function moveToDetachedField(forest: IForestSubscription, cursorToMove: ITreeSubscriptionCursor, field?: DetachedField): void;
+
 // @public
 export enum Multiplicity {
     Forbidden = 3,
@@ -1002,7 +1006,7 @@ export interface NamedComputation {
 export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
 
 // @public
-export function namedTreeSchema(data: TreeSchemaBuilder & Named<TreeSchemaIdentifier>): NamedTreeSchema;
+export function namedTreeSchema(data: Partial<TreeSchemaBuilder> & Named<TreeSchemaIdentifier>): NamedTreeSchema;
 
 // @public
 export type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<any, infer Name> ? Name : never;
@@ -1010,11 +1014,11 @@ export type NameFromBranded<T extends BrandedType<any, string>> = T extends Bran
 // @public
 export const neverTree: TreeSchema;
 
-// @public
-const noChangeHandler: FieldChangeHandler<0>;
-
 // @public (undocumented)
 function newMoveEffectTable<T>(): MoveEffectTable<T>;
+
+// @public
+const noChangeHandler: FieldChangeHandler<0>;
 
 // @public (undocumented)
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
@@ -1070,6 +1074,13 @@ export interface NodeData {
 export type NodeReviver = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
 
 // @public (undocumented)
+type NodeUpdate = {
+    set: JsonableTree;
+} | {
+    revert: RevisionTag | undefined;
+};
+
+// @public (undocumented)
 type ObjectMark<TNodeChange = NodeChangeType> = SizedObjectMark<TNodeChange> | Attach<TNodeChange>;
 
 // @public
@@ -1084,6 +1095,21 @@ type Offset = number;
 
 // @public
 export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
+
+// @public
+const optional: FieldKind<OptionalFieldEditor>;
+
+// @public (undocumented)
+interface OptionalChangeset {
+    childChange?: NodeChangeset;
+    fieldChange?: OptionalFieldChange;
+}
+
+// @public (undocumented)
+interface OptionalFieldChange {
+    newContent?: NodeUpdate;
+    wasEmpty: boolean;
+}
 
 // @public (undocumented)
 export interface OptionalFieldEditBuilder {
@@ -1153,6 +1179,14 @@ function rebase<TNodeChange>(change: Changeset<TNodeChange>, base: TaggedChange<
 // @public
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
 
+// @public
+export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepairDataStore<TTree> {
+    capture(change: Delta.Root, revision: RevisionTag): void;
+}
+
+// @public
+export const replaceField: unique symbol;
+
 // @public (undocumented)
 interface Replacement<T> {
     // (undocumented)
@@ -1166,14 +1200,6 @@ type ReplaceOp<T> = Replacement<T> | 0;
 
 // @public
 function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>>;
-
-// @public
-export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepairDataStore<TTree> {
-    capture(change: Delta.Root, revision: RevisionTag): void;
-}
-
-// @public
-export const replaceField: unique symbol;
 
 // @public (undocumented)
 interface ReturnFrom<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMoveId, HasChanges<TNodeChange> {
@@ -1578,7 +1604,7 @@ interface ValueChangeset {
     // (undocumented)
     changes?: NodeChangeset;
     // (undocumented)
-    value?: JsonableTree;
+    value?: NodeUpdate;
 }
 
 // @public @sealed

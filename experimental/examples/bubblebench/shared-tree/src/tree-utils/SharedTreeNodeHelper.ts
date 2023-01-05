@@ -63,6 +63,7 @@ export class SharedTreeNodeHelper {
             editor.setValue(path, value);
             return TransactionResult.Apply;
         });
+        this.tree.forest.forgetAnchor(fieldAnchor);
     }
 
     stashSetFieldValue(fieldKey: FieldKey, value: Value): void {
@@ -79,5 +80,6 @@ export class SharedTreeNodeHelper {
         this.editBuilderCallbacks.push((editor: IDefaultEditBuilder) =>
             editor.setValue(path, value),
         );
+        this.tree.forest.forgetAnchor(fieldAnchor);
     }
 }

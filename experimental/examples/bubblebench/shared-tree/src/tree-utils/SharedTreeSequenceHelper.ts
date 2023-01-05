@@ -16,6 +16,7 @@ import { SharedTreeNodeHelper } from "./SharedTreeNodeHelper";
 
 export class SharedTreeSequenceHelper {
     private readonly treeNodeHelper: SharedTreeNodeHelper;
+    private readonly spawnedAnchors: Set<Anchor> = new Set();
     constructor(
         public readonly tree: ISharedTree,
         public readonly parentAnchor: Anchor,
@@ -33,6 +34,7 @@ export class SharedTreeSequenceHelper {
         cursor.enterField(this.sequenceFieldKey);
         cursor.enterNode(index);
         const treeNode: Anchor = cursor.buildAnchor();
+        debugger;
         cursor.free();
         return treeNode;
     }
@@ -46,6 +48,10 @@ export class SharedTreeSequenceHelper {
     }
 
     public getAllAnchors() {
+        // Removes anchors built from last call.
+        // this.spawnedAnchors.forEach(anchor => this.tree.forest.forgetAnchor(anchor));
+        // this.spawnedAnchors.clear();
+
         const nodeAnchors: Anchor[] = [];
         // const cursor = this.treeNodeHelper.getCursor();
         const cursor = this.tree.forest.allocateCursor();
@@ -64,8 +70,10 @@ export class SharedTreeSequenceHelper {
             nodeAnchors.push(cursor.buildAnchor());
             currentNode = cursor.nextNode();
         }
-
         cursor.free();
+
+        // saves anchors built from this call so they can be freed after use.
+        nodeAnchors.forEach(anchor => this.spawnedAnchors.add(anchor));
         return nodeAnchors;
     }
 
@@ -106,11 +114,13 @@ export class SharedTreeSequenceHelper {
     public pop(): void {
         this.tree.runTransaction((forest, editor) => {
             const cursor = this.treeNodeHelper.getCursor();
-            const parentPath = this.tree.locate(cursor.buildAnchor());
+            const parentAnchor = cursor.buildAnchor();
+            const parentPath = this.tree.locate(parentAnchor);
             const field = editor.sequenceField(
                 parentPath,
                 this.sequenceFieldKey,
             );
+            this.tree.forest.forgetAnchor(parentAnchor);
             this.tree.context.prepareForEdit();
             cursor.free();
             field.delete(this.length() - 1, 1);

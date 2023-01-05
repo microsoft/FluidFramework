@@ -24,6 +24,7 @@ export class Client implements IClient {
         public readonly tree: ISharedTree,
         public readonly anchor: Anchor,
         readonly editBuilderCallbacks: ((editor: IDefaultEditBuilder) => void)[],
+        private readonly shortTermSpawnedAnchors: Set<Anchor>,
         public shouldStashTransactions: boolean = true,
     ) {
         this.treeHelper = new SharedTreeNodeHelper(tree, anchor, this.editBuilderCallbacks);
@@ -58,8 +59,9 @@ export class Client implements IClient {
     }
 
     public get bubbles() {
-        return this.bubbleSeqeunceHelper
-            .getAll()
+        const treeNodes = this.bubbleSeqeunceHelper.getAll();
+        treeNodes.forEach(treeNode => this.shortTermSpawnedAnchors.add(treeNode.anchor));
+        return treeNodes
             .map((treeNode) => new Bubble(this.tree, treeNode.anchor, this.editBuilderCallbacks));
     }
 
