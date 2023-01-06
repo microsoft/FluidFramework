@@ -4,7 +4,7 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { Brand, Opaque } from "../util";
+import { Brand, Opaque } from "../../util";
 import { ITreeCursorSynchronous } from "./cursor";
 import { FieldKey, Value } from "./types";
 
@@ -128,6 +128,7 @@ import { FieldKey, Value } from "./types";
 
 /**
  * Represents the change made to a document.
+ * Immutable, therefore safe to retain for async processing.
  */
 export type Root<TTree = ProtoNode> = FieldMarks<TTree>;
 export const empty: Root<any> = new Map();
@@ -157,7 +158,7 @@ export type Mark<TTree = ProtoNode> =
  * applying any of the changes, is not represented explicitly.
  * It corresponds to the sum of `inputLength(mark)` for all previous marks.
  */
-export type MarkList<TTree = ProtoNode> = Mark<TTree>[];
+export type MarkList<TTree = ProtoNode> = readonly Mark<TTree>[];
 
 /**
  * Represents a range of contiguous nodes that is unaffected by changes.
@@ -169,17 +170,17 @@ export type Skip = number;
  * Describes modifications made to a subtree.
  */
 export interface Modify<TTree = ProtoNode> {
-    type: typeof MarkType.Modify;
-    setValue?: Value;
-    fields?: FieldMarks<TTree>;
+    readonly type: typeof MarkType.Modify;
+    readonly setValue?: Value;
+    readonly fields?: FieldMarks<TTree>;
 }
 
 /**
  * Describes the deletion of a contiguous range of node.
  */
 export interface Delete {
-    type: typeof MarkType.Delete;
-    count: number;
+    readonly type: typeof MarkType.Delete;
+    readonly count: number;
 }
 
 /**
@@ -187,20 +188,20 @@ export interface Delete {
  * Includes descriptions of the modifications the node.
  */
 export interface ModifyAndDelete<TTree = ProtoNode> {
-    type: typeof MarkType.ModifyAndDelete;
-    fields: FieldMarks<TTree>;
+    readonly type: typeof MarkType.ModifyAndDelete;
+    readonly fields: FieldMarks<TTree>;
 }
 
 /**
  * Describes the moving out of a contiguous range of node.
  */
 export interface MoveOut {
-    type: typeof MarkType.MoveOut;
-    count: number;
+    readonly type: typeof MarkType.MoveOut;
+    readonly count: number;
     /**
      * The delta should carry exactly one `MoveIn` mark with the same move ID.
      */
-    moveId: MoveId;
+    readonly moveId: MoveId;
 }
 
 /**
@@ -208,24 +209,24 @@ export interface MoveOut {
  * Includes descriptions of the modifications made to the node.
  */
 export interface ModifyAndMoveOut<TTree = ProtoNode> {
-    type: typeof MarkType.ModifyAndMoveOut;
+    readonly type: typeof MarkType.ModifyAndMoveOut;
     /**
      * The delta should carry exactly one `MoveIn` mark with the same move ID.
      */
-    moveId: MoveId;
-    setValue?: Value;
-    fields?: FieldMarks<TTree>;
+    readonly moveId: MoveId;
+    readonly setValue?: Value;
+    readonly fields?: FieldMarks<TTree>;
 }
 
 /**
  * Describes the moving in of a contiguous range of node.
  */
 export interface MoveIn {
-    type: typeof MarkType.MoveIn;
+    readonly type: typeof MarkType.MoveIn;
     /**
      * The delta should carry exactly one `MoveOut` mark with the same move ID.
      */
-    moveId: MoveId;
+    readonly moveId: MoveId;
 }
 
 /**
@@ -233,21 +234,21 @@ export interface MoveIn {
  * Includes descriptions of the modifications made to the node.
  */
 export interface MoveInAndModify<TTree = ProtoNode> {
-    type: typeof MarkType.MoveInAndModify;
+    readonly type: typeof MarkType.MoveInAndModify;
     /**
      * The delta should carry exactly one `MoveOut` mark with the same move ID.
      */
-    moveId: MoveId;
-    fields: FieldMarks<TTree>;
+    readonly moveId: MoveId;
+    readonly fields: FieldMarks<TTree>;
 }
 
 /**
  * Describes the insertion of a contiguous range of node.
  */
 export interface Insert<TTree = ProtoNode> {
-    type: typeof MarkType.Insert;
+    readonly type: typeof MarkType.Insert;
     // TODO: use a single cursor with multiple nodes instead of array of cursors.
-    content: TTree[];
+    readonly content: readonly TTree[];
 }
 
 /**
@@ -255,9 +256,9 @@ export interface Insert<TTree = ProtoNode> {
  * Includes descriptions of the modifications made to the nodes.
  */
 export interface InsertAndModify<TTree = ProtoNode> {
-    type: typeof MarkType.InsertAndModify;
-    content: TTree;
-    fields: FieldMarks<TTree>;
+    readonly type: typeof MarkType.InsertAndModify;
+    readonly content: TTree;
+    readonly fields: FieldMarks<TTree>;
 }
 
 /**
@@ -267,7 +268,7 @@ export interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {}
 
 export type Offset = number;
 
-export type FieldMap<T> = Map<FieldKey, T>;
+export type FieldMap<T> = ReadonlyMap<FieldKey, T>;
 export type FieldMarks<TTree = ProtoNode> = FieldMap<MarkList<TTree>>;
 
 export const MarkType = {

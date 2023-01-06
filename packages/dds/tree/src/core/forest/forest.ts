@@ -4,11 +4,13 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { ISubscribable } from "../../events";
 import { Dependee } from "../dependency-tracking";
 import { StoredSchemaRepository } from "../schema-stored";
 import {
     Anchor,
     AnchorSet,
+    Delta,
     DetachedField,
     detachedFieldAsKey,
     FieldKey,
@@ -27,12 +29,29 @@ import type { IEditableForest } from "./editableForest";
  */
 
 /**
+ * Events for {@link IForestSubscription}.
+ *
+ * TODO: consider having before and after events per subtree instead while applying anchor (and this just shows what happens at the root).
+ */
+export interface ForestEvents {
+    /**
+     * Delta is about to be applied to forest.
+     */
+    beforeDelta(delta: Delta.Root): void;
+
+    /**
+     * Delta was just applied to forest.
+     */
+    afterDelta(delta: Delta.Root): void;
+}
+
+/**
  * Invalidates whenever `current` changes.
  * For now (might change later) downloading new parts of the forest counts as a change.
  *
  * When invalidating, all outstanding cursors must be freed or cleared.
  */
-export interface IForestSubscription extends Dependee {
+export interface IForestSubscription extends Dependee, ISubscribable<ForestEvents> {
     /**
      * Create an independent copy of this forest, that uses the provided schema and anchors.
      *

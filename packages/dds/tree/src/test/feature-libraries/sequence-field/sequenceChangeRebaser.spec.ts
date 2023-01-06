@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
-import { RevisionTag, tagChange, tagInverse } from "../../../rebase";
+import { RevisionTag, tagChange, tagInverse } from "../../../core";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze, fakeRepair } from "../../utils";

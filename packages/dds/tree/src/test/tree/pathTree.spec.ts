@@ -11,7 +11,7 @@ import {
     compareUpPaths,
     clonePath,
     compareFieldUpPaths,
-} from "../../tree";
+} from "../../core";
 import { brand } from "../../util";
 
 const rootKey = brand<FieldKey>("root");
