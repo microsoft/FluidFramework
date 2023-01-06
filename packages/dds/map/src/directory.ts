@@ -445,7 +445,9 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * Issue a callback on each entry under this IDirectory.
      * @param callback - Callback to issue
      */
-    public forEach(callback: (value: unknown, key: string, map: Map<string, unknown>) => void): void {
+    // TODO: Use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void {
         // eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-callback-reference
         this.root.forEach(callback);
     }
