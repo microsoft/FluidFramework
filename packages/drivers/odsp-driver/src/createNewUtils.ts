@@ -9,35 +9,14 @@ import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-util
 import { stringToBuffer, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
 import { getGitType } from "@fluidframework/protocol-base";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IFileEntry, InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
+import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IOdspSummaryPayload, IOdspSummaryTree, OdspSummaryTreeEntry, OdspSummaryTreeValue } from "./contracts";
-import { getWithRetryForTokenRefresh, IExistingFileInfo, INewFileInfo, maxUmpPostBodySize } from "./odspUtils";
+import { getWithRetryForTokenRefresh, maxUmpPostBodySize } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { EpochTracker, FetchType } from "./epochTracker";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { runWithRetry } from "./retryUtils";
-
-type CreateNewArgs<T extends INewFileInfo | IExistingFileInfo> = [
-    getStorageToken: InstrumentedStorageTokenFetcher,
-    fileInfo: T,
-    logger: ITelemetryLogger,
-    createNewSummary: ISummaryTree | undefined,
-    epochTracker: EpochTracker,
-    fileEntry: IFileEntry,
-    createNewCaching: boolean,
-    forceAccessTokenViaAuthorizationHeader: boolean,
-    isClpCompliantApp?: boolean,
-    enableSingleRequestForShareLinkWithCreate?: boolean,
-    enableShareLinkWithCreate?: boolean,
-];
-
-export type CreateNewFileArgs = [
-    ...createNewArgs: CreateNewArgs<INewFileInfo>,
-    enableSingleRequestForShareLinkWithCreate?: boolean,
-    enableShareLinkWithCreate?: boolean,
-];
-export type CreateNewContainerOnExistingFileArgs = CreateNewArgs<IExistingFileInfo>;
 
 /**
  * Converts a summary(ISummaryTree) taken in detached container to snapshot tree and blobs
