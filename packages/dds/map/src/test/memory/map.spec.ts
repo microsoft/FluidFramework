@@ -46,7 +46,7 @@ describe("SharedMap memory usage", () => {
 
     const numbersOfEntriesForTests = [1000, 10_000, 100_000];
 
-    numbersOfEntriesForTests.forEach((x) => {
+    for (const x of numbersOfEntriesForTests) {
         benchmarkMemory(new class implements IMemoryTestObject {
             title = `Add ${x} integers to a local map`;
             private map: SharedMap = createLocalMap("testMap");
@@ -77,5 +77,5 @@ describe("SharedMap memory usage", () => {
                 this.map = createLocalMap("testMap");
             }
         }());
-    });
+    }
 });

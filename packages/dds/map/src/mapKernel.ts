@@ -347,17 +347,17 @@ export class MapKernel {
      */
     public getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
         const serializableMapData: IMapDataObjectSerialized = {};
-        this.data.forEach((localValue, key) => {
+        for (const [key, localValue] of this.data.entries()) {
             serializableMapData[key] = localValue.makeSerialized(serializer, this.handle);
-        });
+        }
         return serializableMapData;
     }
 
     public getSerializableStorage(serializer: IFluidSerializer): IMapDataObjectSerializable {
         const serializableMapData: IMapDataObjectSerializable = {};
-        this.data.forEach((localValue, key) => {
+        for (const [key, localValue] of this.data.entries()) {
             serializableMapData[key] = makeSerializable(localValue, serializer, this.handle);
-        });
+        }
         return serializableMapData;
     }
 
@@ -444,9 +444,9 @@ export class MapKernel {
             if (localOpMetadata.previousMap === undefined) {
                 throw new Error("Cannot rollback without previous map");
             }
-            localOpMetadata.previousMap.forEach((localValue, key) => {
+            for (const [key, localValue] of localOpMetadata.previousMap.entries()) {
                 this.setCore(key, localValue, true);
-            });
+            }
 
             const lastPendingClearId = this.pendingClearMessageIds.pop();
             if (lastPendingClearId === undefined || lastPendingClearId !== localOpMetadata.pendingMessageId) {
@@ -521,14 +521,14 @@ export class MapKernel {
         // Assuming the pendingKeys is small and the map is large
         // we will get the value for the pendingKeys and clear the map
         const temp = new Map<string, ILocalValue>();
-        this.pendingKeys.forEach((value, key) => {
+        for (const [key] of this.pendingKeys.entries()) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             temp.set(key, this.data.get(key)!);
-        });
+        }
         this.clearCore(false);
-        temp.forEach((value, key) => {
+        for (const [key, value] of temp.entries()) {
             this.setCore(key, value, true);
-        });
+        }
     }
 
     /**
@@ -613,7 +613,7 @@ export class MapKernel {
                             0x2fb /* pendingMessageId does not match */);
                         return;
                     }
-                    if (this.pendingKeys.size !== 0) {
+                    if (this.pendingKeys.size > 0) {
                         this.clearExceptPendingKeys();
                         return;
                     }

@@ -28,6 +28,8 @@ export interface ILocalValue {
     /**
      * The in-memory value stored within.
      */
+    // TODO: Use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     readonly value: any;
 
     /**
@@ -49,6 +51,7 @@ export function makeSerializable(
     const value = localValue.makeSerialized(serializer, bind);
     return {
         type: value.type,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         value: value.value && JSON.parse(value.value),
     };
 }
@@ -61,8 +64,7 @@ export class PlainLocalValue implements ILocalValue {
      * Create a new PlainLocalValue.
      * @param value - The value to store, which may contain shared object handles
      */
-    constructor(public readonly value: any) {
-    }
+    constructor(public readonly value: unknown) { }
 
     /**
      * {@inheritDoc ILocalValue."type"}
@@ -116,7 +118,7 @@ export class LocalValueMaker {
             serializable.value = handle;
         }
 
-        const translatedValue = parseHandles(serializable.value, this.serializer);
+        const translatedValue: unknown = parseHandles(serializable.value, this.serializer);
 
         return new PlainLocalValue(translatedValue);
     }
@@ -126,7 +128,7 @@ export class LocalValueMaker {
      * @param value - The value to store
      * @returns An ILocalValue containing the value
      */
-    public fromInMemory(value: any): ILocalValue {
+    public fromInMemory(value: unknown): ILocalValue {
         return new PlainLocalValue(value);
     }
 }

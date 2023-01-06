@@ -46,7 +46,7 @@ describe("SharedDirectory memory usage", () => {
 
     const numbersOfEntriesForTests = [1000, 10_000, 100_000];
 
-    numbersOfEntriesForTests.forEach((x) => {
+    for (const x of numbersOfEntriesForTests) {
         benchmarkMemory(new class implements IMemoryTestObject {
             title = `Add ${x} integers to a local directory`;
             private dir: SharedDirectory = createLocalDirectory("testDirectory");
@@ -77,5 +77,5 @@ describe("SharedDirectory memory usage", () => {
                 this.dir = createLocalDirectory("testDirectory");
             }
         });
-    });
+    }
 });

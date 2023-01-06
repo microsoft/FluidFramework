@@ -628,19 +628,19 @@ describe("Map", () => {
                     containerRuntimeFactory.processAllMessages();
 
                     // Verify the local SharedMap
-                    map1.forEach((value, key) => {
+                    for (const [key, value] of map1.entries()) {
                         assert.ok(set.has(key), "the key should be present in the set");
                         assert.equal(key, value, "the value should match the set value");
                         assert.equal(map1.get(key), value, "could not get key");
-                    });
+                    }
 
                     // Verify the remote SharedMap
-                    map2.forEach((value, key) => {
+                    for (const [key, value] of map2.entries()) {
                         assert.ok(set.has(key), "the key in remote map should be present in the set");
                         assert.equal(key, value, "the value should match the set value in the remote map");
                         assert.equal(map2.get(key), value, "could not get key in the remote map");
                         set.delete(key);
-                    });
+                    }
 
                     assert.equal(set.size, 0);
                 });
