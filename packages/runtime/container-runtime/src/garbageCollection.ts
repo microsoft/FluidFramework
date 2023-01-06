@@ -52,6 +52,7 @@ import { getSummaryForDatastores } from "./dataStores";
 import {
     defaultInactiveTimeoutMs,
     defaultSessionExpiryDurationMs,
+    disableGCVersionUpgradeKey,
     disableSweepLogKey,
     disableTombstoneKey,
     gcTestModeKey,
@@ -74,8 +75,11 @@ import {
     ICreateContainerMetadata,
 } from "./summaryFormat";
 
-/** This is the current version of garbage collection. */
-const GCVersion = 1;
+
+/** The stable version of garbage collection in production. */
+const stableGCVersion: GCVersion = 1;
+/** The current version of garbage collection. */
+const currentGCVersion: GCVersion = 2;
 
 /** The statistics of the system state after a garbage collection run. */
 export interface IGCStats {
@@ -402,7 +406,7 @@ export class GarbageCollector implements IGarbageCollector {
     private initialStateNeedsReset: boolean = false;
 
     // The current GC version that this container is running.
-    private readonly currentGCVersion = GCVersion;
+    private readonly currentGCVersion: GCVersion;
     // This is the version of GC data in the latest summary being tracked.
     private latestSummaryGCVersion: GCVersion;
 
@@ -497,6 +501,10 @@ export class GarbageCollector implements IGarbageCollector {
         this.mc = loggerToMonitoringContext(ChildLogger.create(
             createParams.baseLogger, "GarbageCollector", { all: { completedGCRuns: () => this.completedRuns } },
         ));
+
+        // If version upgrade is disabled because of issues, fall back to the stable version.
+        this.currentGCVersion =
+            this.mc.config.getBoolean(disableGCVersionUpgradeKey) ? stableGCVersion : currentGCVersion;
 
         this.sweepReadyUsageHandler = new SweepReadyUsageDetectionHandler(
             createParams.getContainerDiagnosticId(),
