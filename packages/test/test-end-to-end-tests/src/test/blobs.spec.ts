@@ -412,6 +412,11 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 
     // Add this test to full compat ADO: 2942
     it("attach sends an op with compression enabled", async function() {
+        // ADO:3113
+        if (provider.driver.type === "tinylicious") {
+            this.skip();
+        }
+
         const container = await provider.makeTestContainer({
             ...testContainerConfig, runtimeOptions:
             {
@@ -422,9 +427,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
             }
         });
 
-
         const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
-
         const blobOpP = new Promise<void>((resolve, reject) => dataStore._context.containerRuntime.on("op", (op) => {
             if (op.type === ContainerMessageType.BlobAttach) {
                 // eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -433,9 +436,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         }));
 
         const blob = await dataStore._runtime.uploadBlob(stringToBuffer("some random text", "utf-8"));
-
         dataStore._root.set("my blob", blob);
-
         await blobOpP;
     });
 });
