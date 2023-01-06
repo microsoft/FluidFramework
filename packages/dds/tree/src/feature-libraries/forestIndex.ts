@@ -33,7 +33,7 @@ import {
     SummaryElementStringifier,
     IndexEvents,
 } from "../shared-tree-core";
-import { IEventEmitter } from "../events";
+import { ISubscribable } from "../events";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 import { afterChangeForest } from "./object-forest";
 
@@ -63,7 +63,7 @@ export class ForestIndex implements Index, SummaryElement {
 
     public constructor(
         private readonly runtime: IFluidDataStoreRuntime,
-        events: IEventEmitter<IndexEvents<unknown>>,
+        events: ISubscribable<IndexEvents<unknown>>,
         private readonly forest: IEditableForest,
     ) {
         this.cursor = this.forest.allocateCursor();
