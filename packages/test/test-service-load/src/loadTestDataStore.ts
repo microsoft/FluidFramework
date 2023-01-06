@@ -225,8 +225,14 @@ export class LoadTestDataStoreModel {
         this.partnerId = (this.config.runId + halfClients) % this.config.testConfig.numClients;
         const changed = (taskId) => {
             if (taskId === this.taskId && this.taskStartTime !== 0) {
-                this.dir.set(taskTimeKey, this.totalTaskTime);
-                this.taskStartTime = 0;
+                Promise.resolve().then(() => {
+                    this.dir.set(taskTimeKey, this.totalTaskTime);
+                    this.taskStartTime = 0;
+                }).catch((error) => {
+                    this.logger.sendErrorEvent({
+                        eventName: "TaskManager_OnValueChanged",
+                    }, error);
+                });
             }
         };
         this.taskManager.on("lost", changed);
