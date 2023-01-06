@@ -413,7 +413,7 @@ export class DocumentDeltaConnection
 
                         // Self-Signed Certificate ErrorCode Found in error.context
                         if (statusText === "DEPTH_ZERO_SELF_SIGNED_CERT") {
-                            failAndCloseSocket(this.createErrorObject("self_signed_cert_err", error, false));
+                            failAndCloseSocket(this.createErrorObject("connect_error", error, false));
                             return;
                         }
                     }
@@ -422,7 +422,7 @@ export class DocumentDeltaConnection
 
                         // Self-Signed Certificate ErrorCode Found in error.description
                         if (errorCode === "DEPTH_ZERO_SELF_SIGNED_CERT") {
-                            failAndCloseSocket(this.createErrorObject("self_signed_cert_err", error, false));
+                            failAndCloseSocket(this.createErrorObject("connect_error", error, false));
                             return;
                         }
 
