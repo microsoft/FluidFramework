@@ -4,7 +4,6 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { Deferred } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     loggerToMonitoringContext,
@@ -29,7 +28,6 @@ import {
     HostStoragePolicy,
     InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
-import type { io as SocketIOClientStatic } from "socket.io-client";
 import { HostStoragePolicyInternal } from "./contracts";
 import { IOdspCache } from "./odspCache";
 import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "./odspDeltaStorageService";
@@ -49,7 +47,7 @@ export class OdspDocumentService implements IDocumentService {
     private readonly _policies: IDocumentServicePolicies;
 
     // Promise to load socket module only once.
-    private socketModuleP: Deferred<void> | undefined;
+    private socketModuleP: Promise<OdspDelayLoadedDeltaStream> | undefined;
 
     private odspDelayLoadedDeltaStream: OdspDelayLoadedDeltaStream | undefined;
 
@@ -61,7 +59,6 @@ export class OdspDocumentService implements IDocumentService {
      * to as the "Push" token in SPO. If undefined then websocket token is expected to be returned with joinSession
      * response payload.
      * @param logger - a logger that can capture performance and diagnostic information
-     * @param socketIoClientFactory - A factory that returns a promise to the socket io library required by the driver
      * @param cache - This caches response for joinSession.
      * @param hostPolicy - This host constructed policy which customizes service behavior.
      * @param epochTracker - This helper class which adds epoch to backend calls made by returned service instance.
@@ -72,7 +69,6 @@ export class OdspDocumentService implements IDocumentService {
         getStorageToken: InstrumentedStorageTokenFetcher,
         getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
         logger: ITelemetryLogger,
-        socketIoClientFactory: () => Promise<typeof SocketIOClientStatic>,
         cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
         epochTracker: EpochTracker,
@@ -84,7 +80,6 @@ export class OdspDocumentService implements IDocumentService {
             getStorageToken,
             getWebsocketToken,
             logger,
-            socketIoClientFactory,
             cache,
             hostPolicy,
             epochTracker,
@@ -120,7 +115,6 @@ export class OdspDocumentService implements IDocumentService {
         private readonly getStorageToken: InstrumentedStorageTokenFetcher,
         private readonly getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
         logger: ITelemetryLogger,
-        private readonly socketIoClientFactory: () => Promise<typeof SocketIOClientStatic>,
         private readonly cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
         private readonly epochTracker: EpochTracker,
@@ -234,12 +228,9 @@ export class OdspDocumentService implements IDocumentService {
      */
     public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
         if (this.socketModuleP === undefined) {
-            this.socketModuleP = new Deferred();
-        } else {
-            await this.socketModuleP.promise;
+            this.socketModuleP = this.getDelayLoadedDeltaStream();
         }
-        const deltaStream = await this.getDelayLoadedDeltaStream();
-        return deltaStream.connectToDeltaStream(client);
+        return (await this.socketModuleP).connectToDeltaStream(client);
     }
 
     /**
@@ -253,25 +244,26 @@ export class OdspDocumentService implements IDocumentService {
             return this.odspDelayLoadedDeltaStream;
         }
         const module = await import(/* webpackChunkName: "socketModule" */ "./odspDelayLoadedDeltaStream")
+            .then((m) => {
+                this.mc.logger.sendTelemetryEvent({ eventName: "SocketModuleLoaded" });
+                return m;
+            })
             .catch((error) => {
                 this.mc.logger.sendErrorEvent( { eventName: "SocketModuleLoadFailed" }, error);
                 throw error;
             });
-        this.mc.logger.sendTelemetryEvent({ eventName: "SocketModuleLoaded" });
         this.odspDelayLoadedDeltaStream = new module.OdspDelayLoadedDeltaStream(
             this.odspResolvedUrl,
             this._policies,
             this.getStorageToken,
             this.getWebsocketToken,
             this.mc,
-            this.socketIoClientFactory,
             this.cache,
             this.hostPolicy,
             this.epochTracker,
             (ops: ISequencedDocumentMessage[]) => this.opsReceived(ops),
             this.socketReferenceKeyPrefix,
         );
-        this.socketModuleP?.resolve();
         return this.odspDelayLoadedDeltaStream;
     }
 
@@ -286,6 +278,7 @@ export class OdspDocumentService implements IDocumentService {
             this._opsCache?.flushOps();
         }
         this._opsCache?.dispose();
+        // Only need to dipose this, if it is already loaded.
         this.odspDelayLoadedDeltaStream?.dispose();
     }
 

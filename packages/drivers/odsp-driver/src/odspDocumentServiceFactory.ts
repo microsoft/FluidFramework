@@ -11,7 +11,6 @@ import {
     HostStoragePolicy,
 } from "@fluidframework/odsp-driver-definitions";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
-import { getSocketIo } from "./getSocketIo";
 // eslint-disable-next-line import/no-internal-modules
 import { LocalOdspDocumentServiceFactory } from "./localOdspDriver/localOdspDocumentServiceFactory";
 
@@ -29,7 +28,6 @@ export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
         super(
             getStorageToken,
             getWebsocketToken,
-            async () => getSocketIo(),
             persistedCache,
             hostPolicy,
         );

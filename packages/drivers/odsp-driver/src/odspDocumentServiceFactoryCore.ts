@@ -31,7 +31,6 @@ import {
     ShareLinkTypes,
     ISharingLinkKind,
 } from "@fluidframework/odsp-driver-definitions";
-import type { io as SocketIOClientStatic } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 import {
     LocalPersistentCache,
@@ -158,7 +157,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     constructor(
         private readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
         private readonly getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
-        private readonly getSocketIOClient: () => Promise<typeof SocketIOClientStatic>,
         protected persistedCache: IPersistedCache = new LocalPersistentCache(),
         private readonly hostPolicy: HostStoragePolicy = {},
     ) {
@@ -222,7 +220,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             storageTokenFetcher,
             webSocketTokenFetcher,
             odspLogger,
-            this.getSocketIOClient,
             cacheAndTracker.cache,
             this.hostPolicy,
             cacheAndTracker.epochTracker,

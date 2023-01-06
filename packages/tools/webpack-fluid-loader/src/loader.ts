@@ -282,6 +282,8 @@ export async function start(
             );
             assert(prefetched, 0x1eb /* "Snapshot should be prefetched!" */);
         }
+        // This is just to replicate what apps do while loading which is to load the container in puased state and not load
+        // delta stream within the critical load flow.
         container1 = await loader1.resolve({ url: documentUrl, headers: {[LoaderHeader.loadMode]: {deltaConnection: "none"}}});
         container1.connect();
         containers.push(container1);

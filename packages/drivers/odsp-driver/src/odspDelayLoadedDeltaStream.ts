@@ -28,7 +28,6 @@ import {
     OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
 import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils";
-import type { io as SocketIOClientStatic } from "socket.io-client";
 import { ISocketStorageDiscovery } from "./contracts";
 import { IOdspCache } from "./odspCache";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
@@ -60,7 +59,6 @@ export class OdspDelayLoadedDeltaStream {
      * to as the "Push" token in SPO. If undefined then websocket token is expected to be returned with joinSession
      * response payload.
      * @param mc - a logger that can capture performance and diagnostic information
-     * @param socketIoClientFactory - A factory that returns a promise to the socket io library required by the driver
      * @param cache - This caches response for joinSession.
      * @param hostPolicy - host constructed policy which customizes service behavior.
      * @param epochTracker - This helper class which adds epoch to backend calls made by this service instance.
@@ -73,7 +71,6 @@ export class OdspDelayLoadedDeltaStream {
         private readonly getStorageToken: InstrumentedStorageTokenFetcher,
         private readonly getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
         private readonly mc: MonitoringContext,
-        private readonly socketIoClientFactory: () => Promise<typeof SocketIOClientStatic>,
         private readonly cache: IOdspCache,
         private readonly hostPolicy: HostStoragePolicy,
         private readonly epochTracker: EpochTracker,
@@ -128,11 +125,10 @@ export class OdspDelayLoadedDeltaStream {
             };
 
             const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession, options);
-            const [websocketEndpoint, websocketToken, io] =
+            const [websocketEndpoint, websocketToken] =
                 await Promise.all([
                     joinSessionPromise.catch(annotateAndRethrowConnectionError("joinSession")),
                     websocketTokenPromise.catch(annotateAndRethrowConnectionError("getWebsocketToken")),
-                    this.socketIoClientFactory().catch(annotateAndRethrowConnectionError("socketIoClientFactory")),
                 ]);
 
             const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken ?? null);
@@ -151,7 +147,6 @@ export class OdspDelayLoadedDeltaStream {
                     websocketEndpoint.tenantId,
                     websocketEndpoint.id,
                     finalWebsocketToken,
-                    io,
                     client,
                     websocketEndpoint.deltaStreamSocketUrl);
                 connection.on("op", (documentId, ops: ISequencedDocumentMessage[]) => {
@@ -321,7 +316,6 @@ export class OdspDelayLoadedDeltaStream {
      * @param tenantId - the ID of the tenant
      * @param documentId - document ID
      * @param token - authorization token for delta service
-     * @param io - websocket library
      * @param client - information about the client
      * @param webSocketUrl - websocket URL
      */
@@ -329,7 +323,6 @@ export class OdspDelayLoadedDeltaStream {
         tenantId: string,
         documentId: string,
         token: string | null,
-        io: typeof SocketIOClientStatic,
         client: IClient,
         webSocketUrl: string,
     ): Promise<OdspDocumentDeltaConnection> {
@@ -338,7 +331,6 @@ export class OdspDelayLoadedDeltaStream {
             tenantId,
             documentId,
             token,
-            io,
             client,
             webSocketUrl,
             this.mc.logger,
