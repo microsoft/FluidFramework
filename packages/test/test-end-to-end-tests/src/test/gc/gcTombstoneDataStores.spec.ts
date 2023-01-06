@@ -417,6 +417,10 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
                 eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
                 viaHandle: false,
             },
+            {
+                eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
+                viaHandle: false,
+            },
         ],
         async () => {
             const {
@@ -438,7 +442,11 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
                     const correctErrorMessage = error.message.startsWith(`Datastore removed by gc`) === true;
                     return correctErrorType && correctErrorMessage;
                 },
-                `Should not be able to retrieve a tombstoned datastore.`,
+                `Should not be able to retrieve a tombstoned datastore in non-summarizer clients`,
+            );
+            await assert.doesNotReject(
+                async () => requestFluidObject<ITestDataObject>(summarizingContainer, unreferencedId),
+                `Should be able to retrieve a tombstoned datastore in summarizer clients`,
             );
         });
 
