@@ -14,6 +14,7 @@ import { pkgVersion as driverVersion } from "./packageVersion";
 
 export enum R11sErrorType {
     fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
+    sslCertError = "sslCertError",
 }
 
 /**
@@ -65,8 +66,12 @@ export function createR11sNetworkError(
             // If a service is temporarily down or a browser resource limit is reached, RestWrapper will throw
             // a network error with no status code (e.g. err:ERR_CONN_REFUSED or err:ERR_FAILED) and
             // the error message will start with NetworkError as defined in restWrapper.ts
-            return new GenericNetworkError(
-                errorMessage, errorMessage.startsWith("NetworkError"), props);
+            // If there exists a self-signed SSL certificates error, throw a NonRetryableError
+            // TODO: instead of relying on string matching, filter error based on the error code like we do for websocket connections
+            if (errorMessage.includes("failed, reason: self signed certificate")) {
+                return new NonRetryableError(errorMessage, R11sErrorType.sslCertError, props);
+            }
+            return new GenericNetworkError(errorMessage, errorMessage.startsWith("NetworkError"), props);
         case 401:
             // The first 401 is manually retried in RouterliciousRestWrapper with a refreshed token,
             // so we treat repeat 401s the same as 403.
