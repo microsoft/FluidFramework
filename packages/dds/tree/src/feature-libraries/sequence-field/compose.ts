@@ -384,7 +384,8 @@ function applyMoveEffects<TNodeChange>(
     );
 
     while (!queue.isEmpty()) {
-        factory.push(queue.dequeue() as Mark<TNodeChange>);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        factory.push(queue.dequeue()!);
     }
 
     return factory.list;
