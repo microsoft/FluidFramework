@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/sequence";
-export const pkgVersion = "1.3.2";
+export const pkgVersion = "1.3.3";
