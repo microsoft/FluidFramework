@@ -346,7 +346,12 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
         });
 
         describe("TurnBased flushing of batches with compression", () => {
-            beforeEach(async () => {
+            beforeEach(async function () {
+                // ADO:3113
+                if (provider.driver.type === "tinylicious") {
+                    this.skip();
+                }
+
                 await setupContainers({ flushMode: FlushMode.TurnBased,
                                                         compressionOptions: { minimumBatchSizeInBytes: 1,
                                                         compressionAlgorithm: CompressionAlgorithms.lz4 } });
