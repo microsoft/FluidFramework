@@ -18,6 +18,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createAndAttachContainer,
+    ensureContainerConnected,
     ITestFluidObject,
     LoaderContainerTracker,
     LocalCodeLoader,
@@ -51,13 +52,7 @@ describe("Document Dirty", () => {
          */
         async function waitForContainerReconnection(c: Container): Promise<void> {
             assert.equal(c.connected, false);
-            return new Promise((resolve) => c.once("connected", () => resolve()));
-        }
-
-        async function ensureContainerConnected(c: Container): Promise<void> {
-            if (!c.connected) {
-                return waitForContainerReconnection(c);
-            }
+            return ensureContainerConnected(c);
         }
 
         /**

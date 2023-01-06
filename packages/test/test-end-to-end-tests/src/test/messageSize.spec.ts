@@ -14,6 +14,7 @@ import {
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
+    ensureContainerConnected,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { IContainer, IErrorBase } from "@fluidframework/container-definitions";
@@ -21,6 +22,7 @@ import { GenericError } from "@fluidframework/container-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { CompressionAlgorithms, ContainerMessageType } from "@fluidframework/container-runtime";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { Container } from "@fluidframework/container-loader";
 
 describeNoCompat("Message size", (getTestObjectProvider) => {
     const mapId = "mapId";
@@ -56,8 +58,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         remoteContainer = await provider.loadTestContainer(containerConfig);
         dataObject2 = await requestFluidObject<ITestFluidObject>(remoteContainer, "default");
         dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
-        await new Promise<void>((resolve) => localContainer.once("connected", () => resolve()));
-        await new Promise<void>((resolve) => remoteContainer.once("connected", () => resolve()));
+        await ensureContainerConnected(localContainer as Container);
+        await ensureContainerConnected(remoteContainer as Container);
 
         await provider.ensureSynchronized();
     };

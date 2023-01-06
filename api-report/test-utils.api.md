@@ -108,7 +108,7 @@ export enum DataObjectFactoryType {
 export const defaultTimeoutDurationMs = 250;
 
 // @public (undocumented)
-export function ensureContainerConnected(container: Container): Promise<void>;
+export function ensureContainerConnected(container: Container, timeoutOptions?: TimeoutWithError, failOnContainerClose?: boolean): Promise<void>;
 
 // @public
 export class EventAndErrorTrackingLogger extends TelemetryLogger {
