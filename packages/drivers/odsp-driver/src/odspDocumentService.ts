@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { Deferred } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     loggerToMonitoringContext,
@@ -39,7 +40,6 @@ import { EpochTracker } from "./epochTracker";
 import { OpsCache } from "./opsCaching";
 import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter";
 import type { OdspDelayLoadedDeltaStream } from "./odspDelayLoadedDeltaStream";
-import { Deferred } from "@fluidframework/common-utils";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
