@@ -1314,7 +1314,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
                 const nextVal = localValuesIterator.next();
                 return nextVal.done
                     ? { value: undefined, done: true }
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     : { value: nextVal.value.value, done: false };
             },
             [Symbol.iterator](): IterableIterator<unknown> {
