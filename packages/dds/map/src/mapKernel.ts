@@ -197,18 +197,14 @@ export class MapKernel {
     public entries(): IterableIterator<[string, any]> {
         const localEntriesIterator = this.data.entries();
         const iterator = {
-            // TODO: Use `unknown` instead (breaking change).
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            next(): IteratorResult<[string, any]> {
+            next(): IteratorResult<[string, unknown]> {
                 const nextVal = localEntriesIterator.next();
                 return nextVal.done
                     ? { value: undefined, done: true }
                     // Unpack the stored value
                     : { value: [nextVal.value[0], nextVal.value[1].value], done: false };
             },
-            // TODO: Use `unknown` instead (breaking change).
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            [Symbol.iterator](): IterableIterator<[string, any]> {
+            [Symbol.iterator](): IterableIterator<[string, unknown]> {
                 return this;
             },
         };
@@ -224,18 +220,14 @@ export class MapKernel {
     public values(): IterableIterator<any> {
         const localValuesIterator = this.data.values();
         const iterator = {
-            // TODO: Use `unknown` instead (breaking change).
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            next(): IteratorResult<any> {
+            next(): IteratorResult<unknown> {
                 const nextVal = localValuesIterator.next();
                 return nextVal.done
                     ? { value: undefined, done: true }
                     // Unpack the stored value
                     : { value: nextVal.value.value as unknown, done: false };
             },
-            // TODO: Use `unknown` instead (breaking change).
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            [Symbol.iterator](): IterableIterator<[string, any]> {
+            [Symbol.iterator](): IterableIterator<unknown> {
                 return this;
             },
         };

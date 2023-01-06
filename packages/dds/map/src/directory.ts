@@ -1278,17 +1278,13 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         this.throwIfDisposed();
         const localEntriesIterator = this._storage.entries();
         const iterator = {
-            // TODO: Use `unknown` instead (breaking change).
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            next(): IteratorResult<[string, any]> {
+            next(): IteratorResult<[string, unknown]> {
                 const nextVal = localEntriesIterator.next();
                 return nextVal.done
                     ? { value: undefined, done: true }
                     : { value: [nextVal.value[0], nextVal.value[1].value], done: false };
             },
-            // TODO: Use `unknown` instead (breaking change).
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            [Symbol.iterator](): IterableIterator<[string, any]> {
+            [Symbol.iterator](): IterableIterator<[string, unknown]> {
                 return this;
             },
         };
@@ -1314,18 +1310,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         this.throwIfDisposed();
         const localValuesIterator = this._storage.values();
         const iterator = {
-            // TODO: Use `unknown` instead (breaking change).
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            next(): IteratorResult<any> {
+            next(): IteratorResult<unknown> {
                 const nextVal = localValuesIterator.next();
                 return nextVal.done
                     ? { value: undefined, done: true }
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     : { value: nextVal.value.value, done: false };
             },
-            // TODO: Use `unknown` instead (breaking change).
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            [Symbol.iterator](): IterableIterator<any> {
+            [Symbol.iterator](): IterableIterator<unknown> {
                 return this;
             },
         };
