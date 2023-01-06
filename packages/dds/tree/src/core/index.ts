@@ -84,7 +84,7 @@ export {
     initializeForest,
     FieldAnchor,
     moveToDetachedField,
-    afterChangeToken,
+    ForestEvents,
 } from "./forest";
 
 export {
@@ -111,6 +111,7 @@ export {
     emptyMap,
     emptySet,
     treeSchema,
+    SchemaEvents,
 } from "./schema-stored";
 
 export {
