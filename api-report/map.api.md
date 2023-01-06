@@ -223,7 +223,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     // (undocumented)
     get disposed(): boolean;
     entries(): IterableIterator<[string, any]>;
-    forEach(callback: (value: unknown, key: string, map: Map<string, unknown>) => void): void;
+    forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void;
     get<T = any>(key: string): T | undefined;
     static getFactory(): IChannelFactory;
     getSubDirectory(subdirName: string): IDirectory | undefined;
