@@ -16,5 +16,8 @@ module.exports = {
     "rules": {
         "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
+
+        // TODO: consider re-enabling once we have addressed how this rule conflicts with our error codes.
+        "unicorn/numeric-separators-style": "off",
     }
 }
