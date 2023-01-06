@@ -35,6 +35,7 @@ export class MockWebhook implements IDisposable {
      * Mocks submitting notifications of changes to webhook subscribers.
      *
      * @remarks
+     *
      * For now, we simply send a notification that data has changed.
      * Consumers are expected to query for the actual data updates.
      * This could be updated in the future to send the new data / just the delta as a part of the webhook payload.

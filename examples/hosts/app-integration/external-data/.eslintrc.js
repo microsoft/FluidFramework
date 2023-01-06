@@ -8,14 +8,15 @@ module.exports = {
         require.resolve("@fluidframework/eslint-config-fluid/strict"),
         "prettier",
     ],
-    rules: { },
+    rules: {
+        // Fine for tests to use node.js modules.
+        // Tests will ensure our webpack configuration is correctly set up to support any that we use.
+        "import/no-nodejs-modules": "off",
+     },
     overrides: [
         {
             files: ["tests/*"],
             rules: {
-                // Fine for tests to use node.js modules
-                "import/no-nodejs-modules": "off",
-
                 // Since the "tests" directory is adjacent to "src", and this package (intentionally) does not expose
                 // a single exports roll-up, reaching into "src" is required.
                 "import/no-internal-modules": "off",

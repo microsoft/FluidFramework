@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from "react";
 
 import type { IAppModel } from "../model-interface";
-import { customerServicePort, parseStringData } from "../mock-service-interface";
+import { customerServicePort, parseStringData } from "../mock-customer-service-interface";
 
 /**
  * {@link DebugView} input props.

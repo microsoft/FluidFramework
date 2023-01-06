@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
-
 import React from "react";
 import ReactDOM from "react-dom";
+
+import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
 import { TaskListContainerRuntimeFactory } from "../src/model";
 import type { IAppModel } from "../src/model-interface";
@@ -69,7 +69,9 @@ async function setup(): Promise<void> {
     await createContainerAndRenderInElement(rightElement);
 }
 
-setup().catch((error) => {
+setup().then(() => {
+    console.log("App launched successfully!");
+}).catch((error) => {
     console.error(error);
     console.log(
         "%cThere were issues setting up and starting the in memory Fluid Server",

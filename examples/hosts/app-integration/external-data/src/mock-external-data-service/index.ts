@@ -3,5 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { externalDataServicePort } from "./constants";
 export { ExternalDataSource } from "./externalData";
-export { initializeCustomerService } from "./service";
+export { initializeExternalDataService } from "./service";
+export { MockWebhook, SubscriberUrl } from "./webhook";

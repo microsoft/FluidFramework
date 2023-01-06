@@ -63,4 +63,8 @@ async function start(): Promise<void> {
     updateTabForId(id);
 }
 
-start().catch((error) => console.error(error));
+start().then(() => {
+    console.log("App launched successfully!");
+}).catch((error) => {
+    console.error(error);
+});
