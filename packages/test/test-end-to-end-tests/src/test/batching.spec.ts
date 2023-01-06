@@ -472,7 +472,12 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
         });
 
         describe("Immediate flushing of ops with compression", () => {
-            beforeEach(async () => {
+            beforeEach(async function() {
+                // ADO:3113
+                if (provider.driver.type === "tinylicious") {
+                    this.skip();
+                }
+
                 await setupContainers({ flushMode: FlushMode.Immediate,
                     compressionOptions: { minimumBatchSizeInBytes: 1,
                     compressionAlgorithm: CompressionAlgorithms.lz4 } });
