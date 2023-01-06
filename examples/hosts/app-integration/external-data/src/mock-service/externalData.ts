@@ -6,16 +6,8 @@
 import type { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { Response } from "node-fetch";
-/**
- * Object based representation of initial task data.
- */
-export interface TaskData {
-    [key: string]: {
-        name: string;
-        priority: number;
-    };
-};
-// prettier-ignore
+import { TaskData } from "../model-interface";
+
 const startingExternalData: TaskData = {
     12: {
         name: "Alpha",

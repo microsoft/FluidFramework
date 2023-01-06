@@ -10,8 +10,8 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedMap } from "@fluidframework/map";
 
-import { customerServicePort, ParsedTaskData, parseTaskData } from "../mock-service-interface";
-import type { ITask, ITaskEvents, ITaskList } from "../model-interface";
+import { customerServicePort } from "../mock-service-interface";
+import type { ITask, ITaskEvents, ITaskList, TaskData } from "../model-interface";
 
 class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
     public get id(): string {
@@ -190,7 +190,10 @@ export class TaskList extends DataObject implements ITaskList {
     public async importExternalData(): Promise<void> {
         console.log('TASK-LIST: Fetching external data from service...');
 
-        let updatedExternalData: ParsedTaskData[] | undefined;
+        let updatedExternalData: [string, {
+            name: string;
+            priority: number;
+        }][];
         try {
             const response = await fetch(
                 `http://localhost:${customerServicePort}/fetch-tasks`,
@@ -204,12 +207,11 @@ export class TaskList extends DataObject implements ITaskList {
             );
 
             const responseBody = await response.json() as Record<string, unknown>;
-            const data = responseBody.taskList as object;
-            if(data === undefined) {
+            if (responseBody.taskList === undefined) {
                 throw new Error("Task list fetch returned no data.");
             }
-
-            updatedExternalData = parseTaskData(data);
+            const data = responseBody.taskList as TaskData;
+            updatedExternalData = Object.entries(data);
             console.log("TASK-LIST: Data imported from service.", updatedExternalData);
         } catch (error) {
             console.error(`Task list fetch failed due to an error:\n${error}`);
@@ -220,7 +222,7 @@ export class TaskList extends DataObject implements ITaskList {
         }
 
         // TODO: Delete any items that are in the root but missing from the external data
-        const updateTaskPs = updatedExternalData.map(async ({ id, name, priority }) => {
+        const updateTaskPs = updatedExternalData.map(async ([id, { name, priority }]) => {
             const currentTask = this.draftData.get<PersistedTask>(id);
             // Write external data into savedData map.
             this.savedData.set(id, currentTask);
@@ -268,12 +270,12 @@ export class TaskList extends DataObject implements ITaskList {
         // as what we do for summarization).
         const tasks = this.getTasks();
         const formattedTasks = {}
-        tasks.map((task) => {
+        for (const task of tasks) {
             formattedTasks[task.id] = {
-              name: task.name.getText(),
-              priority: task.priority,
+                name: task.name.getText(),
+                priority: task.priority,
             };
-          });
+        }
         try {
             await fetch(
                 `http://localhost:${customerServicePort}/set-tasks`,
@@ -283,7 +285,7 @@ export class TaskList extends DataObject implements ITaskList {
                         "Access-Control-Allow-Origin": "*",
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({ taskList: formattedTasks}),
+                    body: JSON.stringify({ taskList: formattedTasks }),
                 }
             );
         } catch (error) {

@@ -4,8 +4,9 @@
  */
 
 import React, { useEffect, useState } from "react";
-import type { IAppModel } from "../model-interface";
-import { customerServicePort, parseTaskData } from "../mock-service-interface";
+import isEqual from 'lodash.isequal'
+import type { IAppModel, TaskData } from "../model-interface";
+import { customerServicePort } from "../mock-service-interface";
 
 /**
  * {@link DebugView} input props.
@@ -38,27 +39,6 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
     );
 };
 
-function isDeepEqual(obj1: object, obj2: object): boolean {
-    if (obj1 === obj2) {
-      return true;
-    }
-    if (typeof obj1 !== typeof obj2) {
-      return false;
-    }
-    if (typeof obj1 !== 'object') {
-      return obj1 === obj2;
-    }
-    if (Object.keys(obj1).length !== Object.keys(obj2).length) {
-      return false;
-    }
-    for (const key of Object.keys(obj1)) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      if (!isDeepEqual(obj1[key], obj2[key])) {
-        return false;
-      }
-    }
-    return true;
-  }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface IExternalDataViewProps {}
@@ -83,8 +63,8 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
                 );
 
                 const responseBody = await response.json() as Record<string, unknown>;
-                const newData = responseBody.taskList as object;
-                if(newData !== undefined && !isDeepEqual(newData,externalData)) {
+                const newData = responseBody.taskList as TaskData;
+                if(newData !== undefined && !isEqual(newData,externalData)) {
                     console.log("APP: External data has changed. Updating local state with:\n", newData)
                     setExternalData(newData);
                 }
@@ -103,12 +83,12 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
             clearInterval(timer);
         }
     }, [externalData, setExternalData]);
-    const parsedExternalData = isDeepEqual(externalData, {})
+    const parsedExternalData = isEqual(externalData, {})
         ? []
-        : parseTaskData(externalData);
-    const taskRows = parsedExternalData.map(({ id, name, priority }) => (
-        <tr key={ id }>
-            <td>{ id }</td>
+        : Object.entries(externalData as TaskData);
+    const taskRows = parsedExternalData.map(([key, {name, priority}]) => (
+        <tr key={ key }>
+            <td>{ key }</td>
             <td>{ name }</td>
             <td>{ priority }</td>
         </tr>
