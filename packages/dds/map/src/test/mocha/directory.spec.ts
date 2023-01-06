@@ -1495,7 +1495,7 @@ describe("Directory", () => {
             private readonly directory2: SharedDirectory;
             private readonly containerRuntimeFactory: MockContainerRuntimeFactory;
 
-            constructor() {
+            public constructor() {
                 this.containerRuntimeFactory = new MockContainerRuntimeFactory();
                 this.directory1 = createConnectedDirectory("directory1", this.containerRuntimeFactory);
                 this.directory2 = createConnectedDirectory("directory2", this.containerRuntimeFactory);

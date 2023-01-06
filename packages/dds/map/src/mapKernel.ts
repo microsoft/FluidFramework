@@ -169,7 +169,7 @@ export class MapKernel {
      * @param valueTypes - The value types to register
      * @param eventEmitter - The object that will emit map events
      */
-    constructor(
+    public constructor(
         private readonly serializer: IFluidSerializer,
         private readonly handle: IFluidHandle,
         private readonly submitMessage: (op: unknown, localOpMetadata: unknown) => void,

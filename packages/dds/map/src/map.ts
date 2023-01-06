@@ -137,7 +137,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * @param runtime - Data store runtime.
      * @param attributes - The attributes for the map.
      */
-    constructor(
+    public constructor(
         id: string,
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,

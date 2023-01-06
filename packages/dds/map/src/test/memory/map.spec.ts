@@ -34,12 +34,12 @@ describe("SharedMap memory usage", () => {
     });
 
     benchmarkMemory(new class implements IMemoryTestObject {
-        title = "Create empty map";
-        minSampleCount = 500;
+        public title = "Create empty map";
+        public minSampleCount = 500;
 
         private map: SharedMap = createLocalMap("testMap");
 
-        async run(): Promise<void> {
+        public async run(): Promise<void> {
             this.map = createLocalMap("testMap");
         }
     }());
@@ -48,32 +48,32 @@ describe("SharedMap memory usage", () => {
 
     for (const x of numbersOfEntriesForTests) {
         benchmarkMemory(new class implements IMemoryTestObject {
-            title = `Add ${x} integers to a local map`;
+            public title = `Add ${x} integers to a local map`;
             private map: SharedMap = createLocalMap("testMap");
 
-            async run(): Promise<void> {
+            public async run(): Promise<void> {
                 for (let i = 0; i < x; i++) {
                     this.map.set(i.toString().padStart(6, "0"), i);
                 }
             }
 
-            beforeIteration(): void {
+            public beforeIteration(): void {
                 this.map = createLocalMap("testMap");
             }
         }());
 
         benchmarkMemory(new class implements IMemoryTestObject {
-            title = `Add ${x} integers to a local map, clear it`;
+            public title = `Add ${x} integers to a local map, clear it`;
             private map: SharedMap = createLocalMap("testMap");
 
-            async run(): Promise<void> {
+            public async run(): Promise<void> {
                 for (let i = 0; i < x; i++) {
                     this.map.set(i.toString().padStart(6, "0"), i);
                 }
                 this.map.clear();
             }
 
-            beforeIteration(): void {
+            public beforeIteration(): void {
                 this.map = createLocalMap("testMap");
             }
         }());

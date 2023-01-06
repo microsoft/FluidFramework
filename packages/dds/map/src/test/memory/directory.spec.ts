@@ -34,12 +34,12 @@ describe("SharedDirectory memory usage", () => {
     });
 
     benchmarkMemory(new class implements IMemoryTestObject {
-        title = "Create empty directory";
-        minSampleCount = 500;
+        public title = "Create empty directory";
+        public minSampleCount = 500;
 
         private dir: SharedDirectory = createLocalDirectory("testDirectory");
 
-        async run (): Promise<void> {
+        public async run (): Promise<void> {
             this.dir = createLocalDirectory("testDirectory");
         };
     }());
@@ -48,32 +48,32 @@ describe("SharedDirectory memory usage", () => {
 
     for (const x of numbersOfEntriesForTests) {
         benchmarkMemory(new class implements IMemoryTestObject {
-            title = `Add ${x} integers to a local directory`;
+            public title = `Add ${x} integers to a local directory`;
             private dir: SharedDirectory = createLocalDirectory("testDirectory");
 
-            async run (): Promise<void> {
+            public async run (): Promise<void> {
                 for (let i = 0; i < x; i++) {
                     this.dir.set(i.toString().padStart(6, "0"), i);
                 }
             }
 
-            beforeIteration(): void {
+            public beforeIteration(): void {
                 this.dir = createLocalDirectory("testDirectory");
             }
         }());
 
         benchmarkMemory(new class implements IMemoryTestObject {
-            title = `Add ${x} integers to a local directory, clear it`;
+            public title = `Add ${x} integers to a local directory, clear it`;
             private dir: SharedDirectory = createLocalDirectory("testDirectory");
 
-            async run(): Promise<void> {
+            public async run(): Promise<void> {
                 for (let i = 0; i < x; i++) {
                     this.dir.set(i.toString().padStart(6, "0"), i);
                 }
                 this.dir.clear();
             }
 
-            beforeIteration(): void {
+            public beforeIteration(): void {
                 this.dir = createLocalDirectory("testDirectory");
             }
         });

@@ -355,7 +355,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * @param runtime - Data store runtime
      * @param type - Type identifier
      */
-    constructor(
+    public constructor(
         id: string,
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
@@ -1016,7 +1016,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @param serializer - The serializer to serialize / parse handles
      * @param absolutePath - The absolute path of this IDirectory
      */
-    constructor(
+    public constructor(
         private readonly directory: SharedDirectory,
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly serializer: IFluidSerializer,

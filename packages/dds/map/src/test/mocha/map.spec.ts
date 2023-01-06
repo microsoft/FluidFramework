@@ -662,7 +662,7 @@ describe("Map", () => {
             private readonly map2: SharedMap;
             private readonly containerRuntimeFactory: MockContainerRuntimeFactory;
 
-            constructor() {
+            public constructor() {
                 this.containerRuntimeFactory = new MockContainerRuntimeFactory();
                 this.map1 = createConnectedMap("map1", this.containerRuntimeFactory);
                 this.map2 = createConnectedMap("map2", this.containerRuntimeFactory);
