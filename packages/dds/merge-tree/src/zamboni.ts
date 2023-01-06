@@ -57,7 +57,7 @@ export class Zamboni {
     }
 
     // Interior node with all node children
-    private packParent(parent: IMergeBlock, mergeTree: MergeTree) {
+    public packParent(parent: IMergeBlock, mergeTree: MergeTree) {
         const children = parent.children;
         let childIndex: number;
         let childBlock: IMergeBlock;
