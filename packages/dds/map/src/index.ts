@@ -42,7 +42,5 @@ export {
 	ISharedMapEvents,
 	IValueChanged,
 } from "./interfaces";
-export type { IMapClearOperation, IMapDeleteOperation, IMapSetOperation } from "./internalInterfaces";
 export { LocalValueMaker, ILocalValue } from "./localValues";
 export { MapFactory, SharedMap } from "./map";
-export type { IMapKeyOperation, IMapOperation } from "./mapKernel";

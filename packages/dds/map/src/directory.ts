@@ -832,16 +832,15 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
-     * TODO
-     *
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
      * @internal
      */
-    protected applyStashedOp(op: IDirectoryOperation): unknown {
-        const handler = this.messageHandlers.get(op.type);
+    protected applyStashedOp(op: unknown): unknown {
+        const handler = this.messageHandlers.get((op as IDirectoryOperation).type);
         if (handler === undefined) {
             throw new Error("no apply stashed op handler");
         }
-        return handler.applyStashedOp(op);
+        return handler.applyStashedOp(op as IDirectoryOperation);
     }
 
     private serializeDirectory(

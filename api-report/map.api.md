@@ -135,30 +135,6 @@ export interface ILocalValue {
     readonly value: any;
 }
 
-// @public
-export interface IMapClearOperation {
-    type: "clear";
-}
-
-// @public
-export interface IMapDeleteOperation {
-    key: string;
-    type: "delete";
-}
-
-// @public
-export type IMapKeyOperation = IMapSetOperation | IMapDeleteOperation;
-
-// @public
-export type IMapOperation = IMapKeyOperation | IMapClearOperation;
-
-// @public
-export interface IMapSetOperation {
-    key: string;
-    type: "set";
-    value: ISerializableValue;
-}
-
 // @public @deprecated
 export interface ISerializableValue {
     type: string;
@@ -234,8 +210,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     get absolutePath(): string;
-    // @internal
-    protected applyStashedOp(op: IDirectoryOperation): unknown;
+    // @internal (undocumented)
+    protected applyStashedOp(op: unknown): unknown;
     clear(): void;
     countSubDirectory(): number;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDirectory;
@@ -285,7 +261,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     readonly [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // @internal (undocumented)
-    protected applyStashedOp(content: IMapOperation): unknown;
+    protected applyStashedOp(content: unknown): unknown;
     clear(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
     delete(key: string): boolean;
@@ -302,7 +278,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     // @internal (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // @internal (undocumented)
-    protected reSubmitCore(content: IMapOperation, localOpMetadata: unknown): void;
+    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
     // @internal (undocumented)
     protected rollback(content: unknown, localOpMetadata: unknown): void;
     set(key: string, value: unknown): this;

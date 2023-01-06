@@ -355,16 +355,16 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
      * @internal
      */
-    protected reSubmitCore(content: IMapOperation, localOpMetadata: unknown): void {
-        this.kernel.trySubmitMessage(content, localOpMetadata);
+    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
+        this.kernel.trySubmitMessage(content as IMapOperation, localOpMetadata);
     }
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
      * @internal
      */
-    protected applyStashedOp(content: IMapOperation): unknown {
-        return this.kernel.tryApplyStashedOp(content);
+    protected applyStashedOp(content: unknown): unknown {
+        return this.kernel.tryApplyStashedOp(content as IMapOperation);
     }
 
     /**
