@@ -28,7 +28,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.32.2-112764",
+    "@fluidframework/common-utils": "^0.32.2",
     "@fluidframework/server-services-core": "^0.1036.5001",
     "nconf": "^0.12.0",
     "node-rdkafka": "^2.11.0",
