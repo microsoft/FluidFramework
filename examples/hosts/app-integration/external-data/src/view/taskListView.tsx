@@ -81,20 +81,36 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
     const { taskList } = props;
 
     const [tasks, setTasks] = useState<ITask[]>(taskList.getTasks());
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    const [draftTasks, setDiffTasks] = useState<ITask[]>(taskList.getDiffTasks());
+
     useEffect(() => {
         const updateTasks = (): void => {
             setTasks(taskList.getTasks());
         };
+        const updateDiffTasks = (): void => {
+            setTasks(taskList.getDiffTasks());
+        };
         taskList.on("taskAdded", updateTasks);
         taskList.on("taskDeleted", updateTasks);
+        taskList.on("handleDiffDetected", updateDiffTasks);
 
         return (): void => {
             taskList.off("taskAdded", updateTasks);
             taskList.off("taskDeleted", updateTasks);
+            taskList.off("handleDiffDetected", updateDiffTasks);
         };
     }, [taskList]);
 
     const taskRows = tasks.map((task) => (
+        <TaskRow
+            key={ task.id }
+            task={ task }
+            deleteTask={ (): void => taskList.deleteTask(task.id) }
+        />
+    ));
+
+    const draftTaskRows = draftTasks.map((task) => (
         <TaskRow
             key={ task.id }
             task={ task }
@@ -117,6 +133,18 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
                 </thead>
                 <tbody>
                     { taskRows }
+                </tbody>
+            </table>
+            <table style={{ textDecoration: "red" }}>
+                <thead>
+                    <tr>
+                        <td>ID</td>
+                        <td>Title</td>
+                        <td>Priority</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    { draftTaskRows }
                 </tbody>
             </table>
             <button onClick={ taskList.saveChanges }>Save changes</button>

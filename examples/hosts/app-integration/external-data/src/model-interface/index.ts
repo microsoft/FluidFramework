@@ -91,6 +91,12 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
      * Get the full list of tasks.
      */
     readonly getTasks: () => ITask[];
+
+    /**
+     * Get the list of hydrated draft tasks when a difference with external (savedData) is detected.
+     */
+    readonly getDiffTasks: () => ITask[];
+
     /**
      * Get the task with the specified ID.
      */

@@ -67,6 +67,11 @@ export class TaskList extends DataObject implements ITaskList {
      * collection pattern -- see the contact-collection example for more details on this pattern.
      */
     private readonly tasks = new Map<string, Task>();
+
+    /*
+     * diffTasks hydrates draftData in preparation for showing it in the view when there is a diff to render
+     */
+    private readonly diffTasks = new Map<string, Task>();
     /*
      * savedData stores data retrieved from the external source.
      */
@@ -135,6 +140,32 @@ export class TaskList extends DataObject implements ITaskList {
 
     public readonly getTasks = (): Task[] => {
         return [...this.tasks.values()];
+    };
+
+    public readonly getDiffTasks = (): Task[] => {
+        return [...this.diffTasks.values()];
+    };
+
+    public readonly addDiffTask = async (id: string): Promise<void> => {
+
+        // for (const id of this.draftData.keys()) {
+            const diff = this.draftData.get(id) as PersistedTask;
+            if (diff === undefined) {
+                throw new Error("Newly added task is missing from map.");
+            }
+
+            const [nameSharedString, prioritySharedCell] = await Promise.all([
+                diff.name.get(),
+                diff.priority.get(),
+            ]);
+            // It's possible the task was deleted while getting the name/priority, in which case quietly exit.
+            if (this.draftData.get(id) === undefined) {
+                return;
+            }
+            const newTask = new Task(id, nameSharedString, prioritySharedCell);
+            this.diffTasks.set(id, newTask);
+        // }
+        this.emit("diffDetected");
     };
 
     public readonly getTask = (id: string): Task | undefined => {
