@@ -70,7 +70,6 @@ describe("parseBundleAndExportFile", () => {
                 telemetryFile,
             );
 
-            // Instead of relying on string matching, filter error based on the error code / ID
             assert(!result.success, "result should not be successful");
             assert(result.errorMessage.includes("IFluidFileConverter"),
                 `error message does not contain "IFluidFileConverter" [${result.errorMessage}]`);
