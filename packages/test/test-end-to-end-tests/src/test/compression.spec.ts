@@ -31,8 +31,12 @@ describeNoCompat("Op Compression", (getTestObjectProvider) => {
     let dataObject: ITestFluidObject;
     let map: SharedMap;
 
-    beforeEach(async () => {
+    beforeEach(async function() {
         provider = getTestObjectProvider();
+        // ADO:3113
+        if (provider.driver.type === "tinylicious") {
+            this.skip();
+        }
 
         container = (await provider.makeTestContainer(
             testContainerConfig,
