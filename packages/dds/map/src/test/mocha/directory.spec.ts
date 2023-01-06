@@ -42,7 +42,7 @@ async function populate(directory: SharedDirectory, content: unknown): Promise<v
     const storage = new MockSharedObjectServices({
         header: JSON.stringify(content),
     });
-    await directory.load(storage);
+    return directory.load(storage);
 }
 
 function serialize(directory1: SharedDirectory): string {
