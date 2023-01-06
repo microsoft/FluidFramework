@@ -4,13 +4,10 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, performance } from "@fluidframework/common-utils";
 import {
     ChildLogger,
-    IFluidErrorBase,
     loggerToMonitoringContext,
     MonitoringContext,
-    normalizeError,
 } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaConnection,
@@ -19,9 +16,7 @@ import {
     IResolvedUrl,
     IDocumentStorageService,
     IDocumentServicePolicies,
-    DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { canRetryOnError, DeltaStreamConnectionForbiddenError, NonRetryableError } from "@fluidframework/driver-utils";
 import {
     IClient,
     ISequencedDocumentMessage,
@@ -32,31 +27,32 @@ import {
     IEntry,
     HostStoragePolicy,
     InstrumentedStorageTokenFetcher,
-    OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
-import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils";
 import type { io as SocketIOClientStatic } from "socket.io-client";
-import { HostStoragePolicyInternal, ISocketStorageDiscovery } from "./contracts";
+import { HostStoragePolicyInternal } from "./contracts";
 import { IOdspCache } from "./odspCache";
 import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "./odspDeltaStorageService";
-import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
-import { getWithRetryForTokenRefresh, getOdspResolvedUrl, TokenFetchOptionsEx } from "./odspUtils";
-import { fetchJoinSession } from "./vroom";
+import { getOdspResolvedUrl } from "./odspUtils";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OpsCache } from "./opsCaching";
 import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter";
-import { pkgVersion as driverVersion } from "./packageVersion";
+import type { OdspDelayLoadedDeltaStream } from "./odspDelayLoadedDeltaStream";
+import { Deferred } from "@fluidframework/common-utils";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
  */
 export class OdspDocumentService implements IDocumentService {
-    private _policies: IDocumentServicePolicies;
-    // Timer which runs and executes the join session call after intervals.
-    private joinSessionRefreshTimer: ReturnType<typeof setTimeout> | undefined;
+    private readonly _policies: IDocumentServicePolicies;
+
+    // Promise to load socket module only once.
+    private socketModuleP: Deferred<void> | undefined;
+
+    private odspDelayLoadedDeltaStream: OdspDelayLoadedDeltaStream | undefined;
+
     /**
      * @param resolvedUrl - resolved url identifying document that will be managed by returned service instance.
      * @param getStorageToken - function that can provide the storage token. This is is also referred to as
@@ -101,15 +97,9 @@ export class OdspDocumentService implements IDocumentService {
 
     private readonly mc: MonitoringContext;
 
-    private readonly joinSessionKey: string;
-
     private readonly hostPolicy: HostStoragePolicyInternal;
 
     private _opsCache?: OpsCache;
-
-    private currentConnection?: OdspDocumentDeltaConnection;
-
-    private relayServiceTenantAndSessionId: string | undefined;
 
     /**
      * @param odspResolvedUrl - resolved url identifying document that will be managed by this service instance.
@@ -142,7 +132,6 @@ export class OdspDocumentService implements IDocumentService {
             storageOnly: odspResolvedUrl.fileVersion !== undefined,
         };
 
-        this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(logger,
             undefined,
@@ -182,13 +171,14 @@ export class OdspDocumentService implements IDocumentService {
                 this.epochTracker,
                 // flushCallback
                 async () => {
-                    if (this.currentConnection !== undefined && !this.currentConnection.disposed) {
-                        return this.currentConnection.flush();
+                    const currentConnection = this.odspDelayLoadedDeltaStream?.currentDeltaConnection;
+                    if (currentConnection !== undefined && !currentConnection.disposed) {
+                        return currentConnection.flush();
                     }
                     throw new Error("Disconnected while uploading summary (attempt to perform flush())");
                 },
                 () => {
-                    return this.relayServiceTenantAndSessionId;
+                    return this.odspDelayLoadedDeltaStream?.relayServiceTenantAndSessionId;
                 },
                 this.mc.config.getNumber("Fluid.Driver.Odsp.snapshotFormatFetchType"),
             );
@@ -219,30 +209,22 @@ export class OdspDocumentService implements IDocumentService {
             this.mc.logger,
             batchSize,
             concurrency,
+            // Get Ops from storage callback.
             async (from, to, telemetryProps, fetchReason) => service.get(from, to, telemetryProps, fetchReason),
+            // Get cachedOps Callback.
             async (from, to) => {
                 const res = await this.opsCache?.get(from, to);
                 return res as ISequencedDocumentMessage[] ?? [];
             },
+            // Ops requestFromSocket Callback.
             (from, to) => {
-                if (this.currentConnection !== undefined && !this.currentConnection.disposed) {
-                    this.currentConnection.requestOps(from, to);
+                const currentConnection = this.odspDelayLoadedDeltaStream?.currentDeltaConnection;
+                if (currentConnection !== undefined && !currentConnection.disposed) {
+                    currentConnection.requestOps(from, to);
                 }
             },
             (ops: ISequencedDocumentMessage[]) => this.opsReceived(ops),
         );
-    }
-
-    /** Annotate the given error indicating which connection step failed */
-    private annotateConnectionError(
-        error: any,
-        failedConnectionStep: string,
-        separateTokenRequest: boolean,
-    ): IFluidErrorBase {
-        return normalizeError(error, { props: {
-            failedConnectionStep,
-            separateTokenRequest,
-        } });
     }
 
     /**
@@ -251,250 +233,46 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document delta stream service for onedrive/sharepoint driver.
      */
     public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
-        assert(this.currentConnection === undefined, 0x4ad /* Should not be called when connection is already present! */);
-        // Attempt to connect twice, in case we used expired token.
-        return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (options) => {
-            // Presence of getWebsocketToken callback dictates whether callback is used for fetching
-            // websocket token or whether it is returned with joinSession response payload
-            const requestWebsocketTokenFromJoinSession = this.getWebsocketToken === undefined;
-            const websocketTokenPromise = requestWebsocketTokenFromJoinSession
-                ? Promise.resolve(null)
-                : this.getWebsocketToken!(options);
-
-            const annotateAndRethrowConnectionError = (step: string) => (error: any) => {
-                throw this.annotateConnectionError(error, step, !requestWebsocketTokenFromJoinSession);
-            };
-
-            const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession, options);
-            const [websocketEndpoint, websocketToken, io] =
-                await Promise.all([
-                    joinSessionPromise.catch(annotateAndRethrowConnectionError("joinSession")),
-                    websocketTokenPromise.catch(annotateAndRethrowConnectionError("getWebsocketToken")),
-                    this.socketIoClientFactory().catch(annotateAndRethrowConnectionError("socketIoClientFactory")),
-                ]);
-
-            const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken ?? null);
-            if (finalWebsocketToken === null) {
-                throw this.annotateConnectionError(
-                    new NonRetryableError(
-                        "Websocket token is null",
-                        OdspErrorType.fetchTokenError,
-                        { driverVersion },
-                    ),
-                    "getWebsocketToken",
-                    !requestWebsocketTokenFromJoinSession);
-            }
-            try {
-                const connection = await this.createDeltaConnection(
-                    websocketEndpoint.tenantId,
-                    websocketEndpoint.id,
-                    finalWebsocketToken,
-                    io,
-                    client,
-                    websocketEndpoint.deltaStreamSocketUrl);
-                connection.on("op", (documentId, ops: ISequencedDocumentMessage[]) => {
-                    this.opsReceived(ops);
-                });
-                // On disconnect with 401/403 error code, we can just clear the joinSession cache as we will again
-                // get the auth error on reconnecting and face latency.
-                connection.once("disconnect", (error: any) => {
-                    // Clear the join session refresh timer so that it can be restarted on reconnection.
-                    this.clearJoinSessionTimer();
-                    if (typeof error === "object" && error !== null
-                        && error.errorType === DriverErrorType.authorizationError) {
-                        this.cache.sessionJoinCache.remove(this.joinSessionKey);
-                    }
-                    // If we hit this assert, it means that "disconnect" event is emitted before the connection went through
-                    // dispose flow which is not correct and could lead to a bunch of erros.
-                    assert(connection.disposed, 0x4ae /* Connection should be disposed by now */);
-                    this.currentConnection = undefined;
-                });
-                this.currentConnection = connection;
-                return connection;
-            } catch (error) {
-                this.cache.sessionJoinCache.remove(this.joinSessionKey);
-
-                const normalizedError = this.annotateConnectionError(
-                    error,
-                    "createDeltaConnection",
-                    !requestWebsocketTokenFromJoinSession);
-                if (typeof error === "object" && error !== null) {
-                    normalizedError.addTelemetryProperties({ socketDocumentId: websocketEndpoint.id });
-                }
-                throw normalizedError;
-            }
-        });
-    }
-
-    private clearJoinSessionTimer() {
-        if (this.joinSessionRefreshTimer !== undefined) {
-            clearTimeout(this.joinSessionRefreshTimer);
-            this.joinSessionRefreshTimer = undefined;
+        if (this.socketModuleP === undefined) {
+            this.socketModuleP = new Deferred();
+        } else {
+            await this.socketModuleP.promise;
         }
-    }
-
-    private async scheduleJoinSessionRefresh(delta: number) {
-        await new Promise<void>((resolve, reject) => {
-            this.joinSessionRefreshTimer = setTimeout(() => {
-                getWithRetryForTokenRefresh(async (options) => {
-                    await this.joinSession(false, options);
-                    resolve();
-                }).catch((error) => {
-                    reject(error);
-                });
-            }, delta);
-        });
-    }
-
-    private async joinSession(
-        requestSocketToken: boolean,
-        options: TokenFetchOptionsEx,
-    ) {
-        const response = await this.joinSessionCore(requestSocketToken, options).catch((e) => {
-            if (hasFacetCodes(e) && e.facetCodes !== undefined) {
-                for (const code of e.facetCodes) {
-                    switch (code) {
-                        case "sessionForbiddenOnPreservedFiles":
-                        case "sessionForbiddenOnModerationEnabledLibrary":
-                        case "sessionForbiddenOnRequireCheckout":
-                            // This document can only be opened in storage-only mode.
-                            // DeltaManager will recognize this error
-                            // and load without a delta stream connection.
-                            this._policies = { ...this._policies, storageOnly: true };
-                            throw new DeltaStreamConnectionForbiddenError(code, { driverVersion });
-                        default:
-                            continue;
-                    }
-                }
-            }
-            throw e;
-        });
-        this.relayServiceTenantAndSessionId = `${response.tenantId}/${response.id}`;
-        return response;
-    }
-
-    private async joinSessionCore(
-        requestSocketToken: boolean,
-        options: TokenFetchOptionsEx,
-    ): Promise<ISocketStorageDiscovery> {
-        const disableJoinSessionRefresh = this.mc.config.getBoolean("Fluid.Driver.Odsp.disableJoinSessionRefresh");
-        const executeFetch = async () => {
-            const joinSessionResponse = await fetchJoinSession(
-                this.odspResolvedUrl,
-                "opStream/joinSession",
-                "POST",
-                this.mc.logger,
-                this.getStorageToken,
-                this.epochTracker,
-                requestSocketToken,
-                options,
-                disableJoinSessionRefresh,
-                this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
-            );
-            return {
-                entryTime: Date.now(),
-                joinSessionResponse,
-            };
-        };
-
-        const getResponseAndRefreshAfterDeltaMs = async () => {
-            const _response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
-            // If the response does not contain refreshSessionDurationSeconds, then treat it as old flow and let the
-            // cache entry to be treated as expired after 1 hour.
-            _response.joinSessionResponse.refreshSessionDurationSeconds =
-                _response.joinSessionResponse.refreshSessionDurationSeconds ?? 3600;
-            return {
-                ..._response,
-                refreshAfterDeltaMs: this.calculateJoinSessionRefreshDelta(
-                    _response.entryTime, _response.joinSessionResponse.refreshSessionDurationSeconds),
-            };
-        };
-        let response = await getResponseAndRefreshAfterDeltaMs();
-        // This means that the cached entry has expired(This should not be possible if the response is fetched
-        // from the network call). In this case we remove the cached entry and fetch the new response.
-        if (response.refreshAfterDeltaMs <= 0) {
-            this.cache.sessionJoinCache.remove(this.joinSessionKey);
-            response = await getResponseAndRefreshAfterDeltaMs();
-        }
-        if (!disableJoinSessionRefresh) {
-            const props = {
-                entryTime: response.entryTime,
-                refreshSessionDurationSeconds:
-                    response.joinSessionResponse.refreshSessionDurationSeconds,
-                refreshAfterDeltaMs: response.refreshAfterDeltaMs,
-            };
-            if (response.refreshAfterDeltaMs > 0) {
-                this.scheduleJoinSessionRefresh(response.refreshAfterDeltaMs)
-                    .catch((error) => {
-                        const canRetry = canRetryOnError(error);
-                        // Only record error event in case it is non retriable.
-                        if (!canRetry) {
-                            this.mc.logger.sendErrorEvent({
-                                eventName: "JoinSessionRefreshError",
-                                details: JSON.stringify(props),
-                            },
-                            error,
-                            );
-                        }
-                    });
-            } else {
-                // Logging just for informational purposes to help with debugging as this is a new feature.
-                this.mc.logger.sendTelemetryEvent({
-                    eventName: "JoinSessionRefreshNotScheduled",
-                    details: JSON.stringify(props),
-                });
-            }
-        }
-        return response.joinSessionResponse;
-    }
-
-    private calculateJoinSessionRefreshDelta(responseFetchTime: number, refreshSessionDurationSeconds: number) {
-        // 30 seconds is buffer time to refresh the session.
-        return responseFetchTime + ((refreshSessionDurationSeconds * 1000) - 30000) - Date.now();
+        const deltaStream = await this.getDelayLoadedDeltaStream();
+        return deltaStream.connectToDeltaStream(client);
     }
 
     /**
-     * Creats a connection to the given delta stream endpoint
-     *
-     * @param tenantId - the ID of the tenant
-     * @param documentId - document ID
-     * @param token - authorization token for delta service
-     * @param io - websocket library
-     * @param client - information about the client
-     * @param webSocketUrl - websocket URL
+     * This dynamically imports the module for loading the delta connection. In many cases the delta stream, is not
+     * required during the critical load flow. So this way we don't have to bundle this in the initial bundle and can
+     * import this later on when required.
+     * @returns - delta stream object.
      */
-    private async createDeltaConnection(
-        tenantId: string,
-        documentId: string,
-        token: string | null,
-        io: typeof SocketIOClientStatic,
-        client: IClient,
-        webSocketUrl: string,
-    ): Promise<OdspDocumentDeltaConnection> {
-        const startTime = performance.now();
-        const connection = await OdspDocumentDeltaConnection.create(
-            tenantId,
-            documentId,
-            token,
-            io,
-            client,
-            webSocketUrl,
-            this.mc.logger,
-            60000,
+    private async getDelayLoadedDeltaStream() {
+        if (this.odspDelayLoadedDeltaStream) {
+            return this.odspDelayLoadedDeltaStream;
+        }
+        const module = await import(/* webpackChunkName: "socketModule" */ "./odspDelayLoadedDeltaStream")
+            .catch((error) => {
+                this.mc.logger.sendErrorEvent( { eventName: "SocketModuleLoadFailed" }, error);
+                throw error;
+            });
+        this.mc.logger.sendTelemetryEvent({ eventName: "SocketModuleLoaded" });
+        this.odspDelayLoadedDeltaStream = new module.OdspDelayLoadedDeltaStream(
+            this.odspResolvedUrl,
+            this._policies,
+            this.getStorageToken,
+            this.getWebsocketToken,
+            this.mc,
+            this.socketIoClientFactory,
+            this.cache,
+            this.hostPolicy,
             this.epochTracker,
+            (ops: ISequencedDocumentMessage[]) => this.opsReceived(ops),
             this.socketReferenceKeyPrefix,
         );
-        const duration = performance.now() - startTime;
-        // This event happens rather often, so it adds up to cost of telemetry.
-        // Given that most reconnects result in reusing socket and happen very quickly,
-        // report event only if it took longer than threshold.
-        if (duration >= 2000) {
-            this.mc.logger.sendPerformanceEvent({
-                eventName: "ConnectionSuccess",
-                duration,
-            });
-        }
-        return connection;
+        this.socketModuleP?.resolve();
+        return this.odspDelayLoadedDeltaStream;
     }
 
     public dispose(error?: any) {
@@ -508,9 +286,7 @@ export class OdspDocumentService implements IDocumentService {
             this._opsCache?.flushOps();
         }
         this._opsCache?.dispose();
-        this.clearJoinSessionTimer();
-        this.currentConnection?.dispose();
-        this.currentConnection = undefined;
+        this.odspDelayLoadedDeltaStream?.dispose();
     }
 
     protected get opsCache() {

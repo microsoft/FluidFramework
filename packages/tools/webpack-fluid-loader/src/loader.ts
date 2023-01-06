@@ -16,6 +16,7 @@ import {
     IFluidCodeDetails,
     IFluidModuleWithDetails,
     IFluidModule,
+    LoaderHeader,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
@@ -281,7 +282,8 @@ export async function start(
             );
             assert(prefetched, 0x1eb /* "Snapshot should be prefetched!" */);
         }
-        container1 = await loader1.resolve({ url: documentUrl });
+        container1 = await loader1.resolve({ url: documentUrl, headers: {[LoaderHeader.loadMode]: {deltaConnection: "none"}}});
+        container1.connect();
         containers.push(container1);
     }
 
