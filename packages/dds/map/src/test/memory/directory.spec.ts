@@ -9,7 +9,7 @@ import {
 import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { DirectoryFactory, SharedDirectory } from "../../directory";
 
-function createLocalDirectory(id: string) {
+function createLocalDirectory(id: string): SharedDirectory {
     const directory = new SharedDirectory(id, new MockFluidDataStoreRuntime(), DirectoryFactory.Attributes);
     return directory;
 }
@@ -39,7 +39,7 @@ describe("SharedDirectory memory usage", () => {
 
         private dir: SharedDirectory = createLocalDirectory("testDirectory");
 
-        async run () {
+        async run (): Promise<void> {
             this.dir = createLocalDirectory("testDirectory");
         };
     }());
@@ -51,13 +51,13 @@ describe("SharedDirectory memory usage", () => {
             title = `Add ${x} integers to a local directory`;
             private dir: SharedDirectory = createLocalDirectory("testDirectory");
 
-            async run () {
+            async run (): Promise<void> {
                 for (let i = 0; i < x; i++) {
                     this.dir.set(i.toString().padStart(6, "0"), i);
                 }
             }
 
-            beforeIteration() {
+            beforeIteration(): void {
                 this.dir = createLocalDirectory("testDirectory");
             }
         }());
@@ -66,14 +66,14 @@ describe("SharedDirectory memory usage", () => {
             title = `Add ${x} integers to a local directory, clear it`;
             private dir: SharedDirectory = createLocalDirectory("testDirectory");
 
-            async run() {
+            async run(): Promise<void> {
                 for (let i = 0; i < x; i++) {
                     this.dir.set(i.toString().padStart(6, "0"), i);
                 }
                 this.dir.clear();
             }
 
-            beforeIteration() {
+            beforeIteration(): void {
                 this.dir = createLocalDirectory("testDirectory");
             }
         });

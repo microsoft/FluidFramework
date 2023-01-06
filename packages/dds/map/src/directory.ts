@@ -937,6 +937,9 @@ interface IDeleteSubDirLocalOpMetadata {
 type SubDirLocalOpMetadata = ICreateSubDirLocalOpMetadata | IDeleteSubDirLocalOpMetadata;
 type DirectoryLocalOpMetadata = IClearLocalOpMetadata | IKeyEditLocalOpMetadata | SubDirLocalOpMetadata;
 
+
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
+
 function isKeyEditLocalOpMetadata(metadata: any): metadata is IKeyEditLocalOpMetadata {
     return metadata !== undefined && typeof metadata.pendingMessageId === "number" && metadata.type === "edit";
 }
@@ -958,6 +961,8 @@ function isDirectoryLocalOpMetadata(metadata: any): metadata is DirectoryLocalOp
          (metadata.type === "clear" && typeof metadata.previousStorage === "object") ||
          (metadata.type === "createSubDir" && typeof metadata.previouslyExisted === "boolean"));
 }
+
+/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
 
 /**
  * Node of the directory tree.
@@ -1758,11 +1763,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         }
     }
 
+    /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
     /**
      * Rollback a local op
      * @param op - The operation to rollback
      * @param localOpMetadata - The local metadata associated with the op.
      */
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
      public rollback(op: any, localOpMetadata: unknown): void {
         if (!isDirectoryLocalOpMetadata(localOpMetadata)) {
             throw new Error("Invalid localOpMetadata");
@@ -1779,31 +1787,41 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             }
         } else if ((op.type === "delete" || op.type === "set") && localOpMetadata.type === "edit") {
             if (localOpMetadata.previousValue === undefined) {
-                this.deleteCore(op.key, true);
+                this.deleteCore(op.key as string, true);
             } else {
-                this.setCore(op.key, localOpMetadata.previousValue, true);
+                this.setCore(op.key as string, localOpMetadata.previousValue, true);
             }
 
-            this.rollbackPendingMessageId(this.pendingKeys, op.key, localOpMetadata.pendingMessageId);
+            this.rollbackPendingMessageId(this.pendingKeys, op.key as string, localOpMetadata.pendingMessageId);
         } else if (op.type === "createSubDirectory" && localOpMetadata.type === "createSubDir") {
             if (!localOpMetadata.previouslyExisted) {
-                this.deleteSubDirectoryCore(op.subdirName, true);
+                this.deleteSubDirectoryCore(op.subdirName as string, true);
             }
 
-            this.rollbackPendingMessageId(this.pendingSubDirectories, op.subdirName, localOpMetadata.pendingMessageId);
+            this.rollbackPendingMessageId(
+                this.pendingSubDirectories,
+                op.subdirName as string,
+                localOpMetadata.pendingMessageId
+            );
         } else if (op.type === "deleteSubDirectory" && localOpMetadata.type === "deleteSubDir") {
             if (localOpMetadata.subDirectory !== undefined) {
                 this.undeleteSubDirectoryTree(localOpMetadata.subDirectory);
                 // don't need to register events because deleting never unregistered
-                this._subdirectories.set(op.subdirName, localOpMetadata.subDirectory);
+                this._subdirectories.set(op.subdirName as string, localOpMetadata.subDirectory);
                 this.emit("subDirectoryCreated", op.subdirName, true, this);
             }
 
-            this.rollbackPendingMessageId(this.pendingSubDirectories, op.subdirName, localOpMetadata.pendingMessageId);
+            this.rollbackPendingMessageId(
+                this.pendingSubDirectories,
+                op.subdirName as string,
+                localOpMetadata.pendingMessageId
+            );
         } else {
             throw new Error("Unsupported op for rollback");
         }
     }
+
+    /* eslint-enable @typescript-eslint/no-unsafe-member-access */
 
     /**
      * Converts the given relative path into an absolute path.

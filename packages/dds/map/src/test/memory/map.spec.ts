@@ -9,7 +9,7 @@ import {
 import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { MapFactory, SharedMap } from "../../map";
 
-function createLocalMap(id: string) {
+function createLocalMap(id: string): SharedMap {
     const map = new SharedMap(id, new MockFluidDataStoreRuntime(), MapFactory.Attributes);
     return map;
 }
@@ -39,7 +39,7 @@ describe("SharedMap memory usage", () => {
 
         private map: SharedMap = createLocalMap("testMap");
 
-        async run() {
+        async run(): Promise<void> {
             this.map = createLocalMap("testMap");
         }
     }());
@@ -51,13 +51,13 @@ describe("SharedMap memory usage", () => {
             title = `Add ${x} integers to a local map`;
             private map: SharedMap = createLocalMap("testMap");
 
-            async run() {
+            async run(): Promise<void> {
                 for (let i = 0; i < x; i++) {
                     this.map.set(i.toString().padStart(6, "0"), i);
                 }
             }
 
-            beforeIteration() {
+            beforeIteration(): void {
                 this.map = createLocalMap("testMap");
             }
         }());
@@ -66,14 +66,14 @@ describe("SharedMap memory usage", () => {
             title = `Add ${x} integers to a local map, clear it`;
             private map: SharedMap = createLocalMap("testMap");
 
-            async run() {
+            async run(): Promise<void> {
                 for (let i = 0; i < x; i++) {
                     this.map.set(i.toString().padStart(6, "0"), i);
                 }
                 this.map.clear();
             }
 
-            beforeIteration() {
+            beforeIteration(): void {
                 this.map = createLocalMap("testMap");
             }
         }());

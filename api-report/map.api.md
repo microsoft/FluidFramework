@@ -135,6 +135,30 @@ export interface ILocalValue {
     readonly value: any;
 }
 
+// @public
+export interface IMapClearOperation {
+    type: "clear";
+}
+
+// @public
+export interface IMapDeleteOperation {
+    key: string;
+    type: "delete";
+}
+
+// @public
+export type IMapKeyOperation = IMapSetOperation | IMapDeleteOperation;
+
+// @public
+export type IMapOperation = IMapKeyOperation | IMapClearOperation;
+
+// @public
+export interface IMapSetOperation {
+    key: string;
+    type: "set";
+    value: ISerializableValue;
+}
+
 // @public @deprecated
 export interface ISerializableValue {
     type: string;
@@ -261,7 +285,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     readonly [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // @internal (undocumented)
-    protected applyStashedOp(content: any): unknown;
+    protected applyStashedOp(content: IMapOperation): unknown;
     clear(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
     delete(key: string): boolean;
@@ -278,10 +302,10 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     // @internal (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // @internal (undocumented)
-    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    protected reSubmitCore(content: IMapOperation, localOpMetadata: unknown): void;
     // @internal (undocumented)
-    protected rollback(content: any, localOpMetadata: unknown): void;
-    set(key: string, value: any): this;
+    protected rollback(content: unknown, localOpMetadata: unknown): void;
+    set(key: string, value: unknown): this;
     get size(): number;
     // @internal (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;

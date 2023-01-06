@@ -4,6 +4,8 @@
  */
 
 import { strict as assert } from "assert";
+
+import { UsageError } from "@fluidframework/container-utils";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
 import {
@@ -15,9 +17,11 @@ import {
 
 import { MapFactory } from "../../map";
 import { DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from "../../directory";
-import { IDirectory, IDirectoryValueChanged } from "../../interfaces";
+import { IDirectory, IDirectoryValueChanged, ISharedMap } from "../../interfaces";
 
-function createConnectedDirectory(id: string, runtimeFactory: MockContainerRuntimeFactory) {
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
+function createConnectedDirectory(id: string, runtimeFactory: MockContainerRuntimeFactory): SharedDirectory {
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
     const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
     const services = {
@@ -29,17 +33,16 @@ function createConnectedDirectory(id: string, runtimeFactory: MockContainerRunti
     return directory;
 }
 
-function createLocalMap(id: string) {
+function createLocalMap(id: string): ISharedMap {
     const factory = new MapFactory();
     return factory.create(new MockFluidDataStoreRuntime(), id);
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-async function populate(directory: SharedDirectory, content: object) {
+async function populate(directory: SharedDirectory, content: unknown): Promise<void> {
     const storage = new MockSharedObjectServices({
         header: JSON.stringify(content),
     });
-    return directory.load(storage);
+    await directory.load(storage);
 }
 
 function serialize(directory1: SharedDirectory): string {
@@ -84,7 +87,7 @@ describe("Directory", () => {
                 let valueChangedExpected: boolean = true;
                 let containedValueChangedExpected: boolean = true;
                 let clearExpected: boolean = false;
-                let previousValue: any;
+                let previousValue: unknown;
                 let directoryCreationExpected: boolean = true;
                 let directoryDeletedExpected: boolean = true;
 
@@ -249,8 +252,8 @@ describe("Directory", () => {
                 try {
                     subDirectory.set("throw", "error");
                     assert.fail("Should throw usage error");
-                } catch (error: any) {
-                    assert.strictEqual(error.errorType, "usageError", "Should throw usage error");
+                } catch (error) {
+                    assert.strictEqual((error as UsageError)?.errorType, "usageError", "Should throw usage error");
                 }
 
                 // Check recursive dispose event firing
@@ -283,19 +286,21 @@ describe("Directory", () => {
 
             it("Rejects a undefined and null key set", () => {
                 assert.throws(() => {
-                    directory.set(undefined as any, "testValue");
+                    directory.set(undefined as unknown as string, "testValue");
                 }, "Should throw for key of undefined");
                 assert.throws(() => {
-                    directory.set(null as any, "testValue");
+                    // eslint-disable-next-line unicorn/no-null
+                    directory.set(null as unknown as string, "testValue");
                 }, "Should throw for key of null");
             });
 
             it("Rejects subdirectories with undefined and null names", () => {
                 assert.throws(() => {
-                    directory.createSubDirectory(undefined as any);
+                    directory.createSubDirectory(undefined as unknown as string);
                 }, "Should throw for undefined subdirectory name");
                 assert.throws(() => {
-                    directory.createSubDirectory(null as any);
+                    // eslint-disable-next-line unicorn/no-null
+                    directory.createSubDirectory(null as unknown as string);
                 }, "Should throw for null subdirectory name");
             });
         });
@@ -1496,16 +1501,25 @@ describe("Directory", () => {
                 this.directory2 = createConnectedDirectory("directory2", this.containerRuntimeFactory);
             }
 
-            public get sharedObject() {
+            /**
+             * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.sharedObject}
+             */
+            public get sharedObject(): SharedDirectory {
                 // Return the remote SharedDirectory because we want to verify its summary data.
                 return this.directory2;
             }
 
-            public get expectedOutboundRoutes() {
+            /**
+             * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.expectedOutboundRoutes}
+             */
+            public get expectedOutboundRoutes(): string[] {
                 return this._expectedRoutes;
             }
 
-            public async addOutboundRoutes() {
+            /**
+             * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.addOutboundRoutes}
+             */
+            public async addOutboundRoutes(): Promise<void> {
                 const subMapId1 = `subMap-${++this.subMapCount}`;
                 const subMap1 = createLocalMap(subMapId1);
                 this.directory1.set(subMapId1, subMap1.handle);
@@ -1521,12 +1535,17 @@ describe("Directory", () => {
                 this.containerRuntimeFactory.processAllMessages();
             }
 
-            public async deleteOutboundRoutes() {
+            /**
+             * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.deleteOutboundRoutes}
+             */
+            public async deleteOutboundRoutes(): Promise<void> {
                 // Delete the last handle that was added.
                 const fooDirectory = this.directory1.getSubDirectory("foo");
                 assert(fooDirectory, "Route must be added before deleting");
 
                 const subMapId = `subMap-${this.subMapCount}`;
+
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 const deletedHandle = fooDirectory.get(subMapId);
                 assert(deletedHandle, "Route must be added before deleting");
 
@@ -1537,7 +1556,10 @@ describe("Directory", () => {
                 this.containerRuntimeFactory.processAllMessages();
             }
 
-            public async addNestedHandles() {
+            /**
+             * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.addNestedHandles}
+             */
+            public async addNestedHandles(): Promise<void> {
                 const fooDirectory =
                     this.directory1.getSubDirectory("foo") ?? this.directory1.createSubDirectory("foo");
                 const subMapId1 = `subMap-${++this.subMapCount}`;
@@ -1559,3 +1581,5 @@ describe("Directory", () => {
         runGCTests(GCSharedDirectoryProvider);
     });
 });
+
+/* eslint-enable @typescript-eslint/no-unsafe-member-access */
