@@ -133,6 +133,9 @@ export interface Covariant<T> {
 }
 
 // @public
+export function createEmitter<E extends Events<E>>(): ISubscribable<E> & IEmitter<E>;
+
+// @public
 export const createField: unique symbol;
 
 // @public (undocumented)
@@ -241,8 +244,7 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 }
 
 // @public
-export interface EditableTreeContext {
-    attachAfterChangeHandler(afterChangeHandler: (context: EditableTreeContext) => void): void;
+export interface EditableTreeContext extends ISubscribable<ForestEvents> {
     clear(): void;
     free(): void;
     prepareForEdit(): void;
@@ -279,6 +281,11 @@ export const EmptyKey: LocalFieldKey;
 
 // @public (undocumented)
 function encodeForJson<TNodeChange>(formatVersion: number, markList: Changeset<TNodeChange>, encodeChild: NodeChangeEncoder_2<TNodeChange>): JsonCompatibleReadOnly;
+
+// @public
+export type Events<E> = {
+    [P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
+};
 
 // @public
 export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> = TOpaque extends BrandedType<infer ValueType, infer Name> ? isAny<ValueType> extends true ? unknown : Brand<ValueType, Name> : never;
@@ -404,6 +411,12 @@ export interface FieldUpPath {
 }
 
 // @public
+export interface ForestEvents {
+    afterDelta(delta: Delta.Root): void;
+    beforeDelta(delta: Delta.Root): void;
+}
+
+// @public
 export type ForestLocation = ITreeSubscriptionCursor | Anchor;
 
 // @public
@@ -507,7 +520,12 @@ export interface IEditableForest extends IForestSubscription {
 }
 
 // @public
-export interface IForestSubscription extends Dependee {
+export interface IEmitter<E extends Events<E>> {
+    emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void;
+}
+
+// @public
+export interface IForestSubscription extends Dependee, ISubscribable<ForestEvents> {
     allocateCursor(): ITreeSubscriptionCursor;
     clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
     forgetAnchor(anchor: Anchor): void;
@@ -576,6 +594,9 @@ export function isContextuallyTypedNodeDataObject(data: ContextuallyTypedNodeDat
 export function isEditableField(field: UnwrappedEditableField): field is EditableField;
 
 // @public
+export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
+
+// @public
 export function isGlobalFieldKey(key: FieldKey): key is GlobalFieldKeySymbol;
 
 // @public
@@ -600,6 +621,11 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
 
 // @public (undocumented)
 function isSkipMark(mark: Mark<unknown>): mark is Skip;
+
+// @public
+export interface ISubscribable<E extends Events<E>> {
+    on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
+}
 
 // @public
 export function isUnwrappedNode(field: UnwrappedEditableField): field is EditableTree;
@@ -1159,6 +1185,12 @@ export interface SchemaDataAndPolicy<TPolicy extends SchemaPolicy = SchemaPolicy
 }
 
 // @public
+export interface SchemaEvents {
+    afterSchemaChange(newSchema: SchemaData): void;
+    beforeSchemaChange(newSchema: SchemaData): void;
+}
+
+// @public
 export interface SchemaPolicy {
     readonly defaultGlobalFieldSchema: FieldSchema;
     readonly defaultTreeSchema: TreeSchema;
@@ -1329,7 +1361,7 @@ type Skip = number;
 type Skip_2 = number;
 
 // @public
-export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, SchemaDataAndPolicy<TPolicy> {
+export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, ISubscribable<SchemaEvents>, SchemaDataAndPolicy<TPolicy> {
     update(newSchema: SchemaData): void;
 }
 

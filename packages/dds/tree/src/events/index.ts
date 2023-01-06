@@ -11,4 +11,5 @@ export {
     IsEvent,
     TransformEvents,
     UnionToIntersection,
+    IEmitter,
 } from "./events";
