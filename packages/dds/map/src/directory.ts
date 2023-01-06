@@ -1061,9 +1061,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     /**
      * {@inheritDoc IDirectory.get}
      */
-    // TODO: Use `unknown` instead (breaking change).
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public get<T = any>(key: string): T | undefined {
+    public get<T = unknown>(key: string): T | undefined {
         this.throwIfDisposed();
         return this._storage.get(key)?.value as T | undefined;
     }
@@ -1274,9 +1272,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * Get an iterator over the entries under this IDirectory.
      * @returns The iterator
      */
-    // TODO: Use `unknown` instead (breaking change).
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public entries(): IterableIterator<[string, any]> {
+    public entries(): IterableIterator<[string, unknown]> {
         this.throwIfDisposed();
         const localEntriesIterator = this._storage.entries();
         const iterator = {
@@ -1306,9 +1302,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * Get an iterator over the values under this IDirectory.
      * @returns The iterator
      */
-    // TODO: Use `unknown` instead (breaking change).
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public values(): IterableIterator<any> {
+    public values(): IterableIterator<unknown> {
         this.throwIfDisposed();
         const localValuesIterator = this._storage.values();
         const iterator = {
@@ -1329,9 +1323,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * Get an iterator over the entries under this IDirectory.
      * @returns The iterator
      */
-    // TODO: Use `unknown` instead (breaking change).
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public [Symbol.iterator](): IterableIterator<[string, any]> {
+    public [Symbol.iterator](): IterableIterator<[string, unknown]> {
         this.throwIfDisposed();
         return this.entries();
     }
