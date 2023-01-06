@@ -16,6 +16,7 @@ import {
     IRequest,
     IResponse,
     IFluidRouter,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -558,7 +559,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     /**
      * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
      */
-    public get entryPoint() {
+    public get entryPoint() : Promise<FluidObject | undefined> {
         return this.context.entryPoint;
     }
 

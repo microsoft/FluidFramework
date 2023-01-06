@@ -16,7 +16,6 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -135,7 +134,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     disconnect(): void;
     dispose?(error?: ICriticalContainerError): void;
-    readonly entryPoint?: IFluidHandle<FluidObject>;
+    readonly entryPoint?: Promise<FluidObject | undefined>;
     // @alpha
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -169,7 +168,7 @@ export interface IContainerContext extends IDisposable {
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     readonly disposeFn?: (error?: ICriticalContainerError) => void;
-    readonly entryPoint?: IFluidHandle<FluidObject>;
+    readonly entryPoint?: Promise<FluidObject | undefined>;
     // @deprecated (undocumented)
     readonly existing: boolean | undefined;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
@@ -482,7 +481,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 // @public
 export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
-    readonly entryPoint?: IFluidHandle<FluidObject>;
+    readonly entryPoint?: Promise<FluidObject | undefined>;
     getPendingLocalState(): unknown;
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     process(message: ISequencedDocumentMessage, local: boolean): any;

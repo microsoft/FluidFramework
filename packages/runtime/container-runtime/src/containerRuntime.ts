@@ -29,7 +29,6 @@ import {
 } from "@fluidframework/container-runtime-definitions";
 import {
     assert,
-    LazyPromise,
     Trace,
     TypedEventEmitter,
     unreachableCase,
@@ -107,7 +106,6 @@ import {
 } from "@fluidframework/runtime-utils";
 import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
-import { FluidObjectHandle } from "@fluidframework/datastore";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
@@ -1354,8 +1352,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         BindBatchTracker(this, this.logger);
 
         if (initializeEntryPoint) {
-            const promise = new LazyPromise(async () => initializeEntryPoint(this));
-            this.entryPoint = new FluidObjectHandle<FluidObject>(promise, "", this.handleContext);
+            this.entryPoint = initializeEntryPoint(this);
         }
     }
 
@@ -1468,9 +1465,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * {@inheritDoc @fluidframework/container-runtime-definitions#IContainerRuntime.entrypoint}
+     * {@inheritDoc @fluidframework/container-definitions#IRuntime.entrypoint}
      */
-    readonly entryPoint?: IFluidHandle<FluidObject>;
+    readonly entryPoint?: Promise<FluidObject | undefined>;
+
     private internalId(maybeAlias: string): string {
         return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;
     }

@@ -125,7 +125,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
     // (undocumented)
-    readonly entryPoint?: IFluidHandle<FluidObject>;
+    readonly entryPoint?: Promise<FluidObject | undefined>;
     // (undocumented)
     get flushMode(): FlushMode;
     // (undocumented)

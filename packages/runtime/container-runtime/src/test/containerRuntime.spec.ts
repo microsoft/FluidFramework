@@ -675,7 +675,7 @@ describe("Runtime", () => {
                 undefined, // containerRuntimeCtor
                 async (runtime) => myObj
             );
-            assert((await containerRuntime.entryPoint?.get()) === myObj, "entryPoint was not initialized");
+            assert(await containerRuntime.entryPoint === myObj, "entryPoint was not initialized");
         });
     });
 });

@@ -22,7 +22,6 @@ import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IFluidCodeDetails } from '@fluidframework/container-definitions';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidModule } from '@fluidframework/container-definitions';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
@@ -86,7 +85,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     disconnect(): void;
     // (undocumented)
     dispose?(error?: ICriticalContainerError): void;
-    get entryPoint(): IFluidHandle<FluidObject<unknown>> | undefined;
+    get entryPoint(): Promise<FluidObject | undefined>;
     forceReadonly(readonly: boolean): void;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;

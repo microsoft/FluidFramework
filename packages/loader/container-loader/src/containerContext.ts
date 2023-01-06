@@ -46,6 +46,7 @@ import {
     ISummaryContent,
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { Runtime } from "inspector";
 import { Container } from "./container";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
@@ -172,9 +173,11 @@ export class ContainerContext implements IContainerContext {
     /**
      * {@inheritDoc @fluidframework/container-definitions#IContainerContext.entryPoint}
      */
-    public get entryPoint() {
-        return this.runtime.entryPoint;
-    }
+    public readonly entryPoint: Promise<FluidObject | undefined>
+    private _entryPointPromiseResolver: (entryPoint: FluidObject | undefined) => void
+        = (entryPoint: FluidObject | undefined) => {};
+    private _entryPointPromiseRejecter: (reason?: unknown) => void
+        = (reason?: unknown) => {};
 
     constructor(
         private readonly container: Container,
@@ -204,6 +207,11 @@ export class ContainerContext implements IContainerContext {
             async () => this.loadCodeModule(_codeDetails),
         );
         this.attachListener();
+        this.entryPoint = new Promise<FluidObject | undefined>((resolve, reject) => {
+            this._entryPointPromiseResolver = resolve;
+            this._entryPointPromiseRejecter = reject;
+        });
+
     }
 
     /**
@@ -333,10 +341,16 @@ export class ContainerContext implements IContainerContext {
 
     private async instantiateRuntime(existing: boolean) {
         const runtimeFactory = await this.getRuntimeFactory();
-        this._runtime = await PerformanceEvent.timedExecAsync(
-			this.taggedLogger,
-			{ eventName: "InstantiateRuntime" },
-			async () => runtimeFactory.instantiateRuntime(this, existing));
+        try {
+            this._runtime = await PerformanceEvent.timedExecAsync(
+                this.taggedLogger,
+                { eventName: "InstantiateRuntime" },
+                async () => runtimeFactory.instantiateRuntime(this, existing));
+            this._entryPointPromiseResolver(this._runtime.entryPoint);
+        } catch (err: unknown) {
+            this._entryPointPromiseRejecter(err);
+            throw err;
+        }
     }
 
     private attachListener() {
