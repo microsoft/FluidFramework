@@ -173,7 +173,7 @@ class RebaseQueue<T> {
                     this.reattachOffset += getOutputLength(baseMark);
                     return { baseMark: this.baseMarks.dequeue() };
                 } else {
-                    const splitBaseMark = this.baseMarks.splitOutputAndDequeue(offset);
+                    const splitBaseMark = this.baseMarks.dequeueOutput(offset);
                     this.reattachOffset += offset;
                     return { baseMark: splitBaseMark };
                 }
@@ -196,13 +196,13 @@ class RebaseQueue<T> {
             const baseMarkLength = getInputLength(baseMark);
             if (newMarkLength < baseMarkLength) {
                 return {
-                    baseMark: this.baseMarks.splitInputAndDequeue(newMarkLength),
+                    baseMark: this.baseMarks.dequeueInput(newMarkLength),
                     newMark: this.newMarks.dequeue(),
                 };
             } else if (newMarkLength > baseMarkLength) {
                 return {
                     baseMark: this.baseMarks.dequeue(),
-                    newMark: this.newMarks.splitInputAndDequeue(baseMarkLength),
+                    newMark: this.newMarks.dequeueInput(baseMarkLength),
                 };
             } else {
                 return { baseMark: this.baseMarks.dequeue(), newMark: this.newMarks.dequeue() };

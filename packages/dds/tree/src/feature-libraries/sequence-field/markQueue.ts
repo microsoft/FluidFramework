@@ -13,7 +13,7 @@ import {
     splitMarkOnInput,
     splitMarkOnOutput,
 } from "./moveEffectTable";
-import { getInputLength, getOutputLength, isSizedMark } from "./utils";
+import { isSizedMark } from "./utils";
 
 export class MarkQueue<T> {
     private readonly stack: Mark<T>[] = [];
@@ -32,45 +32,6 @@ export class MarkQueue<T> {
 
     public isEmpty(): boolean {
         return this.peek() === undefined;
-    }
-
-    public splitInputAndDequeue(length: number): SizedMark<T> | undefined {
-        const mark = this.dequeue();
-        if (mark === undefined) {
-            return undefined;
-        }
-
-        assert(isSizedMark(mark), "Can only split sized marks on input");
-        if (getInputLength(mark) <= length) {
-            return mark;
-        }
-
-        const [mark1, mark2] = splitMarkOnInput(mark, length, this.genId, this.moveEffects);
-        this.stack.push(mark2);
-        return mark1;
-    }
-
-    public splitOutputAndDequeue(length: number): Mark<T> | undefined {
-        const mark = this.dequeue();
-        if (mark === undefined) {
-            return undefined;
-        }
-
-        if (getOutputLength(mark) <= length) {
-            return mark;
-        }
-
-        const [mark1, mark2] = splitMarkOnOutput(mark, length, this.genId, this.moveEffects);
-        this.stack.push(mark2);
-        return mark1;
-    }
-
-    public peek(): Mark<T> | undefined {
-        const mark = this.dequeue();
-        if (mark !== undefined) {
-            this.stack.push(mark);
-        }
-        return mark;
     }
 
     public dequeue(): Mark<T> | undefined {
@@ -106,5 +67,40 @@ export class MarkQueue<T> {
         }
 
         return result;
+    }
+
+    /**
+     * Dequeues the first `length` sized portion of the next mark.
+     * The caller must verify that the next mark (as returned by peek) is longer than this length.
+     * @param length - The length to dequeue, measured in the input context.
+     */
+    public dequeueInput(length: number): SizedMark<T> {
+        const mark = this.dequeue();
+        assert(mark !== undefined, "Should only dequeue if not empty");
+        assert(isSizedMark(mark), "Can only split sized marks on input");
+        const [mark1, mark2] = splitMarkOnInput(mark, length, this.genId, this.moveEffects);
+        this.stack.push(mark2);
+        return mark1;
+    }
+
+    /**
+     * Dequeues the first `length` sized portion of the next mark.
+     * The caller must verify that the next mark (as returned by peek) is longer than this length.
+     * @param length - The length to dequeue, measured in the output context.
+     */
+    public dequeueOutput(length: number): Mark<T> {
+        const mark = this.dequeue();
+        assert(mark !== undefined, "Should only dequeue if not empty");
+        const [mark1, mark2] = splitMarkOnOutput(mark, length, this.genId, this.moveEffects);
+        this.stack.push(mark2);
+        return mark1;
+    }
+
+    public peek(): Mark<T> | undefined {
+        const mark = this.dequeue();
+        if (mark !== undefined) {
+            this.stack.push(mark);
+        }
+        return mark;
     }
 }

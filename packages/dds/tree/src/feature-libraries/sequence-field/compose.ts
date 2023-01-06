@@ -463,10 +463,10 @@ export class ComposeQueue<T> {
             const baseMarkLength = getOutputLength(baseMark);
             if (newMarkLength < baseMarkLength) {
                 this.newMarks.dequeue();
-                baseMark = this.baseMarks.splitOutputAndDequeue(newMarkLength);
+                baseMark = this.baseMarks.dequeueOutput(newMarkLength);
             } else if (newMarkLength > baseMarkLength) {
                 this.baseMarks.dequeue();
-                newMark = this.newMarks.splitInputAndDequeue(baseMarkLength);
+                newMark = this.newMarks.dequeueInput(baseMarkLength);
             } else {
                 this.baseMarks.dequeue();
                 this.newMarks.dequeue();
