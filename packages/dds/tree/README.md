@@ -315,8 +315,7 @@ flowchart
             dependency-tracking
             forest-->tree
         end
-        core-->events
-        core-->util
+        core-->events-->util
         id-compressor-->util
         feature-->shared-tree-core
         shared-tree-core-->core
@@ -328,7 +327,8 @@ flowchart
             defaultSchema-->defaultFieldKinds-->modular-schema
             forestIndex-->treeTextCursor
             modular-schema
-            object-forest-->treeTextCursor
+            object-forest-->mapTreeCursor-->treeCursorUtils
+            chunked-forest-->treeCursorUtils
             schemaIndex
             sequence-change-family-->treeTextCursor
         end

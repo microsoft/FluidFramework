@@ -50,7 +50,8 @@ export const blobCountPropertyName = "BlobCount";
 export const channelsTreeName = ".channels";
 
 // @public (undocumented)
-export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>) => ISummarizerNodeWithGC;
+export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
+getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>) => ISummarizerNodeWithGC;
 
 // @public (undocumented)
 export type CreateChildSummarizerNodeParam = {

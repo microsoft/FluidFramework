@@ -133,6 +133,9 @@ export interface Covariant<T> {
 }
 
 // @public
+export function createEmitter<E extends Events<E>>(): ISubscribable<E> & IEmitter<E>;
+
+// @public
 export const createField: unique symbol;
 
 // @public (undocumented)
@@ -153,9 +156,9 @@ export const defaultSchemaPolicy: FullSchemaPolicy;
 // @public
 interface Delete {
     // (undocumented)
-    count: number;
+    readonly count: number;
     // (undocumented)
-    type: typeof MarkType.Delete;
+    readonly type: typeof MarkType.Delete;
 }
 
 // @public (undocumented)
@@ -241,8 +244,7 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 }
 
 // @public
-export interface EditableTreeContext {
-    attachAfterChangeHandler(afterChangeHandler: (context: EditableTreeContext) => void): void;
+export interface EditableTreeContext extends ISubscribable<ForestEvents> {
     clear(): void;
     free(): void;
     prepareForEdit(): void;
@@ -279,6 +281,11 @@ export const EmptyKey: LocalFieldKey;
 
 // @public (undocumented)
 function encodeForJson<TNodeChange>(formatVersion: number, markList: Changeset<TNodeChange>, encodeChild: NodeChangeEncoder_2<TNodeChange>): JsonCompatibleReadOnly;
+
+// @public
+export type Events<E> = {
+    [P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
+};
 
 // @public
 export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> = TOpaque extends BrandedType<infer ValueType, infer Name> ? isAny<ValueType> extends true ? unknown : Brand<ValueType, Name> : never;
@@ -371,7 +378,7 @@ export interface FieldLocation {
 }
 
 // @public (undocumented)
-type FieldMap<T> = Map<FieldKey, T>;
+type FieldMap<T> = ReadonlyMap<FieldKey, T>;
 
 // @public
 export interface FieldMapObject<TChild> {
@@ -401,6 +408,12 @@ export const enum FieldScope {
 export interface FieldUpPath {
     readonly field: FieldKey;
     readonly parent: UpPath | undefined;
+}
+
+// @public
+export interface ForestEvents {
+    afterDelta(delta: Delta.Root): void;
+    beforeDelta(delta: Delta.Root): void;
 }
 
 // @public
@@ -507,7 +520,12 @@ export interface IEditableForest extends IForestSubscription {
 }
 
 // @public
-export interface IForestSubscription extends Dependee {
+export interface IEmitter<E extends Events<E>> {
+    emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void;
+}
+
+// @public
+export interface IForestSubscription extends Dependee, ISubscribable<ForestEvents> {
     allocateCursor(): ITreeSubscriptionCursor;
     clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
     forgetAnchor(anchor: Anchor): void;
@@ -525,9 +543,9 @@ function inputLength(mark: Mark<unknown>): number;
 // @public
 interface Insert<TTree = ProtoNode> {
     // (undocumented)
-    content: TTree[];
+    readonly content: readonly TTree[];
     // (undocumented)
-    type: typeof MarkType.Insert;
+    readonly type: typeof MarkType.Insert;
 }
 
 // @public (undocumented)
@@ -541,11 +559,11 @@ interface Insert_2<TNodeChange = NodeChangeType> extends HasTiebreakPolicy, HasR
 // @public
 interface InsertAndModify<TTree = ProtoNode> {
     // (undocumented)
-    content: TTree;
+    readonly content: TTree;
     // (undocumented)
-    fields: FieldMarks<TTree>;
+    readonly fields: FieldMarks<TTree>;
     // (undocumented)
-    type: typeof MarkType.InsertAndModify;
+    readonly type: typeof MarkType.InsertAndModify;
 }
 
 // @public
@@ -576,6 +594,9 @@ export function isContextuallyTypedNodeDataObject(data: ContextuallyTypedNodeDat
 export function isEditableField(field: UnwrappedEditableField): field is EditableField;
 
 // @public
+export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
+
+// @public
 export function isGlobalFieldKey(key: FieldKey): key is GlobalFieldKeySymbol;
 
 // @public
@@ -600,6 +621,11 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
 
 // @public (undocumented)
 function isSkipMark(mark: Mark<unknown>): mark is Skip;
+
+// @public
+export interface ISubscribable<E extends Events<E>> {
+    on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
+}
 
 // @public
 export function isUnwrappedNode(field: UnwrappedEditableField): field is EditableTree;
@@ -734,7 +760,7 @@ export interface MarkedArrayLike<T> extends ArrayLike<T> {
 }
 
 // @public
-type MarkList<TTree = ProtoNode> = Mark<TTree>[];
+type MarkList<TTree = ProtoNode> = readonly Mark<TTree>[];
 
 // @public (undocumented)
 type MarkList_2<TNodeChange = NodeChangeType, TMark = Mark_2<TNodeChange>> = TMark[];
@@ -768,11 +794,11 @@ const MarkType: {
 // @public
 interface Modify<TTree = ProtoNode> {
     // (undocumented)
-    fields?: FieldMarks<TTree>;
+    readonly fields?: FieldMarks<TTree>;
     // (undocumented)
-    setValue?: Value;
+    readonly setValue?: Value;
     // (undocumented)
-    type: typeof MarkType.Modify;
+    readonly type: typeof MarkType.Modify;
 }
 
 // @public (undocumented)
@@ -788,20 +814,20 @@ interface Modify_2<TNodeChange = NodeChangeType> {
 // @public
 interface ModifyAndDelete<TTree = ProtoNode> {
     // (undocumented)
-    fields: FieldMarks<TTree>;
+    readonly fields: FieldMarks<TTree>;
     // (undocumented)
-    type: typeof MarkType.ModifyAndDelete;
+    readonly type: typeof MarkType.ModifyAndDelete;
 }
 
 // @public
 interface ModifyAndMoveOut<TTree = ProtoNode> {
     // (undocumented)
-    fields?: FieldMarks<TTree>;
-    moveId: MoveId;
+    readonly fields?: FieldMarks<TTree>;
+    readonly moveId: MoveId;
     // (undocumented)
-    setValue?: Value;
+    readonly setValue?: Value;
     // (undocumented)
-    type: typeof MarkType.ModifyAndMoveOut;
+    readonly type: typeof MarkType.ModifyAndMoveOut;
 }
 
 // @public @sealed
@@ -862,7 +888,6 @@ interface MoveEffectTable<T> {
     srcEffects: Map<MoveId_2, MovePartition<T>[]>;
     // (undocumented)
     srcMergeable: Map<MoveId_2, MoveId_2>;
-    validatedMarks: Set<Mark_2<T>>;
 }
 
 // @public
@@ -874,9 +899,9 @@ type MoveId_2 = ChangesetLocalId;
 
 // @public
 interface MoveIn {
-    moveId: MoveId;
+    readonly moveId: MoveId;
     // (undocumented)
-    type: typeof MarkType.MoveIn;
+    readonly type: typeof MarkType.MoveIn;
 }
 
 // @public (undocumented)
@@ -889,10 +914,10 @@ interface MoveIn_2 extends HasMoveId, HasPlaceFields, HasRevisionTag {
 // @public
 interface MoveInAndModify<TTree = ProtoNode> {
     // (undocumented)
-    fields: FieldMarks<TTree>;
-    moveId: MoveId;
+    readonly fields: FieldMarks<TTree>;
+    readonly moveId: MoveId;
     // (undocumented)
-    type: typeof MarkType.MoveInAndModify;
+    readonly type: typeof MarkType.MoveInAndModify;
 }
 
 // @public (undocumented)
@@ -901,10 +926,10 @@ type MoveMark<T> = MoveOut_2<T> | MoveIn_2 | ReturnFrom<T> | ReturnTo;
 // @public
 interface MoveOut {
     // (undocumented)
-    count: number;
-    moveId: MoveId;
+    readonly count: number;
+    readonly moveId: MoveId;
     // (undocumented)
-    type: typeof MarkType.MoveOut;
+    readonly type: typeof MarkType.MoveOut;
 }
 
 // @public (undocumented)
@@ -1159,6 +1184,12 @@ export interface SchemaDataAndPolicy<TPolicy extends SchemaPolicy = SchemaPolicy
 }
 
 // @public
+export interface SchemaEvents {
+    afterSchemaChange(newSchema: SchemaData): void;
+    beforeSchemaChange(newSchema: SchemaData): void;
+}
+
+// @public
 export interface SchemaPolicy {
     readonly defaultGlobalFieldSchema: FieldSchema;
     readonly defaultTreeSchema: TreeSchema;
@@ -1329,7 +1360,7 @@ type Skip = number;
 type Skip_2 = number;
 
 // @public
-export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, SchemaDataAndPolicy<TPolicy> {
+export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, ISubscribable<SchemaEvents>, SchemaDataAndPolicy<TPolicy> {
     update(newSchema: SchemaData): void;
 }
 
