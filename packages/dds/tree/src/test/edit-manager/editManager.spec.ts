@@ -13,6 +13,7 @@ import {
     ChangeRebaser,
     Delta,
     FieldKey,
+    TaggedChange,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
@@ -258,6 +259,43 @@ describe("EditManager", () => {
                 { seq: 7, type: "Pull", ref: 5, from: peer1 },
             ],
             new UnrebasableTestChangeRebaser(),
+        );
+        runUnitTestScenario(
+            "Sequenced local changes should not be rebased over prior local changes if those earlier changes were not rebased",
+            [
+                { seq: 1, type: "Push" },
+                { seq: 2, type: "Push" },
+                { seq: 4, type: "Push" },
+                { seq: 1, type: "Ack" },
+                { seq: 2, type: "Ack" },
+                { seq: 3, type: "Pull", ref: 2, from: peer2 },
+                { seq: 4, type: "Ack" },
+            ],
+            new UnrebasableTestChangeRebaser(
+                (change: TestChange, over: TaggedChange<TestChange>): TestChange => {
+                    // This is the only rebase that should happen
+                    assert.deepEqual(change.intentions, [4]);
+                    assert.deepEqual(over.change.intentions, [3]);
+                    return TestChange.rebase(change, over.change);
+                },
+            ),
+        );
+        runUnitTestScenario(
+            "Sequenced peer changes should not be rebased over changes from the same peer if those earlier changes were not rebased",
+            [
+                { seq: 1, type: "Pull", ref: 0, from: peer1 },
+                { seq: 2, type: "Pull", ref: 0, from: peer1 },
+                { seq: 3, type: "Pull", ref: 2, from: peer2 },
+                { seq: 4, type: "Pull", ref: 0, from: peer1 },
+            ],
+            new UnrebasableTestChangeRebaser(
+                (change: TestChange, over: TaggedChange<TestChange>): TestChange => {
+                    // This is the only rebase that should happen
+                    assert.deepEqual(change.intentions, [4]);
+                    assert.deepEqual(over.change.intentions, [3]);
+                    return TestChange.rebase(change, over.change);
+                },
+            ),
         );
     });
 

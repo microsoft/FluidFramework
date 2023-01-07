@@ -224,18 +224,47 @@ export class EditManager<
         commitToRebase: Commit<TChangeset>,
         branch: Branch<TChangeset>,
     ): TChangeset {
-        if (!branch.isDivergent && commitToRebase.sessionId === this.getLastCommit()?.sessionId) {
+        const peerSessionId = commitToRebase.sessionId;
+        if (!branch.isDivergent && peerSessionId === this.getLastCommit()?.sessionId) {
             // The new commit is not divergent and therefore doesn't need to be rebased.
             return commitToRebase.changeset;
         }
 
-        const changeRebasedToRef = branch.localChanges.reduceRight(
+        const trunkCommits = this.getCommitsAfter(branch.refSeq);
+
+        // The peer branch (or this last edit) is divergent, meaning some edits on the trunk after `branch.refSeq`
+        // came from a different session.
+        // This new edit needs to be rebased to account for the effect of these concurrent edits.
+        // We could rebase the new edit over the inverses of all the edits in the branch and over all the trunk commits
+        // but that may lead to some superfluous rebases. We only need to rebase over the inverse branch changes and
+        // their corresponding trunk commits if those changes were themselves divergent. In other words, we don't need
+        // to include in the sandwich rebase those edits form the branch that were sequenced as is (i.e., without being
+        // rebased).
+        // There are two benefits to this:
+        // 1. We avoid wasting time performing superfluous computation.
+        // 2. It makes the process of rebasing peer changes identical to the process of rebasing local changes.
+        //    This reduces the risk of decoherence bugs even if the ChangeFamily is buggy (i.e., doesn't satisfy the
+        //    required axioms).
+
+        // The number of edits on the branch that made it to the trunk without being rebased.
+        // This can also be thought as the length of the common prefix between the trunk changes
+        // since `branch.refSeq` and the branch changes.
+        let nonDivergentEditCount = 0;
+        while (
+            nonDivergentEditCount < branch.localChanges.length &&
+            trunkCommits[nonDivergentEditCount].sessionId === peerSessionId
+        ) {
+            ++nonDivergentEditCount;
+        }
+        const divergentEditsFromSession = branch.localChanges.slice(nonDivergentEditCount);
+        const trunkCommitsUnknownToSession = trunkCommits.slice(nonDivergentEditCount);
+        const changeRebasedToRef = divergentEditsFromSession.reduceRight(
             (newChange, branchCommit) =>
                 this.changeFamily.rebaser.rebase(newChange, this.inverseFromCommit(branchCommit)),
             commitToRebase.changeset,
         );
 
-        return this.rebaseOverCommits(changeRebasedToRef, this.getCommitsAfter(branch.refSeq));
+        return this.rebaseOverCommits(changeRebasedToRef, trunkCommitsUnknownToSession);
     }
 
     // TODO: Try to share more logic between this method and `rebaseBranch`
