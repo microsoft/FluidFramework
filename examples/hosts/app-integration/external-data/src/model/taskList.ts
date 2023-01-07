@@ -10,9 +10,9 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedMap } from "@fluidframework/map";
 
-import { ParsedTaskData, parseStringData } from "../mock-customer-service-interface";
-import type { ITask, ITaskEvents, ITaskList } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
+import type { ITask, ITaskEvents, ITaskList } from "../model-interface";
+import { ParsedTaskData, parseStringData } from "../utilities";
 
 class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
     public get id(): string {

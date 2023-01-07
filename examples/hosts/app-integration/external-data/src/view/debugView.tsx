@@ -5,9 +5,9 @@
 
 import React, { useEffect, useState } from "react";
 
-import type { IAppModel } from "../model-interface";
-import { parseStringData } from "../mock-customer-service-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
+import type { IAppModel } from "../model-interface";
+import { parseStringData } from "../utilities";
 
 /**
  * {@link DebugView} input props.
@@ -146,7 +146,7 @@ interface IControlsViewProps {
 function debugResetExternalData(): void {
     console.log("APP (DEBUG): Resetting external data...")
     fetch(
-        `http://localhost:${customerServicePort}/debug-reset-task-list`,
+        `http://localhost:${externalDataServicePort}/debug-reset-task-list`,
         {
             method: "POST",
             headers: {
