@@ -12,7 +12,8 @@ import request from "supertest";
 
 import { delay } from '@fluidframework/common-utils';
 
-import { externalDataServicePort, ExternalDataSource, initializeExternalDataService } from '../src/mock-external-data-service';
+import { externalDataServicePort } from '../src/mock-external-data-service-interface';
+import { ExternalDataSource, initializeExternalDataService } from '../src/mock-external-data-service';
 import { closeServer } from './utilities';
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */

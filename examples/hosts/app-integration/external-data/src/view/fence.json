@@ -1,5 +1,5 @@
 {
     "tags": ["view"],
     "exports": ["index"],
-    "imports": ["model-interface", "mock-customer-service-interface"]
+    "imports": ["model-interface", "mock-customer-service-interface", "mock-external-data-service-interface", "utilities"]
   }

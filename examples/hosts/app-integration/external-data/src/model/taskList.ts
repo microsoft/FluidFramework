@@ -10,8 +10,9 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedMap } from "@fluidframework/map";
 
-import { customerServicePort, ParsedTaskData, parseStringData } from "../mock-customer-service-interface";
+import { ParsedTaskData, parseStringData } from "../mock-customer-service-interface";
 import type { ITask, ITaskEvents, ITaskList } from "../model-interface";
+import { externalDataServicePort } from "../mock-external-data-service-interface";
 
 class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
     public get id(): string {
@@ -193,7 +194,7 @@ export class TaskList extends DataObject implements ITaskList {
         let updatedExternalData: ParsedTaskData[] | undefined;
         try {
             const response = await fetch(
-                `http://localhost:${customerServicePort}/fetch-tasks`,
+                `http://localhost:${externalDataServicePort}/fetch-tasks`,
                 {
                     method: 'GET',
                     headers: {
@@ -274,7 +275,7 @@ export class TaskList extends DataObject implements ITaskList {
 
         try {
             await fetch(
-                `http://localhost:${customerServicePort}/set-tasks`,
+                `http://localhost:${externalDataServicePort}/set-tasks`,
                 {
                     method: 'POST',
                     headers: {

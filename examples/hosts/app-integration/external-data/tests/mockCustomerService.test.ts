@@ -9,31 +9,47 @@ import request from "supertest";
 
 import { initializeCustomerService } from '../src/mock-customer-service';
 import { customerServicePort } from '../src/mock-customer-service-interface';
+import { initializeExternalDataService } from '../src/mock-external-data-service';
+import { externalDataServicePort } from '../src/mock-external-data-service-interface';
 import { closeServer } from './utilities';
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
+/**
+ * @remarks
+ *
+ * These tests spin up their own Express server instances so we can directly test against it
+ * (using supertest), rather than leaning on network calls.
+ */
 describe("mock-customer-service", () => {
     /**
-     * Express server instance backing our service.
-     *
-     * @remarks
-     *
-     * These tests spin up their own Express server instance so we can directly test against it
-     * (using supertest), rather than leaning on network calls.
+     * Express server instance backing our mock external data service.
+     */
+    let externalDataService: Server | undefined;
+
+    /**
+     * Express server instance backing our mock customer service.
      */
     let customerService: Server | undefined;
 
     beforeEach(async () => {
+        externalDataService = await initializeExternalDataService({
+            port: externalDataServicePort
+        });
         customerService = await initializeCustomerService({
             port: customerServicePort,
+            externalDataServiceWebhookRegistrationUrl: `http://localhost:${externalDataServicePort}/register-for-webhook`
         });
     });
 
     afterEach(async () => {
+        const _externalDataService = externalDataService!;
         const _customerService = customerService!;
+
+        externalDataService = undefined;
         customerService = undefined;
 
+        await closeServer(_externalDataService);
         await closeServer(_customerService);
     });
 

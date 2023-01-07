@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { ExternalDataSource } from "./externalData";
-export { initializeExternalDataService } from "./service";
+export { externalDataServicePort } from "./constants";

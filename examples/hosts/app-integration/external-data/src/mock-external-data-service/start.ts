@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ExternalDataSource } from "../mock-external-data-service";
-import { externalDataServicePort } from "./constants";
+import { externalDataServicePort } from "../mock-external-data-service-interface";
+import { ExternalDataSource } from "./externalData";
 import { initializeExternalDataService } from "./service";
 
 /**
