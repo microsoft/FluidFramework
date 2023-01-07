@@ -128,9 +128,12 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
      * - gcData: The garbage collection data of this node that is required for running GC.
      */
     private async loadBaseGCDetails() {
+        if (this.baseGCDetailsLoaded) {
+            return;
+        }
         const baseGCDetails = await this.baseGCDetailsP;
 
-        // Possible race - If there were parallel calls to loadBaseGCDetails, we want to make sure that we only update
+        // Possible race - If there were parallel calls to loadBaseGCDetails, we want to make sure that we update
         // the state from the base details only once.
         if (this.baseGCDetailsLoaded) {
             return;
@@ -181,10 +184,11 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // called and the node's data has not changed since last summary, the GC data in initial details is returned.
         await this.loadBaseGCDetails();
 
-        // If there is no new data since last summary and we have GC data from the previous run, return it. We may not
-        // have data from previous GC run for clients with older summary format before GC was added. They won't have
-        // GC details in their initial summary.
-        if (!fullGC && !this.hasDataChanged() && this.gcData !== undefined) {
+        // If there is no new data since last summary and we have GC data from the previous run, return it. The previous
+        // GC data may not be available if loaded from a snapshot with either GC disabled or before GC was added.
+        // Note - canReuseHandle is checked to be consistent with summarize - generate GC data for nodes for which
+        // summary must be generated.
+        if (this.canReuseHandle && !fullGC && !this.hasDataChanged() && this.gcData !== undefined) {
             return cloneGCData(this.gcData);
         }
 
@@ -363,6 +367,20 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     ): ISummarizerNodeWithGC {
         assert(!this.children.has(id), 0x1b6 /* "Create SummarizerNode child already exists" */);
 
+        /**
+          * Update the child node's base GC details from this node's current GC details instead of updating from the base
+          * GC details of this node. This will handle scenarios where the GC details was updated during refresh from
+          * snapshot and the child node wasn't created then. If a child is created after that, its GC details should be
+          * the one from the downloaded snapshot and not the base GC details.
+          */
+        const getChildBaseGCDetailsP = new LazyPromise<IGarbageCollectionDetailsBase>(async () => {
+            // Ensure that the base GC details is loaded because a child can be created before GC runs which is when
+            // base GC details is usually loaded.
+            await this.loadBaseGCDetails();
+            const childBaseGCDetails = unpackChildNodesGCDetails({ gcData: this.gcData, usedRoutes: this.usedRoutes });
+            return childBaseGCDetails.get(id) ?? {};
+        });
+
         const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
         const child = new SummarizerNodeWithGC(
             this.defaultLogger,
@@ -377,7 +395,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             createDetails.initialSummary,
             this.wipSummaryLogger,
             getGCDataFn,
-            getBaseGCDetailsFn,
+            async () => getChildBaseGCDetailsP,
         );
 
         // There may be additional state that has to be updated in this child. For example, if a summary is being

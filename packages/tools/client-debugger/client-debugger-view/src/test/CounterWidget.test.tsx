@@ -15,9 +15,12 @@ import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 import { createFluidContainer } from "./ClientUtilities";
 import { CounterWidget } from "./widgets";
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 describe("CounterWidget component tests", () => {
     let client: TinyliciousClient | undefined;
     let container: IFluidContainer | undefined;
+    let sharedCounter: SharedCounter | undefined;
 
     const containerSchema: ContainerSchema = {
         initialObjects: {
@@ -28,23 +31,18 @@ describe("CounterWidget component tests", () => {
     beforeEach(async () => {
         client = new TinyliciousClient();
         ({ container } = await createFluidContainer(client, containerSchema));
+        sharedCounter = await container.create(SharedCounter);
     });
 
-    afterEach(async () => {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    afterEach(() => {
         container!.dispose();
         container = undefined;
         client = undefined;
+        sharedCounter = undefined;
     });
 
-    async function createSharedCounter(): Promise<SharedCounter> {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return container!.create(SharedCounter);
-    }
-
-    test("Has expected elements", async (): Promise<void> => {
-        const sharedCounter = await createSharedCounter();
-        render(<CounterWidget counter={sharedCounter} />);
+    it("Has expected elements", async (): Promise<void> => {
+        render(<CounterWidget counter={sharedCounter!} />);
 
         // Verify initial component text presence and value
         await screen.findByText("0"); // Will throw if exact text not found
@@ -56,9 +54,8 @@ describe("CounterWidget component tests", () => {
         expect(buttons[1]).toBeEnabled();
     });
 
-    test("Responds to increment (via UI)", async (): Promise<void> => {
-        const sharedCounter = await createSharedCounter();
-        render(<CounterWidget counter={sharedCounter} />);
+    it("Responds to increment (via UI)", async (): Promise<void> => {
+        render(<CounterWidget counter={sharedCounter!} />);
 
         let buttons = await screen.findAllByRole("button");
         expect(buttons).toHaveLength(2);
@@ -67,7 +64,7 @@ describe("CounterWidget component tests", () => {
         await userEvent.click(buttons[1]);
 
         // Verify change in DDS
-        expect(sharedCounter.value).toEqual(1); // Value should have been incremented from 0 to 1
+        expect(sharedCounter!.value).toEqual(1); // Value should have been incremented from 0 to 1
 
         // Verify component text
         await screen.findByText("1"); // Will throw if exact text not found
@@ -78,3 +75,5 @@ describe("CounterWidget component tests", () => {
         expect(buttons[0]).toBeEnabled();
     });
 });
+
+/* eslint-enable @typescript-eslint/no-non-null-assertion */
