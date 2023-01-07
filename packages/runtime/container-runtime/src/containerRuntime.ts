@@ -641,23 +641,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * Load the stores from a snapshot and returns the runtime.
      * @param context - Context of the container.
-     * @param registryEntries - Mapping to the stores.
-     * @param requestHandler - Request handlers for the container runtime
+     * @param containerRuntimeCtor - (optional) Constructor to use to create the ContainerRuntime instance.
      * @param runtimeOptions - Additional options to be passed to the runtime
+     * @param registryEntries - Mapping to the stores.
      * @param existing - (optional) When loading from an existing snapshot. Precedes context.existing if provided
-     * @param containerRuntimeCtor - (optional) Constructor to use to create the ContainerRuntime instance. This
-     * allows mixin classes to leverage this method to define their own async initializer.
+     * This allows mixin classes to leverage this method to define their own async initializer.
+     * @param initializeEntryPoint - Function that returns the object which will act as entryPoint for the Container.
+     * This object should provide all the functionality that the Container is expected to provide to the loader layer.
      */
-    public static async load(
+    public static async newLoad(
         context: IContainerContext,
-        registryEntries: NamedFluidDataStoreRegistryEntries,
-        requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
-        runtimeOptions: IContainerRuntimeOptions = {},
-        containerScope: FluidObject = context.scope,
-        existing?: boolean,
         containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime,
-        initializeEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject> =
-            async (containerRuntime: IContainerRuntime) => containerRuntime,
+        // runtimeOptions: IContainerRuntimeOptions = {},
+        // registryEntries: NamedFluidDataStoreRegistryEntries,
+        existing?: boolean,
+        initializeEntryPoint?: Promise<FluidObject>
     ): Promise<ContainerRuntime> {
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
@@ -669,6 +667,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 runtimeVersion: pkgVersion,
             },
         });
+
+        if (initializeEntryPoint === undefined) {
+            throw new UsageError("Need to provide entryPoint initialization function");
+        }
+        const entryPoint: any = await initializeEntryPoint;
 
         const {
             summaryOptions = {},
@@ -683,7 +686,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
             chunkSizeInBytes = Number.POSITIVE_INFINITY,
             enableOpReentryCheck = false,
-        } = runtimeOptions;
+        } = entryPoint.runtimeOptions;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
@@ -691,7 +694,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             context.storage :
             new SerializedSnapshotStorage(() => { return context.storage; }, pendingRuntimeState.snapshotBlobs);
 
-        const registry = new FluidDataStoreRegistry(registryEntries);
+        const registry = new FluidDataStoreRegistry(entryPoint.registryEntries);
 
         const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
             const blobId = baseSnapshot?.blobs[blobName];
@@ -765,14 +768,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 chunkSizeInBytes,
                 enableOpReentryCheck,
             },
-            containerScope,
+            entryPoint.containerScope,
             logger,
             loadExisting,
             blobManagerSnapshot,
             storage,
-            requestHandler,
             undefined,
-            initializeEntryPoint,
+            undefined,
+            Promise.resolve(entryPoint),
         );
 
         if (pendingRuntimeState) {
@@ -785,6 +788,38 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         await runtime.initializeBaseState();
 
         return runtime;
+    }
+
+    /**
+     * Load the stores from a snapshot and returns the runtime.
+     * @param context - Context of the container.
+     * @param registryEntries - Mapping to the stores.
+     * @param requestHandler - Request handlers for the container runtime
+     * @param runtimeOptions - Additional options to be passed to the runtime
+     * @param existing - (optional) When loading from an existing snapshot. Precedes context.existing if provided
+     * @param containerRuntimeCtor - (optional) Constructor to use to create the ContainerRuntime instance. This
+     * allows mixin classes to leverage this method to define their own async initializer.
+     */
+    public static async load(
+        context: IContainerContext,
+        registryEntries: NamedFluidDataStoreRegistryEntries,
+        requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
+        runtimeOptions: IContainerRuntimeOptions = {},
+        containerScope: FluidObject = context.scope,
+        existing?: boolean,
+        containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime,
+    ): Promise<ContainerRuntime> {
+        const entryPoint = {
+            requestHandler,
+            registryEntries,
+            runtimeOptions,
+            containerScope,
+        };
+        return ContainerRuntime.newLoad(
+            context,
+            containerRuntimeCtor,
+            existing,
+            Promise.resolve(entryPoint as FluidObject));
     }
 
     public get options(): ILoaderOptions {
@@ -1021,7 +1056,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // the runtime configuration overrides
             ...runtimeOptions.summaryOptions?.summaryConfigOverrides,
         },
-        initializeEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>,
+        public readonly entryPoint?: Promise<FluidObject | undefined>,
     ) {
         super();
 
@@ -1350,10 +1385,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
         BindBatchTracker(this, this.logger);
-
-        if (initializeEntryPoint) {
-            this.entryPoint = initializeEntryPoint(this);
-        }
     }
 
     /**
