@@ -6,7 +6,8 @@
 import React, { useEffect, useState } from "react";
 
 import type { IAppModel } from "../model-interface";
-import { customerServicePort, parseStringData } from "../mock-customer-service-interface";
+import { parseStringData } from "../mock-customer-service-interface";
+import { externalDataServicePort } from "../mock-external-data-service-interface";
 
 /**
  * {@link DebugView} input props.
@@ -51,7 +52,7 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
         async function pollForServiceUpdates(): Promise<void> {
             try {
                 const response = await fetch(
-                    `http://localhost:${customerServicePort}/fetch-tasks`,
+                    `http://localhost:${externalDataServicePort}/fetch-tasks`,
                     {
                         method: "GET",
                         headers: {
