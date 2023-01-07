@@ -22,7 +22,6 @@ import { GenericError } from "@fluidframework/container-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { CompressionAlgorithms, ContainerMessageType } from "@fluidframework/container-runtime";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { Container } from "@fluidframework/container-loader";
 
 describeNoCompat("Message size", (getTestObjectProvider) => {
     const mapId = "mapId";
@@ -58,8 +57,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         remoteContainer = await provider.loadTestContainer(containerConfig);
         dataObject2 = await requestFluidObject<ITestFluidObject>(remoteContainer, "default");
         dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
-        await ensureContainerConnected(localContainer as Container);
-        await ensureContainerConnected(remoteContainer as Container);
+        await ensureContainerConnected(localContainer);
+        await ensureContainerConnected(remoteContainer);
 
         await provider.ensureSynchronized();
     };

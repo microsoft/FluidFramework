@@ -5,7 +5,6 @@
 ```ts
 
 import { ConfigTypes } from '@fluidframework/telemetry-utils';
-import { Container } from '@fluidframework/container-loader';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqueduct';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
@@ -108,7 +107,7 @@ export enum DataObjectFactoryType {
 export const defaultTimeoutDurationMs = 250;
 
 // @public (undocumented)
-export function ensureContainerConnected(container: Container, timeoutOptions?: TimeoutWithError, failOnContainerClose?: boolean): Promise<void>;
+export function ensureContainerConnected(container: IContainer, timeoutOptions?: TimeoutWithError, failOnContainerClose?: boolean): Promise<void>;
 
 // @public
 export class EventAndErrorTrackingLogger extends TelemetryLogger {

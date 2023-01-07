@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Container } from "@fluidframework/container-loader";
+import { IContainer } from "@fluidframework/container-definitions";
+import { ConnectionState } from "@fluidframework/container-loader";
 
 export const defaultTimeoutDurationMs = 250;
 
@@ -26,10 +27,10 @@ export async function timeoutAwait<T = void>(
 }
 
 export async function ensureContainerConnected(
-    container: Container,
+    container: IContainer,
     timeoutOptions: TimeoutWithError = {},
     failOnContainerClose: boolean = true): Promise<void> {
-    if (!container.connected) {
+    if (container.connectionState !== ConnectionState.Connected) {
         return timeoutPromise((resolve, reject) => {
             container.once("connected", () => resolve());
             if (failOnContainerClose) {

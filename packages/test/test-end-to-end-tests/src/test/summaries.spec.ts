@@ -8,7 +8,6 @@ import { strict as assert } from "assert";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { bufferToString } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
 import {
     ContainerRuntime,
     Summarizer,
@@ -273,7 +272,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
         await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
 
-        await ensureContainerConnected(container as Container);
+        await ensureContainerConnected(container);
 
         // Send an op to trigger summary. We should not get the "IncrementalSummaryViolation" error log.
         defaultDataStore._root.set("key", "value");

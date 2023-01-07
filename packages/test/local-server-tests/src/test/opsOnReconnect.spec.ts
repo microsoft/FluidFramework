@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer, IHostLoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { ConnectionState, Container, Loader } from "@fluidframework/container-loader";
+import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import {
     ContainerMessageType,
     IContainerRuntimeOptions,
@@ -44,7 +44,7 @@ describe("Ops on Reconnect", () => {
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let documentServiceFactory: LocalDocumentServiceFactory;
     let loaderContainerTracker: LoaderContainerTracker;
-    let container1: Container;
+    let container1: IContainer;
     let container1Object1: ITestFluidObject & IFluidLoadable;
     let container1Object1Map1: SharedMap;
     let container1Object1Map2: SharedMap;
@@ -97,7 +97,7 @@ describe("Ops on Reconnect", () => {
 
     async function setupFirstContainer(runtimeOptions: IContainerRuntimeOptions = { flushMode: FlushMode.Immediate }) {
         // Create the first container, dataObject and DDSes.
-        container1 = await createContainer(runtimeOptions) as Container;
+        container1 = await createContainer(runtimeOptions);
         container1Object1 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
             container1,
             "default");
@@ -111,7 +111,7 @@ describe("Ops on Reconnect", () => {
     async function setupSecondContainersDataObject(): Promise<ITestFluidObject> {
         const loader = await createLoader();
         const container2 = await loader.resolve({ url: documentLoadUrl });
-        await ensureContainerConnected(container2 as Container);
+        await ensureContainerConnected(container2);
 
         // Get dataStore1 on the second container.
         const container2Object1 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
