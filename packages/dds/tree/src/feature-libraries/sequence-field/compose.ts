@@ -41,6 +41,8 @@ import {
     isMutedDetach,
     isReattach,
     lineUpRelatedReattaches,
+    isMutedReattach,
+    isMuted,
 } from "./utils";
 
 export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
@@ -112,7 +114,7 @@ function composeMarkLists<TNodeChange>(
             // start at the same location in the revision after the base changes.
             // They therefore refer to the same range for that revision.
             assert(
-                !isAttach(newMark),
+                !isAttach(newMark) || isMutedReattach(newMark),
                 "A new attach cannot be at the same position as a base mark",
             );
             const composedMark = composeMarks(
@@ -191,6 +193,10 @@ function composeMarks<TNodeChange>(
                         ),
                     );
                     return 0;
+                case "Revive": {
+                    assert(!isMutedReattach(baseMark) && isMuted(newMark), "Invalid mark overlap");
+                    return baseMark;
+                }
                 default:
                     fail(`Not implemented: ${newType}`);
             }
@@ -524,7 +530,7 @@ export class ComposeQueue<T> {
                     return {
                         baseMark,
                         newMark,
-                        areInverses,
+                        areInverses: true,
                     };
                 }
             }
@@ -648,8 +654,5 @@ interface ComposeMarks<T> {
  * Only valid in the context of a compose (i.e., the output context of `baseMarks` is the input context of `newMark`).
  */
 function areRelatedReattaches<T>(baseMark: Reattach<T>, newMark: Reattach<T>): boolean {
-    return (
-        (baseMark.mutedBy ?? newMark.mutedBy) !== undefined &&
-        newMark.detachedBy === baseMark.detachedBy
-    );
+    return newMark.detachedBy === baseMark.detachedBy;
 }

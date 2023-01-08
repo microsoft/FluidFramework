@@ -46,9 +46,8 @@ export {
     Skip,
     LineageEvent,
     HasReattachFields,
-    Active,
     Muted,
-    Mutable,
+    Muteable,
 } from "./format";
 export {
     SequenceFieldChangeHandler,

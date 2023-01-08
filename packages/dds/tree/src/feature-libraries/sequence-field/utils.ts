@@ -28,9 +28,10 @@ import {
     ReturnTo,
     Skip,
     Muted,
-    Mutable,
+    Muteable,
     OutputSpanningMark,
     Changeset,
+    SkipLikeReattach,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 
@@ -75,7 +76,7 @@ export function isMutedDetach<TNodeChange>(
 
 export function isSkipLikeReattach<TNodeChange>(
     mark: Mark<TNodeChange>,
-): mark is Reattach<TNodeChange> & Muted {
+): mark is SkipLikeReattach<TNodeChange> {
     return isMutedReattach(mark) && mark.lastDetachedBy === undefined;
 }
 
@@ -85,7 +86,7 @@ export function isBlockedReattach<TNodeChange>(
     return isMutedReattach(mark) && mark.lastDetachedBy !== undefined;
 }
 
-export function isMuted(mark: Mutable): mark is Muted {
+export function isMuted(mark: Muteable): mark is Muted {
     return mark.mutedBy !== undefined;
 }
 
@@ -173,10 +174,7 @@ export function getInputLength(mark: Mark<unknown>): number {
         return mark;
     }
     if (isAttach(mark)) {
-        if (isSkipLikeReattach(mark)) {
-            return mark.count;
-        }
-        return 0;
+        return isSkipLikeReattach(mark) ? mark.count : 0;
     }
     const type = mark.type;
     switch (type) {
@@ -274,9 +272,9 @@ export function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(
     length: number,
     genId: IdAllocator,
     moveEffects: MoveEffectTable<unknown>,
-    allowUnpairedMark: boolean = false,
+    ignorePairing: boolean = false,
 ): [TMark, TMark] {
-    const markLength = getOutputLength(mark, allowUnpairedMark);
+    const markLength = getOutputLength(mark, ignorePairing);
     const remainder = markLength - length;
     if (length < 1 || remainder < 1) {
         fail(
@@ -950,10 +948,9 @@ export function splitMoveOut<T>(
                 }
             }
             if (updatePairedMarkStatus && part.pairedMarkStatus !== undefined) {
-                // TODO: support unpairing for move
                 assert(
                     splitMark.type === "ReturnFrom",
-                    "Only ReturnFrom marks can be unpaired through move effects",
+                    "TODO: support updating MoveOut.isSrcMuted",
                 );
                 if (part.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
                     splitMark.isDstMuted = true;
@@ -968,13 +965,13 @@ export function splitMoveOut<T>(
                 );
                 splitMark.detachedBy = part.detachedBy;
             }
-            if (mark.type === "ReturnFrom" && isMuted(mark)) {
+            if (splitMark.type === "ReturnFrom" && isMuted(mark)) {
                 assert(
-                    mark.detachIndex !== undefined,
+                    splitMark.detachIndex !== undefined,
                     "Muted ReturnFrom should have a detachIndex",
                 );
                 const returnFrom = splitMark as ReturnFrom;
-                returnFrom.detachIndex = mark.detachIndex + cumulativeCount;
+                returnFrom.detachIndex = splitMark.detachIndex + cumulativeCount;
                 cumulativeCount += splitMark.count;
             }
             result.push(splitMark);

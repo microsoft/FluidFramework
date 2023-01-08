@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { clone, fail, getOrAddEmptyToMap, StackyIterator } from "../../util";
 import { RevisionTag, TaggedChange } from "../../core";
 import { IdAllocator } from "../modular-schema";
@@ -43,7 +43,7 @@ import {
     MarkList,
     Reattach,
     CellSpanningMark,
-    Mutable,
+    Muteable,
     ReturnFrom,
     Muted,
     Detach,
@@ -103,7 +103,7 @@ function rebaseMarkList<TNodeChange>(
     // marks which should have their lineage updated if we encounter a detach.
     const lineageRequests: LineageRequest<TNodeChange>[] = [];
     let baseDetachOffset = 0;
-    // The offset of the next base mark in the input context of the base change.
+    // The index of (i.e., number of nodes to the left of) the base mark in the input context of the base change.
     // This assumes the base changeset is not composite (and asserts if it is).
     let baseInputOffset = 0;
     while (!queue.isEmpty()) {
@@ -257,7 +257,6 @@ class RebaseQueue<T> {
         } else if (isAttachInGap(newMark)) {
             return { newMark: this.newMarks.pop() };
         } else if (
-            isAttach(baseMark) &&
             // The `isNewAttach(baseMark)` bit is needed because of the way sandwich rebasing makes
             // the rebased local new attaches relevant to later local changes.
             (isNewAttach(baseMark) || isActiveReattach(baseMark)) &&
@@ -463,48 +462,70 @@ function rebaseMark<TNodeChange>(
                 isDetachMark(currMark) || isReattach(currMark),
                 "Only a detach or a reattach can overlap with a non-inert reattach",
             );
-            if (isDetachMark(currMark)) {
-                assert(
-                    currMark.type === "ReturnFrom",
-                    "TODO: support mute/unmute for other detach marks",
-                );
-                assert(
-                    isMuted(currMark) && currMark.mutedBy === baseMarkRevision,
-                    "Invalid reattach mark overlap",
-                );
-                // The nodes that currMark aims to detach are being reattached by baseMark
-                const newCurrMark = clone(currMark) as ReturnFrom<TNodeChange>;
-                delete newCurrMark.mutedBy;
-                delete newCurrMark.detachIndex;
-                updateMoveDestPairing(moveEffects, newCurrMark.id, PairedMarkUpdate.Reactivated);
-                return newCurrMark;
-            }
-            if (currMark.isIntention) {
-                assert(isActiveReattach(currMark), `Invalid reattach mark overlap`);
-                // The nodes that currMark aims to reattach are being reattached by baseMark
-                return {
-                    ...clone(currMark),
-                    mutedBy: baseMarkRevision,
-                };
-            }
-
-            if (isActiveReattach(currMark)) {
-                // The nodes that currMark aims to reattach are being reattached by baseMark
-                if (currMark.type === "ReturnTo") {
-                    updateMoveSrcPairing(moveEffects, currMark.id, PairedMarkUpdate.Deactivated);
+            const currMarkType = currMark.type;
+            switch (currMarkType) {
+                case "Delete":
+                case "MoveOut":
+                case "ReturnFrom": {
+                    assert(
+                        currMarkType === "ReturnFrom",
+                        "TODO: support mute/unmute for other detach marks",
+                    );
+                    assert(
+                        isMuted(currMark) && currMark.mutedBy === baseMarkRevision,
+                        "Invalid reattach mark overlap",
+                    );
+                    // The nodes that currMark aims to detach are being reattached by baseMark
+                    const newCurrMark = clone(currMark) as ReturnFrom<TNodeChange>;
+                    delete newCurrMark.mutedBy;
+                    delete newCurrMark.detachIndex;
+                    updateMoveDestPairing(
+                        moveEffects,
+                        newCurrMark.id,
+                        PairedMarkUpdate.Reactivated,
+                    );
+                    return newCurrMark;
                 }
-                return {
-                    ...clone(currMark),
-                    mutedBy: baseMarkRevision,
-                };
+                case "Revive":
+                case "ReturnTo": {
+                    if (currMark.isIntention) {
+                        // Past this point, currMark must be a reattach.
+                        assert(isActiveReattach(currMark), `Invalid reattach mark overlap`);
+                        // The nodes that currMark aims to reattach are being reattached by baseMark
+                        return {
+                            ...clone(currMark),
+                            mutedBy: baseMarkRevision,
+                        };
+                    }
+
+                    if (isActiveReattach(currMark)) {
+                        // The nodes that currMark aims to reattach are being reattached by baseMark
+                        if (currMarkType === "ReturnTo") {
+                            updateMoveSrcPairing(
+                                moveEffects,
+                                currMark.id,
+                                PairedMarkUpdate.Deactivated,
+                            );
+                        }
+                        return {
+                            ...clone(currMark),
+                            mutedBy: baseMarkRevision,
+                        };
+                    }
+                    assert(!isSkipLikeReattach(currMark), `Unsupported reattach mark overlap`);
+                    // The nodes that currMark aims to reattach and were detached by `currMark.lastDetachedBy`
+                    // are being reattached by baseMark.
+                    assert(
+                        currMark.lastDetachedBy === baseMark.detachedBy,
+                        `Invalid revive mark overlap`,
+                    );
+                    const revive = clone(currMark);
+                    delete revive.lastDetachedBy;
+                    return revive;
+                }
+                default:
+                    unreachableCase(currMarkType);
             }
-            assert(!isSkipLikeReattach(currMark), `Unsupported reattach mark overlap`);
-            // The nodes that currMark aims to reattach and were detached by `currMark.lastDetachedBy`
-            // are being reattached by baseMark.
-            assert(currMark.lastDetachedBy === baseMark.detachedBy, `Invalid revive mark overlap`);
-            const revive = clone(currMark);
-            delete revive.lastDetachedBy;
-            return revive;
         }
         case "Modify": {
             if (isModify(currMark)) {
@@ -545,7 +566,7 @@ function rebaseMark<TNodeChange>(
                         // This makes it possible for currMark to be active again.
                         newCurrMark.detachedBy = baseMarkRevision;
                         newCurrMark.detachIndex = baseInputOffset;
-                        delete (newCurrMark as Mutable).mutedBy;
+                        delete (newCurrMark as Muteable).mutedBy;
                         updateMoveSrcDetacher(moveEffects, newCurrMark.id, baseMarkRevision);
                         updateMoveSrcPairing(
                             moveEffects,

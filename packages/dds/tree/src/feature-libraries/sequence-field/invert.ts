@@ -95,7 +95,7 @@ function invertMark<TNodeChange>(
                               },
                           ];
                 }
-                // The node were not revived and could not be revived.
+                // The nodes were not revived and could not be revived.
                 return [];
             }
             case "Modify": {
@@ -144,7 +144,7 @@ function invertMark<TNodeChange>(
             case "ReturnTo": {
                 if (!isMuted(mark)) {
                     if (mark.isSrcMuted) {
-                        // The node could have been attached but were not because of the source.
+                        // The nodes could have been attached but were not because of the source.
                         return [];
                     }
                     return [
@@ -160,7 +160,7 @@ function invertMark<TNodeChange>(
                     // The nodes were already attached, so the mark did not affect them.
                     return [mark.count];
                 }
-                // The node were not attached and could not be attached.
+                // The nodes were not attached and could not be attached.
                 return [];
             }
             default:

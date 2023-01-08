@@ -50,16 +50,12 @@ export type SkipLikeReattach<TNodeChange> = Reattach<TNodeChange> &
         lastDeletedBy?: never;
     };
 
-export interface Mutable {
+export interface Muteable {
     mutedBy?: RevisionTag;
 }
 
 export interface Muted {
     mutedBy: RevisionTag;
-}
-
-export interface Active {
-    mutedBy?: undefined;
 }
 
 export interface Modify<TNodeChange = NodeChangeType> {
@@ -125,7 +121,7 @@ export interface Insert<TNodeChange = NodeChangeType>
     content: ProtoNode[];
 }
 
-export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag, Mutable {
+export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag, Muteable {
     type: "MoveIn";
     /**
      * The actual number of nodes being moved-in. This count excludes nodes that were concurrently deleted.
@@ -155,7 +151,7 @@ export type Reattach<TNodeChange = NodeChangeType> = Revive<TNodeChange> | Retur
 export interface Delete<TNodeChange = NodeChangeType>
     extends HasRevisionTag,
         HasChanges<TNodeChange>,
-        Mutable {
+        Muteable {
     type: "Delete";
     tomb?: RevisionTag;
     count: NodeCount;
@@ -165,7 +161,7 @@ export interface MoveOut<TNodeChange = NodeChangeType>
     extends HasRevisionTag,
         HasMoveId,
         HasChanges<TNodeChange>,
-        Mutable {
+        Muteable {
     type: "MoveOut";
     count: NodeCount;
     tomb?: RevisionTag;
@@ -216,12 +212,12 @@ export interface Revive<TNodeChange = NodeChangeType>
     extends HasReattachFields,
         HasRevisionTag,
         HasChanges<TNodeChange>,
-        Mutable {
+        Muteable {
     type: "Revive";
     count: NodeCount;
 }
 
-export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId, Mutable {
+export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId, Muteable {
     type: "ReturnTo";
     count: NodeCount;
     /**
@@ -235,7 +231,7 @@ export interface ReturnFrom<TNodeChange = NodeChangeType>
     extends HasRevisionTag,
         HasMoveId,
         HasChanges<TNodeChange>,
-        Mutable {
+        Muteable {
     type: "ReturnFrom";
     count: NodeCount;
     /**
