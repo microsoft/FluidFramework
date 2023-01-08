@@ -136,8 +136,8 @@ function areSameLineage(lineage1: LineageEvent[], lineage2: LineageEvent[]): boo
 
 /**
  * @param mark - The mark to get the length of.
- * @param ignorePairing - When true, the length of a src or dst mark is whose matching src or dst is not active
- * will be treated the same as if that matching src or dst were active.
+ * @param ignorePairing - When true, the length of a paired mark (e.g. MoveIn/MoveOut) whose matching mark is not active
+ * will be treated the same as if the matching mark were active.
  * @returns The number of nodes within the output context of the mark.
  */
 export function getOutputLength(mark: Mark<unknown>, ignorePairing: boolean = false): number {
