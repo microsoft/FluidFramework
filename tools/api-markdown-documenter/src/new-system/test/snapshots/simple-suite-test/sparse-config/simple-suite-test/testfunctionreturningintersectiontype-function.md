@@ -1,0 +1,20 @@
+# testFunctionReturningIntersectionType
+
+
+> <bold> [Warning]: Deprecated </bold>
+> 
+> This is a test deprecation notice. Here is a <i>link</i> to something else!  
+
+Test function that returns an inline type  
+
+## Signature {#testfunctionreturningintersectiontype-signature}
+
+```typescript
+export declare function testFunctionReturningIntersectionType(): TestEmptyInterface & TestInterfaceWithTypeParameter<number>;
+```
+
+## Returns {#testfunctionreturningintersectiontype-returns}
+
+an intersection type  
+<b>Return type: </b>[TestEmptyInterface](docs/simple-suite-test/testemptyinterface-interface) & [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface)<number>  
+

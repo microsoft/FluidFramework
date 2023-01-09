@@ -5,8 +5,7 @@
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { LineBreakNode } from "./LineBreakNode";
-import { PlainTextNode } from "./PlainTextNode";
-import { compareNodeArrays } from "./Utilities";
+import { compareNodeArrays, createNodesFromPlainText } from "./Utilities";
 
 /**
  * Types allowed as children under {@link FencedCodeBlockNode}.
@@ -38,7 +37,7 @@ export class FencedCodeBlockNode extends ParentNodeBase<FencedCodeBlockChildren>
     }
 
     public static createFromPlainText(text: string, language?: string): FencedCodeBlockNode {
-        return new FencedCodeBlockNode([new PlainTextNode(text)], language);
+        return new FencedCodeBlockNode(createNodesFromPlainText(text), language);
     }
 
     /**

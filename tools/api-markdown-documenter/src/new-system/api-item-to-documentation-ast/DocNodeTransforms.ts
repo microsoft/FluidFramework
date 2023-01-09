@@ -29,6 +29,8 @@ import {
     SpanNode,
 } from "../documentation-domain";
 
+// TODO: remove calls to "trim" - this logic should not be opinionated in that way
+
 /**
  * Transformation library from {@link @microsoft/tsdoc#DocNode}_s to {@link DocumentationNode}s.
  */
@@ -126,7 +128,7 @@ export function transformFencedCode(
     node: DocFencedCode,
     options: DocNodeTransformOptions,
 ): FencedCodeBlockNode {
-    return FencedCodeBlockNode.createFromPlainText(node.code.trim(), node.language);
+    return FencedCodeBlockNode.createFromPlainText(node.code, node.language);
 }
 
 /**
