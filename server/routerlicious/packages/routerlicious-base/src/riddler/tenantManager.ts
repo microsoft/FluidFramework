@@ -284,11 +284,9 @@ export class TenantManager {
         const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId, includeDisabledTenant };
         const fetchTenantKeyMetric = Lumberjack.newLumberMetric(LumberEventName.RiddlerFetchTenantKey);
         let uncaughtException;
-        let retrievedFromCache;
-
+        let retrievedFromCache = false;
 
         try {
-            retrievedFromCache = false;
             if(!disableCache) {
                 // Read from cache first
                 const cachedKey = await this.getKeyFromCache(tenantId);
