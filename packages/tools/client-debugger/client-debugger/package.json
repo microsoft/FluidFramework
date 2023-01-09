@@ -40,7 +40,7 @@
     "test:realsvc:coverage": "npm run test:realsvc:run:coverage",
     "test:realsvc:run": "mocha dist/**/*.test.js --unhandled-rejections=strict --exit",
     "test:realsvc:run:coverage": "nyc npm run mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-    "tsc": "tsc --pretty"
+    "tsc": "tsc"
   },
   "nyc": {
     "all": true,
