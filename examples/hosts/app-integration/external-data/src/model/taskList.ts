@@ -98,6 +98,15 @@ export class TaskList extends DataObject implements ITaskList {
     }
 
     public readonly addTask = (id: string, name: string, priority: number): void => {
+        console.log("addTask");
+        console.log("this.draftData");
+        console.log(this.draftData);
+        console.log("this._draftData");
+        console.log(this._draftData);
+        console.log("this.savedData");
+        console.log(this.savedData);
+        console.log(this._savedData);
+        console.log("this._savedData");
 
         if (this.tasks.get(id) !== undefined) {
             throw new Error("Task already exists");
@@ -148,8 +157,8 @@ export class TaskList extends DataObject implements ITaskList {
 
     public readonly addDiffTask = async (id: string): Promise<void> => {
 
-        // for (const id of this.draftData.keys()) {
-            const diff = this.draftData.get(id) as PersistedTask;
+        // for (const id of this.savedData.keys()) {
+            const diff = this.savedData.get(id) as PersistedTask;
             if (diff === undefined) {
                 throw new Error("Newly added task is missing from map.");
             }
@@ -159,7 +168,7 @@ export class TaskList extends DataObject implements ITaskList {
                 diff.priority.get(),
             ]);
             // It's possible the task was deleted while getting the name/priority, in which case quietly exit.
-            if (this.draftData.get(id) === undefined) {
+            if (this.savedData.get(id) === undefined) {
                 return;
             }
             const newTask = new Task(id, nameSharedString, prioritySharedCell);
@@ -219,6 +228,16 @@ export class TaskList extends DataObject implements ITaskList {
      * TODO: Use leader election to reduce noise from competing clients
      */
     public async importExternalData(): Promise<void> {
+
+        console.log("importExternalData");
+        console.log("this.draftData");
+        console.log(this.draftData);
+        console.log("this._draftData");
+        console.log(this._draftData);
+        console.log("this.savedData");
+        console.log(this.savedData);
+        console.log(this._savedData);
+        console.log("this._savedData");
         console.log('TASK-LIST: Fetching external data from service...');
 
         let updatedExternalData: ParsedTaskData[] | undefined;
@@ -249,6 +268,14 @@ export class TaskList extends DataObject implements ITaskList {
 
             return;
         }
+        console.log("this.draftData");
+        console.log(this.draftData);
+        console.log("this._draftData");
+        console.log(this._draftData);
+        console.log("this.savedData");
+        console.log(this.savedData);
+        console.log(this._savedData);
+        console.log("this._savedData");
 
         // TODO: Delete any items that are in the root but missing from the external data
         const updateTaskPs = updatedExternalData.map(async ({ id, name, priority }) => {
@@ -268,11 +295,15 @@ export class TaskList extends DataObject implements ITaskList {
             if (currName.getText() !== name) {
                 // TODO: Currently replacing existing Fluid data.  But eventually this is where
                 // we'd want conflict resolution UX.
+                console.log(currName.getText(), name, "notEqual");
+                // await this.addDiffTask(id);
                 currName.replaceText(0, currName.getLength(), name);
             }
             if (currPriority.get() !== priority) {
                 // TODO: Currently replacing existing Fluid data. But eventually this is where
                 // we'd want conflict resolution UX.
+                console.log(currPriority.get(), name, "notEqual");
+                // await this.addDiffTask(id);
                 currPriority.set(priority);
             }
             // Saved updated Fluid data with
@@ -330,6 +361,15 @@ export class TaskList extends DataObject implements ITaskList {
         // TODO: Probably don't need to await this once the sync'ing flow is solid, we can just trust it to sync
         // at some point in the future.
         await this.importExternalData();
+        console.log("initializingFirstTime");
+        console.log("this.draftData");
+        console.log(this.draftData);
+        console.log("this._draftData");
+        console.log(this._draftData);
+        console.log("this.savedData");
+        console.log(this.savedData);
+        console.log(this._savedData);
+        console.log("this._savedData");
     }
 
     /**
