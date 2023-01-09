@@ -6,13 +6,18 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { ModelLoader } from "@fluid-example/example-utils";
+import type {
+    IMigratableModel,
+    IVersionedModel,
+} from "@fluid-example/example-utils";
+import {
+    Migrator,
+    ModelLoader,
+} from "@fluid-example/example-utils";
 import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
 
 import { DemoCodeLoader } from "./demoCodeLoader";
 import { externalDataSource } from "./externalData";
-import type { IMigratableModel, IVersionedModel } from "./migrationInterfaces";
-import { Migrator } from "./migrator";
 import type { IInventoryListAppModel } from "./modelInterfaces";
 import { TinyliciousService } from "./tinyliciousService";
 import { DebugView, InventoryListAppView } from "./view";
