@@ -128,7 +128,7 @@ export function transformFencedCode(
     node: DocFencedCode,
     options: DocNodeTransformOptions,
 ): FencedCodeBlockNode {
-    return FencedCodeBlockNode.createFromPlainText(node.code, node.language);
+    return FencedCodeBlockNode.createFromPlainText(node.code.trim(), node.language);
 }
 
 /**
