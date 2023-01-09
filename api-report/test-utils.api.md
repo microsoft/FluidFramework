@@ -106,9 +106,6 @@ export enum DataObjectFactoryType {
 // @public (undocumented)
 export const defaultTimeoutDurationMs = 250;
 
-// @public (undocumented)
-export function ensureContainerConnected(container: IContainer, timeoutOptions?: TimeoutWithError, failOnContainerClose?: boolean): Promise<void>;
-
 // @public
 export class EventAndErrorTrackingLogger extends TelemetryLogger {
     constructor(baseLogger: ITelemetryBaseLogger);
@@ -363,8 +360,8 @@ export interface TimeoutWithValue<T = void> {
     value: T;
 }
 
-// @public (undocumented)
-export function waitForContainerConnection(container: IContainer): Promise<void>;
+// @public
+export function waitForContainerConnection(container: IContainer, timeoutOptions?: TimeoutWithError, failOnContainerClose?: boolean): Promise<void>;
 
 // @public
 export function wrapDocumentService(innerDocService: IDocumentService, uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => ISummaryContext): IDocumentService;

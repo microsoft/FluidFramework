@@ -21,7 +21,7 @@ import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidf
 import { SharedString } from "@fluidframework/sequence";
 import {
     createAndAttachContainer,
-    ensureContainerConnected,
+    waitForContainerConnection,
     ITestFluidObject,
     LoaderContainerTracker,
     LocalCodeLoader,
@@ -111,7 +111,7 @@ describe("Ops on Reconnect", () => {
     async function setupSecondContainersDataObject(): Promise<ITestFluidObject> {
         const loader = await createLoader();
         const container2 = await loader.resolve({ url: documentLoadUrl });
-        await ensureContainerConnected(container2);
+        await waitForContainerConnection(container2);
 
         // Get dataStore1 on the second container.
         const container2Object1 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
@@ -179,7 +179,7 @@ describe("Ops on Reconnect", () => {
             });
 
             // Wait for the Container to get reconnected.
-            await ensureContainerConnected(container1);
+            await waitForContainerConnection(container1);
 
             // Wait for the ops to get processed by both the containers.
             await loaderContainerTracker.ensureSynchronized();
@@ -217,7 +217,7 @@ describe("Ops on Reconnect", () => {
             });
 
             // Wait for the Container to get reconnected.
-            await ensureContainerConnected(container1);
+            await waitForContainerConnection(container1);
 
             // Wait for the ops to get processed by both the containers.
             await loaderContainerTracker.ensureSynchronized();
@@ -258,7 +258,7 @@ describe("Ops on Reconnect", () => {
             });
 
             // Wait for the Container to get reconnected.
-            await ensureContainerConnected(container1);
+            await waitForContainerConnection(container1);
 
             // Wait for the ops to get processed by both the containers.
             await loaderContainerTracker.ensureSynchronized();
@@ -328,7 +328,7 @@ describe("Ops on Reconnect", () => {
             });
 
             // Wait for the Container to get reconnected.
-            await ensureContainerConnected(container1);
+            await waitForContainerConnection(container1);
 
             // Wait for the ops to get processed by both the containers.
             await loaderContainerTracker.ensureSynchronized();
@@ -371,7 +371,7 @@ describe("Ops on Reconnect", () => {
             assert.equal(container1.connectionState, ConnectionState.Disconnected);
 
             // Wait for the Container to get reconnected.
-            await ensureContainerConnected(container1);
+            await waitForContainerConnection(container1);
 
             // Wait for the ops to get processed by both the containers.
             await loaderContainerTracker.ensureSynchronized();
@@ -440,7 +440,7 @@ describe("Ops on Reconnect", () => {
             assert.equal(container1.connectionState, ConnectionState.Disconnected);
 
             // Wait for the Container to get reconnected.
-            await ensureContainerConnected(container1);
+            await waitForContainerConnection(container1);
 
             // Wait for the ops to get processed by both the containers.
             await loaderContainerTracker.ensureSynchronized();
@@ -488,7 +488,7 @@ describe("Ops on Reconnect", () => {
             });
 
             // Wait for the Container to get reconnected.
-            await ensureContainerConnected(container1);
+            await waitForContainerConnection(container1);
 
             // Wait for the ops to get processed by both the containers.
             await loaderContainerTracker.ensureSynchronized();
@@ -533,7 +533,7 @@ describe("Ops on Reconnect", () => {
             });
 
             // Wait for the Container to get reconnected.
-            await ensureContainerConnected(container1);
+            await waitForContainerConnection(container1);
 
             // Wait for the ops to get processed by both the containers.
             await loaderContainerTracker.ensureSynchronized();
@@ -571,7 +571,7 @@ describe("Ops on Reconnect", () => {
             });
 
             // Wait for the Container to get reconnected.
-            await ensureContainerConnected(container1);
+            await waitForContainerConnection(container1);
 
             // Wait for the ops to get processed by both the containers.
             await loaderContainerTracker.ensureSynchronized();
@@ -607,7 +607,7 @@ describe("Ops on Reconnect", () => {
             assert.deepStrictEqual(receivedValues, [], "Values have been sent unexpectedly");
 
             // Wait for the Container to get reconnected.
-            await ensureContainerConnected(container1);
+            await waitForContainerConnection(container1);
 
             // Wait for the ops to get processed by both the containers.
             await loaderContainerTracker.ensureSynchronized();

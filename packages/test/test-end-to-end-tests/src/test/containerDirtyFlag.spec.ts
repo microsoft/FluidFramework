@@ -15,7 +15,7 @@ import {
     ITestContainerConfig,
     ITestObjectProvider,
     DataObjectFactoryType,
-    ensureContainerConnected,
+    waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 
@@ -46,7 +46,7 @@ const getPendingStateWithoutClose = (container: IContainer): string => {
 // load container, pause, create (local) ops from callback, then optionally send ops before closing container
 const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback) => {
     const container = await args.loadTestContainer(testContainerConfig);
-    await ensureContainerConnected(container as Container);
+    await waitForContainerConnection(container as Container);
     const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
     const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
@@ -115,7 +115,7 @@ describeNoCompat("Container dirty flag", (getTestObjectProvider) => {
 
             // load container with pending ops, which should resend the ops not sent by previous container
             const container2 = await loader.resolve({ url }, pendingOps);
-            await ensureContainerConnected(container2 as Container);
+            await waitForContainerConnection(container2 as Container);
             await provider.ensureSynchronized();
 
             await verifyDirtyStateTransitions(container2);
@@ -132,7 +132,7 @@ describeNoCompat("Container dirty flag", (getTestObjectProvider) => {
 
             // load container with pending ops, which should not resend the ops sent by previous container
             const container2 = await loader.resolve({ url }, pendingOps);
-            await ensureContainerConnected(container2 as Container);
+            await waitForContainerConnection(container2 as Container);
             await provider.ensureSynchronized();
 
             await verifyDirtyStateTransitions(container2);

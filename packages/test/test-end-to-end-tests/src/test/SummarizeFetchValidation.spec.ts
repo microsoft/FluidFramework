@@ -18,9 +18,9 @@ import {
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider,
-    waitForContainerConnection,
     summarizeNow,
     createSummarizerFromFactory,
+    waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, getContainerRuntimeApi } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";

@@ -17,7 +17,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createAndAttachContainer,
-    ensureContainerConnected,
+    waitForContainerConnection,
     ITestFluidObject,
     LoaderContainerTracker,
     LocalCodeLoader,
@@ -46,7 +46,7 @@ describe("Logging Last Connection Mode ", () => {
      */
     async function waitForContainerReconnection(c: Container): Promise<void> {
         assert.equal(c.connected, false);
-        return ensureContainerConnected(c);
+        return waitForContainerConnection(c);
     }
 
     const logger = new MockLogger();

@@ -26,9 +26,26 @@ export async function timeoutAwait<T = void>(
     return Promise.race([promise, timeoutPromise<T>(() => { }, timeoutOptions)]);
 }
 
-export async function ensureContainerConnected(
+/**
+ * Utility function to wait for the specified Container to be in Connected state.
+ * If the Container is already connected, the Promise returns immediately; otherwise it resolves when the Container emits
+ * its 'connected' event.
+ * If failOnContainerClose === true, the returned Promise will be rejected if the container emits a 'closed' event
+ * before a 'connected' event.
+ * @param container - The container to wait for.
+ * @param timeoutOptions - Options related to the behavior of the timeout.
+ * Defaults to timing out after 1000 ms.
+ * This is an arbitrary value and we should adjust it if we see legitimate reasons for it.
+ * @param failOnContainerClose - If true, the returned Promise will be rejected if the container emits a 'closed' event
+ * before a 'connected' event.
+ * Defaults to true.
+ * @returns A Promise that resolves when the specified container emits a 'connected' event.
+ * If failOnContainerClose === true and the container emits a 'closed' event before a 'connected' event, the Promise
+ * is rejected with the error from the 'closed' event, if any.
+ */
+export async function waitForContainerConnection(
     container: IContainer,
-    timeoutOptions: TimeoutWithError = {},
+    timeoutOptions: TimeoutWithError = { durationMs: 1000 },
     failOnContainerClose: boolean = true): Promise<void> {
     if (container.connectionState !== ConnectionState.Connected) {
         return timeoutPromise((resolve, reject) => {

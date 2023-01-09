@@ -10,7 +10,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { IFluidHandle, IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider, ensureContainerConnected } from "@fluidframework/test-utils";
+import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import {
     describeFullCompat,
     ITestDataObject,
@@ -97,7 +97,7 @@ describeFullCompat("New Fluid objects visibility", (getTestObjectProvider) => {
                 container1 = await loader1.createDetachedContainer(provider.defaultCodeDetails);
             } else {
                 container1 = await provider.makeTestContainer();
-                await ensureContainerConnected(container1 as Container);
+                await waitForContainerConnection(container1 as Container);
             }
 
             dataObject1 = await requestTestObjectWithoutWait(container1, "default");
@@ -119,7 +119,7 @@ describeFullCompat("New Fluid objects visibility", (getTestObjectProvider) => {
 
             if (detachedMode) {
                 await container1.attach(provider.driver.createCreateNewRequest(provider.documentId));
-                await ensureContainerConnected(container1 as Container);
+                await waitForContainerConnection(container1 as Container);
             }
 
             // Load a second container and validate that the non-root data store is visible in it.
@@ -162,7 +162,7 @@ describeFullCompat("New Fluid objects visibility", (getTestObjectProvider) => {
 
             if (detachedMode) {
                 await container1.attach(provider.driver.createCreateNewRequest(provider.documentId));
-                await ensureContainerConnected(container1 as Container);
+                await waitForContainerConnection(container1 as Container);
             }
 
             // Load a second container and validate that both the non-root data stores are visible in it.
@@ -201,7 +201,7 @@ describeFullCompat("New Fluid objects visibility", (getTestObjectProvider) => {
 
             if (detachedMode) {
                 await container1.attach(provider.driver.createCreateNewRequest(provider.documentId));
-                await ensureContainerConnected(container1 as Container);
+                await waitForContainerConnection(container1 as Container);
             }
 
             // Load a second container and validate that the non-root data store is visible in it.
@@ -242,7 +242,7 @@ describeFullCompat("New Fluid objects visibility", (getTestObjectProvider) => {
 
             if (detachedMode) {
                 await container1.attach(provider.driver.createCreateNewRequest(provider.documentId));
-                await ensureContainerConnected(container1 as Container);
+                await waitForContainerConnection(container1 as Container);
             }
 
             // Create a DDS after data store is globally visible and store its handle.
@@ -298,7 +298,7 @@ describeFullCompat("New Fluid objects visibility", (getTestObjectProvider) => {
 
             if (detachedMode) {
                 await container1.attach(provider.driver.createCreateNewRequest(provider.documentId));
-                await ensureContainerConnected(container1 as Container);
+                await waitForContainerConnection(container1 as Container);
             }
 
             // Create a DDS after data store is globally visible and store its handle.

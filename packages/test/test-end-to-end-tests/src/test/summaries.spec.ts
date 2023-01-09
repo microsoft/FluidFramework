@@ -22,7 +22,7 @@ import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protoco
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
-import { ensureContainerConnected, ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
+import { waitForContainerConnection, ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 
 const defaultDataStoreId = "default";
@@ -272,7 +272,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
         await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
 
-        await ensureContainerConnected(container);
+        await waitForContainerConnection(container);
 
         // Send an op to trigger summary. We should not get the "IncrementalSummaryViolation" error log.
         defaultDataStore._root.set("key", "value");
