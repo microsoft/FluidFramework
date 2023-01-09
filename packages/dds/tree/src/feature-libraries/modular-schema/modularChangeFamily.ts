@@ -21,7 +21,7 @@ import {
     RevisionTag,
     tagChange,
 } from "../../core";
-import { brand, clone, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
+import { brand, clone, getOrAddEmptyToMap, JsonCompatibleReadOnly, Mutable } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
 import {
     FieldChangeHandler,
@@ -345,7 +345,7 @@ export class ModularChangeFamily
         repairStore: ReadonlyRepairDataStore,
         path: UpPath | undefined,
     ): Delta.Root {
-        const delta: Delta.Root = new Map();
+        const delta: Map<FieldKey, Delta.MarkList> = new Map();
         for (const [field, fieldChange] of change) {
             const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
                 fieldChange.change,
@@ -374,7 +374,7 @@ export class ModularChangeFamily
         repairStore: ReadonlyRepairDataStore,
         path?: UpPath,
     ): Delta.Modify {
-        const modify: Delta.Modify = {
+        const modify: Mutable<Delta.Modify> = {
             type: Delta.MarkType.Modify,
         };
 
