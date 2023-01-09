@@ -149,7 +149,7 @@ export function testGeneralPurposeTreeCursor<TData, TCursor extends ITreeCursor>
         dataFromCursor,
         testData: testTrees.map(([name, data]) => ({
             name,
-            data: () => dataFromJsonableTree(data),
+            dataFactory: () => dataFromJsonableTree(data),
             expected: data,
         })),
         extraRoot,
@@ -174,7 +174,7 @@ export interface SpecialCaseBuilder<TData> {
 
 export interface TestTree<TData> {
     readonly name: string;
-    readonly data: () => TData;
+    readonly dataFactory: () => TData;
     readonly reference?: JsonableTree;
     readonly path?: UpPath;
 }
@@ -290,7 +290,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 
     return describe(`${cursorName} cursor implementation`, () => {
         describe("test trees", () => {
-            for (const { name, data: dataFactory, reference, path } of testData) {
+            for (const { name, dataFactory, reference, path } of testData) {
                 describe(name, () => {
                     let data: TData;
                     before(() => {
