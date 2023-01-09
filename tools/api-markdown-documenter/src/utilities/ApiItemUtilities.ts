@@ -187,7 +187,7 @@ export function getLinkUrlForApiItem(
     config: Required<MarkdownDocumenterConfiguration>,
 ): string {
     const uriBase = config.uriBaseOverridePolicy(apiItem) ?? config.uriRoot;
-    let documentPath = getApiItemPath(apiItem, config, false).join("/");
+    let documentPath = getApiItemPath(apiItem, config, /* includeExtension: */ false).join("/");
 
     // Omit "index" file name from path generated in links.
     // This can be considered an optimization in most cases, but some documentation systems also special-case
@@ -225,8 +225,7 @@ export function getUnscopedPackageName(apiPackage: ApiPackage): string {
  * The generated path is relative to {@link MarkdownDocumenterConfiguration.uriRoot}.
  *
  * @param apiItem - The API item for which we are generating a file path.
- * @param config - See {@link MarkdownDocumenterConfiguration}
- * @param includeExtension - Whether or not to include the `.md` file extension at the end of the path.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function getFilePathForApiItem(
     apiItem: ApiItem,
@@ -237,9 +236,11 @@ export function getFilePathForApiItem(
 }
 
 /**
- * TODO
+ * Gets the path to the specified API item, represented as an ordered list of path segments.
+ *
  * @param apiItem - The API item for which we are generating a file path.
- * @param config - See {@link MarkdownDocumenterConfiguration}
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param includeExtension - Whether or not to include the `.md` file extension at the end of the path.
  */
 export function getApiItemPath(
     apiItem: ApiItem,
@@ -272,7 +273,7 @@ export function getApiItemPath(
  * To get the path, use {@link getFilePathForApiItem}.
  *
  * @param apiItem - The API item for which we are generating a file path.
- * @param config - See {@link MarkdownDocumenterConfiguration}
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
  * @param includeExtension - Whether or not to include the `.md` file extension at the end of the file name.
  */
 export function getFileNameForApiItem(
