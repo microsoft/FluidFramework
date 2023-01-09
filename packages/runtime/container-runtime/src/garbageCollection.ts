@@ -55,7 +55,7 @@ import {
     defaultSessionExpiryDurationMs,
     disableSweepLogKey,
     disableTombstoneKey,
-    enableGCVersionUpgradeKey,
+    gcVersionUpgradeToV2Key,
     gcTestModeKey,
     oneDayMs,
     runGCKey,
@@ -500,7 +500,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // If version upgrade is not enabled, fall back to the stable GC version.
         this.currentGCVersion =
-            this.mc.config.getBoolean(enableGCVersionUpgradeKey) === true ? currentGCVersion : stableGCVersion;
+            this.mc.config.getBoolean(gcVersionUpgradeToV2Key) === true ? currentGCVersion : stableGCVersion;
 
         this.sweepReadyUsageHandler = new SweepReadyUsageDetectionHandler(
             createParams.getContainerDiagnosticId(),

@@ -45,7 +45,7 @@ import {
     disableSweepLogKey,
     currentGCVersion,
     stableGCVersion,
-    enableGCVersionUpgradeKey,
+    gcVersionUpgradeToV2Key,
 } from "../garbageCollectionConstants";
 
 import { dataStoreAttributesBlobName, GCVersion, IContainerRuntimeMetadata, IGCMetadata } from "../summaryFormat";
@@ -223,8 +223,8 @@ describe("Garbage Collection Tests", () => {
                 const expectedOutputMetadata: IGCMetadata = { ...inputMetadata, gcFeature: stableGCVersion };
                 assert.deepEqual(outputMetadata, expectedOutputMetadata, "getMetadata returned different metadata than loaded from");
             });
-            it("Metadata Roundtrip with GC version upgrade enabled", () => {
-                injectedSettings[enableGCVersionUpgradeKey] = true;
+            it("Metadata Roundtrip with GC version upgrade to v2 enabled", () => {
+                injectedSettings[gcVersionUpgradeToV2Key] = true;
                 const inputMetadata: IGCMetadata = {
                     sweepEnabled: true,
                     gcFeature: 1,
@@ -321,9 +321,9 @@ describe("Garbage Collection Tests", () => {
                 const outputMetadata = gc.getMetadata();
                 assert.deepEqual(outputMetadata, expectedMetadata, "getMetadata returned different metadata than expected");
             });
-            it("Metadata Roundtrip with GC version upgrade enabled", () => {
+            it("Metadata Roundtrip with GC version upgrade to v2 enabled", () => {
                 injectedSettings[runSessionExpiryKey] = true;
-                injectedSettings[enableGCVersionUpgradeKey] = true;
+                injectedSettings[gcVersionUpgradeToV2Key] = true;
                 const expectedMetadata: IGCMetadata = {
                     sweepEnabled: true,
                     gcFeature: currentGCVersion,

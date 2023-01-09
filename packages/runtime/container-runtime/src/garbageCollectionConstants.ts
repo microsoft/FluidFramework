@@ -27,7 +27,7 @@ export const disableTombstoneKey = "Fluid.GarbageCollection.DisableTombstone";
 // Feature gate to enable throwing an error when tombstone object is used.
 export const throwOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombstoneUsage";
 // Feature gate to enable GC version upgrade.
-export const enableGCVersionUpgradeKey = "Fluid.GarbageCollection.EnableGCVersionUpgrade";
+export const gcVersionUpgradeToV2Key = "Fluid.GarbageCollection.GCVersionUpgradeToV2";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
