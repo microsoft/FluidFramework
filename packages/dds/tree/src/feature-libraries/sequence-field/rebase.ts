@@ -34,6 +34,7 @@ import {
     updateMoveDestPairing,
     PairedMarkUpdate,
     lineUpRelatedReattaches,
+    isSkipLikeDetach,
 } from "./utils";
 import {
     Attach,
@@ -416,7 +417,7 @@ function rebaseMark<TNodeChange>(
     rebaseChild: NodeChangeRebaser<TNodeChange>,
     moveEffects: MoveEffectTable<TNodeChange>,
 ): CellSpanningMark<TNodeChange> {
-    if (isSkipMark(baseMark) || isSkipLikeReattach(baseMark)) {
+    if (isSkipMark(baseMark) || isSkipLikeReattach(baseMark) || isSkipLikeDetach(baseMark)) {
         return clone(currMark);
     }
     const baseType = baseMark.type;

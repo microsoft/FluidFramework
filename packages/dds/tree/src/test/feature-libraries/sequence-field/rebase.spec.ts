@@ -506,4 +506,55 @@ describe("SequenceField - Rebase", () => {
         normalizeMoveIds(rebased);
         assert.deepEqual(rebased, expected);
     });
+
+    it("return ↷ related revive ", () => {
+        const revive = Change.revive(2, 1, tag1, 0);
+        const ret = Change.return(0, 1, 1, tag1, 0);
+        const actual = rebase(ret, revive, tag2);
+        const expected: SF.Changeset<never> = [
+            {
+                type: "ReturnFrom",
+                count: 1,
+                id: brand(0),
+                detachedBy: tag1,
+                isDstMuted: true,
+            },
+            1,
+            {
+                type: "ReturnTo",
+                count: 1,
+                id: brand(0),
+                detachedBy: tag1,
+                detachIndex: 0,
+                mutedBy: tag2,
+            },
+        ];
+        normalizeMoveIds(actual);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("return ↷ return-from + muted return-to", () => {
+        const ret1: SF.Changeset<never> = [
+            {
+                type: "ReturnFrom",
+                count: 1,
+                id: brand(0),
+                detachedBy: tag1,
+                isDstMuted: true,
+            },
+            1,
+            {
+                type: "ReturnTo",
+                count: 1,
+                id: brand(0),
+                detachedBy: tag1,
+                detachIndex: 0,
+                mutedBy: tag2,
+            },
+        ];
+        const ret2 = Change.return(0, 1, 10, tag3, 0);
+        const actual = rebase(ret2, ret1, brand(1));
+        normalizeMoveIds(actual);
+        assert.deepEqual(actual, ret2);
+    });
 });

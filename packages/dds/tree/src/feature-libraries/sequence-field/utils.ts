@@ -80,6 +80,10 @@ export function isSkipLikeReattach<TNodeChange>(
     return isMutedReattach(mark) && mark.lastDetachedBy === undefined;
 }
 
+export function isSkipLikeDetach<TNodeChange>(mark: Mark<TNodeChange>): boolean {
+    return isDetachMark(mark) && mark.type !== "Delete" && mark.isDstMuted === true;
+}
+
 export function isBlockedReattach<TNodeChange>(
     mark: Mark<TNodeChange>,
 ): mark is Reattach<TNodeChange> & Muted {
@@ -437,7 +441,12 @@ export function tryExtendMark(
         case "MoveIn":
         case "ReturnTo": {
             const lhsMoveIn = lhs as MoveIn | ReturnTo;
-            if (isEqualPlace(lhsMoveIn, rhs) && moveEffects !== undefined) {
+            if (
+                isEqualPlace(lhsMoveIn, rhs) &&
+                moveEffects !== undefined &&
+                lhsMoveIn.mutedBy === rhs.mutedBy &&
+                lhsMoveIn.isSrcMuted === rhs.isSrcMuted
+            ) {
                 if (lhsMoveIn.type === "ReturnTo") {
                     // Verify that the ReturnTo fields line up
                     const rhsReturnTo = rhs as ReturnTo;
@@ -478,7 +487,11 @@ export function tryExtendMark(
         case "MoveOut":
         case "ReturnFrom": {
             const lhsMoveOut = lhs as MoveOut | ReturnFrom;
-            if (moveEffects !== undefined) {
+            if (
+                moveEffects !== undefined &&
+                lhsMoveOut.mutedBy === rhs.mutedBy &&
+                lhsMoveOut.isDstMuted === rhs.isDstMuted
+            ) {
                 if (
                     lhsMoveOut.type === "ReturnFrom" &&
                     !areMergeableReturnFrom(lhs as ReturnFrom, rhs as ReturnFrom)
@@ -530,6 +543,7 @@ function areMergeableReturnFrom(lhs: ReturnFrom, rhs: ReturnFrom): boolean {
     if (
         lhs.detachedBy !== rhs.detachedBy ||
         lhs.mutedBy !== rhs.mutedBy ||
+        lhs.isDstMuted !== rhs.isDstMuted ||
         lhs.revision !== rhs.revision
     ) {
         return false;
@@ -891,15 +905,14 @@ export function splitMoveIn<T>(
     for (const part of parts) {
         assert(part.modifyAfter === undefined, "Cannot modify move destination");
         if (part.replaceWith !== undefined) {
-            result.push(...part.replaceWith);
             cumulativeCount += part.count ?? mark.count;
+            result.push(...part.replaceWith);
         } else {
             const portion = {
                 ...mark,
                 id: part.id,
                 count: part.count ?? mark.count,
             };
-            result.push(portion);
             if (mark.type === "ReturnTo") {
                 const returnTo = portion as ReturnTo;
                 returnTo.detachIndex = mark.detachIndex + cumulativeCount;
@@ -912,6 +925,7 @@ export function splitMoveIn<T>(
                     }
                 }
             }
+            result.push(portion);
         }
     }
     return result;
@@ -927,8 +941,8 @@ export function splitMoveOut<T>(
     let cumulativeCount = 0;
     for (const part of parts) {
         if (part.replaceWith !== undefined) {
-            result.push(...part.replaceWith);
             cumulativeCount += part.count ?? mark.count;
+            result.push(...part.replaceWith);
         } else {
             const splitMark: MoveOut<T> | ReturnFrom<T> = {
                 ...mark,
