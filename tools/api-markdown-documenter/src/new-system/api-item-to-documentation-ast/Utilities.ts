@@ -15,7 +15,7 @@ export function createDocument(
     // TODO: front-matter, header, footer
     return new DocumentNode(
         contents,
-        getFilePathForApiItem(apiItem, config, /* includeExtension: */ true),
+        getFilePathForApiItem(apiItem, config),
         config.includeTopLevelDocumentHeading ? config.headingTitlePolicy(apiItem) : undefined,
     );
 }

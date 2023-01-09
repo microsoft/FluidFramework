@@ -187,7 +187,7 @@ export function getLinkUrlForApiItem(
     config: Required<MarkdownDocumenterConfiguration>,
 ): string {
     const uriBase = config.uriBaseOverridePolicy(apiItem) ?? config.uriRoot;
-    let documentPath = getFilePathForApiItem(apiItem, config, /* includeExtension: */ false);
+    let documentPath = getApiItemPath(apiItem, config, false).join("/");
 
     // Omit "index" file name from path generated in links.
     // This can be considered an optimization in most cases, but some documentation systems also special-case
@@ -231,8 +231,21 @@ export function getUnscopedPackageName(apiPackage: ApiPackage): string {
 export function getFilePathForApiItem(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
-    includeExtension: boolean,
 ): string {
+    const pathSegments = getApiItemPath(apiItem, config, true);
+    return Path.join(...pathSegments);
+}
+
+/**
+ * TODO
+ * @param apiItem - The API item for which we are generating a file path.
+ * @param config - See {@link MarkdownDocumenterConfiguration}
+ */
+export function getApiItemPath(
+    apiItem: ApiItem,
+    config: Required<MarkdownDocumenterConfiguration>,
+    includeExtension: boolean,
+): string[] {
     const targetDocumentItem = getFirstAncestorWithOwnDocument(apiItem, config.documentBoundaries);
 
     const fileName = getFileNameForApiItem(apiItem, config, includeExtension);
@@ -242,12 +255,10 @@ export function getFilePathForApiItem(
         doesItemGenerateHierarchy(hierarchyItem, config.hierarchyBoundaries),
     );
 
-    let path = fileName;
-    for (const hierarchyItem of documentAncestry) {
-        const segmentName = config.fileNamePolicy(hierarchyItem);
-        path = Path.join(segmentName, path);
-    }
-    return path;
+    return [
+        fileName,
+        ...documentAncestry.map((hierarchyItem) => config.fileNamePolicy(hierarchyItem)),
+    ].reverse();
 }
 
 /**
