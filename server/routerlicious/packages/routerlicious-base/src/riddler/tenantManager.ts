@@ -587,7 +587,7 @@ export class TenantManager {
             if (metric) {
                 metric.setProperty("settingKeyInCacheFailed", true);
             }
-            Lumberjack.error(`Reading from cache failed`, lumberProperties, error);
+            Lumberjack.error(`Setting tenant key in the cache failed`, lumberProperties, error);
             return undefined;
         }
     }
