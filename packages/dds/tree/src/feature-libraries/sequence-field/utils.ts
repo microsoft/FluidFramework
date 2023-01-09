@@ -222,17 +222,14 @@ export function tryExtendMark(
         }
         case "Delete": {
             const lhsDetach = lhs as Detach;
-            if (rhs.tomb === lhsDetach.tomb) {
-                lhsDetach.count += rhs.count;
-                return true;
-            }
-            break;
+            lhsDetach.count += rhs.count;
+            return true;
         }
         case "MoveOut":
         case "ReturnFrom": {
             // TODO: Handle reattach fields
             const lhsMoveOut = lhs as MoveOut | ReturnFrom;
-            if (rhs.tomb === lhsMoveOut.tomb && moveEffects !== undefined) {
+            if (moveEffects !== undefined) {
                 const prevMerge = moveEffects.srcMergeable.get(lhsMoveOut.id);
                 if (prevMerge !== undefined) {
                     moveEffects.srcMergeable.set(prevMerge, rhs.id);
