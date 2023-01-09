@@ -30,7 +30,7 @@ export {
 } from "./TestSummaryUtils";
 export {
     defaultTimeoutDurationMs,
-    waitForContainerConnection as waitForContainerConnection,
+    waitForContainerConnection,
     timeoutAwait,
     timeoutPromise,
     TimeoutWithError,
