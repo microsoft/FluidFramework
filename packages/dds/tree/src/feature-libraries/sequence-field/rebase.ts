@@ -103,7 +103,7 @@ function rebaseMarkList<TNodeChange>(
     // At the time we process an attach we don't know whether the following node will be detached, so we record attach
     // marks which should have their lineage updated if we encounter a detach.
     const lineageRequests: LineageRequest<TNodeChange>[] = [];
-    let baseDetachOffset = 0;
+    let baseInputIndex = 0;
     // The index of (i.e., number of nodes to the left of) the base mark in the input context of the base change.
     // This assumes the base changeset is not composite (and asserts if it is).
     let baseInputOffset = 0;
@@ -119,20 +119,14 @@ function rebaseMarkList<TNodeChange>(
         if (baseMark === undefined) {
             assert(currMark !== undefined, "Non-empty queue should return at least one mark");
             if (isAttach(currMark)) {
-                handleCurrAttach(
-                    currMark,
-                    factory,
-                    lineageRequests,
-                    baseDetachOffset,
-                    baseRevision,
-                );
+                handleCurrAttach(currMark, factory, lineageRequests, baseInputIndex, baseRevision);
             } else {
                 factory.push(clone(currMark));
             }
         } else if (currMark === undefined) {
             if (isDetachMark(baseMark)) {
                 const detachLength = getInputLength(baseMark);
-                baseDetachOffset += detachLength;
+                baseInputIndex += detachLength;
                 baseInputOffset += detachLength;
             } else if (isAttach(baseMark)) {
                 factory.pushOffset(getOutputLength(baseMark));
@@ -160,14 +154,14 @@ function rebaseMarkList<TNodeChange>(
             const detachLength = getInputLength(baseMark);
             baseInputOffset += detachLength;
             if (isDetachMark(baseMark)) {
-                baseDetachOffset += detachLength;
+                baseInputIndex += detachLength;
             } else {
-                if (baseDetachOffset > 0 && baseRevision !== undefined) {
+                if (baseInputIndex > 0 && baseRevision !== undefined) {
                     updateLineage(lineageRequests, baseRevision);
                 }
 
                 lineageRequests.length = 0;
-                baseDetachOffset = 0;
+                baseInputIndex = 0;
             }
         }
         if (baseMark !== undefined) {
@@ -175,7 +169,7 @@ function rebaseMarkList<TNodeChange>(
         }
     }
 
-    if (baseDetachOffset > 0 && baseRevision !== undefined) {
+    if (baseInputIndex > 0 && baseRevision !== undefined) {
         updateLineage(lineageRequests, baseRevision);
     }
 
