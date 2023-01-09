@@ -5,6 +5,7 @@
 
 export {
     Index,
+    IndexEvents,
     ISharedTreeCoreEvents,
     SharedTreeCore,
     SummaryElement,

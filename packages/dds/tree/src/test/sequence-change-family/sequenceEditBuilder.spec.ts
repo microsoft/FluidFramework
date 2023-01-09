@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { jsonString } from "../../domains";
-import { AnchorSet, Delta, FieldKey, ITreeCursorSynchronous, UpPath } from "../../tree";
+import { AnchorSet, Delta, FieldKey, ITreeCursorSynchronous, UpPath } from "../../core";
 import { singleTextCursor } from "../../feature-libraries";
 import {
     sequenceChangeFamily,

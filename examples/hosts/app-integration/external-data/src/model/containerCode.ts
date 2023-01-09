@@ -8,7 +8,7 @@ import type { IContainer } from "@fluidframework/container-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import type { ITaskList, IAppModel } from "../modelInterfaces";
+import type { ITaskList, IAppModel } from "../model-interface";
 import { AppModel } from "./appModel";
 import { TaskListInstantiationFactory } from "./taskList";
 

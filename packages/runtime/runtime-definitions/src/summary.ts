@@ -98,6 +98,28 @@ export interface IGarbageCollectionState {
     gcNodes: { [ id: string ]: IGarbageCollectionNodeData; };
 }
 
+/**
+ * @deprecated - IGarbageCollectionState is written in the root of the summary now.
+ * Legacy GC details from when the GC details were written at the data store's summary tree.
+ */
+export interface IGarbageCollectionSummaryDetailsLegacy {
+    /** A list of routes to Fluid objects that are used in this node. */
+    usedRoutes?: string[];
+    /** The GC data of this node. */
+    gcData?: IGarbageCollectionData;
+    /** If this node is unreferenced, the time when it was marked as such. */
+    unrefTimestamp?: number;
+}
+
+/**
+ * The GC data that is read from a snapshot. It contains the Garbage CollectionState state and tombstone state.
+ */
+export interface IGarbageCollectionSnapshotData {
+    gcState: IGarbageCollectionState;
+    tombstones: string[] | undefined;
+}
+
+
 export type SummarizeInternalFn = (
     fullTree: boolean,
     trackState: boolean,
@@ -253,6 +275,9 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
          */
         config?: ISummarizerNodeConfigWithGC,
         getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
+        /**
+         * @deprecated - The functionality to update child's base GC details is incorporated in the summarizer node.
+         */
         getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
     ): ISummarizerNodeWithGC;
 

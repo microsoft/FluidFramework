@@ -12,13 +12,19 @@ import {
 } from "@fluidframework/container-definitions";
 import {
     MockLogger,
+    sessionStorageConfigProvider,
+    ConfigTypes,
 } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { createRuntimeAttributor, IProvideRuntimeAttributor, mixinAttributor } from "../mixinAttributor";
+import {
+    createRuntimeAttributor,
+    enableOnNewFileKey,
+    IProvideRuntimeAttributor,
+    mixinAttributor
+} from "../mixinAttributor";
 import { Attributor } from "../attributor";
 import { makeLZ4Encoder } from "../lz4Encoder";
 import { AttributorSerializer, chain, deltaEncoder } from "../encoders";
@@ -30,7 +36,6 @@ type Mutable<T> = {
 
 describe("mixinAttributor", () => {
     const clientId = "mock client id";
-    let containerRuntime: ContainerRuntime;
     const getMockContext = ((): Partial<IContainerContext> => {
         return {
             audience: makeMockAudience([clientId]),
@@ -49,11 +54,31 @@ describe("mixinAttributor", () => {
         IRuntimeAttributor: createRuntimeAttributor()
     });
 
+    const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
+    let injectedSettings: Record<string, ConfigTypes> = {};
+
+    before(() => {
+        sessionStorageConfigProvider.value.getRawConfig = (name) => injectedSettings[name];
+    });
+
+    afterEach(() => {
+        injectedSettings = {};
+    });
+
+    after(() => {
+        sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
+    });
+
+    const setEnableOnNew = (val: boolean) => {
+        injectedSettings[enableOnNewFileKey] = val;
+    }
+
     const AttributingContainerRuntime = mixinAttributor();
 
     it("Attributes ops", async () => {
+        setEnableOnNew(true);
         const context = getMockContext() as IContainerContext;
-        containerRuntime = await AttributingContainerRuntime.load(
+        const containerRuntime = await AttributingContainerRuntime.load(
             context,
             [],
             undefined, // requestHandler
@@ -80,8 +105,9 @@ describe("mixinAttributor", () => {
     });
 
     it("includes attribution association data in the summary tree", async () => {
+        setEnableOnNew(true);
         const context = getMockContext() as IContainerContext;
-        containerRuntime = await AttributingContainerRuntime.load(
+        const containerRuntime = await AttributingContainerRuntime.load(
             context,
             [],
             undefined, // requestHandler
@@ -153,7 +179,7 @@ describe("mixinAttributor", () => {
         };
         context.baseSnapshot = snapshot;
         context.storage = mockStorage;
-        containerRuntime = await AttributingContainerRuntime.load(
+        const containerRuntime = await AttributingContainerRuntime.load(
             context,
             [],
             undefined, // requestHandler
@@ -171,26 +197,60 @@ describe("mixinAttributor", () => {
         );
     });
 
-    it("Doesn't summarize attributor for existing documents that had no attributor", async () => {
-        const context = getMockContext() as Mutable<IContainerContext>;
-        const snapshot: ISnapshotTree = {
-            blobs: {},
-            trees: {}
-        };
-        context.baseSnapshot = snapshot;
-        containerRuntime = await AttributingContainerRuntime.load(
-            context,
-            [],
-            undefined, // requestHandler
-            {}, // runtimeOptions
-            getScope(),
-        );
+    describe("Doesn't summarize attributor", () => {
+        const testCases: { getContext: () => IContainerContext, testName: string }[] = [
+            {
+                testName: "for existing documents that had no attributor",
+                getContext: () => {
+                    setEnableOnNew(true);
+                    const context = getMockContext() as Mutable<IContainerContext>;
+                    const snapshot: ISnapshotTree = {
+                        blobs: {},
+                        trees: {}
+                    };
+                    context.baseSnapshot = snapshot;
+                    return context;
+                }
+            },
+            {
+                testName: `for new documents with ${enableOnNewFileKey} unset`,
+                getContext: () => {
+                    return getMockContext() as IContainerContext;
+                }
+            },
+            {
+                testName: `for new documents with ${enableOnNewFileKey} set to false`,
+                getContext: () => {
+                    setEnableOnNew(false);
+                    const context = getMockContext() as Mutable<IContainerContext>;
+                    const snapshot: ISnapshotTree = {
+                        blobs: {},
+                        trees: {}
+                    };
+                    context.baseSnapshot = snapshot;
+                    return context;
+                }
+            }
+        ]
 
-        const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> = containerRuntime.scope;
-        assert(maybeProvidesAttributor.IRuntimeAttributor !== undefined);
-
-        const { summary } = await containerRuntime.summarize({ fullTree: true, trackState: false, runGC: false });
-        assert(summary.tree[".attributor"] === undefined);
+        for (const { getContext, testName } of testCases) {
+            it(testName, async () => {
+                const context = getContext();
+                const containerRuntime = await AttributingContainerRuntime.load(
+                    context,
+                    [],
+                    undefined, // requestHandler
+                    {}, // runtimeOptions
+                    getScope(),
+                );
+    
+                const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> = containerRuntime.scope;
+                assert(maybeProvidesAttributor.IRuntimeAttributor !== undefined);
+        
+                const { summary } = await containerRuntime.summarize({ fullTree: true, trackState: false, runGC: false });
+                assert(summary.tree[".attributor"] === undefined);
+            });
+        }
     });
 });
 

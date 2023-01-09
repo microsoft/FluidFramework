@@ -5,10 +5,15 @@
 
 import { fail, strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/common-utils";
-import { ChangeFamily } from "../../change-family";
-import { Commit, EditManager, SessionId } from "../../edit-manager";
-import { ChangeRebaser } from "../../rebase";
-import { Delta, FieldKey } from "../../tree";
+import {
+    ChangeFamily,
+    Commit,
+    EditManager,
+    SessionId,
+    ChangeRebaser,
+    Delta,
+    FieldKey,
+} from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
     AnchorRebaseData,
