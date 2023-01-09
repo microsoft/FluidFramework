@@ -34,7 +34,7 @@ const testChanges: [string, (index: number) => SF.Changeset<TestChange>][] = [
     ["Insert", (i) => Change.insert(i, 2, 42)],
     ["Delete", (i) => Change.delete(i, 2)],
     ["Revive", (i) => Change.revive(2, 2, tag1, i)],
-    ["MutedRevive", (i) => Change.revive(2, 2, tag2, i, tag3)],
+    ["ConflictedRevive", (i) => Change.revive(2, 2, tag2, i, tag3)],
     ["MoveOut", (i) => Change.move(i, 2, 1)],
     ["MoveIn", (i) => Change.move(1, 2, i)],
     ["ReturnFrom", (i) => Change.return(i, 2, 1, tag4, 0)],
@@ -295,11 +295,11 @@ describe("SequenceField - Sandwich Rebasing", () => {
         // This next rebase fails for two reasons:
         // 1: The current rebase code assumes new attach marks will always be independent.
         // This is violated by the needs of sandwich rebasing: the ReturnFrom of retABC3
-        // needs to be matched up with the MoveIn of movABC2 for it to be unmuted.
+        // needs to be matched up with the MoveIn of movABC2 for it to no longer be conflicted.
         // 2: The 2nd count of movABC2 is interpreted as overlapping with
         // the second ReturnFrom (which corresponds to the deleted node B) when it should to be
         // interpreted as overlapping with the third ReturnFrom.
-        // This will be easier to rectify once movABC2 carries (muted) marks for B as opposed to those marks
+        // This will be easier to rectify once movABC2 carries (conflicted) marks for B as opposed to those marks
         // being deleted when rebasing over the deleted of B.
         const retABC4 = rebaseTagged(retABC3, movABC2);
         const actual = SF.compose(

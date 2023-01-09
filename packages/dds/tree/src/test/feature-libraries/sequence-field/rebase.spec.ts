@@ -148,14 +148,14 @@ describe("SequenceField - Rebase", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("muted revive ↷ related delete", () => {
+    it("conflicted revive ↷ related delete", () => {
         const revive = Change.revive(0, 3, tag1, 1, tag2);
         const deletion = Change.delete(1, 1);
         const actual = rebase(revive, deletion, tag2);
         const expected = composeAnonChanges([
             // Earlier revive is unaffected
             Change.revive(0, 1, tag1, 1, tag2),
-            // Overlapping revive is no longer muted
+            // Overlapping revive is no longer conflicted
             Change.revive(1, 1, tag2, 1),
             // Later revive is unaffected
             Change.revive(2, 1, tag1, 3, tag2, [{ revision: tag2, offset: 1 }]),
@@ -163,7 +163,7 @@ describe("SequenceField - Rebase", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("muted revive ↷ unrelated delete", () => {
+    it("conflicted revive ↷ unrelated delete", () => {
         const revive = Change.revive(0, 3, tag1, 1, tag2);
         const deletion = Change.delete(1, 1);
         const actual = rebase(revive, deletion, tag3);
@@ -185,7 +185,7 @@ describe("SequenceField - Rebase", () => {
         const expected = composeAnonChanges([
             // Earlier revive is unaffected
             Change.revive(0, 1, tag1, 1, tag2, undefined, tag3),
-            // Overlapping revive remains muted but is no longer blocked
+            // Overlapping revive remains conflicted but is no longer blocked
             Change.revive(1, 1, tag1, 2, tag2),
             // Later revive is unaffected
             Change.revive(2, 1, tag1, 3, tag2, undefined, tag3),
@@ -193,14 +193,14 @@ describe("SequenceField - Rebase", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("muted intent-full revive ↷ related delete", () => {
+    it("conflicted intent-full revive ↷ related delete", () => {
         const revive = Change.intentionalRevive(0, 3, tag1, 1, tag2);
         const deletion = Change.delete(1, 1);
         const actual = rebase(revive, deletion, tag2);
         const expected = composeAnonChanges([
             // Earlier revive is unaffected
             Change.intentionalRevive(0, 1, tag1, 1, tag2),
-            // Overlapping revive is no longer muted.
+            // Overlapping revive is no longer conflicted.
             // It now references the target node to revive using the latest delete.
             Change.intentionalRevive(1, 1, tag2, 1),
             // Later revive is unaffected aside from lineage
@@ -209,14 +209,14 @@ describe("SequenceField - Rebase", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("muted intent-full revive ↷ unrelated delete", () => {
+    it("conflicted intent-full revive ↷ unrelated delete", () => {
         const revive = Change.intentionalRevive(0, 3, tag1, 1, tag2);
         const deletion = Change.delete(1, 1);
         const actual = rebase(revive, deletion, tag3);
         const expected = composeAnonChanges([
             // Earlier revive is unaffected
             Change.intentionalRevive(0, 1, tag1, 1, tag2),
-            // Overlapping revive is no longer muted.
+            // Overlapping revive is no longer conflicted.
             // It now references the target node to revive using the latest delete.
             Change.intentionalRevive(1, 1, tag3, 1),
             // Later revive gets linage
@@ -341,7 +341,7 @@ describe("SequenceField - Rebase", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("muted revive ↷ insert", () => {
+    it("conflicted revive ↷ insert", () => {
         const revive = Change.revive(0, 3, tag1, 0, tag2);
         const insert = Change.insert(1, 1);
         const actual = rebase(revive, insert);
@@ -517,7 +517,7 @@ describe("SequenceField - Rebase", () => {
                 count: 1,
                 id: brand(0),
                 detachedBy: tag1,
-                isDstMuted: true,
+                isDstConflicted: true,
             },
             1,
             {
@@ -526,21 +526,21 @@ describe("SequenceField - Rebase", () => {
                 id: brand(0),
                 detachedBy: tag1,
                 detachIndex: 0,
-                mutedBy: tag2,
+                conflictsWith: tag2,
             },
         ];
         normalizeMoveIds(actual);
         assert.deepEqual(actual, expected);
     });
 
-    it("return ↷ return-from + muted return-to", () => {
+    it("return ↷ return-from + conflicted return-to", () => {
         const ret1: SF.Changeset<never> = [
             {
                 type: "ReturnFrom",
                 count: 1,
                 id: brand(0),
                 detachedBy: tag1,
-                isDstMuted: true,
+                isDstConflicted: true,
             },
             1,
             {
@@ -549,7 +549,7 @@ describe("SequenceField - Rebase", () => {
                 id: brand(0),
                 detachedBy: tag1,
                 detachIndex: 0,
-                mutedBy: tag2,
+                conflictsWith: tag2,
             },
         ];
         const ret2 = Change.return(0, 1, 10, tag3, 0);

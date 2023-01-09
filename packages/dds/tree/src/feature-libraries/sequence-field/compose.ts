@@ -38,11 +38,11 @@ import {
     getUniqueMoveId,
     applyMoveEffectsToMark,
     modifyMoveSrc,
-    isMutedDetach,
+    isConflictedDetach,
     isReattach,
     lineUpRelatedReattaches,
-    isMutedReattach,
-    isMuted,
+    isConflictedReattach,
+    isConflicted,
 } from "./utils";
 
 export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
@@ -114,7 +114,7 @@ function composeMarkLists<TNodeChange>(
             // start at the same location in the revision after the base changes.
             // They therefore refer to the same range for that revision.
             assert(
-                !isAttach(newMark) || isMutedReattach(newMark),
+                !isAttach(newMark) || isConflictedReattach(newMark),
                 "A new attach cannot be at the same position as a base mark",
             );
             const composedMark = composeMarks(
@@ -175,7 +175,7 @@ function composeMarks<TNodeChange>(
                 }
                 case "Delete": {
                     // The insertion made by the base change is subsequently deleted.
-                    // TODO: preserve the insertions as muted
+                    // TODO: preserve the insertions as conflicted.
                     return 0;
                 }
                 case "MoveOut":
@@ -194,7 +194,10 @@ function composeMarks<TNodeChange>(
                     );
                     return 0;
                 case "Revive": {
-                    assert(!isMutedReattach(baseMark) && isMuted(newMark), "Invalid mark overlap");
+                    assert(
+                        !isConflictedReattach(baseMark) && isConflicted(newMark),
+                        "Invalid mark overlap",
+                    );
                     return baseMark;
                 }
                 default:
@@ -554,7 +557,7 @@ export class ComposeQueue<T> {
             return { newMark: this.newMarks.pop() };
         } else if (isDetachMark(baseMark)) {
             return { baseMark: this.baseMarks.pop() };
-        } else if (isMutedDetach(newMark)) {
+        } else if (isConflictedDetach(newMark)) {
             return { newMark: this.newMarks.pop() };
         } else {
             // If we've reached this branch then `baseMark` and `newMark` start at the same location

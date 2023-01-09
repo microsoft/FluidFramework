@@ -82,7 +82,7 @@ describe("SequenceField - Invert", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("revert-only muted revive => skip", () => {
+    it("revert-only conflicted revive => skip", () => {
         const input: TestChangeset = [
             {
                 type: "Modify",
@@ -93,7 +93,7 @@ describe("SequenceField - Invert", () => {
                 count: 1,
                 detachedBy: tag,
                 detachIndex: 0,
-                mutedBy: tag2,
+                conflictsWith: tag2,
                 changes: childChange2,
             },
             {
@@ -128,7 +128,7 @@ describe("SequenceField - Invert", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("intentional muted revive => skip", () => {
+    it("intentional conflicted revive => skip", () => {
         const input = composeAnonChanges([
             Change.modify(0, childChange1),
             Change.intentionalRevive(0, 2, tag, 0, tag2),
@@ -165,19 +165,19 @@ describe("SequenceField - Invert", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("muted-move out + move-in => nil + nil", () => {
+    it("conflicted-move out + move-in => nil + nil", () => {
         const input: TestChangeset = [
             {
                 type: "MoveOut",
                 count: 1,
                 id: brand(0),
-                mutedBy: tag,
+                conflictsWith: tag,
             },
             {
                 type: "MoveIn",
                 count: 1,
                 id: brand(0),
-                isSrcMuted: true,
+                isSrcConflicted: true,
             },
             {
                 type: "Modify",
@@ -189,14 +189,14 @@ describe("SequenceField - Invert", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("muted return-from + return-to => nil + nil", () => {
+    it("conflicted return-from + return-to => nil + nil", () => {
         const input: TestChangeset = [
             {
                 type: "ReturnFrom",
                 count: 1,
                 id: brand(0),
                 detachedBy: tag2,
-                mutedBy: tag,
+                conflictsWith: tag,
             },
             {
                 type: "ReturnTo",
@@ -204,7 +204,7 @@ describe("SequenceField - Invert", () => {
                 id: brand(0),
                 detachedBy: tag2,
                 detachIndex: 0,
-                isSrcMuted: true,
+                isSrcConflicted: true,
             },
             {
                 type: "Modify",
@@ -216,20 +216,20 @@ describe("SequenceField - Invert", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("move-out + muted move-in => skip + skip", () => {
+    it("move-out + conflicted move-in => skip + skip", () => {
         const input: TestChangeset = [
             {
                 type: "MoveOut",
                 count: 1,
                 id: brand(0),
-                isDstMuted: true,
+                isDstConflicted: true,
                 changes: childChange1,
             },
             {
                 type: "MoveIn",
                 count: 1,
                 id: brand(0),
-                mutedBy: tag,
+                conflictsWith: tag,
             },
             {
                 type: "Modify",
@@ -244,14 +244,14 @@ describe("SequenceField - Invert", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("return-from + muted return-to => skip + skip", () => {
+    it("return-from + conflicted return-to => skip + skip", () => {
         const input: TestChangeset = [
             {
                 type: "ReturnFrom",
                 count: 1,
                 id: brand(0),
                 detachedBy: tag2,
-                isDstMuted: true,
+                isDstConflicted: true,
                 changes: childChange1,
             },
             {
@@ -260,7 +260,7 @@ describe("SequenceField - Invert", () => {
                 id: brand(0),
                 detachedBy: tag2,
                 detachIndex: 0,
-                mutedBy: tag,
+                conflictsWith: tag,
             },
             {
                 type: "Modify",
@@ -275,14 +275,14 @@ describe("SequenceField - Invert", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("muted move-out + muted move-in => nil + skip", () => {
+    it("conflicted move-out + conflicted move-in => nil + skip", () => {
         const input: TestChangeset = [
             {
                 type: "MoveOut",
                 count: 1,
                 id: brand(0),
-                mutedBy: tag,
-                isDstMuted: true,
+                conflictsWith: tag,
+                isDstConflicted: true,
             },
             {
                 type: "Modify",
@@ -292,8 +292,8 @@ describe("SequenceField - Invert", () => {
                 type: "MoveIn",
                 count: 1,
                 id: brand(0),
-                mutedBy: tag,
-                isSrcMuted: true,
+                conflictsWith: tag,
+                isSrcConflicted: true,
             },
             {
                 type: "Modify",
@@ -308,15 +308,15 @@ describe("SequenceField - Invert", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("muted return-from + muted return-to => nil + skip", () => {
+    it("conflicted return-from + conflicted return-to => nil + skip", () => {
         const input: TestChangeset = [
             {
                 type: "ReturnFrom",
                 count: 1,
                 id: brand(0),
                 detachedBy: tag2,
-                mutedBy: tag,
-                isDstMuted: true,
+                conflictsWith: tag,
+                isDstConflicted: true,
             },
             {
                 type: "Modify",
@@ -328,8 +328,8 @@ describe("SequenceField - Invert", () => {
                 id: brand(0),
                 detachedBy: tag2,
                 detachIndex: 0,
-                mutedBy: tag,
-                isSrcMuted: true,
+                conflictsWith: tag,
+                isSrcConflicted: true,
             },
             {
                 type: "Modify",
@@ -351,7 +351,7 @@ describe("SequenceField - Invert", () => {
                 count: 1,
                 id: brand(0),
                 detachedBy: tag2,
-                isDstMuted: true,
+                isDstConflicted: true,
                 changes: childChange1,
             },
             {
@@ -364,7 +364,7 @@ describe("SequenceField - Invert", () => {
                 id: brand(0),
                 detachedBy: tag2,
                 detachIndex: 0,
-                mutedBy: tag,
+                conflictsWith: tag,
                 lastDetachedBy: tag3,
             },
             {
@@ -381,15 +381,15 @@ describe("SequenceField - Invert", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("muted return-from + blocked return-to => nil + nil", () => {
+    it("conflicted return-from + blocked return-to => nil + nil", () => {
         const input: TestChangeset = [
             {
                 type: "ReturnFrom",
                 count: 1,
                 id: brand(0),
                 detachedBy: tag2,
-                mutedBy: tag,
-                isDstMuted: true,
+                conflictsWith: tag,
+                isDstConflicted: true,
             },
             {
                 type: "ReturnTo",
@@ -397,9 +397,9 @@ describe("SequenceField - Invert", () => {
                 id: brand(0),
                 detachedBy: tag2,
                 detachIndex: 0,
-                mutedBy: tag,
+                conflictsWith: tag,
                 lastDetachedBy: tag3,
-                isSrcMuted: true,
+                isSrcConflicted: true,
             },
             {
                 type: "Modify",

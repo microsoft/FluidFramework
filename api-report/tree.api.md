@@ -12,12 +12,6 @@ import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
 
-// @public (undocumented)
-interface Active {
-    // (undocumented)
-    mutedBy?: undefined;
-}
-
 // @public
 export type Anchor = Brand<number, "rebaser.Anchor">;
 
@@ -65,6 +59,9 @@ export function brandOpaque<T extends BrandedType<any, string>>(value: isAny<Val
 
 // @public (undocumented)
 export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest;
+
+// @public (undocumented)
+type CanConflict = Partial<Conflicted>;
 
 // @public
 type CellSpanningMark<TNodeChange> = Exclude<Mark_2<TNodeChange>, NewAttach<TNodeChange>>;
@@ -124,6 +121,11 @@ type ClientId = number;
 // @public
 function compose<TNodeChange>(changes: TaggedChange<Changeset<TNodeChange>>[], composeChild: NodeChangeComposer_2<TNodeChange>, genId: IdAllocator): Changeset<TNodeChange>;
 
+// @public (undocumented)
+interface Conflicted {
+    conflictsWith: RevisionTag;
+}
+
 // @public
 export type ContextuallyTypedNodeData = ContextuallyTypedNodeDataObject | PrimitiveValue | readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData>;
 
@@ -174,7 +176,7 @@ interface Delete {
 }
 
 // @public (undocumented)
-interface Delete_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasChanges<TNodeChange>, Mutable {
+interface Delete_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasChanges<TNodeChange>, CanConflict {
     // (undocumented)
     count: NodeCount;
     // (undocumented)
@@ -598,7 +600,7 @@ export interface Invariant<T> extends Contravariant<T>, Covariant<T> {
 function invert<TNodeChange>(change: TaggedChange<Changeset<TNodeChange>>, invertChild: NodeChangeInverter_2<TNodeChange>): Changeset<TNodeChange>;
 
 // @public (undocumented)
-function isActiveReattach<TNodeChange>(mark: Mark_2<TNodeChange>): mark is Reattach<TNodeChange> & Muted;
+function isActiveReattach<TNodeChange>(mark: Mark_2<TNodeChange>): mark is Reattach<TNodeChange> & Conflicted;
 
 // @public
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
@@ -920,9 +922,9 @@ interface MoveIn {
 }
 
 // @public (undocumented)
-interface MoveIn_2 extends HasMoveId, HasPlaceFields, HasRevisionTag, Mutable {
+interface MoveIn_2 extends HasMoveId, HasPlaceFields, HasRevisionTag, CanConflict {
     count: NodeCount;
-    isSrcMuted?: true;
+    isSrcConflicted?: true;
     // (undocumented)
     type: "MoveIn";
 }
@@ -949,10 +951,10 @@ interface MoveOut {
 }
 
 // @public (undocumented)
-interface MoveOut_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMoveId, HasChanges<TNodeChange>, Mutable {
+interface MoveOut_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMoveId, HasChanges<TNodeChange>, CanConflict {
     // (undocumented)
     count: NodeCount;
-    isDstMuted?: true;
+    isDstConflicted?: true;
     // (undocumented)
     tomb?: RevisionTag;
     // (undocumented)
@@ -979,18 +981,6 @@ export enum Multiplicity {
     Optional = 1,
     Sequence = 2,
     Value = 0
-}
-
-// @public (undocumented)
-interface Mutable {
-    // (undocumented)
-    mutedBy?: RevisionTag;
-}
-
-// @public (undocumented)
-interface Muted {
-    // (undocumented)
-    mutedBy: RevisionTag;
 }
 
 // @public (undocumented)
@@ -1171,21 +1161,21 @@ export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepair
 export const replaceField: unique symbol;
 
 // @public (undocumented)
-interface ReturnFrom<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMoveId, HasChanges<TNodeChange>, Mutable {
+interface ReturnFrom<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMoveId, HasChanges<TNodeChange>, CanConflict {
     // (undocumented)
     count: NodeCount;
     detachedBy: RevisionTag | undefined;
     detachIndex?: number;
-    isDstMuted?: true;
+    isDstConflicted?: true;
     // (undocumented)
     type: "ReturnFrom";
 }
 
 // @public (undocumented)
-interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId, Mutable {
+interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId, CanConflict {
     // (undocumented)
     count: NodeCount;
-    isSrcMuted?: true;
+    isSrcConflicted?: true;
     // (undocumented)
     type: "ReturnTo";
 }
@@ -1194,7 +1184,7 @@ interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId, Mutable
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
 
 // @public (undocumented)
-interface Revive<TNodeChange = NodeChangeType> extends HasReattachFields, HasRevisionTag, HasChanges<TNodeChange>, Mutable {
+interface Revive<TNodeChange = NodeChangeType> extends HasReattachFields, HasRevisionTag, HasChanges<TNodeChange>, CanConflict {
     // (undocumented)
     count: NodeCount;
     // (undocumented)
@@ -1279,9 +1269,8 @@ declare namespace SequenceField {
         Skip_2 as Skip,
         LineageEvent,
         HasReattachFields,
-        Active,
-        Muted,
-        Mutable,
+        Conflicted,
+        CanConflict,
         SequenceFieldChangeHandler,
         sequenceFieldChangeHandler,
         SequenceChangeRebaser,
@@ -1407,12 +1396,12 @@ type Skip = number;
 type Skip_2 = number;
 
 // @public
-type SkipLikeReattach<TNodeChange> = Reattach<TNodeChange> & Muted & {
+type SkipLikeReattach<TNodeChange> = Reattach<TNodeChange> & Conflicted & {
     lastDeletedBy?: never;
 };
 
 // @public
-function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(mark: TMark, length: number, genId: IdAllocator, moveEffects: MoveEffectTable<unknown>, allowUnpairedMark?: boolean): [TMark, TMark];
+function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(mark: TMark, length: number, genId: IdAllocator, moveEffects: MoveEffectTable<unknown>, ignorePairing?: boolean): [TMark, TMark];
 
 // @public
 export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, SchemaDataAndPolicy<TPolicy> {

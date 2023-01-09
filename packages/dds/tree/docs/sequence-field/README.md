@@ -26,12 +26,12 @@ The rebase state-machine for an intentional `Revive` is as follows:
 stateDiagram-v2
     direction LR
     [*] --> Active
-    Active --> Muted: ↷ Revive
-    Muted --> Active: ↷ Delete
+    Active --> Conflicted: ↷ Revive
+    Conflicted --> Active: ↷ Delete
 ```
 
-The active `Revive` becomes muted when rebased over another `Revive`.
-The muted `Revive` becomes active when rebased over a delete.
+The active `Revive` becomes conflicted when rebased over another `Revive`.
+The conflicted `Revive` becomes active when rebased over a delete.
 
 ## Revert-Only Reattach
 
@@ -52,12 +52,12 @@ The rebase state-machine for an revert-only `Revive` is as follows:
 stateDiagram-v2
     direction LR
     [*] --> Active
-    Active --> Muted: ↷ Revive
-    Muted --> Active: ↷ Delete (inverse of revive)
-    Muted --> Blocked: ↷ Delete (not inverse of revive)
-    Blocked --> Muted: ↷ Revive
+    Active --> Conflicted: ↷ Revive
+    Conflicted --> Active: ↷ Delete (inverse of revive)
+    Conflicted --> Blocked: ↷ Delete (not inverse of revive)
+    Blocked --> Conflicted: ↷ Revive
 ```
 
-The key difference with the intentional `Revive` is that when a muted revert-only `Revive` is rebased over a delete,
-the `Revive` only becomes active again if the delete was the inverse of the `Revive` that muted the revert-only `Revive`.
+The key difference with the intentional `Revive` is that when a conflicted revert-only `Revive` is rebased over a delete,
+the `Revive` only becomes active again if the delete was the inverse of the `Revive` that conflicted the revert-only `Revive`.
 If it isn't, then the revert-only `Revive` becomes blocked and can only be unblocked by the nodes being revived again.

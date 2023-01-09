@@ -8,7 +8,7 @@ import { RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
 import { Changeset, Mark, MarkList, MoveId } from "./format";
 import { MarkListFactory } from "./markListFactory";
-import { getInputLength, isMuted, isObjMark, isSkipMark } from "./utils";
+import { getInputLength, isConflicted, isObjMark, isSkipMark } from "./utils";
 
 export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChange;
 
@@ -76,7 +76,7 @@ function invertMark<TNodeChange>(
                 ];
             }
             case "Revive": {
-                if (!isMuted(mark)) {
+                if (!isConflicted(mark)) {
                     return [
                         {
                             type: "Delete",
@@ -108,7 +108,7 @@ function invertMark<TNodeChange>(
             }
             case "MoveOut":
             case "ReturnFrom": {
-                if (isMuted(mark)) {
+                if (isConflicted(mark)) {
                     assert(
                         mark.changes === undefined,
                         "Nested changes should have been moved to the destination of the move/return that detached them",
@@ -116,8 +116,8 @@ function invertMark<TNodeChange>(
                     // The nodes were already detached so the mark had no effect
                     return [];
                 }
-                if (mark.isDstMuted) {
-                    // The nodes were present but the destination was muted, the mark had no effect on the nodes.
+                if (mark.isDstConflicted) {
+                    // The nodes were present but the destination was conflicted, the mark had no effect on the nodes.
                     return mark.changes === undefined
                         ? [mark.count]
                         : [
@@ -142,8 +142,8 @@ function invertMark<TNodeChange>(
             }
             case "MoveIn":
             case "ReturnTo": {
-                if (!isMuted(mark)) {
-                    if (mark.isSrcMuted) {
+                if (!isConflicted(mark)) {
+                    if (mark.isSrcConflicted) {
                         // The nodes could have been attached but were not because of the source.
                         return [];
                     }

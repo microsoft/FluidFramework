@@ -46,17 +46,18 @@ export type OutputSpanningMark<TNodeChange> =
  * Such a Reattach has no effect when applied and is therefore akin to a Skip mark.
  */
 export type SkipLikeReattach<TNodeChange> = Reattach<TNodeChange> &
-    Muted & {
+    Conflicted & {
         lastDeletedBy?: never;
     };
 
-export interface Muteable {
-    mutedBy?: RevisionTag;
+export interface Conflicted {
+    /**
+     * The revision of the concurrent change that the mark conflicts with.
+     */
+    conflictsWith: RevisionTag;
 }
 
-export interface Muted {
-    mutedBy: RevisionTag;
-}
+export type CanConflict = Partial<Conflicted>;
 
 export interface Modify<TNodeChange = NodeChangeType> {
     type: "Modify";
@@ -121,17 +122,17 @@ export interface Insert<TNodeChange = NodeChangeType>
     content: ProtoNode[];
 }
 
-export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag, Muteable {
+export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag, CanConflict {
     type: "MoveIn";
     /**
      * The actual number of nodes being moved-in. This count excludes nodes that were concurrently deleted.
      */
     count: NodeCount;
     /**
-     * When true, the corresponding MoveOut has been muted.
-     * This is independent of whether this mark is muted.
+     * When true, the corresponding MoveOut has a conflict.
+     * This is independent of whether this mark has a conflict.
      */
-    isSrcMuted?: true;
+    isSrcConflicted?: true;
 }
 
 /**
@@ -151,7 +152,7 @@ export type Reattach<TNodeChange = NodeChangeType> = Revive<TNodeChange> | Retur
 export interface Delete<TNodeChange = NodeChangeType>
     extends HasRevisionTag,
         HasChanges<TNodeChange>,
-        Muteable {
+        CanConflict {
     type: "Delete";
     tomb?: RevisionTag;
     count: NodeCount;
@@ -161,15 +162,15 @@ export interface MoveOut<TNodeChange = NodeChangeType>
     extends HasRevisionTag,
         HasMoveId,
         HasChanges<TNodeChange>,
-        Muteable {
+        CanConflict {
     type: "MoveOut";
     count: NodeCount;
     tomb?: RevisionTag;
     /**
-     * When true, the corresponding MoveIn has been muted.
-     * This is independent of whether this mark is muted.
+     * When true, the corresponding MoveIn has a conflict.
+     * This is independent of whether this mark has a conflict.
      */
-    isDstMuted?: true;
+    isDstConflicted?: true;
 }
 
 export interface HasReattachFields extends HasPlaceFields {
@@ -212,48 +213,48 @@ export interface Revive<TNodeChange = NodeChangeType>
     extends HasReattachFields,
         HasRevisionTag,
         HasChanges<TNodeChange>,
-        Muteable {
+        CanConflict {
     type: "Revive";
     count: NodeCount;
 }
 
-export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId, Muteable {
+export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId, CanConflict {
     type: "ReturnTo";
     count: NodeCount;
     /**
-     * When true, the corresponding ReturnFrom has been muted.
-     * This is independent of whether this mark is muted.
+     * When true, the corresponding ReturnFrom has a conflict.
+     * This is independent of whether this mark has a conflict.
      */
-    isSrcMuted?: true;
+    isSrcConflicted?: true;
 }
 
 export interface ReturnFrom<TNodeChange = NodeChangeType>
     extends HasRevisionTag,
         HasMoveId,
         HasChanges<TNodeChange>,
-        Muteable {
+        CanConflict {
     type: "ReturnFrom";
     count: NodeCount;
     /**
      * Needed for detecting the following:
      * - The mark is being composed with its inverse
-     * - The mark should be unmuted
+     * - The mark should be no longer be conflicted
      *
      * Always kept consistent with `ReturnTo.detachedBy`.
      */
     detachedBy: RevisionTag | undefined;
 
     /**
-     * Only populated when the mark is muted.
-     * Indicates the index of the detach in the input context of `mutedBy`.
+     * Only populated when the mark is conflicted.
+     * Indicates the index of the detach in the input context of the change with revision `conflictsWith`.
      */
     detachIndex?: number;
 
     /**
-     * When true, the corresponding ReturnTo has been muted.
-     * This is independent of whether this mark is muted.
+     * When true, the corresponding ReturnTo has a conflict.
+     * This is independent of whether this mark has a conflict.
      */
-    isDstMuted?: true;
+    isDstConflicted?: true;
 }
 
 /**

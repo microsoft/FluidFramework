@@ -80,7 +80,7 @@ export function sequenceFieldToDelta<TNodeChange>(
                     break;
                 }
                 case "Revive": {
-                    if (mark.mutedBy === undefined) {
+                    if (mark.conflictsWith === undefined) {
                         const insertMark: Delta.Insert = {
                             type: Delta.MarkType.Insert,
                             content: reviver(

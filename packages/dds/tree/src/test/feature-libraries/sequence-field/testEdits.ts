@@ -62,14 +62,14 @@ function createReviveChangeset(
     count: number,
     detachedBy: RevisionTag,
     detachIndex: number,
-    mutedBy?: RevisionTag,
+    conflictsWith?: RevisionTag,
     linage?: SF.LineageEvent[],
     lastDetachedBy?: RevisionTag,
 ): SF.Changeset<never> {
     const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachedBy, detachIndex);
     const mark = markList[markList.length - 1] as SF.Reattach;
-    if (mutedBy !== undefined) {
-        mark.mutedBy = mutedBy;
+    if (conflictsWith !== undefined) {
+        mark.conflictsWith = conflictsWith;
     }
     if (lastDetachedBy !== undefined) {
         mark.lastDetachedBy = lastDetachedBy;
@@ -85,7 +85,7 @@ function createIntentionalReviveChangeset(
     count: number,
     detachedBy: RevisionTag,
     detachIndex: number,
-    mutedBy?: RevisionTag,
+    conflictsWith?: RevisionTag,
     linage?: SF.LineageEvent[],
 ): SF.Changeset<never> {
     const markList = SF.sequenceFieldEditor.revive(
@@ -96,8 +96,8 @@ function createIntentionalReviveChangeset(
         true,
     );
     const mark = markList[markList.length - 1] as SF.Reattach;
-    if (mutedBy !== undefined) {
-        mark.mutedBy = mutedBy;
+    if (conflictsWith !== undefined) {
+        mark.conflictsWith = conflictsWith;
     }
     if (linage !== undefined) {
         mark.lineage = linage;

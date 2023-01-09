@@ -27,8 +27,8 @@ import {
     ReturnFrom,
     ReturnTo,
     Skip,
-    Muted,
-    Muteable,
+    Conflicted,
+    CanConflict,
     OutputSpanningMark,
     Changeset,
     SkipLikeReattach,
@@ -57,41 +57,41 @@ export function isReattach<TNodeChange>(mark: Mark<TNodeChange>): mark is Reatta
 
 export function isActiveReattach<TNodeChange>(
     mark: Mark<TNodeChange>,
-): mark is Reattach<TNodeChange> & Muted {
-    // No need to check Reattach.lastDeletedBy because it can only be set if the mark is muted
-    return isReattach(mark) && !isMuted(mark);
+): mark is Reattach<TNodeChange> & Conflicted {
+    // No need to check Reattach.lastDeletedBy because it can only be set if the mark is conflicted
+    return isReattach(mark) && !isConflicted(mark);
 }
 
-export function isMutedReattach<TNodeChange>(
+export function isConflictedReattach<TNodeChange>(
     mark: Mark<TNodeChange>,
-): mark is Reattach<TNodeChange> & Muted {
-    return isReattach(mark) && isMuted(mark);
+): mark is Reattach<TNodeChange> & Conflicted {
+    return isReattach(mark) && isConflicted(mark);
 }
 
-export function isMutedDetach<TNodeChange>(
+export function isConflictedDetach<TNodeChange>(
     mark: Mark<TNodeChange>,
-): mark is Detach<TNodeChange> & Muted {
-    return isDetachMark(mark) && isMuted(mark);
+): mark is Detach<TNodeChange> & Conflicted {
+    return isDetachMark(mark) && isConflicted(mark);
 }
 
 export function isSkipLikeReattach<TNodeChange>(
     mark: Mark<TNodeChange>,
 ): mark is SkipLikeReattach<TNodeChange> {
-    return isMutedReattach(mark) && mark.lastDetachedBy === undefined;
+    return isConflictedReattach(mark) && mark.lastDetachedBy === undefined;
 }
 
 export function isSkipLikeDetach<TNodeChange>(mark: Mark<TNodeChange>): boolean {
-    return isDetachMark(mark) && mark.type !== "Delete" && mark.isDstMuted === true;
+    return isDetachMark(mark) && mark.type !== "Delete" && mark.isDstConflicted === true;
 }
 
 export function isBlockedReattach<TNodeChange>(
     mark: Mark<TNodeChange>,
-): mark is Reattach<TNodeChange> & Muted {
-    return isMutedReattach(mark) && mark.lastDetachedBy !== undefined;
+): mark is Reattach<TNodeChange> & Conflicted {
+    return isConflictedReattach(mark) && mark.lastDetachedBy !== undefined;
 }
 
-export function isMuted(mark: Muteable): mark is Muted {
-    return mark.mutedBy !== undefined;
+export function isConflicted(mark: CanConflict): mark is Conflicted {
+    return mark.conflictsWith !== undefined;
 }
 
 export function getAttachLength(attach: Attach): number {
@@ -151,7 +151,7 @@ export function getOutputLength(mark: Mark<unknown>, ignorePairing: boolean = fa
     const type = mark.type;
     switch (type) {
         case "ReturnTo":
-            return mark.isSrcMuted && !ignorePairing ? 0 : mark.count;
+            return mark.isSrcConflicted && !ignorePairing ? 0 : mark.count;
         case "Revive":
         case "MoveIn":
             return mark.count;
@@ -160,7 +160,7 @@ export function getOutputLength(mark: Mark<unknown>, ignorePairing: boolean = fa
         case "Modify":
             return 1;
         case "ReturnFrom":
-            return mark.isDstMuted && !ignorePairing ? mark.count : 0;
+            return mark.isDstConflicted && !ignorePairing ? mark.count : 0;
         case "Delete":
         case "MoveOut":
             return 0;
@@ -185,7 +185,7 @@ export function getInputLength(mark: Mark<unknown>): number {
         case "Delete":
         case "MoveOut":
         case "ReturnFrom":
-            return isMuted(mark) ? 0 : mark.count;
+            return isConflicted(mark) ? 0 : mark.count;
         case "Modify":
             return 1;
         default:
@@ -444,8 +444,8 @@ export function tryExtendMark(
             if (
                 isEqualPlace(lhsMoveIn, rhs) &&
                 moveEffects !== undefined &&
-                lhsMoveIn.mutedBy === rhs.mutedBy &&
-                lhsMoveIn.isSrcMuted === rhs.isSrcMuted
+                lhsMoveIn.conflictsWith === rhs.conflictsWith &&
+                lhsMoveIn.isSrcConflicted === rhs.isSrcConflicted
             ) {
                 if (lhsMoveIn.type === "ReturnTo") {
                     // Verify that the ReturnTo fields line up
@@ -489,8 +489,8 @@ export function tryExtendMark(
             const lhsMoveOut = lhs as MoveOut | ReturnFrom;
             if (
                 moveEffects !== undefined &&
-                lhsMoveOut.mutedBy === rhs.mutedBy &&
-                lhsMoveOut.isDstMuted === rhs.isDstMuted
+                lhsMoveOut.conflictsWith === rhs.conflictsWith &&
+                lhsMoveOut.isDstConflicted === rhs.isDstConflicted
             ) {
                 if (
                     lhsMoveOut.type === "ReturnFrom" &&
@@ -523,7 +523,7 @@ export function tryExtendMark(
             const lhsReattach = lhs as Reattach;
             if (
                 rhs.detachedBy === lhsReattach.detachedBy &&
-                rhs.mutedBy === lhsReattach.mutedBy &&
+                rhs.conflictsWith === lhsReattach.conflictsWith &&
                 rhs.isIntention === lhsReattach.isIntention &&
                 rhs.lastDetachedBy === lhsReattach.lastDetachedBy &&
                 lhsReattach.detachIndex + lhsReattach.count === rhs.detachIndex
@@ -542,8 +542,8 @@ export function tryExtendMark(
 function areMergeableReturnFrom(lhs: ReturnFrom, rhs: ReturnFrom): boolean {
     if (
         lhs.detachedBy !== rhs.detachedBy ||
-        lhs.mutedBy !== rhs.mutedBy ||
-        lhs.isDstMuted !== rhs.isDstMuted ||
+        lhs.conflictsWith !== rhs.conflictsWith ||
+        lhs.isDstConflicted !== rhs.isDstConflicted ||
         lhs.revision !== rhs.revision
     ) {
         return false;
@@ -919,9 +919,9 @@ export function splitMoveIn<T>(
                 cumulativeCount += portion.count;
                 if (updatePairedMarkStatus && part.pairedMarkStatus !== undefined) {
                     if (part.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
-                        returnTo.isSrcMuted = true;
+                        returnTo.isSrcConflicted = true;
                     } else {
-                        delete returnTo.isSrcMuted;
+                        delete returnTo.isSrcConflicted;
                     }
                 }
             }
@@ -964,12 +964,12 @@ export function splitMoveOut<T>(
             if (updatePairedMarkStatus && part.pairedMarkStatus !== undefined) {
                 assert(
                     splitMark.type === "ReturnFrom",
-                    "TODO: support updating MoveOut.isSrcMuted",
+                    "TODO: support updating MoveOut.isSrcConflicted",
                 );
                 if (part.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
-                    splitMark.isDstMuted = true;
+                    splitMark.isDstConflicted = true;
                 } else {
-                    delete splitMark.isDstMuted;
+                    delete splitMark.isDstConflicted;
                 }
             }
             if (part.detachedBy !== undefined) {
@@ -979,10 +979,10 @@ export function splitMoveOut<T>(
                 );
                 splitMark.detachedBy = part.detachedBy;
             }
-            if (splitMark.type === "ReturnFrom" && isMuted(mark)) {
+            if (splitMark.type === "ReturnFrom" && isConflicted(mark)) {
                 assert(
                     splitMark.detachIndex !== undefined,
-                    "Muted ReturnFrom should have a detachIndex",
+                    "Conflicted ReturnFrom should have a detachIndex",
                 );
                 const returnFrom = splitMark as ReturnFrom;
                 returnFrom.detachIndex = splitMark.detachIndex + cumulativeCount;

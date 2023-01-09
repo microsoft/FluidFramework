@@ -538,7 +538,7 @@ describe("SequenceField - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("revive ○ muted revive", () => {
+    it("revive ○ conflicted revive", () => {
         const reviveA = Change.revive(0, 2, tag1, 0);
         const reviveB = Change.revive(0, 2, tag1, 0, tag2);
         const expected: SF.Changeset = [
