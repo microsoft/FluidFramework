@@ -43,6 +43,7 @@ import {
     defaultInactiveTimeoutMs,
     gcTestModeKey,
     disableSweepLogKey,
+    currentGCVersion,
 } from "../garbageCollectionConstants";
 
 import { dataStoreAttributesBlobName, GCVersion, IContainerRuntimeMetadata, IGCMetadata } from "../summaryFormat";
@@ -217,7 +218,8 @@ describe("Garbage Collection Tests", () => {
                 };
                 gc = createGcWithPrivateMembers(inputMetadata);
                 const outputMetadata = gc.getMetadata();
-                assert.deepEqual(outputMetadata, inputMetadata, "getMetadata returned different metadata than loaded from");
+                const expectedOutputMetadata: IGCMetadata = { ...inputMetadata, gcFeature: currentGCVersion };
+                assert.deepEqual(outputMetadata, expectedOutputMetadata, "getMetadata returned different metadata than loaded from");
             });
         });
 
@@ -229,7 +231,7 @@ describe("Garbage Collection Tests", () => {
                 assert(!gc.sweepEnabled, "sweepEnabled incorrect");
                 assert(gc.sessionExpiryTimeoutMs !== undefined, "sessionExpiryTimeoutMs incorrect");
                 assert(gc.sweepTimeoutMs !== undefined, "sweepTimeoutMs incorrect");
-                assert.equal(gc.latestSummaryGCVersion, 1, "latestSummaryGCVersion incorrect");
+                assert.equal(gc.latestSummaryGCVersion, currentGCVersion, "latestSummaryGCVersion incorrect");
             });
             it("gcAllowed true", () => {
                 gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: true });
@@ -296,7 +298,7 @@ describe("Garbage Collection Tests", () => {
                 injectedSettings[runSessionExpiryKey] = true;
                 const expectedMetadata: IGCMetadata = {
                     sweepEnabled: true,
-                    gcFeature: 1,
+                    gcFeature: currentGCVersion,
                     sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
                     sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
                 };
@@ -373,7 +375,7 @@ describe("Garbage Collection Tests", () => {
 
                 const expectedMetadata: IGCMetadata = {
                     sweepEnabled: false,
-                    gcFeature: 1,
+                    gcFeature: currentGCVersion,
                     sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
                     sweepTimeoutMs: expectedSweepTimeoutMs,
                 };

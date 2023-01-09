@@ -3,6 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { GCVersion } from "./summaryFormat";
+
+/** The stable version of garbage collection in production. */
+export const stableGCVersion: GCVersion = 1;
+/** The current version of garbage collection. */
+export const currentGCVersion: GCVersion = 2;
+
 // Feature gate key to turn GC on / off.
 export const runGCKey = "Fluid.GarbageCollection.RunGC";
 // Feature gate key to turn GC sweep on / off.

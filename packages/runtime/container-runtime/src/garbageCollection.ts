@@ -50,6 +50,7 @@ import {
 import { IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
 import {
+    currentGCVersion,
     defaultInactiveTimeoutMs,
     defaultSessionExpiryDurationMs,
     disableGCVersionUpgradeKey,
@@ -60,6 +61,7 @@ import {
     runGCKey,
     runSessionExpiryKey,
     runSweepKey,
+    stableGCVersion,
     throwOnTombstoneUsageKey,
     trackGCStateKey
 } from "./garbageCollectionConstants";
@@ -74,12 +76,6 @@ import {
     IGCMetadata,
     ICreateContainerMetadata,
 } from "./summaryFormat";
-
-
-/** The stable version of garbage collection in production. */
-const stableGCVersion: GCVersion = 1;
-/** The current version of garbage collection. */
-const currentGCVersion: GCVersion = 2;
 
 /** The statistics of the system state after a garbage collection run. */
 export interface IGCStats {
