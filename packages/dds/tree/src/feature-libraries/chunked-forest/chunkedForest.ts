@@ -94,10 +94,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
     applyDelta(delta: Delta.Root): void {
         this.events.emit("beforeDelta", delta);
         this.invalidateDependents();
-        assert(
-            this.currentCursors.size === 0,
-            0x374 /* No cursors can be current when modifying forest */,
-        );
+        assert(this.currentCursors.size === 0, "No cursors can be current when modifying forest");
 
         // Note: This code uses cursors, however it also modifies the tree.
         // In general this is not safe, but this code happens to only modify the tree below the current cursor location,
@@ -146,7 +143,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
                 const toAttach = moves.get(id) ?? fail("move in without move out");
                 moves.delete(id);
                 const countMoved = moveIn(index, toAttach);
-                assert(countMoved === count, 0x369 /* counts must match */);
+                assert(countMoved === count, "counts must match");
             },
             onSetValue: (value: Value): void => {
                 const node = cursor.getNode();
@@ -182,7 +179,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
     private addFieldAsDetached(field: ObjectField): DetachedField {
         const detached = this.newDetachedField();
         const key = detachedFieldAsKey(detached);
-        assert(!this.roots.fields.has(key), 0x370 /* new range must not already exist */);
+        assert(!this.roots.fields.has(key), "new range must not already exist");
         if (field.length > 0) {
             this.roots.fields.set(key, field);
         }
@@ -196,7 +193,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
     ): DetachedField {
         assertValidIndex(startIndex, field, true);
         assertValidIndex(endIndex, field, true);
-        assert(startIndex <= endIndex, 0x371 /* detached range's end must be after its start */);
+        assert(startIndex <= endIndex, "detached range's end must be after its start");
         const newField = field.splice(startIndex, endIndex - startIndex);
         return this.addFieldAsDetached(newField);
     }
@@ -245,12 +242,9 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
     moveCursorToPath(destination: UpPath | undefined, cursorToMove: ITreeSubscriptionCursor): void {
         assert(
             cursorToMove instanceof Cursor,
-            0x337 /* ObjectForest must only be given its own Cursor type */,
+            "ObjectForest must only be given its own Cursor type",
         );
-        assert(
-            cursorToMove.forest === this,
-            0x338 /* ObjectForest must only be given its own Cursor */,
-        );
+        assert(cursorToMove.forest === this, "ObjectForest must only be given its own Cursor");
 
         const indexStack: number[] = [];
         const keyStack: FieldKey[] = [];
@@ -274,12 +268,12 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 }
 
 function assertValidIndex(index: number, array: unknown[], allowOnePastEnd: boolean = false) {
-    assert(Number.isInteger(index), 0x376 /* index must be an integer */);
-    assert(index >= 0, 0x377 /* index must be non-negative */);
+    assert(Number.isInteger(index), "index must be an integer");
+    assert(index >= 0, "index must be non-negative");
     if (allowOnePastEnd) {
-        assert(index <= array.length, 0x378 /* index must be less than or equal to length */);
+        assert(index <= array.length, "index must be less than or equal to length");
     } else {
-        assert(index < array.length, 0x379 /* index must be less than length */);
+        assert(index < array.length, "index must be less than length");
     }
 }
 
@@ -315,93 +309,90 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
         return { parent: anchor, fieldKey: path.field };
     }
     getFieldPath(): FieldUpPath {
-        assert(this.innerCursor !== undefined, 0x45f /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.getFieldPath();
     }
     get mode(): CursorLocationType {
-        assert(this.innerCursor !== undefined, 0x42e /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.mode;
     }
 
     nextField(): boolean {
-        assert(this.innerCursor !== undefined, 0x42f /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.nextField();
     }
     exitField(): void {
-        assert(this.innerCursor !== undefined, 0x430 /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.exitField();
     }
     skipPendingFields(): boolean {
-        assert(this.innerCursor !== undefined, 0x431 /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.skipPendingFields();
     }
     getFieldKey(): FieldKey {
-        assert(this.innerCursor !== undefined, 0x432 /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.getFieldKey();
     }
     getFieldLength(): number {
-        assert(this.innerCursor !== undefined, 0x433 /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.getFieldLength();
     }
     firstNode(): boolean {
-        assert(this.innerCursor !== undefined, 0x434 /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.firstNode();
     }
     enterNode(childIndex: number): void {
-        assert(this.innerCursor !== undefined, 0x435 /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.enterNode(childIndex);
     }
     getPath(): UpPath {
-        assert(this.innerCursor !== undefined, 0x436 /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.getPath() ?? fail("no path when at root");
     }
     get fieldIndex(): number {
-        assert(this.innerCursor !== undefined, 0x437 /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.fieldIndex;
     }
     get chunkStart(): number {
-        assert(this.innerCursor !== undefined, 0x438 /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.chunkStart;
     }
     get chunkLength(): number {
-        assert(this.innerCursor !== undefined, 0x439 /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.chunkLength;
     }
     seekNodes(offset: number): boolean {
-        assert(this.innerCursor !== undefined, 0x43a /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.seekNodes(offset);
     }
     nextNode(): boolean {
-        assert(this.innerCursor !== undefined, 0x43b /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.nextNode();
     }
     exitNode(): void {
-        assert(this.innerCursor !== undefined, 0x43c /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.exitNode();
     }
     firstField(): boolean {
-        assert(this.innerCursor !== undefined, 0x43d /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.firstField();
     }
     enterField(key: FieldKey): void {
-        assert(this.innerCursor !== undefined, 0x43e /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.enterField(key);
     }
     get type(): TreeSchemaIdentifier {
-        assert(this.innerCursor !== undefined, 0x43f /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.type;
     }
     get value(): TreeValue {
-        assert(this.innerCursor !== undefined, 0x440 /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.value;
     }
 
     // TODO: tests for clear when not at root.
     public clear(): void {
-        assert(
-            this.state !== ITreeSubscriptionCursorState.Freed,
-            0x33b /* Cursor must not be freed */,
-        );
+        assert(this.state !== ITreeSubscriptionCursorState.Freed, "Cursor must not be freed");
         this.state = ITreeSubscriptionCursorState.Cleared;
         this.innerCursor = undefined;
         this.forest.currentCursors.delete(this);
@@ -412,10 +403,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
      * Can be used when cleared (but not freed).
      */
     public setToAboveDetachedSequences(): void {
-        assert(
-            this.state !== ITreeSubscriptionCursorState.Freed,
-            0x33c /* Cursor must not be freed */,
-        );
+        assert(this.state !== ITreeSubscriptionCursorState.Freed, "Cursor must not be freed");
         this.clear();
         this.state = ITreeSubscriptionCursorState.Current;
         this.innerCursor = singleMapTreeCursor(this.forest.roots);
@@ -423,12 +411,12 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
     }
 
     getNode(): MapTree {
-        assert(this.innerCursor !== undefined, 0x33e /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return this.innerCursor.getNode();
     }
 
     getParent(): [MapTree, FieldKey] {
-        assert(this.innerCursor !== undefined, 0x441 /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         // This could be optimized to skip moving it accessing internals of cursor.
         const key = this.innerCursor.getFieldKey();
         this.innerCursor.exitField();
@@ -438,14 +426,14 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
     }
 
     fork(): ITreeSubscriptionCursor {
-        assert(this.innerCursor !== undefined, 0x460 /* Cursor must be current to be used */);
+        assert(this.innerCursor !== undefined, "Cursor must be current to be used");
         return new Cursor(this.forest, this.innerCursor.fork());
     }
 
     free(): void {
         assert(
             this.state !== ITreeSubscriptionCursorState.Freed,
-            0x33f /* Cursor must not be double freed */,
+            "Cursor must not be double freed",
         );
         this.forest.currentCursors.delete(this);
         this.state = ITreeSubscriptionCursorState.Freed;
@@ -454,7 +442,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
     buildAnchor(): Anchor {
         assert(
             this.state === ITreeSubscriptionCursorState.Current,
-            0x37a /* Cursor must be current to be used */,
+            "Cursor must be current to be used",
         );
         return this.forest.anchors.track(this.getPath());
     }
