@@ -90,10 +90,11 @@ export function testForest(
                     const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
                     const forest = factory(schema);
 
-                    schema.update(jsonSchemaData);
-
                     const rootFieldSchema = fieldSchema(FieldKinds.optional, jsonRoot.types);
-                    schema.updateFieldSchema(rootFieldKey, rootFieldSchema);
+                    schema.update({
+                        ...jsonSchemaData,
+                        globalFieldSchema: new Map([[rootFieldKey, rootFieldSchema]]),
+                    });
 
                     // Check schema is actually valid. If we forgot to add some required types this would fail.
                     assert(!isNeverField(defaultSchemaPolicy, schema, rootFieldSchema));
