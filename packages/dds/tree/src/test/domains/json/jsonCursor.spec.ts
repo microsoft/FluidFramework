@@ -46,13 +46,13 @@ const testCases: readonly [string, readonly JsonCompatible[]][] = [
     ],
 ];
 
-const cursors: { name: string; data: JsonCompatible }[] = [];
+const cursors: { name: string; dataFactory: () => JsonCompatible }[] = [];
 
 for (const [name, testValues] of testCases) {
     for (const data of testValues) {
         cursors.push({
             name: `${name}: ${JSON.stringify(data)}`,
-            data,
+            dataFactory: () => data,
         });
     }
 }
