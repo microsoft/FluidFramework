@@ -5,7 +5,7 @@
 import * as Path from "node:path";
 
 import { ApiItem, ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
-import { FileSystem } from "@rushstack/node-core-library";
+import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { compare } from "dir-compare";
 import { Suite } from "mocha";
@@ -186,6 +186,7 @@ describe("api-markdown-documenter full-suite tests", () => {
      */
     const defaultConfig: Omit<MarkdownDocumenterConfiguration, "apiModel"> = {
         uriRoot: ".",
+        newlineKind: NewlineKind.Lf,
     };
 
     /**
@@ -193,6 +194,7 @@ describe("api-markdown-documenter full-suite tests", () => {
      */
     const flatConfig: Omit<MarkdownDocumenterConfiguration, "apiModel"> = {
         uriRoot: "docs",
+        newlineKind: NewlineKind.Lf,
         includeBreadcrumb: true,
         includeTopLevelDocumentHeading: false,
         documentBoundaries: [], // Render everything to package documents
@@ -205,6 +207,7 @@ describe("api-markdown-documenter full-suite tests", () => {
      */
     const sparseConfig: Omit<MarkdownDocumenterConfiguration, "apiModel"> = {
         uriRoot: "docs",
+        newlineKind: NewlineKind.Lf,
         includeBreadcrumb: false,
         includeTopLevelDocumentHeading: true,
         // Render everything to its own document
