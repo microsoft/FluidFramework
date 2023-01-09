@@ -44,6 +44,8 @@ import {
     gcTestModeKey,
     disableSweepLogKey,
     currentGCVersion,
+    stableGCVersion,
+    enableGCVersionUpgradeKey,
 } from "../garbageCollectionConstants";
 
 import { dataStoreAttributesBlobName, GCVersion, IContainerRuntimeMetadata, IGCMetadata } from "../summaryFormat";
@@ -218,6 +220,19 @@ describe("Garbage Collection Tests", () => {
                 };
                 gc = createGcWithPrivateMembers(inputMetadata);
                 const outputMetadata = gc.getMetadata();
+                const expectedOutputMetadata: IGCMetadata = { ...inputMetadata, gcFeature: stableGCVersion };
+                assert.deepEqual(outputMetadata, expectedOutputMetadata, "getMetadata returned different metadata than loaded from");
+            });
+            it("Metadata Roundtrip with GC version upgrade enabled", () => {
+                injectedSettings[enableGCVersionUpgradeKey] = true;
+                const inputMetadata: IGCMetadata = {
+                    sweepEnabled: true,
+                    gcFeature: 1,
+                    sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
+                    sweepTimeoutMs: 123,
+                };
+                gc = createGcWithPrivateMembers(inputMetadata);
+                const outputMetadata = gc.getMetadata();
                 const expectedOutputMetadata: IGCMetadata = { ...inputMetadata, gcFeature: currentGCVersion };
                 assert.deepEqual(outputMetadata, expectedOutputMetadata, "getMetadata returned different metadata than loaded from");
             });
@@ -231,7 +246,7 @@ describe("Garbage Collection Tests", () => {
                 assert(!gc.sweepEnabled, "sweepEnabled incorrect");
                 assert(gc.sessionExpiryTimeoutMs !== undefined, "sessionExpiryTimeoutMs incorrect");
                 assert(gc.sweepTimeoutMs !== undefined, "sweepTimeoutMs incorrect");
-                assert.equal(gc.latestSummaryGCVersion, currentGCVersion, "latestSummaryGCVersion incorrect");
+                assert.equal(gc.latestSummaryGCVersion, stableGCVersion, "latestSummaryGCVersion incorrect");
             });
             it("gcAllowed true", () => {
                 gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: true });
@@ -296,6 +311,19 @@ describe("Garbage Collection Tests", () => {
             });
             it("Metadata Roundtrip", () => {
                 injectedSettings[runSessionExpiryKey] = true;
+                const expectedMetadata: IGCMetadata = {
+                    sweepEnabled: true,
+                    gcFeature: 1,
+                    sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
+                    sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
+                };
+                gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: true });
+                const outputMetadata = gc.getMetadata();
+                assert.deepEqual(outputMetadata, expectedMetadata, "getMetadata returned different metadata than expected");
+            });
+            it("Metadata Roundtrip with GC version upgrade enabled", () => {
+                injectedSettings[runSessionExpiryKey] = true;
+                injectedSettings[enableGCVersionUpgradeKey] = true;
                 const expectedMetadata: IGCMetadata = {
                     sweepEnabled: true,
                     gcFeature: currentGCVersion,
@@ -375,7 +403,7 @@ describe("Garbage Collection Tests", () => {
 
                 const expectedMetadata: IGCMetadata = {
                     sweepEnabled: false,
-                    gcFeature: currentGCVersion,
+                    gcFeature: 1,
                     sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
                     sweepTimeoutMs: expectedSweepTimeoutMs,
                 };
