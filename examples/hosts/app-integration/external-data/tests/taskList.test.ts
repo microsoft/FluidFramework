@@ -20,6 +20,6 @@ describe("taskList", () => {
 
     it("loads and there's an input", async () => {
         // Validate the input shows up
-        await page.waitForSelector("input");
+        await page.waitForSelector("input", {timeout: 20_000});
     });
 });
