@@ -7,6 +7,9 @@ import type {
 
 import { DocumentationNodeType } from "./DocumentationNodeType";
 
+// TODOs:
+// - Make SingleLineTextNode actually typesafe
+
 /**
  * Base type for documentation nodes.
  */

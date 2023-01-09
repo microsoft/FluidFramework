@@ -18,14 +18,14 @@ Here are some remarks about the enum
 
 Some example  
 ```typescript
-const foo = TestEnum.TestEnumValue1<br/><br/>
+const foo = TestEnum.TestEnumValue1
 ```  
 
 ### Example 2 {#testenum-example2}
 
 Another example  
 ```ts
-const bar = TestEnum.TestEnumValue2<br/><br/>
+const bar = TestEnum.TestEnumValue2
 ```  
 
 ## Flags

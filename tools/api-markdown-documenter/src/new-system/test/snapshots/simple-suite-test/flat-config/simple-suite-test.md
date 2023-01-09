@@ -20,7 +20,7 @@ Also, here is a link test, including a bad link, because we should have some rea
 
 A test example  
 ```typescript
-const foo = bar;<br/><br/>
+const foo = bar;
 ```  
 
 ## Interfaces
@@ -764,14 +764,14 @@ Here are some remarks about the enum
 
 Some example  
 ```typescript
-const foo = TestEnum.TestEnumValue1<br/><br/>
+const foo = TestEnum.TestEnumValue1
 ```  
 
 ##### Example 2 {#testenum-example2}
 
 Another example  
 ```ts
-const bar = TestEnum.TestEnumValue2<br/><br/>
+const bar = TestEnum.TestEnumValue2
 ```  
 
 #### Flags
@@ -1012,14 +1012,14 @@ Here are some remarks about the namespace
 
 Example 1  
 ```typescript
-const foo = bar;<br/><br/>
+const foo = bar;
 ```  
 
 ##### Example 2 {#testnamespace-example2}
 
 Example 2  
 ```javascript
-const bar = foo<br/><br/>
+const bar = foo
 ```  
 
 #### Interfaces

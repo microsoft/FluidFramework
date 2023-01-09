@@ -5,7 +5,7 @@
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
-import { compareNodeArrays } from "./Utilities";
+import { compareNodeArrays, createNodesFromPlainText } from "./Utilities";
 
 export interface TextFormatting {
     /**
@@ -27,7 +27,7 @@ export interface TextFormatting {
     // TODO: what else?
 }
 
-export function compareTextFormatting(a: TextFormatting, b: TextFormatting): boolean {
+function compareTextFormatting(a: TextFormatting, b: TextFormatting): boolean {
     return a.bold === b.bold && a.italic === b.italic && a.strikethrough === b.strikethrough;
 }
 
@@ -49,11 +49,12 @@ export class SpanNode<
         this.textFormatting = formatting;
     }
 
-    public static createFromPlainText(
-        text: string,
-        formatting?: TextFormatting,
-    ): SingleLineSpanNode<PlainTextNode> {
-        return new SpanNode([new PlainTextNode(text)], formatting);
+    /**
+     * Generates an `SpanNode` from the provided string.
+     * @param text - The node contents.
+     */
+    public static createFromPlainText(text: string, formatting?: TextFormatting): SpanNode {
+        return new SpanNode(createNodesFromPlainText(text), formatting);
     }
 
     /**
@@ -89,3 +90,15 @@ export class SpanNode<
 export type SingleLineSpanNode<
     TDocumentationNode extends SingleLineElementNode = SingleLineElementNode,
 > = SpanNode<TDocumentationNode>;
+
+/**
+ * Generates an {@link SingleLineSpanNode} from the provided string.
+ * @param text - The node contents. Note: must not contain newline characters.
+ * @param formatting - See {@link SpanNode.formatting}
+ */
+export function createSingleLineSpanFromPlainText(
+    text: string,
+    formatting?: TextFormatting,
+): SingleLineSpanNode {
+    return new SpanNode<PlainTextNode>([new PlainTextNode(text)], formatting);
+}

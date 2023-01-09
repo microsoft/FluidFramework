@@ -5,9 +5,8 @@
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { LineBreakNode } from "./LineBreakNode";
-import { PlainTextNode } from "./PlainTextNode";
 import { SpanNode } from "./SpanNode";
-import { compareNodeArrays } from "./Utilities";
+import { compareNodeArrays, createNodesFromPlainText } from "./Utilities";
 
 export type ParagraphChildren =
     | LineBreakNode
@@ -24,8 +23,12 @@ export class ParagraphNode extends ParentNodeBase<ParagraphChildren> {
         super(children);
     }
 
+    /**
+     * Generates an `ParagraphNode` from the provided string.
+     * @param text - The node contents.
+     */
     public static createFromPlainText(text: string): ParagraphNode {
-        return new ParagraphNode([new PlainTextNode(text)]);
+        return new ParagraphNode(createNodesFromPlainText(text));
     }
 
     /**

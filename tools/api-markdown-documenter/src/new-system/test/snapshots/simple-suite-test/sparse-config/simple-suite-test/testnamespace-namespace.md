@@ -18,14 +18,14 @@ Here are some remarks about the namespace
 
 Example 1  
 ```typescript
-const foo = bar;<br/><br/>
+const foo = bar;
 ```  
 
 ### Example 2 {#testnamespace-example2}
 
 Example 2  
 ```javascript
-const bar = foo<br/><br/>
+const bar = foo
 ```  
 
 ## Interfaces

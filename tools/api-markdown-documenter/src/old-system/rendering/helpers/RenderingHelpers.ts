@@ -904,6 +904,6 @@ export function renderLink(
         configuration: config.tsdocConfiguration,
         tagName: "@link",
         linkText: link.text,
-        urlDestination: link.url,
+        urlDestination: link.target,
     });
 }

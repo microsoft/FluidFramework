@@ -48,6 +48,7 @@ import {
     SingleLineSpanNode,
     SpanNode,
     UnorderedListNode,
+    createSingleLineSpanFromPlainText,
 } from "../../documentation-domain";
 import { transformSection } from "../DocNodeTransforms";
 import { getDocNodeTransformationOptions } from "./InternalUtilities";
@@ -280,7 +281,7 @@ export function createTypeParametersSpan(
     }
 
     return new SpanNode([
-        new ParagraphNode([SpanNode.createFromPlainText("Type parameters: ", { bold: true })]),
+        new ParagraphNode([createSingleLineSpanFromPlainText("Type parameters: ", { bold: true })]),
         new UnorderedListNode(listItemNodes),
     ]);
 }
@@ -396,7 +397,7 @@ export function createHeadingForApiItem(
     config: Required<MarkdownDocumenterConfiguration>,
 ): HeadingNode {
     const heading = getHeadingForApiItem(apiItem, config);
-    return HeadingNode.createFromHeading(heading);
+    return HeadingNode.createFromPlainTextHeading(heading);
 }
 
 /**
@@ -672,7 +673,7 @@ export function createReturnsSection(
             if (typeExcerptSpan !== undefined) {
                 children.push(
                     new ParagraphNode([
-                        SpanNode.createFromPlainText("Return type: ", { bold: true }),
+                        createSingleLineSpanFromPlainText("Return type: ", { bold: true }),
                         typeExcerptSpan,
                     ]),
                 );
@@ -758,6 +759,6 @@ export function wrapInSection(
 ): HierarchicalSectionNode {
     return new HierarchicalSectionNode(
         nodes,
-        heading ? HeadingNode.createFromHeading(heading) : undefined,
+        heading ? HeadingNode.createFromPlainTextHeading(heading) : undefined,
     );
 }

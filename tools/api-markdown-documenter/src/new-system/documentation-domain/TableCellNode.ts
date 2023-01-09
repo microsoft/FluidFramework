@@ -4,8 +4,7 @@
  */
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
-import { PlainTextNode } from "./PlainTextNode";
-import { compareNodeArrays } from "./Utilities";
+import { compareNodeArrays, createNodesFromPlainText } from "./Utilities";
 
 export class TableCellNode extends ParentNodeBase {
     /**
@@ -19,10 +18,14 @@ export class TableCellNode extends ParentNodeBase {
         super(children);
     }
 
+    /**
+     * Generates an `TableCellNode` from the provided string.
+     * @param text - The node contents.
+     */
     public static createFromPlainText(text: string): TableCellNode {
         return text.length === 0
             ? TableCellNode.Empty
-            : new TableCellNode([new PlainTextNode(text)]);
+            : new TableCellNode(createNodesFromPlainText(text));
     }
 
     /**

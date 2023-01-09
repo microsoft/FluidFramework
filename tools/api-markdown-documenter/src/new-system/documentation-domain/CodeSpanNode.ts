@@ -23,6 +23,10 @@ export class CodeSpanNode
         super(children);
     }
 
+    /**
+     * Generates a `CodeSpanNode` from the provided string.
+     * @param text - The node contents. Note: this must not contain newline characters.
+     */
     public static createFromPlainText(text: string): CodeSpanNode {
         return new CodeSpanNode([new PlainTextNode(text)]);
     }

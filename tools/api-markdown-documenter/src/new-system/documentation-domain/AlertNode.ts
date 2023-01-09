@@ -1,6 +1,9 @@
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
-import { compareNodeArrays } from "./Utilities";
+import { compareNodeArrays, createNodesFromPlainText } from "./Utilities";
+
+// TODOs:
+// - Document each alert kind
 
 /**
  * Kind of alert.
@@ -19,6 +22,9 @@ export class AlertNode extends ParentNodeBase {
      */
     public readonly type = DocumentationNodeType.Alert;
 
+    /**
+     * See {@link AlertKind}.
+     */
     public readonly alertKind: AlertKind;
     public readonly title?: string;
 
@@ -27,6 +33,19 @@ export class AlertNode extends ParentNodeBase {
 
         this.alertKind = alertKind;
         this.title = title;
+    }
+
+    /**
+     * Generates an `AlertNode` from the provided string.
+     * @param text - The node contents.
+     * @param alertKind - See {@link AlertKind}.
+     */
+    public static createFromPlainText(
+        text: string,
+        alertKind: AlertKind,
+        title?: string,
+    ): AlertNode {
+        return new AlertNode(createNodesFromPlainText(text), alertKind, title);
     }
 
     /**

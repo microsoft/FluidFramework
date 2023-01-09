@@ -22,7 +22,7 @@ Also, here is a link test, including a bad link, because we should have some rea
 
 A test example  
 ```typescript
-const foo = bar;<br/><br/>
+const foo = bar;
 ```  
 
 ## Interfaces

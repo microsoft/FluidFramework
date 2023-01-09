@@ -10,6 +10,12 @@ export class PlainTextNode implements LiteralNode<string>, SingleLineElementNode
      * {@inheritDoc DocumentationNode."type"}
      */
     public readonly type = DocumentationNodeType.PlainText;
+
+    /**
+     * The text to display.
+     *
+     * @remarks Must not contain newline characters.
+     */
     public readonly value: string;
 
     public constructor(value: string) {

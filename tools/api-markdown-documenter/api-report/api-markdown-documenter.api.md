@@ -280,9 +280,9 @@ export function getUnscopedPackageName(apiPackage: ApiPackage): string;
 
 // @public
 export interface Heading {
-    id?: string;
-    level?: number;
-    title: string;
+    readonly id?: string;
+    readonly level?: number;
+    readonly title: string;
 }
 
 // @public
@@ -319,8 +319,8 @@ export function isStatic(apiItem: ApiItem): boolean;
 
 // @public
 export interface Link {
-    text: string;
-    url: UrlTarget;
+    readonly target: UrlTarget;
+    readonly text: string;
 }
 
 // @public

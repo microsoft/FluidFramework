@@ -5,7 +5,11 @@
 import { ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
 
 import { MarkdownDocumenterConfiguration } from "../../../Configuration";
-import { HierarchicalSectionNode, ParagraphNode, SpanNode } from "../../documentation-domain";
+import {
+    HierarchicalSectionNode,
+    ParagraphNode,
+    createSingleLineSpanFromPlainText,
+} from "../../documentation-domain";
 import { createTableWithHeading } from "../helpers";
 
 /**
@@ -19,7 +23,7 @@ export function transformApiModel(
         // If no packages under model, print simple note.
         return new HierarchicalSectionNode([
             new ParagraphNode([
-                SpanNode.createFromPlainText("No packages discovered while parsing model.", {
+                createSingleLineSpanFromPlainText("No packages discovered while parsing model.", {
                     italic: true,
                 }),
             ]),
