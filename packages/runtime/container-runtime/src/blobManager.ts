@@ -7,18 +7,25 @@ import { v4 as uuid } from "uuid";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ICreateBlobResponse, ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import {
+    createResponseError,
+    generateHandleContextPath,
+    responseToException,
+    SummaryTreeBuilder,
+} from "@fluidframework/runtime-utils";
 import { assert, bufferToString, Deferred, stringToBuffer, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IContainerRuntime, IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ChildLogger, loggerToMonitoringContext, MonitoringContext, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IGarbageCollectionData,
     ISummaryTreeWithStats,
     ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
+import { summarizerClientType } from "./summarizerClientElection";
+import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
+import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
 
 /**
  * This class represents blob (long string)
@@ -83,7 +90,7 @@ export interface IBlobManagerLoadInfo {
 // Restrict the IContainerRuntime interface to the subset required by BlobManager.  This helps to make
 // the contract explicit and reduces the amount of mocking required for tests.
 export type IBlobManagerRuntime =
-    Pick<IContainerRuntime, "attachState" | "connected" | "logger"> & TypedEventEmitter<IContainerRuntimeEvents>;
+    Pick<IContainerRuntime, "attachState" | "connected" | "logger" | "clientDetails"> & TypedEventEmitter<IContainerRuntimeEvents>;
 
 // Note that while offline we "submit" an op before uploading the blob, but we always
 // expect blobs to be uploaded before we actually see the op round-trip
@@ -104,10 +111,14 @@ interface PendingBlob {
 
 export interface IPendingBlobs { [id: string]: { blob: string; }; }
 
-export class BlobManager {
+export interface IBlobManagerEvents {
+    (event: "noPendingBlobs", listener: () => void);
+}
+
+export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     public static readonly basePath = "_blobs";
     private static readonly redirectTableBlobName = ".redirectTable";
-    private readonly logger: ITelemetryLogger;
+    private readonly mc: MonitoringContext;
 
     /**
      * Map of local (offline/detached) IDs to storage IDs. Contains identity entries
@@ -137,6 +148,14 @@ export class BlobManager {
         formExponentialFn({ coefficient: 20, initialDelay: 0 }),
     ));
 
+    /** If true, throw an error when a tombstone attachment blob is retrieved. */
+    private readonly throwOnTombstoneUsage: boolean;
+    /**
+     * This stores ides of tombstoned blobs.
+     * Tombstone is a temporary feature that imitates a blob getting swept by garbage collection.
+     */
+    private readonly tombstonedBlobs: Set<string> = new Set();
+
     constructor(
         private readonly routeContext: IFluidHandleContext,
         snapshot: IBlobManagerLoadInfo,
@@ -158,7 +177,13 @@ export class BlobManager {
         private readonly runtime: IBlobManagerRuntime,
         stashedBlobs: IPendingBlobs = {},
     ) {
-        this.logger = ChildLogger.create(this.runtime.logger, "BlobManager");
+        super();
+        this.mc = loggerToMonitoringContext(ChildLogger.create(this.runtime.logger, "BlobManager"));
+        // Read the feature flag that tells whether to throw when a tombstone blob is requested.
+        this.throwOnTombstoneUsage =
+            this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
+            this.runtime.clientDetails.type !== summarizerClientType;
+
         this.runtime.on("disconnected", () => this.onDisconnected());
         this.redirectTable = this.load(snapshot);
 
@@ -183,13 +208,18 @@ export class BlobManager {
         return this.pendingOfflineUploads.length > 0;
     }
 
+    public get hasPendingBlobs(): boolean {
+        return (this.runtime.attachState !== AttachState.Attached && this.redirectTable.size > 0)
+        || this.pendingBlobs.size > 0;
+    }
+
     /**
      * Upload blobs added while offline. This must be completed before connecting and resubmitting ops.
      */
     public async onConnected() {
         this.retryThrottler.cancel();
         const pendingUploads = this.pendingOfflineUploads.map(async (e) => e.uploadP);
-        await PerformanceEvent.timedExecAsync(this.logger, {
+        await PerformanceEvent.timedExecAsync(this.mc.logger, {
                 eventName: "BlobUploadOnConnected",
                 count: pendingUploads.length,
             }, async () => Promise.all(pendingUploads),
@@ -239,6 +269,19 @@ export class BlobManager {
     }
 
     public async getBlob(blobId: string): Promise<ArrayBufferLike> {
+        const request = { url: blobId };
+        if (this.tombstonedBlobs.has(blobId) ) {
+            const error = responseToException(createResponseError(404, "Blob removed by gc", request), request);
+            const event = {
+                eventName: "GC_Tombstone_Blob_Requested",
+                url: request.url,
+            };
+            sendGCTombstoneEvent(this.mc, event, this.runtime.clientDetails.type === summarizerClientType, [BlobManager.basePath], error);
+            if (this.throwOnTombstoneUsage) {
+                throw error;
+            }
+        }
+
         const pending = this.pendingBlobs.get(blobId);
         if (pending) {
             return pending.blob;
@@ -259,7 +302,7 @@ export class BlobManager {
         this.gcNodeUpdated(this.getBlobGCNodePath(blobId));
 
         return PerformanceEvent.timedExecAsync(
-            this.logger,
+            this.mc.logger,
             { eventName: "AttachmentReadBlob", id: storageId },
             async () => {
                 return this.getStorage().readBlob(storageId);
@@ -292,7 +335,7 @@ export class BlobManager {
         }
         if (this.runtime.attachState === AttachState.Attaching) {
             // blob upload is not supported in "Attaching" state
-            this.logger.sendTelemetryEvent({ eventName: "CreateBlobWhileAttaching" });
+            this.mc.logger.sendTelemetryEvent({ eventName: "CreateBlobWhileAttaching" });
             await new Promise<void>((resolve) => this.runtime.once("attached", resolve));
         }
         assert(this.runtime.attachState === AttachState.Attached,
@@ -314,7 +357,7 @@ export class BlobManager {
 
     private async uploadBlob(localId: string, blob: ArrayBufferLike): Promise<ICreateBlobResponse> {
         return PerformanceEvent.timedExecAsync(
-            this.logger,
+            this.mc.logger,
             { eventName: "createBlob" },
             async () => this.getStorage().createBlob(blob),
             { end: true, cancel: this.runtime.connected ? "error" : "generic" },
@@ -322,6 +365,13 @@ export class BlobManager {
             (response) => this.onUploadResolve(localId, response),
             async (err) => this.onUploadReject(localId, err),
         );
+    }
+
+    private deleteAndEmitsIfEmpty(id: string) {
+        this.pendingBlobs.delete(id);
+        if (!this.hasPendingBlobs) {
+            this.emit("noPendingBlobs");
+        }
     }
 
     private onUploadResolve(localId: string, response: ICreateBlobResponse) {
@@ -336,7 +386,7 @@ export class BlobManager {
                     // Storage may dedupe blobs and give us an ID we already know
                     // no need to submit BlobAttach op in this case
                     entry.handleP.resolve(this.getBlobHandle(response.id));
-                    this.pendingBlobs.delete(localId);
+                    this.deleteAndEmitsIfEmpty(localId);
                 } else {
                     // Check for still-pending duplicates too; if an op is already in flight we can wait for that one
                     if (!this.opsInFlight.has(response.id)) {
@@ -351,7 +401,7 @@ export class BlobManager {
             }
         } else {
             // connected to storage but not ordering service?
-            this.logger.sendTelemetryEvent({ eventName: "BlobUploadSuccessWhileDisconnected" });
+            this.mc.logger.sendTelemetryEvent({ eventName: "BlobUploadSuccessWhileDisconnected" });
             if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
                 this.transitionToOffline(localId);
             }
@@ -438,14 +488,14 @@ export class BlobManager {
                     // It's possible we transitioned to offline flow while waiting for this op.
                     if (pendingBlobEntry.status === PendingBlobStatus.OnlinePendingOp) {
                         pendingBlobEntry.handleP.resolve(this.getBlobHandle(message.metadata.blobId));
-                        this.pendingBlobs.delete(localId);
+                        this.deleteAndEmitsIfEmpty(localId);
                     }
                 });
             } else {
                 // Each local ID is unique; get the pending blob entry and delete it
                 assert(this.pendingBlobs.get(message.metadata.localId)?.status === PendingBlobStatus.OfflinePendingOp,
                     0x1f8 /* "local BlobAttach op with no pending blob" */);
-                this.pendingBlobs.delete(message.metadata.localId);
+                    this.deleteAndEmitsIfEmpty(message.metadata.localId);
             }
         }
     }
@@ -477,7 +527,7 @@ export class BlobManager {
      * Load a set of previously attached blob IDs and redirect table from a previous snapshot.
      */
     private load(snapshot: IBlobManagerLoadInfo): Map<string, string | undefined> {
-        this.logger.sendTelemetryEvent({
+        this.mc.logger.sendTelemetryEvent({
             eventName: "AttachmentBlobsLoaded",
             count: snapshot.ids?.length ?? 0,
             redirectTable: snapshot.redirectTable?.length,
@@ -504,9 +554,9 @@ export class BlobManager {
           * The node path is of the format `/_blobs/blobId`. This path must match the path of the blob handle returned
           * by the createBlob API because blobs are marked referenced by storing these handles in a referenced DDS.
           */
-        this.storageIds.forEach((blobId: string) => {
+        for (const blobId of this.storageIds) {
             gcData.gcNodes[this.getBlobGCNodePath(blobId)] = [];
-        });
+        }
 
         // For some blobs, the handle returned on creation is based off of the localId. So, these
         // nodes can be referenced by storing the localId handle. When that happens, the corresponding storageId node
@@ -524,10 +574,10 @@ export class BlobManager {
     }
 
     /**
-     * When running GC in test mode, this is called to delete blobs that are unused.
-     * @param unusedRoutes - These are the blob node ids that are unused and should be deleted.
+     * This is called to update blobs whose routes are unused. The unused blobs are either deleted.
+     * @param unusedRoutes - The routes of the blob nodes that are unused.
      */
-    public deleteUnusedRoutes(unusedRoutes: string[]): void {
+    public updateUnusedRoutes(unusedRoutes: string[]): void {
         // The routes or blob node paths are in the same format as returned in getGCData -
         // `/<BlobManager.basePath>/<blobId>`.
         for (const route of unusedRoutes) {
@@ -537,13 +587,40 @@ export class BlobManager {
                 0x2d5 /* "Invalid blob node id in unused routes." */,
             );
             const blobId = pathParts[2];
-
             // The unused blobId could be a localId. If so, remove it from the redirect table and continue. The
             // corresponding storageId may still be used either directly or via other localIds.
-            if (this.redirectTable?.has(blobId)) {
-                this.redirectTable.delete(blobId);
-                continue;
+            this.redirectTable.delete(blobId);
+        }
+    }
+
+    /**
+     * This is called to update blobs whose routes are tombstones. Tombstoned blobs enable testing scenarios with
+     * accessing deleted content without actually deleting content from summaries.
+     * @param tombstonedRoutes - The routes of blob nodes that are tombstones.
+     */
+    public updateTombstonedRoutes(tombstonedRoutes: string[]) {
+        const tombstonedBlobsSet: Set<string> = new Set();
+        // The routes or blob node paths are in the same format as returned in getGCData -
+        // `/<BlobManager.basePath>/<blobId>`.
+        for (const route of tombstonedRoutes) {
+            const pathParts = route.split("/");
+            assert(
+                pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
+                "Invalid blob node id in tombstoned routes.",
+            );
+            tombstonedBlobsSet.add(pathParts[2]);
+        }
+
+        // Remove blobs that were tombstoned but aren't anymore as per the tombstoneRoutes.
+        for (const blobId of this.tombstonedBlobs) {
+            if (!tombstonedBlobsSet.has(blobId)) {
+                this.tombstonedBlobs.delete(blobId);
             }
+        }
+
+        // Mark blobs that are now tombstoned.
+        for (const blobId of tombstonedBlobsSet) {
+            this.tombstonedBlobs.add(blobId);
         }
     }
 

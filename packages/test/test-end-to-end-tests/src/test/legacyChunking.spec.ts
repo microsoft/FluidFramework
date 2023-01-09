@@ -24,7 +24,8 @@ const versionWithChunking = "0.56.0";
 describeInstallVersions(
     {
         requestAbsoluteVersions: [versionWithChunking],
-    }
+    },
+    /* timeoutMs */ 50000,
 )(
     "Legacy chunking",
     (getTestObjectProvider) => {
@@ -37,7 +38,6 @@ describeInstallVersions(
         afterEach(async () => provider.reset());
 
         const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             runtime.IFluidHandleContext.resolveHandle(request);
         const mapId = "map";
         const registry: ChannelFactoryRegistry = [
@@ -92,16 +92,24 @@ describeInstallVersions(
 
         const generateStringOfSize = (sizeInBytes: number): string => new Array(sizeInBytes + 1).join("0");
 
-        it("If an old container sends a large chunked op, a new container is able to process it successfully", async () => {
+        it("If an old container sends chunked ops, a new container is able to process them successfully", async () => {
             await setupContainers();
+            const regularMessageSizeInBytes = 15 * 1024;
             // Ops larger than 16k will end up chunked in older versions of fluid
-            const messageSizeInBytes = 300 * 1024;
-            const value = generateStringOfSize(messageSizeInBytes);
-            oldMap.set("key1", value);
-            oldMap.set("key2", value);
+            const chunkableMessageSizeInBytes = 300 * 1024;
+            const regularValue = generateStringOfSize(regularMessageSizeInBytes);
+            const chunkableValue = generateStringOfSize(chunkableMessageSizeInBytes);
+            oldMap.set("key0", regularValue);
+            oldMap.set("key1", chunkableValue);
+            oldMap.set("key2", chunkableValue);
+            oldMap.set("key3", regularValue);
+            oldMap.set("key4", regularValue);
 
             await provider.ensureSynchronized();
-            assert.strictEqual(newMap.get("key1"), value, "Wrong value found in the new map");
-            assert.strictEqual(newMap.get("key2"), value, "Wrong value found in the new map");
+            assert.strictEqual(newMap.get("key0"), regularValue, "Wrong value found in the new map");
+            assert.strictEqual(newMap.get("key1"), chunkableValue, "Wrong value found in the new map");
+            assert.strictEqual(newMap.get("key2"), chunkableValue, "Wrong value found in the new map");
+            assert.strictEqual(newMap.get("key3"), regularValue, "Wrong value found in the new map");
+            assert.strictEqual(newMap.get("key4"), regularValue, "Wrong value found in the new map");
         });
     });

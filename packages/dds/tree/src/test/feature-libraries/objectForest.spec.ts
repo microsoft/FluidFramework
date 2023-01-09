@@ -7,7 +7,7 @@
 /* eslint-disable-next-line import/no-internal-modules */
 import { buildForest } from "../../feature-libraries/object-forest";
 
-import { InMemoryStoredSchemaRepository } from "../../schema-stored";
+import { InMemoryStoredSchemaRepository } from "../../core";
 import { jsonSchemaData } from "../../domains";
 import { defaultSchemaPolicy } from "../../feature-libraries";
 import { testForest } from "../forestTestSuite";

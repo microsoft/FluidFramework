@@ -5,10 +5,15 @@
 
 import { fail, strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/common-utils";
-import { ChangeFamily } from "../../change-family";
-import { Commit, EditManager, SessionId } from "../../edit-manager";
-import { ChangeRebaser } from "../../rebase";
-import { Delta, FieldKey } from "../../tree";
+import {
+    ChangeFamily,
+    Commit,
+    EditManager,
+    SessionId,
+    ChangeRebaser,
+    Delta,
+    FieldKey,
+} from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
     AnchorRebaseData,
@@ -223,6 +228,21 @@ describe("EditManager", () => {
             { seq: 10, type: "Pull", ref: 0, from: peer2 },
             { seq: 12, type: "Pull", ref: 1, from: peer2 },
         ]);
+
+        it("Bounds memory growth when provided with a minimumSequenceNumber", () => {
+            const { manager } = editManagerFactory({});
+            for (let i = 0; i < 10; ++i) {
+                manager.addSequencedChange({
+                    changeset: TestChange.mint([], []),
+                    refNumber: brand(0),
+                    seqNumber: brand(i),
+                    sessionId: peer1,
+                });
+            }
+            assert.equal(manager.getTrunk().length, 10);
+            manager.advanceMinimumSequenceNumber(5);
+            assert(manager.getTrunk().length < 10);
+        });
     });
 
     describe("Avoids unnecessary rebases", () => {

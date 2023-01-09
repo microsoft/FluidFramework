@@ -19,6 +19,12 @@ module.exports = (env) => {
             },
             resolve: {
                 extensions: [".ts", ".tsx", ".js"],
+                fallback: {
+                    "http": require.resolve("stream-http"),
+                    "fs": false,
+                    "path": false,
+                    "stream": false,
+                }
             },
             module: {
                 rules: [{

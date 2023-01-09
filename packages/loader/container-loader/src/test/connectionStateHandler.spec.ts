@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable max-len */
-
 import { strict as assert } from "assert";
 import { TelemetryNullLogger, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
@@ -29,7 +27,7 @@ import { ProtocolHandler } from "../protocol";
 class MockDeltaManagerForCatchingUp
     extends TypedEventEmitter<IDeltaManagerEvents>
     implements Pick<IDeltaManager<any, any>, "lastSequenceNumber" | "lastKnownSeqNumber">
-{ // eslint-disable-line @typescript-eslint/brace-style
+{
     lastSequenceNumber: number = 5;
     lastKnownSeqNumber: number = 10;
     catchUp(seq = 10) {

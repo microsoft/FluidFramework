@@ -24,6 +24,6 @@ const componentFactory = new DataObjectFactory(
     {},
 );
 
-const monacoViewCallback = (model: MonacoRunner) => React.createElement(MonacoView, { sharedString: model.text });
+const monacoViewCallback = (model: MonacoRunner): React.ReactElement => React.createElement(MonacoView, { sharedString: model.text });
 
 export const fluidExport = new ContainerViewRuntimeFactory(componentFactory, monacoViewCallback);

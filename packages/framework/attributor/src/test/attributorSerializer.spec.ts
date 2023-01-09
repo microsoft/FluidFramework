@@ -45,9 +45,9 @@ describe("AttributorSerializer", () => {
             });
             const encoded: SerializedAttributor = {
                 interner: ["a"],
-                keys: [1, 2],
+                seqs: [1, 2],
                 timestamps: [501, 604],
-                attributionRefs: [0, 0] as any[]
+                attributionRefs: [0, 0] as any[],
             };
 
             assert.equal(calls.length, 0);

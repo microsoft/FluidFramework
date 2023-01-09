@@ -8,7 +8,7 @@ import ReactDOM from "react-dom";
 
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 
-import type { IAppModel } from "./modelInterfaces";
+import type { IAppModel } from "./model-interface";
 import { DebugView, AppView } from "./view";
 import { TaskListContainerRuntimeFactory } from "./model";
 
@@ -33,7 +33,7 @@ const render = (model: IAppModel): void => {
     const debugDiv = document.querySelector("#debug") as HTMLDivElement;
     ReactDOM.unmountComponentAtNode(debugDiv);
     ReactDOM.render(
-        React.createElement(DebugView, { }),
+        React.createElement(DebugView, { model }),
         debugDiv,
     );
 };

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
-import { makeAnonChange, RevisionTag, tagChange } from "../../../rebase";
+import { makeAnonChange, RevisionTag, tagChange } from "../../../core";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
@@ -69,6 +69,20 @@ describe("SequenceField - Invert", () => {
     it("revive => delete", () => {
         const input = Change.revive(0, 2, 0, tag);
         const expected = Change.delete(0, 2);
+        const actual = shallowInvert(input);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("move => return", () => {
+        const input = Change.move(0, 2, 3);
+        const expected = Change.return(3, 2, 0, tag, 0);
+        const actual = shallowInvert(input);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("return => return", () => {
+        const input = Change.return(0, 2, 3, brand(41), 0);
+        const expected = Change.return(3, 2, 0, tag, 0);
         const actual = shallowInvert(input);
         assert.deepEqual(actual, expected);
     });
