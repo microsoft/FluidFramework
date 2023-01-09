@@ -36,20 +36,24 @@ export const InventoryItemView: React.FC<IInventoryItemViewProps> = (props: IInv
     };
 
     return (
-        <div>
-            <CollaborativeInput
-                sharedString={ inventoryItem.name }
-                style={{ width: "200px" }}
-                disabled={ disabled }
-            ></CollaborativeInput>
-            <input
-                ref={ quantityRef }
-                onInput={ inputHandler }
-                type="number"
-                style={{ width: "50px" }}
-                disabled={ disabled }
-            ></input>
-        </div>
+        <tr>
+            <td>
+                <CollaborativeInput
+                    sharedString={ inventoryItem.name }
+                    style={{ width: "200px" }}
+                    disabled={ disabled }
+                ></CollaborativeInput>
+            </td>
+            <td>
+                <input
+                    ref={ quantityRef }
+                    onInput={ inputHandler }
+                    type="number"
+                    style={{ width: "50px" }}
+                    disabled={ disabled }
+                ></input>
+            </td>
+        </tr>
     );
 };
 
@@ -80,8 +84,14 @@ export const InventoryListView: React.FC<IInventoryListViewProps> = (props: IInv
     ));
 
     return (
-        <div style={{ textAlign: "center", whiteSpace: "nowrap" }}>
-            { inventoryItemViews }
-        </div>
+        <table style={{ margin: "0 auto", textAlign: "left" }}>
+            <thead>
+                <th>Inventory item</th>
+                <th>Quantity</th>
+            </thead>
+            <tbody>
+                { inventoryItemViews }
+            </tbody>
+        </table>
     );
 };
