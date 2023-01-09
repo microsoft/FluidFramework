@@ -1,0 +1,350 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { assert } from "@fluidframework/common-utils";
+import {
+    FieldKey,
+    TreeSchemaIdentifier,
+    CursorLocationType,
+    FieldUpPath,
+    UpPath,
+    TreeValue,
+    Value,
+    TreeType,
+} from "../../core";
+import { fail } from "../../util";
+import { SynchronousCursor } from "../treeCursorUtils";
+import { ReferenceCountedBase, TreeChunk } from "./chunk";
+
+/**
+ * General purpose one node chunk.
+ */
+export class BasicChunk extends ReferenceCountedBase implements TreeChunk {
+    public readonly topLevelLength: number = 1;
+
+    /**
+     * Create a tree chunk with ref count 1.
+     *
+     * @param fields - provides exclusive deep ownership of this map to this object (which might mutate it in the future).
+     * @param value - describes the semantics and layout of `values`.
+     */
+    public constructor(
+        public type: TreeSchemaIdentifier,
+        public fields: Map<FieldKey, TreeChunk[]>,
+        public value?: TreeValue,
+    ) {
+        super();
+    }
+
+    public clone(): BasicChunk {
+        return new BasicChunk(this.type, this.fields, this.value);
+    }
+
+    public cursor(): Cursor {
+        return new Cursor([], [], [], [], [this], 0, 0, 0);
+    }
+}
+
+type SiblingsOrKey = readonly TreeChunk[] | readonly FieldKey[];
+
+/**
+ * A simple general purpose ITreeCursorSynchronous implementation.
+ *
+ * As this is a generic implementation, it's ability to optimize is limited.
+ */
+class Cursor extends SynchronousCursor {
+    /**
+     * Might start at special root where fields are detached sequences.
+     *
+     * @param adapter - policy logic.
+     * @param siblingStack - Stack of collections of siblings along the path through the tree:
+     * does not include current level (which is stored in `siblings`).
+     * Even levels in the stack (starting from 0) are sequences of nodes and odd levels
+     * are for fields keys on a node.
+     * @param indexStack - Stack of indices into the corresponding levels in `siblingStack`.
+     * @param siblings - Siblings at the current level (not included in `siblingStack`).
+     * @param index - Index into `siblings`.
+     */
+    public constructor(
+        private readonly siblingStack: SiblingsOrKey[],
+        private readonly indexStack: number[],
+        private readonly indexOfChunkStack: number[],
+        private readonly indexWithinChunkStack: number[],
+        private siblings: SiblingsOrKey,
+        private index: number,
+        private indexOfChunk: number,
+        private indexWithinChunk: number,
+    ) {
+        super();
+    }
+
+    public getFieldKey(): FieldKey {
+        assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
+        return this.siblings[this.index] as FieldKey;
+    }
+
+    private getStackedFieldKey(height: number): FieldKey {
+        assert(height % 2 === 1, 0x3b8 /* must field height */);
+        return this.siblingStack[height][this.indexStack[height]] as FieldKey;
+    }
+
+    private getStackedNodeIndex(height: number): number {
+        assert(height % 2 === 0, "must be node height");
+        assert(height >= 0, "must not be above root");
+        return this.indexStack[height];
+    }
+
+    private getStackedNode(height: number): BasicChunk {
+        const index = this.getStackedNodeIndex(height);
+        return (this.siblingStack[height] as readonly TreeChunk[])[index] as BasicChunk;
+    }
+
+    public getFieldLength(): number {
+        assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
+        return this.getField().length;
+    }
+
+    public enterNode(index: number): void {
+        assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
+        const siblings = this.getField();
+        this.siblingStack.push(this.siblings);
+        this.indexStack.push(this.index);
+        this.indexOfChunkStack.push(this.indexOfChunk);
+        this.indexWithinChunkStack.push(this.indexWithinChunk);
+        this.index = 0;
+        this.siblings = siblings;
+        const found = this.seekNodes(index);
+        assert(found, "child must exist at index");
+    }
+
+    public getPath(): UpPath | undefined {
+        assert(this.mode === CursorLocationType.Nodes, 0x3b9 /* must be in nodes mode */);
+        return this.getOffsetPath(0);
+    }
+
+    public getFieldPath(): FieldUpPath {
+        assert(this.mode === CursorLocationType.Fields, 0x449 /* must be in fields mode */);
+        return {
+            field: this.getFieldKey(),
+            parent: this.getOffsetPath(1),
+        };
+    }
+
+    private getOffsetPath(offset: number): UpPath | undefined {
+        const length = this.indexStack.length - offset;
+        if (length === 0) {
+            return undefined; // At root
+        }
+
+        assert(length > 0, 0x44a /* invalid offset to above root */);
+        assert(length % 2 === 0, 0x44b /* offset path must point to node not field */);
+
+        // Perf Note:
+        // This is O(depth) in tree.
+        // If many different anchors are created, this could be optimized to amortize the costs.
+        // For example, the cursor could cache UpPaths from the anchorSet when creating an anchor,
+        // then reuse them as a starting point when making another.
+        // Could cache this at one depth, and remember the depth.
+        // When navigating up, adjust cached anchor if present.
+
+        let path: UpPath | undefined;
+        // Skip top level, since root node in path is "undefined" and does not have a parent or index.
+        for (let height = 2; height < length; height += 2) {
+            const key = this.getStackedFieldKey(height - 1);
+            path = {
+                parent: path,
+                parentIndex: this.getStackedNodeIndex(height),
+                parentField: key,
+            };
+        }
+
+        path = {
+            parent: path,
+            parentIndex: offset === 0 ? this.index : this.getStackedNodeIndex(length),
+            parentField: this.getStackedFieldKey(length - 1),
+        };
+        return path;
+    }
+
+    public fork(): Cursor {
+        // Siblings arrays are not modified during navigation and do not need be be copied.
+        // This allows this copy to be shallow, and `this.siblings` below to not be copied as all.
+        return new Cursor(
+            [...this.siblingStack],
+            [...this.indexStack],
+            [...this.indexOfChunkStack],
+            [...this.indexWithinChunkStack],
+            this.siblings,
+            this.index,
+            this.indexOfChunk,
+            this.indexWithinChunk,
+        );
+    }
+
+    public enterField(key: FieldKey): void {
+        assert(this.mode === CursorLocationType.Nodes, "must be in nodes mode");
+        this.siblingStack.push(this.siblings);
+        this.indexStack.push(this.index);
+
+        // For fields, siblings are only used for key lookup and
+        // nextField and which has arbitrary iteration order,
+        // so making a array of just key here works.
+        // This adds an allocation, so it's optimizing code simplicity and for the other use case (enumeration)
+        // at the cost of an allocation here.
+        this.index = 0;
+        this.siblings = [key];
+    }
+
+    public get mode(): CursorLocationType {
+        return this.siblingStack.length % 2 === 0
+            ? CursorLocationType.Nodes
+            : CursorLocationType.Fields;
+    }
+
+    public nextField(): boolean {
+        this.index += 1;
+        if (this.index === (this.siblings as []).length) {
+            this.exitField();
+            return false;
+        }
+        return true;
+    }
+
+    public firstField(): boolean {
+        const fields = this.getNode().fields;
+        if (fields.size === 0) {
+            return false;
+        }
+
+        this.siblingStack.push(this.siblings);
+        this.indexStack.push(this.index);
+        this.index = 0;
+        this.siblings = [...fields.keys()]; // TODO: avoid this copy
+        return true;
+    }
+
+    public seekNodes(offset: number): boolean {
+        assert(this.mode === CursorLocationType.Nodes, "can only seekNodes when in Nodes");
+        this.indexWithinChunk += offset;
+        if (offset >= 0) {
+            const chunks = this.siblings as TreeChunk[];
+            while (this.indexWithinChunk >= chunks[this.indexOfChunk].topLevelLength) {
+                this.indexWithinChunk -= chunks[this.indexOfChunk].topLevelLength;
+                this.indexOfChunk++;
+                if (this.indexOfChunk === chunks.length) {
+                    this.exitNode();
+                    return false;
+                }
+            }
+        } else {
+            const chunks = this.siblings as TreeChunk[];
+            while (this.indexWithinChunk < 0) {
+                if (this.indexOfChunk === 0) {
+                    this.exitNode();
+                    return false;
+                }
+                this.indexOfChunk--;
+                this.indexWithinChunk += chunks[this.indexOfChunk].topLevelLength;
+            }
+        }
+
+        this.index += offset;
+        return true;
+    }
+
+    public firstNode(): boolean {
+        const siblings = this.getField();
+        if (siblings.length === 0) {
+            return false;
+        }
+        this.siblingStack.push(this.siblings);
+        this.indexStack.push(this.index);
+        this.indexOfChunkStack.push(this.indexOfChunk);
+        this.indexWithinChunkStack.push(this.indexWithinChunk);
+        this.index = 0;
+        this.siblings = siblings;
+        return true;
+    }
+
+    public nextNode(): boolean {
+        assert(this.mode === CursorLocationType.Nodes, 0x406 /* can only nextNode when in Nodes */);
+        this.indexWithinChunk++;
+        if (
+            this.indexWithinChunk ===
+            (this.siblings as TreeChunk[])[this.indexOfChunk].topLevelLength
+        ) {
+            this.indexOfChunk++;
+            if (this.indexOfChunk === (this.siblings as TreeChunk[]).length) {
+                this.exitNode();
+                return false;
+            }
+            this.indexWithinChunk = 0;
+        }
+        this.index++;
+        return true;
+    }
+
+    public exitField(): void {
+        assert(
+            this.mode === CursorLocationType.Fields,
+            "can only navigate up from field when in field",
+        );
+        this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
+        this.index = this.indexStack.pop() ?? fail("Unexpected indexStack.length");
+    }
+
+    public exitNode(): void {
+        assert(
+            this.mode === CursorLocationType.Nodes,
+            "can only navigate up from node when in node",
+        );
+        this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
+        this.index = this.indexStack.pop() ?? fail("Unexpected indexStack.length");
+        this.indexOfChunk =
+            this.indexOfChunkStack.pop() ?? fail("Unexpected indexOfChunkStack.length");
+        this.indexWithinChunk =
+            this.indexWithinChunkStack.pop() ?? fail("Unexpected indexWithinChunkStack.length");
+    }
+
+    public getNode(): BasicChunk {
+        assert(this.mode === CursorLocationType.Nodes, "can only get node when in node");
+        return (this.siblings as TreeChunk[])[this.index] as BasicChunk;
+    }
+
+    private getField(): readonly TreeChunk[] {
+        assert(this.mode === CursorLocationType.Fields, "can only get field when in fields");
+        const parent = this.getStackedNode(this.indexStack.length - 1);
+        const key: FieldKey = this.getFieldKey();
+        const field = parent.fields.get(key) ?? [];
+        return field;
+    }
+
+    /**
+     * @returns the value of the current node
+     */
+    public get value(): Value {
+        return this.getNode().value;
+    }
+
+    /**
+     * @returns the type of the current node
+     */
+    public get type(): TreeType {
+        return this.getNode().type;
+    }
+
+    public get fieldIndex(): number {
+        assert(this.mode === CursorLocationType.Nodes, "can only node's index when in node");
+        return this.index;
+    }
+
+    public get chunkStart(): number {
+        return this.fieldIndex;
+    }
+
+    public get chunkLength(): number {
+        return 1;
+    }
+}

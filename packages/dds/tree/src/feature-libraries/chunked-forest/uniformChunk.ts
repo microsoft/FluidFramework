@@ -18,23 +18,7 @@ import {
 } from "../../core";
 import { brand, compareArrays, fail } from "../../util";
 import { SynchronousCursor } from "../treeCursorUtils";
-
-export interface ReferenceCounted {
-    referenceAdded(): void;
-
-    referenceRemoved(): void;
-
-    isShared(): boolean;
-}
-
-/**
- * Contiguous part of the tree which get stored together in some data format.
- * Copy-on-write, but optimized to be mutated in place when a chunk only has a single user (detected using reference counting).
- * This allows for efficient cloning of without major performance overheads for non-cloning scenarios.
- */
-export interface TreeChunk extends ReferenceCounted {
-    cursor(): ITreeCursorSynchronous;
-}
+import { ReferenceCountedBase, TreeChunk } from "./chunk";
 
 /**
  * Create a tree chunk with ref count 1.
@@ -52,8 +36,7 @@ export function uniformChunk(shape: ChunkShape, values: TreeValue[]): TreeChunk 
  * Separates shape from content,
  * allowing deduplication of shape information and storing of content as a flat sequence of values.
  */
-export class UniformChunk implements ReferenceCounted {
-    private refCount: number = 1;
+export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
     /**
      * Create a tree chunk with ref count 1.
      *
@@ -61,27 +44,19 @@ export class UniformChunk implements ReferenceCounted {
      * @param values - provides exclusive ownership of this array to this object (which might mutate it in the future).
      */
     public constructor(public shape: ChunkShape, public values: TreeValue[]) {
+        super();
         assert(
             shape.treeShape.valuesPerTopLevelNode * shape.topLevelLength === values.length,
             "invalid number of values for shape",
         );
     }
 
+    public get topLevelLength(): number {
+        return this.shape.topLevelLength;
+    }
+
     public clone(): UniformChunk {
         return new UniformChunk(this.shape, this.values.slice());
-    }
-
-    public referenceAdded(): void {
-        this.refCount++;
-    }
-
-    public referenceRemoved(): void {
-        this.refCount--;
-        assert(this.refCount >= 0, "Negative ref count");
-    }
-
-    public isShared(): boolean {
-        return this.refCount > 1;
     }
 
     public cursor(): Cursor {
