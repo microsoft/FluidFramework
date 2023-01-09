@@ -353,7 +353,7 @@ export class TenantManager {
         if (!uncaughtException) {
             fetchTenantKeyMetric.success(`Successfully retrieved tenant keys.`);
         } else {
-            fetchTenantKeyMetric.error(`Error trying to retrieve tenant keys.`);
+            fetchTenantKeyMetric.error(`Error trying to retrieve tenant keys.`, uncaughtException);
         }
     }
 }
