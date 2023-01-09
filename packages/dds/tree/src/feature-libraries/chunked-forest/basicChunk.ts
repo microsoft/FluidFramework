@@ -58,14 +58,17 @@ class Cursor extends SynchronousCursor {
     /**
      * Might start at special root where fields are detached sequences.
      *
-     * @param adapter - policy logic.
      * @param siblingStack - Stack of collections of siblings along the path through the tree:
      * does not include current level (which is stored in `siblings`).
      * Even levels in the stack (starting from 0) are sequences of nodes and odd levels
      * are for fields keys on a node.
      * @param indexStack - Stack of indices into the corresponding levels in `siblingStack`.
+     * @param indexOfChunkStack - Index of chunk in array of chunks. Only for Node levels.
+     * @param indexWithinChunkStack - Index withing chunk selected by indexOfChunkStack. Only for Node levels.
      * @param siblings - Siblings at the current level (not included in `siblingStack`).
      * @param index - Index into `siblings`.
+     * @param indexOfChunk - Index of chunk in array of chunks. Only for Nodes mode.
+     * @param indexWithinChunk - Index withing chunk selected by indexOfChunkStack. Only for Nodes mode.
      */
     public constructor(
         private readonly siblingStack: SiblingsOrKey[],
@@ -80,13 +83,28 @@ class Cursor extends SynchronousCursor {
         super();
     }
 
+    public get mode(): CursorLocationType {
+        // Compute the number of nodes deep the current depth is.
+        // We want the floor of the result, which can computed using a bitwise shift assuming the depth is less than 2^31, which seems safe.
+        // eslint-disable-next-line no-bitwise
+        const halfHeight = this.siblingStack.length >> 1;
+        assert(this.indexOfChunkStack.length === halfHeight, "unexpected indexOfChunkStack");
+        assert(
+            this.indexWithinChunkStack.length === halfHeight,
+            "unexpected indexWithinChunkStack",
+        );
+        return this.siblingStack.length % 2 === 0
+            ? CursorLocationType.Nodes
+            : CursorLocationType.Fields;
+    }
+
     public getFieldKey(): FieldKey {
         assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
         return this.siblings[this.index] as FieldKey;
     }
 
     private getStackedFieldKey(height: number): FieldKey {
-        assert(height % 2 === 1, 0x3b8 /* must field height */);
+        assert(height % 2 === 1, "must field height");
         return this.siblingStack[height][this.indexStack[height]] as FieldKey;
     }
 
@@ -107,25 +125,17 @@ class Cursor extends SynchronousCursor {
     }
 
     public enterNode(index: number): void {
-        assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
-        const siblings = this.getField();
-        this.siblingStack.push(this.siblings);
-        this.indexStack.push(this.index);
-        this.indexOfChunkStack.push(this.indexOfChunk);
-        this.indexWithinChunkStack.push(this.indexWithinChunk);
-        this.index = 0;
-        this.siblings = siblings;
-        const found = this.seekNodes(index);
+        const found = this.firstNode() && this.seekNodes(index);
         assert(found, "child must exist at index");
     }
 
     public getPath(): UpPath | undefined {
-        assert(this.mode === CursorLocationType.Nodes, 0x3b9 /* must be in nodes mode */);
+        assert(this.mode === CursorLocationType.Nodes, "must be in nodes mode");
         return this.getOffsetPath(0);
     }
 
     public getFieldPath(): FieldUpPath {
-        assert(this.mode === CursorLocationType.Fields, 0x449 /* must be in fields mode */);
+        assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
         return {
             field: this.getFieldKey(),
             parent: this.getOffsetPath(1),
@@ -138,8 +148,8 @@ class Cursor extends SynchronousCursor {
             return undefined; // At root
         }
 
-        assert(length > 0, 0x44a /* invalid offset to above root */);
-        assert(length % 2 === 0, 0x44b /* offset path must point to node not field */);
+        assert(length > 0, "invalid offset to above root");
+        assert(length % 2 === 0, "offset path must point to node not field");
 
         // Perf Note:
         // This is O(depth) in tree.
@@ -197,12 +207,6 @@ class Cursor extends SynchronousCursor {
         this.siblings = [key];
     }
 
-    public get mode(): CursorLocationType {
-        return this.siblingStack.length % 2 === 0
-            ? CursorLocationType.Nodes
-            : CursorLocationType.Fields;
-    }
-
     public nextField(): boolean {
         this.index += 1;
         if (this.index === (this.siblings as []).length) {
@@ -227,6 +231,8 @@ class Cursor extends SynchronousCursor {
 
     public seekNodes(offset: number): boolean {
         assert(this.mode === CursorLocationType.Nodes, "can only seekNodes when in Nodes");
+        assert(this.indexOfChunk < this.siblings.length, "out of bounds indexOfChunk");
+
         this.indexWithinChunk += offset;
         if (offset >= 0) {
             const chunks = this.siblings as TreeChunk[];
@@ -237,6 +243,7 @@ class Cursor extends SynchronousCursor {
                     this.exitNode();
                     return false;
                 }
+                assert(this.indexOfChunk < this.siblings.length, "out of bounds indexOfChunk");
             }
         } else {
             const chunks = this.siblings as TreeChunk[];
@@ -265,11 +272,13 @@ class Cursor extends SynchronousCursor {
         this.indexWithinChunkStack.push(this.indexWithinChunk);
         this.index = 0;
         this.siblings = siblings;
+        this.indexOfChunk = 0;
+        this.indexWithinChunk = 0;
         return true;
     }
 
     public nextNode(): boolean {
-        assert(this.mode === CursorLocationType.Nodes, 0x406 /* can only nextNode when in Nodes */);
+        assert(this.mode === CursorLocationType.Nodes, "can only nextNode when in Nodes");
         this.indexWithinChunk++;
         if (
             this.indexWithinChunk ===
