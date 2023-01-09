@@ -32,6 +32,7 @@
     "@fluidframework/server-services-client": "^0.1038.3000",
     "@fluidframework/server-services-core": "^0.1038.3000",
     "@fluidframework/server-services-ordering-zookeeper": "^0.1038.3000",
+    "events": "^3.1.0",
     "kafka-node": "^5.0.0",
     "nconf": "^0.12.0",
     "sillyname": "^0.1.0"

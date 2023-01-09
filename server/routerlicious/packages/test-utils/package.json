@@ -58,7 +58,9 @@
     "@fluidframework/server-services-client": "^0.1038.3000",
     "@fluidframework/server-services-core": "^0.1038.3000",
     "@fluidframework/server-services-telemetry": "^0.1038.3000",
+    "assert": "^2.0.0",
     "debug": "^4.1.1",
+    "events": "^3.1.0",
     "lodash": "^4.17.21",
     "string-hash": "^1.1.3",
     "uuid": "^8.3.1"
