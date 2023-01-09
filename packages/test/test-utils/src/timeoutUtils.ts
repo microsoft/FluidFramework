@@ -39,7 +39,8 @@ export async function timeoutAwait<T = void>(
  * @param failOnContainerClose - If true, the returned Promise will be rejected if the container emits a 'closed' event
  * before a 'connected' event.
  * Defaults to true.
- * @returns A Promise that resolves when the specified container emits a 'connected' event.
+ * @returns A Promise that resolves when the specified container emits a 'connected' event (or immediately if the
+ * Container is already connected).
  * If failOnContainerClose === true and the container emits a 'closed' event before a 'connected' event, the Promise
  * is rejected with the error from the 'closed' event, if any.
  */
