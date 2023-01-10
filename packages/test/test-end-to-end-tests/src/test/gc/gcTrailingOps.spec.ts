@@ -24,7 +24,7 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
     const tests = (tombstoneEnabled: boolean = false) => {
         let provider: ITestObjectProvider;
 
-        const sweepTimeoutMs = 0;
+        const sweepTimeoutMs = 1;
         const settings = {
             "Fluid.GarbageCollection.ThrowOnTombstoneUsage": true,
             "Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": sweepTimeoutMs,
@@ -133,7 +133,8 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
             // Create a summarizer
             const mainSummarizer = await createSummarizer(provider, mainContainer, undefined, gcOptions, configProvider);
 
-            // Create trailing ops where the datastore and blob are unreferenced
+            // Make the datastore and blob live and unreferenced
+            // Note: Technically the blob is live once the blob is uploaded and the attach op is sequenced, view the BlobManager for more details.
             mainDefaultDataStore._root.set("datastore", newDataStore.entryPoint);
             mainDefaultDataStore._root.set("blob", blobHandle);
             mainDefaultDataStore._root.delete("datastore");
@@ -147,6 +148,8 @@ describeNoCompat("GC trailing ops tests", (getTestObjectProvider) => {
             const blobTimestamp1 = unreferencedTimestamps1.get(blobHandle.absolutePath.slice(1));
             assert(dataStoreTimestamp1 !== undefined, `Should have unreferenced datastore`);
             assert(blobTimestamp1 !== undefined, `Should have unreferenced blob`);
+
+            // Create trailing ops where the datastore and blob are referenced
             mainDefaultDataStore._root.set("datastore", newDataStore.entryPoint);
             mainDefaultDataStore._root.set("blob", blobHandle);
             await provider.ensureSynchronized();
