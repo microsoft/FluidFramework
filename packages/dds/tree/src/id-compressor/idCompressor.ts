@@ -17,7 +17,7 @@ import {
     fail,
     Mutable,
     setPropertyIfDefined,
-} from "../util";
+} from "./utils";
 import {
     LocalCompressedId,
     FinalCompressedId,
