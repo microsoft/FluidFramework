@@ -48,8 +48,8 @@ Here are some remarks about the interface
 
 |  CallSignature | Description |
 |  --- | --- |
-|  [(event: 'testCallSignature', listener: (input: unknown) =&amp;gt; void): any](./simple-suite-test/testinterface-interface#_call_-callsignature) | Test interface event call signature |
-|  [(event: 'anotherTestCallSignature', listener: (input: number) =&amp;gt; string): number](./simple-suite-test/testinterface-interface#_call__1-callsignature) | Another example call signature |
+|  [(event: 'testCallSignature', listener: (input: unknown) =&gt; void): any](./simple-suite-test/testinterface-interface#_call_-callsignature) | Test interface event call signature |
+|  [(event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number](./simple-suite-test/testinterface-interface#_call__1-callsignature) | Another example call signature |
 
 ### Construct Signature Details
 

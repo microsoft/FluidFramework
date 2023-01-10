@@ -4,7 +4,6 @@
  */
 import { CodeSpanNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
-import { getTableEscapedText } from "./Utilities";
 
 /**
  * Recursively enumerates an CodeSpanNode to generate a markdown code span block.
@@ -24,7 +23,10 @@ export function CodeSpanToMarkdown(
     output = renderer.isInsideTable
         ? [
               "<code>",
-              getTableEscapedText(childContents).split(/\r?\n/g).join("</code><br/><code>"),
+              // TODO: Linebreaks get converted to <brs> automatically. Do we need this?
+              // Also: Do we need to wrap each linebroken line in its own <code> block? this came from the original markdown emitters, but it's not clear
+              // if it's needed
+              childContents.split(/\r?\n/g).join("</code><br/><code>"),
               "</code>",
           ]
         : ["`", childContents, "`"];
