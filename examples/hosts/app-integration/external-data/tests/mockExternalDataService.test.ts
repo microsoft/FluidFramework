@@ -16,8 +16,6 @@ import { externalDataServicePort } from '../src/mock-external-data-service-inter
 import { ExternalDataSource, initializeExternalDataService } from '../src/mock-external-data-service';
 import { closeServer } from './utilities';
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 describe("mock-external-data-service", () => {
     /**
      * External data source backing our service.
@@ -41,6 +39,8 @@ describe("mock-external-data-service", () => {
             externalDataSource,
         });
     });
+
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
     afterEach(async () => {
         externalDataSource = undefined;
@@ -93,6 +93,7 @@ describe("mock-external-data-service", () => {
     });
 
     /* eslint-enable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
 });
 
 describe("mock-external-data-service: webhook", () => {
@@ -103,6 +104,8 @@ describe("mock-external-data-service: webhook", () => {
             port: externalDataServicePort
         });
     });
+
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
     afterEach(async () => {
         const _externalDataService = externalDataService!;
@@ -166,6 +169,7 @@ describe("mock-external-data-service: webhook", () => {
             await closeServer(localService);
         }
     });
+
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
 });
 
-/* eslint-enable @typescript-eslint/no-non-null-assertion */

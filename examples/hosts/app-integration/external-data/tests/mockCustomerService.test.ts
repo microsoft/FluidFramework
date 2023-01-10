@@ -13,8 +13,6 @@ import { initializeExternalDataService } from '../src/mock-external-data-service
 import { externalDataServicePort } from '../src/mock-external-data-service-interface';
 import { closeServer } from './utilities';
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 /**
  * @remarks
  *
@@ -22,6 +20,7 @@ import { closeServer } from './utilities';
  * (using supertest), rather than leaning on network calls.
  */
 describe("mock-customer-service", () => {
+
     /**
      * Express server instance backing our mock external data service.
      */
@@ -32,6 +31,7 @@ describe("mock-customer-service", () => {
      */
     let customerService: Server | undefined;
 
+
     beforeEach(async () => {
         externalDataService = await initializeExternalDataService({
             port: externalDataServicePort
@@ -41,6 +41,8 @@ describe("mock-customer-service", () => {
             externalDataServiceWebhookRegistrationUrl: `http://localhost:${externalDataServicePort}/register-for-webhook`
         });
     });
+
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
     afterEach(async () => {
         const _externalDataService = externalDataService!;
@@ -66,6 +68,6 @@ describe("mock-customer-service", () => {
     });
 
     /* eslint-enable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
 });
 
-/* eslint-enable @typescript-eslint/no-non-null-assertion */
