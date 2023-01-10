@@ -1,10 +1,5 @@
 lockfileVersion: 5.4
 
-overrides:
-  '@types/node': ^14.18.36
-  '@types/react': ^17.0.1
-  '@types/react-dom': ^17.0.1
-
 importers:
 
   .:
@@ -3390,7 +3385,7 @@ importers:
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
       '@types/mocha': ^9.1.1
-      '@types/node': ^14.18.36
+      '@types/node': 14.18.36
       axios: ^0.26.0
       chai: ^4.2.0
       concurrently: ^6.2.0
@@ -19109,7 +19104,7 @@ packages:
   /@octokit/types/2.16.2:
     resolution: {integrity: sha512-O75k56TYvJ8WpAakWwYRN8Bgu60KrmX0z1KqFp1kNiFNkgW+JW+9EBKZ+S33PU6SLvbihqd+3drvPxKK68Ee8Q==}
     dependencies:
-      '@types/node': 14.18.36
+      '@types/node': 15.14.9
     dev: true
 
   /@octokit/types/6.41.0:
@@ -19388,7 +19383,7 @@ packages:
   /@rushstack/node-core-library/3.45.3:
     resolution: {integrity: sha512-Rn0mxqC3MPb+YbvaeFcRWfcYHLwyZ99/ffYA8chpq5OpqoY+Mr1ycTbMvzl5AxWf1pYmi/2+Eo3iTOsQdYR8xw==}
     dependencies:
-      '@types/node': 14.18.36
+      '@types/node': 12.20.24
       colors: 1.2.5
       fs-extra: 7.0.1
       import-lazy: 4.0.0
@@ -19402,7 +19397,7 @@ packages:
   /@rushstack/node-core-library/3.53.2:
     resolution: {integrity: sha512-FggLe5DQs0X9MNFeJN3/EXwb+8hyZUTEp2i+V1e8r4Va4JgkjBNY0BuEaQI+3DW6S4apV3UtXU3im17MSY00DA==}
     dependencies:
-      '@types/node': 14.18.36
+      '@types/node': 12.20.24
       colors: 1.2.5
       fs-extra: 7.0.1
       import-lazy: 4.0.0
@@ -21321,8 +21316,16 @@ packages:
       '@types/node': 14.18.36
       form-data: 3.0.1
 
+  /@types/node/12.20.24:
+    resolution: {integrity: sha512-yxDeaQIAJlMav7fH5AQqPH1u8YIuhYJXYBzxaQ4PifsU0GDO38MSdmEDeRlIxrKbC6NbEaaEHDanWb+y30U8SQ==}
+    dev: true
+
   /@types/node/14.18.36:
     resolution: {integrity: sha512-FXKWbsJ6a1hIrRxv+FoukuHnGTgEzKYGi7kilfMae96AL9UNkPFNWJEEYWzdRI9ooIkbr4AKldyuSTLql06vLQ==}
+
+  /@types/node/15.14.9:
+    resolution: {integrity: sha512-qjd88DrCxupx/kJD5yQgZdcYKZKSIGBVDIBE1/LTGcNm3d2Np/jxojkdePDdfnBHJc5W7vSMpbJ1aB7p/Py69A==}
+    dev: true
 
   /@types/normalize-package-data/2.4.1:
     resolution: {integrity: sha512-Gj7cI7z+98M282Tqmp2K5EIsoouUEzbBJhQQzDE3jSIRk6r9gsz0oUokqIUR4u1R3dMHo0pDHM7sNOHyhulypw==}
@@ -21534,7 +21537,7 @@ packages:
     resolution: {integrity: sha512-4UqPv+2567NhMQuMLdKAyK4yzrfCqwaTt6bLhHEs8PFcxbHILsrxaY63n4wgE/BRLDWDQeI+WcTmkXKExh9hQg==}
     dependencies:
       '@types/expect': 1.20.4
-      '@types/node': 14.18.36
+      '@types/node': 15.14.9
     dev: true
 
   /@types/webpack-env/1.18.0:
@@ -34008,7 +34011,7 @@ packages:
     resolution: {integrity: sha512-yiAivd4xFOH/WXlUi6v/nKopBh1QLzwjFi36NK88cGt/PRXI8WeBASqY+YSjIVWvQTx3hR8zHKDBMV6hWmglNA==}
     engines: {node: '>=12'}
     dependencies:
-      '@types/node': 14.18.36
+      '@types/node': 15.14.9
       '@types/vinyl': 2.0.7
       vinyl: 2.2.1
       vinyl-file: 3.0.0
