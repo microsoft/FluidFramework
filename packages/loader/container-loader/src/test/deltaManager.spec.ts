@@ -313,6 +313,30 @@ describe("Loader", () => {
                     // make extra sure
                     await tickClock(expectedTimeout);
                 });
+                it("Should have no gap", async () => {
+                    async function emit(count: number) {
+                        for (let num = 0; num < count; ++num) {
+                            assert(!deltaConnection.disposed, "disposed");
+                            deltaManager.submit(MessageType.Operation);
+                        }
+
+                        // Yield the event loop because the inbound op will be processed asynchronously.
+                        await yieldEventLoop();
+                    }
+
+                    await startDeltaManager();
+
+                    await emit(noopCountFrequency - 1);
+                    await tickClock(expectedTimeout - 1);
+                    // assert.strictEqual(runCount, 0);
+
+                    await emit(1);
+                    // assert.strictEqual(runCount, 1);
+
+                    await emit(noopCountFrequency - 1);
+                    await tickClock(expectedTimeout - 1);
+                    // assert.strictEqual(runCount, 1);
+                });
             });
 
             describe("Readonly API", () => {
