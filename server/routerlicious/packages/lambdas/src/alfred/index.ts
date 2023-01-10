@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import EventEmitter from "events";
 import {
     ConnectionMode,
     IClient,
@@ -215,6 +216,7 @@ export function configureWebSocketServices(
     throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
     verifyMaxMessageSize?: boolean,
     httpServer?: core.IHttpServer,
+    eventEmitter?: EventEmitter,
 ) {
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
@@ -458,7 +460,7 @@ export function configureWebSocketServices(
             (connectedMessage as any).timestamp = connectedTimestamp;
 
             // TODO: KLUDGE webhook connection
-            if(httpServer !== undefined) {
+            if(httpServer !== undefined && eventEmitter !== undefined) {
                 const customerServicePort = 5237;
 
                 const url = `http://localhost:${httpServer.address().port}/task-list-hook`; // TODO: verify this
@@ -482,7 +484,7 @@ export function configureWebSocketServices(
                     }
                 });
 
-                httpServer.on("task-list-hook", () => {
+                eventEmitter.on("task-list-hook", () => {
                     // Only for debugging purposes
                     const signalMessageRuntimeMessage : ISignalMessage = {
                         clientId: null, // system signal
