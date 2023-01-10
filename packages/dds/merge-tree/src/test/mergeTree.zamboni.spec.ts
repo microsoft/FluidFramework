@@ -9,7 +9,7 @@ import { IMergeBlock } from "../mergeTreeNodes";
 import { Zamboni } from "../zamboni";
 import { TestClient } from "./testClient";
 
-describe.only("Zamboni Logic", () => {
+describe("Zamboni Logic", () => {
     let client: TestClient;
     let zamboni: Zamboni;
     const localUserLongId = "localUser";
