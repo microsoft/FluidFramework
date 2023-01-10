@@ -86,6 +86,7 @@
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.0",
+    "@types/sinon": "^7.0.13",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",
     "cross-env": "^7.0.2",
@@ -94,6 +95,7 @@
     "nyc": "^15.0.0",
     "prettier": "~2.6.2",
     "rimraf": "^2.6.2",
+    "sinon": "^7.4.2",
     "typescript": "~4.5.5"
   },
   "typeValidation": {

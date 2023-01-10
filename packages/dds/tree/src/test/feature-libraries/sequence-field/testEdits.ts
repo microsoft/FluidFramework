@@ -5,9 +5,8 @@
 
 import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { RevisionTag, TreeSchemaIdentifier } from "../../../core";
+import { RevisionTag, TreeSchemaIdentifier, makeAnonChange } from "../../../core";
 import { TestChange } from "../../testChange";
-import { makeAnonChange } from "../../../rebase";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag: RevisionTag = brand(42);
@@ -21,6 +20,8 @@ export const cases: {
     modify_insert: TestChangeset;
     delete: TestChangeset;
     revive: TestChangeset;
+    move: TestChangeset;
+    return: TestChangeset;
 } = {
     no_change: [],
     insert: createInsertChangeset(1, 2, 1),
@@ -31,9 +32,12 @@ export const cases: {
             makeAnonChange(createModifyChangeset(1, TestChange.mint([], 2))),
         ],
         TestChange.compose,
+        TestChange.newIdAllocator(),
     ),
     delete: createDeleteChangeset(1, 3),
     revive: createReviveChangeset(2, 2, 0, tag),
+    move: createMoveChangeset(1, 2, 2),
+    return: createReturnChangeset(1, 3, 0, tag, 0),
 };
 
 function createInsertChangeset(
@@ -61,6 +65,24 @@ function createReviveChangeset(
     return SF.sequenceFieldEditor.revive(startIndex, count, detachIndex, revision);
 }
 
+function createMoveChangeset(
+    sourceIndex: number,
+    count: number,
+    destIndex: number,
+): SF.Changeset<never> {
+    return SF.sequenceFieldEditor.move(sourceIndex, count, destIndex);
+}
+
+function createReturnChangeset(
+    sourceIndex: number,
+    count: number,
+    destIndex: number,
+    detachedBy: RevisionTag,
+    detachIndex: number,
+): SF.Changeset<never> {
+    return SF.sequenceFieldEditor.return(sourceIndex, count, destIndex, detachedBy, detachIndex);
+}
+
 function createModifyChangeset<TNodeChange>(
     index: number,
     change: TNodeChange,
@@ -72,5 +94,7 @@ export const ChangeMaker = {
     insert: createInsertChangeset,
     delete: createDeleteChangeset,
     revive: createReviveChangeset,
+    move: createMoveChangeset,
+    return: createReturnChangeset,
     modify: createModifyChangeset,
 };

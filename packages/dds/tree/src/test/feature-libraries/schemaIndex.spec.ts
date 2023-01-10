@@ -9,8 +9,7 @@ import { strict as assert } from "assert";
 /* eslint-disable-next-line import/no-internal-modules */
 import { getSchemaString, parseSchemaString } from "../../feature-libraries/schemaIndex";
 
-import { SchemaData } from "../../schema-stored";
-import { rootFieldKey } from "../../tree";
+import { SchemaData, rootFieldKey } from "../../core";
 import { jsonSchemaData, jsonRoot } from "../../domains";
 import { defaultSchemaPolicy, allowsRepoSuperset } from "../../feature-libraries";
 

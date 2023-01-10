@@ -16,9 +16,8 @@ module.exports = {
         rules: {
             "import/no-nodejs-modules": [
                 "error",
-                { allow: ["assert"] },
+                { allow: ["assert", "fs", "path"] },
             ],
         },
     }],
-
 }

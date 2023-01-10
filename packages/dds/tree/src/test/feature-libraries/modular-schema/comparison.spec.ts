@@ -26,7 +26,9 @@ import {
     fieldSchema,
     InMemoryStoredSchemaRepository,
     lookupTreeSchema,
-} from "../../../schema-stored";
+    TreeSchemaIdentifier,
+    GlobalFieldKey,
+} from "../../../core";
 import { brand } from "../../../util";
 import {
     defaultSchemaPolicy,
@@ -104,16 +106,38 @@ describe("Schema Comparison", () => {
     const optionalAnyField = fieldSchema(FieldKinds.optional);
     const optionalEmptyTreeField = fieldSchema(FieldKinds.optional, [emptyTree.name]);
 
+    function updateTreeSchema(
+        repo: InMemoryStoredSchemaRepository,
+        identifier: TreeSchemaIdentifier,
+        schema: TreeSchema,
+    ) {
+        repo.update({
+            globalFieldSchema: new Map(),
+            treeSchema: new Map([[identifier, schema]]),
+        });
+    }
+
+    function updateFieldSchema(
+        repo: InMemoryStoredSchemaRepository,
+        identifier: GlobalFieldKey,
+        schema: FieldSchema,
+    ) {
+        repo.update({
+            globalFieldSchema: new Map([[identifier, schema]]),
+            treeSchema: new Map(),
+        });
+    }
+
     it("isNeverField", () => {
         const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
         assert(isNeverField(defaultSchemaPolicy, repo, neverField));
-        repo.updateTreeSchema(brand("never"), neverTree);
+        updateTreeSchema(repo, brand("never"), neverTree);
         const neverField2: FieldSchema = fieldSchema(FieldKinds.value, [brand("never")]);
         assert(isNeverField(defaultSchemaPolicy, repo, neverField2));
         assert.equal(isNeverField(defaultSchemaPolicy, repo, emptyField), false);
         assert.equal(isNeverField(defaultSchemaPolicy, repo, anyField), false);
         assert.equal(isNeverField(defaultSchemaPolicy, repo, valueEmptyTreeField), true);
-        repo.updateTreeSchema(brand("empty"), emptyTree);
+        updateTreeSchema(repo, brand("empty"), emptyTree);
         assert.equal(
             isNeverField(
                 defaultSchemaPolicy,
@@ -141,7 +165,7 @@ describe("Schema Comparison", () => {
             }),
         );
         assert(isNeverTree(defaultSchemaPolicy, repo, neverTree2));
-        repo.updateFieldSchema(brand("never"), neverField);
+        updateFieldSchema(repo, brand("never"), neverField);
         assert(
             isNeverTree(defaultSchemaPolicy, repo, {
                 localFields: emptyMap,
@@ -171,7 +195,7 @@ describe("Schema Comparison", () => {
                 emptyTree,
             ),
         );
-        repo.updateTreeSchema(emptyTree.name, emptyTree);
+        updateTreeSchema(repo, emptyTree.name, emptyTree);
 
         assert.equal(isNeverTree(defaultSchemaPolicy, repo, emptyLocalFieldTree), false);
         assert.equal(isNeverTree(defaultSchemaPolicy, repo, valueLocalFieldTree), false);
@@ -217,8 +241,8 @@ describe("Schema Comparison", () => {
 
     it("allowsFieldSuperset", () => {
         const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-        repo.updateTreeSchema(brand("never"), neverTree);
-        repo.updateTreeSchema(emptyTree.name, emptyTree);
+        updateTreeSchema(repo, brand("never"), neverTree);
+        updateTreeSchema(repo, emptyTree.name, emptyTree);
         const neverField2: FieldSchema = fieldSchema(FieldKinds.value, [brand("never")]);
         const compare = (a: FieldSchema, b: FieldSchema): boolean =>
             allowsFieldSuperset(defaultSchemaPolicy, repo, a, b);
@@ -249,7 +273,7 @@ describe("Schema Comparison", () => {
 
     it("allowsTreeSuperset", () => {
         const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-        repo.updateTreeSchema(emptyTree.name, emptyTree);
+        updateTreeSchema(repo, emptyTree.name, emptyTree);
         const compare = (a: TreeSchema, b: TreeSchema): boolean =>
             allowsTreeSuperset(defaultSchemaPolicy, repo, a, b);
         testOrder(compare, [neverTree, emptyTree, optionalLocalFieldTree, anyTree]);

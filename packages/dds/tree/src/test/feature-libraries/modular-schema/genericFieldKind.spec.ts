@@ -14,8 +14,7 @@ import {
     genericFieldKind,
     IdAllocator,
 } from "../../../feature-libraries";
-import { makeAnonChange, tagChange, TaggedChange } from "../../../rebase";
-import { Delta, FieldKey } from "../../../tree";
+import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
 import { noRepair } from "../../utils";
 

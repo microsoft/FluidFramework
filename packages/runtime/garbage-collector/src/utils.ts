@@ -4,13 +4,16 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
     IGarbageCollectionData,
     IGarbageCollectionNodeData,
     IGarbageCollectionState,
     IGarbageCollectionDetailsBase,
+    IGarbageCollectionSnapshotData,
+    gcBlobPrefix,
+    gcTombstoneBlobKey,
 } from "@fluidframework/runtime-definitions";
-
 /**
  * Trims the leading and trailing slashes from the given string.
  * @param str - A string that may contain leading and / or trailing slashes.
@@ -66,10 +69,13 @@ export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionD
         return childGCDetailsMap;
     }
 
-    // Remove the node's self GC nodes, if any, and generate the children GC nodes.
     const gcNodes = gcDetails.gcData.gcNodes;
-    delete gcNodes["/"];
     for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
+        // Skip self-node since only children GC data is to be generated.
+        if (id === "/") {
+            continue;
+        }
+
         assert(id.startsWith("/"), 0x2ae /* "node id should always be an absolute route" */);
         const childId = id.split("/")[1];
         let childGCNodeId = id.slice(childId.length + 1);
@@ -261,4 +267,37 @@ export class GCDataBuilder implements IGarbageCollectionData {
             gcNodes: this.gcNodes,
         };
     }
+}
+
+/**
+ * Gets the base garbage collection state from the given snapshot tree. It contains GC state and tombstone state.
+ * The GC state may be written into multiple blobs. Merge the GC state from all such blobs into one.
+ */
+export async function getGCDataFromSnapshot(
+    gcSnapshotTree: ISnapshotTree,
+    readAndParseBlob: <T>(id: string) => Promise<T>,
+): Promise<IGarbageCollectionSnapshotData> {
+    let rootGCState: IGarbageCollectionState = { gcNodes: {} };
+    let tombstones: string[] | undefined;
+    for (const key of Object.keys(gcSnapshotTree.blobs)) {
+        if (key === gcTombstoneBlobKey) {
+            tombstones = await readAndParseBlob<string[]>(gcSnapshotTree.blobs[key]);
+            continue;
+        }
+
+        // Skip blobs that do not start with the GC prefix.
+        if (!key.startsWith(gcBlobPrefix)) {
+            continue;
+        }
+
+        const blobId = gcSnapshotTree.blobs[key];
+        if (blobId === undefined) {
+            continue;
+        }
+        const gcState = await readAndParseBlob<IGarbageCollectionState>(blobId);
+        assert(gcState !== undefined, 0x2ad /* "GC blob missing from snapshot" */);
+        // Merge the GC state of this blob into the root GC state.
+        rootGCState = concatGarbageCollectionStates(rootGCState, gcState);
+    }
+    return { gcState: rootGCState, tombstones };
 }
