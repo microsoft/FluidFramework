@@ -5,6 +5,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
+import { IMergeBlock } from "../mergeTreeNodes";
 import { Zamboni } from "../zamboni";
 import { TestClient } from "./testClient";
 
@@ -20,17 +21,15 @@ describe.only("Zamboni Logic", () => {
         }
         client.startOrUpdateCollaboration(localUserLongId);
 
-        // const segOff = client.getContainingSegment(segPos);
-        // assert(TextSegment.is(segOff.segment!));
-        // assert.strictEqual(segOff.offset, 0);
-        // assert.strictEqual(segOff.segment.text, "o");
-        // segment = segOff.segment;
     });
     it("packParent with no children segments", () => {
         // currently the applyMsg calls are copied from the other test I wrote that
         // that calls zamboni and packParent indirectly --> not entirely right, but
         // it does run how I want it to
         client.applyMsg(client.makeOpMessage(client.removeRangeLocal(0, client.getLength()-1), 1));
+        zamboni.packParent(client.mergeTree.root, client.mergeTree);
+        assert.equal(client.mergeTree.root.cachedLength, 1);
+
         client.applyMsg(
             client.makeOpMessage(
                 client.removeRangeLocal(0, client.getLength()),
@@ -47,12 +46,32 @@ describe.only("Zamboni Logic", () => {
 
     });
     it("zamboni with no segments to scour", () => {
+        const cachedLength = client.mergeTree.root.cachedLength;
+        const childCount = client.mergeTree.root.childCount;
 
+        zamboni.zamboniSegments(client.mergeTree);
+
+        assert.equal(cachedLength, client.mergeTree.root.cachedLength);
+        assert.equal(childCount, client.mergeTree.root.childCount);
     });
     it("zamboni with one segment to scour", () =>{
+        const initialChildCount = (client.mergeTree.root.children[0] as IMergeBlock).childCount;
+        const initialCachedLength = client.mergeTree.root.cachedLength;
+        client.removeRangeLocal(0, 1);
+        zamboni.zamboniSegments(client.mergeTree);
+
+        assert.equal(client.mergeTree.root.cachedLength, initialCachedLength-1);
+        assert.equal((client.mergeTree.root.children[0] as IMergeBlock).childCount, initialChildCount);
 
     });
     it("zamboni with many segments to scour", () => {
+        client.removeRangeLocal(0, 6);
 
+        assert.equal(client.mergeTree.root.children[0].cachedLength, 0);
+
+        zamboni.zamboniSegments(client.mergeTree);
+        zamboni.packParent(client.mergeTree.root, client.mergeTree);
+
+        assert.equal(client.mergeTree.root.childCount, 1);
     });
 });
