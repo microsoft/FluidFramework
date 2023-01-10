@@ -9,9 +9,13 @@ import { Server } from "http";
  * "Promisifies" `Server.close`.
  */
 export async function closeServer(server: Server): Promise<void> {
-    await new Promise<void>((resolve) => {
-        server.close(() => {
-            resolve();
+    await new Promise<void>((resolve, reject) => {
+        server.close((error) => {
+            if (error !== undefined) {
+                reject(error);
+            } else {
+                resolve();
+            }
         });
     });
 }
