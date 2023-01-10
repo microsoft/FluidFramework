@@ -64,6 +64,7 @@ export class CellAttributor {
     private info: AttributionInfo;
 
     public constructor(initialInfo?: AttributionInfo) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         this.info = initialInfo ?? {} as AttributionInfo;
     }
 
@@ -143,7 +144,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
      * @param runtime - The data store runtime to which the `SharedCell` belongs.
      * @param id - Unique identifier for the `SharedCell`.
      */
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, trackAttribution?: boolean) {
+    public constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, trackAttribution?: boolean) {
         super(id, runtime, attributes, "fluid_cell_");
         this.trackAttribution = trackAttribution ?? false;
     }
