@@ -25,6 +25,7 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils";
 
 /**
@@ -780,6 +781,8 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
         itExpects("removes un-tombstoned data store and attachment blob from tombstone blob in summary",
         [
+            { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Datastore_Revived" },
+            { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Revived" },
             { eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived", type: "DataStore" },
             { eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived", type: "Blob" },
         ],
@@ -789,12 +792,15 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             const mainDataStoreUrl = `/${mainDataStore._context.id}`;
             await waitForContainerConnection(mainContainer);
 
+            const mockLogger = new MockLogger();
+
             const summarizer = await createSummarizer(
                 provider,
                 mainContainer,
                 undefined /* summaryVersion */,
                 gcOptions,
                 mockConfigProvider(settings),
+                mockLogger,
             );
 
             // Create couple of data stores.
@@ -837,10 +843,19 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             validateTombstoneState(
                 summary2.summaryTree, [newDataStoreUrl, newDataStore2Url, blobHandle.absolutePath], [mainDataStoreUrl]);
 
+            mockLogger.assertMatchNone([
+                { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Datastore_Revived" },
+                { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Revived" },
+            ]);
+
             // Mark one of the data stores and attachment blob as referenced so that they are not tombstones anymore.
             mainDataStore._root.set("newDataStore", newDataStore.handle);
             mainDataStore._root.set("blob", blobHandle);
             await provider.ensureSynchronized();
+            mockLogger.assertMatch([
+                { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Datastore_Revived" },
+                { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Revived" },
+            ]);
 
             // Summarize. The un-tombstoned data store and attachment blob should not be part of the tombstone blob.
             const summary3 = await summarizeNow(summarizer);
