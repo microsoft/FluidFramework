@@ -2067,7 +2067,7 @@ class PropertyFactory {
     */
     async initializeSchemaStore(in_options) {
         // https://regex101.com/r/TlgGJp/2
-        var regexBaseUrl = /^(https?:)?\/\/((.[-a-zA-Z0-9@:%_+~#=.]{2,256}){1,2}\.[a-z]{2,6}|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d{1,5})?(\/[-a-zA-Z0-9@:%_+.~#?&/=]*)*$/; // eslint-disable-line max-len
+        var regexBaseUrl = /^(https?:)?\/\/((.[-a-zA-Z0-9@:%_+~#=.]{2,256}){1,2}\.[a-z]{2,6}|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d{1,5})?(\/[-a-zA-Z0-9@:%_+.~#?&/=]*)*$/;
 
         if (!in_options || !in_options.getBearerToken || !_.isFunction(in_options.getBearerToken) || !in_options.url) {
             return Promise.reject(new Error(MSG.MISSING_FSS_INIT_OPTIONS));

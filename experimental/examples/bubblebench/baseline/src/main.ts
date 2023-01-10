@@ -11,10 +11,10 @@ import {
 import { AppState } from "./state";
 
 export class Bubblebench extends DataObject {
-    public static get Name() { return "@fluid-example/bubblebench-baseline"; }
+    public static get Name(): string { return "@fluid-example/bubblebench-baseline"; }
     private state?: AppState;
 
-    protected async hasInitialized() {
+    protected async hasInitialized(): Promise<void> {
         this.state = new AppState(
             /* stageWidth: */ 640,
             /* stageHeight: */ 480,
@@ -22,8 +22,12 @@ export class Bubblebench extends DataObject {
         );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    public get clientManager() { return this.state!; }
+    public get clientManager(): AppState {
+        if (this.state === undefined) {
+            throw new Error("App state has not yet been initialized.");
+        }
+        return this.state;
+    }
 }
 
 /**

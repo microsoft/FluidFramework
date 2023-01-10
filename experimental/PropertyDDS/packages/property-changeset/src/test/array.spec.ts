@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-unused-expressions */
 /**
  * @fileoverview Tests for the array changeset operations
  */
+
 import isEmpty from "lodash/isEmpty";
 import isNumber from "lodash/isNumber";
 import { copy as cloneDeep } from "fastest-json-copy";
@@ -769,7 +769,7 @@ describe("Array Operations", function() {
             for (const additionalInserts of ["", " with insert at the beginning", " with insert at the end"]) {
                 const offset = additionalInserts === " with insert at the beginning" ? 2 : 0;
                 for (const i of range(1, 9)) {
-                    it(`at postion ${i + offset}${additionalInserts}`, () => {
+                    it(`at position ${i + offset}${additionalInserts}`, () => {
                         const initial = createArrayCS({
                             insert: [
                                 [0, generateNamedEntities(10, undefined, "number")],

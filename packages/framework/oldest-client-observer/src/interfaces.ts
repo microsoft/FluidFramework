@@ -9,9 +9,6 @@ import { IQuorumClients } from "@fluidframework/protocol-definitions";
 
 export interface IOldestClientObservableEvents extends IEvent {
     (event: "connected", listener: () => void);
-    // Typescript won't convert IFluidDataStoreRuntime and ContainerRuntime if we unify these,
-    // I believe this is because the "connected" event has a clientId arg in the runtimes.
-    // eslint-disable-next-line @typescript-eslint/unified-signatures
     (event: "disconnected", listener: () => void);
 }
 

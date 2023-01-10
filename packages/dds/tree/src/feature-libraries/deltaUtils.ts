@@ -22,7 +22,7 @@ export function mapFieldMarks<TIn, TOut>(
     fields: Delta.FieldMarks<TIn>,
     func: (tree: TIn) => TOut,
 ): Delta.FieldMarks<TOut> {
-    const out: Delta.FieldMarks<TOut> = new Map();
+    const out: Map<FieldKey, Delta.MarkList<TOut>> = new Map();
     for (const [k, v] of fields) {
         out.set(k, mapMarkList(v, func));
     }

@@ -4,7 +4,7 @@
  */
 
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { FieldKey } from "../../../tree";
+import { FieldKey } from "../../../core";
 import { brand } from "../../../util";
 
 export interface Canada {

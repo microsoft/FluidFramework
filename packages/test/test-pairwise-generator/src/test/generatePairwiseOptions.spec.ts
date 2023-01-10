@@ -98,7 +98,6 @@ function validatePairsExhaustively<T>(
                     }
                     assert(
                         found,
-                        // eslint-disable-next-line max-len
                         `failed to find pair: ${i} === ${optionsToString(iv)} && ${j} === ${optionsToString(jv)}\n${optionsToString(...values)}`);
                 }
             }

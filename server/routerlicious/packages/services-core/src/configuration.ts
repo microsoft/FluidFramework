@@ -45,6 +45,9 @@ export interface IDeliServerConfiguration {
 
     // Controls if ops should be nacked if a summary hasn't been made for a while
     summaryNackMessages: IDeliSummaryNackMessagesServerConfiguration;
+
+    // Enable to make deli not add additionalContent to summarize messages that are for the single commit flow
+    skipSummarizeAugmentationForSingleCommmit: boolean;
 }
 
 export interface ICheckpointHeuristicsServerConfiguration {
@@ -202,6 +205,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
                 message: "Submit a summary before inserting additional operations",
             },
         },
+        skipSummarizeAugmentationForSingleCommmit: false,
     },
     broadcaster: {
         includeEventInMessageBatchName: false,
