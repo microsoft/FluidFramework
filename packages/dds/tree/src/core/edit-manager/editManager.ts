@@ -177,9 +177,29 @@ export class EditManager<
         }
 
         const branch = this.getOrCreateBranch(newCommit.sessionId, newCommit.refNumber);
-        this.updateBranch(branch, newCommit.refNumber);
+
+        // Like `newCommit.refNumber` but takes into account cases where the commit comes from a peer whose
+        // prior changes made it to the trunk without requiring any rebasing.
+        const effectiveNewCommitRef: SeqNumber = brand(
+            Math.max(branch.refSeq, newCommit.refNumber),
+        );
+
+        this.updateBranch(branch, effectiveNewCommitRef);
         const newChangeFullyRebased = this.rebaseChangeFromBranchToTrunk(newCommit, branch);
-        this.addCommitToBranch(branch, newCommit);
+        if (
+            this.trunk.length > 0 &&
+            effectiveNewCommitRef !== this.trunk[this.trunk.length - 1].seqNumber
+        ) {
+            // The change diverges from the trunk
+            branch.localChanges.push(newCommit);
+        } else {
+            // The change is in line with the trunk
+            assert(
+                branch.localChanges.length === 0,
+                "A branch whose latest commit is in line with the trunk should be empty",
+            );
+            branch.refSeq = newCommit.seqNumber;
+        }
 
         // Note: we never use the refNumber of a commit in the trunk
         this.trunk.push({
@@ -190,19 +210,6 @@ export class EditManager<
         return this.changeFamily.intoDelta(
             this.rebaseLocalBranch(tagChange(newChangeFullyRebased, brand(newCommit.seqNumber))),
         );
-    }
-
-    /**
-     * Add `newCommit` to the tip of the `branch` and updates the branch's `isDivergent` flag.
-     */
-    private addCommitToBranch(branch: Branch<TChangeset>, newCommit: Commit<TChangeset>): void {
-        branch.localChanges.push(newCommit);
-        const lastCommit = this.getLastCommit();
-        if (lastCommit === undefined || newCommit.refNumber === lastCommit.seqNumber) {
-            branch.isDivergent = false;
-        } else {
-            branch.isDivergent ||= newCommit.sessionId !== lastCommit.sessionId;
-        }
     }
 
     public addLocalChange(change: TChangeset): Delta.Root {
@@ -224,47 +231,13 @@ export class EditManager<
         commitToRebase: Commit<TChangeset>,
         branch: Branch<TChangeset>,
     ): TChangeset {
-        const peerSessionId = commitToRebase.sessionId;
-        if (!branch.isDivergent && peerSessionId === this.getLastCommit()?.sessionId) {
-            // The new commit is not divergent and therefore doesn't need to be rebased.
-            return commitToRebase.changeset;
-        }
-
-        const trunkCommits = this.getCommitsAfter(branch.refSeq);
-
-        // The peer branch (or this last edit) is divergent, meaning some edits on the trunk after `branch.refSeq`
-        // came from a different session.
-        // This new edit needs to be rebased to account for the effect of these concurrent edits.
-        // We could rebase the new edit over the inverses of all the edits in the branch and over all the trunk commits
-        // but that may lead to some superfluous rebases. We only need to rebase over the inverse branch changes and
-        // their corresponding trunk commits if those changes were themselves divergent. In other words, we don't need
-        // to include in the sandwich rebase those edits form the branch that were sequenced as is (i.e., without being
-        // rebased).
-        // There are two benefits to this:
-        // 1. We avoid wasting time performing superfluous computation.
-        // 2. It makes the process of rebasing peer changes identical to the process of rebasing local changes.
-        //    This reduces the risk of decoherence bugs even if the ChangeFamily is buggy (i.e., doesn't satisfy the
-        //    required axioms).
-
-        // The number of edits on the branch that made it to the trunk without being rebased.
-        // This can also be thought as the length of the common prefix between the trunk changes
-        // since `branch.refSeq` and the branch changes.
-        let nonDivergentEditCount = 0;
-        while (
-            nonDivergentEditCount < branch.localChanges.length &&
-            trunkCommits[nonDivergentEditCount].sessionId === peerSessionId
-        ) {
-            ++nonDivergentEditCount;
-        }
-        const divergentEditsFromSession = branch.localChanges.slice(nonDivergentEditCount);
-        const trunkCommitsUnknownToSession = trunkCommits.slice(nonDivergentEditCount);
-        const changeRebasedToRef = divergentEditsFromSession.reduceRight(
+        const changeRebasedToRef = branch.localChanges.reduceRight(
             (newChange, branchCommit) =>
                 this.changeFamily.rebaser.rebase(newChange, this.inverseFromCommit(branchCommit)),
             commitToRebase.changeset,
         );
 
-        return this.rebaseOverCommits(changeRebasedToRef, trunkCommitsUnknownToSession);
+        return this.rebaseOverCommits(changeRebasedToRef, this.getCommitsAfter(branch.refSeq));
     }
 
     // TODO: Try to share more logic between this method and `rebaseBranch`
@@ -403,7 +376,7 @@ export class EditManager<
 
     private getOrCreateBranch(sessionId: SessionId, refSeq: SeqNumber): Branch<TChangeset> {
         if (!this.branches.has(sessionId)) {
-            this.branches.set(sessionId, { localChanges: [], refSeq, isDivergent: false });
+            this.branches.set(sessionId, { localChanges: [], refSeq });
         }
         return this.branches.get(sessionId) as Branch<TChangeset>;
     }
@@ -427,30 +400,6 @@ function taggedChangeFromCommit<T>(commit: Commit<T>): TaggedChange<T> {
 export interface Branch<TChangeset> {
     localChanges: Commit<TChangeset>[];
     refSeq: SeqNumber;
-    /**
-     * A branch is divergent iff it has local changes and there is a change outside the branch with a `seqNumber`
-     * between the branch's `refSeq` and the `seqNumber` of the last change in the branch.
-     * In other words, the ref commit followed by the local changes
-     * do not form a contiguous block in the trunk or final sequence.
-     *
-     * Note that a commit whose ref number does not match the latest sequence number at the time of its
-     * sequencing is not necessarily divergent: if the commit is from the peer who issued the preceding commit,
-     * and that preceding commit was not divergent, then the new commit is not divergent either.
-     *
-     * More formally, given:
-     *
-     * - A new commit `c`
-     *
-     * - The function `prev(x)` that returns the commit sequenced immediately before commit `x`:
-     *
-     * ```typescript
-     * isDivergent(c) =
-     *     prev(c) !== undefined
-     *     && c.refNumber !== prev(c).seqNumber
-     *     && (prev(c).sessionId !== c.sessionId || isDivergent(prev(c)))
-     * ```
-     */
-    isDivergent: boolean;
 }
 
 const UNEXPECTED_SEQUENCED_LOCAL_EDIT =
