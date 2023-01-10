@@ -15,6 +15,7 @@ import {
     waitForContainerConnection,
     mockConfigProvider,
     ITestContainerConfig,
+    createSummarizerWithContainer,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, itExpects } from "@fluidframework/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
@@ -86,6 +87,9 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             {
                 eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
             },
+            {
+                eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+            },
         ], async () => {
             const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
 
@@ -111,6 +115,8 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             // Summarize so that the tombstoned blobs are now part of the summary.
             const summary2 = await summarizeNow(summarizer);
             const container2 = await loadContainer(summary2.summaryVersion);
+            const absoluteUrl = await container2.getAbsoluteUrl("");
+            assert(absoluteUrl !== undefined, "Should be able to retrieve the absolute url");
 
             // Retrieving the blob should fail. Note that the blob is requested via its url since this container does
             // not have access to the blob's handle.
@@ -118,6 +124,18 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
             assert(response.value.startsWith("Blob removed by gc:"), `Unexpected response value`);
             assert(container2.closed !== true, "Container should not have closed");
+
+            const { container: summarizingContainer } = await createSummarizerWithContainer(
+                provider,
+                absoluteUrl,
+                summary2.summaryVersion,
+                gcOptions,
+                mockConfigProvider(settings),
+            );
+            const summarizingResponse = await summarizingContainer.request({ url: blobHandle.absolutePath });
+            assert.strictEqual(summarizingResponse?.status, 200, `Expecting a 200 response`);
+            assert(summarizingResponse.value !== undefined, `Expecting a value`);
+            assert(summarizingContainer.closed !== true, "Container should not have closed");
         });
 
         itExpects("fails retrieval of blobs that are de-duped in same container and are tombstoned",

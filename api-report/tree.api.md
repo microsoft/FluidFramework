@@ -115,9 +115,6 @@ export interface ChildLocation {
     readonly index: number;
 }
 
-// @public (undocumented)
-type ClientId = number;
-
 // @public
 function compose<TNodeChange>(changes: TaggedChange<Changeset<TNodeChange>>[], composeChild: NodeChangeComposer_2<TNodeChange>, genId: IdAllocator): Changeset<TNodeChange>;
 
@@ -182,8 +179,6 @@ interface Delete {
 interface Delete_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasChanges<TNodeChange>, CanConflict {
     // (undocumented)
     count: NodeCount;
-    // (undocumented)
-    tomb?: RevisionTag;
     // (undocumented)
     type: "Delete";
 }
@@ -449,9 +444,6 @@ export interface FullSchemaPolicy extends SchemaPolicy {
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
 }
 
-// @public (undocumented)
-type GapCount = number;
-
 // @public
 export interface GenericFieldsNode<TChild> {
     // (undocumented)
@@ -486,11 +478,6 @@ export type GlobalFieldKeySymbol = Brand<symbol, "GlobalFieldKeySymbol">;
 interface HasChanges<TNodeChange = NodeChangeType> {
     // (undocumented)
     changes?: TNodeChange;
-}
-
-// @public (undocumented)
-interface HasLength {
-    length?: number;
 }
 
 // @public (undocumented)
@@ -848,8 +835,6 @@ interface Modify_2<TNodeChange = NodeChangeType> {
     // (undocumented)
     changes: TNodeChange;
     // (undocumented)
-    tomb?: RevisionTag;
-    // (undocumented)
     type: "Modify";
 }
 
@@ -980,8 +965,6 @@ interface MoveOut_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMov
     // (undocumented)
     count: NodeCount;
     isDstConflicted?: true;
-    // (undocumented)
-    tomb?: RevisionTag;
     // (undocumented)
     type: "MoveOut";
 }
@@ -1261,14 +1244,11 @@ declare namespace SequenceField {
         Attach,
         NewAttach,
         Changeset,
-        ClientId,
         Delete_2 as Delete,
         Detach,
         Effects,
-        GapCount,
         HasChanges,
         HasMoveId,
-        HasLength,
         HasPlaceFields,
         HasRevisionTag,
         HasTiebreakPolicy,
@@ -1286,20 +1266,17 @@ declare namespace SequenceField {
         ProtoNode_2 as ProtoNode,
         RangeType,
         Reattach,
-        CellSpanningMark,
-        InputSpanningMark,
-        OutputSpanningMark,
-        SkipLikeReattach,
         ReturnFrom,
         ReturnTo,
         Revive,
         Tiebreak,
-        Tombstones,
-        TreeForestPath,
-        TreeRootPath,
         Skip_2 as Skip,
         LineageEvent,
         HasReattachFields,
+        CellSpanningMark,
+        InputSpanningMark,
+        OutputSpanningMark,
+        SkipLikeReattach,
         Conflicted,
         CanConflict,
         SequenceFieldChangeHandler,
@@ -1468,26 +1445,12 @@ export type ToDelta = (child: NodeChangeset, index: number | undefined) => Delta
 // @public (undocumented)
 type ToDelta_2<TNodeChange> = (child: TNodeChange, index: number | undefined) => Delta.Modify;
 
-// @public
-interface Tombstones {
-    // (undocumented)
-    change: RevisionTag;
-    // (undocumented)
-    count: NodeCount;
-}
-
 // @public (undocumented)
 export enum TransactionResult {
     // (undocumented)
     Abort = 0,
     // (undocumented)
     Apply = 1
-}
-
-// @public (undocumented)
-interface TreeForestPath {
-    // (undocumented)
-    [label: string]: TreeRootPath;
 }
 
 // @public (undocumented)
@@ -1504,11 +1467,6 @@ export const enum TreeNavigationResult {
     Ok = 1,
     Pending = 0
 }
-
-// @public (undocumented)
-type TreeRootPath = number | {
-    [label: number]: TreeForestPath;
-};
 
 // @public (undocumented)
 export interface TreeSchema {

@@ -62,7 +62,6 @@ export type CanConflict = Partial<Conflicted>;
 export interface Modify<TNodeChange = NodeChangeType> {
     type: "Modify";
     changes: TNodeChange;
-    tomb?: RevisionTag;
 }
 
 export interface HasChanges<TNodeChange = NodeChangeType> {
@@ -154,7 +153,6 @@ export interface Delete<TNodeChange = NodeChangeType>
         HasChanges<TNodeChange>,
         CanConflict {
     type: "Delete";
-    tomb?: RevisionTag;
     count: NodeCount;
 }
 
@@ -165,7 +163,6 @@ export interface MoveOut<TNodeChange = NodeChangeType>
         CanConflict {
     type: "MoveOut";
     count: NodeCount;
-    tomb?: RevisionTag;
     /**
      * When true, the corresponding MoveIn has a conflict.
      * This is independent of whether this mark has a conflict.
@@ -257,36 +254,9 @@ export interface ReturnFrom<TNodeChange = NodeChangeType>
     isDstConflicted?: true;
 }
 
-/**
- * Represents a consecutive run of detached nodes.
- *
- * Note that in some situations a tombstone is created for the purpose of representing a gap
- * even though no node has been detached.
- * This can happen when a slice-move applied to a gap but not the nodes on both sides of the
- * gap, or when a slice-move is applied to the gap that represents the start (or end) of a
- * field.
- */
-export interface Tombstones {
-    count: NodeCount;
-    change: RevisionTag;
-}
-
 export interface PriorOp {
     change: RevisionTag;
 }
-
-export interface HasLength {
-    /**
-     * Omit if 1.
-     */
-    length?: number;
-}
-
-export interface TreeForestPath {
-    [label: string]: TreeRootPath;
-}
-
-export type TreeRootPath = number | { [label: number]: TreeForestPath };
 
 export enum RangeType {
     Set = "Set",
@@ -323,9 +293,7 @@ export interface HasMoveId {
 export type ProtoNode = JsonableTree;
 
 export type NodeCount = number;
-export type GapCount = number;
 export type Skip = number;
-export type ClientId = number;
 export enum Tiebreak {
     Left,
     Right,

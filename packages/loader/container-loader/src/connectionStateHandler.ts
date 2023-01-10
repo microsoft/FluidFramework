@@ -57,7 +57,7 @@ export function createConnectionStateHandler(
     const mc = loggerToMonitoringContext(inputs.logger);
     return createConnectionStateHandlerCore(
         mc.config.getBoolean("Fluid.Container.CatchUpBeforeDeclaringConnected") === true, // connectedRaisedWhenCaughtUp
-        mc.config.getBoolean("Fluid.Container.DisableJoinSignalWait") !== true, // readClientsWaitForJoinSignal
+        mc.config.getBoolean("Fluid.Container.EnableJoinSignalWait") === true, // readClientsWaitForJoinSignal
         inputs,
         deltaManager,
         clientId,
