@@ -102,6 +102,47 @@
     "version": "2.0.0-internal.2.3.0",
     "baselineRange": ">=2.0.0-internal.2.2.0 <2.0.0-internal.2.3.0",
     "baselineVersion": "2.0.0-internal.2.2.0",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_AuthorizationError": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "ClassDeclaration_DeltaStreamConnectionForbiddenError": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "ClassDeclaration_FluidInvalidSchemaError": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "ClassDeclaration_GenericNetworkError": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "ClassDeclaration_LocationRedirectionError": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "ClassDeclaration_NetworkErrorBasic": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "ClassDeclaration_NonRetryableError": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "ClassDeclaration_RetryableError": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "ClassDeclaration_ThrottlingError": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "ClassDeclaration_UsageError": {
+        "backCompat": false,
+        "forwardCompat": false
+      }
+    }
   }
 }

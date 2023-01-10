@@ -83,6 +83,8 @@
     "@testing-library/react": "^12.0.0",
     "@testing-library/user-event": "^14.4.3",
     "@types/jest": "22.2.3",
+    "@types/react": "^17.0.1",
+    "@types/testing-library__jest-dom": "^5.14.5",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",
     "cross-env": "^7.0.2",
