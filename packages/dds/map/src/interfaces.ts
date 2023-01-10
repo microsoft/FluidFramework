@@ -232,25 +232,6 @@ export interface IDirectoryEvents extends IEvent {
     ) => void);
 
     /**
-     * Emitted when a previously deleted subdirectory is restored.
-     *
-     * @remarks Listener parameters:
-     *
-     * - `path` - The relative path to the subdirectory that is restored.
-     * It is relative from the object which raises the event.
-     *
-     * - `local` - Whether the restore (undelete) originated from this client.
-     *
-     * - `target` - The {@link ISharedDirectory} itself.
-     */
-    // eslint-disable-next-line @typescript-eslint/unified-signatures
-    (event: "subDirectoryUndeleted", listener: (
-        path: string,
-        local: boolean,
-        target: IEventThisPlaceHolder,
-    ) => void);
-
-    /**
      * Emitted when this sub directory is deleted.
      *
      * @remarks Listener parameters:
