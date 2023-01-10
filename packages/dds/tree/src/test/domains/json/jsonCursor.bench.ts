@@ -245,7 +245,7 @@ function extractAvgValsFromTwitter(
 }
 
 function extractAvgValsFromCitm(
-    cursor: ITreeCursorNew,
+    cursor: ITreeCursor,
     calculate: (x: number, y: number) => void,
 ): void {
     cursor.enterField(CitmCatalog.SharedTreeFieldKey.performances);
