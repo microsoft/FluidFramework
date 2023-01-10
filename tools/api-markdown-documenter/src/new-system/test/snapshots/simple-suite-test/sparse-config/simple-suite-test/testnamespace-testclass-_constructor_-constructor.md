@@ -13,5 +13,5 @@ constructor(testClassProperty: string);
 
 | Parameter | Type | Description |
 |  --- | --- | --- |
-|  testClassProperty | string | See <i>TestClass.testClassProperty</i> |
+|  testClassProperty | string | See [TestClass.testClassProperty](docs/simple-suite-test/testclass-testclassproperty-property) |
 

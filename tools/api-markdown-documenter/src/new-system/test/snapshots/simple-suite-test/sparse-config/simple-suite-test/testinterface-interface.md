@@ -51,8 +51,8 @@ Here are some remarks about the interface
 
 ## See also {#testinterface-see-also}
 
-<i>TestInterface.testInterfaceMethod</i>  
-<i>TestInterface.testInterfaceProperty</i>  
-<i>TestInterface.testOptionalInterfaceProperty</i>  
-<i>TestInterface.testClassEventProperty</i>  
+[TestInterface.testInterfaceMethod](docs/simple-suite-test/testinterface-testinterfacemethod-methodsignature)  
+[TestInterface.testInterfaceProperty](docs/simple-suite-test/testinterface-testinterfaceproperty-propertysignature)  
+[TestInterface.testOptionalInterfaceProperty](docs/simple-suite-test/testinterface-testoptionalinterfaceproperty-propertysignature)  
+[TestInterface.testClassEventProperty](docs/simple-suite-test/testinterface-testclasseventproperty-propertysignature)  
 

@@ -61,9 +61,9 @@ Here are some remarks about the class
 |  --- | --- | --- | --- |
 |  [publicAbstractMethod()](docs/simple-suite-test/testclass-publicabstractmethod-method) |  | void | A test public abstract method. |
 |  [testClassMethod(input)](docs/simple-suite-test/testclass-testclassmethod-method) | <code>sealed</code> | TTypeParameterA | Test class method |
-|  [virtualMethod()](docs/simple-suite-test/testclass-virtualmethod-method) |  | number | Overrides <i>TestAbstractClass.virtualMethod</i>. |
+|  [virtualMethod()](docs/simple-suite-test/testclass-virtualmethod-method) |  | number | Overrides [TestAbstractClass.virtualMethod](docs/simple-suite-test/testabstractclass-virtualmethod-method). |
 
 ## See also {#testclass-see-also}
 
-<i>TestAbstractClass</i>  
+[TestAbstractClass](docs/simple-suite-test/testabstractclass-class)  
 

@@ -11,8 +11,8 @@ And an ordered list for good measure!
 2. List item 2  
 3. List item 3  
 Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:  
-- Good link (no alias): <i>TestClass</i>  
-- Good link (with alias): <i>function alias text</i>  
+- Good link (no alias): [TestClass](docs/simple-suite-test#testclass-class)  
+- Good link (with alias): [function alias text](docs/simple-suite-test#testfunction-function)  
 - Bad link (no alias): <i>InvalidItem</i>  
 - Bad link (with alias): <i>even though I link to an invalid item, I would still like this text to be rendered</i>  
 
@@ -54,7 +54,7 @@ const foo = bar;
 
 | TypeAlias | Description |
 |  --- | --- |
-|  [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | Test Mapped Type, using <i>TestEnum</i> |
+|  [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | Test Mapped Type, using [TestEnum](docs/simple-suite-test#testenum-enum) |
 |  [TypeAlias](docs/simple-suite-test#typealias-typealias) | Test Type-Alias |
 
 ## Functions
@@ -252,10 +252,10 @@ Here are some remarks about the event call signature
 
 #### See also {#testinterface-see-also}
 
-<i>TestInterface.testInterfaceMethod</i>  
-<i>TestInterface.testInterfaceProperty</i>  
-<i>TestInterface.testOptionalInterfaceProperty</i>  
-<i>TestInterface.testClassEventProperty</i>  
+[TestInterface.testInterfaceMethod](docs/simple-suite-test#testinterface-testinterfacemethod-methodsignature)  
+[TestInterface.testInterfaceProperty](docs/simple-suite-test#testinterface-testinterfaceproperty-propertysignature)  
+[TestInterface.testOptionalInterfaceProperty](docs/simple-suite-test#testinterface-testoptionalinterfaceproperty-propertysignature)  
+[TestInterface.testClassEventProperty](docs/simple-suite-test#testinterface-testclasseventproperty-propertysignature)  
 
 ### TestInterfaceExtendingOtherInterfaces {#testinterfaceextendingotherinterfaces-interface}
 
@@ -310,9 +310,9 @@ A number
 
 #### See also {#testinterfaceextendingotherinterfaces-see-also}
 
-- <i>TestInterface</i>  
-- <i>TestInterfaceWithTypeParameter</i>  
-- <i>TestMappedType</i>  
+- [TestInterface](docs/simple-suite-test#testinterface-interface)  
+- [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)  
+- [TestMappedType](docs/simple-suite-test#testmappedtype-typealias)  
 
 ### TestInterfaceWithIndexSignature {#testinterfacewithindexsignature-interface}
 
@@ -566,7 +566,7 @@ Here are some remarks about the class
 |  --- | --- | --- | --- |
 |  [publicAbstractMethod()](docs/simple-suite-test#testclass-publicabstractmethod-method) |  | void | A test public abstract method. |
 |  [testClassMethod(input)](docs/simple-suite-test#testclass-testclassmethod-method) | <code>sealed</code> | TTypeParameterA | Test class method |
-|  [virtualMethod()](docs/simple-suite-test#testclass-virtualmethod-method) |  | number | Overrides <i>TestAbstractClass.virtualMethod</i>. |
+|  [virtualMethod()](docs/simple-suite-test#testclass-virtualmethod-method) |  | number | Overrides [TestAbstractClass.virtualMethod](docs/simple-suite-test#testabstractclass-virtualmethod-method). |
 
 #### Constructor Details
 
@@ -589,10 +589,10 @@ Here are some remarks about the constructor
 
 | Parameter | Type | Description |
 |  --- | --- | --- |
-|  privateProperty | number | See <i>TestAbstractClass</i>'s constructor. |
-|  protectedProperty | [TestEnum](docs/simple-suite-test#testenum-enum) | See <i>TestAbstractClass.protectedProperty</i>. |
-|  testClassProperty | TTypeParameterB | See <i>TestClass.testClassProperty</i>. |
-|  testClassEventProperty | () => void | See <i>TestClass.testClassEventProperty</i>. |
+|  privateProperty | number | See [TestAbstractClass](docs/simple-suite-test#testabstractclass-class)'s constructor. |
+|  protectedProperty | [TestEnum](docs/simple-suite-test#testenum-enum) | See [TestAbstractClass.protectedProperty](docs/simple-suite-test#testabstractclass-protectedproperty-property). |
+|  testClassProperty | TTypeParameterB | See [TestClass.testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property). |
+|  testClassEventProperty | () => void | See [TestClass.testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-property). |
 
 #### Event Details
 
@@ -726,7 +726,7 @@ static testClassStaticMethod(foo: number): string;
 
 ##### virtualMethod {#testclass-virtualmethod-method}
 
-Overrides <i>TestAbstractClass.virtualMethod</i>.  
+Overrides [TestAbstractClass.virtualMethod](docs/simple-suite-test#testabstractclass-virtualmethod-method).  
 
 ###### Signature {#virtualmethod-signature}
 
@@ -740,7 +740,7 @@ Overrides <i>TestAbstractClass.virtualMethod</i>.
 
 #### See also {#testclass-see-also}
 
-<i>TestAbstractClass</i>  
+[TestAbstractClass](docs/simple-suite-test#testabstractclass-class)  
 
 ## Enumeration Details
 
@@ -829,7 +829,7 @@ Here are some remarks about the enum value
 
 ### TestMappedType {#testmappedtype-typealias}
 
-Test Mapped Type, using <i>TestEnum</i>  
+Test Mapped Type, using [TestEnum](docs/simple-suite-test#testenum-enum)  
 
 #### Signature {#testmappedtype-signature}
 
@@ -869,7 +869,7 @@ export declare function testFunction<TTypeParameter>(testParameter: TTypeParamet
 
 #### Remarks {#testfunction-remarks}
 
-This is a test <i>link</i> to another API member  
+This is a test [link](docs/simple-suite-test#testinterface-interface) to another API member  
 
 #### Parameters {#testfunction-parameters}
 
@@ -908,7 +908,7 @@ An inline type
 
 > <bold> [Warning]: Deprecated </bold>
 > 
-> This is a test deprecation notice. Here is a <i>link</i> to something else!  
+> This is a test deprecation notice. Here is a [link](docs/simple-suite-test#testfunctionreturninguniontype-function) to something else!  
 
 Test function that returns an inline type  
 
@@ -1173,7 +1173,7 @@ constructor(testClassProperty: string);
 
 | Parameter | Type | Description |
 |  --- | --- | --- |
-|  testClassProperty | string | See <i>TestClass.testClassProperty</i> |
+|  testClassProperty | string | See [TestClass.testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) |
 
 ###### Property Details
 

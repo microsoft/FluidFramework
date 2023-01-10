@@ -243,12 +243,13 @@ export function createDefaultSummaryTable(
  * Creates a simple summary table for a series of parameters.
  * Displays each parameter's name, type, and description ({@link https://tsdoc.org/pages/tags/param/ | @param}) comment.
  *
- * @param apiItems - The items to be displayed. All of these items must be of the kind specified via `itemKind`.
- * @param itemKind - The kind of items being displayed in the table. Used to determine the semantic shape of the table.
+ * @param apiParameters - The items to be displayed. All of these items must be of the kind specified via `itemKind`.
+ * @param contextApiItem - The API item with which the parameter is associated.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function createParametersSummaryTable(
     apiParameters: readonly Parameter[],
+    contextApiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): TableNode {
     // Only display "Modifiers" column if there are any optional parameters present.
@@ -275,7 +276,7 @@ export function createParametersSummaryTable(
             rowCells.push(createModifierCell(apiParameter));
         }
         rowCells.push(createParameterTypeCell(apiParameter, config));
-        rowCells.push(createParameterSummaryCell(apiParameter, config));
+        rowCells.push(createParameterSummaryCell(apiParameter, contextApiItem, config));
 
         tableRows.push(new TableRowNode(rowCells));
     }
@@ -472,7 +473,7 @@ export function createApiSummaryCell(
     }
 
     if (apiItem instanceof ApiDocumentedItem) {
-        const docNodeTransformOptions = getDocNodeTransformationOptions(config);
+        const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
         if (apiItem.tsdocComment !== undefined) {
             const summaryComment = transformSection(
                 apiItem.tsdocComment.summarySection,
@@ -556,7 +557,7 @@ export function createDefaultValueCell(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): TableCellNode {
-    const docNodeTransformOptions = getDocNodeTransformationOptions(config);
+    const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
 
     const defaultValueSection = getDefaultValueBlock(apiItem, config);
 
@@ -631,17 +632,19 @@ export function createParameterTypeCell(
  * If the parameter has no documentation, an empty cell will be used.
  *
  * @param apiParameter - The parameter whose comment will be displayed in the cell.
+ * @param contextApiItem - The API item with which the parameter is associated.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function createParameterSummaryCell(
     apiParameter: Parameter,
+    contextApiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): TableCellNode {
     if (apiParameter.tsdocParamBlock === undefined) {
         return TableCellNode.Empty;
     }
 
-    const docNodeTransformOptions = getDocNodeTransformationOptions(config);
+    const docNodeTransformOptions = getDocNodeTransformationOptions(contextApiItem, config);
 
     const cellContent = transformSection(
         apiParameter.tsdocParamBlock.content,

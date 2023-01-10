@@ -62,7 +62,7 @@ Here are some remarks about the class
 |  --- | --- | --- | --- |
 |  [publicAbstractMethod()](./simple-suite-test/testclass-class#publicabstractmethod-method) |  | void | A test public abstract method. |
 |  [testClassMethod(input)](./simple-suite-test/testclass-class#testclassmethod-method) | <code>sealed</code> | TTypeParameterA | Test class method |
-|  [virtualMethod()](./simple-suite-test/testclass-class#virtualmethod-method) |  | number | Overrides <i>TestAbstractClass.virtualMethod</i>. |
+|  [virtualMethod()](./simple-suite-test/testclass-class#virtualmethod-method) |  | number | Overrides [TestAbstractClass.virtualMethod](./simple-suite-test/testabstractclass-class#virtualmethod-method). |
 
 ## Constructor Details
 
@@ -85,10 +85,10 @@ Here are some remarks about the constructor
 
 | Parameter | Type | Description |
 |  --- | --- | --- |
-|  privateProperty | number | See <i>TestAbstractClass</i>'s constructor. |
-|  protectedProperty | [TestEnum](./simple-suite-test#testenum-enum) | See <i>TestAbstractClass.protectedProperty</i>. |
-|  testClassProperty | TTypeParameterB | See <i>TestClass.testClassProperty</i>. |
-|  testClassEventProperty | () => void | See <i>TestClass.testClassEventProperty</i>. |
+|  privateProperty | number | See [TestAbstractClass](./simple-suite-test/testabstractclass-class)'s constructor. |
+|  protectedProperty | [TestEnum](./simple-suite-test#testenum-enum) | See [TestAbstractClass.protectedProperty](./simple-suite-test/testabstractclass-class#protectedproperty-property). |
+|  testClassProperty | TTypeParameterB | See [TestClass.testClassProperty](./simple-suite-test/testclass-class#testclassproperty-property). |
+|  testClassEventProperty | () => void | See [TestClass.testClassEventProperty](./simple-suite-test/testclass-class#testclasseventproperty-property). |
 
 ## Event Details
 
@@ -222,7 +222,7 @@ static testClassStaticMethod(foo: number): string;
 
 ### virtualMethod {#virtualmethod-method}
 
-Overrides <i>TestAbstractClass.virtualMethod</i>.  
+Overrides [TestAbstractClass.virtualMethod](./simple-suite-test/testabstractclass-class#virtualmethod-method).  
 
 #### Signature {#virtualmethod-signature}
 
@@ -236,5 +236,5 @@ Overrides <i>TestAbstractClass.virtualMethod</i>.
 
 ## See also {#testclass-see-also}
 
-<i>TestAbstractClass</i>  
+[TestAbstractClass](./simple-suite-test/testabstractclass-class)  
 

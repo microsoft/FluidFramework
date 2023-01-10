@@ -115,7 +115,7 @@ export function createSeeAlsoSection(
         return undefined;
     }
 
-    const docNodeTransformOptions = getDocNodeTransformationOptions(config);
+    const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
 
     const contents = seeBlocks.map((seeBlock) =>
         transformSection(seeBlock, docNodeTransformOptions),
@@ -174,7 +174,11 @@ export function createHeritageTypesSpan(
         }
 
         // Render type parameters if there are any.
-        const renderedTypeParameters = createTypeParametersSpan(apiItem.typeParameters, config);
+        const renderedTypeParameters = createTypeParametersSpan(
+            apiItem.typeParameters,
+            apiItem,
+            config,
+        );
         if (renderedTypeParameters !== undefined) {
             contents.push(new ParagraphNode([renderedTypeParameters]));
         }
@@ -192,7 +196,11 @@ export function createHeritageTypesSpan(
         }
 
         // Render type parameters if there are any.
-        const renderedTypeParameters = createTypeParametersSpan(apiItem.typeParameters, config);
+        const renderedTypeParameters = createTypeParametersSpan(
+            apiItem.typeParameters,
+            apiItem,
+            config,
+        );
         if (renderedTypeParameters !== undefined) {
             contents.push(new ParagraphNode([renderedTypeParameters]));
         }
@@ -246,20 +254,22 @@ function createHeritageTypeListSpan(
  * @remarks Displayed as a labeled, comma-separated list of types.
  * Links will be generated for types that are a part of the same API suite (model).
  *
- * @param typeParameters - List of type
+ * @param typeParameters - List of type parameters associated with some API item.
+ * @param contextApiItem - The API item with which the example is associated.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  *
  * @returns The doc section if any type parameters were provided, otherwise `undefined`.
  */
 export function createTypeParametersSpan(
     typeParameters: readonly TypeParameter[],
+    contextApiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): SpanNode | undefined {
     if (typeParameters.length === 0) {
         return undefined;
     }
 
-    const docNodeTransformOptions = getDocNodeTransformationOptions(config);
+    const docNodeTransformOptions = getDocNodeTransformationOptions(contextApiItem, config);
 
     const listItemNodes: SingleLineSpanNode[] = [];
     for (const typeParameter of typeParameters) {
@@ -422,7 +432,7 @@ export function createSummaryParagraph(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): ParagraphNode | undefined {
-    const docNodeTransformOptions = getDocNodeTransformationOptions(config);
+    const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
     return apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined
         ? transformSection(apiItem.tsdocComment.summarySection, docNodeTransformOptions)
         : undefined;
@@ -450,7 +460,7 @@ export function createRemarksSection(
         return undefined;
     }
 
-    const docNodeTransformOptions = getDocNodeTransformationOptions(config);
+    const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
 
     return wrapInSection(
         [transformSection(apiItem.tsdocComment.remarksBlock.content, docNodeTransformOptions)],
@@ -478,7 +488,7 @@ export function createThrowsSection(
         return undefined;
     }
 
-    const docNodeTransformOptions = getDocNodeTransformationOptions(config);
+    const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
 
     const paragraphs = throwsBlocks.map((throwsBlock) =>
         transformSection(throwsBlock, docNodeTransformOptions),
@@ -505,7 +515,7 @@ export function createDeprecationNoticeSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): AlertNode | undefined {
-    const docNodeTransformOptions = getDocNodeTransformationOptions(config);
+    const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
 
     const deprecatedBlock = getDeprecatedBlock(apiItem);
     if (deprecatedBlock === undefined) {
@@ -588,13 +598,14 @@ export interface DocExampleProperties {
  * @remarks Displayed as a heading with the example comment under it.
  *
  * @param example - The example to render.
+ * @param contextApiItem - The API item with which the example is associated.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function createExampleSection(
     example: DocExampleProperties,
     config: Required<MarkdownDocumenterConfiguration>,
 ): HierarchicalSectionNode {
-    const docNodeTransformOptions = getDocNodeTransformationOptions(config);
+    const docNodeTransformOptions = getDocNodeTransformationOptions(example.apiItem, config);
 
     const headingTitle: string =
         example.exampleNumber === undefined ? "Example" : `Example ${example.exampleNumber}`;
@@ -627,10 +638,13 @@ export function createParametersSection(
         return undefined;
     }
 
-    return wrapInSection([createParametersSummaryTable(apiFunctionLike.parameters, config)], {
-        title: "Parameters",
-        id: `${getQualifiedApiItemName(apiFunctionLike)}-parameters`,
-    });
+    return wrapInSection(
+        [createParametersSummaryTable(apiFunctionLike.parameters, apiFunctionLike, config)],
+        {
+            title: "Parameters",
+            id: `${getQualifiedApiItemName(apiFunctionLike)}-parameters`,
+        },
+    );
 }
 
 /**
@@ -648,7 +662,7 @@ export function createReturnsSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): HierarchicalSectionNode | undefined {
-    const docNodeTransformOptions = getDocNodeTransformationOptions(config);
+    const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
 
     const children: DocumentationNode[] = [];
 

@@ -156,8 +156,8 @@ Here are some remarks about the event call signature
 
 ## See also {#testinterface-see-also}
 
-<i>TestInterface.testInterfaceMethod</i>  
-<i>TestInterface.testInterfaceProperty</i>  
-<i>TestInterface.testOptionalInterfaceProperty</i>  
-<i>TestInterface.testClassEventProperty</i>  
+[TestInterface.testInterfaceMethod](./simple-suite-test/testinterface-interface#testinterfacemethod-methodsignature)  
+[TestInterface.testInterfaceProperty](./simple-suite-test/testinterface-interface#testinterfaceproperty-propertysignature)  
+[TestInterface.testOptionalInterfaceProperty](./simple-suite-test/testinterface-interface#testoptionalinterfaceproperty-propertysignature)  
+[TestInterface.testClassEventProperty](./simple-suite-test/testinterface-interface#testclasseventproperty-propertysignature)  
 

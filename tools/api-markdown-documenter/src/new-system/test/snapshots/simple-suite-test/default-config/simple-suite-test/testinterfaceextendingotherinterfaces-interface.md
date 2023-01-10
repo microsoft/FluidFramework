@@ -52,7 +52,7 @@ A number
 
 ## See also {#testinterfaceextendingotherinterfaces-see-also}
 
-- <i>TestInterface</i>  
-- <i>TestInterfaceWithTypeParameter</i>  
-- <i>TestMappedType</i>  
+- [TestInterface](./simple-suite-test/testinterface-interface)  
+- [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)  
+- [TestMappedType](./simple-suite-test#testmappedtype-typealias)  
 

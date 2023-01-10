@@ -10,7 +10,7 @@ export declare function testFunction<TTypeParameter>(testParameter: TTypeParamet
 
 ## Remarks {#testfunction-remarks}
 
-This is a test <i>link</i> to another API member  
+This is a test [link](docs/simple-suite-test/testinterface-interface) to another API member  
 
 ## Parameters {#testfunction-parameters}
 

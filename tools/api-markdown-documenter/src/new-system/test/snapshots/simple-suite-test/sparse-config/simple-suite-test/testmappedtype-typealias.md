@@ -1,6 +1,6 @@
 # TestMappedType
 
-Test Mapped Type, using <i>TestEnum</i>  
+Test Mapped Type, using [TestEnum](docs/simple-suite-test/testenum-enum)  
 
 ## Signature {#testmappedtype-signature}
 

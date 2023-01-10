@@ -13,8 +13,8 @@ And an ordered list for good measure!
 2. List item 2  
 3. List item 3  
 Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:  
-- Good link (no alias): <i>TestClass</i>  
-- Good link (with alias): <i>function alias text</i>  
+- Good link (no alias): [TestClass](docs/simple-suite-test/testclass-class)  
+- Good link (with alias): [function alias text](docs/simple-suite-test/testfunction-function)  
 - Bad link (no alias): <i>InvalidItem</i>  
 - Bad link (with alias): <i>even though I link to an invalid item, I would still like this text to be rendered</i>  
 
@@ -56,7 +56,7 @@ const foo = bar;
 
 | TypeAlias | Description |
 |  --- | --- |
-|  [TestMappedType](docs/simple-suite-test/testmappedtype-typealias) | Test Mapped Type, using <i>TestEnum</i> |
+|  [TestMappedType](docs/simple-suite-test/testmappedtype-typealias) | Test Mapped Type, using [TestEnum](docs/simple-suite-test/testenum-enum) |
 |  [TypeAlias](docs/simple-suite-test/typealias-typealias) | Test Type-Alias |
 
 ## Functions

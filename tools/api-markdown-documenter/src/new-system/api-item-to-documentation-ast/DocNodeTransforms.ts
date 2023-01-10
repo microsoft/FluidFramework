@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { ApiItem } from "@microsoft/api-extractor-model";
 import {
     DocCodeSpan,
     DocDeclarationReference,
@@ -40,7 +41,15 @@ import {
  */
 export interface DocNodeTransformOptions {
     /**
+     * The API item with which the documentation node(s) are associated.
+     */
+    readonly contextApiItem: ApiItem;
+
+    /**
      * Callback for resolving symbolic links to API items.
+     *
+     * @param codeDestination - The referenced target.
+     * @param contextApiItem -
      *
      * @returns The appropriate URL target if the reference can be resolved. Otherwise, `undefined`.
      */
@@ -143,6 +152,7 @@ export function transformLinkTag(
         const linkText = node.linkText?.trim() ?? node.codeDestination.emitAsTsdoc().trim();
 
         const urlTarget = options.resolveApiReference(node.codeDestination);
+
         return urlTarget === undefined
             ? // If the code link could not be resolved, print the unresolved text in italics.
               SpanNode.createFromPlainText(linkText, { italic: true })

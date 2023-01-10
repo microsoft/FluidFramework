@@ -23,7 +23,7 @@ Here are some remarks about the interface
 
 ## See also {#testinterfaceextendingotherinterfaces-see-also}
 
-- <i>TestInterface</i>  
-- <i>TestInterfaceWithTypeParameter</i>  
-- <i>TestMappedType</i>  
+- [TestInterface](docs/simple-suite-test/testinterface-interface)  
+- [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface)  
+- [TestMappedType](docs/simple-suite-test/testmappedtype-typealias)  
 

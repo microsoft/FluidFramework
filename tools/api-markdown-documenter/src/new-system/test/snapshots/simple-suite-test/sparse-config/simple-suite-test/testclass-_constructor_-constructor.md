@@ -17,8 +17,8 @@ Here are some remarks about the constructor
 
 | Parameter | Type | Description |
 |  --- | --- | --- |
-|  privateProperty | number | See <i>TestAbstractClass</i>'s constructor. |
-|  protectedProperty | [TestEnum](docs/simple-suite-test/testenum-enum) | See <i>TestAbstractClass.protectedProperty</i>. |
-|  testClassProperty | TTypeParameterB | See <i>TestClass.testClassProperty</i>. |
-|  testClassEventProperty | () => void | See <i>TestClass.testClassEventProperty</i>. |
+|  privateProperty | number | See [TestAbstractClass](docs/simple-suite-test/testabstractclass-class)'s constructor. |
+|  protectedProperty | [TestEnum](docs/simple-suite-test/testenum-enum) | See [TestAbstractClass.protectedProperty](docs/simple-suite-test/testabstractclass-protectedproperty-property). |
+|  testClassProperty | TTypeParameterB | See [TestClass.testClassProperty](docs/simple-suite-test/testclass-testclassproperty-property). |
+|  testClassEventProperty | () => void | See [TestClass.testClassEventProperty](docs/simple-suite-test/testclass-testclasseventproperty-property). |
 

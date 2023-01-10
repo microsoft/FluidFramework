@@ -1,6 +1,6 @@
 # virtualMethod
 
-Overrides <i>TestAbstractClass.virtualMethod</i>.  
+Overrides [TestAbstractClass.virtualMethod](docs/simple-suite-test/testabstractclass-virtualmethod-method).  
 
 ## Signature {#virtualmethod-signature}
 

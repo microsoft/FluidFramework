@@ -13,8 +13,8 @@ And an ordered list for good measure!
 2. List item 2  
 3. List item 3  
 Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:  
-- Good link (no alias): <i>TestClass</i>  
-- Good link (with alias): <i>function alias text</i>  
+- Good link (no alias): [TestClass](./simple-suite-test/testclass-class)  
+- Good link (with alias): [function alias text](./simple-suite-test#testfunction-function)  
 - Bad link (no alias): <i>InvalidItem</i>  
 - Bad link (with alias): <i>even though I link to an invalid item, I would still like this text to be rendered</i>  
 
@@ -56,7 +56,7 @@ const foo = bar;
 
 | TypeAlias | Description |
 |  --- | --- |
-|  [TestMappedType](./simple-suite-test#testmappedtype-typealias) | Test Mapped Type, using <i>TestEnum</i> |
+|  [TestMappedType](./simple-suite-test#testmappedtype-typealias) | Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum) |
 |  [TypeAlias](./simple-suite-test#typealias-typealias) | Test Type-Alias |
 
 ## Functions
@@ -172,7 +172,7 @@ Here are some remarks about the enum value
 
 ### TestMappedType {#testmappedtype-typealias}
 
-Test Mapped Type, using <i>TestEnum</i>  
+Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum)  
 
 #### Signature {#testmappedtype-signature}
 
@@ -212,7 +212,7 @@ export declare function testFunction<TTypeParameter>(testParameter: TTypeParamet
 
 #### Remarks {#testfunction-remarks}
 
-This is a test <i>link</i> to another API member  
+This is a test [link](./simple-suite-test/testinterface-interface) to another API member  
 
 #### Parameters {#testfunction-parameters}
 
@@ -251,7 +251,7 @@ An inline type
 
 > <bold> [Warning]: Deprecated </bold>
 > 
-> This is a test deprecation notice. Here is a <i>link</i> to something else!  
+> This is a test deprecation notice. Here is a [link](./simple-suite-test#testfunctionreturninguniontype-function) to something else!  
 
 Test function that returns an inline type  
 
