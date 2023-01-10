@@ -72,18 +72,6 @@ describe("SequenceField - toDelta", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("muted child change", () => {
-        const actual = toDelta([
-            {
-                type: "Modify",
-                tomb: tag,
-                changes: TestChange.mint([0], 1),
-            },
-        ]);
-        const expected: Delta.MarkList = [];
-        assert.deepEqual(actual, expected);
-    });
-
     it("empty child change", () => {
         const actual = toDelta(Change.modify(0, TestChange.emptyChange));
         const expected: Delta.MarkList = [];

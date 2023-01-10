@@ -1414,15 +1414,14 @@ export class MergeTree {
             remoteClientRefSeq,
             remoteClientId);
 
-        const segwindow = this.getCollabWindow();
+        const { currentSeq, clientId } = this.collabWindow;
 
         if (segmentInfo && segmentInfo.segment) {
-            const segmentPosition = this.getPosition(segmentInfo.segment, segwindow.currentSeq, segwindow.clientId);
-
+            const segmentPosition = this.getPosition(segmentInfo.segment, currentSeq, clientId);
             return segmentPosition + segmentInfo.offset!;
         } else {
             if (remoteClientPosition === this.getLength(remoteClientRefSeq, remoteClientId)) {
-                return this.getLength(segwindow.currentSeq, segwindow.clientId);
+                return this.getLength(currentSeq, clientId);
             }
         }
     }
