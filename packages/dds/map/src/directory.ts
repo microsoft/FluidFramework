@@ -1904,17 +1904,16 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         // we will get the value for the pendingKeys and clear the map
         const temp = new Map<string, ILocalValue>();
 
-        // eslint-disable-next-line unicorn/no-array-for-each
-        this.pendingKeys.forEach((value, key, map) => {
+        for (const [key] of this.pendingKeys) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             temp.set(key, this._storage.get(key)!);
-        });
+        }
+
         this.clearCore(local);
 
-        // eslint-disable-next-line unicorn/no-array-for-each
-        temp.forEach((value, key, map) => {
+        for (const [key, value] of temp.entries()) {
             this.setCore(key, value, true);
-        });
+        }
     }
 
     /**
