@@ -4,8 +4,14 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { makeAnonChange, RevisionTag } from "../../../core";
-import { Delta, FieldKey, ITreeCursorSynchronous } from "../../../tree";
+import {
+    makeAnonChange,
+    RevisionTag,
+    Delta,
+    FieldKey,
+    ITreeCursorSynchronous,
+    TreeSchemaIdentifier,
+} from "../../../core";
 import {
     ChangesetLocalId,
     FieldChange,
@@ -15,7 +21,6 @@ import {
     SequenceField as SF,
     singleTextCursor,
 } from "../../../feature-libraries";
-import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand, brandOpaque, makeArray } from "../../../util";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze, noRepair } from "../../utils";
@@ -64,18 +69,6 @@ describe("SequenceField - toDelta", () => {
                 setValue: "1",
             },
         ];
-        assert.deepEqual(actual, expected);
-    });
-
-    it("muted child change", () => {
-        const actual = toDelta([
-            {
-                type: "Modify",
-                tomb: tag,
-                changes: TestChange.mint([0], 1),
-            },
-        ]);
-        const expected: Delta.MarkList = [];
         assert.deepEqual(actual, expected);
     });
 

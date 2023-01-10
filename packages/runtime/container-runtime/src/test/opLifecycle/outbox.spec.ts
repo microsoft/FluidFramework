@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { IBatchMessage, IContainerContext, IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { PendingStateManager } from "../../pendingStateManager";
 import { BatchMessage, IBatch, OpCompressor, OpSplitter, Outbox } from "../../opLifecycle";
 import {
@@ -158,7 +159,8 @@ describe("Outbox", () => {
         config: {
             maxBatchSizeInBytes: maxBatchSize,
             compressionOptions,
-        }
+        },
+        logger: new MockLogger(),
     });
 
     beforeEach(() => {

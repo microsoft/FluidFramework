@@ -335,7 +335,10 @@ export interface IFluidDataStoreChannel extends
 export type CreateChildSummarizerNodeFn = (
     summarizeInternal: SummarizeInternalFn,
     getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-    getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
+    /**
+     * @deprecated - The functionality to get base GC details has been moved to summarizer node.
+     */
+    getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 ) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {

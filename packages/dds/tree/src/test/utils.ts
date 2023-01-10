@@ -24,16 +24,14 @@ import {
     summarizeNow,
 } from "@fluidframework/test-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
-import { InvalidationToken, SimpleObservingDependent } from "../dependency-tracking";
 import { ISharedTree, SharedTreeFactory } from "../shared-tree";
-import { Delta } from "../tree";
 import {
     mapFieldMarks,
     mapMarkList,
     mapTreeFromCursor,
     singleTextCursor,
 } from "../feature-libraries";
-import { RevisionTag } from "../core";
+import { RevisionTag, Delta, InvalidationToken, SimpleObservingDependent } from "../core";
 import { brand, makeArray } from "../util";
 
 // Testing utilities

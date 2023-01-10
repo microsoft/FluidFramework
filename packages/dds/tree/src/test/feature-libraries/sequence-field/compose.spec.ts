@@ -4,10 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { RevisionTag } from "../../../core";
+import {
+    RevisionTag,
+    makeAnonChange,
+    tagChange,
+    TaggedChange,
+    TreeSchemaIdentifier,
+} from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
-import { makeAnonChange, tagChange, TaggedChange } from "../../../rebase";
-import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";

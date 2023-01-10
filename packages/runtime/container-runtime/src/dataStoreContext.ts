@@ -804,7 +804,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return (
             summarizeInternal: SummarizeInternalFn,
             getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-            getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
+            getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
         ) => this.summarizerNode.createChild(
             summarizeInternal,
             id,

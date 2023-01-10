@@ -19,11 +19,6 @@ import {
     IEditableForest,
     initializeForest,
     ITreeSubscriptionCursor,
-    Index,
-    IndexEvents,
-    SummaryElement,
-    SummaryElementParser,
-    SummaryElementStringifier,
     cachedValue,
     ICachedValue,
     recordDependency,
@@ -31,9 +26,15 @@ import {
     mapCursorField,
     moveToDetachedField,
 } from "../core";
-import { IEventEmitter } from "../events";
+import {
+    Index,
+    SummaryElement,
+    SummaryElementParser,
+    SummaryElementStringifier,
+    IndexEvents,
+} from "../shared-tree-core";
+import { ISubscribable } from "../events";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
-import { afterChangeForest } from "./object-forest";
 
 /**
  * The storage key for the blob in the summary containing tree data
@@ -61,7 +62,7 @@ export class ForestIndex implements Index, SummaryElement {
 
     public constructor(
         private readonly runtime: IFluidDataStoreRuntime,
-        events: IEventEmitter<IndexEvents<unknown>>,
+        events: ISubscribable<IndexEvents<unknown>>,
         private readonly forest: IEditableForest,
     ) {
         this.cursor = this.forest.allocateCursor();
@@ -76,8 +77,6 @@ export class ForestIndex implements Index, SummaryElement {
         });
         events.on("newLocalState", (changeDelta) => {
             this.forest.applyDelta(changeDelta);
-            // TODO: remove this workaround as soon as notification/eventing will be supported.
-            afterChangeForest(this.forest);
         });
     }
 
