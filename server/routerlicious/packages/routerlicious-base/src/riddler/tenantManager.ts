@@ -16,7 +16,7 @@ import {
     ICache,
 } from "@fluidframework/server-services-core";
 import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
-import { BaseTelemetryProperties, Lumber, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
 import * as winston from "winston";
@@ -339,7 +339,8 @@ export class TenantManager {
             key2: encryptedTenantKey2,
         };
 
-        await this.setKeyInCache(tenantId, cacheKeys, fetchTenantKeyMetric);
+        const setKeyInCacheSucceeded = await this.setKeyInCache(tenantId, cacheKeys);
+        fetchTenantKeyMetric.setProperty("settingKeyInCacheSucceeded", setKeyInCacheSucceeded);
 
         return {
             key1: tenantKey1,
@@ -578,17 +579,15 @@ export class TenantManager {
         return this.cache?.delete(`tenantKeys:${tenantId}`);
     }
 
-    private async setKeyInCache(tenantId: string, value: ITenantKeys, metric?: Lumber): Promise<void> {
+    private async setKeyInCache(tenantId: string, value: ITenantKeys): Promise<boolean> {
         const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId };
         try {
             await this.cache?.set(`tenantKeys:${tenantId}`, JSON.stringify(value));
-            Lumberjack.info(`Added new tenant keys to cache.`, lumberProperties);
+            Lumberjack.info(`Added tenant keys to cache.`, lumberProperties);
+            return true;
         } catch (error) {
-            if (metric) {
-                metric.setProperty("settingKeyInCacheFailed", true);
-            }
             Lumberjack.error(`Setting tenant key in the cache failed`, lumberProperties, error);
-            return undefined;
+            return false;
         }
     }
 
