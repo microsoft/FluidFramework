@@ -89,10 +89,10 @@ When connecting to the Azure Fluid Relay service, you must specify 'enableWholeS
 ```sh
 # Substitute the 'Tenant Id', 'Primary Key' and 'Service Endpoint' found under 'Access Key' in Azure Portal
 npm run start:r11s --env mode=r11s \
+                   --env enableWholeSummaryUpload=true \
                    --env tenantId=$TenantId \
                    --env tenantSecret=$PrimaryKey \
-                   --env discoveryEndpoint=$ServiceEndpoint \
-                   --env enableWholeSummaryUpload=true
+                   --env discoveryEndpoint=$ServiceEndpoint
 ```
 
 ## SharePoint
