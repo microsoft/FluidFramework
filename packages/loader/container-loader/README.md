@@ -20,7 +20,6 @@
     - [`forced`](#forced)
     - [`storageOnly`](#storageonly)
   - [Dirty events](#dirty-events)
-  - [NoOps](#NoOps)
 
 **Related topics covered elsewhere:**
 
@@ -199,10 +198,3 @@ This information can be used by a host to build appropriate UX that allows user 
 Note that when an active connection is in place, it's just a matter of time before changes will be flushed to storage unless there is some source of continuous local changes being generated that prevents container from ever being fully saved. But if there is no active connection, because the user is offline, for example, then a document may stay in a dirty state for very long time.
 
 `Container.isDirty` can be used to get current state of container.
-
-## NoOps
-Definition: NoOps have MessageType.NoOp. "Empty operation message. Used to send an updated reference sequence number. Relay service is free to coalesce these messages or fully drop them, if another op was used to update Minimum Sequence Number to a number equal to or higher than referencedsequence number in Noop."
-
-At the end of a batch of ops, the client will send an NoOp to let the server know it's the end of the batch, almost like a benchmark? Sometimes we can also send noOp immediately, see both in CollabWindowTracker.scheduleSequenceNumberUpdate()
-
-Server might not acknowledge noOps if it does not bring new information about that client (what does this mean?). Server is allowed to not sequence the noOp and will not send it back to client, therefore skipping it. This means, client can send noops, but not receive some of them. We also have methods in place to validate that other ops are still in order and without gap: see deltaManager.processInboundMessage
