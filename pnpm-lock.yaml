@@ -6216,8 +6216,10 @@ importers:
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
       '@types/mocha': ^9.1.1
+      '@types/node': ^14.18.0
       '@types/node-fetch': ^2.5.10
       '@types/sha.js': ^2.4.0
+      '@types/sinon': ^7.0.13
       abort-controller: ^3.0.0
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
@@ -6259,8 +6261,10 @@ importers:
       '@microsoft/api-extractor': 7.22.2
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/mocha': 9.1.1
+      '@types/node': 14.18.36
       '@types/node-fetch': 2.6.2
       '@types/sha.js': 2.4.0
+      '@types/sinon': 7.5.2
       concurrently: 6.3.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -22519,7 +22523,7 @@ packages:
       webpack-cli: 4.x.x
     dependencies:
       webpack: 5.75.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_webpack@5.75.0
+      webpack-cli: 4.10.0_5g4oj3hy5spohe65dtfjx2t5f4
     dev: true
 
   /@webpack-cli/info/1.5.0_webpack-cli@4.10.0:
