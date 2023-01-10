@@ -28,10 +28,7 @@ describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
     const sweepTimeoutMs = 200;
 
     const settings = {};
-    const gcOptions: IGCRuntimeOptions = {
-        inactiveTimeoutMs,
-        sweepTimeoutMs,
-    };
+    const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs };
     const testContainerConfig: ITestContainerConfig = {
         runtimeOptions: {
             summaryOptions: {
