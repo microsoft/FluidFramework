@@ -539,7 +539,7 @@ export class MapKernel {
         // Assuming the pendingKeys is small and the map is large
         // we will get the value for the pendingKeys and clear the map
         const temp = new Map<string, ILocalValue>();
-        for (const [key] of this.pendingKeys.entries()) {
+        for (const key of this.pendingKeys.keys()) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             temp.set(key, this.data.get(key)!);
         }
