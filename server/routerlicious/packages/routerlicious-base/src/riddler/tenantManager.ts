@@ -281,7 +281,7 @@ export class TenantManager {
      * Retrieves the secret for the given tenant
      */
     public async getTenantKeys(tenantId: string, includeDisabledTenant = false, disableCache=false): Promise<ITenantKeys> {
-        const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId, includeDisabledTenant };
+        const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId, includeDisabledTenant, disableCache };
         const fetchTenantKeyMetric = Lumberjack.newLumberMetric(LumberEventName.RiddlerFetchTenantKey);
         let uncaughtException;
         let retrievedFromCache = false;
@@ -311,7 +311,6 @@ export class TenantManager {
 
         const encryptedTenantKey1 = tenantDocument.key;
         const tenantKey1 = this.secretManager.decryptSecret(encryptedTenantKey1);
-        let tenantKey2;
 
         if (tenantKey1 == null) {
             winston.error("Tenant key1 decryption failed.");
@@ -320,14 +319,17 @@ export class TenantManager {
         }
 
         const encryptedTenantKey2 = tenantDocument.secondaryKey;
-        if (encryptedTenantKey2) {
-            tenantKey2 = this.secretManager.decryptSecret(encryptedTenantKey2);
-            if (tenantKey2 == null) {
-                winston.error("Tenant key2 decryption failed");
-                Lumberjack.error("Tenant key2 decryption failed.", lumberProperties);
-                throw new NetworkError(500, "Tenant key2 decryption failed.");
-            }
-        } else {
+        const tenantKey2 = encryptedTenantKey2 ? this.secretManager.decryptSecret(encryptedTenantKey2) : "";
+
+        // Tenant key 2 decryption returns null
+        if (tenantKey2 == null) {
+            winston.error("Tenant key2 decryption failed");
+            Lumberjack.error("Tenant key2 decryption failed.", lumberProperties);
+            throw new NetworkError(500, "Tenant key2 decryption failed.");
+        }
+
+        // If it looks like there is key2, but decrypted key == ""
+        if (!encryptedTenantKey2 || tenantKey2 === "") {
             winston.info("Tenant key2 doesn't exist.");
             Lumberjack.info("Tenant key2 doesn't exist.", lumberProperties);
         }
@@ -347,7 +349,7 @@ export class TenantManager {
         uncaughtException = error;
         throw error;
     } finally {
-        fetchTenantKeyMetric.setProperties({ [BaseTelemetryProperties.tenantId]: tenantId, includeDisabledTenant, retrievedFromCache });
+        fetchTenantKeyMetric.setProperty("retrievedFromCache", retrievedFromCache);
         if (!uncaughtException) {
             fetchTenantKeyMetric.success(`Successfully retrieved tenant keys.`);
         } else {
