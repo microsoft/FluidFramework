@@ -128,6 +128,7 @@ stages:
           clean: true
           lfs: ${{ parameters.checkoutSubmodules }}
           submodules: ${{ parameters.checkoutSubmodules }}
+          fetchDepth: 10
 
         - task: Bash@3
           displayName: Parameters
