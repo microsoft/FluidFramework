@@ -5,7 +5,7 @@
 
 import { AsyncLocalStorage } from "async_hooks";
 import { RequestHandler, Response } from "express";
-import * as jwt from "jsonwebtoken";
+import { decode } from "jsonwebtoken";
 import * as nconf from "nconf";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
@@ -72,7 +72,7 @@ export async function createGitService(
     const customData: ITenantCustomDataExternal = details.customData;
     const writeToExternalStorage = !!customData?.externalStorageData;
     const storageName = customData?.storageName;
-    const decoded = jwt.decode(token) as ITokenClaims;
+    const decoded = decode(token) as ITokenClaims;
     const storageUrl = config.get("storageUrl") as string | undefined;
     if (containsPathTraversal(decoded.documentId)) {
         // Prevent attempted directory traversal.

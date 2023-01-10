@@ -43,6 +43,7 @@ import {
     runSynchronousTransaction,
     buildForest,
     ContextuallyTypedNodeData,
+    ModularChangeset,
 } from "../feature-libraries";
 
 /**
@@ -103,7 +104,11 @@ export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObje
  * TODO: expose or implement Checkout.
  */
 class SharedTree
-    extends SharedTreeCore<DefaultChangeset, DefaultChangeFamily>
+    extends SharedTreeCore<
+        DefaultChangeset,
+        DefaultChangeFamily,
+        [SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset, DefaultChangeFamily>]
+    >
     implements ISharedTree
 {
     public readonly context: EditableTreeContext;
