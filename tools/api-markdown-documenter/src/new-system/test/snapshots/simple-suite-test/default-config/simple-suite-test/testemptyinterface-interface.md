@@ -1,9 +1,10 @@
 # TestEmptyInterface
 
-[Packages](./) > [simple-suite-test](./simple-suite-test) > [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface)  
-An empty interface  
+[Packages](./) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface)
 
-## Signature {#testemptyinterface-signature}
+An empty interface
+
+### Signature {#testemptyinterface-signature}
 
 ```typescript
 export interface TestEmptyInterface

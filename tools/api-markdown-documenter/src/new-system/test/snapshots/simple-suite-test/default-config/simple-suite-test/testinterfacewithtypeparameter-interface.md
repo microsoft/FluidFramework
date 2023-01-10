@@ -1,41 +1,43 @@
 # TestInterfaceWithTypeParameter
 
-[Packages](./) > [simple-suite-test](./simple-suite-test) > [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)  
-Test interface with generic type parameter  
+[Packages](./) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)
 
-## Signature {#testinterfacewithtypeparameter-signature}
+Test interface with generic type parameter
+
+### Signature {#testinterfacewithtypeparameter-signature}
 
 ```typescript
 export interface TestInterfaceWithTypeParameter<T>
 ```
 
-<b>Type parameters: </b>  
-- <b>T</b>: A type parameter  
+<b>Type parameters: </b>
 
-## Remarks {#testinterfacewithtypeparameter-remarks}
+- <b>T</b>: A type parameter
 
-Here are some remarks about the interface  
+### Remarks {#testinterfacewithtypeparameter-remarks}
 
-## Properties
+Here are some remarks about the interface
+
+### Properties
 
 
-| Property | Type | Description |
+|  Property | Type | Description |
 |  --- | --- | --- |
 |  [testProperty](./simple-suite-test/testinterfacewithtypeparameter-interface#testproperty-propertysignature) | T | A test interface property using generic type parameter |
 
-## Property Details
+### Property Details
 
-### testProperty {#testproperty-propertysignature}
+#### testProperty {#testproperty-propertysignature}
 
-A test interface property using generic type parameter  
+A test interface property using generic type parameter
 
-#### Signature {#testproperty-signature}
+##### Signature {#testproperty-signature}
 
 ```typescript
 testProperty: T;
 ```
 
-#### Remarks {#testproperty-remarks}
+##### Remarks {#testproperty-remarks}
 
-Here are some remarks about the property  
+Here are some remarks about the property
 

@@ -1,119 +1,122 @@
 # TestAbstractClass
 
-[Packages](./) > [simple-suite-test](./simple-suite-test) > [TestAbstractClass](./simple-suite-test/testabstractclass-class)  
-A test abstract class.  
+[Packages](./) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestAbstractClass](./simple-suite-test/testabstractclass-class)
 
-## Signature {#testabstractclass-signature}
+A test abstract class.
+
+### Signature {#testabstractclass-signature}
 
 ```typescript
 export declare abstract class TestAbstractClass
 ```
 
-## Constructors
+### Constructors
 
 
-| Constructor | Description |
+|  Constructor | Description |
 |  --- | --- |
 |  [(constructor)(privateProperty, protectedProperty)](./simple-suite-test/testabstractclass-class#_constructor_-constructor) | This is a constructor. |
 
-## Properties
+### Properties
 
 
-| Property | Modifiers | Type | Description |
+|  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [abstractPropertyGetter](./simple-suite-test/testabstractclass-class#abstractpropertygetter-property) | <code>readonly</code> | [TestMappedType](./simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
 |  [protectedProperty](./simple-suite-test/testabstractclass-class#protectedproperty-property) | <code>readonly</code> | [TestEnum](./simple-suite-test#testenum-enum) | A test protected property. |
 
-## Methods
+### Methods
 
 
-| Method | Modifiers | Return Type | Description |
+|  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [publicAbstractMethod()](./simple-suite-test/testabstractclass-class#publicabstractmethod-method) |  | void | A test public abstract method. |
 |  [sealedMethod()](./simple-suite-test/testabstractclass-class#sealedmethod-method) | <code>sealed</code> | string | A test <code>@sealed</code> method. |
 |  [virtualMethod()](./simple-suite-test/testabstractclass-class#virtualmethod-method) | <code>virtual</code> | number | A test <code>@virtual</code> method. |
 
-## Constructor Details
+### Constructor Details
 
-### (constructor) {#_constructor_-constructor}
+#### (constructor) {#_constructor_-constructor}
 
-This is a constructor.  
+This is a constructor.
 
-#### Signature {#_constructor_-signature}
+##### Signature {#_constructor_-signature}
 
 ```typescript
 protected constructor(privateProperty: number, protectedProperty: TestEnum);
 ```
 
-#### Parameters {#_constructor_-parameters}
+##### Parameters {#_constructor_-parameters}
 
 
-| Parameter | Type | Description |
+|  Parameter | Type | Description |
 |  --- | --- | --- |
 |  privateProperty | number |  |
 |  protectedProperty | [TestEnum](./simple-suite-test#testenum-enum) |  |
 
-## Property Details
+### Property Details
 
-### abstractPropertyGetter {#abstractpropertygetter-property}
+#### abstractPropertyGetter {#abstractpropertygetter-property}
 
-A test abstract getter property.  
+A test abstract getter property.
 
-#### Signature {#abstractpropertygetter-signature}
+##### Signature {#abstractpropertygetter-signature}
 
 ```typescript
 abstract get abstractPropertyGetter(): TestMappedType;
 ```
 
-### protectedProperty {#protectedproperty-property}
+#### protectedProperty {#protectedproperty-property}
 
-A test protected property.  
+A test protected property.
 
-#### Signature {#protectedproperty-signature}
+##### Signature {#protectedproperty-signature}
 
 ```typescript
 protected readonly protectedProperty: TestEnum;
 ```
 
-## Method Details
+### Method Details
 
-### publicAbstractMethod {#publicabstractmethod-method}
+#### publicAbstractMethod {#publicabstractmethod-method}
 
-A test public abstract method.  
+A test public abstract method.
 
-#### Signature {#publicabstractmethod-signature}
+##### Signature {#publicabstractmethod-signature}
 
 ```typescript
 abstract publicAbstractMethod(): void;
 ```
 
-### sealedMethod {#sealedmethod-method}
+#### sealedMethod {#sealedmethod-method}
 
-A test `@sealed` method.  
+A test `@sealed` method.
 
-#### Signature {#sealedmethod-signature}
+##### Signature {#sealedmethod-signature}
 
 ```typescript
 /** @sealed */<br/>protected sealedMethod(): string;
 ```
 
-#### Returns {#sealedmethod-returns}
+##### Returns {#sealedmethod-returns}
 
-A string!  
-<b>Return type: </b>string  
+A string!
 
-### virtualMethod {#virtualmethod-method}
+<b>Return type: </b>string
 
-A test `@virtual` method.  
+#### virtualMethod {#virtualmethod-method}
 
-#### Signature {#virtualmethod-signature}
+A test `@virtual` method.
+
+##### Signature {#virtualmethod-signature}
 
 ```typescript
 /** @virtual */<br/>protected virtualMethod(): number;
 ```
 
-#### Returns {#virtualmethod-returns}
+##### Returns {#virtualmethod-returns}
 
-A number!  
-<b>Return type: </b>number  
+A number!
+
+<b>Return type: </b>number
 

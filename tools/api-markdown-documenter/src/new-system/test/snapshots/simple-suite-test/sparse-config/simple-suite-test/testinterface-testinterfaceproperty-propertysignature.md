@@ -1,14 +1,14 @@
 # testInterfaceProperty
 
-Test interface property  
+Test interface property
 
-## Signature {#testinterfaceproperty-signature}
+### Signature {#testinterfaceproperty-signature}
 
 ```typescript
 testInterfaceProperty: number;
 ```
 
-## Remarks {#testinterfaceproperty-remarks}
+### Remarks {#testinterfaceproperty-remarks}
 
-Here are some remarks about the property  
+Here are some remarks about the property
 

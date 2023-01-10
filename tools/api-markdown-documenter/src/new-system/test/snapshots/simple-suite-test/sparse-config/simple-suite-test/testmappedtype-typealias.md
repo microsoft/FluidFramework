@@ -1,14 +1,14 @@
 # TestMappedType
 
-Test Mapped Type, using [TestEnum](docs/simple-suite-test/testenum-enum)  
+Test Mapped Type, using [TestEnum](docs/simple-suite-test/testenum-enum)
 
-## Signature {#testmappedtype-signature}
+### Signature {#testmappedtype-signature}
 
 ```typescript
 export declare type TestMappedType = {<br/>    [K in TestEnum]: boolean;<br/>};
 ```
 
-## Remarks {#testmappedtype-remarks}
+### Remarks {#testmappedtype-remarks}
 
-Here are some remarks about the mapped type  
+Here are some remarks about the mapped type
 

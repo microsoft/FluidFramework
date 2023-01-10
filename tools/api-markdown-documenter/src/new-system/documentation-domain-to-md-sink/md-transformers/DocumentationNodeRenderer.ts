@@ -430,6 +430,7 @@ export function markdownFromDocumentNode(
     }
     if (node.title !== undefined) {
         output.push(`# ${node.title}${standardEOL}${standardEOL}`);
+        renderer.increaseHierarchicalDepth();
     }
     if (node.header) {
         output.push(

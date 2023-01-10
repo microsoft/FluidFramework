@@ -1,8 +1,8 @@
 # testInterfaceMethod
 
-Test interface method  
+Test interface method
 
-## Signature {#testinterfacemethod-signature}
+### Signature {#testinterfacemethod-signature}
 
 ```typescript
 testInterfaceMethod(): void;

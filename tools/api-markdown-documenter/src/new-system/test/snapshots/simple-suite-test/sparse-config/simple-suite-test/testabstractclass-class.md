@@ -1,32 +1,32 @@
 # TestAbstractClass
 
-A test abstract class.  
+A test abstract class.
 
-## Signature {#testabstractclass-signature}
+### Signature {#testabstractclass-signature}
 
 ```typescript
 export declare abstract class TestAbstractClass
 ```
 
-## Constructors
+### Constructors
 
 
-| Constructor | Description |
+|  Constructor | Description |
 |  --- | --- |
 |  [(constructor)(privateProperty, protectedProperty)](docs/simple-suite-test/testabstractclass-_constructor_-constructor) | This is a constructor. |
 
-## Properties
+### Properties
 
 
-| Property | Modifiers | Type | Description |
+|  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [abstractPropertyGetter](docs/simple-suite-test/testabstractclass-abstractpropertygetter-property) | <code>readonly</code> | [TestMappedType](docs/simple-suite-test/testmappedtype-typealias) | A test abstract getter property. |
 |  [protectedProperty](docs/simple-suite-test/testabstractclass-protectedproperty-property) | <code>readonly</code> | [TestEnum](docs/simple-suite-test/testenum-enum) | A test protected property. |
 
-## Methods
+### Methods
 
 
-| Method | Modifiers | Return Type | Description |
+|  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [publicAbstractMethod()](docs/simple-suite-test/testabstractclass-publicabstractmethod-method) |  | void | A test public abstract method. |
 |  [sealedMethod()](docs/simple-suite-test/testabstractclass-sealedmethod-method) | <code>sealed</code> | string | A test <code>@sealed</code> method. |

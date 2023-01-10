@@ -1,58 +1,62 @@
 # TestInterfaceExtendingOtherInterfaces
 
-[Packages](./) > [simple-suite-test](./simple-suite-test) > [TestInterfaceExtendingOtherInterfaces](./simple-suite-test/testinterfaceextendingotherinterfaces-interface)  
-Test interface that extends other interfaces  
+[Packages](./) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestInterfaceExtendingOtherInterfaces](./simple-suite-test/testinterfaceextendingotherinterfaces-interface)
 
-## Signature {#testinterfaceextendingotherinterfaces-signature}
+Test interface that extends other interfaces
+
+### Signature {#testinterfaceextendingotherinterfaces-signature}
 
 ```typescript
 export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter<number>
 ```
 
-<b>Extends: </b>[TestInterface](./simple-suite-test/testinterface-interface), [TestMappedType](./simple-suite-test#testmappedtype-typealias), [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)  
+<b>Extends: </b>[TestInterface](./simple-suite-test/testinterface-interface), [TestMappedType](./simple-suite-test#testmappedtype-typealias), [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)
 
-## Remarks {#testinterfaceextendingotherinterfaces-remarks}
+### Remarks {#testinterfaceextendingotherinterfaces-remarks}
 
-Here are some remarks about the interface  
+Here are some remarks about the interface
 
-## Methods
+### Methods
 
 
-| Method | Return Type | Description |
+|  Method | Return Type | Description |
 |  --- | --- | --- |
 |  [testMethod(input)](./simple-suite-test/testinterfaceextendingotherinterfaces-interface#testmethod-methodsignature) | number | Test interface method accepting a string and returning a number. |
 
-## Method Details
+### Method Details
 
-### testMethod {#testmethod-methodsignature}
+#### testMethod {#testmethod-methodsignature}
 
-Test interface method accepting a string and returning a number.  
+Test interface method accepting a string and returning a number.
 
-#### Signature {#testmethod-signature}
+##### Signature {#testmethod-signature}
 
 ```typescript
 testMethod(input: string): number;
 ```
 
-#### Remarks {#testmethod-remarks}
+##### Remarks {#testmethod-remarks}
 
-Here are some remarks about the method  
+Here are some remarks about the method
 
-#### Parameters {#testmethod-parameters}
+##### Parameters {#testmethod-parameters}
 
 
-| Parameter | Type | Description |
+|  Parameter | Type | Description |
 |  --- | --- | --- |
 |  input | string | A string |
 
-#### Returns {#testmethod-returns}
+##### Returns {#testmethod-returns}
 
-A number  
-<b>Return type: </b>number  
+A number
 
-## See also {#testinterfaceextendingotherinterfaces-see-also}
+<b>Return type: </b>number
 
-- [TestInterface](./simple-suite-test/testinterface-interface)  
-- [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)  
-- [TestMappedType](./simple-suite-test#testmappedtype-typealias)  
+### See also {#testinterfaceextendingotherinterfaces-see-also}
+
+- [TestInterface](./simple-suite-test/testinterface-interface)
+
+- [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)
+
+- [TestMappedType](./simple-suite-test#testmappedtype-typealias)
 

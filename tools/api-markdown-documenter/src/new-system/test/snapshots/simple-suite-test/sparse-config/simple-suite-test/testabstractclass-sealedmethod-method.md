@@ -1,15 +1,16 @@
 # sealedMethod
 
-A test `@sealed` method.  
+A test `@sealed` method.
 
-## Signature {#sealedmethod-signature}
+### Signature {#sealedmethod-signature}
 
 ```typescript
 /** @sealed */<br/>protected sealedMethod(): string;
 ```
 
-## Returns {#sealedmethod-returns}
+### Returns {#sealedmethod-returns}
 
-A string!  
-<b>Return type: </b>string  
+A string!
+
+<b>Return type: </b>string
 
