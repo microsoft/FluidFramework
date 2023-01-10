@@ -46,8 +46,8 @@ Here are some remarks about the interface
 
 |  CallSignature | Description |
 |  --- | --- |
-|  [(event: 'testCallSignature', listener: (input: unknown) =&amp;gt; void): any](docs/simple-suite-test/testinterface-_call_-callsignature) | Test interface event call signature |
-|  [(event: 'anotherTestCallSignature', listener: (input: number) =&amp;gt; string): number](docs/simple-suite-test/testinterface-_call__1-callsignature) | Another example call signature |
+|  [(event: 'testCallSignature', listener: (input: unknown) =&gt; void): any](docs/simple-suite-test/testinterface-_call_-callsignature) | Test interface event call signature |
+|  [(event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number](docs/simple-suite-test/testinterface-_call__1-callsignature) | Another example call signature |
 
 ## See also {#testinterface-see-also}
 

@@ -192,7 +192,9 @@ Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum)
 #### Signature {#testmappedtype-signature}
 
 ```typescript
-export declare type TestMappedType = {<br/>    [K in TestEnum]: boolean;<br/>};
+export declare type TestMappedType = {
+    [K in TestEnum]: boolean;
+};
 ```
 
 #### Remarks {#testmappedtype-remarks}
@@ -254,7 +256,10 @@ Test function that returns an inline type
 #### Signature {#testfunctionreturninginlinetype-signature}
 
 ```typescript
-export declare function testFunctionReturningInlineType(): {<br/>    foo: number;<br/>    bar: TestEnum;<br/>};
+export declare function testFunctionReturningInlineType(): {
+    foo: number;
+    bar: TestEnum;
+};
 ```
 
 #### Returns {#testfunctionreturninginlinetype-returns}

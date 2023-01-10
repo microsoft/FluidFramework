@@ -118,7 +118,7 @@ export class DefaultNodeRenderers {
     public [DocumentationNodeType.LineBreak] = (
         node: LineBreakNode,
         subtreeRenderer: DocumentationNodeRenderer,
-    ): string => (subtreeRenderer.isInsideCodeBlock ? `<br/>` : standardEOL);
+    ): string => (subtreeRenderer.isInsideTable ? `<br/>` : standardEOL);
     public [DocumentationNodeType.Link] = LinkToMarkdown;
     public [DocumentationNodeType.HierarchicalSection] = HierarchicalSectionToMarkdown;
     public [DocumentationNodeType.OrderedList] = OrderedListToMarkdown;

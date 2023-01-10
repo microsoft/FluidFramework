@@ -5,7 +5,8 @@ A test `@virtual` method.
 ## Signature {#virtualmethod-signature}
 
 ```typescript
-/** @virtual */<br/>protected virtualMethod(): number;
+/** @virtual */
+protected virtualMethod(): number;
 ```
 
 ## Returns {#virtualmethod-returns}

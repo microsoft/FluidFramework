@@ -156,8 +156,8 @@ Here are some remarks about the interface
 
 |  CallSignature | Description |
 |  --- | --- |
-|  [(event: 'testCallSignature', listener: (input: unknown) =&amp;gt; void): any](docs/simple-suite-test#testinterface-_call_-callsignature) | Test interface event call signature |
-|  [(event: 'anotherTestCallSignature', listener: (input: number) =&amp;gt; string): number](docs/simple-suite-test#testinterface-_call__1-callsignature) | Another example call signature |
+|  [(event: 'testCallSignature', listener: (input: unknown) =&gt; void): any](docs/simple-suite-test#testinterface-_call_-callsignature) | Test interface event call signature |
+|  [(event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number](docs/simple-suite-test#testinterface-_call__1-callsignature) | Another example call signature |
 
 ### Construct Signature Details
 
@@ -348,7 +348,7 @@ export interface TestInterfaceWithIndexSignature
 
 |  IndexSignature | Description |
 |  --- | --- |
-|  [\[foo: number\]: { bar: string; }](docs/simple-suite-test#testinterfacewithindexsignature-_indexer_-indexsignature) | Test index signature. |
+|  [[foo: number]: { bar: string; }](docs/simple-suite-test#testinterfacewithindexsignature-_indexer_-indexsignature) | Test index signature. |
 
 ### Index Signature Details
 
@@ -359,7 +359,9 @@ Test index signature.
 ##### Signature {#_indexer_-signature}
 
 ```typescript
-[foo: number]: {<br/>        bar: string;<br/>    };
+[foo: number]: {
+        bar: string;
+    };
 ```
 
 ## TestInterfaceWithTypeParameter {#testinterfacewithtypeparameter-interface}
@@ -500,7 +502,8 @@ A test `@sealed` method.
 ##### Signature {#sealedmethod-signature}
 
 ```typescript
-/** @sealed */<br/>protected sealedMethod(): string;
+/** @sealed */
+protected sealedMethod(): string;
 ```
 
 ##### Returns {#sealedmethod-returns}
@@ -516,7 +519,8 @@ A test `@virtual` method.
 ##### Signature {#virtualmethod-signature}
 
 ```typescript
-/** @virtual */<br/>protected virtualMethod(): number;
+/** @virtual */
+protected virtualMethod(): number;
 ```
 
 ##### Returns {#virtualmethod-returns}
@@ -654,7 +658,8 @@ Test class getter-only property
 ##### Signature {#testclassgetterproperty-signature}
 
 ```typescript
-/** @virtual */<br/>get testClassGetterProperty(): number;
+/** @virtual */
+get testClassGetterProperty(): number;
 ```
 
 ##### Remarks {#testclassgetterproperty-remarks}
@@ -704,7 +709,8 @@ Test class method
 ##### Signature {#testclassmethod-signature}
 
 ```typescript
-/** @sealed */<br/>testClassMethod(input: TTypeParameterA): TTypeParameterA;
+/** @sealed */
+testClassMethod(input: TTypeParameterA): TTypeParameterA;
 ```
 
 ##### Remarks {#testclassmethod-remarks}
@@ -758,7 +764,8 @@ Overrides [TestAbstractClass.virtualMethod](docs/simple-suite-test#testabstractc
 ##### Signature {#virtualmethod-signature}
 
 ```typescript
-/** @override */<br/>protected virtualMethod(): number;
+/** @override */
+protected virtualMethod(): number;
 ```
 
 ##### Returns {#virtualmethod-returns}
@@ -863,7 +870,9 @@ Test Mapped Type, using [TestEnum](docs/simple-suite-test#testenum-enum)
 ### Signature {#testmappedtype-signature}
 
 ```typescript
-export declare type TestMappedType = {<br/>    [K in TestEnum]: boolean;<br/>};
+export declare type TestMappedType = {
+    [K in TestEnum]: boolean;
+};
 ```
 
 ### Remarks {#testmappedtype-remarks}
@@ -925,7 +934,10 @@ Test function that returns an inline type
 ### Signature {#testfunctionreturninginlinetype-signature}
 
 ```typescript
-export declare function testFunctionReturningInlineType(): {<br/>    foo: number;<br/>    bar: TestEnum;<br/>};
+export declare function testFunctionReturningInlineType(): {
+    foo: number;
+    bar: TestEnum;
+};
 ```
 
 ### Returns {#testfunctionreturninginlinetype-returns}

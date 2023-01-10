@@ -5,7 +5,9 @@ Test Mapped Type, using [TestEnum](docs/simple-suite-test/testenum-enum)
 ## Signature {#testmappedtype-signature}
 
 ```typescript
-export declare type TestMappedType = {<br/>    [K in TestEnum]: boolean;<br/>};
+export declare type TestMappedType = {
+    [K in TestEnum]: boolean;
+};
 ```
 
 ## Remarks {#testmappedtype-remarks}

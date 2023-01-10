@@ -13,5 +13,5 @@ export interface TestInterfaceWithIndexSignature
 
 |  IndexSignature | Description |
 |  --- | --- |
-|  [\[foo: number\]: { bar: string; }](docs/simple-suite-test/testinterfacewithindexsignature-_indexer_-indexsignature) | Test index signature. |
+|  [[foo: number]: { bar: string; }](docs/simple-suite-test/testinterfacewithindexsignature-_indexer_-indexsignature) | Test index signature. |
 

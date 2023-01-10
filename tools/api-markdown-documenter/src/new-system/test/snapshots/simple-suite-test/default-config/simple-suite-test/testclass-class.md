@@ -129,7 +129,8 @@ Test class getter-only property
 #### Signature {#testclassgetterproperty-signature}
 
 ```typescript
-/** @virtual */<br/>get testClassGetterProperty(): number;
+/** @virtual */
+get testClassGetterProperty(): number;
 ```
 
 #### Remarks {#testclassgetterproperty-remarks}
@@ -179,7 +180,8 @@ Test class method
 #### Signature {#testclassmethod-signature}
 
 ```typescript
-/** @sealed */<br/>testClassMethod(input: TTypeParameterA): TTypeParameterA;
+/** @sealed */
+testClassMethod(input: TTypeParameterA): TTypeParameterA;
 ```
 
 #### Remarks {#testclassmethod-remarks}
@@ -233,7 +235,8 @@ Overrides [TestAbstractClass.virtualMethod](./simple-suite-test/testabstractclas
 #### Signature {#virtualmethod-signature}
 
 ```typescript
-/** @override */<br/>protected virtualMethod(): number;
+/** @override */
+protected virtualMethod(): number;
 ```
 
 #### Returns {#virtualmethod-returns}
