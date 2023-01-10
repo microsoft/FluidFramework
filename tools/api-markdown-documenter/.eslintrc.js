@@ -36,7 +36,27 @@ module.exports = {
         "import/no-nodejs-modules": "off",
 
         // TODO: remove before merging
-        "jsdoc/require-jsdoc": "warn",
+        "jsdoc/require-jsdoc": [
+            "warn",
+            {
+                publicOnly: true,
+                enableFixer: false,
+                require: {
+                    ArrowFunctionExpression: true,
+                    ClassDeclaration: true,
+                    ClassExpression: true,
+                    FunctionDeclaration: true,
+                    FunctionExpression: true,
+                    MethodDefinition: false,
+                },
+                contexts: [
+                    "TSEnumDeclaration",
+                    "TSInterfaceDeclaration",
+                    "TSTypeAliasDeclaration",
+                    "VariableDeclaration",
+                ],
+            },
+        ],
     },
     overrides: [
         {
