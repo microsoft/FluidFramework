@@ -88,7 +88,7 @@ When connecting to the Azure Fluid Relay service, you must specify 'enableWholeS
 
 ```sh
 # Substitute the 'Tenant Id', 'Primary Key' and 'Service Endpoint' found under 'Access Key' in Azure Portal
-npm run start:r11s --env mode=r11s
+npm run start:r11s --env mode=r11s \
                    --env tenantId=$TenantId \
                    --env tenantSecret=$PrimaryKey \
                    --env discoveryEndpoint=$ServiceEndpoint \
