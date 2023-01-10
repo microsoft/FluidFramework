@@ -86,8 +86,10 @@ export const InventoryListView: React.FC<IInventoryListViewProps> = (props: IInv
     return (
         <table style={{ margin: "0 auto", textAlign: "left" }}>
             <thead>
-                <th>Inventory item</th>
-                <th>Quantity</th>
+                <tr>
+                    <th>Inventory item</th>
+                    <th>Quantity</th>
+                </tr>
             </thead>
             <tbody>
                 { inventoryItemViews }
