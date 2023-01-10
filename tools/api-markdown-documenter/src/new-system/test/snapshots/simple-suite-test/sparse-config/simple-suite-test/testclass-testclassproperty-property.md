@@ -1,14 +1,14 @@
 # testClassProperty
 
-Test class property  
+Test class property
 
-## Signature {#testclassproperty-signature}
+### Signature {#testclassproperty-signature}
 
 ```typescript
 readonly testClassProperty: TTypeParameterB;
 ```
 
-## Remarks {#testclassproperty-remarks}
+### Remarks {#testclassproperty-remarks}
 
-Here are some remarks about the property  
+Here are some remarks about the property
 

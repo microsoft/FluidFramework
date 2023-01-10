@@ -1,8 +1,8 @@
 # testOptionalInterfaceProperty
 
-Test optional property  
+Test optional property
 
-## Signature {#testoptionalinterfaceproperty-signature}
+### Signature {#testoptionalinterfaceproperty-signature}
 
 ```typescript
 testOptionalInterfaceProperty?: number;

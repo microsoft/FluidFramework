@@ -1,5 +1,6 @@
 import { PlainTextNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
+import { getEscapedText, getTableEscapedText } from "./Utilities";
 
 /**
  * Converts a PlainTextNode into markdown
@@ -30,7 +31,13 @@ export function PlainTextToMarkdown(
     }
 
     // Add actual content
-    output.push(textNode.value);
+    if (renderer.isInsideTable) {
+        output.push(getTableEscapedText(textNode.value));
+    } else if (renderer.isInsideCodeBlock) {
+        output.push(textNode.value);
+    } else {
+        output.push(getEscapedText(textNode.value));
+    }
 
     // Add bold, underline, strikethrough exit tags
     for (const tag of tagsChecked) {

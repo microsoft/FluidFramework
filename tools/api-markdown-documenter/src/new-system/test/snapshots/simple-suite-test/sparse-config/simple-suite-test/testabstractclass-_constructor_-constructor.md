@@ -1,17 +1,17 @@
 # (constructor)
 
-This is a constructor.  
+This is a constructor.
 
-## Signature {#_constructor_-signature}
+### Signature {#_constructor_-signature}
 
 ```typescript
 protected constructor(privateProperty: number, protectedProperty: TestEnum);
 ```
 
-## Parameters {#_constructor_-parameters}
+### Parameters {#_constructor_-parameters}
 
 
-| Parameter | Type | Description |
+|  Parameter | Type | Description |
 |  --- | --- | --- |
 |  privateProperty | number |  |
 |  protectedProperty | [TestEnum](docs/simple-suite-test/testenum-enum) |  |

@@ -1,31 +1,32 @@
 # testFunction
 
-Test function  
+Test function
 
-## Signature {#testfunction-signature}
+### Signature {#testfunction-signature}
 
 ```typescript
 export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;
 ```
 
-## Remarks {#testfunction-remarks}
+### Remarks {#testfunction-remarks}
 
-This is a test <i>link</i> to another API member  
+This is a test <i>link</i> to another API member
 
-## Parameters {#testfunction-parameters}
+### Parameters {#testfunction-parameters}
 
 
-| Parameter | Modifiers | Type | Description |
+|  Parameter | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  testParameter |  | TTypeParameter | A test parameter |
 |  testOptionalParameter | optional | TTypeParameter |  |
 
-## Returns {#testfunction-returns}
+### Returns {#testfunction-returns}
 
-The provided parameter  
-<b>Return type: </b>TTypeParameter  
+The provided parameter
 
-## Throws {#testfunction-throws}
+<b>Return type: </b>TTypeParameter
 
-An Error when something bad happens.  
+### Throws {#testfunction-throws}
+
+An Error when something bad happens.
 

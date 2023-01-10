@@ -1,24 +1,24 @@
 # (constructor)
 
-Test class constructor  
+Test class constructor
 
-## Signature {#_constructor_-signature}
+### Signature {#_constructor_-signature}
 
 ```typescript
 constructor(privateProperty: number, protectedProperty: TestEnum, testClassProperty: TTypeParameterB, testClassEventProperty: () => void);
 ```
 
-## Remarks {#_constructor_-remarks}
+### Remarks {#_constructor_-remarks}
 
-Here are some remarks about the constructor  
+Here are some remarks about the constructor
 
-## Parameters {#_constructor_-parameters}
+### Parameters {#_constructor_-parameters}
 
 
-| Parameter | Type | Description |
+|  Parameter | Type | Description |
 |  --- | --- | --- |
 |  privateProperty | number | See <i>TestAbstractClass</i>'s constructor. |
 |  protectedProperty | [TestEnum](docs/simple-suite-test/testenum-enum) | See <i>TestAbstractClass.protectedProperty</i>. |
 |  testClassProperty | TTypeParameterB | See <i>TestClass.testClassProperty</i>. |
-|  testClassEventProperty | () => void | See <i>TestClass.testClassEventProperty</i>. |
+|  testClassEventProperty | () =&gt; void | See <i>TestClass.testClassEventProperty</i>. |
 

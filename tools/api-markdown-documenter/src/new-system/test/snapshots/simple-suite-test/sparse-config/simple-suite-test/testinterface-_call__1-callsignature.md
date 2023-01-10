@@ -1,14 +1,14 @@
 # (event: 'anotherTestCallSignature', listener: (input: number) => string): number
 
-Another example call signature  
+Another example call signature
 
-## Signature {#_call__1-signature}
+### Signature {#_call__1-signature}
 
 ```typescript
 (event: 'anotherTestCallSignature', listener: (input: number) => string): number;
 ```
 
-## Remarks {#_call__1-remarks}
+### Remarks {#_call__1-remarks}
 
-Here are some remarks about the event call signature  
+Here are some remarks about the event call signature
 

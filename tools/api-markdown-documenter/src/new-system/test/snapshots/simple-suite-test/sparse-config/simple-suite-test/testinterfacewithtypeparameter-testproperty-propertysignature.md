@@ -1,14 +1,14 @@
 # testProperty
 
-A test interface property using generic type parameter  
+A test interface property using generic type parameter
 
-## Signature {#testproperty-signature}
+### Signature {#testproperty-signature}
 
 ```typescript
 testProperty: T;
 ```
 
-## Remarks {#testproperty-remarks}
+### Remarks {#testproperty-remarks}
 
-Here are some remarks about the property  
+Here are some remarks about the property
 

@@ -33,7 +33,7 @@ export function TableToMarkdown(tableNode: TableNode, renderer: DocumentationNod
     // First, write the table header (which is required by Markdown)
     // Don't render the header via renderNode(), because this header row needs to be handled specially to add more columns to fit the max amount of columns we found in the table.
     // We'll render each header cell individually
-    const headerRow = ["| "];
+    const headerRow = ["|  "];
     for (let i = 0; i < columnsCount; ++i) {
         headerRow.push(i > 0 ? " " : "");
         if (tableNode.headingRow && i < tableNode.headingRow.children.length) {

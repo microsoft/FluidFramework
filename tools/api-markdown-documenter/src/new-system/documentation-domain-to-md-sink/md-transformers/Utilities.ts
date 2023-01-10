@@ -14,10 +14,10 @@ export const standardEOL = os.EOL;
  *
  * @privateRemarks
  *
- * TODO: Markdown spec says to complete a paragraph with two spaces and a newline.
- * Not sure how useful this is, though.
+ * TODO: This used to be two spaces and a newline (Markdown spec says to complete a paragraph with two spaces and a newline), but
+ * we changed this to two newlines to more closely match the old generated docs. Not sure if it's worth going back to two spaces+ \n or keeping like this
  */
-export const markdownEOL = `  ${standardEOL}`;
+export const markdownEOL = `${standardEOL}${standardEOL}`;
 
 /**
  * Converts text into an escaped, html-nesting-friendly form

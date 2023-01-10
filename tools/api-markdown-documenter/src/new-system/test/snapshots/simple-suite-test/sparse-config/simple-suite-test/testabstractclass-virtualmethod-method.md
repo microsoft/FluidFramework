@@ -1,15 +1,16 @@
 # virtualMethod
 
-A test `@virtual` method.  
+A test `@virtual` method.
 
-## Signature {#virtualmethod-signature}
+### Signature {#virtualmethod-signature}
 
 ```typescript
 /** @virtual */<br/>protected virtualMethod(): number;
 ```
 
-## Returns {#virtualmethod-returns}
+### Returns {#virtualmethod-returns}
 
-A number!  
-<b>Return type: </b>number  
+A number!
+
+<b>Return type: </b>number
 
