@@ -103,6 +103,8 @@ The vast majority of these options have default values that have been crafted to
 
 ## Upcoming Work
 
+-   Remove support for empty cell substitution
+
 ### Hackathon TODOs
 
 -   Implement ApiItem/DocNode -> Document Domain (Josh)
