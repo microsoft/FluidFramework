@@ -1326,16 +1326,16 @@ declare namespace SequenceField {
         areRebasable,
         isActiveReattach,
         getInputLength,
-        isMoveMark,
         isDetachMark,
         isReattach,
+        DetachedNodeTracker,
+        isMoveMark,
         MoveMark,
         MoveEffectTable,
         MovePartition,
         newMoveEffectTable,
         PairedMarkUpdate,
-        splitMarkOnOutput,
-        DetachedNodeTracker
+        splitMarkOnOutput
     }
 }
 export { SequenceField }

@@ -175,7 +175,7 @@ function composeMarks(baseMark: T.Mark, newMark: T.SizedMark): T.Mark {
                 }
                 case "Delete": {
                     // The insertion made by the base change is subsequently deleted.
-                    // TODO: preserve the insertions as conflicted
+                    // TODO: preserve the insertions as muted
                     return 0;
                 }
                 default:
@@ -189,7 +189,7 @@ function composeMarks(baseMark: T.Mark, newMark: T.SizedMark): T.Mark {
                 }
                 case "Delete": {
                     // The insertion made by the base change is subsequently deleted.
-                    // TODO: preserve the insertions as conflicted
+                    // TODO: preserve the insertions as muted
                     return 0;
                 }
                 default:
