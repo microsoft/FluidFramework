@@ -339,7 +339,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     }
 
     public getCollabWindow(): CollaborationWindow {
-        return this._mergeTree.getCollabWindow();
+        return this._mergeTree.collabWindow;
     }
 
     /**
@@ -864,7 +864,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     }
 
     public updateSeqNumbers(min: number, seq: number) {
-        const collabWindow = this._mergeTree.getCollabWindow();
+        const collabWindow = this.getCollabWindow();
         // Equal is fine here due to SharedSegmentSequence<>.snapshotContent() potentially updating with same #
         assert(collabWindow.currentSeq <= seq,
             0x038 /* "Incoming op sequence# < local collabWindow's currentSequence#" */);
