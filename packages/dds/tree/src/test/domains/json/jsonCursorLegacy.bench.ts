@@ -7,27 +7,21 @@ import { strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import {
+    buildForest,
     ITreeCursor,
-    singleJsonCursor,
     jsonableTreeFromCursor,
+    singleTextCursor,
     EmptyKey,
-    cursorToJsonObject,
     jsonSchemaData,
 } from "../../..";
-import {
-    buildForest,
-    defaultSchemaPolicy,
-    mapTreeFromCursor,
-    singleMapTreeCursor,
-    singleTextCursor,
-} from "../../../feature-libraries";
-import {
-    initializeForest,
-    InMemoryStoredSchemaRepository,
-    moveToDetachedField,
-} from "../../../core";
+import { initializeForest, TreeNavigationResult } from "../../../forest";
+// Allow importing from this specific file which is being tested:
+/* eslint-disable-next-line import/no-internal-modules */
+import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
+import { defaultSchemaPolicy, singleTextCursorNew } from "../../../feature-libraries";
+import { InMemoryStoredSchemaRepository } from "../../../schema-stored";
 import { Canada, generateCanada } from "./canada";
-import { averageTwoValues, sum, sumMap } from "./benchmarks";
+import { averageTwoValues, sum } from "./benchmarksLegacy";
 import { generateTwitterJsonByByteSize, Twitter } from "./twitter";
 import { CitmCatalog, generateCitmJson } from "./citm";
 
@@ -42,13 +36,7 @@ function cloneObject<T, J = Jsonable<T>>(obj: J): J {
         // PERF: Nested array allocs make 'Object.entries()' ~2.4x slower than reading
         //       value via 'value[key]', even when destructuring. (node 14 x64)
         for (const key of Object.keys(obj)) {
-            // Like `result[key] = clone((obj as any)[key]);` but safe for when key == "__proto__"
-            Object.defineProperty(result, key, {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: clone((obj as any)[key]),
-            });
+            result[key] = clone((obj as any)[key]);
         }
         return result as J;
     }
@@ -75,12 +63,12 @@ function bench(
 ) {
     for (const { name, getJson, dataConsumer } of data) {
         const json = getJson();
-        const encodedTree = jsonableTreeFromCursor(singleJsonCursor(json));
+        const encodedTree = jsonableTreeFromCursor(new JsonCursor(json));
         const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData);
 
         benchmark({
             type: BenchmarkType.Measurement,
-            title: `Clone JS Object: '${name}'`,
+            title: `Direct: '${name}'`,
             before: () => {
                 const cloned = clone(json);
                 assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
@@ -92,20 +80,18 @@ function bench(
         });
 
         const cursorFactories: [string, () => ITreeCursor][] = [
-            ["JsonCursor", () => singleJsonCursor(json)],
+            ["JsonCursor", () => new JsonCursor(json)],
             ["TextCursor", () => singleTextCursor(encodedTree)],
-            [
-                "MapCursor",
-                () => singleMapTreeCursor(mapTreeFromCursor(singleTextCursor(encodedTree))),
-            ],
             [
                 "object-forest Cursor",
                 () => {
                     const forest = buildForest(schema);
-                    initializeForest(forest, [singleTextCursor(encodedTree)]);
+                    initializeForest(forest, [singleTextCursorNew(encodedTree)]);
                     const cursor = forest.allocateCursor();
-                    moveToDetachedField(forest, cursor);
-                    assert(cursor.firstNode());
+                    assert.equal(
+                        forest.tryMoveCursorTo(forest.root(forest.rootField), cursor),
+                        TreeNavigationResult.Ok,
+                    );
                     return cursor;
                 },
             ],
@@ -120,9 +106,7 @@ function bench(
         ][] = [
             ["cursorToJsonObject", cursorToJsonObject],
             ["jsonableTreeFromCursor", jsonableTreeFromCursor],
-            ["mapTreeFromCursor", mapTreeFromCursor],
             ["sum", sum],
-            ["sum-map", sumMap],
             ["averageTwoValues", averageTwoValues],
         ];
 
@@ -134,10 +118,16 @@ function bench(
                     title: `${consumerName}(${factoryName}): '${name}'`,
                     before: () => {
                         cursor = factory();
-                        // TODO: validate behavior
-                        // assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
-                        // assert.deepEqual(
-                        //     jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
+                        assert.deepEqual(
+                            cursorToJsonObject(cursor),
+                            json,
+                            "data should round trip through json",
+                        );
+                        assert.deepEqual(
+                            jsonableTreeFromCursor(cursor),
+                            encodedTree,
+                            "data should round trip through jsonable",
+                        );
                     },
                     benchmarkFn: () => {
                         consumer(cursor, dataConsumer);
@@ -157,109 +147,94 @@ function extractCoordinatesFromCanada(
     cursor: ITreeCursor,
     calculate: (x: number, y: number) => void,
 ): void {
-    cursor.enterField(Canada.SharedTreeFieldKey.features);
-    cursor.enterNode(0);
-    cursor.enterField(EmptyKey);
-    cursor.enterNode(0);
-    cursor.enterField(Canada.SharedTreeFieldKey.geometry);
-    cursor.enterNode(0);
-    cursor.enterField(Canada.SharedTreeFieldKey.coordinates);
-    cursor.enterNode(0);
+    cursor.down(Canada.SharedTreeFieldKey.features, 0);
+    cursor.down(EmptyKey, 0);
+    cursor.down(Canada.SharedTreeFieldKey.geometry, 0);
+    cursor.down(Canada.SharedTreeFieldKey.coordinates, 0);
 
-    cursor.enterField(EmptyKey);
+    let result = cursor.down(EmptyKey, 0);
+    assert.equal(result, TreeNavigationResult.Ok, "Unexpected shape for Canada dataset");
 
-    for (let result = cursor.firstNode(); result; result = cursor.nextNode()) {
-        cursor.enterField(EmptyKey);
+    while (result === TreeNavigationResult.Ok) {
+        let resultInner = cursor.down(EmptyKey, 0);
+        assert.equal(resultInner, TreeNavigationResult.Ok, "Unexpected shape for Canada dataset");
 
-        for (let resultInner = cursor.firstNode(); resultInner; resultInner = cursor.nextNode()) {
+        while (resultInner === TreeNavigationResult.Ok) {
             // Read x and y values
-            cursor.enterField(EmptyKey);
-            assert.equal(cursor.firstNode(), true, "No X field");
+            assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok, "No X field");
             const x = cursor.value as number;
-            assert.equal(cursor.nextNode(), true, "No Y field");
-            const y = cursor.value as number;
+            cursor.up();
 
-            cursor.exitNode();
-            cursor.exitField();
+            assert.equal(cursor.down(EmptyKey, 1), TreeNavigationResult.Ok, "No Y field");
+            const y = cursor.value as number;
+            cursor.up();
 
             calculate(x, y);
+            resultInner = cursor.seek(1);
         }
-
-        cursor.exitField();
+        cursor.up();
+        result = cursor.seek(1);
     }
 
     // Reset the cursor state
-    cursor.exitField();
-    cursor.exitNode();
-    cursor.exitField();
-    cursor.exitNode();
-    cursor.exitField();
-    cursor.exitNode();
-    cursor.exitField();
-    cursor.exitNode();
-    cursor.exitField();
+    cursor.up();
+    cursor.up();
+    cursor.up();
+    cursor.up();
 }
 
 function extractAvgValsFromTwitter(
     cursor: ITreeCursor,
     calculate: (x: number, y: number) => void,
 ): void {
-    cursor.enterField(Twitter.SharedTreeFieldKey.statuses); // move from root to field
-    cursor.enterNode(0); // move from field to node at 0 (which is an object of type array)
-    cursor.enterField(EmptyKey); // enter the array field at the node,
+    cursor.down(Twitter.SharedTreeFieldKey.statuses, 0);
 
-    for (let result = cursor.firstNode(); result; result = cursor.nextNode()) {
-        cursor.enterField(Twitter.SharedTreeFieldKey.retweetCount);
-        cursor.enterNode(0);
+    let result = cursor.down(EmptyKey, 0);
+    while (result === TreeNavigationResult.Ok) {
+        cursor.down(Twitter.SharedTreeFieldKey.retweetCount, 0);
         const retweetCount = cursor.value as number;
-        cursor.exitNode();
-        cursor.exitField();
+        cursor.up();
 
-        cursor.enterField(Twitter.SharedTreeFieldKey.favoriteCount);
-        cursor.enterNode(0);
-        const favoriteCount = cursor.value;
-        cursor.exitNode();
-        cursor.exitField();
-        calculate(retweetCount, favoriteCount as number);
+        cursor.down(Twitter.SharedTreeFieldKey.favoriteCount, 0);
+        const favoriteCount = cursor.value as number;
+        cursor.up();
+        calculate(retweetCount, favoriteCount);
+
+        result = cursor.seek(1);
     }
 
     // Reset the cursor state
-    cursor.exitField();
-    cursor.exitNode();
-    cursor.exitField();
+    cursor.up();
+    cursor.up();
+    cursor.up();
 }
 
 function extractAvgValsFromCitm(
-    cursor: ITreeCursorNew,
+    cursor: ITreeCursor,
     calculate: (x: number, y: number) => void,
 ): void {
-    cursor.enterField(CitmCatalog.SharedTreeFieldKey.performances);
-    cursor.enterNode(0);
-    cursor.enterField(EmptyKey);
+    cursor.down(CitmCatalog.SharedTreeFieldKey.performances, 0);
 
     // iterate over each performance
-    for (
-        let performanceIterator = cursor.firstNode();
-        performanceIterator;
-        performanceIterator = cursor.nextNode()
-    ) {
-        cursor.enterField(CitmCatalog.SharedTreeFieldKey.seatCategories);
-        const numSeatCategories = cursor.getFieldLength();
-        cursor.exitField();
+    let result = cursor.down(EmptyKey, 0);
+    while (result === TreeNavigationResult.Ok) {
+        cursor.down(CitmCatalog.SharedTreeFieldKey.seatCategories, 0);
+        const numSeatCategories = cursor.length(EmptyKey);
+        cursor.up();
 
-        cursor.enterField(CitmCatalog.SharedTreeFieldKey.start);
-        cursor.enterNode(0);
+        cursor.down(CitmCatalog.SharedTreeFieldKey.start, 0);
         const startTimeEpoch = cursor.value as number;
-        cursor.exitNode();
-        cursor.exitField();
+        cursor.up();
 
         calculate(numSeatCategories, startTimeEpoch);
+
+        result = cursor.seek(1);
     }
 
     // Reset the cursor state
-    cursor.exitField();
-    cursor.exitNode();
-    cursor.exitField();
+    cursor.up();
+    cursor.up();
+    cursor.up();
 }
 
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
