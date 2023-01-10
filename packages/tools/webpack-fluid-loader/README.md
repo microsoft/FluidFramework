@@ -6,7 +6,7 @@ This loader is intended for development purposes only and should not be used in 
 
 The following environment variables can be defined when running `webpack --serve` to change the behavior of webpack-fluid-loader.
 
-See the [Azure Fluid Relay](#azure-fluid-relay) and [Sharepoint](#sharepoint) sections below for information on connecting to these services.
+See the [Azure Fluid Relay](#azure-fluid-relay) and [SharePoint](#sharepoint) sections below for information on connecting to these services.
 
 | variable | description |
 | ---------| ----------- |
@@ -78,8 +78,8 @@ or in an optional `config.json` file in the `baseDir` passed into `webpack-fluid
 ```
 
 ## Azure Fluid Relay
-To use Azure Fluid Relay, [provision a Fluid Relay instance](https://learn.microsoft.com/en-us/azure/azure-fluid-relay/how-tos/provision-fluid-azure-portal) in the Azure Portal.
-To select the deployment region, consult [the availability table](https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/?products=fluid-relay) for the Azure Fluid Relay product<sup id="a1">[1](#f1)</sup>.
+To use Azure Fluid Relay, [provision a Fluid Relay instance](https://learn.microsoft.com/azure/azure-fluid-relay/how-tos/provision-fluid-azure-portal) in the Azure Portal.
+To select the deployment region, consult [the availability table](https://azure.microsoft.com/explore/global-infrastructure/products-by-region/?products=fluid-relay) for the Azure Fluid Relay product<sup id="a1">[1](#f1)</sup>.
 
 After provisioning, the connection arguments are available in the Azure Portal under the 'Access Key' tab<sup id="a2">[2](#f2)</sup>.
 
