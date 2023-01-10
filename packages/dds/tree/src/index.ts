@@ -34,6 +34,8 @@ export {
     GlobalFieldKeySymbol,
     symbolFromKey,
     keyFromSymbol,
+    symbolIsFieldKey,
+    isGlobalFieldKey,
     ITreeCursor,
     CursorLocationType,
     ITreeCursorSynchronous,
@@ -73,6 +75,8 @@ export {
     TaggedChange,
     RepairDataStore,
     ReadonlyRepairDataStore,
+    SchemaEvents,
+    ForestEvents,
 } from "./core";
 
 export {
@@ -94,6 +98,8 @@ export {
     JsonCompatible,
     JsonCompatibleObject,
 } from "./util";
+
+export { Events, IsEvent, ISubscribable, createEmitter, IEmitter } from "./events";
 
 export {
     cursorToJsonObject,
@@ -154,6 +160,12 @@ export {
     proxyTargetSymbol,
     getField,
     createField,
+    replaceField,
+    ContextuallyTypedNodeDataObject,
+    ContextuallyTypedNodeData,
+    MarkedArrayLike,
+    isWritableArrayLike,
+    isContextuallyTypedNodeDataObject,
     defaultSchemaPolicy,
     jsonableTreeFromCursor,
     PrimitiveValue,

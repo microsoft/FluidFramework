@@ -93,18 +93,18 @@ At a high level, we need to have a system for accomplishing the following:
 1. Producing an inverse change for a given change that needs to be undone.
 2. Reconciling this inverse change with any edits that have occurred since the undone change.
 3. Updating the reconciled inverse in the face of concurrent changes.
-4. Applying the updating and reconciled inverse to the current document state.
+4. Applying the updated and reconciled inverse to the current document state.
 
 In designing such a system, we need to consider the relevant computational costs and drawbacks:
 
 -   Whether the semantics of undo are guaranteed
 -   Whether the issuer of the undo can be starved out by edits from peers
--   The size of "normal" (i.e., non-inverse) changes sent over the wire.
--   The size of inverse changes sent over the wire.
--   The size of the local data a client needs in order to issue an inverse change.
--   The size of the local data a peer needs in order to apply an inverse change.
--   The ability for a client to issue an inverse change without needing to make network requests.
--   The ability for peers to apply an inverse change without needing to make network requests.
+-   The size of "normal" (i.e., non-undo) changes sent over the wire.
+-   The size of undo changes sent over the wire.
+-   The size of the local data a client needs in order to issue an undo change.
+-   The size of the local data a peer needs in order to apply an undo change.
+-   The ability for a client to issue an undo change without needing to make network requests.
+-   The ability for peers to apply an undo change without needing to make network requests.
 
 We need to consider the above for different application profiles.
 Indeed some applications may not want to support undo at all,

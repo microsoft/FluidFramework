@@ -12,7 +12,7 @@ import { TextSegment } from "../textSegment";
 import { IMergeTreeDeltaOpArgs, MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback";
 import { matchProperties, PropertySet } from "../properties";
 import { depthFirstNodeWalk } from "../mergeTreeNodeWalk";
-import { toRemovalInfo } from "../mergeTreeNodes";
+import { Marker, toRemovalInfo } from "../mergeTreeNodes";
 import { TestClient } from "./testClient";
 
 function getOpString(msg: ISequencedDocumentMessage | undefined) {
@@ -28,6 +28,17 @@ function getOpString(msg: ISequencedDocumentMessage | undefined) {
     const ref = (msg.referenceSequenceNumber - msg.minimumSequenceNumber).toString();
     const client = msg.clientId;
     return `${seq}:${ref}:${client}${opType}${opPos}`;
+}
+
+function arePropsEmpty(props: PropertySet | undefined) {
+    return props === undefined || Object.entries(props).length === 0;
+}
+
+/**
+ * Compare properties, allowing empty to match undefined
+ */
+function matchPropertiesHandleEmpty(a: PropertySet | undefined, b: PropertySet | undefined) {
+    return matchProperties(a, b) || (arePropsEmpty(a) && arePropsEmpty(b));
 }
 
 type ClientMap = Partial<Record<"A" | "B" | "C" | "D" | "E", TestClient>>;
@@ -183,7 +194,6 @@ export class TestClientLogger {
                     assert.equal(
                         c.getText(),
                         baseText,
-                        // eslint-disable-next-line max-len
                         `${errorPrefix}\n${this.toString()}\nClient ${c.longClientId} does not match client ${opts?.baseText ? "baseText" : this.clients[0].longClientId}`);
                 }
 
@@ -197,11 +207,10 @@ export class TestClientLogger {
                         if (toRemovalInfo(seg) === undefined) {
                             const segProps = seg.properties;
                             for (let i = 0; i < seg.cachedLength; i++) {
-                                if (!matchProperties(segProps, properties[pos + i])) {
+                                if (!matchPropertiesHandleEmpty(segProps, properties[pos + i])) {
                                     assert.deepStrictEqual(
                                         segProps,
                                         properties[pos + i],
-                                        // eslint-disable-next-line max-len
                                         `${errorPrefix}\n${this.toString()}\nClient ${c.longClientId} does not match client ${this.clients[0].longClientId} properties at pos ${pos + i}`);
                                 }
                             }
@@ -264,31 +273,37 @@ export class TestClientLogger {
             const node = nodes.shift();
             if (node) {
                 if (node.isLeaf()) {
-                    if (TextSegment.is(node)) {
-                        if (node.parent !== parent) {
-                            if (acked.length > 0) {
-                                acked += " ";
-                                local += " ";
-                            }
-                            parent = node.parent;
+                    if (node.parent !== parent) {
+                        if (acked.length > 0) {
+                            acked += " ";
+                            local += " ";
                         }
+                        parent = node.parent;
+                    }
+                    const text = 
+                        TextSegment.is(node) 
+                            ? node.text 
+                            : Marker.is(node) 
+                                ? "¶"
+                                : undefined;
+                    if(text !== undefined){
                         if (node.removedSeq) {
                             if (node.removedSeq === UnassignedSequenceNumber) {
-                                acked += "_".repeat(node.text.length);
+                                acked += "_".repeat(text.length);
                                 local += node.seq === UnassignedSequenceNumber
-                                    ? "*".repeat(node.text.length)
-                                    : "-".repeat(node.text.length);
+                                    ? "*".repeat(text.length)
+                                    : "-".repeat(text.length);
                             } else {
-                                acked += "-".repeat(node.text.length);
-                                local += " ".repeat(node.text.length);
+                                acked += "-".repeat(text.length);
+                                local += " ".repeat(text.length);
                             }
                         } else {
                             if (node.seq === UnassignedSequenceNumber) {
-                                acked += "_".repeat(node.text.length);
-                                local += node.text;
+                                acked += "_".repeat(text.length);
+                                local += text;
                             } else {
-                                acked += node.text;
-                                local += " ".repeat(node.text.length);
+                                acked += text;
+                                local += " ".repeat(text.length);
                             }
                         }
                     }

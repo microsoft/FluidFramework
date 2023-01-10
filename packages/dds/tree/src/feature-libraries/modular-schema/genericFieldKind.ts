@@ -167,7 +167,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
     },
     intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): Delta.MarkList => {
         let nodeIndex = 0;
-        const delta: Delta.MarkList = [];
+        const delta: Delta.Mark[] = [];
         for (const { index, nodeChange } of change) {
             if (nodeIndex < index) {
                 const offset = index - nodeIndex;

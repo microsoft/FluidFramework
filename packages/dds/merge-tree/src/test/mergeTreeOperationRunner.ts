@@ -223,8 +223,9 @@ export function applyMessages(
     let seq = startingSeq;
     try {
         // log and apply all the ops created in the round
-        while (messageData.length > 0) {
-            const [message] = messageData.shift()!;
+        // eslint-disable-next-line @typescript-eslint/prefer-for-of
+        for (let i = 0; i < messageData.length; i++) {
+            const [message] = messageData[i];
             message.sequenceNumber = ++seq;
             clients.forEach((c) => c.applyMsg(message));
         }

@@ -25,6 +25,7 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils";
 
 /**
@@ -285,7 +286,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
         itExpects("Receive ops fails for tombstoned datastores in summarizing container loaded before sweep timeout",
         [
-            { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded" },
             {
                 eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
                 error: "Context is tombstoned! Call site [process]",
@@ -418,6 +418,10 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
                 eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
                 viaHandle: false,
             },
+            {
+                eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
+                viaHandle: false,
+            },
         ],
         async () => {
             const {
@@ -439,7 +443,11 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
                     const correctErrorMessage = error.message.startsWith(`Datastore removed by gc`) === true;
                     return correctErrorType && correctErrorMessage;
                 },
-                `Should not be able to retrieve a tombstoned datastore.`,
+                `Should not be able to retrieve a tombstoned datastore in non-summarizer clients`,
+            );
+            await assert.doesNotReject(
+                async () => requestFluidObject<ITestDataObject>(summarizingContainer, unreferencedId),
+                `Should be able to retrieve a tombstoned datastore in summarizer clients`,
             );
         });
 
@@ -541,10 +549,10 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
         });
 
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
-        itExpects("Can untombstone datastores by storing a handle",
+        itExpects("Can un-tombstone datastores by storing a handle",
         [
-            { eventName: "fluid:telemetry:Summarizer:Running:InactiveObject_Loaded" },
             { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested" },
+            { eventName: "fluid:telemetry:Summarizer:Running:gcUnknownOutboundReferences" },
             { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed" },
             {
                 eventName: "fluid:telemetry:Container:ContainerClose",
@@ -580,15 +588,17 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
                 `Should not be able to retrieve a tombstoned datastore.`,
             );
 
-            // Normally on non-summarizer clients we would see a SweepReady_Revived error, but because this is the
-            // summarizer client, we do not as we do not decode the handle on the summarizer. We only encode it.
+            // Normally, there should be a SweepReady_Revived error when referencing a SweepReady data store. However,
+            // since the summarizer client is the one that is created and adding the handle, the handle is not decoded
+            // and it will not result in GC detecting the reference. Also, a "gcUnknownOutboundReferences" error will
+            // be logged for the same reason.
             const mainDataObject = await requestFluidObject<ITestDataObject>(summarizingContainer, "default");
             mainDataObject._root.set("store", dataObject.handle);
 
-            // This container closes as we submit ops and signals in the untombstoned container
+            // This container closes as we submit ops and signals in the un-tombstoned container
             setupContainerCloseErrorValidation(tombstoneContainer, "processSignal");
 
-            // The datastore should be untombstoned now
+            // The datastore should be un-tombstoned now
             const { summaryVersion: revivalVersion } = await summarize(summarizer);
             const revivalContainer = await loadContainer(revivalVersion);
             const revivedObject = await requestFluidObject<ITestDataObject>(revivalContainer, unreferencedId);
@@ -603,17 +613,30 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             sendDataObject._runtime.submitSignal("can receive", "a signal");
             await provider.ensureSynchronized();
             assert(tombstoneContainer.closed === true, `Container receiving messages to a tombstoned datastore should close.`);
-            assert(revivalContainer.closed !== true, `Revived datastore should not close a container when requested, sending/receiving signals/ops.`);
-            assert(sendingContainer.closed !== true, `Revived datastore should not close a container when sending signals and ops.`);
+            assert(revivalContainer.closed !== true,
+                `Revived datastore should not close a container when requested, sending/receiving signals/ops.`);
+            assert(sendingContainer.closed !== true,
+                `Revived datastore should not close a container when sending signals and ops.`);
         });
 
         itExpects("does not throw tombstone errors when ThrowOnTombstoneUsage setting is not enabled",
         [
             { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested" },
             { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded" },
-            { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed", callSite: "submitMessage" },
-            { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed", callSite: "process", clientType: "noninteractive/summarizer" },
-            { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed", callSite: "process", clientType: "interactive" },
+            {
+                eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+                callSite: "submitMessage",
+            },
+            {
+                eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+                callSite: "process",
+                clientType: "noninteractive/summarizer",
+            },
+            {
+                eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+                callSite: "process",
+                clientType: "interactive",
+            },
         ],
         async () => {
             settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
@@ -758,8 +781,10 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
         itExpects("removes un-tombstoned data store and attachment blob from tombstone blob in summary",
         [
+            { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Datastore_Revived" },
+            { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Revived" },
             { eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived", type: "DataStore" },
-            { eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived", type: "Blob" }
+            { eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived", type: "Blob" },
         ],
         async () => {
             const mainContainer = await provider.makeTestContainer(testContainerConfig);
@@ -767,12 +792,15 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             const mainDataStoreUrl = `/${mainDataStore._context.id}`;
             await waitForContainerConnection(mainContainer);
 
+            const mockLogger = new MockLogger();
+
             const summarizer = await createSummarizer(
                 provider,
                 mainContainer,
                 undefined /* summaryVersion */,
                 gcOptions,
                 mockConfigProvider(settings),
+                mockLogger,
             );
 
             // Create couple of data stores.
@@ -815,10 +843,19 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             validateTombstoneState(
                 summary2.summaryTree, [newDataStoreUrl, newDataStore2Url, blobHandle.absolutePath], [mainDataStoreUrl]);
 
+            mockLogger.assertMatchNone([
+                { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Datastore_Revived" },
+                { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Revived" },
+            ]);
+
             // Mark one of the data stores and attachment blob as referenced so that they are not tombstones anymore.
             mainDataStore._root.set("newDataStore", newDataStore.handle);
             mainDataStore._root.set("blob", blobHandle);
             await provider.ensureSynchronized();
+            mockLogger.assertMatch([
+                { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Datastore_Revived" },
+                { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Revived" },
+            ]);
 
             // Summarize. The un-tombstoned data store and attachment blob should not be part of the tombstone blob.
             const summary3 = await summarizeNow(summarizer);
