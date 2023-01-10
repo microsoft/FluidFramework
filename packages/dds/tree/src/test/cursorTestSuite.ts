@@ -5,9 +5,9 @@
 
 import { strict as assert } from "assert";
 import { jsonableTreeFromCursor, singleTextCursor } from "../feature-libraries";
-import { GlobalFieldKey, LocalFieldKey } from "../schema-stored";
-
 import {
+    GlobalFieldKey,
+    LocalFieldKey,
     EmptyKey,
     FieldKey,
     JsonableTree,
@@ -21,7 +21,7 @@ import {
     compareUpPaths,
     compareFieldUpPaths,
     clonePath,
-} from "../tree";
+} from "../core";
 import { brand } from "../util";
 
 export const testTrees: readonly (readonly [string, JsonableTree])[] = [
@@ -149,7 +149,7 @@ export function testGeneralPurposeTreeCursor<TData, TCursor extends ITreeCursor>
         dataFromCursor,
         testData: testTrees.map(([name, data]) => ({
             name,
-            data: dataFromJsonableTree(data),
+            dataFactory: () => dataFromJsonableTree(data),
             expected: data,
         })),
         extraRoot,
@@ -174,7 +174,7 @@ export interface SpecialCaseBuilder<TData> {
 
 export interface TestTree<TData> {
     readonly name: string;
-    readonly data: TData;
+    readonly dataFactory: () => TData;
     readonly reference?: JsonableTree;
     readonly path?: UpPath;
 }
@@ -290,8 +290,12 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 
     return describe(`${cursorName} cursor implementation`, () => {
         describe("test trees", () => {
-            for (const { name, data, reference, path } of testData) {
+            for (const { name, dataFactory, reference, path } of testData) {
                 describe(name, () => {
+                    let data: TData;
+                    before(() => {
+                        data = dataFactory();
+                    });
                     it("jsonableTreeFromCursor", () => {
                         const cursor = cursorFactory(data);
                         const jsonableClone = jsonableTreeFromCursor(cursor);
@@ -463,9 +467,14 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
                         }
                     });
 
-                    const dataWithKey = isLocalKey(key) ? withLocalKeys([key]) : withKeys?.([key]);
-                    if (dataWithKey !== undefined) {
+                    const dataFactory = isLocalKey(key)
+                        ? () => withLocalKeys([key])
+                        : withKeys !== undefined
+                        ? () => withKeys([key])
+                        : undefined;
+                    if (dataFactory !== undefined) {
                         it(`handles values for key: ${key.toString()}`, () => {
+                            const dataWithKey = dataFactory();
                             const cursor = cursorFactory(dataWithKey);
                             cursor.enterField(key);
                             assert.equal(cursor.getFieldLength(), 1);

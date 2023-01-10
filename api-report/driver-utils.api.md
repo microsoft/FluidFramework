@@ -272,6 +272,35 @@ export class LocationRedirectionError extends LoggingError implements ILocationR
 // @public (undocumented)
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any): void;
 
+// @public
+export class MapWithExpiration<TKey = any, TValue = any> extends Map<TKey, TValue> {
+    // (undocumented)
+    [Symbol.iterator](): IterableIterator<[TKey, TValue]>;
+    constructor(expiryMs: number);
+    // (undocumented)
+    clear(): void;
+    // (undocumented)
+    delete(key: TKey): boolean;
+    // (undocumented)
+    entries(): IterableIterator<[TKey, TValue]>;
+    // (undocumented)
+    forEach(callbackfn: (value: TValue, key: TKey, map: Map<TKey, TValue>) => void, thisArg?: any): void;
+    // (undocumented)
+    get(key: TKey): TValue | undefined;
+    // (undocumented)
+    has(key: TKey): boolean;
+    // (undocumented)
+    keys(): IterableIterator<TKey>;
+    // (undocumented)
+    set(key: TKey, value: TValue): this;
+    // (undocumented)
+    get size(): number;
+    // (undocumented)
+    valueOf(): Object;
+    // (undocumented)
+    values(): IterableIterator<TValue>;
+}
+
 // @public (undocumented)
 export enum MessageType2 {
     // (undocumented)

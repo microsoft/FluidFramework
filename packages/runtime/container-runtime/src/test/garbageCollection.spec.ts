@@ -10,11 +10,13 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { concatGarbageCollectionStates } from "@fluidframework/garbage-collector";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
-    gcBlobKey,
+    gcBlobPrefix,
+    gcTreeKey,
     IGarbageCollectionData,
     IGarbageCollectionNodeData,
     IGarbageCollectionState,
     IGarbageCollectionDetailsBase,
+    IGarbageCollectionSummaryDetailsLegacy,
     ISummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import {
@@ -34,8 +36,6 @@ import {
 } from "../garbageCollection";
 import {
     defaultSessionExpiryDurationMs,
-    gcBlobPrefix,
-    gcTreeKey,
     runSessionExpiryKey,
     oneDayMs,
     runGCKey,
@@ -43,6 +43,9 @@ import {
     defaultInactiveTimeoutMs,
     gcTestModeKey,
     disableSweepLogKey,
+    currentGCVersion,
+    stableGCVersion,
+    gcVersionUpgradeToV2Key,
 } from "../garbageCollectionConstants";
 
 import { dataStoreAttributesBlobName, GCVersion, IContainerRuntimeMetadata, IGCMetadata } from "../summaryFormat";
@@ -107,7 +110,8 @@ describe("Garbage Collection Tests", () => {
             updateStateBeforeGC: async () => {},
             getGCData: async (fullGC?: boolean) => defaultGCData,
             updateUsedRoutes: (usedRoutes: string[]) => { return { totalNodeCount: 0, unusedNodeCount: 0 }; },
-            updateUnusedRoutes: (unusedRoutes: string[], tombstone: boolean) => {},
+            updateUnusedRoutes: (unusedRoutes: string[]) => {},
+            updateTombstonedRoutes: (tombstoneRoutes: string[]) => {},
             getNodeType,
             getCurrentReferenceTimestampMs: () => Date.now(),
             closeFn,
@@ -216,7 +220,21 @@ describe("Garbage Collection Tests", () => {
                 };
                 gc = createGcWithPrivateMembers(inputMetadata);
                 const outputMetadata = gc.getMetadata();
-                assert.deepEqual(outputMetadata, inputMetadata, "getMetadata returned different metadata than loaded from");
+                const expectedOutputMetadata: IGCMetadata = { ...inputMetadata, gcFeature: stableGCVersion };
+                assert.deepEqual(outputMetadata, expectedOutputMetadata, "getMetadata returned different metadata than loaded from");
+            });
+            it("Metadata Roundtrip with GC version upgrade to v2 enabled", () => {
+                injectedSettings[gcVersionUpgradeToV2Key] = true;
+                const inputMetadata: IGCMetadata = {
+                    sweepEnabled: true,
+                    gcFeature: 1,
+                    sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
+                    sweepTimeoutMs: 123,
+                };
+                gc = createGcWithPrivateMembers(inputMetadata);
+                const outputMetadata = gc.getMetadata();
+                const expectedOutputMetadata: IGCMetadata = { ...inputMetadata, gcFeature: currentGCVersion };
+                assert.deepEqual(outputMetadata, expectedOutputMetadata, "getMetadata returned different metadata than loaded from");
             });
         });
 
@@ -228,7 +246,7 @@ describe("Garbage Collection Tests", () => {
                 assert(!gc.sweepEnabled, "sweepEnabled incorrect");
                 assert(gc.sessionExpiryTimeoutMs !== undefined, "sessionExpiryTimeoutMs incorrect");
                 assert(gc.sweepTimeoutMs !== undefined, "sweepTimeoutMs incorrect");
-                assert.equal(gc.latestSummaryGCVersion, 1, "latestSummaryGCVersion incorrect");
+                assert.equal(gc.latestSummaryGCVersion, stableGCVersion, "latestSummaryGCVersion incorrect");
             });
             it("gcAllowed true", () => {
                 gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: true });
@@ -296,6 +314,19 @@ describe("Garbage Collection Tests", () => {
                 const expectedMetadata: IGCMetadata = {
                     sweepEnabled: true,
                     gcFeature: 1,
+                    sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
+                    sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
+                };
+                gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: true });
+                const outputMetadata = gc.getMetadata();
+                assert.deepEqual(outputMetadata, expectedMetadata, "getMetadata returned different metadata than expected");
+            });
+            it("Metadata Roundtrip with GC version upgrade to v2 enabled", () => {
+                injectedSettings[runSessionExpiryKey] = true;
+                injectedSettings[gcVersionUpgradeToV2Key] = true;
+                const expectedMetadata: IGCMetadata = {
+                    sweepEnabled: true,
+                    gcFeature: currentGCVersion,
                     sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
                     sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
                 };
@@ -771,14 +802,14 @@ describe("Garbage Collection Tests", () => {
             it("generates events for nodes that time out on load - old snapshot format", async () => {
                 // Create GC details for node 3's GC blob whose unreferenced time was > timeout ms ago.
                 // This means this node should time out as soon as its data is loaded.
-                const node3GCDetails: IGarbageCollectionDetailsBase = {
+                const node3GCDetails: IGarbageCollectionSummaryDetailsLegacy = {
                     gcData: { gcNodes: { "/": [] } },
                     unrefTimestamp: Date.now() - (timeout + 100),
                 };
                 const node3Snapshot = getDummySnapshotTree();
                 const gcBlobId = "node3GCDetails";
                 const attributesBlobId = "attributesBlob";
-                node3Snapshot.blobs[gcBlobKey] = gcBlobId;
+                node3Snapshot.blobs[gcTreeKey] = gcBlobId;
                 node3Snapshot.blobs[dataStoreAttributesBlobName] = attributesBlobId;
 
                 // Create a base snapshot that contains snapshot tree of node 3.
@@ -1620,7 +1651,7 @@ describe("Garbage Collection Tests", () => {
             );
         };
 
-        it("No changes to GC between summaries creates a blob handle when no version specified", async () => {
+        it("creates a blob handle when no version specified", async () => {
             garbageCollector = createGarbageCollector();
 
             await garbageCollector.collectGarbage({});
@@ -1628,8 +1659,10 @@ describe("Garbage Collection Tests", () => {
 
             checkGCSummaryType(tree1, SummaryType.Tree, "first");
 
-            await garbageCollector.latestSummaryStateRefreshed(
+            await garbageCollector.refreshLatestSummary(
                 { wasSummaryTracked: true, latestSummaryUpdated: true },
+                undefined,
+                0,
                 parseNothing,
             );
 
