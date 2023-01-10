@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { globals } from "../../jest.config";
+import { globals } from "../jest.config";
 
 describe("Bubblebench", () => {
     describe("SharedTree", () => {
@@ -12,11 +12,12 @@ describe("Bubblebench", () => {
             // so this time isn't attributed to the first test
             await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
         }, 45000);
+
         beforeEach(async () => {
             await page.goto(globals.PATH, { waitUntil: "load" });
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            await page.waitFor(() => window.fluidStarted);
+            await page.waitFor(() => window["fluidStarted"]);
         });
+
         it("The page loads and displays current FPS", async () => {
             // Validate there is a button that can be clicked
             await expect(page).toMatch("FPS", { timeout: 0 });
