@@ -169,10 +169,6 @@ export class FluidPackageCheck {
         concurrent: boolean,
         fix: boolean,
     ) {
-        /**
-        const expectedScript = expected ? concurrent ? `concurrently ${expected.map((value) => `npm:${value}`).join(" ")}` : expected.map((value) => `npm run ${value}`).join(" && ") : undefined;
-         */
-
         const expectedScript = expected
             ? concurrent
                 ? `concurrently ${expected.map((value) => `npm:${value}`).join(" ")}`
