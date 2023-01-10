@@ -484,8 +484,9 @@ export function configureWebSocketServices(
                     }
                 });
 
-                eventEmitter.on("task-list-hook", () => {
-                    // Only for debugging purposes
+                // Only for debugging purposes
+                eventEmitter.on('task-list-hook', () => {
+                    console.log(`ALFRED: Trigger task-list-hook event`);
                     const signalMessageRuntimeMessage : ISignalMessage = {
                         clientId: null, // system signal
                         content: JSON.stringify({
