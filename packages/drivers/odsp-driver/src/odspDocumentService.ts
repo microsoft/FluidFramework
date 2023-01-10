@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { assert } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     loggerToMonitoringContext,
@@ -50,6 +51,8 @@ export class OdspDocumentService implements IDocumentService {
     private socketModuleP: Promise<OdspDelayLoadedDeltaStream> | undefined;
 
     private odspDelayLoadedDeltaStream: OdspDelayLoadedDeltaStream | undefined;
+
+    private odspSocketModuleLoaded: boolean = false;
 
     /**
      * @param resolvedUrl - resolved url identifying document that will be managed by returned service instance.
@@ -230,7 +233,17 @@ export class OdspDocumentService implements IDocumentService {
         if (this.socketModuleP === undefined) {
             this.socketModuleP = this.getDelayLoadedDeltaStream();
         }
-        return (await this.socketModuleP).connectToDeltaStream(client);
+        return this.socketModuleP
+            .then(async (m) => {
+                this.odspSocketModuleLoaded = true;
+                return m.connectToDeltaStream(client);
+            })
+            .catch((error) => {
+                // Setting undefined in case someone tries to recover from module failure by calling again.
+                this.socketModuleP = undefined;
+                this.odspSocketModuleLoaded = false;
+                throw error;
+            });
     }
 
     /**
@@ -240,9 +253,7 @@ export class OdspDocumentService implements IDocumentService {
      * @returns - delta stream object.
      */
     private async getDelayLoadedDeltaStream() {
-        if (this.odspDelayLoadedDeltaStream) {
-            return this.odspDelayLoadedDeltaStream;
-        }
+        assert(this.odspSocketModuleLoaded === false, "Should be loaded only once");
         const module = await import(/* webpackChunkName: "socketModule" */ "./odspDelayLoadedDeltaStream")
             .then((m) => {
                 this.mc.logger.sendTelemetryEvent({ eventName: "SocketModuleLoaded" });
