@@ -29,7 +29,7 @@ export function getDocNodeTransformationOptions(
 }
 
 /**
- * TODO
+ * Resolves a symbolic link and creates a URL to the target.
  *
  * @param contextApiItem - See {@link DocNodeTransformOptions.contextApiItem}.
  * @param codeDestination - The link reference target.
