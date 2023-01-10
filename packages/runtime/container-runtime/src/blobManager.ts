@@ -461,8 +461,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
         /**
          * If we haven't already submitted a BlobAttach op for this entry, send it before returning the blob handle.
-         * This will make sure that the BlobAttach op is sequenced prior to any ops referencing the handle, otherwise
-         * otherwise, an invalid handle could be added to the document.
+         * This will make sure that the BlobAttach op is sequenced prior to any ops referencing the handle. Otherwise,
+         * an invalid handle could be added to the document.
          * storageId may be undefined but since we are not connected we will have a chance to add it when reSubmit()
          * is called on reconnection.
          */
