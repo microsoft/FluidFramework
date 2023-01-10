@@ -72,7 +72,7 @@ export class AppState implements IAppState {
            throw new Error('Failed to retreieve local client node');
         }
 
-        return new Client(this.tree, localClientNode[0].anchor, this.editBuilderCallbacks, this.shortTermSpawnedAnchors);
+        return new Client(this.tree, localClientNode[0].anchor, this.editBuilderCallbacks, this.shortTermSpawnedAnchors, false);
     }
 
     public applyEdits() {
@@ -134,7 +134,7 @@ export class AppState implements IAppState {
         const treeNodes = this.clientsSequenceHelper.getAll();
         treeNodes.forEach(treeNode => this.shortTermSpawnedAnchors.add(treeNode.anchor));
         return treeNodes
-            .map((treeNode) => new Client(this.tree, treeNode.anchor, this.editBuilderCallbacks, this.shortTermSpawnedAnchors));
+            .map((treeNode) => new Client(this.tree, treeNode.anchor, this.editBuilderCallbacks, this.shortTermSpawnedAnchors, true));
     }
 
     public get width() {

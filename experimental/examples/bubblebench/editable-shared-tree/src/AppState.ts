@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import { IAppState, makeBubble, randomColor } from "@fluid-example/bubblebench-common";
-// import { IAppState, randomColor } from "@fluid-example/bubblebench-common";
 import { brand, EditableField, FieldKey, JsonableTree, singleTextCursor } from "@fluid-internal/tree";
 import { Client } from "./Client";
 import {
@@ -52,16 +51,16 @@ export class AppState implements IAppState {
 
         // create and add initial bubbles to initial client json tree
         for (let i = 0; i < numBubbles; i++) {
-            // const bubble = makeBubble(this._width, this._height);
+            const bubble = makeBubble(this._width, this._height);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             clientInitialJsonTree.fields!.bubbles.push({
                 type: iBubbleSchema.name,
                 fields: {
-                    x: [{ type: numberSchema.name, value: 10 }],
-                    y: [{ type: numberSchema.name, value: 10 }],
-                    r: [{ type: numberSchema.name, value: 10 }],
-                    vx: [{ type: numberSchema.name, value: 10 }],
-                    vy: [{ type: numberSchema.name, value: 10 }],
+                    x: [{ type: numberSchema.name, value: bubble.x }],
+                    y: [{ type: numberSchema.name, value: bubble.y }],
+                    r: [{ type: numberSchema.name, value: bubble.r }],
+                    vx: [{ type: numberSchema.name, value: bubble.vx }],
+                    vy: [{ type: numberSchema.name, value: bubble.vy }],
                 },
             });
         }
