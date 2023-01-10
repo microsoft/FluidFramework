@@ -6,14 +6,22 @@ import { strict as assert } from "assert";
 import Table from "easy-table";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { TransactionResult } from "../../checkout";
 import { emptyField, FieldKinds, namedTreeSchema, singleTextCursor } from "../../feature-libraries";
-import { moveToDetachedField } from "../../forest";
-import { fieldSchema, SchemaData, ValueSchema } from "../../schema-stored";
 import { ISharedTree } from "../../shared-tree";
-import { FieldKey, JsonableTree, rootFieldKey, rootFieldKeySymbol, Value } from "../../tree";
 import { brand } from "../../util";
 import { ITestTreeProvider, TestTreeProvider } from "../utils";
+import {
+    FieldKey,
+    fieldSchema,
+    JsonableTree,
+    moveToDetachedField,
+    rootFieldKey,
+    rootFieldKeySymbol,
+    SchemaData,
+    TransactionResult,
+    Value,
+    ValueSchema,
+} from "../../core";
 
 const stringSchema = namedTreeSchema({
     name: brand("String"),
@@ -719,7 +727,6 @@ describe("SharedTree Op Size Benchmarks", () => {
     });
 
     describe("4. Insert, Delete & Edit Nodes", () => {
-
         describe("4a. Insert, Delete & Edit Nodes in Individual Transactions", () => {
             const benchmarkInsertDeleteEditNodesWithInvidiualTxs = async (
                 percentile: number,
@@ -784,7 +791,7 @@ describe("SharedTree Op Size Benchmarks", () => {
             };
 
             describe("4a.a. [Combination] [Individual Txs] With individual transactions and an equal distribution of operation type", () => {
-                const oneThirdNodeCount = Math.floor(BENCHMARK_NODE_COUNT * (1/3));
+                const oneThirdNodeCount = Math.floor(BENCHMARK_NODE_COUNT * (1 / 3));
 
                 it(`4a.a.a. [Combination] [Individual Txs] insert ${oneThirdNodeCount} small nodes, delete ${oneThirdNodeCount} small nodes, edit ${oneThirdNodeCount} nodes with small payloads`, async () => {
                     await benchmarkInsertDeleteEditNodesWithInvidiualTxs(
@@ -921,7 +928,6 @@ describe("SharedTree Op Size Benchmarks", () => {
                     );
                 });
             });
-
         });
 
         describe("4b. Insert, Delete & Edit Nodes in Single Transactions", () => {
@@ -987,7 +993,7 @@ describe("SharedTree Op Size Benchmarks", () => {
             };
 
             describe("4b.a. [Combination] [Single Tx] With single transactions and an equal distribution of operation type", () => {
-                const oneThirdNodeCount = Math.floor(BENCHMARK_NODE_COUNT * (1/3));
+                const oneThirdNodeCount = Math.floor(BENCHMARK_NODE_COUNT * (1 / 3));
 
                 it(`4b.a.a. [Combination] [Single Tx] insert ${oneThirdNodeCount} small nodes, delete ${oneThirdNodeCount} small nodes, edit ${oneThirdNodeCount} nodes with small payloads`, async () => {
                     await benchmarkInsertDeleteEditNodesWithSingleTxs(
@@ -1125,6 +1131,5 @@ describe("SharedTree Op Size Benchmarks", () => {
                 });
             });
         });
-
     });
 });
