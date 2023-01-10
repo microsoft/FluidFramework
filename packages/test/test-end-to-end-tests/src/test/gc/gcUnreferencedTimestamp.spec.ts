@@ -8,8 +8,8 @@ import { stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { gcTreeKey } from "@fluidframework/container-runtime";
 import { SharedMap } from "@fluidframework/map";
+import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ITestObjectProvider,

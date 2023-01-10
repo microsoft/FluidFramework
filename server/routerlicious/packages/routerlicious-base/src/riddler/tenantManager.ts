@@ -92,7 +92,7 @@ export class TenantManager {
                 }
             }
         }
-
+        
         // If Key 1 validation fails, try with Key 2
         try {
             await this.validateTokenWithKey(tenantKeys.key2, KeyName.key2, token);
@@ -131,6 +131,7 @@ export class TenantManager {
                     return;
                 }
                 // When `exp` claim exists in token claims, jsonwebtoken verifies token expiration.
+
                 if(error instanceof jwt.TokenExpiredError) {
                     reject(new NetworkError(401, `Token expired validated with ${keyName}.`));
                 } else {

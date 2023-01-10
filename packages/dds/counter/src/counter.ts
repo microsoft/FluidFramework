@@ -90,7 +90,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
         return runtime.createChannel(id, CounterFactory.Type) as SharedCounter;
     }
 
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
+    public constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes, "fluid_counter_");
     }
 

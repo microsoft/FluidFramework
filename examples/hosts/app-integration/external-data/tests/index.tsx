@@ -8,15 +8,15 @@ import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/exam
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { TaskListView } from "../src/view/taskListView";
 import { TaskListContainerRuntimeFactory } from "../src/model";
-import type { IAppModel } from "../src/modelInterfaces";
+import type { IAppModel } from "../src/model-interface";
+import { TaskListView } from "../src/view";
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-export async function createContainerAndRenderInElement(element: HTMLDivElement) {
+export async function createContainerAndRenderInElement(element: HTMLDivElement): Promise<void> {
     const sessionStorageModelLoader = new SessionStorageModelLoader<IAppModel>(
         new StaticCodeLoader(new TaskListContainerRuntimeFactory()),
     );
@@ -36,11 +36,12 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 
         id = await createResponse.attach();
     } else {
-        id = location.hash.substring(1);
+        id = location.hash.slice(1);
         model = await sessionStorageModelLoader.loadExisting(id);
     }
 
     // update the browser URL and the window title with the actual container ID
+    // eslint-disable-next-line require-atomic-updates
     location.hash = id;
     document.title = id;
 
@@ -55,21 +56,21 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 /**
  * For local testing we have two div's that we are rendering into independently.
  */
-async function setup() {
-    const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
+async function setup(): Promise<void> {
+    const leftElement = document.querySelector("#sbs-left") as HTMLDivElement;
     if (leftElement === null) {
         throw new Error("sbs-left does not exist");
     }
     await createContainerAndRenderInElement(leftElement);
-    const rightElement = document.getElementById("sbs-right") as HTMLDivElement;
+    const rightElement = document.querySelector("#sbs-right") as HTMLDivElement;
     if (rightElement === null) {
         throw new Error("sbs-right does not exist");
     }
     await createContainerAndRenderInElement(rightElement);
 }
 
-setup().catch((e) => {
-    console.error(e);
+setup().catch((error) => {
+    console.error(error);
     console.log(
         "%cThere were issues setting up and starting the in memory Fluid Server",
         "font-size:30px",

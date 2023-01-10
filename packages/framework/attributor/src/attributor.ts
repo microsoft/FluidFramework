@@ -8,9 +8,25 @@ import { UsageError } from "@fluidframework/container-utils";
 import { IAudience, IDeltaManager } from "@fluidframework/container-definitions";
 
 /**
+ * Attribution information associated with a change.
  * @alpha
  */
- export interface AttributionKey {
+export interface AttributionInfo {
+	/**
+	 * The user that performed the change.
+	 */
+	user: IUser;
+	/**
+	 * When the change happened.
+	 */
+	timestamp: number;
+}
+
+/**
+ * Can be indexed into the ContainerRuntime in order to retrieve {@link AttributionInfo}.
+ * @alpha
+ */
+export interface AttributionKey {
     /**
      * The type of attribution this key corresponds to.
      * 
@@ -30,21 +46,8 @@ import { IAudience, IDeltaManager } from "@fluidframework/container-definitions"
 }
 
 /**
- * Attribution information associated with a change.
- */
-export interface AttributionInfo {
-	/**
-	 * The user that performed the change.
-	 */
-	user: IUser;
-	/**
-	 * When the change happened.
-	 */
-	timestamp: number;
-}
-
-/**
  * Provides lookup between attribution keys and their associated attribution information.
+ * @alpha
  */
 export interface IAttributor {
 	/**
@@ -71,6 +74,7 @@ export interface IAttributor {
 
 /**
  * {@inheritdoc IAttributor}
+ * @alpha
  */
 export class Attributor implements IAttributor {
 	protected readonly keyToInfo: Map<number, AttributionInfo>;
@@ -113,6 +117,7 @@ export class Attributor implements IAttributor {
 /**
  * Attributor which listens to an op stream and records entries for each op.
  * Sequence numbers are used as attribution keys.
+ * @alpha
  */
 export class OpStreamAttributor extends Attributor implements IAttributor {
 	constructor(

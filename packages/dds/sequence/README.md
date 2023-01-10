@@ -412,6 +412,24 @@ Using the interval collection API has two main benefits:
     If the ops were submitted using standard insert and delete APIs instead, there would be some potential for data loss if the delete
     operation ended up acknowledged by the server but the insert operation did not.
 
+### Attribution
+
+**Important: Attribution is currently in alpha: expect breaking changes in minor releases as we get feedback on the API shape.**
+
+SharedString supports storing information attributing each character position to the user who inserted it and the time at which that insertion happened.
+This functionality is off by default.
+Enable it by setting `{ attribution: { track: true } }` on the `IFluidDataStoreRuntime` options used to initialize the SharedString.
+If the config flag `"Fluid.Attribution.EnableOnNewFile"` is set, its value will override the runtime options one.
+
+Attribution information is stored on the `attribution` field of the SharedString's segments.
+
+```typescript
+const { segment, offset } = sharedString.getContainingSegment(5);
+const key = segment.attribution.getAtOffset(offset);
+// `key` can be used with an IAttributor to recover user/timestamp info about the insertion of the character at offset 5.
+// See the @fluidframework/attributor package for more details.
+```
+
 ### Examples
 
 - Rich Text Editor Implementations

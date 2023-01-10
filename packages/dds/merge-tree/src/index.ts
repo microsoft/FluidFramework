@@ -35,6 +35,10 @@ export {
     LocalReferencePosition,
 } from "./localReference";
 export {
+	IMergeTreeAttributionOptions,
+	IMergeTreeOptions
+} from "./mergeTree";
+export {
 	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
