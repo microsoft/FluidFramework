@@ -49,7 +49,7 @@ export function createNodesFromPlainText(text: string): (PlainTextNode | LineBre
         } else {
             transformedLines.push(new PlainTextNode(line));
         }
-        if(index !== lines.length - 1) {
+        if (index !== lines.length - 1) {
             // Push line break between each entry (not after last entry)
             transformedLines.push(LineBreakNode.Singleton);
         }

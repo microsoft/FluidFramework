@@ -27,7 +27,7 @@ export class FencedCodeBlockNode extends ParentNodeBase<FencedCodeBlockChildren>
     public readonly type = DocumentationNodeType.FencedCode;
 
     /**
-     * @defaultValue No language tag
+     * (optional) code language to associated with the code block.
      */
     public readonly language?: string;
 
@@ -36,6 +36,11 @@ export class FencedCodeBlockNode extends ParentNodeBase<FencedCodeBlockChildren>
         this.language = language;
     }
 
+    /**
+     * Generates an `FencedCodeBlockNode` from the provided string.
+     * @param text - The node contents.
+     * @param language - (optional) code language to associated with the code block.
+     */
     public static createFromPlainText(text: string, language?: string): FencedCodeBlockNode {
         return new FencedCodeBlockNode(createNodesFromPlainText(text), language);
     }

@@ -29,7 +29,7 @@ describe("Document markdown tests", () => {
                             new PlainTextNode("That's real neat-o."),
                         ]),
                     ],
-                    new HeadingNode(new PlainTextNode("Section Heading")),
+                    HeadingNode.createFromPlainText("Section Heading"),
                 ),
             ],
             "./test.md",

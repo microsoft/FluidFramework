@@ -168,7 +168,7 @@ export function getLinkForApiItem(
     const url = getLinkUrlForApiItem(apiItem, config);
     return {
         text,
-        url,
+        target: url,
     };
 }
 

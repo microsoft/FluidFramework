@@ -16,11 +16,10 @@ export interface Link {
     /**
      * Link text to be rendered.
      */
-    text: string;
+    readonly text: string;
 
-    // TODO: rename to "target"? Type system already captures the format requirements.
     /**
      * Link target URL.
      */
-    url: UrlTarget;
+    readonly target: UrlTarget;
 }

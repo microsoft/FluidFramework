@@ -11,7 +11,7 @@ export class LineBreakNode implements DocumentationNode {
      */
     public readonly type = DocumentationNodeType.LineBreak;
 
-    // TODO: do we want this?
+    // TODO: do we want this? What should it be called?
     public static readonly Singleton = new LineBreakNode();
 
     public constructor() {}

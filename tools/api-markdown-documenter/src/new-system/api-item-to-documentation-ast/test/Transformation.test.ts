@@ -30,6 +30,7 @@ import {
     TableCellNode,
     TableNode,
     TableRowNode,
+    createSingleLineSpanFromPlainText,
 } from "../../documentation-domain";
 import { apiItemToSection } from "../TransformApiItem";
 import { createHeadingForApiItem, wrapInSection } from "../helpers";
@@ -198,8 +199,8 @@ describe("ApiItem to Documentation transformation tests", () => {
                     [
                         ParagraphNode.createFromPlainText("The provided parameter"),
                         new ParagraphNode([
-                            SpanNode.createFromPlainText("Return type: ", { bold: true }),
-                            SpanNode.createFromPlainText("TTypeParameter"),
+                            createSingleLineSpanFromPlainText("Return type: ", { bold: true }),
+                            createSingleLineSpanFromPlainText("TTypeParameter"),
                         ]),
                     ],
                     {

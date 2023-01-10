@@ -4,9 +4,10 @@
  */
 import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
-import { compareNodeArrays } from "./Utilities";
+import { compareNodeArrays, createNodesFromPlainText } from "./Utilities";
 
 /**
+ * TODO
  *
  * @example
  * ```md
@@ -23,6 +24,14 @@ export class BlockQuoteNode extends ParentNodeBase {
 
     public constructor(children: DocumentationNode[]) {
         super(children);
+    }
+
+    /**
+     * Generates a `BlockQuoteNode` from the provided string.
+     * @param text - The node contents.
+     */
+    public static createFromPlainText(text: string): BlockQuoteNode {
+        return new BlockQuoteNode(createNodesFromPlainText(text));
     }
 
     /**
