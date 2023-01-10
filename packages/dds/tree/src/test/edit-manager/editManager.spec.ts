@@ -24,6 +24,7 @@ import {
     TestChangeRebaser,
     TestChange,
     UnrebasableTestChangeRebaser,
+    ConstrainedTestChangeRebaser,
 } from "../testChange";
 
 const rootKey: FieldKey = brand("root");
@@ -286,12 +287,12 @@ describe("EditManager", () => {
                 { seq: 3, type: "Pull", ref: 2, from: peer2 },
                 { seq: 4, type: "Ack" },
             ],
-            new UnrebasableTestChangeRebaser(
-                (change: TestChange, over: TaggedChange<TestChange>): TestChange => {
+            new ConstrainedTestChangeRebaser(
+                (change: TestChange, over: TaggedChange<TestChange>): boolean => {
                     // This is the only rebase that should happen
                     assert.deepEqual(change.intentions, [4]);
                     assert.deepEqual(over.change.intentions, [3]);
-                    return TestChange.rebase(change, over.change);
+                    return true;
                 },
             ),
         );
@@ -303,12 +304,12 @@ describe("EditManager", () => {
                 { seq: 3, type: "Pull", ref: 2, from: peer2 },
                 { seq: 4, type: "Pull", ref: 0, from: peer1 },
             ],
-            new UnrebasableTestChangeRebaser(
-                (change: TestChange, over: TaggedChange<TestChange>): TestChange => {
+            new ConstrainedTestChangeRebaser(
+                (change: TestChange, over: TaggedChange<TestChange>): boolean => {
                     // This is the only rebase that should happen
                     assert.deepEqual(change.intentions, [4]);
                     assert.deepEqual(over.change.intentions, [3]);
-                    return TestChange.rebase(change, over.change);
+                    return true;
                 },
             ),
         );

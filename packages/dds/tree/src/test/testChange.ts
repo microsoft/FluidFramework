@@ -236,17 +236,24 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 }
 
 export class UnrebasableTestChangeRebaser extends TestChangeRebaser {
+    public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+        assert.fail("Unexpected call to rebase");
+    }
+}
+
+export class ConstrainedTestChangeRebaser extends TestChangeRebaser {
     public constructor(
-        private readonly delegate?: (
+        private readonly constraint: (
             change: TestChange,
             over: TaggedChange<TestChange>,
-        ) => TestChange,
+        ) => boolean,
     ) {
         super();
     }
 
     public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
-        return (this.delegate ?? assert.fail("Unexpected call to rebase"))(change, over);
+        assert(this.constraint(change, over));
+        return super.rebase(change, over);
     }
 }
 
