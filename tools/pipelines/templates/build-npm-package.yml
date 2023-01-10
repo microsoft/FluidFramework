@@ -101,8 +101,6 @@ variables:
   # basic ANSI color support though, so force that in the pipeline
   - name: FORCE_COLOR
     value: 1
-  - name: pnpmStorePath
-    value: $(Pipeline.Workspace)/.pnpm-store
   - template: include-vars.yml
     parameters:
       publishOverride: ${{ parameters.publishOverride }}
@@ -164,6 +162,7 @@ stages:
                 publish=${{ variables.publish }}
                 canRelease=${{ variables.canRelease }}
                 publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
+                pnpmStorePath=${{ variables.pnpmStorePath }}
 
                 release=$(release)"
 

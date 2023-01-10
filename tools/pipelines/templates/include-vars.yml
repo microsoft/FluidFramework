@@ -4,6 +4,7 @@
 # common variables
 
 parameters:
+
 - name: publishOverride
   type: string
   default: default
@@ -27,6 +28,8 @@ variables:
 - group: prague-key-vault
 - name: skipComponentGovernanceDetection
   value: true
+- name: pnpmStorePath
+  value: $(Pipeline.Workspace)/.pnpm-store
 - name: testBuild
   value: ${{ lower(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}
 - name: shouldPublish
