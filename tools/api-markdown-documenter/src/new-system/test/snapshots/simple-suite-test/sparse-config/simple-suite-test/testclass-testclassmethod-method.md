@@ -2,28 +2,28 @@
 
 Test class method
 
-### Signature {#testclassmethod-signature}
+## Signature {#testclassmethod-signature}
 
 ```typescript
 /** @sealed */<br/>testClassMethod(input: TTypeParameterA): TTypeParameterA;
 ```
 
-### Remarks {#testclassmethod-remarks}
+## Remarks {#testclassmethod-remarks}
 
 Here are some remarks about the method
 
-### Parameters {#testclassmethod-parameters}
+## Parameters {#testclassmethod-parameters}
 
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  input | TTypeParameterA |  |
 
-### Returns {#testclassmethod-returns}
+## Returns {#testclassmethod-returns}
 
 <b>Return type: </b>TTypeParameterA
 
-### Throws {#testclassmethod-throws}
+## Throws {#testclassmethod-throws}
 
 Some sort of error in 1 case.
 

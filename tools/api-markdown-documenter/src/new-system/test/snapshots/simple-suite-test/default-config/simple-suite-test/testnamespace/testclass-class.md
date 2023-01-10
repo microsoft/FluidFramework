@@ -4,90 +4,90 @@
 
 Test class
 
-### Signature {#testclass-signature}
+## Signature {#testclass-signature}
 
 ```typescript
 class TestClass
 ```
 
-### Constructors
+## Constructors
 
 
 |  Constructor | Description |
 |  --- | --- |
 |  [(constructor)(testClassProperty)](./simple-suite-test/testnamespace/testclass-class#_constructor_-constructor) | Test class constructor |
 
-### Properties
+## Properties
 
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [testClassProperty](./simple-suite-test/testnamespace/testclass-class#testclassproperty-property) | <code>readonly</code> | string | Test interface property |
 
-### Methods
+## Methods
 
 
 |  Method | Return Type | Description |
 |  --- | --- | --- |
 |  [testClassMethod(testParameter)](./simple-suite-test/testnamespace/testclass-class#testclassmethod-method) | Promise&lt;string&gt; | Test class method |
 
-### Constructor Details
+## Constructor Details
 
-#### (constructor) {#_constructor_-constructor}
+### (constructor) {#_constructor_-constructor}
 
 Test class constructor
 
-##### Signature {#_constructor_-signature}
+#### Signature {#_constructor_-signature}
 
 ```typescript
 constructor(testClassProperty: string);
 ```
 
-##### Parameters {#_constructor_-parameters}
+#### Parameters {#_constructor_-parameters}
 
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  testClassProperty | string | See [TestClass.testClassProperty](./simple-suite-test/testclass-class#testclassproperty-property) |
 
-### Property Details
+## Property Details
 
-#### testClassProperty {#testclassproperty-property}
+### testClassProperty {#testclassproperty-property}
 
 Test interface property
 
-##### Signature {#testclassproperty-signature}
+#### Signature {#testclassproperty-signature}
 
 ```typescript
 readonly testClassProperty: string;
 ```
 
-### Method Details
+## Method Details
 
-#### testClassMethod {#testclassmethod-method}
+### testClassMethod {#testclassmethod-method}
 
 Test class method
 
-##### Signature {#testclassmethod-signature}
+#### Signature {#testclassmethod-signature}
 
 ```typescript
 testClassMethod(testParameter: string): Promise<string>;
 ```
 
-##### Parameters {#testclassmethod-parameters}
+#### Parameters {#testclassmethod-parameters}
 
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  testParameter | string | A string |
 
-##### Returns {#testclassmethod-returns}
+#### Returns {#testclassmethod-returns}
 
 A Promise
 
 <b>Return type: </b>Promise&lt;string&gt;
 
-##### Throws {#testclassmethod-throws}
+#### Throws {#testclassmethod-throws}
 
 An Error when something happens for which an error should be thrown. Except in the cases where another kind of error is thrown. We don't throw this error in those cases.
 

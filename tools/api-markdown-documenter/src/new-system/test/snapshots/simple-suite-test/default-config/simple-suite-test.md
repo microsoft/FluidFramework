@@ -4,7 +4,7 @@
 
 Test package
 
-### Remarks {#simple-suite-test-remarks}
+## Remarks {#simple-suite-test-remarks}
 
 This remarks block includes a bulleted list!
 
@@ -30,7 +30,7 @@ Also, here is a link test, including a bad link, because we should have some rea
 
 - Bad link (with alias): <i>even though I link to an invalid item, I would still like this text to be rendered</i>
 
-### Example {#simple-suite-test-example}
+## Example {#simple-suite-test-example}
 
 A test example
 
@@ -38,7 +38,7 @@ A test example
 const foo = bar;
 ```
 
-### Interfaces
+## Interfaces
 
 
 |  Interface | Description |
@@ -49,7 +49,7 @@ const foo = bar;
 |  [TestInterfaceWithIndexSignature](./simple-suite-test/testinterfacewithindexsignature-interface) | An interface with an index signature. |
 |  [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
 
-### Classes
+## Classes
 
 
 |  Class | Description |
@@ -57,14 +57,14 @@ const foo = bar;
 |  [TestAbstractClass](./simple-suite-test/testabstractclass-class) | A test abstract class. |
 |  [TestClass](./simple-suite-test/testclass-class) | Test class |
 
-### Enumerations
+## Enumerations
 
 
 |  Enum | Description |
 |  --- | --- |
 |  [TestEnum](./simple-suite-test#testenum-enum) | Test Enum |
 
-### Types
+## Types
 
 
 |  TypeAlias | Description |
@@ -72,7 +72,7 @@ const foo = bar;
 |  [TestMappedType](./simple-suite-test#testmappedtype-typealias) | Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum) |
 |  [TypeAlias](./simple-suite-test#typealias-typealias) | Test Type-Alias |
 
-### Functions
+## Functions
 
 
 |  Function | Alerts | Return Type | Description |
@@ -82,7 +82,7 @@ const foo = bar;
 |  [testFunctionReturningIntersectionType()](./simple-suite-test#testfunctionreturningintersectiontype-function) | <code>DEPRECATED</code> | [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
 |  [testFunctionReturningUnionType()](./simple-suite-test#testfunctionreturninguniontype-function) |  | string &#124; [TestInterface](./simple-suite-test/testinterface-interface) | Test function that returns an inline type |
 
-### Variables
+## Variables
 
 
 |  Variable | Alerts | Modifiers | Description |
@@ -90,7 +90,7 @@ const foo = bar;
 |  [testConst](./simple-suite-test#testconst-variable) |  | <code>readonly</code> | Test Constant |
 |  [testConstWithEmptyDeprecatedBlock](./simple-suite-test#testconstwithemptydeprecatedblock-variable) | <code>DEPRECATED</code> | <code>readonly</code> | I have a <code>@deprecated</code> tag with an empty comment block. |
 
-### Namespaces
+## Namespaces
 
 
 |  Namespace | Description |
@@ -98,25 +98,25 @@ const foo = bar;
 |  [TestModule](./simple-suite-test/testmodule-namespace) |  |
 |  [TestNamespace](./simple-suite-test/testnamespace-namespace) | Test Namespace |
 
-### Enumeration Details
+## Enumeration Details
 
-#### TestEnum {#testenum-enum}
+### TestEnum {#testenum-enum}
 
 Test Enum
 
-##### Signature {#testenum-signature}
+#### Signature {#testenum-signature}
 
 ```typescript
 export declare enum TestEnum
 ```
 
-##### Remarks {#testenum-remarks}
+#### Remarks {#testenum-remarks}
 
 Here are some remarks about the enum
 
-##### Examples {#testenum-examples}
+#### Examples {#testenum-examples}
 
-###### Example 1 {#testenum-example1}
+##### Example 1 {#testenum-example1}
 
 Some example
 
@@ -124,7 +124,7 @@ Some example
 const foo = TestEnum.TestEnumValue1
 ```
 
-###### Example 2 {#testenum-example2}
+##### Example 2 {#testenum-example2}
 
 Another example
 
@@ -132,7 +132,7 @@ Another example
 const bar = TestEnum.TestEnumValue2
 ```
 
-##### Flags
+#### Flags
 
 
 |  Flag | Description |
@@ -141,95 +141,95 @@ const bar = TestEnum.TestEnumValue2
 |  [TestEnumValue2](./simple-suite-test#testenum-testenumvalue2-enummember) | Test enum value 2 (number) |
 |  [TestEnumValue3](./simple-suite-test#testenum-testenumvalue3-enummember) | Test enum value 3 (default) |
 
-###### TestEnumValue1 {#testenum-testenumvalue1-enummember}
+##### TestEnumValue1 {#testenum-testenumvalue1-enummember}
 
 Test enum value 1 (string)
 
-<b>Signature</b>
+###### Signature {#testenumvalue1-signature}
 
 ```typescript
 TestEnumValue1 = "test-enum-value-1"
 ```
 
-<b>Remarks</b>
+###### Remarks {#testenumvalue1-remarks}
 
 Here are some remarks about the enum value
 
-###### TestEnumValue2 {#testenum-testenumvalue2-enummember}
+##### TestEnumValue2 {#testenum-testenumvalue2-enummember}
 
 Test enum value 2 (number)
 
-<b>Signature</b>
+###### Signature {#testenumvalue2-signature}
 
 ```typescript
 TestEnumValue2 = 3
 ```
 
-<b>Remarks</b>
+###### Remarks {#testenumvalue2-remarks}
 
 Here are some remarks about the enum value
 
-###### TestEnumValue3 {#testenum-testenumvalue3-enummember}
+##### TestEnumValue3 {#testenum-testenumvalue3-enummember}
 
 Test enum value 3 (default)
 
-<b>Signature</b>
+###### Signature {#testenumvalue3-signature}
 
 ```typescript
 TestEnumValue3 = 4
 ```
 
-<b>Remarks</b>
+###### Remarks {#testenumvalue3-remarks}
 
 Here are some remarks about the enum value
 
-### Type Details
+## Type Details
 
-#### TestMappedType {#testmappedtype-typealias}
+### TestMappedType {#testmappedtype-typealias}
 
 Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum)
 
-##### Signature {#testmappedtype-signature}
+#### Signature {#testmappedtype-signature}
 
 ```typescript
 export declare type TestMappedType = {<br/>    [K in TestEnum]: boolean;<br/>};
 ```
 
-##### Remarks {#testmappedtype-remarks}
+#### Remarks {#testmappedtype-remarks}
 
 Here are some remarks about the mapped type
 
-#### TypeAlias {#typealias-typealias}
+### TypeAlias {#typealias-typealias}
 
 Test Type-Alias
 
-##### Signature {#typealias-signature}
+#### Signature {#typealias-signature}
 
 ```typescript
 export declare type TypeAlias = string;
 ```
 
-##### Remarks {#typealias-remarks}
+#### Remarks {#typealias-remarks}
 
 Here are some remarks about the type alias
 
-### Function Details
+## Function Details
 
-#### testFunction {#testfunction-function}
+### testFunction {#testfunction-function}
 
 Test function
 
-##### Signature {#testfunction-signature}
+#### Signature {#testfunction-signature}
 
 ```typescript
 export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;
 ```
 
-##### Remarks {#testfunction-remarks}
+#### Remarks {#testfunction-remarks}
 
 This is a test [link](./simple-suite-test/testinterface-interface) to another API member
 
-##### Parameters {#testfunction-parameters}
+#### Parameters {#testfunction-parameters}
 
 
 |  Parameter | Modifiers | Type | Description |
@@ -237,33 +237,33 @@ This is a test [link](./simple-suite-test/testinterface-interface) to another AP
 |  testParameter |  | TTypeParameter | A test parameter |
 |  testOptionalParameter | optional | TTypeParameter |  |
 
-##### Returns {#testfunction-returns}
+#### Returns {#testfunction-returns}
 
 The provided parameter
 
 <b>Return type: </b>TTypeParameter
 
-##### Throws {#testfunction-throws}
+#### Throws {#testfunction-throws}
 
 An Error when something bad happens.
 
-#### testFunctionReturningInlineType {#testfunctionreturninginlinetype-function}
+### testFunctionReturningInlineType {#testfunctionreturninginlinetype-function}
 
 Test function that returns an inline type
 
-##### Signature {#testfunctionreturninginlinetype-signature}
+#### Signature {#testfunctionreturninginlinetype-signature}
 
 ```typescript
 export declare function testFunctionReturningInlineType(): {<br/>    foo: number;<br/>    bar: TestEnum;<br/>};
 ```
 
-##### Returns {#testfunctionreturninginlinetype-returns}
+#### Returns {#testfunctionreturninginlinetype-returns}
 
 An inline type
 
 <b>Return type: </b>{     foo: number;     bar: [TestEnum](./simple-suite-test#testenum-enum); }
 
-#### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
+### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
 
 > <bold> [Warning]: Deprecated </bold>
@@ -273,51 +273,51 @@ An inline type
 
 Test function that returns an inline type
 
-##### Signature {#testfunctionreturningintersectiontype-signature}
+#### Signature {#testfunctionreturningintersectiontype-signature}
 
 ```typescript
 export declare function testFunctionReturningIntersectionType(): TestEmptyInterface & TestInterfaceWithTypeParameter<number>;
 ```
 
-##### Returns {#testfunctionreturningintersectiontype-returns}
+#### Returns {#testfunctionreturningintersectiontype-returns}
 
 an intersection type
 
 <b>Return type: </b>[TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)&lt;number&gt;
 
-#### testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
+### testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
 
 Test function that returns an inline type
 
-##### Signature {#testfunctionreturninguniontype-signature}
+#### Signature {#testfunctionreturninguniontype-signature}
 
 ```typescript
 export declare function testFunctionReturningUnionType(): string | TestInterface;
 ```
 
-##### Returns {#testfunctionreturninguniontype-returns}
+#### Returns {#testfunctionreturninguniontype-returns}
 
 A union type
 
 <b>Return type: </b>string \| [TestInterface](./simple-suite-test/testinterface-interface)
 
-### Variable Details
+## Variable Details
 
-#### testConst {#testconst-variable}
+### testConst {#testconst-variable}
 
 Test Constant
 
-##### Signature {#testconst-signature}
+#### Signature {#testconst-signature}
 
 ```typescript
 testConst = 42
 ```
 
-##### Remarks {#testconst-remarks}
+#### Remarks {#testconst-remarks}
 
 Here are some remarks about the variable
 
-#### testConstWithEmptyDeprecatedBlock {#testconstwithemptydeprecatedblock-variable}
+### testConstWithEmptyDeprecatedBlock {#testconstwithemptydeprecatedblock-variable}
 
 
 > <bold> [Warning]: Deprecated </bold>
@@ -327,7 +327,7 @@ Here are some remarks about the variable
 
 I have a `@deprecated` tag with an empty comment block.
 
-##### Signature {#testconstwithemptydeprecatedblock-signature}
+#### Signature {#testconstwithemptydeprecatedblock-signature}
 
 ```typescript
 testConstWithEmptyDeprecatedBlock = "I have a `@deprecated` tag with an empty comment block."

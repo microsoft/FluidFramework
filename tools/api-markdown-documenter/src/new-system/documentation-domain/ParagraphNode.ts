@@ -19,6 +19,11 @@ export class ParagraphNode extends ParentNodeBase<ParagraphChildren> {
      */
     public readonly type = DocumentationNodeType.Paragraph;
 
+    /**
+     * Empty paragraph singleton.
+     */
+    public static readonly Empty = new ParagraphNode([]);
+
     public constructor(children: ParagraphChildren[]) {
         super(children);
     }
@@ -42,5 +47,25 @@ export class ParagraphNode extends ParentNodeBase<ParagraphChildren> {
         const otherParagraph = other as ParagraphNode;
 
         return compareNodeArrays(this.children, otherParagraph.children);
+    }
+
+    /**
+     * Combines the contents of 1 or more {@link ParagraphNode}s into a single node.
+     */
+    public static combine(...nodes: ParagraphNode[]): ParagraphNode {
+        if (nodes.length === 0) {
+            return ParagraphNode.Empty;
+        }
+
+        if (nodes.length === 1) {
+            return nodes[0];
+        }
+
+        const children: DocumentationNode[] = [];
+        for (const node of nodes) {
+            children.push(...node.children);
+        }
+
+        return new ParagraphNode(children);
     }
 }

@@ -4,7 +4,7 @@
 
 Test package
 
-### Remarks {#simple-suite-test-remarks}
+## Remarks {#simple-suite-test-remarks}
 
 This remarks block includes a bulleted list!
 
@@ -30,7 +30,7 @@ Also, here is a link test, including a bad link, because we should have some rea
 
 - Bad link (with alias): <i>even though I link to an invalid item, I would still like this text to be rendered</i>
 
-### Example {#simple-suite-test-example}
+## Example {#simple-suite-test-example}
 
 A test example
 
@@ -38,7 +38,7 @@ A test example
 const foo = bar;
 ```
 
-### Interfaces
+## Interfaces
 
 
 |  Interface | Description |
@@ -49,7 +49,7 @@ const foo = bar;
 |  [TestInterfaceWithIndexSignature](docs/simple-suite-test/testinterfacewithindexsignature-interface) | An interface with an index signature. |
 |  [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
 
-### Classes
+## Classes
 
 
 |  Class | Description |
@@ -57,14 +57,14 @@ const foo = bar;
 |  [TestAbstractClass](docs/simple-suite-test/testabstractclass-class) | A test abstract class. |
 |  [TestClass](docs/simple-suite-test/testclass-class) | Test class |
 
-### Enumerations
+## Enumerations
 
 
 |  Enum | Description |
 |  --- | --- |
 |  [TestEnum](docs/simple-suite-test/testenum-enum) | Test Enum |
 
-### Types
+## Types
 
 
 |  TypeAlias | Description |
@@ -72,7 +72,7 @@ const foo = bar;
 |  [TestMappedType](docs/simple-suite-test/testmappedtype-typealias) | Test Mapped Type, using [TestEnum](docs/simple-suite-test/testenum-enum) |
 |  [TypeAlias](docs/simple-suite-test/typealias-typealias) | Test Type-Alias |
 
-### Functions
+## Functions
 
 
 |  Function | Alerts | Return Type | Description |
@@ -82,7 +82,7 @@ const foo = bar;
 |  [testFunctionReturningIntersectionType()](docs/simple-suite-test/testfunctionreturningintersectiontype-function) | <code>DEPRECATED</code> | [TestEmptyInterface](docs/simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
 |  [testFunctionReturningUnionType()](docs/simple-suite-test/testfunctionreturninguniontype-function) |  | string &#124; [TestInterface](docs/simple-suite-test/testinterface-interface) | Test function that returns an inline type |
 
-### Variables
+## Variables
 
 
 |  Variable | Alerts | Modifiers | Description |
@@ -90,7 +90,7 @@ const foo = bar;
 |  [testConst](docs/simple-suite-test/testconst-variable) |  | <code>readonly</code> | Test Constant |
 |  [testConstWithEmptyDeprecatedBlock](docs/simple-suite-test/testconstwithemptydeprecatedblock-variable) | <code>DEPRECATED</code> | <code>readonly</code> | I have a <code>@deprecated</code> tag with an empty comment block. |
 
-### Namespaces
+## Namespaces
 
 
 |  Namespace | Description |

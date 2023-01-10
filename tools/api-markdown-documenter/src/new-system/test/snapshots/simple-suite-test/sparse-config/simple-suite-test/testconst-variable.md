@@ -2,13 +2,13 @@
 
 Test Constant
 
-### Signature {#testconst-signature}
+## Signature {#testconst-signature}
 
 ```typescript
 testConst = 42
 ```
 
-### Remarks {#testconst-remarks}
+## Remarks {#testconst-remarks}
 
 Here are some remarks about the variable
 

@@ -2,13 +2,13 @@
 
 Test function that returns an inline type
 
-### Signature {#testfunctionreturninginlinetype-signature}
+## Signature {#testfunctionreturninginlinetype-signature}
 
 ```typescript
 export declare function testFunctionReturningInlineType(): {<br/>    foo: number;<br/>    bar: TestEnum;<br/>};
 ```
 
-### Returns {#testfunctionreturninginlinetype-returns}
+## Returns {#testfunctionreturninginlinetype-returns}
 
 An inline type
 

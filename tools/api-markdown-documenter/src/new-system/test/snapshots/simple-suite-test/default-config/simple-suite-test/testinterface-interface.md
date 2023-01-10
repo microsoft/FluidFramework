@@ -4,31 +4,31 @@
 
 Test interface
 
-### Signature {#testinterface-signature}
+## Signature {#testinterface-signature}
 
 ```typescript
 export interface TestInterface
 ```
 
-### Remarks {#testinterface-remarks}
+## Remarks {#testinterface-remarks}
 
 Here are some remarks about the interface
 
-### Construct Signatures
+## Construct Signatures
 
 
 |  ConstructSignature | Return Type | Description |
 |  --- | --- | --- |
 |  [new (): TestInterface](./simple-suite-test/testinterface-interface#_new_-constructsignature) | [TestInterface](./simple-suite-test/testinterface-interface) | Test construct signature. |
 
-### Events
+## Events
 
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [testClassEventProperty](./simple-suite-test/testinterface-interface#testclasseventproperty-propertysignature) | <code>readonly</code> | () =&gt; void | Test interface event property |
 
-### Properties
+## Properties
 
 
 |  Property | Modifiers | Default Value | Type | Description |
@@ -36,14 +36,14 @@ Here are some remarks about the interface
 |  [testInterfaceProperty](./simple-suite-test/testinterface-interface#testinterfaceproperty-propertysignature) |  |  | number | Test interface property |
 |  [testOptionalInterfaceProperty](./simple-suite-test/testinterface-interface#testoptionalinterfaceproperty-propertysignature) | <code>optional</code> | 0 | number | Test optional property |
 
-### Methods
+## Methods
 
 
 |  Method | Return Type | Description |
 |  --- | --- | --- |
 |  [testInterfaceMethod()](./simple-suite-test/testinterface-interface#testinterfacemethod-methodsignature) | void | Test interface method |
 
-### Call Signatures
+## Call Signatures
 
 
 |  CallSignature | Description |
@@ -51,111 +51,111 @@ Here are some remarks about the interface
 |  [(event: 'testCallSignature', listener: (input: unknown) =&amp;gt; void): any](./simple-suite-test/testinterface-interface#_call_-callsignature) | Test interface event call signature |
 |  [(event: 'anotherTestCallSignature', listener: (input: number) =&amp;gt; string): number](./simple-suite-test/testinterface-interface#_call__1-callsignature) | Another example call signature |
 
-### Construct Signature Details
+## Construct Signature Details
 
-#### new (): TestInterface {#_new_-constructsignature}
+### new (): TestInterface {#_new_-constructsignature}
 
 Test construct signature.
 
-##### Signature {#_new_-signature}
+#### Signature {#_new_-signature}
 
 ```typescript
 new (): TestInterface;
 ```
 
-##### Returns {#_new_-returns}
+#### Returns {#_new_-returns}
 
 <b>Return type: </b>[TestInterface](./simple-suite-test/testinterface-interface)
 
-### Event Details
+## Event Details
 
-#### testClassEventProperty {#testclasseventproperty-propertysignature}
+### testClassEventProperty {#testclasseventproperty-propertysignature}
 
 Test interface event property
 
-##### Signature {#testclasseventproperty-signature}
+#### Signature {#testclasseventproperty-signature}
 
 ```typescript
 readonly testClassEventProperty: () => void;
 ```
 
-##### Remarks {#testclasseventproperty-remarks}
+#### Remarks {#testclasseventproperty-remarks}
 
 Here are some remarks about the event property
 
-### Property Details
+## Property Details
 
-#### testInterfaceProperty {#testinterfaceproperty-propertysignature}
+### testInterfaceProperty {#testinterfaceproperty-propertysignature}
 
 Test interface property
 
-##### Signature {#testinterfaceproperty-signature}
+#### Signature {#testinterfaceproperty-signature}
 
 ```typescript
 testInterfaceProperty: number;
 ```
 
-##### Remarks {#testinterfaceproperty-remarks}
+#### Remarks {#testinterfaceproperty-remarks}
 
 Here are some remarks about the property
 
-#### testOptionalInterfaceProperty {#testoptionalinterfaceproperty-propertysignature}
+### testOptionalInterfaceProperty {#testoptionalinterfaceproperty-propertysignature}
 
 Test optional property
 
-##### Signature {#testoptionalinterfaceproperty-signature}
+#### Signature {#testoptionalinterfaceproperty-signature}
 
 ```typescript
 testOptionalInterfaceProperty?: number;
 ```
 
-### Method Details
+## Method Details
 
-#### testInterfaceMethod {#testinterfacemethod-methodsignature}
+### testInterfaceMethod {#testinterfacemethod-methodsignature}
 
 Test interface method
 
-##### Signature {#testinterfacemethod-signature}
+#### Signature {#testinterfacemethod-signature}
 
 ```typescript
 testInterfaceMethod(): void;
 ```
 
-##### Remarks {#testinterfacemethod-remarks}
+#### Remarks {#testinterfacemethod-remarks}
 
 Here are some remarks about the method
 
-### Call Signature Details
+## Call Signature Details
 
-#### (event: 'testCallSignature', listener: (input: unknown) =&gt; void): any {#_call_-callsignature}
+### (event: 'testCallSignature', listener: (input: unknown) =&gt; void): any {#_call_-callsignature}
 
 Test interface event call signature
 
-##### Signature {#_call_-signature}
+#### Signature {#_call_-signature}
 
 ```typescript
 (event: 'testCallSignature', listener: (input: unknown) => void): any;
 ```
 
-##### Remarks {#_call_-remarks}
+#### Remarks {#_call_-remarks}
 
 Here are some remarks about the event call signature
 
-#### (event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number {#_call__1-callsignature}
+### (event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number {#_call__1-callsignature}
 
 Another example call signature
 
-##### Signature {#_call__1-signature}
+#### Signature {#_call__1-signature}
 
 ```typescript
 (event: 'anotherTestCallSignature', listener: (input: number) => string): number;
 ```
 
-##### Remarks {#_call__1-remarks}
+#### Remarks {#_call__1-remarks}
 
 Here are some remarks about the event call signature
 
-### See also {#testinterface-see-also}
+## See also {#testinterface-see-also}
 
 [TestInterface.testInterfaceMethod](./simple-suite-test/testinterface-interface#testinterfacemethod-methodsignature)
 

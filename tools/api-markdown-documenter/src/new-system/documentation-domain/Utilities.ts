@@ -1,6 +1,5 @@
 import { DocumentationNode } from "./DocumentionNode";
 import { LineBreakNode } from "./LineBreakNode";
-import { ParagraphNode } from "./ParagraphNode";
 import { PlainTextNode } from "./PlainTextNode";
 
 /**
@@ -21,18 +20,6 @@ export function compareNodeArrays<TNode extends DocumentationNode>(
     }
 
     return true;
-}
-
-/**
- * Combines the contents of 1 or more {@link ParagraphNode}s into a single node.
- */
-export function combineParagraphNodes(...nodes: ParagraphNode[]): ParagraphNode {
-    const children: DocumentationNode[] = [];
-    for (const node of nodes) {
-        children.push(...node.children);
-    }
-
-    return new ParagraphNode(children);
 }
 
 /**

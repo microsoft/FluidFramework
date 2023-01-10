@@ -2,13 +2,13 @@
 
 An interface with an index signature.
 
-### Signature {#testinterfacewithindexsignature-signature}
+## Signature {#testinterfacewithindexsignature-signature}
 
 ```typescript
 export interface TestInterfaceWithIndexSignature
 ```
 
-### Index Signatures
+## Index Signatures
 
 
 |  IndexSignature | Description |

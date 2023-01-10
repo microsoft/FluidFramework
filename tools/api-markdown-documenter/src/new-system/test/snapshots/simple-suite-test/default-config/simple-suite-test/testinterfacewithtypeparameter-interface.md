@@ -4,7 +4,7 @@
 
 Test interface with generic type parameter
 
-### Signature {#testinterfacewithtypeparameter-signature}
+## Signature {#testinterfacewithtypeparameter-signature}
 
 ```typescript
 export interface TestInterfaceWithTypeParameter<T>
@@ -14,30 +14,30 @@ export interface TestInterfaceWithTypeParameter<T>
 
 - <b>T</b>: A type parameter
 
-### Remarks {#testinterfacewithtypeparameter-remarks}
+## Remarks {#testinterfacewithtypeparameter-remarks}
 
 Here are some remarks about the interface
 
-### Properties
+## Properties
 
 
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [testProperty](./simple-suite-test/testinterfacewithtypeparameter-interface#testproperty-propertysignature) | T | A test interface property using generic type parameter |
 
-### Property Details
+## Property Details
 
-#### testProperty {#testproperty-propertysignature}
+### testProperty {#testproperty-propertysignature}
 
 A test interface property using generic type parameter
 
-##### Signature {#testproperty-signature}
+#### Signature {#testproperty-signature}
 
 ```typescript
 testProperty: T;
 ```
 
-##### Remarks {#testproperty-remarks}
+#### Remarks {#testproperty-remarks}
 
 Here are some remarks about the property
 

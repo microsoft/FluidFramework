@@ -4,19 +4,19 @@
 
 Test Namespace
 
-### Signature {#testnamespace-signature}
+## Signature {#testnamespace-signature}
 
 ```typescript
 export declare namespace TestNamespace
 ```
 
-### Remarks {#testnamespace-remarks}
+## Remarks {#testnamespace-remarks}
 
 Here are some remarks about the namespace
 
-### Examples {#testnamespace-examples}
+## Examples {#testnamespace-examples}
 
-#### Example 1 {#testnamespace-example1}
+### Example 1 {#testnamespace-example1}
 
 Example 1
 
@@ -24,7 +24,7 @@ Example 1
 const foo = bar;
 ```
 
-#### Example 2 {#testnamespace-example2}
+### Example 2 {#testnamespace-example2}
 
 Example 2
 
@@ -32,68 +32,68 @@ Example 2
 const bar = foo
 ```
 
-### Interfaces
+## Interfaces
 
 
 |  Interface | Description |
 |  --- | --- |
 |  [TestInterface](./simple-suite-test/testnamespace/testinterface-interface) | Test interface |
 
-### Classes
+## Classes
 
 
 |  Class | Description |
 |  --- | --- |
 |  [TestClass](./simple-suite-test/testnamespace/testclass-class) | Test class |
 
-### Enumerations
+## Enumerations
 
 
 |  Enum | Description |
 |  --- | --- |
 |  [TestEnum](./simple-suite-test/testnamespace-namespace#testenum-enum) | Test Enum |
 
-### Types
+## Types
 
 
 |  TypeAlias | Description |
 |  --- | --- |
 |  [TestTypeAlias](./simple-suite-test/testnamespace-namespace#testtypealias-typealias) | Test Type-Alias |
 
-### Functions
+## Functions
 
 
 |  Function | Return Type | Description |
 |  --- | --- | --- |
 |  [testFunction(testParameter)](./simple-suite-test/testnamespace-namespace#testfunction-function) | number | Test function |
 
-### Variables
+## Variables
 
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestConst](./simple-suite-test/testnamespace-namespace#testconst-variable) | <code>readonly</code> | Test Constant |
 
-### Namespaces
+## Namespaces
 
 
 |  Namespace | Description |
 |  --- | --- |
 |  [TestSubNamespace](./simple-suite-test/testnamespace/testsubnamespace-namespace) | Test sub-namespace |
 
-### Enumeration Details
+## Enumeration Details
 
-#### TestEnum {#testenum-enum}
+### TestEnum {#testenum-enum}
 
 Test Enum
 
-##### Signature {#testenum-signature}
+#### Signature {#testenum-signature}
 
 ```typescript
 enum TestEnum
 ```
 
-##### Flags
+#### Flags
 
 
 |  Flag | Description |
@@ -101,74 +101,74 @@ enum TestEnum
 |  [TestEnumValue1](./simple-suite-test/testnamespace-namespace#testenum-testenumvalue1-enummember) | Test enum value 1 |
 |  [TestEnumValue2](./simple-suite-test/testnamespace-namespace#testenum-testenumvalue2-enummember) | Test enum value 2 |
 
-###### TestEnumValue1 {#testenum-testenumvalue1-enummember}
+##### TestEnumValue1 {#testenum-testenumvalue1-enummember}
 
 Test enum value 1
 
-<b>Signature</b>
+###### Signature {#testenumvalue1-signature}
 
 ```typescript
 TestEnumValue1 = 0
 ```
 
-###### TestEnumValue2 {#testenum-testenumvalue2-enummember}
+##### TestEnumValue2 {#testenum-testenumvalue2-enummember}
 
 Test enum value 2
 
-<b>Signature</b>
+###### Signature {#testenumvalue2-signature}
 
 ```typescript
 TestEnumValue2 = 1
 ```
 
-### Type Details
+## Type Details
 
-#### TestTypeAlias {#testtypealias-typealias}
+### TestTypeAlias {#testtypealias-typealias}
 
 Test Type-Alias
 
-##### Signature {#testtypealias-signature}
+#### Signature {#testtypealias-signature}
 
 ```typescript
 type TestTypeAlias = boolean;
 ```
 
-### Function Details
+## Function Details
 
-#### testFunction {#testfunction-function}
+### testFunction {#testfunction-function}
 
 Test function
 
-##### Signature {#testfunction-signature}
+#### Signature {#testfunction-signature}
 
 ```typescript
 function testFunction(testParameter: number): number;
 ```
 
-##### Parameters {#testfunction-parameters}
+#### Parameters {#testfunction-parameters}
 
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  testParameter | number |  |
 
-##### Returns {#testfunction-returns}
+#### Returns {#testfunction-returns}
 
 A number
 
 <b>Return type: </b>number
 
-##### Throws {#testfunction-throws}
+#### Throws {#testfunction-throws}
 
 An Error
 
-### Variable Details
+## Variable Details
 
-#### TestConst {#testconst-variable}
+### TestConst {#testconst-variable}
 
 Test Constant
 
-##### Signature {#testconst-signature}
+#### Signature {#testconst-signature}
 
 ```typescript
 TestConst = "Hello world!"

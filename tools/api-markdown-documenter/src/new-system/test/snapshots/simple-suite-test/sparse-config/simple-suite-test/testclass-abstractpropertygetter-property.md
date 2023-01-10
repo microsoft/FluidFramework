@@ -2,7 +2,7 @@
 
 A test abstract getter property.
 
-### Signature {#abstractpropertygetter-signature}
+## Signature {#abstractpropertygetter-signature}
 
 ```typescript
 get abstractPropertyGetter(): TestMappedType;
