@@ -47,6 +47,16 @@ export function unreachableCase(never: never): never {
 }
 
 /**
+ * Checks whether or not the given object is a `readonly` array.
+ */
+export function isReadonlyArray<T>(x: readonly T[] | unknown): x is readonly T[] {
+    // `Array.isArray()` does not properly narrow `readonly` array types by itself,
+    // so we wrap it in this type guard. This may become unnecessary if/when
+    // https://github.com/microsoft/TypeScript/issues/17002 is resolved.
+    return Array.isArray(x);
+}
+
+/**
  * Creates and populates a new array.
  * @param size - The size of the array to be created.
  * @param filler - Callback for populating the array with a value for a given index

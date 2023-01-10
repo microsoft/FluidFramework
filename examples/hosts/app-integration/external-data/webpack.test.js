@@ -46,7 +46,7 @@ module.exports = (env) => {
                 process: "process/browser",
             }),
             new HtmlWebpackPlugin({
-                template: "./tests/index.html",
+                template: path.join(__dirname, "tests", "index.html"),
             }),
         ],
         mode: "development",

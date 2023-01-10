@@ -12,7 +12,7 @@ import {
     commitEncoderFromChangeEncoder,
 } from "../../feature-libraries";
 
-import { MutableSummaryData, ReadonlySummaryData } from "../../edit-manager";
+import { MutableSummaryData, ReadonlySummaryData } from "../../core";
 import { TestChange } from "../testChange";
 import { brand } from "../../util";
 

@@ -6,25 +6,23 @@
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
-    fieldSchema,
-    SchemaData,
-    InMemoryStoredSchemaRepository,
-    SchemaDataAndPolicy,
-    GlobalFieldKey,
-    namedTreeSchema,
-    ValueSchema,
-    LocalFieldKey,
-} from "../../../schema-stored";
-import { IEditableForest, initializeForest } from "../../../forest";
-import {
     JsonableTree,
     EmptyKey,
     Value,
     rootFieldKey,
     symbolFromKey,
     FieldKey,
-} from "../../../tree";
-import { brand, clone } from "../../../util";
+    IEditableForest,
+    initializeForest,
+    fieldSchema,
+    SchemaData,
+    InMemoryStoredSchemaRepository,
+    SchemaDataAndPolicy,
+    GlobalFieldKey,
+    ValueSchema,
+    LocalFieldKey,
+} from "../../../core";
+import { brand, clone, isAssignableTo, requireTrue } from "../../../util";
 import {
     defaultSchemaPolicy,
     getEditableTreeContext,
@@ -45,22 +43,26 @@ import {
     UnwrappedEditableTree,
     getField,
     indexSymbol,
-} from "../../../feature-libraries";
-import {
     getPrimaryField,
-    // eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/editable-tree/utilities";
+    namedTreeSchema,
+    ContextuallyTypedNodeData,
+    ContextuallyTypedNodeDataObject,
+    MarkedArrayLike,
+} from "../../../feature-libraries";
+
 import {
     FieldProxyTarget,
     NodeProxyTarget,
-    // eslint-disable-next-line import/no-internal-modules
+    // Allow importing from this specific file which is being tested:
+    /* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/editable-tree/editableTree";
+
 import {
     fullSchemaData,
-    PersonType,
+    Person,
     personSchema,
     addressSchema,
-    ComplexPhoneType,
+    ComplexPhone,
     complexPhoneSchema,
     stringSchema,
     phonesSchema,
@@ -88,9 +90,9 @@ function buildTestProxy(
     return [forest.schema, root];
 }
 
-function buildTestPerson(): readonly [SchemaDataAndPolicy, PersonType] {
+function buildTestPerson(): readonly [SchemaDataAndPolicy, Person] {
     const [schema, proxy] = buildTestProxy(personData);
-    return [schema, proxy as PersonType];
+    return [schema, proxy as Person];
 }
 
 describe("editable-tree: read-only", () => {
@@ -98,18 +100,18 @@ describe("editable-tree: read-only", () => {
         const [, proxy] = buildTestPerson();
         assert(isUnwrappedNode(proxy));
 
-        assert.equal(Object.keys(proxy).length, 5);
+        assert.equal(Object.keys(proxy).length, 6);
         {
-            const expectedKeys = new Set(["name", "age", "salary", "friends", "address"]);
+            const expectedKeys = new Set(["name", "age", "adult", "salary", "friends", "address"]);
             for (const key of Object.keys(proxy)) {
                 assert(expectedKeys.delete(key));
             }
             assert.equal(expectedKeys.size, 0);
         }
 
-        assert.equal(Reflect.ownKeys(proxy).length, 5);
+        assert.equal(Reflect.ownKeys(proxy).length, 6);
         {
-            const expectedKeys = new Set(["name", "age", "salary", "friends", "address"]);
+            const expectedKeys = new Set(["name", "age", "adult", "salary", "friends", "address"]);
             for (const key of Reflect.ownKeys(proxy)) {
                 assert(typeof key === "string");
                 assert(expectedKeys.delete(key));
@@ -153,7 +155,7 @@ describe("editable-tree: read-only", () => {
         });
 
         // primitive node of a sequence field is unwrapped into value
-        const nodeDescriptor = Object.getOwnPropertyDescriptor(proxy.address.phones, 0);
+        const nodeDescriptor = Object.getOwnPropertyDescriptor(proxy.address?.phones, 0);
         assert(nodeDescriptor !== undefined);
         assert.deepEqual(nodeDescriptor, {
             configurable: true,
@@ -279,14 +281,15 @@ describe("editable-tree: read-only", () => {
         const [, proxy] = buildTestPerson();
         assert.deepEqual(proxy[typeSymbol], personSchema);
         assert.equal(proxy[typeNameSymbol], personSchema.name);
+        assert(proxy.address !== undefined);
         assert.deepEqual(proxy.address[typeSymbol], addressSchema);
         assert.deepEqual(proxy.address[typeNameSymbol], addressSchema.name);
         assert.deepEqual(
-            (proxy.address.phones?.[2] as ComplexPhoneType)[typeSymbol],
+            (proxy.address.phones?.[2] as ComplexPhone)[typeSymbol],
             complexPhoneSchema,
         );
         assert.deepEqual(
-            (proxy.address.phones?.[2] as ComplexPhoneType)[typeNameSymbol],
+            (proxy.address.phones?.[2] as ComplexPhone)[typeNameSymbol],
             complexPhoneSchema.name,
         );
         assert.deepEqual(proxy[getField](brand("name")).getNode(0)[typeSymbol], stringSchema);
@@ -316,7 +319,7 @@ describe("editable-tree: read-only", () => {
     });
 
     it('"in" works as expected', () => {
-        const [, personProxy] = buildTestProxy(personData);
+        const [, personProxy] = buildTestPerson();
         assert(isUnwrappedNode(personProxy));
         // Confirm that methods on ProxyTarget are not leaking through.
         assert.equal("free" in personProxy, false);
@@ -334,7 +337,8 @@ describe("editable-tree: read-only", () => {
         assert("age" in personProxy);
         assert.equal(EmptyKey in personProxy, false);
         assert.equal("child" in personProxy, false);
-        assert.equal("zip" in (personProxy as PersonType).address, false);
+        assert(personProxy.address !== undefined);
+        assert.equal("city" in personProxy.address, false);
         // Value does not show up when empty:
         assert.equal(valueSymbol in personProxy, false);
 
@@ -544,7 +548,7 @@ describe("editable-tree: read-only", () => {
         const context = getEditableTreeContext(forest);
         assert.throws(
             () => (context.unwrappedRoot as EditableTree)["child" as FieldKey],
-            (e) => validateAssertionError(e, "undefined` values not allowed for primitive field"),
+            (e) => validateAssertionError(e, "`undefined` values not allowed for primitive fields"),
             "Expected exception was not thrown",
         );
         context.free();
@@ -603,20 +607,24 @@ describe("editable-tree: read-only", () => {
         assert.equal(proxy.salary, 10420.2);
         const cloned = clone(proxy.friends);
         assert.deepEqual(cloned, { Mat: "Mat" });
-        assert.deepEqual(Object.keys(proxy.address), ["street", "phones", "sequencePhones"]);
+        assert(proxy.address !== undefined);
+        assert.deepEqual(Object.keys(proxy.address), ["zip", "street", "phones", "sequencePhones"]);
         assert.equal(proxy.address.street, "treeStreet");
-        assert.equal(proxy.address.zip, undefined);
+        assert.equal(proxy.address.city, undefined);
     });
 
     it("read upwards", () => {
         const [, proxy] = buildTestPerson();
-        assert.deepEqual(Object.keys(proxy.address), ["street", "phones", "sequencePhones"]);
+        assert(proxy.address !== undefined);
+        assert.deepEqual(Object.keys(proxy.address), ["zip", "street", "phones", "sequencePhones"]);
+        assert.equal(proxy.address.city, undefined);
         assert.equal(proxy.address.street, "treeStreet");
         assert.equal(proxy.name, "Adam");
     });
 
     it("access array data", () => {
         const [, proxy] = buildTestPerson();
+        assert(proxy.address !== undefined);
         assert(isEditableField(proxy.address.phones));
         assert.equal(proxy.address.phones.length, 4);
         assert.equal(proxy.address.phones[1], 123456879);
@@ -626,6 +634,9 @@ describe("editable-tree: read-only", () => {
             {
                 number: "012345",
                 prefix: "0123",
+                extraPhones: {
+                    "0": "91919191",
+                },
             },
             ["112", "113"],
         ];
@@ -672,6 +683,7 @@ describe("editable-tree: read-only", () => {
     it("'getWithoutUnwrapping' does not unwrap primary fields", () => {
         const [, proxy] = buildTestPerson();
         // get the field having a node which follows the primary field schema
+        assert(proxy.address !== undefined);
         const phonesField = proxy.address[getField](brand("phones"));
         assert(isEditableField(phonesField));
         assert.equal(phonesField.length, 1);
@@ -714,3 +726,24 @@ describe("editable-tree: read-only", () => {
         }
     });
 });
+
+// This is only to cover the type checking, consider as a helper to properly define the contextually typed API
+{
+    type _checkTree = requireTrue<isAssignableTo<EditableTree, ContextuallyTypedNodeDataObject>>;
+    type _checkUnwrappedTree = requireTrue<
+        isAssignableTo<UnwrappedEditableTree, ContextuallyTypedNodeData>
+    >;
+    type _checkField = requireTrue<
+        isAssignableTo<ContextuallyTypedNodeData | undefined, UnwrappedEditableField>
+    >;
+    const x: ContextuallyTypedNodeDataObject = 0 as any as EditableTree;
+    const xx: MarkedArrayLike<ContextuallyTypedNodeData> = 0 as any as EditableField;
+
+    // TODO: there seems to be a bug in TypeCheck library, since
+    // this should fail, but it does not (undefined should break it).
+    type _checkFail = requireTrue<
+        isAssignableTo<UnwrappedEditableField, ContextuallyTypedNodeData>
+    >;
+    // This does fail, but it should check the same as the above
+    // const _dummyValue: ContextuallyTypedNodeData = 0 as any as UnwrappedEditableField;
+}

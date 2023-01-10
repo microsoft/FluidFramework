@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { RepairDataStore } from "../../../core";
 import {
     FieldChangeEncoder,
     FieldChangeHandler,
@@ -20,9 +19,18 @@ import {
     ModularChangeset,
     ChangesetLocalId,
 } from "../../../feature-libraries";
-import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../../rebase";
-import { FieldKindIdentifier } from "../../../schema-stored";
-import { AnchorSet, Delta, FieldKey, UpPath } from "../../../tree";
+import {
+    RepairDataStore,
+    makeAnonChange,
+    RevisionTag,
+    tagChange,
+    TaggedChange,
+    FieldKindIdentifier,
+    AnchorSet,
+    Delta,
+    FieldKey,
+    UpPath,
+} from "../../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
 import { assertDeltaEqual, deepFreeze } from "../../utils";
 

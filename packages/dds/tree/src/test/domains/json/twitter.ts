@@ -8,7 +8,7 @@ import {
     makeRandom,
     SpaceEfficientWordMarkovChain,
 } from "@fluid-internal/stochastic-test-utils";
-import { FieldKey } from "../../../tree";
+import { FieldKey } from "../../../core";
 import { brand } from "../../../util";
 import {
     createAlphabetFromUnicodeRange,

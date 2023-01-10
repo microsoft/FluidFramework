@@ -4,18 +4,17 @@
  */
 
 import type * as git from "@fluidframework/gitresources";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IExternalWriterConfig, IRepositoryManager } from "./definitions";
 import { BaseGitRestTelemetryProperties, GitRestLumberEventName } from "./gitrestTelemetryDefinitions";
+import { executeApiWithMetric } from "./helpers";
 
 export abstract class RepositoryManagerBase implements IRepositoryManager {
     constructor(
         protected readonly directory: string,
         protected readonly lumberjackBaseProperties: Record<string, any>,
         private readonly enableRepositoryManagerMetrics: boolean = false,
-    ) {}
+    ) { }
 
-    /* eslint-disable max-len */
     protected abstract getCommitCore(sha: string): Promise<git.ICommit>;
     protected abstract getCommitsCore(sha: string, count: number, externalWriterConfig?: IExternalWriterConfig): Promise<git.ICommitDetails[]>;
     protected abstract getTreeCore(root: string, recursive: boolean): Promise<git.ITree>;
@@ -31,7 +30,6 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
     protected abstract deleteRefCore(refId: string): Promise<void>;
     protected abstract getTagCore(tagId: string): Promise<git.ITag>;
     protected abstract createTagCore(tagParams: git.ICreateTagParams): Promise<git.ITag>;
-    /* eslint-enable max-len */
 
     public get path(): string {
         return this.directory;
@@ -201,20 +199,15 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
         api: (...args: T) => Promise<U>,
         apiArgs: T,
         apiName: string,
-        additionalProperties?: Record<string, any>): Promise<U> {
-        const metric = Lumberjack.newLumberMetric(
+        additionalProperties?: Record<string, any>,
+    ): Promise<U> {
+        return executeApiWithMetric(
+            async () => api(...apiArgs),
             apiName,
             {
                 ...this.lumberjackBaseProperties,
                 ...additionalProperties,
-            });
-        try {
-            const result = await api(...apiArgs);
-            metric.success(`RepositoryManager: ${apiName} success`);
-            return result;
-        } catch (error: any) {
-            metric.error(`RepositoryManager: ${apiName} error`, error);
-            throw error;
-        }
+            }
+        );
     }
 }

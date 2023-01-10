@@ -24,15 +24,17 @@ import {
     Commit,
     EditManager,
     ICachedValue,
-    Index,
     MutableSummaryData,
     ReadonlySummaryData,
     recordDependency,
     SessionId,
+} from "../core";
+import {
+    Index,
     SummaryElement,
     SummaryElementParser,
     SummaryElementStringifier,
-} from "../core";
+} from "../shared-tree-core";
 
 /**
  * The storage key for the blob in the summary containing EditManager data
@@ -49,7 +51,7 @@ const stringKey = "String";
 // TODO: Try to reduce this to a single type parameter
 // TODO: Move logic into Rebaser if possible
 export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any, TChangeset>>
-    implements Index<TChangeset>, SummaryElement
+    implements Index, SummaryElement
 {
     public readonly summaryElement?: SummaryElement = this;
     public readonly key = "EditManager";
