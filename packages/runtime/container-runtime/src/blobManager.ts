@@ -345,8 +345,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         assert(this.runtime.attachState === AttachState.Attached,
             0x385 /* For clarity and paranoid defense against adding future attachment states */);
 
-        // Create a local ID for the blob. When the blob is uploaded and resolved, a local ID to storage ID mapping
-        // is created and the local ID is returned to the caller.
+        // Create a local ID for the blob. After uploading it to storage and before returning it, a local ID to
+        // storage ID mapping is created.
         const localId = uuid();
         const pendingEntry: PendingBlob = {
             blob,
@@ -394,7 +394,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     }
 
     private onUploadResolve(localId: string, response: ICreateBlobResponse) {
-        assert(localId !== undefined, "local ID not available");
         const entry = this.pendingBlobs.get(localId);
         assert(entry?.status === PendingBlobStatus.OnlinePendingUpload ||
             entry?.status === PendingBlobStatus.OfflinePendingUpload,
@@ -503,6 +502,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
         // Set up a mapping from local ID to storage ID. This is crucial since without this the blob cannot be
         // requested from the server.
+        // Note: The check for undefined is needed for back-compat when localId was not part of the BlobAttach op that
+        // was sent when online.
         if (message.metadata?.localId !== undefined) {
             this.setRedirection(message.metadata.localId, message.metadata.blobId);
         }
