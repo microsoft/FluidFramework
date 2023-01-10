@@ -4,8 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangeRebaser, TaggedChange, noFailure, verifyChangeRebaser } from "../../rebase";
-import { AnchorSet } from "../../tree";
+import { ChangeRebaser, TaggedChange, noFailure, verifyChangeRebaser, AnchorSet } from "../../core";
 
 const counterRebaser: ChangeRebaser<number> = {
     compose: (changes: TaggedChange<number>[]) =>

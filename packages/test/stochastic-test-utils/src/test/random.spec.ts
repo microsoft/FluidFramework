@@ -304,8 +304,6 @@ describe("Random", () => {
 
             // Predetermined bit patterns to verify that UUIDs are correctly constructed from four uint32s.
 
-            // RATIONALE: Improves readability, even if it's a couple characters over 'max-len'.
-            /* eslint-disable max-len */
             for (const { u32x4, expected } of [
                 // Validate that the 2 predetermined on bits are correctly set.
                 { u32x4: [0x00000000, 0x00000000, 0x00000000, 0x00000000], expected: "00000000-0000-4000-8000-000000000000" },
@@ -349,7 +347,6 @@ describe("Random", () => {
                 { u32x4: [0x00000004, 0x00000004, 0x00000004, 0x00000004], expected: "00000004-0000-4000-8000-000180000001" },
                 { u32x4: [0x00000002, 0x00000002, 0x00000002, 0x00000002], expected: "00000002-0000-4000-8000-000040000000" },
             ]) {
-            /* eslint-enable max-len */
                 it(`[${u32x4.map((u32) => u32.toString(16).padStart(8, "0"))}] -> ${expected}`, () => {
                     const [a, b, c, d] = u32x4;
                     const actual = makeUuid4(a, b, c, d);

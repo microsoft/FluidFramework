@@ -5,7 +5,7 @@
 
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { unreachableCase } from "@fluidframework/common-utils";
-import { AnchorSet, FieldKey, UpPath } from "../../tree";
+import { AnchorSet, FieldKey, UpPath } from "../../core";
 import { singleTextCursor } from "../../feature-libraries";
 import {
     SequenceEditBuilder,

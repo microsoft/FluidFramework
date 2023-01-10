@@ -186,6 +186,11 @@ interface LocalPartialSequenceLength extends PartialSequenceLength {
     localSeq: number;
 }
 
+export interface PartialSequenceLengthsOptions {
+    verifier?: (partialLengths: PartialSequenceLengths) => void;
+    zamboni: boolean;
+}
+
 /**
  * Keeps track of partial sums of segment lengths for all sequence numbers in the current collaboration window.
  * Only used during active collaboration.
@@ -232,8 +237,7 @@ interface LocalPartialSequenceLength extends PartialSequenceLength {
  * concurrently removing the same segment. See the field's documentation for more details.
  */
 export class PartialSequenceLengths {
-    public static options = {
-        verify: false,
+    public static options: PartialSequenceLengthsOptions = {
         zamboni: true,
     };
 
@@ -318,10 +322,7 @@ export class PartialSequenceLengths {
             combinedPartialLengths.zamboni(collabWindow);
         }
 
-        if (PartialSequenceLengths.options.verify) {
-            verify(combinedPartialLengths);
-        }
-
+        PartialSequenceLengths.options.verifier?.(combinedPartialLengths);
         return combinedPartialLengths;
     }
 
@@ -382,9 +383,7 @@ export class PartialSequenceLengths {
             }
         }
 
-        if (PartialSequenceLengths.options.verify) {
-            verify(combinedPartialLengths);
-        }
+        PartialSequenceLengths.options.verifier?.(combinedPartialLengths);
         return combinedPartialLengths;
     }
 
@@ -649,9 +648,8 @@ export class PartialSequenceLengths {
         if (PartialSequenceLengths.options.zamboni) {
             this.zamboni(collabWindow);
         }
-        if (PartialSequenceLengths.options.verify) {
-            verify(this);
-        }
+
+        PartialSequenceLengths.options.verifier?.(this);
     }
 
     /**
@@ -875,7 +873,7 @@ function verifyPartialLengths(
     return count;
 }
 
-function verify(partialSeqLengths: PartialSequenceLengths) {
+export function verify(partialSeqLengths: PartialSequenceLengths) {
     if (partialSeqLengths["clientSeqNumbers"]) {
         let cliCount = 0;
         for (const cliSeq of partialSeqLengths["clientSeqNumbers"]) {

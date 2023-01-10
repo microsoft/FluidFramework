@@ -8,20 +8,21 @@ module.exports = {
         require.resolve("@fluidframework/eslint-config-fluid/strict"),
         "prettier",
     ],
-    rules: {
-        // TODO: remove once dependency on base config has been updated.
-        "@typescript-eslint/explicit-member-accessibility": [
-            "error",
-            {
-                accessibility: "explicit",
-                overrides: {
-                    accessors: "explicit",
-                    constructors: "explicit",
-                    methods: "explicit",
-                    properties: "explicit",
-                    parameterProperties: "explicit",
-                },
-            },
-        ],
-    },
+    rules: { },
+    overrides: [
+        {
+            files: ["tests/*"],
+            rules: {
+                // Fine for tests to use node.js modules
+                "import/no-nodejs-modules": "off",
+
+                // Since the "tests" directory is adjacent to "src", and this package (intentionally) does not expose
+                // a single exports roll-up, reaching into "src" is required.
+                "import/no-internal-modules": "off",
+
+                // Fine for tests to import from dev dependencies
+                "import/no-extraneous-dependencies": ["error", { devDependencies: true }]
+            }
+        }
+    ]
 };

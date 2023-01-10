@@ -25,7 +25,13 @@ export {
 	NamedFluidDataStoreRegistryEntries,
 	NamedFluidDataStoreRegistryEntry,
 } from "./dataStoreRegistry";
-export { gcBlobKey, IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbageCollection";
+export {
+    gcTreeKey,
+    gcBlobPrefix,
+    gcTombstoneBlobKey,
+    IGarbageCollectionData,
+    IGarbageCollectionDetailsBase,
+} from "./garbageCollection";
 export { IAttachMessage, IEnvelope, IInboundSignalMessage, InboundAttachMessage, ISignalEnvelope } from "./protocol";
 export {
 	blobCountPropertyName,
@@ -33,7 +39,9 @@ export {
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
 	IGarbageCollectionNodeData,
+    IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
+    IGarbageCollectionSummaryDetailsLegacy,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNode,
