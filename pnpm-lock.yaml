@@ -6031,6 +6031,7 @@ importers:
       '@fluidframework/odsp-driver-definitions': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
       '@rushstack/eslint-config': ^2.5.1
       '@types/mocha': ^9.1.1
+      '@types/node': ^14.18.0
       concurrently: ^6.2.0
       cross-env: ^7.0.2
       eslint: ~8.6.0
@@ -6053,6 +6054,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/mocha': 9.1.1
+      '@types/node': 14.18.36
       concurrently: 6.3.0
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -22523,7 +22525,7 @@ packages:
       webpack-cli: 4.x.x
     dependencies:
       webpack: 5.75.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_5g4oj3hy5spohe65dtfjx2t5f4
+      webpack-cli: 4.10.0_webpack@5.75.0
     dev: true
 
   /@webpack-cli/info/1.5.0_webpack-cli@4.10.0:
