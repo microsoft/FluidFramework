@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line unicorn/prefer-node-protocol
 import { strict as assert } from "assert";
 import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
 import {
@@ -341,7 +342,7 @@ describe("Cell", () => {
             private readonly cell2: ISharedCell;
             private readonly containerRuntimeFactory: MockContainerRuntimeFactory;
 
-            public constructor() {
+            constructor() {
                 this.containerRuntimeFactory = new MockContainerRuntimeFactory();
                 this.cell1 = createConnectedCell("cell1", this.containerRuntimeFactory);
                 this.cell2 = createConnectedCell("cell2", this.containerRuntimeFactory);

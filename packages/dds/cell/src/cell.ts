@@ -45,8 +45,7 @@ interface ICellValue {
 
 // TODO: this should reference a shared interface in @fluidframework/runtime-definitions so it's usable from
 // here and @fluidframework/attributor
-
-export interface AttributionInfo {
+interface AttributionInfo {
     /**
      * The user that performed the change.
      */
@@ -57,12 +56,14 @@ export interface AttributionInfo {
     timestamp: number;
 }
 
+/**
+ * {@inheritDoc CellAttributor}
+ */
 export class CellAttributor {
 
     private info: AttributionInfo;
 
-    constructor(initialInfo?: AttributionInfo) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    public constructor(initialInfo?: AttributionInfo) {
         this.info = initialInfo ?? {} as AttributionInfo;
     }
 
@@ -142,7 +143,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
      * @param runtime - The data store runtime to which the `SharedCell` belongs.
      * @param id - Unique identifier for the `SharedCell`.
      */
-    public constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, trackAttribution?: boolean) {
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, trackAttribution?: boolean) {
         super(id, runtime, attributes, "fluid_cell_");
         this.trackAttribution = trackAttribution ?? false;
     }
