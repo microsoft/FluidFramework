@@ -37,6 +37,7 @@ export {
     JsonableTree,
     Delta,
     rootFieldKey,
+    rootField,
     FieldScope,
     GlobalFieldKeySymbol,
     symbolFromKey,

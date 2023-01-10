@@ -73,6 +73,10 @@ export {
     TaggedChange,
     RepairDataStore,
     ReadonlyRepairDataStore,
+    rootField,
+    rootFieldKeySymbol,
+    fieldSchema,
+    namedTreeSchema,
 } from "./core";
 
 export {
@@ -161,6 +165,8 @@ export {
     OptionalFieldEditBuilder,
     SequenceFieldEditBuilder,
     SequenceField,
+    FieldKinds,
+    singleTextCursor,
 } from "./feature-libraries";
 
 export { ISharedTree, SharedTreeFactory } from "./shared-tree";
