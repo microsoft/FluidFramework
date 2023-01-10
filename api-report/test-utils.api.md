@@ -235,10 +235,11 @@ export const mockConfigProvider: (settings?: Record<string, ConfigTypes>) => ICo
 // @public
 export const retryWithEventualValue: <T>(callback: () => Promise<T>, check: (value: T) => boolean, defaultValue: T, maxTries?: number, backOffMs?: number) => Promise<T>;
 
-// @public (undocumented)
+// @public
 export function summarizeNow(summarizer: ISummarizer, reason?: string): Promise<{
     summaryTree: ISummaryTree;
     summaryVersion: string;
+    summaryRefSeq: number;
 }>;
 
 // @public (undocumented)
