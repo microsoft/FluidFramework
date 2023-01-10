@@ -32,14 +32,14 @@ import {
 import {
     getInputLength,
     getOutputLength,
-    isActiveReattach,
     isAttach,
-    isConflicted,
-    isConflictedDetach,
-    isConflictedReattach,
     isDetachMark,
     isReattach,
     isSkipMark,
+    isActiveReattach,
+    isConflicted,
+    isConflictedDetach,
+    isConflictedReattach,
     dequeueRelatedReattaches,
     isBlockedReattach,
 } from "./utils";

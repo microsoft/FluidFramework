@@ -89,6 +89,7 @@ export class MarkQueue<T> {
      * Dequeues the first `length` sized portion of the next mark.
      * The caller must verify that the next mark (as returned by peek) is longer than this length.
      * @param length - The length to dequeue, measured in the output context.
+     * @param includeBlockedCells - If true, blocked marks that target empty cells will note be treated as 0-length.
      */
     public dequeueOutput(length: number, includeBlockedCells: boolean = false): Mark<T> {
         const mark = this.dequeue();
