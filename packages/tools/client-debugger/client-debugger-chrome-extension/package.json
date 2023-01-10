@@ -37,7 +37,7 @@
     "test:realsvc:coverage": "npm run test:realsvc:run:coverage",
     "test:realsvc:run": "jest --detectOpenHandles",
     "test:realsvc:run:coverage": "jest  --detectOpenHandles --coverage --ci --reporters=default --reporters=jest-junit",
-    "tsc": "tsc --pretty",
+    "tsc": "tsc",
     "webpack": "webpack --env production",
     "webpack:dev": "webpack --env development"
   },
