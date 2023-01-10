@@ -23,8 +23,9 @@ import {
     LocalCompressedId,
     OpSpaceCompressedId,
     SessionId,
+    fail,
+    Mutable,
 } from "../../id-compressor";
-import { fail, Mutable } from "../../util";
 import {
     Client,
     IdCompressorTestNetwork,
