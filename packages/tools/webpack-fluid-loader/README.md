@@ -81,13 +81,13 @@ or in an optional `config.json` file in the `baseDir` passed into `webpack-fluid
 To use Azure Fluid Relay, [provision a Fluid Relay instance](https://learn.microsoft.com/en-us/azure/azure-fluid-relay/how-tos/provision-fluid-azure-portal) in the Azure Portal.
 To select the deployment region, consult [the availability table](https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/?products=fluid-relay) for the Azure Fluid Relay product<sup id="a1">[1](#f1)</sup>.
 
-After provisioning, the connection arguments are available in the Azure Portal under the 'Access Keys' tab<sup id="a2">[2](#f2)</sup>.
+After provisioning, the connection arguments are available in the Azure Portal under the 'Access Key' tab<sup id="a2">[2](#f2)</sup>.
 
 When connecting to the Azure Fluid Relay service, you must specify 'enableWholeSummaryUpload=true'.
 
 
 ```sh
-# Substitute the 'Tenant Id', 'Primary Key' and 'Service Endpoint' found under 'Access Keys' in Azure Portal
+# Substitute the 'Tenant Id', 'Primary Key' and 'Service Endpoint' found under 'Access Key' in Azure Portal
 npm run start:r11s --env mode=r11s
                    --env tenantId=$TenantId \
                    --env tenantSecret=$PrimaryKey \
