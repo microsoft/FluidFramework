@@ -78,7 +78,6 @@ export {
     rootField,
     rootFieldKeySymbol,
     fieldSchema,
-    namedTreeSchema,
     SchemaEvents,
     ForestEvents,
 } from "./core";
@@ -180,6 +179,7 @@ export {
     SequenceField,
     FieldKinds,
     singleTextCursor,
+    namedTreeSchema,
 } from "./feature-libraries";
 
 export { ISharedTree, SharedTreeFactory } from "./shared-tree";
