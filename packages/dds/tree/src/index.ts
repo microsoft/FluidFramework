@@ -80,6 +80,7 @@ export {
     fieldSchema,
     SchemaEvents,
     ForestEvents,
+    TreeSchemaBuilder,
 } from "./core";
 
 export {
