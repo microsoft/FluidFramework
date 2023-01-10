@@ -77,6 +77,7 @@
     "react-dom": "^17.0.1"
   },
   "devDependencies": {
+    "@fluidframework/build-common": "^1.1.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
