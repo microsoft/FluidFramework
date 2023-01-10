@@ -89,6 +89,9 @@ function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage):
     }
 }
 
+// TODO
+export const GroupedBatchOpType = "groupedBatch";
+
 /**
  * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
@@ -140,6 +143,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     // the last message that got serialized.
     private initSequenceNumber: number = 0;
 
+    private virtualSequenceNumber: number = 0;
+
     private readonly _inbound: DeltaQueue<ISequencedDocumentMessage>;
     private readonly _inboundSignal: DeltaQueue<ISignalMessage>;
 
@@ -168,19 +173,25 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         return this._inboundSignal;
     }
 
+    // TODO: possible deprecate
     public get initialSequenceNumber(): number {
         return this.initSequenceNumber;
     }
 
+    // TODO: possible deprecate
     public get lastSequenceNumber(): number {
+        // This variable now refers to virtual sequence number
         return this.lastProcessedSequenceNumber;
     }
 
+    // TODO: possible deprecate
     public get lastMessage() {
         return this.lastProcessedMessage;
     }
 
+    // TODO: possible deprecate
     public get lastKnownSeqNumber() {
+        // This variable now refers to virtual sequence number
         return this.lastObservedSeqNumber;
     }
 
@@ -188,6 +199,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         return this.baseTerm;
     }
 
+    // TODO: possible deprecate
     public get minimumSequenceNumber(): number {
         return this.minSequenceNumber;
     }
@@ -263,7 +275,17 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             assert(batch[batch.length - 1].metadata?.batch === false, 0x3cb /* no end batch markup */);
         }
 
-        this.connectionManager.sendMessages(batch);
+        // TODO: revisit
+        if (batch.length >= 500) {
+            this.connectionManager.sendMessages([{
+                type: GroupedBatchOpType,
+                clientSequenceNumber: batch[0].clientSequenceNumber, // TODO
+                referenceSequenceNumber: batch[0].referenceSequenceNumber, // TODO
+                contents: batch,
+            }]);
+        } else {
+            this.connectionManager.sendMessages(batch);
+        }
 
         assert(this.messageBuffer.length === 0, 0x3cc /* reentrancy */);
     }
@@ -369,6 +391,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         props.connectionLastQueuedSequenceNumber = this.lastQueuedSequenceNumber;
         props.connectionLastObservedSeqNumber = this.lastObservedSeqNumber;
 
+        // TODO
+
         const checkpointSequenceNumber = connection.checkpointSequenceNumber;
         this._checkpointSequenceNumber = checkpointSequenceNumber;
         if (checkpointSequenceNumber !== undefined) {
@@ -425,6 +449,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         this.minSequenceNumber = minSequenceNumber;
         this.lastQueuedSequenceNumber = sequenceNumber;
         this.lastObservedSeqNumber = sequenceNumber;
+        this.virtualSequenceNumber = sequenceNumber; // TODO
 
         // We will use same check in other places to make sure all the seq number above are set properly.
         assert(this.handler === undefined, 0x0e2 /* "DeltaManager already has attached op handler!" */);
@@ -540,6 +565,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         let opsFromFetch = false;
 
         const opListener = (op: ISequencedDocumentMessage) => {
+            // TODO: this assert hits in e2e tests
             assert(op.sequenceNumber === this.lastQueuedSequenceNumber, 0x23a /* "seq#'s" */);
             // Ops that are coming from this request should not cancel itself.
             // This is useless for known ranges (to is defined) as it means request is over either way.
@@ -745,6 +771,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             }
         }
 
+        // TODO
         this.updateLatestKnownOpSeqNumber(messages[messages.length - 1].sequenceNumber);
 
         const n = this.previouslyProcessedMessage?.sequenceNumber;
@@ -783,12 +810,27 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                     }
                 }
             } else if (message.sequenceNumber !== this.lastQueuedSequenceNumber + 1) {
+                // TODO: might not need to do anything here (just circles back to else below)
                 this.pending.push(message);
                 this.fetchMissingDeltas(reason, message.sequenceNumber);
             } else {
+                // TODO: virtualization here (not for some of these properties though since they aren't public)
                 this.lastQueuedSequenceNumber = message.sequenceNumber;
                 this.previouslyProcessedMessage = message;
-                this._inbound.push(message);
+                if (message.type === GroupedBatchOpType) {
+                    // TODO: do we want to process the grouped batch op?
+                    for (const subMessage of message.contents as IDocumentMessage[]) {
+                        this.updateLatestKnownOpSeqNumber(++this.virtualSequenceNumber);
+                        this._inbound.push({
+                            ...message, // This will override the property difference between ISequencedDocumentMessage and IDocumentMessage
+                            ...subMessage,
+                            sequenceNumber: this.virtualSequenceNumber,
+                        });
+                    }
+                } else {
+                    this.updateLatestKnownOpSeqNumber(++this.virtualSequenceNumber);
+                    this._inbound.push({...message, sequenceNumber: this.virtualSequenceNumber});
+                }
             }
         }
 
@@ -846,6 +888,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         this.minSequenceNumber = message.minimumSequenceNumber;
 
+        // TODO: this hits in e2e tests
         if (message.sequenceNumber !== this.lastProcessedSequenceNumber + 1) {
             // pre-0.58 error message: nonSequentialSequenceNumber
             throw new DataCorruptionError("Found a non-Sequential sequenceNumber", {
@@ -982,6 +1025,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     }
 
     private updateLatestKnownOpSeqNumber(seq: number) {
+        // TODO: check in processInboundMessage will fail
         if (this.lastObservedSeqNumber < seq) {
             this.lastObservedSeqNumber = seq;
         }
