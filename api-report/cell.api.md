@@ -21,6 +21,8 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
     delete(): void;
     empty(): boolean;
     get(): Serializable<T> | undefined;
+    // Warning: (ae-forgotten-export) The symbol "CellAttributor" needs to be exported by the entry point index.d.ts
+    getAttributor(): CellAttributor;
     set(value: Serializable<T>): void;
 }
 
@@ -32,13 +34,14 @@ export interface ISharedCellEvents<T> extends ISharedObjectEvents {
 
 // @public
 export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> implements ISharedCell<T> {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, trackAttribution?: boolean);
     // @internal (undocumented)
     protected applyStashedOp(content: unknown): unknown;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCell;
     delete(): void;
     empty(): boolean;
     get(): Serializable<T> | undefined;
+    getAttributor(): CellAttributor;
     static getFactory(): IChannelFactory;
     protected initializeLocalCore(): void;
     // (undocumented)

@@ -43,6 +43,40 @@ interface ICellValue {
     value: unknown;
 }
 
+// TODO: this should reference a shared interface in @fluidframework/runtime-definitions so it's usable from
+// here and @fluidframework/attributor
+
+export interface AttributionInfo {
+    /**
+     * The user that performed the change.
+     */
+    user: string;
+    /**
+     * When the change happened.
+     */
+    timestamp: number;
+}
+
+export class CellAttributor {
+
+    private info: AttributionInfo;
+
+    constructor(initialInfo?: AttributionInfo) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        this.info = initialInfo ?? {} as AttributionInfo;
+    }
+
+    public getAttributionInfo(): AttributionInfo {
+        return this.info;
+    }
+
+    public setAttributionInfo(message: ISequencedDocumentMessage): void {
+        this.info.user = message.clientId;
+        this.info.timestamp = message.timestamp;
+    }
+
+}
+
 const snapshotFileName = "header";
 
 /**
@@ -92,14 +126,25 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     private readonly pendingMessageIds: number[] = [];
 
     /**
+     * This enables the cell to store the attribution information which can be accessed with the runtime
+     * (i.e. who creeated the content and when it was created)
+     *
+     * default: false
+     */
+    private readonly trackAttribution: boolean;
+
+    private readonly attributor: CellAttributor = new CellAttributor();
+
+    /**
      * Constructs a new `SharedCell`.
      * If the object is non-local an id and service interfaces will be provided.
      *
      * @param runtime - The data store runtime to which the `SharedCell` belongs.
      * @param id - Unique identifier for the `SharedCell`.
      */
-    public constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
+    public constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, trackAttribution?: boolean) {
         super(id, runtime, attributes, "fluid_cell_");
+        this.trackAttribution = trackAttribution ?? false;
     }
 
     /**
@@ -156,6 +201,13 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
      */
     public empty(): boolean {
         return this.data === undefined;
+    }
+
+    /**
+     * {@inheritDoc ISharedCell.getAttributor}
+     */
+    public getAttributor(): CellAttributor {
+        return this.attributor;
     }
 
     /**
@@ -229,12 +281,20 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
                 this.pendingMessageIds.shift();
                 // We got an ACK. Update messageIdObserved.
                 this.messageIdObserved = cellOpMetadata.pendingMessageId;
+                // update the attributor
+                if (this.trackAttribution) {
+                    this.attributor.setAttributionInfo(message);
+                }
+
             }
             return;
         }
 
         if (message.type === MessageType.Operation && !local) {
             const op = message.contents as ICellOperation;
+            if (this.trackAttribution) {
+                this.attributor.setAttributionInfo(message);
+            }
             this.applyInnerOp(op);
         }
     }

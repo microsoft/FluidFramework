@@ -5,6 +5,7 @@
 
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import { Serializable } from "@fluidframework/datastore-definitions";
+import { CellAttributor } from "./cell";
 
 /**
  * Events emitted by {@link ISharedCell}.
@@ -101,6 +102,13 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
      * Delete the value from the cell.
      */
     delete(): void;
+
+    /**
+     * Retrieves the cell attributor.
+     *
+     * @returns - the value of the cell
+     */
+    getAttributor(): CellAttributor;
 }
 
 /**
