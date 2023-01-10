@@ -33,13 +33,14 @@ import {
     OpSpaceCompressedId,
     getIds,
     assertIsStableId,
+    getOrCreate,
+    fail,
 } from "../../id-compressor";
 import type {
     IdCreationRange,
     SerializedIdCompressorWithOngoingSession,
     SerializedIdCompressorWithNoSession,
 } from "../../id-compressor";
-import { fail, getOrCreate } from "../../util";
 
 /**
  * A readonly `Map` which is known to contain a value for every possible key

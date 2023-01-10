@@ -4,7 +4,8 @@
  */
 
 import { Mark, MarkList, ObjectMark, Skip } from "./format";
-import { isObjMark, isSkipMark, MoveEffectTable, tryExtendMark } from "./utils";
+import { MoveEffectTable } from "./moveEffectTable";
+import { isObjMark, isSkipMark, tryExtendMark } from "./utils";
 
 /**
  * Helper class for constructing an offset list of marks that...
