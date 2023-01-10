@@ -48,7 +48,7 @@
     "@fluidframework/merge-tree": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
     "@fluidframework/runtime-definitions": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
     "@fluidframework/sequence": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
-    "@types/node": "^14.18.0",
+    "@types/node": "^14.18.36",
     "monaco-editor": "^0.30.0",
     "react": "^17.0.1"
   },
