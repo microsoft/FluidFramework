@@ -5,7 +5,8 @@ Test class method
 ### Signature {#testclassmethod-signature}
 
 ```typescript
-/** @sealed */<br/>testClassMethod(input: TTypeParameterA): TTypeParameterA;
+/** @sealed */
+testClassMethod(input: TTypeParameterA): TTypeParameterA;
 ```
 
 ### Remarks {#testclassmethod-remarks}

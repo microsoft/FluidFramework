@@ -95,7 +95,8 @@ A test `@sealed` method.
 ##### Signature {#sealedmethod-signature}
 
 ```typescript
-/** @sealed */<br/>protected sealedMethod(): string;
+/** @sealed */
+protected sealedMethod(): string;
 ```
 
 ##### Returns {#sealedmethod-returns}
@@ -111,7 +112,8 @@ A test `@virtual` method.
 ##### Signature {#virtualmethod-signature}
 
 ```typescript
-/** @virtual */<br/>protected virtualMethod(): number;
+/** @virtual */
+protected virtualMethod(): number;
 ```
 
 ##### Returns {#virtualmethod-returns}

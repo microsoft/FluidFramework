@@ -5,7 +5,8 @@ Test class getter-only property
 ### Signature {#testclassgetterproperty-signature}
 
 ```typescript
-/** @virtual */<br/>get testClassGetterProperty(): number;
+/** @virtual */
+get testClassGetterProperty(): number;
 ```
 
 ### Remarks {#testclassgetterproperty-remarks}

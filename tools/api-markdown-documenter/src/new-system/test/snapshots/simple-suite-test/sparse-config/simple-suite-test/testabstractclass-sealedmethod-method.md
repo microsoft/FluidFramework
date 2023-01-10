@@ -5,7 +5,8 @@ A test `@sealed` method.
 ### Signature {#sealedmethod-signature}
 
 ```typescript
-/** @sealed */<br/>protected sealedMethod(): string;
+/** @sealed */
+protected sealedMethod(): string;
 ```
 
 ### Returns {#sealedmethod-returns}

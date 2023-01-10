@@ -5,7 +5,8 @@ Overrides [TestAbstractClass.virtualMethod](docs/simple-suite-test/testabstractc
 ### Signature {#virtualmethod-signature}
 
 ```typescript
-/** @override */<br/>protected virtualMethod(): number;
+/** @override */
+protected virtualMethod(): number;
 ```
 
 ### Returns {#virtualmethod-returns}
