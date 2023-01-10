@@ -21,8 +21,7 @@ import { SummaryType } from "@fluidframework/protocol-definitions";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils";
 
 /**
- * Validates that the unreferenced timestamp is correctly set in the GC summary tree. Also, the timestamp is removed
- * when an unreferenced node becomes referenced again.
+ * Validates that an unreferenced datastore and blob goes through all the GC phases without overlapping.
  */
 describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
     const inactiveTimeoutMs = 100;
@@ -115,6 +114,7 @@ describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
         mainDataStore._root.set("send", "op");
         await provider.ensureSynchronized();
         summaryTree = (await summarizeNow(summarizer)).summaryTree;
+        // GC state is a handle meaning it is the same as before, meaning nothing is tombstoned.
         assert(summaryTree.tree[gcTreeKey].type === SummaryType.Handle, "GC tree should not have changed");
 
         // Wait sweep timeout
@@ -123,9 +123,9 @@ describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
         summaryTree = (await summarizeNow(summarizer)).summaryTree;
         const rootGCTree = summaryTree.tree[gcTreeKey];
-        assert (rootGCTree !== undefined, "GC tree should be a tree");
-        assert(rootGCTree.type === SummaryType.Tree, `GC data should be a tree`);
+        assert(rootGCTree?.type === SummaryType.Tree, `GC data should be a tree`);
         tombstoneState = getGCTombstoneStateFromSummary(summaryTree);
+        // After sweep timeout the datastore and blob should be tombstoned.
         assert(tombstoneState !== undefined, "Should have tombstone state");
         assert(tombstoneState.includes(dataStoreHandle.absolutePath), "Datastore should be tombstoned");
         assert(tombstoneState.includes(blobHandle.absolutePath), "Blob should be tombstoned");
