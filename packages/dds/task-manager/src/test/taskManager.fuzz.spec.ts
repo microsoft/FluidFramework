@@ -284,8 +284,8 @@ function runTaskManagerFuzz(
                 taskManager.volunteerForTask(taskId).catch((e: Error) => {
                     // We expect an error to be thrown if we are disconnected while volunteering
                     const expectedErrors = [
-                        `Disconnected before acquiring task assignment: ${taskId}`,
-                        `Abandoned before acquiring task assignment: ${taskId}`,
+                        "Disconnected before acquiring task assignment",
+                        "Abandoned before acquiring task assignment",
                     ];
                     if (!expectedErrors.includes(e.message)) {
                         throw e;

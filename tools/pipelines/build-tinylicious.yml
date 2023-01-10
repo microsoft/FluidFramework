@@ -73,4 +73,3 @@ extends:
     taskLint: true
     taskTest: [] # no tests
     namespace: false
-    buildNumberInPatch: true
