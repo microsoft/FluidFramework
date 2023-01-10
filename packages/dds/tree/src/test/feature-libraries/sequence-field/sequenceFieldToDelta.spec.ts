@@ -124,7 +124,7 @@ describe("SequenceField - toDelta", () => {
             Change.modify(1, childChange1),
         ]);
         const actual = toDelta(changeset);
-        const expected: Delta.MarkList = [childChange1Delta];
+        const expected: Delta.MarkList = [1, childChange1Delta];
         assertMarkListEqual(actual, expected);
     });
 

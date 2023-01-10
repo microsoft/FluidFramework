@@ -4,11 +4,10 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { clone, fail, getOrAddEmptyToMap, StackyIterator } from "../../util";
+import { clone, fail, getOrAddEmptyToMap } from "../../util";
 import { RevisionTag, TaggedChange } from "../../core";
 import { IdAllocator } from "../modular-schema";
 import {
-    applyMoveEffectsToMark,
     getInputLength,
     getOutputLength,
     isAttach,
@@ -19,21 +18,12 @@ import {
     isReattach,
     isNewAttach,
     isSkipMark,
-    MoveEffectTable,
-    newMoveEffectTable,
-    removeMoveDest,
-    splitMarkOnInput,
-    splitMarkOnOutput,
     isAttachInGap,
     isActiveReattach,
     isObjMark,
     isSkipLikeReattach,
     isConflictedDetach,
-    updateMoveSrcDetacher,
-    updateMoveSrcPairing,
-    updateMoveDestPairing,
-    PairedMarkUpdate,
-    lineUpRelatedReattaches,
+    dequeueRelatedReattaches,
     isSkipLikeDetach,
 } from "./utils";
 import {
@@ -52,6 +42,16 @@ import {
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
+import {
+    MoveEffectTable,
+    newMoveEffectTable,
+    PairedMarkUpdate,
+    removeMoveDest,
+    updateMoveDestPairing,
+    updateMoveSrcDetacher,
+    updateMoveSrcPairing,
+} from "./moveEffectTable";
+import { MarkQueue } from "./markQueue";
 
 /**
  * Rebases `change` over `base` assuming they both apply to the same initial state.
@@ -174,37 +174,39 @@ function rebaseMarkList<TNodeChange>(
     }
 
     moveEffects.allowMerges = true;
+
+    // TODO: It's not convenient to store splitBaseMarks for cross-field move effects.
     return applyMoveEffects(splitBaseMarks, factory.list, moveEffects);
 }
 
 class RebaseQueue<T> {
     private reattachOffset: number = 0;
-    private readonly baseMarks: StackyIterator<Mark<T>>;
-    private readonly newMarks: StackyIterator<Mark<T>>;
+    private readonly baseMarks: MarkQueue<T>;
+    private readonly newMarks: MarkQueue<T>;
 
     public constructor(
-        private readonly baseRevision: RevisionTag | undefined,
+        baseRevision: RevisionTag | undefined,
         baseMarks: Changeset<T>,
         newMarks: Changeset<T>,
-        private readonly genId: IdAllocator,
-        readonly moveEffects: MoveEffectTable<T>,
+        genId: IdAllocator,
+        moveEffects: MoveEffectTable<T>,
     ) {
-        this.baseMarks = new StackyIterator(baseMarks);
-        this.newMarks = new StackyIterator(newMarks);
+        this.baseMarks = new MarkQueue(baseMarks, baseRevision, moveEffects, genId);
+        this.newMarks = new MarkQueue(newMarks, undefined, moveEffects, genId, true);
     }
 
     public isEmpty(): boolean {
-        return (this.getNextBaseMark() ?? this.getNextNewMark()) === undefined;
+        return this.baseMarks.isEmpty() && this.newMarks.isEmpty();
     }
 
     public pop(): RebaseMarks<T> {
-        const baseMark = this.getNextBaseMark();
-        const newMark = this.getNextNewMark();
+        const baseMark = this.baseMarks.peek();
+        const newMark = this.newMarks.peek();
 
         if (baseMark === undefined || newMark === undefined) {
             return {
-                baseMark: this.baseMarks.pop(),
-                newMark: this.newMarks.pop(),
+                baseMark: this.baseMarks.dequeue(),
+                newMark: this.newMarks.dequeue(),
             };
         } else if (isAttach(baseMark) && isAttach(newMark)) {
             if (
@@ -212,48 +214,32 @@ class RebaseQueue<T> {
                 isReattach(newMark) &&
                 areRelatedReattaches(baseMark, newMark)
             ) {
-                const { newMarkHead, newMarkTail, baseMarkHead, baseMarkTail } =
-                    lineUpRelatedReattaches(newMark, baseMark, this.genId, this.moveEffects);
-                this.newMarks.pop();
-                if (newMarkTail !== undefined) {
-                    this.newMarks.push(newMarkTail);
-                }
-                this.baseMarks.pop();
-                if (baseMarkTail !== undefined) {
-                    this.baseMarks.push(baseMarkTail);
-                }
-                return { newMark: newMarkHead, baseMark: baseMarkHead };
+                return dequeueRelatedReattaches(this.newMarks, this.baseMarks);
             }
-            const revision = baseMark.revision ?? this.baseRevision;
+            const revision = baseMark.revision ?? this.baseMarks.revision;
             const reattachOffset = getOffsetInReattach(newMark.lineage, revision);
             if (reattachOffset !== undefined) {
                 const offset = reattachOffset - this.reattachOffset;
                 if (offset === 0) {
-                    return { newMark: this.newMarks.pop() };
+                    return { newMark: this.newMarks.dequeue() };
                 } else if (offset >= getOutputLength(baseMark)) {
                     this.reattachOffset += getOutputLength(baseMark);
-                    return { baseMark: this.baseMarks.pop() };
+                    return { baseMark: this.baseMarks.dequeue() };
                 } else {
-                    const [baseMark1, baseMark2] = splitMarkOnOutput(
-                        baseMark,
-                        offset,
-                        this.genId,
-                        this.moveEffects,
-                    );
-                    this.baseMarks.push(baseMark2);
+                    const splitBaseMark = this.baseMarks.dequeueOutput(offset);
                     this.reattachOffset += offset;
-                    return { baseMark: baseMark1 };
+                    return { baseMark: splitBaseMark };
                 }
             } else if (
                 isAttachAfterBaseAttach(newMark, baseMark) ||
                 isConflictedReattach(newMark)
             ) {
-                return { baseMark: this.baseMarks.pop() };
+                return { baseMark: this.baseMarks.dequeue() };
             } else {
-                return { newMark: this.newMarks.pop() };
+                return { newMark: this.newMarks.dequeue() };
             }
         } else if (isAttachInGap(newMark)) {
-            return { newMark: this.newMarks.pop() };
+            return { newMark: this.newMarks.dequeue() };
         } else if (
             // The `isNewAttach(baseMark)` bit is needed because of the way sandwich rebasing makes
             // the rebased local new attaches relevant to later local changes.
@@ -261,7 +247,7 @@ class RebaseQueue<T> {
             isConflictedDetach(newMark) &&
             // TODO: support muting/unmuting other detach mark types
             newMark.type === "ReturnFrom" &&
-            isBaseAttachRelatedToConflictedDetach(baseMark, newMark, this.baseRevision)
+            isBaseAttachRelatedToConflictedDetach(baseMark, newMark, this.baseMarks.revision)
         ) {
             assert(
                 newMark.detachIndex !== undefined,
@@ -270,130 +256,63 @@ class RebaseQueue<T> {
             const newMarkLength = newMark.count;
             const baseMarkLength = getOutputLength(baseMark);
             if (isNewAttach(baseMark) || newMark.detachIndex === baseMark.detachIndex) {
-                this.baseMarks.pop();
-                this.newMarks.pop();
                 if (newMarkLength < baseMarkLength) {
-                    const [baseMark1, baseMark2] = splitMarkOnOutput(
-                        baseMark,
-                        newMarkLength,
-                        this.genId,
-                        this.moveEffects,
-                    );
-                    this.baseMarks.push(baseMark2);
-                    return { baseMark: baseMark1, newMark };
+                    return {
+                        baseMark: this.baseMarks.dequeueOutput(newMarkLength),
+                        newMark: this.newMarks.dequeue(),
+                    };
                 } else if (newMarkLength > baseMarkLength) {
-                    const [newMark1, newMark2] = splitMarkOnInput(
-                        newMark,
-                        baseMarkLength,
-                        this.genId,
-                        this.moveEffects,
-                    );
-                    this.newMarks.push(newMark2);
-                    return { baseMark, newMark: newMark1 };
+                    return {
+                        baseMark: this.baseMarks.dequeue(),
+                        newMark: this.newMarks.dequeueInput(baseMarkLength),
+                    };
                 } else {
-                    return { baseMark, newMark };
+                    return { baseMark: this.baseMarks.dequeue(), newMark: this.newMarks.dequeue() };
                 }
             } else if (newMark.detachIndex < baseMark.detachIndex) {
-                this.newMarks.pop();
                 if (newMark.detachIndex + newMarkLength <= baseMark.detachIndex) {
-                    return { newMark };
+                    return { newMark: this.newMarks.dequeue() };
                 }
-                const [newMark1, newMark2] = splitMarkOnInput(
-                    newMark,
-                    baseMark.detachIndex - newMark.detachIndex,
-                    this.genId,
-                    this.moveEffects,
-                );
-                this.newMarks.push(newMark2);
-                return { newMark: newMark1 };
+                return {
+                    newMark: this.newMarks.dequeueInput(baseMark.detachIndex - newMark.detachIndex),
+                };
             } else {
-                this.baseMarks.pop();
                 if (baseMark.detachIndex + baseMarkLength <= newMark.detachIndex) {
-                    return { baseMark };
+                    return { baseMark: this.baseMarks.dequeue() };
                 }
-                const [baseMark1, baseMark2] = splitMarkOnOutput(
-                    baseMark,
-                    newMark.detachIndex - baseMark.detachIndex,
-                    this.genId,
-                    this.moveEffects,
-                );
-                this.baseMarks.push(baseMark2);
-                return { baseMark: baseMark1 };
+                return {
+                    baseMark: this.baseMarks.dequeueOutput(
+                        newMark.detachIndex - baseMark.detachIndex,
+                    ),
+                };
             }
         }
 
         // TODO: Handle case where `baseMarks` has adjacent or nested inverse reattaches from multiple revisions
         this.reattachOffset = 0;
         if (isAttachInGap(baseMark)) {
-            return { baseMark: this.baseMarks.pop() };
+            return { baseMark: this.baseMarks.dequeue() };
         } else {
             this.reattachOffset = 0;
-            this.baseMarks.pop();
-            this.newMarks.pop();
             const newMarkLength = getInputLength(newMark);
             const baseMarkLength = getInputLength(baseMark);
             if (newMarkLength < baseMarkLength) {
-                const [baseMark1, baseMark2] = splitMarkOnInput(
-                    baseMark,
-                    newMarkLength,
-                    this.genId,
-                    this.moveEffects,
-                );
-                this.baseMarks.push(baseMark2);
-                return { baseMark: baseMark1, newMark };
+                return {
+                    baseMark: this.baseMarks.dequeueInput(newMarkLength),
+                    newMark: this.newMarks.dequeue(),
+                };
             } else if (newMarkLength > baseMarkLength) {
-                const [newMark1, newMark2] = splitMarkOnInput(
-                    newMark,
-                    baseMarkLength,
-                    this.genId,
-                    this.moveEffects,
-                );
-                this.newMarks.push(newMark2);
-                this.moveEffects.validatedMarks.add(newMark1);
-                this.moveEffects.validatedMarks.add(newMark2);
-                return { baseMark, newMark: newMark1 };
+                return {
+                    baseMark: this.baseMarks.dequeue(),
+                    newMark: this.newMarks.dequeueInput(baseMarkLength),
+                };
             } else {
-                return { baseMark, newMark };
+                return {
+                    baseMark: this.baseMarks.dequeue(),
+                    newMark: this.newMarks.dequeue(),
+                };
             }
         }
-    }
-
-    private getNextBaseMark(): Mark<T> | undefined {
-        return this.getNextMark(this.baseMarks, false);
-    }
-
-    private getNextNewMark(): Mark<T> | undefined {
-        return this.getNextMark(this.newMarks, true);
-    }
-
-    private getNextMark(
-        marks: StackyIterator<Mark<T>>,
-        reassignMoveIds: boolean,
-    ): Mark<T> | undefined {
-        let mark: Mark<T> | undefined;
-        while (mark === undefined) {
-            mark = marks.pop();
-            if (mark === undefined) {
-                return undefined;
-            }
-
-            const splitMarks = applyMoveEffectsToMark(
-                mark,
-                undefined,
-                this.moveEffects,
-                this.genId,
-                reassignMoveIds,
-                false,
-            );
-
-            mark = splitMarks[0];
-            for (let i = splitMarks.length - 1; i >= 0; i--) {
-                marks.push(splitMarks[i]);
-                this.moveEffects.validatedMarks.add(splitMarks[i]);
-            }
-        }
-
-        return mark;
     }
 }
 

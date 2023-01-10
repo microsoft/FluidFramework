@@ -72,14 +72,16 @@ export {
     areRebasable,
     isActiveReattach,
     getInputLength,
-    isMoveMark,
     isDetachMark,
     isReattach,
+    DetachedNodeTracker,
+} from "./utils";
+export {
+    isMoveMark,
     MoveMark,
     MoveEffectTable,
     MovePartition,
     newMoveEffectTable,
     PairedMarkUpdate,
     splitMarkOnOutput,
-    DetachedNodeTracker,
-} from "./utils";
+} from "./moveEffectTable";

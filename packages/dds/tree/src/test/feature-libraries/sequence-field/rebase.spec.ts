@@ -173,22 +173,22 @@ describe("SequenceField - Rebase", () => {
             // Overlapping revive is now blocked
             Change.revive(1, 1, tag1, 1, tag2, undefined, tag3),
             // Later revive gets linage
-            Change.revive(2, 1, tag1, 3, tag2, [{ revision: tag3, offset: 1 }]),
+            Change.revive(1, 1, tag1, 3, tag2, [{ revision: tag3, offset: 1 }]),
         ]);
         assert.deepEqual(actual, expected);
     });
 
     it("blocked revive ↷ revive", () => {
-        const revive = Change.revive(0, 3, tag1, 1, tag2, undefined, tag3);
-        const deletion = Change.revive(0, 1, tag3, 2);
-        const actual = rebase(revive, deletion, tag3);
+        const revive1 = Change.revive(0, 3, tag1, 1, tag2, undefined, tag3);
+        const revive2 = Change.revive(0, 1, tag3, 2);
+        const actual = rebase(revive1, revive2, tag3);
         const expected = composeAnonChanges([
             // Earlier revive is unaffected
             Change.revive(0, 1, tag1, 1, tag2, undefined, tag3),
             // Overlapping revive remains conflicted but is no longer blocked
-            Change.revive(1, 1, tag1, 2, tag2),
+            Change.revive(0, 1, tag1, 2, tag2),
             // Later revive is unaffected
-            Change.revive(2, 1, tag1, 3, tag2, undefined, tag3),
+            Change.revive(1, 1, tag1, 3, tag2, undefined, tag3),
         ]);
         assert.deepEqual(actual, expected);
     });

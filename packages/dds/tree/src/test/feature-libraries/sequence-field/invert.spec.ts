@@ -113,10 +113,13 @@ describe("SequenceField - Invert", () => {
     it("revert-only blocked revive => no-op", () => {
         const input = composeAnonChanges([
             Change.modify(0, childChange1),
-            Change.revive(0, 2, tag, 0, tag2, undefined, tag3),
-            Change.modify(0, childChange2),
+            Change.revive(1, 2, tag, 0, tag2, undefined, tag3),
+            Change.modify(1, childChange2),
         ]);
-        const expected = composeAnonChanges([Change.modify(0, inverseChildChange1)]);
+        const expected = composeAnonChanges([
+            Change.modify(0, inverseChildChange1),
+            Change.modify(1, inverseChildChange2),
+        ]);
         const actual = invert(input);
         assert.deepEqual(actual, expected);
     });

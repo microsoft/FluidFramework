@@ -930,7 +930,6 @@ interface MoveEffectTable<T> {
     srcEffects: Map<MoveId_2, MovePartition<T>[]>;
     // (undocumented)
     srcMergeable: Map<MoveId_2, MoveId_2>;
-    validatedMarks: Set<Mark_2<T>>;
 }
 
 // @public
