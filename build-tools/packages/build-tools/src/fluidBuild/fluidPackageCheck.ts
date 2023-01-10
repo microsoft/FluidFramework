@@ -149,6 +149,7 @@ export class FluidPackageCheck {
     ) {
         let fixed = false;
         const actual = pkg.getScript(name);
+
         if (expected !== actual) {
             this.logWarn(pkg, `non-conformant script "${name}"`, fix);
             this.logWarn(pkg, `  expect: ${expected}`, fix);
@@ -168,6 +169,10 @@ export class FluidPackageCheck {
         concurrent: boolean,
         fix: boolean,
     ) {
+        /**
+        const expectedScript = expected ? concurrent ? `concurrently ${expected.map((value) => `npm:${value}`).join(" ")}` : expected.map((value) => `npm run ${value}`).join(" && ") : undefined;
+         */
+
         const expectedScript = expected
             ? concurrent
                 ? `concurrently ${expected.map((value) => `npm:${value}`).join(" ")}`
@@ -488,22 +493,28 @@ export class FluidPackageCheck {
     private static checkLintScripts(pkg: Package, fix: boolean) {
         let fixed = false;
         if (pkg.getScript("build")) {
-            const hasPrettier = pkg.getScript("prettier");
-            const lintChildren = hasPrettier ? ["prettier", "eslint"] : ["eslint"];
-            if (this.checkChildrenScripts(pkg, "lint", lintChildren, false, fix)) {
+            // const hasPrettier = pkg.getScript("prettier");
+            const hasLint = pkg.getScript("lint") === "npm run prettier && npm run eslint";
+
+            const lintChildren = hasLint ? ["prettier", "eslint"] : ["eslint"];
+
+            // npm run lint
+            // if hasLint has both "prettier && eslint"
+            if (hasLint) {
+                if (this.checkChildrenScripts(pkg, "lint", lintChildren, false, fix)) {
+                    fixed = true;
+                }
+            } else {
+                if (this.checkChildrenScripts(pkg, "lint", lintChildren, false, fix)) {
+                    fixed = true;
+                }
+            }
+
+            // "npm run lint:fix"
+            if (this.checkChildrenScripts(pkg, "lint:fix", lintChildren.map((value) => `${value}:fix`), false, fix,)) {
                 fixed = true;
             }
-            if (
-                this.checkChildrenScripts(
-                    pkg,
-                    "lint:fix",
-                    lintChildren.map((value) => `${value}:fix`),
-                    false,
-                    fix,
-                )
-            ) {
-                fixed = true;
-            }
+
             // TODO: for now, some jest test at the root isn't linted yet
             const eslintScript = pkg.getScript("eslint");
             const hasFormatStylish = eslintScript && eslintScript.search("--format stylish") >= 0;
