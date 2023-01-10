@@ -62,6 +62,9 @@ const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
     compose: (changes, composeChild) => composeChild(changes),
     invert: (change, invertChild) => invertChild(change.change),
     rebase: (change, base, rebaseChild) => rebaseChild(change, base.change),
+    amendCompose: () => fail("Not supported"),
+    amendInvert: () => fail("Not supported"),
+    amendRebase: () => fail("Not supported"),
 };
 
 const singleNodeEditor: FieldEditor<NodeChangeset> = {
@@ -92,6 +95,9 @@ const idFieldRebaser: FieldChangeRebaser<IdChangeset> = {
     compose: (changes, composeChild, genId): IdChangeset => genId(),
     invert: (change, invertChild, genId): IdChangeset => genId(),
     rebase: (change, over, rebaseChild, genId): IdChangeset => genId(),
+    amendCompose: () => fail("Not supported"),
+    amendInvert: () => fail("Not supported"),
+    amendRebase: () => fail("Not supported"),
 };
 
 const idFieldHandler: FieldChangeHandler<IdChangeset> = {

@@ -139,6 +139,24 @@ export function createEmitter<E extends Events<E>>(): ISubscribable<E> & IEmitte
 export const createField: unique symbol;
 
 // @public (undocumented)
+export interface CrossFieldManager<T = unknown> {
+    // (undocumented)
+    consume: (target: CrossFieldTarget, revision: RevisionTag, id: ChangesetLocalId) => void;
+    // (undocumented)
+    get: (target: CrossFieldTarget, revision: RevisionTag, id: ChangesetLocalId) => T | undefined;
+    // (undocumented)
+    getOrCreate: (target: CrossFieldTarget, revision: RevisionTag, id: ChangesetLocalId, newValue: T) => T;
+}
+
+// @public (undocumented)
+export enum CrossFieldTarget {
+    // (undocumented)
+    Destination = 1,
+    // (undocumented)
+    Source = 0
+}
+
+// @public (undocumented)
 export const enum CursorLocationType {
     Fields = 1,
     Nodes = 0
@@ -334,10 +352,16 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 // @public (undocumented)
 export interface FieldChangeRebaser<TChangeset> {
-    compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer, genId: IdAllocator): TChangeset;
     // (undocumented)
-    invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter, genId: IdAllocator): TChangeset;
-    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator): TChangeset;
+    amendCompose(composeChange: TChangeset, composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
+    // (undocumented)
+    amendInvert(invertedChange: TChangeset, invertChild: NodeChangeInverter, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
+    // (undocumented)
+    amendRebase(rebasedChange: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
+    compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
+    // (undocumented)
+    invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
+    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
 }
 
 // @public (undocumented)
@@ -1282,6 +1306,9 @@ const sequenceFieldChangeRebaser: {
     compose: typeof compose;
     invert: typeof invert;
     rebase: typeof rebase;
+    amendCompose: () => never;
+    amendInvert: () => never;
+    amendRebase: () => never;
 };
 
 // @public (undocumented)

@@ -14,7 +14,10 @@ export {
 export { FieldKind, FullSchemaPolicy, Multiplicity } from "./fieldKind";
 export {
     ChangesetLocalId,
+    CrossFieldManager,
+    CrossFieldTarget,
     IdAllocator,
+    isolatedFieldChangeRebaser,
     FieldChange,
     FieldChangeEncoder,
     FieldChangeHandler,

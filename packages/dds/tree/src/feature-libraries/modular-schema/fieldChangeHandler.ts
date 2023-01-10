@@ -4,7 +4,7 @@
  */
 
 import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange, RevisionTag } from "../../core";
-import { Brand, Invariant, JsonCompatibleReadOnly } from "../../util";
+import { Brand, fail, Invariant, JsonCompatibleReadOnly } from "../../util";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -33,6 +33,14 @@ export interface FieldChangeRebaser<TChangeset> {
         changes: TaggedChange<TChangeset>[],
         composeChild: NodeChangeComposer,
         genId: IdAllocator,
+        crossFieldManager: CrossFieldManager,
+    ): TChangeset;
+
+    amendCompose(
+        composeChange: TChangeset,
+        composeChild: NodeChangeComposer,
+        genId: IdAllocator,
+        crossFieldManager: CrossFieldManager,
     ): TChangeset;
 
     /**
@@ -43,6 +51,14 @@ export interface FieldChangeRebaser<TChangeset> {
         change: TaggedChange<TChangeset>,
         invertChild: NodeChangeInverter,
         genId: IdAllocator,
+        crossFieldManager: CrossFieldManager,
+    ): TChangeset;
+
+    amendInvert(
+        invertedChange: TChangeset,
+        invertChild: NodeChangeInverter,
+        genId: IdAllocator,
+        crossFieldManager: CrossFieldManager,
     ): TChangeset;
 
     /**
@@ -54,6 +70,15 @@ export interface FieldChangeRebaser<TChangeset> {
         over: TaggedChange<TChangeset>,
         rebaseChild: NodeChangeRebaser,
         genId: IdAllocator,
+        crossFieldManager: CrossFieldManager,
+    ): TChangeset;
+
+    amendRebase(
+        rebasedChange: TChangeset,
+        over: TaggedChange<TChangeset>,
+        rebaseChild: NodeChangeRebaser,
+        genId: IdAllocator,
+        crossFieldManager: CrossFieldManager,
     ): TChangeset;
 }
 
@@ -66,10 +91,36 @@ export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
     invert: (change: TChangeset) => TChangeset;
     rebase: (change: TChangeset, over: TChangeset) => TChangeset;
 }): FieldChangeRebaser<TChangeset> {
-    return {
+    return isolatedFieldChangeRebaser({
         compose: (changes, _composeChild, _genId) => data.compose(changes.map((c) => c.change)),
         invert: (change, _invertChild, _genId) => data.invert(change.change),
         rebase: (change, over, _rebaseChild, _genId) => data.rebase(change, over.change),
+    });
+}
+
+export function isolatedFieldChangeRebaser<TChangeset>(data: {
+    compose: (
+        changes: TaggedChange<TChangeset>[],
+        composeChild: NodeChangeComposer,
+        genId: IdAllocator,
+    ) => TChangeset;
+    invert: (
+        change: TaggedChange<TChangeset>,
+        invertChild: NodeChangeInverter,
+        genId: IdAllocator,
+    ) => TChangeset;
+    rebase: (
+        change: TChangeset,
+        over: TaggedChange<TChangeset>,
+        rebaseChild: NodeChangeRebaser,
+        genId: IdAllocator,
+    ) => TChangeset;
+}): FieldChangeRebaser<TChangeset> {
+    return {
+        ...data,
+        amendCompose: () => fail("Not implemented"),
+        amendInvert: () => fail("Not implemented"),
+        amendRebase: () => fail("Not implemented"),
     };
 }
 
@@ -122,6 +173,22 @@ export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnl
 export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
 
 export type IdAllocator = () => ChangesetLocalId;
+
+export enum CrossFieldTarget {
+    Source,
+    Destination,
+}
+
+export interface CrossFieldManager<T = unknown> {
+    getOrCreate: (
+        target: CrossFieldTarget,
+        revision: RevisionTag,
+        id: ChangesetLocalId,
+        newValue: T,
+    ) => T;
+    get: (target: CrossFieldTarget, revision: RevisionTag, id: ChangesetLocalId) => T | undefined;
+    consume: (target: CrossFieldTarget, revision: RevisionTag, id: ChangesetLocalId) => void;
+}
 
 /**
  * An ID which is unique within a revision of a `ModularChangeset`.

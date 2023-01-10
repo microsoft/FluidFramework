@@ -21,7 +21,14 @@ import {
     RevisionTag,
     tagChange,
 } from "../../core";
-import { brand, clone, getOrAddEmptyToMap, JsonCompatibleReadOnly, Mutable } from "../../util";
+import {
+    brand,
+    clone,
+    fail,
+    getOrAddEmptyToMap,
+    JsonCompatibleReadOnly,
+    Mutable,
+} from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
 import {
     FieldChangeHandler,
@@ -33,6 +40,8 @@ import {
     ModularChangeset,
     ChangesetLocalId,
     IdAllocator,
+    CrossFieldManager,
+    CrossFieldTarget,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { convertGenericChange, GenericChangeset, genericFieldKind } from "./genericFieldKind";
@@ -89,7 +98,7 @@ export class ModularChangeFamily
                 return convertGenericChange(
                     genericChange,
                     handler,
-                    (children) => this.composeNodeChanges(children, genId),
+                    (children) => this.composeNodeChanges(children, genId, newCrossFieldTable()),
                     genId,
                 ) as FieldChangeset;
             }
@@ -101,17 +110,37 @@ export class ModularChangeFamily
     compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
         let maxId = changes.reduce((max, change) => Math.max(change.change.maxId ?? -1, max), -1);
         const genId: IdAllocator = () => brand(++maxId);
+        const crossFieldTable = newCrossFieldTable<ComposeData>();
 
         const composedFields = this.composeFieldMaps(
             changes.map((change) => tagChange(change.change.changes, change.revision)),
             genId,
+            crossFieldTable,
         );
+
+        while (crossFieldTable.fieldsToUpdate.size > 0) {
+            const fieldsToUpdate = crossFieldTable.fieldsToUpdate;
+            crossFieldTable.fieldsToUpdate = new Set();
+            for (const field of fieldsToUpdate) {
+                const amendedChange = getChangeHandler(
+                    this.fieldKinds,
+                    field.fieldKind,
+                ).rebaser.amendCompose(
+                    field.change,
+                    (children) => this.composeNodeChanges(children, genId, crossFieldTable),
+                    genId,
+                    makeCrossFieldManager(crossFieldTable),
+                );
+                field.change = brand(amendedChange);
+            }
+        }
         return makeModularChangeset(composedFields, maxId);
     }
 
     private composeFieldMaps(
         changes: TaggedChange<FieldChangeMap>[],
         genId: IdAllocator,
+        crossFieldTable: CrossFieldTable<ComposeData>,
     ): FieldChangeMap {
         const fieldChanges = new Map<FieldKey, FieldChange[]>();
         for (const change of changes) {
@@ -142,19 +171,25 @@ export class ModularChangeFamily
                     changesets.length === changesForField.length,
                     0x4a8 /* Number of changes should be constant when normalizing */,
                 );
+
+                const srcQueries = new Set<ChangesetLocalId>();
+                const dstQueries = new Set<ChangesetLocalId>();
                 const taggedChangesets = changesets.map((change, i) =>
                     tagChange(change, changesForField[i].revision),
                 );
                 const composedChange = fieldKind.changeHandler.rebaser.compose(
                     taggedChangesets,
-                    (children) => this.composeNodeChanges(children, genId),
+                    (children) => this.composeNodeChanges(children, genId, crossFieldTable),
                     genId,
+                    makeCrossFieldManager(crossFieldTable, srcQueries, dstQueries),
                 );
 
                 composedField = {
                     fieldKind: fieldKind.identifier,
                     change: brand(composedChange),
                 };
+
+                addCrossFieldReceivers(crossFieldTable, srcQueries, dstQueries, composedField);
             }
 
             // TODO: Could optimize by checking that composedField is non-empty
@@ -166,6 +201,7 @@ export class ModularChangeFamily
     private composeNodeChanges(
         changes: TaggedChange<NodeChangeset>[],
         genId: IdAllocator,
+        crossFieldTable: CrossFieldTable<ComposeData>,
     ): NodeChangeset {
         const fieldChanges: TaggedChange<FieldChangeMap>[] = [];
         let valueChange: ValueChange | undefined;
@@ -179,7 +215,7 @@ export class ModularChangeFamily
             }
         }
 
-        const composedFieldChanges = this.composeFieldMaps(fieldChanges, genId);
+        const composedFieldChanges = this.composeFieldMaps(fieldChanges, genId, crossFieldTable);
         const composedNodeChange: NodeChangeset = {};
         if (valueChange !== undefined) {
             composedNodeChange.valueChange = valueChange;
@@ -195,36 +231,71 @@ export class ModularChangeFamily
     invert(change: TaggedChange<ModularChangeset>): ModularChangeset {
         let maxId = change.change.maxId ?? -1;
         const genId: IdAllocator = () => brand(++maxId);
+        const crossFieldTable = newCrossFieldTable<InvertData>();
         const invertedFields = this.invertFieldMap(
             tagChange(change.change.changes, change.revision),
             genId,
+            crossFieldTable,
         );
 
+        while (crossFieldTable.fieldsToUpdate.size > 0) {
+            const fieldsToUpdate = crossFieldTable.fieldsToUpdate;
+            crossFieldTable.fieldsToUpdate = new Set();
+            for (const field of fieldsToUpdate) {
+                const amendedChange = getChangeHandler(
+                    this.fieldKinds,
+                    field.fieldKind,
+                ).rebaser.amendInvert(
+                    field.change,
+                    () => fail(""),
+                    genId,
+                    makeCrossFieldManager(crossFieldTable),
+                );
+                field.change = brand(amendedChange);
+            }
+        }
         return makeModularChangeset(invertedFields, maxId);
     }
 
     private invertFieldMap(
         changes: TaggedChange<FieldChangeMap>,
         genId: IdAllocator,
+        crossFieldTable: CrossFieldTable<InvertData>,
     ): FieldChangeMap {
         const invertedFields: FieldChangeMap = new Map();
 
         for (const [field, fieldChange] of changes.change) {
             const { revision } = fieldChange.revision !== undefined ? fieldChange : changes;
 
+            const crossFieldSrcQueries = new Set<ChangesetLocalId>();
+            const crossFieldDstQueries = new Set<ChangesetLocalId>();
             const invertedChange = getChangeHandler(
                 this.fieldKinds,
                 fieldChange.fieldKind,
             ).rebaser.invert(
                 { revision, change: fieldChange.change },
-                (childChanges) => this.invertNodeChange({ revision, change: childChanges }, genId),
+                (childChanges) =>
+                    this.invertNodeChange(
+                        { revision, change: childChanges },
+                        genId,
+                        crossFieldTable,
+                    ),
                 genId,
+                makeCrossFieldManager(crossFieldTable, crossFieldSrcQueries, crossFieldDstQueries),
             );
 
-            invertedFields.set(field, {
+            const invertedFieldChange: FieldChange = {
                 ...fieldChange,
                 change: brand(invertedChange),
-            });
+            };
+            invertedFields.set(field, invertedFieldChange);
+
+            addCrossFieldReceivers(
+                crossFieldTable,
+                crossFieldSrcQueries,
+                crossFieldDstQueries,
+                invertedFieldChange,
+            );
         }
 
         return invertedFields;
@@ -233,6 +304,7 @@ export class ModularChangeFamily
     private invertNodeChange(
         change: TaggedChange<NodeChangeset>,
         genId: IdAllocator,
+        crossFieldTable: CrossFieldTable<InvertData>,
     ): NodeChangeset {
         const inverse: NodeChangeset = {};
 
@@ -249,6 +321,7 @@ export class ModularChangeFamily
             inverse.fieldChanges = this.invertFieldMap(
                 { ...change, change: change.change.fieldChanges },
                 genId,
+                crossFieldTable,
             );
         }
 
@@ -258,11 +331,31 @@ export class ModularChangeFamily
     rebase(change: ModularChangeset, over: TaggedChange<ModularChangeset>): ModularChangeset {
         let maxId = change.maxId ?? -1;
         const genId: IdAllocator = () => brand(++maxId);
+        const crossFieldTable = newCrossFieldTable<RebaseData>();
         const rebasedFields = this.rebaseFieldMap(
             change.changes,
             tagChange(over.change.changes, over.revision),
             genId,
+            crossFieldTable,
         );
+
+        while (crossFieldTable.fieldsToUpdate.size > 0) {
+            const fieldsToUpdate = crossFieldTable.fieldsToUpdate;
+            crossFieldTable.fieldsToUpdate = new Set();
+            for (const { fieldChange, baseChange } of fieldsToUpdate) {
+                const amendedChange = getChangeHandler(
+                    this.fieldKinds,
+                    fieldChange.fieldKind,
+                ).rebaser.amendRebase(
+                    fieldChange.change,
+                    baseChange,
+                    () => fail(""),
+                    genId,
+                    makeCrossFieldManager(crossFieldTable),
+                );
+                fieldChange.change = brand(amendedChange);
+            }
+        }
 
         return makeModularChangeset(rebasedFields, maxId);
     }
@@ -271,6 +364,7 @@ export class ModularChangeFamily
         change: FieldChangeMap,
         over: TaggedChange<FieldChangeMap>,
         genId: IdAllocator,
+        crossFieldTable: CrossFieldTable<RebaseData>,
     ): FieldChangeMap {
         const rebasedFields: FieldChangeMap = new Map();
 
@@ -285,19 +379,35 @@ export class ModularChangeFamily
                 } = this.normalizeFieldChanges([fieldChange, baseChanges], genId);
 
                 const { revision } = fieldChange.revision !== undefined ? fieldChange : over;
+                const srcQueries = new Set<ChangesetLocalId>();
+                const dstQueries = new Set<ChangesetLocalId>();
+                const taggedBaseChange = { revision, change: baseChangeset };
                 const rebasedField = fieldKind.changeHandler.rebaser.rebase(
                     fieldChangeset,
-                    { revision, change: baseChangeset },
+                    taggedBaseChange,
                     (child, baseChild) =>
-                        this.rebaseNodeChange(child, { revision, change: baseChild }, genId),
+                        this.rebaseNodeChange(
+                            child,
+                            { revision, change: baseChild },
+                            genId,
+                            crossFieldTable,
+                        ),
                     genId,
+                    makeCrossFieldManager(crossFieldTable, srcQueries, dstQueries),
                 );
 
-                // TODO: Could optimize by skipping this assignment if `rebasedField` is empty
-                rebasedFields.set(field, {
+                const rebasedFieldChange: FieldChange = {
                     fieldKind: fieldKind.identifier,
                     change: brand(rebasedField),
-                });
+                };
+
+                const rebaseData: RebaseData = {
+                    fieldChange: rebasedFieldChange,
+                    baseChange: taggedBaseChange,
+                };
+
+                addCrossFieldReceivers(crossFieldTable, srcQueries, dstQueries, rebaseData);
+                rebasedFields.set(field, rebasedFieldChange);
             }
         }
 
@@ -308,6 +418,7 @@ export class ModularChangeFamily
         change: NodeChangeset,
         over: TaggedChange<NodeChangeset>,
         genId: IdAllocator,
+        crossFieldTable: CrossFieldTable<RebaseData>,
     ): NodeChangeset {
         if (change.fieldChanges === undefined || over.change.fieldChanges === undefined) {
             return change;
@@ -322,6 +433,7 @@ export class ModularChangeFamily
                     change: over.change.fieldChanges,
                 },
                 genId,
+                crossFieldTable,
             ),
         };
     }
@@ -427,6 +539,103 @@ export function getChangeHandler(
     kind: FieldKindIdentifier,
 ): FieldChangeHandler<unknown> {
     return getFieldKind(fieldKinds, kind).changeHandler;
+}
+
+interface CrossFieldTable<T> {
+    srcTable: Map<ChangesetLocalId, unknown>;
+    dstTable: Map<ChangesetLocalId, unknown>;
+    srcReceivers: Map<ChangesetLocalId, T>;
+    dstReceivers: Map<ChangesetLocalId, T>;
+    fieldsToUpdate: Set<T>;
+}
+
+function newCrossFieldTable<T>(): CrossFieldTable<T> {
+    return {
+        srcTable: new Map(),
+        dstTable: new Map(),
+        srcReceivers: new Map(),
+        dstReceivers: new Map(),
+        fieldsToUpdate: new Set(),
+    };
+}
+
+type InvertData = FieldChange;
+type ComposeData = FieldChange;
+
+interface RebaseData {
+    fieldChange: FieldChange;
+    baseChange: TaggedChange<FieldChangeset>;
+}
+
+function makeCrossFieldManager<T>(
+    crossFieldTable: CrossFieldTable<T>,
+    srcQueries?: Set<ChangesetLocalId>,
+    dstQueries?: Set<ChangesetLocalId>,
+): CrossFieldManager {
+    return {
+        getOrCreate: (
+            target: CrossFieldTarget,
+            revision: RevisionTag,
+            id: ChangesetLocalId,
+            newValue: unknown,
+        ) => {
+            const table =
+                target === CrossFieldTarget.Source
+                    ? crossFieldTable.srcTable
+                    : crossFieldTable.dstTable;
+            if (!table.has(id)) {
+                table.set(id, newValue);
+            }
+
+            const receivers =
+                target === CrossFieldTarget.Source
+                    ? crossFieldTable.srcReceivers
+                    : crossFieldTable.dstReceivers;
+            const receiver = receivers.get(id);
+            if (receiver !== undefined) {
+                crossFieldTable.fieldsToUpdate.add(receiver);
+            }
+            return table.get(id);
+        },
+        get: (target: CrossFieldTarget, revision: RevisionTag, id: ChangesetLocalId) => {
+            const table =
+                target === CrossFieldTarget.Source
+                    ? crossFieldTable.srcTable
+                    : crossFieldTable.dstTable;
+
+            const queries = target === CrossFieldTarget.Source ? srcQueries : dstQueries;
+            if (queries !== undefined) {
+                queries.add(id);
+            }
+            return table.get(id);
+        },
+        consume: (target: CrossFieldTarget, revision: RevisionTag, id: ChangesetLocalId) => {
+            const table =
+                target === CrossFieldTarget.Source
+                    ? crossFieldTable.srcTable
+                    : crossFieldTable.dstTable;
+            table.delete(id);
+            const queries = target === CrossFieldTarget.Source ? srcQueries : dstQueries;
+            if (queries !== undefined) {
+                queries.delete(id);
+            }
+        },
+    };
+}
+
+function addCrossFieldReceivers<T>(
+    crossFieldTable: CrossFieldTable<T>,
+    srcQueries: Set<ChangesetLocalId>,
+    dstQueries: Set<ChangesetLocalId>,
+    fieldData: T,
+) {
+    for (const id of srcQueries) {
+        crossFieldTable.srcReceivers.set(id, fieldData);
+    }
+
+    for (const id of dstQueries) {
+        crossFieldTable.dstReceivers.set(id, fieldData);
+    }
 }
 
 function makeModularChangeset(changes: FieldChangeMap, maxId: number): ModularChangeset {

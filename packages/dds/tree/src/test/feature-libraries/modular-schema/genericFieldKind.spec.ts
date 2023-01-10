@@ -77,7 +77,12 @@ const childComposer = (nodeChanges: TaggedChange<NodeChangeset>[]): NodeChangese
     const valueChanges = nodeChanges.map((c) =>
         tagChange(valueChangeFromNodeChange(c.change), c.revision),
     );
-    const valueChange = valueHandler.rebaser.compose(valueChanges, unexpectedDelegate, idAllocator);
+    const valueChange = valueHandler.rebaser.compose(
+        valueChanges,
+        unexpectedDelegate,
+        idAllocator,
+        crossFieldManager,
+    );
     return nodeChangeFromValueChange(valueChange);
 };
 
@@ -87,6 +92,7 @@ const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
         makeAnonChange(valueChange),
         unexpectedDelegate,
         idAllocator,
+        crossFieldManager,
     );
     return nodeChangeFromValueChange(inverse);
 };
@@ -99,6 +105,7 @@ const childRebaser = (nodeChangeA: NodeChangeset, nodeChangeB: NodeChangeset): N
         makeAnonChange(valueChangeB),
         unexpectedDelegate,
         idAllocator,
+        crossFieldManager,
     );
     return nodeChangeFromValueChange(rebased);
 };
@@ -123,6 +130,12 @@ const childDecoder = (nodeChange: JsonCompatibleReadOnly): NodeChangeset => {
     return nodeChangeFromValueChange(valueChange);
 };
 
+const crossFieldManager = {
+    get: unexpectedDelegate,
+    getOrCreate: unexpectedDelegate,
+    consume: unexpectedDelegate,
+};
+
 describe("Generic FieldKind", () => {
     describe("compose", () => {
         it("empty list", () => {
@@ -130,6 +143,7 @@ describe("Generic FieldKind", () => {
                 [],
                 childComposer,
                 idAllocator,
+                crossFieldManager,
             );
             assert.deepEqual(actual, []);
         });
@@ -173,6 +187,7 @@ describe("Generic FieldKind", () => {
                 [makeAnonChange(changeA), makeAnonChange(changeB)],
                 childComposer,
                 idAllocator,
+                crossFieldManager,
             );
             assert.deepEqual(actual, expected);
         });
@@ -216,6 +231,7 @@ describe("Generic FieldKind", () => {
                 [makeAnonChange(changeA), makeAnonChange(changeB)],
                 childComposer,
                 idAllocator,
+                crossFieldManager,
             );
             assert.deepEqual(actual, expected);
         });
@@ -258,6 +274,7 @@ describe("Generic FieldKind", () => {
                 makeAnonChange(changeB),
                 childRebaser,
                 idAllocator,
+                crossFieldManager,
             );
             assert.deepEqual(actual, expected);
         });
@@ -298,6 +315,7 @@ describe("Generic FieldKind", () => {
                 makeAnonChange(changeB),
                 childRebaser,
                 idAllocator,
+                crossFieldManager,
             );
             assert.deepEqual(actual, expected);
         });
@@ -328,6 +346,7 @@ describe("Generic FieldKind", () => {
             makeAnonChange(forward),
             childInverter,
             idAllocator,
+            crossFieldManager,
         );
         assert.deepEqual(actual, expected);
     });

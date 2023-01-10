@@ -138,6 +138,8 @@ export {
     NodeChangeRebaser,
     NodeChangeEncoder,
     NodeChangeDecoder,
+    CrossFieldManager,
+    CrossFieldTarget,
     FieldKind,
     Multiplicity,
     isNeverField,
