@@ -6,7 +6,7 @@ This loader is intended for development purposes only and should not be used in 
 
 The following environment variables can be defined when running `webpack --serve` to change the behavior of webpack-fluid-loader.
 
-See the [Azure Fluid Relay](#azure-fluid-relay) and [Sharepoint](#sharepoint) sections below for information on connecting to these services.
+See the [Azure Fluid Relay](#azure-fluid-relay) and [SharePoint](#sharepoint) sections below for information on connecting to these services.
 
 | variable | description |
 | ---------| ----------- |
