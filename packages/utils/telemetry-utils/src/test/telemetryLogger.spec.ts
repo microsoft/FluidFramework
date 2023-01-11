@@ -214,6 +214,37 @@ describe("convertToBasePropertyType", () => {
             };
             assert.deepStrictEqual(converted, expected);
         });
+    });
+    describe("untagged properties", () => {
+        it("number", () => {
+            const property: TelemetryEventPropertyTypeExt = 123;
+            const converted = convertToBasePropertyType(property);
+            const expected: TelemetryEventPropertyTypeExt = 123;
+            assert.deepStrictEqual(converted, expected);
+        });
+        it("string", () => {
+            const property: TelemetryEventPropertyTypeExt = "test";
+            const converted = convertToBasePropertyType(property);
+            const expected: TelemetryEventPropertyTypeExt = "test";
+            assert.deepStrictEqual(converted, expected);
+        });
+        it("boolean", () => {
+            const property: TelemetryEventPropertyTypeExt = true;
+            const converted = convertToBasePropertyType(property);
+            const expected: TelemetryEventPropertyTypeExt = true;
+            assert.deepStrictEqual(converted, expected);
+        });
+        it("array", () => {
+            const property: TelemetryEventPropertyTypeExt = [true, "test"];
+            const converted = convertToBasePropertyType(property);
+            const expected: TelemetryEventPropertyTypeExt = JSON.stringify([true, "test"]);
+            assert.deepStrictEqual(converted, expected);
+        });
+    });
+    // Note the "as any" required in each of these cases.
+    // These are unexpected, but it's good to have coverage to ensure they behave "well enough"
+    // (e.g. they shouldn't crash)
+    describe("Check various invalid (per typings) cases", () => {
         it("nested ITaggedTelemetryPropertyTypeExt", () => {
             const taggedProperty: ITaggedTelemetryPropertyTypeExt = {
                 value: { value: true, tag: "tag" } as any,
@@ -272,32 +303,6 @@ describe("convertToBasePropertyType", () => {
                 value: "INVALID PROPERTY (typed as symbol)",
                 tag: "tag"
             };
-            assert.deepStrictEqual(converted, expected);
-        });
-    });
-    describe("untagged properties", () => {
-        it("number", () => {
-            const property: TelemetryEventPropertyTypeExt = 123;
-            const converted = convertToBasePropertyType(property);
-            const expected: TelemetryEventPropertyTypeExt = 123;
-            assert.deepStrictEqual(converted, expected);
-        });
-        it("string", () => {
-            const property: TelemetryEventPropertyTypeExt = "test";
-            const converted = convertToBasePropertyType(property);
-            const expected: TelemetryEventPropertyTypeExt = "test";
-            assert.deepStrictEqual(converted, expected);
-        });
-        it("boolean", () => {
-            const property: TelemetryEventPropertyTypeExt = true;
-            const converted = convertToBasePropertyType(property);
-            const expected: TelemetryEventPropertyTypeExt = true;
-            assert.deepStrictEqual(converted, expected);
-        });
-        it("array", () => {
-            const property: TelemetryEventPropertyTypeExt = [true, "test"];
-            const converted = convertToBasePropertyType(property);
-            const expected: TelemetryEventPropertyTypeExt = JSON.stringify([true, "test"]);
             assert.deepStrictEqual(converted, expected);
         });
         it("nested object", () => {

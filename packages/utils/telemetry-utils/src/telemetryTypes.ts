@@ -7,6 +7,7 @@ import { ITelemetryBaseLogger, TelemetryEventCategory } from "@fluidframework/co
 
 /**
  * Property types that can be logged.
+ * Includes extra types beyond TelemetryEventPropertyType (which will be deprecated in favor of this one)
  */
 export type TelemetryEventPropertyTypeExt =
     | string
@@ -33,7 +34,7 @@ export interface ITelemetryPropertiesExt {
 }
 
 /**
- * Base interface for logging telemetry statements.
+ * Interface for logging telemetry statements.
  * Can contain any number of properties that get serialized as json payload.
  * @param category - category of the event, like "error", "performance", "generic", etc.
  * @param eventName - name of the event.

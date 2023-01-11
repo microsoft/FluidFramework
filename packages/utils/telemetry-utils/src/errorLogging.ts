@@ -271,7 +271,7 @@ export function isExternalError(e: any): boolean {
 }
 
 /**
- * Type guard to identify if a particular value (loosely) appears to be a tagged telemetry property
+ * Type guard to identify if a particular telemetry property appears to be a tagged telemetry property
  */
 export function isTaggedTelemetryPropertyValue(
     x: ITaggedTelemetryPropertyTypeExt | TelemetryEventPropertyTypeExt,

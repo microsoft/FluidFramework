@@ -642,7 +642,7 @@ function convertToBasePropertyTypeUntagged(
             // We assume this is an array based on the input types
             return JSON.stringify(x);
         default:
-            // should never reach this case.
+            // should never reach this case based on the input types
             console.error(`convertToBasePropertyTypeUntagged: INVALID PROPERTY (typed as ${typeof x})`);
             return `INVALID PROPERTY (typed as ${typeof x})`;
     }

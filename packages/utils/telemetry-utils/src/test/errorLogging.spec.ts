@@ -196,10 +196,15 @@ describe("Error Logging", () => {
                 { value: false, tag: "any string" }), true);
             assert.strictEqual(isTaggedTelemetryPropertyValue(
                 { value: undefined, tag: "any string" }), true);
+        });
+        it("Check result for various invalid inputs (per typings)", () => {
             assert.strictEqual(isTaggedTelemetryPropertyValue(
                 { tag: "any string" } as any), true, "value prop may be absent");
-        });
-        it("non-string tag not ok", () => {
+            // The type guard used is a bit imprecise. Here is proof (these "shouldn't" be ok)
+            assert.strictEqual(isTaggedTelemetryPropertyValue(
+                { value: function x() { return 54; } as any, tag: "any string" }), true);
+            assert.strictEqual(isTaggedTelemetryPropertyValue(
+                { value: Symbol("okay") as any, tag: "any string" }), true);
             assert.strictEqual(isTaggedTelemetryPropertyValue(
                 { value: "hello", tag: 1 } as any), false, "number tag is bad");
             assert.strictEqual(isTaggedTelemetryPropertyValue(
