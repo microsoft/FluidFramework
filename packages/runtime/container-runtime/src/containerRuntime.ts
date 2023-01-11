@@ -688,7 +688,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
             maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
             chunkSizeInBytes = Number.POSITIVE_INFINITY,
-            enableRuntimeCompressor = false,
+            enableRuntimeCompressor = true,
             enableOpReentryCheck = false,
         } = runtimeOptions;
 
