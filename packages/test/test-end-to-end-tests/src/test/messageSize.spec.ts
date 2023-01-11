@@ -211,8 +211,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
             "Fluid.ContainerRuntime.DisableCompression": true,
         });
 
-        const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
-        const messageCount = 3; // Will result in a 15 MB payload
+        const largeString = generateStringOfSize(500000);
+        const messageCount = 10;
         assert.throws(() => setMapKeys(dataObject1map, messageCount, largeString));
         await provider.ensureSynchronized();
     });
