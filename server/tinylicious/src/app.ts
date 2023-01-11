@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     IDocumentStorage,
     MongoManager,
@@ -33,6 +34,7 @@ export function create(
     config: Provider,
     storage: IDocumentStorage,
     mongoManager: MongoManager,
+    eventEmitter: EventEmitter,
 ) {
     // Maximum REST request size
     const requestSize = config.get("alfred:restJsonSize");
@@ -75,6 +77,10 @@ export function create(
     // Basic Help Message
     app.use(Router().get("/", (req, res) => {
         res.status(200).send("This is Tinylicious. Learn more at https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious");
+    }));
+    app.use(Router().post("/task-list-hook", (req, res) => {
+        eventEmitter.emit('task-list-hook');
+        res.status(200).send("Triggering debug signal from tinylicious");
     }));
 
     // Catch 404 and forward to error handler

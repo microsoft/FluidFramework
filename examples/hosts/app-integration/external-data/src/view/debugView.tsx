@@ -165,6 +165,7 @@ function debugResetExternalData(): void {
 // themselves (as if they were editing it outside of Fluid).
 // TODO: Consider how we might simulate errors/failures here to play with retry and recovery.
 const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
+    console.log(props.model);
     return (
         <div>
             <h3>Debug controls</h3>
