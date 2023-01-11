@@ -501,7 +501,7 @@ export class FluidPackageCheck {
                 const lintChildren = lintPackages?.map((x) => x.trim().split(" ")[1]); // regex to create a list of ["foo", "bar"]
 
                 if (lintChildren !== undefined) {
-                    const hasEslint = lintChildren.some(elem => /eslint/.test(elem)); // regex to check if "eslint" exists
+                    const hasEslint = lintChildren.some((elem) => /eslint/.test(elem)); // regex to check if "eslint" exists
 
                     if (!hasEslint) {
                         lintChildren?.push("eslint"); // push "eslint" to lintChildren as expected package
@@ -517,12 +517,11 @@ export class FluidPackageCheck {
             const lintFixScript = pkg.getScript("lint:fix");
             const lintFixPackages = lintFixScript?.match(/run\s*([^&]*)\s*/g);
 
-
             if (lintFixPackages !== null) {
                 const lintFixChildren = lintFixPackages?.map((x) => x.trim().split(" ")[1]);
 
                 if (lintFixChildren !== undefined) {
-                    const hasEslint = lintFixChildren.some(elem => /eslint/.test(elem));
+                    const hasEslint = lintFixChildren.some((elem) => /eslint/.test(elem));
 
                     if (!hasEslint) {
                         lintFixChildren?.push("eslint");
