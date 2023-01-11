@@ -3,6 +3,15 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * "Minimal" eslint configuration.
+ *
+ * This configuration is primarily intended for use in packages during prototyping / initial setup.
+ * Ideally, all of packages in the fluid-framework repository should derive from either the "Recommended" or
+ * "Strict" configuration.
+ *
+ * Production packages **should not** use this configuration.
+ */
 module.exports = {
     env: {
         browser: true,
