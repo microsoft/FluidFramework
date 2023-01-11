@@ -87,10 +87,6 @@ To run the app, navigate to the root of this package and run `npm run start:test
 -   Currently, the view offers no data editing affordances. At the very least for "simple" data, we should allow users to edit data in place.
     -   This could be especially valuable during the prototyping state of an application.
 
-### Audience View TODOs
-
--   Add a way to view the history of changes.
-
 <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) -->
 
 ## API Documentation
