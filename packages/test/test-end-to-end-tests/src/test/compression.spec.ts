@@ -31,7 +31,7 @@ describeNoCompat("Op Compression", (getTestObjectProvider) => {
     let dataObject: ITestFluidObject;
     let map: SharedMap;
 
-    beforeEach(async function() {
+    beforeEach(async () => {
         provider = getTestObjectProvider();
 
         container = (await provider.makeTestContainer(
