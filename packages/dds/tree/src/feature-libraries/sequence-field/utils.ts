@@ -31,6 +31,7 @@ import {
     Changeset,
     SkipLikeReattach,
     OutputSpanningMark,
+    SkipLikeDetach,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
@@ -64,7 +65,7 @@ export function isReattach<TNodeChange>(mark: Mark<TNodeChange>): mark is Reatta
 
 export function isActiveReattach<TNodeChange>(
     mark: Mark<TNodeChange>,
-): mark is Reattach<TNodeChange> & Conflicted {
+): mark is Reattach<TNodeChange> & { conflictsWith?: undefined } {
     // No need to check Reattach.lastDeletedBy because it can only be set if the mark is conflicted
     return isReattach(mark) && !isConflicted(mark);
 }
@@ -93,7 +94,9 @@ export function isSkipLikeReattach<TNodeChange>(
     return isConflictedReattach(mark) && mark.lastDetachedBy === undefined;
 }
 
-export function isSkipLikeDetach<TNodeChange>(mark: Mark<TNodeChange>): boolean {
+export function isSkipLikeDetach<TNodeChange>(
+    mark: Mark<TNodeChange>,
+): mark is SkipLikeDetach<TNodeChange> {
     return isDetachMark(mark) && mark.type !== "Delete" && mark.isDstConflicted === true;
 }
 
@@ -206,8 +209,31 @@ export function getInputLength(mark: Mark<unknown>): number {
     }
 }
 
+export function isNetZeroNodeCountChange<T>(
+    mark: Mark<T>,
+): mark is Skip | Modify<T> | SkipLikeDetach<T> | SkipLikeReattach<T> {
+    return isSkipMark(mark) || isModify(mark) || isSkipLikeDetach(mark) || isSkipLikeReattach(mark);
+}
+
 export function isSkipMark(mark: Mark<unknown>): mark is Skip {
     return typeof mark === "number";
+}
+
+export function getOffsetAtRevision(
+    lineage: LineageEvent[] | undefined,
+    reattachRevision: RevisionTag | undefined,
+): number | undefined {
+    if (lineage === undefined || reattachRevision === undefined) {
+        return undefined;
+    }
+
+    for (const event of lineage) {
+        if (event.revision === reattachRevision) {
+            return event.offset;
+        }
+    }
+
+    return undefined;
 }
 
 export function dequeueRelatedReattaches<T>(

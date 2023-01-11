@@ -35,7 +35,13 @@ export class MarkQueue<T> {
         return this.peek() === undefined;
     }
 
-    public dequeue(): Mark<T> | undefined {
+    public dequeue(): Mark<T> {
+        const output = this.tryDequeue();
+        assert(output !== undefined, "Unexpected end of mark queue");
+        return output;
+    }
+
+    public tryDequeue(): Mark<T> | undefined {
         let reassignMoveIds = this.reassignMoveIds;
         let mark: Mark<T> | undefined;
         if (this.stack.length > 0) {
@@ -78,7 +84,6 @@ export class MarkQueue<T> {
      */
     public dequeueInput(length: number): InputSpanningMark<T> {
         const mark = this.dequeue();
-        assert(mark !== undefined, "Should only dequeue if not empty");
         assert(isInputSpanningMark(mark), "Can only split sized marks on input");
         const [mark1, mark2] = splitMarkOnInput(mark, length, this.genId, this.moveEffects);
         this.stack.push(mark2);
@@ -93,7 +98,6 @@ export class MarkQueue<T> {
      */
     public dequeueOutput(length: number, includeBlockedCells: boolean = false): Mark<T> {
         const mark = this.dequeue();
-        assert(mark !== undefined, "Should only dequeue if not empty");
         assert(
             isOutputSpanningMark(mark) || (includeBlockedCells && isBlockedReattach(mark)),
             "Should only dequeue output if the next mark has output length > 0",
@@ -104,7 +108,7 @@ export class MarkQueue<T> {
     }
 
     public peek(): Mark<T> | undefined {
-        const mark = this.dequeue();
+        const mark = this.tryDequeue();
         if (mark !== undefined) {
             this.stack.push(mark);
         }

@@ -227,10 +227,20 @@ describe("SequenceField - Rebaser Axioms", () => {
                 // We may reconsider this in the future in order to minimize the deltas produced when rebasing local changes.
             } else {
                 it(`${name}⁻¹ ○ ${name} === ε`, () => {
+                    const tracker = new SF.DetachedNodeTracker();
                     const change = makeChange(0);
                     const taggedChange = tagChange(change, brand(1));
-                    const inv = SF.invert(taggedChange, TestChange.invert);
-                    const changes = [tagInverse(inv, taggedChange.revision), taggedChange];
+                    const inv = tagInverse(
+                        SF.invert(taggedChange, TestChange.invert),
+                        taggedChange.revision,
+                    );
+                    tracker.apply(taggedChange);
+                    tracker.apply(inv);
+                    const updatedChange = tracker.update(
+                        taggedChange,
+                        continuingAllocator([taggedChange]),
+                    );
+                    const changes = [inv, updatedChange];
                     const actual = SF.compose(
                         changes,
                         TestChange.compose,

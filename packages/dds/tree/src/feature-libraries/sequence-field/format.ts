@@ -50,6 +50,14 @@ export type SkipLikeReattach<TNodeChange> = Reattach<TNodeChange> &
         lastDeletedBy?: never;
     };
 
+/**
+ * A Detach with a conflicted destination.
+ * Such a Detach has no effect when applied and is therefore akin to a Skip mark.
+ */
+export type SkipLikeDetach<TNodeChange> = (MoveOut<TNodeChange> | ReturnFrom<TNodeChange>) & {
+    isDstConflicted: true;
+};
+
 export interface Conflicted {
     /**
      * The revision of the concurrent change that the mark conflicts with.

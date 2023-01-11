@@ -17,6 +17,7 @@ import {
     ObjectMark,
     Reattach,
 } from "./format";
+import { GapTracker, IndexTracker } from "./tracker";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
 import {
@@ -42,6 +43,7 @@ import {
     isConflictedReattach,
     dequeueRelatedReattaches,
     isBlockedReattach,
+    getOffsetAtRevision,
 } from "./utils";
 
 export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
@@ -89,6 +91,7 @@ function composeMarkLists<TNodeChange>(
 ): MarkList<TNodeChange> {
     const factory = new MarkListFactory<TNodeChange>(moveEffects);
     const queue = new ComposeQueue(
+        undefined,
         baseMarkList,
         newRev,
         newMarkList,
@@ -99,10 +102,12 @@ function composeMarkLists<TNodeChange>(
         (a, b) => composeChildChanges(a, b, newRev, composeChild),
     );
     while (!queue.isEmpty()) {
-        const { baseMark, newMark, areInverses } = queue.pop();
-        if (areInverses) {
+        const popped = queue.pop();
+        if (popped.areInverses) {
+            factory.pushOffset(getInputLength(popped.baseMark));
             continue;
         }
+        const { baseMark, newMark } = popped;
         if (newMark === undefined) {
             assert(baseMark !== undefined, "Non-empty queue should not return two undefined marks");
             factory.push(baseMark);
@@ -411,8 +416,7 @@ function applyMoveEffects<TNodeChange>(
     );
 
     while (!queue.isEmpty()) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        factory.push(queue.dequeue()!);
+        factory.push(queue.dequeue());
     }
 
     return factory.list;
@@ -421,8 +425,11 @@ function applyMoveEffects<TNodeChange>(
 export class ComposeQueue<T> {
     private readonly baseMarks: MarkQueue<T>;
     private readonly newMarks: MarkQueue<T>;
+    private readonly baseIndex: IndexTracker;
+    private readonly baseGap: GapTracker;
 
     public constructor(
+        baseRevision: RevisionTag | undefined,
         baseMarks: Changeset<T>,
         private readonly newRevision: RevisionTag | undefined,
         newMarks: Changeset<T>,
@@ -432,9 +439,11 @@ export class ComposeQueue<T> {
         updatePairedMarkStatus: boolean = true,
         composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
     ) {
+        this.baseIndex = new IndexTracker();
+        this.baseGap = new GapTracker();
         this.baseMarks = new MarkQueue(
             baseMarks,
-            undefined,
+            baseRevision,
             moveEffects,
             genId,
             false,
@@ -457,42 +466,95 @@ export class ComposeQueue<T> {
     }
 
     public pop(): ComposeMarks<T> {
+        const output = this.popImpl();
+        if (output.baseMark !== undefined) {
+            this.baseIndex.advance(output.baseMark);
+            this.baseGap.advance(output.baseMark);
+        }
+        return output;
+    }
+
+    private popImpl(): ComposeMarks<T> {
         let baseMark = this.baseMarks.peek();
         let newMark = this.newMarks.peek();
         if (baseMark === undefined || newMark === undefined) {
-            return { baseMark: this.baseMarks.dequeue(), newMark: this.newMarks.dequeue() };
+            return { baseMark: this.baseMarks.tryDequeue(), newMark: this.newMarks.tryDequeue() };
         } else if (isAttach(newMark)) {
             if (isActiveReattach(newMark) && isDetachMark(baseMark)) {
                 const newRev = newMark.revision ?? this.newRevision;
+                const baseRev = baseMark.revision ?? this.baseMarks.revision;
+                assert(baseRev !== undefined, "Compose base mark should carry revision info");
                 const areInverses =
                     // The same RevisionTag implies the two changesets are inverses in a rebase sandwich
-                    (newRev !== undefined && baseMark.revision === newRev) ||
+                    (newRev !== undefined && baseRev === newRev) ||
                     // The new mark is an undo of the base one
-                    newMark.detachedBy === baseMark.revision;
+                    newMark.detachedBy === baseRev;
                 if (areInverses) {
                     const baseMarkLength = getInputLength(baseMark);
                     const newMarkLength = getOutputLength(newMark);
-                    if (baseMarkLength > newMarkLength) {
-                        // Only a portion of the base mark is cancelled out
-                        baseMark = this.baseMarks.dequeueInput(newMarkLength);
-                        this.newMarks.dequeue();
-                    } else if (baseMarkLength < newMarkLength) {
-                        // Only a portion of the new mark is cancelled out
-                        this.baseMarks.dequeue();
-                        newMark = this.newMarks.dequeueOutput(baseMarkLength);
+                    const baseIndex = this.baseIndex.get(baseRev);
+                    if (baseIndex === newMark.detachIndex) {
+                        if (newMarkLength < baseMarkLength) {
+                            baseMark = this.baseMarks.dequeueInput(newMarkLength);
+                            newMark = this.newMarks.dequeue();
+                        } else if (newMarkLength > baseMarkLength) {
+                            baseMark = this.baseMarks.dequeue();
+                            newMark = this.newMarks.dequeueOutput(baseMarkLength, true);
+                        } else {
+                            baseMark = this.baseMarks.dequeue();
+                            newMark = this.newMarks.dequeue();
+                        }
+                        return {
+                            baseMark,
+                            newMark,
+                            areInverses: true,
+                        };
+                    } else if (newMark.detachIndex < baseIndex) {
+                        return {
+                            newMark:
+                                newMark.detachIndex + newMarkLength <= baseIndex
+                                    ? this.newMarks.dequeue()
+                                    : this.newMarks.dequeueOutput(
+                                          baseIndex - newMark.detachIndex,
+                                          true,
+                                      ),
+                        };
                     } else {
-                        // The two marks fully cancel out
-                        this.baseMarks.dequeue();
-                        this.newMarks.dequeue();
+                        return {
+                            baseMark:
+                                baseIndex + baseMarkLength <= newMark.detachIndex
+                                    ? this.baseMarks.dequeue()
+                                    : this.baseMarks.dequeueInput(newMark.detachIndex - baseIndex),
+                        };
                     }
-                    return {
-                        baseMark,
-                        newMark,
-                        areInverses: true,
-                    };
+                } else {
+                    const targetOffset = getOffsetAtRevision(newMark.lineage, baseRev);
+                    if (targetOffset === undefined) {
+                        // The reattach is for a detach that occurred chronologically after the baseMark detach.
+                        // This later detach must therefore be present in the base changeset, we just haven't yet
+                        // iterated far enough to encounter it.
+                        return {
+                            baseMark: this.baseMarks.dequeue(),
+                        };
+                    } else {
+                        // The reattach is for a detach that occurred chronologically before the baseMark detach.
+                        // We rely on the lineage information to tell us where in relation to baseMark this earlier
+                        // detach was.
+                        const currentOffset = this.baseGap.get(baseRev);
+                        const remainingOffset = targetOffset - currentOffset;
+                        assert(remainingOffset >= 0, "Overshot the target gap");
+                        if (remainingOffset === 0) {
+                            return { newMark: this.newMarks.dequeue() };
+                        }
+                        return {
+                            baseMark:
+                                remainingOffset < getInputLength(baseMark)
+                                    ? this.baseMarks.dequeueInput(remainingOffset)
+                                    : this.baseMarks.dequeue(),
+                        };
+                    }
                 }
-            }
-            if (
+            } else if (
                 isReattach(newMark) &&
                 isReattach(baseMark) &&
                 areRelatedReattaches(baseMark, newMark)
@@ -530,11 +592,17 @@ export class ComposeQueue<T> {
     }
 }
 
-interface ComposeMarks<T> {
-    baseMark?: Mark<T>;
-    newMark?: Mark<T>;
-    areInverses?: boolean;
-}
+type ComposeMarks<T> =
+    | {
+          baseMark: Mark<T>;
+          newMark: Mark<T>;
+          areInverses: true;
+      }
+    | {
+          baseMark?: Mark<T>;
+          newMark?: Mark<T>;
+          areInverses?: false;
+      };
 
 /**
  * @returns true iff both reattaches target cells that were affected by the same detach.

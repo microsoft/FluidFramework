@@ -136,12 +136,12 @@ describe("SequenceField - Rebase", () => {
             Change.revive(8, 1, tag1, 2),
         ]);
         const deletion = Change.delete(1, 3);
-        const actual = rebase(revive, deletion);
+        const actual = rebase(revive, deletion, tag2);
         const expected = composeAnonChanges([
             // Earlier revive is unaffected
             Change.revive(0, 1, tag1, 0),
             // Overlapping revive has its index reduced
-            Change.revive(2, 1, tag1, 1),
+            Change.revive(2, 1, tag1, 1, undefined, [{ revision: tag2, offset: 1 }]),
             // Later revive has its index reduced
             Change.revive(5, 1, tag1, 2),
         ]);

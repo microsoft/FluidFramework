@@ -25,6 +25,7 @@ import {
     isConflictedDetach,
     dequeueRelatedReattaches,
     isSkipLikeDetach,
+    getOffsetAtRevision,
 } from "./utils";
 import {
     Attach,
@@ -127,6 +128,10 @@ function rebaseMarkList<TNodeChange>(
                     baseRevision,
                 );
             } else {
+                if (baseDetachOffset > 0 && baseRevision !== undefined) {
+                    updateLineage(lineageRequests, baseRevision);
+                    baseDetachOffset = 0;
+                }
                 factory.push(clone(currMark));
             }
         } else if (currMark === undefined) {
@@ -182,7 +187,7 @@ function rebaseMarkList<TNodeChange>(
     moveEffects.allowMerges = true;
 
     // TODO: It's not convenient to store splitBaseMarks for cross-field move effects.
-    return applyMoveEffects(splitBaseMarks, factory.list, moveEffects);
+    return applyMoveEffects(baseRevision, splitBaseMarks, factory.list, moveEffects);
 }
 
 class RebaseQueue<T> {
@@ -211,8 +216,8 @@ class RebaseQueue<T> {
 
         if (baseMark === undefined || newMark === undefined) {
             return {
-                baseMark: this.baseMarks.dequeue(),
-                newMark: this.newMarks.dequeue(),
+                baseMark: this.baseMarks.tryDequeue(),
+                newMark: this.newMarks.tryDequeue(),
             };
         } else if (isAttach(baseMark) && isAttach(newMark)) {
             if (
@@ -223,7 +228,7 @@ class RebaseQueue<T> {
                 return dequeueRelatedReattaches(this.newMarks, this.baseMarks);
             }
             const revision = baseMark.revision ?? this.baseMarks.revision;
-            const reattachOffset = getOffsetInReattach(newMark.lineage, revision);
+            const reattachOffset = getOffsetAtRevision(newMark.lineage, revision);
             if (reattachOffset !== undefined) {
                 const offset = reattachOffset - this.reattachOffset;
                 if (offset === 0) {
@@ -526,11 +531,13 @@ function rebaseMark<TNodeChange>(
 }
 
 function applyMoveEffects<TNodeChange>(
+    baseRevision: RevisionTag | undefined,
     baseMarks: MarkList<TNodeChange>,
     rebasedMarks: MarkList<TNodeChange>,
     moveEffects: MoveEffectTable<TNodeChange>,
 ): Changeset<TNodeChange> {
     const queue = new ComposeQueue<TNodeChange>(
+        baseRevision,
         baseMarks,
         undefined,
         rebasedMarks,
@@ -614,23 +621,6 @@ function isAttachAfterBaseAttach<T>(currMark: Attach<T>, baseMark: Attach<T>): b
     // Instead of using B's tiebreak policy, we should first consider the relative positions of a, b, and c if A1 were undone.
     // The best outcome seems to be that c is positioned relative to ab according to A2's tiebreak policy.
     return false;
-}
-
-function getOffsetInReattach(
-    lineage: LineageEvent[] | undefined,
-    reattachRevision: RevisionTag | undefined,
-): number | undefined {
-    if (lineage === undefined || reattachRevision === undefined) {
-        return undefined;
-    }
-
-    for (const event of lineage) {
-        if (event.revision === reattachRevision) {
-            return event.offset;
-        }
-    }
-
-    return undefined;
 }
 
 function compareLineages(
