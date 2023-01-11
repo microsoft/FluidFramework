@@ -2772,7 +2772,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             /**
              * If the fetched snapshot is older than the one for which the ack was received, close the container.
              * This should never happen because an ack should be sent after the latest summary is updated in the server.
-             * However, there are couple of scenarios it's possible:
+             * However, there are couple of scenarios where it's possible:
              * 1. A file was modified externally resulting in modifying the snapshot's sequence number. This can lead to
              * the document being unusable and we should not proceed.
              * 2. The server DB failed after the ack was sent which may delete the corresponding snapshot. Ideally, in
