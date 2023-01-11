@@ -23,9 +23,11 @@ export interface Canada {
 
 export namespace Canada {
     // Shared tree keys that map to the type used by the Canada dataset
-    export const FeatureKey: FieldKey = brand("features");
-    export const GeometryKey: FieldKey = brand("geometry");
-    export const CoordinatesKey: FieldKey = brand("coordinates");
+    export namespace SharedTreeFieldKey {
+        export const features: FieldKey = brand("features");
+        export const geometry: FieldKey = brand("geometry");
+        export const coordinates: FieldKey = brand("coordinates");
+    }
 }
 
 // The geometry of 'canada.json' is encoded as 480 segments of varying length.
