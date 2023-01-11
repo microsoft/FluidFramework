@@ -81,28 +81,41 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
     const { taskList } = props;
 
     const [tasks, setTasks] = useState<ITask[]>(taskList.getTasks());
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const [draftTasks, setDiffTasks] = useState<ITask[]>(taskList.getDiffTasks());
+    // const [draftTasks, setDiffTasks] = useState<ITask[]>(taskList.getDiffTasks());
 
     useEffect(() => {
         const updateTasks = (): void => {
             setTasks(taskList.getTasks());
         };
-        const updateDiffTasks = (): void => {
-            setTasks(taskList.getDiffTasks());
-        };
+        // const updateDiffTasks = (): void => {
+        //     setDiffTasks(taskList.getDiffTasks());
+        // };
         taskList.on("taskAdded", updateTasks);
         taskList.on("taskDeleted", updateTasks);
-        taskList.on("handleDiffDetected", updateDiffTasks);
+        // taskList.on("diffDetected", updateDiffTasks);
 
+        setTasks(taskList.getTasks());
+        // setDiffTasks(taskList.getDiffTasks());
+
+        // HACK: Once we have external changes triggering the appropriate Fluid signal, we can simply listen
+        // for changes coming into the model that way.
+        // For now, poll the external service directly for any updates and apply as needed.
+
+        // Run once immediately to run without waiting.
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        // taskList.importExternalData();
+
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+        const timer = setInterval(taskList.importExternalData, 3000); // Poll every 3 seconds
         return (): void => {
+            clearInterval(timer);
             taskList.off("taskAdded", updateTasks);
             taskList.off("taskDeleted", updateTasks);
-            taskList.off("handleDiffDetected", updateDiffTasks);
-        };
+            // taskList.off("diffDetected", updateDiffTasks);
+        }
     }, [taskList]);
 
-    const taskRows = tasks.map((task) => (
+    const taskRows = tasks.map((task: ITask) => (
         <TaskRow
             key={ task.id }
             task={ task }
@@ -110,13 +123,13 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
         />
     ));
 
-    const draftTaskRows = draftTasks.map((task) => (
-        <TaskRow
-            key={ task.id }
-            task={ task }
-            deleteTask={ (): void => taskList.deleteTask(task.id) }
-        />
-    ));
+    // const draftTaskRows = draftTasks.map((task) => (
+    //     <TaskRow
+    //         key={ task.id }
+    //         task={ task }
+    //         deleteTask={ (): void => taskList.deleteTask(task.id) }
+    //     />
+    // ));
 
     return (
         // TODO: Gray button if not "authenticated" via debug controls
@@ -144,7 +157,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
                     </tr>
                 </thead>
                 <tbody>
-                    { draftTaskRows }
+                    {/* { draftTaskRows } */}
                 </tbody>
             </table>
             <button onClick={ taskList.saveChanges }>Save changes</button>

@@ -190,7 +190,6 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
     const priorityRef = useRef<HTMLInputElement>(null);
     useEffect(() => {
         const updateFromRemotePriority = (): void => {
-            console.log("when are we using updateFromRemotePriority?");
             if (priorityRef.current !== null) {
                 priorityRef.current.value = task.priority.toString();
             }
