@@ -34,8 +34,8 @@ describe("SharedDirectory memory usage", () => {
     });
 
     benchmarkMemory(new class implements IMemoryTestObject {
-        public title = "Create empty directory";
-        public minSampleCount = 500;
+        public readonly title = "Create empty directory";
+        public readonly minSampleCount = 500;
 
         private dir: SharedDirectory = createLocalDirectory("testDirectory");
 
@@ -48,7 +48,7 @@ describe("SharedDirectory memory usage", () => {
 
     for (const x of numbersOfEntriesForTests) {
         benchmarkMemory(new class implements IMemoryTestObject {
-            public title = `Add ${x} integers to a local directory`;
+            public readonly title = `Add ${x} integers to a local directory`;
             private dir: SharedDirectory = createLocalDirectory("testDirectory");
 
             public async run (): Promise<void> {
@@ -63,7 +63,7 @@ describe("SharedDirectory memory usage", () => {
         }());
 
         benchmarkMemory(new class implements IMemoryTestObject {
-            public title = `Add ${x} integers to a local directory, clear it`;
+            public readonly title = `Add ${x} integers to a local directory, clear it`;
             private dir: SharedDirectory = createLocalDirectory("testDirectory");
 
             public async run(): Promise<void> {
