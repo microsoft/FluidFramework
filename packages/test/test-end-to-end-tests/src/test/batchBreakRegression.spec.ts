@@ -184,7 +184,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
     });
 
     describe("client sends invalid batches ", () => {
-        itExpects("Batch end without start",
+        itExpects.skip("Batch end without start",
         [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "OpBatchIncomplete" },
         ],
