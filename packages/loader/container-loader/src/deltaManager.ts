@@ -173,23 +173,24 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         return this._inboundSignal;
     }
 
-    // TODO: possible deprecate
+    // TODO: possibly deprecate
     public get initialSequenceNumber(): number {
         return this.initSequenceNumber;
     }
 
-    // TODO: possible deprecate
+    // TODO: possibly deprecate
     public get lastSequenceNumber(): number {
         // This variable now refers to virtual sequence number
         return this.lastProcessedSequenceNumber;
     }
 
-    // TODO: possible deprecate
+    // TODO: possibly deprecate
     public get lastMessage() {
+        // Potentially refers to virtualized message
         return this.lastProcessedMessage;
     }
 
-    // TODO: possible deprecate
+    // TODO: possibly deprecate
     public get lastKnownSeqNumber() {
         // This variable now refers to virtual sequence number
         return this.lastObservedSeqNumber;
@@ -199,7 +200,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         return this.baseTerm;
     }
 
-    // TODO: possible deprecate
+    // TODO: possibly deprecate
     public get minimumSequenceNumber(): number {
         return this.minSequenceNumber;
     }
@@ -276,7 +277,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         }
 
         // TODO: revisit
-        if (batch.length >= 500) {
+        if (batch.length >= 2) {
             this.connectionManager.sendMessages([{
                 type: GroupedBatchOpType,
                 clientSequenceNumber: batch[0].clientSequenceNumber, // TODO
@@ -396,6 +397,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         const checkpointSequenceNumber = connection.checkpointSequenceNumber;
         this._checkpointSequenceNumber = checkpointSequenceNumber;
         if (checkpointSequenceNumber !== undefined) {
+            // TODO
             this.updateLatestKnownOpSeqNumber(checkpointSequenceNumber);
         }
 
@@ -566,7 +568,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         const opListener = (op: ISequencedDocumentMessage) => {
             // TODO: this assert hits in e2e tests
-            assert(op.sequenceNumber === this.lastQueuedSequenceNumber, 0x23a /* "seq#'s" */);
+            assert(op.sequenceNumber === this.virtualSequenceNumber, 0x23a /* "seq#'s" */);
             // Ops that are coming from this request should not cancel itself.
             // This is useless for known ranges (to is defined) as it means request is over either way.
             // And it will cancel unbound request too early, not allowing us to learn where the end of the file is.
@@ -814,7 +816,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 this.pending.push(message);
                 this.fetchMissingDeltas(reason, message.sequenceNumber);
             } else {
-                // TODO: virtualization here (not for some of these properties though since they aren't public)
                 this.lastQueuedSequenceNumber = message.sequenceNumber;
                 this.previouslyProcessedMessage = message;
                 if (message.type === GroupedBatchOpType) {
@@ -888,7 +889,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         this.minSequenceNumber = message.minimumSequenceNumber;
 
-        // TODO: this hits in e2e tests
         if (message.sequenceNumber !== this.lastProcessedSequenceNumber + 1) {
             // pre-0.58 error message: nonSequentialSequenceNumber
             throw new DataCorruptionError("Found a non-Sequential sequenceNumber", {
@@ -1018,7 +1018,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             // and thus can leverage that to trigger recovery. But this is not going to solve all the problems
             // (the other 50%), and thus these errors below should be looked at even if code below results in
             // recovery.
-            if (this.lastQueuedSequenceNumber < this.lastObservedSeqNumber) {
+            if (this.lastQueuedSequenceNumber < this.lastObservedSeqNumber) { // TODO: comparing real sqn to virtual sqn
                 this.fetchMissingDeltas("OpsBehind");
             }
         }
