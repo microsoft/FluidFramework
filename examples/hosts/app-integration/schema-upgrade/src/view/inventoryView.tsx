@@ -74,15 +74,21 @@ const AddItemView: React.FC<IAddItemViewProps> = (props: IAddItemViewProps) => {
     const quantityRef = useRef<HTMLInputElement>(null);
 
     const onAddItemButtonClick = () => {
-        const name = nameRef.current?.value;
-        const quantityString = quantityRef.current?.value;
-        if (name === undefined || quantityString === undefined) {
+        if (nameRef.current === null || quantityRef.current === null) {
             throw new Error("Couldn't get the new item info");
         }
+
+        // Extract the values from the inputs and add the new item
+        const name = nameRef.current.value;
+        const quantityString = quantityRef.current.value;
         const quantity = quantityString !== ""
             ? parseInt(quantityString, 10)
             : 0;
         addItem(name, quantity);
+
+        // Clear the input form
+        nameRef.current.value = "";
+        quantityRef.current.value = "";
     };
 
     return (
