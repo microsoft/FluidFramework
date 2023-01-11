@@ -32,7 +32,7 @@ steps:
   displayName: Install root dependencies
   inputs:
     targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
+    workingDirectory: .
     script: |
       npm i -g pnpm
       pnpm config set recursive-install false
