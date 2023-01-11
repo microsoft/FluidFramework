@@ -75,11 +75,14 @@ const AddItemView: React.FC<IAddItemViewProps> = (props: IAddItemViewProps) => {
 
     const onAddItemButtonClick = () => {
         const name = nameRef.current?.value;
-        const quantity = quantityRef.current?.value;
-        if (name === undefined || quantity === undefined) {
+        const quantityString = quantityRef.current?.value;
+        if (name === undefined || quantityString === undefined) {
             throw new Error("Couldn't get the new item info");
         }
-        addItem(name, parseInt(quantity, 10));
+        const quantity = quantityString !== ""
+            ? parseInt(quantityString, 10)
+            : 0;
+        addItem(name, quantity);
     };
 
     return (
