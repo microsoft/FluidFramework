@@ -49,11 +49,58 @@ export const InventoryItemView: React.FC<IInventoryItemViewProps> = (props: IInv
                     ref={ quantityRef }
                     onInput={ inputHandler }
                     type="number"
-                    style={{ width: "50px" }}
+                    style={{ width: "60px" }}
                     disabled={ disabled }
                 ></input>
             </td>
         </tr>
+    );
+};
+
+interface IAddItemViewProps {
+    readonly addItem: (name: string, quantity: number) => void;
+}
+
+const AddItemView: React.FC<IAddItemViewProps> = (props: IAddItemViewProps) => {
+    const { addItem } = props;
+    const nameRef = useRef<HTMLInputElement>(null);
+    const quantityRef = useRef<HTMLInputElement>(null);
+
+    const onAddItemButtonClick = () => {
+        const name = nameRef.current?.value;
+        const quantity = quantityRef.current?.value;
+        if (name === undefined || quantity === undefined) {
+            throw new Error("Couldn't get the new item info");
+        }
+        addItem(name, parseInt(quantity, 10));
+    };
+
+    return (
+        <>
+            <tr style={{ borderTop: "3px solid black" }}>
+                <td>
+                    <input
+                        ref={ nameRef }
+                        type="text"
+                        placeholder="New item"
+                        style={{ width: "200px" }}
+                    />
+                </td>
+                <td>
+                    <input
+                        ref={ quantityRef }
+                        type="number"
+                        placeholder="0"
+                        style={{ width: "60px" }}
+                    />
+                </td>
+            </tr>
+            <tr>
+                <td colSpan={ 2 }>
+                    <button style={{ width: "100%" }} onClick={ onAddItemButtonClick }>Add new item</button>
+                </td>
+            </tr>
+        </>
     );
 };
 
@@ -84,7 +131,7 @@ export const InventoryListView: React.FC<IInventoryListViewProps> = (props: IInv
     ));
 
     return (
-        <table style={{ margin: "0 auto", textAlign: "left" }}>
+        <table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
             <thead>
                 <tr>
                     <th>Inventory item</th>
@@ -92,7 +139,12 @@ export const InventoryListView: React.FC<IInventoryListViewProps> = (props: IInv
                 </tr>
             </thead>
             <tbody>
-                { inventoryItemViews }
+                {
+                    inventoryItemViews.length > 0
+                    ? inventoryItemViews
+                    : <tr><td colSpan={ 2 }>No items in inventory</td></tr>
+                }
+                <AddItemView addItem={ inventoryList.addItem } />
             </tbody>
         </table>
     );
