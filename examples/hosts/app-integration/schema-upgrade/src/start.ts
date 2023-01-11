@@ -14,13 +14,17 @@ import {
     Migrator,
     ModelLoader,
 } from "@fluid-example/example-utils";
-import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import {
+    createTinyliciousCreateNewRequest,
+    InsecureTinyliciousTokenProvider,
+    InsecureTinyliciousUrlResolver,
+} from "@fluidframework/tinylicious-driver";
 
+import { inventoryListDataTransformationCallback } from "./dataTransform";
 import { DemoCodeLoader } from "./demoCodeLoader";
 import type { IInventoryListAppModel } from "./modelInterfaces";
-import { TinyliciousService } from "./tinyliciousService";
 import { DebugView, InventoryListAppView } from "./view";
-import { inventoryListDataTransformationCallback } from "./dataTransform";
 
 const updateTabForId = (id: string) => {
     // Update the URL with the actual ID
@@ -64,15 +68,13 @@ const render = (model: IVersionedModel) => {
 };
 
 async function start(): Promise<void> {
-    const tinyliciousService = new TinyliciousService();
-
     // If we assumed the container code could consistently present a model to us, we could bake that assumption
     // in here as well as in the Migrator -- both places just need a reliable way to get a model regardless of the
     // (unknown) container version.  So the ModelLoader would be replaced by whatever the consistent request call
     // (e.g. container.request({ url: "mode" })) looks like.
     const modelLoader = new ModelLoader<IMigratableModel>({
-        urlResolver: tinyliciousService.urlResolver,
-        documentServiceFactory: tinyliciousService.documentServiceFactory,
+        urlResolver: new InsecureTinyliciousUrlResolver(),
+        documentServiceFactory: new RouterliciousDocumentServiceFactory(new InsecureTinyliciousTokenProvider()),
         codeLoader: new DemoCodeLoader(),
         generateCreateNewRequest: createTinyliciousCreateNewRequest,
     });
