@@ -136,7 +136,10 @@ export async function createSummarizerWithContainer(
     const loader = provider.makeTestLoader(testContainerConfig);
     return createSummarizerCore(absoluteUrl, loader, summaryVersion);
 }
-
+/**
+ * Summarizes on demand and returns the summary tree, the version number and the reference sequence number of the
+ * submitted summary.
+*/
 export async function summarizeNow(summarizer: ISummarizer, reason: string = "end-to-end test") {
     const result = summarizer.summarizeOnDemand({ reason });
 
@@ -157,6 +160,7 @@ export async function summarizeNow(summarizer: ISummarizer, reason: string = "en
     return {
         summaryTree: submitResult.data.summaryTree,
         summaryVersion: ackNackResult.data.summaryAckOp.contents.handle,
+        summaryRefSeq: submitResult.data.referenceSequenceNumber,
     };
 }
 
