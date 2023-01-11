@@ -158,9 +158,7 @@ const generateInstallationSection = (packageJson, devDependency, includeHeading)
 npm i ${packageJson.name}${devDependency ? " -D" : ""}
 \`\`\``;
 
-    return includeHeading
-        ? `## Installation\n\n${sectionBody}`
-        : sectionBody;
+    return formattedSectionText(sectionBody, includeHeading ? "Installation" : undefined);
 }
 
 /**
@@ -202,10 +200,7 @@ const generateHelpSection = (includeHeading) => {
  */
 const generateApiDocsLinkSection = (packageJson, includeHeading) => {
     const sectionBody = `API documentation for **${packageJson.name}** is available at <https://fluidframework.com/docs/apis/${packageJson.shortName}>.`;
-
-    return includeHeading
-        ? `## API Documentation\n\n${sectionBody}`
-        : sectionBody;
+    return formattedSectionText(sectionBody, includeHeading ? "API Documentation" : undefined)
 }
 
 /**
@@ -216,9 +211,7 @@ const generateApiDocsLinkSection = (packageJson, includeHeading) => {
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
  */
 const generateScriptsSection = (scriptsTable, includeHeading) => {
-    return includeHeading
-        ? `## Scripts\n\n${scriptsTable}`
-        : scriptsTable;
+    return formattedSectionText(scriptsTable, includeHeading ? "Scripts" : undefined);
 }
 
 const fetchFunc = async (content, options) => {
