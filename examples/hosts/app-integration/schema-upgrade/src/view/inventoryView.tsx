@@ -11,11 +11,12 @@ import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
 
 export interface IInventoryItemViewProps {
     inventoryItem: IInventoryItem;
+    deleteItem: () => void;
     disabled?: boolean;
 }
 
 export const InventoryItemView: React.FC<IInventoryItemViewProps> = (props: IInventoryItemViewProps) => {
-    const { inventoryItem, disabled } = props;
+    const { inventoryItem, deleteItem, disabled } = props;
     const quantityRef = useRef<HTMLInputElement>(null);
     useEffect(() => {
         const updateFromRemoteQuantity = () => {
@@ -52,6 +53,12 @@ export const InventoryItemView: React.FC<IInventoryItemViewProps> = (props: IInv
                     style={{ width: "60px" }}
                     disabled={ disabled }
                 ></input>
+            </td>
+            <td>
+                <button
+                    onClick={ deleteItem }
+                    style={{ border: "none", background: "none" }}
+                >❌</button>
             </td>
         </tr>
     );
@@ -126,9 +133,17 @@ export const InventoryListView: React.FC<IInventoryListViewProps> = (props: IInv
         };
     }, [inventoryList]);
 
-    const inventoryItemViews = inventoryItems.map((inventoryItem) => (
-        <InventoryItemView key={ inventoryItem.id } inventoryItem={ inventoryItem } disabled={ disabled } />
-    ));
+    const inventoryItemViews = inventoryItems.map((inventoryItem) => {
+        const deleteItem = () => inventoryList.deleteItem(inventoryItem.id);
+        return (
+            <InventoryItemView
+                key={ inventoryItem.id }
+                inventoryItem={ inventoryItem }
+                deleteItem={ deleteItem }
+                disabled={ disabled }
+            />
+        );
+    });
 
     return (
         <table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
