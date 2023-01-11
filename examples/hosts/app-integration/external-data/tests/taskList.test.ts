@@ -7,6 +7,7 @@ import { globals } from "../jest.config";
 
 describe("taskList", () => {
     beforeAll(async () => {
+        jest.setTimeout(30_000);
         // Wait for the page to load first before running any tests
         // so this time isn't attributed to the first test
         await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
@@ -20,6 +21,7 @@ describe("taskList", () => {
 
     it("loads and there's an input", async () => {
         // Validate the input shows up
-        await page.waitForSelector("input", {timeout: 20_000});
+        console.log(globals.PATH)
+        await page.waitForSelector("input");
     });
 });

@@ -67,10 +67,9 @@ describe("mockCustomerService", () => {
         };
 
         await request(server!).post("/set-tasks").send({ taskList: newData }).expect(200);
-        const externalData = await externalDataSource!.fetchData().then((data) => {
-            return JSON.parse(data.body.toString()) as object
-        });
-        expect(externalData).toEqual(newData);
+        const  externalData = await externalDataSource!.fetchData();
+        const parsed = JSON.parse(externalData.body.toString()) as object;
+        expect(parsed).toEqual(newData);
     });
 
     it("set-tasks: Ensure server rejects update with no data", async () => {
