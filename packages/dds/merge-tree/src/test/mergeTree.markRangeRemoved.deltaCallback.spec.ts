@@ -88,7 +88,7 @@ describe("MergeTree", () => {
             });
 
             // Move currentSeq/minSeq past the seq# at which the removal was ACKed.
-            mergeTree.getCollabWindow().currentSeq = currentSequenceNumber;
+            mergeTree.collabWindow.currentSeq = currentSequenceNumber;
             mergeTree.setMinSeq(currentSequenceNumber);
 
             assert.deepStrictEqual(count, {

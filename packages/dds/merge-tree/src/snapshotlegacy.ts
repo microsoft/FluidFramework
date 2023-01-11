@@ -151,7 +151,7 @@ export class SnapshotLegacy {
     }
 
     extractSync() {
-        const collabWindow = this.mergeTree.getCollabWindow();
+        const collabWindow = this.mergeTree.collabWindow ;
         this.seq = collabWindow.minSeq;
         this.header = {
             segmentsTotalLength: this.mergeTree.getLength(this.mergeTree.collabWindow.minSeq,

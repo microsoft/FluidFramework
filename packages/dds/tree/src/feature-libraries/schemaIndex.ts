@@ -35,6 +35,7 @@ import {
     TreeSchemaIdentifier,
     ValueSchema,
     schemaDataIsEmpty,
+    SchemaEvents,
 } from "../core";
 import {
     Index,
@@ -326,6 +327,10 @@ export class SchemaEditor implements StoredSchemaRepository {
         public readonly inner: StoredSchemaRepository,
         private readonly submit: (op: SchemaOp) => void,
     ) {}
+
+    public on<K extends keyof SchemaEvents>(eventName: K, listener: SchemaEvents[K]): () => void {
+        return this.inner.on(eventName, listener);
+    }
 
     /**
      * @returns true if this is a schema op and was handled.
