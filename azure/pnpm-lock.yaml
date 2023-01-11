@@ -209,6 +209,7 @@ importers:
       concurrently: ^6.2.0
       cross-env: ^7.0.2
       eslint: ~8.6.0
+      events: ^3.1.0
       fluid-framework: ^1.4.0-108057
       html-webpack-plugin: ^5.5.0
       jest: ^26.6.3
@@ -231,6 +232,7 @@ importers:
     dependencies:
       '@fluidframework/azure-client': link:../azure-client
       '@fluidframework/common-definitions': 0.20.1
+      events: 3.3.0
       fluid-framework: 1.4.0-108057
     devDependencies:
       '@fluid-experimental/get-container': 1.4.0-108057
