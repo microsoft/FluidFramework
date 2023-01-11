@@ -600,8 +600,21 @@ describe("Runtime", () => {
             });
         });
 
-        it("supports mixin classes", async () => {
-            const makeMixin = <T>(Base: typeof ContainerRuntime, methodName: string, methodReturn: T) =>
+        describe("supports mixin classes", () => {
+            const getMockContext = ((): Partial<IContainerContext> => {
+                return {
+                    attachState: AttachState.Attached,
+                    deltaManager: new MockDeltaManager(),
+                    quorum: new MockQuorumClients(),
+                    taggedLogger: new MockLogger(),
+                    clientDetails: { capabilities: { interactive: true } },
+                    closeFn: (_error?: ICriticalContainerError): void => { },
+                    updateDirtyContainerState: (_dirty: boolean) => { },
+                };
+            });
+
+            it("old load method works", async () => {
+                const makeMixin = <T>(Base: typeof ContainerRuntime, methodName: string, methodReturn: T) =>
                 class MixinContainerRuntime extends Base {
                     public static async load(
                         context: IContainerContext,
@@ -631,28 +644,59 @@ describe("Runtime", () => {
                     }
                 } as typeof ContainerRuntime;
 
-            const getMockContext = ((): Partial<IContainerContext> => {
-                return {
-                    attachState: AttachState.Attached,
-                    deltaManager: new MockDeltaManager(),
-                    quorum: new MockQuorumClients(),
-                    taggedLogger: new MockLogger(),
-                    clientDetails: { capabilities: { interactive: true } },
-                    closeFn: (_error?: ICriticalContainerError): void => { },
-                    updateDirtyContainerState: (_dirty: boolean) => { },
-                };
+                const runtime = await makeMixin(makeMixin(ContainerRuntime, "method1", "mixed in return"), "method2", 42).load(
+                    getMockContext() as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    {}, // runtimeOptions
+                );
+
+                assert.equal((runtime as unknown as { method1: () => any; }).method1(), "mixed in return");
+                assert.equal((runtime as unknown as { method2: () => any; }).method2(), 42);
             });
 
-            const runtime = await makeMixin(makeMixin(ContainerRuntime, "method1", "mixed in return"), "method2", 42).load(
-                getMockContext() as IContainerContext,
-                [],
-                undefined, // requestHandler
-                {}, // runtimeOptions
-            );
+            it("new load method works", async () => {
+                const makeMixin = <T>(Base: typeof ContainerRuntime, methodName: string, methodReturn: T) =>
+                class MixinContainerRuntime extends Base {
+                    public static async newLoad(
+                        context: IContainerContext,
+                        containerRuntimeCtor: typeof ContainerRuntime = MixinContainerRuntime,
+                        runtimeOptions: IContainerRuntimeOptions = {},
+                        existing?: boolean,
+                        initializeEntryPoint?: Promise<IContainerEntryPoint>
+                    ): Promise<ContainerRuntime> {
 
-            assert.equal((runtime as unknown as { method1: () => any; }).method1(), "mixed in return");
-            assert.equal((runtime as unknown as { method2: () => any; }).method2(), 42);
-        });
+                        return Base.newLoad(
+                            context,
+                            containerRuntimeCtor,
+                            runtimeOptions,
+                            existing,
+                            initializeEntryPoint
+                        );
+                    }
+
+                    public [methodName](): T {
+                        return methodReturn;
+                    }
+                } as typeof ContainerRuntime;
+
+                const myEntryPoint: IContainerEntryPoint = {
+                    containerScope: {},
+                    dataStoreRegistryEntries: []
+                };
+
+                const runtime = await makeMixin(makeMixin(ContainerRuntime, "method1", "mixed in return"), "method2", 42).newLoad(
+                    getMockContext() as IContainerContext,
+                    undefined, // containerRuntimeCtor
+                    {},    // runtimeOptions
+                    false, // existing
+                    Promise.resolve(myEntryPoint),
+                );
+
+                assert.equal((runtime as unknown as { method1: () => any; }).method1(), "mixed in return");
+                assert.equal((runtime as unknown as { method2: () => any; }).method2(), 42);
+            });
+        })
 
         it("entryPoint is initialized correctly when using old load method", async () => {
             const mockContext: Partial<IContainerContext> = {
