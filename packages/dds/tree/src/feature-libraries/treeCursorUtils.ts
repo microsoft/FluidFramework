@@ -241,6 +241,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
     }
 
     public firstField(): boolean {
+        // assert(this.mode === CursorLocationType.Nodes, "must be in nodes mode");
         const fields = this.adapter.keysFromNode(this.getNode());
         if (fields.length === 0) {
             return false;
@@ -264,14 +265,15 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
     }
 
     public firstNode(): boolean {
-        const siblings = this.getField();
-        if (siblings.length === 0) {
+        // assert(this.mode === CursorLocationType.Fields, "firstNode only allowed in fields mode");
+        const nodes = this.getField();
+        if (nodes.length === 0) {
             return false;
         }
         this.siblingStack.push(this.siblings);
         this.indexStack.push(this.index);
         this.index = 0;
-        this.siblings = siblings;
+        this.siblings = nodes;
         return true;
     }
 
@@ -302,14 +304,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
         return (this.siblings as TNode[])[this.index];
     }
 
-    private getParent(): TNode {
-        // assert(this.mode === CursorLocationType.Nodes, "can only get node when in node");
-        return this.getStackedNode(this.indexStack.length - 1);
-    }
-
     private getField(): readonly TNode[] {
         // assert(this.mode === CursorLocationType.Fields, "can only get field when in fields");
-        const parent = this.getParent();
+        const parent = this.getStackedNode(this.indexStack.length - 1);
         const key: FieldKey = this.getFieldKey();
         const field = this.adapter.getFieldFromNode(parent, key);
         return field;
