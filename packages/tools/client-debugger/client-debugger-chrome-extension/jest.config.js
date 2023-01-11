@@ -12,6 +12,8 @@ module.exports = {
     testRegex: "(/__tests__/.*|(\\.|/)(test|spec))\\.(ts|tsx)?$",
     testPathIgnorePatterns: ["/node_modules/", "dist"],
     moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
-    setupFiles: ["./testSetup.js"],
+    setupFiles: ["./jestTestSetup.js"],
+    globalSetup: "./jestGlobalSetup.js",
+    globalTeardown: "./jestGlobalTeardown.js",
     coveragePathIgnorePatterns: ["/node_modules/", "/src/test/"],
 };
