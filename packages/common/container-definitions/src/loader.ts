@@ -104,7 +104,6 @@ export interface ICodeAllowList {
 /**
  * Events emitted by the {@link IContainer} "upwards" to the Loader and Host.
  */
-/* eslint-disable @typescript-eslint/unified-signatures */
 export interface IContainerEvents extends IEvent {
     /**
      * Emitted when the readonly state of the container changes.
@@ -238,7 +237,6 @@ export interface IContainerEvents extends IEvent {
      */
     (event: "saved", listener: (dirty: boolean) => void);
 }
-/* eslint-enable @typescript-eslint/unified-signatures */
 
 /**
  * Namespace for the different connection states a container can be in.
