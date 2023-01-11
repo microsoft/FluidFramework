@@ -96,5 +96,6 @@ export class OpDecompressor {
 const newMessage = (originalMessage: ISequencedDocumentMessage, contents: any): ISequencedDocumentMessage => ({
     ...originalMessage,
     contents,
+    compression: undefined,
     metadata: { ...originalMessage.metadata },
 });
