@@ -98,7 +98,7 @@ export enum DriverErrorType {
     usageError = "usageError",
 
     /**
-     * File is locked, status code 423
+     * Storage supports file locking (not through Fluid protocol), and Fluid Framework can only read file, not edit.
      */
     fileIsLocked = "fileIsLocked",
 }
