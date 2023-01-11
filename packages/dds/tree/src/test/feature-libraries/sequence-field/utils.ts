@@ -7,7 +7,7 @@ import { ChangesetLocalId, SequenceField as SF } from "../../../feature-librarie
 import { Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze, fakeRepair } from "../../utils";
-import { brand } from "../../../util";
+import { brand, fail } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
 export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
@@ -39,6 +39,30 @@ export function rebaseTagged(
         );
     }
     return currChange;
+}
+
+const dummyCrossFieldManager = {
+    get: () => fail("Not implemented"),
+    getOrCreate: () => fail("Not implemented"),
+    consume: () => fail("Not implemented"),
+};
+
+export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
+    return SF.invert(
+        change,
+        TestChange.invert,
+        () => fail("Sequence fields should not generate IDs during invert"),
+        dummyCrossFieldManager,
+    );
+}
+
+export function shallowInvert(change: TaggedChange<TestChangeset>): TestChangeset {
+    return SF.invert(
+        change,
+        () => fail("Unexpected call to child inverter"),
+        () => fail("Sequence fields should not generate IDs during invert"),
+        dummyCrossFieldManager,
+    );
 }
 
 export function checkDeltaEquality(actual: TestChangeset, expected: TestChangeset) {

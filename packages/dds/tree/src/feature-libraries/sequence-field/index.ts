@@ -60,7 +60,7 @@ export { sequenceFieldToDelta, ToDelta } from "./sequenceFieldToDelta";
 export { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor";
 export { MarkListFactory } from "./markListFactory";
 export { NodeChangeRebaser, rebase } from "./rebase";
-export { invert, NodeChangeInverter } from "./invert";
+export { amendInvert, invert, NodeChangeInverter } from "./invert";
 export { compose, NodeChangeComposer } from "./compose";
 export {
     isMoveMark,

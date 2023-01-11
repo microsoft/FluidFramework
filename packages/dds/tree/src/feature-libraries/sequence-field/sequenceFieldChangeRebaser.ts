@@ -7,7 +7,7 @@ import { fail } from "../../util";
 import { FieldChangeRebaser } from "../modular-schema";
 import { compose } from "./compose";
 import { Changeset } from "./format";
-import { invert } from "./invert";
+import { amendInvert, invert } from "./invert";
 import { rebase } from "./rebase";
 
 export type SequenceChangeRebaser = FieldChangeRebaser<Changeset>;
@@ -17,6 +17,6 @@ export const sequenceFieldChangeRebaser = {
     invert,
     rebase,
     amendCompose: () => fail("Not implemented"),
-    amendInvert: () => fail("Not implemented"),
+    amendInvert,
     amendRebase: () => fail("Not implemented"),
 };

@@ -12,6 +12,9 @@ import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
 
+// @public (undocumented)
+function amendInvert<TNodeChange>(invertedChange: Changeset<TNodeChange>, originalRevision: RevisionTag | undefined, invertChild: NodeChangeInverter_2<TNodeChange>, genId: IdAllocator, crossFieldManager: CrossFieldManager): Changeset<TNodeChange>;
+
 // @public
 export type Anchor = Brand<number, "rebaser.Anchor">;
 
@@ -141,11 +144,11 @@ export const createField: unique symbol;
 // @public (undocumented)
 export interface CrossFieldManager<T = unknown> {
     // (undocumented)
-    consume: (target: CrossFieldTarget, revision: RevisionTag, id: ChangesetLocalId) => void;
+    consume: (target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId) => void;
     // (undocumented)
-    get: (target: CrossFieldTarget, revision: RevisionTag, id: ChangesetLocalId) => T | undefined;
+    get: (target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId) => T | undefined;
     // (undocumented)
-    getOrCreate: (target: CrossFieldTarget, revision: RevisionTag, id: ChangesetLocalId, newValue: T) => T;
+    getOrCreate: (target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, newValue: T) => T;
 }
 
 // @public (undocumented)
@@ -355,7 +358,7 @@ export interface FieldChangeRebaser<TChangeset> {
     // (undocumented)
     amendCompose(composeChange: TChangeset, composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
     // (undocumented)
-    amendInvert(invertedChange: TChangeset, invertChild: NodeChangeInverter, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
+    amendInvert(invertedChange: TChangeset, originalRevision: RevisionTag | undefined, invertChild: NodeChangeInverter, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
     // (undocumented)
     amendRebase(rebasedChange: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
     compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
@@ -606,7 +609,7 @@ export interface Invariant<T> extends Contravariant<T>, Covariant<T> {
 }
 
 // @public
-function invert<TNodeChange>(change: TaggedChange<Changeset<TNodeChange>>, invertChild: NodeChangeInverter_2<TNodeChange>): Changeset<TNodeChange>;
+function invert<TNodeChange>(change: TaggedChange<Changeset<TNodeChange>>, invertChild: NodeChangeInverter_2<TNodeChange>, genId: IdAllocator, crossFieldManager: CrossFieldManager): Changeset<TNodeChange>;
 
 // @public
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
@@ -1279,6 +1282,7 @@ declare namespace SequenceField {
         MarkListFactory,
         NodeChangeRebaser_2 as NodeChangeRebaser,
         rebase,
+        amendInvert,
         invert,
         NodeChangeInverter_2 as NodeChangeInverter,
         compose,
@@ -1307,7 +1311,7 @@ const sequenceFieldChangeRebaser: {
     invert: typeof invert;
     rebase: typeof rebase;
     amendCompose: () => never;
-    amendInvert: () => never;
+    amendInvert: typeof amendInvert;
     amendRebase: () => never;
 };
 

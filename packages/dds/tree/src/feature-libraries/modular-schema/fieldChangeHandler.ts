@@ -56,6 +56,7 @@ export interface FieldChangeRebaser<TChangeset> {
 
     amendInvert(
         invertedChange: TChangeset,
+        originalRevision: RevisionTag | undefined,
         invertChild: NodeChangeInverter,
         genId: IdAllocator,
         crossFieldManager: CrossFieldManager,
@@ -182,12 +183,20 @@ export enum CrossFieldTarget {
 export interface CrossFieldManager<T = unknown> {
     getOrCreate: (
         target: CrossFieldTarget,
-        revision: RevisionTag,
+        revision: RevisionTag | undefined,
         id: ChangesetLocalId,
         newValue: T,
     ) => T;
-    get: (target: CrossFieldTarget, revision: RevisionTag, id: ChangesetLocalId) => T | undefined;
-    consume: (target: CrossFieldTarget, revision: RevisionTag, id: ChangesetLocalId) => void;
+    get: (
+        target: CrossFieldTarget,
+        revision: RevisionTag | undefined,
+        id: ChangesetLocalId,
+    ) => T | undefined;
+    consume: (
+        target: CrossFieldTarget,
+        revision: RevisionTag | undefined,
+        id: ChangesetLocalId,
+    ) => void;
 }
 
 /**

@@ -241,17 +241,18 @@ export class ModularChangeFamily
         while (crossFieldTable.fieldsToUpdate.size > 0) {
             const fieldsToUpdate = crossFieldTable.fieldsToUpdate;
             crossFieldTable.fieldsToUpdate = new Set();
-            for (const field of fieldsToUpdate) {
+            for (const { fieldChange, originalRevision } of fieldsToUpdate) {
                 const amendedChange = getChangeHandler(
                     this.fieldKinds,
-                    field.fieldKind,
+                    fieldChange.fieldKind,
                 ).rebaser.amendInvert(
-                    field.change,
+                    fieldChange.change,
+                    originalRevision,
                     () => fail(""),
                     genId,
                     makeCrossFieldManager(crossFieldTable),
                 );
-                field.change = brand(amendedChange);
+                fieldChange.change = brand(amendedChange);
             }
         }
         return makeModularChangeset(invertedFields, maxId);
@@ -290,11 +291,16 @@ export class ModularChangeFamily
             };
             invertedFields.set(field, invertedFieldChange);
 
+            const invertData: InvertData = {
+                fieldChange: invertedFieldChange,
+                originalRevision: changes.revision,
+            };
+
             addCrossFieldReceivers(
                 crossFieldTable,
                 crossFieldSrcQueries,
                 crossFieldDstQueries,
-                invertedFieldChange,
+                invertData,
             );
         }
 
@@ -559,7 +565,11 @@ function newCrossFieldTable<T>(): CrossFieldTable<T> {
     };
 }
 
-type InvertData = FieldChange;
+interface InvertData {
+    originalRevision: RevisionTag | undefined;
+    fieldChange: FieldChange;
+}
+
 type ComposeData = FieldChange;
 
 interface RebaseData {
@@ -575,7 +585,7 @@ function makeCrossFieldManager<T>(
     return {
         getOrCreate: (
             target: CrossFieldTarget,
-            revision: RevisionTag,
+            revision: RevisionTag | undefined,
             id: ChangesetLocalId,
             newValue: unknown,
         ) => {
@@ -597,7 +607,11 @@ function makeCrossFieldManager<T>(
             }
             return table.get(id);
         },
-        get: (target: CrossFieldTarget, revision: RevisionTag, id: ChangesetLocalId) => {
+        get: (
+            target: CrossFieldTarget,
+            revision: RevisionTag | undefined,
+            id: ChangesetLocalId,
+        ) => {
             const table =
                 target === CrossFieldTarget.Source
                     ? crossFieldTable.srcTable
@@ -609,7 +623,11 @@ function makeCrossFieldManager<T>(
             }
             return table.get(id);
         },
-        consume: (target: CrossFieldTarget, revision: RevisionTag, id: ChangesetLocalId) => {
+        consume: (
+            target: CrossFieldTarget,
+            revision: RevisionTag | undefined,
+            id: ChangesetLocalId,
+        ) => {
             const table =
                 target === CrossFieldTarget.Source
                     ? crossFieldTable.srcTable

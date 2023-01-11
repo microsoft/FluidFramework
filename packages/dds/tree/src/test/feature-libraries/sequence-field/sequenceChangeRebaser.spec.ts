@@ -13,6 +13,7 @@ import {
     checkDeltaEquality,
     composeAnonChanges,
     getMaxIdTagged,
+    invert,
     normalizeMoveIds,
     rebaseTagged,
 } from "./utils";
@@ -64,10 +65,7 @@ describe("SequenceField - Rebaser Axioms", () => {
                             for (let offset2 = 1; offset2 <= 4; ++offset2) {
                                 const change1 = tagChange(makeChange1(offset1), brand(1));
                                 const change2 = tagChange(makeChange2(offset2), brand(2));
-                                const inv = tagInverse(
-                                    SF.invert(change2, TestChange.invert),
-                                    change2.revision,
-                                );
+                                const inv = tagInverse(invert(change2), change2.revision);
                                 const r1 = rebaseTagged(change1, change2);
                                 const r2 = rebaseTagged(r1, inv);
                                 normalizeMoveIds(r2.change);
@@ -96,10 +94,7 @@ describe("SequenceField - Rebaser Axioms", () => {
                         for (let offset2 = 1; offset2 <= 4; ++offset2) {
                             const change1 = tagChange(makeChange1(offset1), brand(1));
                             const change2 = tagChange(makeChange2(offset2), brand(2));
-                            const inverse2 = tagInverse(
-                                SF.invert(change2, TestChange.invert),
-                                change2.revision,
-                            );
+                            const inverse2 = tagInverse(invert(change2), change2.revision);
                             const r1 = rebaseTagged(change1, change2);
                             normalizeMoveIds(r1.change);
                             const r2 = rebaseTagged(r1, inverse2);
@@ -118,7 +113,7 @@ describe("SequenceField - Rebaser Axioms", () => {
             it(`${name} ○ ${name}⁻¹ === ε`, () => {
                 const change = makeChange(0);
                 const taggedChange = tagChange(change, brand(1));
-                const inv = SF.invert(taggedChange, TestChange.invert);
+                const inv = invert(taggedChange);
                 const changes = [taggedChange, tagInverse(inv, taggedChange.revision)];
                 const actual = SF.compose(
                     changes,
@@ -141,7 +136,7 @@ describe("SequenceField - Rebaser Axioms", () => {
                 it(`${name}⁻¹ ○ ${name} === ε`, () => {
                     const change = makeChange(0);
                     const taggedChange = tagChange(change, brand(1));
-                    const inv = SF.invert(taggedChange, TestChange.invert);
+                    const inv = invert(taggedChange);
                     const changes = [tagInverse(inv, taggedChange.revision), taggedChange];
                     const actual = SF.compose(
                         changes,
@@ -160,7 +155,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
     it("Nested inserts", () => {
         const insertA = tagChange(Change.insert(0, 2), brand(1));
         const insertB = tagChange(Change.insert(1, 1), brand(2));
-        const inverseA = SF.invert(insertA, TestChange.invert);
+        const inverseA = invert(insertA);
         const insertB2 = rebaseTagged(insertB, tagInverse(inverseA, insertA.revision));
         const insertB3 = rebaseTagged(insertB2, insertA);
         assert.deepEqual(insertB3.change, insertB.change);
@@ -170,7 +165,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
         const insertX = tagChange(Change.insert(0, 1), brand(1));
         const insertA = tagChange(Change.insert(1, 2), brand(2));
         const insertB = tagChange(Change.insert(2, 1), brand(3));
-        const inverseA = SF.invert(insertA, TestChange.invert);
+        const inverseA = invert(insertA);
         const insertA2 = rebaseTagged(insertA, insertX);
         const insertB2 = rebaseTagged(insertB, tagInverse(inverseA, insertA.revision));
         const insertB3 = rebaseTagged(insertB2, insertX);
