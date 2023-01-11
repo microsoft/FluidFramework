@@ -76,6 +76,7 @@
     "@types/jest": "22.2.3",
     "@types/node": "^14.18.36",
     "@types/react": "^17.0.44",
+    "@types/sinon": "^7.0.13",
     "@types/underscore": "^1.9.1",
     "@wojtekmaj/enzyme-adapter-react-17": "^0.6.7",
     "async": "^3.2.2",

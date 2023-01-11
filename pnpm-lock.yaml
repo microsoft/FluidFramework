@@ -1652,8 +1652,10 @@ importers:
       bootstrap: ^3.3.7
       concurrently: ^6.2.0
       cross-env: ^7.0.2
+      css-loader: ^1.0.0
       debug: ^4.1.1
       eslint: ~8.6.0
+      events: ^3.1.0
       jest: ^26.6.3
       jest-junit: ^10.0.0
       jest-puppeteer: ^4.3.0
@@ -1665,6 +1667,7 @@ importers:
       react-dom: ^17.0.1
       rimraf: ^2.6.2
       source-map-loader: ^2.0.0
+      style-loader: ^1.0.0
       ts-loader: ^9.3.0
       typescript: ~4.5.5
       url-loader: ^2.1.0
@@ -1692,6 +1695,7 @@ importers:
       '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       bootstrap: 3.4.1
       debug: 4.3.4
+      events: 3.3.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
@@ -1710,6 +1714,7 @@ importers:
       '@types/react-dom': 17.0.18
       concurrently: 6.3.0
       cross-env: 7.0.3
+      css-loader: 1.0.1_webpack@5.74.0
       eslint: 8.6.0
       jest: 26.6.3
       jest-junit: 10.0.0
@@ -1720,6 +1725,7 @@ importers:
       puppeteer: 1.20.0
       rimraf: 2.7.1
       source-map-loader: 2.0.2_webpack@5.74.0
+      style-loader: 1.3.0_webpack@5.74.0
       ts-loader: 9.4.1_c7vzyzxpsxf4kskkum3br4suwu
       typescript: 4.5.5
       url-loader: 2.3.0_webpack@5.74.0
@@ -2602,6 +2608,7 @@ importers:
       eslint-plugin-react: ~7.28.0
       eslint-plugin-unicorn: ~40.0.0
       eslint-plugin-unused-imports: ~2.0.0
+      events: ^3.1.0
       html-webpack-plugin: ^5.5.0
       jest: ^26.6.3
       jest-junit: ^10.0.0
@@ -2644,10 +2651,9 @@ importers:
       '@fluidframework/task-manager': link:../../../../packages/dds/task-manager
       '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
       '@fluidframework/tinylicious-driver': link:../../../../packages/drivers/tinylicious-driver
-      css-loader: 1.0.1_webpack@5.74.0
+      events: 3.3.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-      style-loader: 1.3.0_webpack@5.74.0
       uuid: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli': 0.7.0_webpack-cli@4.10.0
@@ -2664,6 +2670,7 @@ importers:
       clean-webpack-plugin: 4.0.0_webpack@5.74.0
       concurrently: 6.3.0
       cross-env: 7.0.3
+      css-loader: 1.0.1_webpack@5.74.0
       eslint: 8.6.0
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.6.0
       eslint-plugin-import: 2.25.4_eslint@8.6.0
@@ -2680,6 +2687,7 @@ importers:
       process: 0.11.10
       puppeteer: 1.20.0
       rimraf: 2.7.1
+      style-loader: 1.3.0_webpack@5.74.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_c7vzyzxpsxf4kskkum3br4suwu
       typescript: 4.5.5
@@ -3520,6 +3528,7 @@ importers:
       '@types/jest': 22.2.3
       '@types/node': ^14.18.36
       '@types/react': ^17.0.44
+      '@types/sinon': ^7.0.13
       '@types/underscore': ^1.9.1
       '@wojtekmaj/enzyme-adapter-react-17': ^0.6.7
       async: ^3.2.2
@@ -3597,6 +3606,7 @@ importers:
       '@types/jest': 22.2.3
       '@types/node': 14.18.36
       '@types/react': 17.0.52
+      '@types/sinon': 7.5.2
       '@types/underscore': 1.11.4
       '@wojtekmaj/enzyme-adapter-react-17': 0.6.7_enzyme@3.11.0+react@17.0.2
       async: 3.2.4
@@ -5354,6 +5364,7 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.2
       eslint: ~8.6.0
+      events: ^3.1.0
       mocha: ^10.0.0
       mocha-junit-reporter: ^1.18.0
       nyc: ^15.0.0
@@ -5369,6 +5380,7 @@ importers:
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
+      events: 3.3.0
     devDependencies:
       '@fluid-internal/test-dds-utils': link:../test-dds-utils
       '@fluidframework/build-common': 1.1.0
@@ -7406,6 +7418,7 @@ importers:
       cross-env: ^7.0.2
       diff: ^3.5.0
       eslint: ~8.6.0
+      events: ^3.1.0
       mocha: ^10.0.0
       nyc: ^15.0.0
       prettier: ~2.6.2
@@ -7417,6 +7430,7 @@ importers:
       '@fluidframework/matrix': link:../../dds/matrix
       '@fluidframework/merge-tree': link:../../dds/merge-tree
       '@fluidframework/sequence': link:../../dds/sequence
+      events: 3.3.0
     devDependencies:
       '@fluid-tools/build-cli': 0.7.0
       '@fluidframework/build-common': 1.1.0
