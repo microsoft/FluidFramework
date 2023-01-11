@@ -48,20 +48,20 @@ const render = (model: IVersionedModel) => {
             React.createElement(InventoryListAppView, { model }),
             appDiv,
         );
+
+        // The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
+        const debugDiv = document.getElementById("debug") as HTMLDivElement;
+        ReactDOM.unmountComponentAtNode(debugDiv);
+        ReactDOM.render(
+            React.createElement(DebugView, {
+                model,
+                getUrlForContainerId,
+            }),
+            debugDiv,
+        );
     } else {
         throw new Error(`Don't know how to render version ${model.version}`);
     }
-
-    // The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
-    const debugDiv = document.getElementById("debug") as HTMLDivElement;
-    ReactDOM.unmountComponentAtNode(debugDiv);
-    ReactDOM.render(
-        React.createElement(DebugView, {
-            model,
-            getUrlForContainerId,
-        }),
-        debugDiv,
-    );
 };
 
 async function start(): Promise<void> {
