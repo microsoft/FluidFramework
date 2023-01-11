@@ -51,6 +51,7 @@
     "memoize-one": "^5.0.0",
     "react": "^17.0.1",
     "react-base-table": "1.13.2",
+    "react-dom": "^17.0.1",
     "react-loading-skeleton": "^3.1.0",
     "react-select": "^2.4.3",
     "react-virtualized-auto-sizer": "^1.0.6"
