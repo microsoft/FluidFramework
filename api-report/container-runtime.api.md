@@ -158,7 +158,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // Warning: (ae-forgotten-export) The symbol "IContainerEntryPoint" needs to be exported by the entry point index.d.ts
-    static newLoad(context: IContainerContext, containerRuntimeCtor?: typeof ContainerRuntime, runtimeOptions?: IContainerRuntimeOptions, existing?: boolean, initializeEntryPoint?: Promise<IContainerEntryPoint>): Promise<ContainerRuntime>;
+    static newLoad(context: IContainerContext, containerRuntimeCtor: typeof ContainerRuntime | undefined, runtimeOptions: IContainerRuntimeOptions | undefined, existing: boolean, initializeEntryPoint: Promise<IContainerEntryPoint>): Promise<ContainerRuntime>;
     // (undocumented)
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     // (undocumented)

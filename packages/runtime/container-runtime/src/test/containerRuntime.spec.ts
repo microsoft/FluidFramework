@@ -657,28 +657,28 @@ describe("Runtime", () => {
 
             it("new load method works", async () => {
                 const makeMixin = <T>(Base: typeof ContainerRuntime, methodName: string, methodReturn: T) =>
-                class MixinContainerRuntime extends Base {
-                    public static async newLoad(
-                        context: IContainerContext,
-                        containerRuntimeCtor: typeof ContainerRuntime = MixinContainerRuntime,
-                        runtimeOptions: IContainerRuntimeOptions = {},
-                        existing?: boolean,
-                        initializeEntryPoint?: Promise<IContainerEntryPoint>
-                    ): Promise<ContainerRuntime> {
+                    class MixinContainerRuntime extends Base {
+                        public static async newLoad(
+                            context: IContainerContext,
+                            containerRuntimeCtor: typeof ContainerRuntime = MixinContainerRuntime,
+                            runtimeOptions: IContainerRuntimeOptions = {},
+                            existing: boolean,
+                            initializeEntryPoint: Promise<IContainerEntryPoint>
+                        ): Promise<ContainerRuntime> {
 
-                        return Base.newLoad(
-                            context,
-                            containerRuntimeCtor,
-                            runtimeOptions,
-                            existing,
-                            initializeEntryPoint
-                        );
-                    }
+                            return Base.newLoad(
+                                context,
+                                containerRuntimeCtor,
+                                runtimeOptions,
+                                existing,
+                                initializeEntryPoint
+                            );
+                        }
 
-                    public [methodName](): T {
-                        return methodReturn;
-                    }
-                } as typeof ContainerRuntime;
+                        public [methodName](): T {
+                            return methodReturn;
+                        }
+                    } as typeof ContainerRuntime;
 
                 const myEntryPoint: IContainerEntryPoint = {
                     containerScope: {},
