@@ -10,6 +10,8 @@ aliases:
      content, so you should commit the resulting changes. -->
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=packages/dds/sequence/README.md&start=2&end=377) -->
+<!-- This section is automatically generated.
+To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
 The **@fluidframework/sequence** package supports distributed data structures which are list-like.
 Its main export is [SharedString][], a DDS for storing and simultaneously editing a sequence of text.
 

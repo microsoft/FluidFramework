@@ -118,6 +118,8 @@ The host is responsible for checking that this response is valid. Did the loader
 As the Fluid Framework expands, we intend to make further use of these responses.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+<!-- This section is automatically generated.
+To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
 <!-- Links -->
 
 <!-- Concepts -->

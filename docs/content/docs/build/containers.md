@@ -267,6 +267,8 @@ references to useful services you can use to build richer apps. An example of a 
 [Audience]({{< relref "audience.md" >}}), which provides user information for clients that are connected to the container.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+<!-- This section is automatically generated.
+To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
 <!-- Links -->
 
 <!-- Concepts -->

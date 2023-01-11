@@ -62,6 +62,10 @@ efficient spatial querying of the nearest Marker to a given position. -->
      content, so you should commit the resulting changes. -->
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=packages/dds/sequence/README.md&start=432&end=447) -->
+<!-- This section is automatically generated.
+To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
+### Examples
+
 - Rich Text Editor Implementations
   - [webflow](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/webflow)
   - [flowView](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/shared-text/src/client-ui-lib/controls/flowView.ts)
@@ -75,8 +79,6 @@ efficient spatial querying of the nearest Marker to a given position. -->
   - [collaborativeInput](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/react-inputs/src/CollaborativeInput.tsx)
 
 [SharedMap]: https://fluidframework.com/docs/data-structures/map/
-[SharedString]: https://github.com/microsoft/FluidFramework/blob/main/packages/dds/sequence/src/sharedString.ts
-
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 [Sequences]: {{< relref "sequences.md" >}}
