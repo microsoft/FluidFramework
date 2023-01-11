@@ -8,7 +8,6 @@ const pathLib = require("path");
 const template = require("markdown-magic-template");
 const fetch = require("node-fetch");
 const scripts = require("markdown-magic-package-scripts");
-const os = require("os");
 
 const mdMagicTemplatesPath = pathLib.join(__dirname, "..", ".md-magic-templates");
 
@@ -111,7 +110,7 @@ const readTemplate = (templateFileName) => {
  * If not provided, will not include header in output.
  */
 const formattedSectionText = (sectionBody, maybeHeaderText) => {
-    return `${os.EOL}${maybeHeaderText === undefined ? "" : `## ${maybeHeaderText}${os.EOL}${os.EOL}`}${sectionBody}${os.EOL}`;
+    return `\n${maybeHeaderText === undefined ? "" : `## ${maybeHeaderText}\n\n`}${sectionBody}\n`;
 }
 
 /**
@@ -142,7 +141,7 @@ You can run this example using the following steps:
         finalStep,
     ].filter(item => item !== undefined);
 
-    return `${steps.join("\n")}\n`;
+    return `${steps.join("\n")}"\n"`;
 }
 
 /**
@@ -160,7 +159,7 @@ npm i ${packageJson.name}${devDependency ? " -D" : ""}
 \`\`\``;
 
     return includeHeading
-        ? `## Installation${os.EOL}${os.EOL}${sectionBody}`
+        ? `## Installation\n\n${sectionBody}`
         : sectionBody;
 }
 
@@ -205,7 +204,7 @@ const generateApiDocsLinkSection = (packageJson, includeHeading) => {
     const sectionBody = `API documentation for **${packageJson.name}** is available at <https://fluidframework.com/docs/apis/${packageJson.shortName}>.`;
 
     return includeHeading
-        ? `## API Documentation${os.EOL}${os.EOL}${sectionBody}`
+        ? `## API Documentation\n\n${sectionBody}`
         : sectionBody;
 }
 
@@ -218,7 +217,7 @@ const generateApiDocsLinkSection = (packageJson, includeHeading) => {
  */
 const generateScriptsSection = (scriptsTable, includeHeading) => {
     return includeHeading
-        ? `## Scripts${os.EOL}${os.EOL}${scriptsTable}`
+        ? `## Scripts\n\n${scriptsTable}`
         : scriptsTable;
 }
 
@@ -319,7 +318,7 @@ const mdMagicConfig = {
                 sections.push(generateTrademarkSection(true));
             }
 
-            return sections.join(`${os.EOL}${os.EOL}`);
+            return sections.join(`\n\n`);
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) --> */
         README_API_DOCS_SECTION(content, options, config) {
