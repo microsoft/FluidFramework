@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { fail } from "assert";
 import chalk from "chalk";
 import fs from "fs";
 import isEqual from "lodash.isequal";
@@ -521,7 +520,7 @@ export class FluidPackageCheck {
                 const lintFixChildren = lintFixPackages?.map((x) => x.trim().split(" ")[1]);
 
                 if (lintFixChildren !== undefined) {
-                    const hasEslint = lintFixChildren.some((elem) => /eslint/.test(elem));
+                    const hasEslint = lintFixChildren.some((elem) => /eslint:fix/.test(elem));
 
                     if (!hasEslint) {
                         lintFixChildren?.push("eslint");
