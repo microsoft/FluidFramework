@@ -37,7 +37,7 @@
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.32.2-112764",
+    "@fluidframework/common-utils": "^0.32.2",
     "@fluidframework/core-interfaces": "^1.3.3",
     "@fluidframework/driver-definitions": "^1.3.3",
     "@fluidframework/protocol-definitions": "^0.1028.2000",

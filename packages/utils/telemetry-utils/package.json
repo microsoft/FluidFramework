@@ -65,7 +65,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/common-utils": "^0.32.2-112764",
+    "@fluidframework/common-utils": "^0.32.2",
     "debug": "^4.1.1",
     "events": "^3.1.0",
     "uuid": "^8.3.1"
