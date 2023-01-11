@@ -93,6 +93,28 @@ const toPosix = (path) => {
 }
 
 /**
+ * Reads and returns the contents for the specified template file.
+ *
+ * @param {string} templateFileName - Name of the file to read, under {@link mdMagicTemplatesPath}.
+ */
+const readTemplate = (templateFileName) => {
+    return fs.readFileSync(pathLib.resolve(mdMagicTemplatesPath, templateFileName), { encoding: "utf-8"}).trim();
+}
+
+/**
+ * Generates the appropriately formatted Markdown section contents for the provided section body.
+ * If header text is provided, a level 2 heading (i.e. `##`) will be included with the provided text.
+ * The section will be wrapped in leading and trailing newlines to ensure adequate spacing between generated contents.
+ *
+ * @param {string} sectionBody - Body text to include in the section.
+ * @param {string | undefined} maybeHeaderText - (optional) header text to display.
+ * If not provided, will not include header in output.
+ */
+const formattedSectionText = (sectionBody, maybeHeaderText) => {
+    return `${os.EOL}${maybeHeaderText === undefined ? "" : `## ${maybeHeaderText}${os.EOL}${os.EOL}`}${sectionBody}${os.EOL}`;
+}
+
+/**
  * Generates a `Getting Started` heading and contents for the specified package.
  *
  * @param {string} packageJsonPath - Path to the package's `package.json` file.
@@ -148,13 +170,8 @@ npm i ${packageJson.name}${devDependency ? " -D" : ""}
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
  */
 const generateTrademarkSection = (includeHeading) => {
-    const sectionBody = `This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
-Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
-Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.`;
-
-    return includeHeading
-        ? `## Trademark${os.EOL}${os.EOL}${sectionBody}`
-        : sectionBody;
+    const sectionBody = readTemplate("Trademark-Template.md");
+    return formattedSectionText(sectionBody, includeHeading ? "Trademark" : undefined);
 }
 
 /**
@@ -163,8 +180,8 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
  */
  const generateContributionGuidelinesSection = (includeHeading) => {
-    const sectionBody = fs.readFileSync(pathLib.resolve(mdMagicTemplatesPath, "Contribution-Guidelines-Template.md"), { encoding: "utf-8"}).trim();
-    return `${os.EOL}${includeHeading ? `## Contribution Guidelines${os.EOL}${os.EOL}` : ""}${sectionBody}${os.EOL}`;
+    const sectionBody = readTemplate("Contribution-Guidelines-Template.md");
+    return formattedSectionText(sectionBody, includeHeading ? "Contribution Guidelines" : undefined);
 }
 
 /**
@@ -174,15 +191,8 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
  */
 const generateHelpSection = (includeHeading) => {
-    const sectionBody = `Not finding what you're looking for in this README?
-Check out our [GitHub Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
-
-Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
-Thank you!`;
-
-    return includeHeading
-        ? `## Help${os.EOL}${os.EOL}${sectionBody}`
-        : sectionBody;
+    const sectionBody = readTemplate("Help-Template.md");
+    return formattedSectionText(sectionBody, includeHeading ? "Help" : undefined);
 }
 
 /**
