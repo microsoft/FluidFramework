@@ -5,7 +5,7 @@ importers:
   .:
     specifiers:
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': ^0.6.0-110879
+      '@fluidframework/build-tools': ^0.7.0
       '@fluidframework/test-tools': ^0.2.3074
       '@microsoft/api-documenter': ^7.17.9
       '@microsoft/api-extractor': ^7.22.2
@@ -19,7 +19,7 @@ importers:
       typescript: ~4.5.5
     devDependencies:
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.6.0-110879
+      '@fluidframework/build-tools': 0.7.0
       '@fluidframework/test-tools': 0.2.3074
       '@microsoft/api-documenter': 7.19.24
       '@microsoft/api-extractor': 7.33.6
@@ -38,7 +38,7 @@ importers:
       '@fluidframework/azure-client-previous': npm:@fluidframework/azure-client@^1.0.0
       '@fluidframework/azure-local-service': ^1.2.0
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': ^0.6.0-110879
+      '@fluidframework/build-tools': ^0.7.0
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.0.0
       '@fluidframework/container-definitions': ^1.4.0-108057
@@ -47,7 +47,7 @@ importers:
       '@fluidframework/counter': ^1.4.0-108057
       '@fluidframework/driver-definitions': ^1.4.0-108057
       '@fluidframework/driver-utils': ^1.4.0-108057
-      '@fluidframework/eslint-config-fluid': ^1.2.1
+      '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/fluid-static': ^1.4.0-108057
       '@fluidframework/map': ^1.4.0-108057
       '@fluidframework/protocol-definitions': ^1.0.0
@@ -94,9 +94,9 @@ importers:
       '@fluidframework/azure-client-previous': 'link:'
       '@fluidframework/azure-local-service': link:../azure-local-service
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.6.0-110879
+      '@fluidframework/build-tools': 0.7.0
       '@fluidframework/counter': 1.4.0-108057
-      '@fluidframework/eslint-config-fluid': 1.2.1_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-client-utils': 1.4.0-108057
       '@fluidframework/test-utils': 1.4.0-108057
       '@microsoft/api-extractor': 7.33.6
@@ -118,7 +118,7 @@ importers:
   packages/azure-local-service:
     specifiers:
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/eslint-config-fluid': ^1.2.1
+      '@fluidframework/eslint-config-fluid': ^2.0.0
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
       concurrently: ^6.2.0
@@ -128,14 +128,14 @@ importers:
       forever: ^4.0.3
       prettier: ~2.6.2
       rimraf: ^2.6.2
-      tinylicious: ^0.4.89251
+      tinylicious: 0.5.0
       ts-node: ^8.6.2
       typescript: ~4.5.5
     dependencies:
-      tinylicious: 0.4.94771
+      tinylicious: 0.5.0
     devDependencies:
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/eslint-config-fluid': 1.2.1_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.33.6
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       concurrently: 6.5.1
@@ -152,8 +152,8 @@ importers:
     specifiers:
       '@fluidframework/azure-service-utils-previous': npm:@fluidframework/azure-service-utils@^1.0.0
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': ^0.6.0-110879
-      '@fluidframework/eslint-config-fluid': ^1.2.1
+      '@fluidframework/build-tools': ^0.7.0
+      '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-definitions': ^1.0.0
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
@@ -175,8 +175,8 @@ importers:
     devDependencies:
       '@fluidframework/azure-service-utils-previous': 'link:'
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.6.0-110879
-      '@fluidframework/eslint-config-fluid': 1.2.1_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/build-tools': 0.7.0
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.33.6
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/jsrsasign': 8.0.13
@@ -195,7 +195,7 @@ importers:
       '@fluidframework/azure-client': ^1.2.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/eslint-config-fluid': ^1.2.1
+      '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/fluid-static': ^1.4.0-108057
       '@fluidframework/test-client-utils': 1.4.0-108057
       '@fluidframework/test-tools': ^0.2.3074
@@ -220,7 +220,7 @@ importers:
       puppeteer: ^1.20.0
       rimraf: ^2.6.2
       start-server-and-test: ^1.11.7
-      tinylicious: ^0.4.89251
+      tinylicious: 0.5.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -235,7 +235,7 @@ importers:
     devDependencies:
       '@fluid-experimental/get-container': 1.4.0-108057
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/eslint-config-fluid': 1.2.1_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/fluid-static': 1.4.0-108057
       '@fluidframework/test-client-utils': 1.4.0-108057
       '@fluidframework/test-tools': 0.2.3074
@@ -259,7 +259,7 @@ importers:
       puppeteer: 1.20.0
       rimraf: 2.7.1
       start-server-and-test: 1.14.0
-      tinylicious: 0.4.94771
+      tinylicious: 0.5.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_c7vzyzxpsxf4kskkum3br4suwu
       typescript: 4.5.5
@@ -276,7 +276,7 @@ importers:
       '@fluidframework/container-definitions': ^1.4.0-108057
       '@fluidframework/core-interfaces': ^1.4.0-108057
       '@fluidframework/counter': ^1.4.0-108057
-      '@fluidframework/eslint-config-fluid': ^1.2.1
+      '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/fluid-static': ^1.4.0-108057
       '@fluidframework/map': ^1.4.0-108057
       '@fluidframework/matrix': ^1.4.0-108057
@@ -302,7 +302,7 @@ importers:
       rimraf: ^2.6.2
       sinon: ^7.4.2
       start-server-and-test: ^1.11.7
-      tinylicious: ^0.4.89251
+      tinylicious: 0.5.0
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -326,11 +326,11 @@ importers:
       mocha: 10.1.0
       sinon: 7.5.0
       start-server-and-test: 1.14.0
-      tinylicious: 0.4.94771
+      tinylicious: 0.5.0
       uuid: 8.3.2
     devDependencies:
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/eslint-config-fluid': 1.2.1_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/mocha': 9.1.1
       '@types/nock': 9.3.1
@@ -353,7 +353,7 @@ importers:
       '@fluidframework/container-definitions': ^1.4.0-108057
       '@fluidframework/core-interfaces': ^1.4.0-108057
       '@fluidframework/counter': ^1.4.0-108057
-      '@fluidframework/eslint-config-fluid': ^1.2.1
+      '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/fluid-static': ^1.4.0-108057
       '@fluidframework/map': ^1.4.0-108057
       '@fluidframework/matrix': ^1.4.0-108057
@@ -384,7 +384,7 @@ importers:
       rimraf: ^2.6.2
       sinon: ^7.4.2
       start-server-and-test: ^1.11.7
-      tinylicious: ^0.4.89251
+      tinylicious: 0.5.0
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -413,11 +413,11 @@ importers:
       mocha: 10.1.0
       sinon: 7.5.0
       start-server-and-test: 1.14.0
-      tinylicious: 0.4.94771
+      tinylicious: 0.5.0
       uuid: 8.3.2
     devDependencies:
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/eslint-config-fluid': 1.2.1_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/js-yaml': 4.0.5
       '@types/mocha': 9.1.1
@@ -922,8 +922,8 @@ packages:
       - utf-8-validate
     dev: true
 
-  /@fluid-tools/version-tools/0.6.0-110879:
-    resolution: {integrity: sha512-PiB8gsS5TYfaXpzISEBiiB6nX8pYYP3TxNVWXLw/IK8SuMqx77nHxPWO0h15Z9yuxFk+dLDBt4xefuNIYUknfQ==}
+  /@fluid-tools/version-tools/0.7.0:
+    resolution: {integrity: sha512-BMovOIobnm1IiH2kp+lkbh3nkcT9kOjkozEKvYSqHpSwn8ooR9XmxcfBx69pZIpgmr4CKkhOnNe0Kg2FwHCgEQ==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
@@ -992,13 +992,13 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools/0.6.0-110879:
-    resolution: {integrity: sha512-auhFTqKEy0gH5jw6LpWDfjRJDKFum7JcSrDKKtJM8gmkQRT3Z2+kp/31wdUaUgq/oDFCjtD0rYe4NznbUVQNYQ==}
+  /@fluidframework/build-tools/0.7.0:
+    resolution: {integrity: sha512-9hR+3BH16Kai06aS/Sr+F/mKpDbBfzkujlG16sWAbcBrkmRz5PILaEXHEe1ln39O98zDkRQMh341qYpwhKKvJA==}
     engines: {node: '>=14.13.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.6.0-110879
-      '@fluidframework/bundle-size-tools': 0.6.0-110879
+      '@fluid-tools/version-tools': 0.7.0
+      '@fluidframework/bundle-size-tools': 0.7.0
       '@rushstack/node-core-library': 3.53.2
       async: 3.2.4
       chalk: 2.4.2
@@ -1032,8 +1032,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools/0.6.0-110879:
-    resolution: {integrity: sha512-OUEhtbaOo1eykpykKNLSBr3bMVkm9d0HTy5IhfsxSTCWbjEKaDICVOb3GbZSfXE8WTgXWQK13x3TzXpnFSExMg==}
+  /@fluidframework/bundle-size-tools/0.7.0:
+    resolution: {integrity: sha512-XDKYtTd/n78p1aX5nGYfySVlinCdDKqhHnPhphULQ9yOjfr3BGbz8/968DNopLMaMTrYyEyQouxcBAmvH8blmQ==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -1340,8 +1340,8 @@ packages:
       - debug
       - supports-color
 
-  /@fluidframework/eslint-config-fluid/1.2.1_kufnqfq7tb5rpdawkdb6g5smma:
-    resolution: {integrity: sha512-jOt6rWtg4Zigz33hv42hg/y8CUWXp6J+0Jn4ub0Bo/0H58agHD2XWfD0RAOD5bOtNxBLPAhsSUHD4XN7SCct+w==}
+  /@fluidframework/eslint-config-fluid/2.0.0_kufnqfq7tb5rpdawkdb6g5smma:
+    resolution: {integrity: sha512-/az5CybW5XUZUOk9HMH0nUMtKx5AK+CRfHg35UyygTK+V2OmNRes/yCAbmxoQ1J1Vn2iow3Y/Sgw/oJygciugQ==}
     dependencies:
       '@rushstack/eslint-patch': 1.1.4
       '@rushstack/eslint-plugin': 0.8.6_kufnqfq7tb5rpdawkdb6g5smma
@@ -14737,8 +14737,8 @@ packages:
     resolution: {integrity: sha512-eHY7nBftgThBqOyHGVN+l8gF0BucP09fMo0oO/Lb0w1OF80dJv+lDVpXG60WMQvkcxAkNybKsrEIE3ZtKGmPrA==}
     dev: true
 
-  /tinylicious/0.4.94771:
-    resolution: {integrity: sha512-Kde8XznxOaYLkfJLQdwNlJbz2ejJtqaYAWyiG2pdQ1O97nV5rDYVKtPub7+MC4hDWQ/9pqsxNRdpzeAjU097Ng==}
+  /tinylicious/0.5.0:
+    resolution: {integrity: sha512-gpsLV9/Fmyc/jiFWEfj1jQYOZISCVIxemahN/c/USzunqCfLx7J6OYBvcVli6Q9n41ZXsid7Xv06gMuPav7PBg==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
