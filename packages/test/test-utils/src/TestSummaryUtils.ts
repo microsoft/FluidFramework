@@ -40,7 +40,6 @@ async function createSummarizerCore(absoluteUrl: string | undefined, loader: IHo
                 type: summarizerClientType,
             },
             [DriverHeader.summarizingClient]: true,
-            [LoaderHeader.reconnect]: false,
             [LoaderHeader.version]: summaryVersion,
         },
         url: absoluteUrl,
