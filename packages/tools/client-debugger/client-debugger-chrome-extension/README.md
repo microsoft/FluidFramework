@@ -1,6 +1,6 @@
 # @fluid-tools/client-debugger-chrome-extension
 
-This package contains a browser (Chrome) extension for launching the Fluid Client visual debugger tooling on a page that has invoked our client debug tooling (TODO: link to debugger library package).
+This package contains a browser (Chrome) extension for launching the [Fluid Client visual debugger tooling](https://github.com/microsoft/FluidFramework/tree/main/packages/tools/client-debugger/client-debugger-view) on a page that has invoked our client debug tooling.
 
 ## Usage
 
