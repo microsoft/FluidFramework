@@ -22,7 +22,7 @@ export interface ReferenceCounted {
  */
 export interface TreeChunk extends ReferenceCounted {
     readonly topLevelLength: number;
-    cursor(): ITreeCursorSynchronous;
+    cursor(): ChunkedCursor;
 }
 
 /**
@@ -54,10 +54,24 @@ export const dummyRoot: GlobalFieldKeySymbol = symbolFromKey(
  */
 export const cursorChunk: unique symbol = Symbol("cursorChunk");
 
+/**
+ * Cursors can optionally implement this interface, allowing querying them for the chunk they are traversing.
+ */
 interface WithChunk {
-    [cursorChunk]?: TreeChunk;
+    /**
+     * When in nodes mode, if a value is returned, it is a TreeChunk who's top level nodes are the
+     * chunkLength nodes starting from chunkStart.
+     *
+     * Note that there may be other tree representations which different chunk APS and thus different ways to query them.
+     * The chunkStart and chunkLength values thus to not uniquely apply to the chunks accessed through this field.
+     */
+    readonly [cursorChunk]?: TreeChunk;
 }
 
 export function tryGetChunk(cursor: ITreeCursor): undefined | TreeChunk {
     return (cursor as WithChunk)[cursorChunk];
+}
+
+export interface ChunkedCursor extends ITreeCursorSynchronous, WithChunk {
+    readonly [cursorChunk]?: TreeChunk;
 }

@@ -16,7 +16,7 @@ import {
 } from "../../core";
 import { fail } from "../../util";
 import { SynchronousCursor } from "../treeCursorUtils";
-import { ReferenceCountedBase, TreeChunk } from "./chunk";
+import { ChunkedCursor, ReferenceCountedBase, TreeChunk } from "./chunk";
 
 /**
  * General purpose one node chunk.
@@ -42,19 +42,26 @@ export class BasicChunk extends ReferenceCountedBase implements TreeChunk {
         return new BasicChunk(this.type, this.fields, this.value);
     }
 
-    public cursor(): Cursor {
-        return new Cursor([], [], [], [], [this], 0, 0, 0);
+    public cursor(): ChunkedCursor {
+        return new BasicChunkCursor([], [], [], [], [this], 0, 0, 0);
     }
 }
 
-type SiblingsOrKey = readonly TreeChunk[] | readonly FieldKey[];
+export type SiblingsOrKey = readonly TreeChunk[] | readonly FieldKey[];
 
 /**
- * A simple general purpose ITreeCursorSynchronous implementation.
+ * Cursor over basic chunks.
  *
- * As this is a generic implementation, it's ability to optimize is limited.
+ * This implementation is similar to StackCursor, however it is distinct because:
+ * 1. The children are chunks, which might have a top level length that greater than 1.
+ * 2. It needs to be able to delegate to cursors of other chunk formats it does not natively understand (See TODO below).
+ *
+ * TODO:
+ * This cursor currently only handles child chunks which are BasicChunks:
+ * BasicChunks should be an optimized fast path, and arbitrary chunk formats,
+ * like UniformChunk, should be supported by delegating to their cursor implementations.
  */
-class Cursor extends SynchronousCursor {
+export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor {
     /**
      * Might start at special root where fields are detached sequences.
      *
@@ -71,17 +78,23 @@ class Cursor extends SynchronousCursor {
      * @param indexWithinChunk - Index withing chunk selected by indexOfChunkStack. Only for Nodes mode.
      */
     public constructor(
-        private readonly siblingStack: SiblingsOrKey[],
-        private readonly indexStack: number[],
-        private readonly indexOfChunkStack: number[],
-        private readonly indexWithinChunkStack: number[],
-        private siblings: SiblingsOrKey,
-        private index: number,
-        private indexOfChunk: number,
-        private indexWithinChunk: number,
+        protected readonly siblingStack: SiblingsOrKey[],
+        protected readonly indexStack: number[],
+        protected readonly indexOfChunkStack: number[],
+        protected readonly indexWithinChunkStack: number[],
+        protected siblings: SiblingsOrKey,
+        protected index: number,
+        protected indexOfChunk: number,
+        protected indexWithinChunk: number,
     ) {
         super();
     }
+
+    // TODO implements `[cursorChunk]`, handling:
+    // 1. root chunk
+    // 2. nested basic chunk
+    // 3. inner chunks
+    // public readonly get [cursorChunk](): TreeChunk ;
 
     public get mode(): CursorLocationType {
         // Compute the number of nodes deep the current depth is.
@@ -176,21 +189,6 @@ class Cursor extends SynchronousCursor {
             parentField: this.getStackedFieldKey(length - 1),
         };
         return path;
-    }
-
-    public fork(): Cursor {
-        // Siblings arrays are not modified during navigation and do not need be be copied.
-        // This allows this copy to be shallow, and `this.siblings` below to not be copied as all.
-        return new Cursor(
-            [...this.siblingStack],
-            [...this.indexStack],
-            [...this.indexOfChunkStack],
-            [...this.indexWithinChunkStack],
-            this.siblings,
-            this.index,
-            this.indexOfChunk,
-            this.indexWithinChunk,
-        );
     }
 
     public enterField(key: FieldKey): void {
@@ -330,16 +328,10 @@ class Cursor extends SynchronousCursor {
         return field;
     }
 
-    /**
-     * @returns the value of the current node
-     */
     public get value(): Value {
         return this.getNode().value;
     }
 
-    /**
-     * @returns the type of the current node
-     */
     public get type(): TreeType {
         return this.getNode().type;
     }
