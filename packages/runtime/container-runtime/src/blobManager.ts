@@ -497,6 +497,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     }
 
     public processBlobAttachOp(message: ISequencedDocumentMessage, local: boolean) {
+        const localId = message.metadata?.localId;
         const blobId = message.metadata?.blobId;
         assert(blobId !== undefined, 0x12a /* "Missing blob id on metadata" */);
 
@@ -504,21 +505,21 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         // requested from the server.
         // Note: The check for undefined is needed for back-compat when localId was not part of the BlobAttach op that
         // was sent when online.
-        if (message.metadata?.localId !== undefined) {
-            this.setRedirection(message.metadata.localId, message.metadata.blobId);
+        if (localId !== undefined) {
+            this.setRedirection(localId, blobId);
         }
         // set identity (id -> id) entry
         this.setRedirection(blobId, blobId);
 
         if (local) {
-            assert(message.metadata?.localId !== undefined, "local ID not present in blob attach message");
+            assert(localId !== undefined, "local ID not present in blob attach message");
             const waitingBlobs = this.opsInFlight.get(blobId);
             if (waitingBlobs !== undefined) {
                 // For each op corresponding to this storage ID that we are waiting for, resolve the pending blob.
                 // This is safe because the server will keep the blob alive and the op containing the local ID to
                 // storage ID is already in flight and any op containing this local ID will be sequenced after that.
-                waitingBlobs.forEach((localId) => {
-                    const pendingBlobEntry = this.pendingBlobs.get(localId);
+                waitingBlobs.forEach((pendingLocalId) => {
+                    const pendingBlobEntry = this.pendingBlobs.get(pendingLocalId);
                     assert(
                         pendingBlobEntry !== undefined,
                         0x38f, /* local online BlobAttach op with no pending blob entry */
@@ -526,15 +527,15 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
                     // It's possible we transitioned to offline flow while waiting for this op.
                     if (pendingBlobEntry.status === PendingBlobStatus.OnlinePendingOp) {
-                        this.setRedirection(localId, blobId);
-                        pendingBlobEntry.handleP.resolve(this.getBlobHandle(localId));
-                        this.deleteAndEmitsIfEmpty(localId);
+                        this.setRedirection(pendingLocalId, blobId);
+                        pendingBlobEntry.handleP.resolve(this.getBlobHandle(pendingLocalId));
+                        this.deleteAndEmitsIfEmpty(pendingLocalId);
                     }
                 });
                 this.opsInFlight.delete(blobId);
             }
             // For blobs that were transitioned to offline flow while waiting for this op, the entry should be deleted.
-            this.deleteAndEmitsIfEmpty(message.metadata.localId);
+            this.deleteAndEmitsIfEmpty(localId);
         }
     }
 
