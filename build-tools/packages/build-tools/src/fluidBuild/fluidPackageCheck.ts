@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { fail } from "assert";
 import chalk from "chalk";
 import fs from "fs";
 import isEqual from "lodash.isequal";
@@ -489,26 +490,56 @@ export class FluidPackageCheck {
     private static checkLintScripts(pkg: Package, fix: boolean) {
         let fixed = false;
         if (pkg.getScript("build")) {
+            // hasPrettier commented out to discard build warnings from "lint" & "lint:fix" scripts
             // const hasPrettier = pkg.getScript("prettier");
-            const hasLint = pkg.getScript("lint") === "npm run prettier && npm run eslint";
-
-            const lintChildren = hasLint ? ["prettier", "eslint"] : ["eslint"];
 
             // npm run lint
-            // if hasLint has both "prettier && eslint"
-            if (hasLint) {
-                if (this.checkChildrenScripts(pkg, "lint", lintChildren, false, fix)) {
-                    fixed = true;
+            const lintScript = pkg.getScript("lint"); // acess lint-script
+            const lintPackages = lintScript?.match(/run\s*([^&]*)\s*/g); // regex to create a list of ["run foo", "run bar"]
+
+            if (lintPackages !== null) {
+                const lintChildren = lintPackages?.map((x) => x.trim().split(" ")[1]); // regex to create a list of ["foo", "bar"]
+
+                if (lintChildren !== undefined) {
+                    const hasEslint = lintChildren.some(elem => /eslint/.test(elem)); // regex to check if "eslint" exists
+
+                    if (!hasEslint) {
+                        lintChildren?.push("eslint"); // push "eslint" to lintChildren as expected package
+                    }
                 }
-            } else {
+
                 if (this.checkChildrenScripts(pkg, "lint", lintChildren, false, fix)) {
                     fixed = true;
                 }
             }
 
             // "npm run lint:fix"
-            if (this.checkChildrenScripts(pkg, "lint:fix", lintChildren.map((value) => `${value}:fix`), false, fix,)) {
-                fixed = true;
+            const lintFixScript = pkg.getScript("lint:fix");
+            const lintFixPackages = lintFixScript?.match(/run\s*([^&]*)\s*/g);
+
+
+            if (lintFixPackages !== null) {
+                const lintFixChildren = lintFixPackages?.map((x) => x.trim().split(" ")[1]);
+
+                if (lintFixChildren !== undefined) {
+                    const hasEslint = lintFixChildren.some(elem => /eslint/.test(elem));
+
+                    if (!hasEslint) {
+                        lintFixChildren?.push("eslint");
+                    }
+                }
+
+                if (
+                    this.checkChildrenScripts(
+                        pkg,
+                        "lint:fix",
+                        lintFixChildren?.map((value) => `${value}:fix`),
+                        false,
+                        fix,
+                    )
+                ) {
+                    fixed = true;
+                }
             }
 
             // TODO: for now, some jest test at the root isn't linted yet
