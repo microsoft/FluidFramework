@@ -188,6 +188,8 @@ Then:
 ## Contributing
 
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=FALSE) -->
+<!-- This section is automatically generated.
+To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
 
 There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
 

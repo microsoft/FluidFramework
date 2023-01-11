@@ -140,6 +140,8 @@ This causes the `incremented` event to be sent to all of the clients who have th
 Since `updateCounterValueLabel` is listening for all `incremented` events, the view will always refresh with the appropriate updated value any time a collaborator increments or decrements the counter value.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) -->
+<!-- This section is automatically generated.
+To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
 
 ## API Documentation
 
@@ -148,6 +150,8 @@ API documentation for **@fluidframework/counter** is available at <https://fluid
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- This section is automatically generated.
+To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Trademark
 

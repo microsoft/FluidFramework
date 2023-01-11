@@ -3,6 +3,8 @@
 The Fluid Client Debugger library contains a simple API for initializing debug sessions for recording and propogating information about a given Fluid [Container][] and its [Audience][].
 
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
+<!-- This section is automatically generated.
+To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Installation
 
@@ -58,6 +60,8 @@ The following are TODO items to enhance the functionality of this library.
     -   This seems like a violation of
 
 <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) -->
+<!-- This section is automatically generated.
+To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
 
 ## API Documentation
 
@@ -66,6 +70,8 @@ API documentation for **@fluid-tools/client-debugger** is available at <https://
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- This section is automatically generated.
+To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Trademark
 

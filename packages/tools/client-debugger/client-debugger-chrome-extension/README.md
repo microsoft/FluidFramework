@@ -18,6 +18,8 @@ To use this extension in your browser:
 -   Inject the debugger view as a sibling next to the page contents, rather than as an overlay on top of it (to ensure all customer content is not obscured by the panel).
 
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- This section is automatically generated.
+To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Trademark
 

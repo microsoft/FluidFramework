@@ -114,6 +114,14 @@ const formattedSectionText = (sectionBody, maybeHeaderText) => {
 }
 
 /**
+ * Prepends the {@link generatedContentNotice} to the provided Markdown contents.
+ * @param {string} contents - The Markdown contents to be included.
+ */
+const withGeneratedContentNotice = (contents) => {
+    return [generatedContentNotice, contents].join("\n");
+}
+
+/**
  * Generates a `Getting Started` heading and contents for the specified package.
  *
  * @param {string} packageJsonPath - Path to the package's `package.json` file.
@@ -122,8 +130,7 @@ const formattedSectionText = (sectionBody, maybeHeaderText) => {
 const getStartedInfo = (packageJsonPath, includeTinylicious = false) => {
     const packageJson = getPackageMetadata(packageJsonPath);
 
-    const preamble = `${generatedContentNotice}
-
+    const preamble = `
 ## Getting Started
 
 You can run this example using the following steps:
@@ -256,35 +263,28 @@ const mdMagicConfig = {
         // includes relative to the repo root
         INCLUDE(content, options, config) {
             options.path = pathLib.resolve(pathLib.join(getRepoRoot(), options.path));
-            // console.log(options.path);
-            // options.path = pathLib.normalize(pathLib.join(getRepoRoot(), "docs", options.path));
-            // const relPath = pathLib.relative(getRepoRoot(), path);
-            return includeContent(options, config);
+            return withGeneratedContentNotice(includeContent(options, config));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (INCLUDE_ROOT:path=../file.js) --> */
         // includes relative to the file calling the include
         INCLUDE_RELATIVE(content, options) {
             options.path = pathLib.normalize(pathLib.join(pathLib.dirname(config.originalPath), options.path));
-            return includeContent(options, config);
+            return withGeneratedContentNotice(includeContent(options, config));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) --> */
         GET_STARTED(content, options, config) {
             const jsonPath = getPackageJsonPathFromOriginalPath(config.originalPath);
-            if (options && options.tinylicious) {
-                return getStartedInfo(jsonPath, options.tinylicious);
-            } else {
-                return getStartedInfo(jsonPath, false);
-            }
+            return withGeneratedContentNotice(getStartedInfo(jsonPath, options?.tinylicious ?? false));
         },
         PKGJSON(content, options, config) {
             options.pkg = getPackageJsonPathFromOriginalPath(config.originalPath);
-            return require("markdown-magic-package-json")(content, options, config);
+            return withGeneratedContentNotice(require("markdown-magic-package-json")(content, options, config));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (README_SIMPLE:installation=TRUE&apiDocs=TRUE&scripts=TRUE&contributionGuidelines=TRUE&help=TRUE&trademark=TRUE&devDependency=FALSE) --> */
         README_SIMPLE(content, options, config) {
             const pkg = getPackageJsonFromOriginalPath(config.originalPath);
 
-            const sections = [`\n${generatedContentNotice}\n`];
+            const sections = [];
 
             if(options.installation !== "FALSE") {
                 sections.push(generateInstallationSection(pkg, options.devDependency, true));
@@ -311,34 +311,34 @@ const mdMagicConfig = {
                 sections.push(generateTrademarkSection(true));
             }
 
-            return sections.join("");
+            return withGeneratedContentNotice(sections.join(""));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) --> */
         README_API_DOCS_SECTION(content, options, config) {
             const includeHeading = options.includeHeading !== "FALSE";
             const pkg = getPackageJsonFromOriginalPath(config.originalPath);
-            return generateApiDocsLinkSection(pkg, includeHeading);
+            return withGeneratedContentNotice(generateApiDocsLinkSection(pkg, includeHeading));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=FALSE) --> */
         README_INSTALLATION_SECTION(content, options, config) {
             const includeHeading = options.includeHeading !== "FALSE";
             const pkg = getPackageJsonFromOriginalPath(config.originalPath);
-            return generateInstallationSection(pkg, options.devDependency, includeHeading);
+            return withGeneratedContentNotice(generateInstallationSection(pkg, options.devDependency, includeHeading));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) --> */
         README_TRADEMARK_SECTION(content, options, config) {
             const includeHeading = options.includeHeading !== "FALSE";
-            return generateTrademarkSection(includeHeading);
+            return withGeneratedContentNotice(generateTrademarkSection(includeHeading));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) --> */
         README_CONTRIBUTION_GUIDELINES_SECTION(content, options, config) {
             const includeHeading = options.includeHeading !== "FALSE";
-            return generateContributionGuidelinesSection(includeHeading);
+            return withGeneratedContentNotice(generateContributionGuidelinesSection(includeHeading));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) --> */
         README_HELP_SECTION(content, options, config) {
             const includeHeading = options.includeHeading !== "FALSE";
-            return generateHelpSection(includeHeading);
+            return withGeneratedContentNotice(generateHelpSection(includeHeading));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (TEMPLATE:src="<name-of-template-file under `/.md-magic-templates`>") --> */
         TEMPLATE(content, options, config) {
@@ -347,13 +347,13 @@ const mdMagicConfig = {
 
             options = options || {};
             options.src = pathLib.relative(dir, pathLib.join(mdMagicTemplatesPath, options.src));
-            return template({ pkg: pkg })(content, options, config);
+            return withGeneratedContentNotice(template({ pkg: pkg })(content, options, config));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (SCRIPTS:includeHeading=TRUE) --> */
         SCRIPTS(content, options, config) {
             const includeHeading = options.includeHeading !== "FALSE";
             const scriptsTable = scripts(content, options, config);
-            return generateScriptsSection(scriptsTable, includeHeading);
+            return withGeneratedContentNotice(generateScriptsSection(scriptsTable, includeHeading));
         },
         FETCH: fetchFunc,
     },
