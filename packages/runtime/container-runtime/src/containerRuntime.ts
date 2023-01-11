@@ -1801,7 +1801,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public processSignal(message: ISignalMessage, local: boolean) {
-        console.log(`I am in container runtime`);
+        console.log(`CONTAINER-RUNTIME:containerRuntime.ts:processSignal`);
         console.log(message);
         const envelope = message.content as ISignalEnvelope; // can either reshape to look like isignalenvelope or if else logic to bypass this
         // add one more envelope instead of striping it down
@@ -1832,7 +1832,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         if (envelope.address === undefined) { // this is what we want
-            console.log("I am a containerRuntime sending a transformed message");
+            console.log(`CONTAINER-RUNTIME:containerRuntime.ts:processSignal--sending transformed signal`);
             // No address indicates a container signal message.
             this.emit("signal", transformed, local);
             return;

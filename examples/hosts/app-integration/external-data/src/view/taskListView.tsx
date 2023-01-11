@@ -97,18 +97,11 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
         setTasks(taskList.getTasks());
         // setDiffTasks(taskList.getDiffTasks());
 
-        // HACK: Once we have external changes triggering the appropriate Fluid signal, we can simply listen
-        // for changes coming into the model that way.
-        // For now, poll the external service directly for any updates and apply as needed.
-
         // Run once immediately to run without waiting.
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        // taskList.importExternalData();
+        taskList.importExternalData();
 
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        const timer = setInterval(taskList.importExternalData, 3000); // Poll every 3 seconds
         return (): void => {
-            clearInterval(timer);
             taskList.off("taskAdded", updateTasks);
             taskList.off("taskDeleted", updateTasks);
             // taskList.off("diffDetected", updateDiffTasks);

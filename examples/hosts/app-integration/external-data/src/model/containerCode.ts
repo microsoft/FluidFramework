@@ -62,7 +62,10 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
         );
         // Register listener only once the model is fully loaded and ready
         runtime.on("signal", (message) => {
+            console.log(`APP: ContainerCode.ts:received signal`);
+            console.log(message);
             if (message.type === SignalType.ExternalDataChanged) {
+                console.log(`APP: ContainerCode.ts: kick off importExternalData`);
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 taskList.importExternalData();
             }
