@@ -649,7 +649,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param containerRuntimeCtor - (optional) Constructor to use to create the ContainerRuntime instance.
      * This allows mixin classes to leverage this method to define their own async initializer.
      * @param existing - Pass 'true' if loading from an existing snapshot.
-     * @param initializeEntryPoint - Function that returns the object which will act as entryPoint for the Container.
+     * @param initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
      * This object should provide all the functionality that the Container is expected to provide to the loader layer.
      */
     public static async newLoad(
