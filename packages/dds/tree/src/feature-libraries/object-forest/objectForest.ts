@@ -29,12 +29,13 @@ import {
     MapTree,
     getMapTreeField,
     FieldAnchor,
-    afterChangeToken,
     FieldUpPath,
+    ForestEvents,
 } from "../../core";
 import { brand, fail } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
 import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
+import { createEmitter } from "../../events";
 
 function makeRoot(): MapTree {
     return {
@@ -57,6 +58,8 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
     // All cursors that are in the "Current" state. Must be empty when editing.
     public readonly currentCursors: Set<Cursor> = new Set();
 
+    private readonly events = createEmitter<ForestEvents>();
+
     public constructor(
         public readonly schema: StoredSchemaRepository,
         public readonly anchors: AnchorSet = new AnchorSet(),
@@ -64,6 +67,10 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
         super("object-forest.ObjectForest");
         // Invalidate forest if schema change.
         recordDependency(this.dependent, this.schema);
+    }
+
+    public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
+        return this.events.on(eventName, listener);
     }
 
     clone(schema: StoredSchemaRepository, anchors: AnchorSet): ObjectForest {
@@ -85,7 +92,12 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
     }
 
     applyDelta(delta: Delta.Root): void {
-        this.beforeChange();
+        this.events.emit("beforeDelta", delta);
+        this.invalidateDependents();
+        assert(
+            this.currentCursors.size === 0,
+            0x374 /* No cursors can be current when modifying forest */,
+        );
 
         // Note: This code uses cursors, however it also modifies the tree.
         // In general this is not safe, but this code happens to only modify the tree below the current cursor location,
@@ -151,6 +163,8 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
         };
         visitDelta(delta, visitor);
         cursor.free();
+
+        this.events.emit("afterDelta", delta);
     }
 
     private nextRange = 0;
@@ -193,19 +207,6 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 
     allocateCursor(): Cursor {
         return new Cursor(this);
-    }
-
-    private beforeChange(): void {
-        this.invalidateDependents();
-        assert(
-            this.currentCursors.size === 0,
-            0x374 /* No cursors can be current when modifying forest */,
-        );
-    }
-
-    // TODO: remove this workaround as soon as notification/eventing will be supported.
-    afterChange(): void {
-        this.invalidateDependents(afterChangeToken);
     }
 
     tryMoveCursorToNode(
@@ -299,10 +300,12 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
         private innerCursor?: CursorWithNode<MapTree>,
     ) {
         super();
-        this.state =
-            innerCursor === undefined
-                ? ITreeSubscriptionCursorState.Cleared
-                : ITreeSubscriptionCursorState.Current;
+        if (innerCursor === undefined) {
+            this.state = ITreeSubscriptionCursorState.Cleared;
+        } else {
+            this.state = ITreeSubscriptionCursorState.Current;
+            this.forest.currentCursors.add(this);
+        }
     }
 
     buildFieldAnchor(): FieldAnchor {
@@ -464,11 +467,5 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
  * @returns an implementation of {@link IEditableForest} with no data or schema.
  */
 export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest {
-    return new ObjectForest(schema);
-}
-
-// This must be used only in forestIndex and should never be exported elsewhere.
-// TODO: remove this workaround as soon as notification/eventing will be supported.
-export function afterChangeForest(forest: IEditableForest): void {
-    (forest as ObjectForest).afterChange();
+    return new ObjectForest(schema, anchors);
 }

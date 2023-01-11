@@ -3,6 +3,15 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * "Minimal" eslint configuration.
+ *
+ * This configuration is primarily intended for use in packages during prototyping / initial setup.
+ * Ideally, all of packages in the fluid-framework repository should derive from either the "Recommended" or
+ * "Strict" configuration.
+ *
+ * Production packages **should not** use this configuration.
+ */
 module.exports = {
     env: {
         browser: true,
@@ -15,7 +24,7 @@ module.exports = {
         "plugin:import/errors",
         "plugin:import/warnings",
         "plugin:import/typescript",
-        "prettier"
+        "prettier",
     ],
     globals: {
         Atomics: "readonly",
@@ -51,6 +60,10 @@ module.exports = {
         "unicorn",
     ],
     reportUnusedDisableDirectives: true,
+    ignorePatterns: [
+        // Don't lint generated packageVersion files.
+        "**/packageVersion.ts"
+    ],
     rules: {
         /**
          * The @rushstack rules are documented in the package README:
@@ -321,10 +334,15 @@ module.exports = {
         "@typescript-eslint/prefer-optional-chain": "error",
 
         /**
-         * By default libraries should not take dependencies on node libraries. This rule can be disabled at the project
-         * level for libraries that are intended to be used only in node.
+         * By default, libraries should not take dependencies on node libraries.
+         * This rule can be disabled at the project level for libraries that are intended to be used only in node.
+         *
+         * @remarks
+         *
+         * Note: "events" has been allow-listed here due to the sheer number of uses across the codebase.
+         * We may wish to address this in the future.
          */
-        "import/no-nodejs-modules": "warn",
+        "import/no-nodejs-modules": ["error", { allow: ["events"] }],
     },
     overrides: [
         {

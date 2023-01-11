@@ -14,6 +14,7 @@ import {
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
+    IdAllocator,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
 
@@ -166,7 +167,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
     },
     intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): Delta.MarkList => {
         let nodeIndex = 0;
-        const delta: Delta.MarkList = [];
+        const delta: Delta.Mark[] = [];
         for (const { index, nodeChange } of change) {
             if (nodeIndex < index) {
                 const offset = index - nodeIndex;
@@ -202,9 +203,10 @@ export function convertGenericChange<TChange>(
     changeset: GenericChangeset,
     target: FieldChangeHandler<TChange>,
     composeChild: NodeChangeComposer,
+    genId: IdAllocator,
 ): TChange {
     const perIndex: TaggedChange<TChange>[] = changeset.map(({ index, nodeChange }) =>
         makeAnonChange(target.editor.buildChildChange(index, nodeChange)),
     );
-    return target.rebaser.compose(perIndex, composeChild);
+    return target.rebaser.compose(perIndex, composeChild, genId);
 }

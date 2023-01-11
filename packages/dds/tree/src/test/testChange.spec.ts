@@ -5,9 +5,7 @@
 
 import { strict as assert } from "assert";
 import { FieldKinds, NodeChangeset } from "../feature-libraries";
-import { makeAnonChange } from "../rebase";
-import { TreeSchemaIdentifier } from "../schema-stored";
-import { Delta } from "../tree";
+import { makeAnonChange, TreeSchemaIdentifier, Delta } from "../core";
 import { brand } from "../util";
 import { TestChange, TestChangeEncoder } from "./testChange";
 

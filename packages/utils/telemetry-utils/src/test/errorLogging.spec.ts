@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable max-len */
-
 import { strict as assert } from "assert";
 import sinon from "sinon";
 import { v4 as uuid } from "uuid";
@@ -183,10 +181,9 @@ describe("Error Logging", () => {
             assert.strictEqual(isTaggedTelemetryPropertyValue(123), false);
             assert.strictEqual(isTaggedTelemetryPropertyValue(false), false);
             assert.strictEqual(isTaggedTelemetryPropertyValue(undefined), false);
-            assert.strictEqual(isTaggedTelemetryPropertyValue(null), false);
-            // eslint-disable-next-line prefer-arrow-callback
-            assert.strictEqual(isTaggedTelemetryPropertyValue(function x() { return 54; }), false);
-            assert.strictEqual(isTaggedTelemetryPropertyValue(Symbol("okay")), false);
+            assert.strictEqual(isTaggedTelemetryPropertyValue(null as any), false);
+            assert.strictEqual(isTaggedTelemetryPropertyValue(function x() { return 54; } as any), false);
+            assert.strictEqual(isTaggedTelemetryPropertyValue(Symbol("okay") as any), false);
         });
         it("non-object value ok", () => {
             assert.strictEqual(isTaggedTelemetryPropertyValue(
@@ -197,25 +194,25 @@ describe("Error Logging", () => {
                 { value: false, tag: "any string" }), true);
             assert.strictEqual(isTaggedTelemetryPropertyValue(
                 { value: undefined, tag: "any string" }), true);
+        });
+        it("Check result for various invalid inputs (per typings)", () => {
             assert.strictEqual(isTaggedTelemetryPropertyValue(
-                { tag: "any string" }), true, "value prop may be absent");
+                { tag: "any string" } as any), true, "value prop may be absent");
             // The type guard used is a bit imprecise. Here is proof (these "shouldn't" be ok)
             assert.strictEqual(isTaggedTelemetryPropertyValue(
-                { value: function x() { return 54; }, tag: "any string" }), true);
+                { value: function x() { return 54; } as any, tag: "any string" }), true);
             assert.strictEqual(isTaggedTelemetryPropertyValue(
-                { value: Symbol("okay"), tag: "any string" }), true);
-        });
-        it("non-string tag not ok", () => {
+                { value: Symbol("okay") as any, tag: "any string" }), true);
             assert.strictEqual(isTaggedTelemetryPropertyValue(
-                { value: "hello", tag: 1 }), false, "number tag is bad");
+                { value: "hello", tag: 1 } as any), false, "number tag is bad");
             assert.strictEqual(isTaggedTelemetryPropertyValue(
-                { value: "hello", tag: false }), false, "boolean tag is bad");
+                { value: "hello", tag: false } as any), false, "boolean tag is bad");
             assert.strictEqual(isTaggedTelemetryPropertyValue(
-                { value: "hello", tag: {} }), false, "object tag is bad");
+                { value: "hello", tag: {} } as any), false, "object tag is bad");
             assert.strictEqual(isTaggedTelemetryPropertyValue(
-                { value: "hello", tag: null }), false, "null tag is bad");
+                { value: "hello", tag: null } as any), false, "null tag is bad");
             assert.strictEqual(isTaggedTelemetryPropertyValue(
-                { value: "hello" }), false, "undefined (missing) tag is bad");
+                { value: "hello" } as any), false, "undefined (missing) tag is bad");
         });
     });
     describe("LoggingError", () => {

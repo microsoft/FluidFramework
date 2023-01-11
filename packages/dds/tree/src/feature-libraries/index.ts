@@ -24,6 +24,7 @@ export {
     isEditableField,
     isPrimitive,
     isPrimitiveValue,
+    getPrimaryField,
     isUnwrappedNode,
     PrimitiveValue,
     proxyTargetSymbol,
@@ -32,6 +33,12 @@ export {
     valueSymbol,
     getField,
     createField,
+    replaceField,
+    ContextuallyTypedNodeDataObject,
+    ContextuallyTypedNodeData,
+    MarkedArrayLike,
+    isWritableArrayLike,
+    isContextuallyTypedNodeDataObject,
 } from "./editable-tree";
 export { ForestIndex } from "./forestIndex";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
@@ -47,6 +54,7 @@ export { SequenceField };
 export { defaultSchemaPolicy, emptyField, neverField, neverTree } from "./defaultSchema";
 
 export {
+    ChangesetLocalId,
     isNeverField,
     ModularChangeFamily,
     ModularEditBuilder,
@@ -60,6 +68,8 @@ export {
     FieldChange,
     FieldChangeset,
     ToDelta,
+    ModularChangeset,
+    IdAllocator,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
@@ -92,3 +102,4 @@ export { ForestRepairDataStore } from "./forestRepairDataStore";
 export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
 export { runSynchronousTransaction } from "./defaultTransaction";
+export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";

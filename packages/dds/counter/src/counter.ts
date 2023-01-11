@@ -90,7 +90,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
         return runtime.createChannel(id, CounterFactory.Type) as SharedCounter;
     }
 
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
+    public constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes, "fluid_counter_");
     }
 
@@ -200,9 +200,13 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * {@inheritdoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
      * @internal
      */
-    protected applyStashedOp(op: unknown) {
+    protected applyStashedOp(op: unknown): void {
         const counterOp = op as IIncrementOperation;
+
+        // TODO: Clean up error code linter violations repo-wide.
+        // eslint-disable-next-line unicorn/numeric-separators-style
         assert(counterOp.type === "increment", 0x3ec /* Op type is not increment */);
+
         this.incrementCore(counterOp.incrementAmount);
     }
 }

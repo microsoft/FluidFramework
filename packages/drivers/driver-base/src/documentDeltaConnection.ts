@@ -406,10 +406,30 @@ export class DocumentDeltaConnection
                 let isWebSocketTransportError = false;
                 try {
                     const description = error?.description;
-                    if (description && typeof description === "object") {
+                    const context = error?.context;
+
+                    if (context && typeof context === "object") {
+                        const statusText = context.statusText?.code;
+
+                        // Self-Signed Certificate ErrorCode Found in error.context
+                        if (statusText === "DEPTH_ZERO_SELF_SIGNED_CERT") {
+                            failAndCloseSocket(this.createErrorObject("connect_error", error, false));
+                            return;
+                        }
+                    }
+                    else if (description && typeof description === "object") {
+                        const errorCode = description.error?.code;
+
+                        // Self-Signed Certificate ErrorCode Found in error.description
+                        if (errorCode === "DEPTH_ZERO_SELF_SIGNED_CERT") {
+                            failAndCloseSocket(this.createErrorObject("connect_error", error, false));
+                            return;
+                        }
+
                         if (error.type === "TransportError") {
                             isWebSocketTransportError = true;
                         }
+
                         // That's a WebSocket. Clear it as we can't log it.
                         description.target = undefined;
                     }

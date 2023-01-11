@@ -419,7 +419,6 @@ declare function get_current_InterfaceDeclaration_ITestContainerConfig():
 declare function use_old_InterfaceDeclaration_ITestContainerConfig(
     use: TypeOnly<old.ITestContainerConfig>);
 use_old_InterfaceDeclaration_ITestContainerConfig(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITestContainerConfig());
 
 /*

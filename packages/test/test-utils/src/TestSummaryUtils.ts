@@ -21,6 +21,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
 
@@ -104,6 +105,7 @@ export async function createSummarizer(
     summaryVersion?: string,
     gcOptions?: IGCRuntimeOptions,
     configProvider: IConfigProviderBase = mockConfigProvider(),
+    logger?: ITelemetryBaseLogger,
 ): Promise<ISummarizer> {
     const absoluteUrl = await container.getAbsoluteUrl("");
     return (await createSummarizerWithContainer(
@@ -112,6 +114,7 @@ export async function createSummarizer(
         summaryVersion,
         gcOptions,
         configProvider,
+        logger,
     )).summarizer;
 }
 
@@ -121,18 +124,22 @@ export async function createSummarizerWithContainer(
     summaryVersion?: string,
     gcOptions?: IGCRuntimeOptions,
     configProvider: IConfigProviderBase = mockConfigProvider(),
+    logger?: ITelemetryBaseLogger,
 ): Promise<{ container: IContainer; summarizer: ISummarizer; }> {
     const testContainerConfig: ITestContainerConfig = {
         runtimeOptions: {
             summaryOptions: defaultSummaryOptions,
             gcOptions,
         },
-        loaderProps: { configProvider },
+        loaderProps: { configProvider, logger },
     };
     const loader = provider.makeTestLoader(testContainerConfig);
     return createSummarizerCore(absoluteUrl, loader, summaryVersion);
 }
-
+/**
+ * Summarizes on demand and returns the summary tree, the version number and the reference sequence number of the
+ * submitted summary.
+*/
 export async function summarizeNow(summarizer: ISummarizer, reason: string = "end-to-end test") {
     const result = summarizer.summarizeOnDemand({ reason });
 
@@ -153,6 +160,7 @@ export async function summarizeNow(summarizer: ISummarizer, reason: string = "en
     return {
         summaryTree: submitResult.data.summaryTree,
         summaryVersion: ackNackResult.data.summaryAckOp.contents.handle,
+        summaryRefSeq: submitResult.data.referenceSequenceNumber,
     };
 }
 
