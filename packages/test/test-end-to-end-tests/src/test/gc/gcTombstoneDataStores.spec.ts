@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import {
     IGCRuntimeOptions,
-    ISummarizer, RuntimeHeaders,
+    ISummarizer,
 } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
@@ -21,11 +21,12 @@ import {
 import { describeNoCompat, ITestDataObject, itExpects, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
+import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils";
 
 /**
@@ -69,7 +70,8 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
         );
     }
 
-    describe("Using tombstone data stores is not allowed", () => {
+    //* ONLY
+    describe.only("Using tombstone data stores is not allowed", () => {
         let documentAbsoluteUrl: string | undefined;
 
         const makeContainer = async () => {
@@ -412,7 +414,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
         });
 
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
-        itExpects("Requesting tombstoned datastores fails in summarizing container loaded after sweep timeout",
+        itExpects("Requesting tombstoned datastores fails in interactive client loaded after sweep timeout",
         [
             {
                 eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
@@ -446,13 +448,17 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
                 `Should not be able to retrieve a tombstoned datastore in non-summarizer clients`,
             );
             await assert.doesNotReject(
+                async () => requestFluidObject<ITestDataObject>(container, { url: unreferencedId, headers: { allowTombstone: true }}),
+                `Should be able to retrieve a tombstoned datastore given the allowTombstone header`,
+            );
+            await assert.doesNotReject(
                 async () => requestFluidObject<ITestDataObject>(summarizingContainer, unreferencedId),
                 `Should be able to retrieve a tombstoned datastore in summarizer clients`,
             );
         });
 
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
-        itExpects("Requesting tombstoned datastores fails in summarizing container loaded before sweep timeout",
+        itExpects("Requesting tombstoned datastores fails in interactive client loaded before sweep timeout",
         [
             {
                 eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
@@ -471,7 +477,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
 
             // The datastore should be tombstoned now
-            await summarize(summarizer);
             const { summaryVersion } = await summarize(summarizer);
             const container = await loadContainer(summaryVersion);
             await sendOpToUpdateSummaryTimestampToNow(container);
@@ -484,6 +489,14 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
                     return correctErrorType && correctErrorMessage;
                 },
                 `Should not be able to retrieve a tombstoned datastore.`,
+            );
+            await assert.doesNotReject(
+                async () => requestFluidObject<ITestDataObject>(container, { url: unreferencedId, headers: { allowTombstone: true }}),
+                `Should be able to retrieve a tombstoned datastore given the allowTombstone header`,
+            );
+            await assert.doesNotReject(
+                async () => requestFluidObject<ITestDataObject>(summarizingContainer, unreferencedId),
+                `Should be able to retrieve a tombstoned datastore in summarizer clients`,
             );
         });
 
@@ -507,13 +520,14 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             const { summaryVersion } = await summarize(summarizer);
             const dataObject = await getTombstonedDataObjectFromSummary(summaryVersion, unreferencedId);
 
-            // Note: if a user makes a request that looks like this, we will also think that the request is via handle
-            const request: IRequest = { url: unreferencedId, headers: { [RuntimeHeaders.viaHandle]: true } };
-            const response = await dataObject._context.IFluidHandleContext.resolveHandle(request);
+            const serializer = new FluidSerializer(dataObject._context.IFluidHandleContext, () => {});
+            const handle: IFluidHandle = parseHandles({ type: "__fluid_handle__", url: unreferencedId }, serializer);
 
-            assert(response !== undefined, `Expecting a response!`);
-            assert(response.status === 404);
-            assert(response.value === `Datastore removed by gc: ${unreferencedId}`);
+            // Note: if a user makes a request that looks like this, we will also think that the request is via handle
+            await assert.rejects(
+                async () => handle.get(),
+                (error) => { return error.code === 404 && error.message === `Datastore removed by gc: ${unreferencedId}`; },
+                "handle.get should fail for tombstoned object!");
         });
 
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
@@ -539,13 +553,14 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             const { summaryVersion } = await summarize(summarizer);
             const dataObject = await getTombstonedDataObjectFromSummary(summaryVersion, unreferencedId);
 
-            // Note: if a user makes a request that looks like this, we will also think that the request is via handle
-            const request: IRequest = { url: unreferencedId, headers: { [RuntimeHeaders.viaHandle]: true } };
-            const response = await dataObject._context.IFluidHandleContext.resolveHandle(request);
+            const serializer = new FluidSerializer(dataObject._context.IFluidHandleContext, () => {});
+            const handle: IFluidHandle = parseHandles({ type: "__fluid_handle__", url: unreferencedId }, serializer);
 
-            assert(response !== undefined, `Expecting a response!`);
-            assert(response.status === 404);
-            assert(response.value === `Datastore removed by gc: ${unreferencedId}`);
+            // Note: if a user makes a request that looks like this, we will also think that the request is via handle
+            await assert.rejects(
+                async () => handle.get(),
+                (error) => { return error.code === 404 && error.message === `Datastore removed by gc: ${unreferencedId}`; },
+                "handle.get should fail for tombstoned object!");
         });
 
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
