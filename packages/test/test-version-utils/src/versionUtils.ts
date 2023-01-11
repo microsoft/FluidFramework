@@ -115,7 +115,7 @@ export function resolveVersion(requested: string, installed: boolean) {
         if (found) {
             return found;
         }
-        throw new Error(`No matching version found in ${baseModulePath}`);
+        throw new Error(`No matching version found in ${baseModulePath} (requested: ${requested})`);
     } else {
         const result = execSync(
             `npm v @fluidframework/container-loader@"${requested}" version --json`,
@@ -140,7 +140,7 @@ export function resolveVersion(requested: string, installed: boolean) {
 async function ensureModulePath(version: string, modulePath: string) {
     const release = await lock(baseModulePath, { retries: { forever: true } });
     try {
-        console.log(`Installing version ${version}`);
+        console.log(`Installing version ${version} at ${modulePath}`);
         if (!existsSync(modulePath)) {
             // Create the under the baseModulePath lock
             mkdirSync(modulePath, { recursive: true });
@@ -223,7 +223,7 @@ export function checkInstalled(requested: string) {
         // assume it is valid if it exists
         return { version, modulePath };
     }
-    throw new Error(`Requested version ${requested} resolved to ${version} is not installed`);
+    throw new Error(`Requested version ${requested} resolved to ${version} is not installed at ${modulePath}`);
 }
 
 export const loadPackage = (modulePath: string, pkg: string) =>

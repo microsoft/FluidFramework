@@ -81,7 +81,6 @@ const root_bar2_bar5_bar7: UpPath = {
 
 const nodeX = { type: jsonString.name, value: "X" };
 const nodeXCursor: ITreeCursorSynchronous = singleTextCursor(nodeX);
-const content = [nodeX];
 const moveId = brandOpaque<Delta.MoveId>(0);
 const moveId2 = brandOpaque<Delta.MoveId>(1);
 

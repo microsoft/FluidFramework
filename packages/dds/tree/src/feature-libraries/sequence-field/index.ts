@@ -6,14 +6,11 @@
 export {
     Attach,
     Changeset,
-    ClientId,
     Delete,
     Detach,
     Effects,
-    GapCount,
     HasChanges,
     HasMoveId,
-    HasLength,
     HasPlaceFields,
     HasRevisionTag,
     HasTiebreakPolicy,
@@ -37,9 +34,6 @@ export {
     SizedMark,
     SizedObjectMark,
     Tiebreak,
-    Tombstones,
-    TreeForestPath,
-    TreeRootPath,
     Skip,
     LineageEvent,
     HasReattachFields,
@@ -62,4 +56,10 @@ export { MarkListFactory } from "./markListFactory";
 export { NodeChangeRebaser, rebase } from "./rebase";
 export { invert, NodeChangeInverter } from "./invert";
 export { compose, NodeChangeComposer } from "./compose";
-export { isMoveMark, MoveMark, MoveEffectTable, MovePartition, newMoveEffectTable } from "./utils";
+export {
+    isMoveMark,
+    MoveMark,
+    MoveEffectTable,
+    MovePartition,
+    newMoveEffectTable,
+} from "./moveEffectTable";

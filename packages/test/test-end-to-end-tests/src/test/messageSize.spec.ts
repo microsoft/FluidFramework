@@ -372,7 +372,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
                 it("Reconnects while sending compressed batch", async function() {
                     // This is not supported by the local server. See ADO:2690
-                    if (provider.driver.type === "local") {
+                    // This test is flaky on tinylicious. See ADO:2964
+                    if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
                         this.skip();
                     }
 

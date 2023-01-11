@@ -103,9 +103,6 @@ export interface ChildLocation {
     readonly index: number;
 }
 
-// @public (undocumented)
-type ClientId = number;
-
 // @public
 function compose<TNodeChange>(changes: TaggedChange<Changeset<TNodeChange>>[], composeChild: NodeChangeComposer_2<TNodeChange>, genId: IdAllocator): Changeset<TNodeChange>;
 
@@ -165,8 +162,6 @@ interface Delete {
 interface Delete_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasChanges<TNodeChange> {
     // (undocumented)
     count: NodeCount;
-    // (undocumented)
-    tomb?: RevisionTag;
     // (undocumented)
     type: "Delete";
 }
@@ -424,9 +419,6 @@ export interface FullSchemaPolicy extends SchemaPolicy {
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
 }
 
-// @public (undocumented)
-type GapCount = number;
-
 // @public
 export interface GenericFieldsNode<TChild> {
     // (undocumented)
@@ -458,11 +450,6 @@ export type GlobalFieldKeySymbol = Brand<symbol, "GlobalFieldKeySymbol">;
 interface HasChanges<TNodeChange = NodeChangeType> {
     // (undocumented)
     changes?: TNodeChange;
-}
-
-// @public (undocumented)
-interface HasLength {
-    length?: number;
 }
 
 // @public (undocumented)
@@ -806,8 +793,6 @@ interface Modify_2<TNodeChange = NodeChangeType> {
     // (undocumented)
     changes: TNodeChange;
     // (undocumented)
-    tomb?: RevisionTag;
-    // (undocumented)
     type: "Modify";
 }
 
@@ -888,7 +873,6 @@ interface MoveEffectTable<T> {
     srcEffects: Map<MoveId_2, MovePartition<T>[]>;
     // (undocumented)
     srcMergeable: Map<MoveId_2, MoveId_2>;
-    validatedMarks: Set<Mark_2<T>>;
 }
 
 // @public
@@ -937,8 +921,6 @@ interface MoveOut {
 interface MoveOut_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMoveId, HasChanges<TNodeChange> {
     // (undocumented)
     count: NodeCount;
-    // (undocumented)
-    tomb?: RevisionTag;
     // (undocumented)
     type: "MoveOut";
 }
@@ -1135,8 +1117,6 @@ interface ReturnFrom<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMo
     // (undocumented)
     detachedBy: RevisionTag | undefined;
     // (undocumented)
-    tomb?: RevisionTag;
-    // (undocumented)
     type: "ReturnFrom";
 }
 
@@ -1203,14 +1183,11 @@ declare namespace SequenceField {
     export {
         Attach,
         Changeset,
-        ClientId,
         Delete_2 as Delete,
         Detach,
         Effects,
-        GapCount,
         HasChanges,
         HasMoveId,
-        HasLength,
         HasPlaceFields,
         HasRevisionTag,
         HasTiebreakPolicy,
@@ -1234,9 +1211,6 @@ declare namespace SequenceField {
         SizedMark,
         SizedObjectMark,
         Tiebreak,
-        Tombstones,
-        TreeForestPath,
-        TreeRootPath,
         Skip_2 as Skip,
         LineageEvent,
         HasReattachFields,
@@ -1394,26 +1368,12 @@ export type ToDelta = (child: NodeChangeset, index: number | undefined) => Delta
 // @public (undocumented)
 type ToDelta_2<TNodeChange> = (child: TNodeChange, index: number | undefined) => Delta.Modify;
 
-// @public
-interface Tombstones {
-    // (undocumented)
-    change: RevisionTag;
-    // (undocumented)
-    count: NodeCount;
-}
-
 // @public (undocumented)
 export enum TransactionResult {
     // (undocumented)
     Abort = 0,
     // (undocumented)
     Apply = 1
-}
-
-// @public (undocumented)
-interface TreeForestPath {
-    // (undocumented)
-    [label: string]: TreeRootPath;
 }
 
 // @public (undocumented)
@@ -1430,11 +1390,6 @@ export const enum TreeNavigationResult {
     Ok = 1,
     Pending = 0
 }
-
-// @public (undocumented)
-type TreeRootPath = number | {
-    [label: number]: TreeForestPath;
-};
 
 // @public (undocumented)
 export interface TreeSchema {
