@@ -25,6 +25,7 @@ import {
     isILoggingError,
     extractLogSafeErrorProperties,
     generateStack,
+    isTaggedTelemetryPropertyValue,
 } from "./errorLogging";
 import {
     ITaggedTelemetryPropertyTypeExt,
@@ -618,9 +619,19 @@ function convertToBaseEvent({ category, eventName, ...props }: ITelemetryEventEx
  * If none of these cases are reached - returns an error string
  * @param x - value passed in to convert to a base property type
  */
-function convertToBasePropertyType(
+export function convertToBasePropertyType(
     x: TelemetryEventPropertyTypeExt | ITaggedTelemetryPropertyTypeExt,
 ): TelemetryEventPropertyType | ITaggedTelemetryPropertyType {
+
+    return isTaggedTelemetryPropertyValue(x) ? {
+            value: convertToBasePropertyTypeUntagged(x.value),
+            tag: x.tag,
+        } : convertToBasePropertyTypeUntagged(x);
+}
+
+function convertToBasePropertyTypeUntagged(
+    x: TelemetryEventPropertyTypeExt,
+): TelemetryEventPropertyType {
     switch (typeof x) {
         case "string":
         case "number":
@@ -628,19 +639,11 @@ function convertToBasePropertyType(
         case "undefined":
             return x;
         case "object":
-            if (Array.isArray(x)) {
-                // We know that the array type is
-                return JSON.stringify(x);
-            }
-            return {
-                value: JSON.stringify(
-                    convertToBasePropertyType(x.value)
-                ),
-                tag: x.tag,
-            };
+            // We assume this is an array based on the input types
+            return JSON.stringify(x);
         default:
             // should never reach this case.
-            console.error("");
+            console.error(`convertToBasePropertyTypeUntagged: INVALID PROPERTY (typed as ${typeof x})`);
             return `INVALID PROPERTY (typed as ${typeof x})`;
     }
 }
