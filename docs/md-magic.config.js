@@ -141,7 +141,7 @@ You can run this example using the following steps:
         finalStep,
     ].filter(item => item !== undefined);
 
-    return `${steps.join("\n")}"\n"`;
+    return `${steps.join("\n")}\n`;
 }
 
 /**
@@ -284,7 +284,7 @@ const mdMagicConfig = {
         README_SIMPLE(content, options, config) {
             const pkg = getPackageJsonFromOriginalPath(config.originalPath);
 
-            const sections = [generatedContentNotice];
+            const sections = [`\n${generatedContentNotice}\n`];
 
             if(options.installation !== "FALSE") {
                 sections.push(generateInstallationSection(pkg, options.devDependency, true));
@@ -311,7 +311,7 @@ const mdMagicConfig = {
                 sections.push(generateTrademarkSection(true));
             }
 
-            return sections.join(`\n\n`);
+            return sections.join("");
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) --> */
         README_API_DOCS_SECTION(content, options, config) {

@@ -3,6 +3,7 @@
 The `SharedCell` Distributed Data Structure (DDS)  stores a single, shared value that can be edited or deleted.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE) -->
+
 ## Installation
 
 To get started, install the package by running the following command:
@@ -10,12 +11,15 @@ To get started, install the package by running the following command:
 ```bash
 npm i @fluidframework/cell
 ```
+
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) -->
+
 ## API Documentation
 
 API documentation for **@fluidframework/cell** is available at <https://fluidframework.com/docs/apis/cell>.
+
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
