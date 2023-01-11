@@ -14,7 +14,6 @@ To use this extension in your browser:
 
 ## Package TODOs
 
--   Use the multi-container visualizer component once it is available, rather than manually looking for debugger instances from this tool.
 -   Inject the debugger view as a sibling next to the page contents, rather than as an overlay on top of it (to ensure all customer content is not obscured by the panel).
 
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
