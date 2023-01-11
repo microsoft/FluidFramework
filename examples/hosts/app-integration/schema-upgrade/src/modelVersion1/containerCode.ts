@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import type { IMigrationTool } from "@fluid-example/example-utils";
 import {
+    MigrationToolInstantiationFactory,
     ModelContainerRuntimeFactory,
 } from "@fluid-example/example-utils";
 import type { IContainer } from "@fluidframework/container-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import type { IMigrationTool } from "../migrationInterfaces";
-import { MigrationToolInstantiationFactory } from "../migrationTool";
 import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces";
 import { InventoryListAppModel } from "./appModel";
 import { InventoryListInstantiationFactory } from "./inventoryList";

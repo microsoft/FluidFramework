@@ -13,6 +13,7 @@ import {
     ChangeRebaser,
     Delta,
     FieldKey,
+    TaggedChange,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
@@ -23,6 +24,7 @@ import {
     TestChangeRebaser,
     TestChange,
     UnrebasableTestChangeRebaser,
+    ConstrainedTestChangeRebaser,
 } from "../testChange";
 
 const rootKey: FieldKey = brand("root");
@@ -149,6 +151,15 @@ describe("EditManager", () => {
             { seq: 3, type: "Ack" },
         ]);
 
+        runUnitTestScenario("Can handle non-concurrent local changes partially sequenced later", [
+            { seq: 1, type: "Push" },
+            { seq: 2, type: "Push" },
+            { seq: 1, type: "Ack" },
+            { seq: 3, type: "Push" },
+            { seq: 2, type: "Ack" },
+            { seq: 3, type: "Ack" },
+        ]);
+
         runUnitTestScenario("Can handle non-concurrent peer changes sequenced immediately", [
             { seq: 1, type: "Pull", ref: 0, from: peer1 },
             { seq: 2, type: "Pull", ref: 1, from: peer1 },
@@ -159,6 +170,12 @@ describe("EditManager", () => {
             { seq: 1, type: "Pull", ref: 0, from: peer1 },
             { seq: 2, type: "Pull", ref: 0, from: peer1 },
             { seq: 3, type: "Pull", ref: 0, from: peer1 },
+        ]);
+
+        runUnitTestScenario("Can handle non-concurrent peer changes partially sequenced later", [
+            { seq: 1, type: "Pull", ref: 0, from: peer1 },
+            { seq: 2, type: "Pull", ref: 0, from: peer1 },
+            { seq: 3, type: "Pull", ref: 1, from: peer1 },
         ]);
 
         runUnitTestScenario("Can rebase a single peer change over multiple peer changes", [
@@ -259,6 +276,43 @@ describe("EditManager", () => {
             ],
             new UnrebasableTestChangeRebaser(),
         );
+        runUnitTestScenario(
+            "Sequenced local changes should not be rebased over prior local changes if those earlier changes were not rebased",
+            [
+                { seq: 1, type: "Push" },
+                { seq: 2, type: "Push" },
+                { seq: 4, type: "Push" },
+                { seq: 1, type: "Ack" },
+                { seq: 2, type: "Ack" },
+                { seq: 3, type: "Pull", ref: 2, from: peer2 },
+                { seq: 4, type: "Ack" },
+            ],
+            new ConstrainedTestChangeRebaser(
+                (change: TestChange, over: TaggedChange<TestChange>): boolean => {
+                    // This is the only rebase that should happen
+                    assert.deepEqual(change.intentions, [4]);
+                    assert.deepEqual(over.change.intentions, [3]);
+                    return true;
+                },
+            ),
+        );
+        runUnitTestScenario(
+            "Sequenced peer changes should not be rebased over changes from the same peer if those earlier changes were not rebased",
+            [
+                { seq: 1, type: "Pull", ref: 0, from: peer1 },
+                { seq: 2, type: "Pull", ref: 0, from: peer1 },
+                { seq: 3, type: "Pull", ref: 2, from: peer2 },
+                { seq: 4, type: "Pull", ref: 0, from: peer1 },
+            ],
+            new ConstrainedTestChangeRebaser(
+                (change: TestChange, over: TaggedChange<TestChange>): boolean => {
+                    // This is the only rebase that should happen
+                    assert.deepEqual(change.intentions, [4]);
+                    assert.deepEqual(over.change.intentions, [3]);
+                    return true;
+                },
+            ),
+        );
     });
 
     /**
@@ -279,15 +333,17 @@ describe("EditManager", () => {
         for (const scenario of buildScenario([], meta)) {
             // Uncomment the code below to log the titles of generated scenarios.
             // This is helpful for creating a unit test out of a generated scenario that fails.
-            // const title = scenario.map((s) => {
-            //     if (s.type === "Pull") {
-            //         return `Pull(${s.seq}) from:${s.from} ref:${s.ref}`;
-            //     } else if (s.type === "Ack") {
-            //         return `Ack(${s.seq})`;
-            //     }
-            //     return s.type;
-            // }).join("|");
-            // console.debug(title);
+            const title = scenario
+                .map((s) => {
+                    if (s.type === "Pull") {
+                        return `Pull(${s.seq}) from:${s.from} ref:${s.ref}`;
+                    } else if (s.type === "Ack") {
+                        return `Ack(${s.seq})`;
+                    }
+                    return `Push(${s.seq})`;
+                })
+                .join("|");
+            console.debug(title);
             runUnitTestScenario(undefined, scenario);
         }
     });

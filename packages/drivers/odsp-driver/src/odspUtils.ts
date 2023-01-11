@@ -225,9 +225,15 @@ export async function fetchAndParseAsJSONHelper<T>(
     return res;
 }
 
-export interface INewFileInfo {
+
+export interface IFileInfoBase {
+    type: 'New' | 'Existing';
     siteUrl: string;
     driveId: string;
+}
+
+export interface INewFileInfo extends IFileInfoBase {
+    type: 'New';
     filename: string;
     filePath: string;
     /**
@@ -238,6 +244,15 @@ export interface INewFileInfo {
      * share link type and the role type.
      */
     createLinkType?: ShareLinkTypes | ISharingLinkKind;
+}
+
+export interface IExistingFileInfo extends IFileInfoBase {
+    type: 'Existing';
+    itemId: string;
+}
+
+export function isNewFileInfo(fileInfo: INewFileInfo | IExistingFileInfo): fileInfo is INewFileInfo {
+    return fileInfo.type === undefined || fileInfo.type === 'New';
 }
 
 export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl {
