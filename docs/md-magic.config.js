@@ -163,11 +163,8 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
  */
  const generateContributionGuidelinesSection = (includeHeading) => {
-    const sectionBody = `Please refer to our [Github Wiki](https://github.com/microsoft/FluidFramework/wiki/Contributing) for an overview of our contribution guidelines.`;
-
-    return includeHeading
-        ? `## Contribution Guidelines${os.EOL}${os.EOL}${sectionBody}`
-        : sectionBody;
+    const sectionBody = fs.readFileSync(pathLib.resolve(mdMagicTemplatesPath, "Contribution-Guidelines-Template.md"), { encoding: "utf-8"}).trim();
+    return `${os.EOL}${includeHeading ? `## Contribution Guidelines${os.EOL}${os.EOL}` : ""}${sectionBody}${os.EOL}`;
 }
 
 /**
