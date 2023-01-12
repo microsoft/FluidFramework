@@ -327,7 +327,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
                 // Record how long it actually took to recover.
                 // This is generic event, as it by itself is not an error.
                 // We also have a case where NoJoinOp happens during container boot (we do not report it as error in such case),
-                // this this log statement happens after boot - we do not want to consider it error case.
+                // if this log statement happens after boot - we do not want to consider it error case.
                 this.handler.logConnectionIssue("ReceivedJoinOp", "generic");
             }
             // Start the event in case we are waiting for leave or timeout.
