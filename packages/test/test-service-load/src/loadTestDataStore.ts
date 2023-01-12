@@ -226,8 +226,10 @@ export class LoadTestDataStoreModel {
         const changed = (taskId) => {
             if (taskId === this.taskId && this.taskStartTime !== 0) {
                 Promise.resolve().then(() => {
-                    this.dir.set(taskTimeKey, this.totalTaskTime);
-                    this.taskStartTime = 0;
+                    if (!this.runtime.disposed) {
+                        this.dir.set(taskTimeKey, this.totalTaskTime);
+                        this.taskStartTime = 0;
+                    }
                 }).catch((error) => {
                     this.logger.sendErrorEvent({
                         eventName: "TaskManager_OnValueChanged",
@@ -263,7 +265,9 @@ export class LoadTestDataStoreModel {
 
                 if (newBlobs > 0) {
                     Promise.resolve().then(() => {
-                        this.blobUploads.push(...[...Array(newBlobs)].map(async () => this.writeBlob(this.blobCount++)));
+                        if (!this.runtime.disposed) {
+                            this.blobUploads.push(...[...Array(newBlobs)].map(async () => this.writeBlob(this.blobCount++)));
+                        }
                     }).catch((error) => this.logger.sendErrorEvent({
                         eventName: "WriteBlobFailed_OnCounterChanged",
                         count: this.blobCount,
