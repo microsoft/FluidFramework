@@ -40,7 +40,7 @@ import {
     ITelemetryContext,
     SummarizeInternalFn,
 } from "./summary";
-import { IIdCompressor } from "./idCompressor";
+import { IIdCompressor } from "./id-compressor";
 
 /**
  * Runtime flush mode handling

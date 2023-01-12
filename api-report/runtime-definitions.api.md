@@ -291,6 +291,30 @@ export interface IGarbageCollectionSummaryDetailsLegacy {
 export interface IIdCompressor {
     // (undocumented)
     generateCompressedId(): number;
+    getAllIdsFromLocalSession(): IterableIterator<SessionSpaceCompressedId>;
+    // Warning: (ae-forgotten-export) The symbol "SessionSpaceCompressedId" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "OpSpaceCompressedId" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
+    // Warning: (ae-forgotten-export) The symbol "SessionId" needs to be exported by the entry point index.d.ts
+    normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
+    // Warning: (ae-forgotten-export) The symbol "FinalCompressedId" needs to be exported by the entry point index.d.ts
+    normalizeToSessionSpace(id: FinalCompressedId): SessionSpaceCompressedId;
+    // (undocumented)
+    normalizeToSessionSpace(id: OpSpaceCompressedId, sessionIdIfLocal?: SessionId): SessionSpaceCompressedId;
+    // Warning: (ae-forgotten-export) The symbol "SerializedIdCompressorWithOngoingSession" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "SerializedIdCompressorWithNoSession" needs to be exported by the entry point index.d.ts
+    serialize(withSession: boolean): SerializedIdCompressorWithOngoingSession | SerializedIdCompressorWithNoSession;
+    serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
+    serialize(withSession: false): SerializedIdCompressorWithNoSession;
+    // Warning: (ae-forgotten-export) The symbol "SerializedIdCompressor" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    serialize(withSession: boolean): SerializedIdCompressor;
+    // Warning: (ae-forgotten-export) The symbol "StableId" needs to be exported by the entry point index.d.ts
+    tryDecompress(id: SessionSpaceCompressedId | FinalCompressedId): StableId | string | undefined;
+    tryRecompress(uncompressed: string): SessionSpaceCompressedId | undefined;
 }
 
 // @public

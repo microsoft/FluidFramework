@@ -21,6 +21,7 @@ import {
     ITelemetryContext,
     blobCountPropertyName,
     totalBlobSizePropertyName,
+    IIdCompressor,
 } from "@fluidframework/runtime-definitions";
 import {
     ChildLogger,
@@ -85,6 +86,10 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         return this._connected;
     }
 
+    public get idCompressor(): IIdCompressor | undefined {
+        return this.runtime.idCompressor;
+    }
+
     /**
      * @param id - The id of the shared object
      * @param runtime - The IFluidDataStoreRuntime which contains the shared object
@@ -121,10 +126,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         [this.opProcessingHelper, this.callbacksHelper] = this.setUpSampledTelemetryHelpers();
 
         this.attachListeners();
-    }
-
-    public generateCompressedId(): number | undefined {
-        return this.runtime.idCompressor?.generateCompressedId();
     }
 
     /**

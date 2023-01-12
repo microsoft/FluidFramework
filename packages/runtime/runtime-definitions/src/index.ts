@@ -56,4 +56,4 @@ export {
 } from "./summary";
 export {
     IIdCompressor
-} from "./idCompressor";
+} from "./id-compressor";

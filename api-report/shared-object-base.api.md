@@ -17,6 +17,7 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { IIdCompressor } from '@fluidframework/runtime-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
@@ -114,14 +115,14 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     // @internal
     emit(event: EventEmitterEventType, ...args: any[]): boolean;
     // (undocumented)
-    generateCompressedId(): number | undefined;
-    // (undocumented)
     abstract getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
     readonly handle: IFluidHandle;
     protected handleDecoded(decodedHandle: IFluidHandle): void;
     // (undocumented)
     id: string;
+    // (undocumented)
+    get idCompressor(): IIdCompressor | undefined;
     // (undocumented)
     get IFluidLoadable(): this;
     initializeLocal(): void;
