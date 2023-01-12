@@ -100,6 +100,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 siteUrl: odspResolvedUrl.siteUrl,
                 itemId: odspResolvedUrl.itemId
             };
+        } else {
+            throw new Error("A new or existing file must be specified to create container!");
         }
 
         const protocolSummary = createNewSummary?.tree[".protocol"];
