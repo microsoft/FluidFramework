@@ -704,7 +704,7 @@ describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
     });
 });
 
-describeNoCompat.only("SharedDirectory orderSequentially", (getTestObjectProvider) => {
+describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
         provider = getTestObjectProvider();
