@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import {
     IGCRuntimeOptions,
     ISummarizer,
+    RuntimeHeaders,
 } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
@@ -416,11 +417,14 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
         itExpects("Requesting tombstoned datastores fails in interactive client loaded after sweep timeout",
         [
-            {
+            {   // Interactive client's request
                 eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
                 viaHandle: false,
             },
-            {
+            {   // Interactive client's request w/ allowTombstone
+                eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded",
+            },
+            {   // Summarizer client's request
                 eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
                 viaHandle: false,
             },
@@ -448,7 +452,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
                 `Should not be able to retrieve a tombstoned datastore in non-summarizer clients`,
             );
             await assert.doesNotReject(
-                async () => requestFluidObject<ITestDataObject>(container, { url: unreferencedId, headers: { allowTombstone: true }}),
+                async () => requestFluidObject<ITestDataObject>(container, { url: unreferencedId, headers: { [RuntimeHeaders.allowTombstone]: true }}),
                 `Should be able to retrieve a tombstoned datastore given the allowTombstone header`,
             );
             await assert.doesNotReject(
@@ -460,7 +464,14 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
         itExpects("Requesting tombstoned datastores fails in interactive client loaded before sweep timeout",
         [
-            {
+            {   // Interactive client's request
+                eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
+                viaHandle: false,
+            },
+            {   // Interactive client's request w/ allowTombstone
+                eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded",
+            },
+            {   // Summarizer client's request
                 eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
                 viaHandle: false,
             },
@@ -491,7 +502,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
                 `Should not be able to retrieve a tombstoned datastore.`,
             );
             await assert.doesNotReject(
-                async () => requestFluidObject<ITestDataObject>(container, { url: unreferencedId, headers: { allowTombstone: true }}),
+                async () => requestFluidObject<ITestDataObject>(container, { url: unreferencedId, headers: { [RuntimeHeaders.allowTombstone]: true }}),
                 `Should be able to retrieve a tombstoned datastore given the allowTombstone header`,
             );
             await assert.doesNotReject(

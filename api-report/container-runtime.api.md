@@ -650,6 +650,7 @@ export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck |
 
 // @public
 export enum RuntimeHeaders {
+    allowTombstone = "allowTombstone",
     externalRequest = "externalRequest",
     viaHandle = "viaHandle",
     wait = "wait"

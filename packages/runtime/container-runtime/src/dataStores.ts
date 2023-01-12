@@ -43,7 +43,7 @@ import { assert, Lazy, LazyPromise } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import { GCDataBuilder, unpackChildNodesGCDetails, unpackChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
-import { ContainerRuntime } from "./containerRuntime";
+import { ContainerRuntime, RuntimeHeaderData } from "./containerRuntime";
 import {
     FluidDataStoreContext,
     RemoteFluidDataStoreContext,
@@ -430,8 +430,8 @@ export class DataStores implements IDisposable {
         );
     }
 
-    public async getDataStore(id: string, wait: boolean, viaHandle: boolean): Promise<FluidDataStoreContext> {
-        const context = await this.contexts.getBoundOrRemoted(id, wait);
+    public async getDataStore(id: string, headerData: RuntimeHeaderData): Promise<FluidDataStoreContext> {
+        const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
         const request = { url: id };
         if (context === undefined) {
             // The requested data store does not exits. Throw a 404 response exception.
@@ -445,7 +445,7 @@ export class DataStores implements IDisposable {
             const event = {
                 eventName: "GC_Tombstone_DataStore_Requested",
                 url: request.url,
-                viaHandle,
+                viaHandle: headerData.viaHandle,
             };
             sendGCTombstoneEvent(
                 this.mc,
@@ -453,10 +453,9 @@ export class DataStores implements IDisposable {
                 this.runtime.clientDetails.type === summarizerClientType,
                 context.isLoaded ? context.packagePath : undefined,
                 error,
+                this.throwOnTombstoneUsage && !headerData.allowTombstone /* logAsError */,
             );
-            // Always log an error when tombstoned data store is used. However, throw an error only if
-            // throwOnTombstoneUsage is set.
-            if (this.throwOnTombstoneUsage) {
+            if (this.throwOnTombstoneUsage && !headerData.allowTombstone) {
                 throw error;
             }
         }
