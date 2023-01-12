@@ -380,20 +380,20 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
         if (this.readOnlyInfo.readonly === true) {
             const error = this.readOnlyInfo.permissions === true ?
-                new Error(`Attempted to volunteer with read-only permissions: ${taskId}`) :
-                new Error(`Attempted to volunteer in read-only state: ${taskId}`);
+                new Error("Attempted to volunteer with read-only permissions") :
+                new Error("Attempted to volunteer in read-only state");
             throw error;
         }
 
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenario
-            assert(this.clientId !== undefined, "clientId should not be undefined");
+            assert(this.clientId !== undefined, 0x472 /* clientId should not be undefined */);
             this.addClientToQueue(taskId, this.clientId);
             return true;
         }
 
         if (!this.connected) {
-            throw new Error(`Attempted to volunteer in disconnected state: ${taskId}`);
+            throw new Error("Attempted to volunteer in disconnected state");
         }
 
         // This promise works even if we already have an outstanding volunteer op.
@@ -424,7 +424,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 this.abandonWatcher.off("abandon", checkIfAbandoned);
                 this.connectionWatcher.off("disconnect", rejectOnDisconnect);
                 this.completedWatcher.off("completed", checkIfCompleted);
-                reject(new Error(`Abandoned before acquiring task assignment: ${taskId}`));
+                reject(new Error("Abandoned before acquiring task assignment"));
             };
 
             const rejectOnDisconnect = () => {
@@ -432,7 +432,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 this.abandonWatcher.off("abandon", checkIfAbandoned);
                 this.connectionWatcher.off("disconnect", rejectOnDisconnect);
                 this.completedWatcher.off("completed", checkIfCompleted);
-                reject(new Error(`Disconnected before acquiring task assignment: ${taskId}`));
+                reject(new Error("Disconnected before acquiring task assignment"));
             };
 
             const checkIfCompleted = (eventTaskId: string) => {
@@ -468,7 +468,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         }
 
         if (this.readOnlyInfo.readonly === true && this.readOnlyInfo.permissions === true) {
-            throw new Error(`Attempted to subscribe with read-only permissions: ${taskId}`);
+            throw new Error("Attempted to subscribe with read-only permissions");
         }
 
         const submitVolunteerOp = () => {
@@ -512,7 +512,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenario
-            assert(this.clientId !== undefined, "clientId should not be undefined");
+            assert(this.clientId !== undefined, 0x473 /* clientId should not be undefined */);
             this.addClientToQueue(taskId, this.clientId);
             // Because we volunteered with placeholderClientId, we need to wait for when we attach and are assigned
             // a real clientId. At that point we should re-enter the queue with a real volunteer op (assuming we are
@@ -553,7 +553,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
         if (!this.isAttached()) {
             // Simulate auto-ack in detached scenario
-            assert(this.clientId !== undefined, "clientId is undefined");
+            assert(this.clientId !== undefined, 0x474 /* clientId is undefined */);
             this.removeClientFromQueue(taskId, this.clientId);
             this.abandonWatcher.emit("abandon", taskId);
             return;
@@ -611,14 +611,14 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      */
     public complete(taskId: string): void {
         if (!this.assigned(taskId)) {
-            throw new Error(`Attempted to mark task as complete while not being assigned: ${taskId}`);
+            throw new Error("Attempted to mark task as complete while not being assigned");
         }
 
         // If we are detached we will simulate auto-ack for the complete op. Therefore we only need to send the op if
         // we are attached. Additionally, we don't need to check if we are connected while detached.
         if (this.isAttached()) {
             if (!this.connected) {
-                throw new Error(`Attempted to complete task in disconnected state: ${taskId}`);
+                throw new Error("Attempted to complete task in disconnected state");
             }
             this.submitCompleteOp(taskId);
         }
@@ -800,7 +800,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * transitioning from detached to attached and this.runtime.clientId is defined.
      */
     private replacePlaceholderInAllQueues() {
-        assert(this.runtime.clientId !== undefined, "this.runtime.clientId should be defined");
+        assert(this.runtime.clientId !== undefined, 0x475 /* this.runtime.clientId should be defined */);
         for (const clientQueue of this.taskQueues.values()) {
             const clientIdIndex = clientQueue.indexOf(placeholderClientId);
             if (clientIdIndex !== -1) {

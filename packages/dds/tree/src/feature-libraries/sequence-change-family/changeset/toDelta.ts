@@ -208,7 +208,7 @@ interface DeltaInsertModification {
  * all modifications are applied by the function.
  */
 function applyOrCollectModifications(node: ProtoNode, modify: ChangesetMods): Delta.FieldMarks {
-    const outFieldsMarks: Delta.FieldMarks = new Map();
+    const outFieldsMarks: Map<FieldKey, Delta.MarkList> = new Map();
     if (modify.value !== undefined) {
         node.value = modify.value.value;
     }
@@ -348,7 +348,7 @@ function convertModify(modify: ChangesetMods): DeltaMods {
 }
 
 function convertFieldMarks(fields: T.FieldMarks): Delta.FieldMarks {
-    const outFields: Delta.FieldMarks = new Map();
+    const outFields: Map<FieldKey, Delta.MarkList> = new Map();
     for (const key of Object.keys(fields)) {
         const marks = convertMarkList(fields[key]);
         const brandedKey: FieldKey = brand(key);

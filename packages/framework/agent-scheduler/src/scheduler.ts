@@ -258,7 +258,14 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
             if (this.isActive() && currentClient === this.clientId) {
                 this.onNewTaskAssigned(key);
             } else {
-                await this.onTaskReassigned(key, currentClient);
+                // The call below mutates the consensusRegisterCollection in
+                // its event handler, which is not safe.
+                // We need to force this to be part of a different batch of ops by
+                // scheduling a microtask in order to work around the current validations.
+                // This is not recommended and should be avoided.
+                await Promise.resolve().then(async () => {
+                    await this.onTaskReassigned(key, currentClient);
+                });
             }
         });
 
@@ -307,7 +314,6 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
             this.emit("released", key);
         }
         assert(currentClient !== undefined, 0x11e /* "client is undefined" */);
-        /* eslint-disable @typescript-eslint/brace-style */
         if (this.isActive()) {
             // attempt to pick up task if we are connected.
             // If not, initializeCore() will do it when connected
@@ -323,7 +329,6 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
                 await this.writeCore(key, null);
             }
         }
-        /* eslint-enable @typescript-eslint/brace-style */
     }
 
     private isActive() {

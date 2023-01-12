@@ -8,7 +8,9 @@
         "Atomics": "readonly",
         "SharedArrayBuffer": "readonly"
     },
-    "ignorePatterns": [],
+    "ignorePatterns": [
+        "**/packageVersion.ts"
+    ],
     "parserOptions": {
         "ecmaFeatures": {
             "jsx": true
@@ -106,7 +108,7 @@
                 "accessibility": "explicit",
                 "overrides": {
                     "accessors": "explicit",
-                    "constructors": "no-public",
+                    "constructors": "explicit",
                     "methods": "explicit",
                     "parameterProperties": "explicit",
                     "properties": "explicit"
@@ -603,7 +605,12 @@
             1
         ],
         "import/no-nodejs-modules": [
-            "warn"
+            "error",
+            {
+                "allow": [
+                    "events"
+                ]
+            }
         ],
         "import/no-unassigned-import": [
             "error"
@@ -667,6 +674,33 @@
         ],
         "jsdoc/require-hyphen-before-param-description": [
             "error"
+        ],
+        "jsdoc/require-jsdoc": [
+            "error",
+            {
+                "checkConstructors": true,
+                "checkGetters": true,
+                "checkSetters": true,
+                "contexts": [
+                    "TSEnumDeclaration",
+                    "TSInterfaceDeclaration",
+                    "TSTypeAliasDeclaration",
+                    "VariableDeclaration"
+                ],
+                "enableFixer": false,
+                "exemptEmptyConstructors": false,
+                "exemptEmptyFunctions": false,
+                "fixerMessage": "",
+                "publicOnly": true,
+                "require": {
+                    "ArrowFunctionExpression": true,
+                    "ClassDeclaration": true,
+                    "ClassExpression": true,
+                    "FunctionDeclaration": true,
+                    "FunctionExpression": true,
+                    "MethodDefinition": false
+                }
+            }
         ],
         "jsdoc/require-param-description": [
             "error"
@@ -1453,7 +1487,7 @@
             "error"
         ],
         "unicorn/prefer-node-protocol": [
-            "error"
+            "off"
         ],
         "unicorn/prefer-number-properties": [
             "error"

@@ -8,7 +8,7 @@ import type { IContainer } from "@fluidframework/container-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import type { ITaskList, IAppModel } from "../modelInterfaces";
+import type { ITaskList, IAppModel } from "../model-interface";
 import { AppModel } from "./appModel";
 import { TaskListInstantiationFactory } from "./taskList";
 
@@ -27,7 +27,7 @@ const SignalType = {
  * {@inheritDoc ModelContainerRuntimeFactory}
  */
 export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
-    constructor() {
+    public constructor() {
         super(
             new Map([TaskListInstantiationFactory.registryEntry]), // registryEntries
         );
@@ -67,6 +67,6 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
                 taskList.importExternalData();
             }
         });
-        return new AppModel(taskList, container);
+        return new AppModel(taskList, container, runtime);
     }
 }

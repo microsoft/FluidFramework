@@ -40,7 +40,7 @@ import { pkgVersion } from "./packageVersion";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
-const posix: typeof import("path").posix = path.posix;
+const posix = path.posix;
 
 const snapshotFileName = "header";
 
@@ -252,14 +252,14 @@ export class DirectoryFactory implements IChannelFactory {
     /**
      * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
      */
-    public get type() {
+    public get type(): string {
         return DirectoryFactory.Type;
     }
 
     /**
      * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
      */
-    public get attributes() {
+    public get attributes(): IChannelAttributes {
         return DirectoryFactory.Attributes;
     }
 
@@ -355,7 +355,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * @param runtime - Data store runtime
      * @param type - Type identifier
      */
-    constructor(
+    public constructor(
         id: string,
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
@@ -387,6 +387,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * {@inheritDoc IDirectory.get}
      */
+    // TODO: Use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public get<T = any>(key: string): T | undefined {
         return this.root.get<T>(key);
     }
@@ -394,7 +396,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * {@inheritDoc IDirectory.set}
      */
-    public set<T = any>(key: string, value: T): this {
+    public set<T = unknown>(key: string, value: T): this {
         this.root.set(key, value);
         return this;
     }
@@ -443,7 +445,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * Issue a callback on each entry under this IDirectory.
      * @param callback - Callback to issue
      */
+    // TODO: Use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void {
+        // eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-callback-reference
         this.root.forEach(callback);
     }
 
@@ -451,6 +456,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * Get an iterator over the entries under this IDirectory.
      * @returns The iterator
      */
+    // TODO: Use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public [Symbol.iterator](): IterableIterator<[string, any]> {
         return this.root[Symbol.iterator]();
     }
@@ -459,6 +466,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * Get an iterator over the entries under this IDirectory.
      * @returns The iterator
      */
+    // TODO: Use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public entries(): IterableIterator<[string, any]> {
         return this.root.entries();
     }
@@ -482,6 +491,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * Get an iterator over the values under this IDirectory.
      * @returns The iterator
      */
+    // TODO: Use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public values(): IterableIterator<any> {
         return this.root.values();
     }
@@ -531,7 +542,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         }
 
         let currentSubDir = this.root;
-        const subdirs = absolutePath.substr(1).split(posix.sep);
+        const subdirs = absolutePath.slice(1).split(posix.sep);
         for (const subdir of subdirs) {
             currentSubDir = currentSubDir.getSubDirectory(subdir) as SubDirectory;
             if (!currentSubDir) {
@@ -559,7 +570,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * this op while it has not been ack'd. This will be sent when we receive this op back from the server.
      * @internal
      */
-    public submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown) {
+    public submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): void {
         this.submitLocalMessage(op, localOpMetadata);
     }
 
@@ -567,13 +578,13 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
      * @internal
      */
-    protected onDisconnect() { }
+    protected onDisconnect(): void { }
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
      * @internal
      */
-    protected reSubmitCore(content: any, localOpMetadata: unknown) {
+    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
         const message = content as IDirectoryOperation;
         const handler = this.messageHandlers.get(message.type);
         assert(handler !== undefined, 0x00d /* Missing message handler for message type */);
@@ -584,7 +595,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      * @internal
      */
-    protected async loadCore(storage: IChannelStorageService) {
+    protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const data = await readAndParse(storage, snapshotFileName);
         const newFormat = data as IDirectoryNewStorageFormat;
         if (Array.isArray(newFormat.blobs)) {
@@ -605,7 +616,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * @param data - A JSON string containing serialized directory data
      * @internal
      */
-    protected populate(data: IDirectoryDataObject) {
+    protected populate(data: IDirectoryDataObject): void {
         const stack: [SubDirectory, IDirectoryDataObject][] = [];
         stack.push([this.root, data]);
         while (stack.length > 0) {
@@ -657,7 +668,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
      * @internal
     */
-    protected rollback(content: any, localOpMetadata: unknown) {
+    protected rollback(content: unknown, localOpMetadata: unknown): void {
         const op: IDirectoryOperation = content as IDirectoryOperation;
         const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
         if (subdir) {
@@ -787,7 +798,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                         parentSubdir.resubmitSubDirectoryMessage(op, localOpMetadata);
                     }
                 },
-                // eslint-disable-next-line max-len
                 applyStashedOp: (op: IDirectoryCreateSubDirectoryOperation): ICreateSubDirLocalOpMetadata | undefined => {
                     const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     if (parentSubdir) {
@@ -813,7 +823,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                         parentSubdir.resubmitSubDirectoryMessage(op, localOpMetadata);
                     }
                 },
-                // eslint-disable-next-line max-len
                 applyStashedOp: (op: IDirectoryDeleteSubDirectoryOperation): IDeleteSubDirLocalOpMetadata | undefined => {
                     const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     if (parentSubdir) {
@@ -825,10 +834,11 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
      * @internal
      */
-    protected applyStashedOp(op) {
-        const handler = this.messageHandlers.get(op.type);
+    protected applyStashedOp(op: unknown): unknown {
+        const handler = this.messageHandlers.get((op as IDirectoryOperation).type);
         if (handler === undefined) {
             throw new Error("no apply stashed op handler");
         }
@@ -859,14 +869,13 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                 }
                 const result: ISerializableValue = {
                     type: value.type,
-                    // eslint-disable-next-line @typescript-eslint/ban-types
                     value: value.value && JSON.parse(value.value) as object,
                 };
                 if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
                     const extraContent: IDirectoryDataObject = {};
                     let largeContent = extraContent;
                     if (currentSubDir.absolutePath !== posix.sep) {
-                        for (const dir of currentSubDir.absolutePath.substr(1).split(posix.sep)) {
+                        for (const dir of currentSubDir.absolutePath.slice(1).split(posix.sep)) {
                             const subDataObject: IDirectoryDataObject = {};
                             largeContent.subdirectories = { [dir]: subDataObject };
                             largeContent = subDataObject;
@@ -929,6 +938,9 @@ interface IDeleteSubDirLocalOpMetadata {
 type SubDirLocalOpMetadata = ICreateSubDirLocalOpMetadata | IDeleteSubDirLocalOpMetadata;
 type DirectoryLocalOpMetadata = IClearLocalOpMetadata | IKeyEditLocalOpMetadata | SubDirLocalOpMetadata;
 
+
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
+
 function isKeyEditLocalOpMetadata(metadata: any): metadata is IKeyEditLocalOpMetadata {
     return metadata !== undefined && typeof metadata.pendingMessageId === "number" && metadata.type === "edit";
 }
@@ -950,6 +962,8 @@ function isDirectoryLocalOpMetadata(metadata: any): metadata is DirectoryLocalOp
          (metadata.type === "clear" && typeof metadata.previousStorage === "object") ||
          (metadata.type === "createSubDir" && typeof metadata.previouslyExisted === "boolean"));
 }
+
+/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
 
 /**
  * Node of the directory tree.
@@ -1003,7 +1017,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @param serializer - The serializer to serialize / parse handles
      * @param absolutePath - The absolute path of this IDirectory
      */
-    constructor(
+    public constructor(
         private readonly directory: SharedDirectory,
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly serializer: IFluidSerializer,
@@ -1028,7 +1042,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         return this._deleted;
     }
 
-    private throwIfDisposed() {
+    private throwIfDisposed(): void {
         if (this._deleted) {
             throw new UsageError("Cannot access Disposed subDirectory");
         }
@@ -1047,7 +1061,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     /**
      * {@inheritDoc IDirectory.get}
      */
-    public get<T = any>(key: string): T | undefined {
+    public get<T = unknown>(key: string): T | undefined {
         this.throwIfDisposed();
         return this._storage.get(key)?.value as T | undefined;
     }
@@ -1055,7 +1069,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     /**
      * {@inheritDoc IDirectory.set}
      */
-    public set<T = any>(key: string, value: T): this {
+    public set<T = unknown>(key: string, value: T): this {
         this.throwIfDisposed();
         // Undefined/null keys can't be serialized to JSON in the manner we currently snapshot.
         if (key === undefined || key === null) {
@@ -1238,8 +1252,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * Issue a callback on each entry under this IDirectory.
      * @param callback - Callback to issue
      */
-    public forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void {
+    public forEach(callback: (value: unknown, key: string, map: Map<string, unknown>) => void): void {
         this.throwIfDisposed();
+        // eslint-disable-next-line unicorn/no-array-for-each
         this._storage.forEach((localValue, key, map) => {
             callback(localValue.value, key, map);
         });
@@ -1257,17 +1272,17 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * Get an iterator over the entries under this IDirectory.
      * @returns The iterator
      */
-    public entries(): IterableIterator<[string, any]> {
+    public entries(): IterableIterator<[string, unknown]> {
         this.throwIfDisposed();
         const localEntriesIterator = this._storage.entries();
         const iterator = {
-            next(): IteratorResult<[string, any]> {
+            next(): IteratorResult<[string, unknown]> {
                 const nextVal = localEntriesIterator.next();
                 return nextVal.done
                     ? { value: undefined, done: true }
                     : { value: [nextVal.value[0], nextVal.value[1].value], done: false };
             },
-            [Symbol.iterator]() {
+            [Symbol.iterator](): IterableIterator<[string, unknown]> {
                 return this;
             },
         };
@@ -1287,17 +1302,17 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * Get an iterator over the values under this IDirectory.
      * @returns The iterator
      */
-    public values(): IterableIterator<any> {
+    public values(): IterableIterator<unknown> {
         this.throwIfDisposed();
         const localValuesIterator = this._storage.values();
         const iterator = {
-            next(): IteratorResult<any> {
+            next(): IteratorResult<unknown> {
                 const nextVal = localValuesIterator.next();
                 return nextVal.done
                     ? { value: undefined, done: true }
                     : { value: nextVal.value.value, done: false };
             },
-            [Symbol.iterator]() {
+            [Symbol.iterator](): IterableIterator<unknown> {
                 return this;
             },
         };
@@ -1308,7 +1323,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * Get an iterator over the entries under this IDirectory.
      * @returns The iterator
      */
-    public [Symbol.iterator](): IterableIterator<[string, any]> {
+    public [Symbol.iterator](): IterableIterator<[string, unknown]> {
         this.throwIfDisposed();
         return this.entries();
     }
@@ -1673,7 +1688,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @returns The JSONable string representing the storage of this subdirectory
      * @internal
      */
-    public *getSerializedStorage(serializer: IFluidSerializer) {
+    public *getSerializedStorage(serializer: IFluidSerializer): Generator<[string, ISerializedValue], void> {
         this.throwIfDisposed();
         for (const [key, localValue] of this._storage) {
             const value = localValue.makeSerialized(serializer, this.directory.handle);
@@ -1721,7 +1736,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @param map - map tracking the pending messages
      * @param key - key of the edit in the op
      */
-    private rollbackPendingMessageId(map: Map<string, number[]>, key: string, pendingMessageId) {
+    private rollbackPendingMessageId(map: Map<string, number[]>, key: string, pendingMessageId): void {
         const pendingMessageIds = map.get(key);
         const lastPendingMessageId = pendingMessageIds?.pop();
         if (!pendingMessageIds || lastPendingMessageId !== pendingMessageId) {
@@ -1732,20 +1747,23 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         }
     }
 
+    /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
     /**
      * Rollback a local op
      * @param op - The operation to rollback
      * @param localOpMetadata - The local metadata associated with the op.
      */
-     public rollback(op: any, localOpMetadata: unknown) {
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     public rollback(op: any, localOpMetadata: unknown): void {
         if (!isDirectoryLocalOpMetadata(localOpMetadata)) {
             throw new Error("Invalid localOpMetadata");
         }
 
         if (op.type === "clear" && localOpMetadata.type === "clear") {
-            localOpMetadata.previousStorage.forEach((localValue, key) => {
+            for (const [key, localValue] of localOpMetadata.previousStorage.entries()) {
                 this.setCore(key, localValue, true);
-            });
+            }
 
             const lastPendingClearId = this.pendingClearMessageIds.pop();
             if (lastPendingClearId === undefined || lastPendingClearId !== localOpMetadata.pendingMessageId) {
@@ -1753,31 +1771,41 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             }
         } else if ((op.type === "delete" || op.type === "set") && localOpMetadata.type === "edit") {
             if (localOpMetadata.previousValue === undefined) {
-                this.deleteCore(op.key, true);
+                this.deleteCore(op.key as string, true);
             } else {
-                this.setCore(op.key, localOpMetadata.previousValue, true);
+                this.setCore(op.key as string, localOpMetadata.previousValue, true);
             }
 
-            this.rollbackPendingMessageId(this.pendingKeys, op.key, localOpMetadata.pendingMessageId);
+            this.rollbackPendingMessageId(this.pendingKeys, op.key as string, localOpMetadata.pendingMessageId);
         } else if (op.type === "createSubDirectory" && localOpMetadata.type === "createSubDir") {
             if (!localOpMetadata.previouslyExisted) {
-                this.deleteSubDirectoryCore(op.subdirName, true);
+                this.deleteSubDirectoryCore(op.subdirName as string, true);
             }
 
-            this.rollbackPendingMessageId(this.pendingSubDirectories, op.subdirName, localOpMetadata.pendingMessageId);
+            this.rollbackPendingMessageId(
+                this.pendingSubDirectories,
+                op.subdirName as string,
+                localOpMetadata.pendingMessageId
+            );
         } else if (op.type === "deleteSubDirectory" && localOpMetadata.type === "deleteSubDir") {
             if (localOpMetadata.subDirectory !== undefined) {
                 this.undeleteSubDirectoryTree(localOpMetadata.subDirectory);
                 // don't need to register events because deleting never unregistered
-                this._subdirectories.set(op.subdirName, localOpMetadata.subDirectory);
+                this._subdirectories.set(op.subdirName as string, localOpMetadata.subDirectory);
                 this.emit("subDirectoryCreated", op.subdirName, true, this);
             }
 
-            this.rollbackPendingMessageId(this.pendingSubDirectories, op.subdirName, localOpMetadata.pendingMessageId);
+            this.rollbackPendingMessageId(
+                this.pendingSubDirectories,
+                op.subdirName as string,
+                localOpMetadata.pendingMessageId
+            );
         } else {
             throw new Error("Unsupported op for rollback");
         }
     }
+
+    /* eslint-enable @typescript-eslint/no-unsafe-member-access */
 
     /**
      * Converts the given relative path into an absolute path.
@@ -1871,25 +1899,28 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     /**
      * Clear all keys in memory in response to a remote clear, but retain keys we have modified but not yet been ack'd.
      */
-    private clearExceptPendingKeys(local: boolean) {
+    private clearExceptPendingKeys(local: boolean): void {
         // Assuming the pendingKeys is small and the map is large
         // we will get the value for the pendingKeys and clear the map
         const temp = new Map<string, ILocalValue>();
-        this.pendingKeys.forEach((value, key, map) => {
+
+        for (const [key] of this.pendingKeys) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             temp.set(key, this._storage.get(key)!);
-        });
+        }
+
         this.clearCore(local);
-        temp.forEach((value, key, map) => {
+
+        for (const [key, value] of temp.entries()) {
             this.setCore(key, value, true);
-        });
+        }
     }
 
     /**
      * Clear implementation used for both locally sourced clears as well as incoming remote clears.
      * @param local - Whether the message originated from the local client
      */
-    private clearCore(local: boolean) {
+    private clearCore(local: boolean): void {
         this._storage.clear();
         this.directory.emit("clear", local, this.directory);
     }
@@ -1902,7 +1933,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      */
     private deleteCore(key: string, local: boolean): ILocalValue | undefined {
         const previousLocalValue = this._storage.get(key);
-        const previousValue = previousLocalValue?.value;
+        const previousValue: unknown = previousLocalValue?.value;
         const successfullyRemoved = this._storage.delete(key);
         if (successfullyRemoved) {
             const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
@@ -1922,7 +1953,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      */
     private setCore(key: string, value: ILocalValue, local: boolean): ILocalValue | undefined {
         const previousLocalValue = this._storage.get(key);
-        const previousValue = previousLocalValue?.value;
+        const previousValue: unknown = previousLocalValue?.value;
         this._storage.set(key, value);
         const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
         this.directory.emit("valueChanged", event, local, this.directory);
@@ -1949,7 +1980,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         return false;
     }
 
-    private registerEventsOnSubDirectory(subDirectory: SubDirectory, subDirName: string) {
+    private registerEventsOnSubDirectory(subDirectory: SubDirectory, subDirName: string): void {
         subDirectory.on("subDirectoryCreated", (relativePath: string, local: boolean) => {
             this.emit("subDirectoryCreated", posix.join(subDirName, relativePath), local, this);
         });
@@ -1963,7 +1994,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @param subdirName - The name of the subdirectory being deleted
      * @param local - Whether the message originated from the local client
      */
-    private deleteSubDirectoryCore(subdirName: string, local: boolean) {
+    private deleteSubDirectoryCore(subdirName: string, local: boolean): SubDirectory | undefined {
         const previousValue = this._subdirectories.get(subdirName);
         // This should make the subdirectory structure unreachable so it can be GC'd and won't appear in snapshots
         // Might want to consider cleaning out the structure more exhaustively though? But not when rollback.
@@ -1975,7 +2006,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         return previousValue;
     }
 
-    private disposeSubDirectoryTree(directory: IDirectory | undefined) {
+    private disposeSubDirectoryTree(directory: IDirectory | undefined): void {
         if (!directory) {
             return;
         }
@@ -1989,7 +2020,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         }
     }
 
-    private undeleteSubDirectoryTree(directory: SubDirectory) {
+    private undeleteSubDirectoryTree(directory: SubDirectory): void {
         // Restore deleted subdirectory tree. This will unmark "deleted" from the subdirectories from bottom to top.
         for (const [_, subDirectory] of this._subdirectories.entries()) {
             this.undeleteSubDirectoryTree(subDirectory);

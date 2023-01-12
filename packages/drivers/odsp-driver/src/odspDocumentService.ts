@@ -191,8 +191,104 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document delta stream service for onedrive/sharepoint driver.
      */
     public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+<<<<<<< HEAD
         const service = await this.getDelayLoadedDocumentService();
         return service.connectToDeltaStream(client);
+=======
+        assert(this.currentConnection === undefined, 0x4ad /* Should not be called when connection is already present! */);
+        // Attempt to connect twice, in case we used expired token.
+        return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (options) => {
+            // Presence of getWebsocketToken callback dictates whether callback is used for fetching
+            // websocket token or whether it is returned with joinSession response payload
+            const requestWebsocketTokenFromJoinSession = this.getWebsocketToken === undefined;
+            const websocketTokenPromise = requestWebsocketTokenFromJoinSession
+                ? Promise.resolve(null)
+                : this.getWebsocketToken!(options);
+
+            const annotateAndRethrowConnectionError = (step: string) => (error: any) => {
+                throw this.annotateConnectionError(error, step, !requestWebsocketTokenFromJoinSession);
+            };
+
+            const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession, options);
+            const [websocketEndpoint, websocketToken, io] =
+                await Promise.all([
+                    joinSessionPromise.catch(annotateAndRethrowConnectionError("joinSession")),
+                    websocketTokenPromise.catch(annotateAndRethrowConnectionError("getWebsocketToken")),
+                    this.socketIoClientFactory().catch(annotateAndRethrowConnectionError("socketIoClientFactory")),
+                ]);
+
+            const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken ?? null);
+            if (finalWebsocketToken === null) {
+                throw this.annotateConnectionError(
+                    new NonRetryableError(
+                        "Websocket token is null",
+                        OdspErrorType.fetchTokenError,
+                        { driverVersion },
+                    ),
+                    "getWebsocketToken",
+                    !requestWebsocketTokenFromJoinSession);
+            }
+            try {
+                const connection = await this.createDeltaConnection(
+                    websocketEndpoint.tenantId,
+                    websocketEndpoint.id,
+                    finalWebsocketToken,
+                    io,
+                    client,
+                    websocketEndpoint.deltaStreamSocketUrl);
+                connection.on("op", (documentId, ops: ISequencedDocumentMessage[]) => {
+                    this.opsReceived(ops);
+                });
+                // On disconnect with 401/403 error code, we can just clear the joinSession cache as we will again
+                // get the auth error on reconnecting and face latency.
+                connection.once("disconnect", (error: any) => {
+                    // Clear the join session refresh timer so that it can be restarted on reconnection.
+                    this.clearJoinSessionTimer();
+                    if (typeof error === "object" && error !== null
+                        && error.errorType === DriverErrorType.authorizationError) {
+                        this.cache.sessionJoinCache.remove(this.joinSessionKey);
+                    }
+                    // If we hit this assert, it means that "disconnect" event is emitted before the connection went through
+                    // dispose flow which is not correct and could lead to a bunch of erros.
+                    assert(connection.disposed, 0x4ae /* Connection should be disposed by now */);
+                    this.currentConnection = undefined;
+                });
+                this.currentConnection = connection;
+                return connection;
+            } catch (error) {
+                this.cache.sessionJoinCache.remove(this.joinSessionKey);
+
+                const normalizedError = this.annotateConnectionError(
+                    error,
+                    "createDeltaConnection",
+                    !requestWebsocketTokenFromJoinSession);
+                if (typeof error === "object" && error !== null) {
+                    normalizedError.addTelemetryProperties({ socketDocumentId: websocketEndpoint.id });
+                }
+                throw normalizedError;
+            }
+        });
+    }
+
+    private clearJoinSessionTimer() {
+        if (this.joinSessionRefreshTimer !== undefined) {
+            clearTimeout(this.joinSessionRefreshTimer);
+            this.joinSessionRefreshTimer = undefined;
+        }
+    }
+
+    private async scheduleJoinSessionRefresh(delta: number) {
+        await new Promise<void>((resolve, reject) => {
+            this.joinSessionRefreshTimer = setTimeout(() => {
+                getWithRetryForTokenRefresh(async (options) => {
+                    await this.joinSession(false, options);
+                    resolve();
+                }).catch((error) => {
+                    reject(error);
+                });
+            }, delta);
+        });
+>>>>>>> c2b8d3c31f51764834bfa2655c92b2abf67083fe
     }
 
     private async getDelayLoadedDocumentService() {

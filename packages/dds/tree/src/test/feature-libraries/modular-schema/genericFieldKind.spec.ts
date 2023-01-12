@@ -12,9 +12,9 @@ import {
     NodeChangeset,
     GenericChangeset,
     genericFieldKind,
+    IdAllocator,
 } from "../../../feature-libraries";
-import { makeAnonChange, tagChange, TaggedChange } from "../../../rebase";
-import { Delta, FieldKey } from "../../../tree";
+import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
 import { noRepair } from "../../utils";
 
@@ -71,17 +71,23 @@ const nodeChange0To2: NodeChangeset = nodeChangeFromValueChange(valueChange0To2)
 
 const unexpectedDelegate = () => assert.fail("Unexpected call");
 
+const idAllocator: IdAllocator = unexpectedDelegate;
+
 const childComposer = (nodeChanges: TaggedChange<NodeChangeset>[]): NodeChangeset => {
     const valueChanges = nodeChanges.map((c) =>
         tagChange(valueChangeFromNodeChange(c.change), c.revision),
     );
-    const valueChange = valueHandler.rebaser.compose(valueChanges, unexpectedDelegate);
+    const valueChange = valueHandler.rebaser.compose(valueChanges, unexpectedDelegate, idAllocator);
     return nodeChangeFromValueChange(valueChange);
 };
 
 const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
     const valueChange = valueChangeFromNodeChange(nodeChange);
-    const inverse = valueHandler.rebaser.invert(makeAnonChange(valueChange), unexpectedDelegate);
+    const inverse = valueHandler.rebaser.invert(
+        makeAnonChange(valueChange),
+        unexpectedDelegate,
+        idAllocator,
+    );
     return nodeChangeFromValueChange(inverse);
 };
 
@@ -92,6 +98,7 @@ const childRebaser = (nodeChangeA: NodeChangeset, nodeChangeB: NodeChangeset): N
         valueChangeA,
         makeAnonChange(valueChangeB),
         unexpectedDelegate,
+        idAllocator,
     );
     return nodeChangeFromValueChange(rebased);
 };
@@ -119,7 +126,11 @@ const childDecoder = (nodeChange: JsonCompatibleReadOnly): NodeChangeset => {
 describe("Generic FieldKind", () => {
     describe("compose", () => {
         it("empty list", () => {
-            const actual = genericFieldKind.changeHandler.rebaser.compose([], childComposer);
+            const actual = genericFieldKind.changeHandler.rebaser.compose(
+                [],
+                childComposer,
+                idAllocator,
+            );
             assert.deepEqual(actual, []);
         });
 
@@ -161,6 +172,7 @@ describe("Generic FieldKind", () => {
             const actual = genericFieldKind.changeHandler.rebaser.compose(
                 [makeAnonChange(changeA), makeAnonChange(changeB)],
                 childComposer,
+                idAllocator,
             );
             assert.deepEqual(actual, expected);
         });
@@ -203,6 +215,7 @@ describe("Generic FieldKind", () => {
             const actual = genericFieldKind.changeHandler.rebaser.compose(
                 [makeAnonChange(changeA), makeAnonChange(changeB)],
                 childComposer,
+                idAllocator,
             );
             assert.deepEqual(actual, expected);
         });
@@ -244,6 +257,7 @@ describe("Generic FieldKind", () => {
                 changeA,
                 makeAnonChange(changeB),
                 childRebaser,
+                idAllocator,
             );
             assert.deepEqual(actual, expected);
         });
@@ -283,6 +297,7 @@ describe("Generic FieldKind", () => {
                 changeA,
                 makeAnonChange(changeB),
                 childRebaser,
+                idAllocator,
             );
             assert.deepEqual(actual, expected);
         });
@@ -312,6 +327,7 @@ describe("Generic FieldKind", () => {
         const actual = genericFieldKind.changeHandler.rebaser.invert(
             makeAnonChange(forward),
             childInverter,
+            idAllocator,
         );
         assert.deepEqual(actual, expected);
     });

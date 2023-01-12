@@ -4,6 +4,7 @@
  */
 
 import { Mark, MarkList, ObjectMark, Skip } from "./format";
+import { MoveEffectTable } from "./moveEffectTable";
 import { isObjMark, isSkipMark, tryExtendMark } from "./utils";
 
 /**
@@ -16,6 +17,8 @@ import { isObjMark, isSkipMark, tryExtendMark } from "./utils";
 export class MarkListFactory<TNodeChange> {
     private offset = 0;
     public readonly list: MarkList<TNodeChange> = [];
+
+    public constructor(private readonly moveEffects?: MoveEffectTable<TNodeChange>) {}
 
     public push(...marks: Mark<TNodeChange>[]): void {
         for (const item of marks) {
@@ -38,7 +41,7 @@ export class MarkListFactory<TNodeChange> {
         }
         const prev = this.list[this.list.length - 1];
         if (isObjMark(prev) && prev.type === mark.type) {
-            if (tryExtendMark(prev, mark)) {
+            if (tryExtendMark(prev, mark, this.moveEffects)) {
                 return;
             }
         }
