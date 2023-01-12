@@ -424,7 +424,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			case WriteFormat.v0_0_2:
 				return nilUuid;
 			default: {
-				const { attributionId } = this.idCompressor;
+				const { attributionId } = this._idCompressor;
 				if (attributionId === ghostSessionId) {
 					return nilUuid;
 				}
@@ -433,14 +433,14 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		}
 	}
 
-	private idCompressor: IdCompressor;
+	private _idCompressor: IdCompressor;
 	private readonly idNormalizer: NodeIdNormalizer<OpSpaceNodeId> & { tree: SharedTree } = {
 		tree: this,
 		get localSessionId() {
-			return this.tree.idCompressor.localSessionId;
+			return this.tree._idCompressor.localSessionId;
 		},
-		normalizeToOpSpace: (id) => this.idCompressor.normalizeToOpSpace(id) as OpSpaceNodeId,
-		normalizeToSessionSpace: (id, sessionId) => this.idCompressor.normalizeToSessionSpace(id, sessionId) as NodeId,
+		normalizeToOpSpace: (id) => this._idCompressor.normalizeToOpSpace(id) as OpSpaceNodeId,
+		normalizeToSessionSpace: (id, sessionId) => this._idCompressor.normalizeToSessionSpace(id, sessionId) as NodeId,
 	};
 	/** Temporarily created to apply stashed ops from a previous session */
 	private stashedIdCompressor?: IdCompressor | null;
@@ -545,7 +545,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		);
 
 		const attributionId = (options as SharedTreeOptions<WriteFormat.v0_1_1>).attributionId;
-		this.idCompressor = new IdCompressor(createSessionId(), reservedIdCount, attributionId, this.logger);
+		this._idCompressor = new IdCompressor(createSessionId(), reservedIdCount, attributionId, this.logger);
 		this.editLogSize = options.inMemoryHistorySize;
 		this.editEvictionFrequency = options.inMemoryHistorySize;
 		const { editLog, cachingLogViewer } = this.initializeNewEditLogFromSummary(
@@ -554,7 +554,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 				editIds: [],
 			},
 			undefined,
-			this.idCompressor,
+			this._idCompressor,
 			this.processEditResult,
 			this.processSequencedEditResult,
 			WriteFormat.v0_1_1
@@ -629,7 +629,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @public
 	 */
 	public generateNodeId(override?: string): NodeId {
-		return this.idCompressor.generateCompressedId(override) as NodeId;
+		return this._idCompressor.generateCompressedId(override) as NodeId;
 	}
 
 	/**
@@ -640,7 +640,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @public
 	 */
 	public convertToStableNodeId(id: NodeId): StableNodeId {
-		return (this.idCompressor.tryDecompress(id) as StableNodeId) ?? fail('Node id is not known to this SharedTree');
+		return (this._idCompressor.tryDecompress(id) as StableNodeId) ?? fail('Node id is not known to this SharedTree');
 	}
 
 	/**
@@ -652,7 +652,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @public
 	 */
 	public tryConvertToStableNodeId(id: NodeId): StableNodeId | undefined {
-		return this.idCompressor.tryDecompress(id) as StableNodeId | undefined;
+		return this._idCompressor.tryDecompress(id) as StableNodeId | undefined;
 	}
 
 	/**
@@ -664,7 +664,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 */
 	public convertToNodeId(id: StableNodeId): NodeId {
 		return (
-			(this.idCompressor.tryRecompress(id) as NodeId) ?? fail('Stable node id is not known to this SharedTree')
+			(this._idCompressor.tryRecompress(id) as NodeId) ?? fail('Stable node id is not known to this SharedTree')
 		);
 	}
 
@@ -676,7 +676,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @public
 	 */
 	public tryConvertToNodeId(id: StableNodeId): NodeId | undefined {
-		return this.idCompressor.tryRecompress(id) as NodeId | undefined;
+		return this._idCompressor.tryRecompress(id) as NodeId | undefined;
 	}
 
 	/**
@@ -690,7 +690,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			case WriteFormat.v0_0_2:
 				return nilUuid;
 			default: {
-				const attributionId = this.idCompressor.attributeId(id);
+				const attributionId = this._idCompressor.attributeId(id);
 				if (attributionId === ghostSessionId) {
 					return nilUuid;
 				}
@@ -753,7 +753,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			);
 			if (this.writeFormat === WriteFormat.v0_1_1) {
 				// Since we're the first client to attach, we can safely finalize ourselves since we're the only ones who have made IDs.
-				this.idCompressor.finalizeCreationRange(this.idCompressor.takeNextCreationRange());
+				this._idCompressor.finalizeCreationRange(this._idCompressor.takeNextCreationRange());
 				for (const edit of this.editLog.getLocalEdits()) {
 					this.internStringsFromEdit(edit);
 				}
@@ -781,7 +781,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 						this,
 						this.idNormalizer,
 						this.interner,
-						this.idCompressor.serialize(false)
+						this._idCompressor.serialize(false)
 					);
 				default:
 					fail('Unknown version');
@@ -817,7 +817,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		}
 
 		assert(
-			this.idCompressor.getAllIdsFromLocalSession().next().done === true,
+			this._idCompressor.getAllIdsFromLocalSession().next().done === true,
 			'Summary load should not be executed after local state is created.'
 		);
 
@@ -891,7 +891,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		sequencedEditResultCallback: SequencedEditResultCallback,
 		version: WriteFormat
 	): { editLog: EditLog<ChangeInternal>; cachingLogViewer: CachingLogViewer } {
-		this.idCompressor = idCompressor;
+		this._idCompressor = idCompressor;
 		// Dispose the current log viewer if it exists. This ensures that re-used EditAddedHandlers below don't retain references to old
 		// log viewers.
 		this.cachingLogViewer?.detachFromEditLog();
@@ -999,7 +999,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 				this.logger.sendErrorEvent({ eventName: 'UnexpectedHistoryChunk' });
 			} else if (type === SharedTreeOpType.Edit) {
 				if (op.version === WriteFormat.v0_1_1) {
-					this.idCompressor.finalizeCreationRange(op.idRange);
+					this._idCompressor.finalizeCreationRange(op.idRange);
 				}
 				const edit = this.parseSequencedEdit(op);
 				if (op.version === WriteFormat.v0_1_1) {
@@ -1123,7 +1123,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	private upgradeFrom_0_0_2_to_0_1_1(): void {
 		// Reset the string interner, re-populate only with information that there is consensus on
 		this.interner = new MutableStringInterner([initialTree.definition]);
-		const oldIdCompressor = this.idCompressor;
+		const oldIdCompressor = this._idCompressor;
 		// Create the IdCompressor that will be used after the upgrade
 		const newIdCompressor = new IdCompressor(createSessionId(), reservedIdCount, this.attributionId, this.logger);
 		const newContext = getNodeIdContext(newIdCompressor);
@@ -1166,7 +1166,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		}
 		// Finalize any IDs in the ghost compressor into the actual compressor. This simulates all clients reaching a consensus on those IDs
 		newIdCompressor.finalizeCreationRange(ghostIdCompressor.takeNextCreationRange());
-		this.idCompressor = newIdCompressor;
+		this._idCompressor = newIdCompressor;
 	}
 
 	/**
@@ -1370,7 +1370,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 						this.encoder_0_1_1.encodeEditOp(
 							edit,
 							this.serializeEdit.bind(this),
-							this.idCompressor.takeNextCreationRange(),
+							this._idCompressor.takeNextCreationRange(),
 							this.idNormalizer,
 							this.interner
 						)
@@ -1441,7 +1441,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 								if (this.stashedIdCompressor === undefined) {
 									// Use a temporary compressor that will help translate the stashed ops
 									this.stashedIdCompressor = IdCompressor.deserialize(
-										this.idCompressor.serialize(false),
+										this._idCompressor.serialize(false),
 										stashedSessionId,
 										sharedTreeOp.idRange.attributionId
 									);
@@ -1455,7 +1455,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 								const stashedIdContext = getNodeIdContext(this.stashedIdCompressor);
 								// Use a normalizer to translate all node IDs in the stashed ops
 								const normalizer: NodeIdNormalizer<OpSpaceNodeId> = {
-									localSessionId: this.idCompressor.localSessionId,
+									localSessionId: this._idCompressor.localSessionId,
 									normalizeToSessionSpace: (id, _sessionId) => {
 										// Interpret the IDs from the stashed ops as stable IDs, and use those as overrides for the equivalent new ops
 										const sessionSpaceId = stashedIdContext.normalizeToSessionSpace(
