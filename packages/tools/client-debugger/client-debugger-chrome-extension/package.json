@@ -39,7 +39,6 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-tools/client-debugger": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
     "@fluid-tools/client-debugger-view": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
