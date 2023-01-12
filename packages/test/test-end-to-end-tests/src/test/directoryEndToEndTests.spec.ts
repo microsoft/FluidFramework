@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { Container } from "@fluidframework/container-loader";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IDirectoryValueChanged, ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
+import { IDirectory, IDirectoryValueChanged, ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
@@ -704,7 +704,7 @@ describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
     });
 });
 
-describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) => {
+describeNoCompat.only("SharedDirectory orderSequentially", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
         provider = getTestObjectProvider();
@@ -718,6 +718,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
     let changedEventData: IDirectoryValueChanged[];
     let subDirCreatedEventData: string[];
     let subDirDeletedEventData: string[];
+    let undisposedEventData: string[];
 
     const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
         getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -739,6 +740,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
         changedEventData = [];
         subDirCreatedEventData = [];
         subDirDeletedEventData = [];
+        undisposedEventData = [];
         sharedDir.on("valueChanged", (changed, _local, _target) => {
             changedEventData.push(changed);
         });
@@ -750,6 +752,9 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
         });
         sharedDir.on("subDirectoryDeleted", (path, _local, _target) => {
             subDirDeletedEventData.push(path);
+        });
+        sharedDir.on("undisposed", (path, _local, _target) => {
+            undisposedEventData.push(path);
         });
     });
 
@@ -951,7 +956,10 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 
     it("Should rollback deleted subdirectory", () => {
         let error: Error | undefined;
-        sharedDir.createSubDirectory("subDirName");
+        const subDir = sharedDir.createSubDirectory("subDirName");
+        subDir.on("undisposed", (value: IDirectory) => {
+            undisposedEventData.push(value.absolutePath);
+        });
         try {
             containerRuntime.orderSequentially(() => {
                 sharedDir.deleteSubDirectory("subDirName");
@@ -972,6 +980,8 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
         assert.equal(subDirDeletedEventData[0], "subDirName");
         // rollback
         assert.equal(subDirCreatedEventData[1], "subDirName");
+        assert.equal(undisposedEventData.length, 1);
+        assert.equal(undisposedEventData[0], "/subDirName");
     });
 
     it("Should not rollback deleting nonexistent subdirectory", () => {
@@ -992,13 +1002,20 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
         assert.equal(subDirDeletedEventData.length, 0);
         // rollback
         assert.equal(subDirCreatedEventData.length, 0);
+        assert.equal(undisposedEventData.length, 0);
     });
 
     it("Should rollback deleted subdirectory with content", () => {
         let error: Error | undefined;
         const subdir = sharedDir.createSubDirectory("subDirName");
+        subdir.on("undisposed", (value: IDirectory) => {
+            undisposedEventData.push(value.absolutePath);
+        });
         subdir.set("key1", "content1");
-        subdir.createSubDirectory("subSubDirName");
+        const subsubdir = subdir.createSubDirectory("subSubDirName");
+        // subsubdir.on("undisposed", (value: IDirectory) => {
+        //     undisposedEventData.push(value.absolutePath);
+        // });
         try {
             containerRuntime.orderSequentially(() => {
                 sharedDir.deleteSubDirectory("subDirName");
@@ -1029,6 +1046,8 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
         assert.equal(subDirDeletedEventData[0], "subDirName");
         // rollback
         assert.equal(subDirCreatedEventData[2], "subDirName");
+        assert.equal(undisposedEventData.length, 1);
+        assert.equal(undisposedEventData[0], "/subDirName");
 
         // verify we still get events on restored content
         readSubdir.set("key2", "content2");
