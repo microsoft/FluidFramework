@@ -753,9 +753,6 @@ describeNoCompat.only("SharedDirectory orderSequentially", (getTestObjectProvide
         sharedDir.on("subDirectoryDeleted", (path, _local, _target) => {
             subDirDeletedEventData.push(path);
         });
-        sharedDir.on("undisposed", (path, _local, _target) => {
-            undisposedEventData.push(path);
-        });
     });
 
     it("Should rollback set", () => {
