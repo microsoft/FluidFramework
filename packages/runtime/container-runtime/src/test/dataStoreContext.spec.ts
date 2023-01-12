@@ -29,11 +29,11 @@ import {
     CreateSummarizerNodeSource,
     channelsTreeName,
 } from "@fluidframework/runtime-definitions";
-import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
+import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC, requestFluidObject } from "@fluidframework/runtime-utils";
 import { isFluidError, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { MockFluidDataStoreRuntime, validateAssertionError } from "@fluidframework/test-runtime-utils";
 
-import { FluidObjectHandle } from "@fluidframework/datastore";
+import { FluidDataStoreRuntime, FluidObjectHandle, ISharedObjectRegistry } from "@fluidframework/datastore";
 import {
     LocalDetachedFluidDataStoreContext,
     LocalFluidDataStoreContext,
@@ -286,7 +286,6 @@ describe("Data Store Context Tests", () => {
                 const isRootNode = await localDataStoreContext.isRoot();
                 assert.strictEqual(isRootNode, false, "The data store should not be root.");
             });
-        });
 
         describe("Garbage Collection", () => {
             it("can generate correct GC data", async () => {
@@ -810,6 +809,37 @@ describe("Data Store Context Tests", () => {
         });
 
         describe("Initialization", () => {
+            const myObj: FluidObject = { fakeProp: "fakeValue" };
+            const registry: ISharedObjectRegistry = {
+                get(name: string) {
+                    throw new Error("Not implemented");
+                },
+            };
+            const dataStoreRuntime = new FluidDataStoreRuntime(
+                localDataStoreContext,
+                registry,
+                /* existing */ false,
+                (async (dataStoreRuntime) => requestFluidObject(dataStoreRuntime, "/")));
+
+
+            // Datastore should allow itself to attach, then after that throw on get, and then ensure it can summarize.
+            it("entryPoint is not initialized until calling request", async () => {
+                factory = {
+                    type: "store-type",
+                    get IFluidDataStoreFactory() { return factory; },
+                    instantiateDataStore: async (context: IFluidDataStoreContext, existing: boolean) =>
+                        dataStoreRuntime,
+                };
+                const dataStore = await factory.instantiateDataStore(localDataStoreContext, false);
+                await localDataStoreContext.attachRuntime(factory, dataStore);
+                assert((await dataStoreRuntime.entryPoint?.get()) === myObj, "entryPoint was not initialized after attaching.");
+
+                await dataStore.request({url: "fakeUrl"});
+                const summarizeResult = await dataStoreRuntime.summarize(true, false);
+                assert(summarizeResult.summary.type === SummaryType.Tree, "Data store runtime can summarize.");
+                assert.strictEqual((await dataStoreRuntime.entryPoint?.get()), myObj);
+            });
+
             it("rejects ids with forward slashes", async () => {
                 const invalidId = "beforeSlash/afterSlash";
                 const codeBlock = () => new LocalDetachedFluidDataStoreContext({
