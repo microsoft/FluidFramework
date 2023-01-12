@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { GCVersion } from "./summaryFormat";
 
-// The key for the GC tree in summary.
-export const gcTreeKey = "gc";
-// They prefix for GC blobs in the GC tree in summary.
-export const gcBlobPrefix = "__gc";
-// The key for tombstone blob in the GC tree in summary.
-export const gcTombstoneBlobKey = "__tombstones";
+/** The stable version of garbage collection in production. */
+export const stableGCVersion: GCVersion = 1;
+/** The current version of garbage collection. */
+export const currentGCVersion: GCVersion = 2;
 
 // Feature gate key to turn GC on / off.
 export const runGCKey = "Fluid.GarbageCollection.RunGC";
@@ -27,6 +26,8 @@ export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
 export const disableTombstoneKey = "Fluid.GarbageCollection.DisableTombstone";
 // Feature gate to enable throwing an error when tombstone object is used.
 export const throwOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombstoneUsage";
+// Feature gate to enable GC version upgrade.
+export const gcVersionUpgradeToV2Key = "Fluid.GarbageCollection.GCVersionUpgradeToV2";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;

@@ -9,72 +9,61 @@ import userEvent from "@testing-library/user-event";
 import React from "react";
 
 import { SharedCounter } from "@fluidframework/counter";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { TinyliciousClient } from "@fluidframework/tinylicious-client";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
-import { createFluidContainer } from "./ClientUtilities";
 import { CounterWidget } from "./widgets";
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 describe("CounterWidget component tests", () => {
-	let client: TinyliciousClient | undefined;
-	let container: IFluidContainer | undefined;
+    let sharedCounter: SharedCounter | undefined;
 
-	const containerSchema: ContainerSchema = {
-		initialObjects: {
-			counter: SharedCounter,
-		},
-	};
+    beforeEach(async () => {
+        sharedCounter = new SharedCounter(
+            "test-counter",
+            new MockFluidDataStoreRuntime(),
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+            (SharedCounter.getFactory() as any).attributes,
+        );
+    });
 
-	beforeEach(async () => {
-		client = new TinyliciousClient();
-		({ container } = await createFluidContainer(client, containerSchema));
-	});
+    afterEach(() => {
+        sharedCounter = undefined;
+    });
 
-	afterEach(async () => {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		container!.dispose();
-		container = undefined;
-		client = undefined;
-	});
+    it("Has expected elements", async (): Promise<void> => {
+        render(<CounterWidget counter={sharedCounter!} />);
 
-	async function createSharedCounter(): Promise<SharedCounter> {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return container!.create(SharedCounter);
-	}
+        // Verify initial component text presence and value
+        await screen.findByText("0"); // Will throw if exact text not found
 
-	test("Has expected elements", async (): Promise<void> => {
-		const sharedCounter = await createSharedCounter();
-		render(<CounterWidget counter={sharedCounter} />);
+        // Verify button presence and state
+        const buttons = await screen.findAllByRole("button");
+        expect(buttons).toHaveLength(2);
+        expect(buttons[0]).toBeDisabled(); // Initial counter value is 0, so the decrement button should be disabled.
+        expect(buttons[1]).toBeEnabled();
+    });
 
-		// Verify initial component text presence and value
-		await screen.findByText("0"); // Will throw if exact text not found
+    it("Responds to increment (via UI)", async (): Promise<void> => {
+        render(<CounterWidget counter={sharedCounter!} />);
 
-		// Verify button presence and state
-		const buttons = await screen.findAllByRole("button");
-		expect(buttons).toHaveLength(2);
-		expect(buttons[0]).toBeDisabled(); // Initial counter value is 0, so the decrement button should be disabled.
-		expect(buttons[1]).toBeEnabled();
-	});
+        let buttons = await screen.findAllByRole("button");
+        expect(buttons).toHaveLength(2);
 
-	test("Responds to increment (via UI)", async (): Promise<void> => {
-		const sharedCounter = await createSharedCounter();
-		render(<CounterWidget counter={sharedCounter} />);
+        // Click increment button
+        await userEvent.click(buttons[1]);
 
-		let buttons = await screen.findAllByRole("button");
-		expect(buttons).toHaveLength(2);
+        // Verify change in DDS
+        expect(sharedCounter!.value).toEqual(1); // Value should have been incremented from 0 to 1
 
-		// Click increment button
-		await userEvent.click(buttons[1]);
+        // Verify component text
+        await screen.findByText("1"); // Will throw if exact text not found
 
-		// Verify change in DDS
-		expect(sharedCounter.value).toEqual(1); // Value should have been incremented from 0 to 1
-
-		// Verify component text
-		await screen.findByText("1"); // Will throw if exact text not found
-
-		// Verify that decrement button is now enabled
-		buttons = await screen.findAllByRole("button");
-		expect(buttons).toHaveLength(2);
-		expect(buttons[0]).toBeEnabled();
-	});
+        // Verify that decrement button is now enabled
+        buttons = await screen.findAllByRole("button");
+        expect(buttons).toHaveLength(2);
+        expect(buttons[0]).toBeEnabled();
+    });
 });
+
+/* eslint-enable @typescript-eslint/no-non-null-assertion */

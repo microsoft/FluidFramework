@@ -5,8 +5,8 @@
 
 import { RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
-import { Changeset, Mark, MarkList } from "./format";
-import { getInputLength, isSkipMark } from "./utils";
+import { Changeset, Mark, MarkList, MoveId } from "./format";
+import { getInputLength, isObjMark, isSkipMark } from "./utils";
 
 export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChange;
 
@@ -16,9 +16,6 @@ export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChan
  * @returns The inverse of the given `change` such that the inverse can be applied after `change`.
  *
  * WARNING! This implementation is incomplete:
- * - It is unable to produce adequate inverses for set-value and delete operations.
- * This is because changesets are not given IDs.
- * - Support for moves is not implemented.
  * - Support for slices is not implemented.
  */
 export function invert<TNodeChange>(
@@ -35,11 +32,15 @@ function invertMarkList<TNodeChange>(
 ): MarkList<TNodeChange> {
     const inverseMarkList: MarkList<TNodeChange> = [];
     let inputIndex = 0;
+    const movedChanges = new Map<MoveId, TNodeChange>();
+
     for (const mark of markList) {
-        const inverseMarks = invertMark(mark, inputIndex, revision, invertChild);
+        const inverseMarks = invertMark(mark, inputIndex, revision, invertChild, movedChanges);
         inverseMarkList.push(...inverseMarks);
         inputIndex += getInputLength(mark);
     }
+
+    transferMovedChanges(inverseMarkList, movedChanges);
     return inverseMarkList;
 }
 
@@ -48,6 +49,7 @@ function invertMark<TNodeChange>(
     inputIndex: number,
     revision: RevisionTag | undefined,
     invertChild: NodeChangeInverter<TNodeChange>,
+    movedChanges: Map<MoveId, TNodeChange>,
 ): Mark<TNodeChange>[] {
     if (isSkipMark(mark)) {
         return [mark];
@@ -87,8 +89,48 @@ function invertMark<TNodeChange>(
                     },
                 ];
             }
+            case "MoveOut":
+            case "ReturnFrom": {
+                if (mark.changes !== undefined) {
+                    movedChanges.set(mark.id, mark.changes);
+                }
+                return [
+                    {
+                        type: "ReturnTo",
+                        id: mark.id,
+                        count: mark.count,
+                        detachedBy: mark.revision ?? revision,
+                        detachIndex: inputIndex,
+                    },
+                ];
+            }
+            case "MoveIn":
+            case "ReturnTo": {
+                return [
+                    {
+                        type: "ReturnFrom",
+                        id: mark.id,
+                        count: mark.count,
+                        detachedBy: mark.revision ?? revision,
+                    },
+                ];
+            }
             default:
                 fail("Not implemented");
+        }
+    }
+}
+
+function transferMovedChanges<TNodeChange>(
+    marks: MarkList<TNodeChange>,
+    movedChanges: Map<MoveId, TNodeChange>,
+): void {
+    for (const mark of marks) {
+        if (isObjMark(mark) && (mark.type === "MoveOut" || mark.type === "ReturnFrom")) {
+            const change = movedChanges.get(mark.id);
+            if (change !== undefined) {
+                mark.changes = change;
+            }
         }
     }
 }

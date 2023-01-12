@@ -4,7 +4,7 @@
  */
 
 import { JsonableTree, RevisionTag } from "../../core";
-import { NodeChangeset } from "../modular-schema";
+import { ChangesetLocalId, NodeChangeset } from "../modular-schema";
 
 export type NodeChangeType = NodeChangeset;
 export type Changeset<TNodeChange = NodeChangeType> = MarkList<TNodeChange>;
@@ -26,7 +26,6 @@ export type SizedObjectMark<TNodeChange = NodeChangeType> =
 export interface Modify<TNodeChange = NodeChangeType> {
     type: "Modify";
     changes: TNodeChange;
-    tomb?: RevisionTag;
 }
 
 export interface HasChanges<TNodeChange = NodeChangeType> {
@@ -99,13 +98,17 @@ export type Attach<TNodeChange = NodeChangeType> =
     | MoveIn
     | Reattach<TNodeChange>;
 
-export type Detach<TNodeChange = NodeChangeType> = Delete<TNodeChange> | MoveOut<TNodeChange>;
+export type Detach<TNodeChange = NodeChangeType> =
+    | Delete<TNodeChange>
+    | MoveOut<TNodeChange>
+    | ReturnFrom<TNodeChange>;
+
+export type Reattach<TNodeChange = NodeChangeType> = Revive<TNodeChange> | ReturnTo;
 
 export interface Delete<TNodeChange = NodeChangeType>
     extends HasRevisionTag,
         HasChanges<TNodeChange> {
     type: "Delete";
-    tomb?: RevisionTag;
     count: NodeCount;
 }
 
@@ -115,7 +118,6 @@ export interface MoveOut<TNodeChange = NodeChangeType>
         HasChanges<TNodeChange> {
     type: "MoveOut";
     count: NodeCount;
-    tomb?: RevisionTag;
 }
 
 export interface HasReattachFields extends HasPlaceFields {
@@ -133,44 +135,31 @@ export interface HasReattachFields extends HasPlaceFields {
     detachIndex: number;
 }
 
-export interface Reattach<TNodeChange = NodeChangeType>
+export interface Revive<TNodeChange = NodeChangeType>
     extends HasReattachFields,
         HasRevisionTag,
         HasChanges<TNodeChange> {
-    type: "Revive" | "Return";
+    type: "Revive";
     count: NodeCount;
 }
 
-/**
- * Represents a consecutive run of detached nodes.
- *
- * Note that in some situations a tombstone is created for the purpose of representing a gap
- * even though no node has been detached.
- * This can happen when a slice-move applied to a gap but not the nodes on both sides of the
- * gap, or when a slice-move is applied to the gap that represents the start (or end) of a
- * field.
- */
-export interface Tombstones {
+export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId {
+    type: "ReturnTo";
     count: NodeCount;
-    change: RevisionTag;
+}
+
+export interface ReturnFrom<TNodeChange = NodeChangeType>
+    extends HasRevisionTag,
+        HasMoveId,
+        HasChanges<TNodeChange> {
+    type: "ReturnFrom";
+    count: NodeCount;
+    detachedBy: RevisionTag | undefined;
 }
 
 export interface PriorOp {
     change: RevisionTag;
 }
-
-export interface HasLength {
-    /**
-     * Omit if 1.
-     */
-    length?: number;
-}
-
-export interface TreeForestPath {
-    [label: string]: TreeRootPath;
-}
-
-export type TreeRootPath = number | { [label: number]: TreeForestPath };
 
 export enum RangeType {
     Set = "Set",
@@ -192,7 +181,7 @@ export interface HasRevisionTag {
  *
  * The uniqueness of IDs is leveraged to uniquely identify the matching move-out for a move-in/return and vice-versa.
  */
-export type MoveId = number;
+export type MoveId = ChangesetLocalId;
 
 export interface HasMoveId {
     /**
@@ -207,9 +196,7 @@ export interface HasMoveId {
 export type ProtoNode = JsonableTree;
 
 export type NodeCount = number;
-export type GapCount = number;
 export type Skip = number;
-export type ClientId = number;
 export enum Tiebreak {
     Left,
     Right,

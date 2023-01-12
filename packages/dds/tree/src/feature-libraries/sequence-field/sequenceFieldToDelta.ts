@@ -41,7 +41,8 @@ export function sequenceFieldToDelta<TNodeChange>(
                     out.pushContent(insertMark);
                     break;
                 }
-                case "MoveIn": {
+                case "MoveIn":
+                case "ReturnTo": {
                     const moveMark: Delta.MoveIn = {
                         type: Delta.MarkType.MoveIn,
                         moveId: brandOpaque<Delta.MoveId>(mark.id),
@@ -50,13 +51,11 @@ export function sequenceFieldToDelta<TNodeChange>(
                     break;
                 }
                 case "Modify": {
-                    if (mark.tomb === undefined) {
-                        const modify = deltaFromChild(mark.changes, inputIndex);
-                        if (modify.setValue !== undefined || modify.fields !== undefined) {
-                            out.pushContent(modify);
-                        } else {
-                            out.pushOffset(1);
-                        }
+                    const modify = deltaFromChild(mark.changes, inputIndex);
+                    if (modify.setValue !== undefined || modify.fields !== undefined) {
+                        out.pushContent(modify);
+                    } else {
+                        out.pushOffset(1);
                     }
                     break;
                 }
@@ -68,7 +67,8 @@ export function sequenceFieldToDelta<TNodeChange>(
                     out.pushContent(deleteMark);
                     break;
                 }
-                case "MoveOut": {
+                case "MoveOut":
+                case "ReturnFrom": {
                     const moveMark: Delta.MoveOut = {
                         type: Delta.MarkType.MoveOut,
                         moveId: brandOpaque<Delta.MoveId>(mark.id),
@@ -89,8 +89,6 @@ export function sequenceFieldToDelta<TNodeChange>(
                     out.pushContent(insertMark);
                     break;
                 }
-                case "Return":
-                    fail(ERR_NOT_IMPLEMENTED);
                 default:
                     unreachableCase(type);
             }
@@ -128,5 +126,3 @@ function makeDeltaInsert<TNodeChange>(
         return { type: Delta.MarkType.Insert, content: cursors };
     }
 }
-
-const ERR_NOT_IMPLEMENTED = "Not implemented";

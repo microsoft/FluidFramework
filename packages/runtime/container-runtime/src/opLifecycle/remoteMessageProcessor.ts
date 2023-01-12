@@ -24,11 +24,27 @@ export class RemoteMessageProcessor {
 
     public process(remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage {
         let message = copy(remoteMessage);
-
-        message = this.opDecompressor.processMessage(message);
+        message = this.opDecompressor.processMessage(message).message;
         unpackRuntimeMessage(message);
-        message = this.opSplitter.processRemoteMessage(message);
 
+        const chunkProcessingResult = this.opSplitter.processRemoteMessage(message);
+        message = chunkProcessingResult.message;
+        if (chunkProcessingResult.state !== "Processed") {
+            // If the message is not chunked or if the splitter is still rebuilding the original message,
+            // there is no need to continue processing
+            return message;
+        }
+
+        const decompressionAfterChunking = this.opDecompressor.processMessage(message);
+        message = decompressionAfterChunking.message;
+        if (decompressionAfterChunking.state === "Skipped") {
+            // After chunking, if the original message was not compressed,
+            // there is no need to continue processing
+            return message;
+        }
+
+        // The message needs to be unpacked after chunking + decompression
+        unpack(message);
         return message;
     }
 }

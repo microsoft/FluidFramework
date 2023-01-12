@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
@@ -15,151 +14,35 @@ import { IFluidClientDebugger } from "./IFluidClientDebugger";
  * @public
  */
 export interface FluidClientDebuggerProps {
-	/**
-	 * The Container with which the debugger will be associated.
-	 */
-	container: IContainer;
+    /**
+     * The Container with which the debugger will be associated.
+     */
+    container: IContainer;
 
-	/**
-	 * The ID of {@link FluidClientDebuggerProps.container | the Container}.
-	 */
-	containerId: string;
+    /**
+     * The ID of {@link FluidClientDebuggerProps.container | the Container}.
+     */
+    containerId: string;
 
-	/**
-	 * Optional: Data belonging to {@link FluidClientDebuggerProps.container | the Container}.
-	 *
-	 * @remarks The debugger will not mutate this data.
-	 */
-	containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
+    /**
+     * Optional: Data belonging to {@link FluidClientDebuggerProps.container | the Container}.
+     *
+     * @remarks The debugger will not mutate this data.
+     */
+    containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
 
-	/**
-	 * Optional: Nickname for {@link FluidClientDebuggerProps.container | the Container} / debugger instance.
-	 *
-	 * @remarks
-	 *
-	 * Associated tooling may take advantage of this to differentiate between debugger instances using
-	 * semantically meaningful information.
-	 *
-	 * If not provided, the {@link FluidClientDebuggerProps.containerId} will be used for the purpose of distinguising
-	 * debugger instances.
-	 */
-	containerNickname?: string;
-}
-
-/**
- * @internal
- */
-export interface DebuggerRegistryEvents extends IEvent {
-	/**
-	 * Emitted when a {@link FluidClientDebugger | clientDebugger} is registered.
-	 *
-	 * @eventProperty
-	 */
-	(
-		event: "debuggerRegistered",
-		listener: (containerId: string, clientDebugger: IFluidClientDebugger) => void,
-	): void;
-
-	/**
-	 * Emitted when a {@link FluidClientDebugger | clientDebugger} is closed.
-	 *
-	 * @eventProperty
-	 */
-	(event: "debuggerClosed", listener: (containerId: string) => void): void;
-}
-
-/**
- * Contract for maintaining a global client debugger registry to store all registered client debugger and current
- * displaying debugger.
- * @internal
- */
-export class DebuggerRegistry extends IEventProvider<DebuggerRegistryEvents> {
-	/**
-	 * A map of registered debuggers, which debugger monitor one container.
-	 */
-	private readonly registeredDebuggers: Map<string, IFluidClientDebugger> = new Map();
-
-	/**
-	 * The debugger is currently displaying.
-	 */
-	private currentDisplayDebugger: IFluidClientDebugger;
-
-	public constructor() {
-		super();
-	}
-
-	/**
-	 * Initializes a {@link IFluidClientDebugger} from the provided properties, binding it to the global context. Emit a
-	 * debugger registered event.
-	 * @public
-	 *
-	 */
-	public initializeDebugger(props: FluidClientDebuggerProps): void {
-		const { containerId } = props;
-		const existingDebugger = this.registeredDebuggers.get(containerId);
-		if (existingDebugger !== undefined) {
-			console.warn(
-				`Active debugger registry already contains an entry for container ID "${containerId}". Override existing entry.`,
-			);
-			existingDebugger.dispose();
-		}
-
-		const clientDebugger = new FluidClientDebugger(props);
-		this.registeredDebuggers.set(containerId, clientDebugger);
-		this.emit("debuggerRegistered", containerId, clientDebugger);
-	}
-
-	/**
-	 * Closes ({@link IFluidClientDebugger.dispose | disposes}) a registered client debugger associated with the
-	 * provided Container ID. Emit a debugger closed event.
-	 *
-	 * @public
-	 */
-	public closeDebugger(containerId: string): void {
-		if (this.registeredDebuggers.has(containerId)) {
-			const clientDebugger = this.registeredDebuggers.get(containerId);
-			if (clientDebugger === undefined) {
-				console.warn(
-					`No active client debugger associated with container ID "${containerId}" was found.`,
-				);
-			} else {
-				clientDebugger.dispose();
-				this.registeredDebuggers.delete(containerId);
-				this.emit("debuggerClosed", containerId);
-			}
-		} else {
-			console.warn(`Fluid Client debugger never been registered.`);
-		}
-	}
-
-	/**
-	 * Generate a new list of client debugger from global context
-	 * @returns client debuggers list.
-	 */
-	public getRegisteredDebuggers(): IFluidClientDebugger[] {
-		const clientDebuggers: IFluidClientDebugger[] = [];
-		for (const [, clientDebugger] of this.registeredDebuggers) {
-			clientDebuggers.push(clientDebugger);
-		}
-
-		return clientDebuggers;
-	}
-
-	/**
-	 * Get the current display debugger.
-	 * @returns the current displaying debugger.
-	 */
-	public getCurrentDisplayDebugger(): IFluidClientDebugger {
-		return this.currentDisplayDebugger;
-	}
-
-	/**
-	 * Update the current display debugger.
-	 * @param currentDisplayDebugger - the current display debugger.
-	 */
-	public setCurrentDisplayDebugger(currentDisplayDebugger: IFluidClientDebugger): void {
-		this.currentDisplayDebugger = currentDisplayDebugger;
-	}
+    /**
+     * Optional: Nickname for {@link FluidClientDebuggerProps.container | the Container} / debugger instance.
+     *
+     * @remarks
+     *
+     * Associated tooling may take advantage of this to differentiate between debugger instances using
+     * semantically meaningful information.
+     *
+     * If not provided, the {@link FluidClientDebuggerProps.containerId} will be used for the purpose of distinguising
+     * debugger instances.
+     */
+    containerNickname?: string;
 }
 
 /**
@@ -173,7 +56,18 @@ export class DebuggerRegistry extends IEventProvider<DebuggerRegistryEvents> {
  * @public
  */
 export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): void {
-	getDebuggerRegistry().initializeDebugger(props);
+    const { containerId } = props;
+
+    const debuggerRegistry = getDebuggerRegistry();
+
+    const existingDebugger = debuggerRegistry.get(containerId);
+    if (existingDebugger !== undefined) {
+        console.warn(
+            `Active debugger registry already contains an entry for container ID "${containerId}". Override existing entry.`,
+        );
+        existingDebugger.dispose();
+    }
+    debuggerRegistry.set(containerId, new FluidClientDebugger(props));
 }
 
 /**
@@ -183,7 +77,17 @@ export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): 
  * @public
  */
 export function closeFluidClientDebugger(containerId: string): void {
-	getDebuggerRegistry().closeDebugger(containerId);
+    const debuggerRegistry = getDebuggerRegistry();
+
+    const clientDebugger = debuggerRegistry.get(containerId);
+    if (clientDebugger === undefined) {
+        console.warn(
+            `No active client debugger associated with container ID "${containerId}" was found.`,
+        );
+    } else {
+        clientDebugger.dispose();
+        debuggerRegistry.delete(containerId);
+    }
 }
 
 /**
@@ -194,8 +98,8 @@ export function closeFluidClientDebugger(containerId: string): void {
  * @internal
  */
 export function getFluidClientDebugger(containerId: string): IFluidClientDebugger | undefined {
-	const clientDebuggers = getDebuggerRegistry().getRegisteredDebuggers();
-	return clientDebuggers.find((c) => c.containerId === containerId);
+    const debuggerRegistry = getDebuggerRegistry();
+    return debuggerRegistry.get(containerId);
 }
 
 /**
@@ -204,9 +108,14 @@ export function getFluidClientDebugger(containerId: string): IFluidClientDebugge
  * @internal
  */
 export function getFluidClientDebuggers(): IFluidClientDebugger[] {
-	const debuggerRegistry = getDebuggerRegistry();
+    const debuggerRegistry = getDebuggerRegistry();
 
-	return debuggerRegistry.getRegisteredDebuggers();
+    const clientDebuggers: IFluidClientDebugger[] = [];
+    for (const [, clientDebugger] of debuggerRegistry) {
+        clientDebuggers.push(clientDebugger);
+    }
+
+    return clientDebuggers;
 }
 
 /**
@@ -216,19 +125,19 @@ export function getFluidClientDebuggers(): IFluidClientDebugger[] {
  *
  * @internal
  */
-export function getDebuggerRegistry(): DebuggerRegistry {
-	if (globalThis.fluidClientDebuggersRegistry === undefined) {
-		// If no client debuggers have been bound, initialize list
-		globalThis.fluidClientDebuggersRegistry = new DebuggerRegistry();
-	}
+export function getDebuggerRegistry(): Map<string, IFluidClientDebugger> {
+    if (globalThis.fluidClientDebuggers === undefined) {
+        // If no client debuggers have been bound, initialize list
+        globalThis.fluidClientDebuggers = new Map<string, IFluidClientDebugger>();
+    }
 
-	const debuggerRegistry = globalThis.fluidClientDebuggersRegistry as DebuggerRegistry;
+    const debuggerRegistry = globalThis.fluidClientDebuggers as Map<string, IFluidClientDebugger>;
 
-	if (debuggerRegistry === undefined) {
-		throw new Error("Fluid Client debugger registry initialization failed.");
-	}
+    if (debuggerRegistry === undefined) {
+        throw new Error("Fluid Client debugger registry initialization failed.");
+    }
 
-	return debuggerRegistry;
+    return debuggerRegistry;
 }
 
 /**
@@ -237,16 +146,16 @@ export function getDebuggerRegistry(): DebuggerRegistry {
  * @internal
  */
 export function clearDebuggerRegistry(): void {
-	const debuggerRegistry = globalThis.fluidClientDebuggers as Map<string, IFluidClientDebugger>;
-	if (debuggerRegistry !== undefined) {
-		for (const [, clientDebugger] of debuggerRegistry) {
-			if (clientDebugger.disposed) {
-				console.warn(`Fluid Client debugger has already been disposed.`);
-			} else {
-				clientDebugger.dispose();
-			}
-		}
-	}
+    const debuggerRegistry = globalThis.fluidClientDebuggers as Map<string, IFluidClientDebugger>;
+    if (debuggerRegistry !== undefined) {
+        for (const [, clientDebugger] of debuggerRegistry) {
+            if (clientDebugger.disposed) {
+                console.warn(`Fluid Client debugger has already been disposed.`);
+            } else {
+                clientDebugger.dispose();
+            }
+        }
+    }
 
-	globalThis.fluidClientDebuggers = undefined;
+    globalThis.fluidClientDebuggers = undefined;
 }

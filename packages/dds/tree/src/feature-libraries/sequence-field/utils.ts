@@ -4,10 +4,10 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { fail } from "../../util";
 import {
     Attach,
     Detach,
+    HasChanges,
     HasRevisionTag,
     HasTiebreakPolicy,
     Insert,
@@ -15,12 +15,15 @@ import {
     Mark,
     Modify,
     MoveIn,
+    MoveOut,
     ObjectMark,
     Reattach,
+    ReturnFrom,
+    ReturnTo,
     SizedMark,
-    SizedObjectMark,
     Skip,
 } from "./format";
+import { MoveEffectTable } from "./moveEffectTable";
 
 export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<TNodeChange> {
     return isObjMark(mark) && mark.type === "Modify";
@@ -33,7 +36,7 @@ export function isAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is Attach<T
 }
 
 export function isReattach<TNodeChange>(mark: Mark<TNodeChange>): mark is Reattach<TNodeChange> {
-    return isObjMark(mark) && (mark.type === "Revive" || mark.type === "Return");
+    return isObjMark(mark) && (mark.type === "Revive" || mark.type === "ReturnTo");
 }
 
 export function getAttachLength(attach: Attach): number {
@@ -43,7 +46,7 @@ export function getAttachLength(attach: Attach): number {
             return attach.content.length;
         case "MoveIn":
         case "Revive":
-        case "Return":
+        case "ReturnTo":
             return attach.count;
         default:
             unreachableCase(type);
@@ -91,7 +94,7 @@ export function getOutputLength(mark: Mark<unknown>): number {
     const type = mark.type;
     switch (type) {
         case "Revive":
-        case "Return":
+        case "ReturnTo":
         case "MoveIn":
             return mark.count;
         case "Insert":
@@ -100,6 +103,7 @@ export function getOutputLength(mark: Mark<unknown>): number {
             return 1;
         case "Delete":
         case "MoveOut":
+        case "ReturnFrom":
             return 0;
         default:
             unreachableCase(type);
@@ -121,6 +125,7 @@ export function getInputLength(mark: Mark<unknown>): number {
     switch (type) {
         case "Delete":
         case "MoveOut":
+        case "ReturnFrom":
             return mark.count;
         case "Modify":
             return 1;
@@ -133,99 +138,12 @@ export function isSkipMark(mark: Mark<unknown>): mark is Skip {
     return typeof mark === "number";
 }
 
-/**
- * Splits the `mark` into two marks such that the first returned mark has input length `length`.
- * @param mark - The mark to split.
- * @param length - The desired length for the first of the two returned marks.
- * @returns A pair of marks equivalent to the original `mark`
- * such that the first returned mark has input length `length`.
- */
-export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
-    mark: TMark,
-    length: number,
-): [TMark, TMark] {
-    const markLength = getInputLength(mark);
-    const remainder = markLength - length;
-    if (length < 1 || remainder < 1) {
-        fail(
-            `Unable to split mark of length ${markLength} into marks of lengths ${length} and ${remainder}`,
-        );
-    }
-    if (isSkipMark(mark)) {
-        return [length, remainder] as [TMark, TMark];
-    }
-    const markObj = mark as SizedObjectMark;
-    const type = mark.type;
-    switch (type) {
-        case "Modify":
-            fail(`Unable to split ${type} mark of length 1`);
-        case "Delete":
-        case "MoveOut":
-            return [
-                { ...markObj, count: length },
-                { ...markObj, count: remainder },
-            ] as [TMark, TMark];
-        default:
-            unreachableCase(type);
-    }
-}
-
-/**
- * Splits the `mark` into two marks such that the first returned mark has output length `length`.
- * @param mark - The mark to split.
- * @param length - The desired length for the first of the two returned marks.
- * @returns A pair of marks equivalent to the original `mark`
- * such that the first returned mark has output length `length`.
- */
-export function splitMarkOnOutput<TMark extends Mark<unknown>>(
-    mark: TMark,
-    length: number,
-): [TMark, TMark] {
-    const markLength = getOutputLength(mark);
-    const remainder = markLength - length;
-    if (length < 1 || remainder < 1) {
-        fail(
-            `Unable to split mark of length ${markLength} into marks of lengths ${length} and ${remainder}`,
-        );
-    }
-    if (isSkipMark(mark)) {
-        return [length, remainder] as [TMark, TMark];
-    }
-    const markObj = mark as ObjectMark;
-    const type = markObj.type;
-    switch (type) {
-        case "Modify":
-            fail(`Unable to split ${type} mark of length 1`);
-        case "Delete":
-        case "MoveOut":
-            fail(`Unable to split ${type} mark of length 0`);
-        case "Insert":
-            return [
-                { ...markObj, content: markObj.content.slice(0, length) },
-                { ...markObj, content: markObj.content.slice(length) },
-            ] as [TMark, TMark];
-        case "MoveIn":
-            return [
-                { ...markObj, count: length },
-                { ...markObj, count: remainder },
-            ] as [TMark, TMark];
-        case "Return":
-        case "Revive":
-            return [
-                { ...markObj, count: length },
-                { ...markObj, count: remainder, detachIndex: markObj.detachIndex + length },
-            ] as [TMark, TMark];
-        default:
-            unreachableCase(type);
-    }
-}
-
 export function isDetachMark<TNodeChange>(
     mark: Mark<TNodeChange> | undefined,
 ): mark is Detach<TNodeChange> {
     if (isObjMark(mark)) {
         const type = mark.type;
-        return type === "Delete" || type === "MoveOut";
+        return type === "Delete" || type === "MoveOut" || type === "ReturnFrom";
     }
     return false;
 }
@@ -236,6 +154,10 @@ export function isObjMark<TNodeChange>(
     return typeof mark === "object";
 }
 
+export function isSizedMark<TNodeChange>(mark: Mark<TNodeChange>): mark is SizedMark<TNodeChange> {
+    return isSkipMark(mark) || mark.type === "Modify" || isDetachMark(mark);
+}
+
 /**
  * Attempts to extend `lhs` to include the effects of `rhs`.
  * @param lhs - The mark to extend.
@@ -243,7 +165,11 @@ export function isObjMark<TNodeChange>(
  * @returns `true` iff the function was able to mutate `lhs` to include the effects of `rhs`.
  * When `false` is returned, `lhs` is left untouched.
  */
-export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boolean {
+export function tryExtendMark(
+    lhs: ObjectMark,
+    rhs: Readonly<ObjectMark>,
+    moveEffects: MoveEffectTable<unknown> | undefined,
+): boolean {
     if (rhs.type !== lhs.type) {
         return false;
     }
@@ -253,39 +179,79 @@ export function tryExtendMark(lhs: ObjectMark, rhs: Readonly<ObjectMark>): boole
     }
 
     if (
-        (type !== "MoveIn" && rhs.changes !== undefined) ||
-        (lhs.type !== "MoveIn" && lhs.changes !== undefined)
+        (type !== "MoveIn" && type !== "ReturnTo" && rhs.changes !== undefined) ||
+        (lhs as Modify | HasChanges).changes !== undefined
     ) {
         return false;
     }
 
     switch (type) {
-        case "Insert":
-        case "MoveIn": {
-            const lhsAttach = lhs as Insert | MoveIn;
-            if (isEqualPlace(lhsAttach, rhs)) {
-                if (rhs.type === "Insert") {
-                    const lhsInsert = lhsAttach as Insert;
-                    lhsInsert.content.push(...rhs.content);
+        case "Insert": {
+            const lhsInsert = lhs as Insert;
+            if (isEqualPlace(lhsInsert, rhs)) {
+                lhsInsert.content.push(...rhs.content);
+                return true;
+            }
+            break;
+        }
+        case "MoveIn":
+        case "ReturnTo": {
+            // TODO: Handle reattach fields
+            const lhsMoveIn = lhs as MoveIn | ReturnTo;
+            if (isEqualPlace(lhsMoveIn, rhs) && moveEffects !== undefined) {
+                const prevMerge = moveEffects.dstMergeable.get(lhsMoveIn.id);
+                if (prevMerge !== undefined) {
+                    moveEffects.dstMergeable.set(prevMerge, rhs.id);
                 } else {
-                    const lhsMoveIn = lhsAttach as MoveIn;
-                    lhsMoveIn.count += rhs.count;
+                    moveEffects.dstMergeable.set(lhsMoveIn.id, rhs.id);
                 }
-                return true;
+
+                if (
+                    moveEffects.allowMerges &&
+                    moveEffects.srcMergeable.get(lhsMoveIn.id) === rhs.id
+                ) {
+                    const nextId = moveEffects.srcMergeable.get(rhs.id);
+                    if (nextId !== undefined) {
+                        moveEffects.srcMergeable.set(lhsMoveIn.id, nextId);
+                    }
+                    lhsMoveIn.count += rhs.count;
+                    return true;
+                }
             }
             break;
         }
-        case "Delete":
-        case "MoveOut": {
+        case "Delete": {
             const lhsDetach = lhs as Detach;
-            if (rhs.tomb === lhsDetach.tomb) {
-                lhsDetach.count += rhs.count;
-                return true;
+            lhsDetach.count += rhs.count;
+            return true;
+        }
+        case "MoveOut":
+        case "ReturnFrom": {
+            // TODO: Handle reattach fields
+            const lhsMoveOut = lhs as MoveOut | ReturnFrom;
+            if (moveEffects !== undefined) {
+                const prevMerge = moveEffects.srcMergeable.get(lhsMoveOut.id);
+                if (prevMerge !== undefined) {
+                    moveEffects.srcMergeable.set(prevMerge, rhs.id);
+                } else {
+                    moveEffects.srcMergeable.set(lhsMoveOut.id, rhs.id);
+                }
+
+                if (
+                    moveEffects.allowMerges &&
+                    moveEffects.dstMergeable.get(lhsMoveOut.id) === rhs.id
+                ) {
+                    const nextId = moveEffects.dstMergeable.get(rhs.id);
+                    if (nextId !== undefined) {
+                        moveEffects.dstMergeable.set(lhsMoveOut.id, nextId);
+                    }
+                    lhsMoveOut.count += rhs.count;
+                    return true;
+                }
             }
             break;
         }
-        case "Revive":
-        case "Return": {
+        case "Revive": {
             const lhsReattach = lhs as Reattach;
             if (
                 rhs.detachedBy === lhsReattach.detachedBy &&

@@ -12,8 +12,10 @@ import {
     FieldSchema,
     InMemoryStoredSchemaRepository,
     SchemaData,
-} from "../../../schema-stored";
-import { EmptyKey, rootFieldKey, symbolFromKey } from "../../../tree";
+    EmptyKey,
+    rootFieldKey,
+    symbolFromKey,
+} from "../../../core";
 import { brand } from "../../../util";
 import {
     isPrimitiveValue,

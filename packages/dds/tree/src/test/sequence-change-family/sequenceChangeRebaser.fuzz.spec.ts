@@ -13,9 +13,14 @@ import {
     sequenceChangeRebaser,
     // eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/sequence-change-family";
-import { TreeSchemaIdentifier } from "../../schema-stored";
-import { noFailure, OutputType, verifyChangeRebaser } from "../../rebase";
-import { Delta, FieldKey } from "../../tree";
+import {
+    TreeSchemaIdentifier,
+    Delta,
+    FieldKey,
+    noFailure,
+    OutputType,
+    verifyChangeRebaser,
+} from "../../core";
 import { brand } from "../../util";
 // TODO: Move ../rebase/fuzz.ts code outside of src/test
 // eslint-disable-next-line import/no-internal-modules

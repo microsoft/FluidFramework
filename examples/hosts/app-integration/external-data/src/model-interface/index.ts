@@ -6,6 +6,9 @@
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { SharedString } from "@fluidframework/sequence";
 
+/**
+ * Events emitted by {@link IAppModel}.
+ */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IAppModelEvents extends IEvent { }
 
@@ -26,6 +29,9 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
     readonly debugSendCustomSignal: () => void;
 }
 
+/**
+ * Events emitted by {@link ITask}.
+ */
 export interface ITaskEvents extends IEvent {
     /**
      * Emitted when the name or priority have changed respectively.
@@ -52,6 +58,9 @@ export interface ITask extends IEventProvider<ITaskEvents> {
     priority: number;
 }
 
+/**
+ * Events emitted by {@link ITaskList}.
+ */
 export interface ITaskListEvents extends IEvent {
     /**
      * Emitted when a task is added/removed respectively.

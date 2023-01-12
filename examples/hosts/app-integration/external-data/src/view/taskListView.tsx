@@ -67,6 +67,9 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
     );
 };
 
+/**
+ * {@link TaskListView} input props.
+ */
 export interface ITaskListViewProps {
     readonly taskList: ITaskList;
 }
