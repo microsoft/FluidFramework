@@ -34,7 +34,10 @@ steps:
     targetType: 'inline'
     workingDirectory: .
     script: |
+      # Install pnpm globally
       npm i -g pnpm
+
+      # We only want to install the root package deps, so we set recursive-install to false
       pnpm config set recursive-install false
       pnpm install --frozen-lockfile
 
