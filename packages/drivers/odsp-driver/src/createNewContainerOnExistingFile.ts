@@ -7,6 +7,7 @@ import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { UsageError } from "@fluidframework/driver-utils";
 import {
+  IFileEntry,
   InstrumentedStorageTokenFetcher,
   IOdspResolvedUrl
 } from "@fluidframework/odsp-driver-definitions";
@@ -21,27 +22,23 @@ import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { convertCreateNewSummaryTreeToTreeAndBlobs, convertSummaryIntoContainerSnapshot, CreateNewContainerOnExistingFileArgs, createNewFluidContainerCore } from "./createNewUtils";
+import { convertCreateNewSummaryTreeToTreeAndBlobs, convertSummaryIntoContainerSnapshot, createNewFluidContainerCore } from "./createNewUtils";
 import { ClpCompliantAppHeader } from "./contractsPublic";
 
 /**
  * Creates a new Fluid container on an existing file.
  */
 export async function createNewContainerOnExistingFile(
-  ...args: CreateNewContainerOnExistingFileArgs
+  getStorageToken: InstrumentedStorageTokenFetcher,
+  fileInfo: IExistingFileInfo,
+  logger: ITelemetryLogger,
+  createNewSummary: ISummaryTree | undefined,
+  epochTracker: EpochTracker,
+  fileEntry: IFileEntry,
+  createNewCaching: boolean,
+  forceAccessTokenViaAuthorizationHeader: boolean,
+  isClpCompliantApp?: boolean
 ): Promise<IOdspResolvedUrl> {
-  const [
-    getStorageToken,
-    fileInfo,
-    logger,
-    createNewSummary,
-    epochTracker,
-    fileEntry,
-    createNewCaching,
-    forceAccessTokenViaAuthorizationHeader,
-    isClpCompliantApp
-  ] = args;
-
   if (createNewSummary === undefined) {
     const toThrow = new UsageError("createNewSummary must exist to create a new container");
     logger.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
@@ -90,14 +87,14 @@ async function createNewFluidContainerOnExistingFileFromSummary(
 
   const initialUrl = `${baseUrl}/opStream/snapshots/snapshot`;
 
-  return createNewFluidContainerCore(
+  return createNewFluidContainerCore({
     containerSnapshot,
     getStorageToken,
     logger,
     initialUrl,
     forceAccessTokenViaAuthorizationHeader,
     epochTracker,
-    "CreateNewContainerOnExistingFile",
-    "uploadSummary"
-  );
+    telemetryName: "CreateNewContainerOnExistingFile",
+    fetchType: "uploadSummary"
+  });
 }
