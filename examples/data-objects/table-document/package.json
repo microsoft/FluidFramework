@@ -11,9 +11,9 @@
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,
-  "main": "dist/index.js",
+  "main": "lib/index.js",
   "module": "lib/index.js",
-  "types": "dist/index.d.ts",
+  "types": "lib/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:commonjs": "npm run tsc && npm run build:test",
@@ -33,8 +33,7 @@
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml --exit",
     "test:mocha": "mocha --config src/test/.mocharc.js dist/test",
-    "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-    "tsc": "tsc"
+    "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
   },
   "nyc": {
     "all": true,

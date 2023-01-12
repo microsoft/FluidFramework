@@ -4,11 +4,12 @@
         "src/test/**/*"
     ],
     "compilerOptions": {
+        "module": "esnext",
         "composite": true,
         "jsx": "react",
         "strictNullChecks": false,
         "rootDir": "./src",
-        "outDir": "./dist",
+        "outDir": "lib",
         "types": [
             "react",
             "react-dom"

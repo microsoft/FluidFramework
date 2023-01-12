@@ -1,9 +1,9 @@
 {
     "extends": "@fluidframework/build-common/ts-common-config.json",
     "compilerOptions": {
-        "declarationDir": "./dist",
+        "module": "esnext",
         "rootDir": "./src",
-        "outDir": "./dist"
+        "outDir": "lib"
     },
     "include": [
         "src/**/*"
