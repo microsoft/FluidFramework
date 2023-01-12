@@ -4,7 +4,6 @@
 # common variables
 
 parameters:
-
 - name: publishOverride
   type: string
   default: default
