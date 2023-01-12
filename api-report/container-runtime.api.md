@@ -33,6 +33,7 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IFluidTokenProvider } from '@fluidframework/container-definitions';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { IIdCompressor } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -133,10 +134,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     getCurrentReferenceTimestampMs(): number | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined>;
-    // Warning: (ae-forgotten-export) The symbol "IdCompressor" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    getIdCompressor(): IdCompressor | undefined;
     // Warning: (ae-forgotten-export) The symbol "GCNodeType" needs to be exported by the entry point index.d.ts
     getNodeType(nodePath: string): GCNodeType;
     // (undocumented)
@@ -147,6 +144,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     // (undocumented)
     get IContainerRuntime(): this;
+    // Warning: (ae-forgotten-export) The symbol "IdCompressor" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    get idCompressor(): IdCompressor | undefined;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
     // (undocumented)

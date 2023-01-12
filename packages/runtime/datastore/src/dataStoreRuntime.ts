@@ -223,9 +223,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this.id = dataStoreContext.id;
         this.options = dataStoreContext.options;
         this.deltaManager = dataStoreContext.deltaManager;
+        this.idCompressor = dataStoreContext.idCompressor;
         this.quorum = dataStoreContext.getQuorum();
         this.audience = dataStoreContext.getAudience();
-        this.idCompressor = dataStoreContext.getIdCompressor();
 
         const tree = dataStoreContext.baseSnapshot;
 

@@ -31,6 +31,7 @@ import {
     IFluidDataStoreContext,
     IFluidDataStoreRegistry,
     IGarbageCollectionDetailsBase,
+    IIdCompressor
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -48,6 +49,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     public storage: IDocumentStorageService = undefined as any;
     public IFluidDataStoreRegistry: IFluidDataStoreRegistry = undefined as any;
     public IFluidHandleContext: IFluidHandleContext = undefined as any;
+    public idCompressor: IIdCompressor = undefined as any;
 
     /**
      * Indicates the attachment state of the data store to a host service.
@@ -128,10 +130,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     }
 
     public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
-        throw new Error("Method not implemented.");
-    }
-
-    public getIdCompressor() {
         throw new Error("Method not implemented.");
     }
 }

@@ -843,6 +843,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.attachState;
     }
 
+    public get idCompressor(): IdCompressor | undefined {
+        return this._idCompressor;
+    }
+    private readonly _idCompressor?: IdCompressor;
+
     public get IFluidHandleContext(): IFluidHandleContext {
         return this.handleContext;
     }
@@ -976,11 +981,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             : 0;
     }
 
-    private readonly idCompressor?: IdCompressor;
-    public getIdCompressor(): IdCompressor | undefined {
-        return this.idCompressor;
-    }
-
     private readonly initialSummarizerDelayMs: number;
     private getInitialSummarizerDelayMs(): number {
         // back-compat: initialSummarizerDelayMs was moved from ISummaryRuntimeOptions
@@ -1080,7 +1080,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
         this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
         if (this.runtimeOptions.enableRuntimeCompressor) {
-            this.idCompressor = idCompressorSnapshot !== undefined ? IdCompressor.deserialize(idCompressorSnapshot, createSessionId()) : new IdCompressor(createSessionId(), 10, this.logger);
+            this._idCompressor = idCompressorSnapshot !== undefined ? IdCompressor.deserialize(idCompressorSnapshot, createSessionId()) : new IdCompressor(createSessionId(), 10, this.logger);
         }
 
         this.maxConsecutiveReconnects =

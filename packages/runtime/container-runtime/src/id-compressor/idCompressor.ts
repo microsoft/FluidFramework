@@ -7,6 +7,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
+import { IIdCompressor } from "@fluidframework/runtime-definitions";
 import BTree from "sorted-btree";
 import {
     hasAtLeastLength,
@@ -269,7 +270,7 @@ type InversionKey = `${typeof nonStableOverridePrefix}${string}` | StableId;
  * should use op-space IDs.
  *
  */
-export class IdCompressor {
+export class IdCompressor implements IIdCompressor {
     /**
      * Max allowed cluster size
      */

@@ -57,6 +57,7 @@ import {
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
     ITelemetryContext,
+    IIdCompressor,
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
@@ -89,7 +90,6 @@ import {
 import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
 import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
 import { summarizerClientType } from "./summarizerClientElection";
-import { IdCompressor } from "./id-compressor";
 
 function createAttributes(
     pkg: readonly string[],
@@ -198,6 +198,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public get baseSnapshot(): ISnapshotTree | undefined {
         return this._baseSnapshot;
+    }
+
+    public get idCompressor(): IIdCompressor | undefined {
+        return this._containerRuntime.idCompressor;
     }
 
     private _disposed = false;
@@ -469,10 +473,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public getAudience(): IAudience {
         return this._containerRuntime.getAudience();
-    }
-
-    public getIdCompressor(): IdCompressor | undefined {
-        return this._containerRuntime.getIdCompressor();
     }
 
     /**

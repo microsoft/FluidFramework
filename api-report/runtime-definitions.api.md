@@ -194,10 +194,11 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     getCreateChildSummarizerNodeFn(
     id: string,
     createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
-    getIdCompressor(): any;
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
+    // (undocumented)
+    readonly idCompressor?: IIdCompressor;
     readonly isLocalDataStore: boolean;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
@@ -375,7 +376,8 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     summarizeInternalFn: SummarizeInternalFn,
     id: string,
     createParam: CreateChildSummarizerNodeParam,
-    config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>): ISummarizerNodeWithGC;
+    config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
+    getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>): ISummarizerNodeWithGC;
     deleteChild(id: string): void;
     // (undocumented)
     getChild(id: string): ISummarizerNodeWithGC | undefined;
