@@ -280,8 +280,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         if (batch.length >= 2) {
             this.connectionManager.sendMessages([{
                 type: GroupedBatchOpType,
-                clientSequenceNumber: batch[0].clientSequenceNumber, // TODO
-                referenceSequenceNumber: batch[0].referenceSequenceNumber, // TODO
+                clientSequenceNumber: batch[0].clientSequenceNumber, // TODO: doesn't matter what we put here because we forget this message
+                referenceSequenceNumber: batch[0].referenceSequenceNumber, // TODO: doesn't matter what we put here because we forget this message
                 contents: batch,
             }]);
         } else {
@@ -816,6 +816,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 this.pending.push(message);
                 this.fetchMissingDeltas(reason, message.sequenceNumber);
             } else {
+                // Client ops: MSN has to be lower than sequence #, as client can continue to send ops with same
+                // reference sequence number as this op.
+                // System ops (when no clients are connected) are the only ops where equation is possible.
+                const diff = message.sequenceNumber - message.minimumSequenceNumber;
+                if (diff < 0 || diff === 0 && message.clientId !== null) {
+                    // TODO: this hit in e2e tests
+                    throw new DataCorruptionError("MSN has to be lower than sequence #",
+                        extractSafePropertiesFromMessage(message));
+                }
+
                 this.lastQueuedSequenceNumber = message.sequenceNumber;
                 this.previouslyProcessedMessage = message;
                 if (message.type === GroupedBatchOpType) {
@@ -876,15 +886,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 ...extractSafePropertiesFromMessage(message),
                 clientId: this.connectionManager.clientId,
             });
-        }
-
-        // Client ops: MSN has to be lower than sequence #, as client can continue to send ops with same
-        // reference sequence number as this op.
-        // System ops (when no clients are connected) are the only ops where equation is possible.
-        const diff = message.sequenceNumber - message.minimumSequenceNumber;
-        if (diff < 0 || diff === 0 && message.clientId !== null) {
-            throw new DataCorruptionError("MSN has to be lower than sequence #",
-                extractSafePropertiesFromMessage(message));
         }
 
         this.minSequenceNumber = message.minimumSequenceNumber;
@@ -1018,7 +1019,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             // and thus can leverage that to trigger recovery. But this is not going to solve all the problems
             // (the other 50%), and thus these errors below should be looked at even if code below results in
             // recovery.
-            if (this.lastQueuedSequenceNumber < this.lastObservedSeqNumber) { // TODO: comparing real sqn to virtual sqn
+            if (this.virtualSequenceNumber < this.lastObservedSeqNumber) {
                 this.fetchMissingDeltas("OpsBehind");
             }
         }
