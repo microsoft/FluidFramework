@@ -35,6 +35,7 @@ steps:
     workingDirectory: .
     script: |
       npm i -g pnpm
+      pnpm config set recursive-install false
       pnpm install --frozen-lockfile
 
 - task: Npm@1
