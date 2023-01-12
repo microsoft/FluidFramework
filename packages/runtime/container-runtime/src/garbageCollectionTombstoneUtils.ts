@@ -32,3 +32,13 @@ export function sendGCTombstoneEvent(
         mc.logger.sendTelemetryEvent(event, error);
     }
 }
+
+export function prepareGCTombstoneEvent(
+    event: ITelemetryGenericEvent,
+    isSummarizerClient: boolean,
+    packagePath: readonly string[] | undefined,
+) {
+    event.pkg = packagePathToTelemetryProperty(packagePath);
+    event.isSummarizerClient = isSummarizerClient;
+    return event;
+}
