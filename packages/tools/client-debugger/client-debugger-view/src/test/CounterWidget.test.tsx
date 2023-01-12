@@ -9,35 +9,25 @@ import userEvent from "@testing-library/user-event";
 import React from "react";
 
 import { SharedCounter } from "@fluidframework/counter";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { TinyliciousClient } from "@fluidframework/tinylicious-client";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
-import { createFluidContainer } from "./ClientUtilities";
 import { CounterWidget } from "./widgets";
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 describe("CounterWidget component tests", () => {
-    let client: TinyliciousClient | undefined;
-    let container: IFluidContainer | undefined;
     let sharedCounter: SharedCounter | undefined;
 
-    const containerSchema: ContainerSchema = {
-        initialObjects: {
-            counter: SharedCounter,
-        },
-    };
-
     beforeEach(async () => {
-        client = new TinyliciousClient();
-        ({ container } = await createFluidContainer(client, containerSchema));
-        sharedCounter = await container.create(SharedCounter);
+        sharedCounter = new SharedCounter(
+            "test-counter",
+            new MockFluidDataStoreRuntime(),
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+            (SharedCounter.getFactory() as any).attributes,
+        );
     });
 
     afterEach(() => {
-        container!.dispose();
-        container = undefined;
-        client = undefined;
         sharedCounter = undefined;
     });
 
