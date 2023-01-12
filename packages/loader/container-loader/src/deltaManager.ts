@@ -843,7 +843,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             const clientSeqNumGap = message.clientSequenceNumber - this.lastClientSequenceNumber - 1;
             this.noOpCount -= clientSeqNumGap;
             if (this.noOpCount < 0) {
-                throw new Error(`gap in client sequence number :${clientSeqNumGap}`);
+                throw new Error(`gap in client sequence number: ${clientSeqNumGap}`);
             }
             this.lastClientSequenceNumber = message.clientSequenceNumber;
         }
