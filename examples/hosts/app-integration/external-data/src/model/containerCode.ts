@@ -20,7 +20,7 @@ const taskListId = "task-list";
 * fetching the new data. This is an enum as there may be more signals that need to be created.
 */
 const SignalType = {
-    ExternalDataChanged: "externalDataChange"
+    ExternalDataChanged: "ExternalDataChanged"
 };
 
 /**
@@ -64,7 +64,8 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
         runtime.on("signal", (message) => {
             console.log(`APP: ContainerCode.ts:received signal`);
             console.log(message);
-            if (message.type === SignalType.ExternalDataChanged) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            if ('content' in message && 'type' in message.content && message.content.type === SignalType.ExternalDataChanged) {
                 console.log(`APP: ContainerCode.ts: kick off importExternalData`);
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 taskList.importExternalData();
