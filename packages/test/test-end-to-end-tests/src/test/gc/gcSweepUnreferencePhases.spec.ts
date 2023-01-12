@@ -23,7 +23,7 @@ import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestS
 /**
  * Validates that an unreferenced datastore and blob goes through all the GC sweep phases without overlapping.
  */
-describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
+describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
     const inactiveTimeoutMs = 100;
     const sweepTimeoutMs = 200;
 
@@ -121,6 +121,7 @@ describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
         const summaryTree2 = (await summarizeNow(summarizer)).summaryTree;
         // GC state is a handle meaning it is the same as before, meaning nothing is tombstoned.
         assert(summaryTree2.tree[gcTreeKey].type === SummaryType.Handle, "GC tree should not have changed");
+        assert(await isDataStoreInSummaryTree(summaryTree2, dataStoreId), "Data Store should be in the summary!");
 
         // Wait sweep timeout
         await delay(sweepTimeoutMs);
@@ -136,7 +137,7 @@ describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
         assert(tombstoneState3 !== undefined, "Should have tombstone state");
         assert(tombstoneState3.includes(dataStoreHandle.absolutePath), "Datastore should be tombstoned");
         assert(tombstoneState3.includes(blobHandle.absolutePath), "Blob should be tombstoned");
+        // Summary check
         assert(!(await isDataStoreInSummaryTree(summaryTree3, dataStoreId)), "Data Store should not be in the summary!");
-
     });
 });
