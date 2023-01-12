@@ -4,10 +4,9 @@
         "src/test/**/*"
     ],
     "compilerOptions": {
-        "module": "esnext",
         "strictNullChecks": false,
         "rootDir": "./src",
-        "outDir": "lib",
+        "outDir": "./dist",
         "composite": true
     },
     "include": [
