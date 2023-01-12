@@ -33,13 +33,10 @@
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write .",
-    "start:tinylicious": "tinylicious",
-    "test": "npm run test:realsvc",
-    "test:coverage": "start-server-and-test start:tinylicious 7070 test:realsvc:coverage",
-    "test:realsvc": "start-server-and-test start:tinylicious 7070 test:realsvc:run",
-    "test:realsvc:coverage": "npm run test:realsvc:run:coverage",
-    "test:realsvc:run": "mocha dist/**/*.test.js --unhandled-rejections=strict --exit",
-    "test:realsvc:run:coverage": "nyc npm run mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+    "test": "npm run test:mocha",
+    "test:coverage": "npm run test:mocha:coverage",
+    "test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict --exit",
+    "test:mocha:coverage": "nyc npm run mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "tsc": "tsc"
   },
   "nyc": {
@@ -73,8 +70,8 @@
   "devDependencies": {
     "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/build-tools": "^0.7.0",
+    "@fluidframework/driver-definitions": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
     "@fluidframework/eslint-config-fluid": "^2.0.0",
-    "@fluidframework/fluid-static": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@types/chai": "^4.0.0",
@@ -91,7 +88,6 @@
     "rimraf": "^2.6.2",
     "start-server-and-test": "^1.11.7",
     "style-loader": "^1.0.0",
-    "tinylicious": "0.5.0",
     "typescript": "~4.5.5"
   }
 }
