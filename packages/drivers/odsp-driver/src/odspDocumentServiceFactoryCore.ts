@@ -90,6 +90,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 
         const createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
         const newFileInfo: INewFileInfo = {
+            type: 'New',
             driveId: odspResolvedUrl.driveId,
             siteUrl: odspResolvedUrl.siteUrl,
             filePath,

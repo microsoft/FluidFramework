@@ -17,6 +17,7 @@ import {
     isFluidError,
     isValidLegacyError,
 } from "./fluidErrorBase";
+import { ITaggedTelemetryPropertyTypeExt, TelemetryEventPropertyTypeExt } from "./telemetryTypes";
 
 /** @returns true if value is an object but neither null nor an array */
 const isRegularObject = (value: any): boolean => {
@@ -270,10 +271,12 @@ export function isExternalError(e: any): boolean {
 }
 
 /**
- * Type guard to identify if a particular value (loosely) appears to be a tagged telemetry property
+ * Type guard to identify if a particular telemetry property appears to be a tagged telemetry property
  */
-export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType {
-    return typeof (x?.tag) === "string";
+export function isTaggedTelemetryPropertyValue(
+    x: ITaggedTelemetryPropertyTypeExt | TelemetryEventPropertyTypeExt,
+): x is ITaggedTelemetryPropertyType | ITaggedTelemetryPropertyTypeExt {
+    return typeof ((x as any)?.tag) === "string";
 }
 
 /**
