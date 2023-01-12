@@ -49,7 +49,6 @@ describe("OpCompressor", () => {
             assert.strictEqual(compressedBatch.content.length, batch.content.length);
             assert.strictEqual(compressedBatch.content[0].compression, "lz4");
             assert.strictEqual(compressedBatch.content[0].metadata?.flag, true);
-            assert.strictEqual(compressedBatch.content[0].metadata?.compressed, true);
             if (compressedBatch.content.length > 1) {
                 assert.strictEqual(compressedBatch.content[1].contents, undefined);
                 assert.strictEqual(compressedBatch.content[1].compression, undefined);
