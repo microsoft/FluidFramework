@@ -11,32 +11,11 @@ import {
     IAudienceOwner,
     IContainer,
     IContainerEvents,
-    IDeltaManager,
-    IDeltaManagerEvents,
 } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import {
-    IClient,
-    IDocumentMessage,
-    ISequencedDocumentMessage,
-} from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
-/**
- * Mock {@link @fluidframework/container-definitions#IDeltaManager} for use in tests.
- */
-class MockDeltaManager
-    extends TypedEventEmitter<IDeltaManagerEvents>
-    implements
-        Partial<
-            Omit<IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, "on" | "off" | "once">
-        >
-{
-    public hasCheckpointSequenceNumber = true;
-    public lastKnownSeqNumber = 2;
-    public lastSequenceNumber = 1;
-}
 
 class MockAudience extends EventEmitter implements IAudienceOwner {
     private readonly audienceMembers: Map<string, IClient>;
@@ -91,12 +70,6 @@ class MockContainer
     extends TypedEventEmitter<IContainerEvents>
     implements Partial<Omit<IContainer, "on" | "off" | "once">>
 {
-    public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> =
-        new MockDeltaManager() as unknown as IDeltaManager<
-            ISequencedDocumentMessage,
-            IDocumentMessage
-        >;
-
     public readonly audience: IAudience = new MockAudience();
 
     private _connectionState: ConnectionState = ConnectionState.Disconnected;
@@ -104,15 +77,6 @@ class MockContainer
     public get connectionState(): ConnectionState {
         return this._connectionState;
     }
-
-    // public resolvedUrl?: IResolvedUrl | undefined;
-    // public attachState?: AttachState | undefined;
-    // public closed?: boolean | undefined = false;
-    // public isDirty?: boolean | undefined;
-    // public connected?: boolean | undefined;
-    // public clientId?: string | undefined;
-    // public readOnlyInfo?: ReadOnlyInfo | undefined;
-    // public IFluidRouter?: IFluidRouter | undefined;
 
     public connect(): void {
         this._connectionState = ConnectionState.Connected;
