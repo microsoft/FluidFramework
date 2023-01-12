@@ -30,7 +30,8 @@ import {
 } from "../../../core";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
-import { generateTwitterJsonByByteSize, TwitterStatus } from "./twitter";
+import { generateTwitterJsonByByteSize, Twitter } from "./twitter";
+import { CitmCatalog, generateCitmJson } from "./citm";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -171,13 +172,13 @@ function extractCoordinatesFromCanada(
     cursor: ITreeCursor,
     calculate: (x: number, y: number) => void,
 ): void {
-    cursor.enterField(Canada.FeatureKey);
+    cursor.enterField(Canada.SharedTreeFieldKey.features);
     cursor.enterNode(0);
     cursor.enterField(EmptyKey);
     cursor.enterNode(0);
-    cursor.enterField(Canada.GeometryKey);
+    cursor.enterField(Canada.SharedTreeFieldKey.geometry);
     cursor.enterNode(0);
-    cursor.enterField(Canada.CoordinatesKey);
+    cursor.enterField(Canada.SharedTreeFieldKey.coordinates);
     cursor.enterNode(0);
 
     cursor.enterField(EmptyKey);
@@ -218,18 +219,18 @@ function extractAvgValsFromTwitter(
     cursor: ITreeCursor,
     calculate: (x: number, y: number) => void,
 ): void {
-    cursor.enterField(TwitterStatus.statusesKey); // move from root to field
+    cursor.enterField(Twitter.SharedTreeFieldKey.statuses); // move from root to field
     cursor.enterNode(0); // move from field to node at 0 (which is an object of type array)
     cursor.enterField(EmptyKey); // enter the array field at the node,
 
     for (let result = cursor.firstNode(); result; result = cursor.nextNode()) {
-        cursor.enterField(TwitterStatus.retweetCountKey);
+        cursor.enterField(Twitter.SharedTreeFieldKey.retweetCount);
         cursor.enterNode(0);
         const retweetCount = cursor.value as number;
         cursor.exitNode();
         cursor.exitField();
 
-        cursor.enterField(TwitterStatus.favoriteCountKey);
+        cursor.enterField(Twitter.SharedTreeFieldKey.favoriteCount);
         cursor.enterNode(0);
         const favoriteCount = cursor.value;
         cursor.exitNode();
@@ -243,9 +244,47 @@ function extractAvgValsFromTwitter(
     cursor.exitField();
 }
 
+function extractAvgValsFromCitm(
+    cursor: ITreeCursor,
+    calculate: (x: number, y: number) => void,
+): void {
+    cursor.enterField(CitmCatalog.SharedTreeFieldKey.performances);
+    cursor.enterNode(0);
+    cursor.enterField(EmptyKey);
+
+    // iterate over each performance
+    for (
+        let performanceIterator = cursor.firstNode();
+        performanceIterator;
+        performanceIterator = cursor.nextNode()
+    ) {
+        cursor.enterField(CitmCatalog.SharedTreeFieldKey.seatCategories);
+        const numSeatCategories = cursor.getFieldLength();
+        cursor.exitField();
+
+        cursor.enterField(CitmCatalog.SharedTreeFieldKey.start);
+        cursor.enterNode(0);
+        const startTimeEpoch = cursor.value as number;
+        cursor.exitNode();
+        cursor.exitField();
+
+        calculate(numSeatCategories, startTimeEpoch);
+    }
+
+    // Reset the cursor state
+    cursor.exitField();
+    cursor.exitNode();
+    cursor.exitField();
+}
+
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
 const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
+// The original benchmark citm_catalog.json 500299 Bytes according to getSizeInBytes.
+const citm = isInPerformanceTestingMode
+    ? generateCitmJson(2, 2500000)
+    : generateCitmJson(1, 500299);
 describe("ITreeCursor", () => {
     bench([{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanada }]);
     bench([{ name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitter }]);
+    bench([{ name: "citm", getJson: () => citm, dataConsumer: extractAvgValsFromCitm }]);
 });

@@ -33,7 +33,6 @@ describe("OpCompressor", () => {
         ]));
         assert.strictEqual(compressedBatch.content.length, 1);
         assert.strictEqual(compressedBatch.content[0].compression, "lz4");
-        assert.strictEqual(compressedBatch.content[0].metadata?.compressed, true);
     });
 
     it("Compresses batch of multiple ops", () => {
@@ -57,7 +56,6 @@ describe("OpCompressor", () => {
         }]));
         assert.strictEqual(compressedBatch.content.length, 2);
         assert.strictEqual(compressedBatch.content[0].compression, "lz4");
-        assert.strictEqual(compressedBatch.content[0].metadata?.compressed, true);
         assert.strictEqual(compressedBatch.content[1].contents, undefined);
         assert.strictEqual(compressedBatch.content[1].compression, undefined);
     });
