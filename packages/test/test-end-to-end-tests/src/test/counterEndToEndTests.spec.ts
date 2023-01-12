@@ -91,7 +91,7 @@ describeFullCompat("SharedCounter", (getTestObjectProvider) => {
             verifyCounterValues(-13, -13, -13);
         });
 
-        it.only("fires incremented events in 3 containers correctly", async function() {
+        it("fires incremented events in 3 containers correctly", async function() {
             const incrementSteps: { incrementer: ISharedCounter; incrementAmount: number; }[] = [
                 { incrementer: sharedCounter3, incrementAmount: -1 },
                 { incrementer: sharedCounter1, incrementAmount: 3 },

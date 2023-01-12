@@ -640,7 +640,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @public
 	 */
 	public convertToStableNodeId(id: NodeId): StableNodeId {
-		return (this._idCompressor.tryDecompress(id) as StableNodeId) ?? fail('Node id is not known to this SharedTree');
+		return (
+			(this._idCompressor.tryDecompress(id) as StableNodeId) ?? fail('Node id is not known to this SharedTree')
+		);
 	}
 
 	/**
