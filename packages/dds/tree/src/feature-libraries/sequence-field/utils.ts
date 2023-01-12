@@ -493,6 +493,7 @@ interface DetachedNode {
  * It should be tested and made more efficient before production use.
  */
 export class DetachedNodeTracker {
+    // Maps the index for a node to its last characterization as a reattached node.
     private nodes: Map<number, DetachedNode> = new Map();
     private readonly equivalences: { old: DetachedNode; new: DetachedNode }[] = [];
 
