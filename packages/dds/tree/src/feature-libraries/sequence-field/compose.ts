@@ -492,7 +492,7 @@ export class ComposeQueue<T> {
                 if (areInverses) {
                     const baseMarkLength = getInputLength(baseMark);
                     const newMarkLength = getOutputLength(newMark);
-                    const baseIndex = this.baseIndex.get(baseRev);
+                    const baseIndex = this.baseIndex.getIndex(baseRev);
                     if (baseIndex === newMark.detachIndex) {
                         if (newMarkLength < baseMarkLength) {
                             baseMark = this.baseMarks.dequeueInput(newMarkLength);
@@ -530,9 +530,21 @@ export class ComposeQueue<T> {
                 } else {
                     const targetOffset = getOffsetAtRevision(newMark.lineage, baseRev);
                     if (targetOffset === undefined) {
-                        // The reattach is for a detach that occurred chronologically after the baseMark detach.
-                        // This later detach must therefore be present in the base changeset, we just haven't yet
-                        // iterated far enough to encounter it.
+                        // Let baseMark represent the detach of some content X and newMark represent a reattach of some
+                        // different content Y.
+                        // The fact that newMark's lineage does not include an entry the detach of X, despite being in the
+                        // gap where that detach is taking place, means that the detach of Y must have occurred
+                        // chronologically after the detach of content X by baseMark.
+                        // Since the set of changes being composed include both the detach for X (in the form of
+                        // baseMark) and the reattach for Y (in the form of newMark), then we know for sure that the
+                        // set of changes being composed must also include the detach for content Y that must have
+                        // occurred (chronologically) between them.
+                        // We also know that, during this iteration of compose, the detach for content Y will show up
+                        // in the base changeset because we're in the process of merging in its inverse.
+                        // If we had already encountered this base detach of content Y then we would have cancelled it
+                        // out with (or ordered it with respect to) newMark.
+                        // This later detach must therefore be present in the base changeset, and further to the right.
+                        // We'll keep returning all the base marks before that.
                         return {
                             baseMark: this.baseMarks.dequeue(),
                         };
@@ -540,7 +552,7 @@ export class ComposeQueue<T> {
                         // The reattach is for a detach that occurred chronologically before the baseMark detach.
                         // We rely on the lineage information to tell us where in relation to baseMark this earlier
                         // detach was.
-                        const currentOffset = this.baseGap.get(baseRev);
+                        const currentOffset = this.baseGap.getOffset(baseRev);
                         const remainingOffset = targetOffset - currentOffset;
                         assert(remainingOffset >= 0, "Overshot the target gap");
                         if (remainingOffset === 0) {
