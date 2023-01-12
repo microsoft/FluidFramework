@@ -33,10 +33,14 @@ export interface ContainerInfo {
     audience: ITinyliciousAudience;
 }
 
+function initializeTinyliciousClient(): TinyliciousClient {
+    console.log(`Initializing Tinylicious client on port ${process.env.PORT}...`);
+    return new TinyliciousClient();
+}
+
 /**
  * Creates a new Fluid Container from the provided client and container schema.
  *
- * @param client - The Tinylicious service client.
  * @param containerSchema - Schema with which to create the container.
  * @param setContentsPreAttach - Optional callback for setting initial content state on the
  * container *before* it is attached.
@@ -44,10 +48,12 @@ export interface ContainerInfo {
  * @throws If container creation or attaching fails for any reason.
  */
 export async function createFluidContainer(
-    client: TinyliciousClient,
     containerSchema: ContainerSchema,
     setContentsPreAttach?: (container: IFluidContainer) => Promise<void>,
 ): Promise<ContainerInfo> {
+    // Initialize Tinylicious client
+    const client = initializeTinyliciousClient();
+
     // Create the container
     console.log("Creating new container...");
     let createContainerResult: ContainerLoadResult;
@@ -92,10 +98,12 @@ export async function createFluidContainer(
  * @throws If no container exists with the specified ID, or if loading / connecting fails for any reason.
  */
 export async function loadExistingFluidContainer(
-    client: TinyliciousClient,
     containerId: string,
     containerSchema: ContainerSchema,
 ): Promise<ContainerInfo> {
+    // Initialize Tinylicious client
+    const client = initializeTinyliciousClient();
+
     console.log("Loading existing container...");
     let getContainerResult: ContainerLoadResult;
     try {

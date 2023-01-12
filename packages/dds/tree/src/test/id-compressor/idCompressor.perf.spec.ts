@@ -23,8 +23,9 @@ import {
     LocalCompressedId,
     OpSpaceCompressedId,
     SessionId,
+    fail,
+    Mutable,
 } from "../../id-compressor";
-import { fail, Mutable } from "../../util";
 import {
     Client,
     IdCompressorTestNetwork,
@@ -199,7 +200,7 @@ describe("IdCompressor Perf", () => {
 
     benchmark({
         type,
-        title: `takes a ID creation range'})`,
+        title: "takes a ID creation range",
         before: () => {
             setupCompressors(defaultClusterCapacity, true, false);
             perfCompressor = perfNetwork.getCompressorUnsafeNoProxy(localClient);

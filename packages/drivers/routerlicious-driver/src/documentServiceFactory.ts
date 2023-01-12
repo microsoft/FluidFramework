@@ -8,8 +8,10 @@ import {
     FiveDaysMs,
     IDocumentService,
     IDocumentServiceFactory,
+    IDocumentStorageServicePolicies,
     IFluidResolvedUrl,
     IResolvedUrl,
+    LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
@@ -30,6 +32,8 @@ import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl }
 import { ICache, InMemoryCache, NullCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ISnapshotTreeVersion } from "./definitions";
+
+const maximumSnapshotCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
@@ -56,8 +60,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         private readonly tokenProvider: ITokenProvider,
         driverPolicies: Partial<IRouterliciousDriverPolicies> = {},
     ) {
-        // 5 days is the max allowed value per the IDocumentStorageServicePolicies.maximumCacheDurationMs policy
-        const snapshotCacheExpiryMs: FiveDaysMs = 432000000;
+        // Use the maximum allowed by the policy (IDocumentStorageServicePolicies.maximumCacheDurationMs set below)
+        const snapshotCacheExpiryMs: FiveDaysMs = maximumSnapshotCacheDurationMs;
 
         this.driverPolicies = {
             ...defaultRouterliciousDriverPolicies,
@@ -262,6 +266,14 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 `All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
         }
 
+        const documentStorageServicePolicies: IDocumentStorageServicePolicies = {
+            caching: this.driverPolicies.enablePrefetch
+                ? LoaderCachingPolicy.Prefetch
+                : LoaderCachingPolicy.NoCaching,
+            minBlobSize: this.driverPolicies.aggregateBlobsSmallerThanBytes,
+            maximumCacheDurationMs: maximumSnapshotCacheDurationMs,
+        };
+
         return new DocumentService(
             fluidResolvedUrl,
             ordererUrl,
@@ -273,6 +285,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             tenantId,
             documentId,
             ordererRestWrapper,
+            documentStorageServicePolicies,
             this.driverPolicies,
             this.blobCache,
             this.snapshotTreeCache,

@@ -20,6 +20,7 @@ import {
 } from "@fluidframework/container-loader";
 import {
     DriverErrorType,
+    FiveDaysMs,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
 } from "@fluidframework/driver-definitions";
@@ -517,5 +518,17 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             container.connectionState, ConnectionState.Connected,
             "container is not connected after rapid disconnect() + connect()",
         );
+    });
+});
+
+describeNoCompat("Driver", (getTestObjectProvider) => {
+    it("Driver Storage Policy Values", async () => {
+        const provider = getTestObjectProvider();
+        const fiveDaysMs: FiveDaysMs = 432_000_000;
+
+        const expectedPolicyValue = provider.driver.type === "local" ? undefined : fiveDaysMs;
+
+        const container = await provider.makeTestContainer() as Container;
+        assert.equal(container.storage.policies?.maximumCacheDurationMs, expectedPolicyValue);
     });
 });

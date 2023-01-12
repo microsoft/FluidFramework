@@ -16,7 +16,8 @@ import {
     ISummarizeResults,
 } from "@fluidframework/container-runtime";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { readAndParse } from "@fluidframework/driver-utils";
+import { requestFluidObject, seqFromTree } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider,
     waitForContainerConnection,
     summarizeNow,
@@ -25,9 +26,9 @@ import { ITestObjectProvider,
 import { describeNoCompat, getContainerRuntimeApi } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { FetchSource, ISummaryContext } from "@fluidframework/driver-definitions";
+import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { SharedMatrix } from "@fluidframework/matrix";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree, ISummaryTree, IVersion } from "@fluidframework/protocol-definitions";
 import { pkgVersion } from "../packageVersion";
 
 // Note GC needs to be disabled.
@@ -121,11 +122,14 @@ describeNoCompat("Summarizer fetches expected number of times",
         return provider.createContainer(runtimeFactory, { logger: mockLogger });
     };
 
-    async function waitForSummary(summarizer: ISummarizer): Promise<string> {
+    async function waitForSummary(summarizer: ISummarizer) {
         // Wait for all pending ops to be processed by all clients.
         await provider.ensureSynchronized();
         const summaryResult = await summarizeNow(summarizer);
-        return summaryResult.summaryVersion;
+        return {
+            summaryVersion: summaryResult.summaryVersion,
+            summaryRefSeq: summaryResult.summaryRefSeq,
+        };
     }
 
     beforeEach(async () => {
@@ -153,37 +157,44 @@ describeNoCompat("Summarizer fetches expected number of times",
     }
 
     interface GetVersionWrap {
-        fetchCount: number;
-        summaryCount: number;
+        /** The reference sequence number of the submitted summary. */
+        summaryRefSeq: number;
+        /** The version number of the submitted summary. */
         summaryVersion: string | null;
+        /** Number of times snapshot is fetched from the server when submitting a summary. */
+        fetchCount: number;
+        /** The referenced sequence number of the last fetched snapshot when submitting a summary. */
+        fetchSnapshotRefSeq: number;
     }
 
     async function incrementCellValueAndRunSummary(summarizer: ISummarizer,
         expectedMatrixCellValue: number): Promise<GetVersionWrap> {
         let fetchCount: number = 0;
-        let summaryCount: number = 0;
+        let fetchSnapshotRefSeq = -1;
+        // let summaryCount: number = 0;
         const value = getAndIncrementCellValue(mainDataStore.matrix, 0, 0, "1");
         assert(value === expectedMatrixCellValue, "Value matches expected");
 
         const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
-        let getVersionsFunc = containerRuntime.storage.getVersions;
-        const getVersionsOverride = async (versionId: string | null,
-            count: number,
+        const readAndParseBlob = async <T>(id: string) => readAndParse<T>(containerRuntime.storage, id);
+        let getSnapshotTreeFunc = containerRuntime.storage.getSnapshotTree;
+        const getSnapshotTreeOverride = async (
+            version?: IVersion,
             scenarioName?: string,
-            fetchSource?: FetchSource,
-        ) => {
-            getVersionsFunc = getVersionsFunc.bind(containerRuntime.storage);
-            const response = await getVersionsFunc(versionId, count, scenarioName, fetchSource);
-            summaryCount = count;
+        ): Promise<ISnapshotTree | null> => {
+            getSnapshotTreeFunc = getSnapshotTreeFunc.bind(containerRuntime.storage);
+            const snapshotTree = await getSnapshotTreeFunc(version, scenarioName);
+            assert(snapshotTree !== null, "getSnapshotTree should did not return a tree");
+            fetchSnapshotRefSeq = await seqFromTree(snapshotTree, readAndParseBlob);
             fetchCount++;
-            return response;
-        };
-        containerRuntime.storage.getVersions = getVersionsOverride;
+            return snapshotTree;
+        }
+        containerRuntime.storage.getSnapshotTree = getSnapshotTreeOverride;
 
         // Generate first Summary and close the summarizer.
-        const summaryVersion = await waitForSummary(summarizer);
-        assert(summaryVersion, "Summary version should be defined");
-        return { fetchCount, summaryCount, summaryVersion };
+        const summaryResult = await waitForSummary(summarizer);
+        assert(summaryResult.summaryVersion, "Summary version should be defined");
+        return { fetchCount, fetchSnapshotRefSeq, ...summaryResult };
     }
 
     it("First Summary does not result in fetch", async () => {
@@ -223,13 +234,13 @@ describeNoCompat("Summarizer fetches expected number of times",
     });
 
     it("Second summarizer from latest should not fetch", async function() {
-
         const summarizer1 = await createSummarizer(provider, mainContainer);
 
-        let versionWrap = await incrementCellValueAndRunSummary(summarizer1, 1 /* expectedMatrixCellValue */);
-        assert(versionWrap.fetchCount === 0, "No fetch should have happened");
-        versionWrap = await incrementCellValueAndRunSummary(summarizer1, 2 /* expectedMatrixCellValue */);
-        assert(versionWrap.fetchCount === 0, "No fetch should have happened");
+        const versionWrap1 = await incrementCellValueAndRunSummary(summarizer1, 1 /* expectedMatrixCellValue */);
+        assert(versionWrap1.fetchCount === 0, "No fetch should have happened");
+
+        const versionWrap2 = await incrementCellValueAndRunSummary(summarizer1, 2 /* expectedMatrixCellValue */);
+        assert(versionWrap2.fetchCount === 0, "No fetch should have happened");
         await provider.ensureSynchronized();
         summarizer1.close();
 
@@ -237,44 +248,57 @@ describeNoCompat("Summarizer fetches expected number of times",
         assert(value === 3, "Value matches expected");
 
         const summarizer2 = await createSummarizer(provider, mainContainer);
-        versionWrap = await incrementCellValueAndRunSummary(summarizer2, 4 /* expectedMatrixCellValue */);
-        // Only ODSP driver uses cache
-        const isUsingCache = provider.driver.type === "odsp";
-        assert(versionWrap.fetchCount === (isUsingCache ? 1 : 0), "Fetch should have happened when using cache");
+        const versionWrap3 = await incrementCellValueAndRunSummary(summarizer2, 4 /* expectedMatrixCellValue */);
+        // Only ODSP driver uses snapshot cache due to which the summarizer would have loaded from an older summary.
+        if (provider.driver.type === "odsp") {
+            assert(versionWrap3.fetchCount === 1, "Fetch should have happened");
+            assert.strictEqual(
+                versionWrap3.fetchSnapshotRefSeq, versionWrap2.summaryRefSeq, "Fetch did not download latest snapshot");
+        } else {
+            assert(versionWrap3.fetchCount === 0, "Fetch should have happened");
+        }
 
-        versionWrap = await incrementCellValueAndRunSummary(summarizer2, 5 /* expectedMatrixCellValue */);
-        assert(versionWrap.fetchCount === 0, "No fetch should have happened");
+        const versionWrap4 = await incrementCellValueAndRunSummary(summarizer2, 5 /* expectedMatrixCellValue */);
+        assert(versionWrap4.fetchCount === 0, "No fetch should have happened");
         summarizer2.close();
     });
 
     it("Loading Summary from older version should fetch", async function() {
-
         const summarizerClient = await createSummarizer(provider, mainContainer);
-        let versionWrap = await incrementCellValueAndRunSummary(summarizerClient, 1 /* expectedMatrixCellValue */);
-        const summaryVersion = versionWrap.summaryVersion;
-        assert(versionWrap.fetchCount === 0, "No fetch should have happened");
-        assert(summaryVersion, "Summary version should be defined");
+        const versionWrap1 = await incrementCellValueAndRunSummary(summarizerClient, 1 /* expectedMatrixCellValue */);
+        assert(versionWrap1.fetchCount === 0, "No fetch should have happened");
+        assert(versionWrap1.summaryVersion, "Summary version should be defined");
         summarizerClient.close();
 
         // Add more summaries and we can have more recent ones.
         const secondSummarizer = await createSummarizer(provider, mainContainer);
-        versionWrap = await incrementCellValueAndRunSummary(secondSummarizer, 2 /* expectedMatrixCellValue */);
+        const versionWrap2 = await incrementCellValueAndRunSummary(secondSummarizer, 2 /* expectedMatrixCellValue */);
+        // Only ODSP driver uses snapshot cache due to which the summarizer would have loaded from an older summary.
+        if (provider.driver.type === "odsp") {
+            assert(versionWrap2.fetchCount === 1, "Fetch should have happened");
+            assert.strictEqual(
+                versionWrap2.fetchSnapshotRefSeq, versionWrap1.summaryRefSeq, "Fetch did not download latest snapshot");
+        } else {
+            assert(versionWrap2.fetchCount === 0, "Fetch should have happened");
+        }
 
-        // Only ODSP driver uses cache
-        const isUsingCache = provider.driver.type === "odsp";
-
-        assert(versionWrap.fetchCount === (isUsingCache ? 1 : 0), "Fetch should have happened when using cache");
-        versionWrap = await incrementCellValueAndRunSummary(secondSummarizer, 3 /* expectedMatrixCellValue */);
-        assert(versionWrap.fetchCount === 0, "No fetch should have happened");
+        const versionWrap3 = await incrementCellValueAndRunSummary(secondSummarizer, 3 /* expectedMatrixCellValue */);
+        assert(versionWrap3.fetchCount === 0, "No fetch should have happened");
         await provider.ensureSynchronized();
         secondSummarizer.close();
 
         // Load summarizer from previous version triggers fetch.
         const newSummarizerClient = await createSummarizer(provider, mainContainer);
-        versionWrap = await incrementCellValueAndRunSummary(newSummarizerClient, 4 /* expectedMatrixCellValue */);
-
-        assert(versionWrap.fetchCount === (isUsingCache ? 1 : 0), "Single fetch should have happened once");
-        assert(versionWrap.summaryVersion, "Summarizer should have happened");
+        const versionWrap4 = await incrementCellValueAndRunSummary(newSummarizerClient, 4 /* expectedMatrixCellValue */);
+        assert(versionWrap4.summaryVersion, "Summarizer should have happened");
+        // Only ODSP driver uses snapshot cache due to which the summarizer would have loaded from an older summary.
+        if (provider.driver.type === "odsp") {
+            assert(versionWrap4.fetchCount === 1, "Fetch should have happened");
+            assert.strictEqual(
+                versionWrap4.fetchSnapshotRefSeq, versionWrap3.summaryRefSeq, "Fetch did not download latest snapshot");
+        } else {
+            assert(versionWrap4.fetchCount === 0, "Fetch should have happened");
+        }
         newSummarizerClient.close();
      });
 
@@ -304,6 +328,7 @@ describeNoCompat("Summarizer fetches expected number of times",
         const secondSummarizer = await createSummarizer(provider, mainContainer);
         let versionWrap = await incrementCellValueAndRunSummary(secondSummarizer, 2 /* expectedMatrixCellValue */);
         assert(versionWrap.fetchCount === 0, "No fetch should have happened");
+
         versionWrap = await incrementCellValueAndRunSummary(secondSummarizer, 3 /* expectedMatrixCellValue */);
         assert(versionWrap.fetchCount === 0, "No fetch should have happened");
         await provider.ensureSynchronized();

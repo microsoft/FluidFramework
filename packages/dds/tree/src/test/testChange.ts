@@ -241,6 +241,22 @@ export class UnrebasableTestChangeRebaser extends TestChangeRebaser {
     }
 }
 
+export class ConstrainedTestChangeRebaser extends TestChangeRebaser {
+    public constructor(
+        private readonly constraint: (
+            change: TestChange,
+            over: TaggedChange<TestChange>,
+        ) => boolean,
+    ) {
+        super();
+    }
+
+    public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+        assert(this.constraint(change, over));
+        return super.rebase(change, over);
+    }
+}
+
 export class TestAnchorSet extends AnchorSet implements AnchorRebaseData {
     public rebases: RecursiveReadonly<NonEmptyTestChange>[] = [];
     public intentions: number[] = [];

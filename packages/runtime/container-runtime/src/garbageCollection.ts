@@ -50,15 +50,18 @@ import {
 import { IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
 import {
+    currentGCVersion,
     defaultInactiveTimeoutMs,
     defaultSessionExpiryDurationMs,
     disableSweepLogKey,
     disableTombstoneKey,
+    gcVersionUpgradeToV2Key,
     gcTestModeKey,
     oneDayMs,
     runGCKey,
     runSessionExpiryKey,
     runSweepKey,
+    stableGCVersion,
     throwOnTombstoneUsageKey,
     trackGCStateKey
 } from "./garbageCollectionConstants";
@@ -73,9 +76,6 @@ import {
     IGCMetadata,
     ICreateContainerMetadata,
 } from "./summaryFormat";
-
-/** This is the current version of garbage collection. */
-const GCVersion = 1;
 
 /** The statistics of the system state after a garbage collection run. */
 export interface IGCStats {
@@ -402,7 +402,7 @@ export class GarbageCollector implements IGarbageCollector {
     private initialStateNeedsReset: boolean = false;
 
     // The current GC version that this container is running.
-    private readonly currentGCVersion = GCVersion;
+    private readonly currentGCVersion: GCVersion;
     // This is the version of GC data in the latest summary being tracked.
     private latestSummaryGCVersion: GCVersion;
 
@@ -497,6 +497,10 @@ export class GarbageCollector implements IGarbageCollector {
         this.mc = loggerToMonitoringContext(ChildLogger.create(
             createParams.baseLogger, "GarbageCollector", { all: { completedGCRuns: () => this.completedRuns } },
         ));
+
+        // If version upgrade is not enabled, fall back to the stable GC version.
+        this.currentGCVersion =
+            this.mc.config.getBoolean(gcVersionUpgradeToV2Key) === true ? currentGCVersion : stableGCVersion;
 
         this.sweepReadyUsageHandler = new SweepReadyUsageDetectionHandler(
             createParams.getContainerDiagnosticId(),
@@ -1424,7 +1428,8 @@ export class GarbageCollector implements IGarbageCollector {
              * explicit routes to them.
              */
             currentOutboundRoutes.forEach((route) => {
-                if (this.runtime.getNodeType(route) === GCNodeType.DataStore
+                const nodeType = this.runtime.getNodeType(route);
+                if ((nodeType === GCNodeType.DataStore || nodeType === GCNodeType.Blob)
                     && !nodeId.startsWith(route)
                     && (!previousRoutes.includes(route) && !explicitRoutes.includes(route))) {
                     missingExplicitRoutes.push(route);
