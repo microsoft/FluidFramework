@@ -118,8 +118,8 @@ describe("Outbox", () => {
     };
 
     const batchedMessage = (message: BatchMessage, batchMarker: boolean | undefined = undefined) => batchMarker === undefined ?
-        { contents: message.contents, metadata: message.metadata } :
-        { contents: message.contents, metadata: { ...message.metadata, batch: batchMarker } };
+        { contents: message.contents, metadata: message.metadata, compression: undefined } :
+        { contents: message.contents, metadata: { ...message.metadata, batch: batchMarker }, compression: undefined };
 
     const addBatchMetadata = (messages: BatchMessage[]): BatchMessage[] => {
         if (messages.length > 1) {
