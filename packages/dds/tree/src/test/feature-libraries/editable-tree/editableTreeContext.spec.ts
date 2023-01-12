@@ -52,9 +52,9 @@ describe("editable-tree context", () => {
         const person1 = tree1.root as Person;
 
         let person2 = tree2.root as Person;
-        context2.attachAfterChangeHandler((context) => {
-            context.clear();
-            person2 = context.unwrappedRoot as Person;
+        context2.on("afterDelta", () => {
+            context2.clear();
+            person2 = tree2.root as Person;
         });
 
         // reify EditableTrees
@@ -78,8 +78,8 @@ describe("editable-tree context", () => {
         const ageField: FieldKey = brand("age");
         const [, [tree]] = await createSharedTrees(fullSchemaData, [personData]);
 
-        tree.context.attachAfterChangeHandler((context) => {
-            context.clear();
+        tree.context.on("afterDelta", () => {
+            tree.context.clear();
         });
 
         assert.doesNotThrow(() => {

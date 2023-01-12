@@ -51,7 +51,8 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
             undefined as any, // routeContext
             snapshot,
             () => this.getStorage(),
-            (blobId, localId) => this.sendBlobAttachOp(blobId, localId),
+            (localId: string, blobId?: string) => this.sendBlobAttachOp(localId, blobId),
+            () => undefined,
             () => undefined,
             this,
         );
@@ -89,8 +90,8 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
         } as unknown as IDocumentStorageService;
     }
 
-    public sendBlobAttachOp(blobId?: string, localId?: string) {
-        this.ops.push({ metadata: { blobId, localId } });
+    public sendBlobAttachOp(localId: string, blobId?: string) {
+        this.ops.push({ metadata: { localId, blobId } });
     }
 
     public async createBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
@@ -181,9 +182,9 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
         this.emit("disconnected");
     }
 
-    public async remoteUpload(blob: ArrayBufferLike, redirected = false) {
+    public async remoteUpload(blob: ArrayBufferLike) {
         const response = await this.storage.createBlob(blob);
-        const op = { metadata: { blobId: response.id, localId: redirected ? uuid() : undefined } };
+        const op = { metadata: { localId: uuid(), blobId: response.id } };
         this.blobManager.processBlobAttachOp(op as ISequencedDocumentMessage, false);
         return op;
     }
@@ -261,7 +262,7 @@ describe("BlobManager", () => {
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
-        assert.strictEqual(summaryData.redirectTable, undefined);
+        assert.strictEqual(summaryData.redirectTable.size, 1);
     });
 
     it("hasPendingBlobs", async () => {
@@ -276,7 +277,7 @@ describe("BlobManager", () => {
         assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 2);
-        assert.strictEqual(summaryData.redirectTable, undefined);
+        assert.strictEqual(summaryData.redirectTable.size, 2);
     });
 
     it("NoPendingBlobs count", async () => {
@@ -294,7 +295,7 @@ describe("BlobManager", () => {
         assert.strictEqual(count, 2);
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 3);
-        assert.strictEqual(summaryData.redirectTable, undefined);
+        assert.strictEqual(summaryData.redirectTable.size, 3);
     });
 
     it("detached snapshot", async () => {
@@ -414,7 +415,7 @@ describe("BlobManager", () => {
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
-        assert.strictEqual(summaryData.redirectTable.size, 4);
+        assert.strictEqual(summaryData.redirectTable.size, 6);
     });
 
     it("handles deduped IDs in detached", async () => {
@@ -452,7 +453,7 @@ describe("BlobManager", () => {
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
-        assert.strictEqual(summaryData.redirectTable.size, 2);
+        assert.strictEqual(summaryData.redirectTable.size, 4);
     });
 
     it("can load from summary", async () => {
@@ -471,12 +472,12 @@ describe("BlobManager", () => {
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
-        assert.strictEqual(summaryData.redirectTable.size, 2);
+        assert.strictEqual(summaryData.redirectTable.size, 3);
 
         const runtime2 = new MockRuntime(summaryData, true);
         const summaryData2 = validateSummary(runtime2);
         assert.strictEqual(summaryData2.ids.length, 1);
-        assert.strictEqual(summaryData2.redirectTable.size, 2);
+        assert.strictEqual(summaryData2.redirectTable.size, 3);
     });
 
     it("handles duplicate remote upload", async () => {
@@ -489,7 +490,7 @@ describe("BlobManager", () => {
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
-        assert.strictEqual(summaryData.redirectTable, undefined);
+        assert.strictEqual(summaryData.redirectTable.size, 2);
     });
 
     it("handles duplicate remote upload between upload and op", async () => {
@@ -503,7 +504,7 @@ describe("BlobManager", () => {
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
-        assert.strictEqual(summaryData.redirectTable, undefined);
+        assert.strictEqual(summaryData.redirectTable.size, 2);
     });
 
     it("handles duplicate remote upload with local ID", async () => {
@@ -512,7 +513,7 @@ describe("BlobManager", () => {
         await createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.processBlobs();
         await runtime.connect();
-        await runtime.remoteUpload(IsoBuffer.from("blob", "utf8"), true);
+        await runtime.remoteUpload(IsoBuffer.from("blob", "utf8"));
         await runtime.processAll();
 
         const summaryData = validateSummary(runtime);

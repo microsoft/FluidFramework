@@ -4,10 +4,15 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { ChangeEncoder, ChangeFamily } from "../change-family";
+import {
+    ChangeEncoder,
+    ChangeFamily,
+    ChangeRebaser,
+    TaggedChange,
+    AnchorSet,
+    Delta,
+} from "../core";
 import { ChangesetLocalId, IdAllocator } from "../feature-libraries";
-import { ChangeRebaser, TaggedChange } from "../rebase";
-import { AnchorSet, Delta } from "../tree";
 import { brand, JsonCompatible, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
 import { deepFreeze } from "./utils";
 
@@ -233,6 +238,22 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 export class UnrebasableTestChangeRebaser extends TestChangeRebaser {
     public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
         assert.fail("Unexpected call to rebase");
+    }
+}
+
+export class ConstrainedTestChangeRebaser extends TestChangeRebaser {
+    public constructor(
+        private readonly constraint: (
+            change: TestChange,
+            over: TaggedChange<TestChange>,
+        ) => boolean,
+    ) {
+        super();
+    }
+
+    public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+        assert(this.constraint(change, over));
+        return super.rebase(change, over);
     }
 }
 

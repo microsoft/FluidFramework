@@ -79,6 +79,7 @@
     "@fluidframework/runtime-utils": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
     "@fluidframework/telemetry-utils": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
     "double-ended-queue": "^2.1.0-0",
+    "events": "^3.1.0",
     "lz4js": "^0.2.0",
     "uuid": "^8.3.1"
   },
@@ -123,6 +124,9 @@
       "RemovedVariableDeclaration_gcTreeKey": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "ClassDeclaration_ContainerRuntime": {
+        "forwardCompat": false
       }
     }
   }
