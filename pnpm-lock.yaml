@@ -4590,6 +4590,7 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.2
       eslint: ~8.6.0
+      events: ^3.1.0
       prettier: ~2.6.2
       rimraf: ^2.6.2
       typescript: ~4.5.5
@@ -4600,6 +4601,7 @@ importers:
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/map': link:../../../packages/dds/map
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
+      events: 3.3.0
     devDependencies:
       '@fluid-tools/build-cli': 0.7.0
       '@fluidframework/build-common': 1.1.0
@@ -4783,6 +4785,7 @@ importers:
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
+      events: ^3.1.0
       prettier: ~2.6.2
       rimraf: ^2.6.2
       typescript: ~4.5.5
@@ -4791,6 +4794,7 @@ importers:
       '@fluidframework/core-interfaces': link:../core-interfaces
       '@fluidframework/driver-definitions': link:../driver-definitions
       '@fluidframework/protocol-definitions': 1.1.0
+      events: 3.3.0
     devDependencies:
       '@fluid-tools/build-cli': 0.7.0
       '@fluidframework/build-common': 1.1.0
@@ -6166,6 +6170,7 @@ importers:
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
+      events: ^3.1.0
       mocha: ^10.0.0
       nock: ^10.0.1
       prettier: ~2.6.2
@@ -6180,6 +6185,7 @@ importers:
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       comlink: 4.3.1
+      events: 3.3.0
     devDependencies:
       '@fluid-tools/build-cli': 0.7.0
       '@fluidframework/build-common': 1.1.0
