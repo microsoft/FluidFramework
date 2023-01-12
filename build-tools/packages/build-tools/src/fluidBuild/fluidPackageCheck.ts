@@ -152,10 +152,20 @@ export class FluidPackageCheck {
 
         if (expected !== actual) {
             if (name === "lint" || name === "lint:fix") {
-                const lintRegex = /npm run (\w+)(?::fix)?/g;
+                /* Regular Expression
+                    lintRegex is a regex to extract expected lint-packages from the expected string value
+
+                    if expected = "npm run foo && npm run bar && npm run baz-qux:fix"
+                    lintPackages = ["foo", "bar", "baz-qux"]
+
+                    `/run (.*?)(?= &&|:|$)/g` : matches text between "run" and ("&&" or ":")
+                    `map` : extract the text from lintMatch by replacing `run` and `\s` with ""
+                */
+
+                const lintRegex = /run (.*?)(?= &&|:|$)/g;
                 const lintMatch = expected?.match(lintRegex);
 
-                const lintPackages = lintMatch?.map((e) => e.replace(/npm run |:fix/g, ""));
+                const lintPackages = lintMatch?.map((e) => e.replace(/run |\s/g, ""));
 
                 this.logWarn(pkg, `${name} should contain: ${lintPackages}`, fix);
             } else {
@@ -522,10 +532,10 @@ export class FluidPackageCheck {
                 const lintChildren = lintMatch?.map((e) => e.replace(/npm run |:fix/g, ""));
 
                 if (lintChildren !== undefined) {
-                    const hasEslint = lintChildren.some((e) => /eslint/.test(e)); // regex to check if "eslint" exists
+                    const hasEslint = lintChildren.some((e) => /eslint/.test(e));
 
                     if (!hasEslint) {
-                        lintChildren?.push("eslint"); // push "eslint" to lintChildren as expected package
+                        lintChildren?.push("eslint");
                     }
                 }
 
