@@ -28,7 +28,9 @@ export class BasicChunk extends ReferenceCountedBase implements TreeChunk {
      * Create a tree chunk with ref count 1.
      *
      * @param fields - provides exclusive deep ownership of this map to this object (which might mutate it in the future).
-     * @param value - describes the semantics and layout of `values`.
+     * The caller must have already accounted for this reference to the children in this map (via `referenceAdded`),
+     * and any edits to this must update child reference counts.
+     * @param value - the value on this node, if any.
      */
     public constructor(
         public type: TreeSchemaIdentifier,
@@ -39,11 +41,27 @@ export class BasicChunk extends ReferenceCountedBase implements TreeChunk {
     }
 
     public clone(): BasicChunk {
-        return new BasicChunk(this.type, this.fields, this.value);
+        const fields = new Map<FieldKey, TreeChunk[]>();
+        for (const [k, v] of this.fields) {
+            const field = v.map((child) => {
+                child.referenceAdded();
+                return child;
+            });
+            fields.set(k, field);
+        }
+        return new BasicChunk(this.type, fields, this.value);
     }
 
     public cursor(): ChunkedCursor {
         return new BasicChunkCursor([], [], [], [], [this], 0, 0, 0);
+    }
+
+    protected dispose(): void {
+        for (const v of this.fields.values()) {
+            for (const child of v) {
+                child.referenceRemoved();
+            }
+        }
     }
 }
 

@@ -62,6 +62,8 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
     public cursor(): Cursor {
         return new Cursor(this);
     }
+
+    protected dispose(): void {}
 }
 
 export const dummyRoot: GlobalFieldKeySymbol = symbolFromKey(

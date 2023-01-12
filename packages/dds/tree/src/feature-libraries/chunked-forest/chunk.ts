@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { assert } from "@fluidframework/common-utils";
 import {
     GlobalFieldKeySymbol,
@@ -28,7 +33,7 @@ export interface TreeChunk extends ReferenceCounted {
 /**
  * Base class to assist with implementing ReferenceCounted
  */
-export class ReferenceCountedBase implements ReferenceCounted {
+export abstract class ReferenceCountedBase implements ReferenceCounted {
     private refCount: number = 1;
 
     public referenceAdded(): void {
@@ -38,11 +43,19 @@ export class ReferenceCountedBase implements ReferenceCounted {
     public referenceRemoved(): void {
         this.refCount--;
         assert(this.refCount >= 0, "Negative ref count");
+        if (this.refCount === 0) {
+            this.dispose();
+        }
     }
 
     public isShared(): boolean {
         return this.refCount > 1;
     }
+
+    /**
+     * Called when refcount reaches 0.
+     */
+    protected abstract dispose(): void;
 }
 
 export const dummyRoot: GlobalFieldKeySymbol = symbolFromKey(
