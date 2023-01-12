@@ -25,7 +25,7 @@ export class OpDecompressor {
     public processMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
         assert(
             message.compression === undefined || message.compression === CompressionAlgorithms.lz4,
-            "We only support lz4 compression");
+            "Only lz4 compression is supported");
 
         if (message.metadata?.batch === true && message.compression === CompressionAlgorithms.lz4) {
             // Beginning of a compressed batch
