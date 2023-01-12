@@ -72,10 +72,7 @@ describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
         const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
         await waitForContainerConnection(mainContainer);
 
-        const {
-            container: summarizingContainer,
-            summarizer,
-        } = await loadSummarizerAndContainer();
+        const { summarizer } = await loadSummarizerAndContainer();
 
         // create datastore and blob
         const dataStore = await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);

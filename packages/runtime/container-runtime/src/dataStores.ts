@@ -652,7 +652,11 @@ export class DataStores implements IDisposable {
                 continue;
             }
             const dataStoreId = pathParts[1];
-            assert(this.contexts.has(dataStoreId), 0x2d7 /* No data store with specified id */);
+
+            // Datastores should not be deleted twice if they are already deleted.
+            if (!this.contexts.has(dataStoreId)) {
+                continue;
+            }
             // Delete the contexts of unused data stores.
             this.contexts.delete(dataStoreId);
             // Delete the summarizer node of the unused data stores.

@@ -2210,6 +2210,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
+     * This is called to update datastores that are to be swept.
+     * @param tombstonedRoutes - Data store and attachment blob routes that are tombstones in this Container.
+     */
+    public sweepDataStores(tombstonedRoutes: string[]) {
+        const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(tombstonedRoutes);
+        this.dataStores.updateTombstonedRoutes(dataStoreRoutes);
+        this.dataStores.updateUnusedRoutes(dataStoreRoutes);
+    }
+
+    /**
      * Returns a server generated referenced timestamp to be used to track unreferenced nodes by GC.
      */
     public getCurrentReferenceTimestampMs(): number | undefined {

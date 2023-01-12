@@ -107,11 +107,12 @@ describe("Garbage Collection Tests", () => {
 
         // The runtime to be passed to the garbage collector.
         const gcRuntime: IGarbageCollectionRuntime = {
-            updateStateBeforeGC: async () => {},
+            updateStateBeforeGC: async () => { },
             getGCData: async (fullGC?: boolean) => defaultGCData,
             updateUsedRoutes: (usedRoutes: string[]) => { return { totalNodeCount: 0, unusedNodeCount: 0 }; },
-            updateUnusedRoutes: (unusedRoutes: string[]) => {},
-            updateTombstonedRoutes: (tombstoneRoutes: string[]) => {},
+            updateUnusedRoutes: (unusedRoutes: string[]) => { },
+            updateTombstonedRoutes: (tombstoneRoutes: string[]) => { },
+            sweepDataStores: (tombstones: string[]) => { },
             getNodeType,
             getCurrentReferenceTimestampMs: () => Date.now(),
             closeFn,
