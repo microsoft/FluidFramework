@@ -5718,7 +5718,6 @@ importers:
 
   packages/dds/task-manager:
     specifiers:
-      '@fluid-experimental/task-manager-previous': npm:@fluid-experimental/task-manager@2.0.0-internal.2.1.0
       '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
       '@fluid-internal/test-dds-utils': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
       '@fluid-tools/build-cli': ^0.7.0
@@ -5736,6 +5735,7 @@ importers:
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
       '@fluidframework/shared-object-base': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/task-manager-previous': npm:@fluidframework/task-manager@2.0.0-internal.2.2.0
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
@@ -5765,7 +5765,6 @@ importers:
       '@fluidframework/shared-object-base': link:../shared-object-base
       events: 3.3.0
     devDependencies:
-      '@fluid-experimental/task-manager-previous': /@fluid-experimental/task-manager/2.0.0-internal.2.1.0
       '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-internal/test-dds-utils': link:../test-dds-utils
       '@fluid-tools/build-cli': 0.7.0
@@ -5773,6 +5772,7 @@ importers:
       '@fluidframework/build-tools': 0.7.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
+      '@fluidframework/task-manager-previous': /@fluidframework/task-manager/2.0.0-internal.2.2.0
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.22.2
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
@@ -13651,24 +13651,6 @@ packages:
       - supports-color
     dev: true
 
-  /@fluid-experimental/task-manager/2.0.0-internal.2.1.0:
-    resolution: {integrity: sha512-cBlR9htG2w9xz7ujfbs5tWTLOGBY07bWzNLVhxpdq0ZSMC6GHnBSO+g2lmGaQAgLxkA6awNsFq8omDDyMkhGMg==}
-    dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.0.0
-      '@fluidframework/container-definitions': 2.0.0-internal.2.2.0
-      '@fluidframework/container-runtime-definitions': 2.0.0-internal.2.2.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.2.2.0
-      '@fluidframework/datastore-definitions': 2.0.0-internal.2.2.0
-      '@fluidframework/driver-utils': 2.0.0-internal.2.2.0
-      '@fluidframework/protocol-definitions': 1.1.0
-      '@fluidframework/runtime-definitions': 2.0.0-internal.2.2.0
-      '@fluidframework/shared-object-base': 2.0.0-internal.2.2.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-    dev: true
-
   /@fluid-tools/benchmark/0.45.112032:
     resolution: {integrity: sha512-mCZgefqxqEWiWNRb9SpUDb2xW+vt/tjx5wLAMG1fOPTEUSMMBwT/baIuDF9EURYq8MbysWLfZsuw5cE7zFYxMg==}
     dependencies:
@@ -15298,6 +15280,24 @@ packages:
 
   /@fluidframework/synthesize/2.0.0-internal.2.2.0:
     resolution: {integrity: sha512-Z1PdSOr9PrpcU8tCG+INGzS5RFMoe9sO+IrGgACJ1tFDpja29gs3su9JfIWcgnDIAtL2lbP/i8ezxBGDbJZPxQ==}
+    dev: true
+
+  /@fluidframework/task-manager/2.0.0-internal.2.2.0:
+    resolution: {integrity: sha512-/Drvtblg00+OH7y8hyFeQKu76UYBG1/07Yf+b7R/hiESplSk/0XIQ2kRxK/vXyelwFUT7PUowgPI3ytLCHFLrQ==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 1.0.0
+      '@fluidframework/container-definitions': 2.0.0-internal.2.2.0
+      '@fluidframework/container-runtime-definitions': 2.0.0-internal.2.2.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.2.2.0
+      '@fluidframework/datastore-definitions': 2.0.0-internal.2.2.0
+      '@fluidframework/driver-utils': 2.0.0-internal.2.2.0
+      '@fluidframework/protocol-definitions': 1.1.0
+      '@fluidframework/runtime-definitions': 2.0.0-internal.2.2.0
+      '@fluidframework/shared-object-base': 2.0.0-internal.2.2.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
     dev: true
 
   /@fluidframework/telemetry-utils/2.0.0-internal.2.2.0:
