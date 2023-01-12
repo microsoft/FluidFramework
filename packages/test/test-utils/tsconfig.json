@@ -6,9 +6,9 @@
     "compilerOptions": {
         "rootDir": "./src",
         "outDir": "./dist",
+        "types": ["node"],
         "composite": true
     },
-    "types": ["node"],
     "include": [
         "src/**/*"
     ]
