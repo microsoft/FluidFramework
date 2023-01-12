@@ -151,9 +151,18 @@ export class FluidPackageCheck {
         const actual = pkg.getScript(name);
 
         if (expected !== actual) {
-            this.logWarn(pkg, `non-conformant script "${name}"`, fix);
-            this.logWarn(pkg, `  expect: ${expected}`, fix);
-            this.logWarn(pkg, `  actual: ${actual}`, fix);
+            if (name === "lint" || name === "lint:fix") {
+                const lintRegex = /npm run (\w+)(?::fix)?/g;
+                const lintMatch = expected?.match(lintRegex);
+
+                const lintPackages = lintMatch?.map((e) => e.replace(/npm run |:fix/g, ""));
+
+                this.logWarn(pkg, `${name} should contain: ${lintPackages}`, fix);
+            } else {
+                this.logWarn(pkg, `non-conformant script "${name}"`, fix);
+                this.logWarn(pkg, `  expect: ${expected}`, fix);
+                this.logWarn(pkg, `  actual: ${actual}`, fix);
+            }
             if (fix) {
                 pkg.packageJson.scripts[name] = expected;
                 fixed = true;
@@ -489,18 +498,31 @@ export class FluidPackageCheck {
     private static checkLintScripts(pkg: Package, fix: boolean) {
         let fixed = false;
         if (pkg.getScript("build")) {
-            // hasPrettier commented out to discard build warnings from "lint" & "lint:fix" scripts
+            // TODO: add prettier check comment once prettier is enforced globally, hasPrettier commented out to discard build warnings from "lint" & "lint:fix" scripts
             // const hasPrettier = pkg.getScript("prettier");
 
-            // npm run lint
-            const lintScript = pkg.getScript("lint"); // acess lint-script
-            const lintPackages = lintScript?.match(/run\s*([^&]*)\s*/g); // regex to create a list of ["run foo", "run bar"]
+            const lintScript = pkg.getScript("lint");
+            const lintFixScript = pkg.getScript("lint:fix");
 
-            if (lintPackages !== null) {
-                const lintChildren = lintPackages?.map((x) => x.trim().split(" ")[1]); // regex to create a list of ["foo", "bar"]
+            /* Regular Expression
+                lintRegex is a regex to extract lint-package name from lintScript & lintFixScript
+
+                if lintScript:
+                    -> lintMatch = ["npm run foo", "npm run bar"]
+                    -> lintChildren = ["foo", "bar"]
+                else:
+                    -> lintFixMatch = ["npm run foo:fix", "npm run bar:fix"]
+                    -> lintFixChildren = ["foo", "bar"]
+            */
+            const lintRegex = /npm run (\w+)(?::fix)?/g;
+
+            // Check "lint"
+            if (lintScript) {
+                const lintMatch = lintScript?.match(lintRegex);
+                const lintChildren = lintMatch?.map((e) => e.replace(/npm run |:fix/g, ""));
 
                 if (lintChildren !== undefined) {
-                    const hasEslint = lintChildren.some((elem) => /eslint/.test(elem)); // regex to check if "eslint" exists
+                    const hasEslint = lintChildren.some((e) => /eslint/.test(e)); // regex to check if "eslint" exists
 
                     if (!hasEslint) {
                         lintChildren?.push("eslint"); // push "eslint" to lintChildren as expected package
@@ -512,15 +534,13 @@ export class FluidPackageCheck {
                 }
             }
 
-            // "npm run lint:fix"
-            const lintFixScript = pkg.getScript("lint:fix");
-            const lintFixPackages = lintFixScript?.match(/run\s*([^&]*)\s*/g);
-
-            if (lintFixPackages !== null) {
-                const lintFixChildren = lintFixPackages?.map((x) => x.trim().split(" ")[1]);
+            // Check "lint:fix"
+            if (lintFixScript) {
+                const lintFixMatch = lintFixScript?.match(lintRegex);
+                const lintFixChildren = lintFixMatch?.map((e) => e.replace(/npm run |:fix/g, ""));
 
                 if (lintFixChildren !== undefined) {
-                    const hasEslint = lintFixChildren.some((elem) => /eslint:fix/.test(elem));
+                    const hasEslint = lintFixChildren.some((e) => /eslint/.test(e));
 
                     if (!hasEslint) {
                         lintFixChildren?.push("eslint");
