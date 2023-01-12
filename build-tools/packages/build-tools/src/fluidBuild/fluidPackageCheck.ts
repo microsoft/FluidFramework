@@ -561,7 +561,7 @@ export class FluidPackageCheck {
                     this.checkChildrenScripts(
                         pkg,
                         "lint:fix",
-                        lintFixChildren?.map((value) => `${value}:fix`),
+                        lintFixChildren?.map((e) => `${e}:fix`),
                         false,
                         fix,
                     )
