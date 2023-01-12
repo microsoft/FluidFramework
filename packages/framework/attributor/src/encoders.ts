@@ -42,12 +42,9 @@ export const deltaEncoder: TimestampEncoder = {
 
 export type IAttributorSerializer = Encoder<IAttributor, SerializedAttributor>;
 
-/**
- * @internal
- */
 export interface SerializedAttributor {
 	interner: readonly string[]; /* result of calling getSerializable() on a StringInterner */
-	keys: number[];
+	seqs: number[];
 	timestamps: number[];
 	attributionRefs: InternedStringId[];
 }
@@ -60,11 +57,11 @@ export class AttributorSerializer implements IAttributorSerializer {
 
 	public encode(attributor: IAttributor): SerializedAttributor {
 		const interner = new MutableStringInterner();
-		const keys: number[] = [];
+		const seqs: number[] = [];
 		const timestamps: number[] = [];
 		const attributionRefs: InternedStringId[] = [];
-		for (const [key, { user, timestamp }] of attributor.entries()) {
-			keys.push(key);
+		for (const [seq, { user, timestamp }] of attributor.entries()) {
+			seqs.push(seq);
 			timestamps.push(timestamp);
 			const ref = interner.getOrCreateInternedId(JSON.stringify(user));
 			attributionRefs.push(ref);
@@ -72,7 +69,7 @@ export class AttributorSerializer implements IAttributorSerializer {
 
 		const serialized: SerializedAttributor = {
 			interner: interner.getSerializable(),
-			keys,
+			seqs,
 			timestamps: this.timestampEncoder.encode(timestamps),
 			attributionRefs,
 		};
@@ -82,13 +79,13 @@ export class AttributorSerializer implements IAttributorSerializer {
 
 	public decode(encoded: SerializedAttributor): IAttributor {
 		const interner = new MutableStringInterner(encoded.interner);
-		const { keys, timestamps: encodedTimestamps, attributionRefs } = encoded;
+		const { seqs, timestamps: encodedTimestamps, attributionRefs } = encoded;
 		const timestamps = this.timestampEncoder.decode(encodedTimestamps);
-		assert(keys.length === timestamps.length && timestamps.length === attributionRefs.length,
+		assert(seqs.length === timestamps.length && timestamps.length === attributionRefs.length,
 			0x4b1 /* serialized attribution columns should have the same length */);
-		const entries = new Array(keys.length);
-		for (let i = 0; i < keys.length; i++) {
-			const key = keys[i];
+		const entries = new Array(seqs.length);
+		for (let i = 0; i < seqs.length; i++) {
+			const key = seqs[i];
 			const timestamp = timestamps[i];
 			const ref = attributionRefs[i];
 			const user: IUser = JSON.parse(interner.getString(ref));

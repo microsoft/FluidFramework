@@ -9,6 +9,14 @@ import type {
     IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 
+/*
+ * For this demo, the two "packages" are imported from the local directory.  In a more realistic scenario, these are
+ * probably either:
+ * 1. Installed from some published location but still statically bundled, maybe something like this in package.json:
+ *        "inventory-list-1": "npm:inventory-list@^1.0.0"
+ *        "inventory-list-2": "npm:inventory-list@^2.0.0"
+ * 2. Dynamically fetched from some CDN at runtime and not included as part of the bundle at all.
+ */
 import {
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1,
 } from "./modelVersion1";

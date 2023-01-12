@@ -14,6 +14,16 @@
                 "min": 0,
                 "max": 150000
             },
+            "offline": {
+                "delayMs": {
+                    "min": 0,
+                    "max": 150000
+                },
+                "durationMs": {
+                    "min": 5000,
+                    "max": 15000
+                }
+            },
             "optionOverrides":{
                 "odsp":{
                     "configurations":{
@@ -114,6 +124,16 @@
                 "min": 0,
                 "max": 10000
             },
+            "offline": {
+                "delayMs": {
+                    "min": 0,
+                    "max": 150000
+                },
+                "durationMs": {
+                    "min": 5000,
+                    "max": 15000
+                }
+            },
             "totalBlobCount": 300,
             "blobSize": 10240,
             "detachedBlobCount": 0
@@ -153,16 +173,17 @@
             "numClients":  10,
             "totalSendCount":  70000,
             "readWriteCycleMs":  30000,
-            "faultInjectionMinMs":  900000,
-            "faultInjectionMaxMs":  1800000,
+            "faultInjectionMs": {
+                "min": 900000,
+                "max": 1800000
+            },
             "optionOverrides":{
               "odsp":{
                   "configurations":{
                       "Fluid.Container.summarizeProtocolTree": [true]
                   }
               }
-
-          },
+            },
             "opsSendType":  "allClientsConcurrentReadWrite"
         }
     }

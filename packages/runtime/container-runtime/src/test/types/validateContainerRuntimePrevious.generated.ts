@@ -95,6 +95,7 @@ declare function get_old_ClassDeclaration_ContainerRuntime():
 declare function use_current_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<current.ContainerRuntime>);
 use_current_ClassDeclaration_ContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -208,74 +209,38 @@ use_old_ClassDeclaration_FluidDataStoreRegistry(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcBlobPrefix": {"forwardCompat": false}
+* "RemovedVariableDeclaration_gcBlobPrefix": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_gcBlobPrefix():
-    TypeOnly<typeof old.gcBlobPrefix>;
-declare function use_current_VariableDeclaration_gcBlobPrefix(
-    use: TypeOnly<typeof current.gcBlobPrefix>);
-use_current_VariableDeclaration_gcBlobPrefix(
-    get_old_VariableDeclaration_gcBlobPrefix());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcBlobPrefix": {"backCompat": false}
+* "RemovedVariableDeclaration_gcBlobPrefix": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_gcBlobPrefix():
-    TypeOnly<typeof current.gcBlobPrefix>;
-declare function use_old_VariableDeclaration_gcBlobPrefix(
-    use: TypeOnly<typeof old.gcBlobPrefix>);
-use_old_VariableDeclaration_gcBlobPrefix(
-    get_current_VariableDeclaration_gcBlobPrefix());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcTombstoneBlobKey": {"forwardCompat": false}
+* "RemovedVariableDeclaration_gcTombstoneBlobKey": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_gcTombstoneBlobKey():
-    TypeOnly<typeof old.gcTombstoneBlobKey>;
-declare function use_current_VariableDeclaration_gcTombstoneBlobKey(
-    use: TypeOnly<typeof current.gcTombstoneBlobKey>);
-use_current_VariableDeclaration_gcTombstoneBlobKey(
-    get_old_VariableDeclaration_gcTombstoneBlobKey());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcTombstoneBlobKey": {"backCompat": false}
+* "RemovedVariableDeclaration_gcTombstoneBlobKey": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_gcTombstoneBlobKey():
-    TypeOnly<typeof current.gcTombstoneBlobKey>;
-declare function use_old_VariableDeclaration_gcTombstoneBlobKey(
-    use: TypeOnly<typeof old.gcTombstoneBlobKey>);
-use_old_VariableDeclaration_gcTombstoneBlobKey(
-    get_current_VariableDeclaration_gcTombstoneBlobKey());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcTreeKey": {"forwardCompat": false}
+* "RemovedVariableDeclaration_gcTreeKey": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_gcTreeKey():
-    TypeOnly<typeof old.gcTreeKey>;
-declare function use_current_VariableDeclaration_gcTreeKey(
-    use: TypeOnly<typeof current.gcTreeKey>);
-use_current_VariableDeclaration_gcTreeKey(
-    get_old_VariableDeclaration_gcTreeKey());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcTreeKey": {"backCompat": false}
+* "RemovedVariableDeclaration_gcTreeKey": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_gcTreeKey():
-    TypeOnly<typeof current.gcTreeKey>;
-declare function use_old_VariableDeclaration_gcTreeKey(
-    use: TypeOnly<typeof old.gcTreeKey>);
-use_old_VariableDeclaration_gcTreeKey(
-    get_current_VariableDeclaration_gcTreeKey());
 
 /*
 * Validate forward compat by using old type in place of current type

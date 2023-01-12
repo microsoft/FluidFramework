@@ -5,8 +5,13 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { SchemaDataAndPolicy } from "../../../schema-stored";
-import { FieldKey, genericTreeKeys, getGenericTreeField, JsonableTree } from "../../../tree";
+import {
+    SchemaDataAndPolicy,
+    FieldKey,
+    genericTreeKeys,
+    getGenericTreeField,
+    JsonableTree,
+} from "../../../core";
 import { fail, brand } from "../../../util";
 import {
     UnwrappedEditableField,
@@ -102,7 +107,7 @@ export function expectTreeSequence(
     assert(Array.isArray(expected));
     assert.equal(field.length, expected.length);
     for (let index = 0; index < field.length; index++) {
-        expectTreeEquals(schemaData, field[index], expected[index]);
+        expectTreeEquals(schemaData, field[index] as UnwrappedEditableField, expected[index]);
     }
 }
 

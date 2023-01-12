@@ -24,7 +24,8 @@ const versionWithChunking = "0.56.0";
 describeInstallVersions(
     {
         requestAbsoluteVersions: [versionWithChunking],
-    }
+    },
+    /* timeoutMs */ 50000,
 )(
     "Legacy chunking",
     (getTestObjectProvider) => {
@@ -37,7 +38,6 @@ describeInstallVersions(
         afterEach(async () => provider.reset());
 
         const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             runtime.IFluidHandleContext.resolveHandle(request);
         const mapId = "map";
         const registry: ChannelFactoryRegistry = [

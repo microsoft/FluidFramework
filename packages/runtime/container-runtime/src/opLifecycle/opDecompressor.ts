@@ -7,6 +7,7 @@ import { decompress } from "lz4js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { CompressionAlgorithms } from "../containerRuntime";
+import { IMessageProcessingResult } from "./definitions";
 
 /**
  * State machine that "unrolls" contents of compressed batches of ops after decompressing them.
@@ -21,13 +22,12 @@ export class OpDecompressor {
     private rootMessageContents: any | undefined;
     private processedCount = 0;
 
-    public processMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage {
-        // We're checking for compression = true or top level compression property so
-        // that we can enable compression without waiting on all ordering services
-        // to pick up protocol change. Eventually only the top level property should
-        // be used.
-        if (message.metadata?.batch === true
-            && (message.metadata?.compressed || message.compression !== undefined)) {
+    public processMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
+        assert(
+            message.compression === undefined || message.compression === CompressionAlgorithms.lz4,
+            "Only lz4 compression is supported");
+
+        if (message.metadata?.batch === true && message.compression === CompressionAlgorithms.lz4) {
             // Beginning of a compressed batch
             assert(this.activeBatch === false, 0x4b8 /* shouldn't have multiple active batches */);
             if (message.compression) {
@@ -44,30 +44,37 @@ export class OpDecompressor {
             const asObj = JSON.parse(intoString);
             this.rootMessageContents = asObj;
 
-            return { ...message, contents: this.rootMessageContents[this.processedCount++] };
+            return {
+                message: newMessage(message, this.rootMessageContents[this.processedCount++]),
+                state: "Accepted",
+            };
         }
 
         if (this.rootMessageContents !== undefined && message.metadata?.batch === undefined && this.activeBatch) {
+            assert(message.contents === undefined, "Expecting empty message");
+
             // Continuation of compressed batch
-            return { ...message, contents: this.rootMessageContents[this.processedCount++] };
+            return {
+                message: newMessage(message, this.rootMessageContents[this.processedCount++]),
+                state: "Accepted",
+            };
         }
 
         if (this.rootMessageContents !== undefined && message.metadata?.batch === false) {
             // End of compressed batch
-            const returnMessage = {
-                ...message,
-                contents: this.rootMessageContents[this.processedCount++]
-            };
+            const returnMessage = newMessage(message, this.rootMessageContents[this.processedCount++]);
 
             this.activeBatch = false;
             this.rootMessageContents = undefined;
             this.processedCount = 0;
 
-            return returnMessage;
+            return {
+                message: returnMessage,
+                state: "Processed",
+            };
         }
 
-        if (message.metadata?.batch === undefined &&
-            (message.metadata?.compressed || message.compression === CompressionAlgorithms.lz4)) {
+        if (message.metadata?.batch === undefined && message.compression === CompressionAlgorithms.lz4) {
             // Single compressed message
             assert(this.activeBatch === false, 0x4ba /* shouldn't receive compressed message in middle of a batch */);
 
@@ -76,9 +83,23 @@ export class OpDecompressor {
             const intoString = new TextDecoder().decode(decompressedMessage);
             const asObj = JSON.parse(intoString);
 
-            return { ...message, contents: asObj[0] };
+            return {
+                message: newMessage(message, asObj[0]),
+                state: "Processed",
+            };
         }
 
-        return message;
+        return {
+            message,
+            state: "Skipped",
+        };
     }
 }
+
+// We should not be mutating the input message nor its metadata
+const newMessage = (originalMessage: ISequencedDocumentMessage, contents: any): ISequencedDocumentMessage => ({
+    ...originalMessage,
+    contents,
+    compression: undefined,
+    metadata: { ...originalMessage.metadata },
+});

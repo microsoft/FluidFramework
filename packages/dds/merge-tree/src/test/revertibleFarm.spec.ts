@@ -43,7 +43,6 @@ describe("MergeTree.Client", () => {
         doOverRange(defaultOptions.concurrentOpsWithRevert, defaultOptions.growthFunc, (opsWithRevert) => {
             doOverRange(defaultOptions.revertOps, defaultOptions.growthFunc, (revertOps) => {
                 for (const ackBeforeRevert of defaultOptions.ackBeforeRevert) {
-                    // eslint-disable-next-line max-len
                     it(`InitialOps: ${defaultOptions.initialOps} MinLen: ${minLen}  ConcurrentOpsWithRevert: ${opsWithRevert} RevertOps: ${revertOps} AckBeforeRevert: ${ackBeforeRevert}`, async () => {
                         const mt = random.engines.mt19937();
                         mt.seedWithArray([

@@ -12,9 +12,7 @@ import {
     NodeReviver,
     singleTextCursor,
 } from "../../feature-libraries";
-import { makeAnonChange, RevisionTag, TaggedChange } from "../../rebase";
-import { TreeSchemaIdentifier } from "../../schema-stored";
-import { Delta } from "../../tree";
+import { makeAnonChange, RevisionTag, TaggedChange, TreeSchemaIdentifier, Delta } from "../../core";
 import { brand, JsonCompatibleReadOnly } from "../../util";
 import { assertMarkListEqual, noRepair } from "../utils";
 

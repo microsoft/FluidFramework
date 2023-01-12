@@ -33,6 +33,12 @@ export {
     valueSymbol,
     getField,
     createField,
+    replaceField,
+    ContextuallyTypedNodeDataObject,
+    ContextuallyTypedNodeData,
+    MarkedArrayLike,
+    isWritableArrayLike,
+    isContextuallyTypedNodeDataObject,
 } from "./editable-tree";
 export { ForestIndex } from "./forestIndex";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";

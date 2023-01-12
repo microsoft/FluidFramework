@@ -17,7 +17,6 @@ import { IBatch, BatchMessage } from "./definitions";
  */
 export class OpCompressor {
     private readonly logger;
-    private compressedBatchCount = 0;
 
     constructor(logger: ITelemetryLogger) {
         this.logger = ChildLogger.create(logger, "OpCompressor");
@@ -25,7 +24,6 @@ export class OpCompressor {
 
     public compressBatch(batch: IBatch): IBatch {
         const messages: BatchMessage[] = [];
-        this.compressedBatchCount++;
         const contentToCompress: ContainerRuntimeMessage[] = [];
         for (const message of batch.content) {
             contentToCompress.push(message.deserializedContent);
@@ -37,7 +35,7 @@ export class OpCompressor {
         const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
         const duration = Date.now() - compressionStart;
 
-        if (batch.contentSizeInBytes > 200000 || this.compressedBatchCount % 25) {
+        if (batch.contentSizeInBytes > 200000) {
             this.logger.sendPerformanceEvent({
                 eventName: "CompressedBatch",
                 duration,
@@ -48,7 +46,7 @@ export class OpCompressor {
 
         messages.push({
             ...batch.content[0], contents: JSON.stringify({ packedContents: compressedContent }),
-            metadata: { ...batch.content[0].metadata, compressed: true },
+            metadata: batch.content[0].metadata,
             compression: CompressionAlgorithms.lz4,
         });
 
