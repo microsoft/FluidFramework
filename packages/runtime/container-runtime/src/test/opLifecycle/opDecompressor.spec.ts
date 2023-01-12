@@ -11,7 +11,7 @@ import { ContainerRuntimeMessage, ContainerMessageType } from "../..";
 import { OpDecompressor } from "../../opLifecycle";
 
 
-function generateCompressedBatchMessage(length: number, metadata = true): ISequencedDocumentMessage {
+function generateCompressedBatchMessage(length: number): ISequencedDocumentMessage {
     const batch: ContainerRuntimeMessage[] = [];
     for (let i = 0; i < length; i++) {
         batch.push({ contents: `value${i}`, type: ContainerMessageType.FluidDataStoreOp });
@@ -85,6 +85,13 @@ describe("OpDecompressor", () => {
         assert.strictEqual(result.message.compression, undefined);
     });
 
+    it("Expecting only lz4 compression", () => {
+        assert.throws(() => decompressor.processMessage({
+            ...generateCompressedBatchMessage(5),
+            compression: "gzip",
+        }));
+    });
+
     it("Processes multiple compressed ops", () => {
         const rootMessage = generateCompressedBatchMessage(5);
         const firstMessageResult = decompressor.processMessage(rootMessage);
@@ -148,14 +155,6 @@ describe("OpDecompressor", () => {
         const endBatchEmptyMessageResult = decompressor.processMessage(endBatchEmptyMessage);
         assert.equal(endBatchEmptyMessageResult.state, "Processed");
         assert.strictEqual(endBatchEmptyMessageResult.message.contents.contents, "value2");
-    });
-
-    it("Processes single compressed op wth only protocol property", () => {
-        const rootMessage = generateCompressedBatchMessage(5, false);
-        const firstMessageResult = decompressor.processMessage(rootMessage);
-
-        assert.equal(firstMessageResult.state, "Accepted");
-        assert.strictEqual(firstMessageResult.message.contents.contents, "value0");
     });
 
     it("Ignores ops without compression", () => {
