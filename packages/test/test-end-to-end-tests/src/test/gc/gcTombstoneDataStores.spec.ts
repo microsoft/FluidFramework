@@ -198,7 +198,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             assert.throws(() => dataObject._root.set("send", "op"),
                 (error) => {
                     const correctErrorType = error.errorType === "dataCorruptionError";
-                    const correctErrorMessage = error.errorMessage?.startsWith(`Context is tombstoned`) === true;
+                    const correctErrorMessage = error.message?.startsWith(`Context is tombstoned`) === true;
                     return correctErrorType && correctErrorMessage;
                 },
                 `Should not be able to send ops for a tombstoned datastore.`,
@@ -229,7 +229,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             assert.throws(() => dataObject._root.set("send", "op"),
                 (error) => {
                     const correctErrorType = error.errorType === "dataCorruptionError";
-                    const correctErrorMessage = error.errorMessage?.startsWith(`Context is tombstoned`) === true;
+                    const correctErrorMessage = error.message?.startsWith(`Context is tombstoned`) === true;
                     return correctErrorType && correctErrorMessage;
                 },
                 `Should not be able to send ops for a tombstoned datastore.`,
@@ -357,7 +357,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             assert.throws(() => dataObject._runtime.submitSignal("send", "signal"),
                 (error) => {
                     const correctErrorType = error.errorType === "dataCorruptionError";
-                    const correctErrorMessage = error.errorMessage?.startsWith(`Context is tombstoned`) === true;
+                    const correctErrorMessage = error.message?.startsWith(`Context is tombstoned`) === true;
                     return correctErrorType && correctErrorMessage;
                 },
                 `Should not be able to send signals for a tombstoned datastore.`,

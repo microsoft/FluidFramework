@@ -36,7 +36,7 @@ import {
     responseToException,
     SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
-import { ChildLogger, loggerToMonitoringContext, LoggingError, MonitoringContext, normalizeError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { ChildLogger, loggerToMonitoringContext, LoggingError, MonitoringContext, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { BlobCacheStorageService, buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy, LazyPromise } from "@fluidframework/common-utils";
@@ -56,7 +56,7 @@ import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { GCNodeType } from "./garbageCollection";
 import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
 import { summarizerClientType } from "./summarizerClientElection";
-import { prepareGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
+import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -439,27 +439,28 @@ export class DataStores implements IDisposable {
         }
 
         if (context.tombstoned) {
-            // The requested data store is removed by gc. Create a 404 gc response exception.
-            const error = normalizeError(
-                responseToException(createResponseError(404, "Datastore removed by gc", request), request),
-                { props: { viaHandle: headerData.viaHandle }});
+            const shouldFail = this.throwOnTombstoneUsage && !headerData.allowTombstone;
 
-            // Note: if a user writes a request to look like it's viaHandle, we will also send this telemetry event
-            const event = prepareGCTombstoneEvent(
+            // The requested data store is removed by gc. Create a 404 gc response exception.
+            const error = responseToException(createResponseError(404, "Datastore removed by gc", request), request);
+
+            // Note: if a user writes a request to look like it's viaHandle,
+            // it will be indistinguishable in telemetry from an actual handle
+            sendGCTombstoneEvent(
+                this.mc.logger,
                 {
                     eventName: "GC_Tombstone_DataStore_Requested",
+                    viaHandle: headerData.viaHandle,
                 },
+                shouldFail /* logAsError */,
                 this.runtime.clientDetails.type === summarizerClientType,
                 context.isLoaded ? context.packagePath : undefined,
+                error,
             );
 
-            //* Can the two log lines be merged where category is set via ternary expression?
-            const shouldFail = this.throwOnTombstoneUsage && !headerData.allowTombstone;
             if (shouldFail) {
-                this.mc.logger.sendErrorEvent(event, error);
                 throw error;
             }
-            this.mc.logger.sendTelemetryEvent(event, error);
         }
 
         return context;

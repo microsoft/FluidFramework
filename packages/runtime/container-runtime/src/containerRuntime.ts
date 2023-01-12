@@ -1436,7 +1436,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
-                const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
+                const allowTombstone = request.headers?.[RuntimeHeaders.allowTombstone] === true;
+                const blob = await this.blobManager.getBlob(requestParser.pathParts[1], allowTombstone);
                 return blob
                     ? {
                         status: 200,

@@ -16,7 +16,7 @@ import {
 import { assert, bufferToString, Deferred, stringToBuffer, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IContainerRuntime, IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
-import { ChildLogger, loggerToMonitoringContext, MonitoringContext, normalizeError, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ChildLogger, loggerToMonitoringContext, MonitoringContext, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IGarbageCollectionData,
     ISummaryTreeWithStats,
@@ -25,7 +25,7 @@ import {
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summarizerClientElection";
 import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
-import { prepareGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
+import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
 
 /**
  * This class represents blob (long string)
@@ -269,23 +269,24 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     }
 
     //* Add param for allowTombstone header
-    public async getBlob(blobId: string): Promise<ArrayBufferLike> {
+    public async getBlob(blobId: string, allowTombstone: boolean = false): Promise<ArrayBufferLike> {
         const request = { url: blobId };
         if (this.tombstonedBlobs.has(blobId) ) {
-            const error = normalizeError(
-                responseToException(createResponseError(404, "Blob removed by gc", request), request));
-            const event = prepareGCTombstoneEvent(
+            const shouldFail = this.throwOnTombstoneUsage && !allowTombstone;
+            const error = responseToException(createResponseError(404, "Blob removed by gc", request), request);
+            sendGCTombstoneEvent(
+                this.mc.logger,
                 {
                     eventName: "GC_Tombstone_Blob_Requested",
                 },
+                shouldFail /* logAsError */,
                 this.runtime.clientDetails.type === summarizerClientType,
                 [BlobManager.basePath],
+                error,
             );
-            if (this.throwOnTombstoneUsage) {
-                this.mc.logger.sendErrorEvent(event, error);
+            if (shouldFail) {
                 throw error;
             }
-            this.mc.logger.sendTelemetryEvent(event, error);
         }
 
         const pending = this.pendingBlobs.get(blobId);
