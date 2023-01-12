@@ -605,7 +605,9 @@ export interface Invariant<T> extends Contravariant<T>, Covariant<T> {
 function invert<TNodeChange>(change: TaggedChange<Changeset<TNodeChange>>, invertChild: NodeChangeInverter_2<TNodeChange>): Changeset<TNodeChange>;
 
 // @public (undocumented)
-function isActiveReattach<TNodeChange>(mark: Mark_2<TNodeChange>): mark is Reattach<TNodeChange> & Conflicted;
+function isActiveReattach<TNodeChange>(mark: Mark_2<TNodeChange>): mark is Reattach<TNodeChange> & {
+    conflictsWith?: undefined;
+};
 
 // @public
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
