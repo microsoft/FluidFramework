@@ -81,21 +81,21 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
     const { taskList } = props;
 
     const [tasks, setTasks] = useState<ITask[]>(taskList.getTasks());
-    // const [draftTasks, setDiffTasks] = useState<ITask[]>(taskList.getDiffTasks());
+    const [draftTasks, setDiffTasks] = useState<ITask[]>(taskList.getDiffTasks());
 
     useEffect(() => {
         const updateTasks = (): void => {
             setTasks(taskList.getTasks());
         };
-        // const updateDiffTasks = (): void => {
-        //     setDiffTasks(taskList.getDiffTasks());
-        // };
+        const updateDiffTasks = (): void => {
+            setDiffTasks(taskList.getDiffTasks());
+        };
         taskList.on("taskAdded", updateTasks);
         taskList.on("taskDeleted", updateTasks);
-        // taskList.on("diffDetected", updateDiffTasks);
+        taskList.on("diffDetected", updateDiffTasks);
 
         setTasks(taskList.getTasks());
-        // setDiffTasks(taskList.getDiffTasks());
+        setDiffTasks(taskList.getDiffTasks());
 
         // Run once immediately to run without waiting.
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -104,7 +104,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
         return (): void => {
             taskList.off("taskAdded", updateTasks);
             taskList.off("taskDeleted", updateTasks);
-            // taskList.off("diffDetected", updateDiffTasks);
+            taskList.off("diffDetected", updateDiffTasks);
         }
     }, [taskList]);
 
@@ -116,14 +116,15 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
         />
     ));
 
-    // const draftTaskRows = draftTasks.map((task) => (
-    //     <TaskRow
-    //         key={ task.id }
-    //         task={ task }
-    //         deleteTask={ (): void => taskList.deleteTask(task.id) }
-    //     />
-    // ));
+    const draftTaskRows = draftTasks.map((task) => (
+        <TaskRow
+            key={ task.id }
+            task={ task }
+            deleteTask={ (): void => taskList.deleteTask(task.id) }
+        />
+    ));
 
+    const diffElementsArePresent = draftTasks.length === 0 ? 'hidden' : 'visible';
     return (
         // TODO: Gray button if not "authenticated" via debug controls
         // TODO: Conflict UI
@@ -141,7 +142,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
                     { taskRows }
                 </tbody>
             </table>
-            <table style={{ textDecoration: "red" }}>
+            <table style={{ visibility: diffElementsArePresent, backgroundColor: 'orange' }}>
                 <thead>
                     <tr>
                         <td>ID</td>
@@ -150,7 +151,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
                     </tr>
                 </thead>
                 <tbody>
-                    {/* { draftTaskRows } */}
+                    { draftTaskRows }
                 </tbody>
             </table>
             <button onClick={ taskList.saveChanges }>Save changes</button>

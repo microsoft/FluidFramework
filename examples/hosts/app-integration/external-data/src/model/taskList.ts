@@ -98,16 +98,6 @@ export class TaskList extends DataObject implements ITaskList {
     }
 
     public readonly addTask = (id: string, name: string, priority: number): void => {
-        console.log("addTask");
-        console.log("this.draftData");
-        console.log(this.draftData);
-        console.log("this._draftData");
-        console.log(this._draftData);
-        console.log("this.savedData");
-        console.log(this.savedData);
-        console.log(this._savedData);
-        console.log("this._savedData");
-
         if (this.tasks.get(id) !== undefined) {
             throw new Error("Task already exists");
         }
@@ -155,9 +145,9 @@ export class TaskList extends DataObject implements ITaskList {
         return [...this.diffTasks.values()];
     };
 
-    public readonly addDiffTask = async (id: string): Promise<void> => {
+    public readonly addDiffTask = async (id: string, newName:string, newPriority: number): Promise<void> => {
         // for (const id of this.savedData.keys()) {
-            const diff = this.draftData.get(id) as PersistedTask;
+            const diff = this.savedData.get(id) as PersistedTask;
             if (diff === undefined) {
                 throw new Error("Newly added task is missing from map.");
             }
@@ -166,8 +156,13 @@ export class TaskList extends DataObject implements ITaskList {
                 diff.name.get(),
                 diff.priority.get(),
             ]);
+
+            console.log(`savedData name: ${nameSharedString}`);
+            console.log(nameSharedString);
+            console.log(`savedData priority: ${prioritySharedCell}`);
+            console.log(prioritySharedCell);
             // It's possible the task was deleted while getting the name/priority, in which case quietly exit.
-            if (this.draftData.get(id) === undefined) {
+            if (this.savedData.get(id) === undefined) {
                 return;
             }
             const newTask = new Task(id, nameSharedString, prioritySharedCell);
@@ -228,17 +223,6 @@ export class TaskList extends DataObject implements ITaskList {
      */
     public async importExternalData(): Promise<void> {
 
-        console.log("importExternalData");
-        console.log("this.draftData");
-        console.log(this.draftData);
-        console.log("this._draftData");
-        console.log(this._draftData);
-        console.log("this.savedData");
-        console.log(this.savedData);
-        console.log(this._savedData);
-        console.log("this._savedData");
-        console.log('TASK-LIST: Fetching external data from service...');
-
         let updatedExternalData: ParsedTaskData[] | undefined;
         try {
             const response = await fetch(
@@ -267,20 +251,13 @@ export class TaskList extends DataObject implements ITaskList {
 
             return;
         }
-        console.log("this.draftData");
-        console.log(this.draftData);
-        console.log("this._draftData");
-        console.log(this._draftData);
-        console.log("this.savedData");
-        console.log(this.savedData);
-        console.log(this._savedData);
-        console.log("this._savedData");
 
         // TODO: Delete any items that are in the root but missing from the external data
         const updateTaskPs = updatedExternalData.map(async ({ id, name, priority }) => {
             const currentTask = this.draftData.get<PersistedTask>(id);
             // Write external data into savedData map.
             this.savedData.set(id, currentTask);
+            // console.log(this.savedData.get(id));
 
             if (currentTask === undefined) {
                 // A new task was added from external source, add it to the Fluid data.
@@ -295,15 +272,15 @@ export class TaskList extends DataObject implements ITaskList {
                 // TODO: Currently replacing existing Fluid data.  But eventually this is where
                 // we'd want conflict resolution UX.
                 console.log(currName.getText(), name, "notEqual");
-                // await this.addDiffTask(id);
-                currName.replaceText(0, currName.getLength(), name);
+                await this.addDiffTask(id, name, priority);
+                // currName.replaceText(0, currName.getLength(), name);
             }
             if (currPriority.get() !== priority) {
                 // TODO: Currently replacing existing Fluid data. But eventually this is where
                 // we'd want conflict resolution UX.
-                console.log(currPriority.get(), name, "notEqual");
-                // await this.addDiffTask(id);
-                currPriority.set(priority);
+                console.log(currPriority.get(), priority, "notEqual");
+                await this.addDiffTask(id, name, priority);
+                // currPriority.set(priority);
             }
             // Saved updated Fluid data with
             this.draftData.set(id, currentTask);
@@ -360,15 +337,6 @@ export class TaskList extends DataObject implements ITaskList {
         // TODO: Probably don't need to await this once the sync'ing flow is solid, we can just trust it to sync
         // at some point in the future.
         await this.importExternalData();
-        console.log("initializingFirstTime");
-        console.log("this.draftData");
-        console.log(this.draftData);
-        console.log("this._draftData");
-        console.log(this._draftData);
-        console.log("this.savedData");
-        console.log(this.savedData);
-        console.log(this._savedData);
-        console.log("this._savedData");
     }
 
     /**
