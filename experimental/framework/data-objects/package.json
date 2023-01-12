@@ -37,7 +37,8 @@
     "@fluidframework/common-utils": "^1.0.0",
     "@fluidframework/datastore-definitions": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
     "@fluidframework/map": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
-    "@fluidframework/runtime-definitions": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0"
+    "@fluidframework/runtime-definitions": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
+    "events": "^3.1.0"
   },
   "devDependencies": {
     "@fluid-tools/build-cli": "^0.7.0",
