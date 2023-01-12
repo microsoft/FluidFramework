@@ -50,7 +50,8 @@ export const blobCountPropertyName = "BlobCount";
 export const channelsTreeName = ".channels";
 
 // @public (undocumented)
-export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>) => ISummarizerNodeWithGC;
+export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
+getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>) => ISummarizerNodeWithGC;
 
 // @public (undocumented)
 export type CreateChildSummarizerNodeParam = {
@@ -83,7 +84,13 @@ export enum FlushMode {
 }
 
 // @public (undocumented)
-export const gcBlobKey = "gc";
+export const gcBlobPrefix = "__gc";
+
+// @public (undocumented)
+export const gcTombstoneBlobKey = "__tombstones";
+
+// @public (undocumented)
+export const gcTreeKey = "gc";
 
 // @public
 export interface IAttachMessage {
@@ -126,6 +133,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 
 // @public
 export interface IDataStore extends IFluidRouter {
+    readonly entryPoint?: IFluidHandle<FluidObject>;
     trySetAlias(alias: string): Promise<AliasResult>;
 }
 
@@ -142,6 +150,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     // @deprecated
     attachGraph(): void;
     readonly attachState: AttachState;
+    readonly entryPoint?: IFluidHandle<FluidObject>;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
@@ -244,7 +253,6 @@ export interface IGarbageCollectionData {
 // @public
 export interface IGarbageCollectionDetailsBase {
     gcData?: IGarbageCollectionData;
-    unrefTimestamp?: number;
     usedRoutes?: string[];
 }
 
@@ -255,11 +263,26 @@ export interface IGarbageCollectionNodeData {
 }
 
 // @public
+export interface IGarbageCollectionSnapshotData {
+    // (undocumented)
+    gcState: IGarbageCollectionState;
+    // (undocumented)
+    tombstones: string[] | undefined;
+}
+
+// @public
 export interface IGarbageCollectionState {
     // (undocumented)
     gcNodes: {
         [id: string]: IGarbageCollectionNodeData;
     };
+}
+
+// @public @deprecated (undocumented)
+export interface IGarbageCollectionSummaryDetailsLegacy {
+    gcData?: IGarbageCollectionData;
+    unrefTimestamp?: number;
+    usedRoutes?: string[];
 }
 
 // @public

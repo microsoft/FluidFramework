@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import * as jwt from "jsonwebtoken";
+import { verify, TokenExpiredError } from "jsonwebtoken";
 import * as _ from "lodash";
 import * as winston from "winston";
 
@@ -68,7 +68,7 @@ export class TenantManager {
     public async validateToken(tenantId: string, token: string, includeDisabledTenant = false): Promise<void> {
         const tenantKeys = await this.getTenantKeys(tenantId, includeDisabledTenant);
 
-        return jwt.verify(token, tenantKeys.key1, (error1) => {
+        return verify(token, tenantKeys.key1, (error1) => {
             if (!error1) {
                 return;
             }
@@ -76,19 +76,19 @@ export class TenantManager {
             // if the tenant doesn't have key2, it will be empty string
             // we should fail token generated with empty string as key
             if (!tenantKeys.key2) {
-                throw error1 instanceof jwt.TokenExpiredError
+                throw error1 instanceof TokenExpiredError
                     ? new NetworkError(401, "Token expired validated with key1.")
                     : new NetworkError(403, "Invalid token validated with key1.");
             }
 
-            jwt.verify(token, tenantKeys.key2, (error2) => {
+            verify(token, tenantKeys.key2, (error2) => {
                 if (!error2) {
                     return;
                 }
 
                 // When `exp` claim exists in token claims, jsonwebtoken verifies token expiration.
-                throw (error1 instanceof jwt.TokenExpiredError
-                    || error2 instanceof jwt.TokenExpiredError)
+                throw (error1 instanceof TokenExpiredError
+                    || error2 instanceof TokenExpiredError)
                     ? new NetworkError(401, "Token expired validated with both key1 and key2.")
                     : new NetworkError(403, "Invalid token validated with both key1 and key2.");
             });

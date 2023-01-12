@@ -15,7 +15,8 @@ import { v4 as uuid } from "uuid";
 export const generateTestUser = (): IUser & { name: string; } => {
     const user = {
         id: uuid(),
-        name: generateName(),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        name: generateName() as string,
     };
     return user;
 };

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { PackageName } from "@rushstack/node-core-library";
+import { strict as assert } from "assert";
 import { compareDesc, differenceInBusinessDays } from "date-fns";
 import ncu from "npm-check-updates";
 import type { Index } from "npm-check-updates/build/src/types/IndexType";
@@ -10,7 +11,14 @@ import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
 import path from "path";
 import * as semver from "semver";
 
-import { Context, Logger, MonoRepo, Package, readJsonAsync } from "@fluidframework/build-tools";
+import {
+    Context,
+    Logger,
+    MonoRepo,
+    Package,
+    VersionDetails,
+    readJsonAsync,
+} from "@fluidframework/build-tools";
 
 import { ReleaseVersion, isPrereleaseVersion } from "@fluid-tools/version-tools";
 
@@ -24,7 +32,7 @@ import { indentString } from "./text";
  * @internal
  */
 export interface PackageVersionMap {
-    [packageName: ReleasePackage]: ReleaseVersion;
+    [packageName: ReleasePackage | ReleaseGroup]: ReleaseVersion;
 }
 
 /**
@@ -350,108 +358,7 @@ export function generateReleaseGitTagName(
 }
 
 /**
- * Returns an array of all the git tags associated with a release group.
- *
- * @param context - The {@link Context}.
- * @param releaseGroupOrPackage - The release group or independent package to get tags for.
- * @returns An array of all all the tags for the release group or package.
- *
- * @internal
- */
-export async function getTagsForReleaseGroup(
-    context: Context,
-    releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
-): Promise<string[]> {
-    const prefix = isReleaseGroup(releaseGroupOrPackage)
-        ? releaseGroupOrPackage.toLowerCase()
-        : PackageName.getUnscopedName(releaseGroupOrPackage);
-    const tagList = await context.gitRepo.getAllTags(`${prefix}_v*`);
-
-    const allTags = tagList;
-    return allTags;
-}
-
-/**
- * Parses the version from a git tag.
- *
- * @param tag - The tag.
- * @returns - The version string, or undefined if one could not be found.
- *
- * @internal
- */
-export function getVersionFromTag(tag: string): string | undefined {
-    // This is sufficient, but there is a possibility that this will fail if we add a tag that includes "_v" in its
-    // name.
-    const tagSplit = tag.split("_v");
-    if (tagSplit.length !== 2) {
-        return undefined;
-    }
-
-    const ver = semver.parse(tagSplit[1]);
-    if (ver === null) {
-        return undefined;
-    }
-
-    return ver.version;
-}
-
-/**
- * Represents a version and its release date, if applicable.
- *
- * @internal
- */
-export interface VersionDetails {
-    /**
-     * The version of the release.
-     */
-    version: ReleaseVersion;
-
-    /**
-     * The date the version was released, if applicable.
-     */
-    date?: Date;
-}
-
-/**
- * Gets all the versions for a release group or independent package. This function only considers the tags in the repo
- * to determine releases and dates.
- *
- * @param context - The {@link Context}.
- * @param releaseGroupOrPackage - The release group or independent package to get versions for.
- * @returns An array of {@link VersionDetails} containing the version and date for each version.
- *
- * @internal
- */
-export async function getAllVersions(
-    context: Context,
-    releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
-): Promise<VersionDetails[] | undefined> {
-    const versions = new Map<string, Date>();
-    const tags = await getTagsForReleaseGroup(context, releaseGroupOrPackage);
-
-    for (const tag of tags) {
-        const ver = getVersionFromTag(tag);
-        if (ver !== undefined && ver !== "" && ver !== null) {
-            // eslint-disable-next-line no-await-in-loop
-            const date = await context.gitRepo.getCommitDate(tag);
-            versions.set(ver, date);
-        }
-    }
-
-    if (versions.size === 0) {
-        return undefined;
-    }
-
-    const toReturn: VersionDetails[] = [];
-    for (const [version, date] of versions) {
-        toReturn.push({ version, date });
-    }
-
-    return toReturn;
-}
-
-/**
- * Sorts an array of {@link VersionDetails} by version or date. The array will be cloned then sorted in place.
+ * Sorts an array of {@link ReleaseDetails} by version or date. The array will be cloned then sorted in place.
  *
  * @param versions - The array of versions to sort.
  * @param sortKey - The sort key.
@@ -496,4 +403,58 @@ export function filterVersionsOlderThan(
         const diff = v.date === undefined ? 0 : differenceInBusinessDays(Date.now(), v.date);
         return diff <= numBusinessDays;
     });
+}
+
+/**
+ * Gets the direct Fluid dependencies for a given package or release group. A Fluid dependency is a dependency on
+ * other packages or release groups in the repo.
+ *
+ * @param context - The {@link Context}.
+ * @param releaseGroupOrPackage - The release group or package to check.
+ * @returns A tuple of {@link PackageVersionMap} objects, one of which contains release groups on which the package
+ * depends, and the other contains independent packages on which the package depends.
+ *
+ * @internal
+ */
+export function getFluidDependencies(
+    context: Context,
+    releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
+): [releaseGroups: PackageVersionMap, packages: PackageVersionMap] {
+    const releaseGroups: PackageVersionMap = {};
+    const packages: PackageVersionMap = {};
+    let packagesToCheck: Package[];
+
+    if (isReleaseGroup(releaseGroupOrPackage)) {
+        packagesToCheck = context.packagesInReleaseGroup(releaseGroupOrPackage);
+    } else {
+        const independentPackage = context.fullPackageMap.get(releaseGroupOrPackage);
+        assert(
+            independentPackage !== undefined,
+            `Package not found in context: ${releaseGroupOrPackage}`,
+        );
+        packagesToCheck = [independentPackage];
+    }
+
+    for (const p of packagesToCheck) {
+        for (const dep of p.combinedDependencies) {
+            const pkg = context.fullPackageMap.get(dep.name);
+            if (pkg === undefined) {
+                continue;
+            }
+
+            const minVer = semver.minVersion(dep.version);
+            if (minVer === null) {
+                throw new Error(`Failed to parse depVersion: ${dep.version}`);
+            }
+
+            if (pkg.monoRepo !== undefined) {
+                releaseGroups[pkg.monoRepo.kind] = minVer.version;
+                continue;
+            }
+
+            packages[pkg.name] = minVer.version;
+        }
+    }
+
+    return [releaseGroups, packages];
 }

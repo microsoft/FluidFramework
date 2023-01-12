@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/bundle-size-tools",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Utility for analyzing bundle size regressions",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.1.0",
-    "@fluidframework/eslint-config-fluid": "^1.1.0",
+    "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@trivago/prettier-plugin-sort-imports": "^3.3.0",
     "@types/jszip": "^3.4.1",

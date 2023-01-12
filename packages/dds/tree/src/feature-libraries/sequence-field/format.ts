@@ -4,7 +4,7 @@
  */
 
 import { JsonableTree, RevisionTag } from "../../core";
-import { NodeChangeset } from "../modular-schema";
+import { ChangesetLocalId, NodeChangeset } from "../modular-schema";
 
 export type NodeChangeType = NodeChangeset;
 export type Changeset<TNodeChange = NodeChangeType> = MarkList<TNodeChange>;
@@ -20,21 +20,16 @@ export type ObjectMark<TNodeChange = NodeChangeType> =
 export type SizedMark<TNodeChange = NodeChangeType> = Skip | SizedObjectMark<TNodeChange>;
 
 export type SizedObjectMark<TNodeChange = NodeChangeType> =
-    | Tomb
     | Modify<TNodeChange>
-    | Detach
-    | ModifyDetach<TNodeChange>;
-
-export interface Tomb {
-    type: "Tomb";
-    change: ChangesetTag;
-    count: number;
-}
+    | Detach<TNodeChange>;
 
 export interface Modify<TNodeChange = NodeChangeType> {
     type: "Modify";
-    tomb?: ChangesetTag;
     changes: TNodeChange;
+}
+
+export interface HasChanges<TNodeChange = NodeChangeType> {
+    changes?: TNodeChange;
 }
 
 export interface HasPlaceFields {
@@ -82,18 +77,15 @@ export interface LineageEvent {
     readonly offset: number;
 }
 
-export interface Insert extends HasOpId, HasTiebreakPolicy {
+export interface Insert<TNodeChange = NodeChangeType>
+    extends HasTiebreakPolicy,
+        HasRevisionTag,
+        HasChanges<TNodeChange> {
     type: "Insert";
     content: ProtoNode[];
 }
 
-export interface ModifyInsert<TNodeChange = NodeChangeType> extends HasOpId, HasTiebreakPolicy {
-    type: "MInsert";
-    content: ProtoNode;
-    changes: TNodeChange;
-}
-
-export interface MoveIn extends HasOpId, HasPlaceFields {
+export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag {
     type: "MoveIn";
     /**
      * The actual number of nodes being moved-in. This count excludes nodes that were concurrently deleted.
@@ -101,95 +93,101 @@ export interface MoveIn extends HasOpId, HasPlaceFields {
     count: NodeCount;
 }
 
-export interface ModifyMoveIn<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFields {
-    type: "MMoveIn";
-    changes: TNodeChange;
-}
-
 export type Attach<TNodeChange = NodeChangeType> =
-    | Insert
-    | ModifyInsert<TNodeChange>
+    | Insert<TNodeChange>
     | MoveIn
-    | ModifyMoveIn<TNodeChange>
-    | Reattach
-    | ModifyReattach<TNodeChange>;
+    | Reattach<TNodeChange>;
 
-export type NodeMark = Detach;
+export type Detach<TNodeChange = NodeChangeType> =
+    | Delete<TNodeChange>
+    | MoveOut<TNodeChange>
+    | ReturnFrom<TNodeChange>;
 
-export interface Detach extends HasOpId {
-    tomb?: ChangesetTag;
-    type: "Delete" | "MoveOut";
+export type Reattach<TNodeChange = NodeChangeType> = Revive<TNodeChange> | ReturnTo;
+
+export interface Delete<TNodeChange = NodeChangeType>
+    extends HasRevisionTag,
+        HasChanges<TNodeChange> {
+    type: "Delete";
     count: NodeCount;
 }
 
-export interface ModifyDetach<TNodeChange = NodeChangeType> extends HasOpId {
-    type: "MDelete" | "MMoveOut";
-    tomb?: ChangesetTag;
-    changes: TNodeChange;
-}
-
-export interface Reattach extends HasOpId, HasPlaceFields {
-    type: "Revive" | "Return";
-    tomb: ChangesetTag;
+export interface MoveOut<TNodeChange = NodeChangeType>
+    extends HasRevisionTag,
+        HasMoveId,
+        HasChanges<TNodeChange> {
+    type: "MoveOut";
     count: NodeCount;
 }
-export interface ModifyReattach<TNodeChange = NodeChangeType> extends HasOpId, HasPlaceFields {
-    type: "MRevive" | "MReturn";
-    tomb: ChangesetTag;
-    changes: TNodeChange;
+
+export interface HasReattachFields extends HasPlaceFields {
+    /**
+     * The tag of the change that detached the data being reattached.
+     *
+     * Undefined when the reattach is the product of a tag-less change being inverted.
+     * It is invalid to try convert such a reattach mark to a delta.
+     */
+    detachedBy: RevisionTag | undefined;
+    /**
+     * The original field index of the detached node(s).
+     * "Original" here means before the change that detached them was applied.
+     */
+    detachIndex: number;
 }
 
-/**
- * Represents a consecutive run of detached nodes.
- *
- * Note that in some situations a tombstone is created for the purpose of representing a gap
- * even though no node has been detached.
- * This can happen when a slice-move applied to a gap but not the nodes on both sides of the
- * gap, or when a slice-move is applied to the gap that represents the start (or end) of a
- * field.
- */
-export interface Tombstones {
+export interface Revive<TNodeChange = NodeChangeType>
+    extends HasReattachFields,
+        HasRevisionTag,
+        HasChanges<TNodeChange> {
+    type: "Revive";
     count: NodeCount;
-    change: ChangesetTag;
+}
+
+export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId {
+    type: "ReturnTo";
+    count: NodeCount;
+}
+
+export interface ReturnFrom<TNodeChange = NodeChangeType>
+    extends HasRevisionTag,
+        HasMoveId,
+        HasChanges<TNodeChange> {
+    type: "ReturnFrom";
+    count: NodeCount;
+    detachedBy: RevisionTag | undefined;
 }
 
 export interface PriorOp {
-    change: ChangesetTag;
-    id: OpId;
+    change: RevisionTag;
 }
-
-export interface HasLength {
-    /**
-     * Omit if 1.
-     */
-    length?: number;
-}
-
-export interface TreeForestPath {
-    [label: string]: TreeRootPath;
-}
-
-export type TreeRootPath = number | { [label: number]: TreeForestPath };
 
 export enum RangeType {
     Set = "Set",
     Slice = "Slice",
 }
 
+export interface HasRevisionTag {
+    /**
+     * The revision this mark is part of.
+     * Only set for marks in fields which are a composition of multiple revisions.
+     */
+    revision?: RevisionTag;
+}
+
 /**
- * A monotonically increasing positive integer assigned to each change within the changeset.
- * OpIds are scoped to a single changeset, so referring to OpIds across changesets requires
+ * A monotonically increasing positive integer assigned to an individual mark within the changeset.
+ * MoveIds are scoped to a single changeset, so referring to MoveIds across changesets requires
  * qualifying them by change tag.
  *
  * The uniqueness of IDs is leveraged to uniquely identify the matching move-out for a move-in/return and vice-versa.
  */
-export type OpId = number;
+export type MoveId = ChangesetLocalId;
 
-export interface HasOpId {
+export interface HasMoveId {
     /**
      * The sequential ID assigned to a change within a transaction.
      */
-    id: OpId;
+    id: MoveId;
 }
 
 /**
@@ -198,10 +196,7 @@ export interface HasOpId {
 export type ProtoNode = JsonableTree;
 
 export type NodeCount = number;
-export type GapCount = number;
 export type Skip = number;
-export type ChangesetTag = number | string;
-export type ClientId = number;
 export enum Tiebreak {
     Left,
     Right,

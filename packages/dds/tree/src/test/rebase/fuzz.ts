@@ -5,7 +5,7 @@
 
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { unreachableCase } from "@fluidframework/common-utils";
-import { ChangeRebaser, makeAnonChange } from "../../rebase";
+import { ChangeRebaser, makeAnonChange } from "../../core";
 
 enum Operation {
     Rebase = 0,
@@ -48,7 +48,10 @@ export function generateFuzzyCombinedChange<TChange>(
                 change = rebase(change, makeAnonChange(changeGenerator(random.real())));
                 break;
             case Operation.Compose:
-                change = compose([change, changeGenerator(random.real())]);
+                change = compose([
+                    makeAnonChange(change),
+                    makeAnonChange(changeGenerator(random.real())),
+                ]);
                 break;
             case Operation.Invert:
                 change = invert(makeAnonChange(change));

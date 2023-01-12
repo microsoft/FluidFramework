@@ -5,7 +5,6 @@
 
 export {
     ContainerMessageType,
-    IChunkedOp,
     ContainerRuntimeMessage,
     IGCRuntimeOptions,
     ISummaryRuntimeOptions,
@@ -17,19 +16,16 @@ export {
     IRootSummaryTreeWithStats,
     isRuntimeMessage,
     RuntimeMessage,
-    unpackRuntimeMessage,
     agentSchedulerId,
     ContainerRuntime,
     RuntimeHeaders,
     ISummaryConfiguration,
     DefaultSummaryConfiguration,
     ICompressionRuntimeOptions,
+    CompressionAlgorithms,
 } from "./containerRuntime";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
 export {
-    gcBlobPrefix,
-    gcTreeKey,
-    IGarbageCollectionRuntime,
     IGCStats,
 } from "./garbageCollection";
 export {
@@ -81,3 +77,4 @@ export {
     SummaryCollection,
 } from "./summaryCollection";
 export { ICancellableSummarizerController, neverCancelledSummaryToken } from "./runWhileConnectedCoordinator";
+export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle";

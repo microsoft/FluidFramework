@@ -24,6 +24,10 @@ export enum LumberEventName {
     ServiceSummary = "ServiceSummary",
     SummaryReader = "SummaryReader",
 
+    // Retries
+    RunWithRetry = "RunWithRetry",
+    RequestWithRetry = "RequestWithRetry",
+
     // Reliability
     SessionResult = "SessionResult",
     StartSessionResult = "StartSessionResult",

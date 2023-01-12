@@ -9,35 +9,14 @@ import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-util
 import { stringToBuffer, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
 import { getGitType } from "@fluidframework/protocol-base";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IFileEntry, InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
+import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IOdspSummaryPayload, IOdspSummaryTree, OdspSummaryTreeEntry, OdspSummaryTreeValue } from "./contracts";
-import { getWithRetryForTokenRefresh, IExistingFileInfo, INewFileInfo, maxUmpPostBodySize } from "./odspUtils";
+import { getWithRetryForTokenRefresh, maxUmpPostBodySize } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { EpochTracker, FetchType } from "./epochTracker";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { runWithRetry } from "./retryUtils";
-
-type CreateNewArgs<T extends INewFileInfo | IExistingFileInfo> = [
-    getStorageToken: InstrumentedStorageTokenFetcher,
-    fileInfo: T,
-    logger: ITelemetryLogger,
-    createNewSummary: ISummaryTree | undefined,
-    epochTracker: EpochTracker,
-    fileEntry: IFileEntry,
-    createNewCaching: boolean,
-    forceAccessTokenViaAuthorizationHeader: boolean,
-    isClpCompliantApp?: boolean,
-    enableSingleRequestForShareLinkWithCreate?: boolean,
-    enableShareLinkWithCreate?: boolean,
-];
-
-export type CreateNewFileArgs = [
-    ...createNewArgs: CreateNewArgs<INewFileInfo>,
-    enableSingleRequestForShareLinkWithCreate?: boolean,
-    enableShareLinkWithCreate?: boolean,
-];
-export type CreateNewContainerOnExistingFileArgs = CreateNewArgs<IExistingFileInfo>;
 
 /**
  * Converts a summary(ISummaryTree) taken in detached container to snapshot tree and blobs
@@ -185,17 +164,29 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
     return snapshotTree;
 }
 
-export async function createNewFluidContainerCore<T>(
-    containerSnapshot: IOdspSummaryPayload,
-    getStorageToken: InstrumentedStorageTokenFetcher,
-    logger: ITelemetryLogger,
-    initialUrl: string,
-    forceAccessTokenViaAuthorizationHeader: boolean,
-    epochTracker: EpochTracker,
-    telemetryName: string,
-    fetchType: FetchType,
-    validateResponseCallback?: (content: T) => void
-): Promise<T> {
+export async function createNewFluidContainerCore<T>(args: {
+    containerSnapshot: IOdspSummaryPayload;
+    getStorageToken: InstrumentedStorageTokenFetcher;
+    logger: ITelemetryLogger;
+    initialUrl: string;
+    forceAccessTokenViaAuthorizationHeader: boolean;
+    epochTracker: EpochTracker;
+    telemetryName: string;
+    fetchType: FetchType;
+    validateResponseCallback?: (content: T) => void;
+}): Promise<T> {
+    const {
+        containerSnapshot,
+        getStorageToken,
+        logger,
+        initialUrl,
+        forceAccessTokenViaAuthorizationHeader,
+        epochTracker,
+        telemetryName,
+        fetchType,
+        validateResponseCallback
+    } = args;
+
     return getWithRetryForTokenRefresh(async (options) => {
         const storageToken = await getStorageToken(options, telemetryName);
 

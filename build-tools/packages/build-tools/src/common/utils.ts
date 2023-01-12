@@ -10,7 +10,17 @@ import * as path from "path";
 import * as util from "util";
 
 export function getExecutableFromCommand(command: string) {
-    return command.split(" ")[0];
+    let toReturn: string;
+    const commands = command.split(" ");
+    if (commands[0] === "flub") {
+        // Find the first flag argument, and filter them out. Assumes flags come at the end of the command, and that all
+        // subsequent arguments are flags.
+        const flagsStartIndex = commands.findIndex((c) => c.startsWith("-"));
+        toReturn = commands.slice(0, flagsStartIndex).join(" ");
+    } else {
+        toReturn = commands[0];
+    }
+    return toReturn;
 }
 
 export function toPosixPath(s: string) {

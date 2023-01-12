@@ -21,6 +21,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
 
@@ -39,7 +40,6 @@ async function createSummarizerCore(absoluteUrl: string | undefined, loader: IHo
                 type: summarizerClientType,
             },
             [DriverHeader.summarizingClient]: true,
-            [LoaderHeader.reconnect]: false,
             [LoaderHeader.version]: summaryVersion,
         },
         url: absoluteUrl,
@@ -104,30 +104,41 @@ export async function createSummarizer(
     summaryVersion?: string,
     gcOptions?: IGCRuntimeOptions,
     configProvider: IConfigProviderBase = mockConfigProvider(),
+    logger?: ITelemetryBaseLogger,
 ): Promise<ISummarizer> {
-    const testContainerConfig: ITestContainerConfig = {
-        runtimeOptions: {
-            summaryOptions: defaultSummaryOptions,
-            gcOptions,
-        },
-        loaderProps: { configProvider },
-    };
-
-    const loader = provider.makeTestLoader(testContainerConfig);
     const absoluteUrl = await container.getAbsoluteUrl("");
-    return (await createSummarizerCore(absoluteUrl, loader, summaryVersion)).summarizer;
+    return (await createSummarizerWithContainer(
+        provider,
+        absoluteUrl,
+        summaryVersion,
+        gcOptions,
+        configProvider,
+        logger,
+    )).summarizer;
 }
 
 export async function createSummarizerWithContainer(
     provider: ITestObjectProvider,
     absoluteUrl: string | undefined,
-    testContainerConfig: ITestContainerConfig,
     summaryVersion?: string,
+    gcOptions?: IGCRuntimeOptions,
+    configProvider: IConfigProviderBase = mockConfigProvider(),
+    logger?: ITelemetryBaseLogger,
 ): Promise<{ container: IContainer; summarizer: ISummarizer; }> {
+    const testContainerConfig: ITestContainerConfig = {
+        runtimeOptions: {
+            summaryOptions: defaultSummaryOptions,
+            gcOptions,
+        },
+        loaderProps: { configProvider, logger },
+    };
     const loader = provider.makeTestLoader(testContainerConfig);
     return createSummarizerCore(absoluteUrl, loader, summaryVersion);
 }
-
+/**
+ * Summarizes on demand and returns the summary tree, the version number and the reference sequence number of the
+ * submitted summary.
+*/
 export async function summarizeNow(summarizer: ISummarizer, reason: string = "end-to-end test") {
     const result = summarizer.summarizeOnDemand({ reason });
 
@@ -148,6 +159,7 @@ export async function summarizeNow(summarizer: ISummarizer, reason: string = "en
     return {
         summaryTree: submitResult.data.summaryTree,
         summaryVersion: ackNackResult.data.summaryAckOp.contents.handle,
+        summaryRefSeq: submitResult.data.referenceSequenceNumber,
     };
 }
 

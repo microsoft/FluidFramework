@@ -3,17 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { clone, fail, StackyIterator } from "../../util";
+import { assert } from "@fluidframework/common-utils";
+import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
+import { clone, fail } from "../../util";
+import { IdAllocator } from "../modular-schema";
 import {
     Changeset,
+    HasChanges,
+    HasRevisionTag,
     Mark,
     MarkList,
-    Modify,
-    ModifyInsert,
-    ModifyReattach,
     SizedMark,
+    SizedObjectMark,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
+import { MarkQueue } from "./markQueue";
+import {
+    changeSrcMoveId,
+    modifyMoveSrc,
+    MoveEffectTable,
+    newMoveEffectTable,
+    removeMoveDest,
+    removeMoveSrc,
+    replaceMoveDest,
+    replaceMoveSrc,
+} from "./moveEffectTable";
 import {
     getInputLength,
     getOutputLength,
@@ -21,12 +35,9 @@ import {
     isDetachMark,
     isReattach,
     isSkipMark,
-    isTomb,
-    splitMarkOnInput,
-    splitMarkOnOutput,
 } from "./utils";
 
-export type NodeChangeComposer<TNodeChange> = (changes: TNodeChange[]) => TNodeChange;
+export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
 
 /**
  * Composes a sequence of changesets into a single changeset.
@@ -41,62 +52,408 @@ export type NodeChangeComposer<TNodeChange> = (changes: TNodeChange[]) => TNodeC
  * - Support for slices is not implemented.
  */
 export function compose<TNodeChange>(
-    changes: Changeset<TNodeChange>[],
+    changes: TaggedChange<Changeset<TNodeChange>>[],
     composeChild: NodeChangeComposer<TNodeChange>,
+    genId: IdAllocator,
 ): Changeset<TNodeChange> {
-    if (changes.length === 1) {
-        return changes[0];
-    }
     let composed: Changeset<TNodeChange> = [];
     for (const change of changes) {
-        composed = composeMarkLists(composed, change, composeChild);
+        const moveEffects: MoveEffectTable<TNodeChange> = newMoveEffectTable();
+
+        composed = composeMarkLists(
+            composed,
+            change.revision,
+            change.change,
+            composeChild,
+            genId,
+            moveEffects,
+        );
     }
     return composed;
 }
 
 function composeMarkLists<TNodeChange>(
     baseMarkList: MarkList<TNodeChange>,
+    newRev: RevisionTag | undefined,
     newMarkList: MarkList<TNodeChange>,
     composeChild: NodeChangeComposer<TNodeChange>,
+    genId: IdAllocator,
+    moveEffects: MoveEffectTable<TNodeChange>,
 ): MarkList<TNodeChange> {
-    const factory = new MarkListFactory<TNodeChange>();
-    const baseIter = new StackyIterator(baseMarkList);
-    const newIter = new StackyIterator(newMarkList);
-    for (let newMark of newIter) {
-        let baseMark: Mark<TNodeChange> | undefined = baseIter.pop();
-        if (baseMark === undefined) {
-            // We have reached a region of the field that the base change does not affect.
-            // We therefore adopt the new mark as is.
-            factory.push(clone(newMark));
+    const factory = new MarkListFactory<TNodeChange>(moveEffects);
+    const queue = new ComposeQueue(
+        baseMarkList,
+        newRev,
+        newMarkList,
+        genId,
+        moveEffects,
+        true,
+        (a, b) => composeChildChanges(a, b, newRev, composeChild),
+    );
+    while (!queue.isEmpty()) {
+        const { baseMark, newMark, areInverses } = queue.pop();
+        if (areInverses) {
+            continue;
+        }
+        if (newMark === undefined) {
+            assert(baseMark !== undefined, "Non-empty queue should not return two undefined marks");
+            factory.push(baseMark);
+        } else if (baseMark === undefined) {
+            factory.push(composeMark(newMark, newRev, composeChild));
+        } else {
+            // Past this point, we are guaranteed that `newMark` and `baseMark` have the same length and
+            // start at the same location in the revision after the base changes.
+            // They therefore refer to the same range for that revision.
+            assert(
+                !isAttach(newMark),
+                "A new attach cannot be at the same position as a base mark",
+            );
+            const composedMark = composeMarks(
+                baseMark,
+                newRev,
+                newMark,
+                composeChild,
+                genId,
+                moveEffects,
+            );
+            factory.push(composedMark);
+        }
+    }
+
+    return applyMoveEffects(factory.list, composeChild, moveEffects);
+}
+
+/**
+ * Composes two marks where `newMark` is based on the state produced by `baseMark`.
+ * @param baseMark - The mark to compose with `newMark`.
+ * Its output range should be the same as `newMark`'s input range.
+ * @param newRev - The revision the new mark is part of.
+ * @param newMark - The mark to compose with `baseMark`.
+ * Its input range should be the same as `baseMark`'s output range.
+ * @returns A mark that is equivalent to applying both `baseMark` and `newMark` successively.
+ */
+function composeMarks<TNodeChange>(
+    baseMark: Mark<TNodeChange>,
+    newRev: RevisionTag | undefined,
+    newMark: SizedMark<TNodeChange>,
+    composeChild: NodeChangeComposer<TNodeChange>,
+    genId: IdAllocator,
+    moveEffects: MoveEffectTable<TNodeChange>,
+): Mark<TNodeChange> {
+    if (isSkipMark(baseMark)) {
+        return composeMark(newMark, newRev, composeChild);
+    }
+    if (isSkipMark(newMark)) {
+        return baseMark;
+    }
+
+    const baseType = baseMark.type;
+    const newType = newMark.type;
+    if (
+        (newType === "Delete" && newMark.changes !== undefined) ||
+        (baseType === "Delete" && baseMark.changes !== undefined)
+    ) {
+        // This should not occur yet because we discard all modifications to deleted subtrees
+        // In the long run we want to preserve them.
+        fail("TODO: support modifications to deleted subtree");
+    }
+    switch (baseType) {
+        case "Insert":
+        case "Revive":
+            switch (newType) {
+                case "Modify": {
+                    return mergeInNewChildChanges(baseMark, newMark.changes, newRev, composeChild);
+                }
+                case "Delete": {
+                    // The insertion made by the base change is subsequently deleted.
+                    // TODO: preserve the insertions as muted
+                    return 0;
+                }
+                case "MoveOut":
+                case "ReturnFrom":
+                    // The insert has been moved by `newMark`.
+                    // We can represent net effect of the two marks as an insert at the move destination.
+                    replaceMoveDest(
+                        moveEffects,
+                        newMark.id,
+                        mergeInNewChildChanges(
+                            baseMark,
+                            newMark.changes,
+                            newMark.revision ?? newRev,
+                            composeChild,
+                        ),
+                    );
+                    return 0;
+                default:
+                    fail(`Not implemented: ${newType}`);
+            }
+        case "Modify": {
+            switch (newType) {
+                case "Modify": {
+                    return mergeInNewChildChanges(baseMark, newMark.changes, newRev, composeChild);
+                }
+                case "Delete": {
+                    // For now the deletion obliterates all other modifications.
+                    // In the long run we want to preserve them.
+                    return clone(newMark);
+                }
+                case "MoveOut":
+                case "ReturnFrom": {
+                    return composeWithBaseChildChanges(
+                        newMark,
+                        newRev,
+                        baseMark.changes,
+                        composeChild,
+                    );
+                }
+                default:
+                    fail(`Not implemented: ${newType}`);
+            }
+        }
+        case "MoveIn": {
+            switch (newType) {
+                case "Delete": {
+                    replaceMoveSrc(moveEffects, baseMark.id, newMark);
+                    return 0;
+                }
+                case "MoveOut": {
+                    changeSrcMoveId(moveEffects, baseMark.id, newMark.id);
+                    return 0;
+                }
+                case "ReturnFrom": {
+                    if (newMark.detachedBy === baseMark.revision) {
+                        removeMoveSrc(moveEffects, baseMark.id);
+                        removeMoveDest(moveEffects, newMark.id);
+                        return 0;
+                    } else {
+                        changeSrcMoveId(moveEffects, baseMark.id, newMark.id);
+                        return 0;
+                    }
+                }
+                default:
+                    fail(`Not implemented: ${newType}`);
+            }
+        }
+        case "ReturnTo": {
+            switch (newType) {
+                case "Modify": {
+                    modifyMoveSrc(moveEffects, baseMark.id, newMark.changes);
+                    return baseMark;
+                }
+                case "Delete": {
+                    replaceMoveSrc(moveEffects, baseMark.id, newMark);
+                    return 0;
+                }
+                case "MoveOut": {
+                    if (baseMark.detachedBy === (newMark.revision ?? newRev)) {
+                        removeMoveSrc(moveEffects, baseMark.id);
+                        removeMoveDest(moveEffects, newMark.id);
+                        return 0;
+                    } else {
+                        changeSrcMoveId(moveEffects, baseMark.id, newMark.id);
+                        return 0;
+                    }
+                }
+                case "ReturnFrom": {
+                    if (
+                        baseMark.detachedBy === (newMark.revision ?? newRev) ||
+                        newMark.detachedBy === baseMark.revision
+                    ) {
+                        removeMoveSrc(moveEffects, baseMark.id);
+                        removeMoveDest(moveEffects, newMark.id);
+                        return 0;
+                    } else {
+                        if (newMark.changes !== undefined) {
+                            modifyMoveSrc(moveEffects, baseMark.id, newMark.changes);
+                        }
+                        changeSrcMoveId(moveEffects, baseMark.id, newMark.id);
+                        return 0;
+                    }
+                }
+                default:
+                    fail(`Not implemented: ${newType}`);
+            }
+        }
+        default:
+            fail(`Composing ${baseType} and ${newType} is not implemented`);
+    }
+}
+
+function composeChildChanges<TNodeChange>(
+    baseChange: TNodeChange | undefined,
+    newChange: TNodeChange | undefined,
+    newRevision: RevisionTag | undefined,
+    composeChild: NodeChangeComposer<TNodeChange>,
+): TNodeChange | undefined {
+    if (newChange === undefined) {
+        return baseChange;
+    } else if (baseChange === undefined) {
+        return composeChild([tagChange(newChange, newRevision)]);
+    } else {
+        return composeChild([makeAnonChange(baseChange), tagChange(newChange, newRevision)]);
+    }
+}
+
+function composeWithBaseChildChanges<
+    TNodeChange,
+    TMark extends SizedObjectMark<TNodeChange> & HasChanges<TNodeChange> & HasRevisionTag,
+>(
+    newMark: TMark,
+    newRevision: RevisionTag | undefined,
+    baseChanges: TNodeChange | undefined,
+    composeChild: NodeChangeComposer<TNodeChange>,
+): TMark {
+    const composedChanges = composeChildChanges(
+        baseChanges,
+        newMark.changes,
+        newMark.revision ?? newRevision,
+        composeChild,
+    );
+
+    const cloned = clone(newMark);
+    if (newRevision !== undefined && cloned.type !== "Modify") {
+        cloned.revision = newRevision;
+    }
+
+    if (composedChanges !== undefined) {
+        cloned.changes = composedChanges;
+    } else {
+        delete cloned.changes;
+    }
+
+    return cloned;
+}
+
+function mergeInNewChildChanges<TNodeChange, TMark extends HasChanges<TNodeChange>>(
+    baseMark: TMark,
+    newChanges: TNodeChange | undefined,
+    newRevision: RevisionTag | undefined,
+    composeChild: NodeChangeComposer<TNodeChange>,
+): TMark {
+    const composedChanges = composeChildChanges(
+        baseMark.changes,
+        newChanges,
+        newRevision,
+        composeChild,
+    );
+    if (composedChanges !== undefined) {
+        baseMark.changes = composedChanges;
+    } else {
+        delete baseMark.changes;
+    }
+    return baseMark;
+}
+
+function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
+    mark: TMark,
+    revision: RevisionTag | undefined,
+    composeChild: NodeChangeComposer<TNodeChange>,
+): TMark {
+    if (isSkipMark(mark)) {
+        return mark;
+    }
+
+    const cloned = clone(mark);
+    assert(!isSkipMark(cloned), "Cloned should be same type as input mark");
+    if (revision !== undefined && cloned.type !== "Modify" && cloned.revision === undefined) {
+        cloned.revision = revision;
+    }
+
+    if (cloned.type !== "MoveIn" && cloned.type !== "ReturnTo" && cloned.changes !== undefined) {
+        cloned.changes = composeChild([tagChange(cloned.changes, revision)]);
+        return cloned;
+    }
+
+    return cloned;
+}
+
+function applyMoveEffects<TNodeChange>(
+    marks: MarkList<TNodeChange>,
+    composeChild: NodeChangeComposer<TNodeChange>,
+    moveEffects: MoveEffectTable<TNodeChange>,
+): MarkList<TNodeChange> {
+    const factory = new MarkListFactory<TNodeChange>(moveEffects);
+    const queue = new MarkQueue(
+        marks,
+        undefined,
+        moveEffects,
+        () => fail("Should not generate IDs"),
+        false,
+        // TODO: Should pass in revision for new changes
+        (a, b) => composeChildChanges(a, b, undefined, composeChild),
+    );
+
+    while (!queue.isEmpty()) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        factory.push(queue.dequeue()!);
+    }
+
+    return factory.list;
+}
+
+export class ComposeQueue<T> {
+    private readonly baseMarks: MarkQueue<T>;
+    private readonly newMarks: MarkQueue<T>;
+
+    public constructor(
+        baseMarks: Changeset<T>,
+        newRevision: RevisionTag | undefined,
+        newMarks: Changeset<T>,
+        genId: IdAllocator,
+        moveEffects: MoveEffectTable<T>,
+        reassignNewMoveIds: boolean = true,
+        composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
+    ) {
+        this.baseMarks = new MarkQueue(
+            baseMarks,
+            undefined,
+            moveEffects,
+            genId,
+            false,
+            composeChanges,
+        );
+        this.newMarks = new MarkQueue(
+            newMarks,
+            newRevision,
+            moveEffects,
+            genId,
+            reassignNewMoveIds,
+            composeChanges,
+        );
+    }
+
+    public isEmpty(): boolean {
+        return this.baseMarks.isEmpty() && this.newMarks.isEmpty();
+    }
+
+    public pop(): ComposeMarks<T> {
+        let baseMark = this.baseMarks.peek();
+        let newMark = this.newMarks.peek();
+        if (baseMark === undefined || newMark === undefined) {
+            return { baseMark: this.baseMarks.dequeue(), newMark: this.newMarks.dequeue() };
         } else if (isAttach(newMark)) {
-            // Content that is being attached by the new changeset cannot interact with base changes.
-            // Note that attach marks from different changesets can only target the same gap if they are concurrent.
-            // This method assumes that `newMarkList` is based on `baseMarkList`, so they are not concurrent.
-            factory.pushContent(clone(newMark));
-            baseIter.push(baseMark);
-        } else if (isReattach(newMark)) {
-            // Content that is being re-attached by the new changeset can interact with base changes.
-            // This can happen in two cases:
-            // - The base change contains the detach that the re-attach is the inverse of.
-            // - The base change contains a tombstone for the detach that the re-attach is the inverse of.
-            // We're ignoring these cases for now. The impact of ignoring them is that the relative order of
-            // reattached content and concurrently attached content is not preserved.
-            // TODO: properly compose reattach marks with their matching base marks if any.
-            factory.pushContent(clone(newMark));
-            baseIter.push(baseMark);
+            const newRev = newMark.revision ?? this.newMarks.revision;
+            if (
+                isReattach(newMark) &&
+                isDetachMark(baseMark) &&
+                newRev !== undefined &&
+                baseMark.revision === newRev
+            ) {
+                // We assume that baseMark and newMark having the same revision means that they are inverses of each other.
+                assert(
+                    getInputLength(baseMark) === getOutputLength(newMark),
+                    0x4ac /* Inverse marks should be the same length */,
+                );
+                return {
+                    baseMark: this.baseMarks.dequeue(),
+                    newMark: this.newMarks.dequeue(),
+                    areInverses: true,
+                };
+            } else {
+                return { newMark: this.newMarks.dequeue() };
+            }
         } else if (isDetachMark(baseMark)) {
-            // Content that is being detached by the base changeset can interact with the new changes.
-            // This can happen in two cases:
-            // - The new change contains reattach marks for this detach. (see above)
-            // - The new change contains tombs for this detach.
-            // We're ignoring these cases for now. The impact of ignoring them is that the relative order of
-            // reattached content and concurrently attached content is not preserved.
-            // TODO: properly compose detach marks with their matching new marks if any.
-            factory.pushContent(baseMark);
-            newIter.push(newMark);
-        } else if (isTomb(baseMark) || isTomb(newMark)) {
-            // We don't currently support Tomb marks (and don't offer ways to generate them).
-            fail("TODO: support Tomb marks");
+            return { baseMark: this.baseMarks.dequeue() };
         } else {
             // If we've reached this branch then `baseMark` and `newMark` start at the same location
             // in the document field at the revision after the base changes and before the new changes.
@@ -106,131 +463,25 @@ function composeMarkLists<TNodeChange>(
             const newMarkLength = getInputLength(newMark);
             const baseMarkLength = getOutputLength(baseMark);
             if (newMarkLength < baseMarkLength) {
-                let nextBaseMark;
-                [baseMark, nextBaseMark] = splitMarkOnOutput(baseMark, newMarkLength);
-                baseIter.push(nextBaseMark);
+                this.newMarks.dequeue();
+                baseMark = this.baseMarks.dequeueOutput(newMarkLength);
             } else if (newMarkLength > baseMarkLength) {
-                let nextNewMark;
-                [newMark, nextNewMark] = splitMarkOnInput(newMark, baseMarkLength);
-                newIter.push(nextNewMark);
+                this.baseMarks.dequeue();
+                newMark = this.newMarks.dequeueInput(baseMarkLength);
+            } else {
+                this.baseMarks.dequeue();
+                this.newMarks.dequeue();
             }
             // Past this point, we are guaranteed that `newMark` and `baseMark` have the same length and
             // start at the same location in the revision after the base changes.
             // They therefore refer to the same range for that revision.
-            const composedMark = composeMarks(baseMark, newMark, composeChild);
-            factory.push(composedMark);
+            return { baseMark, newMark };
         }
-    }
-    // Push the remaining base marks if any
-    for (const baseMark of baseIter) {
-        factory.push(baseMark);
-    }
-    return factory.list;
-}
-
-/**
- * Composes two marks where `newMark` is based on the state produced by `baseMark`.
- * @param newMark - The mark to compose with `baseMark`.
- * Its input range should be the same as `baseMark`'s output range.
- * @param baseMark - The mark to compose with `newMark`.
- * Its output range should be the same as `newMark`'s input range.
- * @returns A mark that is equivalent to applying both `baseMark` and `newMark` successively.
- */
-function composeMarks<TNodeChange>(
-    baseMark: Mark<TNodeChange>,
-    newMark: SizedMark<TNodeChange>,
-    composeChild: NodeChangeComposer<TNodeChange>,
-): Mark<TNodeChange> {
-    if (isSkipMark(baseMark)) {
-        return clone(newMark);
-    }
-    if (isSkipMark(newMark)) {
-        return baseMark;
-    }
-    const baseType = baseMark.type;
-    const newType = newMark.type;
-    if (newType === "MDelete" || baseType === "MDelete") {
-        // This should not occur yet because we discard all modifications to deleted subtrees
-        // In the long run we want to preserve them.
-        fail("TODO: support modifications to deleted subtree");
-    }
-    switch (baseType) {
-        case "Insert":
-            switch (newType) {
-                case "Modify": {
-                    return {
-                        ...newMark,
-                        type: "MInsert",
-                        id: baseMark.id,
-                        content: baseMark.content[0],
-                    };
-                }
-                case "Delete": {
-                    // The insertion made by the base change is subsequently deleted.
-                    // TODO: preserve the insertions as muted
-                    return 0;
-                }
-                default:
-                    fail("Not implemented");
-            }
-        case "MInsert": {
-            switch (newType) {
-                case "Modify": {
-                    updateModifyLike(newMark, baseMark, composeChild);
-                    return baseMark;
-                }
-                case "Delete": {
-                    // The insertion made by the base change is subsequently deleted.
-                    // TODO: preserve the insertions as muted
-                    return 0;
-                }
-                default:
-                    fail("Not implemented");
-            }
-        }
-        case "Modify": {
-            switch (newType) {
-                case "Modify": {
-                    updateModifyLike(newMark, baseMark, composeChild);
-                    return baseMark;
-                }
-                case "Delete": {
-                    // For now the deletion obliterates all other modifications.
-                    // In the long run we want to preserve them.
-                    return clone(newMark);
-                }
-                default:
-                    fail("Not implemented");
-            }
-        }
-        case "Revive": {
-            switch (newType) {
-                case "Modify": {
-                    const modRevive: ModifyReattach<TNodeChange> = {
-                        type: "MRevive",
-                        id: baseMark.id,
-                        tomb: baseMark.tomb,
-                        changes: newMark.changes,
-                    };
-                    return modRevive;
-                }
-                case "Delete": {
-                    // The deletion undoes the revival
-                    return 0;
-                }
-                default:
-                    fail("Not implemented");
-            }
-        }
-        default:
-            fail("Not implemented");
     }
 }
 
-function updateModifyLike<TNodeChange>(
-    curr: Modify<TNodeChange>,
-    base: ModifyInsert<TNodeChange> | Modify<TNodeChange> | ModifyReattach<TNodeChange>,
-    composeChild: NodeChangeComposer<TNodeChange>,
-) {
-    base.changes = composeChild([base.changes, curr.changes]);
+interface ComposeMarks<T> {
+    baseMark?: Mark<T>;
+    newMark?: Mark<T>;
+    areInverses?: boolean;
 }

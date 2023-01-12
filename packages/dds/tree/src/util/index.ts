@@ -33,14 +33,18 @@ export {
 export { StackyIterator } from "./stackyIterator";
 export {
     clone,
+    compareArrays,
     compareSets,
     fail,
     getOrAddEmptyToMap,
+    getOrCreate,
     isJsonObject,
+    isReadonlyArray,
     JsonCompatible,
     JsonCompatibleObject,
     JsonCompatibleReadOnly,
     makeArray,
+    Mutable,
     RecursiveReadonly,
     unreachableCase,
 } from "./utils";

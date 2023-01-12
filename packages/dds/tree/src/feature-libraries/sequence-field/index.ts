@@ -6,42 +6,37 @@
 export {
     Attach,
     Changeset,
-    ChangesetTag,
-    ClientId,
+    Delete,
     Detach,
     Effects,
-    GapCount,
-    HasOpId,
-    HasLength,
+    HasChanges,
+    HasMoveId,
     HasPlaceFields,
+    HasRevisionTag,
     HasTiebreakPolicy,
     Insert,
     Mark,
     MarkList,
     Modify,
-    ModifyDetach,
-    ModifyInsert,
-    ModifyMoveIn,
-    ModifyReattach,
     MoveIn,
+    MoveOut,
     NodeChangeType,
     NodeCount,
-    NodeMark,
-    OpId,
+    MoveId,
     ObjectMark,
     PriorOp,
     ProtoNode,
     RangeType,
     Reattach,
+    ReturnFrom,
+    ReturnTo,
+    Revive,
     SizedMark,
     SizedObjectMark,
     Tiebreak,
-    Tomb,
-    Tombstones,
-    TreeForestPath,
-    TreeRootPath,
     Skip,
     LineageEvent,
+    HasReattachFields,
 } from "./format";
 export {
     SequenceFieldChangeHandler,
@@ -59,5 +54,12 @@ export { sequenceFieldToDelta, ToDelta } from "./sequenceFieldToDelta";
 export { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor";
 export { MarkListFactory } from "./markListFactory";
 export { NodeChangeRebaser, rebase } from "./rebase";
-export { DUMMY_INVERT_TAG, invert, NodeChangeInverter } from "./invert";
+export { invert, NodeChangeInverter } from "./invert";
 export { compose, NodeChangeComposer } from "./compose";
+export {
+    isMoveMark,
+    MoveMark,
+    MoveEffectTable,
+    MovePartition,
+    newMoveEffectTable,
+} from "./moveEffectTable";

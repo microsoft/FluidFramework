@@ -69,7 +69,7 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
             [branch1, branch2] = branchFlags;
         }
 
-        if (branchFlags?.length > 2) {
+        if (branchFlags !== undefined && branchFlags.length > 2) {
             this.warning(
                 `Only two branch names are used; ignoring the following arguments: ${[
                     branchFlags.slice(2),

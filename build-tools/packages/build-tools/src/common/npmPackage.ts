@@ -10,9 +10,9 @@ import * as path from "path";
 import sortPackageJson from "sort-package-json";
 
 import { options } from "../fluidBuild/options";
-import { IPackageManifest } from "./fluidRepo";
+import { IFluidBuildConfig } from "./fluidRepo";
 import { defaultLogger } from "./logging";
-import { MonoRepo, MonoRepoKind } from "./monoRepo";
+import { MonoRepo, MonoRepoKind, PackageManager } from "./monoRepo";
 import {
     ExecAsyncResult,
     copyFileAsync,
@@ -26,7 +26,7 @@ import {
     writeFileAsync,
 } from "./utils";
 
-const { info, verbose } = defaultLogger;
+const { info, verbose, errorLog: error } = defaultLogger;
 export type ScriptDependencies = { [key: string]: string[] };
 
 interface IPerson {
@@ -35,7 +35,10 @@ interface IPerson {
     url: string;
 }
 
-export interface IPackage {
+/**
+ * A type representing all relevant fields in package.json, including fluid-build-specific config.
+ */
+export interface PackageJson {
     name: string;
     version: string;
     private: boolean;
@@ -65,8 +68,57 @@ export interface IPackage {
     cpu: string[];
     [key: string]: any;
 
-    fluidBuild?: IPackageManifest;
+    /**
+     * fluid-build config. Some properties only apply when set in the root or release group root package.json.
+     */
+    fluidBuild?: IFluidBuildConfig;
+
+    /**
+     * type compatibility test configuration. This only takes effect when set in the package.json of a package. Setting
+     * it at the root of the repo or release group has no effect.
+     */
+    typeValidation?: {
+        /**
+         * The version of the package. Should match the version field in package.json.
+         */
+        version: string;
+
+        /**
+         * An object containing types that are known to be broken.
+         */
+        broken: BrokenCompatTypes;
+
+        /**
+         * If true, disables type test preparation and generation for the package.
+         */
+        disabled?: boolean;
+
+        /**
+         * The version range used as the "previous" version to compare against when generating type tests. This may be
+         * an exact version or a range string.
+         */
+        baselineRange?: string;
+
+        /**
+         * The exact version used as the "previous" version to compare against when generating type tests. This should
+         * always be an exact version.
+         */
+        baselineVersion?: string;
+    };
 }
+
+/**
+ * Metadata about known-broken types.
+ */
+export interface BrokenCompatSettings {
+    backCompat?: false;
+    forwardCompat?: false;
+}
+
+/**
+ * A mapping of a type name to its {@link BrokenCompatSettings}.
+ */
+export type BrokenCompatTypes = Partial<Record<string, BrokenCompatSettings>>;
 
 export class Package {
     private static packageCount: number = 0;
@@ -88,22 +140,29 @@ export class Package {
         chalk.default.whiteBright,
     ];
 
-    public get packageJson(): IPackage {
+    public get packageJson(): PackageJson {
         return this._packageJson;
     }
     private readonly packageId = Package.packageCount++;
     private _matched: boolean = false;
     private _markForBuild: boolean = false;
 
-    private _packageJson: IPackage;
-
+    private _packageJson: PackageJson;
+    public readonly packageManager: PackageManager;
     constructor(
         private readonly packageJsonFileName: string,
         public readonly group: string,
         public readonly monoRepo?: MonoRepo,
     ) {
         this._packageJson = readJsonSync(packageJsonFileName);
-        verbose(`Package Loaded: ${this.nameColored}`);
+        const pnpmWorkspacePath = path.join(this.directory, "pnpm-workspace.yaml");
+        const yarnLockPath = path.join(this.directory, "yarn.lock");
+        this.packageManager = existsSync(pnpmWorkspacePath)
+            ? "pnpm"
+            : existsSync(yarnLockPath)
+            ? "yarn"
+            : "npm";
+        verbose(`Package loaded: ${this.nameColored}`);
     }
 
     public get name(): string {
@@ -116,6 +175,10 @@ export class Package {
 
     public get version(): string {
         return this.packageJson.version;
+    }
+
+    public get fluidBuildConfig(): IFluidBuildConfig | undefined {
+        return this._packageJson.fluidBuild;
     }
 
     public get isPublished(): boolean {
@@ -147,7 +210,7 @@ export class Package {
     }
 
     public get combinedDependencies() {
-        const it = function* (packageJson: IPackage) {
+        const it = function* (packageJson: PackageJson) {
             for (const item in packageJson.dependencies) {
                 yield { name: item, version: packageJson.dependencies[item], dev: false };
             }
@@ -160,6 +223,14 @@ export class Package {
 
     public get directory(): string {
         return path.dirname(this.packageJsonFileName);
+    }
+
+    public get installCommand(): string {
+        return this.packageManager === "pnpm"
+            ? "pnpm i"
+            : this.packageManager === "yarn"
+            ? "npm run install-strict"
+            : "npm i";
     }
 
     private get color() {
@@ -189,11 +260,10 @@ export class Package {
         // Fluid specific
         const rootNpmRC = path.join(repoRoot, ".npmrc");
         const npmRC = path.join(this.directory, ".npmrc");
-        const npmCommand = "npm i --no-package-lock --no-shrinkwrap";
 
         await copyFileAsync(rootNpmRC, npmRC);
         const result = await execWithErrorAsync(
-            npmCommand,
+            `${this.installCommand} --no-package-lock --no-shrinkwrap`,
             { cwd: this.directory },
             this.nameColored,
         );
@@ -207,9 +277,10 @@ export class Package {
             // No dependencies
             return true;
         }
+
         if (!existsSync(path.join(this.directory, "node_modules"))) {
             if (print) {
-                console.error(`${this.nameColored}: node_modules not installed`);
+                error(`${this.nameColored}: node_modules not installed`);
             }
             return false;
         }
@@ -223,7 +294,7 @@ export class Package {
             ) {
                 succeeded = false;
                 if (print) {
-                    console.error(`${this.nameColored}: dependency ${dep.name} not found`);
+                    error(`${this.nameColored}: dependency ${dep.name} not found`);
                 }
             }
         }
@@ -234,9 +305,9 @@ export class Package {
         if (this.monoRepo) {
             throw new Error("Package in a monorepo shouldn't be installed");
         }
-        console.log(`${this.nameColored}: Installing - npm i`);
-        const installScript = "npm i";
-        return execWithErrorAsync(installScript, { cwd: this.directory }, this.directory);
+
+        info(`${this.nameColored}: Installing - ${this.installCommand}`);
+        return execWithErrorAsync(this.installCommand, { cwd: this.directory }, this.directory);
     }
 }
 
@@ -336,7 +407,7 @@ export class Packages {
 
             const globPkg = globPath + "/package.json";
             for (const pkg of globSync(globPkg, { ignore: ignoredGlobs })) {
-                console.log(`Loading from glob: ${pkg}`);
+                info(`Loading from glob: ${pkg}`);
                 packages.push(new Package(pkg, group, monoRepo));
             }
         } else {
@@ -354,7 +425,10 @@ export class Packages {
     }
 
     public async noHoistInstall(repoRoot: string) {
-        return this.queueExecOnAllPackage((pkg) => pkg.noHoistInstall(repoRoot), "npm i");
+        return this.queueExecOnAllPackage(
+            (pkg) => pkg.noHoistInstall(repoRoot),
+            "install dependencies",
+        );
     }
 
     public async filterPackages(releaseGroup: MonoRepoKind | undefined) {

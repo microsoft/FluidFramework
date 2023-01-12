@@ -18,15 +18,18 @@ export interface IValueChanged {
     /**
      * The value that was stored at the key prior to the change.
      */
+    // TODO: Use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     previousValue: any;
 }
 
 /**
  * Interface describing actions on a directory.
  *
- * @remarks
- * When used as a Map, operates on its keys.
+ * @remarks When used as a Map, operates on its keys.
  */
+// TODO: Use `unknown` instead (breaking change).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     /**
      * The absolute path of the directory.
@@ -38,6 +41,8 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
      * @param key - Key to retrieve from
      * @returns The stored value, or undefined if the key is not set
      */
+    // TODO: Use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     get<T = any>(key: string): T | undefined;
 
     /**
@@ -46,7 +51,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
      * @param value - Value to set
      * @returns The IDirectory itself
      */
-    set<T = any>(key: string, value: T): this;
+    set<T = unknown>(key: string, value: T): this;
 
     /**
      * Get the number of sub directory within the directory.
@@ -165,7 +170,6 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
      *
      * - `target` - The {@link ISharedDirectory} itself.
      */
-    // eslint-disable-next-line @typescript-eslint/unified-signatures
     (event: "subDirectoryDeleted", listener: (
         path: string,
         local: boolean,
@@ -226,7 +230,6 @@ export interface IDirectoryEvents extends IEvent {
      *
      * - `target` - The {@link ISharedDirectory} itself.
      */
-    // eslint-disable-next-line @typescript-eslint/unified-signatures
     (event: "subDirectoryDeleted", listener: (
         path: string,
         local: boolean,
@@ -250,11 +253,13 @@ export interface IDirectoryEvents extends IEvent {
  * The values stored within can be accessed like a map, and the hierarchy can be navigated using path syntax.
  * SubDirectories can be retrieved for use as working directories.
  */
-export interface ISharedDirectory extends
-    ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>,
-    Omit<IDirectory, "on" | "once" | "off"> {
+export interface ISharedDirectory
+    extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>, Omit<IDirectory, "on" | "once" | "off">
+{
     // The Omit type excludes symbols, which we don't want to exclude.  Adding them back here manually.
     // https://github.com/microsoft/TypeScript/issues/31671
+    // TODO: Use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [Symbol.iterator](): IterableIterator<[string, any]>;
     readonly [Symbol.toStringTag]: string;
 }
@@ -312,12 +317,16 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  *
  * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
  */
+// TODO: Use `unknown` instead (breaking change).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
     /**
      * Retrieves the given key from the map if it exists.
      * @param key - Key to retrieve from
      * @returns The stored value, or undefined if the key is not set
      */
+    // TODO: Use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     get<T = any>(key: string): T | undefined;
 
     /**
@@ -326,7 +335,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
      * @param value - Value to set
      * @returns The {@link ISharedMap} itself
      */
-    set<T = any>(key: string, value: T): this;
+    set<T = unknown>(key: string, value: T): this;
 }
 
 /**
@@ -361,6 +370,7 @@ export interface ISerializableValue {
     /**
      * The JSONable representation of the value.
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     value: any;
 }
 

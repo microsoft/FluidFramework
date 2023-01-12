@@ -14,11 +14,11 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
 import { Container } from "@fluidframework/container-loader";
-import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { Serializable } from "@fluidframework/datastore-definitions";
 
 const cellId = "cellKey";
 const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
@@ -261,10 +261,12 @@ describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
     let dataObject: ITestFluidObject;
     let sharedCell: SharedCell;
     let containerRuntime: ContainerRuntime;
+    let changedEventData: Serializable[];
 
     const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
         getRawConfig: (name: string): ConfigTypes => settings[name],
     }));
+    const errorMessage = "callback failure";
 
     beforeEach(async () => {
         const configWithFeatureGates = {
@@ -277,18 +279,13 @@ describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
         dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
         sharedCell = await dataObject.getSharedObject<SharedCell>(cellId);
         containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+        changedEventData = [];
+        sharedCell.on("valueChanged", (value) => {
+            changedEventData.push(value);
+        });
     });
 
-    itExpects("Closes container when rollback fails",
-    [
-        {
-            eventName: "fluid:telemetry:Container:ContainerClose",
-            error: "RollbackError: rollback not supported",
-            errorType: ContainerErrorType.dataProcessingError,
-        },
-    ],
-    async () => {
-        const errorMessage = "callback failure";
+    it("Should rollback set", async () => {
         let error: Error | undefined;
         try {
             containerRuntime.orderSequentially(() => {
@@ -300,7 +297,54 @@ describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
         }
 
         assert.notEqual(error, undefined, "No error");
-        assert.ok(error?.message.startsWith("RollbackError:"), "Unexpected error message");
-        assert.equal(containerRuntime.disposed, true);
+        assert.equal(error?.message, errorMessage, "Unexpected error message");
+        assert.equal(containerRuntime.disposed, false);
+        assert.equal(sharedCell.get(), undefined);
+        assert.equal(changedEventData[0], 0);
+        // rollback
+        assert.equal(changedEventData[1], undefined);
+    });
+
+    it("Should rollback set to prior value", async () => {
+        sharedCell.set("old");
+        let error: Error | undefined;
+        try {
+            containerRuntime.orderSequentially(() => {
+                sharedCell.set("new");
+                sharedCell.set("last");
+                throw new Error("callback failure");
+            });
+        } catch (err) {
+            error = err as Error;
+        }
+
+        assert.notEqual(error, undefined, "No error");
+        assert.equal(error?.message, errorMessage, "Unexpected error message");
+        assert.equal(containerRuntime.disposed, false);
+        assert.equal(sharedCell.get(), "old");
+        assert.equal(changedEventData[0], "old");
+        assert.equal(changedEventData[1], "new");
+        assert.equal(changedEventData[2], "last");
+        // rollback
+        assert.equal(changedEventData[3], "new");
+        assert.equal(changedEventData[4], "old");
+    });
+
+    it("Should rollback delete", async () => {
+        sharedCell.set("old");
+        let error: Error | undefined;
+        try {
+            containerRuntime.orderSequentially(() => {
+                sharedCell.delete();
+                throw new Error(errorMessage);
+            });
+        } catch (err) {
+            error = err as Error;
+        }
+
+        assert.notEqual(error, undefined, "No error");
+        assert.equal(error?.message, errorMessage, "Unexpected error message");
+        assert.equal(containerRuntime.disposed, false);
+        assert.equal(sharedCell.get(), "old");
     });
 });

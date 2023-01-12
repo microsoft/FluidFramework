@@ -5,8 +5,7 @@
 
 import { strict as assert } from "assert";
 import { FieldKinds, NodeChangeset } from "../feature-libraries";
-import { TreeSchemaIdentifier } from "../schema-stored";
-import { Delta } from "../tree";
+import { makeAnonChange, TreeSchemaIdentifier, Delta } from "../core";
 import { brand } from "../util";
 import { TestChange, TestChangeEncoder } from "./testChange";
 
@@ -27,7 +26,7 @@ describe("TestChange", () => {
     it("can be composed", () => {
         const change1 = TestChange.mint([0, 1], 2);
         const change2 = TestChange.mint([0, 1, 2], 3);
-        const composed = TestChange.compose([change1, change2]);
+        const composed = TestChange.compose([makeAnonChange(change1), makeAnonChange(change2)]);
 
         const expected = TestChange.mint([0, 1], [2, 3]);
         assert.deepEqual(composed, expected);
@@ -36,7 +35,10 @@ describe("TestChange", () => {
     it("can be composed without verification", () => {
         const change1 = TestChange.mint([0], 1);
         const change2 = TestChange.mint([2], 3);
-        const composed = TestChange.compose([change1, change2], false);
+        const composed = TestChange.compose(
+            [makeAnonChange(change1), makeAnonChange(change2)],
+            false,
+        );
 
         const expected = TestChange.mint([0], [1, 3]);
         assert.deepEqual(composed, expected);
@@ -45,7 +47,7 @@ describe("TestChange", () => {
     it("composition of inverses leads to normalized form", () => {
         const change1 = TestChange.mint([0], [1, 2]);
         const change2 = TestChange.mint([0, 1, 2], [-2, -1, 3]);
-        const composed = TestChange.compose([change1, change2]);
+        const composed = TestChange.compose([makeAnonChange(change1), makeAnonChange(change2)]);
 
         const expected = TestChange.mint([0], [3]);
         assert.deepEqual(composed, expected);

@@ -6,7 +6,9 @@ import { PackageName } from "@rushstack/node-core-library";
 import { assert } from "chai";
 import { parseJSON } from "date-fns";
 
-import { VersionDetails, generateReleaseGitTagName, sortVersions } from "../../src/lib/package";
+import { VersionDetails } from "@fluidframework/build-tools";
+
+import { generateReleaseGitTagName, sortVersions } from "../../src/lib/package";
 
 describe("VersionDetails sorting", async () => {
     const versions: VersionDetails[] = [

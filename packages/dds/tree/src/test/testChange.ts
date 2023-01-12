@@ -4,10 +4,16 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { ChangeEncoder, ChangeFamily } from "../change-family";
-import { ChangeRebaser, TaggedChange } from "../rebase";
-import { AnchorSet, Delta } from "../tree";
-import { JsonCompatible, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
+import {
+    ChangeEncoder,
+    ChangeFamily,
+    ChangeRebaser,
+    TaggedChange,
+    AnchorSet,
+    Delta,
+} from "../core";
+import { ChangesetLocalId, IdAllocator } from "../feature-libraries";
+import { brand, JsonCompatible, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
 import { deepFreeze } from "./utils";
 
 export interface NonEmptyTestChange {
@@ -51,6 +57,14 @@ function mint(inputContext: readonly number[], intention: number | number[]): No
     };
 }
 
+// TODO: Move this to another file since it isn't related to TestChange.
+function idAllocatorFromMaxId(maxId: ChangesetLocalId | undefined = undefined): IdAllocator {
+    let currId = maxId ?? -1;
+    return () => {
+        return brand(++currId);
+    };
+}
+
 function composeIntentions(base: readonly number[], extras: readonly number[]): number[] {
     const composed = [...base];
     let last: number | undefined = composed[composed.length - 1];
@@ -69,11 +83,11 @@ function composeIntentions(base: readonly number[], extras: readonly number[]): 
     return composed;
 }
 
-function compose(changes: TestChange[], verify: boolean = true): TestChange {
+function compose(changes: TaggedChange<TestChange>[], verify: boolean = true): TestChange {
     let inputContext: number[] | undefined;
     let outputContext: number[] | undefined;
     let intentions: number[] = [];
-    for (const change of changes) {
+    for (const { change } of changes) {
         if (isNonEmptyChange(change)) {
             inputContext ??= change.inputContext;
             if (verify && outputContext !== undefined) {
@@ -192,6 +206,7 @@ const encoder = new TestChangeEncoder();
 export const TestChange = {
     emptyChange,
     mint,
+    newIdAllocator: idAllocatorFromMaxId,
     compose,
     invert,
     rebase,
@@ -203,7 +218,7 @@ export const TestChange = {
 deepFreeze(TestChange);
 
 export class TestChangeRebaser implements ChangeRebaser<TestChange> {
-    public compose(changes: TestChange[]): TestChange {
+    public compose(changes: TaggedChange<TestChange>[]): TestChange {
         return compose(changes);
     }
 
@@ -223,6 +238,22 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 export class UnrebasableTestChangeRebaser extends TestChangeRebaser {
     public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
         assert.fail("Unexpected call to rebase");
+    }
+}
+
+export class ConstrainedTestChangeRebaser extends TestChangeRebaser {
+    public constructor(
+        private readonly constraint: (
+            change: TestChange,
+            over: TaggedChange<TestChange>,
+        ) => boolean,
+    ) {
+        super();
+    }
+
+    public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+        assert(this.constraint(change, over));
+        return super.rebase(change, over);
     }
 }
 

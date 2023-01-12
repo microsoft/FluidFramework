@@ -15,6 +15,7 @@ import {
     ShareLinkInfoType,
     ISharingLinkKind,
     ShareLinkTypes,
+    IFileEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
@@ -33,7 +34,7 @@ import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { convertCreateNewSummaryTreeToTreeAndBlobs, convertSummaryIntoContainerSnapshot, CreateNewFileArgs, createNewFluidContainerCore } from "./createNewUtils";
+import { convertCreateNewSummaryTreeToTreeAndBlobs, convertSummaryIntoContainerSnapshot, createNewFluidContainerCore } from "./createNewUtils";
 import { runWithRetry } from "./retryUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ClpCompliantAppHeader } from "./contractsPublic";
@@ -47,20 +48,19 @@ const isInvalidFileName = (fileName: string): boolean => {
  * Creates a new Fluid file.
  * Returns resolved url
  */
-export async function createNewFluidFile(...args: CreateNewFileArgs): Promise<IOdspResolvedUrl> {
-    const [
-        getStorageToken,
-        newFileInfo,
-        logger,
-        createNewSummary,
-        epochTracker,
-        fileEntry,
-        createNewCaching,
-        forceAccessTokenViaAuthorizationHeader,
-        isClpCompliantApp,
-        enableSingleRequestForShareLinkWithCreate,
-        enableShareLinkWithCreate
-    ] = args;
+export async function createNewFluidFile(
+    getStorageToken: InstrumentedStorageTokenFetcher,
+    newFileInfo: INewFileInfo,
+    logger: ITelemetryLogger,
+    createNewSummary: ISummaryTree | undefined,
+    epochTracker: EpochTracker,
+    fileEntry: IFileEntry,
+    createNewCaching: boolean,
+    forceAccessTokenViaAuthorizationHeader: boolean,
+    isClpCompliantApp?: boolean,
+    enableSingleRequestForShareLinkWithCreate?: boolean,
+    enableShareLinkWithCreate?: boolean
+): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
         throw new NonRetryableError(
@@ -248,16 +248,16 @@ export async function createNewFluidFileFromSummary(
     const initialUrl =
         `${baseUrl}:/opStream/snapshots/snapshot${createShareLinkParam ? `?${createShareLinkParam}` : ""}`;
 
-    return createNewFluidContainerCore<ICreateFileResponse>(
+    return createNewFluidContainerCore<ICreateFileResponse>({
         containerSnapshot,
         getStorageToken,
         logger,
         initialUrl,
         forceAccessTokenViaAuthorizationHeader,
         epochTracker,
-        "CreateNewFile",
-        "createFile",
-        content => {
+        telemetryName: "CreateNewFile",
+        fetchType: "createFile",
+        validateResponseCallback: content => {
             if (!content || !content.itemId) {
                 throw new NonRetryableError(
                     "ODSP CreateFile call returned no item ID",
@@ -265,5 +265,5 @@ export async function createNewFluidFileFromSummary(
                     { driverVersion });
             }
         }
-    );
+    });
 }

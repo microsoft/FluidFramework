@@ -162,7 +162,6 @@ export class CodeMirrorPresenceManager extends EventEmitter {
 
             // Selection highlighting
             const style = {
-                // eslint-disable-next-line max-len
                 css: `background-color: rgba(${presenceInfo.color.rgb.r}, ${presenceInfo.color.rgb.g}, ${presenceInfo.color.rgb.b}, 0.3)`,
             };
 
@@ -181,7 +180,6 @@ export class CodeMirrorPresenceManager extends EventEmitter {
             const cursor = document.createElement("span");
             cursor.id = `cursor-${presenceInfo.userId}`;
             cursor.style.width = "1px";
-            // eslint-disable-next-line max-len
             cursor.style.backgroundColor = `rgb(${presenceInfo.color.rgb.r}, ${presenceInfo.color.rgb.g}, ${presenceInfo.color.rgb.b})`;
             cursor.style.height = "15px";
             cursor.style.marginTop = "-15px";
@@ -190,7 +188,6 @@ export class CodeMirrorPresenceManager extends EventEmitter {
             const cursorDot = document.createElement("span");
             cursorDot.style.height = "4px";
             cursorDot.style.width = "4px";
-            // eslint-disable-next-line max-len
             cursorDot.style.backgroundColor = `rgb(${presenceInfo.color.rgb.r}, ${presenceInfo.color.rgb.g}, ${presenceInfo.color.rgb.b})`;
             cursorDot.style.borderRadius = "50%";
             cursorDot.style.position = "absolute";

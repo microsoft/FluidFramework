@@ -90,6 +90,7 @@ describe("Create New Utils Tests", () => {
             },
             new TelemetryNullLogger());
         newFileParams = {
+            type: 'New',
             driveId,
             siteUrl,
             filePath,

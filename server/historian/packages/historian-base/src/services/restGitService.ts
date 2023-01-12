@@ -62,19 +62,16 @@ export class RestGitService {
         private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
         private readonly storageName?: string,
         private readonly storageUrl?: string) {
-        let defaultHeaders: AxiosRequestHeaders;
-        if (storageName !== undefined) {
-            defaultHeaders = {
+        const defaultHeaders: AxiosRequestHeaders = storageName !== undefined
+            ? {
                 "User-Agent": userAgent,
                 "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
                 "Storage-Name": this.storageName,
-            };
-        } else {
-            defaultHeaders = {
+            }
+            : {
                 "User-Agent": userAgent,
                 "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
             };
-        }
         if (storage.credentials) {
             const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
             defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
@@ -213,7 +210,7 @@ export class RestGitService {
     public async createSummary(summaryParams: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
         const summaryResponse = await this.post<IWholeFlatSummary | IWriteSummaryResponse>(
             `/repos/${this.getRepoPath()}/git/summaries`,
-             summaryParams);
+            summaryParams);
         if (summaryParams.type === "container" && (summaryResponse as IWholeFlatSummary).trees !== undefined) {
             // Cache the written summary for future retrieval. If this fails, next summary retrieval
             // will receive an older version, but that is OK. Client will catch up with ops.
@@ -481,8 +478,8 @@ export class RestGitService {
     }
 
     private async resolve<T>(key: string,
-                             fetch: () => Promise<T>,
-                             useCache: boolean): Promise<T> {
+        fetch: () => Promise<T>,
+        useCache: boolean): Promise<T> {
         if (this.cache && useCache) {
             // Attempt to grab the value from the cache. Log any errors but don't fail the request
             const cachedValue: T | undefined = await this.cache.get<T>(key).catch((error) => {

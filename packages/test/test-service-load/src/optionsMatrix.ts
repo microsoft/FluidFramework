@@ -4,6 +4,7 @@
  */
 
 import {
+    CompressionAlgorithms,
     IContainerRuntimeOptions,
     IGCRuntimeOptions,
     ISummaryRuntimeOptions,
@@ -78,8 +79,10 @@ export function generateRuntimeOptions(
         loadSequenceNumberVerification: [undefined],
         enableOfflineLoad: [undefined],
         flushMode: [undefined],
-        compressionOptions: [{ minimumSize: 500 }],
+        compressionOptions: [{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 }],
         maxBatchSizeInBytes: [undefined],
+        enableOpReentryCheck: [true],
+        chunkSizeInBytes: [undefined],
     };
 
     return generatePairwiseOptions<IContainerRuntimeOptions>(

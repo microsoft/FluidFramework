@@ -25,7 +25,16 @@ import {
     isILoggingError,
     extractLogSafeErrorProperties,
     generateStack,
+    isTaggedTelemetryPropertyValue,
 } from "./errorLogging";
+import {
+    ITaggedTelemetryPropertyTypeExt,
+    ITelemetryEventExt,
+    ITelemetryGenericEventExt,
+    ITelemetryLoggerExt,
+    ITelemetryPerformanceEventExt,
+    TelemetryEventPropertyTypeExt,
+} from "./telemetryTypes";
 
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
@@ -53,7 +62,7 @@ export interface ITelemetryLoggerPropertyBags{
  * encoding in one place schemas for various types of Fluid telemetry events.
  * Creates sub-logger that appends properties to all events
  */
-export abstract class TelemetryLogger implements ITelemetryLogger {
+export abstract class TelemetryLogger implements ITelemetryLoggerExt {
     public static readonly eventNamespaceSeparator = ":";
 
     public static formatTick(tick: number): number {
@@ -128,7 +137,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param event - the event to send
      * @param error - optional error object to log
      */
-    public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
+    public sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any) {
         this.sendTelemetryEventCore({ ...event, category: event.category ?? "generic" }, error);
     }
 
@@ -139,9 +148,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
      protected sendTelemetryEventCore(
-        event: ITelemetryGenericEvent & { category: TelemetryEventCategory; },
+        event: ITelemetryGenericEventExt & { category: TelemetryEventCategory; },
         error?: any) {
-        const newEvent = { ...event };
+        const newEvent = convertToBaseEvent(event);
         if (error !== undefined) {
             TelemetryLogger.prepareErrorObject(newEvent, error, false);
         }
@@ -176,7 +185,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param event - Event to send
      * @param error - optional error object to log
      */
-    public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
+    public sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: any): void {
         const perfEvent = {
             ...event,
             category: event.category ?? "performance",
@@ -462,7 +471,7 @@ export class PerformanceEvent {
             this.reportEvent("start");
         }
 
-        if (typeof window === "object" && window != null && window.performance) {
+        if (typeof window === "object" && window != null && window.performance?.mark) {
             this.startMark = `${event.eventName}-start`;
             window.performance.mark(this.startMark);
         }
@@ -586,4 +595,55 @@ export class TelemetryNullLogger implements ITelemetryLogger {
     public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void {}
     public sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void {}
     public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {}
+}
+
+/**
+ * Takes in an event object, and converts all of its values to a basePropertyType.
+ * In the case of an invalid property type, the value will be converted to an error string.
+ * @param event - Event with fields you want to stringify.
+ */
+function convertToBaseEvent({ category, eventName, ...props }: ITelemetryEventExt): ITelemetryBaseEvent {
+    const newEvent: ITelemetryBaseEvent = { category, eventName };
+    for (const key of Object.keys(props)) {
+        newEvent[key] = convertToBasePropertyType(props[key]);
+    }
+    return newEvent;
+}
+
+/**
+ * Takes in value, and does one of 4 things.
+ * if value is of primitive type - returns the original value.
+ * If the value is an array of primitives - returns a stringified version of the array.
+ * If the value is an object of type ITaggedTelemetryPropertyType - returns the object
+ * with its values recursively converted to base property Type.
+ * If none of these cases are reached - returns an error string
+ * @param x - value passed in to convert to a base property type
+ */
+export function convertToBasePropertyType(
+    x: TelemetryEventPropertyTypeExt | ITaggedTelemetryPropertyTypeExt,
+): TelemetryEventPropertyType | ITaggedTelemetryPropertyType {
+
+    return isTaggedTelemetryPropertyValue(x) ? {
+            value: convertToBasePropertyTypeUntagged(x.value),
+            tag: x.tag,
+        } : convertToBasePropertyTypeUntagged(x);
+}
+
+function convertToBasePropertyTypeUntagged(
+    x: TelemetryEventPropertyTypeExt,
+): TelemetryEventPropertyType {
+    switch (typeof x) {
+        case "string":
+        case "number":
+        case "boolean":
+        case "undefined":
+            return x;
+        case "object":
+            // We assume this is an array based on the input types
+            return JSON.stringify(x);
+        default:
+            // should never reach this case based on the input types
+            console.error(`convertToBasePropertyTypeUntagged: INVALID PROPERTY (typed as ${typeof x})`);
+            return `INVALID PROPERTY (typed as ${typeof x})`;
+    }
 }
