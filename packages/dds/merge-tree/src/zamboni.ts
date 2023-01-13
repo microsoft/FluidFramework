@@ -5,19 +5,18 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
+import { UnassignedSequenceNumber } from "./constants";
 import { MergeTree } from "./mergeTree";
 import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback";
 import { IMergeBlock, IMergeNode, ISegment, MaxNodesInBlock } from "./mergeTreeNodes";
 import { matchProperties } from "./properties";
 
-export class Zamboni {
-    public constructor() {}
-
-    private underflow(node: IMergeBlock) {
+    export const zamboniSegmentsMax = 2
+    function underflow(node: IMergeBlock) {
         return node.childCount < (MaxNodesInBlock / 2);
     }
 
-    public zamboniSegments(mergeTree: MergeTree, zamboniSegmentsMaxCount = MergeTree.zamboniSegmentsMaxCount) {
+    export function zamboniSegments(mergeTree: MergeTree, zamboniSegmentsMaxCount = zamboniSegmentsMax) {
         if (!mergeTree.collabWindow.collaborating) {
             return;
         }
@@ -32,7 +31,7 @@ export class Zamboni {
             if (segmentToScour.segment!.parent && segmentToScour.segment!.parent.needsScour !== false) {
                 const block = segmentToScour.segment!.parent;
                 const childrenCopy: IMergeNode[] = [];
-                this.scourNode(block, childrenCopy, mergeTree);
+                scourNode(block, childrenCopy, mergeTree);
                 // This will avoid the cost of re-scouring nodes
                 // that have recently been scoured
                 block.needsScour = false;
@@ -46,10 +45,11 @@ export class Zamboni {
                         block.assignChild(childrenCopy[j], j, false);
                     }
 
-                    if (this.underflow(block) && block.parent) {
-                        this.packParent(block.parent, mergeTree);
+                    if (underflow(block) && block.parent) {
+                        packParent(block.parent, mergeTree);
                     } else {
-                        mergeTree.callback.updateLengthsAndOrdinals(block);
+                        mergeTree.nodeUpdateOrdinals(block);
+                        mergeTree.blockUpdatePathLengths(block, UnassignedSequenceNumber, -1, true);
                     }
                 }
             }
@@ -57,7 +57,7 @@ export class Zamboni {
     }
 
     // Interior node with all node children
-    public packParent(parent: IMergeBlock, mergeTree: MergeTree) {
+    export function packParent(parent: IMergeBlock, mergeTree: MergeTree) {
         const children = parent.children;
         let childIndex: number;
         let childBlock: IMergeBlock;
@@ -66,7 +66,7 @@ export class Zamboni {
             // Debug assert not isLeaf()
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             childBlock = <IMergeBlock>children[childIndex];
-            this.scourNode(childBlock, holdNodes, mergeTree);
+            scourNode(childBlock, holdNodes, mergeTree);
             // Will replace this block with a packed block
             childBlock.parent = undefined;
         }
@@ -87,14 +87,14 @@ export class Zamboni {
                     nodeCount++;
                     remainderCount--;
                 }
-                const packedBlock = mergeTree.callback.makeBlock(nodeCount);
+                const packedBlock = mergeTree.makeBlock(nodeCount);
                 for (let packedNodeIndex = 0; packedNodeIndex < nodeCount; packedNodeIndex++) {
                     const nodeToPack = holdNodes[childrenPackedCount++];
                     packedBlock.assignChild(nodeToPack, packedNodeIndex, false);
                 }
                 packedBlock.parent = parent;
                 packedBlocks[nodeIndex] = packedBlock;
-                mergeTree.callback.updateLengthNew(packedBlock);
+                mergeTree.nodeUpdateLengthNewStructure(packedBlock);
             }
             parent.children = packedBlocks;
             for (let j = 0; j < childCount; j++) {
@@ -105,14 +105,15 @@ export class Zamboni {
             parent.children = [];
             parent.childCount = 0;
         }
-        if (this.underflow(parent) && (parent.parent)) {
-            this.packParent(parent.parent, mergeTree);
+        if (underflow(parent) && (parent.parent)) {
+            packParent(parent.parent, mergeTree);
         } else {
-            mergeTree.callback.updateLengthsAndOrdinals(parent);
+            mergeTree.nodeUpdateOrdinals(parent);
+            mergeTree.blockUpdatePathLengths(parent, UnassignedSequenceNumber, -1, true);
         }
     }
 
-    private scourNode(node: IMergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTree) {
+    function scourNode(node: IMergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTree) {
         let prevSegment: ISegment | undefined;
         for (let k = 0; k < node.childCount; k++) {
             const childNode = node.children[k];
@@ -180,4 +181,3 @@ export class Zamboni {
             }
         }
     }
-}

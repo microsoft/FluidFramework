@@ -94,7 +94,7 @@ import {
     NodeAction,
     walkAllChildSegments,
 } from "./mergeTreeNodeWalk";
-import { Zamboni } from "./zamboni";
+import { zamboniSegments } from "./zamboni";
 
 const minListenerComparer: Comparer<MinListener> = {
     min: { minRequired: Number.MIN_VALUE, onMinGE: () => { assert(false, 0x048 /* "onMinGE()" */); } },
@@ -482,7 +482,6 @@ export class MergeTree {
         return this.segmentsToScour;
     }
 
-    private readonly zamboni = new Zamboni();
     /**
      * Whether or not all blocks in the mergeTree currently have information about local partial lengths computed.
      * This information is only necessary on reconnect, and otherwise costly to bookkeep.
@@ -512,7 +511,7 @@ export class MergeTree {
         value.mergeTree = this;
     }
 
-    private makeBlock(childCount: number) {
+    public makeBlock(childCount: number) {
         const block: MergeBlock = new HierMergeBlock(childCount);
         block.ordinal = "";
         return block;
@@ -542,16 +541,6 @@ export class MergeTree {
         this.nodeUpdateOrdinals(bBlock);
         return bBlock;
     }
-
-    public callback = {
-        updateLengthsAndOrdinals: (block: IMergeBlock) => {
-        this.nodeUpdateOrdinals(block);
-        this.blockUpdatePathLengths(block, UnassignedSequenceNumber, -1, true);
-    }, makeBlock: (nodeCount: number) => {
-        return this.makeBlock(nodeCount);
-    }, updateLengthNew: (block: IMergeBlock) => {
-        this.nodeUpdateLengthNewStructure(block);
-    }};
 
     private segmentClone(segment: ISegment) {
         const b = segment.clone();
@@ -938,7 +927,7 @@ export class MergeTree {
         if (minSeq > this.collabWindow.minSeq) {
             this.collabWindow.minSeq = minSeq;
             if (MergeTree.options.zamboniSegments) {
-                this.zamboni.zamboniSegments(this);
+                zamboniSegments(this);
             }
             this.notifyMinSeqListeners();
         }
@@ -1178,7 +1167,7 @@ export class MergeTree {
             }
         }
         if (MergeTree.options.zamboniSegments) {
-            this.zamboni.zamboniSegments(this);
+            zamboniSegments(this);
         }
     }
 
@@ -1269,7 +1258,7 @@ export class MergeTree {
 
         if (this.collabWindow.collaborating && MergeTree.options.zamboniSegments &&
             (seq !== UnassignedSequenceNumber)) {
-                this.zamboni.zamboniSegments(this);
+                zamboniSegments(this);
         }
     }
 
@@ -1690,7 +1679,7 @@ export class MergeTree {
         return newNode;
     }
 
-    private nodeUpdateOrdinals(block: IMergeBlock) {
+    public nodeUpdateOrdinals(block: IMergeBlock) {
         for (let i = 0; i < block.childCount; i++) {
             const child = block.children[i];
             block.setOrdinal(child, i);
@@ -1751,7 +1740,7 @@ export class MergeTree {
         }
         if (this.collabWindow.collaborating && (seq !== UnassignedSequenceNumber)) {
             if (MergeTree.options.zamboniSegments) {
-                this.zamboni.zamboniSegments(this);
+                zamboniSegments(this);
             }
         }
     }
@@ -1845,7 +1834,7 @@ export class MergeTree {
 
         if (this.collabWindow.collaborating && (seq !== UnassignedSequenceNumber)) {
             if (MergeTree.options.zamboniSegments) {
-                this.zamboni.zamboniSegments(this);
+                zamboniSegments(this);
             }
         }
     }
@@ -1953,7 +1942,7 @@ export class MergeTree {
         return segmentPosition;
     }
 
-    private nodeUpdateLengthNewStructure(node: IMergeBlock, recur = false) {
+    public nodeUpdateLengthNewStructure(node: IMergeBlock, recur = false) {
         this.blockUpdate(node);
         if (this.collabWindow.collaborating) {
             this.localPartialsComputed = false;
@@ -2019,7 +2008,7 @@ export class MergeTree {
         block.cachedLength = len;
     }
 
-    private blockUpdatePathLengths(
+    public blockUpdatePathLengths(
         startBlock: IMergeBlock | undefined,
         seq: number,
         clientId: number,
