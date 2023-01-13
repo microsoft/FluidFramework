@@ -674,7 +674,7 @@ export class DataStores implements IDisposable {
                 continue;
             }
             const dataStoreId = pathParts[1];
-            assert(this.contexts.has(dataStoreId), "No data store with specified id");
+            assert(this.contexts.has(dataStoreId), 0x510 /* No data store with specified id */);
             tombstonedDataStoresSet.add(dataStoreId);
         }
 
