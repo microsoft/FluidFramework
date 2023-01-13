@@ -374,7 +374,7 @@ describe("Loader", () => {
                     } as any as ISequencedDocumentMessage]);
 
                     await yieldEventLoop();
-                    assert.strictEqual(deltaManager.lastMessage().sequenceNumber, seq, "discrepancy in last processed seqNum");
+                    assert.strictEqual(deltaManager.lastMessage.sequenceNumber, seq, "discrepancy in last processed seqNum");
                     assert.strictEqual(expectedError, undefined, `Error should not happen : ${expectedError}`)
                 });
 
@@ -420,7 +420,7 @@ describe("Loader", () => {
                     } as any as ISequencedDocumentMessage]);
 
                     await yieldEventLoop();
-                    assert.strictEqual(deltaManager.lastMessage().sequenceNumber, seq, "discrepancy in last processed seqNum");
+                    assert.strictEqual(deltaManager.lastMessage.sequenceNumber, seq, "discrepancy in last processed seqNum");
                     assert.strictEqual(expectedError, undefined, `Error should not happen : ${expectedError}`)
                 });
             });
