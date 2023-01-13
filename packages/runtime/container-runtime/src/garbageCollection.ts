@@ -62,6 +62,7 @@ import {
     runSessionExpiryKey,
     runSweepKey,
     stableGCVersion,
+    throwOnTombstoneLoadKey,
     throwOnTombstoneUsageKey,
     trackGCStateKey
 } from "./garbageCollectionConstants";
@@ -1248,6 +1249,7 @@ export class GarbageCollector implements IGarbageCollector {
                 isSummarizerClient: this.isSummarizerClient,
                 url: trimLeadingSlashes(toNodePath),
                 nodeType,
+                throwOnTombstoneLoad: this.mc.config.getBoolean(throwOnTombstoneLoadKey) ?? false,
                 throwOnTombstoneUsage: this.mc.config.getBoolean(throwOnTombstoneUsageKey) ?? false,
             });
         }

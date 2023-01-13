@@ -78,6 +78,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
                 this.skip();
             }
 
+            settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = true;
             settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
             settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
         });
@@ -119,12 +120,13 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             assert(absoluteUrl !== undefined, "Should be able to retrieve the absolute url");
 
             // Retrieving the blob should fail. Note that the blob is requested via its url since this container does
-            // not have access to the blob's handle.
+            // not have access to the blob's handle since it loaded after the blob was tombstoned.
             const response = await container2.request({ url: blobHandle.absolutePath });
             assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
             assert(response.value.startsWith("Blob removed by gc:"), `Unexpected response value`);
             assert(container2.closed !== true, "Container should not have closed");
 
+            // But the summarizing container should succeed (logging and error)
             const { container: summarizingContainer } = await createSummarizerWithContainer(
                 provider,
                 absoluteUrl,
@@ -186,6 +188,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             assert(response2.value.startsWith("Blob removed by gc:"), `Unexpected response value for blob handle 2`);
         });
 
+        //* Update this
         itExpects("Can un-tombstone attachment blob by storing a handle",
         [
             {
@@ -253,6 +256,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
         ],
         async () => {
             // Turn ThrowOnTombstoneUsage setting off.
+            settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = false;
             settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
 
             const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
@@ -371,6 +375,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
                 this.skip();
             }
 
+            settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = true;
             settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
             settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
         });
@@ -644,6 +649,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
                 this.skip();
             }
 
+            settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = true;
             settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
             settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
         });
