@@ -242,7 +242,7 @@ export function getFilePathForApiItem(
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  * @param includeExtension - Whether or not to include the `.md` file extension at the end of the path.
  */
-export function getApiItemPath(
+function getApiItemPath(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
     includeExtension: boolean,
