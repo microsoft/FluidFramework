@@ -10,12 +10,17 @@ describe("taskList", () => {
         // Wait for the page to load first before running any tests
         // so this time isn't attributed to the first test
         await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
+        console.log("Reached 1");
     }, 45_000);
 
     beforeEach(async () => {
         await page.goto(globals.PATH, { waitUntil: "load" });
+        console.log("Reached 2");
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/dot-notation
+        console.log(() => window["fluidStarted"]);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/dot-notation
         await page.waitFor(() => window["fluidStarted"]);
+        console.log("Reached 3");
     });
 
     it("loads and there's an input", async () => {

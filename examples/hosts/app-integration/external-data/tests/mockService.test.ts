@@ -67,7 +67,7 @@ describe("mockCustomerService", () => {
         };
 
         await request(server!).post("/set-tasks").send({ taskList: newData }).expect(200);
-        const  externalData = await externalDataSource!.fetchData();
+        const externalData = await externalDataSource!.fetchData();
         const parsed = JSON.parse(externalData.body.toString()) as object;
         expect(parsed).toEqual(newData);
     });
