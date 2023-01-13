@@ -55,5 +55,6 @@ export {
 	totalBlobSizePropertyName,
 } from "./summary";
 export {
+    IIdCompressorCore,
     IIdCompressor
 } from "./id-compressor";

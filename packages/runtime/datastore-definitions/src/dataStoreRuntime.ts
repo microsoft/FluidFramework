@@ -22,6 +22,7 @@ import {
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
+    IIdCompressorCore,
     IIdCompressor,
     IInboundSignalMessage,
     IProvideFluidDataStoreRegistry,
@@ -62,7 +63,7 @@ export interface IFluidDataStoreRuntime extends
 
     readonly logger: ITelemetryLogger;
 
-    readonly idCompressor?: IIdCompressor;
+    readonly idCompressor?: IIdCompressorCore & IIdCompressor;
 
     /**
      * Indicates the attachment state of the data store to a host service.

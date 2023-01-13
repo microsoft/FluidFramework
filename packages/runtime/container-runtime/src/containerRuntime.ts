@@ -1752,13 +1752,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // messages once a batch has been fully processed.
         this.scheduleManager.beforeOpProcessing(message);
 
-        if (this.runtimeOptions.enableRuntimeCompressor
-            && message.type === ContainerMessageType.FluidDataStoreOp
-            && message.contents.contents.content.contents !== undefined
-            && message.contents.contents.content.contents.idRange !== undefined) {
-            this.idCompressor?.finalizeCreationRange(message.contents.contents.content.contents.idRange);
-        }
-
         try {
             let localOpMetadata: unknown;
             if (local && runtimeMessage && message.type !== ContainerMessageType.ChunkedOp) {
@@ -2593,12 +2586,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         id: string,
         contents: any,
         localOpMetadata: unknown = undefined): void {
-        if (this.runtimeOptions.enableRuntimeCompressor && this.idCompressor !== undefined
-            && contents.content.contents !== undefined
-            && contents.content.contents.idRange === undefined) {
-            const range = this.idCompressor.takeNextCreationRange();
-            contents.content.contents.idRange = range.ids?.first !== undefined ? range : undefined;
-        }
         const envelope: IEnvelope = {
             address: id,
             contents,

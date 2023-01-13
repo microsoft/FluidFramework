@@ -198,7 +198,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    readonly idCompressor?: IIdCompressor;
+    readonly idCompressor?: IIdCompressorCore & IIdCompressor;
     readonly isLocalDataStore: boolean;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
@@ -315,6 +315,13 @@ export interface IIdCompressor {
     // Warning: (ae-forgotten-export) The symbol "StableId" needs to be exported by the entry point index.d.ts
     tryDecompress(id: SessionSpaceCompressedId | FinalCompressedId): StableId | string | undefined;
     tryRecompress(uncompressed: string): SessionSpaceCompressedId | undefined;
+}
+
+// @public (undocumented)
+export interface IIdCompressorCore {
+    // Warning: (ae-forgotten-export) The symbol "IdCreationRange" needs to be exported by the entry point index.d.ts
+    finalizeCreationRange(range: IdCreationRange): void;
+    takeNextCreationRange(): IdCreationRange;
 }
 
 // @public

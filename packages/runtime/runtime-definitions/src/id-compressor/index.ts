@@ -19,5 +19,6 @@ export {
 } from './persisted-types';
 
 export {
+    IIdCompressorCore,
     IIdCompressor
 } from "./idCompressor";

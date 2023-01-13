@@ -348,6 +348,12 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): void {
         this.verifyNotClosed();
         if (this.isAttached()) {
+            if (this.runtime.idCompressor !== undefined
+                && content.idRange === undefined) {
+                const range = this.runtime.idCompressor.takeNextCreationRange();
+                content.idRange = range.ids?.first !== undefined ? range : undefined;
+            }
+
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.services!.deltaConnection.submit(content, localOpMetadata);
         }
@@ -479,6 +485,10 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     private process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         this.verifyNotClosed(); // This will result in container closure.
         this.emitInternal("pre-op", message, local, this);
+
+        if (message.contents.idRange !== undefined) {
+            this.runtime.idCompressor?.finalizeCreationRange(message.contents.idRange);
+        }
 
         this.opProcessingHelper.measure(
             () => { this.processCore(message, local, localOpMetadata); },

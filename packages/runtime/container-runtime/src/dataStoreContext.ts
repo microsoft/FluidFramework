@@ -58,6 +58,7 @@ import {
     SummarizeInternalFn,
     ITelemetryContext,
     IIdCompressor,
+    IIdCompressorCore,
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
@@ -200,7 +201,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._baseSnapshot;
     }
 
-    public get idCompressor(): IIdCompressor | undefined {
+    public get idCompressor(): IIdCompressorCore & IIdCompressor | undefined {
         return this._containerRuntime.idCompressor;
     }
 

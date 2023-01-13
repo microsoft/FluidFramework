@@ -4,7 +4,23 @@
  */
 
 import { SessionSpaceCompressedId, OpSpaceCompressedId, SessionId, FinalCompressedId, StableId } from "./identifiers";
-import { SerializedIdCompressor, SerializedIdCompressorWithNoSession, SerializedIdCompressorWithOngoingSession } from "./persisted-types";
+import { IdCreationRange, SerializedIdCompressor, SerializedIdCompressorWithNoSession, SerializedIdCompressorWithOngoingSession } from "./persisted-types";
+
+export interface IIdCompressorCore {
+    /**
+     * Finalizes the supplied range of IDs (which may be from either a remote or local session).
+     * @param range - the range of session-local IDs to finalize.
+     */
+    finalizeCreationRange(range: IdCreationRange): void
+
+    /**
+     * Returns a range of local IDs created by this session in a format for sending to the server for finalizing.
+     * The range will include all local IDs generated via calls to `generateCompressedId` since the last time this method was called.
+     * @returns the range of session-local IDs, which may be empty. This range must be sent to the server for ordering before
+     * it is finalized. Ranges must be sent to the server in the order that they are taken via calls to this method.
+     */
+    takeNextCreationRange(): IdCreationRange
+}
 
 export interface IIdCompressor {
     generateCompressedId(): number;
