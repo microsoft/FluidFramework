@@ -54,6 +54,7 @@ print out the applied config as a JSON file. As we make changes to the config, w
 a diff to review as part of a PR -- just like we do with API reports for code changes.
 
 <!-- AUTO-GENERATED-CONTENT:START (SCRIPTS) -->
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Scripts
 

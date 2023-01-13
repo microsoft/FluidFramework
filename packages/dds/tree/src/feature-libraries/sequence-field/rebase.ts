@@ -227,6 +227,42 @@ class RebaseQueue<T> {
             ) {
                 return dequeueRelatedReattaches(this.newMarks, this.baseMarks);
             }
+            if (isReattach(baseMark)) {
+                const offset = getOffsetAtRevision(
+                    newMark.lineage,
+                    baseMark.lastDetachedBy ?? baseMark.detachedBy,
+                );
+                if (offset !== undefined) {
+                    // WARNING: the offset is based on the first node detached whereas the detachIndex is based on the
+                    // first node in the field.
+                    // The comparison below is the only valid one we can make at the moment.
+                    // TODO: find a way to make the lineage and detachIndex info more comparable so we can correctly
+                    // handle scenarios where either all or some fraction of newMark should come first.
+                    if (offset >= baseMark.detachIndex + baseMark.count) {
+                        return {
+                            baseMark: this.baseMarks.dequeue(),
+                        };
+                    }
+                }
+            }
+            if (isReattach(newMark)) {
+                const offset = getOffsetAtRevision(
+                    baseMark.lineage,
+                    newMark.lastDetachedBy ?? newMark.detachedBy,
+                );
+                if (offset !== undefined) {
+                    // WARNING: the offset is based on the first node detached whereas the detachIndex is based on the
+                    // first node in the field.
+                    // The comparison below is the only valid one we can make at the moment.
+                    // TODO: find a way to make the lineage and detachIndex info more comparable so we can correctly
+                    // handle scenarios where either all or some fraction of baseMark should come first.
+                    if (offset >= newMark.detachIndex + newMark.count) {
+                        return {
+                            newMark: this.newMarks.dequeue(),
+                        };
+                    }
+                }
+            }
             const revision = baseMark.revision ?? this.baseMarks.revision;
             const reattachOffset = getOffsetAtRevision(newMark.lineage, revision);
             if (reattachOffset !== undefined) {
