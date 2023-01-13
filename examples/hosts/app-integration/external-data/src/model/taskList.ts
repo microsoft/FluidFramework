@@ -131,7 +131,7 @@ export class TaskList extends DataObject implements ITaskList {
     };
 
     public readonly deleteTask = (id: string): void => {
-        this.handleTaskDeleted(id);
+        this.draftData.delete(id);
     };
 
     public readonly getTasks = (): Task[] => {
@@ -319,13 +319,13 @@ export class TaskList extends DataObject implements ITaskList {
         }
         this._draftData = await draft.get();
 
-        this.root.on("valueChanged", (changed) => {
+        this._draftData.on("valueChanged", (changed) => {
             if (changed.previousValue === undefined) {
                 // Must be from adding a new task
                 this.handleTaskAdded(changed.key).catch((error) => {
                     console.error(error);
                 });
-            } else if (this.root.get(changed.key) === undefined) {
+            } else if (this.draftData.get(changed.key) === undefined) {
                 // Must be from a deletion
                 this.handleTaskDeleted(changed.key);
             } else {

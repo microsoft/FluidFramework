@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import type { IMigrationTool } from "@fluid-example/example-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 
 import { parseStringDataVersionTwo, readVersion } from "../dataTransform";
-import type { IMigrationTool } from "../migrationInterfaces";
 import type {
     IInventoryListAppModel,
     IInventoryListAppModelEvents,

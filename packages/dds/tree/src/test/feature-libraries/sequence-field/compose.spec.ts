@@ -16,7 +16,7 @@ import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
-import { getMaxIdTagged, normalizeMoveIds } from "./utils";
+import { continuingAllocator, normalizeMoveIds } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = brand(1);
@@ -26,11 +26,7 @@ const tag4: RevisionTag = brand(4);
 
 function compose(changes: TaggedChange<TestChangeset>[]): TestChangeset {
     changes.forEach(deepFreeze);
-    return SF.compose(
-        changes,
-        TestChange.compose,
-        TestChange.newIdAllocator(getMaxIdTagged(changes)),
-    );
+    return SF.compose(changes, TestChange.compose, continuingAllocator(changes));
 }
 
 function composeNoVerify(changes: TaggedChange<TestChangeset>[]): TestChangeset {
@@ -38,7 +34,7 @@ function composeNoVerify(changes: TaggedChange<TestChangeset>[]): TestChangeset 
     return SF.compose(
         changes,
         (cs: TaggedChange<TestChange>[]) => TestChange.compose(cs, false),
-        TestChange.newIdAllocator(getMaxIdTagged(changes)),
+        continuingAllocator(changes),
     );
 }
 
@@ -50,7 +46,7 @@ function shallowCompose(changes: TaggedChange<SF.Changeset>[]): SF.Changeset {
             assert(children.length === 1, "Should only have one child to compose");
             return children[0].change;
         },
-        TestChange.newIdAllocator(getMaxIdTagged(changes)),
+        continuingAllocator(changes),
     );
 }
 
@@ -58,18 +54,32 @@ describe("SequenceField - Compose", () => {
     describe("associativity of triplets", () => {
         const entries = Object.entries(cases);
         for (const a of entries) {
+            const taggedA = tagChange(a[1], brand(1));
             for (const b of entries) {
+                const taggedB = tagChange(b[1], brand(2));
                 for (const c of entries) {
-                    it(`((${a[0]}, ${b[0]}), ${c[0]}) === (${a[0]}, (${b[0]}, ${c[0]}))`, () => {
-                        const ab = composeNoVerify([makeAnonChange(a[1]), makeAnonChange(b[1])]);
-                        const left = composeNoVerify([makeAnonChange(ab), makeAnonChange(c[1])]);
-                        const bc = composeNoVerify([makeAnonChange(b[1]), makeAnonChange(c[1])]);
-                        const right = composeNoVerify([makeAnonChange(a[1]), makeAnonChange(bc)]);
+                    const taggedC = tagChange(c[1], brand(3));
+                    const title = `((${a[0]}, ${b[0]}), ${c[0]}) === (${a[0]}, (${b[0]}, ${c[0]}))`;
+                    if (
+                        title.startsWith("((delete, insert), revive)") ||
+                        title.startsWith("((move, insert), revive)") ||
+                        !SF.areComposable([taggedA, taggedB, taggedC])
+                    ) {
+                        it.skip(title, () => {
+                            // These changes do not form a valid sequence of composable changes
+                        });
+                    } else {
+                        it(title, () => {
+                            const ab = composeNoVerify([taggedA, taggedB]);
+                            const left = composeNoVerify([makeAnonChange(ab), taggedC]);
+                            const bc = composeNoVerify([taggedB, taggedC]);
+                            const right = composeNoVerify([taggedA, makeAnonChange(bc)]);
 
-                        normalizeMoveIds(left);
-                        normalizeMoveIds(right);
-                        assert.deepEqual(left, right);
-                    });
+                            normalizeMoveIds(left);
+                            normalizeMoveIds(right);
+                            assert.deepEqual(left, right);
+                        });
+                    }
                 }
             }
         }
@@ -145,7 +155,7 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ modify", () => {
-        const revive = Change.revive(0, 3, 0, tag1);
+        const revive = Change.revive(0, 3, tag1, 0);
         const modify = Change.modify(0, { valueChange: { value: 2 } });
         const expected: SF.Changeset = [
             {
@@ -380,7 +390,7 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ delete", () => {
-        const revive = Change.revive(0, 5, 0, tag1);
+        const revive = Change.revive(0, 5, tag1, 0);
         const deletion: SF.Changeset = [
             1,
             { type: "Delete", count: 1 },
@@ -440,7 +450,7 @@ describe("SequenceField - Compose", () => {
     });
 
     it("revive ○ insert", () => {
-        const revive = Change.revive(0, 5, 0, tag1);
+        const revive = Change.revive(0, 5, tag1, 0);
         const insert = Change.insert(0, 1, 2);
         // TODO: test with merge-right policy as well
         const expected: SF.Changeset = [
@@ -483,7 +493,7 @@ describe("SequenceField - Compose", () => {
 
     it("modify ○ revive", () => {
         const modify = Change.modify(0, { valueChange: { value: 1 } });
-        const revive = Change.revive(0, 2, 0, tag1);
+        const revive = Change.revive(0, 2, tag1, 0);
         const expected: SF.Changeset = [
             { type: "Revive", count: 2, detachedBy: tag1, detachIndex: 0 },
             {
@@ -495,27 +505,117 @@ describe("SequenceField - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("delete ○ revive", () => {
-        const deletion = Change.delete(0, 3);
-        const revive = Change.revive(0, 2, 0, tag1);
-        // TODO: test with merge-right policy as well
+    it("delete ○ revive (different earlier nodes)", () => {
+        const deletion = tagChange(Change.delete(0, 2), tag1);
+        const revive = makeAnonChange(
+            Change.revive(0, 2, tag2, 0, undefined, [{ revision: tag1, offset: 0 }]),
+        );
         const expected: SF.Changeset = [
-            { type: "Revive", count: 2, detachedBy: tag1, detachIndex: 0 },
-            { type: "Delete", count: 3 },
+            {
+                type: "Revive",
+                count: 2,
+                detachedBy: tag2,
+                detachIndex: 0,
+                lineage: [{ revision: tag1, offset: 0 }],
+            },
+            { type: "Delete", count: 2, revision: tag1 },
         ];
-        const actual = shallowCompose([makeAnonChange(deletion), makeAnonChange(revive)]);
+        const actual = shallowCompose([deletion, revive]);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("delete ○ revive (different in-between nodes)", () => {
+        const deletion = tagChange(Change.delete(0, 2), tag1);
+        const revive = makeAnonChange(
+            Change.revive(0, 2, tag2, 0, undefined, [{ revision: tag1, offset: 1 }]),
+        );
+        const expected: SF.Changeset = [
+            { type: "Delete", count: 1, revision: tag1 },
+            {
+                type: "Revive",
+                count: 2,
+                detachedBy: tag2,
+                detachIndex: 0,
+                lineage: [{ revision: tag1, offset: 1 }],
+            },
+            { type: "Delete", count: 1, revision: tag1 },
+        ];
+        const actual = shallowCompose([deletion, revive]);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("delete ○ revive (different later nodes)", () => {
+        const deletion = tagChange(Change.delete(0, 2), tag1);
+        const revive = makeAnonChange(
+            Change.revive(0, 2, tag2, 0, undefined, [{ revision: tag1, offset: 2 }]),
+        );
+        const expected: SF.Changeset = [
+            { type: "Delete", count: 2, revision: tag1 },
+            {
+                type: "Revive",
+                count: 2,
+                detachedBy: tag2,
+                detachIndex: 0,
+                lineage: [{ revision: tag1, offset: 2 }],
+            },
+        ];
+        const actual = shallowCompose([deletion, revive]);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("delete1 ○ delete2 ○ revive (delete1)", () => {
+        const delete1 = Change.delete(1, 3);
+        const delete2 = Change.delete(0, 2);
+        // The revive needs lineage to describe the precise gap in which it is reviving the nodes.
+        // Such lineage would normally be acquired by rebasing the revive over the second delete.
+        const revive = Change.revive(0, 1, tag1, 2, undefined, [{ revision: tag2, offset: 1 }]);
+        const expected: SF.Changeset = [
+            { type: "Delete", count: 1, revision: tag2 },
+            { type: "Delete", count: 1, revision: tag1 },
+            1,
+            { type: "Delete", count: 1, revision: tag1 },
+            { type: "Delete", count: 1, revision: tag2 },
+        ];
+        const actual = shallowCompose([
+            tagChange(delete1, tag1),
+            tagChange(delete2, tag2),
+            makeAnonChange(revive),
+        ]);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("delete1 ○ delete2 ○ revive (delete2)", () => {
+        const delete1 = Change.delete(1, 3);
+        const delete2 = Change.delete(0, 2);
+        const revive = Change.revive(0, 2, tag2, 0);
+        const expected: SF.Changeset = [1, { type: "Delete", count: 3, revision: tag1 }];
+        const actual = shallowCompose([
+            tagChange(delete1, tag1),
+            tagChange(delete2, tag2),
+            makeAnonChange(revive),
+        ]);
         assert.deepEqual(actual, expected);
     });
 
     it("revive ○ revive", () => {
-        const reviveA = Change.revive(0, 2, 0, tag1);
-        const reviveB = Change.revive(0, 3, 0, tag2);
+        const reviveA = Change.revive(0, 2, tag1, 0);
+        const reviveB = Change.revive(0, 3, tag2, 0);
         // TODO: test with merge-right policy as well
         const expected: SF.Changeset = [
             { type: "Revive", count: 3, detachedBy: tag2, detachIndex: 0 },
             { type: "Revive", count: 2, detachedBy: tag1, detachIndex: 0 },
         ];
         const actual = shallowCompose([makeAnonChange(reviveA), makeAnonChange(reviveB)]);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("revive ○ conflicted revive", () => {
+        const reviveA = Change.revive(0, 2, tag1, 0);
+        const reviveB = Change.revive(0, 2, tag1, 0, tag2);
+        const expected: SF.Changeset = [
+            { type: "Revive", count: 2, detachedBy: tag1, detachIndex: 0, revision: tag2 },
+        ];
+        const actual = shallowCompose([tagChange(reviveA, tag2), makeAnonChange(reviveB)]);
         assert.deepEqual(actual, expected);
     });
 
@@ -557,3 +657,8 @@ describe("SequenceField - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 });
+function tagggedChange(
+    reviveA: SF.Changeset<never>,
+): TaggedChange<SF.Changeset<import("../../../feature-libraries").NodeChangeset>> {
+    throw new Error("Function not implemented.");
+}

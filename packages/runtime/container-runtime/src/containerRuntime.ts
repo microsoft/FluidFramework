@@ -1114,6 +1114,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // If GC should not run, let the summarizer node know so that it does not track GC state.
                 gcDisabled: !this.garbageCollector.shouldRunGC,
             },
+            // Function to get GC data if needed. This will always be called by the root summarizer node to get GC data.
+            async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
+            // Function to get the GC details from the base snapshot we loaded from.
+            async () => this.garbageCollector.getBaseGCDetails(),
         );
 
         if (baseSnapshot) {
@@ -1127,7 +1131,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (id: string, createParam: CreateChildSummarizerNodeParam) => (
                 summarizeInternal: SummarizeInternalFn,
                 getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-                getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
+                getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
             ) => this.summarizerNode.createChild(
                 summarizeInternal,
                 id,
@@ -1152,12 +1156,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.handleContext,
             blobManagerSnapshot,
             () => this.storage,
-            (blobId, localId) => {
+            (localId: string, blobId?: string) => {
                 if (!this.disposed) {
-                    this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId, localId });
+                    this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { localId, blobId });
                 }
             },
             (blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
+            (fromPath: string, toPath: string) => this.garbageCollector.addedOutboundReference(fromPath, toPath),
             this,
             pendingRuntimeState?.pendingAttachmentBlobs,
         );
@@ -2150,6 +2155,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.dataStores.updateStateBeforeGC();
     }
 
+    private async getGCDataInternal(fullGC?: boolean): Promise<IGarbageCollectionData> {
+        return this.dataStores.getGCData(fullGC);
+    }
+
     /**
      * Implementation of IGarbageCollectionRuntime::getGCData.
      * Generates and returns the GC data for this container.
@@ -2157,7 +2166,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public async getGCData(fullGC?: boolean): Promise<IGarbageCollectionData> {
         const builder = new GCDataBuilder();
-        const dsGCData = await this.dataStores.getGCData(fullGC);
+        const dsGCData = await this.summarizerNode.getGCData(fullGC);
         builder.addNodes(dsGCData.gcNodes);
 
         const blobsGCData = this.blobManager.getGCData(fullGC);
@@ -2750,17 +2759,42 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // It should only be done by the summarizerNode, if required.
         // When fetching from storage we will always get the latest version and do not use the ackHandle.
         const snapshotTreeFetcher = async () => {
-            const fetchResult = await this.fetchSnapshotFromStorage(
-                null,
+            const fetchResult = await this.fetchLatestSnapshotFromStorage(
                 summaryLogger,
                 {
                     eventName: "RefreshLatestSummaryGetSnapshot",
                     ackHandle,
                     summaryRefSeq,
                     fetchLatest: true,
-                });
+                },
+            );
 
             const latestSnapshotRefSeq = await seqFromTree(fetchResult.snapshotTree, readAndParseBlob);
+            /**
+             * If the fetched snapshot is older than the one for which the ack was received, close the container.
+             * This should never happen because an ack should be sent after the latest summary is updated in the server.
+             * However, there are couple of scenarios where it's possible:
+             * 1. A file was modified externally resulting in modifying the snapshot's sequence number. This can lead to
+             * the document being unusable and we should not proceed.
+             * 2. The server DB failed after the ack was sent which may delete the corresponding snapshot. Ideally, in
+             * such cases, the file will be rolled back along with the ack and we will eventually reach a consistent
+             * state.
+             */
+            if (latestSnapshotRefSeq < summaryRefSeq) {
+                const error = DataProcessingError.create(
+                    "Fetched snapshot is older than the received ack",
+                    "RefreshLatestSummaryAck",
+                    undefined /* sequencedMessage */,
+                    {
+                        ackHandle,
+                        summaryRefSeq,
+                        latestSnapshotRefSeq,
+                    },
+                );
+                this.closeFn(error);
+                throw error;
+            }
+
             summaryLogger.sendTelemetryEvent(
                 {
                     eventName: "LatestSummaryRetrieved",
@@ -2803,11 +2837,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private async refreshLatestSummaryAckFromServer(
         summaryLogger: ITelemetryLogger,
     ): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined; }> {
-        const { snapshotTree, versionId } = await this.fetchSnapshotFromStorage(null, summaryLogger, {
-            eventName: "RefreshLatestSummaryGetSnapshot",
-            fetchLatest: true,
-        },
-            FetchSource.noCache,
+        const { snapshotTree, versionId } = await this.fetchLatestSnapshotFromStorage(
+            summaryLogger,
+            {
+                eventName: "RefreshLatestSummaryGetSnapshot",
+                fetchLatest: true,
+            },
         );
 
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
@@ -2832,11 +2867,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return { latestSnapshotRefSeq, latestSnapshotVersionId: versionId };
     }
 
-    private async fetchSnapshotFromStorage(
-        versionId: string | null,
+    private async fetchLatestSnapshotFromStorage(
         logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
-        fetchSource?: FetchSource,
     ): Promise<{ snapshotTree: ISnapshotTree; versionId: string; }> {
         return PerformanceEvent.timedExecAsync(
             logger, event, async (perfEvent: {
@@ -2849,7 +2882,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const trace = Trace.start();
 
             const versions = await this.storage.getVersions(
-                versionId, 1, "refreshLatestSummaryAckFromServer", fetchSource);
+                null, 1, "refreshLatestSummaryAckFromServer", FetchSource.noCache);
             assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
             stats.getVersionDuration = trace.trace().duration;
 

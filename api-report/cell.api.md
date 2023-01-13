@@ -24,11 +24,9 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
     set(value: Serializable<T>): void;
 }
 
-// @public (undocumented)
+// @public
 export interface ISharedCellEvents<T> extends ISharedObjectEvents {
-    // (undocumented)
     (event: "valueChanged", listener: (value: Serializable<T>) => void): any;
-    // (undocumented)
     (event: "delete", listener: () => void): any;
 }
 
@@ -37,7 +35,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // @internal (undocumented)
     protected applyStashedOp(content: unknown): unknown;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCell<any>;
+    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCell;
     delete(): void;
     empty(): boolean;
     get(): Serializable<T> | undefined;
@@ -51,7 +49,5 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     set(value: Serializable<T>): void;
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }
-
-// (No @packageDocumentation comment for this package)
 
 ```
