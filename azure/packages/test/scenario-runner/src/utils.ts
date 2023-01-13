@@ -7,6 +7,7 @@ import {
     AzureFunctionTokenProvider,
     AzureLocalConnectionConfig,
     AzureRemoteConnectionConfig,
+    IUser,
 } from "@fluidframework/azure-client";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
@@ -61,10 +62,11 @@ export function createInsecureTokenProvider(
     userID?: string,
     userName?: string,
 ): InsecureTokenProvider {
-    return new InsecureTokenProvider(tenantKey, {
+    const user: IUser & { name: string } = {
         id: userID ?? "foo",
         name: userName ?? "bar",
-    });
+    };
+    return new InsecureTokenProvider(tenantKey, user);
 }
 
 /**
