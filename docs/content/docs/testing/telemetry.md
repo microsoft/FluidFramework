@@ -295,8 +295,7 @@ It's not recommended to set `localStorage.debug` in code; your users will see a 
 
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
-<!-- This section is automatically generated.
-To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 <!-- Links -->
 
 <!-- Concepts -->
