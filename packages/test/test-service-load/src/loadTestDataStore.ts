@@ -225,16 +225,12 @@ export class LoadTestDataStoreModel {
         this.partnerId = (this.config.runId + halfClients) % this.config.testConfig.numClients;
         const changed = (taskId) => {
             if (taskId === this.taskId && this.taskStartTime !== 0) {
-                Promise.resolve().then(() => {
-                    if (!this.runtime.disposed) {
+                this.deferUntilConnected(
+                    () => {
                         this.dir.set(taskTimeKey, this.totalTaskTime);
                         this.taskStartTime = 0;
-                    }
-                }).catch((error) => {
-                    this.logger.sendErrorEvent({
-                        eventName: "TaskManager_OnValueChanged",
-                    }, error);
-                });
+                    },
+                    (error) => this.logger.sendErrorEvent({ eventName: "TaskManager_OnValueChanged" }, error));
             }
         };
         this.taskManager.on("lost", changed);
@@ -264,14 +260,9 @@ export class LoadTestDataStoreModel {
                     : Math.trunc(value * blobsPerOp - this.blobCount);
 
                 if (newBlobs > 0) {
-                    Promise.resolve().then(() => {
-                        if (!this.runtime.disposed) {
-                            this.blobUploads.push(...[...Array(newBlobs)].map(async () => this.writeBlob(this.blobCount++)));
-                        }
-                    }).catch((error) => this.logger.sendErrorEvent({
-                        eventName: "WriteBlobFailed_OnCounterValueChanged",
-                        count: this.blobCount,
-                    }, error));
+                    this.deferUntilConnected(
+                        () => this.blobUploads.push(...[...Array(newBlobs)].map(async () => this.writeBlob(this.blobCount++))),
+                        (error) => this.logger.sendErrorEvent({ eventName: "TaskManager_OnValueChanged" }, error));
                 }
             });
         }
@@ -298,6 +289,22 @@ export class LoadTestDataStoreModel {
         for (const key of this.root.keys()) {
             readBlob(key);
         }
+    }
+
+    private deferUntilConnected(
+        callback:() => void,
+        errorHandler: (error) => void,
+    ) {
+        Promise.resolve().then(() => {
+            if (this.runtime.connected) {
+                callback();
+            } else {
+                this.runtime.on("connected", () => {
+                    callback();
+                });
+            }
+        }).catch((error) =>
+            errorHandler(error));
     }
 
     public get startTime(): number {
