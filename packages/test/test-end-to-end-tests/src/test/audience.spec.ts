@@ -106,7 +106,7 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
 	it("should add clients in audience as expected", async () => {
 		// Create a client - client1 and wait for it to be connected.
 		const client1Container = await createContainer();
-		await waitForContainerConnection(client1Container, true);
+		await waitForContainerConnection(client1Container);
 
 		// Validate that client1 is added to its own audience.
 		assert(client1Container.clientId !== undefined, "client1 does not have clientId");
@@ -118,7 +118,7 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
 
 		// Load a second client - client2 and wait for it to be connected.
 		const client2Container = await loadContainer();
-		await waitForContainerConnection(client2Container, true);
+		await waitForContainerConnection(client2Container);
 
 		// Validate that client2 is added to its own audience.
 		assert(client2Container.clientId !== undefined, "client2 does not have clientId");
@@ -163,8 +163,8 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
 		client2DataStore._root.set("testKey2", "testValue2");
 
 		// Ensure that the clients are connected and synchronized.
-		await waitForContainerConnection(client1Container, true);
-		await waitForContainerConnection(client2Container, true);
+		await waitForContainerConnection(client1Container);
+		await waitForContainerConnection(client2Container);
 		await provider.ensureSynchronized();
 
 		assert(client1Container.clientId !== undefined, "client1 does not have clientId");
@@ -198,11 +198,11 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
 	it("should remove clients in audience as expected", async () => {
 		// Create a client - client1 and wait for it to be connected.
 		const client1Container = await createContainer();
-		await waitForContainerConnection(client1Container, true);
+		await waitForContainerConnection(client1Container);
 
 		// Load a second client - client2 and wait for it to be connected.
 		const client2Container = await loadContainer();
-		await waitForContainerConnection(client2Container, true);
+		await waitForContainerConnection(client2Container);
 
 		assert(client1Container.clientId !== undefined, "client1 does not have clientId");
 		assert(client2Container.clientId !== undefined, "client2 does not have clientId");

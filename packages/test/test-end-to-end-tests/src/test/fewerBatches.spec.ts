@@ -53,8 +53,8 @@ describeNoCompat("Less batches", (getTestObjectProvider) => {
 		remoteContainer = await provider.loadTestContainer(containerConfig);
 		dataObject2 = await requestFluidObject<ITestFluidObject>(remoteContainer, "default");
 		dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
-		await waitForContainerConnection(localContainer, true);
-		await waitForContainerConnection(remoteContainer, true);
+		await waitForContainerConnection(localContainer);
+		await waitForContainerConnection(remoteContainer);
 
 		localContainer.deltaManager.outbound.on("op", (batch: IDocumentMessage[]) => {
 			capturedBatches.push(batch);
