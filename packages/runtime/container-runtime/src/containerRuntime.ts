@@ -1756,7 +1756,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         if (this.runtimeOptions.enableRuntimeCompressor
             && message.type === ContainerMessageType.FluidDataStoreOp
-            && message.contents.contents.content.contents !== undefined) {
+            && message.contents.contents.content.contents !== undefined
+            && message.contents.contents.content.contents.idRange !== undefined) {
             this.idCompressor?.finalizeCreationRange(message.contents.contents.content.contents.idRange);
         }
 
