@@ -16,7 +16,7 @@ import {
     FluidClientDebuggerProps,
     clearDebuggerRegistry,
     closeFluidClientDebugger,
-    getDebuggerRegistry,
+    getFluidClientDebuggers,
     getFluidClientDebugger,
     initializeFluidClientDebugger,
 } from "../Registry";
@@ -94,13 +94,13 @@ describe("ClientDebugger unit tests", () => {
     }
 
     it("Initializing debugger populates global (window) registry", () => {
-        let debuggerRegistry = getDebuggerRegistry();
-        expect(debuggerRegistry.size).to.equal(0); // There should be no registered debuggers yet.
+        let debuggers = getFluidClientDebuggers();
+        expect(debuggers.length).to.equal(0); // There should be no registered debuggers yet.
 
         initializeDebugger(getDebuggerProps());
 
-        debuggerRegistry = getDebuggerRegistry();
-        expect(debuggerRegistry.size).to.equal(1);
+        debuggers = getFluidClientDebuggers();
+        expect(debuggers.length).to.equal(1);
     });
 
     it("Closing debugger removes it from global (window) registry and disposes it.", () => {
@@ -112,16 +112,16 @@ describe("ClientDebugger unit tests", () => {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         expect(clientDebugger.disposed).to.be.false;
 
-        let debuggerRegistry = getDebuggerRegistry();
-        expect(debuggerRegistry.size).to.equal(1);
+        let debuggers = getFluidClientDebuggers();
+        expect(debuggers.length).to.equal(1);
 
         closeFluidClientDebugger(containerId);
 
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         expect(clientDebugger.disposed).to.be.true;
 
-        debuggerRegistry = getDebuggerRegistry();
-        expect(debuggerRegistry.size).to.equal(0);
+        debuggers = getFluidClientDebuggers();
+        expect(debuggers.length).to.equal(0);
     });
 });
 

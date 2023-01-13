@@ -55,9 +55,11 @@ export {
 } from "./Logs";
 
 export {
+    DebuggerRegistry,
     clearDebuggerRegistry,
     closeFluidClientDebugger,
     FluidClientDebuggerProps,
+    getDebuggerRegistry,
     getFluidClientDebugger,
     getFluidClientDebuggers,
     initializeFluidClientDebugger,
