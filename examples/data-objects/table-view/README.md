@@ -5,8 +5,7 @@ Since Table View uses the data model provided by Table Document it only uses it'
 to the created Table Document.
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) -->
-<!-- This section is automatically generated.
-To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Getting Started
 

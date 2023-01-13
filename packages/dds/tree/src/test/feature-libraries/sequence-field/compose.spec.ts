@@ -597,13 +597,58 @@ describe("SequenceField - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("revive ○ revive", () => {
-        const reviveA = Change.revive(0, 2, tag1, 0);
-        const reviveB = Change.revive(0, 3, tag2, 0);
-        // TODO: test with merge-right policy as well
+    it("reviveAA ○ reviveB => BAA", () => {
+        const reviveAA = Change.revive(0, 2, tag1, 1, undefined, [{ revision: tag2, offset: 1 }]);
+        const reviveB = Change.revive(0, 1, tag2, 0);
         const expected: SF.Changeset = [
-            { type: "Revive", count: 3, detachedBy: tag2, detachIndex: 0 },
-            { type: "Revive", count: 2, detachedBy: tag1, detachIndex: 0 },
+            { type: "Revive", count: 1, detachedBy: tag2, detachIndex: 0 },
+            {
+                type: "Revive",
+                count: 2,
+                detachedBy: tag1,
+                detachIndex: 1,
+                lineage: [{ revision: tag2, offset: 1 }],
+            },
+        ];
+        const actual = shallowCompose([makeAnonChange(reviveAA), makeAnonChange(reviveB)]);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("reviveA ○ reviveBB => BAB", () => {
+        const reviveA = Change.revive(0, 1, tag1, 1, undefined, [{ revision: tag2, offset: 1 }]);
+        const reviveB1 = Change.revive(0, 1, tag2, 0);
+        const reviveB2 = Change.revive(2, 1, tag2, 1);
+        const expected: SF.Changeset = [
+            { type: "Revive", count: 1, detachedBy: tag2, detachIndex: 0 },
+            {
+                type: "Revive",
+                count: 1,
+                detachedBy: tag1,
+                detachIndex: 1,
+                lineage: [{ revision: tag2, offset: 1 }],
+            },
+            { type: "Revive", count: 1, detachedBy: tag2, detachIndex: 1 },
+        ];
+        const actual = shallowCompose([
+            makeAnonChange(reviveA),
+            makeAnonChange(reviveB1),
+            makeAnonChange(reviveB2),
+        ]);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("reviveAA ○ reviveB => AAB", () => {
+        const reviveA = Change.revive(0, 2, tag1, 0, undefined, [{ revision: tag2, offset: 0 }]);
+        const reviveB = Change.revive(2, 1, tag2, 0);
+        const expected: SF.Changeset = [
+            {
+                type: "Revive",
+                count: 2,
+                detachedBy: tag1,
+                detachIndex: 0,
+                lineage: [{ revision: tag2, offset: 0 }],
+            },
+            { type: "Revive", count: 1, detachedBy: tag2, detachIndex: 0 },
         ];
         const actual = shallowCompose([makeAnonChange(reviveA), makeAnonChange(reviveB)]);
         assert.deepEqual(actual, expected);
