@@ -9,11 +9,7 @@
         "outDir": "lib",
         "jsx": "react",
         "types": [
-            "react",
-            "react-dom",
-            "jest",
             "puppeteer",
-            "jest-environment-puppeteer"
         ]
     },
     "include": [
