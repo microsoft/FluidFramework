@@ -31,8 +31,8 @@ export class DeterministicRandomGenerator {
      */
     constructor(in_seed: string | number) {
         // Initialize the internal state from the given initial guid
-        this._guid1 = _.isString(in_seed) === true
-            ? GuidUtils.guidToUint32x4(in_seed.toString())
+        this._guid1 = _.isString(in_seed)
+            ? GuidUtils.guidToUint32x4(in_seed)
             : GuidUtils.guidToUint32x4(calculateHash(String(in_seed)));
         this._guid2 = new Uint32Array(4);
         this._guid2[0] = (this._guid1[0] + 1) >>> 0;
