@@ -176,9 +176,6 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
 
     private readonly values: Map<string, QuorumValue<T>> = new Map();
 
-    // connectionWatcher emits an event whenever we get disconnected.
-    private readonly connectionWatcher: EventEmitter = new EventEmitter();
-
     private readonly incomingOp: EventEmitter = new EventEmitter();
 
     /**
@@ -195,10 +192,6 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
         this.incomingOp.on("accept", this.handleIncomingAccept);
 
         this.runtime.getQuorum().on("removeMember", this.handleQuorumRemoveMember);
-
-        this.connectionWatcher.on("disconnect", () => {
-            // TODO: Consider if disconnect watching is needed for promise-based API.
-        });
     }
 
     /**
@@ -306,7 +299,6 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
             currentValue === undefined
             || (currentValue.pending === undefined && currentValue.accepted.sequenceNumber <= refSeq);
         if (!proposalValid) {
-            // TODO: If set() returns a promise we will need to resolve it false for invalid proposals.
             return;
         }
 
@@ -438,9 +430,7 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
      * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.onDisconnect}
      * @internal
      */
-    protected onDisconnect(): void {
-        this.connectionWatcher.emit("disconnect");
-    }
+    protected onDisconnect(): void { }
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.reSubmitCore}
@@ -464,7 +454,6 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
                 || quorumOp.refSeq < currentValue.accepted?.sequenceNumber
             )
         ) {
-            // TODO: If set() returns a promise we will need to resolve it false for invalid proposals.
             return;
         }
 
