@@ -19,7 +19,7 @@ import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { ITinyliciousAudience } from "@fluidframework/tinylicious-client";
 
-import { CollaborativeTextView } from "@fluid-example/collaborative-textarea";
+import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import { closeFluidClientDebugger } from "@fluid-tools/client-debugger";
 
 import {
@@ -261,7 +261,11 @@ function TextView(props: TextViewProps): React.ReactElement {
         });
     }, [sharedTextHandle, setSharedText]);
 
-    return sharedText === undefined ? <Spinner /> : <CollaborativeTextView text={sharedText} />;
+    return sharedText === undefined ? (
+        <Spinner />
+    ) : (
+        <CollaborativeTextArea sharedStringHelper={new SharedStringHelper(sharedText)} />
+    );
 }
 
 interface CounterViewProps {
