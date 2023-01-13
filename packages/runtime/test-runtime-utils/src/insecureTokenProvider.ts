@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ScopeType, IUser } from "@fluidframework/protocol-definitions";
+import { ScopeType } from "@fluidframework/protocol-definitions";
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 import { generateToken } from "./generateToken";
 import { IInsecureUser } from "./insecureUsers";
