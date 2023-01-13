@@ -29,8 +29,8 @@ import {
     fieldSchema,
     GlobalFieldKey,
     SchemaData,
-    SharedTreeCore,
 } from "../../core";
+import { SharedTreeCore } from "../../shared-tree-core";
 
 const fooKey: FieldKey = brand("foo");
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");

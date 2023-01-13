@@ -81,9 +81,9 @@ export function generateRuntimeOptions(
         flushMode: [undefined],
         compressionOptions: [{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 }],
         maxBatchSizeInBytes: [undefined],
+        enableOpReentryCheck: [undefined],
         // Compressed payloads over 1MB will be split into chunked ops of this size
-        chunkSizeInBytes: [614400],
-        enableOpReentryCheck: [true],
+        chunkSizeInBytes: [1024, 38400, 614400],
     };
 
     return generatePairwiseOptions<IContainerRuntimeOptions>(

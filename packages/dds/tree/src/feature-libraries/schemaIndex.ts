@@ -17,11 +17,6 @@ import {
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
-    Index,
-    IndexEvents,
-    SummaryElement,
-    SummaryElementParser,
-    SummaryElementStringifier,
     cachedValue,
     Dependee,
     Dependent,
@@ -40,9 +35,17 @@ import {
     TreeSchemaIdentifier,
     ValueSchema,
     schemaDataIsEmpty,
+    SchemaEvents,
 } from "../core";
+import {
+    Index,
+    IndexEvents,
+    SummaryElement,
+    SummaryElementParser,
+    SummaryElementStringifier,
+} from "../shared-tree-core";
 import { brand, isJsonObject, JsonCompatibleReadOnly } from "../util";
-import { IEventEmitter } from "../events";
+import { ISubscribable } from "../events";
 
 /**
  * The storage key for the blob in the summary containing schema data
@@ -221,7 +224,7 @@ export class SchemaIndex implements Index, SummaryElement {
 
     public constructor(
         private readonly runtime: IFluidDataStoreRuntime,
-        events: IEventEmitter<IndexEvents<unknown>>,
+        events: ISubscribable<IndexEvents<unknown>>,
         private readonly schema: StoredSchemaRepository,
     ) {
         this.schemaBlob = cachedValue(async (observer) => {
@@ -324,6 +327,10 @@ export class SchemaEditor implements StoredSchemaRepository {
         public readonly inner: StoredSchemaRepository,
         private readonly submit: (op: SchemaOp) => void,
     ) {}
+
+    public on<K extends keyof SchemaEvents>(eventName: K, listener: SchemaEvents[K]): () => void {
+        return this.inner.on(eventName, listener);
+    }
 
     /**
      * @returns true if this is a schema op and was handled.

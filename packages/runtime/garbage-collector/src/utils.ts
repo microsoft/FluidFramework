@@ -69,10 +69,13 @@ export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionD
         return childGCDetailsMap;
     }
 
-    // Remove the node's self GC nodes, if any, and generate the children GC nodes.
     const gcNodes = gcDetails.gcData.gcNodes;
-    delete gcNodes["/"];
     for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
+        // Skip self-node since only children GC data is to be generated.
+        if (id === "/") {
+            continue;
+        }
+
         assert(id.startsWith("/"), 0x2ae /* "node id should always be an absolute route" */);
         const childId = id.split("/")[1];
         let childGCNodeId = id.slice(childId.length + 1);

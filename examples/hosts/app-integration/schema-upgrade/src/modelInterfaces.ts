@@ -4,9 +4,9 @@
  */
 
 import { EventEmitter } from "events";
+import type { IMigratableModel, IMigratableModelEvents } from "@fluid-example/example-utils";
 import type { IEventProvider } from "@fluidframework/common-definitions";
 import { SharedString } from "@fluidframework/sequence";
-import type { IMigratableModel, IMigratableModelEvents } from "./migrationInterfaces";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IInventoryListAppModelEvents extends IMigratableModelEvents { }
@@ -33,6 +33,7 @@ export interface IInventoryItem extends EventEmitter {
  */
 export interface IInventoryList extends EventEmitter {
     readonly addItem: (name: string, quantity: number) => void;
+    readonly deleteItem: (id: string) => void;
 
     readonly getItems: () => IInventoryItem[];
     readonly getItem: (id: string) => IInventoryItem | undefined;

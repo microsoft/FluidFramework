@@ -4,9 +4,35 @@ This package contains a shared ESLint config used by all the packages in the Flu
 
 It exports the following shared ESLint configs:
 
--   `minimal`: The minimal config for Fluid Framework packages.
--   `recommended`: (default) The recommended config for Fluid Framework packages.
--   `strict`: The strictest config; intended for packages with public facing APIs.
+## Configurations
+
+### Minimal
+
+This is the minimal config for use in Fluid Framework libraries, only intended for internal-only packages, test libraries, etc.
+Whenever possible, the [recommended](#recommended) or [strict](#strict) configs should be used instead.
+
+This configuration should never be used in published packages.
+It is only suitable for early prototyping and repository-internal testing libraries.
+
+Imported via `@fluidframework/eslint-config-fluid/minimal`.
+
+### Recommended
+
+This is the standard config for use in Fluid Framework libraries.
+It is also the default library export.
+
+This configuration is recommended for all libraries in the repository, though use of the [strict](#strict) config is preferred whenever reasonable.
+
+Imported via `@fluidframework/eslint-config-fluid` (or `@fluidframework/eslint-config-fluid/recommended`).
+
+### Strict
+
+The strictest config for use in Fluid Framework libraries.
+Recommended for highest code quality enforcement.
+
+In particular, use of this config is encouraged for libraries with public facing APIs, and those used as external-facing examples (e.g. those mentioned on `fluidframework.com`).
+
+Imported via `@fluidframework/eslint-config-fluid/strict`.
 
 ## Changing the lint config
 
@@ -28,6 +54,7 @@ print out the applied config as a JSON file. As we make changes to the config, w
 a diff to review as part of a PR -- just like we do with API reports for code changes.
 
 <!-- AUTO-GENERATED-CONTENT:START (SCRIPTS) -->
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Scripts
 

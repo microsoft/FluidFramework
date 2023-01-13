@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ChangesetLocalId, SequenceField as SF } from "../../../feature-libraries";
-import { Delta, TaggedChange } from "../../../core";
+import { ChangesetLocalId, IdAllocator, SequenceField as SF } from "../../../feature-libraries";
+import { Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze, fakeRepair } from "../../utils";
-import { makeAnonChange, tagChange } from "../../../rebase";
 import { brand } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
@@ -16,7 +15,7 @@ export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
     return SF.sequenceFieldChangeRebaser.compose(
         taggedChanges,
         TestChange.compose,
-        TestChange.newIdAllocator(getMaxIdTagged(taggedChanges)),
+        continuingAllocator(taggedChanges),
     );
 }
 
@@ -34,7 +33,7 @@ export function rebaseTagged(
                 currChange.change,
                 baseChange,
                 TestChange.rebase,
-                TestChange.newIdAllocator(getMaxId(currChange.change, baseChange.change)),
+                idAllocatorFromMaxId(getMaxId(currChange.change, baseChange.change)),
             ),
             change.revision,
         );
@@ -46,7 +45,7 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
     assertMarkListEqual(toDelta(actual), toDelta(expected));
 }
 
-function toDelta(change: TestChangeset): Delta.MarkList {
+export function toDelta(change: TestChangeset): Delta.MarkList {
     return SF.sequenceFieldToDelta(change, TestChange.toDelta, fakeRepair);
 }
 
@@ -69,6 +68,10 @@ export function getMaxIdTagged(
     return getMaxId(...changes.map((c) => c.change));
 }
 
+export function continuingAllocator(changes: TaggedChange<SF.Changeset<unknown>>[]): IdAllocator {
+    return idAllocatorFromMaxId(getMaxIdTagged(changes));
+}
+
 export function normalizeMoveIds(change: SF.Changeset<unknown>): void {
     let nextId = 0;
     const mappings = new Map<SF.MoveId, SF.MoveId>();
@@ -84,4 +87,11 @@ export function normalizeMoveIds(change: SF.Changeset<unknown>): void {
             mark.id = newId!;
         }
     }
+}
+
+export function idAllocatorFromMaxId(maxId: ChangesetLocalId | undefined = undefined): IdAllocator {
+    let currId = maxId ?? -1;
+    return () => {
+        return brand(++currId);
+    };
 }

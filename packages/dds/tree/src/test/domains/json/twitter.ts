@@ -8,7 +8,7 @@ import {
     makeRandom,
     SpaceEfficientWordMarkovChain,
 } from "@fluid-internal/stochastic-test-utils";
-import { FieldKey } from "../../../tree";
+import { FieldKey } from "../../../core";
 import { brand } from "../../../util";
 import {
     createAlphabetFromUnicodeRange,
@@ -21,12 +21,28 @@ import {
  * This file contains logic to generate a JSON file that is statistically similar to the well-known
  * json benchmarks twitter.json - https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json
  */
+// Shared tree keys that map to the type used by the Twitter type/dataset
+export namespace Twitter {
+    export namespace SharedTreeFieldKey {
+        export const statuses: FieldKey = brand("statuses");
+        export const retweetCount: FieldKey = brand("retweet_count");
+        export const favoriteCount: FieldKey = brand("favorite_count");
+    }
+}
 
-export namespace TwitterStatus {
-    // Shared tree keys that map to the type used by the TwitterStatus type/dataset
-    export const statusesKey: FieldKey = brand("statuses");
-    export const retweetCountKey: FieldKey = brand("retweet_count");
-    export const favoriteCountKey: FieldKey = brand("favorite_count");
+export interface Twitter {
+    statuses: TwitterStatus[];
+    search_metadata: {
+        completed_in: number;
+        max_id: number;
+        max_id_str: string;
+        next_results: string;
+        query: string;
+        refresh_url: string;
+        count: number;
+        since_id: number;
+        since_id_str: string;
+    };
 }
 
 /* eslint-disable @rushstack/no-new-null */
@@ -176,21 +192,6 @@ export interface TwitterUser {
 }
 /* eslint-enable */
 
-export interface TwitterJson {
-    statuses: TwitterStatus[];
-    search_metadata: {
-        completed_in: number;
-        max_id: number;
-        max_id_str: string;
-        next_results: string;
-        query: string;
-        refresh_url: string;
-        count: number;
-        since_id: number;
-        since_id_str: string;
-    };
-}
-
 /**
  * Generates a TwitterJson object as closely as possible to a specified byte size.
  * The generated json will as close to the specified size but will almost always be slightly less.
@@ -202,7 +203,7 @@ export interface TwitterJson {
  */
 export function generateTwitterJsonByByteSize(
     sizeInBytes: number,
-    allowOversize: boolean,
+    allowOversize = false,
     seed = 1,
 ) {
     const random = makeRandom(seed);
@@ -215,7 +216,7 @@ export function generateTwitterJsonByByteSize(
         getTwitterJsonUserDescFieldWordMarkovChain(),
     );
     const basicJapaneseAlphabetString = getBasicJapaneseAlphabetString();
-    const twitterJson: TwitterJson = {
+    const twitterJson: Twitter = {
         statuses: [],
         search_metadata: {
             completed_in: 0.087,
@@ -269,7 +270,7 @@ export function generateTwitterJsonByNumStatuses(numStatuses: number, seed = 1) 
         getTwitterJsonUserDescFieldWordMarkovChain(),
     );
     const basicJapaneseAlphabetString = getBasicJapaneseAlphabetString();
-    const twitterJson: TwitterJson = {
+    const twitterJson: Twitter = {
         statuses: [],
         search_metadata: {
             completed_in: 0.087,

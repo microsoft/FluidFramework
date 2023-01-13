@@ -24,13 +24,12 @@ import {
     SummaryElementParser,
     SummaryElementStringifier,
 } from "../../shared-tree-core";
-import { AnchorSet } from "../../tree";
+import { AnchorSet, EditManager } from "../../core";
 import {
     DefaultChangeFamily,
     defaultChangeFamily,
     DefaultChangeset,
 } from "../../feature-libraries";
-import { EditManager } from "../../edit-manager";
 
 describe("SharedTreeCore", () => {
     it("summarizes without indexes", async () => {

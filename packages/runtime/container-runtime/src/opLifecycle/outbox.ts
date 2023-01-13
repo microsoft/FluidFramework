@@ -182,7 +182,11 @@ export class Outbox {
         } else {
             // returns clientSequenceNumber of last message in a batch
             clientSequenceNumber = this.params.containerContext.submitBatchFn(
-                batch.content.map((message) => ({ contents: message.contents, metadata: message.metadata })));
+                batch.content.map((message) => ({
+                    contents: message.contents,
+                    metadata: message.metadata,
+                    compression: message.compression,
+                })));
         }
 
         // Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
