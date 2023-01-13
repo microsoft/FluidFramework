@@ -54,7 +54,7 @@ import {
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { GCNodeType } from "./garbageCollection";
-import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
+import { throwOnTombstoneLoadKey } from "./garbageCollectionConstants";
 import { summarizerClientType } from "./summarizerClientElection";
 import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
 
@@ -85,7 +85,7 @@ export class DataStores implements IDisposable {
     // root data stores that are added.
     private dataStoresSinceLastGC: string[] = [];
     /** If true, throw an error when a tombstone data store is retrieved. */
-    private readonly throwOnTombstoneUsage: boolean;
+    private readonly throwOnTombstoneLoad: boolean;
     // The handle to the container runtime. This is used mainly for GC purposes to represent outbound reference from
     // the container runtime to other nodes.
     private readonly containerRuntimeHandle: IFluidHandle;
@@ -118,8 +118,8 @@ export class DataStores implements IDisposable {
             return baseGCDetails.get(dataStoreId);
         };
         // Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
-        this.throwOnTombstoneUsage =
-            this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
+        this.throwOnTombstoneLoad =
+            this.mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&
             this.runtime.clientDetails.type !== summarizerClientType;
 
         // Extract stores stored inside the snapshot
@@ -439,7 +439,7 @@ export class DataStores implements IDisposable {
         }
 
         if (context.tombstoned) {
-            const shouldFail = this.throwOnTombstoneUsage && !headerData.allowTombstone;
+            const shouldFail = this.throwOnTombstoneLoad && !headerData.allowTombstone;
 
             // The requested data store is removed by gc. Create a 404 gc response exception.
             const error = responseToException(createResponseError(404, "Datastore removed by gc", request), request);

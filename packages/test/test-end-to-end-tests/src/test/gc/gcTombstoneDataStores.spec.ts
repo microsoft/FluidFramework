@@ -60,8 +60,9 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
         if (provider.driver.type !== "local") {
             this.skip();
         }
+        settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = true;
         settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
-        settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
+    settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
     });
 
     async function loadContainer(summaryVersion: string) {
@@ -71,8 +72,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
         );
     }
 
-    //* ONLY
-    describe.only("Using tombstone data stores is not allowed", () => {
+    describe("Using tombstone data stores is not allowed", () => {
         let documentAbsoluteUrl: string | undefined;
 
         const makeContainer = async () => {
@@ -446,7 +446,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             await assert.rejects(async () => requestFluidObject<ITestDataObject>(container, unreferencedId),
                 (error) => {
                     const correctErrorType = error.code === 404;
-                    const correctErrorMessage = error.message.startsWith(`Datastore removed by gc`) === true;
+                    const correctErrorMessage = error.message === `Datastore removed by gc: ${unreferencedId}`;
                     return correctErrorType && correctErrorMessage;
                 },
                 `Should not be able to retrieve a tombstoned datastore in non-summarizer clients`,
@@ -496,7 +496,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             await assert.rejects(async () => requestFluidObject<ITestDataObject>(container, unreferencedId),
                 (error) => {
                     const correctErrorType = error.code === 404;
-                    const correctErrorMessage = error.message.startsWith(`Datastore removed by gc`) === true;
+                    const correctErrorMessage = error.message === `Datastore removed by gc: ${unreferencedId}`;
                     return correctErrorType && correctErrorMessage;
                 },
                 `Should not be able to retrieve a tombstoned datastore.`,
@@ -574,6 +574,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
                 "handle.get should fail for tombstoned object!");
         });
 
+        //* Update this
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
         itExpects("Can un-tombstone datastores by storing a handle",
         [
@@ -665,6 +666,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             },
         ],
         async () => {
+            settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = false;
             settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
             const {
                 unreferencedId,
