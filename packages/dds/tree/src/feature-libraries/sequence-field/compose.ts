@@ -13,9 +13,11 @@ import {
     HasRevisionTag,
     Mark,
     MarkList,
-    SizedMark,
-    SizedObjectMark,
+    InputSpanningMark,
+    ObjectMark,
+    Reattach,
 } from "./format";
+import { GapTracker, IndexTracker } from "./tracker";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
 import {
@@ -35,6 +37,13 @@ import {
     isDetachMark,
     isReattach,
     isSkipMark,
+    isActiveReattach,
+    isConflicted,
+    isConflictedDetach,
+    isConflictedReattach,
+    dequeueRelatedReattaches,
+    isBlockedReattach,
+    getOffsetAtRevision,
 } from "./utils";
 
 export type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
@@ -82,19 +91,23 @@ function composeMarkLists<TNodeChange>(
 ): MarkList<TNodeChange> {
     const factory = new MarkListFactory<TNodeChange>(moveEffects);
     const queue = new ComposeQueue(
+        undefined,
         baseMarkList,
         newRev,
         newMarkList,
         genId,
         moveEffects,
         true,
+        true,
         (a, b) => composeChildChanges(a, b, newRev, composeChild),
     );
     while (!queue.isEmpty()) {
-        const { baseMark, newMark, areInverses } = queue.pop();
-        if (areInverses) {
+        const popped = queue.pop();
+        if (popped.areInverses) {
+            factory.pushOffset(getInputLength(popped.baseMark));
             continue;
         }
+        const { baseMark, newMark } = popped;
         if (newMark === undefined) {
             assert(baseMark !== undefined, "Non-empty queue should not return two undefined marks");
             factory.push(baseMark);
@@ -105,7 +118,7 @@ function composeMarkLists<TNodeChange>(
             // start at the same location in the revision after the base changes.
             // They therefore refer to the same range for that revision.
             assert(
-                !isAttach(newMark),
+                !isAttach(newMark) || isConflictedReattach(newMark),
                 "A new attach cannot be at the same position as a base mark",
             );
             const composedMark = composeMarks(
@@ -135,7 +148,7 @@ function composeMarkLists<TNodeChange>(
 function composeMarks<TNodeChange>(
     baseMark: Mark<TNodeChange>,
     newRev: RevisionTag | undefined,
-    newMark: SizedMark<TNodeChange>,
+    newMark: InputSpanningMark<TNodeChange>,
     composeChild: NodeChangeComposer<TNodeChange>,
     genId: IdAllocator,
     moveEffects: MoveEffectTable<TNodeChange>,
@@ -166,7 +179,7 @@ function composeMarks<TNodeChange>(
                 }
                 case "Delete": {
                     // The insertion made by the base change is subsequently deleted.
-                    // TODO: preserve the insertions as muted
+                    // TODO: preserve the insertions as conflicted.
                     return 0;
                 }
                 case "MoveOut":
@@ -184,6 +197,13 @@ function composeMarks<TNodeChange>(
                         ),
                     );
                     return 0;
+                case "Revive": {
+                    assert(
+                        !isConflictedReattach(baseMark) && isConflicted(newMark),
+                        "Invalid mark overlap",
+                    );
+                    return baseMark;
+                }
                 default:
                     fail(`Not implemented: ${newType}`);
             }
@@ -195,7 +215,7 @@ function composeMarks<TNodeChange>(
                 case "Delete": {
                     // For now the deletion obliterates all other modifications.
                     // In the long run we want to preserve them.
-                    return clone(newMark);
+                    return clone(composeMark(newMark, newRev, composeChild));
                 }
                 case "MoveOut":
                 case "ReturnFrom": {
@@ -213,7 +233,11 @@ function composeMarks<TNodeChange>(
         case "MoveIn": {
             switch (newType) {
                 case "Delete": {
-                    replaceMoveSrc(moveEffects, baseMark.id, newMark);
+                    replaceMoveSrc(
+                        moveEffects,
+                        baseMark.id,
+                        composeMark(newMark, newRev, composeChild),
+                    );
                     return 0;
                 }
                 case "MoveOut": {
@@ -241,7 +265,11 @@ function composeMarks<TNodeChange>(
                     return baseMark;
                 }
                 case "Delete": {
-                    replaceMoveSrc(moveEffects, baseMark.id, newMark);
+                    replaceMoveSrc(
+                        moveEffects,
+                        baseMark.id,
+                        composeMark(newMark, newRev, composeChild),
+                    );
                     return 0;
                 }
                 case "MoveOut": {
@@ -296,7 +324,10 @@ function composeChildChanges<TNodeChange>(
 
 function composeWithBaseChildChanges<
     TNodeChange,
-    TMark extends SizedObjectMark<TNodeChange> & HasChanges<TNodeChange> & HasRevisionTag,
+    TMark extends InputSpanningMark<TNodeChange> &
+        ObjectMark<TNodeChange> &
+        HasChanges<TNodeChange> &
+        HasRevisionTag,
 >(
     newMark: TMark,
     newRevision: RevisionTag | undefined,
@@ -379,13 +410,13 @@ function applyMoveEffects<TNodeChange>(
         moveEffects,
         () => fail("Should not generate IDs"),
         false,
+        false,
         // TODO: Should pass in revision for new changes
         (a, b) => composeChildChanges(a, b, undefined, composeChild),
     );
 
     while (!queue.isEmpty()) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        factory.push(queue.dequeue()!);
+        factory.push(queue.dequeue());
     }
 
     return factory.list;
@@ -394,21 +425,28 @@ function applyMoveEffects<TNodeChange>(
 export class ComposeQueue<T> {
     private readonly baseMarks: MarkQueue<T>;
     private readonly newMarks: MarkQueue<T>;
+    private readonly baseIndex: IndexTracker;
+    private readonly baseGap: GapTracker;
 
     public constructor(
+        baseRevision: RevisionTag | undefined,
         baseMarks: Changeset<T>,
-        newRevision: RevisionTag | undefined,
+        private readonly newRevision: RevisionTag | undefined,
         newMarks: Changeset<T>,
         genId: IdAllocator,
         moveEffects: MoveEffectTable<T>,
         reassignNewMoveIds: boolean = true,
+        updatePairedMarkStatus: boolean = true,
         composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
     ) {
+        this.baseIndex = new IndexTracker();
+        this.baseGap = new GapTracker();
         this.baseMarks = new MarkQueue(
             baseMarks,
-            undefined,
+            baseRevision,
             moveEffects,
             genId,
+            false,
             false,
             composeChanges,
         );
@@ -418,6 +456,7 @@ export class ComposeQueue<T> {
             moveEffects,
             genId,
             reassignNewMoveIds,
+            updatePairedMarkStatus,
             composeChanges,
         );
     }
@@ -427,33 +466,118 @@ export class ComposeQueue<T> {
     }
 
     public pop(): ComposeMarks<T> {
+        const output = this.popImpl();
+        if (output.baseMark !== undefined) {
+            this.baseIndex.advance(output.baseMark);
+            this.baseGap.advance(output.baseMark);
+        }
+        return output;
+    }
+
+    private popImpl(): ComposeMarks<T> {
         let baseMark = this.baseMarks.peek();
         let newMark = this.newMarks.peek();
         if (baseMark === undefined || newMark === undefined) {
-            return { baseMark: this.baseMarks.dequeue(), newMark: this.newMarks.dequeue() };
+            return { baseMark: this.baseMarks.tryDequeue(), newMark: this.newMarks.tryDequeue() };
         } else if (isAttach(newMark)) {
-            const newRev = newMark.revision ?? this.newMarks.revision;
-            if (
+            if (isActiveReattach(newMark) && isDetachMark(baseMark)) {
+                const newRev = newMark.revision ?? this.newRevision;
+                const baseRev = baseMark.revision ?? this.baseMarks.revision;
+                assert(baseRev !== undefined, "Compose base mark should carry revision info");
+                const areInverses =
+                    // The same RevisionTag implies the two changesets are inverses in a rebase sandwich
+                    (newRev !== undefined && baseRev === newRev) ||
+                    // The new mark is an undo of the base one
+                    newMark.detachedBy === baseRev;
+                if (areInverses) {
+                    const baseMarkLength = getInputLength(baseMark);
+                    const newMarkLength = getOutputLength(newMark);
+                    const baseIndex = this.baseIndex.getIndex(baseRev);
+                    if (baseIndex === newMark.detachIndex) {
+                        if (newMarkLength < baseMarkLength) {
+                            baseMark = this.baseMarks.dequeueInput(newMarkLength);
+                            newMark = this.newMarks.dequeue();
+                        } else if (newMarkLength > baseMarkLength) {
+                            baseMark = this.baseMarks.dequeue();
+                            newMark = this.newMarks.dequeueOutput(baseMarkLength, true);
+                        } else {
+                            baseMark = this.baseMarks.dequeue();
+                            newMark = this.newMarks.dequeue();
+                        }
+                        return {
+                            baseMark,
+                            newMark,
+                            areInverses: true,
+                        };
+                    } else if (newMark.detachIndex < baseIndex) {
+                        return {
+                            newMark:
+                                newMark.detachIndex + newMarkLength <= baseIndex
+                                    ? this.newMarks.dequeue()
+                                    : this.newMarks.dequeueOutput(
+                                          baseIndex - newMark.detachIndex,
+                                          true,
+                                      ),
+                        };
+                    } else {
+                        return {
+                            baseMark:
+                                baseIndex + baseMarkLength <= newMark.detachIndex
+                                    ? this.baseMarks.dequeue()
+                                    : this.baseMarks.dequeueInput(newMark.detachIndex - baseIndex),
+                        };
+                    }
+                } else {
+                    const targetOffset = getOffsetAtRevision(newMark.lineage, baseRev);
+                    if (targetOffset === undefined) {
+                        // Let baseMark represent the detach of some content X and newMark represent a reattach of some
+                        // different content Y.
+                        // The fact that newMark's lineage does not include an entry the detach of X, despite being in the
+                        // gap where that detach is taking place, means that the detach of Y must have occurred
+                        // chronologically after the detach of content X by baseMark.
+                        // Since the set of changes being composed include both the detach for X (in the form of
+                        // baseMark) and the reattach for Y (in the form of newMark), then we know for sure that the
+                        // set of changes being composed must also include the detach for content Y that must have
+                        // occurred (chronologically) between them.
+                        // We also know that, during this iteration of compose, the detach for content Y will show up
+                        // in the base changeset because we're in the process of merging in its inverse.
+                        // If we had already encountered this base detach of content Y then we would have cancelled it
+                        // out with (or ordered it with respect to) newMark.
+                        // This later detach must therefore be present in the base changeset, and further to the right.
+                        // We'll keep returning all the base marks before that.
+                        return {
+                            baseMark: this.baseMarks.dequeue(),
+                        };
+                    } else {
+                        // The reattach is for a detach that occurred chronologically before the baseMark detach.
+                        // We rely on the lineage information to tell us where in relation to baseMark this earlier
+                        // detach was.
+                        const currentOffset = this.baseGap.getOffset(baseRev);
+                        const remainingOffset = targetOffset - currentOffset;
+                        assert(remainingOffset >= 0, "Overshot the target gap");
+                        if (remainingOffset === 0) {
+                            return { newMark: this.newMarks.dequeue() };
+                        }
+                        return {
+                            baseMark:
+                                remainingOffset < getInputLength(baseMark)
+                                    ? this.baseMarks.dequeueInput(remainingOffset)
+                                    : this.baseMarks.dequeue(),
+                        };
+                    }
+                }
+            } else if (
                 isReattach(newMark) &&
-                isDetachMark(baseMark) &&
-                newRev !== undefined &&
-                baseMark.revision === newRev
+                isReattach(baseMark) &&
+                areRelatedReattaches(baseMark, newMark)
             ) {
-                // We assume that baseMark and newMark having the same revision means that they are inverses of each other.
-                assert(
-                    getInputLength(baseMark) === getOutputLength(newMark),
-                    0x4ac /* Inverse marks should be the same length */,
-                );
-                return {
-                    baseMark: this.baseMarks.dequeue(),
-                    newMark: this.newMarks.dequeue(),
-                    areInverses: true,
-                };
-            } else {
-                return { newMark: this.newMarks.dequeue() };
+                return dequeueRelatedReattaches(this.newMarks, this.baseMarks);
             }
-        } else if (isDetachMark(baseMark)) {
+            return { newMark: this.newMarks.dequeue() };
+        } else if (isDetachMark(baseMark) || isBlockedReattach(baseMark)) {
             return { baseMark: this.baseMarks.dequeue() };
+        } else if (isConflictedDetach(newMark)) {
+            return { newMark: this.newMarks.dequeue() };
         } else {
             // If we've reached this branch then `baseMark` and `newMark` start at the same location
             // in the document field at the revision after the base changes and before the new changes.
@@ -480,8 +604,24 @@ export class ComposeQueue<T> {
     }
 }
 
-interface ComposeMarks<T> {
-    baseMark?: Mark<T>;
-    newMark?: Mark<T>;
-    areInverses?: boolean;
+type ComposeMarks<T> =
+    | {
+          baseMark: Mark<T>;
+          newMark: Mark<T>;
+          areInverses: true;
+      }
+    | {
+          baseMark?: Mark<T>;
+          newMark?: Mark<T>;
+          areInverses?: false;
+      };
+
+/**
+ * @returns true iff both reattaches target cells that were affected by the same detach.
+ * The target cells may or may not overlap depending on detach index information.
+ *
+ * Only valid in the context of a compose (i.e., the output context of `baseMarks` is the input context of `newMark`).
+ */
+function areRelatedReattaches<T>(baseMark: Reattach<T>, newMark: Reattach<T>): boolean {
+    return newMark.detachedBy === baseMark.detachedBy;
 }

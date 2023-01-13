@@ -7,6 +7,7 @@ import { SequenceField as SF, singleTextCursor } from "../../../feature-librarie
 import { brand } from "../../../util";
 import { RevisionTag, TreeSchemaIdentifier, makeAnonChange } from "../../../core";
 import { TestChange } from "../../testChange";
+import { idAllocatorFromMaxId } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag: RevisionTag = brand(42);
@@ -32,10 +33,10 @@ export const cases: {
             makeAnonChange(createModifyChangeset(1, TestChange.mint([], 2))),
         ],
         TestChange.compose,
-        TestChange.newIdAllocator(),
+        idAllocatorFromMaxId(),
     ),
     delete: createDeleteChangeset(1, 3),
-    revive: createReviveChangeset(2, 2, 0, tag),
+    revive: createReviveChangeset(2, 2, tag, 0),
     move: createMoveChangeset(1, 2, 2),
     return: createReturnChangeset(1, 3, 0, tag, 0),
 };
@@ -59,10 +60,49 @@ function createDeleteChangeset(startIndex: number, size: number): SF.Changeset<n
 function createReviveChangeset(
     startIndex: number,
     count: number,
+    detachedBy: RevisionTag,
     detachIndex: number,
-    revision: RevisionTag,
+    conflictsWith?: RevisionTag,
+    linage?: SF.LineageEvent[],
+    lastDetachedBy?: RevisionTag,
 ): SF.Changeset<never> {
-    return SF.sequenceFieldEditor.revive(startIndex, count, detachIndex, revision);
+    const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachedBy, detachIndex);
+    const mark = markList[markList.length - 1] as SF.Reattach;
+    if (conflictsWith !== undefined) {
+        mark.conflictsWith = conflictsWith;
+    }
+    if (lastDetachedBy !== undefined) {
+        mark.lastDetachedBy = lastDetachedBy;
+    }
+    if (linage !== undefined) {
+        mark.lineage = linage;
+    }
+    return markList;
+}
+
+function createIntentionalReviveChangeset(
+    startIndex: number,
+    count: number,
+    detachedBy: RevisionTag,
+    detachIndex: number,
+    conflictsWith?: RevisionTag,
+    linage?: SF.LineageEvent[],
+): SF.Changeset<never> {
+    const markList = SF.sequenceFieldEditor.revive(
+        startIndex,
+        count,
+        detachedBy,
+        detachIndex,
+        true,
+    );
+    const mark = markList[markList.length - 1] as SF.Reattach;
+    if (conflictsWith !== undefined) {
+        mark.conflictsWith = conflictsWith;
+    }
+    if (linage !== undefined) {
+        mark.lineage = linage;
+    }
+    return markList;
 }
 
 function createMoveChangeset(
@@ -94,6 +134,7 @@ export const ChangeMaker = {
     insert: createInsertChangeset,
     delete: createDeleteChangeset,
     revive: createReviveChangeset,
+    intentionalRevive: createIntentionalReviveChangeset,
     move: createMoveChangeset,
     return: createReturnChangeset,
     modify: createModifyChangeset,
