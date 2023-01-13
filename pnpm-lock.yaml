@@ -8416,7 +8416,9 @@ importers:
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
       '@fluidframework/test-loader-utils': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
       '@rushstack/eslint-config': ^2.5.1
+      '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
+      '@types/node': ^14.18.36
       concurrently: ^6.2.0
       cross-env: ^7.0.2
       eslint: ~8.6.0
@@ -8445,7 +8447,9 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@fluidframework/test-loader-utils': link:../../loader/test-loader-utils
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
+      '@types/events': 3.0.0
       '@types/mocha': 9.1.1
+      '@types/node': 14.18.36
       concurrently: 6.3.0
       cross-env: 7.0.3
       eslint: 8.6.0
