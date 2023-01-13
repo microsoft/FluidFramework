@@ -13,7 +13,7 @@ Definition: NoOps are empty operation message, with the type of `MessageType.NoO
 
 At the end of a batch of ops, the client will send an NoOp to let the server know it's the end of the batch. Sometimes we can also send NoOp immediately, see both in `CollabWindowTracker.scheduleSequenceNumberUpdate()`
 
-Expectations:  NoOps can be coalesced by service, which means:
+Expectations: NoOps can be coalesced by service, which means:
 
 1. NoOp can be dropped by service. In such case, we observe a gap in clientSequenceNumber (otherwise all ops for a given clientId have sequential clientSequenceNumber values).
 2. NoOp can be delayed by service (sequenced later in time) and be reordered relative to ops that naturally follow it. That said, reordering can only happen across ops from different clients (if more ops are sent and sequenced by given client, then noop is simply dropped in such case).
