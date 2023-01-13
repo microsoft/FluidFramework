@@ -337,7 +337,10 @@ export function applyTypesFromContext(
 ): MapTree {
     const possibleTypes: TreeSchemaIdentifier[] = getPossibleTypes(schemaData, typeSet, data);
 
-    assert(possibleTypes.length !== 0, 0x4d4 /* data incompatible with all types allowed by the schema */);
+    assert(
+        possibleTypes.length !== 0,
+        0x4d4 /* data incompatible with all types allowed by the schema */,
+    );
     assert(
         possibleTypes.length === 1,
         0x4d5 /* data compatible with more than one type allowed by the schema */,
@@ -371,7 +374,10 @@ export function applyTypesFromContext(
                 }),
         );
         const value = data[valueSymbol];
-        assert(allowsValue(schema.value, value), 0x4d7 /* provided value not permitted by the schema */);
+        assert(
+            allowsValue(schema.value, value),
+            0x4d7 /* provided value not permitted by the schema */,
+        );
         return { value, type, fields };
     }
 }

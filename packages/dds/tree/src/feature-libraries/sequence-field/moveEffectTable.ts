@@ -294,7 +294,10 @@ export function removeMoveSrc(table: MoveEffectTable<unknown>, id: MoveId): void
 }
 
 export function replaceMoveId<T>(table: MoveEffectTable<T>, id: MoveId, newId: MoveId): void {
-    assert(!table.idRemappings.has(id), 0x4ed /* Cannot remap ID which has already been remapped */);
+    assert(
+        !table.idRemappings.has(id),
+        0x4ed /* Cannot remap ID which has already been remapped */,
+    );
     table.idRemappings.set(id, newId);
 }
 

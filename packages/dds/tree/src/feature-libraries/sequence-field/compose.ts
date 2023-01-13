@@ -109,7 +109,10 @@ function composeMarkLists<TNodeChange>(
         }
         const { baseMark, newMark } = popped;
         if (newMark === undefined) {
-            assert(baseMark !== undefined, 0x4db /* Non-empty queue should not return two undefined marks */);
+            assert(
+                baseMark !== undefined,
+                0x4db /* Non-empty queue should not return two undefined marks */,
+            );
             factory.push(baseMark);
         } else if (baseMark === undefined) {
             factory.push(composeMark(newMark, newRev, composeChild));
@@ -483,7 +486,10 @@ export class ComposeQueue<T> {
             if (isActiveReattach(newMark) && isDetachMark(baseMark)) {
                 const newRev = newMark.revision ?? this.newRevision;
                 const baseRev = baseMark.revision ?? this.baseMarks.revision;
-                assert(baseRev !== undefined, 0x4df /* Compose base mark should carry revision info */);
+                assert(
+                    baseRev !== undefined,
+                    0x4df /* Compose base mark should carry revision info */,
+                );
                 const areInverses =
                     // The same RevisionTag implies the two changesets are inverses in a rebase sandwich
                     (newRev !== undefined && baseRev === newRev) ||

@@ -223,7 +223,10 @@ export class ChunkShape {
     }
 
     atPosition(index: number): NodePositionInfo {
-        assert(index < this.positions.length, 0x4c7 /* index must not be greater than the number of nodes */);
+        assert(
+            index < this.positions.length,
+            0x4c7 /* index must not be greater than the number of nodes */,
+        );
         return this.positions[index]; // TODO % this.numberOfNodesPerTopLevelNode and fixup returned indexes as needed to reduce size of positions array?
 
         // const topIndex = Math.trunc(index / this.treeShape.positions.length);
@@ -399,7 +402,10 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
         const info = this.nodeInfo(CursorLocationType.Fields);
         const f = info.shape.fieldsOffsetArray[this.indexOfField];
         assert(childIndex >= 0, 0x4ca /* index must be positive */);
-        assert(childIndex < f.topLevelLength, 0x4cb /* index must not be past the end of the field */);
+        assert(
+            childIndex < f.topLevelLength,
+            0x4cb /* index must not be past the end of the field */,
+        );
         this.mode = CursorLocationType.Nodes;
         this.moveToPosition(this.positionIndex + f.offset + childIndex * f.shape.positions.length);
         assert(this.fieldIndex === childIndex, 0x4cc /* should be at selected child */);
