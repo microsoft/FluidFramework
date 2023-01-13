@@ -105,7 +105,7 @@ describe("Loader", () => {
                 } as any as ISequencedDocumentMessage;
             }
 
-            async function emit(count: number, type: MessageType) {
+            async function sendAndReceiveOps(count: number, type: MessageType) {
                 for (let num = 0; num < count; ++num) {
                     assert(!deltaConnection.disposed, "disposed");
                     deltaManager.submit(type);
@@ -338,7 +338,7 @@ describe("Loader", () => {
 
                     deltaManager.inbound.on("error",(error) => { expectedError = error; } );
 
-                    await emit(1, MessageType.Operation);
+                    await sendAndReceiveOps(1, MessageType.Operation);
 
                     // send op with gap in clientSeqNum
                     deltaConnection.emitOp(docId, [{
@@ -358,7 +358,7 @@ describe("Loader", () => {
 
                     deltaManager.inbound.on("error",(error) => { expectedError = error; } );
 
-                    await emit(1, MessageType.Operation);
+                    await sendAndReceiveOps(1, MessageType.Operation);
 
                     // send 1 noop without receiving
                     deltaManager.submit(MessageType.NoOp);
@@ -374,6 +374,7 @@ describe("Loader", () => {
                     } as any as ISequencedDocumentMessage]);
 
                     await yieldEventLoop();
+                    assert.strictEqual(deltaManager.lastMessage().sequenceNumber, seq, "discrepancy in last processed seqNum");
                     assert.strictEqual(expectedError, undefined, `Error should not happen : ${expectedError}`)
                 });
 
@@ -382,8 +383,8 @@ describe("Loader", () => {
 
                     deltaManager.inbound.on("error",(error) => { expectedError = error; } );
 
-                    await emit(1, MessageType.Operation);
-                    await emit(1, MessageType.NoOp);
+                    await sendAndReceiveOps(1, MessageType.Operation);
+                    await sendAndReceiveOps(1, MessageType.NoOp);
 
                     // send op with gap in clientSeqNum
                     deltaConnection.emitOp(docId, [{
@@ -402,8 +403,8 @@ describe("Loader", () => {
                     await startDeltaManager();
                     deltaManager.inbound.on("error",(error) => { expectedError = error; } );
 
-                    await emit(1, MessageType.Operation);
-                    await emit(1, MessageType.NoOp);
+                    await sendAndReceiveOps(1, MessageType.Operation);
+                    await sendAndReceiveOps(1, MessageType.NoOp);
 
                     // send second noop, without receiving
                     deltaManager.submit(MessageType.NoOp);
@@ -419,6 +420,7 @@ describe("Loader", () => {
                     } as any as ISequencedDocumentMessage]);
 
                     await yieldEventLoop();
+                    assert.strictEqual(deltaManager.lastMessage().sequenceNumber, seq, "discrepancy in last processed seqNum");
                     assert.strictEqual(expectedError, undefined, `Error should not happen : ${expectedError}`)
                 });
             });
