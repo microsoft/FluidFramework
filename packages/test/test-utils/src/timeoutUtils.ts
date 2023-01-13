@@ -134,12 +134,6 @@ export async function timeoutAwait<T = void>(
 	return Promise.race([promise, timeoutPromise<T>(() => {}, timeoutOptions)]);
 }
 
-export async function ensureContainerConnected(container: IContainer): Promise<void> {
-	if (container.connectionState !== ConnectionState.Connected) {
-		return timeoutPromise((resolve) => container.once("connected", () => resolve()));
-	}
-}
-
 // Create a promise based on the timeout options
 async function getTimeoutPromise<T = void>(
 	executor: (

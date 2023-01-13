@@ -42,4 +42,6 @@ export {
 	TimeoutWithError,
 	TimeoutWithValue,
 } from "./timeoutUtils";
-export { ensureContainerConnected, waitForContainerConnection } from "./containerUtils";
+export {
+    waitForContainerConnection,
+} from "./containerUtils";
