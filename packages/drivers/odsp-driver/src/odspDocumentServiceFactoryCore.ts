@@ -120,7 +120,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 // We can delay load this module as this path will not be executed in load flows and create flow
                 // while only happens once in lifetime of a document happens in the background after creation of
                 // detached container.
-                const module = await import("./internalModule");
+                const module = await import(/* webpackChunkName: "createNewModule" */ "./createFile");
                 odspResolvedUrl = await module.createNewFluidFile(
                     toInstrumentedOdspTokenFetcher(
                         odspLogger,

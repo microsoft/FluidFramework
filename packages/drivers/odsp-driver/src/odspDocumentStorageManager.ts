@@ -63,6 +63,8 @@ interface GetVersionsTelemetryProps {
 }
 
 export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
+    private odspSummaryModuleLoaded: boolean = false;
+    private summaryModuleP: Promise<OdspSummaryUploadManager> | undefined;
     private odspSummaryUploadManager: OdspSummaryUploadManager | undefined;
 
     private firstVersionCall = true;
@@ -458,6 +460,11 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         this.checkSnapshotUrl();
 
+        // Set the module promise right away, so as to not call it twice.
+        if (this.summaryModuleP === undefined) {
+            this.summaryModuleP = this.getDelayLoadedSummaryManager();
+        }
+
         // Enable flushing only if we have single commit summary and this is not the initial summary for an empty file
         if (".protocol" in summary.tree && context.ackHandle !== undefined) {
             let retry = 1;
@@ -491,20 +498,44 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         }
 
         if (!this.odspSummaryUploadManager) {
-            const module = await import("./internalModule");
-            this.odspSummaryUploadManager = new module.OdspSummaryUploadManager(
-                    this.odspResolvedUrl.endpoints.snapshotStorageUrl,
-                    this.getStorageToken,
-                    this.logger,
-                    this.epochTracker,
-                    !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
-                    this.relayServiceTenantAndSessionId,
-            );
+            this.odspSummaryUploadManager = await this.summaryModuleP
+            .then(async (m) => {
+                this.odspSummaryModuleLoaded = true;
+                return m;
+            })
+            .catch((error) => {
+                // Setting undefined in case someone tries to recover from module failure by calling again.
+                this.summaryModuleP = undefined;
+                this.odspSummaryModuleLoaded = false;
+                throw error;
+            });
         }
 
         assert(this.odspSummaryUploadManager !== undefined, "summary upload manager should have been initialized");
         const id = await this.odspSummaryUploadManager.writeSummaryTree(summary, context);
         return id;
+    }
+
+    private async getDelayLoadedSummaryManager() {
+        assert(this.odspSummaryModuleLoaded === false, "Should be loaded only once");
+        const module = await import(/* webpackChunkName: "summaryModule" */ "./odspSummaryUploadManager")
+            .then((m) => {
+                this.logger.sendTelemetryEvent({ eventName: "SummaryModuleLoaded" });
+                return m;
+            })
+            .catch((error) => {
+                this.logger.sendErrorEvent( { eventName: "SummaryModuleLoadFailed" }, error);
+                throw error;
+            });
+        this.odspSummaryUploadManager = new module.OdspSummaryUploadManager(
+                this.odspResolvedUrl.endpoints.snapshotStorageUrl,
+                this.getStorageToken,
+                this.logger,
+                this.epochTracker,
+                !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                this.relayServiceTenantAndSessionId,
+        );
+        return this.odspSummaryUploadManager;
     }
 
     private checkSnapshotUrl() {
