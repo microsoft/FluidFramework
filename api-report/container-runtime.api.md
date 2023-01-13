@@ -123,6 +123,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
+    get disposeFn(): (error?: ICriticalContainerError) => void;
+    // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
     // (undocumented)
     get flushMode(): FlushMode;
@@ -514,6 +516,8 @@ export interface ISummarizerInternalsProvider {
 export interface ISummarizerRuntime extends IConnectableRuntime {
     // (undocumented)
     closeFn(): void;
+    // (undocumented)
+    disposeFn?(): void;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // @deprecated (undocumented)

@@ -739,6 +739,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     logger.sendErrorEvent({ eventName: "SequenceNumberMismatch" }, error);
                 } else {
                     context.closeFn(error);
+                    context.disposeFn?.(error);
                 }
             }
         }
@@ -811,8 +812,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.reSubmit;
     }
 
+    public get disposeFn(): (error?: ICriticalContainerError) => void {
+        return this.context.disposeFn ?? this.context.closeFn;
+    }
+
     public get closeFn(): (error?: ICriticalContainerError) => void {
-        return this.context.closeFn;
+        // Also call disposeFn to retain functionality of runtime being disposed on close
+        return (error?: ICriticalContainerError) => {
+            this.context.closeFn(error);
+            this.context.disposeFn?.(error);
+        };
     }
 
     public get flushMode(): FlushMode {
@@ -3045,6 +3054,7 @@ const waitForSeq = async (
 ): Promise<void> => new Promise<void>((resolve, reject) => {
     // TODO: remove cast to any when actual event is determined
     deltaManager.on("closed" as any, reject);
+    deltaManager.on("disposed" as any, reject);
 
     // If we already reached target sequence number, simply resolve the promise.
     if (deltaManager.lastSequenceNumber >= targetSeq) {
