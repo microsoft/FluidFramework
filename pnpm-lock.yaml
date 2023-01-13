@@ -5386,6 +5386,7 @@ importers:
       '@rushstack/eslint-config': ^2.5.1
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
+      '@types/node': ^14.18.0
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.2
@@ -5417,6 +5418,7 @@ importers:
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/events': 3.0.0
       '@types/mocha': 9.1.1
+      '@types/node': 14.18.36
       concurrently: 6.3.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -20706,7 +20708,7 @@ packages:
   /@types/nock/9.3.1:
     resolution: {integrity: sha512-eOVHXS5RnWOjTVhu3deCM/ruy9E6JCgeix2g7wpFiekQh3AaEAK1cz43tZDukKmtSmQnwvSySq7ubijCA32I7Q==}
     dependencies:
-      '@types/node': 14.18.36
+      '@types/node': 15.14.9
     dev: true
 
   /@types/node-fetch/2.6.2:
@@ -20852,7 +20854,7 @@ packages:
   /@types/sha.js/2.4.0:
     resolution: {integrity: sha512-amxKgPy6WJTKuw8mpUwjX2BSxuBtBmZfRwIUDIuPJKNwGN8CWDli8JTg5ONTWOtcTkHIstvT7oAhhYXqEjStHQ==}
     dependencies:
-      '@types/node': 14.18.36
+      '@types/node': 15.14.9
     dev: true
 
   /@types/shelljs/0.8.11:
