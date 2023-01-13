@@ -267,8 +267,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     /**
-     * Called when we need to upload the reference state from the given summary. Read the GC blob and get the state
-     * to upload from it.
+     * Called when we need to upload the reference state from the given summary.
      */
     protected async refreshLatestSummaryFromSnapshot(
         referenceSequenceNumber: number,
@@ -278,71 +277,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         correlatedSummaryLogger: ITelemetryLogger,
         readAndParseBlob: ReadAndParseBlob,
     ): Promise<void> {
-        // If GC is disabled, skip updating GC state since we are not tracking GC state.
-        if (!this.gcDisabled) {
-            // Load the base GC details before proceeding because if that happens later it can overwrite the GC details
-            // written by the following code.
-            await this.loadBaseGCDetails();
-
-            // Possible re-entrancy. If we have already seen a summary later than this one, ignore it.
-            if (this.referenceSequenceNumber >= referenceSequenceNumber) {
-                return;
-            }
-
-            /**
-             * GC data is written at root of the snapshot tree under "gc" sub-tree. This data needs to be propagated to
-             * all the nodes in the container.
-             * The root summarizer node reads the GC data from the "gc" sub-tree, runs GC on it to get used routes in
-             * the container and updates its GC data and referenced used routes. It then gets the GC data and used
-             * routes of all its children and adds it to their snapshot tree.
-             * All the other nodes gets the GC data and used routes from their snapshot tree and updates their state.
-             * They get the GC data and used routes of their children and add it to their snapshot tree and so on.
-             *
-             * Note that if the snapshot does not have GC tree, GC data will be set to undefined and used routes will be
-             * set to self-route (meaning referenced) for all nodes. This is important because the GC needs to be
-             * regenerated in the next summary.
-             */
-            let gcDetails: IGarbageCollectionDetailsBase | undefined;
-            const gcSnapshotTree = snapshotTree.trees[gcTreeKey];
-            if (gcSnapshotTree !== undefined) {
-                // If there is a GC tree in the snapshot, this is the root summarizer node. Read GC data from the tree
-                // process it as explained above.
-                const gcSnapshotData = await getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
-
-                const gcNodes: { [id: string]: string[]; } = {};
-                for (const [nodeId, nodeData] of Object.entries(gcSnapshotData.gcState.gcNodes)) {
-                    gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
-                }
-                // Run GC on the nodes in the snapshot to get the used routes for each node in the container.
-                const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
-                gcDetails = { gcData: { gcNodes }, usedRoutes };
-            } else {
-                // If there is a GC blob in the snapshot, it's a non-root summarizer nodes - The root summarizer node
-                // writes GC blob in the snapshot of child nodes. Get  GC data and used routes from the blob.
-                const gcDetailsBlob = snapshotTree.blobs[gcTreeKey];
-                if (gcDetailsBlob !== undefined) {
-                    gcDetails = JSON.parse(gcDetailsBlob) as IGarbageCollectionDetailsBase;
-                }
-            }
-
-            // Update this node to the same GC state it was when the ack corresponding to this summary was processed.
-            this.gcData = gcDetails?.gcData !== undefined ? cloneGCData(gcDetails.gcData) : undefined;
-            this.referenceUsedRoutes = gcDetails?.usedRoutes !== undefined ? Array.from(gcDetails.usedRoutes) : undefined;
-            // If there are no used routes in the GC details, set it to have self route which will make the node
-            // referenced. This scenario can only happen if the snapshot is from a client where GC was not run or
-            // disabled. In both the cases, the node should be referenced.
-            this.usedRoutes = gcDetails?.usedRoutes !== undefined ? Array.from(gcDetails.usedRoutes) : [""];
-
-            if (gcDetails !== undefined) {
-                // Generate the GC data and used routes of children GC nodes and add it to their snapshot tree.
-                const gcDetailsMap = unpackChildNodesGCDetails(gcDetails);
-                const { childrenTree } = parseSummaryForSubtrees(snapshotTree);
-                gcDetailsMap.forEach((childGCDetails: IGarbageCollectionDetailsBase, childId: string) => {
-                    childrenTree.trees[childId].blobs[gcTreeKey] = JSON.stringify(childGCDetails);
-                });
-            }
-        }
-
+        await this.refreshGCStateFromSnapshot(referenceSequenceNumber, snapshotTree, readAndParseBlob);
         return super.refreshLatestSummaryFromSnapshot(
             referenceSequenceNumber,
             snapshotTree,
@@ -351,6 +286,85 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             correlatedSummaryLogger,
             readAndParseBlob,
         );
+    }
+
+    /**
+     * Updates GC state from the given snapshot if GC is enabled and the snapshot is newer than the one this node
+     * is tracking.
+     */
+    private async refreshGCStateFromSnapshot(
+        referenceSequenceNumber: number,
+        snapshotTree: ISnapshotTree,
+        readAndParseBlob: ReadAndParseBlob,
+    ): Promise<void> {
+        // If GC is disabled or we have seen a newer summary, skip updating GC state.
+        if (this.gcDisabled || this.referenceSequenceNumber >= referenceSequenceNumber) {
+            return;
+        }
+
+        // Load the base GC details before proceeding because if that happens later it can overwrite the GC details
+        // written by the following code.
+        await this.loadBaseGCDetails();
+
+        // Possible re-entrancy. We may already have processed this while loading base GC details.
+        if (this.referenceSequenceNumber >= referenceSequenceNumber) {
+            return;
+        }
+
+        /**
+         * GC data is written at root of the snapshot tree under "gc" sub-tree. This data needs to be propagated to
+         * all the nodes in the container.
+         * The root summarizer node reads the GC data from the "gc" sub-tree, runs GC on it to get used routes in
+         * the container and updates its GC data and referenced used routes. It then gets the GC data and used
+         * routes of all its children and adds it to their snapshot tree.
+         * All the other nodes gets the GC data and used routes from their snapshot tree and updates their state.
+         * They get the GC data and used routes of their children and add it to their snapshot tree and so on.
+         *
+         * Note that if the snapshot does not have GC tree, GC data will be set to undefined and used routes will be
+         * set to self-route (meaning referenced) for all nodes. This is important because the GC data needs to be
+         * regenerated in the next summary.
+         */
+        let gcDetails: IGarbageCollectionDetailsBase | undefined;
+        const gcSnapshotTree = snapshotTree.trees[gcTreeKey];
+        if (gcSnapshotTree !== undefined) {
+            // If there is a GC tree in the snapshot, this is the root summarizer node. Read GC data from the tree
+            // process it as explained above.
+            const gcSnapshotData = await getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
+
+            const gcNodes: { [id: string]: string[]; } = {};
+            for (const [nodeId, nodeData] of Object.entries(gcSnapshotData.gcState.gcNodes)) {
+                gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
+            }
+            // Run GC on the nodes in the snapshot to get the used routes for each node in the container.
+            const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
+            gcDetails = { gcData: { gcNodes }, usedRoutes };
+        } else {
+            // If there is a GC blob in the snapshot, it's a non-root summarizer nodes - The root summarizer node
+            // writes GC blob in the snapshot of child nodes. Get  GC data and used routes from the blob.
+            const gcDetailsBlob = snapshotTree.blobs[gcTreeKey];
+            if (gcDetailsBlob !== undefined) {
+                gcDetails = JSON.parse(gcDetailsBlob) as IGarbageCollectionDetailsBase;
+            }
+        }
+
+        // Update this node to the same GC state it was when the ack corresponding to this summary was processed.
+        this.gcData = gcDetails?.gcData !== undefined ? cloneGCData(gcDetails.gcData) : undefined;
+        this.referenceUsedRoutes = gcDetails?.usedRoutes !== undefined ? Array.from(gcDetails.usedRoutes) : undefined;
+        // If there are no used routes in the GC details, set it to have self route which will make the node
+        // referenced. This scenario can only happen if the snapshot is from a client where GC was not run or
+        // disabled. In both the cases, the node should be referenced.
+        this.usedRoutes = gcDetails?.usedRoutes !== undefined ? Array.from(gcDetails.usedRoutes) : [""];
+
+        if (gcDetails === undefined) {
+            return;
+        }
+
+        // Generate the GC data and used routes of children GC nodes and add it to their snapshot tree.
+        const gcDetailsMap = unpackChildNodesGCDetails(gcDetails);
+        const { childrenTree } = parseSummaryForSubtrees(snapshotTree);
+        gcDetailsMap.forEach((childGCDetails: IGarbageCollectionDetailsBase, childId: string) => {
+            childrenTree.trees[childId].blobs[gcTreeKey] = JSON.stringify(childGCDetails);
+        });
     }
 
     /**
