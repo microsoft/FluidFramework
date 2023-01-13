@@ -22,7 +22,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
-import { waitForContainerConnection } from "./timeoutUtils";
+import { waitForContainerConnection } from "./containerUtils";
 
 const summarizerClientType = "summarizer";
 
