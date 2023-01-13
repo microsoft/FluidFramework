@@ -810,7 +810,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             this.emit("closed", error);
 
-            this.removeAllListeners();
             if (this.visibilityEventHandler !== undefined) {
                 document.removeEventListener("visibilitychange", this.visibilityEventHandler);
             }
