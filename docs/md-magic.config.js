@@ -8,12 +8,10 @@ const pathLib = require("path");
 const template = require("markdown-magic-template");
 const fetch = require("node-fetch");
 const scripts = require("markdown-magic-package-scripts");
-const os = require("os");
 
 const mdMagicTemplatesPath = pathLib.join(__dirname, "..", ".md-magic-templates");
 
-const generatedContentNotice = `<!-- This section is automatically generated.
-To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->`
+const generatedContentNotice = `<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->`
 
 /**
  * Gets the path to the repo root.
@@ -93,6 +91,36 @@ const toPosix = (path) => {
 }
 
 /**
+ * Reads and returns the contents from the specified template file.
+ *
+ * @param {string} templateFileName - Name of the file to read, under {@link mdMagicTemplatesPath} (e.g. "Trademark-Template.md").
+ */
+const readTemplate = (templateFileName) => {
+    return fs.readFileSync(pathLib.resolve(mdMagicTemplatesPath, templateFileName), { encoding: "utf-8"}).trim();
+}
+
+/**
+ * Generates the appropriately formatted Markdown section contents for the provided section body.
+ * If header text is provided, a level 2 heading (i.e. `##`) will be included with the provided text.
+ * The section will be wrapped in leading and trailing newlines to ensure adequate spacing between generated contents.
+ *
+ * @param {string} sectionBody - Body text to include in the section.
+ * @param {string | undefined} maybeHeaderText - (optional) header text to display.
+ * If not provided, will not include header in output.
+ */
+const formattedSectionText = (sectionBody, maybeHeaderText) => {
+    return `\n${maybeHeaderText === undefined ? "" : `## ${maybeHeaderText}\n\n`}${sectionBody}\n`;
+}
+
+/**
+ * Prepends the {@link generatedContentNotice} to the provided Markdown contents.
+ * @param {string} contents - The Markdown contents to be included.
+ */
+const withGeneratedContentNotice = (contents) => {
+    return [generatedContentNotice, contents].join("\n");
+}
+
+/**
  * Generates a `Getting Started` heading and contents for the specified package.
  *
  * @param {string} packageJsonPath - Path to the package's `package.json` file.
@@ -101,8 +129,7 @@ const toPosix = (path) => {
 const getStartedInfo = (packageJsonPath, includeTinylicious = false) => {
     const packageJson = getPackageMetadata(packageJsonPath);
 
-    const preamble = `${generatedContentNotice}
-
+    const preamble = `
 ## Getting Started
 
 You can run this example using the following steps:
@@ -137,9 +164,7 @@ const generateInstallationSection = (packageJson, devDependency, includeHeading)
 npm i ${packageJson.name}${devDependency ? " -D" : ""}
 \`\`\``;
 
-    return includeHeading
-        ? `## Installation${os.EOL}${os.EOL}${sectionBody}`
-        : sectionBody;
+    return formattedSectionText(sectionBody, includeHeading ? "Installation" : undefined);
 }
 
 /**
@@ -148,13 +173,8 @@ npm i ${packageJson.name}${devDependency ? " -D" : ""}
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
  */
 const generateTrademarkSection = (includeHeading) => {
-    const sectionBody = `This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
-Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
-Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.`;
-
-    return includeHeading
-        ? `## Trademark${os.EOL}${os.EOL}${sectionBody}`
-        : sectionBody;
+    const sectionBody = readTemplate("Trademark-Template.md");
+    return formattedSectionText(sectionBody, includeHeading ? "Trademark" : undefined);
 }
 
 /**
@@ -163,11 +183,8 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
  */
  const generateContributionGuidelinesSection = (includeHeading) => {
-    const sectionBody = `Please refer to our [Github Wiki](https://github.com/microsoft/FluidFramework/wiki/Contributing) for an overview of our contribution guidelines.`;
-
-    return includeHeading
-        ? `## Contribution Guidelines${os.EOL}${os.EOL}${sectionBody}`
-        : sectionBody;
+    const sectionBody = readTemplate("Contribution-Guidelines-Template.md");
+    return formattedSectionText(sectionBody, includeHeading ? "Contribution Guidelines" : undefined);
 }
 
 /**
@@ -177,15 +194,8 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
  */
 const generateHelpSection = (includeHeading) => {
-    const sectionBody = `Not finding what you're looking for in this README?
-Check out our [GitHub Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
-
-Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
-Thank you!`;
-
-    return includeHeading
-        ? `## Help${os.EOL}${os.EOL}${sectionBody}`
-        : sectionBody;
+    const sectionBody = readTemplate("Help-Template.md");
+    return formattedSectionText(sectionBody, includeHeading ? "Help" : undefined);
 }
 
 /**
@@ -196,10 +206,7 @@ Thank you!`;
  */
 const generateApiDocsLinkSection = (packageJson, includeHeading) => {
     const sectionBody = `API documentation for **${packageJson.name}** is available at <https://fluidframework.com/docs/apis/${packageJson.shortName}>.`;
-
-    return includeHeading
-        ? `## API Documentation${os.EOL}${os.EOL}${sectionBody}`
-        : sectionBody;
+    return formattedSectionText(sectionBody, includeHeading ? "API Documentation" : undefined)
 }
 
 /**
@@ -210,9 +217,7 @@ const generateApiDocsLinkSection = (packageJson, includeHeading) => {
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
  */
 const generateScriptsSection = (scriptsTable, includeHeading) => {
-    return includeHeading
-        ? `## Scripts${os.EOL}${os.EOL}${scriptsTable}`
-        : scriptsTable;
+    return formattedSectionText(scriptsTable, includeHeading ? "Scripts" : undefined);
 }
 
 const fetchFunc = async (content, options) => {
@@ -257,35 +262,28 @@ const mdMagicConfig = {
         // includes relative to the repo root
         INCLUDE(content, options, config) {
             options.path = pathLib.resolve(pathLib.join(getRepoRoot(), options.path));
-            // console.log(options.path);
-            // options.path = pathLib.normalize(pathLib.join(getRepoRoot(), "docs", options.path));
-            // const relPath = pathLib.relative(getRepoRoot(), path);
-            return includeContent(options, config);
+            return withGeneratedContentNotice(includeContent(options, config));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (INCLUDE_ROOT:path=../file.js) --> */
         // includes relative to the file calling the include
         INCLUDE_RELATIVE(content, options) {
             options.path = pathLib.normalize(pathLib.join(pathLib.dirname(config.originalPath), options.path));
-            return includeContent(options, config);
+            return withGeneratedContentNotice(includeContent(options, config));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) --> */
         GET_STARTED(content, options, config) {
             const jsonPath = getPackageJsonPathFromOriginalPath(config.originalPath);
-            if (options && options.tinylicious) {
-                return getStartedInfo(jsonPath, options.tinylicious);
-            } else {
-                return getStartedInfo(jsonPath, false);
-            }
+            return withGeneratedContentNotice(getStartedInfo(jsonPath, options?.tinylicious ?? false));
         },
         PKGJSON(content, options, config) {
             options.pkg = getPackageJsonPathFromOriginalPath(config.originalPath);
-            return require("markdown-magic-package-json")(content, options, config);
+            return withGeneratedContentNotice(require("markdown-magic-package-json")(content, options, config));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (README_SIMPLE:installation=TRUE&apiDocs=TRUE&scripts=TRUE&contributionGuidelines=TRUE&help=TRUE&trademark=TRUE&devDependency=FALSE) --> */
         README_SIMPLE(content, options, config) {
             const pkg = getPackageJsonFromOriginalPath(config.originalPath);
 
-            const sections = [generatedContentNotice];
+            const sections = [];
 
             if(options.installation !== "FALSE") {
                 sections.push(generateInstallationSection(pkg, options.devDependency, true));
@@ -312,34 +310,34 @@ const mdMagicConfig = {
                 sections.push(generateTrademarkSection(true));
             }
 
-            return sections.join(`${os.EOL}${os.EOL}`);
+            return withGeneratedContentNotice(sections.join(""));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) --> */
         README_API_DOCS_SECTION(content, options, config) {
             const includeHeading = options.includeHeading !== "FALSE";
             const pkg = getPackageJsonFromOriginalPath(config.originalPath);
-            return generateApiDocsLinkSection(pkg, includeHeading);
+            return withGeneratedContentNotice(generateApiDocsLinkSection(pkg, includeHeading));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=FALSE) --> */
         README_INSTALLATION_SECTION(content, options, config) {
             const includeHeading = options.includeHeading !== "FALSE";
             const pkg = getPackageJsonFromOriginalPath(config.originalPath);
-            return generateInstallationSection(pkg, options.devDependency, includeHeading);
+            return withGeneratedContentNotice(generateInstallationSection(pkg, options.devDependency, includeHeading));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) --> */
         README_TRADEMARK_SECTION(content, options, config) {
             const includeHeading = options.includeHeading !== "FALSE";
-            return generateTrademarkSection(includeHeading);
+            return withGeneratedContentNotice(generateTrademarkSection(includeHeading));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) --> */
         README_CONTRIBUTION_GUIDELINES_SECTION(content, options, config) {
             const includeHeading = options.includeHeading !== "FALSE";
-            return generateContributionGuidelinesSection(includeHeading);
+            return withGeneratedContentNotice(generateContributionGuidelinesSection(includeHeading));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) --> */
         README_HELP_SECTION(content, options, config) {
             const includeHeading = options.includeHeading !== "FALSE";
-            return generateHelpSection(includeHeading);
+            return withGeneratedContentNotice(generateHelpSection(includeHeading));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (TEMPLATE:src="<name-of-template-file under `/.md-magic-templates`>") --> */
         TEMPLATE(content, options, config) {
@@ -348,13 +346,13 @@ const mdMagicConfig = {
 
             options = options || {};
             options.src = pathLib.relative(dir, pathLib.join(mdMagicTemplatesPath, options.src));
-            return template({ pkg: pkg })(content, options, config);
+            return withGeneratedContentNotice(template({ pkg: pkg })(content, options, config));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (SCRIPTS:includeHeading=TRUE) --> */
         SCRIPTS(content, options, config) {
             const includeHeading = options.includeHeading !== "FALSE";
             const scriptsTable = scripts(content, options, config);
-            return generateScriptsSection(scriptsTable, includeHeading);
+            return withGeneratedContentNotice(generateScriptsSection(scriptsTable, includeHeading));
         },
         FETCH: fetchFunc,
     },
