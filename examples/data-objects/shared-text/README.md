@@ -7,6 +7,9 @@ An experimental implementation of writing a Rich Text Editor.
 **Shared Text** was the first editor written on the Fluid Framework and has evolved along with the framework.
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) -->
+
+<!-- prettier-ignore-start -->
+
 <!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Getting Started
@@ -17,5 +20,7 @@ You can run this example using the following steps:
     - For an even faster build, you can add the package name to the build command, like this:
       `npm run build:fast -- --nolint @fluid-example/shared-text`
 1. Run `npm run start` from this directory (examples/data-objects/shared-text) and open <http://localhost:8080> in a web browser to see the app running.
+
+<!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->

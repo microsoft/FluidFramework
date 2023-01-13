@@ -14,6 +14,9 @@ how to combine those distributed data structures with custom code (business logi
      content, so you should commit the resulting changes. -->
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=packages/framework/aqueduct/README.md&start=3&end=-7) -->
+
+<!-- prettier-ignore-start -->
+
 <!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 The Aqueduct is a library for building Fluid objects and Fluid containers within the Fluid Framework. Its goal is to
@@ -211,9 +214,14 @@ type:"text/plain", value:"blue"}`.
 
 We use custom handlers to build the Container Services pattern.
 
+<!-- prettier-ignore-end -->
+
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+
+<!-- prettier-ignore-start -->
+
 <!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 <!-- Links -->
 
@@ -239,5 +247,7 @@ We use custom handlers to build the Container Services pattern.
 
 [FluidContainer]: {{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
 [IFluidContainer]: {{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
+
+<!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
