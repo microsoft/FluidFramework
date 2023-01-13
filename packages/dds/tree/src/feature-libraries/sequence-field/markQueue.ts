@@ -6,14 +6,14 @@
 import { assert } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
 import { IdAllocator } from "../modular-schema";
-import { Mark, SizedMark } from "./format";
+import { InputSpanningMark, Mark } from "./format";
 import {
     applyMoveEffectsToMark,
     MoveEffectTable,
     splitMarkOnInput,
     splitMarkOnOutput,
 } from "./moveEffectTable";
-import { isSizedMark } from "./utils";
+import { isBlockedReattach, isInputSpanningMark, isOutputSpanningMark } from "./utils";
 
 export class MarkQueue<T> {
     private readonly stack: Mark<T>[] = [];
@@ -25,6 +25,7 @@ export class MarkQueue<T> {
         private readonly moveEffects: MoveEffectTable<T>,
         private readonly genId: IdAllocator,
         private readonly reassignMoveIds: boolean = false,
+        private readonly updatePairedMarkStatus: boolean = false,
         private readonly composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
     ) {
         this.list = list;
@@ -34,7 +35,13 @@ export class MarkQueue<T> {
         return this.peek() === undefined;
     }
 
-    public dequeue(): Mark<T> | undefined {
+    public dequeue(): Mark<T> {
+        const output = this.tryDequeue();
+        assert(output !== undefined, "Unexpected end of mark queue");
+        return output;
+    }
+
+    public tryDequeue(): Mark<T> | undefined {
         let reassignMoveIds = this.reassignMoveIds;
         let mark: Mark<T> | undefined;
         if (this.stack.length > 0) {
@@ -54,6 +61,7 @@ export class MarkQueue<T> {
             this.moveEffects,
             this.genId,
             reassignMoveIds,
+            this.updatePairedMarkStatus,
             this.composeChanges,
         );
 
@@ -74,10 +82,9 @@ export class MarkQueue<T> {
      * The caller must verify that the next mark (as returned by peek) is longer than this length.
      * @param length - The length to dequeue, measured in the input context.
      */
-    public dequeueInput(length: number): SizedMark<T> {
+    public dequeueInput(length: number): InputSpanningMark<T> {
         const mark = this.dequeue();
-        assert(mark !== undefined, "Should only dequeue if not empty");
-        assert(isSizedMark(mark), "Can only split sized marks on input");
+        assert(isInputSpanningMark(mark), "Can only split sized marks on input");
         const [mark1, mark2] = splitMarkOnInput(mark, length, this.genId, this.moveEffects);
         this.stack.push(mark2);
         return mark1;
@@ -87,17 +94,21 @@ export class MarkQueue<T> {
      * Dequeues the first `length` sized portion of the next mark.
      * The caller must verify that the next mark (as returned by peek) is longer than this length.
      * @param length - The length to dequeue, measured in the output context.
+     * @param includeBlockedCells - If true, blocked marks that target empty cells will note be treated as 0-length.
      */
-    public dequeueOutput(length: number): Mark<T> {
+    public dequeueOutput(length: number, includeBlockedCells: boolean = false): Mark<T> {
         const mark = this.dequeue();
-        assert(mark !== undefined, "Should only dequeue if not empty");
+        assert(
+            isOutputSpanningMark(mark) || (includeBlockedCells && isBlockedReattach(mark)),
+            "Should only dequeue output if the next mark has output length > 0",
+        );
         const [mark1, mark2] = splitMarkOnOutput(mark, length, this.genId, this.moveEffects);
         this.stack.push(mark2);
         return mark1;
     }
 
     public peek(): Mark<T> | undefined {
-        const mark = this.dequeue();
+        const mark = this.tryDequeue();
         if (mark !== undefined) {
             this.stack.push(mark);
         }

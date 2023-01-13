@@ -10,8 +10,16 @@ export interface ICollaborativeInputProps {
      * The SharedString that will store the input value.
      */
     sharedString: SharedString;
+
     /**
-     * Whether spellCheck should be enabled.  Defaults to true.
+     * Whether or not the control should be {@link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#readonly | read-only}.
+     * @defaultValue `false`
+     */
+    readOnly?: boolean;
+
+    /**
+     * Whether spellCheck should be enabled.
+     * @defaultValue `true`
      */
     spellCheck?: boolean;
     className?: string;
@@ -72,6 +80,7 @@ export class CollaborativeInput
             <input
                 className={this.props.className}
                 style={this.props.style}
+                readOnly={this.props.readOnly ?? false}
                 spellCheck={this.props.spellCheck ? this.props.spellCheck : true}
                 ref={this.inputElementRef}
                 disabled={this.props.disabled}
