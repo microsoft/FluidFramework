@@ -303,8 +303,7 @@ export class LoadTestDataStoreModel {
                     callback();
                 });
             }
-        }).catch((error) =>
-            errorHandler(error));
+        }).catch((error) => errorHandler(error));
     }
 
     public get startTime(): number {
