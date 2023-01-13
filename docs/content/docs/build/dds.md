@@ -8,7 +8,7 @@ editor: sambroner
 ---
 
 The Fluid Framework provides developers with two types of shared objects: *distributed data structures* (DDSes) and
-Data Objects. 
+Data Objects.
 *Data Objects are beta and should not be used in production applications.*
 DDSes are low-level data structures, while Data Objects are composed of DDSes and other shared objects. Data Objects are
 used to organize DDSes into semantically meaningful groupings for your scenario, as well as

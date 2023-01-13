@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalSessionStorageDbFactory } from "@fluidframework/local-driver";
-import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
+import { OdspDocumentServiceFactoryWithCodeSplit } from "@fluidframework/odsp-driver";
 import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -62,7 +62,7 @@ export function getDocumentServiceFactory(
         case "spo":
         case "spo-df":
             // TODO: web socket token
-            return new OdspDocumentServiceFactory(
+            return new OdspDocumentServiceFactoryWithCodeSplit(
                 async () => options.odspAccessToken ?? null,
                 async () => options.pushAccessToken ?? null,
                 odspPersistantCache,

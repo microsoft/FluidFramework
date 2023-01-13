@@ -34,7 +34,9 @@ To clean up a debugger session during your application's tear-down, or when clos
 
 ## Related Tooling
 
-TODO: link to other tools (visualizer library, chrome extension) once they have been published.
+For a visualizer library that takes advantage of this library, see [@fluid-tools/client-debugger-view][].
+
+-   Additionally, see the Chromium browser extension library built upon the visualizer: [@fluid-tools/client-debugger-chrome-extension][].
 
 ## Working in the package
 
@@ -95,5 +97,7 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 <!-- Links -->
 
+[@fluid-tools/client-debugger-chrome-extension]: https://github.com/microsoft/FluidFramework/tree/main/packages/tools/client-debugger/client-debugger-chrome-extension
+[@fluid-tools/client-debugger-view]: https://github.com/microsoft/FluidFramework/tree/main/packages/tools/client-debugger/client-debugger-view
 [audience]: https://fluidframework.com/docs/build/audience
 [container]: https://fluidframework.com/docs/build/containers

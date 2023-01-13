@@ -93,10 +93,6 @@ To run the app, navigate to the root of this package and run `npm run start:test
 -   Currently, the view offers no data editing affordances. At the very least for "simple" data, we should allow users to edit data in place.
     -   This could be especially valuable during the prototyping state of an application.
 
-### Audience View TODOs
-
--   Add a way to view the history of changes.
-
 <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
@@ -129,7 +125,7 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 <!-- Links -->
 
-[@fluid-tools/client-debugger]: TODO: link to README on github once code has been merged.
-[@fluid-tools/client-debugger-chrome-extension]: TODO: link to README on github once code has been merged.
+[@fluid-tools/client-debugger]: https://github.com/microsoft/FluidFramework/tree/main/packages/tools/client-debugger/client-debugger
+[@fluid-tools/client-debugger-chrome-extension]: https://github.com/microsoft/FluidFramework/tree/main/packages/tools/client-debugger/client-debugger-chrome-extension
 [audience]: https://fluidframework.com/docs/build/audience
 [container]: https://fluidframework.com/docs/build/containers

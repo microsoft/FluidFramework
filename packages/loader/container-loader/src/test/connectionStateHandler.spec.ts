@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IConnectionDetails, IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/common-definitions";
 import { ConnectionState } from "../connectionState";
 import {
     IConnectionStateHandlerInputs,
@@ -135,7 +135,9 @@ describe("ConnectionStateHandler Tests", () => {
         handlerInputs = {
             maxClientLeaveWaitTime: expectedTimeout,
             shouldClientJoinWrite: () => shouldClientJoinWrite,
-            logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => { throw new Error(`logConnectionIssue: ${eventName} ${JSON.stringify(details)}`); },
+            logConnectionIssue: (eventName: string, category: TelemetryEventCategory, details?: ITelemetryProperties) => {
+                throw new Error(`logConnectionIssue: ${eventName} ${JSON.stringify(details)}`);
+            },
             connectionStateChanged: () => { },
             logger: new TelemetryNullLogger(),
         };
