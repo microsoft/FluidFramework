@@ -92,9 +92,9 @@ const toPosix = (path) => {
 }
 
 /**
- * Reads and returns the contents for the specified template file.
+ * Reads and returns the contents from the specified template file.
  *
- * @param {string} templateFileName - Name of the file to read, under {@link mdMagicTemplatesPath}.
+ * @param {string} templateFileName - Name of the file to read, under {@link mdMagicTemplatesPath} (e.g. "Trademark-Template.md").
  */
 const readTemplate = (templateFileName) => {
     return fs.readFileSync(pathLib.resolve(mdMagicTemplatesPath, templateFileName), { encoding: "utf-8"}).trim();
