@@ -763,8 +763,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // 2. We need to ensure that we deliver disconnect event to runtime properly. See connectionStateChanged
         //    handler. We only deliver events if container fully loaded. Transitioning from "loading" ->
         //    "closing" will lose that info (can also solve by tracking extra state).
-        // TODO: remove true argument in 2.0.0-internal.3.0.0
-        this._deltaManager.close(error, true /* emitDisposed */);
+        this._deltaManager.close(error);
         this.verifyClosed();
     }
 
