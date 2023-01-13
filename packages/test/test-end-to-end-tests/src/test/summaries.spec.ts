@@ -272,7 +272,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
         await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
 
-        await waitForContainerConnection(container);
+        await waitForContainerConnection(container, true);
 
         // Send an op to trigger summary. We should not get the "IncrementalSummaryViolation" error log.
         defaultDataStore._root.set("key", "value");

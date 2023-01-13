@@ -117,7 +117,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             runtimeFactory);
 
         const container = await localTestObjectProvider.makeTestContainer() as Container;
-        await waitForContainerConnection(container, true,
+        await waitForContainerConnection(container, false,
             { durationMs: timeoutMs, errorMsg: "Container initial connection timeout" },
         );
         assert.strictEqual(
@@ -331,7 +331,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         assert.strictEqual(container.connectionState, ConnectionState.Disconnected, "container can't disconnect()");
 
         container.connect();
-        await waitForContainerConnection(container, true,
+        await waitForContainerConnection(container, false,
             { durationMs: timeoutMs, errorMsg: "container connect() timeout" },
         );
         assert.strictEqual(container.connectionState, ConnectionState.Connected, "container can't connect()");
@@ -413,7 +413,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 
         container.connect();
         container.disconnect();
-        const connectPromise = waitForContainerConnection(container, true,
+        const connectPromise = waitForContainerConnection(container, false,
             { durationMs: timeoutMs, errorMsg: "connected timeout (expected error)" },
         );
         await assert.rejects(
@@ -438,7 +438,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 
         container.connect();
         container.connect();
-        await waitForContainerConnection(container, true,
+        await waitForContainerConnection(container, false,
             { durationMs: timeoutMs, errorMsg: "container connected event timeout" },
         );
         assert.strictEqual(
@@ -456,7 +456,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         (container as any).deltaManager.connectionManager.shouldJoinWrite = () => { return true; };
         container.connect();
 
-        await waitForContainerConnection(container, true,
+        await waitForContainerConnection(container, false,
             { durationMs: timeoutMs, errorMsg: "container connected event timeout" },
         );
 
@@ -474,7 +474,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         container.connect();
         container.connect();
         container.disconnect();
-        const connectPromise = waitForContainerConnection(container, true,
+        const connectPromise = waitForContainerConnection(container, false,
             { durationMs: timeoutMs, errorMsg: "connected timeout (expected error)" },
         );
         await assert.rejects(
@@ -502,7 +502,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         container.connect();
         container.disconnect();
         container.connect();
-        await waitForContainerConnection(container, true,
+        await waitForContainerConnection(container, false,
             { durationMs: timeoutMs, errorMsg: "connected event not fired after rapid disconnect() + connect()" },
         );
         assert.strictEqual(

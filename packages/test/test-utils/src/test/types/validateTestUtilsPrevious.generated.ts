@@ -256,14 +256,26 @@ use_old_VariableDeclaration_defaultTimeoutDurationMs(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_ensureContainerConnected": {"forwardCompat": false}
+* "FunctionDeclaration_ensureContainerConnected": {"forwardCompat": false}
 */
+declare function get_old_FunctionDeclaration_ensureContainerConnected():
+    TypeOnly<typeof old.ensureContainerConnected>;
+declare function use_current_FunctionDeclaration_ensureContainerConnected(
+    use: TypeOnly<typeof current.ensureContainerConnected>);
+use_current_FunctionDeclaration_ensureContainerConnected(
+    get_old_FunctionDeclaration_ensureContainerConnected());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_ensureContainerConnected": {"backCompat": false}
+* "FunctionDeclaration_ensureContainerConnected": {"backCompat": false}
 */
+declare function get_current_FunctionDeclaration_ensureContainerConnected():
+    TypeOnly<typeof current.ensureContainerConnected>;
+declare function use_old_FunctionDeclaration_ensureContainerConnected(
+    use: TypeOnly<typeof old.ensureContainerConnected>);
+use_old_FunctionDeclaration_ensureContainerConnected(
+    get_current_FunctionDeclaration_ensureContainerConnected());
 
 /*
 * Validate forward compat by using old type in place of current type

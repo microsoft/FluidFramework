@@ -80,7 +80,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
         async function loadContainer() {
             const url = getUrlFromItemId((container.resolvedUrl as IOdspResolvedUrl).itemId, provider);
             const newContainer = await provider.makeTestLoader(gcContainerConfig).resolve({ url });
-            await waitForContainerConnection(newContainer);
+            await waitForContainerConnection(newContainer, true);
             return newContainer;
         }
 
@@ -325,7 +325,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 
             // Connect the container and wait for it to be connected.
             container2.connect();
-            await waitForContainerConnection(container2);
+            await waitForContainerConnection(container2, true);
 
             // Validate that the localId is referenced. This should not log any gcUnknownOutboundReferences error as a
             // reference from localId to storageId would be created.

@@ -53,7 +53,7 @@ describeNoCompat("Flush mode validation", (getTestObjectProvider) => {
         dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
         // Send an op in container1 so that it switches to "write" mode and wait for it to be connected.
         dataObject1map1.set("key", "value");
-        await waitForContainerConnection(container1);
+        await waitForContainerConnection(container1, true);
         await provider.ensureSynchronized();
     }
 
