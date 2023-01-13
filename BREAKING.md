@@ -30,7 +30,7 @@ See [the note](#default-parameter-values-for-waitforcontainerconnection-will-cha
 ### Default parameter values for `waitForContainerConnection()` will change
 
 The default value for the `failOnContainerClose` parameter will change from `false` to `true` for function
-`waitForContainerConnection()` exported by `@fluidframework/test-utils`
+`waitForContainerConnection()` exported by `@fluidframework/test-utils`.
 
 This is overall a safer default because it ensures that unexpected errors which cause the Container to close are surfaced
 immediately, instead of potentially being hidden by a timeout.
