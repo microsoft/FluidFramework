@@ -127,6 +127,7 @@ export class TaskList extends DataObject implements ITaskList {
             priority: draftPriorityCell.handle as IFluidHandle<ISharedCell<number>>,
         };
         this.draftData.set(id, draftDataPT);
+        console.log(this.root.get)
     };
 
     public readonly deleteTask = (id: string): void => {
@@ -142,7 +143,7 @@ export class TaskList extends DataObject implements ITaskList {
     };
 
     private readonly handleTaskAdded = async (id: string): Promise<void> => {
-        const taskData = this.root.get(id) as PersistedTask;
+        const taskData = this._draftData?.get(id) as PersistedTask;
         if (taskData === undefined) {
             throw new Error("Newly added task is missing from map.");
         }
@@ -152,7 +153,7 @@ export class TaskList extends DataObject implements ITaskList {
             taskData.priority.get(),
         ]);
         // It's possible the task was deleted while getting the name/priority, in which case quietly exit.
-        if (this.root.get(id) === undefined) {
+        if (this._draftData?.get(id) === undefined) {
             return;
         }
         const newTask = new Task(id, nameSharedString, prioritySharedCell);
