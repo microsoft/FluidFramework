@@ -107,7 +107,7 @@ export enum DataObjectFactoryType {
 // @public (undocumented)
 export const defaultTimeoutDurationMs = 250;
 
-// @public (undocumented)
+// @public @deprecated
 export function ensureContainerConnected(container: Container): Promise<void>;
 
 // @public

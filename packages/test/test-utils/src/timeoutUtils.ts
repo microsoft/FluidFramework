@@ -28,6 +28,14 @@ export async function timeoutAwait<T = void>(
     return Promise.race([promise, timeoutPromise<T>(() => { }, timeoutOptions)]);
 }
 
+/**
+ * Waits for the specified container to emit a 'connected' event.
+ *
+ * @deprecated Use waitForContainerConnection instead.
+ * Note that an upcoming release will change the default parameters on that function to:
+ * - failOnContainerClose = true
+ * - timeoutOptions.durationMs = 1s
+ */
 export async function ensureContainerConnected(container: Container): Promise<void> {
     if (!container.connected) {
         return timeoutPromise((resolve) => container.once("connected", () => resolve()));
