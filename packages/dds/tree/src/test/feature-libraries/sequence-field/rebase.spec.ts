@@ -398,20 +398,47 @@ describe("SequenceField - Rebase", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("revive ↷ different revive", () => {
-        const reviveA = composeAnonChanges([
-            Change.revive(0, 1, tag1, 0),
-            Change.revive(3, 2, tag1, 1),
-            Change.revive(7, 1, tag1, 3),
-        ]);
-        const reviveB = Change.revive(2, 1, tag2, 0);
-        const actual = rebase(reviveA, reviveB);
-        // TODO: test cases for both ordering of revived data
-        const expected = composeAnonChanges([
-            Change.revive(0, 1, tag1, 0),
-            Change.revive(3, 2, tag1, 1),
-            Change.revive(8, 1, tag1, 3),
-        ]);
+    it("reviveAA ↷ reviveB => BAA", () => {
+        const reviveAA = Change.revive(0, 2, tag1, 1, undefined, [{ revision: tag2, offset: 1 }]);
+        const reviveB = Change.revive(0, 1, tag2, 0);
+        const expected = Change.revive(1, 2, tag1, 1, undefined, [{ revision: tag2, offset: 1 }]);
+        const actual = rebase(reviveAA, reviveB);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("reviveAA ↷ reviveB => AAB", () => {
+        const reviveAA = Change.revive(0, 2, tag1, 0, undefined, [{ revision: tag2, offset: 0 }]);
+        const reviveB = Change.revive(0, 1, tag2, 0);
+        const expected = Change.revive(0, 2, tag1, 0, undefined, [{ revision: tag2, offset: 0 }]);
+        const actual = rebase(reviveAA, reviveB);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("reviveBB ↷ reviveA => BBA", () => {
+        const reviveBB = Change.revive(0, 2, tag2, 0);
+        const reviveA = Change.revive(0, 1, tag1, 2, undefined, [{ revision: tag2, offset: 2 }]);
+        const expected = Change.revive(0, 2, tag2, 0);
+        const actual = rebase(reviveBB, reviveA);
+        assert.deepEqual(actual, expected);
+    });
+
+    // To fix this test we need to be able to compare lineage entries with detach indices.
+    // See comments in RebaseQueue.pop
+    it.skip("reviveBB ↷ reviveA => ABB", () => {
+        const reviveBB = Change.revive(0, 2, tag2, 1);
+        const reviveA = Change.revive(0, 1, tag1, 0, undefined, [{ revision: tag2, offset: 0 }]);
+        const expected = Change.revive(1, 2, tag2, 1);
+        const actual = rebase(reviveBB, reviveA);
+        assert.deepEqual(actual, expected);
+    });
+
+    // To fix this test we need to be able to compare lineage entries with detach indices.
+    // See comments in RebaseQueue.pop
+    it.skip("reviveA ↷ reviveBB => BAB", () => {
+        const reviveA = Change.revive(0, 1, tag1, 1, undefined, [{ revision: tag2, offset: 1 }]);
+        const reviveBB = Change.revive(0, 2, tag2, 0);
+        const expected = Change.revive(1, 1, tag1, 1, undefined, [{ revision: tag2, offset: 1 }]);
+        const actual = rebase(reviveA, reviveBB);
         assert.deepEqual(actual, expected);
     });
 
