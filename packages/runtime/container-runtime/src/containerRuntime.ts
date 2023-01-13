@@ -173,7 +173,7 @@ import {
     OpSplitter,
     RemoteMessageProcessor,
 } from "./opLifecycle";
-import { createSessionId, IdCompressor } from "./id-compressor";
+import { createSessionId, hasOngoingSession, IdCompressor } from "./id-compressor";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -1080,7 +1080,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
         this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
         if (this.runtimeOptions.enableRuntimeCompressor) {
-            this._idCompressor = idCompressorSnapshot !== undefined ? IdCompressor.deserialize(idCompressorSnapshot, createSessionId()) : new IdCompressor(createSessionId(), 10, this.logger);
+            if (idCompressorSnapshot !== undefined) {
+                this._idCompressor = hasOngoingSession(idCompressorSnapshot) ? IdCompressor.deserialize(idCompressorSnapshot) : IdCompressor.deserialize(idCompressorSnapshot, createSessionId(), )
+            } else {
+                this._idCompressor = new IdCompressor(createSessionId(), 10, this.logger);
+            }
         }
 
         this.maxConsecutiveReconnects =
@@ -1751,8 +1755,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.scheduleManager.beforeOpProcessing(message);
 
         if (this.runtimeOptions.enableRuntimeCompressor
-            && message.type === ContainerMessageType.FluidDataStoreOp) {
-            this.idCompressor?.finalizeCreationRange(message.contents.contents.idRange);
+            && message.type === ContainerMessageType.FluidDataStoreOp
+            && message.contents.contents.content.contents !== undefined) {
+            this.idCompressor?.finalizeCreationRange(message.contents.contents.content.contents.idRange);
         }
 
         try {
@@ -2589,8 +2594,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         id: string,
         contents: any,
         localOpMetadata: unknown = undefined): void {
-        if (this.runtimeOptions.enableRuntimeCompressor && this.idCompressor !== undefined) {
-            contents.idRange = this.idCompressor.takeNextCreationRange();
+        if (this.runtimeOptions.enableRuntimeCompressor && this.idCompressor !== undefined
+            && contents.content.contents !== undefined
+            && contents.content.contents.idRange === undefined) {
+            contents.content.contents.idRange = this.idCompressor.takeNextCreationRange();
         }
         const envelope: IEnvelope = {
             address: id,
