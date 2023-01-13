@@ -69,7 +69,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
                 },
                 body: JSON.stringify({
                     // External data service will call our webhook echoer to notify our subscribers of the data changes.
-                    url: `http://localhost:${customerServicePort}/echo-external-data-webhook`
+                    url: `http://localhost:${port}/echo-external-data-webhook`
                 }),
             }
         );
