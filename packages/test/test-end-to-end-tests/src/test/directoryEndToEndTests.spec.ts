@@ -719,6 +719,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
     let subDirCreatedEventData: string[];
     let subDirDeletedEventData: string[];
     let undisposedEventData: string[];
+    let disposedEventData: string[];
 
     const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
         getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -741,6 +742,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
         subDirCreatedEventData = [];
         subDirDeletedEventData = [];
         undisposedEventData = [];
+        disposedEventData = [];
         sharedDir.on("valueChanged", (changed, _local, _target) => {
             changedEventData.push(changed);
         });
@@ -957,6 +959,9 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
         subDir.on("undisposed", (value: IDirectory) => {
             undisposedEventData.push(value.absolutePath);
         });
+        subDir.on("disposed", (value: IDirectory) => {
+            disposedEventData.push(value.absolutePath);
+        });
         try {
             containerRuntime.orderSequentially(() => {
                 sharedDir.deleteSubDirectory("subDirName");
@@ -979,6 +984,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
         assert.equal(subDirCreatedEventData[1], "subDirName");
         assert.equal(undisposedEventData.length, 1);
         assert.equal(undisposedEventData[0], "/subDirName");
+        assert.equal(disposedEventData.length, 1);
     });
 
     it("Should not rollback deleting nonexistent subdirectory", () => {
@@ -1008,11 +1014,11 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
         subdir.on("undisposed", (value: IDirectory) => {
             undisposedEventData.push(value.absolutePath);
         });
+        subdir.on("disposed", (value: IDirectory) => {
+            disposedEventData.push(value.absolutePath);
+        });
         subdir.set("key1", "content1");
         const subsubdir = subdir.createSubDirectory("subSubDirName");
-        // subsubdir.on("undisposed", (value: IDirectory) => {
-        //     undisposedEventData.push(value.absolutePath);
-        // });
         try {
             containerRuntime.orderSequentially(() => {
                 sharedDir.deleteSubDirectory("subDirName");
@@ -1045,6 +1051,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
         assert.equal(subDirCreatedEventData[2], "subDirName");
         assert.equal(undisposedEventData.length, 1);
         assert.equal(undisposedEventData[0], "/subDirName");
+        assert.equal(disposedEventData.length, 1);
 
         // verify we still get events on restored content
         readSubdir.set("key2", "content2");

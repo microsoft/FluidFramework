@@ -196,7 +196,8 @@ export interface IDirectoryEvents extends IEvent {
     ) => void);
 
     /**
-     * Emitted when a subdirectory is created.
+     * Emitted when a subdirectory is created. Also emitted when a delete
+     * of a subdirectory is rolled back.
      *
      * @remarks Listener parameters:
      *
