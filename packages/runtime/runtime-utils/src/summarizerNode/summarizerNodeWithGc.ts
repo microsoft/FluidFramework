@@ -297,8 +297,12 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
              * routes of all its children and adds it to their snapshot tree.
              * All the other nodes gets the GC data and used routes from their snapshot tree and updates their state.
              * They get the GC data and used routes of their children and add it to their snapshot tree and so on.
+             *
+             * Note that if the snapshot does not have GC tree, GC data will be set to undefined and used routes will be
+             * set to self-route (meaning referenced) for all nodes. This is important because the GC needs to be
+             * regenerated in the next summary.
              */
-            let gcDetails: IGarbageCollectionDetailsBase = { gcData: { gcNodes: {} } };
+            let gcDetails: IGarbageCollectionDetailsBase | undefined;
             const gcSnapshotTree = snapshotTree.trees[gcTreeKey];
             if (gcSnapshotTree !== undefined) {
                 // If there is a GC tree in the snapshot, this is the root summarizer node. Read GC data from the tree
@@ -322,19 +326,21 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             }
 
             // Update this node to the same GC state it was when the ack corresponding to this summary was processed.
-            this.gcData = gcDetails.gcData !== undefined ? cloneGCData(gcDetails.gcData) : undefined;
-            this.referenceUsedRoutes = gcDetails.usedRoutes !== undefined ? Array.from(gcDetails.usedRoutes) : undefined;
+            this.gcData = gcDetails?.gcData !== undefined ? cloneGCData(gcDetails.gcData) : undefined;
+            this.referenceUsedRoutes = gcDetails?.usedRoutes !== undefined ? Array.from(gcDetails.usedRoutes) : undefined;
             // If there are no used routes in the GC details, set it to have self route which will make the node
             // referenced. This scenario can only happen if the snapshot is from a client where GC was not run or
             // disabled. In both the cases, the node should be referenced.
-            this.usedRoutes = gcDetails.usedRoutes !== undefined ? Array.from(gcDetails.usedRoutes) : [""];
+            this.usedRoutes = gcDetails?.usedRoutes !== undefined ? Array.from(gcDetails.usedRoutes) : [""];
 
-            // Generate the GC data and used routes of children GC nodes and add it to their snapshot tree.
-            const gcDetailsMap = unpackChildNodesGCDetails(gcDetails);
-            const { childrenTree } = parseSummaryForSubtrees(snapshotTree);
-            gcDetailsMap.forEach((childGCDetails: IGarbageCollectionDetailsBase, childId: string) => {
-                childrenTree.trees[childId].blobs[gcTreeKey] = JSON.stringify(childGCDetails);
-            });
+            if (gcDetails !== undefined) {
+                // Generate the GC data and used routes of children GC nodes and add it to their snapshot tree.
+                const gcDetailsMap = unpackChildNodesGCDetails(gcDetails);
+                const { childrenTree } = parseSummaryForSubtrees(snapshotTree);
+                gcDetailsMap.forEach((childGCDetails: IGarbageCollectionDetailsBase, childId: string) => {
+                    childrenTree.trees[childId].blobs[gcTreeKey] = JSON.stringify(childGCDetails);
+                });
+            }
         }
 
         return super.refreshLatestSummaryFromSnapshot(
