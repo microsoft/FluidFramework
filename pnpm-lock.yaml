@@ -9495,6 +9495,7 @@ importers:
       '@fluidframework/protocol-definitions': ^1.1.0
       '@microsoft/api-extractor': ^7.22.2
       '@types/chai': ^4.0.0
+      '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       chai: ^4.2.0
       concurrently: ^6.2.0
@@ -9502,6 +9503,7 @@ importers:
       eslint: ~8.6.0
       eslint-config-prettier: ~8.5.0
       eslint-plugin-chai-expect: ~3.0.0
+      events: ^3.1.0
       mocha: ^10.0.0
       nyc: ^15.0.0
       prettier: ~2.6.2
@@ -9522,6 +9524,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
       '@microsoft/api-extractor': 7.22.2
       '@types/chai': 4.3.4
+      '@types/events': 3.0.0
       '@types/mocha': 9.1.1
       chai: 4.3.7
       concurrently: 6.3.0
@@ -9529,6 +9532,7 @@ importers:
       eslint: 8.6.0
       eslint-config-prettier: 8.5.0_eslint@8.6.0
       eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
+      events: 3.3.0
       mocha: 10.1.0
       nyc: 15.1.0
       prettier: 2.6.2
