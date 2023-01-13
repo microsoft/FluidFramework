@@ -2596,7 +2596,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.runtimeOptions.enableRuntimeCompressor && this.idCompressor !== undefined
             && contents.content.contents !== undefined
             && contents.content.contents.idRange === undefined) {
-            contents.content.contents.idRange = this.idCompressor.takeNextCreationRange();
+            const range = this.idCompressor.takeNextCreationRange();
+            contents.content.contents.idRange = range.ids?.first !== undefined ? range : undefined;
         }
         const envelope: IEnvelope = {
             address: id,
