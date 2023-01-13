@@ -623,7 +623,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             return summarizer;
         }
 
-        const waitForContainerConnectionWriteMode = async (container: IContainer) => {
+        const ensureContainerConnectedWriteMode = async (container: IContainer) => {
             const resolveIfActive = (res: () => void) => { if (container.deltaManager.active) { res(); } };
             if (!container.deltaManager.active) {
                 await new Promise<void>((resolve) => container.on("connected", () => resolveIfActive(resolve)));
@@ -662,7 +662,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             // Connect the container after the blob is uploaded. Send an op to transition it to write mode.
             mainContainer.connect();
             mainDataStore._root.set("transition to write", "true");
-            await waitForContainerConnectionWriteMode(mainContainer);
+            await ensureContainerConnectedWriteMode(mainContainer);
 
             // Remove the blob's handle to unreference it.
             mainDataStore._root.delete("blob");
@@ -717,7 +717,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             // Connect the container after the blob is uploaded. Send an op to transition the container to write mode.
             mainContainer.connect();
             mainDataStore._root.set("transition to write", "true");
-            await waitForContainerConnectionWriteMode(mainContainer);
+            await ensureContainerConnectedWriteMode(mainContainer);
 
             // Upload the same blob. This will get de-duped and we will get back a handle with the storageId instead of
             // the localId that we got when uploading in detached container.
@@ -785,7 +785,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             // Connect the container after the blob is uploaded. Send an op to transition the container to write mode.
             mainContainer.connect();
             mainDataStore._root.set("transition to write", "true");
-            await waitForContainerConnectionWriteMode(mainContainer);
+            await ensureContainerConnectedWriteMode(mainContainer);
 
             // Add the blob's local handles to reference them.
             mainDataStore._root.set("localBlob1", localHandle1);

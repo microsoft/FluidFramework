@@ -14,7 +14,7 @@ import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework
 import { describeNoCompat, ITestDataObject, itExpects, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { defaultGCConfig } from "./gcTestConfigs";
 
-const waitForContainerConnectionWriteMode = async (container: Container) => {
+const ensureContainerConnectedWriteMode = async (container: Container) => {
     const resolveIfActive = (res: () => void) => { if (container.deltaManager.active) { res(); } };
     if (!container.deltaManager.active) {
         await new Promise<void>((resolve) => container.on("connected", () => resolveIfActive(resolve)));
@@ -102,7 +102,7 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         const blob1Contents = "Blob contents 1";
         const blob2Contents = "Blob contents 2";
         // Blob stats will be different if we upload while not connected
-        await waitForContainerConnectionWriteMode(container);
+        await ensureContainerConnectedWriteMode(container);
         const blob1Handle = await mainDataStore._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
         const blob2Handle = await mainDataStore._context.uploadBlob(stringToBuffer(blob2Contents, "utf-8"));
         mainDataStore._root.set("blob1", blob1Handle);
@@ -143,7 +143,7 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         const blob1Contents = "Blob contents 1";
         const blob2Contents = "Blob contents 2";
         // Blob stats will be different if we upload while not connected
-        await waitForContainerConnectionWriteMode(container);
+        await ensureContainerConnectedWriteMode(container);
         const blob1Handle = await mainDataStore._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
         const blob2Handle = await mainDataStore._context.uploadBlob(stringToBuffer(blob2Contents, "utf-8"));
         mainDataStore._root.set("blob1", blob1Handle);
@@ -231,7 +231,7 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         const blob1Contents = "Blob contents 1";
         const blob2Contents = "Blob contents 2";
         // Blob stats will be different if we upload while not connected
-        await waitForContainerConnectionWriteMode(container);
+        await ensureContainerConnectedWriteMode(container);
         const blob1Handle = await mainDataStore._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
         const blob2Handle = await mainDataStore._context.uploadBlob(stringToBuffer(blob2Contents, "utf-8"));
         mainDataStore._root.set("blob1", blob1Handle);
