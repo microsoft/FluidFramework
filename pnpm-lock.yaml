@@ -7438,6 +7438,7 @@ importers:
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
       '@types/diff': ^3.5.1
+      '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.36
       '@types/random-js': ^1.0.31
@@ -7470,6 +7471,7 @@ importers:
       '@microsoft/api-extractor': 7.22.2
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/diff': 3.5.5
+      '@types/events': 3.0.0
       '@types/mocha': 9.1.1
       '@types/node': 14.18.36
       '@types/random-js': 1.0.31
