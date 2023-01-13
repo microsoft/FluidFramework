@@ -5,6 +5,7 @@
 ```ts
 
 import { ConfigTypes } from '@fluidframework/telemetry-utils';
+import { Container } from '@fluidframework/container-loader';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqueduct';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
@@ -105,6 +106,9 @@ export enum DataObjectFactoryType {
 
 // @public (undocumented)
 export const defaultTimeoutDurationMs = 250;
+
+// @public (undocumented)
+export function ensureContainerConnected(container: Container): Promise<void>;
 
 // @public
 export class EventAndErrorTrackingLogger extends TelemetryLogger {
@@ -361,7 +365,7 @@ export interface TimeoutWithValue<T = void> {
 }
 
 // @public
-export function waitForContainerConnection(container: IContainer, timeoutOptions?: TimeoutWithError, failOnContainerClose?: boolean): Promise<void>;
+export function waitForContainerConnection(container: IContainer, failOnContainerClose?: boolean, timeoutOptions?: TimeoutWithError): Promise<void>;
 
 // @public
 export function wrapDocumentService(innerDocService: IDocumentService, uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => ISummaryContext): IDocumentService;

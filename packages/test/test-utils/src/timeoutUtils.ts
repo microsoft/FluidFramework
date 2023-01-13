@@ -4,7 +4,7 @@
  */
 
 import { IContainer } from "@fluidframework/container-definitions";
-import { ConnectionState } from "@fluidframework/container-loader";
+import { ConnectionState, Container } from "@fluidframework/container-loader";
 
 export const defaultTimeoutDurationMs = 250;
 
@@ -19,11 +19,19 @@ export interface TimeoutWithValue<T = void> {
     value: T;
 }
 
+type PromiseExecutor<T = void> = (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void;
+
 export async function timeoutAwait<T = void>(
     promise: PromiseLike<T>,
     timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},
 ) {
     return Promise.race([promise, timeoutPromise<T>(() => { }, timeoutOptions)]);
+}
+
+export async function ensureContainerConnected(container: Container): Promise<void> {
+    if (!container.connected) {
+        return timeoutPromise((resolve) => container.once("connected", () => resolve()));
+    }
 }
 
 /**
@@ -33,28 +41,33 @@ export async function timeoutAwait<T = void>(
  * If failOnContainerClose === true, the returned Promise will be rejected if the container emits a 'closed' event
  * before a 'connected' event.
  * @param container - The container to wait for.
- * @param timeoutOptions - Options related to the behavior of the timeout.
- * Defaults to timing out after 1000 ms.
- * This is an arbitrary value and we should adjust it if we see legitimate reasons for it.
  * @param failOnContainerClose - If true, the returned Promise will be rejected if the container emits a 'closed' event
  * before a 'connected' event.
- * Defaults to true.
+ * Defaults to false (but this will change in an upcoming version).
+ * @param timeoutOptions - Options related to the behavior of the timeout.
+ * If not provided, no timeout will be applied and the promise will wait indefinitely for the Container to emit its
+ * 'connected' (or 'closed, if failOnContainerClose === true) event.
  * @returns A Promise that resolves when the specified container emits a 'connected' event (or immediately if the
  * Container is already connected).
  * If failOnContainerClose === true and the container emits a 'closed' event before a 'connected' event, the Promise
  * is rejected with the error from the 'closed' event, if any.
+ * If timeoutOptions is provided, the Promise will reject if the container hasn't emmited a relevant event before
+ * timeoutOptions.durationMs (which defaults to 250ms if left undefined).
  */
 export async function waitForContainerConnection(
     container: IContainer,
-    timeoutOptions: TimeoutWithError = { durationMs: 1000 },
-    failOnContainerClose: boolean = true): Promise<void> {
+    failOnContainerClose: boolean = false,
+    timeoutOptions?: TimeoutWithError): Promise<void> {
     if (container.connectionState !== ConnectionState.Connected) {
-        return timeoutPromise((resolve, reject) => {
-            container.once("connected", () => resolve());
+
+        const executor: PromiseExecutor = (resolve, reject) => {
+            container.once("connected", () => resolve())
             if (failOnContainerClose) {
                 container.once("closed", (error) =>  reject(error));
             }
-        }, timeoutOptions);
+        };
+
+        return timeoutOptions === undefined ? new Promise(executor) : timeoutPromise(executor, timeoutOptions);
     }
 }
 
