@@ -217,7 +217,7 @@ export class AppendOnlySortedMap<K, V> {
             if (prev !== undefined) {
                 assert(
                     this.comparator(kv[0], prev[0]) > 0,
-                    0x47f /* Keys in map must be sorted. */,
+                    "Keys in runtime compressor map must be sorted"
                 );
             }
             prev = kv;
