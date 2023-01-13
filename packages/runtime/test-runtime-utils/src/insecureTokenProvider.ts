@@ -6,17 +6,7 @@
 import { ScopeType, IUser } from "@fluidframework/protocol-definitions";
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 import { generateToken } from "./generateToken";
-
-/**
- * Insecure user definition.
- * It extends the base IUser interface with a `name` property.
- */
-export interface IInsecureUser extends IUser {
-	/**
-	 * Name of the user making the connection to the service.
-	 */
-	name: string;
-}
+import { IInsecureUser } from "./insecureUsers";
 
 /**
  * Provides an in memory implementation of {@link @fluidframework/routerlicious-driver#ITokenProvider} that can be
