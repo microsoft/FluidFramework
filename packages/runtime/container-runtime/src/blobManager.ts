@@ -485,7 +485,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     public reSubmit(metadata: Record<string, unknown> | undefined) {
         assert(!!metadata, 0x38b /* Resubmitted ops must have metadata */);
         const { localId, blobId }: { localId?: string; blobId?: string } = metadata;
-        assert(localId !== undefined, 0x50d /* local ID not available on reSubmit */);
+        assert(localId !== undefined, "local ID not available on reSubmit");
         if (!blobId) {
             // We submitted this op while offline. The blob should have been uploaded by now.
             const pendingEntry = this.pendingBlobs.get(localId);
@@ -512,7 +512,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         this.setRedirection(blobId, blobId);
 
         if (local) {
-            assert(localId !== undefined, 0x50e /* local ID not present in blob attach message */);
+            assert(localId !== undefined, "local ID not present in blob attach message");
             const waitingBlobs = this.opsInFlight.get(blobId);
             if (waitingBlobs !== undefined) {
                 // For each op corresponding to this storage ID that we are waiting for, resolve the pending blob.
@@ -627,7 +627,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
             const pathParts = route.split("/");
             assert(
                 pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
-                0x50f /* Invalid blob node id in tombstoned routes. */,
+                "Invalid blob node id in tombstoned routes.",
             );
             tombstonedBlobsSet.add(pathParts[2]);
         }
