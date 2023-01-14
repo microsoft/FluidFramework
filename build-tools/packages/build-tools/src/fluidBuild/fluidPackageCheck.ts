@@ -151,15 +151,35 @@ export class FluidPackageCheck {
         const actual = pkg.getScript(name);
 
         if (expected !== actual) {
-            if (name === "lint" || name === "lint:fix") {
-                const lintPackages = this.expectedLintPackages(expected);
+            this.logWarn(pkg, `non-conformant script "${name}"`, fix);
+            this.logWarn(pkg, `  expect: ${expected}`, fix);
+            this.logWarn(pkg, `  actual: ${actual}`, fix);
 
-                this.logWarn(pkg, `${name} should contain: ${lintPackages}`, fix);
-            } else {
-                this.logWarn(pkg, `non-conformant script "${name}"`, fix);
-                this.logWarn(pkg, `  expect: ${expected}`, fix);
-                this.logWarn(pkg, `  actual: ${actual}`, fix);
+            if (fix) {
+                pkg.packageJson.scripts[name] = expected;
+                fixed = true;
             }
+        }
+        return fixed;
+    }
+
+    /**
+     * checks format of "lint" & "lint:fix" scripts
+     * raises warning logs of required packages
+     */
+    private static checkLintScript(
+        pkg: Package,
+        name: string,
+        expected: string | undefined,
+        expectedPackages: string[] | undefined,
+        fix: boolean,
+    ) {
+        let fixed = false;
+        const actual = pkg.getScript(name);
+
+        if (expected !== actual) {
+            this.logWarn(pkg, `${name} should contain: ${expectedPackages}`, fix);
+
             if (fix) {
                 pkg.packageJson.scripts[name] = expected;
                 fixed = true;
@@ -183,23 +203,28 @@ export class FluidPackageCheck {
         return this.checkScript(pkg, name, expectedScript, fix);
     }
 
-    // helper function to extract expected packages for "lint" & "lint:fix"
-    private static expectedLintPackages(expected: string | undefined) {
-        /* Regular Expression
-            lintRegex is a regex to extract expected lint-packages from the expected string value
+    /**
+     * checkChildrenScripts for "lint" && "lint:fix"
+     *  concatenates list of package names to string joined with "npm run" and "&&"
+     */
+    private static checkLintChildrenScripts(
+        pkg: Package,
+        name: string,
+        expected: string[] | undefined,
+        concurrent: boolean,
+        fix: boolean,
+    ) {
+        if (name === "lint:fix") {
+            expected = expected?.map((e) => `${e}:fix`);
+        }
 
-            if expected = "npm run foo && npm run bar && npm run baz-qux:fix"
-            lintPackages = ["foo", "bar", "baz-qux"]
+        const expectedScript = expected
+            ? concurrent
+                ? `concurrently ${expected.map((value) => `npm:${value}`).join(" ")}`
+                : expected.map((value) => `npm run ${value}`).join(" && ")
+            : undefined;
 
-            `/run (.*?)(?= &&|:|$)/g` : matches text between "run" and ("&&" or ":")
-            `map` : extract the text from lintMatch by replacing `run` and `\s` with ""
-        */
-
-        const lintRegex = /run (.*?)(?= &&|:|$)/g;
-        const lintMatch = expected?.match(lintRegex);
-        const lintPackages = lintMatch?.map((e) => e.replace(/run |\s/g, ""));
-
-        return lintPackages;
+        return this.checkLintScript(pkg, name, expectedScript, expected, fix);
     }
 
     /**
@@ -521,18 +546,21 @@ export class FluidPackageCheck {
             const lintFixScript = pkg.getScript("lint:fix");
 
             /* Regular Expression
-                lintRegex is a regex to extract lint-package name from lintScript & lintFixScript
-
-                if lintScript:
-                    -> lintMatch = ["npm run foo", "npm run bar", "npm run foo-bar"]
-                    -> lintChildren = ["foo", "bar", "foo-bar"]
-                else:
-                    -> lintFixMatch = ["npm run foo:fix", "npm run bar:fix", "npm run foo-bar:fix"]
-                    -> lintFixChildren = ["foo", "bar", "foo-bar"]
-            */
+             * lintRegex is a regex to extract lint-package name from lintScript & lintFixScript
+             *   if lintScript:
+             *       -> lintMatch = ["npm run foo", "npm run bar", "npm run foo-bar"]
+             *       -> lintChildren = ["foo", "bar", "foo-bar"]
+             *   else:
+             *       -> lintFixMatch = ["npm run foo:fix", "npm run bar:fix", "npm run foo-bar:fix"]
+             *       -> lintFixChildren = ["foo", "bar", "foo-bar"]
+             */
             const lintRegex = /npm run (\w+[-:\w]*)/g;
 
-            // TODO: we should change the logic below to accept more flexible "lint" & "lint:fix" format
+            /*
+            * TODO: we should change the logic below to accept more flexible "lint" & "lint:fix" format
+            Possible Scripts : "concurrently npm:foo npm:bar" or "run-p foo bar" or "npm run foo && npm run bar"
+            */
+
             // Check "lint"
             if (lintScript) {
                 const lintChildren = lintScript
@@ -548,7 +576,7 @@ export class FluidPackageCheck {
                     }
                 }
 
-                if (this.checkChildrenScripts(pkg, "lint", lintChildren, false, fix)) {
+                if (this.checkLintChildrenScripts(pkg, "lint", lintChildren, false, fix)) {
                     fixed = true;
                 }
             }
@@ -568,15 +596,7 @@ export class FluidPackageCheck {
                     }
                 }
 
-                if (
-                    this.checkChildrenScripts(
-                        pkg,
-                        "lint:fix",
-                        lintFixChildren?.map((e) => `${e}:fix`),
-                        false,
-                        fix,
-                    )
-                ) {
+                if (this.checkLintChildrenScripts(pkg, "lint:fix", lintFixChildren, false, fix)) {
                     fixed = true;
                 }
             }
