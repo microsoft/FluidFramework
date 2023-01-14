@@ -2681,11 +2681,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private verifyCanSubmitOps() {
         if (this.ensureNoDataModelChangesCalls > 0) {
+            const errorMessage = "Op was submitted from within a `ensureNoDataModelChanges` callback";
             if (this.opReentryCallsToReport > 0) {
                 this.mc.logger.sendTelemetryEvent(
-                    { eventName: "Op reentry detected" },
+                    { eventName: "OpReentry" },
                     // We need to capture the call stack in order to inspect the source of this usage pattern
-                    new GenericError("Op reentry detected"),
+                    new UsageError(errorMessage),
                 );
                 this.opReentryCallsToReport--;
             }
@@ -2703,7 +2704,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // The runtime must enforce op coherence by not allowing ops to be submitted
             // while ops are being processed.
             if (this.enableOpReentryCheck) {
-                throw new UsageError("Op was submitted from within a `ensureNoDataModelChanges` callback");
+                throw new UsageError(errorMessage);
             }
         }
     }
