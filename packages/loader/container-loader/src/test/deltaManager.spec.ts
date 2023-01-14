@@ -369,7 +369,7 @@ describe("Loader", () => {
                         clientId: "test",
                         clientSequenceNumber: clientSeqNumber+2,
                         minimumSequenceNumber: 0,
-                        sequenceNumber: seq++,
+                        sequenceNumber: seq,
                         type: MessageType.Operation,
                     } as any as ISequencedDocumentMessage]);
 
@@ -391,7 +391,7 @@ describe("Loader", () => {
                         clientId: "test",
                         clientSequenceNumber: clientSeqNumber+2,
                         minimumSequenceNumber: 0,
-                        sequenceNumber: seq++,
+                        sequenceNumber: seq,
                         type: MessageType.Operation,
                     } as any as ISequencedDocumentMessage])
 
@@ -415,7 +415,7 @@ describe("Loader", () => {
                         clientId: "test",
                         clientSequenceNumber: clientSeqNumber+2,
                         minimumSequenceNumber: 0,
-                        sequenceNumber: seq++,
+                        sequenceNumber: seq,
                         type: MessageType.Operation,
                     } as any as ISequencedDocumentMessage]);
 
