@@ -21,10 +21,6 @@ import {
 export interface IConnectionDetails {
     clientId: string;
     claims: ITokenClaims;
-    existing: boolean;
-    mode: ConnectionMode;
-    version: string;
-    initialClients: ISignalClient[];
     serviceConfiguration: IClientConfiguration;
 
     /**
@@ -38,6 +34,15 @@ export interface IConnectionDetails {
      * that is likely to be more up-to-date.
      */
     checkpointSequenceNumber: number | undefined;
+}
+
+/**
+ *  Internal version of IConnectionDetails with props are only exposed internally
+ */
+export interface IConnectionDetailsInternal extends IConnectionDetails {
+    mode: ConnectionMode;
+    version: string;
+    initialClients: ISignalClient[];
 }
 
 /**

@@ -13,6 +13,7 @@ export { IAudience, IAudienceOwner } from "./audience";
 export { IFluidBrowserPackage, IFluidBrowserPackageEnvironment, isFluidBrowserPackage } from "./browserPackage";
 export {
     IConnectionDetails,
+    IConnectionDetailsInternal,
     IDeltaHandlerStrategy,
     IDeltaManager,
     IDeltaManagerEvents,
