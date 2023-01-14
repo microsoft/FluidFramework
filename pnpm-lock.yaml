@@ -5388,7 +5388,6 @@ importers:
       '@rushstack/eslint-config': ^2.5.1
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
-      '@types/node': ^14.18.0
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.2
@@ -5420,7 +5419,6 @@ importers:
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/events': 3.0.0
       '@types/mocha': 9.1.1
-      '@types/node': 14.18.36
       concurrently: 6.3.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
