@@ -302,7 +302,10 @@ export class SchemaIndex implements Index<unknown>, SummaryElement {
     }
 }
 
-interface SchemaOp {
+/**
+ * TODO: doc
+ */
+export interface SchemaOp {
     readonly type: "SchemaOp";
     readonly data: string;
 }

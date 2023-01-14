@@ -14,7 +14,7 @@ import { mapTreeFromCursor } from "./mapTreeCursor";
  *
  * This function is useful for converting `Delta`s that represent tree content with cursors
  * into `Delta`s that represent tree content with a deep-comparable representation of the content.
- * See {@link assertDeltaEqual}.
+ * See assertDeltaEqual. TODO: link this
  * @param fields - The Map of fields to convert. Not mutated.
  * @param func - The functions used to map tree content.
  */
@@ -35,7 +35,7 @@ export function mapFieldMarks<TIn, TOut>(
  *
  * This function is useful for converting `Delta`s that represent tree content with cursors
  * into `Delta`s that represent tree content with a deep-comparable representation of the content.
- * See {@link assertMarkListEqual}.
+ * See assertMarkListEqual. TODO: link this
  * @param list - The list of marks to convert. Not mutated.
  * @param func - The functions used to map tree content.
  */
@@ -52,7 +52,7 @@ export function mapMarkList<TIn, TOut>(
  *
  * This function is useful for converting `Delta`s that represent tree content with cursors
  * into `Delta`s that represent tree content with a deep-comparable representation of the content.
- * See {@link assertMarkListEqual}.
+ * See assertMarkListEqual. TODO: link this
  * @param mark - The mark to convert. Not mutated.
  * @param func - The functions used to map tree content.
  */

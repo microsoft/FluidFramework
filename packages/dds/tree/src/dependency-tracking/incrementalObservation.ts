@@ -10,7 +10,7 @@ import { Dependent, Dependee } from "./dependencies";
  */
 
 /**
- * State/Environment for a computation which can observe {@link Dependees}.
+ * State/Environment for a computation which can observe {@link Dependee}.
  */
 export interface ObservingContext {
     /**
@@ -18,7 +18,7 @@ export interface ObservingContext {
      * When this computation observes a {@link Dependee}, it should be recorded here via {@link recordDependency}.
      *
      * This dependency tracking allows these dependees to invalidate this dependent in the future via
-     * {@link Dependant.markInvalid}.
+     * {@link Dependent.markInvalid}.
      *
      * It not provided, this observer does not need dependency tracking.
      */

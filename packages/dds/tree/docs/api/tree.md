@@ -2,62 +2,58 @@
   "title": "@fluid-internal/tree Package",
   "kind": "Package",
   "members": {
-    "TypeAlias": {
-      "Anchor": "/docs/apis/tree#anchor-typealias",
-      "Brand": "/docs/apis/tree#brand-typealias",
-      "ChangesetLocalId": "/docs/apis/tree#changesetlocalid-typealias",
-      "ChildCollection": "/docs/apis/tree#childcollection-typealias",
-      "ContextuallyTypedNodeData": "/docs/apis/tree#contextuallytypednodedata-typealias",
-      "EditableTreeOrPrimitive": "/docs/apis/tree#editabletreeorprimitive-typealias",
-      "ExtractFromOpaque": "/docs/apis/tree#extractfromopaque-typealias",
-      "FieldChangeMap": "/docs/apis/tree#fieldchangemap-typealias",
-      "FieldChangeset": "/docs/apis/tree#fieldchangeset-typealias",
-      "FieldKey": "/docs/apis/tree#fieldkey-typealias",
-      "FieldKindIdentifier": "/docs/apis/tree#fieldkindidentifier-typealias",
-      "ForestLocation": "/docs/apis/tree#forestlocation-typealias",
-      "GlobalFieldKey": "/docs/apis/tree#globalfieldkey-typealias",
-      "GlobalFieldKeySymbol": "/docs/apis/tree#globalfieldkeysymbol-typealias",
-      "IdAllocator": "/docs/apis/tree#idallocator-typealias",
-      "isAny": "/docs/apis/tree#isany-typealias",
-      "JsonCompatible": "/docs/apis/tree#jsoncompatible-typealias",
-      "JsonCompatibleObject": "/docs/apis/tree#jsoncompatibleobject-typealias",
-      "JsonCompatibleReadOnly": "/docs/apis/tree#jsoncompatiblereadonly-typealias",
-      "LocalFieldKey": "/docs/apis/tree#localfieldkey-typealias",
-      "NamedTreeSchema": "/docs/apis/tree#namedtreeschema-typealias",
-      "NameFromBranded": "/docs/apis/tree#namefrombranded-typealias",
-      "NodeChangeComposer": "/docs/apis/tree#nodechangecomposer-typealias",
-      "NodeChangeDecoder": "/docs/apis/tree#nodechangedecoder-typealias",
-      "NodeChangeEncoder": "/docs/apis/tree#nodechangeencoder-typealias",
-      "NodeChangeInverter": "/docs/apis/tree#nodechangeinverter-typealias",
-      "NodeChangeRebaser": "/docs/apis/tree#nodechangerebaser-typealias",
-      "NodeReviver": "/docs/apis/tree#nodereviver-typealias",
-      "Opaque": "/docs/apis/tree#opaque-typealias",
-      "PrimitiveValue": "/docs/apis/tree#primitivevalue-typealias",
-      "RevisionTag": "/docs/apis/tree#revisiontag-typealias",
-      "ToDelta": "/docs/apis/tree#todelta-typealias",
-      "TreeSchemaIdentifier": "/docs/apis/tree#treeschemaidentifier-typealias",
-      "TreeType": "/docs/apis/tree#treetype-typealias",
-      "TreeTypeSet": "/docs/apis/tree#treetypeset-typealias",
-      "UnwrappedEditableField": "/docs/apis/tree#unwrappededitablefield-typealias",
-      "UnwrappedEditableTree": "/docs/apis/tree#unwrappededitabletree-typealias",
-      "Value": "/docs/apis/tree#value-typealias",
-      "ValueChange": "/docs/apis/tree#valuechange-typealias",
-      "ValueFromBranded": "/docs/apis/tree#valuefrombranded-typealias"
+    "Class": {
+      "AdaptedViewSchema": "/docs/apis/tree/adaptedviewschema-class",
+      "AnchorSet": "/docs/apis/tree/anchorset-class",
+      "BrandedType": "/docs/apis/tree/brandedtype-class",
+      "ChangeEncoder": "/docs/apis/tree/changeencoder-class",
+      "DefaultChangeFamily": "/docs/apis/tree/defaultchangefamily-class",
+      "DefaultEditBuilder": "/docs/apis/tree/defaulteditbuilder-class",
+      "DisposingDependee": "/docs/apis/tree/disposingdependee-class",
+      "EditManager": "/docs/apis/tree/editmanager-class",
+      "EditManagerIndex": "/docs/apis/tree/editmanagerindex-class",
+      "FieldKind": "/docs/apis/tree/fieldkind-class",
+      "ForestIndex": "/docs/apis/tree/forestindex-class",
+      "ForestRepairDataStore": "/docs/apis/tree/forestrepairdatastore-class",
+      "InMemoryStoredSchemaRepository": "/docs/apis/tree/inmemorystoredschemarepository-class",
+      "InvalidationToken": "/docs/apis/tree/invalidationtoken-class",
+      "ModularChangeFamily": "/docs/apis/tree/modularchangefamily-class",
+      "ModularEditBuilder": "/docs/apis/tree/modulareditbuilder-class",
+      "ProgressiveEditBuilderBase": "/docs/apis/tree/progressiveeditbuilderbase-class",
+      "Rebaser": "/docs/apis/tree/rebaser-class",
+      "SchemaEditor": "/docs/apis/tree/schemaeditor-class",
+      "SchemaIndex": "/docs/apis/tree/schemaindex-class",
+      "SharedTreeCore": "/docs/apis/tree/sharedtreecore-class",
+      "SharedTreeFactory": "/docs/apis/tree/sharedtreefactory-class",
+      "SimpleDependee": "/docs/apis/tree/simpledependee-class",
+      "SimpleObservingDependent": "/docs/apis/tree/simpleobservingdependent-class",
+      "SparseNode": "/docs/apis/tree/sparsenode-class",
+      "ViewSchemaData": "/docs/apis/tree/viewschemadata-class"
     },
     "Interface": {
+      "Adapters": "/docs/apis/tree/adapters-interface",
       "AnchorLocator": "/docs/apis/tree/anchorlocator-interface",
+      "Branch": "/docs/apis/tree/branch-interface",
       "ChangeFamily": "/docs/apis/tree/changefamily-interface",
       "ChangeRebaser": "/docs/apis/tree/changerebaser-interface",
+      "Checkout": "/docs/apis/tree/checkout-interface",
       "ChildLocation": "/docs/apis/tree/childlocation-interface",
+      "Commit": "/docs/apis/tree/commit-interface",
+      "CommitEncoder": "/docs/apis/tree/commitencoder-interface",
       "ContextuallyTypedNodeDataObject": "/docs/apis/tree/contextuallytypednodedataobject-interface",
       "Contravariant": "/docs/apis/tree/contravariant-interface",
       "Covariant": "/docs/apis/tree/covariant-interface",
+      "CursorAdapter": "/docs/apis/tree/cursoradapter-interface",
+      "CursorWithNode": "/docs/apis/tree/cursorwithnode-interface",
+      "DeltaVisitor": "/docs/apis/tree/deltavisitor-interface",
       "Dependee": "/docs/apis/tree/dependee-interface",
       "Dependent": "/docs/apis/tree/dependent-interface",
       "DetachedField": "/docs/apis/tree/detachedfield-interface",
       "EditableField": "/docs/apis/tree/editablefield-interface",
       "EditableTree": "/docs/apis/tree/editabletree-interface",
       "EditableTreeContext": "/docs/apis/tree/editabletreecontext-interface",
+      "Exception": "/docs/apis/tree/exception-interface",
+      "FieldAdapter": "/docs/apis/tree/fieldadapter-interface",
       "FieldAnchor": "/docs/apis/tree/fieldanchor-interface",
       "FieldChange": "/docs/apis/tree/fieldchange-interface",
       "FieldChangeEncoder": "/docs/apis/tree/fieldchangeencoder-interface",
@@ -68,83 +64,71 @@
       "FieldMapObject": "/docs/apis/tree/fieldmapobject-interface",
       "FieldSchema": "/docs/apis/tree/fieldschema-interface",
       "FieldUpPath": "/docs/apis/tree/fielduppath-interface",
+      "FinalChange": "/docs/apis/tree/finalchange-interface",
       "FullSchemaPolicy": "/docs/apis/tree/fullschemapolicy-interface",
+      "GenericChange": "/docs/apis/tree/genericchange-interface",
       "GenericFieldsNode": "/docs/apis/tree/genericfieldsnode-interface",
       "GenericTreeNode": "/docs/apis/tree/generictreenode-interface",
+      "ICachedValue": "/docs/apis/tree/icachedvalue-interface",
       "ICheckout": "/docs/apis/tree/icheckout-interface",
       "IDefaultEditBuilder": "/docs/apis/tree/idefaulteditbuilder-interface",
       "IEditableForest": "/docs/apis/tree/ieditableforest-interface",
       "IForestSubscription": "/docs/apis/tree/iforestsubscription-interface",
+      "Index": "/docs/apis/tree/index-interface",
       "Invariant": "/docs/apis/tree/invariant-interface",
       "ISharedTree": "/docs/apis/tree/isharedtree-interface",
+      "ISharedTreeCoreEvents": "/docs/apis/tree/isharedtreecoreevents-interface",
       "ITreeCursor": "/docs/apis/tree/itreecursor-interface",
       "ITreeCursorSynchronous": "/docs/apis/tree/itreecursorsynchronous-interface",
       "ITreeSubscriptionCursor": "/docs/apis/tree/itreesubscriptioncursor-interface",
       "JsonableTree": "/docs/apis/tree/jsonabletree-interface",
       "MakeNominal": "/docs/apis/tree/makenominal-interface",
+      "MapTree": "/docs/apis/tree/maptree-interface",
       "MarkedArrayLike": "/docs/apis/tree/markedarraylike-interface",
       "ModularChangeset": "/docs/apis/tree/modularchangeset-interface",
+      "MutableSchemaData": "/docs/apis/tree/mutableschemadata-interface",
+      "MutableSummaryData": "/docs/apis/tree/mutablesummarydata-interface",
       "Named": "/docs/apis/tree/named-interface",
       "NamedComputation": "/docs/apis/tree/namedcomputation-interface",
       "NodeChangeset": "/docs/apis/tree/nodechangeset-interface",
       "NodeData": "/docs/apis/tree/nodedata-interface",
+      "ObservingContext": "/docs/apis/tree/observingcontext-interface",
       "ObservingDependent": "/docs/apis/tree/observingdependent-interface",
       "OptionalFieldEditBuilder": "/docs/apis/tree/optionalfieldeditbuilder-interface",
+      "OutputType": "/docs/apis/tree/outputtype-interface",
       "ProgressiveEditBuilder": "/docs/apis/tree/progressiveeditbuilder-interface",
       "ReadonlyRepairDataStore": "/docs/apis/tree/readonlyrepairdatastore-interface",
+      "ReadonlySummaryData": "/docs/apis/tree/readonlysummarydata-interface",
       "RepairDataStore": "/docs/apis/tree/repairdatastore-interface",
       "RootField": "/docs/apis/tree/rootfield-interface",
       "SchemaData": "/docs/apis/tree/schemadata-interface",
       "SchemaDataAndPolicy": "/docs/apis/tree/schemadataandpolicy-interface",
+      "SchemaOp": "/docs/apis/tree/schemaop-interface",
       "SchemaPolicy": "/docs/apis/tree/schemapolicy-interface",
       "SequenceFieldEditBuilder": "/docs/apis/tree/sequencefieldeditbuilder-interface",
       "StoredSchemaRepository": "/docs/apis/tree/storedschemarepository-interface",
+      "SummaryElement": "/docs/apis/tree/summaryelement-interface",
       "TaggedChange": "/docs/apis/tree/taggedchange-interface",
+      "TreeAdapter": "/docs/apis/tree/treeadapter-interface",
       "TreeLocation": "/docs/apis/tree/treelocation-interface",
       "TreeSchema": "/docs/apis/tree/treeschema-interface",
+      "TreeSchemaBuilder": "/docs/apis/tree/treeschemabuilder-interface",
       "TreeValue": "/docs/apis/tree/treevalue-interface",
       "UpPath": "/docs/apis/tree/uppath-interface",
-      "ValueFieldEditBuilder": "/docs/apis/tree/valuefieldeditbuilder-interface"
-    },
-    "Class": {
-      "AnchorSet": "/docs/apis/tree/anchorset-class",
-      "BrandedType": "/docs/apis/tree/brandedtype-class",
-      "ChangeEncoder": "/docs/apis/tree/changeencoder-class",
-      "FieldKind": "/docs/apis/tree/fieldkind-class",
-      "InvalidationToken": "/docs/apis/tree/invalidationtoken-class",
-      "ModularChangeFamily": "/docs/apis/tree/modularchangefamily-class",
-      "ModularEditBuilder": "/docs/apis/tree/modulareditbuilder-class",
-      "ProgressiveEditBuilderBase": "/docs/apis/tree/progressiveeditbuilderbase-class",
-      "SharedTreeFactory": "/docs/apis/tree/sharedtreefactory-class",
-      "SimpleDependee": "/docs/apis/tree/simpledependee-class"
-    },
-    "Function": {
-      "brand": "/docs/apis/tree#brand-function",
-      "brandOpaque": "/docs/apis/tree#brandopaque-function",
-      "buildForest": "/docs/apis/tree#buildforest-function",
-      "cursorToJsonObject": "/docs/apis/tree#cursortojsonobject-function",
-      "extractFromOpaque": "/docs/apis/tree#extractfromopaque-function",
-      "getPrimaryField": "/docs/apis/tree#getprimaryfield-function",
-      "isContextuallyTypedNodeDataObject": "/docs/apis/tree#iscontextuallytypednodedataobject-function",
-      "isEditableField": "/docs/apis/tree#iseditablefield-function",
-      "isGlobalFieldKey": "/docs/apis/tree#isglobalfieldkey-function",
-      "isNeverField": "/docs/apis/tree#isneverfield-function",
-      "isPrimitive": "/docs/apis/tree#isprimitive-function",
-      "isPrimitiveValue": "/docs/apis/tree#isprimitivevalue-function",
-      "isUnwrappedNode": "/docs/apis/tree#isunwrappednode-function",
-      "isWritableArrayLike": "/docs/apis/tree#iswritablearraylike-function",
-      "jsonableTreeFromCursor": "/docs/apis/tree#jsonabletreefromcursor-function",
-      "keyFromSymbol": "/docs/apis/tree#keyfromsymbol-function",
-      "recordDependency": "/docs/apis/tree#recorddependency-function",
-      "singleJsonCursor": "/docs/apis/tree#singlejsoncursor-function",
-      "symbolFromKey": "/docs/apis/tree#symbolfromkey-function",
-      "symbolIsFieldKey": "/docs/apis/tree#symbolisfieldkey-function"
+      "ValueFieldEditBuilder": "/docs/apis/tree/valuefieldeditbuilder-interface",
+      "Violation": "/docs/apis/tree/violation-interface"
     },
     "Variable": {
+      "afterChangeToken": "/docs/apis/tree#afterchangetoken-variable",
       "createField": "/docs/apis/tree#createfield-variable",
+      "defaultChangeFamily": "/docs/apis/tree#defaultchangefamily-variable",
       "defaultSchemaPolicy": "/docs/apis/tree#defaultschemapolicy-variable",
+      "dummyRepairDataStore": "/docs/apis/tree#dummyrepairdatastore-variable",
       "emptyField": "/docs/apis/tree#emptyfield-variable",
       "EmptyKey": "/docs/apis/tree#emptykey-variable",
+      "emptyMap": "/docs/apis/tree#emptymap-variable",
+      "emptySet": "/docs/apis/tree#emptyset-variable",
+      "genericFieldKind": "/docs/apis/tree#genericfieldkind-variable",
       "getField": "/docs/apis/tree#getfield-variable",
       "indexSymbol": "/docs/apis/tree#indexsymbol-variable",
       "jsonArray": "/docs/apis/tree#jsonarray-variable",
@@ -152,19 +136,145 @@
       "jsonNull": "/docs/apis/tree#jsonnull-variable",
       "jsonNumber": "/docs/apis/tree#jsonnumber-variable",
       "jsonObject": "/docs/apis/tree#jsonobject-variable",
+      "jsonRoot": "/docs/apis/tree#jsonroot-variable",
       "jsonSchemaData": "/docs/apis/tree#jsonschemadata-variable",
       "jsonString": "/docs/apis/tree#jsonstring-variable",
+      "neverField": "/docs/apis/tree#neverfield-variable",
       "neverTree": "/docs/apis/tree#nevertree-variable",
+      "noFailure": "/docs/apis/tree#nofailure-variable",
       "proxyTargetSymbol": "/docs/apis/tree#proxytargetsymbol-variable",
       "replaceField": "/docs/apis/tree#replacefield-variable",
+      "rootField": "/docs/apis/tree#rootfield-variable",
       "rootFieldKey": "/docs/apis/tree#rootfieldkey-variable",
+      "rootFieldKeySymbol": "/docs/apis/tree#rootfieldkeysymbol-variable",
       "typeNameSymbol": "/docs/apis/tree#typenamesymbol-variable",
       "typeSymbol": "/docs/apis/tree#typesymbol-variable",
       "valueSymbol": "/docs/apis/tree#valuesymbol-variable"
     },
+    "Function": {
+      "allowsRepoSuperset": "/docs/apis/tree#allowsreposuperset-function",
+      "applyModifyToTree": "/docs/apis/tree#applymodifytotree-function",
+      "buildForest": "/docs/apis/tree#buildforest-function",
+      "cachedValue": "/docs/apis/tree#cachedvalue-function",
+      "clonePath": "/docs/apis/tree#clonepath_1-function",
+      "commitEncoderFromChangeEncoder": "/docs/apis/tree#commitencoderfromchangeencoder-function",
+      "compareFieldUpPaths": "/docs/apis/tree#comparefielduppaths-function",
+      "compareUpPaths": "/docs/apis/tree#compareuppaths-function",
+      "cursorToJsonObject": "/docs/apis/tree#cursortojsonobject-function",
+      "detachedFieldAsKey": "/docs/apis/tree#detachedfieldaskey-function",
+      "encodeSummary": "/docs/apis/tree#encodesummary-function",
+      "extractFromOpaque": "/docs/apis/tree#extractfromopaque-function",
+      "fieldSchema": "/docs/apis/tree#fieldschema-function",
+      "forEachField": "/docs/apis/tree#foreachfield-function",
+      "forEachNode": "/docs/apis/tree#foreachnode-function",
+      "genericTreeDeleteIfEmpty": "/docs/apis/tree#generictreedeleteifempty-function",
+      "genericTreeKeys": "/docs/apis/tree#generictreekeys-function",
+      "getDepth": "/docs/apis/tree#getdepth-function",
+      "getDescendant": "/docs/apis/tree#getdescendant-function",
+      "getEditableTreeContext": "/docs/apis/tree#geteditabletreecontext-function",
+      "getGenericTreeField": "/docs/apis/tree#getgenerictreefield-function",
+      "getMapTreeField": "/docs/apis/tree#getmaptreefield-function",
+      "getPrimaryField": "/docs/apis/tree#getprimaryfield-function",
+      "getSchemaString": "/docs/apis/tree#getschemastring-function",
+      "initializeForest": "/docs/apis/tree#initializeforest-function",
+      "isContextuallyTypedNodeDataObject": "/docs/apis/tree#iscontextuallytypednodedataobject-function",
+      "isEditableField": "/docs/apis/tree#iseditablefield-function",
+      "isFieldLocation": "/docs/apis/tree#isfieldlocation-function",
+      "isGlobalFieldKey": "/docs/apis/tree#isglobalfieldkey-function",
+      "isLocalKey": "/docs/apis/tree#islocalkey-function",
+      "isNeverField": "/docs/apis/tree#isneverfield-function",
+      "isPrimitive": "/docs/apis/tree#isprimitive-function",
+      "isPrimitiveValue": "/docs/apis/tree#isprimitivevalue-function",
+      "isUnwrappedNode": "/docs/apis/tree#isunwrappednode-function",
+      "isWritableArrayLike": "/docs/apis/tree#iswritablearraylike-function",
+      "jsonableTreeFromCursor": "/docs/apis/tree#jsonabletreefromcursor-function",
+      "keyAsDetachedField": "/docs/apis/tree#keyasdetachedfield-function",
+      "keyFromSymbol": "/docs/apis/tree#keyfromsymbol-function",
+      "loadSummary": "/docs/apis/tree#loadsummary-function",
+      "lookupGlobalFieldSchema": "/docs/apis/tree#lookupglobalfieldschema-function",
+      "lookupTreeSchema": "/docs/apis/tree#lookuptreeschema-function",
+      "makeAnonChange": "/docs/apis/tree#makeanonchange-function",
+      "mapCursorField": "/docs/apis/tree#mapcursorfield-function",
+      "mapCursorFields": "/docs/apis/tree#mapcursorfields-function",
+      "mapFieldMarks": "/docs/apis/tree#mapfieldmarks-function",
+      "mapFromNamed": "/docs/apis/tree#mapfromnamed-function",
+      "mapMark": "/docs/apis/tree#mapmark-function",
+      "mapMarkList": "/docs/apis/tree#mapmarklist-function",
+      "mapTreeFromCursor": "/docs/apis/tree#maptreefromcursor-function",
+      "moveToDetachedField": "/docs/apis/tree#movetodetachedfield-function",
+      "namedTreeSchema": "/docs/apis/tree#namedtreeschema-function",
+      "recordDependency": "/docs/apis/tree#recorddependency-function",
+      "runSynchronousTransaction": "/docs/apis/tree#runsynchronoustransaction-function",
+      "schemaDataIsEmpty": "/docs/apis/tree#schemadataisempty-function",
+      "scopeFromKey": "/docs/apis/tree#scopefromkey-function",
+      "setGenericTreeField": "/docs/apis/tree#setgenerictreefield-function",
+      "singleJsonCursor": "/docs/apis/tree#singlejsoncursor-function",
+      "singleMapTreeCursor": "/docs/apis/tree#singlemaptreecursor-function",
+      "singleStackTreeCursor": "/docs/apis/tree#singlestacktreecursor-function",
+      "singleTextCursor": "/docs/apis/tree#singletextcursor-function",
+      "symbolFromKey": "/docs/apis/tree#symbolfromkey-function",
+      "symbolIsFieldKey": "/docs/apis/tree#symbolisfieldkey-function",
+      "tagChange": "/docs/apis/tree#tagchange-function",
+      "tagInverse": "/docs/apis/tree#taginverse-function",
+      "treeSchema": "/docs/apis/tree#treeschema-function",
+      "verifyChangeRebaser": "/docs/apis/tree#verifychangerebaser-function",
+      "visitDelta": "/docs/apis/tree#visitdelta-function"
+    },
+    "TypeAlias": {
+      "Anchor": "/docs/apis/tree#anchor-typealias",
+      "Brand": "/docs/apis/tree#brand-typealias",
+      "ChangesetFromChangeRebaser": "/docs/apis/tree#changesetfromchangerebaser-typealias",
+      "ChangesetLocalId": "/docs/apis/tree#changesetlocalid-typealias",
+      "ChildCollection": "/docs/apis/tree#childcollection-typealias",
+      "ContextuallyTypedNodeData": "/docs/apis/tree#contextuallytypednodedata-typealias",
+      "DefaultChangeset": "/docs/apis/tree#defaultchangeset-typealias",
+      "EditableTreeOrPrimitive": "/docs/apis/tree#editabletreeorprimitive-typealias",
+      "ExtractFromOpaque": "/docs/apis/tree#extractfromopaque-typealias",
+      "Failure": "/docs/apis/tree#failure-typealias",
+      "FieldChangeMap": "/docs/apis/tree#fieldchangemap-typealias",
+      "FieldChangeset": "/docs/apis/tree#fieldchangeset-typealias",
+      "FieldKey": "/docs/apis/tree#fieldkey-typealias",
+      "FieldKindIdentifier": "/docs/apis/tree#fieldkindidentifier-typealias",
+      "ForestLocation": "/docs/apis/tree#forestlocation-typealias",
+      "GenericChangeset": "/docs/apis/tree#genericchangeset-typealias",
+      "GlobalFieldKey": "/docs/apis/tree#globalfieldkey-typealias",
+      "GlobalFieldKeySymbol": "/docs/apis/tree#globalfieldkeysymbol-typealias",
+      "IdAllocator": "/docs/apis/tree#idallocator-typealias",
+      "isAny": "/docs/apis/tree#isany-typealias",
+      "JsonCompatible": "/docs/apis/tree#jsoncompatible-typealias",
+      "JsonCompatibleObject": "/docs/apis/tree#jsoncompatibleobject-typealias",
+      "JsonCompatibleReadOnly": "/docs/apis/tree#jsoncompatiblereadonly-typealias",
+      "LocalFieldKey": "/docs/apis/tree#localfieldkey-typealias",
+      "NamedFieldSchema": "/docs/apis/tree#namedfieldschema-typealias",
+      "NamedTreeSchema": "/docs/apis/tree#namedtreeschema-typealias",
+      "NodeChangeComposer": "/docs/apis/tree#nodechangecomposer-typealias",
+      "NodeChangeDecoder": "/docs/apis/tree#nodechangedecoder-typealias",
+      "NodeChangeEncoder": "/docs/apis/tree#nodechangeencoder-typealias",
+      "NodeChangeInverter": "/docs/apis/tree#nodechangeinverter-typealias",
+      "NodeChangeRebaser": "/docs/apis/tree#nodechangerebaser-typealias",
+      "NodeReviver": "/docs/apis/tree#nodereviver-typealias",
+      "Opaque": "/docs/apis/tree#opaque-typealias",
+      "PrimitiveValue": "/docs/apis/tree#primitivevalue-typealias",
+      "RecursiveReadonly": "/docs/apis/tree#recursivereadonly-typealias",
+      "RevisionTag": "/docs/apis/tree#revisiontag-typealias",
+      "SeqNumber": "/docs/apis/tree#seqnumber-typealias",
+      "SessionId": "/docs/apis/tree#sessionid-typealias",
+      "SummaryElementParser": "/docs/apis/tree#summaryelementparser-typealias",
+      "SummaryElementStringifier": "/docs/apis/tree#summaryelementstringifier-typealias",
+      "ToDelta": "/docs/apis/tree#todelta-typealias",
+      "TreeSchemaIdentifier": "/docs/apis/tree#treeschemaidentifier-typealias",
+      "TreeType": "/docs/apis/tree#treetype-typealias",
+      "TreeTypeSet": "/docs/apis/tree#treetypeset-typealias",
+      "UnwrappedEditableField": "/docs/apis/tree#unwrappededitablefield-typealias",
+      "UnwrappedEditableTree": "/docs/apis/tree#unwrappededitabletree-typealias",
+      "Value": "/docs/apis/tree#value-typealias",
+      "ValueChange": "/docs/apis/tree#valuechange-typealias"
+    },
     "Enum": {
+      "Compatibility": "/docs/apis/tree#compatibility-enum",
       "CursorLocationType": "/docs/apis/tree#cursorlocationtype-enum",
       "FieldScope": "/docs/apis/tree#fieldscope-enum",
+      "FinalChangeStatus": "/docs/apis/tree#finalchangestatus-enum",
       "ITreeSubscriptionCursorState": "/docs/apis/tree#itreesubscriptioncursorstate-enum",
       "Multiplicity": "/docs/apis/tree#multiplicity-enum",
       "TransactionResult": "/docs/apis/tree#transactionresult-enum",
@@ -173,6 +283,7 @@
     },
     "Namespace": {
       "Delta": "/docs/apis/tree/delta-namespace",
+      "FieldKinds": "/docs/apis/tree/fieldkinds-namespace",
       "SequenceField": "/docs/apis/tree/sequencefield-namespace"
     }
   },
@@ -200,10 +311,25 @@
   <tbody>
     <tr>
       <td>
+        <a href='/docs/apis/tree/adapters-interface'>Adapters</a>
+      </td>
+      <td>
+        <p>Minimal selection of adapters (nothing for general out of schema, field level adjustments etc.). Would be used with schematize and have actual conversion/update functionality.</p><p>TODO: Support more kinds of adapters TODO: support efficient lookup of adapters</p>
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree/anchorlocator-interface'>AnchorLocator</a>
       </td>
       <td>
         Maps anchors (which must be ones this locator knows about) to paths.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/branch-interface'>Branch</a>
+      </td>
+      <td>
       </td>
     </tr>
     <tr>
@@ -223,10 +349,32 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree/checkout-interface'>Checkout</a>
+      </td>
+      <td>
+        The interface a checkout has to implement for a transaction to be able to be applied to it.
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree/childlocation-interface'>ChildLocation</a>
       </td>
       <td>
         Location of a tree relative to is parent container (which can be a tree or forest).
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/commit-interface'>Commit</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/commitencoder-interface'>CommitEncoder</a>
+      </td>
+      <td>
       </td>
     </tr>
     <tr>
@@ -251,6 +399,29 @@
       </td>
       <td>
         Constrain generic type parameters to Covariant.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/cursoradapter-interface'>CursorAdapter</a>
+      </td>
+      <td>
+        Provides functionality to allow a <a href='/docs/apis/tree#singlestacktreecursor-function'>singleStackTreeCursor()</a> to implement a cursor.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/cursorwithnode-interface'>CursorWithNode</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/itreecursorsynchronous-interface'>ITreeCursorSynchronous</a> that can return the underlying node objects.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/deltavisitor-interface'>DeltaVisitor</a>
+      </td>
+      <td>
       </td>
     </tr>
     <tr>
@@ -306,6 +477,20 @@
       </td>
       <td>
         A common context of a "forest" of EditableTrees. It handles group operations like transforming cursors into anchors for edits.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/exception-interface'>Exception</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/fieldadapter-interface'>FieldAdapter</a>
+      </td>
+      <td>
       </td>
     </tr>
     <tr>
@@ -385,10 +570,25 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree/finalchange-interface'>FinalChange</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree/fullschemapolicy-interface'>FullSchemaPolicy</a>
       </td>
       <td>
         Policy from the app for interpreting the stored schema. The app must ensure consistency for all users of the document.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/genericchange-interface'>GenericChange</a>
+      </td>
+      <td>
+        A field-kind-agnostic change to a single node within a field.
       </td>
     </tr>
     <tr>
@@ -405,6 +605,14 @@
       </td>
       <td>
         Json comparable tree node, generic over child type. Json compatibility assumes <code>TChild</code> is also json compatible.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/icachedvalue-interface'>ICachedValue</a>
+      </td>
+      <td>
+        Caches and invalidates a value.
       </td>
     </tr>
     <tr>
@@ -440,6 +648,14 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree/index-interface'>Index</a>
+      </td>
+      <td>
+        Observes Changesets (after rebase), after writes data into summaries when requested.
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree/invariant-interface'>Invariant</a>
       </td>
       <td>
@@ -452,6 +668,14 @@
       </td>
       <td>
         <p>Collaboratively editable tree distributed data-structure, powered by <i>@fluidframework/shared-object-base#ISharedObject</i>.</p><p>See [the README](../../README.md) for details.</p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/isharedtreecoreevents-interface'>ISharedTreeCoreEvents</a>
+      </td>
+      <td>
+        <p>The events emitted by a <a href='/docs/apis/tree/sharedtreecore-class'>SharedTreeCore</a></p><p>TODO: Add/remove events</p>
       </td>
     </tr>
     <tr>
@@ -496,6 +720,14 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree/maptree-interface'>MapTree</a>
+      </td>
+      <td>
+        Simple in memory tree representation based on Maps. MapTrees should not store empty fields.
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree/markedarraylike-interface'>MarkedArrayLike</a>
       </td>
       <td>
@@ -507,6 +739,22 @@
         <a href='/docs/apis/tree/modularchangeset-interface'>ModularChangeset</a>
       </td>
       <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/mutableschemadata-interface'>MutableSchemaData</a>
+      </td>
+      <td>
+        TODO: Doc
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/mutablesummarydata-interface'>MutableSummaryData</a>
+      </td>
+      <td>
+        The in-memory data that summaries contain. Note that this interface gives mutable access to the data. Passed to <a href='/docs/apis/tree#loadsummary-function'>loadSummary()</a>.
       </td>
     </tr>
     <tr>
@@ -542,6 +790,14 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree/observingcontext-interface'>ObservingContext</a>
+      </td>
+      <td>
+        State/Environment for a computation which can observe <a href='/docs/apis/tree/dependee-interface'>Dependee</a>.
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree/observingdependent-interface'>ObservingDependent</a>
       </td>
       <td>
@@ -551,6 +807,13 @@
     <tr>
       <td>
         <a href='/docs/apis/tree/optionalfieldeditbuilder-interface'>OptionalFieldEditBuilder</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/outputtype-interface'>OutputType</a>
       </td>
       <td>
       </td>
@@ -568,6 +831,14 @@
       </td>
       <td>
         An object that can queried for document data that was deleted in prior revisions.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/readonlysummarydata-interface'>ReadonlySummaryData</a>
+      </td>
+      <td>
+        The in-memory data that summaries contain. Passed to <a href='/docs/apis/tree#encodesummary-function'>encodeSummary()</a>.
       </td>
     </tr>
     <tr>
@@ -604,6 +875,14 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree/schemaop-interface'>SchemaOp</a>
+      </td>
+      <td>
+        TODO: doc
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree/schemapolicy-interface'>SchemaPolicy</a>
       </td>
       <td>
@@ -627,7 +906,22 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree/summaryelement-interface'>SummaryElement</a>
+      </td>
+      <td>
+        Specifies the behavior of an <a href='/docs/apis/tree/index-interface'>Index</a> that puts data in a summary.
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree/taggedchange-interface'>TaggedChange</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/treeadapter-interface'>TreeAdapter</a>
       </td>
       <td>
       </td>
@@ -644,6 +938,14 @@
         <a href='/docs/apis/tree/treeschema-interface'>TreeSchema</a>
       </td>
       <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/treeschemabuilder-interface'>TreeSchemaBuilder</a>
+      </td>
+      <td>
+        See <a href='/docs/apis/tree/treeschema-interface'>TreeSchema</a> for details.
       </td>
     </tr>
     <tr>
@@ -669,6 +971,13 @@
       <td>
       </td>
     </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/violation-interface'>Violation</a>
+      </td>
+      <td>
+      </td>
+    </tr>
   </tbody>
 </table>
 
@@ -689,6 +998,16 @@
     </tr>
   </thead>
   <tbody>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/adaptedviewschema-class'>AdaptedViewSchema</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        A collection of View information for schema, including policy.
+      </td>
+    </tr>
     <tr>
       <td>
         <a href='/docs/apis/tree/anchorset-class'>AnchorSet</a>
@@ -723,6 +1042,58 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree/defaultchangefamily-class'>DefaultChangeFamily</a>
+      </td>
+      <td>
+        <code>sealed</code>
+      </td>
+      <td>
+        Implementation of <a href='/docs/apis/tree/changefamily-interface'>ChangeFamily</a> based on the default set of supported field kinds.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/defaulteditbuilder-class'>DefaultEditBuilder</a>
+      </td>
+      <td>
+        <code>sealed</code>
+      </td>
+      <td>
+        Implementation of <a href='/docs/apis/tree/progressiveeditbuilder-interface'>ProgressiveEditBuilder</a> based on the default set of supported field kinds.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/disposingdependee-class'>DisposingDependee</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        A <a href='/docs/apis/tree/dependee-interface'>Dependee</a> which runs a callback once it removes its last dependent. See <a href='/docs/apis/tree/disposingdependee-class#endinitialization-method'>DisposingDependee.endInitialization()</a>.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/editmanager-class'>EditManager</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        Represents a local branch of a document and interprets the effect on the document of adding sequenced changes, which were based on a given session's branch, to the document history
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/editmanagerindex-class'>EditManagerIndex</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        Represents a local branch of a document and interprets the effect on the document of adding sequenced changes, which were based on a given session's branch, to the document history
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree/fieldkind-class'>FieldKind</a>
       </td>
       <td>
@@ -730,6 +1101,35 @@
       </td>
       <td>
         <p>Functionality for FieldKinds that is stable, meaning that it can not change in any measurable way without providing a new identifier.</p><p>It is assumed that this information and policy is available on all clients interacting with a document using the identifier.</p><p>This must contain enough information to process remote edits to this FieldKind consistently with all clients. All behavior must be deterministic, and not change across versions of the app/library.</p><p>These policies include the data encoding, change encoding, change rebase and change application.</p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/forestindex-class'>ForestIndex</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <p>Index which provides an editable forest for the current state for the document.</p><p>Maintains part of the document in memory, but can fetch more on demand.</p><p>TODO: support for partial checkouts.</p><p>Used to capture snapshots of document for summaries.</p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/forestrepairdatastore-class'>ForestRepairDataStore</a>
+      </td>
+      <td>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/inmemorystoredschemarepository-class'>InMemoryStoredSchemaRepository</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        StoredSchemaRepository for in memory use: not hooked up to Fluid (does not create Fluid ops when editing).
       </td>
     </tr>
     <tr>
@@ -774,6 +1174,47 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree/rebaser-class'>Rebaser</a>
+      </td>
+      <td>
+        <code>sealed</code>
+      </td>
+      <td>
+        A collection of branches which can rebase changes between them.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/schemaeditor-class'>SchemaEditor</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <p>Wraps a StoredSchemaRepository, adjusting its "update" function to hook into Fluid Ops.</p><p>TODO: this should be more integrated with both SchemaIndex and transactions.</p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/schemaindex-class'>SchemaIndex</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <p>Index which tracks stored schema for the current state for the document.</p><p>Maintains the schema in memory.</p><p>Used to capture snapshots of schema for summaries, as well as for anything else needing access to stored schema.</p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/sharedtreecore-class'>SharedTreeCore</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <p>Generic shared tree, which needs to be configured with indexes, field kinds and a history policy to be used.</p><p>TODO: actually implement TODO: is history policy a detail of what indexes are used, or is there something else to it?</p>
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree/sharedtreefactory-class'>SharedTreeFactory</a>
       </td>
       <td>
@@ -790,6 +1231,36 @@
       </td>
       <td>
         Simple implementation of <a href='/docs/apis/tree/dependee-interface'>Dependee</a>.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/simpleobservingdependent-class'>SimpleObservingDependent</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        A basic <a href='/docs/apis/tree/observingdependent-interface'>ObservingDependent</a> implementation.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/sparsenode-class'>SparseNode</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        <p>Sparse Tree of nodes.</p><p>Contains both child and parent pointers, which are kept in sync.</p><p>Each node is equivalent to a path through the tree. This tree structure stores a collection of these paths, but deduplicating the common prefixes of the tree prefix-tree style.</p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree/viewschemadata-class'>ViewSchemaData</a>
+      </td>
+      <td>
+      </td>
+      <td>
+        A collection of View information for schema, including policy.
       </td>
     </tr>
   </tbody>
@@ -811,6 +1282,14 @@
   <tbody>
     <tr>
       <td>
+        <a href='/docs/apis/tree#compatibility-enum'>Compatibility</a>
+      </td>
+      <td>
+        How compatible a particular view schema is for some operation on some specific document.
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree#cursorlocationtype-enum'>CursorLocationType</a>
       </td>
       <td>
@@ -822,6 +1301,13 @@
       </td>
       <td>
         The scope of a <a href='/docs/apis/tree#fieldkey-typealias'>FieldKey</a>.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#finalchangestatus-enum'>FinalChangeStatus</a>
+      </td>
+      <td>
       </td>
     </tr>
     <tr>
@@ -896,6 +1382,13 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree#changesetfromchangerebaser-typealias'>ChangesetFromChangeRebaser</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree#changesetlocalid-typealias'>ChangesetLocalId</a>
       </td>
       <td>
@@ -920,6 +1413,13 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree#defaultchangeset-typealias'>DefaultChangeset</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree#editabletreeorprimitive-typealias'>EditableTreeOrPrimitive</a>
       </td>
       <td>
@@ -932,6 +1432,13 @@
       </td>
       <td>
         See <a href='/docs/apis/tree#extractfromopaque-function'>extractFromOpaque()</a>.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#failure-typealias'>Failure</a>
+      </td>
+      <td>
       </td>
     </tr>
     <tr>
@@ -970,6 +1477,14 @@
       </td>
       <td>
         Ways to refer to a node in an IEditableForest.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#genericchangeset-typealias'>GenericChangeset</a>
+      </td>
+      <td>
+        A field-agnostic set of changes to the elements of a field.
       </td>
     </tr>
     <tr>
@@ -1037,17 +1552,16 @@
     </tr>
     <tr>
       <td>
-        <a href='/docs/apis/tree#namedtreeschema-typealias'>NamedTreeSchema</a>
+        <a href='/docs/apis/tree#namedfieldschema-typealias'>NamedFieldSchema</a>
       </td>
       <td>
       </td>
     </tr>
     <tr>
       <td>
-        <a href='/docs/apis/tree#namefrombranded-typealias'>NameFromBranded</a>
+        <a href='/docs/apis/tree#namedtreeschema-typealias'>NamedTreeSchema</a>
       </td>
       <td>
-        Implementation detail of type branding. Should not be used directly outside this file, but shows up as part of branded types so API-Extractor requires it to be exported.
       </td>
     </tr>
     <tr>
@@ -1112,10 +1626,48 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree#recursivereadonly-typealias'>RecursiveReadonly</a>
+      </td>
+      <td>
+        Make all transitive properties in T readonly
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree#revisiontag-typealias'>RevisionTag</a>
       </td>
       <td>
         A way to refer to a particular revision within a given <code>Rebaser</code> instance.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#seqnumber-typealias'>SeqNumber</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#sessionid-typealias'>SessionId</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#summaryelementparser-typealias'>SummaryElementParser</a>
+      </td>
+      <td>
+        Parses a serialized/summarized string into an object, rehydrating any Fluid handles as necessary
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#summaryelementstringifier-typealias'>SummaryElementStringifier</a>
+      </td>
+      <td>
+        Serializes the given contents into a string acceptable for storing in summaries, i.e. all Fluid handles have been replaced appropriately by an IFluidSerializer
       </td>
     </tr>
     <tr>
@@ -1180,14 +1732,6 @@
       <td>
       </td>
     </tr>
-    <tr>
-      <td>
-        <a href='/docs/apis/tree#valuefrombranded-typealias'>ValueFromBranded</a>
-      </td>
-      <td>
-        Implementation detail of type branding. Should not be used directly outside this file, but shows up as part of branded types so API-Extractor requires it to be exported.
-      </td>
-    </tr>
   </tbody>
 </table>
 
@@ -1210,24 +1754,23 @@
   <tbody>
     <tr>
       <td>
-        <a href='/docs/apis/tree#brand-function'>brand</a>
+        <a href='/docs/apis/tree#allowsreposuperset-function'>allowsRepoSuperset</a>
       </td>
       <td>
-        T
+        boolean
       </td>
       <td>
-        <p>Adds a type <a href='/docs/apis/tree#brand-typealias'>Brand</a> to a value.</p><p>Only do this when specifically allowed by the requirements of the type being converted to.</p>
       </td>
     </tr>
     <tr>
       <td>
-        <a href='/docs/apis/tree#brandopaque-function'>brandOpaque</a>
+        <a href='/docs/apis/tree#applymodifytotree-function'>applyModifyToTree</a>
       </td>
       <td>
-        <a href='/docs/apis/tree/brandedtype-class'>BrandedType</a><<a href='/docs/apis/tree#valuefrombranded-typealias'>ValueFromBranded</a><T>, <a href='/docs/apis/tree#namefrombranded-typealias'>NameFromBranded</a><T>>
+        Map<<a href='/docs/apis/tree#fieldkey-typealias'>FieldKey</a>, Delta.MarkList>
       </td>
       <td>
-        <p>Adds a type <a href='/docs/apis/tree#brand-typealias'>Brand</a> to a value, returning it as a <a href='/docs/apis/tree#opaque-typealias'>Opaque</a> handle.</p><p>Only do this when specifically allowed by the requirements of the type being converted to.</p>
+        <p>Converts inserted content into the format expected in Delta instances. This involves applying the following changes:</p><p>- Updating node values</p><p>- Inserting new subtrees within the inserted content</p><p>- Deleting parts of the inserted content</p><p>The only kind of change that is not applied by this function is MoveIn.</p>
       </td>
     </tr>
     <tr>
@@ -1236,6 +1779,67 @@
       </td>
       <td>
         <a href='/docs/apis/tree/ieditableforest-interface'>IEditableForest</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#cachedvalue-function'>cachedValue</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/icachedvalue-interface'>ICachedValue</a><T>
+      </td>
+      <td>
+        Create a ICachedValue that is invalidated when <code>observer</code> (as provided to <code>compute</code>) gets invalidated.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#clonepath-function'>clonePath</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/uppath-interface'>UpPath</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#clonepath_1-function'>clonePath</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/uppath-interface'>UpPath</a> | undefined
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#commitencoderfromchangeencoder-function'>commitEncoderFromChangeEncoder</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/commitencoder-interface'>CommitEncoder</a><TChangeset>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#comparefielduppaths-function'>compareFieldUpPaths</a>
+      </td>
+      <td>
+        boolean
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#compareuppaths-function'>compareUpPaths</a>
+      </td>
+      <td>
+        boolean
       </td>
       <td>
       </td>
@@ -1253,6 +1857,27 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree#detachedfieldaskey-function'>detachedFieldAsKey</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree#fieldkey-typealias'>FieldKey</a>
+      </td>
+      <td>
+        Some code abstracts the root as a node with detached fields as its fields. This maps detached field to field keys for thus use.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#encodesummary-function'>encodeSummary</a>
+      </td>
+      <td>
+        string
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree#extractfromopaque-function'>extractFromOpaque</a>
       </td>
       <td>
@@ -1264,10 +1889,136 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree#fieldschema-function'>fieldSchema</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/fieldschema-interface'>FieldSchema</a>
+      </td>
+      <td>
+        Helper for building <a href='/docs/apis/tree/fieldschema-interface'>FieldSchema</a>.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#foreachfield-function'>forEachField</a>
+      </td>
+      <td>
+        void
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#foreachnode-function'>forEachNode</a>
+      </td>
+      <td>
+        void
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#generictreedeleteifempty-function'>genericTreeDeleteIfEmpty</a>
+      </td>
+      <td>
+        void
+      </td>
+      <td>
+        Delete a field if empty. Optionally delete FieldMapObject if empty as well.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#generictreekeys-function'>genericTreeKeys</a>
+      </td>
+      <td>
+        readonly <a href='/docs/apis/tree#fieldkey-typealias'>FieldKey</a>[]
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#getdepth-function'>getDepth</a>
+      </td>
+      <td>
+        number
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#getdescendant-function'>getDescendant</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/sparsenode-class'>SparseNode</a><TData>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#geteditabletreecontext-function'>getEditableTreeContext</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/editabletreecontext-interface'>EditableTreeContext</a>
+      </td>
+      <td>
+        A simple API for a Forest to interact with the tree.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#getgenerictreefield-function'>getGenericTreeField</a>
+      </td>
+      <td>
+        T[]
+      </td>
+      <td>
+        Get a field from <code>node</code>, optionally modifying the tree to create it if missing.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#getmaptreefield-function'>getMapTreeField</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/maptree-interface'>MapTree</a>[]
+      </td>
+      <td>
+        Get a field from <code>node</code>, optionally modifying the tree to create it if missing.
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree#getprimaryfield-function'>getPrimaryField</a>
       </td>
       <td>
         { key: <a href='/docs/apis/tree#localfieldkey-typealias'>LocalFieldKey</a>; schema: <a href='/docs/apis/tree/fieldschema-interface'>FieldSchema</a>; } | undefined
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#getschemastring-function'>getSchemaString</a>
+      </td>
+      <td>
+        string
+      </td>
+      <td>
+        <p>Synchronous monolithic summarization of schema content.</p><p>TODO: when perf matters, this should be replaced with a chunked async version using a binary format.</p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#initializeforest-function'>initializeForest</a>
+      </td>
+      <td>
+        void
       </td>
       <td>
       </td>
@@ -1296,6 +2047,16 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree#isfieldlocation-function'>isFieldLocation</a>
+      </td>
+      <td>
+        range is <a href='/docs/apis/tree/fieldlocation-interface'>FieldLocation</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree#isglobalfieldkey-function'>isGlobalFieldKey</a>
       </td>
       <td>
@@ -1303,6 +2064,16 @@
       </td>
       <td>
         Derives the scope using the type of <code>key</code>.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#islocalkey-function'>isLocalKey</a>
+      </td>
+      <td>
+        key is <a href='/docs/apis/tree#localfieldkey-typealias'>LocalFieldKey</a>
+      </td>
+      <td>
       </td>
     </tr>
     <tr>
@@ -1370,12 +2141,158 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree#keyasdetachedfield-function'>keyAsDetachedField</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/detachedfield-interface'>DetachedField</a>
+      </td>
+      <td>
+        The inverse of <a href='/docs/apis/tree#detachedfieldaskey-function'>detachedFieldAsKey()</a>. Thus must only be used on <a href='/docs/apis/tree#localfieldkey-typealias'>LocalFieldKey</a>s which were produced via <a href='/docs/apis/tree#detachedfieldaskey-function'>detachedFieldAsKey()</a>, and with the same scope (ex: forest) as the detachedFieldAsKey was originally from.
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree#keyfromsymbol-function'>keyFromSymbol</a>
       </td>
       <td>
         <a href='/docs/apis/tree#globalfieldkey-typealias'>GlobalFieldKey</a>
       </td>
       <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#loadsummary-function'>loadSummary</a>
+      </td>
+      <td>
+        void
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#lookupglobalfieldschema-function'>lookupGlobalFieldSchema</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/fieldschema-interface'>FieldSchema</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#lookuptreeschema-function'>lookupTreeSchema</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/treeschema-interface'>TreeSchema</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#makeanonchange-function'>makeAnonChange</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/taggedchange-interface'>TaggedChange</a><T>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#mapcursorfield-function'>mapCursorField</a>
+      </td>
+      <td>
+        T[]
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#mapcursorfields-function'>mapCursorFields</a>
+      </td>
+      <td>
+        T[]
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#mapfieldmarks-function'>mapFieldMarks</a>
+      </td>
+      <td>
+        Delta.FieldMarks<TOut>
+      </td>
+      <td>
+        <p>Converts a <code>Delta.FieldMarks</code> whose tree content is represented with by <code>TIn</code> instances into a <code>Delta.FieldMarks</code>whose tree content is represented with by <code>TOut</code> instances.</p><p>This function is useful for converting <code>Delta</code>s that represent tree content with cursors into <code>Delta</code>s that represent tree content with a deep-comparable representation of the content. See assertDeltaEqual. TODO: link this</p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#mapfromnamed-function'>mapFromNamed</a>
+      </td>
+      <td>
+        Map<TName, T>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#mapmark-function'>mapMark</a>
+      </td>
+      <td>
+        Delta.Mark<TOut>
+      </td>
+      <td>
+        <p>Converts a <code>Delta.Mark</code> whose tree content is represented with by <code>TIn</code> instances into a <code>Delta.Mark</code>whose tree content is represented with by <code>TOut</code> instances.</p><p>This function is useful for converting <code>Delta</code>s that represent tree content with cursors into <code>Delta</code>s that represent tree content with a deep-comparable representation of the content. See assertMarkListEqual. TODO: link this</p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#mapmarklist-function'>mapMarkList</a>
+      </td>
+      <td>
+        Delta.MarkList<TOut>
+      </td>
+      <td>
+        <p>Converts a <code>Delta.MarkList</code> whose tree content is represented with by <code>TIn</code> instances into a <code>Delta.MarkList</code>whose tree content is represented with by <code>TOut</code> instances.</p><p>This function is useful for converting <code>Delta</code>s that represent tree content with cursors into <code>Delta</code>s that represent tree content with a deep-comparable representation of the content. See assertMarkListEqual. TODO: link this</p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#maptreefromcursor-function'>mapTreeFromCursor</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/maptree-interface'>MapTree</a>
+      </td>
+      <td>
+        Extract a MapTree from the contents of the given ITreeCursor's current node.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#movetodetachedfield-function'>moveToDetachedField</a>
+      </td>
+      <td>
+        void
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#namedtreeschema-function'>namedTreeSchema</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree#namedtreeschema-typealias'>NamedTreeSchema</a>
+      </td>
+      <td>
+        Helper for building <a href='/docs/apis/tree#namedtreeschema-typealias'>NamedTreeSchema</a>.
       </td>
     </tr>
     <tr>
@@ -1391,6 +2308,48 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree#runsynchronoustransaction-function'>runSynchronousTransaction</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree#transactionresult-enum'>TransactionResult</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#schemadataisempty-function'>schemaDataIsEmpty</a>
+      </td>
+      <td>
+        boolean
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#scopefromkey-function'>scopeFromKey</a>
+      </td>
+      <td>
+        [<a href='/docs/apis/tree#fieldscope-enum'>FieldScope</a>, <a href='/docs/apis/tree#localfieldkey-typealias'>LocalFieldKey</a> | <a href='/docs/apis/tree#globalfieldkey-typealias'>GlobalFieldKey</a>]
+      </td>
+      <td>
+        Derives the scope using the type of <code>key</code>.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#setgenerictreefield-function'>setGenericTreeField</a>
+      </td>
+      <td>
+        void
+      </td>
+      <td>
+        Sets a field on <code>node</code>.
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree#singlejsoncursor-function'>singleJsonCursor</a>
       </td>
       <td>
@@ -1398,6 +2357,36 @@
       </td>
       <td>
         Used to read a Jsonable tree for testing and benchmarking.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#singlemaptreecursor-function'>singleMapTreeCursor</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/cursorwithnode-interface'>CursorWithNode</a><<a href='/docs/apis/tree/maptree-interface'>MapTree</a>>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#singlestacktreecursor-function'>singleStackTreeCursor</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/cursorwithnode-interface'>CursorWithNode</a><TNode>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#singletextcursor-function'>singleTextCursor</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/itreecursorsynchronous-interface'>ITreeCursorSynchronous</a>
+      </td>
+      <td>
       </td>
     </tr>
     <tr>
@@ -1420,6 +2409,59 @@
       <td>
       </td>
     </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#tagchange-function'>tagChange</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/taggedchange-interface'>TaggedChange</a><T>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#taginverse-function'>tagInverse</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/taggedchange-interface'>TaggedChange</a><T>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#treeschema-function'>treeSchema</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/treeschema-interface'>TreeSchema</a>
+      </td>
+      <td>
+        Helper for building <a href='/docs/apis/tree/treeschema-interface'>TreeSchema</a>.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#verifychangerebaser-function'>verifyChangeRebaser</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/outputtype-interface'>OutputType</a><TChange>
+      </td>
+      <td>
+        Verifies the axioms of <code>ChangeRebaser</code> are met by the given <code>rebaser</code>.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#visitdelta-function'>visitDelta</a>
+      </td>
+      <td>
+        void
+      </td>
+      <td>
+        Crawls the given <code>delta</code>, calling <code>visitor</code>'s callback for each change encountered. Each successive call to the visitor callbacks assumes that the change described by earlier calls have been applied to the document tree. For example, for a change that deletes the first and third node of a field, the visitor calls will pass indices 0 and 1 respectively.
+      </td>
+    </tr>
   </tbody>
 </table>
 
@@ -1439,6 +2481,14 @@
   <tbody>
     <tr>
       <td>
+        <a href='/docs/apis/tree#afterchangetoken-variable'>afterChangeToken</a>
+      </td>
+      <td>
+        This <code>InvalidationToken</code> is used to indicate that the invalidation of Dependents happens after the Delta is applied to the forest. It is a workaround i.e. definitely a misuse of the invalidation system in an absence of alternative notification/eventing system.
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree#createfield-variable'>createField</a>
       </td>
       <td>
@@ -1447,10 +2497,25 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree#defaultchangefamily-variable'>defaultChangeFamily</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree#defaultschemapolicy-variable'>defaultSchemaPolicy</a>
       </td>
       <td>
         <p>FullSchemaPolicy the default field kinds, empty default fields and neverTree for the default tree schema.</p><p>This requires new node types to have explicit stored schema to exist in documents, and allows adding new global fields along with their schema at any point.</p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#dummyrepairdatastore-variable'>dummyRepairDataStore</a>
+      </td>
+      <td>
+        A <code>RepairDataStore</code> implementation that returns dummy content.
       </td>
     </tr>
     <tr>
@@ -1467,6 +2532,30 @@
       </td>
       <td>
         <p>The empty key ("") is used for unnamed relationships, such as the indexer of an explicit array node.</p><p>This key is a hint that this field is the primary function of the node, and in some abstractions the APIs for this field should be inlined onto the node.</p><p>TODO: This has to be a LocalFieldKey since different nodes will have different FieldSchema for it. This makes it prone to collisions and suggests that this intention may be better conveyed by metadata on the TreeViewSchema.</p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#emptymap-variable'>emptyMap</a>
+      </td>
+      <td>
+        Empty readonly map.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#emptyset-variable'>emptySet</a>
+      </td>
+      <td>
+        Empty readonly set.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#genericfieldkind-variable'>genericFieldKind</a>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/fieldkind-class'>FieldKind</a> used to represent changes to elements of a field in a field-kind-agnostic format.
       </td>
     </tr>
     <tr>
@@ -1522,6 +2611,13 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree#jsonroot-variable'>jsonRoot</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree#jsonschemadata-variable'>jsonSchemaData</a>
       </td>
       <td>
@@ -1536,10 +2632,25 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree#neverfield-variable'>neverField</a>
+      </td>
+      <td>
+        FieldSchema which is impossible for any data to be in schema with.
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree#nevertree-variable'>neverTree</a>
       </td>
       <td>
         TreeSchema which is impossible for any data to be in schema with.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#nofailure-variable'>noFailure</a>
+      </td>
+      <td>
       </td>
     </tr>
     <tr>
@@ -1560,10 +2671,24 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree#rootfield-variable'>rootField</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree#rootfieldkey-variable'>rootFieldKey</a>
       </td>
       <td>
         GlobalFieldKey to use for the root of documents. TODO: if we do want to standardize on a single value for this, it likely should be namespaced or a UUID to avoid risk of collisions.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#rootfieldkeysymbol-variable'>rootFieldKeySymbol</a>
+      </td>
+      <td>
       </td>
     </tr>
     <tr>
@@ -1616,6 +2741,13 @@
     </tr>
     <tr>
       <td>
+        <a href='/docs/apis/tree/fieldkinds-namespace'>FieldKinds</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
         <a href='/docs/apis/tree/sequencefield-namespace'>SequenceField</a>
       </td>
       <td>
@@ -1625,6 +2757,80 @@
 </table>
 
 ## Enumeration Details
+
+### Compatibility {#compatibility-enum}
+
+How compatible a particular view schema is for some operation on some specific document.
+
+#### Signature {#compatibility-signature}
+
+```typescript
+export declare enum Compatibility 
+```
+
+#### Flags
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Flag
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#compatibility-compatible-enummember'>Compatible</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#compatibility-incompatible-enummember'>Incompatible</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#compatibility-requiresadapters-enummember'>RequiresAdapters</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### FlagDetails
+
+##### Compatible {#compatibility-compatible-enummember}
+
+###### Signature {#compatible-signature}
+
+```typescript
+Compatible = 2
+```
+
+##### Incompatible {#compatibility-incompatible-enummember}
+
+###### Signature {#incompatible-signature}
+
+```typescript
+Incompatible = 0
+```
+
+##### RequiresAdapters {#compatibility-requiresadapters-enummember}
+
+###### Signature {#requiresadapters-signature}
+
+```typescript
+RequiresAdapters = 1
+```
 
 ### CursorLocationType {#cursorlocationtype-enum}
 
@@ -1746,6 +2952,78 @@ global = "globalFields"
 
 ```typescript
 local = "fields"
+```
+
+### FinalChangeStatus {#finalchangestatus-enum}
+
+#### Signature {#finalchangestatus-signature}
+
+```typescript
+export declare enum FinalChangeStatus 
+```
+
+#### Flags
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Flag
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#finalchangestatus-commuted-enummember'>commuted</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#finalchangestatus-conflicted-enummember'>conflicted</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <a href='/docs/apis/tree#finalchangestatus-rebased-enummember'>rebased</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### FlagDetails
+
+##### commuted {#finalchangestatus-commuted-enummember}
+
+###### Signature {#commuted-signature}
+
+```typescript
+commuted = 2
+```
+
+##### conflicted {#finalchangestatus-conflicted-enummember}
+
+###### Signature {#conflicted-signature}
+
+```typescript
+conflicted = 0
+```
+
+##### rebased {#finalchangestatus-rebased-enummember}
+
+###### Signature {#rebased-signature}
+
+```typescript
+rebased = 1
 ```
 
 ### ITreeSubscriptionCursorState {#itreesubscriptioncursorstate-enum}
@@ -2227,6 +3505,14 @@ These branded types are not opaque: A `Brand<A, B>` can still be used as a `B`<!
 export declare type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
 ```
 
+### ChangesetFromChangeRebaser {#changesetfromchangerebaser-typealias}
+
+#### Signature {#changesetfromchangerebaser-signature}
+
+```typescript
+export declare type ChangesetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any>> = TChangeRebaser extends ChangeRebaser<infer TChangeset> ? TChangeset : never;
+```
+
 ### ChangesetLocalId {#changesetlocalid-typealias}
 
 An ID which is unique within a revision of a `ModularChangeset`<!-- -->. A `ModularChangeset` which is a composition of multiple revisions may contain duplicate `ChangesetLocalId`<!-- -->s, but they are unique when qualified by the revision of the change they are used in.
@@ -2261,6 +3547,14 @@ Once schema aware APIs are implemented, they can be used to provide schema speci
 export declare type ContextuallyTypedNodeData = ContextuallyTypedNodeDataObject | PrimitiveValue | readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData>;
 ```
 
+### DefaultChangeset {#defaultchangeset-typealias}
+
+#### Signature {#defaultchangeset-signature}
+
+```typescript
+export declare type DefaultChangeset = ModularChangeset;
+```
+
 ### EditableTreeOrPrimitive {#editabletreeorprimitive-typealias}
 
 EditableTree, but with any type that `isPrimitive` unwrapped into the value if that value is a [PrimitiveValue](/docs/apis/tree#primitivevalue-typealias)<!-- -->.
@@ -2279,6 +3573,14 @@ See [extractFromOpaque()](/docs/apis/tree#extractfromopaque-function)<!-- -->.
 
 ```typescript
 export declare type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> = TOpaque extends BrandedType<infer ValueType, infer Name> ? isAny<ValueType> extends true ? unknown : Brand<ValueType, Name> : never;
+```
+
+### Failure {#failure-typealias}
+
+#### Signature {#failure-signature}
+
+```typescript
+export declare type Failure<TCase> = Violation<TCase> | Exception<TCase>;
 ```
 
 ### FieldChangeMap {#fieldchangemap-typealias}
@@ -2327,6 +3629,16 @@ Ways to refer to a node in an IEditableForest.
 
 ```typescript
 export declare type ForestLocation = ITreeSubscriptionCursor | Anchor;
+```
+
+### GenericChangeset {#genericchangeset-typealias}
+
+A field-agnostic set of changes to the elements of a field.
+
+#### Signature {#genericchangeset-signature}
+
+```typescript
+export declare type GenericChangeset = GenericChange[];
 ```
 
 ### GlobalFieldKey {#globalfieldkey-typealias}
@@ -2419,22 +3731,20 @@ Key (aka Name or Label) for a field which is scoped to a specific TreeSchema.
 export declare type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 ```
 
+### NamedFieldSchema {#namedfieldschema-typealias}
+
+#### Signature {#namedfieldschema-signature}
+
+```typescript
+export declare type NamedFieldSchema = Named<GlobalFieldKey> & FieldSchema;
+```
+
 ### NamedTreeSchema {#namedtreeschema-typealias}
 
 #### Signature {#namedtreeschema-signature}
 
 ```typescript
 export declare type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
-```
-
-### NameFromBranded {#namefrombranded-typealias}
-
-Implementation detail of type branding. Should not be used directly outside this file, but shows up as part of branded types so API-Extractor requires it to be exported.
-
-#### Signature {#namefrombranded-signature}
-
-```typescript
-export declare type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<any, infer Name> ? Name : never;
 ```
 
 ### NodeChangeComposer {#nodechangecomposer-typealias}
@@ -2509,6 +3819,18 @@ export declare type Opaque<T extends Brand<any, string>> = T extends Brand<infer
 export declare type PrimitiveValue = string | boolean | number;
 ```
 
+### RecursiveReadonly {#recursivereadonly-typealias}
+
+Make all transitive properties in T readonly
+
+#### Signature {#recursivereadonly-signature}
+
+```typescript
+export declare type RecursiveReadonly<T> = {
+    readonly [P in keyof T]: RecursiveReadonly<T[P]>;
+};
+```
+
 ### RevisionTag {#revisiontag-typealias}
 
 A way to refer to a particular revision within a given `Rebaser` instance.
@@ -2517,6 +3839,42 @@ A way to refer to a particular revision within a given `Rebaser` instance.
 
 ```typescript
 export declare type RevisionTag = Brand<number, "rebaser.RevisionTag">;
+```
+
+### SeqNumber {#seqnumber-typealias}
+
+#### Signature {#seqnumber-signature}
+
+```typescript
+export declare type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
+```
+
+### SessionId {#sessionid-typealias}
+
+#### Signature {#sessionid-signature}
+
+```typescript
+export declare type SessionId = string;
+```
+
+### SummaryElementParser {#summaryelementparser-typealias}
+
+Parses a serialized/summarized string into an object, rehydrating any Fluid handles as necessary
+
+#### Signature {#summaryelementparser-signature}
+
+```typescript
+export declare type SummaryElementParser = (contents: string) => unknown;
+```
+
+### SummaryElementStringifier {#summaryelementstringifier-typealias}
+
+Serializes the given contents into a string acceptable for storing in summaries, i.e. all Fluid handles have been replaced appropriately by an IFluidSerializer
+
+#### Signature {#summaryelementstringifier-signature}
+
+```typescript
+export declare type SummaryElementStringifier = (contents: unknown) => string;
 ```
 
 ### ToDelta {#todelta-typealias}
@@ -2619,31 +3977,17 @@ export declare type ValueChange = {
 };
 ```
 
-### ValueFromBranded {#valuefrombranded-typealias}
-
-Implementation detail of type branding. Should not be used directly outside this file, but shows up as part of branded types so API-Extractor requires it to be exported.
-
-#### Signature {#valuefrombranded-signature}
-
-```typescript
-export declare type ValueFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<infer ValueType, string> ? ValueType : never;
-```
-
 ## Function Details
 
-### brand {#brand-function}
+### allowsRepoSuperset {#allowsreposuperset-function}
 
-Adds a type [Brand](/docs/apis/tree#brand-typealias) to a value.
-
-Only do this when specifically allowed by the requirements of the type being converted to.
-
-#### Signature {#brand-signature}
+#### Signature {#allowsreposuperset-signature}
 
 ```typescript
-export declare function brand<T extends Brand<any, string>>(value: T extends BrandedType<infer ValueType, string> ? ValueType : never): T;
+export declare function allowsRepoSuperset(policy: FullSchemaPolicy, original: SchemaData, superset: SchemaData): boolean;
 ```
 
-#### Parameters {#brand-parameters}
+#### Parameters {#allowsreposuperset-parameters}
 
 <table class="table table-striped table-hover">
   <thead>
@@ -2662,10 +4006,30 @@ export declare function brand<T extends Brand<any, string>>(value: T extends Bra
   <tbody>
     <tr>
       <td>
-        value
+        policy
       </td>
       <td>
-        T extends <a href='/docs/apis/tree/brandedtype-class'>BrandedType</a><infer ValueType, string> ? ValueType : never
+        <a href='/docs/apis/tree/fullschemapolicy-interface'>FullSchemaPolicy</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        original
+      </td>
+      <td>
+        <a href='/docs/apis/tree/schemadata-interface'>SchemaData</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        superset
+      </td>
+      <td>
+        <a href='/docs/apis/tree/schemadata-interface'>SchemaData</a>
       </td>
       <td>
       </td>
@@ -2673,23 +4037,35 @@ export declare function brand<T extends Brand<any, string>>(value: T extends Bra
   </tbody>
 </table>
 
-#### Returns {#brand-returns}
+#### Returns {#allowsreposuperset-returns}
 
-<b>Return type:</b> T
+true iff `superset` is a superset of `original`<!-- -->.
 
-### brandOpaque {#brandopaque-function}
+This does not require a strict (aka proper) superset: equivalent schema will return true.
 
-Adds a type [Brand](/docs/apis/tree#brand-typealias) to a value, returning it as a [Opaque](/docs/apis/tree#opaque-typealias) handle.
+A version of this that assumes a specific root field could be slightly more permissive in some simple cases, however if any extra fields and fields with unconstrained types are reachable, it would have to compare everything anyway.
 
-Only do this when specifically allowed by the requirements of the type being converted to.
+<b>Return type:</b> boolean
 
-#### Signature {#brandopaque-signature}
+### applyModifyToTree {#applymodifytotree-function}
+
+Converts inserted content into the format expected in Delta instances. This involves applying the following changes:
+
+- Updating node values
+
+- Inserting new subtrees within the inserted content
+
+- Deleting parts of the inserted content
+
+The only kind of change that is not applied by this function is MoveIn.
+
+#### Signature {#applymodifytotree-signature}
 
 ```typescript
-export declare function brandOpaque<T extends BrandedType<any, string>>(value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>): BrandedType<ValueFromBranded<T>, NameFromBranded<T>>;
+export declare function applyModifyToTree(tree: MapTree, modify: Delta.Modify): Map<FieldKey, Delta.MarkList>;
 ```
 
-#### Parameters {#brandopaque-parameters}
+#### Parameters {#applymodifytotree-parameters}
 
 <table class="table table-striped table-hover">
   <thead>
@@ -2708,20 +4084,34 @@ export declare function brandOpaque<T extends BrandedType<any, string>>(value: i
   <tbody>
     <tr>
       <td>
-        value
+        tree
       </td>
       <td>
-        <a href='/docs/apis/tree#isany-typealias'>isAny</a><<a href='/docs/apis/tree#valuefrombranded-typealias'>ValueFromBranded</a><T>> extends true ? never : <a href='/docs/apis/tree#valuefrombranded-typealias'>ValueFromBranded</a><T>
+        <a href='/docs/apis/tree/maptree-interface'>MapTree</a>
       </td>
       <td>
+        The subtree to apply modifications to. Updated in place.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        modify
+      </td>
+      <td>
+        Delta.Modify
+      </td>
+      <td>
+        The modifications to either apply or collect.
       </td>
     </tr>
   </tbody>
 </table>
 
-#### Returns {#brandopaque-returns}
+#### Returns {#applymodifytotree-returns}
 
-<b>Return type:</b> [BrandedType](/docs/apis/tree/brandedtype-class)<!-- -->&lt;[ValueFromBranded](/docs/apis/tree#valuefrombranded-typealias)<!-- -->&lt;T&gt;, [NameFromBranded](/docs/apis/tree#namefrombranded-typealias)<!-- -->&lt;T&gt;&gt;
+The remaining modifications that the consumer of the Delta will apply on the given node. May be empty if all modifications are applied by the function.
+
+<b>Return type:</b> Map&lt;[FieldKey](/docs/apis/tree#fieldkey-typealias)<!-- -->, Delta.MarkList&gt;
 
 ### buildForest {#buildforest-function}
 
@@ -2785,6 +4175,310 @@ an implementation of [IEditableForest](/docs/apis/tree/ieditableforest-interface
 
 <b>Return type:</b> [IEditableForest](/docs/apis/tree/ieditableforest-interface)
 
+### cachedValue {#cachedvalue-function}
+
+Create a ICachedValue that is invalidated when `observer` (as provided to `compute`<!-- -->) gets invalidated.
+
+#### Signature {#cachedvalue-signature}
+
+```typescript
+export declare function cachedValue<T>(compute: (observer: ObservingDependent) => T, computationName?: string): ICachedValue<T>;
+```
+
+#### Parameters {#cachedvalue-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Modifiers
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        compute
+      </td>
+      <td>
+      </td>
+      <td>
+        (observer: <a href='/docs/apis/tree/observingdependent-interface'>ObservingDependent</a>) => T
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        computationName
+      </td>
+      <td>
+        optional
+      </td>
+      <td>
+        string
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#cachedvalue-returns}
+
+<b>Return type:</b> [ICachedValue](/docs/apis/tree/icachedvalue-interface)<!-- -->&lt;T&gt;
+
+### clonePath {#clonepath-function}
+
+#### Signature {#clonepath-signature}
+
+```typescript
+export declare function clonePath(path: UpPath): UpPath;
+```
+
+#### Parameters {#clonepath-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        path
+      </td>
+      <td>
+        <a href='/docs/apis/tree/uppath-interface'>UpPath</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#clonepath-returns}
+
+a deep copy of the provided path as simple javascript objects. This is safe to hold onto and use deep object comparisons on.
+
+<b>Return type:</b> [UpPath](/docs/apis/tree/uppath-interface)
+
+### clonePath {#clonepath_1-function}
+
+#### Signature {#clonepath_1-signature}
+
+```typescript
+export declare function clonePath(path: UpPath | undefined): UpPath | undefined;
+```
+
+#### Parameters {#clonepath_1-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        path
+      </td>
+      <td>
+        <a href='/docs/apis/tree/uppath-interface'>UpPath</a> | undefined
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#clonepath_1-returns}
+
+a deep copy of the provided path as simple javascript objects. This is safe to hold onto and use deep object comparisons on.
+
+<b>Return type:</b> [UpPath](/docs/apis/tree/uppath-interface) \| undefined
+
+### commitEncoderFromChangeEncoder {#commitencoderfromchangeencoder-function}
+
+#### Signature {#commitencoderfromchangeencoder-signature}
+
+```typescript
+export declare function commitEncoderFromChangeEncoder<TChangeset>(changeEncoder: ChangeEncoder<TChangeset>): CommitEncoder<TChangeset>;
+```
+
+#### Parameters {#commitencoderfromchangeencoder-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        changeEncoder
+      </td>
+      <td>
+        <a href='/docs/apis/tree/changeencoder-class'>ChangeEncoder</a><TChangeset>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#commitencoderfromchangeencoder-returns}
+
+<b>Return type:</b> [CommitEncoder](/docs/apis/tree/commitencoder-interface)<!-- -->&lt;TChangeset&gt;
+
+### compareFieldUpPaths {#comparefielduppaths-function}
+
+#### Signature {#comparefielduppaths-signature}
+
+```typescript
+export declare function compareFieldUpPaths(a: FieldUpPath, b: FieldUpPath): boolean;
+```
+
+#### Parameters {#comparefielduppaths-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        a
+      </td>
+      <td>
+        <a href='/docs/apis/tree/fielduppath-interface'>FieldUpPath</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        b
+      </td>
+      <td>
+        <a href='/docs/apis/tree/fielduppath-interface'>FieldUpPath</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#comparefielduppaths-returns}
+
+true iff `a` and `b` describe the same field path.
+
+Note that for mutable paths (as used in `AnchorSet`<!-- -->), this equality may change over time: this only checks if the two paths are currently the same.
+
+<b>Return type:</b> boolean
+
+### compareUpPaths {#compareuppaths-function}
+
+#### Signature {#compareuppaths-signature}
+
+```typescript
+export declare function compareUpPaths(a: UpPath | undefined, b: UpPath | undefined): boolean;
+```
+
+#### Parameters {#compareuppaths-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        a
+      </td>
+      <td>
+        <a href='/docs/apis/tree/uppath-interface'>UpPath</a> | undefined
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        b
+      </td>
+      <td>
+        <a href='/docs/apis/tree/uppath-interface'>UpPath</a> | undefined
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#compareuppaths-returns}
+
+true iff `a` and `b` describe the same path.
+
+Note that for mutable paths (as used in `AnchorSet`<!-- -->), this equality may change over time: this only checks if the two paths are currently the same.
+
+<b>Return type:</b> boolean
+
 ### cursorToJsonObject {#cursortojsonobject-function}
 
 Extract a JS object tree from the contents of the given ITreeCursor. Assumes that ITreeCursor contains only unaugmented JsonTypes.
@@ -2828,6 +4522,104 @@ export declare function cursorToJsonObject(reader: ITreeCursor): JsonCompatible;
 #### Returns {#cursortojsonobject-returns}
 
 <b>Return type:</b> [JsonCompatible](/docs/apis/tree#jsoncompatible-typealias)
+
+### detachedFieldAsKey {#detachedfieldaskey-function}
+
+Some code abstracts the root as a node with detached fields as its fields. This maps detached field to field keys for thus use.
+
+#### Signature {#detachedfieldaskey-signature}
+
+```typescript
+export declare function detachedFieldAsKey(field: DetachedField): FieldKey;
+```
+
+#### Parameters {#detachedfieldaskey-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        field
+      </td>
+      <td>
+        <a href='/docs/apis/tree/detachedfield-interface'>DetachedField</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#detachedfieldaskey-returns}
+
+`field` as a [FieldKey](/docs/apis/tree#fieldkey-typealias) usable on a special root node serving as a parent of detached fields.
+
+<b>Return type:</b> [FieldKey](/docs/apis/tree#fieldkey-typealias)
+
+### encodeSummary {#encodesummary-function}
+
+#### Signature {#encodesummary-signature}
+
+```typescript
+export declare function stringifySummary<TChange>(data: ReadonlySummaryData<TChange>, encoder: CommitEncoder<TChange>): string;
+```
+
+#### Parameters {#encodesummary-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        data
+      </td>
+      <td>
+        <a href='/docs/apis/tree/readonlysummarydata-interface'>ReadonlySummaryData</a><TChange>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        encoder
+      </td>
+      <td>
+        <a href='/docs/apis/tree/commitencoder-interface'>CommitEncoder</a><TChange>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#encodesummary-returns}
+
+<b>Return type:</b> string
 
 ### extractFromOpaque {#extractfromopaque-function}
 
@@ -2874,6 +4666,564 @@ export declare function extractFromOpaque<TOpaque extends BrandedType<any, strin
 #### Returns {#extractfromopaque-returns}
 
 <b>Return type:</b> [ExtractFromOpaque](/docs/apis/tree#extractfromopaque-typealias)<!-- -->&lt;TOpaque&gt;
+
+### fieldSchema {#fieldschema-function}
+
+Helper for building [FieldSchema](/docs/apis/tree/fieldschema-interface)<!-- -->.
+
+#### Signature {#fieldschema-signature}
+
+```typescript
+export declare function fieldSchema(kind: {
+    identifier: FieldKindIdentifier;
+}, types?: Iterable<TreeSchemaIdentifier>): FieldSchema;
+```
+
+#### Parameters {#fieldschema-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Modifiers
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        kind
+      </td>
+      <td>
+      </td>
+      <td>
+        { identifier: <a href='/docs/apis/tree#fieldkindidentifier-typealias'>FieldKindIdentifier</a>; }
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        types
+      </td>
+      <td>
+        optional
+      </td>
+      <td>
+        Iterable<<a href='/docs/apis/tree#treeschemaidentifier-typealias'>TreeSchemaIdentifier</a>>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#fieldschema-returns}
+
+<b>Return type:</b> [FieldSchema](/docs/apis/tree/fieldschema-interface)
+
+### forEachField {#foreachfield-function}
+
+#### Signature {#foreachfield-signature}
+
+```typescript
+export declare function forEachField<TCursor extends ITreeCursor = ITreeCursor>(cursor: TCursor, f: (cursor: TCursor) => void): void;
+```
+
+#### Parameters {#foreachfield-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        cursor
+      </td>
+      <td>
+        TCursor
+      </td>
+      <td>
+        cursor at a node whose fields will be visited.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        f
+      </td>
+      <td>
+        (cursor: TCursor) => void
+      </td>
+      <td>
+        For on each field. If <code>f</code> moves cursor, it must put it back to where it was at the beginning of <code>f</code> before returning.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### forEachNode {#foreachnode-function}
+
+#### Signature {#foreachnode-signature}
+
+```typescript
+export declare function forEachNode<TCursor extends ITreeCursor = ITreeCursor>(cursor: TCursor, f: (cursor: TCursor) => void): void;
+```
+
+#### Parameters {#foreachnode-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        cursor
+      </td>
+      <td>
+        TCursor
+      </td>
+      <td>
+        cursor at a field whose nodes will be visited.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        f
+      </td>
+      <td>
+        (cursor: TCursor) => void
+      </td>
+      <td>
+        For on each node. If <code>f</code> moves cursor, it must put it back to where it was at the beginning of <code>f</code> before returning.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### genericTreeDeleteIfEmpty {#generictreedeleteifempty-function}
+
+Delete a field if empty. Optionally delete FieldMapObject if empty as well.
+
+#### Signature {#generictreedeleteifempty-signature}
+
+```typescript
+export declare function genericTreeDeleteIfEmpty<T>(node: GenericFieldsNode<T>, key: FieldKey, removeMapObject: boolean): void;
+```
+
+#### Parameters {#generictreedeleteifempty-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        node
+      </td>
+      <td>
+        <a href='/docs/apis/tree/genericfieldsnode-interface'>GenericFieldsNode</a><T>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        key
+      </td>
+      <td>
+        <a href='/docs/apis/tree#fieldkey-typealias'>FieldKey</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        removeMapObject
+      </td>
+      <td>
+        boolean
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### genericTreeKeys {#generictreekeys-function}
+
+#### Signature {#generictreekeys-signature}
+
+```typescript
+export declare function genericTreeKeys<T>(tree: GenericFieldsNode<T>): readonly FieldKey[];
+```
+
+#### Parameters {#generictreekeys-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        tree
+      </td>
+      <td>
+        <a href='/docs/apis/tree/genericfieldsnode-interface'>GenericFieldsNode</a><T>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#generictreekeys-returns}
+
+keys for fields of `tree`<!-- -->.
+
+<b>Return type:</b> readonly [FieldKey](/docs/apis/tree#fieldkey-typealias)<!-- -->\[\]
+
+### getDepth {#getdepth-function}
+
+#### Signature {#getdepth-signature}
+
+```typescript
+export declare function getDepth(path: UpPath): number;
+```
+
+#### Parameters {#getdepth-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        path
+      </td>
+      <td>
+        <a href='/docs/apis/tree/uppath-interface'>UpPath</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#getdepth-returns}
+
+the number of nodes above this one. Zero when the path's parent is undefined, meaning the path represents a node in a detached field. Runs in O(depth) time.
+
+<b>Return type:</b> number
+
+### getDescendant {#getdescendant-function}
+
+#### Signature {#getdescendant-signature}
+
+```typescript
+export declare function getDescendant<TData>(ancestor: SparseNode<TData>, path: UpPath | undefined): SparseNode<TData>;
+```
+
+#### Parameters {#getdescendant-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        ancestor
+      </td>
+      <td>
+        <a href='/docs/apis/tree/sparsenode-class'>SparseNode</a><TData>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        path
+      </td>
+      <td>
+        <a href='/docs/apis/tree/uppath-interface'>UpPath</a> | undefined
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#getdescendant-returns}
+
+<b>Return type:</b> [SparseNode](/docs/apis/tree/sparsenode-class)<!-- -->&lt;TData&gt;
+
+### getEditableTreeContext {#geteditabletreecontext-function}
+
+A simple API for a Forest to interact with the tree.
+
+#### Signature {#geteditabletreecontext-signature}
+
+```typescript
+export declare function getEditableTreeContext(forest: IEditableForest, transactionCheckout?: TransactionCheckout<DefaultEditBuilder, DefaultChangeset>): EditableTreeContext;
+```
+
+#### Parameters {#geteditabletreecontext-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Modifiers
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        forest
+      </td>
+      <td>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/ieditableforest-interface'>IEditableForest</a>
+      </td>
+      <td>
+        the Forest
+      </td>
+    </tr>
+    <tr>
+      <td>
+        transactionCheckout
+      </td>
+      <td>
+        optional
+      </td>
+      <td>
+        <a href='/docs/apis/tree/checkout-interface'>TransactionCheckout</a><<a href='/docs/apis/tree/defaulteditbuilder-class'>DefaultEditBuilder</a>, <a href='/docs/apis/tree#defaultchangeset-typealias'>DefaultChangeset</a>>
+      </td>
+      <td>
+        the Checkout applied to a transaction, not required in read-only usecases.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#geteditabletreecontext-returns}
+
+[EditableTreeContext](/docs/apis/tree/editabletreecontext-interface) which is used to manage the cursors and anchors within the EditableTrees: This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
+
+<b>Return type:</b> [EditableTreeContext](/docs/apis/tree/editabletreecontext-interface)
+
+### getGenericTreeField {#getgenerictreefield-function}
+
+Get a field from `node`<!-- -->, optionally modifying the tree to create it if missing.
+
+#### Signature {#getgenerictreefield-signature}
+
+```typescript
+export declare function getGenericTreeField<T>(node: GenericFieldsNode<T>, key: FieldKey, createIfMissing: boolean): T[];
+```
+
+#### Parameters {#getgenerictreefield-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        node
+      </td>
+      <td>
+        <a href='/docs/apis/tree/genericfieldsnode-interface'>GenericFieldsNode</a><T>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        key
+      </td>
+      <td>
+        <a href='/docs/apis/tree#fieldkey-typealias'>FieldKey</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        createIfMissing
+      </td>
+      <td>
+        boolean
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#getgenerictreefield-returns}
+
+<b>Return type:</b> T\[\]
+
+### getMapTreeField {#getmaptreefield-function}
+
+Get a field from `node`<!-- -->, optionally modifying the tree to create it if missing.
+
+#### Signature {#getmaptreefield-signature}
+
+```typescript
+export declare function getMapTreeField(node: MapTree, key: FieldKey, createIfMissing: boolean): MapTree[];
+```
+
+#### Parameters {#getmaptreefield-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        node
+      </td>
+      <td>
+        <a href='/docs/apis/tree/maptree-interface'>MapTree</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        key
+      </td>
+      <td>
+        <a href='/docs/apis/tree#fieldkey-typealias'>FieldKey</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        createIfMissing
+      </td>
+      <td>
+        boolean
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#getmaptreefield-returns}
+
+<b>Return type:</b> [MapTree](/docs/apis/tree/maptree-interface)<!-- -->\[\]
 
 ### getPrimaryField {#getprimaryfield-function}
 
@@ -2923,6 +5273,102 @@ the key and the schema of the primary field out of the given tree schema.
 See note on [EmptyKey](/docs/apis/tree#emptykey-variable) for what is a primary field.
 
 <b>Return type:</b> { key: [LocalFieldKey](/docs/apis/tree#localfieldkey-typealias)<!-- -->; schema: [FieldSchema](/docs/apis/tree/fieldschema-interface)<!-- -->; } \| undefined
+
+### getSchemaString {#getschemastring-function}
+
+Synchronous monolithic summarization of schema content.
+
+TODO: when perf matters, this should be replaced with a chunked async version using a binary format.
+
+#### Signature {#getschemastring-signature}
+
+```typescript
+export declare function getSchemaString(data: SchemaData): string;
+```
+
+#### Parameters {#getschemastring-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        data
+      </td>
+      <td>
+        <a href='/docs/apis/tree/schemadata-interface'>SchemaData</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#getschemastring-returns}
+
+a snapshot of the schema as a string.
+
+<b>Return type:</b> string
+
+### initializeForest {#initializeforest-function}
+
+#### Signature {#initializeforest-signature}
+
+```typescript
+export declare function initializeForest(forest: IEditableForest, content: ITreeCursorSynchronous[]): void;
+```
+
+#### Parameters {#initializeforest-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        forest
+      </td>
+      <td>
+        <a href='/docs/apis/tree/ieditableforest-interface'>IEditableForest</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        content
+      </td>
+      <td>
+        <a href='/docs/apis/tree/itreecursorsynchronous-interface'>ITreeCursorSynchronous</a>[]
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 ### isContextuallyTypedNodeDataObject {#iscontextuallytypednodedataobject-function}
 
@@ -3012,6 +5458,48 @@ export declare function isEditableField(field: UnwrappedEditableField): field is
 
 <b>Return type:</b> field is [EditableField](/docs/apis/tree/editablefield-interface)
 
+### isFieldLocation {#isfieldlocation-function}
+
+#### Signature {#isfieldlocation-signature}
+
+```typescript
+export declare function isFieldLocation(range: FieldLocation | DetachedField): range is FieldLocation;
+```
+
+#### Parameters {#isfieldlocation-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        range
+      </td>
+      <td>
+        <a href='/docs/apis/tree/fieldlocation-interface'>FieldLocation</a> | <a href='/docs/apis/tree/detachedfield-interface'>DetachedField</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#isfieldlocation-returns}
+
+<b>Return type:</b> range is [FieldLocation](/docs/apis/tree/fieldlocation-interface)
+
 ### isGlobalFieldKey {#isglobalfieldkey-function}
 
 Derives the scope using the type of `key`<!-- -->.
@@ -3055,6 +5543,48 @@ export declare function isGlobalFieldKey(key: FieldKey): key is GlobalFieldKeySy
 #### Returns {#isglobalfieldkey-returns}
 
 <b>Return type:</b> key is [GlobalFieldKeySymbol](/docs/apis/tree#globalfieldkeysymbol-typealias)
+
+### isLocalKey {#islocalkey-function}
+
+#### Signature {#islocalkey-signature}
+
+```typescript
+export declare function isLocalKey(key: FieldKey): key is LocalFieldKey;
+```
+
+#### Parameters {#islocalkey-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        key
+      </td>
+      <td>
+        <a href='/docs/apis/tree#fieldkey-typealias'>FieldKey</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#islocalkey-returns}
+
+<b>Return type:</b> key is [LocalFieldKey](/docs/apis/tree#localfieldkey-typealias)
 
 ### isNeverField {#isneverfield-function}
 
@@ -3338,6 +5868,50 @@ export declare function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTre
 
 <b>Return type:</b> [JsonableTree](/docs/apis/tree/jsonabletree-interface)
 
+### keyAsDetachedField {#keyasdetachedfield-function}
+
+The inverse of [detachedFieldAsKey()](/docs/apis/tree#detachedfieldaskey-function)<!-- -->. Thus must only be used on [LocalFieldKey](/docs/apis/tree#localfieldkey-typealias)<!-- -->s which were produced via [detachedFieldAsKey()](/docs/apis/tree#detachedfieldaskey-function)<!-- -->, and with the same scope (ex: forest) as the detachedFieldAsKey was originally from.
+
+#### Signature {#keyasdetachedfield-signature}
+
+```typescript
+export declare function keyAsDetachedField(key: FieldKey): DetachedField;
+```
+
+#### Parameters {#keyasdetachedfield-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        key
+      </td>
+      <td>
+        <a href='/docs/apis/tree#fieldkey-typealias'>FieldKey</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#keyasdetachedfield-returns}
+
+<b>Return type:</b> [DetachedField](/docs/apis/tree/detachedfield-interface)
+
 ### keyFromSymbol {#keyfromsymbol-function}
 
 #### Signature {#keyfromsymbol-signature}
@@ -3381,6 +5955,701 @@ export declare function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey
 the original [GlobalFieldKey](/docs/apis/tree#globalfieldkey-typealias) for the symbol.
 
 <b>Return type:</b> [GlobalFieldKey](/docs/apis/tree#globalfieldkey-typealias)
+
+### loadSummary {#loadsummary-function}
+
+#### Signature {#loadsummary-signature}
+
+```typescript
+export declare function parseSummary<TChange>(summary: string, encoder: CommitEncoder<TChange>, destination: MutableSummaryData<TChange>): void;
+```
+
+#### Parameters {#loadsummary-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        summary
+      </td>
+      <td>
+        string
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        encoder
+      </td>
+      <td>
+        <a href='/docs/apis/tree/commitencoder-interface'>CommitEncoder</a><TChange>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        destination
+      </td>
+      <td>
+        <a href='/docs/apis/tree/mutablesummarydata-interface'>MutableSummaryData</a><TChange>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### lookupGlobalFieldSchema {#lookupglobalfieldschema-function}
+
+#### Signature {#lookupglobalfieldschema-signature}
+
+```typescript
+export declare function lookupGlobalFieldSchema(data: SchemaDataAndPolicy, identifier: GlobalFieldKey): FieldSchema;
+```
+
+#### Parameters {#lookupglobalfieldschema-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        data
+      </td>
+      <td>
+        <a href='/docs/apis/tree/schemadataandpolicy-interface'>SchemaDataAndPolicy</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        identifier
+      </td>
+      <td>
+        <a href='/docs/apis/tree#globalfieldkey-typealias'>GlobalFieldKey</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#lookupglobalfieldschema-returns}
+
+<b>Return type:</b> [FieldSchema](/docs/apis/tree/fieldschema-interface)
+
+### lookupTreeSchema {#lookuptreeschema-function}
+
+#### Signature {#lookuptreeschema-signature}
+
+```typescript
+export declare function lookupTreeSchema(data: SchemaDataAndPolicy, identifier: TreeSchemaIdentifier): TreeSchema;
+```
+
+#### Parameters {#lookuptreeschema-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        data
+      </td>
+      <td>
+        <a href='/docs/apis/tree/schemadataandpolicy-interface'>SchemaDataAndPolicy</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        identifier
+      </td>
+      <td>
+        <a href='/docs/apis/tree#treeschemaidentifier-typealias'>TreeSchemaIdentifier</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#lookuptreeschema-returns}
+
+<b>Return type:</b> [TreeSchema](/docs/apis/tree/treeschema-interface)
+
+### makeAnonChange {#makeanonchange-function}
+
+#### Signature {#makeanonchange-signature}
+
+```typescript
+export declare function makeAnonChange<T>(change: T): TaggedChange<T>;
+```
+
+#### Parameters {#makeanonchange-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        change
+      </td>
+      <td>
+        T
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#makeanonchange-returns}
+
+<b>Return type:</b> [TaggedChange](/docs/apis/tree/taggedchange-interface)<!-- -->&lt;T&gt;
+
+### mapCursorField {#mapcursorfield-function}
+
+#### Signature {#mapcursorfield-signature}
+
+```typescript
+export declare function mapCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(cursor: TCursor, f: (cursor: TCursor) => T): T[];
+```
+
+#### Parameters {#mapcursorfield-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        cursor
+      </td>
+      <td>
+        TCursor
+      </td>
+      <td>
+        tree whose field will be visited.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        f
+      </td>
+      <td>
+        (cursor: TCursor) => T
+      </td>
+      <td>
+        builds output from field member, which will be selected in cursor when cursor is provided. If <code>f</code> moves cursor, it must put it back to where it was at the beginning of <code>f</code> before returning.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#mapcursorfield-returns}
+
+array resulting from applying `f` to each item of the current field on `cursor`<!-- -->. Returns an empty array if the field is empty or not present (which are considered the same).
+
+<b>Return type:</b> T\[\]
+
+### mapCursorFields {#mapcursorfields-function}
+
+#### Signature {#mapcursorfields-signature}
+
+```typescript
+export declare function mapCursorFields<T, TCursor extends ITreeCursor = ITreeCursor>(cursor: TCursor, f: (cursor: TCursor) => T): T[];
+```
+
+#### Parameters {#mapcursorfields-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        cursor
+      </td>
+      <td>
+        TCursor
+      </td>
+      <td>
+        tree whose fields will be visited.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        f
+      </td>
+      <td>
+        (cursor: TCursor) => T
+      </td>
+      <td>
+        builds output from field, which will be selected in cursor when cursor is provided. If <code>f</code> moves cursor, it must put it back to where it was at the beginning of <code>f</code> before returning.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#mapcursorfields-returns}
+
+array resulting from applying `f` to each field of the current node on `cursor`<!-- -->. Returns an empty array if the node is empty or not present (which are considered the same). Note that order is not specified for field iteration.
+
+<b>Return type:</b> T\[\]
+
+### mapFieldMarks {#mapfieldmarks-function}
+
+Converts a `Delta.FieldMarks` whose tree content is represented with by `TIn` instances into a `Delta.FieldMarks`<!-- -->whose tree content is represented with by `TOut` instances.
+
+This function is useful for converting `Delta`<!-- -->s that represent tree content with cursors into `Delta`<!-- -->s that represent tree content with a deep-comparable representation of the content. See assertDeltaEqual. TODO: link this
+
+#### Signature {#mapfieldmarks-signature}
+
+```typescript
+export declare function mapFieldMarks<TIn, TOut>(fields: Delta.FieldMarks<TIn>, func: (tree: TIn) => TOut): Delta.FieldMarks<TOut>;
+```
+
+#### Parameters {#mapfieldmarks-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        fields
+      </td>
+      <td>
+        Delta.FieldMarks<TIn>
+      </td>
+      <td>
+        The Map of fields to convert. Not mutated.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        func
+      </td>
+      <td>
+        (tree: TIn) => TOut
+      </td>
+      <td>
+        The functions used to map tree content.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#mapfieldmarks-returns}
+
+<b>Return type:</b> Delta.FieldMarks&lt;TOut&gt;
+
+### mapFromNamed {#mapfromnamed-function}
+
+#### Signature {#mapfromnamed-signature}
+
+```typescript
+export declare function mapFromNamed<T extends Named<TName>, TName>(named: Iterable<T>): Map<TName, T>;
+```
+
+#### Parameters {#mapfromnamed-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        named
+      </td>
+      <td>
+        Iterable<T>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#mapfromnamed-returns}
+
+a map from name of item with that name from a collection of named items.
+
+<b>Return type:</b> Map&lt;TName, T&gt;
+
+### mapMark {#mapmark-function}
+
+Converts a `Delta.Mark` whose tree content is represented with by `TIn` instances into a `Delta.Mark`<!-- -->whose tree content is represented with by `TOut` instances.
+
+This function is useful for converting `Delta`<!-- -->s that represent tree content with cursors into `Delta`<!-- -->s that represent tree content with a deep-comparable representation of the content. See assertMarkListEqual. TODO: link this
+
+#### Signature {#mapmark-signature}
+
+```typescript
+export declare function mapMark<TIn, TOut>(mark: Delta.Mark<TIn>, func: (tree: TIn) => TOut): Delta.Mark<TOut>;
+```
+
+#### Parameters {#mapmark-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        mark
+      </td>
+      <td>
+        Delta.Mark<TIn>
+      </td>
+      <td>
+        The mark to convert. Not mutated.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        func
+      </td>
+      <td>
+        (tree: TIn) => TOut
+      </td>
+      <td>
+        The functions used to map tree content.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#mapmark-returns}
+
+<b>Return type:</b> Delta.Mark&lt;TOut&gt;
+
+### mapMarkList {#mapmarklist-function}
+
+Converts a `Delta.MarkList` whose tree content is represented with by `TIn` instances into a `Delta.MarkList`<!-- -->whose tree content is represented with by `TOut` instances.
+
+This function is useful for converting `Delta`<!-- -->s that represent tree content with cursors into `Delta`<!-- -->s that represent tree content with a deep-comparable representation of the content. See assertMarkListEqual. TODO: link this
+
+#### Signature {#mapmarklist-signature}
+
+```typescript
+export declare function mapMarkList<TIn, TOut>(list: Delta.MarkList<TIn>, func: (tree: TIn) => TOut): Delta.MarkList<TOut>;
+```
+
+#### Parameters {#mapmarklist-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        list
+      </td>
+      <td>
+        Delta.MarkList<TIn>
+      </td>
+      <td>
+        The list of marks to convert. Not mutated.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        func
+      </td>
+      <td>
+        (tree: TIn) => TOut
+      </td>
+      <td>
+        The functions used to map tree content.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#mapmarklist-returns}
+
+<b>Return type:</b> Delta.MarkList&lt;TOut&gt;
+
+### mapTreeFromCursor {#maptreefromcursor-function}
+
+Extract a MapTree from the contents of the given ITreeCursor's current node.
+
+#### Signature {#maptreefromcursor-signature}
+
+```typescript
+export declare function mapTreeFromCursor(cursor: ITreeCursor): MapTree;
+```
+
+#### Parameters {#maptreefromcursor-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        cursor
+      </td>
+      <td>
+        <a href='/docs/apis/tree/itreecursor-interface'>ITreeCursor</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#maptreefromcursor-returns}
+
+<b>Return type:</b> [MapTree](/docs/apis/tree/maptree-interface)
+
+### moveToDetachedField {#movetodetachedfield-function}
+
+#### Signature {#movetodetachedfield-signature}
+
+```typescript
+export declare function moveToDetachedField(forest: IForestSubscription, cursorToMove: ITreeSubscriptionCursor, field?: DetachedField): void;
+```
+
+#### Parameters {#movetodetachedfield-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Modifiers
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        forest
+      </td>
+      <td>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/iforestsubscription-interface'>IForestSubscription</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        cursorToMove
+      </td>
+      <td>
+      </td>
+      <td>
+        <a href='/docs/apis/tree/itreesubscriptioncursor-interface'>ITreeSubscriptionCursor</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        field
+      </td>
+      <td>
+        optional
+      </td>
+      <td>
+        <a href='/docs/apis/tree/detachedfield-interface'>DetachedField</a>
+      </td>
+      <td>
+        defaults to <a href='/docs/apis/tree#rootfield-variable'>rootField</a>.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#movetodetachedfield-returns}
+
+anchor to `field`<!-- -->.
+
+### namedTreeSchema {#namedtreeschema-function}
+
+Helper for building [NamedTreeSchema](/docs/apis/tree#namedtreeschema-typealias)<!-- -->.
+
+#### Signature {#namedtreeschema-signature}
+
+```typescript
+export declare function namedTreeSchema(data: Partial<TreeSchemaBuilder> & Named<TreeSchemaIdentifier>): NamedTreeSchema;
+```
+
+#### Parameters {#namedtreeschema-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        data
+      </td>
+      <td>
+        Partial<<a href='/docs/apis/tree/treeschemabuilder-interface'>TreeSchemaBuilder</a>> & <a href='/docs/apis/tree/named-interface'>Named</a><<a href='/docs/apis/tree#treeschemaidentifier-typealias'>TreeSchemaIdentifier</a>>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#namedtreeschema-returns}
+
+<b>Return type:</b> [NamedTreeSchema](/docs/apis/tree#namedtreeschema-typealias)
 
 ### recordDependency {#recorddependency-function}
 
@@ -3432,6 +6701,204 @@ export declare function recordDependency(dependent: ObservingDependent | undefin
   </tbody>
 </table>
 
+### runSynchronousTransaction {#runsynchronoustransaction-function}
+
+#### Signature {#runsynchronoustransaction-signature}
+
+```typescript
+export declare function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder<TChange>, TChange>({ forest, changeFamily, submitEdit }: Checkout<TEditor, TChange>, command: (forest: IForestSubscription, editor: TEditor) => TransactionResult): TransactionResult;
+```
+
+#### Parameters {#runsynchronoustransaction-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        { forest, changeFamily, submitEdit }
+      </td>
+      <td>
+        <a href='/docs/apis/tree/checkout-interface'>Checkout</a><TEditor, TChange>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        command
+      </td>
+      <td>
+        (forest: <a href='/docs/apis/tree/iforestsubscription-interface'>IForestSubscription</a>, editor: TEditor) => <a href='/docs/apis/tree#transactionresult-enum'>TransactionResult</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#runsynchronoustransaction-returns}
+
+<b>Return type:</b> [TransactionResult](/docs/apis/tree#transactionresult-enum)
+
+### schemaDataIsEmpty {#schemadataisempty-function}
+
+#### Signature {#schemadataisempty-signature}
+
+```typescript
+export declare function schemaDataIsEmpty(data: SchemaData): boolean;
+```
+
+#### Parameters {#schemadataisempty-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        data
+      </td>
+      <td>
+        <a href='/docs/apis/tree/schemadata-interface'>SchemaData</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#schemadataisempty-returns}
+
+<b>Return type:</b> boolean
+
+### scopeFromKey {#scopefromkey-function}
+
+Derives the scope using the type of `key`<!-- -->.
+
+#### Signature {#scopefromkey-signature}
+
+```typescript
+export declare function scopeFromKey(key: FieldKey): [FieldScope, LocalFieldKey | GlobalFieldKey];
+```
+
+#### Parameters {#scopefromkey-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        key
+      </td>
+      <td>
+        <a href='/docs/apis/tree#fieldkey-typealias'>FieldKey</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#scopefromkey-returns}
+
+<b>Return type:</b> \[[FieldScope](/docs/apis/tree#fieldscope-enum)<!-- -->, [LocalFieldKey](/docs/apis/tree#localfieldkey-typealias) \| [GlobalFieldKey](/docs/apis/tree#globalfieldkey-typealias)<!-- -->\]
+
+### setGenericTreeField {#setgenerictreefield-function}
+
+Sets a field on `node`<!-- -->.
+
+#### Signature {#setgenerictreefield-signature}
+
+```typescript
+export declare function setGenericTreeField<T>(node: GenericFieldsNode<T>, key: FieldKey, content: T[]): void;
+```
+
+#### Parameters {#setgenerictreefield-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        node
+      </td>
+      <td>
+        <a href='/docs/apis/tree/genericfieldsnode-interface'>GenericFieldsNode</a><T>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        key
+      </td>
+      <td>
+        <a href='/docs/apis/tree#fieldkey-typealias'>FieldKey</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        content
+      </td>
+      <td>
+        T[]
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
 ### singleJsonCursor {#singlejsoncursor-function}
 
 Used to read a Jsonable tree for testing and benchmarking.
@@ -3475,6 +6942,148 @@ export declare function singleJsonCursor(root: JsonCompatible): ITreeCursorSynch
 #### Returns {#singlejsoncursor-returns}
 
 an [ITreeCursorSynchronous](/docs/apis/tree/itreecursorsynchronous-interface) for a single [JsonCompatible](/docs/apis/tree#jsoncompatible-typealias)<!-- -->.
+
+<b>Return type:</b> [ITreeCursorSynchronous](/docs/apis/tree/itreecursorsynchronous-interface)
+
+### singleMapTreeCursor {#singlemaptreecursor-function}
+
+#### Signature {#singlemaptreecursor-signature}
+
+```typescript
+export declare function singleMapTreeCursor(root: MapTree): CursorWithNode<MapTree>;
+```
+
+#### Parameters {#singlemaptreecursor-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        root
+      </td>
+      <td>
+        <a href='/docs/apis/tree/maptree-interface'>MapTree</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#singlemaptreecursor-returns}
+
+an ITreeCursorSynchronous for a single MapTree.
+
+<b>Return type:</b> [CursorWithNode](/docs/apis/tree/cursorwithnode-interface)<!-- -->&lt;[MapTree](/docs/apis/tree/maptree-interface)<!-- -->&gt;
+
+### singleStackTreeCursor {#singlestacktreecursor-function}
+
+#### Signature {#singlestacktreecursor-signature}
+
+```typescript
+export declare function singleStackTreeCursor<TNode>(root: TNode, adapter: CursorAdapter<TNode>): CursorWithNode<TNode>;
+```
+
+#### Parameters {#singlestacktreecursor-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        root
+      </td>
+      <td>
+        TNode
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        adapter
+      </td>
+      <td>
+        <a href='/docs/apis/tree/cursoradapter-interface'>CursorAdapter</a><TNode>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#singlestacktreecursor-returns}
+
+an [ITreeCursorSynchronous](/docs/apis/tree/itreecursorsynchronous-interface) for a single root.
+
+<b>Return type:</b> [CursorWithNode](/docs/apis/tree/cursorwithnode-interface)<!-- -->&lt;TNode&gt;
+
+### singleTextCursor {#singletextcursor-function}
+
+#### Signature {#singletextcursor-signature}
+
+```typescript
+export declare function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;
+```
+
+#### Parameters {#singletextcursor-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        root
+      </td>
+      <td>
+        <a href='/docs/apis/tree/jsonabletree-interface'>JsonableTree</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#singletextcursor-returns}
+
+an [ITreeCursorSynchronous](/docs/apis/tree/itreecursorsynchronous-interface) for a single [JsonableTree](/docs/apis/tree/jsonabletree-interface)<!-- -->.
 
 <b>Return type:</b> [ITreeCursorSynchronous](/docs/apis/tree/itreecursorsynchronous-interface)
 
@@ -3566,7 +7175,304 @@ true iff `key` is a [GlobalFieldKeySymbol](/docs/apis/tree#globalfieldkeysymbol-
 
 <b>Return type:</b> key is [GlobalFieldKeySymbol](/docs/apis/tree#globalfieldkeysymbol-typealias)
 
+### tagChange {#tagchange-function}
+
+#### Signature {#tagchange-signature}
+
+```typescript
+export declare function tagChange<T>(change: T, tag: RevisionTag | undefined, isInverse?: boolean): TaggedChange<T>;
+```
+
+#### Parameters {#tagchange-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Modifiers
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        change
+      </td>
+      <td>
+      </td>
+      <td>
+        T
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        tag
+      </td>
+      <td>
+      </td>
+      <td>
+        <a href='/docs/apis/tree#revisiontag-typealias'>RevisionTag</a> | undefined
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        isInverse
+      </td>
+      <td>
+        optional
+      </td>
+      <td>
+        boolean
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#tagchange-returns}
+
+<b>Return type:</b> [TaggedChange](/docs/apis/tree/taggedchange-interface)<!-- -->&lt;T&gt;
+
+### tagInverse {#taginverse-function}
+
+#### Signature {#taginverse-signature}
+
+```typescript
+export declare function tagInverse<T>(inverseChange: T, invertedRevision: RevisionTag | undefined): TaggedChange<T>;
+```
+
+#### Parameters {#taginverse-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        inverseChange
+      </td>
+      <td>
+        T
+      </td>
+      <td>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        invertedRevision
+      </td>
+      <td>
+        <a href='/docs/apis/tree#revisiontag-typealias'>RevisionTag</a> | undefined
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#taginverse-returns}
+
+<b>Return type:</b> [TaggedChange](/docs/apis/tree/taggedchange-interface)<!-- -->&lt;T&gt;
+
+### treeSchema {#treeschema-function}
+
+Helper for building [TreeSchema](/docs/apis/tree/treeschema-interface)<!-- -->.
+
+#### Signature {#treeschema-signature}
+
+```typescript
+export declare function treeSchema(data: TreeSchemaBuilder): TreeSchema;
+```
+
+#### Parameters {#treeschema-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        data
+      </td>
+      <td>
+        <a href='/docs/apis/tree/treeschemabuilder-interface'>TreeSchemaBuilder</a>
+      </td>
+      <td>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#treeschema-returns}
+
+<b>Return type:</b> [TreeSchema](/docs/apis/tree/treeschema-interface)
+
+### verifyChangeRebaser {#verifychangerebaser-function}
+
+Verifies the axioms of `ChangeRebaser` are met by the given `rebaser`<!-- -->.
+
+#### Signature {#verifychangerebaser-signature}
+
+```typescript
+export declare function verifyChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>, changes: ReadonlySet<TChange>, isEquivalent: (a: TChange, b: TChange) => boolean): OutputType<TChange>;
+```
+
+#### Parameters {#verifychangerebaser-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        rebaser
+      </td>
+      <td>
+        <a href='/docs/apis/tree/changerebaser-interface'>ChangeRebaser</a><TChange>
+      </td>
+      <td>
+        The rebaser to test.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        changes
+      </td>
+      <td>
+        ReadonlySet<TChange>
+      </td>
+      <td>
+        The set of changes to use for testing the <code>rebaser</code>.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        isEquivalent
+      </td>
+      <td>
+        (a: TChange, b: TChange) => boolean
+      </td>
+      <td>
+        Used to compare whether two changes are equivalent for the purposes of this axioms.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+#### Returns {#verifychangerebaser-returns}
+
+<b>Return type:</b> [OutputType](/docs/apis/tree/outputtype-interface)<!-- -->&lt;TChange&gt;
+
+### visitDelta {#visitdelta-function}
+
+Crawls the given `delta`<!-- -->, calling `visitor`<!-- -->'s callback for each change encountered. Each successive call to the visitor callbacks assumes that the change described by earlier calls have been applied to the document tree. For example, for a change that deletes the first and third node of a field, the visitor calls will pass indices 0 and 1 respectively.
+
+#### Signature {#visitdelta-signature}
+
+```typescript
+export declare function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void;
+```
+
+#### Parameters {#visitdelta-parameters}
+
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th scope="col">
+        Parameter
+      </th>
+      <th scope="col">
+        Type
+      </th>
+      <th scope="col">
+        Description
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        delta
+      </td>
+      <td>
+        Delta.Root
+      </td>
+      <td>
+        The delta to be crawled.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        visitor
+      </td>
+      <td>
+        <a href='/docs/apis/tree/deltavisitor-interface'>DeltaVisitor</a>
+      </td>
+      <td>
+        The object to notify of the changes encountered.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
 ## Variable Details
+
+### afterChangeToken {#afterchangetoken-variable}
+
+This `InvalidationToken` is used to indicate that the invalidation of Dependents happens after the Delta is applied to the forest. It is a workaround i.e. definitely a misuse of the invalidation system in an absence of alternative notification/eventing system.
+
+#### Signature {#afterchangetoken-signature}
+
+```typescript
+afterChangeToken: InvalidationToken
+```
 
 ### createField {#createfield-variable}
 
@@ -3576,6 +7482,14 @@ A symbol to get the function, which creates a new field of [EditableTree](/docs/
 
 ```typescript
 createField: unique symbol
+```
+
+### defaultChangeFamily {#defaultchangefamily-variable}
+
+#### Signature {#defaultchangefamily-signature}
+
+```typescript
+defaultChangeFamily: DefaultChangeFamily
 ```
 
 ### defaultSchemaPolicy {#defaultschemapolicy-variable}
@@ -3588,6 +7502,16 @@ This requires new node types to have explicit stored schema to exist in document
 
 ```typescript
 defaultSchemaPolicy: FullSchemaPolicy
+```
+
+### dummyRepairDataStore {#dummyrepairdatastore-variable}
+
+A `RepairDataStore` implementation that returns dummy content.
+
+#### Signature {#dummyrepairdatastore-signature}
+
+```typescript
+dummyRepairDataStore: RepairDataStore
 ```
 
 ### emptyField {#emptyfield-variable}
@@ -3612,6 +7536,36 @@ TODO: This has to be a LocalFieldKey since different nodes will have different F
 
 ```typescript
 EmptyKey: LocalFieldKey
+```
+
+### emptyMap {#emptymap-variable}
+
+Empty readonly map.
+
+#### Signature {#emptymap-signature}
+
+```typescript
+emptyMap: ReadonlyMap<never, never>
+```
+
+### emptySet {#emptyset-variable}
+
+Empty readonly set.
+
+#### Signature {#emptyset-signature}
+
+```typescript
+emptySet: ReadonlySet<never>
+```
+
+### genericFieldKind {#genericfieldkind-variable}
+
+[FieldKind](/docs/apis/tree/fieldkind-class) used to represent changes to elements of a field in a field-kind-agnostic format.
+
+#### Signature {#genericfieldkind-signature}
+
+```typescript
+genericFieldKind: FieldKind
 ```
 
 ### getField {#getfield-variable}
@@ -3674,6 +7628,14 @@ jsonNumber: NamedTreeSchema
 jsonObject: NamedTreeSchema
 ```
 
+### jsonRoot {#jsonroot-variable}
+
+#### Signature {#jsonroot-signature}
+
+```typescript
+jsonRoot: FieldSchema
+```
+
 ### jsonSchemaData {#jsonschemadata-variable}
 
 #### Signature {#jsonschemadata-signature}
@@ -3690,6 +7652,16 @@ jsonSchemaData: SchemaData
 jsonString: NamedTreeSchema
 ```
 
+### neverField {#neverfield-variable}
+
+FieldSchema which is impossible for any data to be in schema with.
+
+#### Signature {#neverfield-signature}
+
+```typescript
+neverField: import("../core").FieldSchema
+```
+
 ### neverTree {#nevertree-variable}
 
 TreeSchema which is impossible for any data to be in schema with.
@@ -3698,6 +7670,14 @@ TreeSchema which is impossible for any data to be in schema with.
 
 ```typescript
 neverTree: TreeSchema
+```
+
+### noFailure {#nofailure-variable}
+
+#### Signature {#nofailure-signature}
+
+```typescript
+noFailure: OutputType<unknown>
 ```
 
 ### proxyTargetSymbol {#proxytargetsymbol-variable}
@@ -3720,6 +7700,14 @@ A symbol to get the function, which replaces a field of [EditableTree](/docs/api
 replaceField: unique symbol
 ```
 
+### rootField {#rootfield-variable}
+
+#### Signature {#rootfield-signature}
+
+```typescript
+rootField: DetachedField
+```
+
 ### rootFieldKey {#rootfieldkey-variable}
 
 GlobalFieldKey to use for the root of documents. TODO: if we do want to standardize on a single value for this, it likely should be namespaced or a UUID to avoid risk of collisions.
@@ -3728,6 +7716,14 @@ GlobalFieldKey to use for the root of documents. TODO: if we do want to standard
 
 ```typescript
 rootFieldKey: GlobalFieldKey
+```
+
+### rootFieldKeySymbol {#rootfieldkeysymbol-variable}
+
+#### Signature {#rootfieldkeysymbol-signature}
+
+```typescript
+rootFieldKeySymbol: GlobalFieldKeySymbol
 ```
 
 ### typeNameSymbol {#typenamesymbol-variable}

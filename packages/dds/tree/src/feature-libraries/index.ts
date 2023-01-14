@@ -43,8 +43,8 @@ export {
 export { ForestIndex } from "./forestIndex";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export { buildForest } from "./object-forest";
-export { SchemaIndex, SchemaEditor, getSchemaString } from "./schemaIndex";
-export { singleStackTreeCursor, CursorAdapter } from "./treeCursorUtils";
+export { SchemaIndex, SchemaEditor, SchemaOp, getSchemaString } from "./schemaIndex";
+export { CursorWithNode, singleStackTreeCursor, CursorAdapter } from "./treeCursorUtils";
 export { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
@@ -79,6 +79,7 @@ export {
     Multiplicity,
     FullSchemaPolicy,
     allowsRepoSuperset,
+    GenericChange,
     GenericChangeset,
     genericFieldKind,
     NodeReviver,

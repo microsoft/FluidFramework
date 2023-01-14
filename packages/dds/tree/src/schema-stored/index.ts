@@ -19,11 +19,12 @@ export {
     NamedFieldSchema,
 } from "./schema";
 export {
-    StoredSchemaRepository,
+    InMemoryStoredSchemaRepository,
     lookupGlobalFieldSchema,
     lookupTreeSchema,
-    InMemoryStoredSchemaRepository,
+    MutableSchemaData,
     schemaDataIsEmpty,
     SchemaDataAndPolicy,
+    StoredSchemaRepository,
 } from "./storedSchemaRepository";
 export { treeSchema, fieldSchema, emptyMap, emptySet, TreeSchemaBuilder } from "./builders";

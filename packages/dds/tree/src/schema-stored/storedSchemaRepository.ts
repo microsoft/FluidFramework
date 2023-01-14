@@ -107,7 +107,10 @@ export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = Schem
     }
 }
 
-interface MutableSchemaData extends SchemaData {
+/**
+ * TODO: Doc
+ */
+export interface MutableSchemaData extends SchemaData {
     globalFieldSchema: Map<GlobalFieldKey, FieldSchema>;
     treeSchema: Map<TreeSchemaIdentifier, TreeSchema>;
 }

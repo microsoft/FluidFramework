@@ -287,7 +287,7 @@ export interface SummaryElement {
 
     /**
      * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
-     * @param stringify - Serializes the contents of the index (including {@link IFluidHandle}s) for storage.
+     * @param stringify - Serializes the contents of the index (including {@link @fluidframework/core-interfaces#IFluidHandle}s) for storage.
      */
     getAttachSummary(
         stringify: SummaryElementStringifier,
@@ -298,7 +298,7 @@ export interface SummaryElement {
 
     /**
      * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
-     * @param stringify - Serializes the contents of the index (including {@link IFluidHandle}s) for storage.
+     * @param stringify - Serializes the contents of the index (including {@link @fluidframework/core-interfaces#IFluidHandle}s) for storage.
      */
     summarize(
         stringify: SummaryElementStringifier,
@@ -308,7 +308,7 @@ export interface SummaryElement {
     ): Promise<ISummaryTreeWithStats>;
 
     /**
-     * {@inheritDoc (ISharedObject:interface).getGCData}
+     * {@inheritDoc @fluidframework/shared-object-base#(ISharedObject:interface).getGCData}
      */
     // TODO: Change this interface (and the one in ISharedObject, if necessary) to support "handles within handles".
     // Consider the case of a document with history; the return value here currently grows unboundedly.
