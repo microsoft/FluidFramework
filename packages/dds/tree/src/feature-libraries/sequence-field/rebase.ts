@@ -118,7 +118,10 @@ function rebaseMarkList<TNodeChange>(
             );
         }
         if (baseMark === undefined) {
-            assert(currMark !== undefined, 0x4f4 /* Non-empty queue should return at least one mark */);
+            assert(
+                currMark !== undefined,
+                0x4f4 /* Non-empty queue should return at least one mark */,
+            );
             if (isAttach(currMark)) {
                 handleCurrAttach(
                     currMark,
@@ -455,7 +458,10 @@ function rebaseMark<TNodeChange>(
                 case "ReturnTo": {
                     if (currMark.isIntention) {
                         // Past this point, currMark must be a reattach.
-                        assert(isActiveReattach(currMark), 0x4fb /* Invalid reattach mark overlap */);
+                        assert(
+                            isActiveReattach(currMark),
+                            0x4fb /* Invalid reattach mark overlap */,
+                        );
                         // The nodes that currMark aims to reattach are being reattached by baseMark
                         return {
                             ...clone(currMark),
@@ -477,7 +483,10 @@ function rebaseMark<TNodeChange>(
                             conflictsWith: baseMarkRevision,
                         };
                     }
-                    assert(!isSkipLikeReattach(currMark), 0x4fc /* Unsupported reattach mark overlap */);
+                    assert(
+                        !isSkipLikeReattach(currMark),
+                        0x4fc /* Unsupported reattach mark overlap */,
+                    );
                     // The nodes that currMark aims to reattach and were detached by `currMark.lastDetachedBy`
                     // are being reattached by baseMark.
                     assert(
@@ -601,7 +610,10 @@ function applyMoveEffects<TNodeChange>(
             }
         }
         if (newMark === undefined) {
-            assert(baseMark !== undefined, 0x500 /* Non-empty RebaseQueue should return at least one mark */);
+            assert(
+                baseMark !== undefined,
+                0x500 /* Non-empty RebaseQueue should return at least one mark */,
+            );
             offset += getOutputLength(baseMark);
             continue;
         }

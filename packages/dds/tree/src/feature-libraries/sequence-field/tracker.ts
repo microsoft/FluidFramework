@@ -76,7 +76,10 @@ export class GapTracker {
             if (revision === undefined) {
                 return;
             }
-            assert(revision !== undefined, 0x503 /* Compose base mark should carry revision info */);
+            assert(
+                revision !== undefined,
+                0x503 /* Compose base mark should carry revision info */,
+            );
             if (isAttach(mark)) {
                 // Reset the offset for the revisions chronologically after the attach to zero.
                 // This is because for those revisions, the nodes were present in the input context.
