@@ -13,4 +13,8 @@ export class TestCache implements ICache {
     public async set(key: string, value: string): Promise<void> {
         this.map.set(key, value);
     }
+    public async delete(key: string): Promise<boolean> {
+        const result = this.map.delete(key);
+        return result;
+    }
 }

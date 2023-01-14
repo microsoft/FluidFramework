@@ -4,18 +4,19 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { RevisionTag } from "../../core";
 import { clone, fail } from "../../util";
 import { IdAllocator } from "../modular-schema";
 import {
+    InputSpanningMark,
     Mark,
     MoveId,
     MoveIn,
     MoveOut,
-    ObjectMark,
+    OutputSpanningMark,
     ReturnFrom,
     ReturnTo,
-    SizedMark,
-    SizedObjectMark,
+    Skip,
 } from "./format";
 import { getInputLength, getOutputLength, isSkipMark } from "./utils";
 
@@ -33,6 +34,8 @@ export interface MoveEffect<T> {
     mark?: Mark<T>;
     modifyAfter?: T;
     movedMark?: Mark<T>;
+    pairedMarkStatus?: PairedMarkUpdate;
+    detacher?: RevisionTag;
 }
 
 export function newMoveEffectTable<T>(): MoveEffectTable<T> {
@@ -49,6 +52,34 @@ export enum MoveEnd {
 
 function getTable<T>(table: MoveEffectTable<T>, end: MoveEnd): Map<MoveId, MoveEffect<T>> {
     return end === MoveEnd.Source ? table.srcEffects : table.dstEffects;
+}
+
+export enum PairedMarkUpdate {
+    /**
+     * Indicates that the mark's matching mark is now inactive.
+     */
+    Deactivated,
+    /**
+     * Indicates that the mark's matching mark is now active.
+     */
+    Reactivated,
+}
+
+export interface MovePartition<TNodeChange> {
+    id: MoveId;
+
+    // Undefined means the partition is the same size as the input.
+    count?: number;
+    replaceWith?: Mark<TNodeChange>[];
+    modifyAfter?: TNodeChange;
+    /**
+     * When set, updates the mark's paired mark status.
+     */
+    pairedMarkStatus?: PairedMarkUpdate;
+    /**
+     * When set, updates the mark's `detachedBy` field.
+     */
+    detachedBy?: RevisionTag;
 }
 
 export function splitMove<T>(
@@ -122,11 +153,19 @@ function applyMoveEffectsToDest<T>(
         result.push(effect.mark);
     } else {
         if (effect.count !== 0) {
-            result.push({
+            const newMark: Mark<T> = {
                 ...mark,
                 id: effect.id ?? mark.id,
                 count: effect.count ?? mark.count,
-            });
+            };
+            if (effect.pairedMarkStatus !== undefined) {
+                if (effect.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
+                    newMark.isSrcConflicted = true;
+                } else {
+                    delete newMark.isSrcConflicted;
+                }
+            }
+            result.push(newMark);
         }
     }
 
@@ -173,6 +212,14 @@ function applyMoveEffectsToSource<T>(
                 newMark.changes = changes;
             } else {
                 delete newMark.changes;
+            }
+        }
+        if (effect.pairedMarkStatus !== undefined) {
+            assert(newMark.type === "ReturnFrom", "TODO: support updating MoveOut.isSrcConflicted");
+            if (effect.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
+                newMark.isDstConflicted = true;
+            } else {
+                delete newMark.isDstConflicted;
             }
         }
         result.push(newMark);
@@ -228,7 +275,7 @@ export function applyMoveEffectsToMark<T>(
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has input length `length`.
  */
-export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
+export function splitMarkOnInput<TMark extends InputSpanningMark<unknown>>(
     mark: TMark,
     length: number,
     genId: IdAllocator,
@@ -244,11 +291,24 @@ export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
     if (isSkipMark(mark)) {
         return [length, remainder] as [TMark, TMark];
     }
-    const markObj = mark as SizedObjectMark;
+    const markObj = mark as Exclude<TMark, Skip>;
     const type = mark.type;
     switch (type) {
         case "Modify":
             fail(`Unable to split ${type} mark of length 1`);
+        case "ReturnTo": {
+            const newId = genId();
+            splitMove(moveEffects, MoveEnd.Source, mark.id, newId, length, remainder);
+            return [
+                { ...markObj, count: length },
+                { ...markObj, id: newId, count: remainder, detachIndex: mark.detachIndex + length },
+            ] as [TMark, TMark];
+        }
+        case "Revive":
+            return [
+                { ...markObj, count: length },
+                { ...markObj, count: remainder, detachIndex: mark.detachIndex + length },
+            ] as [TMark, TMark];
         case "Delete":
             return [
                 { ...markObj, count: length },
@@ -276,13 +336,14 @@ export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has output length `length`.
  */
-export function splitMarkOnOutput<TMark extends Mark<unknown>>(
+export function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(
     mark: TMark,
     length: number,
     genId: IdAllocator,
     moveEffects: MoveEffectTable<unknown>,
+    ignorePairing: boolean = false,
 ): [TMark, TMark] {
-    const markLength = getOutputLength(mark);
+    const markLength = getOutputLength(mark, ignorePairing);
     const remainder = markLength - length;
     if (length < 1 || remainder < 1) {
         fail(
@@ -292,15 +353,11 @@ export function splitMarkOnOutput<TMark extends Mark<unknown>>(
     if (isSkipMark(mark)) {
         return [length, remainder] as [TMark, TMark];
     }
-    const markObj = mark as ObjectMark;
+    const markObj = mark as Exclude<TMark, Skip>;
     const type = markObj.type;
     switch (type) {
         case "Modify":
             fail(`Unable to split ${type} mark of length 1`);
-        case "Delete":
-        case "MoveOut":
-        case "ReturnFrom":
-            fail(`Unable to split ${type} mark of length 0`);
         case "Insert":
             return [
                 { ...markObj, content: markObj.content.slice(0, length) },
@@ -313,7 +370,14 @@ export function splitMarkOnOutput<TMark extends Mark<unknown>>(
             splitMove(moveEffects, MoveEnd.Source, markObj.id, newId, length, remainder);
             return [
                 { ...markObj, count: length },
-                { ...markObj, id: newId, count: remainder },
+                type === "MoveIn"
+                    ? { ...markObj, id: newId, count: remainder }
+                    : {
+                          ...markObj,
+                          id: newId,
+                          count: remainder,
+                          detachIndex: markObj.detachIndex + length,
+                      },
             ] as [TMark, TMark];
         }
         case "Revive":
