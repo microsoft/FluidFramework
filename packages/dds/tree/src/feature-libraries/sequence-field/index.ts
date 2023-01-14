@@ -60,6 +60,6 @@ export {
     isMoveMark,
     MoveMark,
     MoveEffectTable,
-    MovePartition,
+    MoveEffect,
     newMoveEffectTable,
 } from "./moveEffectTable";

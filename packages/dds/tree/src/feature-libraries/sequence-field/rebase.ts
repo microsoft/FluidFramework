@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { clone, fail, getOrAddEmptyToMap } from "../../util";
+import { clone, fail } from "../../util";
 import { RevisionTag, TaggedChange } from "../../core";
 import { IdAllocator } from "../modular-schema";
 import {
@@ -19,7 +19,7 @@ import {
 import { Attach, Changeset, LineageEvent, Mark, MarkList, SizedMark } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
-import { MoveEffectTable, newMoveEffectTable, removeMoveDest } from "./moveEffectTable";
+import { getOrCreateEffect, MoveEffectTable, MoveEnd, newMoveEffectTable } from "./moveEffectTable";
 import { MarkQueue } from "./markQueue";
 
 /**
@@ -59,12 +59,7 @@ function rebaseMarkList<TNodeChange>(
     genId: IdAllocator,
 ): MarkList<TNodeChange> {
     const moveEffects = newMoveEffectTable<TNodeChange>();
-
-    // Necessary so we don't have to re-split any marks when applying move effects.
-    moveEffects.allowMerges = false;
     const factory = new MarkListFactory<TNodeChange>(moveEffects);
-
-    const splitBaseMarks: MarkList<TNodeChange> = [];
     const queue = new RebaseQueue(baseRevision, baseMarkList, currMarkList, genId, moveEffects);
 
     // Each attach mark in `currMarkList` should have a lineage event added for `baseRevision` if a node adjacent to
@@ -118,19 +113,13 @@ function rebaseMarkList<TNodeChange>(
                 baseDetachOffset = 0;
             }
         }
-        if (baseMark !== undefined) {
-            splitBaseMarks.push(baseMark);
-        }
     }
 
     if (baseDetachOffset > 0 && baseRevision !== undefined) {
         updateLineage(lineageRequests, baseRevision);
     }
 
-    moveEffects.allowMerges = true;
-
-    // TODO: It's not convenient to store splitBaseMarks for cross-field move effects.
-    return applyMoveEffects(splitBaseMarks, factory.list, moveEffects);
+    return applyMoveEffects(baseMarkList, factory.list, moveEffects);
 }
 
 class RebaseQueue<T> {
@@ -145,8 +134,8 @@ class RebaseQueue<T> {
         genId: IdAllocator,
         moveEffects: MoveEffectTable<T>,
     ) {
-        this.baseMarks = new MarkQueue(baseMarks, baseRevision, moveEffects, genId);
-        this.newMarks = new MarkQueue(newMarks, undefined, moveEffects, genId, true);
+        this.baseMarks = new MarkQueue(baseMarks, baseRevision, moveEffects, false, genId);
+        this.newMarks = new MarkQueue(newMarks, undefined, moveEffects, true, genId);
     }
 
     public isEmpty(): boolean {
@@ -236,7 +225,7 @@ function rebaseMark<TNodeChange>(
                 isObjMark(currMark) &&
                 (currMark.type === "MoveOut" || currMark.type === "ReturnFrom")
             ) {
-                removeMoveDest(moveEffects, currMark.id);
+                getOrCreateEffect(moveEffects, MoveEnd.Dest, currMark.id).count = 0;
             }
             return 0;
         case "Modify": {
@@ -251,7 +240,8 @@ function rebaseMark<TNodeChange>(
         case "MoveOut":
         case "ReturnFrom": {
             if (!isSkipMark(currMark)) {
-                getOrAddEmptyToMap(moveEffects.movedMarks, baseMark.id).push(clone(currMark));
+                getOrCreateEffect(moveEffects, MoveEnd.Dest, baseMark.id).movedMark =
+                    clone(currMark);
             }
             return 0;
         }
@@ -269,9 +259,8 @@ function applyMoveEffects<TNodeChange>(
         baseMarks,
         undefined,
         rebasedMarks,
-        () => fail("Should not split moves while applying move effects"),
+        () => fail("Should not generate new IDs when applying move effects"),
         moveEffects,
-        false,
     );
     const factory = new MarkListFactory<TNodeChange>(moveEffects);
 
@@ -279,16 +268,13 @@ function applyMoveEffects<TNodeChange>(
     while (!queue.isEmpty()) {
         const { baseMark, newMark } = queue.pop();
         if (isObjMark(baseMark) && (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")) {
-            const movedMarks = moveEffects.movedMarks.get(baseMark.id);
-            if (movedMarks !== undefined) {
+            const effect = getOrCreateEffect(moveEffects, MoveEnd.Dest, baseMark.id);
+            if (effect.movedMark !== undefined) {
                 factory.pushOffset(offset);
                 offset = 0;
-                factory.push(...movedMarks);
-                const size = movedMarks.reduce<number>(
-                    (count, mark) => count + getInputLength(mark),
-                    0,
-                );
-                factory.pushOffset(-size);
+                factory.push(effect.movedMark);
+                factory.pushOffset(-getInputLength(effect.movedMark));
+                delete effect.movedMark;
             }
         }
         if (newMark === undefined) {

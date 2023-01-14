@@ -856,23 +856,31 @@ export class ModularEditBuilder extends ProgressiveEditBuilderBase<ModularChange
 }
 
 // @public (undocumented)
+interface MoveEffect<T> {
+    // (undocumented)
+    child?: MoveId_2;
+    // (undocumented)
+    count?: number;
+    // (undocumented)
+    id?: MoveId_2;
+    // (undocumented)
+    mark?: Mark_2<T>;
+    // (undocumented)
+    mergeLeft?: MoveId_2;
+    // (undocumented)
+    mergeRight?: MoveId_2;
+    // (undocumented)
+    modifyAfter?: T;
+    // (undocumented)
+    movedMark?: Mark_2<T>;
+}
+
+// @public (undocumented)
 interface MoveEffectTable<T> {
     // (undocumented)
-    allowMerges: boolean;
+    dstEffects: Map<MoveId_2, MoveEffect<T>>;
     // (undocumented)
-    dstEffects: Map<MoveId_2, MovePartition<T>[]>;
-    // (undocumented)
-    dstMergeable: Map<MoveId_2, MoveId_2>;
-    // (undocumented)
-    idRemappings: Map<MoveId_2, MoveId_2>;
-    // (undocumented)
-    movedMarks: Map<MoveId_2, Mark_2<T>[]>;
-    // (undocumented)
-    splitIdToOrigId: Map<MoveId_2, MoveId_2>;
-    // (undocumented)
-    srcEffects: Map<MoveId_2, MovePartition<T>[]>;
-    // (undocumented)
-    srcMergeable: Map<MoveId_2, MoveId_2>;
+    srcEffects: Map<MoveId_2, MoveEffect<T>>;
 }
 
 // @public
@@ -923,18 +931,6 @@ interface MoveOut_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMov
     count: NodeCount;
     // (undocumented)
     type: "MoveOut";
-}
-
-// @public (undocumented)
-interface MovePartition<TNodeChange> {
-    // (undocumented)
-    count?: number;
-    // (undocumented)
-    id: MoveId_2;
-    // (undocumented)
-    modifyAfter?: TNodeChange;
-    // (undocumented)
-    replaceWith?: Mark_2<TNodeChange>[];
 }
 
 // @public
@@ -1237,7 +1233,7 @@ declare namespace SequenceField {
         isMoveMark,
         MoveMark,
         MoveEffectTable,
-        MovePartition,
+        MoveEffect,
         newMoveEffectTable
     }
 }

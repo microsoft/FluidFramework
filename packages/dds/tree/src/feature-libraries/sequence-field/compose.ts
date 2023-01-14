@@ -18,16 +18,7 @@ import {
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
-import {
-    changeSrcMoveId,
-    modifyMoveSrc,
-    MoveEffectTable,
-    newMoveEffectTable,
-    removeMoveDest,
-    removeMoveSrc,
-    replaceMoveDest,
-    replaceMoveSrc,
-} from "./moveEffectTable";
+import { getOrCreateEffect, MoveEffectTable, MoveEnd, newMoveEffectTable } from "./moveEffectTable";
 import {
     getInputLength,
     getOutputLength,
@@ -81,14 +72,8 @@ function composeMarkLists<TNodeChange>(
     moveEffects: MoveEffectTable<TNodeChange>,
 ): MarkList<TNodeChange> {
     const factory = new MarkListFactory<TNodeChange>(moveEffects);
-    const queue = new ComposeQueue(
-        baseMarkList,
-        newRev,
-        newMarkList,
-        genId,
-        moveEffects,
-        true,
-        (a, b) => composeChildChanges(a, b, newRev, composeChild),
+    const queue = new ComposeQueue(baseMarkList, newRev, newMarkList, genId, moveEffects, (a, b) =>
+        composeChildChanges(a, b, newRev, composeChild),
     );
     while (!queue.isEmpty()) {
         const { baseMark, newMark, areInverses } = queue.pop();
@@ -173,16 +158,13 @@ function composeMarks<TNodeChange>(
                 case "ReturnFrom":
                     // The insert has been moved by `newMark`.
                     // We can represent net effect of the two marks as an insert at the move destination.
-                    replaceMoveDest(
-                        moveEffects,
-                        newMark.id,
+                    getOrCreateEffect(moveEffects, MoveEnd.Dest, newMark.id).mark =
                         mergeInNewChildChanges(
                             baseMark,
                             newMark.changes,
                             newMark.revision ?? newRev,
                             composeChild,
-                        ),
-                    );
+                        );
                     return 0;
                 default:
                     fail(`Not implemented: ${newType}`);
@@ -213,20 +195,20 @@ function composeMarks<TNodeChange>(
         case "MoveIn": {
             switch (newType) {
                 case "Delete": {
-                    replaceMoveSrc(moveEffects, baseMark.id, newMark);
+                    getOrCreateEffect(moveEffects, MoveEnd.Source, baseMark.id).mark = newMark;
                     return 0;
                 }
                 case "MoveOut": {
-                    changeSrcMoveId(moveEffects, baseMark.id, newMark.id);
+                    getOrCreateEffect(moveEffects, MoveEnd.Source, baseMark.id).id = newMark.id;
                     return 0;
                 }
                 case "ReturnFrom": {
                     if (newMark.detachedBy === baseMark.revision) {
-                        removeMoveSrc(moveEffects, baseMark.id);
-                        removeMoveDest(moveEffects, newMark.id);
+                        getOrCreateEffect(moveEffects, MoveEnd.Source, baseMark.id).count = 0;
+                        getOrCreateEffect(moveEffects, MoveEnd.Dest, newMark.id).count = 0;
                         return 0;
                     } else {
-                        changeSrcMoveId(moveEffects, baseMark.id, newMark.id);
+                        getOrCreateEffect(moveEffects, MoveEnd.Source, baseMark.id).id = newMark.id;
                         return 0;
                     }
                 }
@@ -237,20 +219,21 @@ function composeMarks<TNodeChange>(
         case "ReturnTo": {
             switch (newType) {
                 case "Modify": {
-                    modifyMoveSrc(moveEffects, baseMark.id, newMark.changes);
+                    getOrCreateEffect(moveEffects, MoveEnd.Source, baseMark.id).modifyAfter =
+                        newMark.changes;
                     return baseMark;
                 }
                 case "Delete": {
-                    replaceMoveSrc(moveEffects, baseMark.id, newMark);
+                    getOrCreateEffect(moveEffects, MoveEnd.Source, baseMark.id).mark = newMark;
                     return 0;
                 }
                 case "MoveOut": {
                     if (baseMark.detachedBy === (newMark.revision ?? newRev)) {
-                        removeMoveSrc(moveEffects, baseMark.id);
-                        removeMoveDest(moveEffects, newMark.id);
+                        getOrCreateEffect(moveEffects, MoveEnd.Source, baseMark.id).count = 0;
+                        getOrCreateEffect(moveEffects, MoveEnd.Dest, newMark.id).count = 0;
                         return 0;
                     } else {
-                        changeSrcMoveId(moveEffects, baseMark.id, newMark.id);
+                        getOrCreateEffect(moveEffects, MoveEnd.Source, baseMark.id).id = newMark.id;
                         return 0;
                     }
                 }
@@ -259,14 +242,18 @@ function composeMarks<TNodeChange>(
                         baseMark.detachedBy === (newMark.revision ?? newRev) ||
                         newMark.detachedBy === baseMark.revision
                     ) {
-                        removeMoveSrc(moveEffects, baseMark.id);
-                        removeMoveDest(moveEffects, newMark.id);
+                        getOrCreateEffect(moveEffects, MoveEnd.Source, baseMark.id).count = 0;
+                        getOrCreateEffect(moveEffects, MoveEnd.Dest, newMark.id).count = 0;
                         return 0;
                     } else {
                         if (newMark.changes !== undefined) {
-                            modifyMoveSrc(moveEffects, baseMark.id, newMark.changes);
+                            getOrCreateEffect(
+                                moveEffects,
+                                MoveEnd.Source,
+                                baseMark.id,
+                            ).modifyAfter = newMark.changes;
                         }
-                        changeSrcMoveId(moveEffects, baseMark.id, newMark.id);
+                        getOrCreateEffect(moveEffects, MoveEnd.Source, baseMark.id).id = newMark.id;
                         return 0;
                     }
                 }
@@ -377,8 +364,8 @@ function applyMoveEffects<TNodeChange>(
         marks,
         undefined,
         moveEffects,
+        true,
         () => fail("Should not generate IDs"),
-        false,
         // TODO: Should pass in revision for new changes
         (a, b) => composeChildChanges(a, b, undefined, composeChild),
     );
@@ -401,23 +388,22 @@ export class ComposeQueue<T> {
         newMarks: Changeset<T>,
         genId: IdAllocator,
         moveEffects: MoveEffectTable<T>,
-        reassignNewMoveIds: boolean = true,
         composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
     ) {
         this.baseMarks = new MarkQueue(
             baseMarks,
             undefined,
             moveEffects,
+            true,
             genId,
-            false,
             composeChanges,
         );
         this.newMarks = new MarkQueue(
             newMarks,
             newRevision,
             moveEffects,
+            true,
             genId,
-            reassignNewMoveIds,
             composeChanges,
         );
     }

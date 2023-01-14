@@ -23,8 +23,8 @@ export class MarkQueue<T> {
         private readonly list: readonly Mark<T>[],
         public readonly revision: RevisionTag | undefined,
         private readonly moveEffects: MoveEffectTable<T>,
+        private readonly consumeEffects: boolean,
         private readonly genId: IdAllocator,
-        private readonly reassignMoveIds: boolean = false,
         private readonly composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
     ) {
         this.list = list;
@@ -35,11 +35,9 @@ export class MarkQueue<T> {
     }
 
     public dequeue(): Mark<T> | undefined {
-        let reassignMoveIds = this.reassignMoveIds;
         let mark: Mark<T> | undefined;
         if (this.stack.length > 0) {
             mark = this.stack.pop();
-            reassignMoveIds = false;
         } else if (this.index < this.list.length) {
             mark = this.list[this.index++];
         }
@@ -50,10 +48,8 @@ export class MarkQueue<T> {
 
         const splitMarks = applyMoveEffectsToMark(
             mark,
-            this.revision,
             this.moveEffects,
-            this.genId,
-            reassignMoveIds,
+            this.consumeEffects,
             this.composeChanges,
         );
 

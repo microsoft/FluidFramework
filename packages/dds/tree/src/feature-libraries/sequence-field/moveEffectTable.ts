@@ -4,11 +4,9 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { RevisionTag } from "../../core";
 import { clone, fail } from "../../util";
 import { IdAllocator } from "../modular-schema";
 import {
-    Attach,
     Mark,
     MoveId,
     MoveIn,
@@ -22,252 +20,76 @@ import {
 import { getInputLength, getOutputLength, isSkipMark } from "./utils";
 
 export interface MoveEffectTable<T> {
-    srcEffects: Map<MoveId, MovePartition<T>[]>;
-    dstEffects: Map<MoveId, MovePartition<T>[]>;
-    splitIdToOrigId: Map<MoveId, MoveId>;
-    idRemappings: Map<MoveId, MoveId>;
-    movedMarks: Map<MoveId, Mark<T>[]>;
-    srcMergeable: Map<MoveId, MoveId>;
-    dstMergeable: Map<MoveId, MoveId>;
-    allowMerges: boolean;
+    srcEffects: Map<MoveId, MoveEffect<T>>;
+    dstEffects: Map<MoveId, MoveEffect<T>>;
+}
+
+export interface MoveEffect<T> {
+    id?: MoveId;
+    count?: number;
+    child?: MoveId;
+    mergeLeft?: MoveId;
+    mergeRight?: MoveId;
+    mark?: Mark<T>;
+    modifyAfter?: T;
+    movedMark?: Mark<T>;
 }
 
 export function newMoveEffectTable<T>(): MoveEffectTable<T> {
     return {
         srcEffects: new Map(),
         dstEffects: new Map(),
-        splitIdToOrigId: new Map(),
-        idRemappings: new Map(),
-        movedMarks: new Map(),
-        srcMergeable: new Map(),
-        dstMergeable: new Map(),
-        allowMerges: true,
     };
 }
 
-export interface MovePartition<TNodeChange> {
-    id: MoveId;
-
-    // Undefined means the partition is the same size as the input.
-    count?: number;
-    replaceWith?: Mark<TNodeChange>[];
-    modifyAfter?: TNodeChange;
+export enum MoveEnd {
+    Source,
+    Dest,
 }
 
-export function splitMoveSrc<T>(
-    table: MoveEffectTable<T>,
+function getTable<T>(table: MoveEffectTable<T>, end: MoveEnd): Map<MoveId, MoveEffect<T>> {
+    return end === MoveEnd.Source ? table.srcEffects : table.dstEffects;
+}
+
+export function splitMove<T>(
+    effects: MoveEffectTable<T>,
+    end: MoveEnd,
     id: MoveId,
-    parts: MovePartition<T>[],
+    newId: MoveId,
+    count1: number,
+    count2: number,
 ): void {
-    // TODO: Do we need a separate splitIdToOrigId for src and dst? Or do we need to eagerly apply splits when processing?
-    const origId = table.splitIdToOrigId.get(id);
-    if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.srcEffects.get(origId)!;
-        const index = effect.findIndex((p) => p.id === id);
-
-        // TODO: Assert that the sums of the partition sizes match
-        effect.splice(index, 1, ...parts);
-        for (const { id: newId } of parts) {
-            table.splitIdToOrigId.set(newId, origId);
-        }
-    } else {
-        assert(
-            !table.srcEffects.has(id),
-            "There should be an entry in splitIdToOrigId for this ID",
-        );
-        table.srcEffects.set(id, parts);
-        for (const { id: newId } of parts) {
-            table.splitIdToOrigId.set(newId, id);
-        }
+    const table = getTable(effects, end);
+    let effect = table.get(id);
+    if (effect === undefined) {
+        effect = {
+            count: count1 + count2,
+        };
+        table.set(id, effect);
     }
 
-    const rightId = table.srcMergeable.get(id);
-    if (parts.length > 0) {
-        if (rightId !== undefined) {
-            table.srcMergeable.set(parts[parts.length - 1].id, rightId);
-        }
-        for (let i = 1; i < parts.length; i++) {
-            table.srcMergeable.set(parts[i - 1].id, parts[i].id);
-        }
-    } else {
-        const leftId = findKey(table.srcMergeable, id);
-        if (leftId !== undefined && rightId !== undefined) {
-            table.srcMergeable.set(leftId, rightId);
-        }
-        table.srcMergeable.delete(id);
-    }
+    const newEffect: MoveEffect<T> = {
+        count: count2,
+        child: effect.child,
+    };
+
+    effect.child = newId;
+    effect.count = count1;
+    table.set(newId, newEffect);
 }
 
-export function splitMoveDest<T>(
-    table: MoveEffectTable<T>,
+export function getOrCreateEffect<T>(
+    moveEffects: MoveEffectTable<T>,
+    end: MoveEnd,
     id: MoveId,
-    parts: MovePartition<T>[],
-): void {
-    // TODO: What if source has been deleted?
-    const origId = table.splitIdToOrigId.get(id);
-    if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.dstEffects.get(origId)!;
-        const index = effect.findIndex((p) => p.id === id);
-
-        effect.splice(index, 1, ...parts);
-        for (const { id: newId } of parts) {
-            table.splitIdToOrigId.set(newId, origId);
-        }
-    } else {
-        assert(
-            !table.dstEffects.has(id),
-            "There should be an entry in splitIdToOrigId for this ID",
-        );
-        table.dstEffects.set(id, parts);
-        for (const { id: newId } of parts) {
-            table.splitIdToOrigId.set(newId, id);
-        }
+): MoveEffect<T> {
+    const table = getTable(moveEffects, end);
+    let effect = table.get(id);
+    if (effect === undefined) {
+        effect = {};
+        table.set(id, effect);
     }
-
-    const rightId = table.dstMergeable.get(id);
-    if (parts.length > 0) {
-        if (rightId !== undefined) {
-            table.dstMergeable.set(parts[parts.length - 1].id, rightId);
-        }
-        for (let i = 1; i < parts.length; i++) {
-            table.dstMergeable.set(parts[i - 1].id, parts[i].id);
-        }
-    } else {
-        const leftId = findKey(table.dstMergeable, id);
-        if (leftId !== undefined && rightId !== undefined) {
-            table.dstMergeable.set(leftId, rightId);
-        }
-        table.dstMergeable.delete(id);
-    }
-}
-
-export function replaceMoveDest<T>(table: MoveEffectTable<T>, id: MoveId, mark: Attach<T>): void {
-    const origId = table.splitIdToOrigId.get(id);
-    if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.dstEffects.get(origId)!;
-        const index = effect.findIndex((p) => p.id === id);
-        assert(effect[index].replaceWith === undefined, "Move dest already replaced");
-        effect[index].replaceWith = [mark];
-    } else {
-        assert(!table.dstEffects.has(id), "This MoveId cannot be replaced");
-        table.dstEffects.set(id, [{ id, replaceWith: [mark] }]);
-    }
-}
-
-export function removeMoveDest(table: MoveEffectTable<unknown>, id: MoveId): void {
-    const origId = table.splitIdToOrigId.get(id);
-    if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.dstEffects.get(origId)!;
-        const index = effect.findIndex((p) => p.id === id);
-        effect.splice(index, 1);
-    } else {
-        table.dstEffects.set(id, []);
-    }
-
-    const rightId = table.dstMergeable.get(id);
-    const leftId = findKey(table.dstMergeable, id);
-    if (rightId !== undefined && leftId !== undefined) {
-        table.dstMergeable.set(leftId, rightId);
-    }
-    table.dstMergeable.delete(id);
-}
-
-export function modifyMoveSrc<T>(table: MoveEffectTable<T>, id: MoveId, change: T): void {
-    const origId = table.splitIdToOrigId.get(id);
-    if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.srcEffects.get(origId)!;
-        const index = effect.findIndex((p) => p.id === id);
-        assert(effect[index].replaceWith === undefined, "Move source already replaced");
-        assert(effect[index].modifyAfter === undefined, "Move source already been modified");
-        effect[index].modifyAfter = change;
-    } else {
-        table.srcEffects.set(id, [{ id, modifyAfter: change }]);
-    }
-
-    table.srcMergeable.delete(id);
-    const leftId = findKey(table.srcMergeable, id);
-    if (leftId !== undefined) {
-        table.srcMergeable.delete(leftId);
-    }
-}
-
-export function replaceMoveSrc<T>(
-    table: MoveEffectTable<T>,
-    id: MoveId,
-    mark: SizedObjectMark<T>,
-): void {
-    const origId = table.splitIdToOrigId.get(id);
-    if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.srcEffects.get(origId)!;
-        const index = effect.findIndex((p) => p.id === id);
-        assert(effect[index].replaceWith === undefined, "Move source already replaced");
-        effect[index].replaceWith = [mark];
-    } else {
-        table.srcEffects.set(id, [{ id, replaceWith: [mark] }]);
-        table.splitIdToOrigId.set(id, id);
-    }
-}
-
-export function removeMoveSrc(table: MoveEffectTable<unknown>, id: MoveId): void {
-    const origId = table.splitIdToOrigId.get(id);
-    if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.srcEffects.get(origId)!;
-        const index = effect.findIndex((p) => p.id === id);
-        effect.splice(index, 1);
-    } else {
-        table.srcEffects.set(id, []);
-    }
-
-    const rightId = table.srcMergeable.get(id);
-    const leftId = findKey(table.srcMergeable, id);
-    if (rightId !== undefined && leftId !== undefined) {
-        table.srcMergeable.set(leftId, rightId);
-    }
-    table.srcMergeable.delete(id);
-}
-
-export function replaceMoveId<T>(table: MoveEffectTable<T>, id: MoveId, newId: MoveId): void {
-    assert(!table.idRemappings.has(id), "Cannot remap ID which has already been remapped");
-    table.idRemappings.set(id, newId);
-}
-
-export function findKey<K, V>(map: Map<K, V>, value: V): K | undefined {
-    for (const [k, v] of map) {
-        if (v === value) {
-            return k;
-        }
-    }
-    return undefined;
-}
-
-export function changeSrcMoveId<T>(table: MoveEffectTable<T>, id: MoveId, newId: MoveId): void {
-    const origId = table.splitIdToOrigId.get(id);
-    if (origId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const effect = table.srcEffects.get(origId)!;
-        const index = effect.findIndex((p) => p.id === id);
-        effect[index].id = newId;
-        // TODO: Need to update splitIdToOrigId?
-    } else {
-        table.srcEffects.set(id, [{ id: newId }]);
-    }
-
-    const rightId = table.srcMergeable.get(id);
-    if (rightId !== undefined) {
-        table.srcMergeable.set(newId, rightId);
-    }
-
-    const leftId = findKey(table.srcMergeable, id);
-    if (leftId !== undefined) {
-        table.srcMergeable.set(leftId, newId);
-    }
+    return effect;
 }
 
 export type MoveMark<T> = MoveOut<T> | MoveIn | ReturnFrom<T> | ReturnTo;
@@ -287,118 +109,116 @@ export function isMoveMark<T>(mark: Mark<T>): mark is MoveMark<T> {
     }
 }
 
-export function splitMoveIn<T>(mark: MoveIn | ReturnTo, parts: MovePartition<T>[]): Mark<T>[] {
+function applyMoveEffectsToDest<T>(
+    mark: MoveIn | ReturnTo,
+    effects: MoveEffectTable<T>,
+    consumeEffect: boolean,
+): Mark<T>[] {
+    const effect = getOrCreateEffect(effects, MoveEnd.Dest, mark.id);
     const result: Mark<T>[] = [];
-    for (const part of parts) {
-        assert(part.modifyAfter === undefined, "Cannot modify move destination");
-        if (part.replaceWith !== undefined) {
-            result.push(...part.replaceWith);
-        } else {
+
+    assert(effect.modifyAfter === undefined, "Cannot modify move destination");
+    if (effect.mark !== undefined) {
+        result.push(effect.mark);
+    } else {
+        if (effect.count !== 0) {
             result.push({
                 ...mark,
-                id: part.id,
-                count: part.count ?? mark.count,
+                id: effect.id ?? mark.id,
+                count: effect.count ?? mark.count,
             });
         }
+    }
+
+    if (effect.child !== undefined) {
+        const childEffect = getOrCreateEffect(effects, MoveEnd.Dest, effect.child);
+        assert(childEffect.count !== undefined, "Child effects should have size");
+        result.push({
+            ...mark,
+            id: effect.child,
+            count: childEffect.count,
+        });
+    }
+
+    if (consumeEffect) {
+        delete effect.mark;
+        delete effect.count;
+        delete effect.id;
+        delete effect.child;
     }
     return result;
 }
 
-export function splitMoveOut<T>(
+function applyMoveEffectsToSource<T>(
     mark: MoveOut<T> | ReturnFrom<T>,
-    parts: MovePartition<T>[],
+    effects: MoveEffectTable<T>,
+    consumeEffect: boolean,
     composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
+    const effect = getOrCreateEffect(effects, MoveEnd.Source, mark.id);
     const result: Mark<T>[] = [];
-    for (const part of parts) {
-        if (part.replaceWith !== undefined) {
-            result.push(...part.replaceWith);
-        } else {
-            const splitMark: MoveOut<T> | ReturnFrom<T> = {
-                ...mark,
-                id: part.id,
-                count: part.count ?? mark.count,
-            };
-            if (part.modifyAfter !== undefined) {
-                assert(
-                    composeChildren !== undefined,
-                    "Must provide a change composer if modifying moves",
-                );
-                const changes = composeChildren(mark.changes, part.modifyAfter);
-                if (changes !== undefined) {
-                    splitMark.changes = changes;
-                } else {
-                    delete splitMark.changes;
-                }
+    if (effect.mark !== undefined) {
+        result.push(effect.mark);
+    } else if (effect.count !== 0) {
+        const newMark = clone(mark);
+        newMark.id = effect.id ?? newMark.id;
+        newMark.count = effect.count ?? newMark.count;
+        if (effect.modifyAfter !== undefined) {
+            assert(
+                composeChildren !== undefined,
+                "Must provide a change composer if modifying moves",
+            );
+            const changes = composeChildren(newMark.changes, effect.modifyAfter);
+            if (changes !== undefined) {
+                newMark.changes = changes;
+            } else {
+                delete newMark.changes;
             }
-            result.push(splitMark);
         }
+        result.push(newMark);
+    }
+
+    if (effect.child !== undefined) {
+        const childEffect = getOrCreateEffect(effects, MoveEnd.Source, effect.child);
+        assert(childEffect.count !== undefined, "Child effects should have size");
+        result.push({
+            ...mark,
+            id: effect.child,
+            count: childEffect.count,
+        });
+    }
+
+    if (consumeEffect) {
+        delete effect.mark;
+        delete effect.count;
+        delete effect.id;
+        delete effect.child;
     }
     return result;
 }
 
 export function applyMoveEffectsToMark<T>(
-    inputMark: Mark<T>,
-    revision: RevisionTag | undefined,
-    moveEffects: MoveEffectTable<T>,
-    genId: IdAllocator,
-    reassignIds: boolean,
+    mark: Mark<T>,
+    effects: MoveEffectTable<T>,
+    consumeEffect: boolean,
     composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
-    let mark = inputMark;
     if (isMoveMark(mark)) {
-        if (reassignIds) {
-            const newId = getUniqueMoveId(mark, revision, genId, moveEffects);
-            if (newId !== mark.id) {
-                mark = clone(mark);
-                mark.id = newId;
-            }
-        }
-
         const type = mark.type;
         switch (type) {
             case "MoveOut":
             case "ReturnFrom": {
-                const effect = moveEffects.srcEffects.get(mark.id);
-                if (effect !== undefined) {
-                    moveEffects.srcEffects.delete(mark.id);
-                    const splitMarks = splitMoveOut(mark, effect, composeChildren);
-                    return splitMarks;
-                }
-                break;
+                return applyMoveEffectsToSource(mark, effects, consumeEffect, composeChildren);
             }
             case "MoveIn":
             case "ReturnTo": {
-                const effect = moveEffects.dstEffects.get(mark.id);
-                if (effect !== undefined) {
-                    moveEffects.dstEffects.delete(mark.id);
-                    const splitMarks = splitMoveIn(mark, effect);
-                    return splitMarks;
-                }
-                break;
+                return applyMoveEffectsToDest(mark, effects, consumeEffect);
             }
             default:
                 unreachableCase(type);
         }
     }
     return [mark];
-}
-
-export function getUniqueMoveId<T>(
-    mark: MoveMark<T>,
-    revision: RevisionTag | undefined,
-    genId: IdAllocator,
-    moveEffects: MoveEffectTable<T>,
-): MoveId {
-    if ((mark.revision ?? revision) === undefined) {
-        let newId = moveEffects.idRemappings.get(mark.id);
-        if (newId === undefined) {
-            newId = genId();
-            replaceMoveId(moveEffects, mark.id, newId);
-        }
-        return newId;
-    }
-    return mark.id;
 }
 
 /**
@@ -438,10 +258,7 @@ export function splitMarkOnInput<TMark extends SizedMark<unknown>>(
         case "ReturnFrom": {
             // TODO: Handle detach index for ReturnFrom
             const newId = genId();
-            splitMoveDest(moveEffects, mark.id, [
-                { id: mark.id, count: length },
-                { id: newId, count: remainder },
-            ]);
+            splitMove(moveEffects, MoveEnd.Dest, mark.id, newId, length, remainder);
             return [
                 { ...markObj, count: length },
                 { ...markObj, id: newId, count: remainder },
@@ -493,10 +310,7 @@ export function splitMarkOnOutput<TMark extends Mark<unknown>>(
         case "ReturnTo": {
             // TODO: Handle detachIndex
             const newId = genId();
-            splitMoveSrc(moveEffects, markObj.id, [
-                { id: markObj.id, count: length },
-                { id: newId, count: remainder },
-            ]);
+            splitMove(moveEffects, MoveEnd.Source, markObj.id, newId, length, remainder);
             return [
                 { ...markObj, count: length },
                 { ...markObj, id: newId, count: remainder },

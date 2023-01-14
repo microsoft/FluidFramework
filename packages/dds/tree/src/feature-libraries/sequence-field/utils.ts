@@ -23,7 +23,7 @@ import {
     SizedMark,
     Skip,
 } from "./format";
-import { MoveEffectTable } from "./moveEffectTable";
+import { getOrCreateEffect, MoveEffectTable, MoveEnd, MoveMark } from "./moveEffectTable";
 
 export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<TNodeChange> {
     return isObjMark(mark) && mark.type === "Modify";
@@ -198,25 +198,12 @@ export function tryExtendMark(
         case "ReturnTo": {
             // TODO: Handle reattach fields
             const lhsMoveIn = lhs as MoveIn | ReturnTo;
-            if (isEqualPlace(lhsMoveIn, rhs) && moveEffects !== undefined) {
-                const prevMerge = moveEffects.dstMergeable.get(lhsMoveIn.id);
-                if (prevMerge !== undefined) {
-                    moveEffects.dstMergeable.set(prevMerge, rhs.id);
-                } else {
-                    moveEffects.dstMergeable.set(lhsMoveIn.id, rhs.id);
-                }
-
-                if (
-                    moveEffects.allowMerges &&
-                    moveEffects.srcMergeable.get(lhsMoveIn.id) === rhs.id
-                ) {
-                    const nextId = moveEffects.srcMergeable.get(rhs.id);
-                    if (nextId !== undefined) {
-                        moveEffects.srcMergeable.set(lhsMoveIn.id, nextId);
-                    }
-                    lhsMoveIn.count += rhs.count;
-                    return true;
-                }
+            if (
+                isEqualPlace(lhsMoveIn, rhs) &&
+                moveEffects !== undefined &&
+                tryMergeMoves(MoveEnd.Dest, lhsMoveIn, rhs, moveEffects)
+            ) {
+                return true;
             }
             break;
         }
@@ -229,25 +216,11 @@ export function tryExtendMark(
         case "ReturnFrom": {
             // TODO: Handle reattach fields
             const lhsMoveOut = lhs as MoveOut | ReturnFrom;
-            if (moveEffects !== undefined) {
-                const prevMerge = moveEffects.srcMergeable.get(lhsMoveOut.id);
-                if (prevMerge !== undefined) {
-                    moveEffects.srcMergeable.set(prevMerge, rhs.id);
-                } else {
-                    moveEffects.srcMergeable.set(lhsMoveOut.id, rhs.id);
-                }
-
-                if (
-                    moveEffects.allowMerges &&
-                    moveEffects.dstMergeable.get(lhsMoveOut.id) === rhs.id
-                ) {
-                    const nextId = moveEffects.dstMergeable.get(rhs.id);
-                    if (nextId !== undefined) {
-                        moveEffects.dstMergeable.set(lhsMoveOut.id, nextId);
-                    }
-                    lhsMoveOut.count += rhs.count;
-                    return true;
-                }
+            if (
+                moveEffects !== undefined &&
+                tryMergeMoves(MoveEnd.Source, lhsMoveOut, rhs, moveEffects)
+            ) {
+                return true;
             }
             break;
         }
@@ -264,6 +237,33 @@ export function tryExtendMark(
         }
         default:
             break;
+    }
+    return false;
+}
+
+function tryMergeMoves(
+    end: MoveEnd,
+    left: MoveMark<unknown>,
+    right: MoveMark<unknown>,
+    moveEffects: MoveEffectTable<unknown>,
+): boolean {
+    const oppEnd = end === MoveEnd.Source ? MoveEnd.Dest : MoveEnd.Source;
+    const effect = getOrCreateEffect(moveEffects, end, left.id);
+    if (effect.mergeRight !== undefined) {
+        getOrCreateEffect(moveEffects, end, effect.mergeRight).mergeRight = right.id;
+        getOrCreateEffect(moveEffects, end, right.id).mergeLeft = effect.mergeRight;
+    } else {
+        getOrCreateEffect(moveEffects, end, left.id).mergeRight = right.id;
+        getOrCreateEffect(moveEffects, end, right.id).mergeRight = left.id;
+    }
+
+    if (getOrCreateEffect(moveEffects, oppEnd, left.id).mergeRight === right.id) {
+        const nextId = getOrCreateEffect(moveEffects, oppEnd, right.id).mergeRight;
+        getOrCreateEffect(moveEffects, oppEnd, left.id).mergeRight = nextId;
+        left.count += right.count;
+
+        // TODO: Add effect to re-split these partitions
+        return true;
     }
     return false;
 }
