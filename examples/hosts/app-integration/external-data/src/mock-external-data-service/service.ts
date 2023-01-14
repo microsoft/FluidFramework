@@ -9,7 +9,6 @@ import cors from "cors";
 import express from "express";
 import { isWebUri } from "valid-url";
 
-import { externalDataServicePort } from '../mock-external-data-service-interface';
 import { MockWebhook } from '../utilities';
 import { ExternalDataSource } from './externalData';
 
@@ -19,10 +18,8 @@ import { ExternalDataSource } from './externalData';
 export interface ServiceProps {
     /**
      * Port to listen on.
-     *
-     * @defaultValue {@link externalDataServicePort}
      */
-    port?: number | string;
+    port: number | string;
 
     /**
      * External data source backing this service.
@@ -38,7 +35,7 @@ export interface ServiceProps {
  * @remarks Consumers are required to manually dispose of the returned `Server` object.
  */
 export async function initializeExternalDataService(props: ServiceProps): Promise<Server> {
-    const port = props.port ?? externalDataServicePort;
+    const { port } = props;
     const externalDataSource = props.externalDataSource ?? new ExternalDataSource();
 
     /**

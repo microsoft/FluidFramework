@@ -10,7 +10,6 @@ import express from "express";
 import fetch from 'node-fetch';
 import { isWebUri } from "valid-url";
 
-import { customerServicePort } from '../mock-customer-service-interface';
 import { MockWebhook } from '../utilities';
 
 /**
@@ -19,10 +18,8 @@ import { MockWebhook } from '../utilities';
 export interface ServiceProps {
     /**
      * Port to listen on.
-     *
-     * @defaultValue {@link customerServicePort}
      */
-    port?: number | string;
+    port: number | string;
 
     /**
      * URL of the external data service webhook.
@@ -42,8 +39,7 @@ export interface ServiceProps {
  * @remarks Consumers are required to manually dispose of the returned `Server` object.
  */
 export async function initializeCustomerService(props: ServiceProps): Promise<Server> {
-    const { externalDataServiceWebhookRegistrationUrl } = props;
-    const port = props?.port ?? customerServicePort;
+    const { port, externalDataServiceWebhookRegistrationUrl } = props;
 
     /**
      * Helper function to prepend service-specific metadata to messages logged by this service.
