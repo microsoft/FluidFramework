@@ -1,87 +1,87 @@
 {
-  "title": "SequenceField Namespace",
-  "kind": "Namespace",
-  "members": {
-    "TypeAlias": {
-      "Attach": "/docs/apis/tree/sequencefield-namespace#attach-typealias",
-      "Changeset": "/docs/apis/tree/sequencefield-namespace#changeset-typealias",
-      "ClientId": "/docs/apis/tree/sequencefield-namespace#clientid-typealias",
-      "Detach": "/docs/apis/tree/sequencefield-namespace#detach-typealias",
-      "GapCount": "/docs/apis/tree/sequencefield-namespace#gapcount-typealias",
-      "Mark": "/docs/apis/tree/sequencefield-namespace#mark-typealias",
-      "MarkList": "/docs/apis/tree/sequencefield-namespace#marklist-typealias",
-      "ModifyDetach": "/docs/apis/tree/sequencefield-namespace#modifydetach-typealias",
-      "MoveId": "/docs/apis/tree/sequencefield-namespace#moveid-typealias",
-      "NodeChangeComposer": "/docs/apis/tree/sequencefield-namespace#nodechangecomposer-typealias",
-      "NodeChangeDecoder": "/docs/apis/tree/sequencefield-namespace#nodechangedecoder-typealias",
-      "NodeChangeEncoder": "/docs/apis/tree/sequencefield-namespace#nodechangeencoder-typealias",
-      "NodeChangeInverter": "/docs/apis/tree/sequencefield-namespace#nodechangeinverter-typealias",
-      "NodeChangeRebaser": "/docs/apis/tree/sequencefield-namespace#nodechangerebaser-typealias",
-      "NodeChangeType": "/docs/apis/tree/sequencefield-namespace#nodechangetype-typealias",
-      "NodeCount": "/docs/apis/tree/sequencefield-namespace#nodecount-typealias",
-      "ObjectMark": "/docs/apis/tree/sequencefield-namespace#objectmark-typealias",
-      "ProtoNode": "/docs/apis/tree/sequencefield-namespace#protonode-typealias",
-      "SequenceChangeRebaser": "/docs/apis/tree/sequencefield-namespace#sequencechangerebaser-typealias",
-      "SequenceFieldChangeHandler": "/docs/apis/tree/sequencefield-namespace#sequencefieldchangehandler-typealias",
-      "SizedMark": "/docs/apis/tree/sequencefield-namespace#sizedmark-typealias",
-      "SizedObjectMark": "/docs/apis/tree/sequencefield-namespace#sizedobjectmark-typealias",
-      "Skip": "/docs/apis/tree/sequencefield-namespace#skip-typealias",
-      "ToDelta": "/docs/apis/tree/sequencefield-namespace#todelta-typealias",
-      "TreeRootPath": "/docs/apis/tree/sequencefield-namespace#treerootpath-typealias"
-    },
-    "Function": {
-      "compose": "/docs/apis/tree/sequencefield-namespace#compose-function",
-      "decodeJson": "/docs/apis/tree/sequencefield-namespace#decodejson-function",
-      "encodeForJson": "/docs/apis/tree/sequencefield-namespace#encodeforjson-function",
-      "invert": "/docs/apis/tree/sequencefield-namespace#invert-function",
-      "rebase": "/docs/apis/tree/sequencefield-namespace#rebase-function",
-      "sequenceFieldToDelta": "/docs/apis/tree/sequencefield-namespace#sequencefieldtodelta-function"
-    },
-    "Interface": {
-      "Delete": "/docs/apis/tree/sequencefield/delete-interface",
-      "HasChanges": "/docs/apis/tree/sequencefield/haschanges-interface",
-      "HasLength": "/docs/apis/tree/sequencefield/haslength-interface",
-      "HasMoveId": "/docs/apis/tree/sequencefield/hasmoveid-interface",
-      "HasPlaceFields": "/docs/apis/tree/sequencefield/hasplacefields-interface",
-      "HasReattachFields": "/docs/apis/tree/sequencefield/hasreattachfields-interface",
-      "HasRevisionTag": "/docs/apis/tree/sequencefield/hasrevisiontag-interface",
-      "HasTiebreakPolicy": "/docs/apis/tree/sequencefield/hastiebreakpolicy-interface",
-      "Insert": "/docs/apis/tree/sequencefield/insert-interface",
-      "LineageEvent": "/docs/apis/tree/sequencefield/lineageevent-interface",
-      "Modify": "/docs/apis/tree/sequencefield/modify-interface",
-      "ModifyDelete": "/docs/apis/tree/sequencefield/modifydelete-interface",
-      "ModifyInsert": "/docs/apis/tree/sequencefield/modifyinsert-interface",
-      "ModifyMoveIn": "/docs/apis/tree/sequencefield/modifymovein-interface",
-      "ModifyMoveOut": "/docs/apis/tree/sequencefield/modifymoveout-interface",
-      "ModifyReattach": "/docs/apis/tree/sequencefield/modifyreattach-interface",
-      "MoveIn": "/docs/apis/tree/sequencefield/movein-interface",
-      "MoveOut": "/docs/apis/tree/sequencefield/moveout-interface",
-      "PriorOp": "/docs/apis/tree/sequencefield/priorop-interface",
-      "Reattach": "/docs/apis/tree/sequencefield/reattach-interface",
-      "SequenceFieldEditor": "/docs/apis/tree/sequencefield/sequencefieldeditor-interface",
-      "Tombstones": "/docs/apis/tree/sequencefield/tombstones-interface",
-      "TreeForestPath": "/docs/apis/tree/sequencefield/treeforestpath-interface"
-    },
-    "Enum": {
-      "Effects": "/docs/apis/tree/sequencefield-namespace#effects-enum",
-      "RangeType": "/docs/apis/tree/sequencefield-namespace#rangetype-enum",
-      "Tiebreak": "/docs/apis/tree/sequencefield-namespace#tiebreak-enum"
-    },
-    "Class": {
-      "MarkListFactory": "/docs/apis/tree/sequencefield/marklistfactory-class"
-    },
-    "Variable": {
-      "sequenceFieldChangeEncoder": "/docs/apis/tree/sequencefield-namespace#sequencefieldchangeencoder-variable",
-      "sequenceFieldChangeHandler": "/docs/apis/tree/sequencefield-namespace#sequencefieldchangehandler-variable",
-      "sequenceFieldChangeRebaser": "/docs/apis/tree/sequencefield-namespace#sequencefieldchangerebaser-variable",
-      "sequenceFieldEditor": "/docs/apis/tree/sequencefield-namespace#sequencefieldeditor-variable"
-    }
-  },
-  "package": "@fluid-internal/tree",
-  "unscopedPackageName": "tree"
+"title": "SequenceField Namespace",
+"kind": "Namespace",
+"members": {
+"TypeAlias": {
+"Attach": "/docs/apis/tree/sequencefield-namespace#attach-typealias",
+"Changeset": "/docs/apis/tree/sequencefield-namespace#changeset-typealias",
+"ClientId": "/docs/apis/tree/sequencefield-namespace#clientid-typealias",
+"Detach": "/docs/apis/tree/sequencefield-namespace#detach-typealias",
+"GapCount": "/docs/apis/tree/sequencefield-namespace#gapcount-typealias",
+"Mark": "/docs/apis/tree/sequencefield-namespace#mark-typealias",
+"MarkList": "/docs/apis/tree/sequencefield-namespace#marklist-typealias",
+"ModifyDetach": "/docs/apis/tree/sequencefield-namespace#modifydetach-typealias",
+"MoveId": "/docs/apis/tree/sequencefield-namespace#moveid-typealias",
+"NodeChangeComposer": "/docs/apis/tree/sequencefield-namespace#nodechangecomposer-typealias",
+"NodeChangeDecoder": "/docs/apis/tree/sequencefield-namespace#nodechangedecoder-typealias",
+"NodeChangeEncoder": "/docs/apis/tree/sequencefield-namespace#nodechangeencoder-typealias",
+"NodeChangeInverter": "/docs/apis/tree/sequencefield-namespace#nodechangeinverter-typealias",
+"NodeChangeRebaser": "/docs/apis/tree/sequencefield-namespace#nodechangerebaser-typealias",
+"NodeChangeType": "/docs/apis/tree/sequencefield-namespace#nodechangetype-typealias",
+"NodeCount": "/docs/apis/tree/sequencefield-namespace#nodecount-typealias",
+"ObjectMark": "/docs/apis/tree/sequencefield-namespace#objectmark-typealias",
+"ProtoNode": "/docs/apis/tree/sequencefield-namespace#protonode-typealias",
+"SequenceChangeRebaser": "/docs/apis/tree/sequencefield-namespace#sequencechangerebaser-typealias",
+"SequenceFieldChangeHandler": "/docs/apis/tree/sequencefield-namespace#sequencefieldchangehandler-typealias",
+"SizedMark": "/docs/apis/tree/sequencefield-namespace#sizedmark-typealias",
+"SizedObjectMark": "/docs/apis/tree/sequencefield-namespace#sizedobjectmark-typealias",
+"Skip": "/docs/apis/tree/sequencefield-namespace#skip-typealias",
+"ToDelta": "/docs/apis/tree/sequencefield-namespace#todelta-typealias",
+"TreeRootPath": "/docs/apis/tree/sequencefield-namespace#treerootpath-typealias"
+},
+"Function": {
+"compose": "/docs/apis/tree/sequencefield-namespace#compose-function",
+"decodeJson": "/docs/apis/tree/sequencefield-namespace#decodejson-function",
+"encodeForJson": "/docs/apis/tree/sequencefield-namespace#encodeforjson-function",
+"invert": "/docs/apis/tree/sequencefield-namespace#invert-function",
+"rebase": "/docs/apis/tree/sequencefield-namespace#rebase-function",
+"sequenceFieldToDelta": "/docs/apis/tree/sequencefield-namespace#sequencefieldtodelta-function"
+},
+"Interface": {
+"Delete": "/docs/apis/tree/sequencefield/delete-interface",
+"HasChanges": "/docs/apis/tree/sequencefield/haschanges-interface",
+"HasLength": "/docs/apis/tree/sequencefield/haslength-interface",
+"HasMoveId": "/docs/apis/tree/sequencefield/hasmoveid-interface",
+"HasPlaceFields": "/docs/apis/tree/sequencefield/hasplacefields-interface",
+"HasReattachFields": "/docs/apis/tree/sequencefield/hasreattachfields-interface",
+"HasRevisionTag": "/docs/apis/tree/sequencefield/hasrevisiontag-interface",
+"HasTiebreakPolicy": "/docs/apis/tree/sequencefield/hastiebreakpolicy-interface",
+"Insert": "/docs/apis/tree/sequencefield/insert-interface",
+"LineageEvent": "/docs/apis/tree/sequencefield/lineageevent-interface",
+"Modify": "/docs/apis/tree/sequencefield/modify-interface",
+"ModifyDelete": "/docs/apis/tree/sequencefield/modifydelete-interface",
+"ModifyInsert": "/docs/apis/tree/sequencefield/modifyinsert-interface",
+"ModifyMoveIn": "/docs/apis/tree/sequencefield/modifymovein-interface",
+"ModifyMoveOut": "/docs/apis/tree/sequencefield/modifymoveout-interface",
+"ModifyReattach": "/docs/apis/tree/sequencefield/modifyreattach-interface",
+"MoveIn": "/docs/apis/tree/sequencefield/movein-interface",
+"MoveOut": "/docs/apis/tree/sequencefield/moveout-interface",
+"PriorOp": "/docs/apis/tree/sequencefield/priorop-interface",
+"Reattach": "/docs/apis/tree/sequencefield/reattach-interface",
+"SequenceFieldEditor": "/docs/apis/tree/sequencefield/sequencefieldeditor-interface",
+"Tombstones": "/docs/apis/tree/sequencefield/tombstones-interface",
+"TreeForestPath": "/docs/apis/tree/sequencefield/treeforestpath-interface"
+},
+"Enum": {
+"Effects": "/docs/apis/tree/sequencefield-namespace#effects-enum",
+"RangeType": "/docs/apis/tree/sequencefield-namespace#rangetype-enum",
+"Tiebreak": "/docs/apis/tree/sequencefield-namespace#tiebreak-enum"
+},
+"Class": {
+"MarkListFactory": "/docs/apis/tree/sequencefield/marklistfactory-class"
+},
+"Variable": {
+"sequenceFieldChangeEncoder": "/docs/apis/tree/sequencefield-namespace#sequencefieldchangeencoder-variable",
+"sequenceFieldChangeHandler": "/docs/apis/tree/sequencefield-namespace#sequencefieldchangehandler-variable",
+"sequenceFieldChangeRebaser": "/docs/apis/tree/sequencefield-namespace#sequencefieldchangerebaser-variable",
+"sequenceFieldEditor": "/docs/apis/tree/sequencefield-namespace#sequencefieldeditor-variable"
+}
+},
+"package": "@fluid-internal/tree",
+"unscopedPackageName": "tree"
 }
 
-[//]: # (Do not edit this file. It is automatically generated by @fluidtools/api-markdown-documenter.)
+[//]: # "Do not edit this file. It is automatically generated by @fluidtools/api-markdown-documenter."
 
 [Packages](/docs/apis/) &gt; [@fluid-internal/tree](/docs/apis/tree) &gt; [SequenceField](/docs/apis/tree/sequencefield-namespace)
 
@@ -657,7 +657,7 @@
 #### Signature {#effects-signature}
 
 ```typescript
-export declare enum Effects 
+export declare enum Effects
 ```
 
 #### Flags
@@ -712,7 +712,7 @@ export declare enum Effects
 ###### Signature {#all-signature}
 
 ```typescript
-All = "All"
+All = "All";
 ```
 
 ##### Delete {#effects-delete-enummember}
@@ -720,7 +720,7 @@ All = "All"
 ###### Signature {#delete-signature}
 
 ```typescript
-Delete = "Delete"
+Delete = "Delete";
 ```
 
 ##### Move {#effects-move-enummember}
@@ -728,7 +728,7 @@ Delete = "Delete"
 ###### Signature {#move-signature}
 
 ```typescript
-Move = "Move"
+Move = "Move";
 ```
 
 ##### None {#effects-none-enummember}
@@ -736,7 +736,7 @@ Move = "Move"
 ###### Signature {#none-signature}
 
 ```typescript
-None = "None"
+None = "None";
 ```
 
 ### RangeType {#rangetype-enum}
@@ -744,7 +744,7 @@ None = "None"
 #### Signature {#rangetype-signature}
 
 ```typescript
-export declare enum RangeType 
+export declare enum RangeType
 ```
 
 #### Flags
@@ -785,7 +785,7 @@ export declare enum RangeType
 ###### Signature {#set-signature}
 
 ```typescript
-Set = "Set"
+Set = "Set";
 ```
 
 ##### Slice {#rangetype-slice-enummember}
@@ -793,7 +793,7 @@ Set = "Set"
 ###### Signature {#slice-signature}
 
 ```typescript
-Slice = "Slice"
+Slice = "Slice";
 ```
 
 ### Tiebreak {#tiebreak-enum}
@@ -801,7 +801,7 @@ Slice = "Slice"
 #### Signature {#tiebreak-signature}
 
 ```typescript
-export declare enum Tiebreak 
+export declare enum Tiebreak
 ```
 
 #### Flags
@@ -842,7 +842,7 @@ export declare enum Tiebreak
 ###### Signature {#left-signature}
 
 ```typescript
-Left = 0
+Left = 0;
 ```
 
 ##### Right {#tiebreak-right-enummember}
@@ -850,7 +850,7 @@ Left = 0
 ###### Signature {#right-signature}
 
 ```typescript
-Right = 1
+Right = 1;
 ```
 
 ## Type Details
@@ -860,7 +860,13 @@ Right = 1
 #### Signature {#attach-signature}
 
 ```typescript
-export declare type Attach<TNodeChange = NodeChangeType> = Insert | ModifyInsert<TNodeChange> | MoveIn | ModifyMoveIn<TNodeChange> | Reattach | ModifyReattach<TNodeChange>;
+export declare type Attach<TNodeChange = NodeChangeType> =
+    | Insert
+    | ModifyInsert<TNodeChange>
+    | MoveIn
+    | ModifyMoveIn<TNodeChange>
+    | Reattach
+    | ModifyReattach<TNodeChange>;
 ```
 
 ### Changeset {#changeset-typealias}
@@ -900,7 +906,9 @@ export declare type GapCount = number;
 #### Signature {#mark-signature}
 
 ```typescript
-export declare type Mark<TNodeChange = NodeChangeType> = SizedMark<TNodeChange> | Attach<TNodeChange>;
+export declare type Mark<TNodeChange = NodeChangeType> =
+    | SizedMark<TNodeChange>
+    | Attach<TNodeChange>;
 ```
 
 ### MarkList {#marklist-typealias}
@@ -916,7 +924,9 @@ export declare type MarkList<TNodeChange = NodeChangeType, TMark = Mark<TNodeCha
 #### Signature {#modifydetach-signature}
 
 ```typescript
-export declare type ModifyDetach<TNodeChange> = ModifyDelete<TNodeChange> | ModifyMoveOut<TNodeChange>;
+export declare type ModifyDetach<TNodeChange> =
+    | ModifyDelete<TNodeChange>
+    | ModifyMoveOut<TNodeChange>;
 ```
 
 ### MoveId {#moveid-typealias}
@@ -936,7 +946,9 @@ export declare type MoveId = number;
 #### Signature {#nodechangecomposer-signature}
 
 ```typescript
-export declare type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNodeChange>[]) => TNodeChange;
+export declare type NodeChangeComposer<TNodeChange> = (
+    changes: TaggedChange<TNodeChange>[],
+) => TNodeChange;
 ```
 
 ### NodeChangeDecoder {#nodechangedecoder-typealias}
@@ -944,7 +956,9 @@ export declare type NodeChangeComposer<TNodeChange> = (changes: TaggedChange<TNo
 #### Signature {#nodechangedecoder-signature}
 
 ```typescript
-export declare type NodeChangeDecoder<TNodeChange> = (change: JsonCompatibleReadOnly) => TNodeChange;
+export declare type NodeChangeDecoder<TNodeChange> = (
+    change: JsonCompatibleReadOnly,
+) => TNodeChange;
 ```
 
 ### NodeChangeEncoder {#nodechangeencoder-typealias}
@@ -952,7 +966,9 @@ export declare type NodeChangeDecoder<TNodeChange> = (change: JsonCompatibleRead
 #### Signature {#nodechangeencoder-signature}
 
 ```typescript
-export declare type NodeChangeEncoder<TNodeChange> = (change: TNodeChange) => JsonCompatibleReadOnly;
+export declare type NodeChangeEncoder<TNodeChange> = (
+    change: TNodeChange,
+) => JsonCompatibleReadOnly;
 ```
 
 ### NodeChangeInverter {#nodechangeinverter-typealias}
@@ -968,7 +984,10 @@ export declare type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => T
 #### Signature {#nodechangerebaser-signature}
 
 ```typescript
-export declare type NodeChangeRebaser<TNodeChange> = (change: TNodeChange, baseChange: TNodeChange) => TNodeChange;
+export declare type NodeChangeRebaser<TNodeChange> = (
+    change: TNodeChange,
+    baseChange: TNodeChange,
+) => TNodeChange;
 ```
 
 ### NodeChangeType {#nodechangetype-typealias}
@@ -992,7 +1011,9 @@ export declare type NodeCount = number;
 #### Signature {#objectmark-signature}
 
 ```typescript
-export declare type ObjectMark<TNodeChange = NodeChangeType> = SizedObjectMark<TNodeChange> | Attach<TNodeChange>;
+export declare type ObjectMark<TNodeChange = NodeChangeType> =
+    | SizedObjectMark<TNodeChange>
+    | Attach<TNodeChange>;
 ```
 
 ### ProtoNode {#protonode-typealias}
@@ -1034,7 +1055,10 @@ export declare type SizedMark<TNodeChange = NodeChangeType> = Skip | SizedObject
 #### Signature {#sizedobjectmark-signature}
 
 ```typescript
-export declare type SizedObjectMark<TNodeChange = NodeChangeType> = Modify<TNodeChange> | Detach | ModifyDetach<TNodeChange>;
+export declare type SizedObjectMark<TNodeChange = NodeChangeType> =
+    | Modify<TNodeChange>
+    | Detach
+    | ModifyDetach<TNodeChange>;
 ```
 
 ### Skip {#skip-typealias}
@@ -1050,7 +1074,10 @@ export declare type Skip = number;
 #### Signature {#todelta-signature}
 
 ```typescript
-export declare type ToDelta<TNodeChange> = (child: TNodeChange, index: number | undefined) => Delta.Modify;
+export declare type ToDelta<TNodeChange> = (
+    child: TNodeChange,
+    index: number | undefined,
+) => Delta.Modify;
 ```
 
 ### TreeRootPath {#treerootpath-typealias}
@@ -1058,9 +1085,11 @@ export declare type ToDelta<TNodeChange> = (child: TNodeChange, index: number | 
 #### Signature {#treerootpath-signature}
 
 ```typescript
-export declare type TreeRootPath = number | {
-    [label: number]: TreeForestPath;
-};
+export declare type TreeRootPath =
+    | number
+    | {
+          [label: number]: TreeForestPath;
+      };
 ```
 
 ## Function Details
@@ -1072,7 +1101,10 @@ Composes a sequence of changesets into a single changeset.
 #### Signature {#compose-signature}
 
 ```typescript
-export declare function compose<TNodeChange>(changes: TaggedChange<Changeset<TNodeChange>>[], composeChild: NodeChangeComposer<TNodeChange>): Changeset<TNodeChange>;
+export declare function compose<TNodeChange>(
+    changes: TaggedChange<Changeset<TNodeChange>>[],
+    composeChild: NodeChangeComposer<TNodeChange>,
+): Changeset<TNodeChange>;
 ```
 
 #### Parameters {#compose-parameters}
@@ -1129,7 +1161,11 @@ WARNING! This implementation is incomplete: - Tombstone information is ignored. 
 #### Signature {#decodejson-signature}
 
 ```typescript
-export declare function decodeJson<TNodeChange>(formatVersion: number, change: JsonCompatibleReadOnly, decodeChild: NodeChangeDecoder<TNodeChange>): Changeset<TNodeChange>;
+export declare function decodeJson<TNodeChange>(
+    formatVersion: number,
+    change: JsonCompatibleReadOnly,
+    decodeChild: NodeChangeDecoder<TNodeChange>,
+): Changeset<TNodeChange>;
 ```
 
 #### Parameters {#decodejson-parameters}
@@ -1191,7 +1227,11 @@ export declare function decodeJson<TNodeChange>(formatVersion: number, change: J
 #### Signature {#encodeforjson-signature}
 
 ```typescript
-export declare function encodeForJson<TNodeChange>(formatVersion: number, markList: Changeset<TNodeChange>, encodeChild: NodeChangeEncoder<TNodeChange>): JsonCompatibleReadOnly;
+export declare function encodeForJson<TNodeChange>(
+    formatVersion: number,
+    markList: Changeset<TNodeChange>,
+    encodeChild: NodeChangeEncoder<TNodeChange>,
+): JsonCompatibleReadOnly;
 ```
 
 #### Parameters {#encodeforjson-parameters}
@@ -1255,7 +1295,10 @@ Inverts a given changeset.
 #### Signature {#invert-signature}
 
 ```typescript
-export declare function invert<TNodeChange>(change: TaggedChange<Changeset<TNodeChange>>, invertChild: NodeChangeInverter<TNodeChange>): Changeset<TNodeChange>;
+export declare function invert<TNodeChange>(
+    change: TaggedChange<Changeset<TNodeChange>>,
+    invertChild: NodeChangeInverter<TNodeChange>,
+): Changeset<TNodeChange>;
 ```
 
 #### Parameters {#invert-parameters}
@@ -1314,7 +1357,11 @@ Rebases `change` over `base` assuming they both apply to the same initial state.
 #### Signature {#rebase-signature}
 
 ```typescript
-export declare function rebase<TNodeChange>(change: Changeset<TNodeChange>, base: TaggedChange<Changeset<TNodeChange>>, rebaseChild: NodeChangeRebaser<TNodeChange>): Changeset<TNodeChange>;
+export declare function rebase<TNodeChange>(
+    change: Changeset<TNodeChange>,
+    base: TaggedChange<Changeset<TNodeChange>>,
+    rebaseChild: NodeChangeRebaser<TNodeChange>,
+): Changeset<TNodeChange>;
 ```
 
 #### Parameters {#rebase-parameters}
@@ -1382,7 +1429,11 @@ WARNING! This implementation is incomplete: - Marks that affect existing content
 #### Signature {#sequencefieldtodelta-signature}
 
 ```typescript
-export declare function sequenceFieldToDelta<TNodeChange>(marks: MarkList<TNodeChange>, deltaFromChild: ToDelta<TNodeChange>, reviver: NodeReviver): Delta.MarkList;
+export declare function sequenceFieldToDelta<TNodeChange>(
+    marks: MarkList<TNodeChange>,
+    deltaFromChild: ToDelta<TNodeChange>,
+    reviver: NodeReviver,
+): Delta.MarkList;
 ```
 
 #### Parameters {#sequencefieldtodelta-parameters}
@@ -1454,7 +1505,7 @@ sequenceFieldChangeEncoder: FieldChangeEncoder<Changeset>
 #### Signature {#sequencefieldchangehandler-signature}
 
 ```typescript
-sequenceFieldChangeHandler: SequenceFieldChangeHandler
+sequenceFieldChangeHandler: SequenceFieldChangeHandler;
 ```
 
 ### sequenceFieldChangeRebaser {#sequencefieldchangerebaser-variable}

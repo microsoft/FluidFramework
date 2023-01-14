@@ -1,297 +1,297 @@
 {
-  "title": "@fluid-internal/tree Package",
-  "kind": "Package",
-  "members": {
-    "Class": {
-      "AdaptedViewSchema": "/docs/apis/tree/adaptedviewschema-class",
-      "AnchorSet": "/docs/apis/tree/anchorset-class",
-      "BrandedType": "/docs/apis/tree/brandedtype-class",
-      "ChangeEncoder": "/docs/apis/tree/changeencoder-class",
-      "DefaultChangeFamily": "/docs/apis/tree/defaultchangefamily-class",
-      "DefaultEditBuilder": "/docs/apis/tree/defaulteditbuilder-class",
-      "DisposingDependee": "/docs/apis/tree/disposingdependee-class",
-      "EditManager": "/docs/apis/tree/editmanager-class",
-      "EditManagerIndex": "/docs/apis/tree/editmanagerindex-class",
-      "FieldKind": "/docs/apis/tree/fieldkind-class",
-      "ForestIndex": "/docs/apis/tree/forestindex-class",
-      "ForestRepairDataStore": "/docs/apis/tree/forestrepairdatastore-class",
-      "InMemoryStoredSchemaRepository": "/docs/apis/tree/inmemorystoredschemarepository-class",
-      "InvalidationToken": "/docs/apis/tree/invalidationtoken-class",
-      "ModularChangeFamily": "/docs/apis/tree/modularchangefamily-class",
-      "ModularEditBuilder": "/docs/apis/tree/modulareditbuilder-class",
-      "ProgressiveEditBuilderBase": "/docs/apis/tree/progressiveeditbuilderbase-class",
-      "Rebaser": "/docs/apis/tree/rebaser-class",
-      "SchemaEditor": "/docs/apis/tree/schemaeditor-class",
-      "SchemaIndex": "/docs/apis/tree/schemaindex-class",
-      "SharedTreeCore": "/docs/apis/tree/sharedtreecore-class",
-      "SharedTreeFactory": "/docs/apis/tree/sharedtreefactory-class",
-      "SimpleDependee": "/docs/apis/tree/simpledependee-class",
-      "SimpleObservingDependent": "/docs/apis/tree/simpleobservingdependent-class",
-      "SparseNode": "/docs/apis/tree/sparsenode-class",
-      "ViewSchemaData": "/docs/apis/tree/viewschemadata-class"
-    },
-    "Interface": {
-      "Adapters": "/docs/apis/tree/adapters-interface",
-      "AnchorLocator": "/docs/apis/tree/anchorlocator-interface",
-      "Branch": "/docs/apis/tree/branch-interface",
-      "ChangeFamily": "/docs/apis/tree/changefamily-interface",
-      "ChangeRebaser": "/docs/apis/tree/changerebaser-interface",
-      "Checkout": "/docs/apis/tree/checkout-interface",
-      "ChildLocation": "/docs/apis/tree/childlocation-interface",
-      "Commit": "/docs/apis/tree/commit-interface",
-      "CommitEncoder": "/docs/apis/tree/commitencoder-interface",
-      "ContextuallyTypedNodeDataObject": "/docs/apis/tree/contextuallytypednodedataobject-interface",
-      "Contravariant": "/docs/apis/tree/contravariant-interface",
-      "Covariant": "/docs/apis/tree/covariant-interface",
-      "CursorAdapter": "/docs/apis/tree/cursoradapter-interface",
-      "CursorWithNode": "/docs/apis/tree/cursorwithnode-interface",
-      "DeltaVisitor": "/docs/apis/tree/deltavisitor-interface",
-      "Dependee": "/docs/apis/tree/dependee-interface",
-      "Dependent": "/docs/apis/tree/dependent-interface",
-      "DetachedField": "/docs/apis/tree/detachedfield-interface",
-      "EditableField": "/docs/apis/tree/editablefield-interface",
-      "EditableTree": "/docs/apis/tree/editabletree-interface",
-      "EditableTreeContext": "/docs/apis/tree/editabletreecontext-interface",
-      "Exception": "/docs/apis/tree/exception-interface",
-      "FieldAdapter": "/docs/apis/tree/fieldadapter-interface",
-      "FieldAnchor": "/docs/apis/tree/fieldanchor-interface",
-      "FieldChange": "/docs/apis/tree/fieldchange-interface",
-      "FieldChangeEncoder": "/docs/apis/tree/fieldchangeencoder-interface",
-      "FieldChangeHandler": "/docs/apis/tree/fieldchangehandler-interface",
-      "FieldChangeRebaser": "/docs/apis/tree/fieldchangerebaser-interface",
-      "FieldEditor": "/docs/apis/tree/fieldeditor-interface",
-      "FieldLocation": "/docs/apis/tree/fieldlocation-interface",
-      "FieldMapObject": "/docs/apis/tree/fieldmapobject-interface",
-      "FieldSchema": "/docs/apis/tree/fieldschema-interface",
-      "FieldUpPath": "/docs/apis/tree/fielduppath-interface",
-      "FinalChange": "/docs/apis/tree/finalchange-interface",
-      "FullSchemaPolicy": "/docs/apis/tree/fullschemapolicy-interface",
-      "GenericChange": "/docs/apis/tree/genericchange-interface",
-      "GenericFieldsNode": "/docs/apis/tree/genericfieldsnode-interface",
-      "GenericTreeNode": "/docs/apis/tree/generictreenode-interface",
-      "ICachedValue": "/docs/apis/tree/icachedvalue-interface",
-      "ICheckout": "/docs/apis/tree/icheckout-interface",
-      "IDefaultEditBuilder": "/docs/apis/tree/idefaulteditbuilder-interface",
-      "IEditableForest": "/docs/apis/tree/ieditableforest-interface",
-      "IForestSubscription": "/docs/apis/tree/iforestsubscription-interface",
-      "Index": "/docs/apis/tree/index-interface",
-      "Invariant": "/docs/apis/tree/invariant-interface",
-      "ISharedTree": "/docs/apis/tree/isharedtree-interface",
-      "ISharedTreeCoreEvents": "/docs/apis/tree/isharedtreecoreevents-interface",
-      "ITreeCursor": "/docs/apis/tree/itreecursor-interface",
-      "ITreeCursorSynchronous": "/docs/apis/tree/itreecursorsynchronous-interface",
-      "ITreeSubscriptionCursor": "/docs/apis/tree/itreesubscriptioncursor-interface",
-      "JsonableTree": "/docs/apis/tree/jsonabletree-interface",
-      "MakeNominal": "/docs/apis/tree/makenominal-interface",
-      "MapTree": "/docs/apis/tree/maptree-interface",
-      "MarkedArrayLike": "/docs/apis/tree/markedarraylike-interface",
-      "ModularChangeset": "/docs/apis/tree/modularchangeset-interface",
-      "MutableSchemaData": "/docs/apis/tree/mutableschemadata-interface",
-      "MutableSummaryData": "/docs/apis/tree/mutablesummarydata-interface",
-      "Named": "/docs/apis/tree/named-interface",
-      "NamedComputation": "/docs/apis/tree/namedcomputation-interface",
-      "NodeChangeset": "/docs/apis/tree/nodechangeset-interface",
-      "NodeData": "/docs/apis/tree/nodedata-interface",
-      "ObservingContext": "/docs/apis/tree/observingcontext-interface",
-      "ObservingDependent": "/docs/apis/tree/observingdependent-interface",
-      "OptionalFieldEditBuilder": "/docs/apis/tree/optionalfieldeditbuilder-interface",
-      "OutputType": "/docs/apis/tree/outputtype-interface",
-      "ProgressiveEditBuilder": "/docs/apis/tree/progressiveeditbuilder-interface",
-      "ReadonlyRepairDataStore": "/docs/apis/tree/readonlyrepairdatastore-interface",
-      "ReadonlySummaryData": "/docs/apis/tree/readonlysummarydata-interface",
-      "RepairDataStore": "/docs/apis/tree/repairdatastore-interface",
-      "RootField": "/docs/apis/tree/rootfield-interface",
-      "SchemaData": "/docs/apis/tree/schemadata-interface",
-      "SchemaDataAndPolicy": "/docs/apis/tree/schemadataandpolicy-interface",
-      "SchemaOp": "/docs/apis/tree/schemaop-interface",
-      "SchemaPolicy": "/docs/apis/tree/schemapolicy-interface",
-      "SequenceFieldEditBuilder": "/docs/apis/tree/sequencefieldeditbuilder-interface",
-      "StoredSchemaRepository": "/docs/apis/tree/storedschemarepository-interface",
-      "SummaryElement": "/docs/apis/tree/summaryelement-interface",
-      "TaggedChange": "/docs/apis/tree/taggedchange-interface",
-      "TreeAdapter": "/docs/apis/tree/treeadapter-interface",
-      "TreeLocation": "/docs/apis/tree/treelocation-interface",
-      "TreeSchema": "/docs/apis/tree/treeschema-interface",
-      "TreeSchemaBuilder": "/docs/apis/tree/treeschemabuilder-interface",
-      "TreeValue": "/docs/apis/tree/treevalue-interface",
-      "UpPath": "/docs/apis/tree/uppath-interface",
-      "ValueFieldEditBuilder": "/docs/apis/tree/valuefieldeditbuilder-interface",
-      "Violation": "/docs/apis/tree/violation-interface"
-    },
-    "Variable": {
-      "afterChangeToken": "/docs/apis/tree#afterchangetoken-variable",
-      "createField": "/docs/apis/tree#createfield-variable",
-      "defaultChangeFamily": "/docs/apis/tree#defaultchangefamily-variable",
-      "defaultSchemaPolicy": "/docs/apis/tree#defaultschemapolicy-variable",
-      "dummyRepairDataStore": "/docs/apis/tree#dummyrepairdatastore-variable",
-      "emptyField": "/docs/apis/tree#emptyfield-variable",
-      "EmptyKey": "/docs/apis/tree#emptykey-variable",
-      "emptyMap": "/docs/apis/tree#emptymap-variable",
-      "emptySet": "/docs/apis/tree#emptyset-variable",
-      "genericFieldKind": "/docs/apis/tree#genericfieldkind-variable",
-      "getField": "/docs/apis/tree#getfield-variable",
-      "indexSymbol": "/docs/apis/tree#indexsymbol-variable",
-      "jsonArray": "/docs/apis/tree#jsonarray-variable",
-      "jsonBoolean": "/docs/apis/tree#jsonboolean-variable",
-      "jsonNull": "/docs/apis/tree#jsonnull-variable",
-      "jsonNumber": "/docs/apis/tree#jsonnumber-variable",
-      "jsonObject": "/docs/apis/tree#jsonobject-variable",
-      "jsonRoot": "/docs/apis/tree#jsonroot-variable",
-      "jsonSchemaData": "/docs/apis/tree#jsonschemadata-variable",
-      "jsonString": "/docs/apis/tree#jsonstring-variable",
-      "neverField": "/docs/apis/tree#neverfield-variable",
-      "neverTree": "/docs/apis/tree#nevertree-variable",
-      "noFailure": "/docs/apis/tree#nofailure-variable",
-      "proxyTargetSymbol": "/docs/apis/tree#proxytargetsymbol-variable",
-      "replaceField": "/docs/apis/tree#replacefield-variable",
-      "rootField": "/docs/apis/tree#rootfield-variable",
-      "rootFieldKey": "/docs/apis/tree#rootfieldkey-variable",
-      "rootFieldKeySymbol": "/docs/apis/tree#rootfieldkeysymbol-variable",
-      "typeNameSymbol": "/docs/apis/tree#typenamesymbol-variable",
-      "typeSymbol": "/docs/apis/tree#typesymbol-variable",
-      "valueSymbol": "/docs/apis/tree#valuesymbol-variable"
-    },
-    "Function": {
-      "allowsRepoSuperset": "/docs/apis/tree#allowsreposuperset-function",
-      "applyModifyToTree": "/docs/apis/tree#applymodifytotree-function",
-      "buildForest": "/docs/apis/tree#buildforest-function",
-      "cachedValue": "/docs/apis/tree#cachedvalue-function",
-      "clonePath": "/docs/apis/tree#clonepath_1-function",
-      "commitEncoderFromChangeEncoder": "/docs/apis/tree#commitencoderfromchangeencoder-function",
-      "compareFieldUpPaths": "/docs/apis/tree#comparefielduppaths-function",
-      "compareUpPaths": "/docs/apis/tree#compareuppaths-function",
-      "cursorToJsonObject": "/docs/apis/tree#cursortojsonobject-function",
-      "detachedFieldAsKey": "/docs/apis/tree#detachedfieldaskey-function",
-      "encodeSummary": "/docs/apis/tree#encodesummary-function",
-      "extractFromOpaque": "/docs/apis/tree#extractfromopaque-function",
-      "fieldSchema": "/docs/apis/tree#fieldschema-function",
-      "forEachField": "/docs/apis/tree#foreachfield-function",
-      "forEachNode": "/docs/apis/tree#foreachnode-function",
-      "genericTreeDeleteIfEmpty": "/docs/apis/tree#generictreedeleteifempty-function",
-      "genericTreeKeys": "/docs/apis/tree#generictreekeys-function",
-      "getDepth": "/docs/apis/tree#getdepth-function",
-      "getDescendant": "/docs/apis/tree#getdescendant-function",
-      "getEditableTreeContext": "/docs/apis/tree#geteditabletreecontext-function",
-      "getGenericTreeField": "/docs/apis/tree#getgenerictreefield-function",
-      "getMapTreeField": "/docs/apis/tree#getmaptreefield-function",
-      "getPrimaryField": "/docs/apis/tree#getprimaryfield-function",
-      "getSchemaString": "/docs/apis/tree#getschemastring-function",
-      "initializeForest": "/docs/apis/tree#initializeforest-function",
-      "isContextuallyTypedNodeDataObject": "/docs/apis/tree#iscontextuallytypednodedataobject-function",
-      "isEditableField": "/docs/apis/tree#iseditablefield-function",
-      "isFieldLocation": "/docs/apis/tree#isfieldlocation-function",
-      "isGlobalFieldKey": "/docs/apis/tree#isglobalfieldkey-function",
-      "isLocalKey": "/docs/apis/tree#islocalkey-function",
-      "isNeverField": "/docs/apis/tree#isneverfield-function",
-      "isPrimitive": "/docs/apis/tree#isprimitive-function",
-      "isPrimitiveValue": "/docs/apis/tree#isprimitivevalue-function",
-      "isUnwrappedNode": "/docs/apis/tree#isunwrappednode-function",
-      "isWritableArrayLike": "/docs/apis/tree#iswritablearraylike-function",
-      "jsonableTreeFromCursor": "/docs/apis/tree#jsonabletreefromcursor-function",
-      "keyAsDetachedField": "/docs/apis/tree#keyasdetachedfield-function",
-      "keyFromSymbol": "/docs/apis/tree#keyfromsymbol-function",
-      "loadSummary": "/docs/apis/tree#loadsummary-function",
-      "lookupGlobalFieldSchema": "/docs/apis/tree#lookupglobalfieldschema-function",
-      "lookupTreeSchema": "/docs/apis/tree#lookuptreeschema-function",
-      "makeAnonChange": "/docs/apis/tree#makeanonchange-function",
-      "mapCursorField": "/docs/apis/tree#mapcursorfield-function",
-      "mapCursorFields": "/docs/apis/tree#mapcursorfields-function",
-      "mapFieldMarks": "/docs/apis/tree#mapfieldmarks-function",
-      "mapFromNamed": "/docs/apis/tree#mapfromnamed-function",
-      "mapMark": "/docs/apis/tree#mapmark-function",
-      "mapMarkList": "/docs/apis/tree#mapmarklist-function",
-      "mapTreeFromCursor": "/docs/apis/tree#maptreefromcursor-function",
-      "moveToDetachedField": "/docs/apis/tree#movetodetachedfield-function",
-      "namedTreeSchema": "/docs/apis/tree#namedtreeschema-function",
-      "recordDependency": "/docs/apis/tree#recorddependency-function",
-      "runSynchronousTransaction": "/docs/apis/tree#runsynchronoustransaction-function",
-      "schemaDataIsEmpty": "/docs/apis/tree#schemadataisempty-function",
-      "scopeFromKey": "/docs/apis/tree#scopefromkey-function",
-      "setGenericTreeField": "/docs/apis/tree#setgenerictreefield-function",
-      "singleJsonCursor": "/docs/apis/tree#singlejsoncursor-function",
-      "singleMapTreeCursor": "/docs/apis/tree#singlemaptreecursor-function",
-      "singleStackTreeCursor": "/docs/apis/tree#singlestacktreecursor-function",
-      "singleTextCursor": "/docs/apis/tree#singletextcursor-function",
-      "symbolFromKey": "/docs/apis/tree#symbolfromkey-function",
-      "symbolIsFieldKey": "/docs/apis/tree#symbolisfieldkey-function",
-      "tagChange": "/docs/apis/tree#tagchange-function",
-      "tagInverse": "/docs/apis/tree#taginverse-function",
-      "treeSchema": "/docs/apis/tree#treeschema-function",
-      "verifyChangeRebaser": "/docs/apis/tree#verifychangerebaser-function",
-      "visitDelta": "/docs/apis/tree#visitdelta-function"
-    },
-    "TypeAlias": {
-      "Anchor": "/docs/apis/tree#anchor-typealias",
-      "Brand": "/docs/apis/tree#brand-typealias",
-      "ChangesetFromChangeRebaser": "/docs/apis/tree#changesetfromchangerebaser-typealias",
-      "ChangesetLocalId": "/docs/apis/tree#changesetlocalid-typealias",
-      "ChildCollection": "/docs/apis/tree#childcollection-typealias",
-      "ContextuallyTypedNodeData": "/docs/apis/tree#contextuallytypednodedata-typealias",
-      "DefaultChangeset": "/docs/apis/tree#defaultchangeset-typealias",
-      "EditableTreeOrPrimitive": "/docs/apis/tree#editabletreeorprimitive-typealias",
-      "ExtractFromOpaque": "/docs/apis/tree#extractfromopaque-typealias",
-      "Failure": "/docs/apis/tree#failure-typealias",
-      "FieldChangeMap": "/docs/apis/tree#fieldchangemap-typealias",
-      "FieldChangeset": "/docs/apis/tree#fieldchangeset-typealias",
-      "FieldKey": "/docs/apis/tree#fieldkey-typealias",
-      "FieldKindIdentifier": "/docs/apis/tree#fieldkindidentifier-typealias",
-      "ForestLocation": "/docs/apis/tree#forestlocation-typealias",
-      "GenericChangeset": "/docs/apis/tree#genericchangeset-typealias",
-      "GlobalFieldKey": "/docs/apis/tree#globalfieldkey-typealias",
-      "GlobalFieldKeySymbol": "/docs/apis/tree#globalfieldkeysymbol-typealias",
-      "IdAllocator": "/docs/apis/tree#idallocator-typealias",
-      "isAny": "/docs/apis/tree#isany-typealias",
-      "JsonCompatible": "/docs/apis/tree#jsoncompatible-typealias",
-      "JsonCompatibleObject": "/docs/apis/tree#jsoncompatibleobject-typealias",
-      "JsonCompatibleReadOnly": "/docs/apis/tree#jsoncompatiblereadonly-typealias",
-      "LocalFieldKey": "/docs/apis/tree#localfieldkey-typealias",
-      "NamedFieldSchema": "/docs/apis/tree#namedfieldschema-typealias",
-      "NamedTreeSchema": "/docs/apis/tree#namedtreeschema-typealias",
-      "NodeChangeComposer": "/docs/apis/tree#nodechangecomposer-typealias",
-      "NodeChangeDecoder": "/docs/apis/tree#nodechangedecoder-typealias",
-      "NodeChangeEncoder": "/docs/apis/tree#nodechangeencoder-typealias",
-      "NodeChangeInverter": "/docs/apis/tree#nodechangeinverter-typealias",
-      "NodeChangeRebaser": "/docs/apis/tree#nodechangerebaser-typealias",
-      "NodeReviver": "/docs/apis/tree#nodereviver-typealias",
-      "Opaque": "/docs/apis/tree#opaque-typealias",
-      "PrimitiveValue": "/docs/apis/tree#primitivevalue-typealias",
-      "RecursiveReadonly": "/docs/apis/tree#recursivereadonly-typealias",
-      "RevisionTag": "/docs/apis/tree#revisiontag-typealias",
-      "SeqNumber": "/docs/apis/tree#seqnumber-typealias",
-      "SessionId": "/docs/apis/tree#sessionid-typealias",
-      "SummaryElementParser": "/docs/apis/tree#summaryelementparser-typealias",
-      "SummaryElementStringifier": "/docs/apis/tree#summaryelementstringifier-typealias",
-      "ToDelta": "/docs/apis/tree#todelta-typealias",
-      "TreeSchemaIdentifier": "/docs/apis/tree#treeschemaidentifier-typealias",
-      "TreeType": "/docs/apis/tree#treetype-typealias",
-      "TreeTypeSet": "/docs/apis/tree#treetypeset-typealias",
-      "UnwrappedEditableField": "/docs/apis/tree#unwrappededitablefield-typealias",
-      "UnwrappedEditableTree": "/docs/apis/tree#unwrappededitabletree-typealias",
-      "Value": "/docs/apis/tree#value-typealias",
-      "ValueChange": "/docs/apis/tree#valuechange-typealias"
-    },
-    "Enum": {
-      "Compatibility": "/docs/apis/tree#compatibility-enum",
-      "CursorLocationType": "/docs/apis/tree#cursorlocationtype-enum",
-      "FieldScope": "/docs/apis/tree#fieldscope-enum",
-      "FinalChangeStatus": "/docs/apis/tree#finalchangestatus-enum",
-      "ITreeSubscriptionCursorState": "/docs/apis/tree#itreesubscriptioncursorstate-enum",
-      "Multiplicity": "/docs/apis/tree#multiplicity-enum",
-      "TransactionResult": "/docs/apis/tree#transactionresult-enum",
-      "TreeNavigationResult": "/docs/apis/tree#treenavigationresult-enum",
-      "ValueSchema": "/docs/apis/tree#valueschema-enum"
-    },
-    "Namespace": {
-      "Delta": "/docs/apis/tree/delta-namespace",
-      "FieldKinds": "/docs/apis/tree/fieldkinds-namespace",
-      "SequenceField": "/docs/apis/tree/sequencefield-namespace"
-    }
-  },
-  "package": "@fluid-internal/tree",
-  "unscopedPackageName": "tree"
+"title": "@fluid-internal/tree Package",
+"kind": "Package",
+"members": {
+"Class": {
+"AdaptedViewSchema": "/docs/apis/tree/adaptedviewschema-class",
+"AnchorSet": "/docs/apis/tree/anchorset-class",
+"BrandedType": "/docs/apis/tree/brandedtype-class",
+"ChangeEncoder": "/docs/apis/tree/changeencoder-class",
+"DefaultChangeFamily": "/docs/apis/tree/defaultchangefamily-class",
+"DefaultEditBuilder": "/docs/apis/tree/defaulteditbuilder-class",
+"DisposingDependee": "/docs/apis/tree/disposingdependee-class",
+"EditManager": "/docs/apis/tree/editmanager-class",
+"EditManagerIndex": "/docs/apis/tree/editmanagerindex-class",
+"FieldKind": "/docs/apis/tree/fieldkind-class",
+"ForestIndex": "/docs/apis/tree/forestindex-class",
+"ForestRepairDataStore": "/docs/apis/tree/forestrepairdatastore-class",
+"InMemoryStoredSchemaRepository": "/docs/apis/tree/inmemorystoredschemarepository-class",
+"InvalidationToken": "/docs/apis/tree/invalidationtoken-class",
+"ModularChangeFamily": "/docs/apis/tree/modularchangefamily-class",
+"ModularEditBuilder": "/docs/apis/tree/modulareditbuilder-class",
+"ProgressiveEditBuilderBase": "/docs/apis/tree/progressiveeditbuilderbase-class",
+"Rebaser": "/docs/apis/tree/rebaser-class",
+"SchemaEditor": "/docs/apis/tree/schemaeditor-class",
+"SchemaIndex": "/docs/apis/tree/schemaindex-class",
+"SharedTreeCore": "/docs/apis/tree/sharedtreecore-class",
+"SharedTreeFactory": "/docs/apis/tree/sharedtreefactory-class",
+"SimpleDependee": "/docs/apis/tree/simpledependee-class",
+"SimpleObservingDependent": "/docs/apis/tree/simpleobservingdependent-class",
+"SparseNode": "/docs/apis/tree/sparsenode-class",
+"ViewSchemaData": "/docs/apis/tree/viewschemadata-class"
+},
+"Interface": {
+"Adapters": "/docs/apis/tree/adapters-interface",
+"AnchorLocator": "/docs/apis/tree/anchorlocator-interface",
+"Branch": "/docs/apis/tree/branch-interface",
+"ChangeFamily": "/docs/apis/tree/changefamily-interface",
+"ChangeRebaser": "/docs/apis/tree/changerebaser-interface",
+"Checkout": "/docs/apis/tree/checkout-interface",
+"ChildLocation": "/docs/apis/tree/childlocation-interface",
+"Commit": "/docs/apis/tree/commit-interface",
+"CommitEncoder": "/docs/apis/tree/commitencoder-interface",
+"ContextuallyTypedNodeDataObject": "/docs/apis/tree/contextuallytypednodedataobject-interface",
+"Contravariant": "/docs/apis/tree/contravariant-interface",
+"Covariant": "/docs/apis/tree/covariant-interface",
+"CursorAdapter": "/docs/apis/tree/cursoradapter-interface",
+"CursorWithNode": "/docs/apis/tree/cursorwithnode-interface",
+"DeltaVisitor": "/docs/apis/tree/deltavisitor-interface",
+"Dependee": "/docs/apis/tree/dependee-interface",
+"Dependent": "/docs/apis/tree/dependent-interface",
+"DetachedField": "/docs/apis/tree/detachedfield-interface",
+"EditableField": "/docs/apis/tree/editablefield-interface",
+"EditableTree": "/docs/apis/tree/editabletree-interface",
+"EditableTreeContext": "/docs/apis/tree/editabletreecontext-interface",
+"Exception": "/docs/apis/tree/exception-interface",
+"FieldAdapter": "/docs/apis/tree/fieldadapter-interface",
+"FieldAnchor": "/docs/apis/tree/fieldanchor-interface",
+"FieldChange": "/docs/apis/tree/fieldchange-interface",
+"FieldChangeEncoder": "/docs/apis/tree/fieldchangeencoder-interface",
+"FieldChangeHandler": "/docs/apis/tree/fieldchangehandler-interface",
+"FieldChangeRebaser": "/docs/apis/tree/fieldchangerebaser-interface",
+"FieldEditor": "/docs/apis/tree/fieldeditor-interface",
+"FieldLocation": "/docs/apis/tree/fieldlocation-interface",
+"FieldMapObject": "/docs/apis/tree/fieldmapobject-interface",
+"FieldSchema": "/docs/apis/tree/fieldschema-interface",
+"FieldUpPath": "/docs/apis/tree/fielduppath-interface",
+"FinalChange": "/docs/apis/tree/finalchange-interface",
+"FullSchemaPolicy": "/docs/apis/tree/fullschemapolicy-interface",
+"GenericChange": "/docs/apis/tree/genericchange-interface",
+"GenericFieldsNode": "/docs/apis/tree/genericfieldsnode-interface",
+"GenericTreeNode": "/docs/apis/tree/generictreenode-interface",
+"ICachedValue": "/docs/apis/tree/icachedvalue-interface",
+"ICheckout": "/docs/apis/tree/icheckout-interface",
+"IDefaultEditBuilder": "/docs/apis/tree/idefaulteditbuilder-interface",
+"IEditableForest": "/docs/apis/tree/ieditableforest-interface",
+"IForestSubscription": "/docs/apis/tree/iforestsubscription-interface",
+"Index": "/docs/apis/tree/index-interface",
+"Invariant": "/docs/apis/tree/invariant-interface",
+"ISharedTree": "/docs/apis/tree/isharedtree-interface",
+"ISharedTreeCoreEvents": "/docs/apis/tree/isharedtreecoreevents-interface",
+"ITreeCursor": "/docs/apis/tree/itreecursor-interface",
+"ITreeCursorSynchronous": "/docs/apis/tree/itreecursorsynchronous-interface",
+"ITreeSubscriptionCursor": "/docs/apis/tree/itreesubscriptioncursor-interface",
+"JsonableTree": "/docs/apis/tree/jsonabletree-interface",
+"MakeNominal": "/docs/apis/tree/makenominal-interface",
+"MapTree": "/docs/apis/tree/maptree-interface",
+"MarkedArrayLike": "/docs/apis/tree/markedarraylike-interface",
+"ModularChangeset": "/docs/apis/tree/modularchangeset-interface",
+"MutableSchemaData": "/docs/apis/tree/mutableschemadata-interface",
+"MutableSummaryData": "/docs/apis/tree/mutablesummarydata-interface",
+"Named": "/docs/apis/tree/named-interface",
+"NamedComputation": "/docs/apis/tree/namedcomputation-interface",
+"NodeChangeset": "/docs/apis/tree/nodechangeset-interface",
+"NodeData": "/docs/apis/tree/nodedata-interface",
+"ObservingContext": "/docs/apis/tree/observingcontext-interface",
+"ObservingDependent": "/docs/apis/tree/observingdependent-interface",
+"OptionalFieldEditBuilder": "/docs/apis/tree/optionalfieldeditbuilder-interface",
+"OutputType": "/docs/apis/tree/outputtype-interface",
+"ProgressiveEditBuilder": "/docs/apis/tree/progressiveeditbuilder-interface",
+"ReadonlyRepairDataStore": "/docs/apis/tree/readonlyrepairdatastore-interface",
+"ReadonlySummaryData": "/docs/apis/tree/readonlysummarydata-interface",
+"RepairDataStore": "/docs/apis/tree/repairdatastore-interface",
+"RootField": "/docs/apis/tree/rootfield-interface",
+"SchemaData": "/docs/apis/tree/schemadata-interface",
+"SchemaDataAndPolicy": "/docs/apis/tree/schemadataandpolicy-interface",
+"SchemaOp": "/docs/apis/tree/schemaop-interface",
+"SchemaPolicy": "/docs/apis/tree/schemapolicy-interface",
+"SequenceFieldEditBuilder": "/docs/apis/tree/sequencefieldeditbuilder-interface",
+"StoredSchemaRepository": "/docs/apis/tree/storedschemarepository-interface",
+"SummaryElement": "/docs/apis/tree/summaryelement-interface",
+"TaggedChange": "/docs/apis/tree/taggedchange-interface",
+"TreeAdapter": "/docs/apis/tree/treeadapter-interface",
+"TreeLocation": "/docs/apis/tree/treelocation-interface",
+"TreeSchema": "/docs/apis/tree/treeschema-interface",
+"TreeSchemaBuilder": "/docs/apis/tree/treeschemabuilder-interface",
+"TreeValue": "/docs/apis/tree/treevalue-interface",
+"UpPath": "/docs/apis/tree/uppath-interface",
+"ValueFieldEditBuilder": "/docs/apis/tree/valuefieldeditbuilder-interface",
+"Violation": "/docs/apis/tree/violation-interface"
+},
+"Variable": {
+"afterChangeToken": "/docs/apis/tree#afterchangetoken-variable",
+"createField": "/docs/apis/tree#createfield-variable",
+"defaultChangeFamily": "/docs/apis/tree#defaultchangefamily-variable",
+"defaultSchemaPolicy": "/docs/apis/tree#defaultschemapolicy-variable",
+"dummyRepairDataStore": "/docs/apis/tree#dummyrepairdatastore-variable",
+"emptyField": "/docs/apis/tree#emptyfield-variable",
+"EmptyKey": "/docs/apis/tree#emptykey-variable",
+"emptyMap": "/docs/apis/tree#emptymap-variable",
+"emptySet": "/docs/apis/tree#emptyset-variable",
+"genericFieldKind": "/docs/apis/tree#genericfieldkind-variable",
+"getField": "/docs/apis/tree#getfield-variable",
+"indexSymbol": "/docs/apis/tree#indexsymbol-variable",
+"jsonArray": "/docs/apis/tree#jsonarray-variable",
+"jsonBoolean": "/docs/apis/tree#jsonboolean-variable",
+"jsonNull": "/docs/apis/tree#jsonnull-variable",
+"jsonNumber": "/docs/apis/tree#jsonnumber-variable",
+"jsonObject": "/docs/apis/tree#jsonobject-variable",
+"jsonRoot": "/docs/apis/tree#jsonroot-variable",
+"jsonSchemaData": "/docs/apis/tree#jsonschemadata-variable",
+"jsonString": "/docs/apis/tree#jsonstring-variable",
+"neverField": "/docs/apis/tree#neverfield-variable",
+"neverTree": "/docs/apis/tree#nevertree-variable",
+"noFailure": "/docs/apis/tree#nofailure-variable",
+"proxyTargetSymbol": "/docs/apis/tree#proxytargetsymbol-variable",
+"replaceField": "/docs/apis/tree#replacefield-variable",
+"rootField": "/docs/apis/tree#rootfield-variable",
+"rootFieldKey": "/docs/apis/tree#rootfieldkey-variable",
+"rootFieldKeySymbol": "/docs/apis/tree#rootfieldkeysymbol-variable",
+"typeNameSymbol": "/docs/apis/tree#typenamesymbol-variable",
+"typeSymbol": "/docs/apis/tree#typesymbol-variable",
+"valueSymbol": "/docs/apis/tree#valuesymbol-variable"
+},
+"Function": {
+"allowsRepoSuperset": "/docs/apis/tree#allowsreposuperset-function",
+"applyModifyToTree": "/docs/apis/tree#applymodifytotree-function",
+"buildForest": "/docs/apis/tree#buildforest-function",
+"cachedValue": "/docs/apis/tree#cachedvalue-function",
+"clonePath": "/docs/apis/tree#clonepath_1-function",
+"commitEncoderFromChangeEncoder": "/docs/apis/tree#commitencoderfromchangeencoder-function",
+"compareFieldUpPaths": "/docs/apis/tree#comparefielduppaths-function",
+"compareUpPaths": "/docs/apis/tree#compareuppaths-function",
+"cursorToJsonObject": "/docs/apis/tree#cursortojsonobject-function",
+"detachedFieldAsKey": "/docs/apis/tree#detachedfieldaskey-function",
+"encodeSummary": "/docs/apis/tree#encodesummary-function",
+"extractFromOpaque": "/docs/apis/tree#extractfromopaque-function",
+"fieldSchema": "/docs/apis/tree#fieldschema-function",
+"forEachField": "/docs/apis/tree#foreachfield-function",
+"forEachNode": "/docs/apis/tree#foreachnode-function",
+"genericTreeDeleteIfEmpty": "/docs/apis/tree#generictreedeleteifempty-function",
+"genericTreeKeys": "/docs/apis/tree#generictreekeys-function",
+"getDepth": "/docs/apis/tree#getdepth-function",
+"getDescendant": "/docs/apis/tree#getdescendant-function",
+"getEditableTreeContext": "/docs/apis/tree#geteditabletreecontext-function",
+"getGenericTreeField": "/docs/apis/tree#getgenerictreefield-function",
+"getMapTreeField": "/docs/apis/tree#getmaptreefield-function",
+"getPrimaryField": "/docs/apis/tree#getprimaryfield-function",
+"getSchemaString": "/docs/apis/tree#getschemastring-function",
+"initializeForest": "/docs/apis/tree#initializeforest-function",
+"isContextuallyTypedNodeDataObject": "/docs/apis/tree#iscontextuallytypednodedataobject-function",
+"isEditableField": "/docs/apis/tree#iseditablefield-function",
+"isFieldLocation": "/docs/apis/tree#isfieldlocation-function",
+"isGlobalFieldKey": "/docs/apis/tree#isglobalfieldkey-function",
+"isLocalKey": "/docs/apis/tree#islocalkey-function",
+"isNeverField": "/docs/apis/tree#isneverfield-function",
+"isPrimitive": "/docs/apis/tree#isprimitive-function",
+"isPrimitiveValue": "/docs/apis/tree#isprimitivevalue-function",
+"isUnwrappedNode": "/docs/apis/tree#isunwrappednode-function",
+"isWritableArrayLike": "/docs/apis/tree#iswritablearraylike-function",
+"jsonableTreeFromCursor": "/docs/apis/tree#jsonabletreefromcursor-function",
+"keyAsDetachedField": "/docs/apis/tree#keyasdetachedfield-function",
+"keyFromSymbol": "/docs/apis/tree#keyfromsymbol-function",
+"loadSummary": "/docs/apis/tree#loadsummary-function",
+"lookupGlobalFieldSchema": "/docs/apis/tree#lookupglobalfieldschema-function",
+"lookupTreeSchema": "/docs/apis/tree#lookuptreeschema-function",
+"makeAnonChange": "/docs/apis/tree#makeanonchange-function",
+"mapCursorField": "/docs/apis/tree#mapcursorfield-function",
+"mapCursorFields": "/docs/apis/tree#mapcursorfields-function",
+"mapFieldMarks": "/docs/apis/tree#mapfieldmarks-function",
+"mapFromNamed": "/docs/apis/tree#mapfromnamed-function",
+"mapMark": "/docs/apis/tree#mapmark-function",
+"mapMarkList": "/docs/apis/tree#mapmarklist-function",
+"mapTreeFromCursor": "/docs/apis/tree#maptreefromcursor-function",
+"moveToDetachedField": "/docs/apis/tree#movetodetachedfield-function",
+"namedTreeSchema": "/docs/apis/tree#namedtreeschema-function",
+"recordDependency": "/docs/apis/tree#recorddependency-function",
+"runSynchronousTransaction": "/docs/apis/tree#runsynchronoustransaction-function",
+"schemaDataIsEmpty": "/docs/apis/tree#schemadataisempty-function",
+"scopeFromKey": "/docs/apis/tree#scopefromkey-function",
+"setGenericTreeField": "/docs/apis/tree#setgenerictreefield-function",
+"singleJsonCursor": "/docs/apis/tree#singlejsoncursor-function",
+"singleMapTreeCursor": "/docs/apis/tree#singlemaptreecursor-function",
+"singleStackTreeCursor": "/docs/apis/tree#singlestacktreecursor-function",
+"singleTextCursor": "/docs/apis/tree#singletextcursor-function",
+"symbolFromKey": "/docs/apis/tree#symbolfromkey-function",
+"symbolIsFieldKey": "/docs/apis/tree#symbolisfieldkey-function",
+"tagChange": "/docs/apis/tree#tagchange-function",
+"tagInverse": "/docs/apis/tree#taginverse-function",
+"treeSchema": "/docs/apis/tree#treeschema-function",
+"verifyChangeRebaser": "/docs/apis/tree#verifychangerebaser-function",
+"visitDelta": "/docs/apis/tree#visitdelta-function"
+},
+"TypeAlias": {
+"Anchor": "/docs/apis/tree#anchor-typealias",
+"Brand": "/docs/apis/tree#brand-typealias",
+"ChangesetFromChangeRebaser": "/docs/apis/tree#changesetfromchangerebaser-typealias",
+"ChangesetLocalId": "/docs/apis/tree#changesetlocalid-typealias",
+"ChildCollection": "/docs/apis/tree#childcollection-typealias",
+"ContextuallyTypedNodeData": "/docs/apis/tree#contextuallytypednodedata-typealias",
+"DefaultChangeset": "/docs/apis/tree#defaultchangeset-typealias",
+"EditableTreeOrPrimitive": "/docs/apis/tree#editabletreeorprimitive-typealias",
+"ExtractFromOpaque": "/docs/apis/tree#extractfromopaque-typealias",
+"Failure": "/docs/apis/tree#failure-typealias",
+"FieldChangeMap": "/docs/apis/tree#fieldchangemap-typealias",
+"FieldChangeset": "/docs/apis/tree#fieldchangeset-typealias",
+"FieldKey": "/docs/apis/tree#fieldkey-typealias",
+"FieldKindIdentifier": "/docs/apis/tree#fieldkindidentifier-typealias",
+"ForestLocation": "/docs/apis/tree#forestlocation-typealias",
+"GenericChangeset": "/docs/apis/tree#genericchangeset-typealias",
+"GlobalFieldKey": "/docs/apis/tree#globalfieldkey-typealias",
+"GlobalFieldKeySymbol": "/docs/apis/tree#globalfieldkeysymbol-typealias",
+"IdAllocator": "/docs/apis/tree#idallocator-typealias",
+"isAny": "/docs/apis/tree#isany-typealias",
+"JsonCompatible": "/docs/apis/tree#jsoncompatible-typealias",
+"JsonCompatibleObject": "/docs/apis/tree#jsoncompatibleobject-typealias",
+"JsonCompatibleReadOnly": "/docs/apis/tree#jsoncompatiblereadonly-typealias",
+"LocalFieldKey": "/docs/apis/tree#localfieldkey-typealias",
+"NamedFieldSchema": "/docs/apis/tree#namedfieldschema-typealias",
+"NamedTreeSchema": "/docs/apis/tree#namedtreeschema-typealias",
+"NodeChangeComposer": "/docs/apis/tree#nodechangecomposer-typealias",
+"NodeChangeDecoder": "/docs/apis/tree#nodechangedecoder-typealias",
+"NodeChangeEncoder": "/docs/apis/tree#nodechangeencoder-typealias",
+"NodeChangeInverter": "/docs/apis/tree#nodechangeinverter-typealias",
+"NodeChangeRebaser": "/docs/apis/tree#nodechangerebaser-typealias",
+"NodeReviver": "/docs/apis/tree#nodereviver-typealias",
+"Opaque": "/docs/apis/tree#opaque-typealias",
+"PrimitiveValue": "/docs/apis/tree#primitivevalue-typealias",
+"RecursiveReadonly": "/docs/apis/tree#recursivereadonly-typealias",
+"RevisionTag": "/docs/apis/tree#revisiontag-typealias",
+"SeqNumber": "/docs/apis/tree#seqnumber-typealias",
+"SessionId": "/docs/apis/tree#sessionid-typealias",
+"SummaryElementParser": "/docs/apis/tree#summaryelementparser-typealias",
+"SummaryElementStringifier": "/docs/apis/tree#summaryelementstringifier-typealias",
+"ToDelta": "/docs/apis/tree#todelta-typealias",
+"TreeSchemaIdentifier": "/docs/apis/tree#treeschemaidentifier-typealias",
+"TreeType": "/docs/apis/tree#treetype-typealias",
+"TreeTypeSet": "/docs/apis/tree#treetypeset-typealias",
+"UnwrappedEditableField": "/docs/apis/tree#unwrappededitablefield-typealias",
+"UnwrappedEditableTree": "/docs/apis/tree#unwrappededitabletree-typealias",
+"Value": "/docs/apis/tree#value-typealias",
+"ValueChange": "/docs/apis/tree#valuechange-typealias"
+},
+"Enum": {
+"Compatibility": "/docs/apis/tree#compatibility-enum",
+"CursorLocationType": "/docs/apis/tree#cursorlocationtype-enum",
+"FieldScope": "/docs/apis/tree#fieldscope-enum",
+"FinalChangeStatus": "/docs/apis/tree#finalchangestatus-enum",
+"ITreeSubscriptionCursorState": "/docs/apis/tree#itreesubscriptioncursorstate-enum",
+"Multiplicity": "/docs/apis/tree#multiplicity-enum",
+"TransactionResult": "/docs/apis/tree#transactionresult-enum",
+"TreeNavigationResult": "/docs/apis/tree#treenavigationresult-enum",
+"ValueSchema": "/docs/apis/tree#valueschema-enum"
+},
+"Namespace": {
+"Delta": "/docs/apis/tree/delta-namespace",
+"FieldKinds": "/docs/apis/tree/fieldkinds-namespace",
+"SequenceField": "/docs/apis/tree/sequencefield-namespace"
+}
+},
+"package": "@fluid-internal/tree",
+"unscopedPackageName": "tree"
 }
 
-[//]: # (Do not edit this file. It is automatically generated by @fluidtools/api-markdown-documenter.)
+[//]: # "Do not edit this file. It is automatically generated by @fluidtools/api-markdown-documenter."
 
 [Packages](/docs/apis/) &gt; [@fluid-internal/tree](/docs/apis/tree)
 
@@ -2765,7 +2765,7 @@ How compatible a particular view schema is for some operation on some specific d
 #### Signature {#compatibility-signature}
 
 ```typescript
-export declare enum Compatibility 
+export declare enum Compatibility
 ```
 
 #### Flags
@@ -2813,7 +2813,7 @@ export declare enum Compatibility
 ###### Signature {#compatible-signature}
 
 ```typescript
-Compatible = 2
+Compatible = 2;
 ```
 
 ##### Incompatible {#compatibility-incompatible-enummember}
@@ -2821,7 +2821,7 @@ Compatible = 2
 ###### Signature {#incompatible-signature}
 
 ```typescript
-Incompatible = 0
+Incompatible = 0;
 ```
 
 ##### RequiresAdapters {#compatibility-requiresadapters-enummember}
@@ -2829,7 +2829,7 @@ Incompatible = 0
 ###### Signature {#requiresadapters-signature}
 
 ```typescript
-RequiresAdapters = 1
+RequiresAdapters = 1;
 ```
 
 ### CursorLocationType {#cursorlocationtype-enum}
@@ -2837,7 +2837,7 @@ RequiresAdapters = 1
 #### Signature {#cursorlocationtype-signature}
 
 ```typescript
-export declare const enum CursorLocationType 
+export declare const enum CursorLocationType
 ```
 
 #### Flags
@@ -2882,7 +2882,7 @@ Can iterate through fields of a node. At a "current field".
 ###### Signature {#fields-signature}
 
 ```typescript
-Fields = 1
+Fields = 1;
 ```
 
 ##### Nodes {#cursorlocationtype-nodes-enummember}
@@ -2892,7 +2892,7 @@ Can iterate through nodes in a field. At a "current node".
 ###### Signature {#nodes-signature}
 
 ```typescript
-Nodes = 0
+Nodes = 0;
 ```
 
 ### FieldScope {#fieldscope-enum}
@@ -2902,7 +2902,7 @@ The scope of a [FieldKey](/docs/apis/tree#fieldkey-typealias)<!-- -->.
 #### Signature {#fieldscope-signature}
 
 ```typescript
-export declare const enum FieldScope 
+export declare const enum FieldScope
 ```
 
 #### Flags
@@ -2943,7 +2943,7 @@ export declare const enum FieldScope
 ###### Signature {#global-signature}
 
 ```typescript
-global = "globalFields"
+global = "globalFields";
 ```
 
 ##### local {#fieldscope-local-enummember}
@@ -2951,7 +2951,7 @@ global = "globalFields"
 ###### Signature {#local-signature}
 
 ```typescript
-local = "fields"
+local = "fields";
 ```
 
 ### FinalChangeStatus {#finalchangestatus-enum}
@@ -2959,7 +2959,7 @@ local = "fields"
 #### Signature {#finalchangestatus-signature}
 
 ```typescript
-export declare enum FinalChangeStatus 
+export declare enum FinalChangeStatus
 ```
 
 #### Flags
@@ -3007,7 +3007,7 @@ export declare enum FinalChangeStatus
 ###### Signature {#commuted-signature}
 
 ```typescript
-commuted = 2
+commuted = 2;
 ```
 
 ##### conflicted {#finalchangestatus-conflicted-enummember}
@@ -3015,7 +3015,7 @@ commuted = 2
 ###### Signature {#conflicted-signature}
 
 ```typescript
-conflicted = 0
+conflicted = 0;
 ```
 
 ##### rebased {#finalchangestatus-rebased-enummember}
@@ -3023,7 +3023,7 @@ conflicted = 0
 ###### Signature {#rebased-signature}
 
 ```typescript
-rebased = 1
+rebased = 1;
 ```
 
 ### ITreeSubscriptionCursorState {#itreesubscriptioncursorstate-enum}
@@ -3031,7 +3031,7 @@ rebased = 1
 #### Signature {#itreesubscriptioncursorstate-signature}
 
 ```typescript
-export declare enum ITreeSubscriptionCursorState 
+export declare enum ITreeSubscriptionCursorState
 ```
 
 #### Flags
@@ -3084,7 +3084,7 @@ Empty, but can be reused.
 ###### Signature {#cleared-signature}
 
 ```typescript
-Cleared = 1
+Cleared = 1;
 ```
 
 ##### Current {#itreesubscriptioncursorstate-current-enummember}
@@ -3094,7 +3094,7 @@ On the current revision of the forest.
 ###### Signature {#current-signature}
 
 ```typescript
-Current = 0
+Current = 0;
 ```
 
 ##### Freed {#itreesubscriptioncursorstate-freed-enummember}
@@ -3104,7 +3104,7 @@ Freed and must not be used.
 ###### Signature {#freed-signature}
 
 ```typescript
-Freed = 2
+Freed = 2;
 ```
 
 ### Multiplicity {#multiplicity-enum}
@@ -3116,7 +3116,7 @@ This determine its reading and editing APIs, multiplicity, and what merge resolu
 #### Signature {#multiplicity-signature}
 
 ```typescript
-export declare enum Multiplicity 
+export declare enum Multiplicity
 ```
 
 #### Flags
@@ -3187,7 +3187,7 @@ See [emptyField](/docs/apis/tree#emptyfield-variable) for a constant, reusable f
 ###### Signature {#forbidden-signature}
 
 ```typescript
-Forbidden = 3
+Forbidden = 3;
 ```
 
 ##### Optional {#multiplicity-optional-enummember}
@@ -3197,7 +3197,7 @@ Forbidden = 3
 ###### Signature {#optional-signature}
 
 ```typescript
-Optional = 1
+Optional = 1;
 ```
 
 ##### Sequence {#multiplicity-sequence-enummember}
@@ -3207,7 +3207,7 @@ Optional = 1
 ###### Signature {#sequence-signature}
 
 ```typescript
-Sequence = 2
+Sequence = 2;
 ```
 
 ##### Value {#multiplicity-value-enummember}
@@ -3217,7 +3217,7 @@ Exactly one item.
 ###### Signature {#value-signature}
 
 ```typescript
-Value = 0
+Value = 0;
 ```
 
 ### TransactionResult {#transactionresult-enum}
@@ -3225,7 +3225,7 @@ Value = 0
 #### Signature {#transactionresult-signature}
 
 ```typescript
-export declare enum TransactionResult 
+export declare enum TransactionResult
 ```
 
 #### Flags
@@ -3266,7 +3266,7 @@ export declare enum TransactionResult
 ###### Signature {#abort-signature}
 
 ```typescript
-Abort = 0
+Abort = 0;
 ```
 
 ##### Apply {#transactionresult-apply-enummember}
@@ -3274,7 +3274,7 @@ Abort = 0
 ###### Signature {#apply-signature}
 
 ```typescript
-Apply = 1
+Apply = 1;
 ```
 
 ### TreeNavigationResult {#treenavigationresult-enum}
@@ -3282,7 +3282,7 @@ Apply = 1
 #### Signature {#treenavigationresult-signature}
 
 ```typescript
-export declare const enum TreeNavigationResult 
+export declare const enum TreeNavigationResult
 ```
 
 #### Flags
@@ -3335,7 +3335,7 @@ Attempt to navigate cursor to a key or index that is outside the client's view.
 ###### Signature {#notfound-signature}
 
 ```typescript
-NotFound = -1
+NotFound = -1;
 ```
 
 ##### Ok {#treenavigationresult-ok-enummember}
@@ -3345,7 +3345,7 @@ ITreeReader successfully navigated to the desired node.
 ###### Signature {#ok-signature}
 
 ```typescript
-Ok = 1
+Ok = 1;
 ```
 
 ##### Pending {#treenavigationresult-pending-enummember}
@@ -3355,7 +3355,7 @@ Attempt to navigate cursor to a portion of the tree that has not yet been loaded
 ###### Signature {#pending-signature}
 
 ```typescript
-Pending = 0
+Pending = 0;
 ```
 
 ### ValueSchema {#valueschema-enum}
@@ -3373,7 +3373,7 @@ TODO: come up with a final design for how to handle primitives / values. This de
 #### Signature {#valueschema-signature}
 
 ```typescript
-export declare enum ValueSchema 
+export declare enum ValueSchema
 ```
 
 #### Flags
@@ -3436,7 +3436,7 @@ export declare enum ValueSchema
 ###### Signature {#boolean-signature}
 
 ```typescript
-Boolean = 3
+Boolean = 3;
 ```
 
 ##### Nothing {#valueschema-nothing-enummember}
@@ -3444,7 +3444,7 @@ Boolean = 3
 ###### Signature {#nothing-signature}
 
 ```typescript
-Nothing = 0
+Nothing = 0;
 ```
 
 ##### Number {#valueschema-number-enummember}
@@ -3452,7 +3452,7 @@ Nothing = 0
 ###### Signature {#number-signature}
 
 ```typescript
-Number = 1
+Number = 1;
 ```
 
 ##### Serializable {#valueschema-serializable-enummember}
@@ -3466,7 +3466,7 @@ If it is desired to not include Nothing here, `anyNode` and `allowsValueSuperset
 ###### Signature {#serializable-signature}
 
 ```typescript
-Serializable = 4
+Serializable = 4;
 ```
 
 ##### String {#valueschema-string-enummember}
@@ -3474,7 +3474,7 @@ Serializable = 4
 ###### Signature {#string-signature}
 
 ```typescript
-String = 2
+String = 2;
 ```
 
 ## Type Details
@@ -3502,7 +3502,8 @@ These branded types are not opaque: A `Brand<A, B>` can still be used as a `B`<!
 #### Signature {#brand-signature}
 
 ```typescript
-export declare type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
+export declare type Brand<ValueType, Name extends string> = ValueType &
+    BrandedType<ValueType, Name>;
 ```
 
 ### ChangesetFromChangeRebaser {#changesetfromchangerebaser-typealias}
@@ -3510,7 +3511,8 @@ export declare type Brand<ValueType, Name extends string> = ValueType & BrandedT
 #### Signature {#changesetfromchangerebaser-signature}
 
 ```typescript
-export declare type ChangesetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any>> = TChangeRebaser extends ChangeRebaser<infer TChangeset> ? TChangeset : never;
+export declare type ChangesetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any>> =
+    TChangeRebaser extends ChangeRebaser<infer TChangeset> ? TChangeset : never;
 ```
 
 ### ChangesetLocalId {#changesetlocalid-typealias}
@@ -3544,7 +3546,11 @@ Once schema aware APIs are implemented, they can be used to provide schema speci
 #### Signature {#contextuallytypednodedata-signature}
 
 ```typescript
-export declare type ContextuallyTypedNodeData = ContextuallyTypedNodeDataObject | PrimitiveValue | readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData>;
+export declare type ContextuallyTypedNodeData =
+    | ContextuallyTypedNodeDataObject
+    | PrimitiveValue
+    | readonly ContextuallyTypedNodeData[]
+    | MarkedArrayLike<ContextuallyTypedNodeData>;
 ```
 
 ### DefaultChangeset {#defaultchangeset-typealias}
@@ -3572,7 +3578,12 @@ See [extractFromOpaque()](/docs/apis/tree#extractfromopaque-function)<!-- -->.
 #### Signature {#extractfromopaque-signature}
 
 ```typescript
-export declare type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> = TOpaque extends BrandedType<infer ValueType, infer Name> ? isAny<ValueType> extends true ? unknown : Brand<ValueType, Name> : never;
+export declare type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> =
+    TOpaque extends BrandedType<infer ValueType, infer Name>
+        ? isAny<ValueType> extends true
+            ? unknown
+            : Brand<ValueType, Name>
+        : never;
 ```
 
 ### Failure {#failure-typealias}
@@ -3690,7 +3701,13 @@ Note that this does not robustly forbid non json comparable data via type checki
 #### Signature {#jsoncompatible-signature}
 
 ```typescript
-export declare type JsonCompatible = string | number | boolean | null | JsonCompatible[] | JsonCompatibleObject;
+export declare type JsonCompatible =
+    | string
+    | number
+    | boolean
+    | null
+    | JsonCompatible[]
+    | JsonCompatibleObject;
 ```
 
 ### JsonCompatibleObject {#jsoncompatibleobject-typealias}
@@ -3716,9 +3733,15 @@ Note that this does not robustly forbid non json comparable data via type checki
 #### Signature {#jsoncompatiblereadonly-signature}
 
 ```typescript
-export declare type JsonCompatibleReadOnly = string | number | boolean | null | readonly JsonCompatibleReadOnly[] | {
-    readonly [P in string]: JsonCompatibleReadOnly | undefined;
-};
+export declare type JsonCompatibleReadOnly =
+    | string
+    | number
+    | boolean
+    | null
+    | readonly JsonCompatibleReadOnly[]
+    | {
+          readonly [P in string]: JsonCompatibleReadOnly | undefined;
+      };
 ```
 
 ### LocalFieldKey {#localfieldkey-typealias}
@@ -3784,7 +3807,10 @@ export declare type NodeChangeInverter = (change: NodeChangeset) => NodeChangese
 #### Signature {#nodechangerebaser-signature}
 
 ```typescript
-export declare type NodeChangeRebaser = (change: NodeChangeset, baseChange: NodeChangeset) => NodeChangeset;
+export declare type NodeChangeRebaser = (
+    change: NodeChangeset,
+    baseChange: NodeChangeset,
+) => NodeChangeset;
 ```
 
 ### NodeReviver {#nodereviver-typealias}
@@ -3792,7 +3818,11 @@ export declare type NodeChangeRebaser = (change: NodeChangeset, baseChange: Node
 #### Signature {#nodereviver-signature}
 
 ```typescript
-export declare type NodeReviver = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
+export declare type NodeReviver = (
+    revision: RevisionTag,
+    index: number,
+    count: number,
+) => Delta.ProtoNode[];
 ```
 
 ### Opaque {#opaque-typealias}
@@ -3802,13 +3832,18 @@ Converts a Branded type into an "opaque" handle. This prevents the value from be
 Recommenced usage is to use `interface` instead of `type` so tooling (such as tsc and refactoring tools) uses the type name instead of expanding it:
 
 ```typescript
-export interface MyType extends Opaque<Brand<string, "myPackage.MyType">>{}
+export interface MyType extends Opaque<Brand<string, "myPackage.MyType">> {}
 ```
 
 #### Signature {#opaque-signature}
 
 ```typescript
-export declare type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
+export declare type Opaque<T extends Brand<any, string>> = T extends Brand<
+    infer ValueType,
+    infer Name
+>
+    ? BrandedType<ValueType, Name>
+    : never;
 ```
 
 ### PrimitiveValue {#primitivevalue-typealias}
@@ -3915,15 +3950,15 @@ Note that even when unconstrained, children must still be in-schema for their ow
 
 In the future, this could be extended to allow inlining a TreeSchema here (or some similar structural schema system). For structural types which could go here, there are a few interesting options:
 
-- Allow replacing the whole set with a structural type for terminal / non-tree data, and use this as a replacement for values on the tree nodes.
+-   Allow replacing the whole set with a structural type for terminal / non-tree data, and use this as a replacement for values on the tree nodes.
 
-- Allow expression structural constraints for child trees, for example requiring specific traits (ex: via TreeSchema), instead of by type.
+-   Allow expression structural constraints for child trees, for example requiring specific traits (ex: via TreeSchema), instead of by type.
 
 There are two ways this could work:
 
-- Constrain the child nodes based on their shape: this makes schema safe editing difficult because nodes would incur extra editing constraints to prevent them from going out of schema based on their location in such a field.
+-   Constrain the child nodes based on their shape: this makes schema safe editing difficult because nodes would incur extra editing constraints to prevent them from going out of schema based on their location in such a field.
 
-- Constrain the types allowed based on which types guarantee their data will always meet the constraints.
+-   Constrain the types allowed based on which types guarantee their data will always meet the constraints.
 
 Care would need to be taken to make sure this is sound for the schema updating mechanisms.
 
@@ -3968,13 +4003,15 @@ export declare type Value = undefined | TreeValue;
 #### Signature {#valuechange-signature}
 
 ```typescript
-export declare type ValueChange = {
-    revision?: RevisionTag;
-    value?: Value;
-} | {
-    revision?: RevisionTag;
-    revert: RevisionTag | undefined;
-};
+export declare type ValueChange =
+    | {
+          revision?: RevisionTag;
+          value?: Value;
+      }
+    | {
+          revision?: RevisionTag;
+          revert: RevisionTag | undefined;
+      };
 ```
 
 ## Function Details
@@ -3984,7 +4021,11 @@ export declare type ValueChange = {
 #### Signature {#allowsreposuperset-signature}
 
 ```typescript
-export declare function allowsRepoSuperset(policy: FullSchemaPolicy, original: SchemaData, superset: SchemaData): boolean;
+export declare function allowsRepoSuperset(
+    policy: FullSchemaPolicy,
+    original: SchemaData,
+    superset: SchemaData,
+): boolean;
 ```
 
 #### Parameters {#allowsreposuperset-parameters}
@@ -4051,18 +4092,21 @@ A version of this that assumes a specific root field could be slightly more perm
 
 Converts inserted content into the format expected in Delta instances. This involves applying the following changes:
 
-- Updating node values
+-   Updating node values
 
-- Inserting new subtrees within the inserted content
+-   Inserting new subtrees within the inserted content
 
-- Deleting parts of the inserted content
+-   Deleting parts of the inserted content
 
 The only kind of change that is not applied by this function is MoveIn.
 
 #### Signature {#applymodifytotree-signature}
 
 ```typescript
-export declare function applyModifyToTree(tree: MapTree, modify: Delta.Modify): Map<FieldKey, Delta.MarkList>;
+export declare function applyModifyToTree(
+    tree: MapTree,
+    modify: Delta.Modify,
+): Map<FieldKey, Delta.MarkList>;
 ```
 
 #### Parameters {#applymodifytotree-parameters}
@@ -4118,7 +4162,10 @@ The remaining modifications that the consumer of the Delta will apply on the giv
 #### Signature {#buildforest-signature}
 
 ```typescript
-export declare function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest;
+export declare function buildForest(
+    schema: StoredSchemaRepository,
+    anchors?: AnchorSet,
+): IEditableForest;
 ```
 
 #### Parameters {#buildforest-parameters}
@@ -4182,7 +4229,10 @@ Create a ICachedValue that is invalidated when `observer` (as provided to `compu
 #### Signature {#cachedvalue-signature}
 
 ```typescript
-export declare function cachedValue<T>(compute: (observer: ObservingDependent) => T, computationName?: string): ICachedValue<T>;
+export declare function cachedValue<T>(
+    compute: (observer: ObservingDependent) => T,
+    computationName?: string,
+): ICachedValue<T>;
 ```
 
 #### Parameters {#cachedvalue-parameters}
@@ -4330,7 +4380,9 @@ a deep copy of the provided path as simple javascript objects. This is safe to h
 #### Signature {#commitencoderfromchangeencoder-signature}
 
 ```typescript
-export declare function commitEncoderFromChangeEncoder<TChangeset>(changeEncoder: ChangeEncoder<TChangeset>): CommitEncoder<TChangeset>;
+export declare function commitEncoderFromChangeEncoder<TChangeset>(
+    changeEncoder: ChangeEncoder<TChangeset>,
+): CommitEncoder<TChangeset>;
 ```
 
 #### Parameters {#commitencoderfromchangeencoder-parameters}
@@ -4574,7 +4626,10 @@ export declare function detachedFieldAsKey(field: DetachedField): FieldKey;
 #### Signature {#encodesummary-signature}
 
 ```typescript
-export declare function stringifySummary<TChange>(data: ReadonlySummaryData<TChange>, encoder: CommitEncoder<TChange>): string;
+export declare function stringifySummary<TChange>(
+    data: ReadonlySummaryData<TChange>,
+    encoder: CommitEncoder<TChange>,
+): string;
 ```
 
 #### Parameters {#encodesummary-parameters}
@@ -4630,7 +4685,9 @@ It is assumed that only code that produces these "opaque" handles does this conv
 #### Signature {#extractfromopaque-signature}
 
 ```typescript
-export declare function extractFromOpaque<TOpaque extends BrandedType<any, string>>(value: TOpaque): ExtractFromOpaque<TOpaque>;
+export declare function extractFromOpaque<TOpaque extends BrandedType<any, string>>(
+    value: TOpaque,
+): ExtractFromOpaque<TOpaque>;
 ```
 
 #### Parameters {#extractfromopaque-parameters}
@@ -4674,9 +4731,12 @@ Helper for building [FieldSchema](/docs/apis/tree/fieldschema-interface)<!-- -->
 #### Signature {#fieldschema-signature}
 
 ```typescript
-export declare function fieldSchema(kind: {
-    identifier: FieldKindIdentifier;
-}, types?: Iterable<TreeSchemaIdentifier>): FieldSchema;
+export declare function fieldSchema(
+    kind: {
+        identifier: FieldKindIdentifier;
+    },
+    types?: Iterable<TreeSchemaIdentifier>,
+): FieldSchema;
 ```
 
 #### Parameters {#fieldschema-parameters}
@@ -4736,7 +4796,10 @@ export declare function fieldSchema(kind: {
 #### Signature {#foreachfield-signature}
 
 ```typescript
-export declare function forEachField<TCursor extends ITreeCursor = ITreeCursor>(cursor: TCursor, f: (cursor: TCursor) => void): void;
+export declare function forEachField<TCursor extends ITreeCursor = ITreeCursor>(
+    cursor: TCursor,
+    f: (cursor: TCursor) => void,
+): void;
 ```
 
 #### Parameters {#foreachfield-parameters}
@@ -4786,7 +4849,10 @@ export declare function forEachField<TCursor extends ITreeCursor = ITreeCursor>(
 #### Signature {#foreachnode-signature}
 
 ```typescript
-export declare function forEachNode<TCursor extends ITreeCursor = ITreeCursor>(cursor: TCursor, f: (cursor: TCursor) => void): void;
+export declare function forEachNode<TCursor extends ITreeCursor = ITreeCursor>(
+    cursor: TCursor,
+    f: (cursor: TCursor) => void,
+): void;
 ```
 
 #### Parameters {#foreachnode-parameters}
@@ -4838,7 +4904,11 @@ Delete a field if empty. Optionally delete FieldMapObject if empty as well.
 #### Signature {#generictreedeleteifempty-signature}
 
 ```typescript
-export declare function genericTreeDeleteIfEmpty<T>(node: GenericFieldsNode<T>, key: FieldKey, removeMapObject: boolean): void;
+export declare function genericTreeDeleteIfEmpty<T>(
+    node: GenericFieldsNode<T>,
+    key: FieldKey,
+    removeMapObject: boolean,
+): void;
 ```
 
 #### Parameters {#generictreedeleteifempty-parameters}
@@ -4984,7 +5054,10 @@ the number of nodes above this one. Zero when the path's parent is undefined, me
 #### Signature {#getdescendant-signature}
 
 ```typescript
-export declare function getDescendant<TData>(ancestor: SparseNode<TData>, path: UpPath | undefined): SparseNode<TData>;
+export declare function getDescendant<TData>(
+    ancestor: SparseNode<TData>,
+    path: UpPath | undefined,
+): SparseNode<TData>;
 ```
 
 #### Parameters {#getdescendant-parameters}
@@ -5038,7 +5111,10 @@ A simple API for a Forest to interact with the tree.
 #### Signature {#geteditabletreecontext-signature}
 
 ```typescript
-export declare function getEditableTreeContext(forest: IEditableForest, transactionCheckout?: TransactionCheckout<DefaultEditBuilder, DefaultChangeset>): EditableTreeContext;
+export declare function getEditableTreeContext(
+    forest: IEditableForest,
+    transactionCheckout?: TransactionCheckout<DefaultEditBuilder, DefaultChangeset>,
+): EditableTreeContext;
 ```
 
 #### Parameters {#geteditabletreecontext-parameters}
@@ -5104,7 +5180,11 @@ Get a field from `node`<!-- -->, optionally modifying the tree to create it if m
 #### Signature {#getgenerictreefield-signature}
 
 ```typescript
-export declare function getGenericTreeField<T>(node: GenericFieldsNode<T>, key: FieldKey, createIfMissing: boolean): T[];
+export declare function getGenericTreeField<T>(
+    node: GenericFieldsNode<T>,
+    key: FieldKey,
+    createIfMissing: boolean,
+): T[];
 ```
 
 #### Parameters {#getgenerictreefield-parameters}
@@ -5168,7 +5248,11 @@ Get a field from `node`<!-- -->, optionally modifying the tree to create it if m
 #### Signature {#getmaptreefield-signature}
 
 ```typescript
-export declare function getMapTreeField(node: MapTree, key: FieldKey, createIfMissing: boolean): MapTree[];
+export declare function getMapTreeField(
+    node: MapTree,
+    key: FieldKey,
+    createIfMissing: boolean,
+): MapTree[];
 ```
 
 #### Parameters {#getmaptreefield-parameters}
@@ -5230,10 +5314,12 @@ export declare function getMapTreeField(node: MapTree, key: FieldKey, createIfMi
 #### Signature {#getprimaryfield-signature}
 
 ```typescript
-export declare function getPrimaryField(schema: TreeSchema): {
-    key: LocalFieldKey;
-    schema: FieldSchema;
-} | undefined;
+export declare function getPrimaryField(schema: TreeSchema):
+    | {
+          key: LocalFieldKey;
+          schema: FieldSchema;
+      }
+    | undefined;
 ```
 
 #### Parameters {#getprimaryfield-parameters}
@@ -5327,7 +5413,10 @@ a snapshot of the schema as a string.
 #### Signature {#initializeforest-signature}
 
 ```typescript
-export declare function initializeForest(forest: IEditableForest, content: ITreeCursorSynchronous[]): void;
+export declare function initializeForest(
+    forest: IEditableForest,
+    content: ITreeCursorSynchronous[],
+): void;
 ```
 
 #### Parameters {#initializeforest-parameters}
@@ -5377,7 +5466,9 @@ Checks the type of a `ContextuallyTypedNodeData`<!-- -->.
 #### Signature {#iscontextuallytypednodedataobject-signature}
 
 ```typescript
-export declare function isContextuallyTypedNodeDataObject(data: ContextuallyTypedNodeData | undefined): data is ContextuallyTypedNodeDataObject;
+export declare function isContextuallyTypedNodeDataObject(
+    data: ContextuallyTypedNodeData | undefined,
+): data is ContextuallyTypedNodeDataObject;
 ```
 
 #### Parameters {#iscontextuallytypednodedataobject-parameters}
@@ -5463,7 +5554,9 @@ export declare function isEditableField(field: UnwrappedEditableField): field is
 #### Signature {#isfieldlocation-signature}
 
 ```typescript
-export declare function isFieldLocation(range: FieldLocation | DetachedField): range is FieldLocation;
+export declare function isFieldLocation(
+    range: FieldLocation | DetachedField,
+): range is FieldLocation;
 ```
 
 #### Parameters {#isfieldlocation-parameters}
@@ -5591,7 +5684,11 @@ export declare function isLocalKey(key: FieldKey): key is LocalFieldKey;
 #### Signature {#isneverfield-signature}
 
 ```typescript
-export declare function isNeverField(policy: FullSchemaPolicy, originalData: SchemaData, field: FieldSchema): boolean;
+export declare function isNeverField(
+    policy: FullSchemaPolicy,
+    originalData: SchemaData,
+    field: FieldSchema,
+): boolean;
 ```
 
 #### Parameters {#isneverfield-parameters}
@@ -5787,7 +5884,9 @@ Checks the type of a `ContextuallyTypedNodeData`<!-- -->.
 #### Signature {#iswritablearraylike-signature}
 
 ```typescript
-export declare function isWritableArrayLike(data: ContextuallyTypedNodeData | undefined): data is MarkedArrayLike<ContextuallyTypedNodeData>;
+export declare function isWritableArrayLike(
+    data: ContextuallyTypedNodeData | undefined,
+): data is MarkedArrayLike<ContextuallyTypedNodeData>;
 ```
 
 #### Parameters {#iswritablearraylike-parameters}
@@ -5961,7 +6060,11 @@ the original [GlobalFieldKey](/docs/apis/tree#globalfieldkey-typealias) for the 
 #### Signature {#loadsummary-signature}
 
 ```typescript
-export declare function parseSummary<TChange>(summary: string, encoder: CommitEncoder<TChange>, destination: MutableSummaryData<TChange>): void;
+export declare function parseSummary<TChange>(
+    summary: string,
+    encoder: CommitEncoder<TChange>,
+    destination: MutableSummaryData<TChange>,
+): void;
 ```
 
 #### Parameters {#loadsummary-parameters}
@@ -6019,7 +6122,10 @@ export declare function parseSummary<TChange>(summary: string, encoder: CommitEn
 #### Signature {#lookupglobalfieldschema-signature}
 
 ```typescript
-export declare function lookupGlobalFieldSchema(data: SchemaDataAndPolicy, identifier: GlobalFieldKey): FieldSchema;
+export declare function lookupGlobalFieldSchema(
+    data: SchemaDataAndPolicy,
+    identifier: GlobalFieldKey,
+): FieldSchema;
 ```
 
 #### Parameters {#lookupglobalfieldschema-parameters}
@@ -6071,7 +6177,10 @@ export declare function lookupGlobalFieldSchema(data: SchemaDataAndPolicy, ident
 #### Signature {#lookuptreeschema-signature}
 
 ```typescript
-export declare function lookupTreeSchema(data: SchemaDataAndPolicy, identifier: TreeSchemaIdentifier): TreeSchema;
+export declare function lookupTreeSchema(
+    data: SchemaDataAndPolicy,
+    identifier: TreeSchemaIdentifier,
+): TreeSchema;
 ```
 
 #### Parameters {#lookuptreeschema-parameters}
@@ -6165,7 +6274,10 @@ export declare function makeAnonChange<T>(change: T): TaggedChange<T>;
 #### Signature {#mapcursorfield-signature}
 
 ```typescript
-export declare function mapCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(cursor: TCursor, f: (cursor: TCursor) => T): T[];
+export declare function mapCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
+    cursor: TCursor,
+    f: (cursor: TCursor) => T,
+): T[];
 ```
 
 #### Parameters {#mapcursorfield-parameters}
@@ -6221,7 +6333,10 @@ array resulting from applying `f` to each item of the current field on `cursor`<
 #### Signature {#mapcursorfields-signature}
 
 ```typescript
-export declare function mapCursorFields<T, TCursor extends ITreeCursor = ITreeCursor>(cursor: TCursor, f: (cursor: TCursor) => T): T[];
+export declare function mapCursorFields<T, TCursor extends ITreeCursor = ITreeCursor>(
+    cursor: TCursor,
+    f: (cursor: TCursor) => T,
+): T[];
 ```
 
 #### Parameters {#mapcursorfields-parameters}
@@ -6281,7 +6396,10 @@ This function is useful for converting `Delta`<!-- -->s that represent tree cont
 #### Signature {#mapfieldmarks-signature}
 
 ```typescript
-export declare function mapFieldMarks<TIn, TOut>(fields: Delta.FieldMarks<TIn>, func: (tree: TIn) => TOut): Delta.FieldMarks<TOut>;
+export declare function mapFieldMarks<TIn, TOut>(
+    fields: Delta.FieldMarks<TIn>,
+    func: (tree: TIn) => TOut,
+): Delta.FieldMarks<TOut>;
 ```
 
 #### Parameters {#mapfieldmarks-parameters}
@@ -6335,7 +6453,9 @@ export declare function mapFieldMarks<TIn, TOut>(fields: Delta.FieldMarks<TIn>, 
 #### Signature {#mapfromnamed-signature}
 
 ```typescript
-export declare function mapFromNamed<T extends Named<TName>, TName>(named: Iterable<T>): Map<TName, T>;
+export declare function mapFromNamed<T extends Named<TName>, TName>(
+    named: Iterable<T>,
+): Map<TName, T>;
 ```
 
 #### Parameters {#mapfromnamed-parameters}
@@ -6383,7 +6503,10 @@ This function is useful for converting `Delta`<!-- -->s that represent tree cont
 #### Signature {#mapmark-signature}
 
 ```typescript
-export declare function mapMark<TIn, TOut>(mark: Delta.Mark<TIn>, func: (tree: TIn) => TOut): Delta.Mark<TOut>;
+export declare function mapMark<TIn, TOut>(
+    mark: Delta.Mark<TIn>,
+    func: (tree: TIn) => TOut,
+): Delta.Mark<TOut>;
 ```
 
 #### Parameters {#mapmark-parameters}
@@ -6441,7 +6564,10 @@ This function is useful for converting `Delta`<!-- -->s that represent tree cont
 #### Signature {#mapmarklist-signature}
 
 ```typescript
-export declare function mapMarkList<TIn, TOut>(list: Delta.MarkList<TIn>, func: (tree: TIn) => TOut): Delta.MarkList<TOut>;
+export declare function mapMarkList<TIn, TOut>(
+    list: Delta.MarkList<TIn>,
+    func: (tree: TIn) => TOut,
+): Delta.MarkList<TOut>;
 ```
 
 #### Parameters {#mapmarklist-parameters}
@@ -6539,7 +6665,11 @@ export declare function mapTreeFromCursor(cursor: ITreeCursor): MapTree;
 #### Signature {#movetodetachedfield-signature}
 
 ```typescript
-export declare function moveToDetachedField(forest: IForestSubscription, cursorToMove: ITreeSubscriptionCursor, field?: DetachedField): void;
+export declare function moveToDetachedField(
+    forest: IForestSubscription,
+    cursorToMove: ITreeSubscriptionCursor,
+    field?: DetachedField,
+): void;
 ```
 
 #### Parameters {#movetodetachedfield-parameters}
@@ -6614,7 +6744,9 @@ Helper for building [NamedTreeSchema](/docs/apis/tree#namedtreeschema-typealias)
 #### Signature {#namedtreeschema-signature}
 
 ```typescript
-export declare function namedTreeSchema(data: Partial<TreeSchemaBuilder> & Named<TreeSchemaIdentifier>): NamedTreeSchema;
+export declare function namedTreeSchema(
+    data: Partial<TreeSchemaBuilder> & Named<TreeSchemaIdentifier>,
+): NamedTreeSchema;
 ```
 
 #### Parameters {#namedtreeschema-parameters}
@@ -6658,7 +6790,10 @@ Ensures this context's computation is a dependant to dependee (adding it if need
 #### Signature {#recorddependency-signature}
 
 ```typescript
-export declare function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
+export declare function recordDependency(
+    dependent: ObservingDependent | undefined,
+    dependee: Dependee,
+): void;
 ```
 
 #### Parameters {#recorddependency-parameters}
@@ -6706,7 +6841,13 @@ export declare function recordDependency(dependent: ObservingDependent | undefin
 #### Signature {#runsynchronoustransaction-signature}
 
 ```typescript
-export declare function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder<TChange>, TChange>({ forest, changeFamily, submitEdit }: Checkout<TEditor, TChange>, command: (forest: IForestSubscription, editor: TEditor) => TransactionResult): TransactionResult;
+export declare function runSynchronousTransaction<
+    TEditor extends ProgressiveEditBuilder<TChange>,
+    TChange,
+>(
+    { forest, changeFamily, submitEdit }: Checkout<TEditor, TChange>,
+    command: (forest: IForestSubscription, editor: TEditor) => TransactionResult,
+): TransactionResult;
 ```
 
 #### Parameters {#runsynchronoustransaction-parameters}
@@ -6846,7 +6987,11 @@ Sets a field on `node`<!-- -->.
 #### Signature {#setgenerictreefield-signature}
 
 ```typescript
-export declare function setGenericTreeField<T>(node: GenericFieldsNode<T>, key: FieldKey, content: T[]): void;
+export declare function setGenericTreeField<T>(
+    node: GenericFieldsNode<T>,
+    key: FieldKey,
+    content: T[],
+): void;
 ```
 
 #### Parameters {#setgenerictreefield-parameters}
@@ -6994,7 +7139,10 @@ an ITreeCursorSynchronous for a single MapTree.
 #### Signature {#singlestacktreecursor-signature}
 
 ```typescript
-export declare function singleStackTreeCursor<TNode>(root: TNode, adapter: CursorAdapter<TNode>): CursorWithNode<TNode>;
+export declare function singleStackTreeCursor<TNode>(
+    root: TNode,
+    adapter: CursorAdapter<TNode>,
+): CursorWithNode<TNode>;
 ```
 
 #### Parameters {#singlestacktreecursor-parameters}
@@ -7180,7 +7328,11 @@ true iff `key` is a [GlobalFieldKeySymbol](/docs/apis/tree#globalfieldkeysymbol-
 #### Signature {#tagchange-signature}
 
 ```typescript
-export declare function tagChange<T>(change: T, tag: RevisionTag | undefined, isInverse?: boolean): TaggedChange<T>;
+export declare function tagChange<T>(
+    change: T,
+    tag: RevisionTag | undefined,
+    isInverse?: boolean,
+): TaggedChange<T>;
 ```
 
 #### Parameters {#tagchange-parameters}
@@ -7252,7 +7404,10 @@ export declare function tagChange<T>(change: T, tag: RevisionTag | undefined, is
 #### Signature {#taginverse-signature}
 
 ```typescript
-export declare function tagInverse<T>(inverseChange: T, invertedRevision: RevisionTag | undefined): TaggedChange<T>;
+export declare function tagInverse<T>(
+    inverseChange: T,
+    invertedRevision: RevisionTag | undefined,
+): TaggedChange<T>;
 ```
 
 #### Parameters {#taginverse-parameters}
@@ -7350,7 +7505,11 @@ Verifies the axioms of `ChangeRebaser` are met by the given `rebaser`<!-- -->.
 #### Signature {#verifychangerebaser-signature}
 
 ```typescript
-export declare function verifyChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>, changes: ReadonlySet<TChange>, isEquivalent: (a: TChange, b: TChange) => boolean): OutputType<TChange>;
+export declare function verifyChangeRebaser<TChange>(
+    rebaser: ChangeRebaser<TChange>,
+    changes: ReadonlySet<TChange>,
+    isEquivalent: (a: TChange, b: TChange) => boolean,
+): OutputType<TChange>;
 ```
 
 #### Parameters {#verifychangerebaser-parameters}
@@ -7471,7 +7630,7 @@ This `InvalidationToken` is used to indicate that the invalidation of Dependents
 #### Signature {#afterchangetoken-signature}
 
 ```typescript
-afterChangeToken: InvalidationToken
+afterChangeToken: InvalidationToken;
 ```
 
 ### createField {#createfield-variable}
@@ -7489,7 +7648,7 @@ createField: unique symbol
 #### Signature {#defaultchangefamily-signature}
 
 ```typescript
-defaultChangeFamily: DefaultChangeFamily
+defaultChangeFamily: DefaultChangeFamily;
 ```
 
 ### defaultSchemaPolicy {#defaultschemapolicy-variable}
@@ -7501,7 +7660,7 @@ This requires new node types to have explicit stored schema to exist in document
 #### Signature {#defaultschemapolicy-signature}
 
 ```typescript
-defaultSchemaPolicy: FullSchemaPolicy
+defaultSchemaPolicy: FullSchemaPolicy;
 ```
 
 ### dummyRepairDataStore {#dummyrepairdatastore-variable}
@@ -7511,7 +7670,7 @@ A `RepairDataStore` implementation that returns dummy content.
 #### Signature {#dummyrepairdatastore-signature}
 
 ```typescript
-dummyRepairDataStore: RepairDataStore
+dummyRepairDataStore: RepairDataStore;
 ```
 
 ### emptyField {#emptyfield-variable}
@@ -7521,7 +7680,7 @@ FieldSchema which is impossible to put anything in.
 #### Signature {#emptyfield-signature}
 
 ```typescript
-emptyField: import("../core").FieldSchema
+emptyField: import("../core").FieldSchema;
 ```
 
 ### EmptyKey {#emptykey-variable}
@@ -7535,7 +7694,7 @@ TODO: This has to be a LocalFieldKey since different nodes will have different F
 #### Signature {#emptykey-signature}
 
 ```typescript
-EmptyKey: LocalFieldKey
+EmptyKey: LocalFieldKey;
 ```
 
 ### emptyMap {#emptymap-variable}
@@ -7565,7 +7724,7 @@ emptySet: ReadonlySet<never>
 #### Signature {#genericfieldkind-signature}
 
 ```typescript
-genericFieldKind: FieldKind
+genericFieldKind: FieldKind;
 ```
 
 ### getField {#getfield-variable}
@@ -7593,7 +7752,7 @@ indexSymbol: unique symbol
 #### Signature {#jsonarray-signature}
 
 ```typescript
-jsonArray: NamedTreeSchema
+jsonArray: NamedTreeSchema;
 ```
 
 ### jsonBoolean {#jsonboolean-variable}
@@ -7601,7 +7760,7 @@ jsonArray: NamedTreeSchema
 #### Signature {#jsonboolean-signature}
 
 ```typescript
-jsonBoolean: NamedTreeSchema
+jsonBoolean: NamedTreeSchema;
 ```
 
 ### jsonNull {#jsonnull-variable}
@@ -7609,7 +7768,7 @@ jsonBoolean: NamedTreeSchema
 #### Signature {#jsonnull-signature}
 
 ```typescript
-jsonNull: NamedTreeSchema
+jsonNull: NamedTreeSchema;
 ```
 
 ### jsonNumber {#jsonnumber-variable}
@@ -7617,7 +7776,7 @@ jsonNull: NamedTreeSchema
 #### Signature {#jsonnumber-signature}
 
 ```typescript
-jsonNumber: NamedTreeSchema
+jsonNumber: NamedTreeSchema;
 ```
 
 ### jsonObject {#jsonobject-variable}
@@ -7625,7 +7784,7 @@ jsonNumber: NamedTreeSchema
 #### Signature {#jsonobject-signature}
 
 ```typescript
-jsonObject: NamedTreeSchema
+jsonObject: NamedTreeSchema;
 ```
 
 ### jsonRoot {#jsonroot-variable}
@@ -7633,7 +7792,7 @@ jsonObject: NamedTreeSchema
 #### Signature {#jsonroot-signature}
 
 ```typescript
-jsonRoot: FieldSchema
+jsonRoot: FieldSchema;
 ```
 
 ### jsonSchemaData {#jsonschemadata-variable}
@@ -7641,7 +7800,7 @@ jsonRoot: FieldSchema
 #### Signature {#jsonschemadata-signature}
 
 ```typescript
-jsonSchemaData: SchemaData
+jsonSchemaData: SchemaData;
 ```
 
 ### jsonString {#jsonstring-variable}
@@ -7649,7 +7808,7 @@ jsonSchemaData: SchemaData
 #### Signature {#jsonstring-signature}
 
 ```typescript
-jsonString: NamedTreeSchema
+jsonString: NamedTreeSchema;
 ```
 
 ### neverField {#neverfield-variable}
@@ -7659,7 +7818,7 @@ FieldSchema which is impossible for any data to be in schema with.
 #### Signature {#neverfield-signature}
 
 ```typescript
-neverField: import("../core").FieldSchema
+neverField: import("../core").FieldSchema;
 ```
 
 ### neverTree {#nevertree-variable}
@@ -7669,7 +7828,7 @@ TreeSchema which is impossible for any data to be in schema with.
 #### Signature {#nevertree-signature}
 
 ```typescript
-neverTree: TreeSchema
+neverTree: TreeSchema;
 ```
 
 ### noFailure {#nofailure-variable}
@@ -7705,7 +7864,7 @@ replaceField: unique symbol
 #### Signature {#rootfield-signature}
 
 ```typescript
-rootField: DetachedField
+rootField: DetachedField;
 ```
 
 ### rootFieldKey {#rootfieldkey-variable}
@@ -7715,7 +7874,7 @@ GlobalFieldKey to use for the root of documents. TODO: if we do want to standard
 #### Signature {#rootfieldkey-signature}
 
 ```typescript
-rootFieldKey: GlobalFieldKey
+rootFieldKey: GlobalFieldKey;
 ```
 
 ### rootFieldKeySymbol {#rootfieldkeysymbol-variable}
@@ -7723,7 +7882,7 @@ rootFieldKey: GlobalFieldKey
 #### Signature {#rootfieldkeysymbol-signature}
 
 ```typescript
-rootFieldKeySymbol: GlobalFieldKeySymbol
+rootFieldKeySymbol: GlobalFieldKeySymbol;
 ```
 
 ### typeNameSymbol {#typenamesymbol-variable}
