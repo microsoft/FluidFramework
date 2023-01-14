@@ -62,6 +62,9 @@ efficient spatial querying of the nearest Marker to a given position. -->
      content, so you should commit the resulting changes. -->
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=packages/dds/sequence/README.md&start=434&end=448) -->
+
+<!-- prettier-ignore-start -->
+
 <!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 - Rich Text Editor Implementations
   - [webflow](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/webflow)
@@ -77,6 +80,8 @@ efficient spatial querying of the nearest Marker to a given position. -->
 
 [SharedMap]: https://fluidframework.com/docs/data-structures/map/
 [SharedString]: https://github.com/microsoft/FluidFramework/blob/main/packages/dds/sequence/src/sharedString.ts
+<!-- prettier-ignore-end -->
+
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 [Sequences]: {{< relref "sequences.md" >}}
