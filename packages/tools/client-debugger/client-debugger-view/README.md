@@ -15,6 +15,9 @@ The library is intended to be extensible and customizable.
 Visualizers for new or custom forms of Fluid data (in particular, [DDS](https://fluidframework.com/docs/build/dds/)es) may be provided, and some pre-packed visualization defaults may be overridden.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
+
+<!-- prettier-ignore-start -->
+
 <!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Installation
@@ -24,6 +27,8 @@ To get started, install the package by running the following command:
 ```bash
 npm i @fluid-tools/client-debugger-view -D
 ```
+
+<!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
@@ -89,15 +94,23 @@ To run the app, navigate to the root of this package and run `npm run start:test
     -   This could be especially valuable during the prototyping state of an application.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+
 <!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 ## API Documentation
 
 API documentation for **@fluid-tools/client-debugger-view** is available at <https://fluidframework.com/docs/apis/client-debugger-view>.
 
+<!-- prettier-ignore-end -->
+
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+
 <!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Trademark
@@ -105,6 +118,8 @@ API documentation for **@fluid-tools/client-debugger-view** is available at <htt
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+<!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
