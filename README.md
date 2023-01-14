@@ -188,6 +188,9 @@ Then:
 ## Contributing
 
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=FALSE) -->
+
+<!-- prettier-ignore-start -->
+
 <!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
@@ -205,5 +208,7 @@ For more information see the [Code of Conduct FAQ](https://opensource.microsoft.
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+<!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->

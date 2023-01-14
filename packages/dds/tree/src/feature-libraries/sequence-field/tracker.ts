@@ -27,14 +27,14 @@ export class IndexTracker {
         }
         const netLength = outLength - inLength;
         // If you hit this assert, then you probably need to add a check for it in `isNetZeroNodeCountChange`.
-        assert(netLength !== 0, "Unknown mark type with net-zero node count change");
+        assert(netLength !== 0, 0x501 /* Unknown mark type with net-zero node count change */);
         const revision = mark.revision;
         // TODO: Remove this early return. It is only needed because some tests use anonymous changes.
         // These tests will fail (i.e., produce the wrong result) if they rely the index tracking performed here.
         if (revision === undefined) {
             return;
         }
-        assert(revision !== undefined, "Compose base mark should carry revision info");
+        assert(revision !== undefined, 0x502 /* Compose base mark should carry revision info */);
         const index = this.contributions.findIndex(({ rev }) => rev >= revision);
         if (index === -1) {
             this.contributions.push({ rev: revision, netLength });
@@ -76,7 +76,10 @@ export class GapTracker {
             if (revision === undefined) {
                 return;
             }
-            assert(revision !== undefined, "Compose base mark should carry revision info");
+            assert(
+                revision !== undefined,
+                0x503 /* Compose base mark should carry revision info */,
+            );
             if (isAttach(mark)) {
                 // Reset the offset for the revisions chronologically after the attach to zero.
                 // This is because for those revisions, the nodes were present in the input context.
