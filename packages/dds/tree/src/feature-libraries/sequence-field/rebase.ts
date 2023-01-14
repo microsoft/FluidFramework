@@ -114,11 +114,14 @@ function rebaseMarkList<TNodeChange>(
             // TODO support rebasing over composite changeset
             assert(
                 baseMark.revision === baseRevision,
-                "Unable to keep track of the base input offset in composite changeset",
+                0x4f3 /* Unable to keep track of the base input offset in composite changeset */,
             );
         }
         if (baseMark === undefined) {
-            assert(currMark !== undefined, "Non-empty queue should return at least one mark");
+            assert(
+                currMark !== undefined,
+                0x4f4 /* Non-empty queue should return at least one mark */,
+            );
             if (isAttach(currMark)) {
                 handleCurrAttach(
                     currMark,
@@ -145,11 +148,11 @@ function rebaseMarkList<TNodeChange>(
         } else {
             assert(
                 !isNewAttach(baseMark) && !isNewAttach(currMark),
-                "A new attach cannot be at the same position as another mark",
+                0x4f5 /* A new attach cannot be at the same position as another mark */,
             );
             assert(
                 getInputLength(baseMark) === getInputLength(currMark),
-                "The two marks should be the same size",
+                0x4f6 /* The two marks should be the same size */,
             );
 
             const rebasedMark = rebaseMark(
@@ -298,7 +301,7 @@ class RebaseQueue<T> {
         ) {
             assert(
                 newMark.detachIndex !== undefined,
-                "A conflicted ReturnFrom should have a detachIndex",
+                0x4f7 /* A conflicted ReturnFrom should have a detachIndex */,
             );
             const newMarkLength = newMark.count;
             const baseMarkLength = getOutputLength(baseMark);
@@ -425,7 +428,7 @@ function rebaseMark<TNodeChange>(
             const baseMarkRevision = baseMark.revision ?? baseRevision;
             assert(
                 isDetachMark(currMark) || isReattach(currMark),
-                "Only a detach or a reattach can overlap with a non-inert reattach",
+                0x4f8 /* Only a detach or a reattach can overlap with a non-inert reattach */,
             );
             const currMarkType = currMark.type;
             switch (currMarkType) {
@@ -434,11 +437,11 @@ function rebaseMark<TNodeChange>(
                 case "ReturnFrom": {
                     assert(
                         currMarkType === "ReturnFrom",
-                        "TODO: support conflict management for other detach marks",
+                        0x4f9 /* TODO: support conflict management for other detach marks */,
                     );
                     assert(
                         isConflicted(currMark) && currMark.conflictsWith === baseMarkRevision,
-                        "Invalid reattach mark overlap",
+                        0x4fa /* Invalid reattach mark overlap */,
                     );
                     // The nodes that currMark aims to detach are being reattached by baseMark
                     const newCurrMark = clone(currMark) as ReturnFrom<TNodeChange>;
@@ -455,7 +458,10 @@ function rebaseMark<TNodeChange>(
                 case "ReturnTo": {
                     if (currMark.isIntention) {
                         // Past this point, currMark must be a reattach.
-                        assert(isActiveReattach(currMark), `Invalid reattach mark overlap`);
+                        assert(
+                            isActiveReattach(currMark),
+                            0x4fb /* Invalid reattach mark overlap */,
+                        );
                         // The nodes that currMark aims to reattach are being reattached by baseMark
                         return {
                             ...clone(currMark),
@@ -477,12 +483,15 @@ function rebaseMark<TNodeChange>(
                             conflictsWith: baseMarkRevision,
                         };
                     }
-                    assert(!isSkipLikeReattach(currMark), `Unsupported reattach mark overlap`);
+                    assert(
+                        !isSkipLikeReattach(currMark),
+                        0x4fc /* Unsupported reattach mark overlap */,
+                    );
                     // The nodes that currMark aims to reattach and were detached by `currMark.lastDetachedBy`
                     // are being reattached by baseMark.
                     assert(
                         currMark.lastDetachedBy === baseMark.detachedBy,
-                        `Invalid revive mark overlap`,
+                        0x4fd /* Invalid revive mark overlap */,
                     );
                     const revive = clone(currMark);
                     delete revive.lastDetachedBy;
@@ -519,7 +528,7 @@ function rebaseMark<TNodeChange>(
                 } else if (newCurrMark.type === "ReturnTo") {
                     assert(
                         isSkipLikeReattach(newCurrMark),
-                        "Only a skip-like reattach can overlap with a ReturnFrom",
+                        0x4fe /* Only a skip-like reattach can overlap with a ReturnFrom */,
                     );
                     if (
                         newCurrMark.conflictsWith === baseMarkRevision ||
@@ -543,7 +552,7 @@ function rebaseMark<TNodeChange>(
                 } else if (newCurrMark.type === "Revive" && !newCurrMark.isIntention) {
                     assert(
                         isSkipLikeReattach(newCurrMark),
-                        "Only a skip-like reattach can overlap with a ReturnFrom",
+                        0x4ff /* Only a skip-like reattach can overlap with a ReturnFrom */,
                     );
                     // The already populated cells that currMark aimed to revive content into
                     // are having their contents detached by baseMark.
@@ -601,7 +610,10 @@ function applyMoveEffects<TNodeChange>(
             }
         }
         if (newMark === undefined) {
-            assert(baseMark !== undefined, "Non-empty RebaseQueue should return at least one mark");
+            assert(
+                baseMark !== undefined,
+                0x500 /* Non-empty RebaseQueue should return at least one mark */,
+            );
             offset += getOutputLength(baseMark);
             continue;
         }

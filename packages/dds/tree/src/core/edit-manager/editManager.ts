@@ -196,7 +196,7 @@ export class EditManager<
             // The change is in line with the trunk
             assert(
                 branch.localChanges.length === 0,
-                "A branch whose latest commit is in line with the trunk should be empty",
+                0x4c2 /* A branch whose latest commit is in line with the trunk should be empty */,
             );
             // We record that the peer session's commits are up to date with the current trunk tip.
             // This will be leveraged to compute `effectiveNewCommitRef` when receiving the next change from

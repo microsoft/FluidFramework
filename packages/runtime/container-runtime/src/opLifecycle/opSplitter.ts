@@ -126,19 +126,19 @@ export class OpSplitter {
      * @returns A new adjusted batch which can be sent over the wire
      */
     public splitCompressedBatch(batch: IBatch): IBatch {
-        assert(this.isBatchChunkingEnabled, "Chunking needs to be enabled");
-        assert(batch.contentSizeInBytes > 0 && batch.content.length > 0, "Batch needs to be non-empty");
-        assert(this.chunkSizeInBytes !== 0, "Chunk size needs to be non-zero");
-        assert(this.chunkSizeInBytes < this.maxBatchSizeInBytes, "Chunk size needs to be smaller than the max batch size");
+        assert(this.isBatchChunkingEnabled, 0x513 /* Chunking needs to be enabled */);
+        assert(batch.contentSizeInBytes > 0 && batch.content.length > 0, 0x514 /* Batch needs to be non-empty */);
+        assert(this.chunkSizeInBytes !== 0, 0x515 /* Chunk size needs to be non-zero */);
+        assert(this.chunkSizeInBytes < this.maxBatchSizeInBytes, 0x516 /* Chunk size needs to be smaller than the max batch size */);
 
         const firstMessage = batch.content[0]; // we expect this to be the large compressed op, which needs to be split
-        assert(firstMessage.metadata?.compressed === true || firstMessage.compression !== undefined, "Batch needs to be compressed");
-        assert((firstMessage.contents?.length ?? 0) >= this.chunkSizeInBytes, "First message in the batch needs to be chunkable");
+        assert(firstMessage.metadata?.compressed === true || firstMessage.compression !== undefined, 0x517 /* Batch needs to be compressed */);
+        assert((firstMessage.contents?.length ?? 0) >= this.chunkSizeInBytes, 0x518 /* First message in the batch needs to be chunkable */);
 
         const restOfMessages = batch.content.slice(1); // we expect these to be empty ops, created to reserve sequence numbers
         const chunks = splitOp(firstMessage, this.chunkSizeInBytes);
 
-        assert(this.submitBatchFn !== undefined, "We don't support old loaders");
+        assert(this.submitBatchFn !== undefined, 0x519 /* We don't support old loaders */);
         // Send the first N-1 chunks immediately
         for (const chunk of chunks.slice(0, -1)) {
             this.submitBatchFn([chunkToBatchMessage(chunk, firstMessage.referenceSequenceNumber)]);
@@ -183,7 +183,7 @@ const chunkToBatchMessage = (
 
 export const splitOp = (op: BatchMessage, chunkSizeInBytes: number): IChunkedOp[] => {
     const chunks: IChunkedOp[] = [];
-    assert(op.contents !== undefined && op.contents !== null, "We should have something to chunk");
+    assert(op.contents !== undefined && op.contents !== null, 0x51a /* We should have something to chunk */);
 
     const contentLength = op.contents.length;
     const chunkN = Math.floor((contentLength - 1) / chunkSizeInBytes) + 1;

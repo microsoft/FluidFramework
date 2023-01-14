@@ -111,7 +111,7 @@ function invertMark<TNodeChange>(
                 if (isConflicted(mark)) {
                     assert(
                         mark.changes === undefined,
-                        "Nested changes should have been moved to the destination of the move/return that detached them",
+                        0x4e1 /* Nested changes should have been moved to the destination of the move/return that detached them */,
                     );
                     // The nodes were already detached so the mark had no effect
                     return [];
