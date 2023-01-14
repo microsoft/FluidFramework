@@ -84,6 +84,9 @@ In this way, we can toggle between remote and local mode using the same config f
 secret key in the client-side code whereas while running the service locally for development purpose, we make use of `InsecureTokenProvider`.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+
 <!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Contribution Guidelines
@@ -104,9 +107,14 @@ This project may contain Microsoft trademarks or logos for Microsoft projects, p
 Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
+<!-- prettier-ignore-end -->
+
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+
 <!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Help
@@ -117,9 +125,14 @@ Check out our [GitHub Wiki](https://github.com/microsoft/FluidFramework/wiki) or
 Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
 Thank you!
 
+<!-- prettier-ignore-end -->
+
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+
 <!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Trademark
@@ -127,5 +140,7 @@ Thank you!
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+<!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
