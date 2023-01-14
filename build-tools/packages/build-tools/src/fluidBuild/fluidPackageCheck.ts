@@ -152,20 +152,7 @@ export class FluidPackageCheck {
 
         if (expected !== actual) {
             if (name === "lint" || name === "lint:fix") {
-                /* Regular Expression
-                    lintRegex is a regex to extract expected lint-packages from the expected string value
-
-                    if expected = "npm run foo && npm run bar && npm run baz-qux:fix"
-                    lintPackages = ["foo", "bar", "baz-qux"]
-
-                    `/run (.*?)(?= &&|:|$)/g` : matches text between "run" and ("&&" or ":")
-                    `map` : extract the text from lintMatch by replacing `run` and `\s` with ""
-                */
-
-                const lintRegex = /run (.*?)(?= &&|:|$)/g;
-                const lintMatch = expected?.match(lintRegex);
-
-                const lintPackages = lintMatch?.map((e) => e.replace(/run |\s/g, ""));
+                const lintPackages = this.expectedLintPackages(expected);
 
                 this.logWarn(pkg, `${name} should contain: ${lintPackages}`, fix);
             } else {
@@ -194,6 +181,25 @@ export class FluidPackageCheck {
                 : expected.map((value) => `npm run ${value}`).join(" && ")
             : undefined;
         return this.checkScript(pkg, name, expectedScript, fix);
+    }
+
+    // helper function to extract expected packages for "lint" & "lint:fix"
+    private static expectedLintPackages(expected: string | undefined) {
+        /* Regular Expression
+            lintRegex is a regex to extract expected lint-packages from the expected string value
+
+            if expected = "npm run foo && npm run bar && npm run baz-qux:fix"
+            lintPackages = ["foo", "bar", "baz-qux"]
+
+            `/run (.*?)(?= &&|:|$)/g` : matches text between "run" and ("&&" or ":")
+            `map` : extract the text from lintMatch by replacing `run` and `\s` with ""
+        */
+
+        const lintRegex = /run (.*?)(?= &&|:|$)/g;
+        const lintMatch = expected?.match(lintRegex);
+        const lintPackages = lintMatch?.map((e) => e.replace(/run |\s/g, ""));
+
+        return lintPackages;
     }
 
     /**
@@ -518,18 +524,21 @@ export class FluidPackageCheck {
                 lintRegex is a regex to extract lint-package name from lintScript & lintFixScript
 
                 if lintScript:
-                    -> lintMatch = ["npm run foo", "npm run bar"]
-                    -> lintChildren = ["foo", "bar"]
+                    -> lintMatch = ["npm run foo", "npm run bar", "npm run foo-bar"]
+                    -> lintChildren = ["foo", "bar", "foo-bar"]
                 else:
-                    -> lintFixMatch = ["npm run foo:fix", "npm run bar:fix"]
-                    -> lintFixChildren = ["foo", "bar"]
+                    -> lintFixMatch = ["npm run foo:fix", "npm run bar:fix", "npm run foo-bar:fix"]
+                    -> lintFixChildren = ["foo", "bar", "foo-bar"]
             */
-            const lintRegex = /npm run (\w+)(?::fix)?/g;
+            const lintRegex = /npm run (\w+[-:\w]*)/g;
 
+            // TODO: we should change the logic below to accept more flexible "lint" & "lint:fix" format
             // Check "lint"
             if (lintScript) {
-                const lintMatch = lintScript?.match(lintRegex);
-                const lintChildren = lintMatch?.map((e) => e.replace(/npm run |:fix/g, ""));
+                const lintChildren = lintScript
+                    ?.match(lintRegex)
+                    ?.map((name) => name.replace("npm run ", ""))
+                    .map((name) => name.split(":")[0]);
 
                 if (lintChildren !== undefined) {
                     const hasEslint = lintChildren.some((e) => /eslint/.test(e));
@@ -546,8 +555,10 @@ export class FluidPackageCheck {
 
             // Check "lint:fix"
             if (lintFixScript) {
-                const lintFixMatch = lintFixScript?.match(lintRegex);
-                const lintFixChildren = lintFixMatch?.map((e) => e.replace(/npm run |:fix/g, ""));
+                const lintFixChildren = lintFixScript
+                    ?.match(lintRegex)
+                    ?.map((name) => name.replace("npm run ", ""))
+                    .map((name) => name.split(":")[0]);
 
                 if (lintFixChildren !== undefined) {
                     const hasEslint = lintFixChildren.some((e) => /eslint/.test(e));
