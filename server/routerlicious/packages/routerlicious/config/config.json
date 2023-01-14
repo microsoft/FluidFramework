@@ -242,6 +242,11 @@
         "port": 6379,
         "tls": false
     },
+    "redisForTenantCache": {
+        "host": "redis",
+        "port": 6379,
+        "tls": false
+    },
     "redis2": {
         "host": "redis",
         "port": 6379,
