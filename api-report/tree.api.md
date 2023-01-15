@@ -798,7 +798,7 @@ type MarkList_2<TNodeChange = NodeChangeType, TMark = Mark_2<TNodeChange>> = TMa
 
 // @public
 class MarkListFactory<TNodeChange> {
-    constructor(moveEffects?: MoveEffectTable<TNodeChange> | undefined);
+    constructor(revision?: RevisionTag | undefined, moveEffects?: MoveEffectTable<TNodeChange> | undefined);
     // (undocumented)
     readonly list: MarkList_2<TNodeChange>;
     // (undocumented)
@@ -921,14 +921,16 @@ interface MoveEffect<T> {
     movedMark?: Mark_2<T>;
     // (undocumented)
     pairedMarkStatus?: PairedMarkUpdate;
+    // (undocumented)
+    shouldRemove?: boolean;
 }
 
 // @public (undocumented)
 interface MoveEffectTable<T> {
     // (undocumented)
-    dstEffects: Map<MoveId_2, MoveEffect<T>>;
+    dstEffects: NestedMap<RevisionTag | undefined, MoveId_2, MoveEffect<T>>;
     // (undocumented)
-    srcEffects: Map<MoveId_2, MoveEffect<T>>;
+    srcEffects: NestedMap<RevisionTag | undefined, MoveId_2, MoveEffect<T>>;
 }
 
 // @public
@@ -1009,6 +1011,9 @@ export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
 
 // @public
 export type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<any, infer Name> ? Name : never;
+
+// @public
+export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 
 // @public
 export const neverTree: TreeSchema;
@@ -1409,7 +1414,7 @@ type SkipLikeReattach<TNodeChange> = Reattach<TNodeChange> & Conflicted & {
 };
 
 // @public
-function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(mark: TMark, length: number, genId: IdAllocator, moveEffects: MoveEffectTable<unknown>, ignorePairing?: boolean): [TMark, TMark];
+function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(mark: TMark, revision: RevisionTag | undefined, length: number, genId: IdAllocator, moveEffects: MoveEffectTable<unknown>, ignorePairing?: boolean): [TMark, TMark];
 
 // @public
 export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, ISubscribable<SchemaEvents>, SchemaDataAndPolicy<TPolicy> {

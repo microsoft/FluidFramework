@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
-import { clone, fail } from "../../util";
+import { clone, fail, getOrAddInNestedMap, NestedMap, setInNestedMap } from "../../util";
 import { IdAllocator } from "../modular-schema";
 import {
     InputSpanningMark,
@@ -21,13 +21,14 @@ import {
 import { getInputLength, getOutputLength, isSkipMark } from "./utils";
 
 export interface MoveEffectTable<T> {
-    srcEffects: Map<MoveId, MoveEffect<T>>;
-    dstEffects: Map<MoveId, MoveEffect<T>>;
+    srcEffects: NestedMap<RevisionTag | undefined, MoveId, MoveEffect<T>>;
+    dstEffects: NestedMap<RevisionTag | undefined, MoveId, MoveEffect<T>>;
 }
 
 export interface MoveEffect<T> {
     id?: MoveId;
     count?: number;
+    shouldRemove?: boolean;
     child?: MoveId;
     mergeLeft?: MoveId;
     mergeRight?: MoveId;
@@ -50,7 +51,10 @@ export enum MoveEnd {
     Dest,
 }
 
-function getTable<T>(table: MoveEffectTable<T>, end: MoveEnd): Map<MoveId, MoveEffect<T>> {
+function getTable<T>(
+    table: MoveEffectTable<T>,
+    end: MoveEnd,
+): NestedMap<RevisionTag | undefined, MoveId, MoveEffect<T>> {
     return end === MoveEnd.Source ? table.srcEffects : table.dstEffects;
 }
 
@@ -85,19 +89,13 @@ export interface MovePartition<TNodeChange> {
 export function splitMove<T>(
     effects: MoveEffectTable<T>,
     end: MoveEnd,
+    revision: RevisionTag | undefined,
     id: MoveId,
     newId: MoveId,
     count1: number,
     count2: number,
 ): void {
-    const table = getTable(effects, end);
-    let effect = table.get(id);
-    if (effect === undefined) {
-        effect = {
-            count: count1 + count2,
-        };
-        table.set(id, effect);
-    }
+    const effect = getOrCreateEffect(effects, end, revision, id);
 
     const newEffect: MoveEffect<T> = {
         count: count2,
@@ -106,21 +104,19 @@ export function splitMove<T>(
 
     effect.child = newId;
     effect.count = count1;
-    table.set(newId, newEffect);
+
+    const table = getTable(effects, end);
+    setInNestedMap(table, revision, newId, newEffect);
 }
 
 export function getOrCreateEffect<T>(
     moveEffects: MoveEffectTable<T>,
     end: MoveEnd,
+    revision: RevisionTag | undefined,
     id: MoveId,
 ): MoveEffect<T> {
     const table = getTable(moveEffects, end);
-    let effect = table.get(id);
-    if (effect === undefined) {
-        effect = {};
-        table.set(id, effect);
-    }
-    return effect;
+    return getOrAddInNestedMap(table, revision, id, {});
 }
 
 export type MoveMark<T> = MoveOut<T> | MoveIn | ReturnFrom<T> | ReturnTo;
@@ -142,17 +138,18 @@ export function isMoveMark<T>(mark: Mark<T>): mark is MoveMark<T> {
 
 function applyMoveEffectsToDest<T>(
     mark: MoveIn | ReturnTo,
+    revision: RevisionTag | undefined,
     effects: MoveEffectTable<T>,
     consumeEffect: boolean,
 ): Mark<T>[] {
-    const effect = getOrCreateEffect(effects, MoveEnd.Dest, mark.id);
+    const effect = getOrCreateEffect(effects, MoveEnd.Dest, mark.revision ?? revision, mark.id);
     const result: Mark<T>[] = [];
 
     assert(effect.modifyAfter === undefined, "Cannot modify move destination");
     if (effect.mark !== undefined) {
         result.push(effect.mark);
     } else {
-        if (effect.count !== 0) {
+        if (!effect.shouldRemove) {
             const newMark: Mark<T> = {
                 ...mark,
                 id: effect.id ?? mark.id,
@@ -170,13 +167,28 @@ function applyMoveEffectsToDest<T>(
     }
 
     if (effect.child !== undefined) {
-        const childEffect = getOrCreateEffect(effects, MoveEnd.Dest, effect.child);
+        const childEffect = getOrCreateEffect(
+            effects,
+            MoveEnd.Dest,
+            mark.revision ?? revision,
+            effect.child,
+        );
         assert(childEffect.count !== undefined, "Child effects should have size");
-        result.push({
+
+        const newMark: Mark<T> = {
             ...mark,
             id: effect.child,
             count: childEffect.count,
-        });
+        };
+
+        if (mark.type === "ReturnTo" && mark.detachIndex !== undefined) {
+            assert(effect.count !== undefined, "Should define count when splitting a mark");
+
+            // TODO: This assumes that effect.count has not been changed to represent a shrinking of the mark.
+            (newMark as ReturnTo).detachIndex = mark.detachIndex + effect.count;
+        }
+
+        result.push(newMark);
     }
 
     if (consumeEffect) {
@@ -190,15 +202,16 @@ function applyMoveEffectsToDest<T>(
 
 function applyMoveEffectsToSource<T>(
     mark: MoveOut<T> | ReturnFrom<T>,
+    revision: RevisionTag | undefined,
     effects: MoveEffectTable<T>,
     consumeEffect: boolean,
     composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
-    const effect = getOrCreateEffect(effects, MoveEnd.Source, mark.id);
+    const effect = getOrCreateEffect(effects, MoveEnd.Source, mark.revision ?? revision, mark.id);
     const result: Mark<T>[] = [];
     if (effect.mark !== undefined) {
         result.push(effect.mark);
-    } else if (effect.count !== 0) {
+    } else if (!effect.shouldRemove) {
         const newMark = clone(mark);
         newMark.id = effect.id ?? newMark.id;
         newMark.count = effect.count ?? newMark.count;
@@ -226,7 +239,12 @@ function applyMoveEffectsToSource<T>(
     }
 
     if (effect.child !== undefined) {
-        const childEffect = getOrCreateEffect(effects, MoveEnd.Source, effect.child);
+        const childEffect = getOrCreateEffect(
+            effects,
+            MoveEnd.Source,
+            mark.revision ?? revision,
+            effect.child,
+        );
         assert(childEffect.count !== undefined, "Child effects should have size");
         result.push({
             ...mark,
@@ -246,6 +264,7 @@ function applyMoveEffectsToSource<T>(
 
 export function applyMoveEffectsToMark<T>(
     mark: Mark<T>,
+    revision: RevisionTag | undefined,
     effects: MoveEffectTable<T>,
     consumeEffect: boolean,
     composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
@@ -255,11 +274,17 @@ export function applyMoveEffectsToMark<T>(
         switch (type) {
             case "MoveOut":
             case "ReturnFrom": {
-                return applyMoveEffectsToSource(mark, effects, consumeEffect, composeChildren);
+                return applyMoveEffectsToSource(
+                    mark,
+                    revision,
+                    effects,
+                    consumeEffect,
+                    composeChildren,
+                );
             }
             case "MoveIn":
             case "ReturnTo": {
-                return applyMoveEffectsToDest(mark, effects, consumeEffect);
+                return applyMoveEffectsToDest(mark, revision, effects, consumeEffect);
             }
             default:
                 unreachableCase(type);
@@ -277,6 +302,7 @@ export function applyMoveEffectsToMark<T>(
  */
 export function splitMarkOnInput<TMark extends InputSpanningMark<unknown>>(
     mark: TMark,
+    revision: RevisionTag | undefined,
     length: number,
     genId: IdAllocator,
     moveEffects: MoveEffectTable<unknown>,
@@ -298,7 +324,7 @@ export function splitMarkOnInput<TMark extends InputSpanningMark<unknown>>(
             fail(`Unable to split ${type} mark of length 1`);
         case "ReturnTo": {
             const newId = genId();
-            splitMove(moveEffects, MoveEnd.Source, mark.id, newId, length, remainder);
+            splitMove(moveEffects, MoveEnd.Source, revision, mark.id, newId, length, remainder);
             return [
                 { ...markObj, count: length },
                 { ...markObj, id: newId, count: remainder, detachIndex: mark.detachIndex + length },
@@ -318,11 +344,13 @@ export function splitMarkOnInput<TMark extends InputSpanningMark<unknown>>(
         case "ReturnFrom": {
             // TODO: Handle detach index for ReturnFrom
             const newId = genId();
-            splitMove(moveEffects, MoveEnd.Dest, mark.id, newId, length, remainder);
-            return [
-                { ...markObj, count: length },
-                { ...markObj, id: newId, count: remainder },
-            ] as [TMark, TMark];
+            splitMove(moveEffects, MoveEnd.Dest, revision, mark.id, newId, length, remainder);
+            const mark1 = { ...markObj, count: length };
+            const mark2 = { ...markObj, id: newId, count: remainder };
+            if (mark.type === "ReturnFrom" && mark.detachIndex !== undefined) {
+                (mark2 as unknown as ReturnFrom<unknown>).detachIndex = mark.detachIndex + length;
+            }
+            return [mark1, mark2];
         }
         default:
             unreachableCase(type);
@@ -338,6 +366,7 @@ export function splitMarkOnInput<TMark extends InputSpanningMark<unknown>>(
  */
 export function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(
     mark: TMark,
+    revision: RevisionTag | undefined,
     length: number,
     genId: IdAllocator,
     moveEffects: MoveEffectTable<unknown>,
@@ -367,7 +396,7 @@ export function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(
         case "ReturnTo": {
             // TODO: Handle detachIndex
             const newId = genId();
-            splitMove(moveEffects, MoveEnd.Source, markObj.id, newId, length, remainder);
+            splitMove(moveEffects, MoveEnd.Source, revision, markObj.id, newId, length, remainder);
             return [
                 { ...markObj, count: length },
                 type === "MoveIn"

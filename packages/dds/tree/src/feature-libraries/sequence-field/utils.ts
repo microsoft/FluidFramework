@@ -338,6 +338,7 @@ export function isOutputSpanningMark<TNodeChange>(
 export function tryExtendMark(
     lhs: ObjectMark,
     rhs: Readonly<ObjectMark>,
+    revision: RevisionTag | undefined,
     moveEffects: MoveEffectTable<unknown> | undefined,
 ): boolean {
     if (rhs.type !== lhs.type) {
@@ -371,7 +372,7 @@ export function tryExtendMark(
                 isEqualPlace(lhsMoveIn, rhs) &&
                 moveEffects !== undefined &&
                 lhsMoveIn.isSrcConflicted === rhs.isSrcConflicted &&
-                tryMergeMoves(MoveEnd.Dest, lhsMoveIn, rhs, moveEffects)
+                tryMergeMoves(MoveEnd.Dest, lhsMoveIn, rhs, revision, moveEffects)
             ) {
                 return true;
             }
@@ -390,7 +391,7 @@ export function tryExtendMark(
             }
             if (
                 moveEffects !== undefined &&
-                tryMergeMoves(MoveEnd.Source, lhsMoveOut, rhs, moveEffects)
+                tryMergeMoves(MoveEnd.Source, lhsMoveOut, rhs, revision, moveEffects)
             ) {
                 return true;
             }
@@ -420,24 +421,26 @@ function tryMergeMoves(
     end: MoveEnd,
     left: MoveMark<unknown>,
     right: MoveMark<unknown>,
+    revision: RevisionTag | undefined,
     moveEffects: MoveEffectTable<unknown>,
 ): boolean {
     if (left.conflictsWith !== right.conflictsWith) {
         return false;
     }
+    const rev = left.revision ?? revision;
     const oppEnd = end === MoveEnd.Source ? MoveEnd.Dest : MoveEnd.Source;
-    const effect = getOrCreateEffect(moveEffects, end, left.id);
+    const effect = getOrCreateEffect(moveEffects, end, rev, left.id);
     if (effect.mergeRight !== undefined) {
-        getOrCreateEffect(moveEffects, end, effect.mergeRight).mergeRight = right.id;
-        getOrCreateEffect(moveEffects, end, right.id).mergeLeft = effect.mergeRight;
+        getOrCreateEffect(moveEffects, end, rev, effect.mergeRight).mergeRight = right.id;
+        getOrCreateEffect(moveEffects, end, rev, right.id).mergeLeft = effect.mergeRight;
     } else {
-        getOrCreateEffect(moveEffects, end, left.id).mergeRight = right.id;
-        getOrCreateEffect(moveEffects, end, right.id).mergeRight = left.id;
+        getOrCreateEffect(moveEffects, end, rev, left.id).mergeRight = right.id;
+        getOrCreateEffect(moveEffects, end, rev, right.id).mergeRight = left.id;
     }
 
-    if (getOrCreateEffect(moveEffects, oppEnd, left.id).mergeRight === right.id) {
-        const nextId = getOrCreateEffect(moveEffects, oppEnd, right.id).mergeRight;
-        getOrCreateEffect(moveEffects, oppEnd, left.id).mergeRight = nextId;
+    if (getOrCreateEffect(moveEffects, oppEnd, rev, left.id).mergeRight === right.id) {
+        const nextId = getOrCreateEffect(moveEffects, oppEnd, rev, right.id).mergeRight;
+        getOrCreateEffect(moveEffects, oppEnd, rev, left.id).mergeRight = nextId;
         left.count += right.count;
 
         // TODO: Add effect to re-split these partitions
@@ -586,12 +589,12 @@ export class DetachedNodeTracker {
         genId: IdAllocator,
     ): TaggedChange<Changeset<T>> {
         const moveEffects = newMoveEffectTable<T>();
-        const factory = new MarkListFactory<T>(moveEffects);
+        const factory = new MarkListFactory<T>(change.revision, moveEffects);
         const iter = new StackyIterator(change.change);
         while (!iter.done) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const preSplit = iter.pop()!;
-            const splitMarks = applyMoveEffectsToMark(preSplit, moveEffects, true);
+            const splitMarks = applyMoveEffectsToMark(preSplit, change.revision, moveEffects, true);
 
             const mark = splitMarks[0];
             for (let i = splitMarks.length - 1; i > 0; i--) {
@@ -601,12 +604,19 @@ export class DetachedNodeTracker {
             if (isReattach(cloned)) {
                 let remainder: Reattach<T> = cloned;
                 for (let i = 1; i < cloned.count; ++i) {
-                    const [head, tail] = splitMarkOnOutput(remainder, 1, genId, moveEffects, true);
-                    this.updateMark(head, moveEffects);
+                    const [head, tail] = splitMarkOnOutput(
+                        remainder,
+                        change.revision,
+                        1,
+                        genId,
+                        moveEffects,
+                        true,
+                    );
+                    this.updateMark(head, change.revision, moveEffects);
                     factory.push(head);
                     remainder = tail;
                 }
-                this.updateMark(remainder, moveEffects);
+                this.updateMark(remainder, change.revision, moveEffects);
                 factory.push(remainder);
             } else {
                 factory.push(cloned);
@@ -615,9 +625,9 @@ export class DetachedNodeTracker {
 
         // We may need to apply the effects of updateMoveSrcDetacher for some marks if those were located
         // before their corresponding detach mark.
-        const factory2 = new MarkListFactory<T>(moveEffects);
+        const factory2 = new MarkListFactory<T>(change.revision, moveEffects);
         for (const mark of factory.list) {
-            const splitMarks = applyMoveEffectsToMark(mark, moveEffects, true);
+            const splitMarks = applyMoveEffectsToMark(mark, change.revision, moveEffects, true);
             factory2.push(...splitMarks);
         }
         return {
@@ -626,7 +636,11 @@ export class DetachedNodeTracker {
         };
     }
 
-    private updateMark(mark: Reattach<unknown>, moveEffects: MoveEffectTable<unknown>): void {
+    private updateMark(
+        mark: Reattach<unknown>,
+        revision: RevisionTag | undefined,
+        moveEffects: MoveEffectTable<unknown>,
+    ): void {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const original = { rev: mark.detachedBy!, index: mark.detachIndex };
         const updated = this.getUpdatedDetach(original);
@@ -634,7 +648,12 @@ export class DetachedNodeTracker {
             mark.detachedBy = updated.rev;
             mark.detachIndex = updated.index;
             if (mark.type === "ReturnTo") {
-                getOrCreateEffect(moveEffects, MoveEnd.Source, mark.id).detacher = mark.detachedBy;
+                getOrCreateEffect(
+                    moveEffects,
+                    MoveEnd.Source,
+                    mark.revision ?? revision,
+                    mark.id,
+                ).detacher = mark.detachedBy;
             }
         }
     }

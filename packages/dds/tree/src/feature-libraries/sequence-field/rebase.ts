@@ -89,7 +89,7 @@ function rebaseMarkList<TNodeChange>(
     genId: IdAllocator,
 ): MarkList<TNodeChange> {
     const moveEffects = newMoveEffectTable<TNodeChange>();
-    const factory = new MarkListFactory<TNodeChange>(moveEffects);
+    const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects);
     const queue = new RebaseQueue(baseRevision, baseMarkList, currMarkList, genId, moveEffects);
 
     // Each attach mark in `currMarkList` should have a lineage event added for `baseRevision` if a node adjacent to
@@ -403,7 +403,12 @@ function rebaseMark<TNodeChange>(
                 isObjMark(currMark) &&
                 (currMark.type === "MoveOut" || currMark.type === "ReturnFrom")
             ) {
-                getOrCreateEffect(moveEffects, MoveEnd.Dest, currMark.id).count = 0;
+                getOrCreateEffect(
+                    moveEffects,
+                    MoveEnd.Dest,
+                    currMark.revision,
+                    currMark.id,
+                ).shouldRemove = true;
             }
             return 0;
         }
@@ -431,8 +436,12 @@ function rebaseMark<TNodeChange>(
                     const newCurrMark = clone(currMark) as ReturnFrom<TNodeChange>;
                     delete newCurrMark.conflictsWith;
                     delete newCurrMark.detachIndex;
-                    getOrCreateEffect(moveEffects, MoveEnd.Dest, newCurrMark.id).pairedMarkStatus =
-                        PairedMarkUpdate.Reactivated;
+                    getOrCreateEffect(
+                        moveEffects,
+                        MoveEnd.Dest,
+                        newCurrMark.revision,
+                        newCurrMark.id,
+                    ).pairedMarkStatus = PairedMarkUpdate.Reactivated;
                     return newCurrMark;
                 }
                 case "Revive":
@@ -453,6 +462,7 @@ function rebaseMark<TNodeChange>(
                             getOrCreateEffect(
                                 moveEffects,
                                 MoveEnd.Source,
+                                currMark.revision,
                                 currMark.id,
                             ).pairedMarkStatus = PairedMarkUpdate.Deactivated;
                         }
@@ -494,8 +504,12 @@ function rebaseMark<TNodeChange>(
                     // The nodes that currMark aims to detach are being detached by baseMark
                     newCurrMark.conflictsWith = baseMarkRevision;
                     newCurrMark.detachIndex = baseInputOffset;
-                    getOrCreateEffect(moveEffects, MoveEnd.Dest, newCurrMark.id).pairedMarkStatus =
-                        PairedMarkUpdate.Deactivated;
+                    getOrCreateEffect(
+                        moveEffects,
+                        MoveEnd.Dest,
+                        newCurrMark.revision,
+                        newCurrMark.id,
+                    ).pairedMarkStatus = PairedMarkUpdate.Deactivated;
                     return newCurrMark;
                 } else if (newCurrMark.type === "ReturnTo") {
                     assert(
@@ -516,6 +530,7 @@ function rebaseMark<TNodeChange>(
                         const effect = getOrCreateEffect(
                             moveEffects,
                             MoveEnd.Source,
+                            newCurrMark.revision,
                             newCurrMark.id,
                         );
                         effect.detacher = baseMarkRevision;
@@ -538,8 +553,12 @@ function rebaseMark<TNodeChange>(
                     newCurrMark.detachIndex = baseInputOffset;
                     return newCurrMark;
                 } else {
-                    getOrCreateEffect(moveEffects, MoveEnd.Dest, baseMark.id).movedMark =
-                        newCurrMark;
+                    getOrCreateEffect(
+                        moveEffects,
+                        MoveEnd.Dest,
+                        baseMark.revision ?? baseRevision,
+                        baseMark.id,
+                    ).movedMark = newCurrMark;
                 }
             }
             return 0;
@@ -564,13 +583,18 @@ function applyMoveEffects<TNodeChange>(
         moveEffects,
         true,
     );
-    const factory = new MarkListFactory<TNodeChange>(moveEffects);
+    const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects);
 
     let offset = 0;
     while (!queue.isEmpty()) {
         const { baseMark, newMark } = queue.pop();
         if (isObjMark(baseMark) && (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")) {
-            const effect = getOrCreateEffect(moveEffects, MoveEnd.Dest, baseMark.id);
+            const effect = getOrCreateEffect(
+                moveEffects,
+                MoveEnd.Dest,
+                baseMark.revision ?? baseRevision,
+                baseMark.id,
+            );
             if (effect.movedMark !== undefined) {
                 factory.pushOffset(offset);
                 offset = 0;
@@ -592,7 +616,7 @@ function applyMoveEffects<TNodeChange>(
 
     // We may have discovered new mergeable marks while applying move effects, as we may have moved a MoveOut next to another MoveOut.
     // A second pass through MarkListFactory will handle any remaining merges.
-    const factory2 = new MarkListFactory<TNodeChange>(moveEffects);
+    const factory2 = new MarkListFactory<TNodeChange>(undefined, moveEffects);
     for (const mark of factory.list) {
         factory2.push(mark);
     }

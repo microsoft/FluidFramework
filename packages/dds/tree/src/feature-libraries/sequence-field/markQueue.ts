@@ -54,6 +54,7 @@ export class MarkQueue<T> {
 
         const splitMarks = applyMoveEffectsToMark(
             mark,
+            this.revision,
             this.moveEffects,
             this.consumeEffects,
             this.composeChanges,
@@ -79,7 +80,13 @@ export class MarkQueue<T> {
     public dequeueInput(length: number): InputSpanningMark<T> {
         const mark = this.dequeue();
         assert(isInputSpanningMark(mark), "Can only split sized marks on input");
-        const [mark1, mark2] = splitMarkOnInput(mark, length, this.genId, this.moveEffects);
+        const [mark1, mark2] = splitMarkOnInput(
+            mark,
+            this.revision,
+            length,
+            this.genId,
+            this.moveEffects,
+        );
         this.stack.push(mark2);
         return mark1;
     }
@@ -96,7 +103,13 @@ export class MarkQueue<T> {
             isOutputSpanningMark(mark) || (includeBlockedCells && isBlockedReattach(mark)),
             "Should only dequeue output if the next mark has output length > 0",
         );
-        const [mark1, mark2] = splitMarkOnOutput(mark, length, this.genId, this.moveEffects);
+        const [mark1, mark2] = splitMarkOnOutput(
+            mark,
+            this.revision,
+            length,
+            this.genId,
+            this.moveEffects,
+        );
         this.stack.push(mark2);
         return mark1;
     }
