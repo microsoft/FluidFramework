@@ -412,7 +412,15 @@ export function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(
         case "ReturnTo": {
             // TODO: Handle detachIndex
             const newId = genId();
-            splitMove(moveEffects, MoveEnd.Source, revision, markObj.id, newId, length, remainder);
+            splitMove(
+                moveEffects,
+                MoveEnd.Source,
+                markObj.revision ?? revision,
+                markObj.id,
+                newId,
+                length,
+                remainder,
+            );
             return [
                 { ...markObj, count: length },
                 type === "MoveIn"
