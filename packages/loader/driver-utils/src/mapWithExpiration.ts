@@ -29,7 +29,7 @@ export class MapWithExpiration<TKey = any, TValue = any> extends Map<TKey, TValu
      */
     private checkExpiry(key: TKey, cleanUp: boolean = false): boolean | undefined {
         const refreshTime = this.lastRefreshedTimes.get(key);
-        assert((refreshTime !== undefined) === super.has(key), "freshness map out of sync");
+        assert((refreshTime !== undefined) === super.has(key), 0x50c /* freshness map out of sync */);
 
         if (refreshTime === undefined) {
             return undefined;
