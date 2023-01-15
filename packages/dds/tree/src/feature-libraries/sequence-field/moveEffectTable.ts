@@ -324,7 +324,15 @@ export function splitMarkOnInput<TMark extends InputSpanningMark<unknown>>(
             fail(`Unable to split ${type} mark of length 1`);
         case "ReturnTo": {
             const newId = genId();
-            splitMove(moveEffects, MoveEnd.Source, revision, mark.id, newId, length, remainder);
+            splitMove(
+                moveEffects,
+                MoveEnd.Source,
+                mark.revision ?? revision,
+                mark.id,
+                newId,
+                length,
+                remainder,
+            );
             return [
                 { ...markObj, count: length },
                 { ...markObj, id: newId, count: remainder, detachIndex: mark.detachIndex + length },
@@ -344,7 +352,15 @@ export function splitMarkOnInput<TMark extends InputSpanningMark<unknown>>(
         case "ReturnFrom": {
             // TODO: Handle detach index for ReturnFrom
             const newId = genId();
-            splitMove(moveEffects, MoveEnd.Dest, revision, mark.id, newId, length, remainder);
+            splitMove(
+                moveEffects,
+                MoveEnd.Dest,
+                mark.revision ?? revision,
+                mark.id,
+                newId,
+                length,
+                remainder,
+            );
             const mark1 = { ...markObj, count: length };
             const mark2 = { ...markObj, id: newId, count: remainder };
             if (mark.type === "ReturnFrom" && mark.detachIndex !== undefined) {
