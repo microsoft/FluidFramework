@@ -238,7 +238,7 @@ function composeMarks<TNodeChange>(
                         MoveEnd.Source,
                         baseMark.revision,
                         baseMark.id,
-                    ).mark = newMark;
+                    ).mark = composeMark(newMark, newRev, composeChild);
                     return 0;
                 }
                 case "ReturnFrom": {
@@ -262,7 +262,7 @@ function composeMarks<TNodeChange>(
                             MoveEnd.Source,
                             baseMark.revision,
                             baseMark.id,
-                        ).mark = newMark;
+                        ).mark = composeMark(newMark, newRev, composeChild);
                         return 0;
                     }
                 }
@@ -311,7 +311,7 @@ function composeMarks<TNodeChange>(
                             MoveEnd.Source,
                             baseMark.revision,
                             baseMark.id,
-                        ).mark = newMark;
+                        ).mark = composeMark(newMark, newRev, composeChild);
                         return 0;
                     }
                 }
@@ -347,7 +347,7 @@ function composeMarks<TNodeChange>(
                             MoveEnd.Source,
                             baseMark.revision,
                             baseMark.id,
-                        ).mark = newMark;
+                        ).mark = composeMark(newMark, newRev, composeChild);
                         return 0;
                     }
                 }
