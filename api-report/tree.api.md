@@ -908,8 +908,6 @@ interface MoveEffect<T> {
     // (undocumented)
     detacher?: RevisionTag;
     // (undocumented)
-    id?: MoveId_2;
-    // (undocumented)
     mark?: Mark_2<T>;
     // (undocumented)
     mergeLeft?: MoveId_2;

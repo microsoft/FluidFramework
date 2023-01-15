@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
-import { clone, fail, getOrAddInNestedMap, NestedMap, setInNestedMap } from "../../util";
+import { clone, fail, getOrAddInNestedMap, NestedMap } from "../../util";
 import { IdAllocator } from "../modular-schema";
 import {
     InputSpanningMark,
@@ -26,7 +26,6 @@ export interface MoveEffectTable<T> {
 }
 
 export interface MoveEffect<T> {
-    id?: MoveId;
     count?: number;
     shouldRemove?: boolean;
     child?: MoveId;
@@ -96,17 +95,14 @@ export function splitMove<T>(
     count2: number,
 ): void {
     const effect = getOrCreateEffect(effects, end, revision, id);
-
-    const newEffect: MoveEffect<T> = {
-        count: count2,
-        child: effect.child,
-    };
+    const newEffect = getOrCreateEffect(effects, end, revision, newId);
+    newEffect.count = count2;
+    if (effect.child !== undefined) {
+        newEffect.child = effect.child;
+    }
 
     effect.child = newId;
     effect.count = count1;
-
-    const table = getTable(effects, end);
-    setInNestedMap(table, revision, newId, newEffect);
 }
 
 export function getOrCreateEffect<T>(
@@ -152,7 +148,6 @@ function applyMoveEffectsToDest<T>(
         if (!effect.shouldRemove) {
             const newMark: Mark<T> = {
                 ...mark,
-                id: effect.id ?? mark.id,
                 count: effect.count ?? mark.count,
             };
             if (effect.pairedMarkStatus !== undefined) {
@@ -194,7 +189,6 @@ function applyMoveEffectsToDest<T>(
     if (consumeEffect) {
         delete effect.mark;
         delete effect.count;
-        delete effect.id;
         delete effect.child;
     }
     return result;
@@ -213,7 +207,6 @@ function applyMoveEffectsToSource<T>(
         result.push(effect.mark);
     } else if (!effect.shouldRemove) {
         const newMark = clone(mark);
-        newMark.id = effect.id ?? newMark.id;
         newMark.count = effect.count ?? newMark.count;
         if (effect.modifyAfter !== undefined) {
             assert(
@@ -256,7 +249,6 @@ function applyMoveEffectsToSource<T>(
     if (consumeEffect) {
         delete effect.mark;
         delete effect.count;
-        delete effect.id;
         delete effect.child;
     }
     return result;
@@ -293,6 +285,7 @@ export function applyMoveEffectsToMark<T>(
     return [mark];
 }
 
+// TODO: These functions should not be in this file.
 /**
  * Splits the `mark` into two marks such that the first returned mark has input length `length`.
  * @param mark - The mark to split.
