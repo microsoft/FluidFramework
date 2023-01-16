@@ -22,7 +22,7 @@ import {
 import { describeNoCompat, ITestDataObject, itExpects, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
@@ -615,12 +615,13 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
                 `Should not be able to retrieve a tombstoned datastore.`,
             );
 
-            // Normally, there should be a SweepReady_Revived error when referencing a SweepReady data store. However,
-            // since the summarizer client is the one that is created and adding the handle, the handle is not decoded
-            // and it will not result in GC detecting the reference. Also, a "gcUnknownOutboundReferences" error will
-            // be logged for the same reason.
-            const mainDataObject = await requestFluidObject<ITestDataObject>(summarizingContainer, "default");
-            mainDataObject._root.set("store", dataObject.handle);
+            const requestAllowingTombstone: IRequest = {
+                url: unreferencedId,
+                headers: { [RuntimeHeaders.allowTombstone]: true },
+            };
+            const tombstonedObject = await requestFluidObject<ITestDataObject>(tombstoneContainer, requestAllowingTombstone);
+            const defaultDataObject = await requestFluidObject<ITestDataObject>(tombstoneContainer, "default");
+            defaultDataObject._root.set("store", tombstonedObject.handle);
 
             // This container closes as we submit ops and signals in the un-tombstoned container
             setupContainerCloseErrorValidation(tombstoneContainer, "processSignal");
