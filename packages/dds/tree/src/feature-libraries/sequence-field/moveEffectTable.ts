@@ -97,12 +97,14 @@ export function splitMove<T>(
     const effect = getOrCreateEffect(effects, end, revision, id);
     const newEffect = getOrCreateEffect(effects, end, revision, newId);
     newEffect.count = count2;
+    newEffect.mergeLeft = id;
     if (effect.child !== undefined) {
         newEffect.child = effect.child;
     }
 
     effect.child = newId;
     effect.count = count1;
+    effect.mergeRight = newId;
 }
 
 export function getOrCreateEffect<T>(
@@ -110,9 +112,36 @@ export function getOrCreateEffect<T>(
     end: MoveEnd,
     revision: RevisionTag | undefined,
     id: MoveId,
+    resetMerges: boolean = false,
 ): MoveEffect<T> {
     const table = getTable(moveEffects, end);
-    return getOrAddInNestedMap(table, revision, id, {});
+    const effect = getOrAddInNestedMap(table, revision, id, {});
+    if (resetMerges && effect.mergeLeft !== undefined) {
+        delete getOrCreateEffect(moveEffects, end, revision, effect.mergeLeft).mergeRight;
+        delete effect.mergeLeft;
+    }
+    if (resetMerges && effect.mergeRight !== undefined) {
+        delete getOrCreateEffect(moveEffects, end, revision, effect.mergeRight).mergeLeft;
+        delete effect.mergeRight;
+    }
+    return effect;
+}
+
+export function clearMergeability(
+    moveEffects: MoveEffectTable<unknown>,
+    end: MoveEnd,
+    revision: RevisionTag | undefined,
+    id: MoveId,
+): void {
+    const effect = getOrCreateEffect(moveEffects, end, revision, id);
+    if (effect.mergeLeft !== undefined) {
+        delete getOrCreateEffect(moveEffects, end, revision, effect.mergeLeft).mergeRight;
+        delete effect.mergeLeft;
+    }
+    if (effect.mergeRight !== undefined) {
+        delete getOrCreateEffect(moveEffects, end, revision, effect.mergeRight).mergeLeft;
+        delete effect.mergeRight;
+    }
 }
 
 export type MoveMark<T> = MoveOut<T> | MoveIn | ReturnFrom<T> | ReturnTo;

@@ -181,6 +181,7 @@ function composeMarks<TNodeChange>(
                         MoveEnd.Dest,
                         newMark.revision ?? newRev,
                         newMark.id,
+                        true,
                     ).mark = mergeInNewChildChanges(
                         baseMark,
                         newMark.changes,
@@ -229,6 +230,7 @@ function composeMarks<TNodeChange>(
                         MoveEnd.Source,
                         baseMark.revision,
                         baseMark.id,
+                        true,
                     ).mark = composeMark(newMark, newRev, composeChild);
                     return 0;
                 }
@@ -238,7 +240,15 @@ function composeMarks<TNodeChange>(
                         MoveEnd.Source,
                         baseMark.revision,
                         baseMark.id,
+                        true,
                     ).mark = composeMark(newMark, newRev, composeChild);
+                    getOrCreateEffect(
+                        moveEffects,
+                        MoveEnd.Dest,
+                        newMark.revision ?? newRev,
+                        newMark.id,
+                        true,
+                    );
                     return 0;
                 }
                 case "ReturnFrom": {
@@ -248,12 +258,14 @@ function composeMarks<TNodeChange>(
                             MoveEnd.Source,
                             baseMark.revision,
                             baseMark.id,
+                            true,
                         ).shouldRemove = true;
                         getOrCreateEffect(
                             moveEffects,
                             MoveEnd.Dest,
                             newMark.revision ?? newRev,
                             newMark.id,
+                            true,
                         ).shouldRemove = true;
                         return 0;
                     } else {
@@ -262,7 +274,15 @@ function composeMarks<TNodeChange>(
                             MoveEnd.Source,
                             baseMark.revision,
                             baseMark.id,
+                            true,
                         ).mark = composeMark(newMark, newRev, composeChild);
+                        getOrCreateEffect(
+                            moveEffects,
+                            MoveEnd.Dest,
+                            newMark.revision ?? newRev,
+                            newMark.id,
+                            true,
+                        );
                         return 0;
                     }
                 }
@@ -278,6 +298,7 @@ function composeMarks<TNodeChange>(
                         MoveEnd.Source,
                         baseMark.revision,
                         baseMark.id,
+                        true,
                     ).modifyAfter = newMark.changes;
                     return baseMark;
                 }
@@ -287,6 +308,7 @@ function composeMarks<TNodeChange>(
                         MoveEnd.Source,
                         baseMark.revision,
                         baseMark.id,
+                        true,
                     ).mark = composeMark(newMark, newRev, composeChild);
                     return 0;
                 }
@@ -297,12 +319,14 @@ function composeMarks<TNodeChange>(
                             MoveEnd.Source,
                             baseMark.revision,
                             baseMark.id,
+                            true,
                         ).shouldRemove = true;
                         getOrCreateEffect(
                             moveEffects,
                             MoveEnd.Dest,
                             newMark.revision ?? newRev,
                             newMark.id,
+                            true,
                         ).shouldRemove = true;
                         return 0;
                     } else {
@@ -311,7 +335,15 @@ function composeMarks<TNodeChange>(
                             MoveEnd.Source,
                             baseMark.revision,
                             baseMark.id,
+                            true,
                         ).mark = composeMark(newMark, newRev, composeChild);
+                        getOrCreateEffect(
+                            moveEffects,
+                            MoveEnd.Dest,
+                            newMark.revision ?? newRev,
+                            newMark.id,
+                            true,
+                        );
                         return 0;
                     }
                 }
@@ -325,12 +357,14 @@ function composeMarks<TNodeChange>(
                             MoveEnd.Source,
                             baseMark.revision,
                             baseMark.id,
+                            true,
                         ).shouldRemove = true;
                         getOrCreateEffect(
                             moveEffects,
                             MoveEnd.Dest,
                             newMark.revision ?? newRev,
                             newMark.id,
+                            true,
                         ).shouldRemove = true;
                         return 0;
                     } else {
@@ -340,6 +374,7 @@ function composeMarks<TNodeChange>(
                                 MoveEnd.Source,
                                 baseMark.revision,
                                 baseMark.id,
+                                true,
                             ).modifyAfter = newMark.changes;
                         }
                         getOrCreateEffect(
@@ -347,7 +382,15 @@ function composeMarks<TNodeChange>(
                             MoveEnd.Source,
                             baseMark.revision,
                             baseMark.id,
+                            true,
                         ).mark = composeMark(newMark, newRev, composeChild);
+                        getOrCreateEffect(
+                            moveEffects,
+                            MoveEnd.Dest,
+                            newMark.revision ?? newRev,
+                            newMark.id,
+                            true,
+                        );
                         return 0;
                     }
                 }

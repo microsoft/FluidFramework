@@ -431,16 +431,20 @@ function tryMergeMoves(
     const oppEnd = end === MoveEnd.Source ? MoveEnd.Dest : MoveEnd.Source;
     const effect = getOrCreateEffect(moveEffects, end, rev, left.id);
     if (effect.mergeRight !== undefined) {
-        getOrCreateEffect(moveEffects, end, rev, effect.mergeRight).mergeRight = right.id;
-        getOrCreateEffect(moveEffects, end, rev, right.id).mergeLeft = effect.mergeRight;
+        getOrCreateEffect(moveEffects, oppEnd, rev, effect.mergeRight).mergeRight = right.id;
+        getOrCreateEffect(moveEffects, oppEnd, rev, right.id).mergeLeft = effect.mergeRight;
     } else {
-        getOrCreateEffect(moveEffects, end, rev, left.id).mergeRight = right.id;
-        getOrCreateEffect(moveEffects, end, rev, right.id).mergeRight = left.id;
+        getOrCreateEffect(moveEffects, oppEnd, rev, left.id).mergeRight = right.id;
+        getOrCreateEffect(moveEffects, oppEnd, rev, right.id).mergeLeft = left.id;
     }
 
-    if (getOrCreateEffect(moveEffects, oppEnd, rev, left.id).mergeRight === right.id) {
-        const nextId = getOrCreateEffect(moveEffects, oppEnd, rev, right.id).mergeRight;
-        getOrCreateEffect(moveEffects, oppEnd, rev, left.id).mergeRight = nextId;
+    if (getOrCreateEffect(moveEffects, end, rev, left.id).mergeRight === right.id) {
+        assert(
+            getOrCreateEffect(moveEffects, end, rev, right.id).mergeLeft === left.id,
+            "Inconsistent merge info",
+        );
+        const nextId = getOrCreateEffect(moveEffects, end, rev, right.id).mergeRight;
+        getOrCreateEffect(moveEffects, end, rev, left.id).mergeRight = nextId;
         left.count += right.count;
 
         // TODO: Add effect to re-split these partitions
