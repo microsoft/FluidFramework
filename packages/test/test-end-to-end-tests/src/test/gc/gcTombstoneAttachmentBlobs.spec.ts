@@ -188,7 +188,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             assert(response2.value.startsWith("Blob removed by gc:"), `Unexpected response value for blob handle 2`);
         });
 
-        //* Update this
         itExpects("Can un-tombstone attachment blob by storing a handle",
         [
             {

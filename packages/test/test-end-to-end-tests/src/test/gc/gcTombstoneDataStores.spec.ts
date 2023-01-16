@@ -549,7 +549,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             assert(response.value === `Datastore removed by gc: ${unreferencedId}`);
         });
 
-        //* Update this
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
         itExpects("Can un-tombstone datastores by storing a handle",
         [
