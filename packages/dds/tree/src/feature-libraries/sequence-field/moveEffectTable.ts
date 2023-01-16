@@ -144,6 +144,17 @@ export function clearMergeability(
     }
 }
 
+export function makeMergeable(
+    moveEffects: MoveEffectTable<unknown>,
+    end: MoveEnd,
+    revision: RevisionTag | undefined,
+    leftId: MoveId,
+    rightId: MoveId,
+): void {
+    getOrCreateEffect(moveEffects, end, revision, leftId).mergeRight = rightId;
+    getOrCreateEffect(moveEffects, end, revision, rightId).mergeLeft = leftId;
+}
+
 export type MoveMark<T> = MoveOut<T> | MoveIn | ReturnFrom<T> | ReturnTo;
 
 export function isMoveMark<T>(mark: Mark<T>): mark is MoveMark<T> {

@@ -38,6 +38,7 @@ import { MarkQueue } from "./markQueue";
 import {
     applyMoveEffectsToMark,
     getOrCreateEffect,
+    makeMergeable,
     MoveEffectTable,
     MoveEnd,
     MoveMark,
@@ -429,13 +430,11 @@ function tryMergeMoves(
     }
     const rev = left.revision ?? revision;
     const oppEnd = end === MoveEnd.Source ? MoveEnd.Dest : MoveEnd.Source;
-    const effect = getOrCreateEffect(moveEffects, end, rev, left.id);
-    if (effect.mergeRight !== undefined) {
-        getOrCreateEffect(moveEffects, oppEnd, rev, effect.mergeRight).mergeRight = right.id;
-        getOrCreateEffect(moveEffects, oppEnd, rev, right.id).mergeLeft = effect.mergeRight;
+    const prevMergeId = getOrCreateEffect(moveEffects, oppEnd, rev, left.id).mergeRight;
+    if (prevMergeId !== undefined) {
+        makeMergeable(moveEffects, oppEnd, rev, prevMergeId, right.id);
     } else {
-        getOrCreateEffect(moveEffects, oppEnd, rev, left.id).mergeRight = right.id;
-        getOrCreateEffect(moveEffects, oppEnd, rev, right.id).mergeLeft = left.id;
+        makeMergeable(moveEffects, oppEnd, rev, left.id, right.id);
     }
 
     if (getOrCreateEffect(moveEffects, end, rev, left.id).mergeRight === right.id) {
@@ -444,7 +443,11 @@ function tryMergeMoves(
             "Inconsistent merge info",
         );
         const nextId = getOrCreateEffect(moveEffects, end, rev, right.id).mergeRight;
-        getOrCreateEffect(moveEffects, end, rev, left.id).mergeRight = nextId;
+        if (nextId !== undefined) {
+            makeMergeable(moveEffects, end, rev, left.id, nextId);
+        } else {
+            getOrCreateEffect(moveEffects, end, rev, left.id).mergeRight = undefined;
+        }
         left.count += right.count;
 
         // TODO: Add effect to re-split these partitions
