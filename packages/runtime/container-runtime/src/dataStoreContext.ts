@@ -787,7 +787,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
                 isSummarizerClient: this.clientDetails.type === summarizerClientType,
                 callSite,
             };
-            sendGCTombstoneEvent(this.mc.logger, event, this.throwOnTombstoneUsage, this.pkg, error);
+            sendGCTombstoneEvent(this.mc, event, this.throwOnTombstoneUsage, this.pkg, error);
             // Always log an error when tombstoned data store is used. However, throw an error only if
             // throwOnTombstoneUsage is set and the client is not a summarizer.
             if (this.throwOnTombstoneUsage) {
