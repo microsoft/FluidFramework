@@ -277,9 +277,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
             const error = responseToException(createResponseError(404, "Blob removed by gc", request), request);
             const event = {
                 eventName: "GC_Tombstone_Blob_Requested",
-                url: request.url,
+                isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
             };
-            sendGCTombstoneEvent(this.mc, event, this.runtime.clientDetails.type === summarizerClientType, [BlobManager.basePath], error);
+            sendGCTombstoneEvent(this.mc.logger, event, this.throwOnTombstoneLoad, [BlobManager.basePath], error);
             if (this.throwOnTombstoneLoad) {
                 throw error;
             }

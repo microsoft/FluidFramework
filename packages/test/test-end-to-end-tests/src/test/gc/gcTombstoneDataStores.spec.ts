@@ -584,7 +584,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             await assert.rejects(async () => requestFluidObject<ITestDataObject>(tombstoneContainer, unreferencedId),
                 (error) => {
                     const correctErrorType = error.code === 404;
-                    const correctErrorMessage = error.message.startsWith(`Datastore removed by gc`) === true;
+                    const correctErrorMessage = error.message === `Datastore removed by gc: ${unreferencedId}`;
                     return correctErrorType && correctErrorMessage;
                 },
                 `Should not be able to retrieve a tombstoned datastore.`,
@@ -966,10 +966,11 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             const container2 = await loadContainer(summary2.summaryVersion);
 
             // Requesting the tombstoned data store should result in an error.
-            await assert.rejects(async () => requestFluidObject<ITestDataObject>(container2, newDataStore._context.id),
+            const unreferencedId = newDataStore._context.id;
+            await assert.rejects(async () => requestFluidObject<ITestDataObject>(container2, unreferencedId),
                 (error) => {
                     const correctErrorType = error.code === 404;
-                    const correctErrorMessage = error.message.startsWith(`Datastore removed by gc`) === true;
+                    const correctErrorMessage = error.message === `Datastore removed by gc: ${unreferencedId}`;
                     return correctErrorType && correctErrorMessage;
                 },
                 `Should not be able to retrieve a tombstoned datastore.`,

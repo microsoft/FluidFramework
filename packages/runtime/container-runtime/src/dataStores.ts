@@ -444,13 +444,13 @@ export class DataStores implements IDisposable {
             // Note: if a user writes a request to look like it's viaHandle, we will also send this telemetry event
             const event = {
                 eventName: "GC_Tombstone_DataStore_Requested",
-                url: request.url,
+                isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
                 viaHandle,
             };
             sendGCTombstoneEvent(
-                this.mc,
+                this.mc.logger,
                 event,
-                this.runtime.clientDetails.type === summarizerClientType,
+                this.throwOnTombstoneLoad,
                 context.isLoaded ? context.packagePath : undefined,
                 error,
             );
