@@ -15,11 +15,10 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - Avoid using code formatting in the title (it's fine to use in the body).
 - To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
-# 2.0.0-internal.2.3.0
+# 2.0.0-internal.2.4.0
 
-## 2.0.0-internal.2.3.0 Upcoming changes
+## 2.0.0-internal.2.4.0 Upcoming changes
 - [Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`](#deprecate-ensurecontainerconnected-in-fluidframeworktest-utils)
-- [Upcoming changes to container closure](#Upcoming-changes-to-container-closure)
 
 ### Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`
 
@@ -32,6 +31,11 @@ This is overall a safer default because it ensures that unexpected errors which 
 immediately, instead of potentially being hidden by a timeout.
 It is recommended that you start passing `failOnContainerClose=true` when calling `waitForContainerConnection()` in
 preparation for this upcoming breaking change.
+
+# 2.0.0-internal.2.3.0
+
+## 2.0.0-internal.2.3.0 Upcoming changes
+- [Upcoming changes to container closure](#Upcoming-changes-to-container-closure)
 
 ### Upcoming changes to container closure
 
