@@ -13,9 +13,9 @@ async function main() {
         .parse(process.argv);
     const version: string = commander.config;
     const o = new TestOrchestrator({ version });
-    await o.run().then(() => {
-        console.log("TestOrchestrator: done");
-        process.exit(0);
+    await o.run().then((success: boolean) => {
+        console.log(`TestOrchestrator: done (${success ? "Success" : "Failed"})`);
+        process.exit(success ? 0 : -1);
     });
 }
 
