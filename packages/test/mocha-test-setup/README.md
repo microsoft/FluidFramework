@@ -88,7 +88,7 @@ configuration will also include this:
 Where `${packageDir}` is the location of the package being tested, and `${packageJson.name}` is the `name` field in its
 `package.json` file.
 
-If a value for `testReportPrefix` is passed to `getFluidTestMochaConfig()`, `${testReportPrefix}-` will be preprended to
+If a value for `testReportPrefix` is passed to `getFluidTestMochaConfig()`, `${testReportPrefix}-` will be prepended to
 the output file name, and ` - ${testReportPrefix}` will be appended to the suiteName.
 
 ## Mapping of package paths to account for Lerna hoisting
