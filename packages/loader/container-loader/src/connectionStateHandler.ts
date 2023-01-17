@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/common-definitions";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { IConnectionDetails, IDeltaManager } from "@fluidframework/container-definitions";
 import { ILocalSequencedClient } from "@fluidframework/protocol-base";
@@ -32,7 +32,7 @@ export interface IConnectionStateHandlerInputs {
     /** (Optional) How long should we wait on our previous client's Leave op before transitioning to Connected again */
     maxClientLeaveWaitTime: number | undefined;
     /** Log an issue encountered while in the Connecting state. details will be logged as a JSON string */
-    logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => void;
+    logConnectionIssue: (eventName: string, category: TelemetryEventCategory, details?: ITelemetryProperties) => void;
 }
 
 /**
@@ -57,7 +57,7 @@ export function createConnectionStateHandler(
     const mc = loggerToMonitoringContext(inputs.logger);
     return createConnectionStateHandlerCore(
         mc.config.getBoolean("Fluid.Container.CatchUpBeforeDeclaringConnected") === true, // connectedRaisedWhenCaughtUp
-        mc.config.getBoolean("Fluid.Container.DisableJoinSignalWait") !== true, // readClientsWaitForJoinSignal
+        mc.config.getBoolean("Fluid.Container.EnableJoinSignalWait") === true, // readClientsWaitForJoinSignal
         inputs,
         deltaManager,
         clientId,
@@ -136,8 +136,8 @@ class ConnectionStateHandlerPassThrough implements IConnectionStateHandler, ICon
     }
     public shouldClientJoinWrite() { return this.inputs.shouldClientJoinWrite(); }
     public get maxClientLeaveWaitTime() { return this.inputs.maxClientLeaveWaitTime; }
-    public logConnectionIssue(eventName: string, details?: ITelemetryProperties) {
-        return this.inputs.logConnectionIssue(eventName, details);
+    public logConnectionIssue(eventName: string, category: TelemetryEventCategory, details?: ITelemetryProperties) {
+        return this.inputs.logConnectionIssue(eventName, category, details);
     }
 }
 
@@ -281,14 +281,14 @@ class ConnectionStateHandler implements IConnectionStateHandler {
                     clientJoined: this.hasMember(this.pendingClientId),
                     waitingForLeaveOp: this.waitingForLeaveOp,
                 };
-                this.handler.logConnectionIssue("NoJoinOp", details);
+                this.handler.logConnectionIssue("NoJoinOp", "error", details);
             },
         );
     }
 
     private startJoinOpTimer() {
         assert(!this.joinOpTimer.hasTimer, 0x234 /* "has joinOpTimer" */);
-        assert(this.connection !== undefined, "have connection");
+        assert(this.connection !== undefined, 0x4b3 /* have connection */);
         this.joinOpTimer.start(
             this.connection.mode === "write" ? JoinOpTimeoutMs : JoinSignalTimeoutMs,
         );
@@ -325,7 +325,10 @@ class ConnectionStateHandler implements IConnectionStateHandler {
             } else if (this.shouldWaitForJoinSignal()) {
                 // timer has already fired, meaning it took too long to get join op/signal.
                 // Record how long it actually took to recover.
-                this.handler.logConnectionIssue("ReceivedJoinOp");
+                // This is generic event, as it by itself is not an error.
+                // We also have a case where NoJoinOp happens during container boot (we do not report it as error in such case),
+                // if this log statement happens after boot - we do not want to consider it error case.
+                this.handler.logConnectionIssue("ReceivedJoinOp", "generic");
             }
             // Start the event in case we are waiting for leave or timeout.
             if (this.waitingForLeaveOp) {
@@ -388,7 +391,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
     }
 
     private shouldWaitForJoinSignal() {
-        assert(this.connection !== undefined, "all callers call here with active connection");
+        assert(this.connection !== undefined, 0x4b4 /* all callers call here with active connection */);
         return this.connection.mode === "write" || this.readClientsWaitForJoinSignal;
     }
 
@@ -525,12 +528,12 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 
         this.membership?.on("addMember", (clientId, details) => {
             assert((details as IClient).mode === "read" || protocol.quorum.getMember(clientId) !== undefined,
-                "Audience is subset of quorum");
+                0x4b5 /* Audience is subset of quorum */);
             this.receivedAddMemberEvent(clientId);
         });
 
         this.membership?.on("removeMember", (clientId) => {
-            assert(protocol.quorum.getMember(clientId) === undefined, "Audience is subset of quorum");
+            assert(protocol.quorum.getMember(clientId) === undefined, 0x4b6 /* Audience is subset of quorum */);
             this.receivedRemoveMemberEvent(clientId);
         });
 

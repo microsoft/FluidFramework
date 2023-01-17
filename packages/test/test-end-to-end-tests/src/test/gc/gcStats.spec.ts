@@ -11,7 +11,7 @@ import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions"
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { calculateStats, mergeStats, requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
+import { describeNoCompat, ITestDataObject, itExpects, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { defaultGCConfig } from "./gcTestConfigs";
 
 const ensureContainerConnectedWriteMode = async (container: Container) => {
@@ -67,7 +67,7 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         container = await provider.makeTestContainer(defaultGCConfig) as Container;
         mainDataStore = await requestFluidObject<ITestDataObject>(container, "/");
         containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
-        await waitForContainerConnection(container);
+        await waitForContainerConnection(container, true);
     });
 
     /**
@@ -83,15 +83,15 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         const dataStore2 = await requestFluidObject<ITestDataObject>(
             await containerRuntime.createDataStore(TestDataObjectType), "");
         const expectedGCStats: IGCStats = {
-            nodeCount: 9,
+            nodeCount: 11,
             unrefNodeCount: 0,
-            updatedNodeCount: 9,
+            updatedNodeCount: 11,
             dataStoreCount: 3,
             unrefDataStoreCount: 0,
             updatedDataStoreCount: 3,
-            attachmentBlobCount: 2,
+            attachmentBlobCount: 4,
             unrefAttachmentBlobCount: 0,
-            updatedAttachmentBlobCount: 2,
+            updatedAttachmentBlobCount: 4,
         };
 
         // Add both data store handles in default data store to mark them referenced.
@@ -124,15 +124,15 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         const dataStore2 = await requestFluidObject<ITestDataObject>(
             await containerRuntime.createDataStore(TestDataObjectType), "");
         const expectedGCStats: IGCStats = {
-            nodeCount: 9,
+            nodeCount: 11,
             unrefNodeCount: 0,
-            updatedNodeCount: 9,
+            updatedNodeCount: 11,
             dataStoreCount: 3,
             unrefDataStoreCount: 0,
             updatedDataStoreCount: 3,
-            attachmentBlobCount: 2,
+            attachmentBlobCount: 4,
             unrefAttachmentBlobCount: 0,
-            updatedAttachmentBlobCount: 2,
+            updatedAttachmentBlobCount: 4,
         };
 
         // Add both data store handles in default data store to mark them referenced.
@@ -161,12 +161,12 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 
         // dataStore1, its DDS and blob1 should be now unreferenced. Also, their reference state updated from referenced
         // to unreferenced.
-        expectedGCStats.unrefNodeCount = 3;
-        expectedGCStats.updatedNodeCount = 3;
+        expectedGCStats.unrefNodeCount = 4;
+        expectedGCStats.updatedNodeCount = 4;
         expectedGCStats.unrefDataStoreCount = 1;
         expectedGCStats.updatedDataStoreCount = 1;
-        expectedGCStats.unrefAttachmentBlobCount = 1;
-        expectedGCStats.updatedAttachmentBlobCount = 1;
+        expectedGCStats.unrefAttachmentBlobCount = 2;
+        expectedGCStats.updatedAttachmentBlobCount = 2;
 
         gcStats = await containerRuntime.collectGarbage({});
         assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
@@ -186,12 +186,12 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 
         // dataStore1, dataStore2, their DDS and blob2 should be now unreferenced. Also, dataStore2, its DDS and blob2's
         // reference state updated from referenced to unreferenced.
-        expectedGCStats.unrefNodeCount = 6;
-        expectedGCStats.updatedNodeCount = 3;
+        expectedGCStats.unrefNodeCount = 8;
+        expectedGCStats.updatedNodeCount = 4;
         expectedGCStats.unrefDataStoreCount = 2;
         expectedGCStats.updatedDataStoreCount = 1;
-        expectedGCStats.unrefAttachmentBlobCount = 2;
-        expectedGCStats.updatedAttachmentBlobCount = 1;
+        expectedGCStats.unrefAttachmentBlobCount = 4;
+        expectedGCStats.updatedAttachmentBlobCount = 2;
 
         gcStats = await containerRuntime.collectGarbage({});
         assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
@@ -212,15 +212,15 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         const dataStore2 = await requestFluidObject<ITestDataObject>(
             await containerRuntime.createDataStore(TestDataObjectType), "");
         const expectedGCStats: IGCStats = {
-            nodeCount: 9,
+            nodeCount: 11,
             unrefNodeCount: 0,
-            updatedNodeCount: 9,
+            updatedNodeCount: 11,
             dataStoreCount: 3,
             unrefDataStoreCount: 0,
             updatedDataStoreCount: 3,
-            attachmentBlobCount: 2,
+            attachmentBlobCount: 4,
             unrefAttachmentBlobCount: 0,
-            updatedAttachmentBlobCount: 2,
+            updatedAttachmentBlobCount: 4,
         };
 
         // Add both data store handles in default data store to mark them referenced.
@@ -260,7 +260,11 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         assert.strictEqual(summarizeResult.stats.unreferencedBlobSize, 0, "There shouldn't be unreferenced blobs");
     });
 
-    it("can correctly generate GC stats when reference state changes between GC runs", async () => {
+    itExpects("can correctly generate GC stats when reference state changes between GC runs",
+    [
+        { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:gcUnknownOutboundReferences" },
+    ],
+    async () => {
         const dataStore1 = await requestFluidObject<ITestDataObject>(
             await containerRuntime.createDataStore(TestDataObjectType), "");
         const dataStore2 = await requestFluidObject<ITestDataObject>(
@@ -311,6 +315,8 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         expectedGCStats.unrefNodeCount = 0;
         expectedGCStats.unrefDataStoreCount = 0;
 
+        // Note that this will result in a "gcUnknownOutboundReferences" error. Since the same client is creating and
+        // adding the handle, the handle is not decoded and it will not result in GC detecting the referenced.
         gcStats = await containerRuntime.collectGarbage({});
         assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
     });

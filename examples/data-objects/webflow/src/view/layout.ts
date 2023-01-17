@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-nodejs-modules
 import assert from "assert";
 import { EventEmitter } from "events";
 import { ISegment, ReferencePosition, MergeTreeMaintenanceType, LocalReferencePosition } from "@fluidframework/merge-tree";

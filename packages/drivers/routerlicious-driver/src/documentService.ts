@@ -40,7 +40,6 @@ export class DocumentService implements api.IDocumentService {
 
     private storageManager: GitManager | undefined;
     private noCacheStorageManager: GitManager | undefined;
-    private ordererRestWrapper: RestWrapper | undefined;
 
     public get resolvedUrl() {
         return this._resolvedUrl;
@@ -56,6 +55,8 @@ export class DocumentService implements api.IDocumentService {
         protected tokenProvider: ITokenProvider,
         protected tenantId: string,
         protected documentId: string,
+        protected ordererRestWrapper: RouterliciousOrdererRestWrapper,
+        private readonly documentStorageServicePolicies: api.IDocumentStorageServicePolicies,
         private readonly driverPolicies: IRouterliciousDriverPolicies,
         private readonly blobCache: ICache<ArrayBufferLike>,
         private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>,
@@ -116,18 +117,11 @@ export class DocumentService implements api.IDocumentService {
         // Initialize storageManager and noCacheStorageManager
         const storageManager = await getStorageManager();
         const noCacheStorageManager = await getStorageManager(true);
-        const documentStorageServicePolicies: api.IDocumentStorageServicePolicies = {
-            caching: this.driverPolicies.enablePrefetch
-                ? api.LoaderCachingPolicy.Prefetch
-                : api.LoaderCachingPolicy.NoCaching,
-            minBlobSize: this.driverPolicies.aggregateBlobsSmallerThanBytes,
-        };
-
         this.documentStorageService = new DocumentStorageService(
             this.documentId,
             storageManager,
             this.logger,
-            documentStorageServicePolicies,
+            this.documentStorageServicePolicies,
             this.driverPolicies,
             this.blobCache,
             this.snapshotTreeCache,
@@ -147,10 +141,9 @@ export class DocumentService implements api.IDocumentService {
 
         const getRestWrapper = async (): Promise<RestWrapper> => {
             const shouldUpdateDiscoveredSessionInfo = this.shouldUpdateDiscoveredSessionInfo();
+
             if (shouldUpdateDiscoveredSessionInfo) {
                 await this.refreshDiscovery();
-            }
-            if (!this.ordererRestWrapper || shouldUpdateDiscoveredSessionInfo) {
                 const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
                 this.ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
                     this.tenantId,
@@ -187,27 +180,32 @@ export class DocumentService implements api.IDocumentService {
      */
     public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
         const connect = async (refreshToken?: boolean) => {
+            let ordererToken = this.ordererRestWrapper.getToken();
             if (this.shouldUpdateDiscoveredSessionInfo()) {
                 await this.refreshDiscovery();
             }
 
-            const ordererToken = await PerformanceEvent.timedExecAsync(
-                this.logger,
-                {
-                    eventName: "GetDeltaStreamToken",
-                    docId: this.documentId,
-                    details: JSON.stringify({
-                        refreshToken,
-                    }),
-                },
-                async () => {
-                    return this.tokenProvider.fetchOrdererToken(
-                        this.tenantId,
-                        this.documentId,
-                        refreshToken,
-                    );
-                }
-            );
+            if (refreshToken) {
+                ordererToken = await PerformanceEvent.timedExecAsync(
+                    this.logger,
+                    {
+                        eventName: "GetDeltaStreamToken",
+                        docId: this.documentId,
+                        details: JSON.stringify({
+                            refreshToken,
+                        }),
+                    },
+                    async () => {
+                        const newOrdererToken = await this.tokenProvider.fetchOrdererToken(
+                            this.tenantId,
+                            this.documentId,
+                            refreshToken,
+                        );
+                        this.ordererRestWrapper.setToken(newOrdererToken);
+                        return newOrdererToken;
+                    }
+                );
+            }
 
             return PerformanceEvent.timedExecAsync(
                 this.logger,

@@ -5,8 +5,8 @@
 import { strict as assert } from "assert";
 import { singleTextCursor } from "../../feature-libraries";
 import { jsonString } from "../../domains";
-import { rootFieldKeySymbol } from "../../tree";
-import { JsonCompatible } from "../../util";
+import { brand, JsonCompatible } from "../../util";
+import { rootFieldKeySymbol } from "../../core";
 import { Sequencer, TestTree, TestTreeEdit } from "./testTree";
 
 describe("Editing", () => {
@@ -33,10 +33,7 @@ describe("Editing", () => {
             const tree1 = TestTree.fromJson(["x", "y"]);
             const tree2 = tree1.fork();
 
-            const delY = tree1.runTransaction((forest, editor) => {
-                const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-                field.delete(1, 1);
-            });
+            const delY = remove(tree1, 1, 1);
 
             const addW = insert(tree2, 0, "w");
 
@@ -47,8 +44,30 @@ describe("Editing", () => {
             expectJsonTree([tree1, tree2], ["w", "x"]);
         });
 
-        // TODO: investigate. It seems PR13079 may have broken this.
-        it.skip("does not interleave concurrent left to right inserts", () => {
+        it("inserts that concurrently target the same insertion point do not interleave their contents", () => {
+            const sequencer = new Sequencer();
+            const tree1 = TestTree.fromJson([]);
+            const tree2 = tree1.fork();
+            const tree3 = tree1.fork();
+            const tree4 = tree1.fork();
+
+            const abc = insert(tree1, 0, "a", "b", "c");
+            const rst = insert(tree2, 0, "r", "s", "t");
+            const xyz = insert(tree3, 0, "x", "y", "z");
+
+            const sequenced = sequencer.sequence([xyz, rst, abc]);
+            tree1.receive(sequenced);
+            tree2.receive(sequenced);
+            tree3.receive(sequenced);
+            tree4.receive(sequenced);
+
+            expectJsonTree(
+                [tree1, tree2, tree3, tree4],
+                ["a", "b", "c", "r", "s", "t", "x", "y", "z"],
+            );
+        });
+
+        it("merge-left tie-breaking does not interleave concurrent left to right inserts", () => {
             const sequencer = new Sequencer();
             const tree1 = TestTree.fromJson([]);
             const tree2 = tree1.fork();
@@ -80,8 +99,11 @@ describe("Editing", () => {
         });
 
         // The current implementation orders the letters from inserted last to inserted first.
-        // TODO: address this scenario.
-        it.skip("does not interleave concurrent right to left inserts", () => {
+        // This is due to the hard-coded merge-left policy.
+        // Having merge-right tie-breaking does preserve groupings but in a first-to-last order
+        // which is the desired outcome for RTL text.
+        // TODO: update and activate this test once merge-right is supported.
+        it.skip("merge-right tie-breaking does not interleave concurrent right to left inserts", () => {
             const sequencer = new Sequencer();
             const tree1 = TestTree.fromJson([]);
             const tree2 = tree1.fork();
@@ -111,6 +133,58 @@ describe("Editing", () => {
                 ["a", "b", "c", "r", "s", "t", "x", "y", "z"],
             );
         });
+
+        // TODO: Enable once local branch repair data is supported
+        it.skip("revert-only revive", () => {
+            const sequencer = new Sequencer();
+            const tree1 = TestTree.fromJson(["a", "b", "c"]);
+            const tree2 = tree1.fork();
+
+            const delB = remove(tree1, 1, 1);
+
+            const delABC = remove(tree2, 0, 3);
+
+            const seqDelB = sequencer.sequence(delB);
+            const seqDelABC = sequencer.sequence(delABC);
+
+            const revABC = tree2.runTransaction((forest, editor) => {
+                const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+                field.revive(0, 3, brand(seqDelABC.seqNumber), 1);
+            });
+
+            const seqRevABC = sequencer.sequence(revABC);
+            const sequenced = [seqDelB, seqDelABC, seqRevABC];
+            tree1.receive(sequenced);
+            tree2.receive(sequenced);
+
+            expectJsonTree([tree1, tree2], ["a", "c"]);
+        });
+
+        // TODO: Enable once local branch repair data is supported
+        it.skip("intentional revive", () => {
+            const sequencer = new Sequencer();
+            const tree1 = TestTree.fromJson(["a", "b", "c"]);
+            const tree2 = tree1.fork();
+
+            const delB = remove(tree1, 1, 1);
+
+            const delABC = remove(tree2, 0, 3);
+
+            const seqDelB = sequencer.sequence(delB);
+            const seqDelABC = sequencer.sequence(delABC);
+
+            const revABC = tree2.runTransaction((forest, editor) => {
+                const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+                field.revive(0, 3, brand(seqDelABC.seqNumber), 1, true);
+            });
+
+            const seqRevABC = sequencer.sequence(revABC);
+            const sequenced = [seqDelB, seqDelABC, seqRevABC];
+            tree1.receive(sequenced);
+            tree2.receive(sequenced);
+
+            expectJsonTree([tree1, tree2], ["a", "b", "c"]);
+        });
     });
 });
 
@@ -126,6 +200,13 @@ function insert(tree: TestTree, index: number, ...values: string[]): TestTreeEdi
         const field = editor.sequenceField(undefined, rootFieldKeySymbol);
         const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
         field.insert(index, nodes);
+    });
+}
+
+function remove(tree: TestTree, index: number, count: number): TestTreeEdit {
+    return tree.runTransaction((forest, editor) => {
+        const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+        field.delete(index, count);
     });
 }
 

@@ -4,8 +4,9 @@
  */
 
  module.exports = {
-  "extends": [
-      "@fluidframework/eslint-config-fluid"
+  extends: [
+      require.resolve("@fluidframework/eslint-config-fluid/minimal"),
+      "prettier"
   ],
   "rules": {
     "@typescript-eslint/consistent-type-assertions": "off",

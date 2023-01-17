@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable max-len */
-
 import { strict as assert } from "assert";
 import { TelemetryNullLogger, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
@@ -16,7 +14,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IConnectionDetails, IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/common-definitions";
 import { ConnectionState } from "../connectionState";
 import {
     IConnectionStateHandlerInputs,
@@ -29,7 +27,7 @@ import { ProtocolHandler } from "../protocol";
 class MockDeltaManagerForCatchingUp
     extends TypedEventEmitter<IDeltaManagerEvents>
     implements Pick<IDeltaManager<any, any>, "lastSequenceNumber" | "lastKnownSeqNumber">
-{ // eslint-disable-line @typescript-eslint/brace-style
+{
     lastSequenceNumber: number = 5;
     lastKnownSeqNumber: number = 10;
     catchUp(seq = 10) {
@@ -137,7 +135,9 @@ describe("ConnectionStateHandler Tests", () => {
         handlerInputs = {
             maxClientLeaveWaitTime: expectedTimeout,
             shouldClientJoinWrite: () => shouldClientJoinWrite,
-            logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => { throw new Error(`logConnectionIssue: ${eventName} ${JSON.stringify(details)}`); },
+            logConnectionIssue: (eventName: string, category: TelemetryEventCategory, details?: ITelemetryProperties) => {
+                throw new Error(`logConnectionIssue: ${eventName} ${JSON.stringify(details)}`);
+            },
             connectionStateChanged: () => { },
             logger: new TelemetryNullLogger(),
         };

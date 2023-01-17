@@ -4,9 +4,16 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { makeAnonChange, RevisionTag } from "../../../core";
-import { Delta, FieldKey, ITreeCursorSynchronous } from "../../../tree";
 import {
+    makeAnonChange,
+    RevisionTag,
+    Delta,
+    FieldKey,
+    ITreeCursorSynchronous,
+    TreeSchemaIdentifier,
+} from "../../../core";
+import {
+    ChangesetLocalId,
     FieldChange,
     FieldKinds,
     NodeChangeset,
@@ -14,19 +21,21 @@ import {
     SequenceField as SF,
     singleTextCursor,
 } from "../../../feature-libraries";
-import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand, brandOpaque, makeArray } from "../../../util";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze, noRepair } from "../../utils";
 import { ChangeMaker as Change, TestChangeset } from "./testEdits";
+import { composeAnonChanges, idAllocatorFromMaxId } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const nodeX = { type, value: 0 };
 const content = [nodeX];
 const contentCursor: ITreeCursorSynchronous[] = [singleTextCursor(nodeX)];
-const opId = 42;
-const tag: RevisionTag = brand(42);
-const moveId = brandOpaque<Delta.MoveId>(opId);
+const moveId = brand<ChangesetLocalId>(4242);
+const tag: RevisionTag = brand(41);
+const tag2: RevisionTag = brand(42);
+const tag3: RevisionTag = brand(43);
+const deltaMoveId = brandOpaque<Delta.MoveId>(moveId);
 const fooField = brand<FieldKey>("foo");
 
 const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("DummyRevivedNode");
@@ -49,6 +58,9 @@ function toDeltaShallow(change: TestChangeset): Delta.MarkList {
     );
 }
 
+const childChange1 = TestChange.mint([0], 1);
+const childChange1Delta = TestChange.toDelta(childChange1);
+
 describe("SequenceField - toDelta", () => {
     it("empty mark list", () => {
         const actual = toDeltaShallow([]);
@@ -56,25 +68,8 @@ describe("SequenceField - toDelta", () => {
     });
 
     it("child change", () => {
-        const actual = toDelta(Change.modify(0, TestChange.mint([0], 1)));
-        const expected: Delta.MarkList = [
-            {
-                type: Delta.MarkType.Modify,
-                setValue: "1",
-            },
-        ];
-        assert.deepEqual(actual, expected);
-    });
-
-    it("muted child change", () => {
-        const actual = toDelta([
-            {
-                type: "Modify",
-                tomb: tag,
-                changes: TestChange.mint([0], 1),
-            },
-        ]);
-        const expected: Delta.MarkList = [];
+        const actual = toDelta(Change.modify(0, childChange1));
+        const expected: Delta.MarkList = [childChange1Delta];
         assert.deepEqual(actual, expected);
     });
 
@@ -96,7 +91,7 @@ describe("SequenceField - toDelta", () => {
     });
 
     it("revive => insert", () => {
-        const changeset = Change.revive(0, 1, 0, tag);
+        const changeset = Change.revive(0, 1, tag, 0);
         function reviver(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] {
             assert.equal(revision, tag);
             assert.equal(index, 0);
@@ -113,6 +108,26 @@ describe("SequenceField - toDelta", () => {
         assertMarkListEqual(actual, expected);
     });
 
+    it("conflicted revive => skip", () => {
+        const changeset: TestChangeset = composeAnonChanges([
+            Change.revive(0, 1, tag, 0, tag2),
+            Change.modify(1, childChange1),
+        ]);
+        const actual = toDelta(changeset);
+        const expected: Delta.MarkList = [1, childChange1Delta];
+        assertMarkListEqual(actual, expected);
+    });
+
+    it("blocked revive => nil", () => {
+        const changeset: TestChangeset = composeAnonChanges([
+            Change.revive(0, 1, tag, 0, tag2, undefined, tag3),
+            Change.modify(1, childChange1),
+        ]);
+        const actual = toDelta(changeset);
+        const expected: Delta.MarkList = [1, childChange1Delta];
+        assertMarkListEqual(actual, expected);
+    });
+
     it("revive and modify => insert", () => {
         const nestedChange: FieldChange = {
             fieldKind: FieldKinds.sequence.identifier,
@@ -122,11 +137,9 @@ describe("SequenceField - toDelta", () => {
             fieldChanges: new Map([[fooField, nestedChange]]),
         };
         const changeset: SF.Changeset = [
-            { type: "MRevive", detachedBy: tag, detachIndex: 0, changes: nodeChange },
+            { type: "Revive", count: 1, detachedBy: tag, detachIndex: 0, changes: nodeChange },
         ];
-        const fieldChanges = new Map([
-            [fooField, [{ type: Delta.MarkType.Insert, id: opId, content: [] }]],
-        ]);
+        const fieldChanges = new Map([[fooField, [{ type: Delta.MarkType.Insert, content: [] }]]]);
         const deltaFromChild = (child: NodeChangeset): Delta.Modify => {
             assert.deepEqual(child, nodeChange);
             return { type: Delta.MarkType.Modify, fields: fieldChanges };
@@ -163,24 +176,24 @@ describe("SequenceField - toDelta", () => {
             42,
             {
                 type: "MoveOut",
-                id: opId,
+                id: moveId,
                 count: 10,
             },
             8,
             {
                 type: "MoveIn",
-                id: opId,
+                id: moveId,
                 count: 10,
             },
         ];
         const moveOut: Delta.MoveOut = {
             type: Delta.MarkType.MoveOut,
-            moveId,
+            moveId: deltaMoveId,
             count: 10,
         };
         const moveIn: Delta.MoveIn = {
             type: Delta.MarkType.MoveIn,
-            moveId,
+            moveId: deltaMoveId,
         };
         const expected: Delta.MarkList = [42, moveOut, 8, moveIn];
         const actual = toDelta(changeset);
@@ -192,9 +205,10 @@ describe("SequenceField - toDelta", () => {
             [
                 makeAnonChange(Change.delete(0, 10)),
                 makeAnonChange(Change.insert(3, 1)),
-                makeAnonChange(Change.modify(5, TestChange.mint([0], 1))),
+                makeAnonChange(Change.modify(5, childChange1)),
             ],
             TestChange.compose,
+            idAllocatorFromMaxId(),
         );
         const del: Delta.Delete = {
             type: Delta.MarkType.Delete,
@@ -215,11 +229,9 @@ describe("SequenceField - toDelta", () => {
 
     it("insert and modify => insert", () => {
         const changeset = SF.sequenceFieldChangeRebaser.compose(
-            [
-                makeAnonChange(Change.insert(0, 1)),
-                makeAnonChange(Change.modify(0, TestChange.mint([0], 1))),
-            ],
+            [makeAnonChange(Change.insert(0, 1)), makeAnonChange(Change.modify(0, childChange1))],
             TestChange.compose,
+            idAllocatorFromMaxId(),
         );
         const mark: Delta.Insert = {
             type: Delta.MarkType.Insert,
@@ -237,11 +249,9 @@ describe("SequenceField - toDelta", () => {
 
     it("modify and delete => delete", () => {
         const changeset = SF.sequenceFieldChangeRebaser.compose(
-            [
-                makeAnonChange(Change.modify(0, TestChange.mint([0], 1))),
-                makeAnonChange(Change.delete(0, 1)),
-            ],
+            [makeAnonChange(Change.modify(0, childChange1)), makeAnonChange(Change.delete(0, 1))],
             TestChange.compose,
+            idAllocatorFromMaxId(),
         );
         const mark: Delta.Delete = {
             type: Delta.MarkType.Delete,
@@ -258,7 +268,7 @@ describe("SequenceField - toDelta", () => {
             fieldKind: FieldKinds.sequence.identifier,
             change: brand({
                 type: "MoveIn",
-                id: opId,
+                id: moveId,
                 count: 42,
             }),
         };
@@ -267,12 +277,14 @@ describe("SequenceField - toDelta", () => {
         };
         const changeset: SF.Changeset = [
             {
-                type: "MInsert",
-                content: content[0],
+                type: "Insert",
+                content,
                 changes: nodeChange,
             },
         ];
-        const nestedMoveDelta = new Map([[fooField, [{ type: Delta.MarkType.MoveIn, moveId }]]]);
+        const nestedMoveDelta = new Map([
+            [fooField, [{ type: Delta.MarkType.MoveIn, moveId: deltaMoveId }]],
+        ]);
         const mark: Delta.InsertAndModify = {
             type: Delta.MarkType.InsertAndModify,
             content: contentCursor[0],

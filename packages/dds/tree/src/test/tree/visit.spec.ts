@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { jsonString } from "../../domains";
 import { singleTextCursor } from "../../feature-libraries";
-import { FieldKey, Delta, DeltaVisitor, visitDelta } from "../../tree";
+import { FieldKey, Delta, DeltaVisitor, visitDelta } from "../../core";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
 

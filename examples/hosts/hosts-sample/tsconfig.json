@@ -1,13 +1,9 @@
 {
     "extends": "@fluidframework/build-common/ts-common-config.json",
-    "exclude": [
-        "dist",
-        "node_modules"
-    ],
     "compilerOptions": {
         "target": "es6",
         "module": "esnext",
-        "outDir": "dist",
+        "outDir": "lib",
         "jsx": "react",
         "types": ["react"]
     },

@@ -13,9 +13,10 @@ import {
     KeyName,
     MongoManager,
     ISecretManager,
+    ICache,
 } from "@fluidframework/server-services-core";
-import { NetworkError } from "@fluidframework/server-services-client";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
+import { BaseTelemetryProperties, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
 import * as winston from "winston";
@@ -59,41 +60,86 @@ export class TenantManager {
         private readonly defaultHistorianUrl: string,
         private readonly defaultInternalHistorianUrl: string,
         private readonly secretManager: ISecretManager,
+        private readonly cache?: ICache
     ) {
     }
 
     /**
      * Validates a tenant's API token
      */
-    public async validateToken(tenantId: string, token: string, includeDisabledTenant = false): Promise<void> {
+     public async validateToken(tenantId: string, token: string, includeDisabledTenant = false, bypassCache = false): Promise<void> {
         const tenantKeys = await this.getTenantKeys(tenantId, includeDisabledTenant);
+        const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId, includeDisabledTenant };
 
-        return jwt.verify(token, tenantKeys.key1, (error1) => {
-            if (!error1) {
-                return;
+        // Try validating with Key 1
+        try {
+            await this.validateTokenWithKey(tenantKeys.key1, KeyName.key1, token);
+            return;
+        } catch (error) {
+            if (isNetworkError(error)) {
+                if (error.code === 403 && !tenantKeys.key2){
+                    // Delete key from cache when there is a 403 error and no key2 to validate
+                    Lumberjack.info(`Error with tenant key 1 token verification while key 2 is not present. Deleting key from cache.`, lumberProperties);
+                    await this.deleteKeyFromCache(tenantId).catch((err) => {
+                        Lumberjack.error(`Error deleting keys from the cache.`, lumberProperties, err);
+                    });
+                    throw error;
+                }
+                if (error.code === 401 || !tenantKeys.key2) {
+                    // Trying key2 with an expired token won't help.
+                    // Also, if there is no key2, don't bother validating.
+                    throw error;
+                }
             }
-
-            // if the tenant doesn't have key2, it will be empty string
-            // we should fail token generated with empty string as key
-            if (!tenantKeys.key2) {
-                throw error1 instanceof jwt.TokenExpiredError
-                    ? new NetworkError(401, "Token expired validated with key1.")
-                    : new NetworkError(403, "Invalid token validated with key1.");
+        }
+        
+        // If Key 1 validation fails, try with Key 2
+        try {
+            await this.validateTokenWithKey(tenantKeys.key2, KeyName.key2, token);
+        } catch (error) {
+            if (isNetworkError(error)) {
+                if (error.code === 403) {
+                    // Delete key from cache on 403
+                    Lumberjack.info(`Error with key 2 token validation. Deleting key from cache.`, lumberProperties);
+                    await this.deleteKeyFromCache(tenantId).catch((err) => {
+                        Lumberjack.error(`Error deleting keys from the cache.`, lumberProperties, err);
+                    });
+                    if (bypassCache === false) {
+                        // Assume we used a cached key, and try again by bypassing cache.
+                        return this.validateToken(
+                            tenantId,
+                            token,
+                            includeDisabledTenant,
+                            true // bypasses cache on retry
+                        );
+                    }
+                }
+                throw error;
             }
+        }
+    }
 
-            jwt.verify(token, tenantKeys.key2, (error2) => {
-                if (!error2) {
+    /**
+     * Validates a given token with the tenantKey
+     */
+    private async validateTokenWithKey (key: string, keyName: string, token: string): Promise<boolean> {
+        return new Promise<boolean>((resolve, reject) => {
+            jwt.verify(token, key, (error) => {
+                // token verified, return
+                if (!error) {
+                    resolve(true);
                     return;
                 }
-
                 // When `exp` claim exists in token claims, jsonwebtoken verifies token expiration.
-                throw (error1 instanceof jwt.TokenExpiredError
-                    || error2 instanceof jwt.TokenExpiredError)
-                    ? new NetworkError(401, "Token expired validated with both key1 and key2.")
-                    : new NetworkError(403, "Invalid token validated with both key1 and key2.");
+
+                if(error instanceof jwt.TokenExpiredError) {
+                    reject(new NetworkError(401, `Token expired validated with ${keyName}.`));
+                } else {
+                    reject(new NetworkError(403, `Invalid token validated with ${keyName}.`));
+                }
             });
         });
-    }
+    };
 
     /**
      * Retrieves the details for the given tenant
@@ -235,7 +281,24 @@ export class TenantManager {
     /**
      * Retrieves the secret for the given tenant
      */
-    public async getTenantKeys(tenantId: string, includeDisabledTenant = false): Promise<ITenantKeys> {
+    public async getTenantKeys(tenantId: string, includeDisabledTenant = false, disableCache=false): Promise<ITenantKeys> {
+        const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId, includeDisabledTenant, disableCache };
+        const fetchTenantKeyMetric = Lumberjack.newLumberMetric(LumberEventName.RiddlerFetchTenantKey);
+        let uncaughtException;
+        let retrievedFromCache = false;
+
+        try {
+            if(!disableCache) {
+                // Read from cache first
+                const cachedKey = await this.getKeyFromCache(tenantId);
+
+                if (cachedKey) {
+                    retrievedFromCache = true;
+                    return this.decryptCachedKeys(cachedKey);
+                }
+            }
+
+        // Read from database if keys aren't found in the cache
         const tenantDocument = await this.getTenantDocument(tenantId, includeDisabledTenant);
 
         if (!tenantDocument) {
@@ -249,34 +312,53 @@ export class TenantManager {
 
         const encryptedTenantKey1 = tenantDocument.key;
         const tenantKey1 = this.secretManager.decryptSecret(encryptedTenantKey1);
+
         if (tenantKey1 == null) {
             winston.error("Tenant key1 decryption failed.");
-            Lumberjack.error("Tenant key1 decryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
+            Lumberjack.error("Tenant key1 decryption failed.", lumberProperties);
             throw new NetworkError(500, "Tenant key1 decryption failed.");
         }
 
         const encryptedTenantKey2 = tenantDocument.secondaryKey;
-        if (!encryptedTenantKey2) {
-            winston.info("Tenant key2 doesn't exist.");
-            Lumberjack.info("Tenant key2 doesn't exist.", { [BaseTelemetryProperties.tenantId]: tenantId });
-            return {
-                key1: tenantKey1,
-                key2: "",
-            };
-        }
+        const tenantKey2 = encryptedTenantKey2 ? this.secretManager.decryptSecret(encryptedTenantKey2) : "";
 
-        const tenantKey2 = this.secretManager.decryptSecret(encryptedTenantKey2);
+        // Tenant key 2 decryption returns null
         if (tenantKey2 == null) {
-            winston.error("Tenant key2 decryption failed.");
-            Lumberjack.error("Tenant key2 decryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
+            winston.error("Tenant key2 decryption failed");
+            Lumberjack.error("Tenant key2 decryption failed.", lumberProperties);
             throw new NetworkError(500, "Tenant key2 decryption failed.");
         }
+
+        // If it looks like there is key2, but decrypted key == ""
+        if (!encryptedTenantKey2 || tenantKey2 === "") {
+            winston.info("Tenant key2 doesn't exist.");
+            Lumberjack.info("Tenant key2 doesn't exist.", lumberProperties);
+        }
+
+        const cacheKeys = {
+            key1: encryptedTenantKey1,
+            key2: encryptedTenantKey2,
+        };
+
+        const setKeyInCacheSucceeded = await this.setKeyInCache(tenantId, cacheKeys);
+        fetchTenantKeyMetric.setProperty("settingKeyInCacheSucceeded", setKeyInCacheSucceeded);
 
         return {
             key1: tenantKey1,
             key2: tenantKey2,
         };
+    } catch (error) {
+        uncaughtException = error;
+        throw error;
+    } finally {
+        fetchTenantKeyMetric.setProperty("retrievedFromCache", retrievedFromCache);
+        if (!uncaughtException) {
+            fetchTenantKeyMetric.success(`Successfully retrieved tenant keys.`);
+        } else {
+            fetchTenantKeyMetric.error(`Error trying to retrieve tenant keys.`, uncaughtException);
+        }
     }
+}
 
     /**
      * Generates a new key for a tenant
@@ -295,6 +377,10 @@ export class TenantManager {
             Lumberjack.error("Tenant key encryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
             throw new NetworkError(500, "Tenant key encryption failed.");
         }
+
+        // Delete old key from the cache
+        Lumberjack.info(`Deleting old key from cache`, { [BaseTelemetryProperties.tenantId]: tenantId });
+        await this.deleteKeyFromCache(tenantId);
 
         const tenantKeys = await this.getUpdatedTenantKeys(
             tenantDocument.key,
@@ -323,14 +409,22 @@ export class TenantManager {
         newTenantKey: string,
         tenantId: string,
     ): Promise<ITenantKeys> {
+        const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId };
         // if key2 is to be refreshed
         if (keyName === KeyName.key2) {
             const decryptedTenantKey1 = this.secretManager.decryptSecret(key1);
             if (decryptedTenantKey1 == null) {
                 winston.error("Tenant key1 decryption failed.");
-                Lumberjack.error("Tenant key1 decryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
+                Lumberjack.error("Tenant key1 decryption failed.", lumberProperties);
                 throw new NetworkError(500, "Tenant key1 decryption failed.");
             }
+
+            const cacheKeys = {
+                key1,
+                key2: this.secretManager.encryptSecret(newTenantKey)
+            };
+
+            await this.setKeyInCache(tenantId, cacheKeys);
             return {
                 key1: decryptedTenantKey1,
                 key2: newTenantKey,
@@ -342,6 +436,15 @@ export class TenantManager {
         if (!key2) {
             winston.info("Tenant key2 doesn't exist.");
             Lumberjack.info("Tenant key2 doesn't exist.", { [BaseTelemetryProperties.tenantId]: tenantId });
+
+            const cacheKey1 = {
+                key1: this.secretManager.encryptSecret(newTenantKey),
+                key2: "",
+            };
+
+            await this.setKeyInCache(tenantId, cacheKey1);
+            Lumberjack.info(`Added new key to cache.`, lumberProperties);
+
             return {
                 key1: newTenantKey,
                 key2: "",
@@ -444,6 +547,8 @@ export class TenantManager {
         } else {
             await collection.deleteOne({ _id: tenantId });
         }
+        // invalidate cache
+        await this.deleteKeyFromCache(tenantId);
     }
 
     private encryptAccessInfo(accessInfo: any): string {
@@ -455,4 +560,36 @@ export class TenantManager {
         const accessInfo = JSON.parse(this.secretManager.decryptSecret(encryptedAccessInfo));
         return accessInfo;
     }
+
+    private decryptCachedKeys(cachedKey: string) {
+        const keys = JSON.parse(cachedKey);
+        return keys.key2 === "" ? {
+                key1: this.secretManager.decryptSecret(keys.key1),
+                key2: "",
+            } : {
+                key1: this.secretManager.decryptSecret(keys.key1),
+                key2: this.secretManager.decryptSecret(keys.key2),
+            };
+    }
+
+    private async getKeyFromCache(tenantId: string): Promise<string> {
+        return this.cache?.get(`tenantKeys:${tenantId}`);
+    }
+
+    private async deleteKeyFromCache(tenantId: string): Promise<boolean> {
+        return this.cache?.delete(`tenantKeys:${tenantId}`);
+    }
+
+    private async setKeyInCache(tenantId: string, value: ITenantKeys): Promise<boolean> {
+        const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId };
+        try {
+            await this.cache?.set(`tenantKeys:${tenantId}`, JSON.stringify(value));
+            Lumberjack.info(`Added tenant keys to cache.`, lumberProperties);
+            return true;
+        } catch (error) {
+            Lumberjack.error(`Setting tenant key in the cache failed`, lumberProperties, error);
+            return false;
+        }
+    }
+
 }

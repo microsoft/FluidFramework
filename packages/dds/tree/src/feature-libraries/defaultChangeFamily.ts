@@ -16,6 +16,7 @@ import {
     Value,
     ITreeCursor,
     ReadonlyRepairDataStore,
+    RevisionTag,
 } from "../core";
 import { brand } from "../util";
 import {
@@ -23,11 +24,11 @@ import {
     ModularChangeFamily,
     ModularEditBuilder,
     FieldChangeset,
-    FieldChangeMap,
+    ModularChangeset,
 } from "./modular-schema";
 import { forbidden, optional, sequence, value as valueFieldKind } from "./defaultFieldKinds";
 
-export type DefaultChangeset = FieldChangeMap;
+export type DefaultChangeset = ModularChangeset;
 
 const defaultFieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
     [valueFieldKind, optional, sequence, forbidden].map((f) => [f.identifier, f]),
@@ -162,6 +163,36 @@ export class DefaultEditBuilder
                 );
                 this.modularBuilder.submitChange(parent, field, sequence.identifier, change);
             },
+            move: (sourceIndex: number, count: number, destIndex: number): void => {
+                const change: FieldChangeset = brand(
+                    sequence.changeHandler.editor.move(sourceIndex, count, destIndex),
+                );
+                this.modularBuilder.submitChange(
+                    parent,
+                    field,
+                    sequence.identifier,
+                    change,
+                    brand(0),
+                );
+            },
+            revive: (
+                index: number,
+                count: number,
+                detachedBy: RevisionTag,
+                detachIndex: number,
+                isIntention?: true,
+            ): void => {
+                const change: FieldChangeset = brand(
+                    sequence.changeHandler.editor.revive(
+                        index,
+                        count,
+                        detachedBy,
+                        detachIndex,
+                        isIntention,
+                    ),
+                );
+                this.modularBuilder.submitChange(parent, field, sequence.identifier, change);
+            },
         };
     }
 
@@ -204,4 +235,29 @@ export interface SequenceFieldEditBuilder {
      * @param count - The number of elements to delete.
      */
     delete(index: number, count: number): void;
+
+    /**
+     * Issues a change which moves `count` elements starting at `sourceIndex` to `destIndex`.
+     * @param sourceIndex - the index of the first moved element.
+     * @param count - the number of elements to move.
+     * @param destIndex - the index the elements are moved to, interpreted after removing the moving elements.
+     */
+    move(sourceIndex: number, count: number, destIndex: number): void;
+
+    /**
+     * Revives a contiguous range of deleted nodes.
+     * @param index - The index at which to revive the node (this will become the index of the first revived node).
+     * @param count - The number of nodes to revive.
+     * @param detachedBy - The revision of the edit that deleted the nodes.
+     * @param detachIndex - The index of the first node to revive in the input context of edit `detachedBy`.
+     * @param isIntention - If true, the node will be revived even if edit `detachedBy` did not ultimately
+     * delete them. If false, only those nodes that were deleted by `detachedBy` (and not revived) will be revived.
+     */
+    revive(
+        index: number,
+        count: number,
+        detachedBy: RevisionTag,
+        detachIndex: number,
+        isIntention?: true,
+    ): void;
 }

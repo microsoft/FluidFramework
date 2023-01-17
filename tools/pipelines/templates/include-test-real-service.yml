@@ -44,6 +44,14 @@ parameters:
   type: boolean
   default: false
 
+# Id of the pipeline run that contains the artifacts to download.
+# Needed to workaround a bug in the DownloadPipelineArtifact task that might cause artifacts to be downloaded from the
+# incorrect pipeline run (see https://github.com/microsoft/azure-pipelines-tasks/issues/13518).
+# Make sure that the value provided corresponds to a run of the 'Build - azure' pipeline if downloadAzureTestArtifacts=true
+# or a run of the 'Build - client packages' otherwise.
+- name: artifactBuildId
+  type: string
+
 # Name of the Secure File that contains the self-signed cert for the R11s deployment.
 # If not blank, the pipeline will try to install it to the local cert store.
 - name: r11sSelfSignedCertSecureFile
@@ -57,6 +65,12 @@ parameters:
 - name: loggerPackage
   type: string
   default: '@ff-internal/aria-logger'
+
+# Custom steps specified by the "caller" of this template, for any additional things that need to be done
+# after the steps in this template complete.
+- name: additionalSteps
+  type: stepList
+  default: []
 
 jobs:
   - ${{ each variant in parameters.splitTestVariants }}:
@@ -160,13 +174,19 @@ jobs:
           source: specific
           project: internal
           pipeline: ${{ variables.artifactPipeline }}
-          preferTriggeringPipeline: true
-          allowPartiallySucceededBuilds: true
-          runVersion: latestFromBranch
-          runBranch: $(Build.SourceBranch)
+          buildVersionToDownload: specific
+          buildId: ${{ parameters.artifactBuildId }}
           artifact: pack
           patterns: "**/${{ variables.testPackageFilePattern }}"
           path: $(Pipeline.Workspace)/client/pack
+          # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
+          # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
+          # It seems there's a bug and preferTriggeringPipeline is not respected.
+          # We force the behavior by explicitly specifying:
+          # - buildVersionToDownload: specific
+          # - buildId: <the id of the triggering build>
+          # preferTriggeringPipeline: true
+
 
       - task: Bash@3
         displayName: Create test directory
@@ -238,12 +258,17 @@ jobs:
             source: specific
             project: internal
             pipeline: ${{ variables.artifactPipeline }}
-            preferTriggeringPipeline: true
-            allowPartiallySucceededBuilds: true
-            runVersion: latestFromBranch
-            runBranch: $(Build.SourceBranch)
+            buildVersionToDownload: specific
+            buildId: ${{ parameters.artifactBuildId }}
             artifact: test-files
             path: $(Pipeline.Workspace)/test-files
+            # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
+            # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
+            # It seems there's a bug and preferTriggeringPipeline is not respected.
+            # We force the behavior by explicitly specifying:
+            # - buildVersionToDownload: specific
+            # - buildId: <the id of the triggering build>
+            # preferTriggeringPipeline: true
 
         # Unpack test files
         - task: Bash@3
@@ -290,6 +315,27 @@ jobs:
           workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
           customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
 
+      # filter report
+      - task: Bash@3
+        displayName: Filter skipped test from report
+        inputs:
+          workingDir: ${{ variables.testPackageDir }}/nyc
+          targetType: 'inline'
+          script: |
+            if [[ -d ${{ variables.testPackageDir }}/nyc ]]; then
+              echo "directory '${{ variables.testPackageDir }}/nyc' exists."
+              cd ${{ variables.testPackageDir }}/nyc
+              if ! [[ -z "$(ls -A .)" ]]; then
+                curdirfiles=`ls`
+                echo "report file(s) ${curdirfiles} found. Filtering skipped tests..."
+                for i in `ls`; do sed -i '/<skipped/d' $i; done
+              else
+                echo "No report files found in '${{ variables.testPackageDir }}/nyc'"
+              fi
+            else
+              echo "Directory '${{ variables.testPackageDir }}/nyc' not found"
+            fi
+
       # Upload results
       - task: PublishTestResults@2
         displayName: Publish Test Results
@@ -299,3 +345,5 @@ jobs:
           searchFolder: ${{ variables.testPackageDir }}/nyc
           mergeTestResults: false
         condition: succeededOrFailed()
+
+      - ${{ parameters.additionalSteps }}
