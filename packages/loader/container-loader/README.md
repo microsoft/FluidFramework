@@ -72,7 +72,7 @@ Container can be closed directly by host by calling `Container.close()` and/or `
 
 #### `Container.close()`
 
-Once closed, container terminates connection to ordering service, and any local changes (former or future) do not propagate to storage. This method is to be used when the container **IS** still expected to be used and the container needs to be switched to a "safe" state for viewing.
+Once closed, container terminates connection to ordering service, and any local changes (former or future) do not propagate to storage. This method is to be used when the container **IS** still expected to be used and the container needs to be switched to a "safe" state for viewing. For example, allowing a user to copy the content out of a container.
 
 The "closed" state effectively means the container is disconnected forever and cannot be reconnected.
 

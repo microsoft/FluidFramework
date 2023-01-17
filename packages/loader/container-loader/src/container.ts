@@ -387,7 +387,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private readonly mc: MonitoringContext;
 
-    private _lifecycleState: "loading" | "loaded" | "closing" | "closed" = "loading";
+    private _lifecycleState: "loading" | "loaded" | "closing" | "closed" | "disposed" = "loading";
 
     private setLoaded() {
         // It's conceivable the container could be closed when this is called
@@ -400,7 +400,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public get closed(): boolean {
-        return (this._lifecycleState === "closing" || this._lifecycleState === "closed");
+        return (this._lifecycleState === "closing" || this._lifecycleState === "closed" || this._lifecycleState === "disposed");
     }
 
     private _attachState = AttachState.Detached;
@@ -754,7 +754,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public dispose?(error?: ICriticalContainerError) {
-        this._deltaManager.close(error, true /* emitDisposed */);
+        this._deltaManager.close(error, true /* doDispose */);
         this.verifyClosed();
     }
 
@@ -771,7 +771,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.connectionState === ConnectionState.Disconnected,
             0x0cf /* "disconnect event was not raised!" */);
 
-        assert(this._lifecycleState === "closed", 0x314 /* Container properly closed */);
+        assert(this._lifecycleState === "closed" || this._lifecycleState === "disposed", 0x314 /* Container properly closed */);
     }
 
     private closeCore(error?: ICriticalContainerError) {
@@ -849,7 +849,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 document.removeEventListener("visibilitychange", this.visibilityEventHandler);
             }
         } finally {
-            this._lifecycleState = "closed";
+            this._lifecycleState = "disposed";
         }
     }
 
@@ -873,6 +873,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.mc.logger.sendTelemetryEvent({ eventName: "CloseAndGetPendingLocalState" });
 
+        // Only close here as method name suggests
         this.close();
 
         return JSON.stringify(pendingState);
@@ -1003,6 +1004,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     newError.addTelemetryProperties({ resolvedUrl: resolvedUrl.url });
                 }
                 this.close(newError);
+                this.dispose?.(newError);
                 throw newError;
             }
         },
@@ -1732,11 +1734,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     metadata);
             case MessageType.Summarize:
                 return this.submitSummaryMessage(contents as unknown as ISummaryContent);
-            default:
-                this.close(new GenericError("invalidContainerSubmitOpType",
+            default: {
+                const newError = new GenericError("invalidContainerSubmitOpType",
                     undefined /* error */,
-                    { messageType: type }));
+                    { messageType: type });
+                this.close(newError);
+                this.dispose?.(newError);
                 return -1;
+            }
         }
     }
 

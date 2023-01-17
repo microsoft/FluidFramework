@@ -585,17 +585,23 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     /**
      * Closes the connection and clears inbound & outbound queues.
+     *
+     * @param doDispose - should the DeltaManager treat this close call as a dispose?
+     * Differences between close and dispose:
+     * - dispose will emit "disposed" event while close emits "closed"
+     * - dispose will remove all listeners
+     * - dispose can be called after closure, but not vis versa
      */
-     public close(error?: ICriticalContainerError, emitDisposed?: boolean): void {
+     public close(error?: ICriticalContainerError, doDispose?: boolean): void {
         if (this._closed) {
-            if (emitDisposed === true) {
+            if (doDispose === true) {
                 this.disposeInternal(error);
             }
             return;
         }
         this._closed = true;
 
-        this.connectionManager.dispose(error, emitDisposed !== true);
+        this.connectionManager.dispose(error, doDispose !== true);
 
         this.closeAbortController.abort();
 
@@ -610,7 +616,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         // Drop pending messages - this will ensure catchUp() does not go into infinite loop
         this.pending = [];
 
-        if (emitDisposed === true) {
+        if (doDispose === true) {
             this.disposeInternal(error);
         } else {
             this.emit("closed", error);
