@@ -92,7 +92,7 @@ export class TenantManager {
                 }
             }
         }
-        
+
         // If Key 1 validation fails, try with Key 2
         try {
             await this.validateTokenWithKey(tenantKeys.key2, KeyName.key2, token);
@@ -283,6 +283,8 @@ export class TenantManager {
      */
     public async getTenantKeys(tenantId: string, includeDisabledTenant = false, disableCache=false): Promise<ITenantKeys> {
         const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId, includeDisabledTenant, disableCache };
+        const isCacheEnabled = this.cache ? true : false;
+        console.log(`CACHE ${isCacheEnabled}`);
         const fetchTenantKeyMetric = Lumberjack.newLumberMetric(LumberEventName.RiddlerFetchTenantKey);
         let uncaughtException;
         let retrievedFromCache = false;
@@ -340,7 +342,7 @@ export class TenantManager {
             key2: encryptedTenantKey2,
         };
 
-        const setKeyInCacheSucceeded = await this.setKeyInCache(tenantId, cacheKeys);
+        const setKeyInCacheSucceeded = isCacheEnabled ? await this.setKeyInCache(tenantId, cacheKeys) : false;
         fetchTenantKeyMetric.setProperty("settingKeyInCacheSucceeded", setKeyInCacheSucceeded);
 
         return {
