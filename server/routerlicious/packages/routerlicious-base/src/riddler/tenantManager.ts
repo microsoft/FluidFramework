@@ -284,7 +284,6 @@ export class TenantManager {
     public async getTenantKeys(tenantId: string, includeDisabledTenant = false, disableCache=false): Promise<ITenantKeys> {
         const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId, includeDisabledTenant, disableCache };
         const isCacheEnabled = this.cache ? true : false;
-        console.log(`CACHE ${isCacheEnabled}`);
         const fetchTenantKeyMetric = Lumberjack.newLumberMetric(LumberEventName.RiddlerFetchTenantKey);
         let uncaughtException;
         let retrievedFromCache = false;
