@@ -4,7 +4,8 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
+import { ISequencedDocumentMessage, MessageType, IUser } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
@@ -43,13 +44,38 @@ interface ICellValue {
     value: unknown;
 }
 
-// TODO: this should reference a shared interface in @fluidframework/runtime-definitions so it's usable from
-// here and @fluidframework/attributor
-interface AttributionInfo {
+/**
+ * {@inheritDoc ICellOptions}
+ */
+export interface ICellOptions {
+    /**
+     * Options related to attribution
+     */
+    attribution?: ICellAttributionOptions;
+}
+
+/**
+ * {@inheritDoc ICellAttributionOptions}
+ */
+export interface ICellAttributionOptions {
+    /**
+     * This enables the cell to store the attribution information which can be accessed with the runtime
+     * (i.e. who creeated the content and when it was created)
+     *
+     * default: false
+     */
+    track?: boolean;
+}
+
+/**
+ * Attribution information associated with a change.
+ * @alpha
+ */
+export interface AttributionInfo {
     /**
      * The user that performed the change.
      */
-    user: string;
+    user: IUser;
     /**
      * When the change happened.
      */
@@ -57,26 +83,26 @@ interface AttributionInfo {
 }
 
 /**
- * {@inheritDoc CellAttributor}
+ * Can be indexed into the ContainerRuntime in order to retrieve {@link AttributionInfo}.
+ * @alpha
  */
-export class CellAttributor {
+export interface AttributionKey {
+    /**
+     * The type of attribution this key corresponds to.
+     *
+     * Keys currently all represent op-based attribution, so have the form `{ type: "op", key: sequenceNumber }`.
+     * Thus, they can be used with an `OpStreamAttributor` to recover timestamp/user information.
+     *
+     * @remarks - If we want to support different types of attribution, a reasonable extensibility point is to make
+     * AttributionKey a discriminated union on the 'type' field. This would empower
+     * consumers with the ability to implement different attribution policies.
+    */
+    type: "op";
 
-    private info: AttributionInfo;
-
-    public constructor(initialInfo?: AttributionInfo) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        this.info = initialInfo ?? {} as AttributionInfo;
-    }
-
-    public getAttributionInfo(): AttributionInfo {
-        return this.info;
-    }
-
-    public setAttributionInfo(message: ISequencedDocumentMessage): void {
-        this.info.user = message.clientId;
-        this.info.timestamp = message.timestamp;
-    }
-
+	/**
+	 * The sequenceNumber of the op this attribution key is for.
+	 */
+    seq: number;
 }
 
 const snapshotFileName = "header";
@@ -127,15 +153,9 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
 
     private readonly pendingMessageIds: number[] = [];
 
-    /**
-     * This enables the cell to store the attribution information which can be accessed with the runtime
-     * (i.e. who creeated the content and when it was created)
-     *
-     * default: false
-     */
-    private readonly trackAttribution: boolean;
+    private attributionKey?: AttributionKey;
 
-    private readonly attributor: CellAttributor = new CellAttributor();
+    private readonly attributor: { [ key: number ]: AttributionInfo } = {};
 
     /**
      * Constructs a new `SharedCell`.
@@ -144,9 +164,21 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
      * @param runtime - The data store runtime to which the `SharedCell` belongs.
      * @param id - Unique identifier for the `SharedCell`.
      */
-    public constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, trackAttribution?: boolean) {
+    // eslint-disable-next-line @typescript-eslint/no-parameter-properties, @typescript-eslint/explicit-member-accessibility
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, public options?: ICellOptions) {
         super(id, runtime, attributes, "fluid_cell_");
-        this.trackAttribution = trackAttribution ?? false;
+
+        const cellOptions = {
+            ...runtime.options as ICellOptions
+        };
+
+        const configSetAttribution = loggerToMonitoringContext(this.logger).config.getBoolean("Fluid.Attribution.EnableOnNewFile");
+        if (configSetAttribution !== undefined) {
+            cellOptions.attribution ??= {};
+            cellOptions.attribution.track = configSetAttribution;
+        }
+
+        this.options ??= cellOptions;
     }
 
     /**
@@ -206,10 +238,25 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     }
 
     /**
-     * {@inheritDoc ISharedCell.getAttributor}
+     * {@inheritDoc ISharedCell.getAttribution}
      */
-    public getAttributor(): CellAttributor {
-        return this.attributor;
+    public getAttribution(key: AttributionKey): AttributionInfo {
+        return this.attributor[key.seq];
+    }
+
+    /**
+     * {@inheritDoc ISharedCell.setAttribution}
+     */
+    public setAttribution(message: ISequencedDocumentMessage): void {
+        this.attributionKey = { type: "op", seq: message.sequenceNumber };
+        this.attributor[message.sequenceNumber] = { user: { id: message.clientId }, timestamp: message.timestamp };
+    }
+
+    /**
+     * {@inheritDoc ISharedCell.hastAttribution}
+     */
+    public hasAttribution(): boolean {
+        return this.attributionKey !== undefined;
     }
 
     /**
@@ -284,8 +331,8 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
                 // We got an ACK. Update messageIdObserved.
                 this.messageIdObserved = cellOpMetadata.pendingMessageId;
                 // update the attributor
-                if (this.trackAttribution) {
-                    this.attributor.setAttributionInfo(message);
+                if ((this.options?.attribution?.track) ?? false) {
+                    this.setAttribution(message);
                 }
 
             }
@@ -294,8 +341,8 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
 
         if (message.type === MessageType.Operation && !local) {
             const op = message.contents as ICellOperation;
-            if (this.trackAttribution) {
-                this.attributor.setAttributionInfo(message);
+            if ((this.options?.attribution?.track) ?? false) {
+                this.setAttribution(message);
             }
             this.applyInnerOp(op);
         }
