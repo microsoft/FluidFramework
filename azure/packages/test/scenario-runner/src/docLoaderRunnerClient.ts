@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import commander from "commander";
 
 import { ConnectionState } from "fluid-framework";
@@ -13,8 +12,41 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ContainerFactorySchema } from "./interface";
-import { getLogger } from "./logger";
+import { getLogger, loggerP } from "./logger";
 import { createAzureClient, loadInitialObjSchema } from "./utils";
+
+const eventMap = new Map([
+    [
+        "fluid:telemetry:RouterliciousDriver:FetchOrdererToken",
+        "scenario:runner:DocLoader:Load:FetchOrdererToken",
+    ],
+    [
+        "fluid:telemetry:RouterliciousDriver:DiscoverSession",
+        "scenario:runner:DocLoader:Load:DiscoverSession",
+    ],
+    [
+        "fluid:telemetry:RouterliciousDriver:FetchStorageToken",
+        "scenario:runner:DocLoader:Load:FetchStorageToken",
+    ],
+    [
+        "fluid:telemetry:RouterliciousDriver:getWholeFlatSummary",
+        "scenario:runner:DocLoader:Load:GetSummary",
+    ],
+    ["fluid:telemetry:RouterliciousDriver:GetDeltas", "scenario:runner:DocLoader:Load:GetDeltas"],
+    ["fluid:telemetry:Container:Request", "scenario:runner:DocLoader:Load:RequestDataObject"],
+    [
+        "fluid:telemetry:RouterliciousDriver:GetDeltaStreamToken",
+        "scenario:runner:DocLoader:Connection:GetDeltaStreamToken",
+    ],
+    [
+        "fluid:telemetry:RouterliciousDriver:ConnectToDeltaStream",
+        "scenario:runner:DocLoader:Connection:ConnectToDeltaStream",
+    ],
+    [
+        "fluid:telemetry:Container:ConnectionStateChange",
+        "scenario:runner:DocLoader:Connection:ConnectionStateChange",
+    ],
+]);
 
 export interface DocLoaderRunnerConfig {
     runId: string;
@@ -40,7 +72,10 @@ async function main() {
         .requiredOption("-s, --scenarioName <scenarioName>", "scenario name.")
         .requiredOption("-c, --childId <childId>", "id of this node client.", parseIntArg)
         .requiredOption("-ct, --connType <connType>", "Connection type")
-        .requiredOption("-ce, --connEndpoint <connEndpoint>", "Connection endpoint")
+        .option("-ce, --connEndpoint <connEndpoint>", "Connection endpoint")
+        .option("-ti, --tenantId <tenantId>", "Tenant ID")
+        .option("-tk, --tenantKey <tenantKey>", "Tenant Key")
+        .option("-furl, --functionUrl <functionUrl>", "Azure Function URL")
         .option(
             "-l, --log <filter>",
             "Filter debug logging. If not provided, uses DEBUG env variable.",
@@ -54,7 +89,11 @@ async function main() {
         childId: commander.childId,
         docId: commander.docId,
         connType: commander.connType,
-        connEndpoint: commander.connEndpoint,
+        connEndpoint: commander.connEndpoint ?? process.env.azure__fluid__relay__service__endpoint,
+        tenantId: commander.tenantId ?? process.env.azure__fluid__relay__service__tenantId,
+        tenantKey: commander.tenantKey ?? process.env.azure__fluid__relay__service__tenantKey,
+        functionUrl:
+            commander.functionUrl ?? process.env.azure__fluid__relay__service__function__url,
     };
 
     if (commander.log !== undefined) {
@@ -65,8 +104,10 @@ async function main() {
         {
             runId: config.runId,
             scenarioName: config.scenarioName,
+            endpoint: config.connEndpoint,
         },
         ["scenario:runner"],
+        eventMap,
     );
 
     const ac = await createAzureClient({
@@ -74,6 +115,9 @@ async function main() {
         userName: `testUserName_${config.childId}`,
         connType: config.connType,
         connEndpoint: config.connEndpoint,
+        tenantId: config.tenantId,
+        tenantKey: config.tenantKey,
+        functionUrl: config.functionUrl,
         logger,
     });
 
@@ -83,17 +127,12 @@ async function main() {
 
 async function execRun(ac: AzureClient, config: DocLoaderRunnerConfig): Promise<void> {
     let schema;
-    const eventMap = new Map([
-        [
-            "fluid:telemetry:RouterliciousDriver:getWholeFlatSummary",
-            "scenario:runner:DocLoader:getSummary",
-        ],
-    ]);
     const logger = await getLogger(
         {
             runId: config.runId,
             scenarioName: config.scenarioName,
             namespace: "scenario:runner:DocLoader",
+            endpoint: config.connEndpoint,
         },
         ["scenario:runner"],
         eventMap,
@@ -119,19 +158,22 @@ async function execRun(ac: AzureClient, config: DocLoaderRunnerConfig): Promise<
         throw new Error("Unable to load container.");
     }
 
-    if (container.connectionState !== ConnectionState.Connected) {
-        await PerformanceEvent.timedExecAsync(
-            logger,
-            { eventName: "connected" },
-            async () => {
+    await PerformanceEvent.timedExecAsync(
+        logger,
+        { eventName: "connected" },
+        async () => {
+            if (container.connectionState !== ConnectionState.Connected) {
                 return timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-                    durationMs: 10000,
+                    durationMs: 60000,
                     errorMsg: "container connect() timeout",
                 });
-            },
-            { start: true, end: true, cancel: "generic" },
-        );
-    }
+            }
+        },
+        { start: true, end: true, cancel: "generic" },
+    );
+
+    const scenarioLogger = await loggerP;
+    await scenarioLogger.flush();
 }
 
 main().catch((error) => {

@@ -15,8 +15,9 @@ import { PropertySet } from "./properties";
 // Small number also makes ReplayTool produce false positives ("same" snapshots have slightly different binary
 // representations).  More measurements needs to be done, but it's very likely the right spot is somewhere between
 // 1K-2K mark.  That said, we also break segments on newline and there are very few segments that are longer than 256
-// because of it.  Must be an even number
-const TextSegmentGranularity = 256;
+// because of it.  Must be an even number.
+// Exported for test use only.
+export const TextSegmentGranularity = 256;
 
 export interface IJSONTextSegment extends IJSONSegment {
     text: string;

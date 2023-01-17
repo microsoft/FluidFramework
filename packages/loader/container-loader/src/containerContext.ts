@@ -46,7 +46,7 @@ import {
     ISummaryContent,
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { Container, ReportIfTooLong } from "./container";
+import { Container } from "./container";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
@@ -326,13 +326,10 @@ export class ContainerContext implements IContainerContext {
 
     private async instantiateRuntime(existing: boolean) {
         const runtimeFactory = await this.getRuntimeFactory();
-        await ReportIfTooLong(
-            this.taggedLogger,
-            "instantiateRuntime",
-            async () => {
-                this._runtime = await runtimeFactory.instantiateRuntime(this, existing);
-                return {};
-            });
+        this._runtime = await PerformanceEvent.timedExecAsync(
+			this.taggedLogger,
+			{ eventName: "InstantiateRuntime" },
+			async () => runtimeFactory.instantiateRuntime(this, existing));
     }
 
     private attachListener() {

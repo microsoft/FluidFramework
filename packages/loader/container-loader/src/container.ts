@@ -1282,14 +1282,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             if (opsBeforeReturnP !== undefined) {
                 this._deltaManager.inbound.resume();
 
-                await ReportIfTooLong(
+                await PerformanceEvent.timedExecAsync(
                     this.mc.logger,
-                    "WaitOps",
-                    async () => { await opsBeforeReturnP; return {}; });
-                await ReportIfTooLong(
+                    { eventName:  "WaitOps" },
+                    async () => opsBeforeReturnP
+                );
+                await PerformanceEvent.timedExecAsync(
                     this.mc.logger,
-                    "WaitOpProcessing",
-                    async () => this._deltaManager.inbound.waitTillProcessingDone());
+                    { eventName:  "WaitOpProcessing" },
+                    async () => this._deltaManager.inbound.waitTillProcessingDone()
+                );
 
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this._deltaManager.inbound.pause();

@@ -37,7 +37,7 @@ export class MarkQueue<T> {
 
     public dequeue(): Mark<T> {
         const output = this.tryDequeue();
-        assert(output !== undefined, "Unexpected end of mark queue");
+        assert(output !== undefined, 0x4e2 /* Unexpected end of mark queue */);
         return output;
     }
 
@@ -84,7 +84,7 @@ export class MarkQueue<T> {
      */
     public dequeueInput(length: number): InputSpanningMark<T> {
         const mark = this.dequeue();
-        assert(isInputSpanningMark(mark), "Can only split sized marks on input");
+        assert(isInputSpanningMark(mark), 0x4e3 /* Can only split sized marks on input */);
         const [mark1, mark2] = splitMarkOnInput(mark, length, this.genId, this.moveEffects);
         this.stack.push(mark2);
         return mark1;
@@ -100,7 +100,7 @@ export class MarkQueue<T> {
         const mark = this.dequeue();
         assert(
             isOutputSpanningMark(mark) || (includeBlockedCells && isBlockedReattach(mark)),
-            "Should only dequeue output if the next mark has output length > 0",
+            0x4e4 /* Should only dequeue output if the next mark has output length > 0 */,
         );
         const [mark1, mark2] = splitMarkOnOutput(mark, length, this.genId, this.moveEffects);
         this.stack.push(mark2);

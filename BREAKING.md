@@ -18,7 +18,20 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 # 2.0.0-internal.2.3.0
 
 ## 2.0.0-internal.2.3.0 Upcoming changes
+- [Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`](#deprecate-ensurecontainerconnected-in-fluidframeworktest-utils)
 - [Upcoming changes to container closure](#Upcoming-changes-to-container-closure)
+
+### Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`
+
+`ensureContainerConnected()` is now deprecated.
+Use `waitForContainerConnection()` from the same package instead.
+
+**NOTE**: the default value for the `failOnContainerClose` parameter of `waitForContainerConnection()` is currently set
+to `false` for backwards compatibility but will change to `true` in a future release.
+This is overall a safer default because it ensures that unexpected errors which cause the Container to close are surfaced
+immediately, instead of potentially being hidden by a timeout.
+It is recommended that you start passing `failOnContainerClose=true` when calling `waitForContainerConnection()` in
+preparation for this upcoming breaking change.
 
 ### Upcoming changes to container closure
 
