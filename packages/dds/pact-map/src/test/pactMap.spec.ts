@@ -11,12 +11,12 @@ import {
     MockContainerRuntimeForReconnection,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { Quorum } from "../quorum";
-import { QuorumFactory } from "../quorumFactory";
-import { IQuorum } from "../interfaces";
+import { PactMap } from "../pactMap";
+import { PactMapFactory } from "../pactMapFactory";
+import { IPactMap } from "../interfaces";
 
-function createConnectedQuorum(id: string, runtimeFactory: MockContainerRuntimeFactory): Quorum {
-    // Create and connect a Quorum.
+function createConnectedPactMap(id: string, runtimeFactory: MockContainerRuntimeFactory): PactMap {
+    // Create and connect a PactMap.
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
     const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
     const services = {
@@ -24,209 +24,209 @@ function createConnectedQuorum(id: string, runtimeFactory: MockContainerRuntimeF
         objectStorage: new MockStorage(),
     };
 
-    const quorum = new Quorum(id, dataStoreRuntime, QuorumFactory.Attributes);
-    quorum.connect(services);
-    return quorum;
+    const pactMap = new PactMap(id, dataStoreRuntime, PactMapFactory.Attributes);
+    pactMap.connect(services);
+    return pactMap;
 }
 
-const createLocalQuorum = (id: string): Quorum =>
-    new Quorum(id, new MockFluidDataStoreRuntime(), QuorumFactory.Attributes);
+const createLocalPactMap = (id: string): PactMap =>
+    new PactMap(id, new MockFluidDataStoreRuntime(), PactMapFactory.Attributes);
 
-describe("Quorum", () => {
+describe("PactMap", () => {
     describe("Local state", () => {
-        let quorum: Quorum;
+        let pactMap: PactMap;
 
         beforeEach(() => {
-            quorum = createLocalQuorum("quorum");
+            pactMap = createLocalPactMap("pactMap");
         });
 
         describe("APIs", () => {
-            it("Can create a Quorum", () => {
-                assert.ok(quorum, "Could not create a quorum");
+            it("Can create a PactMap", () => {
+                assert.ok(pactMap, "Could not create a PactMap");
             });
         });
     });
 
     describe("Connected state, single client", () => {
-        let quorum: IQuorum;
+        let pactMap: IPactMap;
         let containerRuntimeFactory: MockContainerRuntimeFactory;
 
         beforeEach(() => {
             containerRuntimeFactory = new MockContainerRuntimeFactory();
-            quorum = createConnectedQuorum("quorum", containerRuntimeFactory);
+            pactMap = createConnectedPactMap("pactMap", containerRuntimeFactory);
         });
 
-        it("Can create the Quorum", async () => {
-            assert.ok(quorum, "Could not create quorum");
+        it("Can create the PactMap", async () => {
+            assert.ok(pactMap, "Could not create PactMap");
         });
 
         it("Can set a value and read it from all clients", async () => {
             const expectedKey = "key";
             const expectedValue = "value";
-            const quorumAcceptanceP = new Promise<void>((resolve) => {
+            const pactMapAcceptanceP = new Promise<void>((resolve) => {
                 const watchForPending = (pendingKey: string): void => {
                     if (pendingKey === expectedKey) {
                         assert.strictEqual(
-                            quorum.getPending(expectedKey),
+                            pactMap.getPending(expectedKey),
                             expectedValue,
-                            "Value in Quorum should be pending now",
+                            "Value in PactMap should be pending now",
                         );
                         assert.strictEqual(
-                            quorum.get(expectedKey),
+                            pactMap.get(expectedKey),
                             undefined,
-                            "Value in Quorum should not be accepted yet",
+                            "Value in PactMap should not be accepted yet",
                         );
-                        quorum.off("pending", watchForPending);
+                        pactMap.off("pending", watchForPending);
 
                         // Doing this synchronously after validating pending, since processAllMessages() won't permit
                         // us to pause after the set but before the noop.
                         const watchForAccepted = (acceptedKey: string): void => {
                             if (acceptedKey === expectedKey) {
                                 assert.strictEqual(
-                                    quorum.getPending(expectedKey),
+                                    pactMap.getPending(expectedKey),
                                     undefined,
-                                    "Value in Quorum should not be pending anymore",
+                                    "Value in PactMap should not be pending anymore",
                                 );
                                 assert.strictEqual(
-                                    quorum.get(expectedKey),
+                                    pactMap.get(expectedKey),
                                     expectedValue,
-                                    "Value in Quorum should be accepted now",
+                                    "Value in PactMap should be accepted now",
                                 );
-                                quorum.off("accepted", watchForAccepted);
+                                pactMap.off("accepted", watchForAccepted);
                                 resolve();
                             }
                         };
-                        quorum.on("accepted", watchForAccepted);
+                        pactMap.on("accepted", watchForAccepted);
                     }
                 };
-                quorum.on("pending", watchForPending);
+                pactMap.on("pending", watchForPending);
             });
-            quorum.set(expectedKey, expectedValue);
+            pactMap.set(expectedKey, expectedValue);
             containerRuntimeFactory.processAllMessages();
 
-            await quorumAcceptanceP;
-            assert.strictEqual(quorum.get(expectedKey), expectedValue, "Wrong value in Quorum");
+            await pactMapAcceptanceP;
+            assert.strictEqual(pactMap.get(expectedKey), expectedValue, "Wrong value in PactMap");
         });
     });
 
     describe("Connected state, multiple clients", () => {
-        let quorum1: IQuorum;
-        let quorum2: IQuorum;
+        let pactMap1: IPactMap;
+        let pactMap2: IPactMap;
         let containerRuntimeFactory: MockContainerRuntimeFactory;
 
         beforeEach(() => {
             containerRuntimeFactory = new MockContainerRuntimeFactory();
-            quorum1 = createConnectedQuorum("quorum1", containerRuntimeFactory);
-            quorum2 = createConnectedQuorum("quorum2", containerRuntimeFactory);
+            pactMap1 = createConnectedPactMap("pactMap1", containerRuntimeFactory);
+            pactMap2 = createConnectedPactMap("pactMap2", containerRuntimeFactory);
         });
 
-        it("Can create the Quorums", async () => {
-            assert.ok(quorum1, "Could not create quorum1");
-            assert.ok(quorum2, "Could not create quorum2");
+        it("Can create the PactMaps", async () => {
+            assert.ok(pactMap1, "Could not create pactMap1");
+            assert.ok(pactMap2, "Could not create pactMap2");
         });
 
         it("Can set a value and read it from all clients", async () => {
             const expectedKey = "key";
             const expectedValue = "value";
-            const quorum1AcceptanceP = new Promise<void>((resolve) => {
+            const pactMap1AcceptanceP = new Promise<void>((resolve) => {
                 const watchForPending = (pendingKey: string): void => {
                     if (pendingKey === expectedKey) {
                         assert.strictEqual(
-                            quorum1.getPending(expectedKey),
+                            pactMap1.getPending(expectedKey),
                             expectedValue,
-                            "Value in Quorum 1 should be pending now",
+                            "Value in PactMap 1 should be pending now",
                         );
                         assert.strictEqual(
-                            quorum1.get(expectedKey),
+                            pactMap1.get(expectedKey),
                             undefined,
-                            "Value in Quorum 1 should not be accepted yet",
+                            "Value in PactMap 1 should not be accepted yet",
                         );
-                        quorum1.off("pending", watchForPending);
+                        pactMap1.off("pending", watchForPending);
 
                         // Doing this synchronously after validating pending, since processAllMessages() won't permit
                         // us to pause after the set but before the noop.
                         const watchForAccepted = (acceptedKey: string): void => {
                             if (acceptedKey === expectedKey) {
                                 assert.strictEqual(
-                                    quorum1.getPending(expectedKey),
+                                    pactMap1.getPending(expectedKey),
                                     undefined,
-                                    "Value in Quorum 1 should not be pending anymore",
+                                    "Value in PactMap 1 should not be pending anymore",
                                 );
                                 assert.strictEqual(
-                                    quorum1.get(expectedKey),
+                                    pactMap1.get(expectedKey),
                                     expectedValue,
-                                    "Value in Quorum 1 should be accepted now",
+                                    "Value in PactMap 1 should be accepted now",
                                 );
-                                quorum1.off("accepted", watchForAccepted);
+                                pactMap1.off("accepted", watchForAccepted);
                                 resolve();
                             }
                         };
-                        quorum1.on("accepted", watchForAccepted);
+                        pactMap1.on("accepted", watchForAccepted);
                     }
                 };
-                quorum1.on("pending", watchForPending);
+                pactMap1.on("pending", watchForPending);
             });
-            const quorum2AcceptanceP = new Promise<void>((resolve) => {
+            const pactMap2AcceptanceP = new Promise<void>((resolve) => {
                 const watchForPending = (pendingKey: string): void => {
                     if (pendingKey === expectedKey) {
                         assert.strictEqual(
-                            quorum2.getPending(expectedKey),
+                            pactMap2.getPending(expectedKey),
                             expectedValue,
-                            "Value in Quorum 2 should be pending now",
+                            "Value in PactMap 2 should be pending now",
                         );
                         assert.strictEqual(
-                            quorum2.get(expectedKey),
+                            pactMap2.get(expectedKey),
                             undefined,
-                            "Value in Quorum 2 should not be accepted yet",
+                            "Value in PactMap 2 should not be accepted yet",
                         );
-                        quorum2.off("pending", watchForPending);
+                        pactMap2.off("pending", watchForPending);
 
                         // Doing this synchronously after validating pending, since processAllMessages() won't permit
                         // us to pause after the set but before the noop.
                         const watchForAccepted = (acceptedKey: string): void => {
                             if (acceptedKey === expectedKey) {
                                 assert.strictEqual(
-                                    quorum2.getPending(expectedKey),
+                                    pactMap2.getPending(expectedKey),
                                     undefined,
-                                    "Value in Quorum 2 should not be pending anymore",
+                                    "Value in PactMap 2 should not be pending anymore",
                                 );
                                 assert.strictEqual(
-                                    quorum2.get(expectedKey),
+                                    pactMap2.get(expectedKey),
                                     expectedValue,
-                                    "Value in Quorum 2 should be accepted now",
+                                    "Value in PactMap 2 should be accepted now",
                                 );
-                                quorum2.off("accepted", watchForAccepted);
+                                pactMap2.off("accepted", watchForAccepted);
                                 resolve();
                             }
                         };
-                        quorum2.on("accepted", watchForAccepted);
+                        pactMap2.on("accepted", watchForAccepted);
                     }
                 };
-                quorum2.on("pending", watchForPending);
+                pactMap2.on("pending", watchForPending);
             });
-            quorum1.set(expectedKey, expectedValue);
+            pactMap1.set(expectedKey, expectedValue);
             containerRuntimeFactory.processAllMessages();
 
-            await Promise.all([quorum1AcceptanceP, quorum2AcceptanceP]);
-            assert.strictEqual(quorum1.get(expectedKey), expectedValue, "Wrong value in Quorum 1");
-            assert.strictEqual(quorum2.get(expectedKey), expectedValue, "Wrong value in Quorum 2");
+            await Promise.all([pactMap1AcceptanceP, pactMap2AcceptanceP]);
+            assert.strictEqual(pactMap1.get(expectedKey), expectedValue, "Wrong value in PactMap 1");
+            assert.strictEqual(pactMap2.get(expectedKey), expectedValue, "Wrong value in PactMap 2");
         });
 
         it("Resolves simultaneous sets and deletes with first-write-wins", async () => {
             const targetKey = "key";
-            quorum1.set(targetKey, "expected");
-            quorum2.set(targetKey, "unexpected1");
+            pactMap1.set(targetKey, "expected");
+            pactMap2.set(targetKey, "unexpected1");
             containerRuntimeFactory.processAllMessages();
 
-            assert.strictEqual(quorum1.get(targetKey), "expected", "Unexpected value in quorum1");
-            assert.strictEqual(quorum2.get(targetKey), "expected", "Unexpected value in quorum2");
+            assert.strictEqual(pactMap1.get(targetKey), "expected", "Unexpected value in pactMap1");
+            assert.strictEqual(pactMap2.get(targetKey), "expected", "Unexpected value in pactMap2");
 
-            quorum2.delete(targetKey);
-            quorum1.set(targetKey, "unexpected2");
+            pactMap2.delete(targetKey);
+            pactMap1.set(targetKey, "unexpected2");
             containerRuntimeFactory.processAllMessages();
 
-            assert.strictEqual(quorum1.get(targetKey), undefined, "Unexpected value in quorum1");
-            assert.strictEqual(quorum2.get(targetKey), undefined, "Unexpected value in quorum2");
+            assert.strictEqual(pactMap1.get(targetKey), undefined, "Unexpected value in pactMap1");
+            assert.strictEqual(pactMap2.get(targetKey), undefined, "Unexpected value in pactMap2");
         });
     });
 
@@ -238,58 +238,58 @@ describe("Quorum", () => {
         });
 
         it("Can set and delete values before attaching and functions normally after attaching", async () => {
-            // Create a detached Quorum.
+            // Create a detached PactMap.
             const dataStoreRuntime = new MockFluidDataStoreRuntime();
             const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 
-            const quorum = new Quorum("quorum", dataStoreRuntime, QuorumFactory.Attributes);
-            assert.strict(!quorum.isAttached(), "Quorum is attached earlier than expected");
+            const pactMap = new PactMap("pactMap", dataStoreRuntime, PactMapFactory.Attributes);
+            assert.strict(!pactMap.isAttached(), "PactMap is attached earlier than expected");
 
             const accept1P = new Promise<void>((resolve) => {
-                quorum.on("accepted", (key) => {
+                pactMap.on("accepted", (key) => {
                     if (key === "baz") {
                         resolve();
                     }
                 });
             });
-            quorum.set("foo", "bar");
-            quorum.set("baz", "boop");
+            pactMap.set("foo", "bar");
+            pactMap.set("baz", "boop");
             await accept1P;
-            assert.strictEqual(quorum.get("baz"), "boop", "Couldn't set value in detached state");
+            assert.strictEqual(pactMap.get("baz"), "boop", "Couldn't set value in detached state");
 
             const accept2P = new Promise<void>((resolve) => {
-                quorum.on("accepted", (key) => {
+                pactMap.on("accepted", (key) => {
                     if (key === "foo") {
                         resolve();
                     }
                 });
             });
-            quorum.delete("foo");
+            pactMap.delete("foo");
             await accept2P;
-            assert.strictEqual(quorum.get("foo"), undefined, "Couldn't delete value in detached state");
+            assert.strictEqual(pactMap.get("foo"), undefined, "Couldn't delete value in detached state");
 
-            // Attach the Quorum
+            // Attach the PactMap
             const services = {
                 deltaConnection: containerRuntime.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
-            quorum.connect(services);
+            pactMap.connect(services);
 
-            assert.strict(quorum.isAttached(), "Quorum is not attached when expected");
-            assert.strictEqual(quorum.get("foo"), undefined, "Wrong value in foo after attach");
-            assert.strictEqual(quorum.get("baz"), "boop", "Wrong value in baz after attach");
+            assert.strict(pactMap.isAttached(), "PactMap is not attached when expected");
+            assert.strictEqual(pactMap.get("foo"), undefined, "Wrong value in foo after attach");
+            assert.strictEqual(pactMap.get("baz"), "boop", "Wrong value in baz after attach");
 
             const accept3P = new Promise<void>((resolve) => {
-                quorum.on("accepted", (key) => {
+                pactMap.on("accepted", (key) => {
                     if (key === "woz") {
                         resolve();
                     }
                 });
             });
-            quorum.set("woz", "wiz");
+            pactMap.set("woz", "wiz");
             containerRuntimeFactory.processAllMessages();
             await accept3P;
-            assert.strictEqual(quorum.get("woz"), "wiz", "Wrong value in woz after post-attach set");
+            assert.strictEqual(pactMap.get("woz"), "wiz", "Wrong value in woz after post-attach set");
         });
     });
 
@@ -297,40 +297,40 @@ describe("Quorum", () => {
         let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
         let containerRuntime1: MockContainerRuntimeForReconnection;
         let containerRuntime2: MockContainerRuntimeForReconnection;
-        let quorum1: Quorum;
-        let quorum2: Quorum;
+        let pactMap1: PactMap;
+        let pactMap2: PactMap;
 
         beforeEach(async () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
-            // Create the first Quorum.
+            // Create the first PactMap.
             const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
             containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
             const services1 = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
-            quorum1 = new Quorum("quorum-1", dataStoreRuntime1, QuorumFactory.Attributes);
-            quorum1.connect(services1);
+            pactMap1 = new PactMap("pact-map-1", dataStoreRuntime1, PactMapFactory.Attributes);
+            pactMap1.connect(services1);
 
-            // Create the second Quorum.
+            // Create the second PactMap.
             const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
             containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
-            quorum2 = new Quorum("quorum-2", dataStoreRuntime2, QuorumFactory.Attributes);
-            quorum2.connect(services2);
+            pactMap2 = new PactMap("pact-map-2", dataStoreRuntime2, PactMapFactory.Attributes);
+            pactMap2.connect(services2);
         });
 
         // TODO: Consider if there's any value in distinctly testing these scenarios for acceptance via
         // accept ops vs. via the last expected signoff disconnecting.
         it("Doesn't resubmit accept ops that were sent before offline", async () => {
             const targetKey = "key";
-            quorum1.set(targetKey, "expected");
-            // This should cause quorum2 to produce an accept op but...
-            containerRuntimeFactory.processSomeMessages(1); // quorum1 "set"
+            pactMap1.set(targetKey, "expected");
+            // This should cause pactMap2 to produce an accept op but...
+            containerRuntimeFactory.processSomeMessages(1); // pactMap1 "set"
             // We disconnect before it gets processed.
             containerRuntime2.connected = false;
             containerRuntime2.connected = true;
@@ -340,81 +340,81 @@ describe("Quorum", () => {
 
         it("Doesn't resubmit unsequenced proposals that were sent before offline but are futile after reconnect", async () => {
             const targetKey = "key";
-            quorum1.set(targetKey, "unexpected");
+            pactMap1.set(targetKey, "unexpected");
             containerRuntime1.connected = false;
             containerRuntimeFactory.processAllMessages();
-            quorum2.set(targetKey, "expected");
+            pactMap2.set(targetKey, "expected");
             containerRuntimeFactory.processAllMessages();
-            assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
-            assert.strictEqual(quorum1.get(targetKey), undefined, "Quorum1 should not see any value");
+            assert.strictEqual(pactMap2.get(targetKey), "expected", "PactMap2 should see the expected value");
+            assert.strictEqual(pactMap1.get(targetKey), undefined, "PactMap1 should not see any value");
             containerRuntime1.connected = true;
             assert.strictEqual(containerRuntimeFactory.outstandingMessageCount, 0, "Should not have generated an op");
             containerRuntimeFactory.processAllMessages();
-            assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
+            assert.strictEqual(pactMap1.get(targetKey), "expected", "PactMap1 should see the expected value");
         });
 
         it("Unsequenced proposals sent before offline and still valid after reconnect are accepted after reconnect", async () => {
             const targetKey = "key";
-            quorum1.set(targetKey, "expected");
+            pactMap1.set(targetKey, "expected");
             containerRuntime1.connected = false;
             containerRuntime1.connected = true;
             containerRuntimeFactory.processAllMessages();
-            assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
-            assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
+            assert.strictEqual(pactMap1.get(targetKey), "expected", "PactMap1 should see the expected value");
+            assert.strictEqual(pactMap2.get(targetKey), "expected", "PactMap2 should see the expected value");
         });
 
         it("Doesn't resubmit unsequenced proposals that were sent during offline but are futile after reconnect", async () => {
             const targetKey = "key";
             containerRuntime1.connected = false;
-            quorum1.set(targetKey, "unexpected");
+            pactMap1.set(targetKey, "unexpected");
             containerRuntimeFactory.processAllMessages();
-            quorum2.set(targetKey, "expected");
+            pactMap2.set(targetKey, "expected");
             containerRuntimeFactory.processAllMessages();
-            assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
-            assert.strictEqual(quorum1.get(targetKey), undefined, "Quorum1 should not see any value");
+            assert.strictEqual(pactMap2.get(targetKey), "expected", "PactMap2 should see the expected value");
+            assert.strictEqual(pactMap1.get(targetKey), undefined, "PactMap1 should not see any value");
             containerRuntime1.connected = true;
             assert.strictEqual(containerRuntimeFactory.outstandingMessageCount, 0, "Should not have generated an op");
-            assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
+            assert.strictEqual(pactMap1.get(targetKey), "expected", "PactMap1 should see the expected value");
         });
 
         it("Unsequenced proposals sent during offline and still valid after reconnect are accepted after reconnect", async () => {
             const targetKey = "key";
             containerRuntime1.connected = false;
-            quorum1.set(targetKey, "expected");
+            pactMap1.set(targetKey, "expected");
             containerRuntime1.connected = true;
             containerRuntimeFactory.processAllMessages();
-            assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
-            assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
+            assert.strictEqual(pactMap1.get(targetKey), "expected", "PactMap1 should see the expected value");
+            assert.strictEqual(pactMap2.get(targetKey), "expected", "PactMap2 should see the expected value");
         });
 
         it("Sequenced proposals that were accepted during offline have correct state after reconnect", async () => {
             const targetKey = "key";
-            quorum1.set(targetKey, "expected");
+            pactMap1.set(targetKey, "expected");
             // TODO: In this flow, client 1 processes the set message ack before it disconnects but not the accepts
             // Consider whether it's interesting for it to disconnect before processing any ops.
-            containerRuntimeFactory.processOneMessage(); // quorum1 "set"
+            containerRuntimeFactory.processOneMessage(); // pactMap1 "set"
             containerRuntime1.connected = false;
             containerRuntimeFactory.processAllMessages(); // Process the accept from client 2
             containerRuntime1.connected = true;
             assert.strictEqual(containerRuntimeFactory.outstandingMessageCount, 0, "Should not have generated an op");
-            assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
-            assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
+            assert.strictEqual(pactMap1.get(targetKey), "expected", "PactMap1 should see the expected value");
+            assert.strictEqual(pactMap2.get(targetKey), "expected", "PactMap2 should see the expected value");
         });
 
         it("Sequenced proposals that remained pending during offline have correct state after reconnect", async () => {
             const targetKey = "key";
-            quorum1.set(targetKey, "expected");
+            pactMap1.set(targetKey, "expected");
             // TODO: In this flow, client 1 processes the set message ack before it disconnects but not the accepts
             // Consider whether it's interesting for it to disconnect before processing any ops.
-            containerRuntimeFactory.processOneMessage(); // quorum1 "set"
+            containerRuntimeFactory.processOneMessage(); // pactMap1 "set"
             containerRuntime1.connected = false;
             containerRuntime1.connected = true;
             assert.strictEqual(containerRuntimeFactory.outstandingMessageCount, 1, "Should only have client 2 accept");
-            assert.strictEqual(quorum1.get(targetKey), undefined, "Quorum1 should not see the expected value");
-            assert.strictEqual(quorum2.get(targetKey), undefined, "Quorum2 should not see the expected value");
+            assert.strictEqual(pactMap1.get(targetKey), undefined, "PactMap1 should not see the expected value");
+            assert.strictEqual(pactMap2.get(targetKey), undefined, "PactMap2 should not see the expected value");
             containerRuntimeFactory.processAllMessages();
-            assert.strictEqual(quorum1.get(targetKey), "expected", "Quorum1 should see the expected value");
-            assert.strictEqual(quorum2.get(targetKey), "expected", "Quorum2 should see the expected value");
+            assert.strictEqual(pactMap1.get(targetKey), "expected", "PactMap1 should see the expected value");
+            assert.strictEqual(pactMap2.get(targetKey), "expected", "PactMap2 should see the expected value");
         });
     });
 });
