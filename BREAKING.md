@@ -15,6 +15,28 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - Avoid using code formatting in the title (it's fine to use in the body).
 - To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.2.4.0
+
+## 2.0.0-internal.2.4.0 Upcoming changes
+
+- [Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`](#deprecate-ensurecontainerconnected-in-fluidframeworktest-utils)
+
+### Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`
+
+`ensureContainerConnected()` is now deprecated.
+Use `waitForContainerConnection()` from the same package instead.
+
+**NOTE**: the default value for the `failOnContainerClose` parameter of `waitForContainerConnection()` is currently set
+to `false` for backwards compatibility but will change to `true` in a future release.
+This is overall a safer default because it ensures that unexpected errors which cause the Container to close are surfaced
+immediately, instead of potentially being hidden by a timeout.
+It is recommended that you start passing `failOnContainerClose=true` when calling `waitForContainerConnection()` in
+preparation for this upcoming breaking change.
+
+# 2.0.0-internal.2.3.0
+
+## 2.0.0-internal.2.3.0 Upcoming changes
+
 # 2.0.0-internal.2.2.0
 
 ## 2.0.0-internal.2.2.0 Upcoming changes
