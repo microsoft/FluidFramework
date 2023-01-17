@@ -299,7 +299,7 @@ export class LoadTestDataStoreModel {
             if (this.runtime.connected) {
                 callback();
             } else {
-                this.runtime.on("connected", () => {
+                this.runtime.once("connected", () => {
                     callback();
                 });
             }
