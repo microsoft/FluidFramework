@@ -567,12 +567,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
         [
             { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested" },
             { eventName: "fluid:telemetry:Summarizer:Running:gcUnknownOutboundReferences" },
-            { eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed" },
-            {
-                eventName: "fluid:telemetry:Container:ContainerClose",
-                error: "Context is tombstoned! Call site [processSignal]",
-                errorType: "dataCorruptionError",
-            },
         ],
         async () => {
             const {
@@ -609,9 +603,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             const mainDataObject = await requestFluidObject<ITestDataObject>(summarizingContainer, "default");
             mainDataObject._root.set("store", dataObject.handle);
 
-            // This container closes as we submit ops and signals in the un-tombstoned container
-            setupContainerCloseErrorValidation(tombstoneContainer, "processSignal");
-
             // The datastore should be un-tombstoned now
             const { summaryVersion: revivalVersion } = await summarize(summarizer);
             const revivalContainer = await loadContainer(revivalVersion);
@@ -626,7 +617,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             sendDataObject._root.set("can receive", "an op");
             sendDataObject._runtime.submitSignal("can receive", "a signal");
             await provider.ensureSynchronized();
-            assert(tombstoneContainer.closed === true, `Container receiving messages to a tombstoned datastore should close.`);
+            assert(tombstoneContainer.closed !== true, `Tombstone usage allowed, so container should not close.`);
             assert(revivalContainer.closed !== true,
                 `Revived datastore should not close a container when requested, sending/receiving signals/ops.`);
             assert(sendingContainer.closed !== true,
