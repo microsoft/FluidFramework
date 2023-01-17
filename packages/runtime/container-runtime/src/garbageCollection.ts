@@ -1247,11 +1247,11 @@ export class GarbageCollector implements IGarbageCollector {
                 this.mc,
                 {
                     eventName,
+                    category: "generic",
                     isSummarizerClient: this.isSummarizerClient,
                     url: trimLeadingSlashes(toNodePath),
                     nodeType,
                  },
-                false /* logAsError */,
                 undefined /* packagePath */,
             );
         }

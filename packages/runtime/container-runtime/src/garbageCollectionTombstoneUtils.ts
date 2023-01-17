@@ -13,12 +13,10 @@ import { disableTombstoneKey, throwOnTombstoneLoadKey, throwOnTombstoneUsageKey 
  */
 export function sendGCTombstoneEvent(
     mc: MonitoringContext,
-    event: ITelemetryGenericEvent & { isSummarizerClient: boolean },
-    logAsError: boolean,
+    event: ITelemetryGenericEvent & { category: "error" | "generic", isSummarizerClient: boolean },
     packagePath: readonly string[] | undefined,
     error?: unknown,
 ) {
-    event.category = logAsError ? "error" : "generic";
     event.pkg = packagePathToTelemetryProperty(packagePath);
     event.tombstoneFlags = JSON.stringify({
         DisableTombstone: mc.config.getBoolean(disableTombstoneKey),
