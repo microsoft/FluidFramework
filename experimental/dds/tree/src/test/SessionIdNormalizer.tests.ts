@@ -35,19 +35,19 @@ describe('SessionIdNormalizer', () => {
 		expect(() => normalizer.addFinalIds(final(1), final(0), dummy)).to.throw('Malformed normalization range.');
 	});
 
-    it('fails when registering final blocks with no corresponding locals', () => {
+	it('fails when registering final blocks with no corresponding locals', () => {
 		const normalizer = makeTestNormalizer();
 		expect(() => normalizer.registerFinalIdBlock(final(0), 5, dummy)).to.throw(
 			'Final ID block should not be registered before any locals.'
 		);
-        normalizer.addLocalId();
-        addFinalIds(normalizer, final(0), final(0));
-        expect(() => normalizer.registerFinalIdBlock(final(1), 5, dummy)).to.throw(
+		normalizer.addLocalId();
+		addFinalIds(normalizer, final(0), final(0));
+		expect(() => normalizer.registerFinalIdBlock(final(1), 5, dummy)).to.throw(
 			'Final ID block should not be registered without an existing local range.'
 		);
 	});
 
-    it('fails when registering final blocks with an invalid count', () => {
+	it('fails when registering final blocks with an invalid count', () => {
 		const normalizer = makeTestNormalizer();
 		normalizer.addLocalId();
 		expect(() => normalizer.registerFinalIdBlock(final(1), 0, dummy)).to.throw('Malformed normalization block.');
@@ -67,7 +67,7 @@ describe('SessionIdNormalizer', () => {
 		const normalizer = makeTestNormalizer();
 		normalizer.addLocalId(); // -1
 		normalizer.addLocalId(); // -2
-        addFinalIds(normalizer, final(0), final(2));
+		addFinalIds(normalizer, final(0), final(2));
 		normalizer.addLocalId(); // -4
 		addFinalIds(normalizer, final(5), final(5));
 		expect(() => addFinalIds(normalizer, final(9), final(9))).to.throw(
@@ -100,14 +100,14 @@ describe('SessionIdNormalizer', () => {
 
 	itWithNormalizer('can normalize IDs with trailing finals', (normalizer) => {
 		normalizer.addLocalId();
-        addFinalIds(normalizer, final(0), final(1));
-        addFinalIds(normalizer, final(2), final(3));
-        addFinalIds(normalizer, final(4), final(10));
+		addFinalIds(normalizer, final(0), final(1));
+		addFinalIds(normalizer, final(2), final(3));
+		addFinalIds(normalizer, final(4), final(10));
 	});
 
 	itWithNormalizer('can normalize IDs with trailing locals', (normalizer) => {
 		normalizer.addLocalId();
-        addFinalIds(normalizer, final(0), final(1));
+		addFinalIds(normalizer, final(0), final(1));
 		normalizer.addLocalId();
 		normalizer.addLocalId();
 	});
@@ -116,22 +116,22 @@ describe('SessionIdNormalizer', () => {
 		normalizer.addLocalId();
 		normalizer.addLocalId();
 		normalizer.addLocalId();
-        addFinalIds(normalizer, final(0), final(1));
-        addFinalIds(normalizer, final(10), final(11));
+		addFinalIds(normalizer, final(0), final(1));
+		addFinalIds(normalizer, final(10), final(11));
 	});
 
 	itWithNormalizer('can normalize IDs with and without corresponding local forms', (normalizer) => {
 		normalizer.addLocalId(); // -1
 		normalizer.addLocalId(); // -2
 		normalizer.addLocalId(); // -3
-        addFinalIds(normalizer, final(0), final(3));
+		addFinalIds(normalizer, final(0), final(3));
 		normalizer.addLocalId(); // -5
 		normalizer.addLocalId(); // -6
-        addFinalIds(normalizer, final(4), final(5));
+		addFinalIds(normalizer, final(4), final(5));
 		normalizer.addLocalId(); // -7
-        addFinalIds(normalizer, final(8), final(9));
+		addFinalIds(normalizer, final(8), final(9));
 		normalizer.addLocalId(); // -9
-        addFinalIds(normalizer, final(14), final(15));
+		addFinalIds(normalizer, final(14), final(15));
 		normalizer.addLocalId(); // -11
 		normalizer.addLocalId(); // -12
 	});
@@ -142,11 +142,11 @@ describe('SessionIdNormalizer', () => {
 		normalizer.addLocalId(); // -3
 		normalizer.addLocalId(); // -4
 		expect(normalizer.getLastFinalId()).to.be.undefined;
-        addFinalIds(normalizer, final(0), final(1));
+		addFinalIds(normalizer, final(0), final(1));
 		expect(normalizer.getLastFinalId()).to.equal(1);
-        addFinalIds(normalizer, final(2), final(2));
+		addFinalIds(normalizer, final(2), final(2));
 		expect(normalizer.getLastFinalId()).to.equal(2);
-        addFinalIds(normalizer, final(10), final(15));
+		addFinalIds(normalizer, final(10), final(15));
 		expect(normalizer.getLastFinalId()).to.equal(15);
 	});
 
@@ -261,7 +261,11 @@ function itWithNormalizer(title: string, itFn: (normalizer: SessionIdNormalizer<
 	});
 }
 
-function addFinalIds(normalizer: SessionIdNormalizer<DummyRange>, firstFinal: FinalCompressedId, lastFinal: FinalCompressedId): void {
+function addFinalIds(
+	normalizer: SessionIdNormalizer<DummyRange>,
+	firstFinal: FinalCompressedId,
+	lastFinal: FinalCompressedId
+): void {
 	normalizer.addFinalIds(firstFinal, lastFinal, dummy);
 }
 
@@ -324,7 +328,7 @@ interface AddFinalIds {
 	type: 'addFinalIds';
 	first: FinalCompressedId;
 	last: FinalCompressedId;
-    isBlock: boolean;
+	isBlock: boolean;
 }
 
 type Operation = AddLocalId | AddFinalIds;
@@ -355,11 +359,16 @@ function makeOpGenerator(numOperations: number): Generator<Operation, FuzzTestSt
 			state.currentFinal += random.integer(1, 4);
 		}
 		let lastFinal = state.currentFinal + random.integer(0, 10);
-        const isBlock = random.bool(1 / 7);
-        if (isBlock) {
-            lastFinal += random.integer(1, 10);
-        }
-		const addFinal: AddFinalIds = { type: 'addFinalIds', first: final(state.currentFinal), last: final(lastFinal), isBlock };
+		const isBlock = random.bool(1 / 7);
+		if (isBlock) {
+			lastFinal += random.integer(1, 10);
+		}
+		const addFinal: AddFinalIds = {
+			type: 'addFinalIds',
+			first: final(state.currentFinal),
+			last: final(lastFinal),
+			isBlock,
+		};
 		state.currentFinal = lastFinal + 1;
 		state.prevWasLocal = false;
 		return addFinal;
@@ -404,11 +413,11 @@ function fuzzNormalizer(
 				return state;
 			},
 			addFinalIds: (state, { first, last, isBlock }) => {
-                if (isBlock) {
-                    state.normalizer.registerFinalIdBlock(first, last - first + 1, dummy)
-                } else {
-                    state.normalizer.addFinalIds(first, last, dummy);
-                }
+				if (isBlock) {
+					state.normalizer.registerFinalIdBlock(first, last - first + 1, dummy);
+				} else {
+					state.normalizer.addFinalIds(first, last, dummy);
+				}
 				return state;
 			},
 		},

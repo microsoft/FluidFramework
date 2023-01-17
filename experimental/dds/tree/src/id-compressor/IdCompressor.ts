@@ -1000,7 +1000,10 @@ export class IdCompressor {
 		if (currentClusterDetails !== undefined) {
 			cluster = currentClusterDetails.cluster;
 			const lastFinalKnown = sessionIdNormalizer.getLastFinalId();
-			if (lastFinalKnown !== undefined && lastFinalKnown - currentClusterDetails.clusterBase + 1 < cluster.capacity) {
+			if (
+				lastFinalKnown !== undefined &&
+				lastFinalKnown - currentClusterDetails.clusterBase + 1 < cluster.capacity
+			) {
 				eagerFinalId = (lastFinalKnown + 1) as FinalCompressedId & SessionSpaceCompressedId;
 			}
 		}
@@ -1179,10 +1182,12 @@ export class IdCompressor {
 					this.clustersAndOverridesInversion.get(inversionKey) ?? fail('Bimap is malformed.');
 				return !IdCompressor.isClusterInfo(compressionMapping) &&
 					!IdCompressor.isUnfinalizedOverride(compressionMapping) &&
-					compressionMapping.associatedLocalId === id ? compressionMapping.originalOverridingFinal : id as OpSpaceCompressedId;
+					compressionMapping.associatedLocalId === id
+					? compressionMapping.originalOverridingFinal
+					: (id as OpSpaceCompressedId);
 			}
-            const possibleFinal = this.sessionIdNormalizer.getFinalId(id);
-			return possibleFinal === undefined ? id as OpSpaceCompressedId : possibleFinal[0];
+			const possibleFinal = this.sessionIdNormalizer.getFinalId(id);
+			return possibleFinal === undefined ? (id as OpSpaceCompressedId) : possibleFinal[0];
 		}
 		const [correspondingFinal, cluster] =
 			this.sessionIdNormalizer.getFinalId(id) ??

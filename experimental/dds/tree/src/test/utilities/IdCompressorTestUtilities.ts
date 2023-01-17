@@ -183,12 +183,12 @@ export class IdCompressorTestNetwork {
 		this.sequencedIdLogs = clientSequencedIds as ClientMap<TestIdData[]>;
 	}
 
-    /**
+	/**
 	 * Returns the number of undelivered operations for the given client that are in flight in the network.
 	 */
-    public getPendingOperations(destination: Client): number {
-        return this.serverOperations.length - this.clientProgress.get(destination);
-    }
+	public getPendingOperations(destination: Client): number {
+		return this.serverOperations.length - this.clientProgress.get(destination);
+	}
 
 	/**
 	 * Returns an immutable handle to a compressor in the network.
@@ -328,12 +328,12 @@ export class IdCompressorTestNetwork {
 		return nextIdIndex === 0 ? opSpaceIds : creationRange;
 	}
 
-    	/**
+	/**
 	 * Delivers all undelivered ID ranges and cluster capacity changes from the server to the target clients.
 	 */
 	public deliverOperations(clientTakingDelivery: Client, opsToDeliver?: number);
 
-    /**
+	/**
 	 * Delivers all undelivered ID ranges and cluster capacity changes from the server to the target clients.
 	 */
 	public deliverOperations(clientTakingDelivery: DestinationClient);
@@ -342,15 +342,16 @@ export class IdCompressorTestNetwork {
 	 * Delivers all undelivered ID ranges and cluster capacity changes from the server to the target clients.
 	 */
 	public deliverOperations(clientTakingDelivery: DestinationClient, opsToDeliver?: number) {
-        let opIndexBound: number;
-        if (clientTakingDelivery === DestinationClient.All) {
-            assert(opsToDeliver === undefined);
-            opIndexBound = this.serverOperations.length;
-        } else {
-            opIndexBound = opsToDeliver !== undefined
-                ? (this.clientProgress.get(clientTakingDelivery) + opsToDeliver)
-                : this.serverOperations.length;
-        }
+		let opIndexBound: number;
+		if (clientTakingDelivery === DestinationClient.All) {
+			assert(opsToDeliver === undefined);
+			opIndexBound = this.serverOperations.length;
+		} else {
+			opIndexBound =
+				opsToDeliver !== undefined
+					? this.clientProgress.get(clientTakingDelivery) + opsToDeliver
+					: this.serverOperations.length;
+		}
 		for (const [clientTo, compressorTo] of this.getTargetCompressors(clientTakingDelivery)) {
 			for (let i = this.clientProgress.get(clientTo); i < opIndexBound; i++) {
 				const operation = this.serverOperations[i];
@@ -403,15 +404,15 @@ export class IdCompressorTestNetwork {
 			(client) => [this.compressors.get(client), this.getSequencedIdLog(client)] as const
 		);
 
-        // First, ensure all clients each generated a unique ID for each of their own calls to generate.
-        for (const [compressor, ids] of sequencedLogs) {
-            const uuids = new Set<StableId | string>();
-            for (const idData of ids) {
-                const uuid = compressor.decompress(idData.id);
-                expect(!uuids.has(uuid), 'Duplicate UUID generated.');
-                uuids.add(uuid);
-            }
-        }
+		// First, ensure all clients each generated a unique ID for each of their own calls to generate.
+		for (const [compressor, ids] of sequencedLogs) {
+			const uuids = new Set<StableId | string>();
+			for (const idData of ids) {
+				const uuid = compressor.decompress(idData.id);
+				expect(!uuids.has(uuid), 'Duplicate UUID generated.');
+				uuids.add(uuid);
+			}
+		}
 
 		const maxLogLength = sequencedLogs.map(([_, data]) => data.length).reduce((p, n) => Math.max(p, n));
 
@@ -659,7 +660,7 @@ interface DeliverAllOperations {
 interface DeliverSomeOperations {
 	type: 'deliverSomeOperations';
 	client: Client;
-    count: number;
+	count: number;
 }
 
 interface ChangeCapacity {
@@ -684,7 +685,14 @@ interface Validate {
 	type: 'validate';
 }
 
-type Operation = AllocateIds | DeliverSomeOperations | DeliverAllOperations | ChangeCapacity | GenerateUnifyingIds | Reconnect | Validate;
+type Operation =
+	| AllocateIds
+	| DeliverSomeOperations
+	| DeliverAllOperations
+	| ChangeCapacity
+	| GenerateUnifyingIds
+	| Reconnect
+	| Validate;
 
 interface FuzzTestState extends BaseFuzzTestState {
 	network: IdCompressorTestNetwork;
@@ -744,20 +752,24 @@ export function makeOpGenerator(options: OperationGenerationConfig): Generator<O
 		};
 	}
 
-    function deliverSomeOperationsGenerator({ random, selectableClients, network }: FuzzTestState): DeliverSomeOperations {
-        const pendingClients = selectableClients.filter((c) => network.getPendingOperations(c) > 0);
-        if (pendingClients.length === 0) {
-            return {
-                type: 'deliverSomeOperations',
-                client: random.pick(selectableClients),
-                count: 0
-            };
-        }
-        const client = random.pick(pendingClients);
+	function deliverSomeOperationsGenerator({
+		random,
+		selectableClients,
+		network,
+	}: FuzzTestState): DeliverSomeOperations {
+		const pendingClients = selectableClients.filter((c) => network.getPendingOperations(c) > 0);
+		if (pendingClients.length === 0) {
+			return {
+				type: 'deliverSomeOperations',
+				client: random.pick(selectableClients),
+				count: 0,
+			};
+		}
+		const client = random.pick(pendingClients);
 		return {
 			type: 'deliverSomeOperations',
 			client,
-            count: random.integer(1, network.getPendingOperations(client))
+			count: random.integer(1, network.getPendingOperations(client)),
 		};
 	}
 
@@ -829,7 +841,7 @@ export function performFuzzActions(
 				network.deliverOperations(op.client, op.count);
 				return state;
 			},
-            deliverAllOperations: (state) => {
+			deliverAllOperations: (state) => {
 				network.deliverOperations(DestinationClient.All);
 				return state;
 			},
