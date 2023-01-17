@@ -24,6 +24,7 @@ import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
+import { timeoutAwait } from "./timeoutUtils";
 
 const summarizerClientType = "summarizer";
 
@@ -65,7 +66,6 @@ const defaultSummaryOptions: ISummaryRuntimeOptions = {
         maxAckWaitTime: 10000,
         maxOpsSinceLastSummary: 7000,
         initialSummarizerDelayMs: 0,
-        summarizerClientElection: false,
     },
 };
 
@@ -142,16 +142,16 @@ export async function createSummarizerWithContainer(
 export async function summarizeNow(summarizer: ISummarizer, reason: string = "end-to-end test") {
     const result = summarizer.summarizeOnDemand({ reason });
 
-    const submitResult = await result.summarySubmitted;
+    const submitResult = await timeoutAwait(result.summarySubmitted);
     assert(submitResult.success, "on-demand summary should submit");
     assert(submitResult.data.stage === "submit",
         "on-demand summary submitted data stage should be submit");
     assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
 
-    const broadcastResult = await result.summaryOpBroadcasted;
+    const broadcastResult = await timeoutAwait(result.summaryOpBroadcasted);
     assert(broadcastResult.success, "summary op should be broadcast");
 
-    const ackNackResult = await result.receivedSummaryAckOrNack;
+    const ackNackResult = await timeoutAwait(result.receivedSummaryAckOrNack);
     assert(ackNackResult.success, "summary op should be acked");
 
     await new Promise((resolve) => process.nextTick(resolve));

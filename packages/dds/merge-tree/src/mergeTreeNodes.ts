@@ -344,6 +344,7 @@ export interface SegmentGroup {
     segments: ISegment[];
     previousProps?: PropertySet[];
     localSeq: number;
+    refSeq: number;
 }
 
 export class MergeNode implements IMergeNodeCommon {
