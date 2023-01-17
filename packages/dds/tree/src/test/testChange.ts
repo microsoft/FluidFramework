@@ -12,8 +12,7 @@ import {
     AnchorSet,
     Delta,
 } from "../core";
-import { ChangesetLocalId, IdAllocator } from "../feature-libraries";
-import { brand, JsonCompatible, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
+import { JsonCompatible, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
 import { deepFreeze } from "./utils";
 
 export interface NonEmptyTestChange {
@@ -54,14 +53,6 @@ function mint(inputContext: readonly number[], intention: number | number[]): No
         inputContext: [...inputContext],
         intentions,
         outputContext: composeIntentions(inputContext, intentions),
-    };
-}
-
-// TODO: Move this to another file since it isn't related to TestChange.
-function idAllocatorFromMaxId(maxId: ChangesetLocalId | undefined = undefined): IdAllocator {
-    let currId = maxId ?? -1;
-    return () => {
-        return brand(++currId);
     };
 }
 
@@ -206,7 +197,6 @@ const encoder = new TestChangeEncoder();
 export const TestChange = {
     emptyChange,
     mint,
-    newIdAllocator: idAllocatorFromMaxId,
     compose,
     invert,
     rebase,
@@ -238,6 +228,22 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 export class UnrebasableTestChangeRebaser extends TestChangeRebaser {
     public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
         assert.fail("Unexpected call to rebase");
+    }
+}
+
+export class ConstrainedTestChangeRebaser extends TestChangeRebaser {
+    public constructor(
+        private readonly constraint: (
+            change: TestChange,
+            over: TaggedChange<TestChange>,
+        ) => boolean,
+    ) {
+        super();
+    }
+
+    public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+        assert(this.constraint(change, over));
+        return super.rebase(change, over);
     }
 }
 

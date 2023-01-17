@@ -14,22 +14,36 @@ import { ISharedCell } from "./interfaces";
 import { pkgVersion } from "./packageVersion";
 
 /**
- * The factory that defines the map
+ * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedCell}.
+ *
+ * @sealed
  */
 export class CellFactory implements IChannelFactory {
+    /**
+     * {@inheritDoc CellFactory."type"}
+     */
     public static readonly Type = "https://graph.microsoft.com/types/cell";
 
+    /**
+     * {@inheritDoc CellFactory.attributes}
+     */
     public static readonly Attributes: IChannelAttributes = {
         type: CellFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
     };
 
-    public get type() {
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
+     */
+    public get type(): string {
         return CellFactory.Type;
     }
 
-    public get attributes() {
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
+     */
+    public get attributes(): IChannelAttributes {
         return CellFactory.Attributes;
     }
 
@@ -46,6 +60,9 @@ export class CellFactory implements IChannelFactory {
         return cell;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
+     */
     public create(document: IFluidDataStoreRuntime, id: string): ISharedCell {
         const cell = new SharedCell(id, document, this.attributes);
         cell.initializeLocal();

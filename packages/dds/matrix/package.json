@@ -76,6 +76,7 @@
     "@fluidframework/shared-object-base": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
     "@fluidframework/telemetry-utils": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
     "@tiny-calc/nano": "0.0.0-alpha.5",
+    "events": "^3.1.0",
     "tslib": "^1.10.0"
   },
   "devDependencies": {
@@ -92,6 +93,7 @@
     "@rushstack/eslint-config": "^2.5.1",
     "@tiny-calc/micro": "0.0.0-alpha.5",
     "@types/mocha": "^9.1.1",
+    "@types/node": "^14.18.36",
     "best-random": "^1.0.0",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",

@@ -27,7 +27,6 @@ export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryC
         super(
             (_options) => this.throwUnsupportedUsageError("Getting storage token"),
             (_options) => this.throwUnsupportedUsageError("Getting websocket token"),
-            () => this.throwUnsupportedUsageError("Getting SocketIO Client"),
         );
     }
 

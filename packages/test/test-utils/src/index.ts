@@ -27,13 +27,15 @@ export {
     createSummarizerFromFactory,
     createSummarizerWithContainer,
     summarizeNow,
-    waitForContainerConnection,
 } from "./TestSummaryUtils";
 export {
     defaultTimeoutDurationMs,
-    ensureContainerConnected,
     timeoutAwait,
     timeoutPromise,
     TimeoutWithError,
     TimeoutWithValue,
 } from "./timeoutUtils";
+export {
+    ensureContainerConnected,
+    waitForContainerConnection,
+} from "./containerUtils";

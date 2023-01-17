@@ -4,16 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { jsonString } from "../../../domains";
-import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import { TestChange, TestChangeEncoder } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import { ChangeMaker as Change, TestChangeset } from "./testEdits";
-
-const nodeX = { type: jsonString.name, value: "X" };
-const nodeY = { type: jsonString.name, value: "Y" };
-const content = [singleTextCursor(nodeX), singleTextCursor(nodeY)];
-deepFreeze(content);
 
 describe("SequenceField - Encoder", () => {
     it("with child change", () => {
