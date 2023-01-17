@@ -53,7 +53,6 @@ interface IPendingPact<T> {
     /**
      * The list of clientIds that we expect "accept" ops from.  Clients are also removed from this list if they
      * disconnect without accepting.  When this list empties, the pending value transitions to accepted.
-     * TODO: Consider using a Set locally, and serializing to array just for the snapshot
      */
     expectedSignoffs: string[];
 }
@@ -226,7 +225,6 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
         }
 
         // If not attached, we basically pretend we got an ack immediately.
-        // TODO: Should we just directly store the value rather than the full simulation?
         if (!this.isAttached()) {
             // Queueing as a microtask to permit callers to complete their callstacks before the result of the set
             // takes effect.  This more closely resembles the pattern in the attached state, where the ack will not
