@@ -75,6 +75,54 @@ describe('SessionIdNormalizer', () => {
 		);
 	});
 
+	it('aligns outstanding locals when a block of finals is registered', () => {
+		/**
+		 * Locals: [-1, -2,  -3,  -4]
+		 * Finals: [ 0,  X,   X,   X]
+		 * Calling `registerFinalIdBlock` with first === 3, count === 10 results in the following:
+		 * Locals: [-1, -2,  -3,  -4]
+		 * Finals: [ 0,  3,   4,   5]
+		 *
+		 */
+		const normalizer = makeTestNormalizer();
+		const local1 = normalizer.addLocalId(); // -1
+		const local2 = normalizer.addLocalId(); // -2
+		const local3 = normalizer.addLocalId(); // -3
+		const local4 = normalizer.addLocalId(); // -4
+		normalizer.addFinalIds(final(0), final(0), dummy);
+
+		normalizer.registerFinalIdBlock(final(3), 10, dummy);
+		const locals = [local1, local2, local3, local4];
+		for (let i = 1; i < locals.length; i++) {
+			const expectedFinal = final(i + 2);
+			const finalObj = normalizer.getFinalId(locals[i]);
+			if (finalObj === undefined) {
+				expect.fail();
+			} else {
+				expect(finalObj[0]).to.equal(expectedFinal);
+			}
+		}
+
+		const local5 = normalizer.addLocalId();
+		expect(local5).to.equal(-5);
+		expect(normalizer.getFinalId(local5)).to.be.undefined;
+	});
+
+	it('fails to align a block of finals when there are no outstanding local IDs', () => {
+		/**
+		 * Locals: [-1,  X]
+		 * Finals: [ 0,  1]
+		 * Calling `registerFinalIdBlock` with first === 5, count === 10 should fail.
+		 */
+		const normalizer = makeTestNormalizer();
+		normalizer.addLocalId(); // -1
+		normalizer.addFinalIds(final(0), final(1), dummy);
+
+		expect(() => normalizer.registerFinalIdBlock(final(5), 10, dummy)).to.throw(
+			'Final ID block should not be registered without an existing local range.'
+		);
+	});
+
 	it('fails when attempting to normalize a local ID that was never registered', () => {
 		const normalizer = makeTestNormalizer();
 		expect(() => normalizer.getFinalId(-1 as LocalCompressedId)).to.throw(
@@ -278,46 +326,46 @@ function makeNormalizerProxy(
 		get(target, property: keyof SessionIdNormalizer<DummyRange>) {
 			if (typeof target[property] === 'function') {
 				switch (property) {
-				case 'addLocalId': {
-					return new Proxy(target[property], {
-						apply: (func, thisArg, argumentsList) => {
-							const local = Reflect.apply(func, thisArg, argumentsList);
-							if (locals.length > 0) {
-								for (let i = (locals[locals.length - 1] ?? fail()) - 1; i > local; i--) {
-									locals.push(undefined);
+					case 'addLocalId': {
+						return new Proxy(target[property], {
+							apply: (func, thisArg, argumentsList) => {
+								const local = Reflect.apply(func, thisArg, argumentsList);
+								if (locals.length > 0) {
+									for (let i = (locals[locals.length - 1] ?? fail()) - 1; i > local; i--) {
+										locals.push(undefined);
+									}
 								}
-							}
-							locals.push(local);
-							return local;
-						},
-					});
-				}
-				case 'addFinalIds': {
-					return new Proxy(target[property], {
-						apply: (func, thisArg, argumentsList) => {
-							const firstFinal: FinalCompressedId = argumentsList[0];
-							const lastFinal: FinalCompressedId = argumentsList[1];
-							for (let i = firstFinal; i <= lastFinal; i++) {
-								finals.push(i);
-							}
-							return Reflect.apply(func, thisArg, argumentsList);
-						},
-					});
-				}
-				case 'registerFinalIdBlock': {
-					return new Proxy(target[property], {
-						apply: (func, thisArg, argumentsList) => {
-							const firstFinal: FinalCompressedId = argumentsList[0];
-							const count: FinalCompressedId = argumentsList[1];
-							const usedFinals = Math.max(0, Math.min(locals.length - finals.length, count));
-							for (let i = firstFinal; i < usedFinals; i++) {
-								finals.push(i);
-							}
-							return Reflect.apply(func, thisArg, argumentsList);
-						},
-					});
-				}
-				// No default
+								locals.push(local);
+								return local;
+							},
+						});
+					}
+					case 'addFinalIds': {
+						return new Proxy(target[property], {
+							apply: (func, thisArg, argumentsList) => {
+								const firstFinal: FinalCompressedId = argumentsList[0];
+								const lastFinal: FinalCompressedId = argumentsList[1];
+								for (let i = firstFinal; i <= lastFinal; i++) {
+									finals.push(i);
+								}
+								return Reflect.apply(func, thisArg, argumentsList);
+							},
+						});
+					}
+					case 'registerFinalIdBlock': {
+						return new Proxy(target[property], {
+							apply: (func, thisArg, argumentsList) => {
+								const firstFinal: FinalCompressedId = argumentsList[0];
+								const count: FinalCompressedId = argumentsList[1];
+								const usedFinals = Math.max(0, Math.min(locals.length - finals.length, count));
+								for (let i = firstFinal; i < usedFinals; i++) {
+									finals.push(i);
+								}
+								return Reflect.apply(func, thisArg, argumentsList);
+							},
+						});
+					}
+					// No default
 				}
 			}
 			return Reflect.get(target, property);
