@@ -56,6 +56,7 @@ variables:
   - name: toolAbsolutePath
     value: $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
+  - group: imamsean-azure-monitor
 
 stages:
   # Performance unit tests - runtime
@@ -68,6 +69,8 @@ stages:
         readonly: true
     jobs:
     - template: templates/include-test-perf-benchmarks.yml
+      env:
+        test_sean_env_var: ${seantest}
       parameters:
         poolBuild: ${{ parameters.poolBuild }}
         testWorkspace: ${{ variables.testWorkspace }}
@@ -187,15 +190,24 @@ stages:
                 echo "Cleanup package ${{ testPackage }} from ${{ variables.testWorkspace }}/node_modules/"
                 rm -rf ${{ testPackage }};
 
+        # - task: Bash@3
+        #   displayName: Write measurements to Aria/Kusto
+        #   inputs:
+        #     targetType: 'inline'
+        #     workingDirectory: $(toolAbsolutePath)
+        #     script: |
+        #       echo "Write the following benchmark output to Aria/Kusto"
+        #       ls -laR ${{ variables.consolidatedTestsOutputFolder }};
+        #       node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
+
         - task: Bash@3
-          displayName: Write measurements to Aria/Kusto
+          displayName: Get Azure Monitor test variable
           inputs:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
-              echo "Write the following benchmark output to Aria/Kusto"
-              ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
+              echo $(seantest)
+
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - Perf tests output - execution time
@@ -203,6 +215,7 @@ stages:
             targetPath: '${{ variables.consolidatedTestsOutputFolder }}'
             artifactName: 'perf-test-outputs_execution-time'
           condition: succeededOrFailed()
+
 
   # Performance unit tests - memory
   - stage: perf_unit_tests_memory
