@@ -30,6 +30,7 @@ export function validateTokenClaims(
     tenantId: string,
     requireDocumentId = true): ITokenClaims {
     const claims = decode(token) as ITokenClaims;
+    Lumberjack.info(`Token: ${token}, Claims: ${claims}`);
     if (!claims) {
         throw new NetworkError(403, "Missing token claims.");
     }

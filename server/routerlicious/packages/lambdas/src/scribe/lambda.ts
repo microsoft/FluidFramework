@@ -45,7 +45,7 @@ import { initializeProtocol, sendToDeli } from "./utils";
 
 export class ScribeLambda implements IPartitionLambda {
     // Value of the last processed Kafka offset
-    private lastOffset: number;
+    private readonly lastOffset: number;
 
     // Pending checkpoint information
     private pendingCheckpointScribe: IScribe | undefined;
@@ -117,6 +117,12 @@ export class ScribeLambda implements IPartitionLambda {
         for (const baseMessage of boxcar.contents) {
             if (baseMessage.type === SequencedOperationType) {
                 const value = baseMessage as ISequencedOperationMessage;
+                Lumberjack.info(`Processing ${value.operation.sequenceNumber} ${value.operation.type}`, getLumberBaseProperties(this.documentId, this.tenantId));
+
+                // if (value.operation.sequenceNumber > 10 && value.operation.sequenceNumber < 20) {
+                //     Lumberjack.info(`Skipping ${value.operation.sequenceNumber} ${value.operation.term} ${this.term}`,   getLumberBaseProperties(this.documentId, this.tenantId));
+                //     continue;
+                // }
 
                 // The following block is only invoked once deli enables term flipping.
                 if (this.term && value.operation.term) {
@@ -164,8 +170,10 @@ export class ScribeLambda implements IPartitionLambda {
                     if (this.pendingMessageReader !== undefined) {
                         const from = lastProtocolHandlerSequenceNumber + 1;
                         const to = value.operation.sequenceNumber - 1;
+                        Lumberjack.info(`From = ${from} To = ${to} LastProtocolHandlerSequenceNumber = ${lastProtocolHandlerSequenceNumber}`);
                         const additionalPendingMessages = await this.pendingMessageReader.readMessages(from, to);
                         for (const additionalPendingMessage of additionalPendingMessages) {
+                            Lumberjack.info(`Adding additional pending message ${additionalPendingMessage.sequenceNumber}`);
                             this.pendingMessages.push(additionalPendingMessage);
                         }
                     } else {
@@ -384,15 +392,15 @@ export class ScribeLambda implements IPartitionLambda {
             checkpoint,
             message,
             this.clearCache);
-        this.lastOffset = message.offset;
-        Lumberjack.info(`Last offset: ${this.lastOffset}`, getLumberBaseProperties(this.documentId, this.tenantId));
-        const reason = CheckpointReason[checkpointReason];
-        const checkpointResult = `Writing checkpoint. Reason: ${reason}`;
-        const lumberjackProperties = {
-            ...getLumberBaseProperties(this.documentId, this.tenantId),
-            checkpointReason: reason,
-        };
-        Lumberjack.info(checkpointResult, lumberjackProperties);
+        // this.lastOffset = message.offset;
+        // Lumberjack.info(`Last offset: ${this.lastOffset}`, getLumberBaseProperties(this.documentId, this.tenantId));
+        // const reason = CheckpointReason[checkpointReason];
+        // const checkpointResult = `Writing checkpoint. Reason: ${reason}`;
+        // const lumberjackProperties = {
+        //     ...getLumberBaseProperties(this.documentId, this.tenantId),
+        //     checkpointReason: reason,
+        // };
+        // Lumberjack.info(checkpointResult, lumberjackProperties);
     }
 
     public close(closeType: LambdaCloseType) {

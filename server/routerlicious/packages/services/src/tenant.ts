@@ -13,6 +13,7 @@ import {
 import { generateToken, getCorrelationId } from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { ScopeType } from "@fluidframework/protocol-definitions";
 
 export class Tenant implements core.ITenant {
     public get id(): string {
@@ -63,7 +64,7 @@ export class TenantManager implements core.ITenantManager {
         };
         const getDefaultHeaders = () => {
             const credentials: ICredentials = {
-                password: generateToken(tenantId, documentId, key, null),
+                password: generateToken(tenantId, documentId, key, [ScopeType.DocRead]),
                 user: tenantId,
             };
             return ({
