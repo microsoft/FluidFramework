@@ -83,7 +83,14 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 
         let fileInfo: INewFileInfo | IExistingFileInfo;
         let createShareLinkParam: ShareLinkTypes | ISharingLinkKind | undefined;
-        if (odspResolvedUrl.fileName) {
+        if (odspResolvedUrl.itemId) {
+            fileInfo = {
+                type: 'Existing',
+                driveId: odspResolvedUrl.driveId,
+                siteUrl: odspResolvedUrl.siteUrl,
+                itemId: odspResolvedUrl.itemId
+            };
+        } else if (odspResolvedUrl.fileName) {
             createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
             fileInfo = {
                 type: 'New',
@@ -92,13 +99,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 filePath,
                 filename: odspResolvedUrl.fileName,
                 createLinkType: createShareLinkParam,
-            };
-        } else if (odspResolvedUrl.itemId) {
-            fileInfo = {
-                type: 'Existing',
-                driveId: odspResolvedUrl.driveId,
-                siteUrl: odspResolvedUrl.siteUrl,
-                itemId: odspResolvedUrl.itemId
             };
         } else {
             throw new Error("A new or existing file must be specified to create container!");
