@@ -1038,7 +1038,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const opSplitter = new OpSplitter(
             chunks,
             this.context.submitBatchFn,
-            runtimeOptions.chunkSizeInBytes,
+            this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableCompressionChunking") === true ?
+                Number.POSITIVE_INFINITY : runtimeOptions.chunkSizeInBytes,
             runtimeOptions.maxBatchSizeInBytes,
             this.mc.logger);
         this.remoteMessageProcessor = new RemoteMessageProcessor(opSplitter, new OpDecompressor());
@@ -1184,6 +1185,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
             pendingRuntimeState?.pending);
 
+        const compressionOptions = this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableCompression") === true ?
+        {
+            minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+            compressionAlgorithm: CompressionAlgorithms.lz4
+        } : runtimeOptions.compressionOptions;
+
         this.outbox = new Outbox({
             shouldSend: () => this.canSendOps(),
             pendingStateManager: this.pendingStateManager,
@@ -1191,7 +1198,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             compressor: new OpCompressor(this.mc.logger),
             splitter: opSplitter,
             config: {
-                compressionOptions: runtimeOptions.compressionOptions,
+                compressionOptions,
                 maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
                 enableOpReentryCheck: this.enableOpReentryCheck,
             },

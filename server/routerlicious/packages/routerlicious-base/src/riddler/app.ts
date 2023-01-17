@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MongoManager, ISecretManager } from "@fluidframework/server-services-core";
+import { MongoManager, ISecretManager, ICache } from "@fluidframework/server-services-core";
 import { BaseTelemetryProperties } from "@fluidframework/server-services-telemetry";
 import * as bodyParser from "body-parser";
 import express from "express";
@@ -23,6 +23,7 @@ export function create(
     defaultHistorianUrl: string,
     defaultInternalHistorianUrl: string,
     secretManager: ISecretManager,
+    cache?: ICache
 ) {
     // Express app configuration
     const app: express.Express = express();
@@ -55,7 +56,8 @@ export function create(
             baseOrdererUrl,
             defaultHistorianUrl,
             defaultInternalHistorianUrl,
-            secretManager));
+            secretManager,
+            cache));
 
     // Catch 404 and forward to error handler
     app.use(catch404());

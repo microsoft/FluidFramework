@@ -245,8 +245,14 @@ export function dequeueRelatedReattaches<T>(
 } {
     const newMark = newMarks.peek();
     const baseMark = baseMarks.peek();
-    assert(newMark !== undefined && isReattach(newMark), "No new reattach mark to line up");
-    assert(baseMark !== undefined && isReattach(baseMark), "No base reattach mark to line up");
+    assert(
+        newMark !== undefined && isReattach(newMark),
+        0x504 /* No new reattach mark to line up */,
+    );
+    assert(
+        baseMark !== undefined && isReattach(baseMark),
+        0x505 /* No base reattach mark to line up */,
+    );
     const newMarkLength = newMark.count;
     const baseMarkLength = baseMark.count;
     if (newMark.detachIndex === baseMark.detachIndex) {
@@ -708,7 +714,7 @@ export function areRebasable(branch: Changeset<unknown>, target: Changeset<unkno
                 const key = `${entry.rev}|${entry.index}`;
                 assert(
                     !reattachToIndex.has(key),
-                    "First changeset as inconsistent characterization of detached nodes",
+                    0x506 /* First changeset as inconsistent characterization of detached nodes */,
                 );
                 list.push(key);
                 reattachToIndex.set(key, index);
