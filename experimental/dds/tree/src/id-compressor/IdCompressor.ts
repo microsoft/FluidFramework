@@ -1187,7 +1187,7 @@ export class IdCompressor {
 					: (id as OpSpaceCompressedId);
 			}
 			const possibleFinal = this.sessionIdNormalizer.getFinalId(id);
-			return possibleFinal === undefined ? (id as OpSpaceCompressedId) : possibleFinal[0];
+			return possibleFinal?.[0] ?? (id as OpSpaceCompressedId);
 		}
 		const [correspondingFinal, cluster] =
 			this.sessionIdNormalizer.getFinalId(id) ??
