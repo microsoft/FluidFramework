@@ -109,7 +109,10 @@ function composeMarkLists<TNodeChange>(
         }
         const { baseMark, newMark } = popped;
         if (newMark === undefined) {
-            assert(baseMark !== undefined, "Non-empty queue should not return two undefined marks");
+            assert(
+                baseMark !== undefined,
+                0x4db /* Non-empty queue should not return two undefined marks */,
+            );
             factory.push(baseMark);
         } else if (baseMark === undefined) {
             factory.push(composeMark(newMark, newRev, composeChild));
@@ -119,7 +122,7 @@ function composeMarkLists<TNodeChange>(
             // They therefore refer to the same range for that revision.
             assert(
                 !isAttach(newMark) || isConflictedReattach(newMark),
-                "A new attach cannot be at the same position as a base mark",
+                0x4dc /* A new attach cannot be at the same position as a base mark */,
             );
             const composedMark = composeMarks(
                 baseMark,
@@ -200,7 +203,7 @@ function composeMarks<TNodeChange>(
                 case "Revive": {
                     assert(
                         !isConflictedReattach(baseMark) && isConflicted(newMark),
-                        "Invalid mark overlap",
+                        0x4dd /* Invalid mark overlap */,
                     );
                     return baseMark;
                 }
@@ -385,7 +388,7 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
     }
 
     const cloned = clone(mark);
-    assert(!isSkipMark(cloned), "Cloned should be same type as input mark");
+    assert(!isSkipMark(cloned), 0x4de /* Cloned should be same type as input mark */);
     if (revision !== undefined && cloned.type !== "Modify" && cloned.revision === undefined) {
         cloned.revision = revision;
     }
@@ -483,7 +486,10 @@ export class ComposeQueue<T> {
             if (isActiveReattach(newMark) && isDetachMark(baseMark)) {
                 const newRev = newMark.revision ?? this.newRevision;
                 const baseRev = baseMark.revision ?? this.baseMarks.revision;
-                assert(baseRev !== undefined, "Compose base mark should carry revision info");
+                assert(
+                    baseRev !== undefined,
+                    0x4df /* Compose base mark should carry revision info */,
+                );
                 const areInverses =
                     // The same RevisionTag implies the two changesets are inverses in a rebase sandwich
                     (newRev !== undefined && baseRev === newRev) ||
@@ -554,7 +560,7 @@ export class ComposeQueue<T> {
                         // detach was.
                         const currentOffset = this.baseGap.getOffset(baseRev);
                         const remainingOffset = targetOffset - currentOffset;
-                        assert(remainingOffset >= 0, "Overshot the target gap");
+                        assert(remainingOffset >= 0, 0x4e0 /* Overshot the target gap */);
                         if (remainingOffset === 0) {
                             return { newMark: this.newMarks.dequeue() };
                         }

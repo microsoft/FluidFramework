@@ -92,7 +92,7 @@ export function splitMoveSrc<T>(
     } else {
         assert(
             !table.srcEffects.has(id),
-            "There should be an entry in splitIdToOrigId for this ID",
+            0x4e5 /* There should be an entry in splitIdToOrigId for this ID */,
         );
         table.srcEffects.set(id, parts);
         for (const { id: newId } of parts) {
@@ -135,7 +135,7 @@ export function splitMoveDest<T>(
     } else {
         assert(
             !table.dstEffects.has(id),
-            "There should be an entry in splitIdToOrigId for this ID",
+            0x4e6 /* There should be an entry in splitIdToOrigId for this ID */,
         );
         table.dstEffects.set(id, parts);
         for (const { id: newId } of parts) {
@@ -165,10 +165,10 @@ export function replaceMoveDest<T>(table: MoveEffectTable<T>, id: MoveId, mark: 
     if (origId !== undefined) {
         const effect = getOrAddEmptyToMap(table.dstEffects, origId);
         const partition = getOrAddMovePartition(effect, id);
-        assert(partition.replaceWith === undefined, "Move dest already replaced");
+        assert(partition.replaceWith === undefined, 0x4e7 /* Move dest already replaced */);
         partition.replaceWith = [mark];
     } else {
-        assert(!table.dstEffects.has(id), "This MoveId cannot be replaced");
+        assert(!table.dstEffects.has(id), 0x4e8 /* This MoveId cannot be replaced */);
         table.dstEffects.set(id, [{ id, replaceWith: [mark] }]);
     }
 }
@@ -196,8 +196,8 @@ export function modifyMoveSrc<T>(table: MoveEffectTable<T>, id: MoveId, change: 
     if (origId !== undefined) {
         const effect = getOrAddEmptyToMap(table.srcEffects, origId);
         const partition = getOrAddMovePartition(effect, id);
-        assert(partition.replaceWith === undefined, "Move source already replaced");
-        assert(partition.modifyAfter === undefined, "Move source already been modified");
+        assert(partition.replaceWith === undefined, 0x4e9 /* Move source already replaced */);
+        assert(partition.modifyAfter === undefined, 0x4ea /* Move source already been modified */);
         partition.modifyAfter = change;
     } else {
         table.srcEffects.set(id, [{ id, modifyAfter: change }]);
@@ -219,7 +219,7 @@ export function replaceMoveSrc<T>(
     if (origId !== undefined) {
         const effect = getOrAddEmptyToMap(table.srcEffects, origId);
         const partition = getOrAddMovePartition(effect, id);
-        assert(partition.replaceWith === undefined, "Move source already replaced");
+        assert(partition.replaceWith === undefined, 0x4eb /* Move source already replaced */);
         partition.replaceWith = [mark];
     } else {
         table.srcEffects.set(id, [{ id, replaceWith: [mark] }]);
@@ -254,7 +254,7 @@ export function updateMoveDestPairing<T>(
         const partition = getOrAddMovePartition(effect, id);
         partition.pairedMarkStatus = pairedMarkStatus;
     } else {
-        assert(!table.dstEffects.has(id), "This MoveId cannot be replaced");
+        assert(!table.dstEffects.has(id), 0x4ec /* This MoveId cannot be replaced */);
         table.dstEffects.set(id, [{ id, pairedMarkStatus }]);
     }
 }
@@ -294,7 +294,10 @@ export function removeMoveSrc(table: MoveEffectTable<unknown>, id: MoveId): void
 }
 
 export function replaceMoveId<T>(table: MoveEffectTable<T>, id: MoveId, newId: MoveId): void {
-    assert(!table.idRemappings.has(id), "Cannot remap ID which has already been remapped");
+    assert(
+        !table.idRemappings.has(id),
+        0x4ed /* Cannot remap ID which has already been remapped */,
+    );
     table.idRemappings.set(id, newId);
 }
 
@@ -364,7 +367,7 @@ export function splitMoveIn<T>(
     const result: Mark<T>[] = [];
     let cumulativeCount = 0;
     for (const part of parts) {
-        assert(part.modifyAfter === undefined, "Cannot modify move destination");
+        assert(part.modifyAfter === undefined, 0x4ee /* Cannot modify move destination */);
         if (part.replaceWith !== undefined) {
             cumulativeCount += part.count ?? mark.count;
             result.push(...part.replaceWith);
@@ -413,7 +416,7 @@ export function splitMoveOut<T>(
             if (part.modifyAfter !== undefined) {
                 assert(
                     composeChildren !== undefined,
-                    "Must provide a change composer if modifying moves",
+                    0x4ef /* Must provide a change composer if modifying moves */,
                 );
                 const changes = composeChildren(mark.changes, part.modifyAfter);
                 if (changes !== undefined) {
@@ -425,7 +428,7 @@ export function splitMoveOut<T>(
             if (updatePairedMarkStatus && part.pairedMarkStatus !== undefined) {
                 assert(
                     splitMark.type === "ReturnFrom",
-                    "TODO: support updating MoveOut.isSrcConflicted",
+                    0x4f0 /* TODO: support updating MoveOut.isSrcConflicted */,
                 );
                 if (part.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
                     splitMark.isDstConflicted = true;
@@ -436,14 +439,14 @@ export function splitMoveOut<T>(
             if (part.detachedBy !== undefined) {
                 assert(
                     splitMark.type === "ReturnFrom",
-                    "Only ReturnFrom marks can have their detachBy field set",
+                    0x4f1 /* Only ReturnFrom marks can have their detachBy field set */,
                 );
                 splitMark.detachedBy = part.detachedBy;
             }
             if (splitMark.type === "ReturnFrom" && isConflicted(mark)) {
                 assert(
                     splitMark.detachIndex !== undefined,
-                    "Conflicted ReturnFrom should have a detachIndex",
+                    0x4f2 /* Conflicted ReturnFrom should have a detachIndex */,
                 );
                 const returnFrom = splitMark as ReturnFrom;
                 returnFrom.detachIndex = splitMark.detachIndex + cumulativeCount;

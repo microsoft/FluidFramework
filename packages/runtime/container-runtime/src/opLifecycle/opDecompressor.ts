@@ -25,7 +25,7 @@ export class OpDecompressor {
     public processMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
         assert(
             message.compression === undefined || message.compression === CompressionAlgorithms.lz4,
-            "Only lz4 compression is supported");
+            0x511 /* Only lz4 compression is supported */);
 
         if (message.metadata?.batch === true && message.compression === CompressionAlgorithms.lz4) {
             // Beginning of a compressed batch
@@ -51,7 +51,7 @@ export class OpDecompressor {
         }
 
         if (this.rootMessageContents !== undefined && message.metadata?.batch === undefined && this.activeBatch) {
-            assert(message.contents === undefined, "Expecting empty message");
+            assert(message.contents === undefined, 0x512 /* Expecting empty message */);
 
             // Continuation of compressed batch
             return {

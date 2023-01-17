@@ -1732,7 +1732,7 @@ export class MergeTree {
                 // will be removed, so should just be skipped for now
                 continue;
             } else {
-                assert(len >= 0, "Length should not be negative");
+                assert(len >= 0, 0x4bc /* Length should not be negative */);
             }
 
             if ((_pos < len) || ((_pos === len) && this.breakTie(_pos, child, seq))) {
