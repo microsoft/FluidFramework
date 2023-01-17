@@ -122,11 +122,10 @@ export interface IGarbageCollectionRuntime {
     /** After GC has run, called to notify the runtime of routes that are used in it. */
     updateUsedRoutes(usedRoutes: string[]): void;
     /** After GC has run, called to notify the runtime of routes that are unused in it. */
-    updateUnusedRoutes(unusedRoutes: string[]): void;
+    updateUnusedRoutes(unusedRoutes: string[], safeRoutes: string[]): string[];
     /** Called to notify the runtime of routes that are tombstones. */
     updateTombstonedRoutes(tombstoneRoutes: string[]): void;
     /** Called to notify the runtime of datastore routes to be swept. */
-    sweepDataStores(tombstones: string[]): unknown;
     /** Returns a referenced timestamp to be used to track unreferenced nodes. */
     getCurrentReferenceTimestampMs(): number | undefined;
     /** Returns the type of the GC node. */
@@ -985,10 +984,12 @@ export class GarbageCollector implements IGarbageCollector {
         // If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
         // involving access to deleted data.
         if (this.sweepDataStoresMode) {
-            this.removeSweptDataStores(this.tombstones);
-            this.runtime.sweepDataStores(this.tombstones);
+            const safeRoutes = gcResult.deletedNodeIds.concat(gcResult.referencedNodeIds);
+            const removedRoutes = this.runtime.updateUnusedRoutes(this.tombstones, safeRoutes);
+            this.removeSweptNodes(removedRoutes);
         } else if (this.testMode) {
-            this.runtime.updateUnusedRoutes(gcResult.deletedNodeIds);
+            const removedRoutes = this.runtime.updateUnusedRoutes(gcResult.deletedNodeIds, []/* safeRoutes */ );
+            this.removeSweptNodes(removedRoutes);
         } else if (this.tombstoneMode) {
             // If we are running in GC tombstone mode, update tombstoned routes. This enables testing scenarios
             // involving access to "deleted" data without actually deleting the data from summaries.
@@ -1305,10 +1306,7 @@ export class GarbageCollector implements IGarbageCollector {
             } else {
                 nodeStateTracker.updateTracking(currentReferenceTimestampMs);
                 if (this.tombstoneMode && nodeStateTracker.state === UnreferencedState.SweepReady) {
-                    const nodeType = this.runtime.getNodeType(nodeId);
-                    if (nodeType === GCNodeType.DataStore || nodeType === GCNodeType.Blob) {
-                        this.tombstoned.add(nodeId);
-                    }
+                    this.tombstoned.add(nodeId);
                 }
             }
         }
@@ -1317,12 +1315,8 @@ export class GarbageCollector implements IGarbageCollector {
     /**
      * Removes data stores that are swept from GC state except for the tombstones
      */
-    private removeSweptDataStores(tombstones: string[]) {
-        for (const nodeId of tombstones) {
-            const nodeType = this.runtime.getNodeType(nodeId);
-            if (nodeType !== GCNodeType.DataStore) {
-                continue;
-            }
+    private removeSweptNodes(gcNodes: string[]) {
+        for (const nodeId of gcNodes) {
             const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
             if (nodeStateTracker !== undefined) {
                 // Stop tracking so as to clear out any running timers.
@@ -1330,15 +1324,17 @@ export class GarbageCollector implements IGarbageCollector {
                 // Delete the node as we don't need to track it any more.
                 this.unreferencedNodesState.delete(nodeId);
             }
-
-            assert(this.gcDataFromLastRun !== undefined, "GC data should be defined when we are running sweep");
-
-            // Not sure how we want to delete here
-            // delete this.gcDataFromLastRun.gcNodes[nodeId] is not a good practice
-            // Maybe updating the gcNodes to also include undefined?
-            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-            delete this.gcDataFromLastRun.gcNodes[nodeId];
         }
+
+        const sweptNodes = new Set<string>(gcNodes);
+        assert(this.gcDataFromLastRun !== undefined, "GC data should be defined when we are running sweep");
+        const remainingNodes: { [ id: string ]: string[]; } = {};
+        Object.entries(this.gcDataFromLastRun.gcNodes).forEach(([nodeId, routes]) => {
+            if (!sweptNodes.has(nodeId)) {
+                remainingNodes[nodeId] = routes;
+            }
+        });
+        this.gcDataFromLastRun = { gcNodes: remainingNodes };
     }
 
     /**

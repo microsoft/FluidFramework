@@ -643,25 +643,63 @@ export class DataStores implements IDisposable {
      * This is called to update objects whose routes are unused. The unused objects are deleted.
      * @param unusedRoutes - The routes that are unused in all data stores in this Container.
      */
-    public updateUnusedRoutes(unusedRoutes: string[]) {
-        for (const route of unusedRoutes) {
+    public updateUnusedRoutes(unusedRoutes: string[], safeRoutes: string[]): string[] {
+        const deletedRoutes: string[] = [];
+        const deletedDatastoreIds: Set<string> = new Set();
+        const notDeletedRoutes = safeRoutes.filter((route) => !unusedRoutes.includes(route));
+        const notDeletedDataStoreIds: Set<string> = new Set();
+        for (const route of notDeletedRoutes) {
             const pathParts = route.split("/");
-            // Delete data store only if its route (/datastoreId) is in unusedRoutes. We don't want to delete a data
-            // store based on its DDS being unused.
-            if (pathParts.length > 2) {
+            if (pathParts.length < 2) {
                 continue;
             }
             const dataStoreId = pathParts[1];
-
-            // Datastores should not be deleted twice if they are already deleted.
+            // skip non datastore routes
             if (!this.contexts.has(dataStoreId)) {
                 continue;
             }
+            notDeletedDataStoreIds.add(dataStoreId);
+        }
+
+        const missingDeletedDataStoreIds: Set<string> = new Set();
+        for (const route of unusedRoutes) {
+            const pathParts = route.split("/");
+            if (pathParts.length < 2) {
+                continue;
+            }
+            const dataStoreId = pathParts[1];
+            // skip non datastore routes
+            if (!this.contexts.has(dataStoreId)) {
+                continue;
+            }
+            assert(!notDeletedDataStoreIds.has(dataStoreId), "Not deleting all datastore and sub datastore routes!");
+
+            // If a sub datastore is being deleted, its parent datastore should also be deleted
+            if (pathParts.length > 2 && !deletedDatastoreIds.has(dataStoreId)) {
+                missingDeletedDataStoreIds.add(dataStoreId);
+            }
+
+            // Push all deleted DataStore (/datastoreId) and DDS (/datastoreId/DDSId) routes to deleted routes
+            deletedRoutes.push(route);
+
+            // Mark datastores for deletion
+            if (pathParts.length === 2) {
+                deletedDatastoreIds.add(dataStoreId);
+                missingDeletedDataStoreIds.delete(dataStoreId);
+            }
+        }
+
+        assert(missingDeletedDataStoreIds.size === 0, "Deleting sub datastores without deleting their parent datastores!");
+
+        // Actually delete the datastore
+        for (const dataStoreId of deletedDatastoreIds) {
             // Delete the contexts of unused data stores.
             this.contexts.delete(dataStoreId);
             // Delete the summarizer node of the unused data stores.
             this.deleteChildSummarizerNodeFn(dataStoreId);
         }
+
+        return deletedRoutes;
     }
 
     /**
@@ -678,8 +716,9 @@ export class DataStores implements IDisposable {
                 continue;
             }
             const dataStoreId = pathParts[1];
-            assert(this.contexts.has(dataStoreId), "No data store with specified id");
-            tombstonedDataStoresSet.add(dataStoreId);
+            if(this.contexts.has(dataStoreId)) {
+                tombstonedDataStoresSet.add(dataStoreId);
+            }
         }
 
         // Update the used routes in each data store. Used routes is empty for unused data stores.

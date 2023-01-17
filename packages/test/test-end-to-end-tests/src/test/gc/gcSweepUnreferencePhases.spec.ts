@@ -18,6 +18,7 @@ import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { LoaderHeader } from "@fluidframework/container-definitions";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils";
 
 /**
@@ -78,7 +79,7 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
         const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
         await waitForContainerConnection(mainContainer);
 
-        const { summarizer } = await loadSummarizerAndContainer();
+        const { container, summarizer } = await loadSummarizerAndContainer();
 
         // create datastore and blob
         const dataStore = await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
@@ -127,7 +128,8 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
         await delay(sweepTimeoutMs);
         mainDataStore._root.set("send", "op2");
         await provider.ensureSynchronized();
-        const summaryTree3 = (await summarizeNow(summarizer)).summaryTree;
+        const summary3 = await summarizeNow(summarizer);
+        const summaryTree3 = summary3.summaryTree;
         // GC graph check
         const gcState3 = getGCStateFromSummary(summaryTree3);
         assert(gcState3 !== undefined, "Expected GC state to be generated");
@@ -139,5 +141,15 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
         assert(tombstoneState3.includes(blobHandle.absolutePath), "Blob should be tombstoned");
         // Summary check
         assert(!(await isDataStoreInSummaryTree(summaryTree3, dataStoreId)), "Data Store should not be in the summary!");
+
+        await provider.loadTestContainer(
+            testContainerConfig,
+            { [LoaderHeader.version]: summary3.summaryVersion },
+        );
+        container.close();
+
+        const { summarizer: remoteSummarizer } = await loadSummarizerAndContainer(summary3.summaryVersion);
+        const summaryTree4 = (await summarizeNow(remoteSummarizer)).summaryTree;
+        assert(!(await isDataStoreInSummaryTree(summaryTree4, dataStoreId)), "Data Store should not be in the summary!");
     });
 });

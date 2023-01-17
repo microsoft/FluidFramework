@@ -2192,11 +2192,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * This is called to update objects whose routes are unused.
      * @param unusedRoutes - Data store and attachment blob routes that are unused in this Container.
+     * @returns - routes deleted from the runtime
      */
-    public updateUnusedRoutes(unusedRoutes: string[]) {
+    public updateUnusedRoutes(unusedRoutes: string[], safeRoutes: string[]): string[] {
         const { blobManagerRoutes, dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
+        const sweptRoutes: string[] = [];
+        this.updateTombstonedRoutes(unusedRoutes);
         this.blobManager.updateUnusedRoutes(blobManagerRoutes);
-        this.dataStores.updateUnusedRoutes(dataStoreRoutes);
+        const sweptDataStoreRoutes = this.dataStores.updateUnusedRoutes(dataStoreRoutes, safeRoutes);
+        // Potentially a feature flag here for checking for sweptDataStoreRoutes?
+        // No need, but it can be possible.
+        // This is a more generic solution
+        sweptRoutes.push(...sweptDataStoreRoutes);
+        return sweptRoutes;
     }
 
     /**
@@ -2207,16 +2215,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const { blobManagerRoutes, dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(tombstonedRoutes);
         this.blobManager.updateTombstonedRoutes(blobManagerRoutes);
         this.dataStores.updateTombstonedRoutes(dataStoreRoutes);
-    }
-
-    /**
-     * This is called to update datastores that are to be swept.
-     * @param tombstonedRoutes - Data store and attachment blob routes that are tombstones in this Container.
-     */
-    public sweepDataStores(tombstonedRoutes: string[]) {
-        const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(tombstonedRoutes);
-        this.dataStores.updateTombstonedRoutes(dataStoreRoutes);
-        this.dataStores.updateUnusedRoutes(dataStoreRoutes);
     }
 
     /**
