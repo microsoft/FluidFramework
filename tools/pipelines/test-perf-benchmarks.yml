@@ -56,6 +56,7 @@ variables:
   - name: toolAbsolutePath
     value: $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
+  - group: imamsean-azure-monitor
 
 stages:
   # Performance unit tests - runtime
@@ -187,15 +188,23 @@ stages:
                 echo "Cleanup package ${{ testPackage }} from ${{ variables.testWorkspace }}/node_modules/"
                 rm -rf ${{ testPackage }};
 
+        # - task: Bash@3
+        #   displayName: Write measurements to Aria/Kusto
+        #   inputs:
+        #     targetType: 'inline'
+        #     workingDirectory: $(toolAbsolutePath)
+        #     script: |
+        #       echo "Write the following benchmark output to Aria/Kusto"
+        #       ls -laR ${{ variables.consolidatedTestsOutputFolder }};
+        #       node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
+
         - task: Bash@3
-          displayName: Write measurements to Aria/Kusto
+          displayName: Test get azure monitor variable
           inputs:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
-              echo "Write the following benchmark output to Aria/Kusto"
-              ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
+              echo $(seantest)
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - Perf tests output - execution time
