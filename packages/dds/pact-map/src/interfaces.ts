@@ -6,9 +6,9 @@
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 /**
- * IQuorumEvents are the events fired by an IQuorum.
+ * IPactMapEvents are the events fired by an IPactMap.
  */
-export interface IQuorumEvents extends ISharedObjectEvents {
+export interface IPactMapEvents extends ISharedObjectEvents {
     /**
      * Notifies when a new value goes pending or has been accepted.
      */
@@ -16,11 +16,11 @@ export interface IQuorumEvents extends ISharedObjectEvents {
 }
 
 /**
- * An IQuorum is a key-value storage, in which setting a value requires all connected collaborators to observe and ack
+ * An IPactMap is a key-value storage, in which setting a value requires all connected collaborators to observe and ack
  * the set message.  As a result, the value goes through two phases - "pending" state where the local client has seen
  * the set, but not all connected clients have, and "accepted" where all connected clients have seen the set.
  */
-export interface IQuorum<T = unknown> extends ISharedObject<IQuorumEvents> {
+export interface IPactMap<T = unknown> extends ISharedObject<IPactMapEvents> {
     /**
      * Gets the accepted value for the given key.
      * @param key - The key to retrieve from

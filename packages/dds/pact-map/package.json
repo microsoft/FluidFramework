@@ -1,13 +1,13 @@
 {
-  "name": "@fluid-experimental/quorum",
+  "name": "@fluid-experimental/pact-map",
   "version": "2.0.0-internal.2.3.0",
   "private": true,
-  "description": "Distributed data structure for key-value pairs using quorum consensus",
+  "description": "Distributed data structure for key-value pairs using pact consensus",
   "homepage": "https://fluidframework.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "packages/dds/quorum"
+    "directory": "packages/dds/pact-map"
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
