@@ -178,7 +178,7 @@ export class FluidPackageCheck {
         const actual = pkg.getScript(name);
 
         if (expected !== actual) {
-            this.logWarn(pkg, `${name} should contain: ${expectedPackages}`, fix);
+            this.logWarn(pkg, `${name} should only contain: ${expectedPackages}`, fix);
 
             if (fix) {
                 pkg.packageJson.scripts[name] = expected;
@@ -188,20 +188,20 @@ export class FluidPackageCheck {
         return fixed;
     }
 
-    private static checkChildrenScripts(
-        pkg: Package,
-        name: string,
-        expected: string[] | undefined,
-        concurrent: boolean,
-        fix: boolean,
-    ) {
-        const expectedScript = expected
-            ? concurrent
-                ? `concurrently ${expected.map((value) => `npm:${value}`).join(" ")}`
-                : expected.map((value) => `npm run ${value}`).join(" && ")
-            : undefined;
-        return this.checkScript(pkg, name, expectedScript, fix);
-    }
+    // private static checkChildrenScripts(
+    //     pkg: Package,
+    //     name: string,
+    //     expected: string[] | undefined,
+    //     concurrent: boolean,
+    //     fix: boolean,
+    // ) {
+    //     const expectedScript = expected
+    //         ? concurrent
+    //             ? `concurrently ${expected.map((value) => `npm:${value}`).join(" ")}`
+    //             : expected.map((value) => `npm run ${value}`).join(" && ")
+    //         : undefined;
+    //     return this.checkScript(pkg, name, expectedScript, fix);
+    // }
 
     /**
      * checkChildrenScripts for "lint" && "lint:fix"
@@ -563,16 +563,19 @@ export class FluidPackageCheck {
 
             // Check "lint"
             if (lintScript) {
-                const lintChildren = lintScript
+                let lintChildren = lintScript
                     ?.match(lintRegex)
                     ?.map((name) => name.replace("npm run ", ""))
                     .map((name) => name.split(":")[0]);
 
                 if (lintChildren !== undefined) {
                     const hasEslint = lintChildren.some((e) => /eslint/.test(e));
+                    const checkEslintPrettier = /^(eslint|prettier)(,(eslint|prettier))*$/.test(
+                        lintChildren.toString(),
+                    );
 
-                    if (!hasEslint) {
-                        lintChildren?.push("eslint");
+                    if (!(hasEslint && checkEslintPrettier)) {
+                        lintChildren = ["eslint", "prettier"];
                     }
                 }
 
@@ -583,16 +586,19 @@ export class FluidPackageCheck {
 
             // Check "lint:fix"
             if (lintFixScript) {
-                const lintFixChildren = lintFixScript
+                let lintFixChildren = lintFixScript
                     ?.match(lintRegex)
                     ?.map((name) => name.replace("npm run ", ""))
                     .map((name) => name.split(":")[0]);
 
                 if (lintFixChildren !== undefined) {
                     const hasEslint = lintFixChildren.some((e) => /eslint/.test(e));
+                    const checkEslintPrettier = /^(eslint|prettier)(,(eslint|prettier))*$/.test(
+                        lintFixChildren.toString(),
+                    );
 
-                    if (!hasEslint) {
-                        lintFixChildren?.push("eslint");
+                    if (!(hasEslint && checkEslintPrettier)) {
+                        lintFixChildren = ["eslint", "prettier"];
                     }
                 }
 
