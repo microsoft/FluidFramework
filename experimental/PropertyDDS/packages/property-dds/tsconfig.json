@@ -9,7 +9,7 @@
 		"noUnusedLocals": false,
 		"outDir": "./dist",
 		"rootDir": "./src",
-        "types": ["node"]
+		"types": ["node"]
 	},
 	"include": ["src/**/*"],
 }
