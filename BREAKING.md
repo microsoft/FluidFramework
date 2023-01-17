@@ -30,6 +30,8 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Op reentry will no longer be supported](#op-reentry-will-no-longer-be-supported)
 - [Remove ISummarizerRuntime batchEnd listener](#Remove-ISummarizerRuntime-batchEnd-listener)
 - [Remove ISummaryBaseConfiguration.summarizerClientElection](#Remove-ISummaryBaseConfigurationsummarizerClientElection)
+- [Remove Deprecated IFluidObject Interface](#Remove-Deprecated-IFluidObject-Interface)
+
 ### existing parameter is now required in IRuntimeFactory::instantiateRuntime
 The `existing` flag was added as optional in client version 0.44 and has been updated to be expected
 and required in the `IRuntimeFactory.instantiateRuntime` function. This flag is used to determine whether the runtime should
@@ -75,6 +77,9 @@ If these methods are needed, please refer to the `IContainerRuntimeBase` interfa
 ### Remove-ISummaryBaseConfigurationsummarizerClientElection
 `ISummaryBaseConfiguration.summarizerClientElection` was deprecated and is now being removed.
 There will be no replacement for this property.'
+
+### Remove Deprecated IFluidObject Interface
+IFluidObject is removed and has been replaced with [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject). 
 
 # 2.0.0-internal.2.2.0
 
