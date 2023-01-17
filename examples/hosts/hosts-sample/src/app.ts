@@ -31,7 +31,7 @@ const bearerSecret = "";
 // to be derived from. The API only requires a field named 'id' but you can create your own fields on it as well. For
 // example we defined a 'name' field.
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-const user = {
+const user: IInsecureUser = {
     id: "test", // Required value
     name: "Test User", // Required value that we included
 } as IInsecureUser;
