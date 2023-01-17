@@ -617,6 +617,7 @@ export class DetachedNodeTracker {
                         1,
                         genId,
                         moveEffects,
+                        false,
                         true,
                     );
                     this.updateMark(head, change.revision, moveEffects);

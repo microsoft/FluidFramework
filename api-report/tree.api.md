@@ -1412,7 +1412,7 @@ type SkipLikeReattach<TNodeChange> = Reattach<TNodeChange> & Conflicted & {
 };
 
 // @public
-function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(mark: TMark, revision: RevisionTag | undefined, length: number, genId: IdAllocator, moveEffects: MoveEffectTable<unknown>, ignorePairing?: boolean): [TMark, TMark];
+function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(mark: TMark, revision: RevisionTag | undefined, length: number, genId: IdAllocator, moveEffects: MoveEffectTable<unknown>, recordMoveEffect?: boolean, ignorePairing?: boolean): [TMark, TMark];
 
 // @public
 export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, ISubscribable<SchemaEvents>, SchemaDataAndPolicy<TPolicy> {

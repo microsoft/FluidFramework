@@ -41,35 +41,32 @@ export class MarkQueue<T> {
     }
 
     public tryDequeue(): Mark<T> | undefined {
-        let mark: Mark<T> | undefined;
         if (this.stack.length > 0) {
-            mark = this.stack.pop();
+            return this.stack.pop();
         } else if (this.index < this.list.length) {
-            mark = this.list[this.index++];
+            const mark = this.list[this.index++];
+            if (mark === undefined) {
+                return undefined;
+            }
+
+            const splitMarks = applyMoveEffectsToMark(
+                mark,
+                this.revision,
+                this.moveEffects,
+                this.consumeEffects,
+                this.composeChanges,
+            );
+
+            if (splitMarks.length === 0) {
+                return undefined;
+            }
+
+            const result = splitMarks[0];
+            for (let i = splitMarks.length - 1; i > 0; i--) {
+                this.stack.push(splitMarks[i]);
+            }
+            return result;
         }
-
-        if (mark === undefined) {
-            return undefined;
-        }
-
-        const splitMarks = applyMoveEffectsToMark(
-            mark,
-            this.revision,
-            this.moveEffects,
-            this.consumeEffects,
-            this.composeChanges,
-        );
-
-        if (splitMarks.length === 0) {
-            return undefined;
-        }
-
-        const result = splitMarks[0];
-        for (let i = splitMarks.length - 1; i > 0; i--) {
-            this.stack.push(splitMarks[i]);
-        }
-
-        return result;
     }
 
     /**
@@ -86,6 +83,7 @@ export class MarkQueue<T> {
             length,
             this.genId,
             this.moveEffects,
+            !this.consumeEffects,
         );
         this.stack.push(mark2);
         return mark1;
@@ -109,6 +107,7 @@ export class MarkQueue<T> {
             length,
             this.genId,
             this.moveEffects,
+            !this.consumeEffects,
         );
         this.stack.push(mark2);
         return mark1;

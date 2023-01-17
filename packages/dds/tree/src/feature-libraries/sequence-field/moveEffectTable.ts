@@ -221,7 +221,7 @@ function applyMoveEffectsToDest<T>(
             (newMark as ReturnTo).detachIndex = mark.detachIndex + effect.count;
         }
 
-        result.push(newMark);
+        result.push(...applyMoveEffectsToDest(newMark, revision, effects, consumeEffect));
     }
 
     if (consumeEffect) {
@@ -277,11 +277,19 @@ function applyMoveEffectsToSource<T>(
             effect.child,
         );
         assert(childEffect.count !== undefined, "Child effects should have size");
-        result.push({
-            ...mark,
-            id: effect.child,
-            count: childEffect.count,
-        });
+        result.push(
+            ...applyMoveEffectsToSource(
+                {
+                    ...mark,
+                    id: effect.child,
+                    count: childEffect.count,
+                },
+                revision,
+                effects,
+                consumeEffect,
+                composeChildren,
+            ),
+        );
     }
 
     if (consumeEffect) {
@@ -338,6 +346,7 @@ export function splitMarkOnInput<TMark extends InputSpanningMark<unknown>>(
     length: number,
     genId: IdAllocator,
     moveEffects: MoveEffectTable<unknown>,
+    recordMoveEffect: boolean = false,
 ): [TMark, TMark] {
     const markLength = getInputLength(mark);
     const remainder = markLength - length;
@@ -393,6 +402,17 @@ export function splitMarkOnInput<TMark extends InputSpanningMark<unknown>>(
                 length,
                 remainder,
             );
+            if (recordMoveEffect) {
+                splitMove(
+                    moveEffects,
+                    MoveEnd.Source,
+                    mark.revision ?? revision,
+                    mark.id,
+                    newId,
+                    length,
+                    remainder,
+                );
+            }
             const mark1 = { ...markObj, count: length };
             const mark2 = { ...markObj, id: newId, count: remainder };
             if (mark.type === "ReturnFrom" && mark.detachIndex !== undefined) {
@@ -418,6 +438,7 @@ export function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(
     length: number,
     genId: IdAllocator,
     moveEffects: MoveEffectTable<unknown>,
+    recordMoveEffect: boolean = false,
     ignorePairing: boolean = false,
 ): [TMark, TMark] {
     const markLength = getOutputLength(mark, ignorePairing);
@@ -453,6 +474,17 @@ export function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(
                 length,
                 remainder,
             );
+            if (recordMoveEffect) {
+                splitMove(
+                    moveEffects,
+                    MoveEnd.Dest,
+                    markObj.revision ?? revision,
+                    markObj.id,
+                    newId,
+                    length,
+                    remainder,
+                );
+            }
             return [
                 { ...markObj, count: length },
                 type === "MoveIn"
