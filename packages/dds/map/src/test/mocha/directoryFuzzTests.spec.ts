@@ -18,7 +18,6 @@ import {
     SaveInfo,
     take,
 } from "@fluid-internal/stochastic-test-utils";
-import { SharedDirectory } from "@fluidframework/map-previous";
 import {
     MockContainerRuntimeFactoryForReconnection,
     MockContainerRuntimeForReconnection,
@@ -26,7 +25,7 @@ import {
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
-import { DirectoryFactory } from "../../directory";
+import { DirectoryFactory, SharedDirectory } from "../../directory";
 import { IDirectory } from "../../interfaces";
 
 export interface Client {
@@ -106,7 +105,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
     // All subsequent helper functions are generators; note that they don't actually apply any operations.
     function pickAbsolutePathForCreateDirectoryOp(state: ClientOpState): string {
         const { random, sharedDirectory } = state;
-        let dir = sharedDirectory as IDirectory;
+        let dir: IDirectory = sharedDirectory;
         for(;;) {
             assert(dir !== undefined, "Directory should be defined");
             const subDirectories: IDirectory[] = [];
@@ -129,7 +128,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
 
     function pickAbsolutePathForDeleteDirectoryOp(state: ClientOpState): string {
         const { random, sharedDirectory } = state;
-        let parentDir = sharedDirectory as IDirectory;
+        let parentDir: IDirectory = sharedDirectory;
         const subDirectories: IDirectory[] = [];
         for (const [_, b] of sharedDirectory.subdirectories()) {
             subDirectories.push(b);
@@ -154,7 +153,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
 
     function pickAbsolutePathForKeyOps(state: ClientOpState): string {
         const { random, sharedDirectory } = state;
-        let parentDir = sharedDirectory as IDirectory;
+        let parentDir: IDirectory = sharedDirectory;
         for(;;) {
             assert(parentDir !== undefined, "Directory should be defined");
             const subDirs: IDirectory[] = [];
@@ -173,7 +172,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
 
     function pickAbsolutePathForClearOps(state: ClientOpState): string {
         const { random, sharedDirectory } = state;
-        let parentDir = sharedDirectory as IDirectory;
+        let parentDir: IDirectory = sharedDirectory;
         for(;;) {
             assert(parentDir !== undefined, "Directory should be defined");
             const proceed = random.bool(0.5);
