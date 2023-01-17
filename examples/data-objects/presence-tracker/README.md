@@ -7,8 +7,10 @@
 This implementation visualizes the Container in a standalone application, rather than using the webpack-fluid-loader environment that most of our examples use.  This implementation relies on [Tinylicious](/server/tinylicious), so there are a few extra steps to get started.  We bring our own view that we will bind to the data in the container.
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
-<!-- This section is automatically generated.
-To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
+
+<!-- prettier-ignore-start -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Getting Started
 
@@ -19,5 +21,7 @@ You can run this example using the following steps:
       `npm run build:fast -- --nolint @fluid-example/presence-tracker`
 1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](../../../server/tinylicious).
 1. Run `npm run start` from this directory (examples/data-objects/presence-tracker) and open <http://localhost:8080> in a web browser to see the app running.
+
+<!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->

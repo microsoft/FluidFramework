@@ -28,7 +28,7 @@ import {
 import { v4 as uuid } from "uuid";
 import { ChangeFamily, Commit, EditManager, SeqNumber, AnchorSet, Delta } from "../core";
 import { brand, isReadonlyArray, JsonCompatibleReadOnly } from "../util";
-import { EventEmitter, IEventEmitter, TransformEvents } from "../events";
+import { createEmitter, ISubscribable, TransformEvents } from "../events";
 
 /**
  * The events emitted by a {@link SharedTreeCore}
@@ -104,7 +104,7 @@ export class SharedTreeCore<
     /**
      * Provides events that indexes can subscribe to
      */
-    private readonly indexEventEmitter = EventEmitter.create<IndexEvents<TChange>>();
+    private readonly indexEventEmitter = createEmitter<IndexEvents<TChange>>();
 
     /**
      * @param indexes - A list of indexes, either as an array or as a factory function
@@ -117,7 +117,7 @@ export class SharedTreeCore<
      * @param telemetryContextPrefix - the context for any telemetry logs/errors emitted
      */
     public constructor(
-        indexes: TIndexes | ((events: IEventEmitter<IndexEvents<TChange>>) => TIndexes),
+        indexes: TIndexes | ((events: ISubscribable<IndexEvents<TChange>>) => TIndexes),
         public readonly changeFamily: TChangeFamily,
         public readonly editManager: EditManager<TChange, TChangeFamily>,
         anchors: AnchorSet,

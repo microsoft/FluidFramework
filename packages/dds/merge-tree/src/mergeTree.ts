@@ -837,10 +837,6 @@ export class MergeTree {
         }
     }
 
-    public getCollabWindow() {
-        return this.collabWindow;
-    }
-
     public getLength(refSeq: number, clientId: number) {
         return this.blockLength(this.root, refSeq, clientId);
     }
@@ -1562,15 +1558,14 @@ export class MergeTree {
             remoteClientRefSeq,
             remoteClientId);
 
-        const segwindow = this.getCollabWindow();
+        const { currentSeq, clientId } = this.collabWindow;
 
         if (segmentInfo && segmentInfo.segment) {
-            const segmentPosition = this.getPosition(segmentInfo.segment, segwindow.currentSeq, segwindow.clientId);
-
+            const segmentPosition = this.getPosition(segmentInfo.segment, currentSeq, clientId);
             return segmentPosition + segmentInfo.offset!;
         } else {
             if (remoteClientPosition === this.getLength(remoteClientRefSeq, remoteClientId)) {
-                return this.getLength(segwindow.currentSeq, segwindow.clientId);
+                return this.getLength(currentSeq, clientId);
             }
         }
     }
@@ -1737,7 +1732,7 @@ export class MergeTree {
                 // will be removed, so should just be skipped for now
                 continue;
             } else {
-                assert(len >= 0, "Length should not be negative");
+                assert(len >= 0, 0x4bc /* Length should not be negative */);
             }
 
             if ((_pos < len) || ((_pos === len) && this.breakTie(_pos, child, seq))) {

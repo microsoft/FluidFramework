@@ -26,11 +26,6 @@ export function sendGCTombstoneEvent(
     if(throwOnTombstoneUsage) {
         mc.logger.sendErrorEvent(event, error);
     } else {
-        mc.logger.sendTelemetryEvent(
-            {
-                ...event,
-                ...error,
-            }
-        );
+        mc.logger.sendTelemetryEvent(event, error);
     }
 }

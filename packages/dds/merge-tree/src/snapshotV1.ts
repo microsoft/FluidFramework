@@ -59,7 +59,7 @@ export class SnapshotV1 {
         this.logger = ChildLogger.create(logger, "Snapshot");
         this.chunkSize = mergeTree?.options?.mergeTreeSnapshotChunkSize ?? SnapshotV1.chunkSize;
 
-        const { currentSeq, minSeq } = mergeTree.getCollabWindow();
+        const { currentSeq, minSeq } = mergeTree.collabWindow;
         this.header = {
             minSequenceNumber: minSeq,
             sequenceNumber: currentSeq,
