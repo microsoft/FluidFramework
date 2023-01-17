@@ -89,12 +89,7 @@ export class MigrationTool extends DataObject implements IMigrationTool {
         }
 
         // Note that the accepted proposal could come from another client (e.g. two clients try to propose
-        // simultaneously).  Watching via the event listener will work regardless of whether our proposal or
-        // a remote client's proposal was the one that actually got accepted.
-
-        // So even if pactMap.set() becomes a promise, this will remain fire-and-forget since we don't care
-        // whether our proposal or a remote client's proposal is accepted (though maybe we'd do retry
-        // logic if a remote client rejects the local client's proposal).
+        // simultaneously).
         this.pactMap.set(newVersionKey, newVersion);
     };
 
