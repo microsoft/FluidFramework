@@ -2,7 +2,7 @@
 
 This package has a few main purposes:
 
-- Expose/generate a default `mocharc.js` configuration for running mocha tests, which other packages can extend.
+- Expose/generate a default `.mocharc.js` configuration for running mocha tests, which other packages can extend.
 - Map paths for required packages/modules to account for Lerna's dependency hoisting.
 - Add mocha `beforeAll`, `beforeEach` and `afterEach` [root hook plugins](https://mochajs.org/#root-hook-plugins) to add
 some special behavior when we run tests.
@@ -20,7 +20,7 @@ To leverage the base mocha configuration exposed by this package, first add it a
 }
 ```
 
-Then put this in your package's `.mocharc.js` file:
+Then put this in a `.mocharc.js` file at the root of your package:
 
 ```javascript
 'use strict';
