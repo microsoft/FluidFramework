@@ -15,7 +15,8 @@
   "types": "dist/expressApp.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
-    "build:compile": "npm run tsc",
+    "build:compile": "npm run build:esnext",
+    "build:esnext": "tsc",
     "build:full": "concurrently npm:build npm:webpack",
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
@@ -28,7 +29,6 @@
     "start": "npm run start:spo-df",
     "start:spo": "node dist/expressApp.js --env mode=spo",
     "start:spo-df": "node dist/expressApp.js --env mode=spo-df",
-    "tsc": "tsc",
     "webpack": "webpack --env production",
     "webpack:dev": "webpack --env development"
   },
