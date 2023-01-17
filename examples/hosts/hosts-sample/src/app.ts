@@ -33,7 +33,7 @@ const bearerSecret = "";
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 const user = {
     id: "test", // Required value
-    name: "Test User", // Optional value that we included
+    name: "Test User", // Required value that we included
 } as IInsecureUser;
 
 // Create or load the Fluid container using specified document info and render the root component.
