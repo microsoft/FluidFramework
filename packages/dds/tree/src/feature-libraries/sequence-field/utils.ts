@@ -431,7 +431,7 @@ function tryMergeMoves(
     const rev = left.revision ?? revision;
     const oppEnd = end === MoveEnd.Source ? MoveEnd.Dest : MoveEnd.Source;
     const prevMergeId = getOrCreateEffect(moveEffects, oppEnd, rev, left.id).mergeRight;
-    if (prevMergeId !== undefined) {
+    if (prevMergeId !== undefined && prevMergeId !== right.id) {
         makeMergeable(moveEffects, oppEnd, rev, prevMergeId, right.id);
     } else {
         makeMergeable(moveEffects, oppEnd, rev, left.id, right.id);

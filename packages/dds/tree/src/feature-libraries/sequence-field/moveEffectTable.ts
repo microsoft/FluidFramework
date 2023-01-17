@@ -97,14 +97,12 @@ export function splitMove<T>(
     const effect = getOrCreateEffect(effects, end, revision, id);
     const newEffect = getOrCreateEffect(effects, end, revision, newId);
     newEffect.count = count2;
-    newEffect.mergeLeft = id;
     if (effect.child !== undefined) {
         newEffect.child = effect.child;
     }
 
     effect.child = newId;
     effect.count = count1;
-    effect.mergeRight = newId;
 }
 
 export function getOrCreateEffect<T>(
@@ -290,6 +288,7 @@ function applyMoveEffectsToSource<T>(
         delete effect.mark;
         delete effect.count;
         delete effect.child;
+        delete effect.modifyAfter;
     }
     return result;
 }
