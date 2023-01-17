@@ -5229,6 +5229,7 @@ importers:
   packages/dds/merge-tree:
     specifiers:
       '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
+      '@fluid-tools/benchmark': ^0.45.0
       '@fluid-tools/build-cli': ^0.7.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.7.0
@@ -5280,6 +5281,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
     devDependencies:
       '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
+      '@fluid-tools/benchmark': 0.45.112032
       '@fluid-tools/build-cli': 0.7.0
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.7.0
@@ -13642,7 +13644,7 @@ packages:
       benchmark: 2.1.4
       chai: 4.3.7
       easy-table: 1.2.0
-      mocha: 10.1.0
+      mocha: 10.2.0
 
   /@fluid-tools/build-cli/0.7.0:
     resolution: {integrity: sha512-OnKJb8qTnKm5F6eEpagra4RVHyk9el6R3pSojzfRCD0XTB7fku46ag9uTWksma68+V9udNiQP4JPZmTubRBz+Q==}
@@ -24916,7 +24918,7 @@ packages:
       - supports-color
 
   /concat-map/0.0.1:
-    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
+    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
 
   /concat-stream/1.6.2:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
@@ -33989,7 +33991,6 @@ packages:
       yargs: 16.2.0
       yargs-parser: 20.2.4
       yargs-unparser: 2.0.0
-    dev: true
 
   /mochawesome-report-generator/3.1.5:
     resolution: {integrity: sha512-/lFmlpY1cPfLXmV/Qb7kprbQS5VYExEaJGRR86rCLYUdLQM5uivIwvulUEt5VV9mbK/GttN2XPb8al7/5VgtOw==}
