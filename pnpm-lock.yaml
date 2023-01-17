@@ -2331,7 +2331,6 @@ importers:
   examples/hosts/app-integration/external-data:
     specifiers:
       '@fluid-example/example-utils': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
-      '@fluid-experimental/quorum': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
       '@fluid-experimental/react-inputs': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
       '@fluidframework/aqueduct': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
       '@fluidframework/build-common': ^1.1.0
@@ -2409,7 +2408,6 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/example-utils': link:../../../utils/example-utils
-      '@fluid-experimental/quorum': link:../../../../packages/dds/quorum
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
       '@fluidframework/cell': link:../../../../packages/dds/cell
@@ -2569,7 +2567,6 @@ importers:
   examples/hosts/app-integration/schema-upgrade:
     specifiers:
       '@fluid-example/example-utils': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
-      '@fluid-experimental/quorum': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
       '@fluid-experimental/react-inputs': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
       '@fluid-tools/build-cli': ^0.7.0
       '@fluidframework/aqueduct': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
@@ -2636,7 +2633,6 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/example-utils': link:../../../utils/example-utils
-      '@fluid-experimental/quorum': link:../../../../packages/dds/quorum
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
       '@fluidframework/cell': link:../../../../packages/dds/cell
@@ -2825,7 +2821,7 @@ importers:
 
   examples/utils/example-utils:
     specifiers:
-      '@fluid-experimental/quorum': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
+      '@fluid-experimental/pact-map': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
       '@fluid-tools/build-cli': ^0.7.0
       '@fluidframework/aqueduct': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
       '@fluidframework/build-common': ^1.1.0
@@ -2861,7 +2857,7 @@ importers:
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
-      '@fluid-experimental/quorum': link:../../../packages/dds/quorum
+      '@fluid-experimental/pact-map': link:../../../packages/dds/pact-map
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.0.0
@@ -5372,7 +5368,7 @@ importers:
       rimraf: 2.7.1
       typescript: 4.5.5
 
-  packages/dds/quorum:
+  packages/dds/pact-map:
     specifiers:
       '@fluid-internal/test-dds-utils': '>=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0'
       '@fluidframework/build-common': ^1.1.0
@@ -5428,8 +5424,8 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
-      mocha: 10.1.0
-      mocha-junit-reporter: 1.23.3_mocha@10.1.0
+      mocha: 10.2.0
+      mocha-junit-reporter: 1.23.3_mocha@10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 2.7.1
@@ -33917,6 +33913,21 @@ packages:
       md5: 2.3.0
       mkdirp: 0.5.6
       mocha: 10.1.0
+      strip-ansi: 4.0.0
+      xml: 1.0.1
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
+  /mocha-junit-reporter/1.23.3_mocha@10.2.0:
+    resolution: {integrity: sha512-ed8LqbRj1RxZfjt/oC9t12sfrWsjZ3gNnbhV1nuj9R/Jb5/P3Xb4duv2eCfCDMYH+fEu0mqca7m4wsiVjsxsvA==}
+    peerDependencies:
+      mocha: '>=2.2.5'
+    dependencies:
+      debug: 2.6.9
+      md5: 2.3.0
+      mkdirp: 0.5.6
+      mocha: 10.2.0
       strip-ansi: 4.0.0
       xml: 1.0.1
     transitivePeerDependencies:
