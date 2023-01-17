@@ -277,7 +277,8 @@ function makeNormalizerProxy(
 	return new Proxy<SessionIdNormalizer<DummyRange>>(normalizer, {
 		get(target, property: keyof SessionIdNormalizer<DummyRange>) {
 			if (typeof target[property] === 'function') {
-				if (property === 'addLocalId') {
+				switch (property) {
+				case 'addLocalId': {
 					return new Proxy(target[property], {
 						apply: (func, thisArg, argumentsList) => {
 							const local = Reflect.apply(func, thisArg, argumentsList);
@@ -290,7 +291,8 @@ function makeNormalizerProxy(
 							return local;
 						},
 					});
-				} else if (property === 'addFinalIds') {
+				}
+				case 'addFinalIds': {
 					return new Proxy(target[property], {
 						apply: (func, thisArg, argumentsList) => {
 							const firstFinal: FinalCompressedId = argumentsList[0];
@@ -301,6 +303,21 @@ function makeNormalizerProxy(
 							return Reflect.apply(func, thisArg, argumentsList);
 						},
 					});
+				}
+				case 'registerFinalIdBlock': {
+					return new Proxy(target[property], {
+						apply: (func, thisArg, argumentsList) => {
+							const firstFinal: FinalCompressedId = argumentsList[0];
+							const count: FinalCompressedId = argumentsList[1];
+							const usedFinals = Math.max(0, Math.min(locals.length - finals.length, count));
+							for (let i = firstFinal; i < usedFinals; i++) {
+								finals.push(i);
+							}
+							return Reflect.apply(func, thisArg, argumentsList);
+						},
+					});
+				}
+				// No default
 				}
 			}
 			return Reflect.get(target, property);
@@ -328,7 +345,6 @@ interface AddFinalIds {
 	type: 'addFinalIds';
 	first: FinalCompressedId;
 	last: FinalCompressedId;
-	isBlock: boolean;
 }
 
 type Operation = AddLocalId | AddFinalIds;
@@ -358,16 +374,11 @@ function makeOpGenerator(numOperations: number): Generator<Operation, FuzzTestSt
 		if (state.prevWasLocal && locals.length > finals.length && random.integer(1, 3) === 3) {
 			state.currentFinal += random.integer(1, 4);
 		}
-		let lastFinal = state.currentFinal + random.integer(0, 10);
-		const isBlock = random.bool(1 / 7);
-		if (isBlock) {
-			lastFinal += random.integer(1, 10);
-		}
+		const lastFinal = state.currentFinal + random.integer(0, 10);
 		const addFinal: AddFinalIds = {
 			type: 'addFinalIds',
 			first: final(state.currentFinal),
 			last: final(lastFinal),
-			isBlock,
 		};
 		state.currentFinal = lastFinal + 1;
 		state.prevWasLocal = false;
@@ -412,12 +423,8 @@ function fuzzNormalizer(
 				state.normalizer.addLocalId();
 				return state;
 			},
-			addFinalIds: (state, { first, last, isBlock }) => {
-				if (isBlock) {
-					state.normalizer.registerFinalIdBlock(first, last - first + 1, dummy);
-				} else {
-					state.normalizer.addFinalIds(first, last, dummy);
-				}
+			addFinalIds: (state, { first, last }) => {
+				state.normalizer.addFinalIds(first, last, dummy);
 				return state;
 			},
 		},

@@ -603,7 +603,7 @@ export function expectSerializes(
 
 		for (const cluster of serialized.clusters) {
 			const [sessionIndex] = cluster;
-			expect(sessionIndex < serialized.sessions.length);
+			expect(sessionIndex < serialized.sessions.length).to.be.true;
 			chainCount[sessionIndex]++;
 		}
 
@@ -611,9 +611,9 @@ export function expectSerializes(
 			const [sessionIndex, capacity, maybeSize] = cluster;
 			const chainIndex = chainProcessed[sessionIndex];
 			if (chainIndex < chainCount[sessionIndex] - 1) {
-				expect(maybeSize === undefined);
+				expect(typeof maybeSize !== 'number').to.be.true;
 			} else {
-				expect(maybeSize === undefined || typeof maybeSize !== 'number' || maybeSize < capacity);
+				expect(maybeSize === undefined || typeof maybeSize !== 'number' || maybeSize < capacity).to.be.true;
 			}
 			chainProcessed[sessionIndex]++;
 		}
