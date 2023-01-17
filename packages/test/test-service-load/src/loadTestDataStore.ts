@@ -489,7 +489,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         0 : config.testConfig.opSizeinBytes;
         assert(opSizeinBytes >= 0, "opSizeinBytes must be greater than or equal to zero.");
         const generateStringOfSize = (sizeInBytes: number): string => new Array(sizeInBytes + 1).join("0");
-        let opsSent = 0; 
+        let opsSent = 0;
 
         const sendSingleOp = opSizeinBytes === 0 ? () => {
             dataModel.counter.increment(1);

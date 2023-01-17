@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { averageTwoValues, sumDirect } from "./benchmarks";
-import { generateTwitterJsonByByteSize, TwitterJson } from "./twitter";
+import { generateTwitterJsonByByteSize, Twitter } from "./twitter";
 import { Canada, generateCanada } from "./canada";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
@@ -96,7 +96,7 @@ function extractCoordinatesFromCanadaDirect(
 }
 
 function extractAvgValsFromTwitterDirect(
-    directObj: TwitterJson,
+    directObj: Twitter,
     calculate: (x: number, y: number) => void,
 ): void {
     for (const status of directObj.statuses) {

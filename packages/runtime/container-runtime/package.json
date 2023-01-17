@@ -79,6 +79,7 @@
     "@fluidframework/runtime-utils": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
     "@fluidframework/telemetry-utils": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
     "double-ended-queue": "^2.1.0-0",
+    "events": "^3.1.0",
     "lz4js": "^0.2.0",
     "uuid": "^8.3.1"
   },
@@ -93,8 +94,8 @@
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/double-ended-queue": "^2.1.0",
+    "@types/events": "^3.0.0",
     "@types/mocha": "^9.1.1",
-    "@types/node": "^14.18.0",
     "@types/sinon": "^7.0.13",
     "@types/uuid": "^8.3.0",
     "concurrently": "^6.2.0",
@@ -123,6 +124,9 @@
       "RemovedVariableDeclaration_gcTreeKey": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "ClassDeclaration_ContainerRuntime": {
+        "forwardCompat": false
       }
     }
   }

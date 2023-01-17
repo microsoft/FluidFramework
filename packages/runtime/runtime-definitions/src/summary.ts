@@ -275,6 +275,9 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
          */
         config?: ISummarizerNodeConfigWithGC,
         getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
+        /**
+         * @deprecated - The functionality to update child's base GC details is incorporated in the summarizer node.
+         */
         getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
     ): ISummarizerNodeWithGC;
 

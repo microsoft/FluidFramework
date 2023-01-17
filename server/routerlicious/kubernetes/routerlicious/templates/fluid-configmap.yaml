@@ -212,6 +212,12 @@ data:
             "pass": "{{ .Values.redis.password }}",
             "tls": {{ .Values.redis.tls }}
         },
+        "redisForTenantCache": {
+            "host": "{{ .Values.redisForTenantCache.url }}",
+            "port": "{{ .Values.redisForTenantCache.port }}",
+            "pass": "{{ .Values.redisForTenantCache.password }}",
+            "tls": {{ .Values.redisForTenantCache.tls }}
+        },
         "redis2": {
             "host": "{{ .Values.redis2.url }}",
             "port": "{{ .Values.redis2.port }}",

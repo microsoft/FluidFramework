@@ -22,7 +22,7 @@ import {
     ISharedMap,
     ISharedMapEvents,
 } from "./interfaces";
-import { IMapDataObjectSerializable, MapKernel } from "./mapKernel";
+import { IMapDataObjectSerializable, IMapOperation, MapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
 
 interface IMapSerializationFormat {
@@ -55,14 +55,14 @@ export class MapFactory implements IChannelFactory {
     /**
      * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
      */
-    public get type() {
+    public get type(): string {
         return MapFactory.Type;
     }
 
     /**
      * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
      */
-    public get attributes() {
+    public get attributes(): IChannelAttributes {
         return MapFactory.Attributes;
     }
 
@@ -137,7 +137,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * @param runtime - Data store runtime.
      * @param attributes - The attributes for the map.
      */
-    constructor(
+    public constructor(
         id: string,
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
@@ -164,6 +164,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * Get an iterator over the entries in this map.
      * @returns The iterator
      */
+    // TODO: Use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public entries(): IterableIterator<[string, any]> {
         return this.kernel.entries();
     }
@@ -172,6 +174,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * Get an iterator over the values in this map.
      * @returns The iterator
      */
+    // TODO: Use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public values(): IterableIterator<any> {
         return this.kernel.values();
     }
@@ -180,6 +184,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * Get an iterator over the entries in this map.
      * @returns The iterator
      */
+    // TODO: Use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public [Symbol.iterator](): IterableIterator<[string, any]> {
         return this.kernel.entries();
     }
@@ -187,7 +193,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     /**
      * The number of key/value pairs stored in the map.
      */
-    public get size() {
+    public get size(): number {
         return this.kernel.size;
     }
 
@@ -195,13 +201,18 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * Executes the given callback on each entry in the map.
      * @param callbackFn - Callback function
      */
+    // TODO: Use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void {
+        // eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-callback-reference
         this.kernel.forEach(callbackFn);
     }
 
     /**
      * {@inheritDoc ISharedMap.get}
      */
+    // TODO: Use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public get<T = any>(key: string): T | undefined {
         return this.kernel.get<T>(key);
     }
@@ -218,7 +229,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     /**
      * {@inheritDoc ISharedMap.set}
      */
-    public set(key: string, value: any): this {
+    public set(key: string, value: unknown): this {
         this.kernel.set(key, value);
         return this;
     }
@@ -282,7 +293,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
                 const content: IMapDataObjectSerializable = {
                     [key]: {
                         type: value.type,
-                        value: JSON.parse(value.value),
+                        value: JSON.parse(value.value) as unknown,
                     },
                 };
                 builder.addBlob(blobName, JSON.stringify(content));
@@ -302,7 +313,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
                 }
                 headerBlob[key] = {
                     type: value.type,
-                    value: value.value === undefined ? undefined : JSON.parse(value.value),
+                    value: value.value === undefined ? undefined : JSON.parse(value.value) as unknown,
                 };
             }
         }
@@ -320,7 +331,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      * @internal
      */
-    protected async loadCore(storage: IChannelStorageService) {
+    protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const json = await readAndParse<object>(storage, snapshotFileName);
         const newFormat = json as IMapSerializationFormat;
         if (Array.isArray(newFormat.blobs)) {
@@ -338,31 +349,31 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
      * @internal
      */
-    protected onDisconnect() { }
+    protected onDisconnect(): void { }
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
      * @internal
      */
-    protected reSubmitCore(content: any, localOpMetadata: unknown) {
-        this.kernel.trySubmitMessage(content, localOpMetadata);
+    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
+        this.kernel.trySubmitMessage(content as IMapOperation, localOpMetadata);
     }
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
      * @internal
      */
-    protected applyStashedOp(content: any): unknown {
-        return this.kernel.tryApplyStashedOp(content);
+    protected applyStashedOp(content: unknown): unknown {
+        return this.kernel.tryApplyStashedOp(content as IMapOperation);
     }
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
      * @internal
      */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         if (message.type === MessageType.Operation) {
-            this.kernel.tryProcessMessage(message.contents, local, localOpMetadata);
+            this.kernel.tryProcessMessage(message.contents as IMapOperation, local, localOpMetadata);
         }
     }
 
@@ -370,7 +381,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
      * @internal
     */
-    protected rollback(content: any, localOpMetadata: unknown) {
+    protected rollback(content: unknown, localOpMetadata: unknown): void {
         this.kernel.rollback(content, localOpMetadata);
     }
 }
