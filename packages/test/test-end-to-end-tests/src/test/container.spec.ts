@@ -518,9 +518,7 @@ describeNoCompat("Driver", (getTestObjectProvider) => {
         const provider = getTestObjectProvider();
         const fiveDaysMs: FiveDaysMs = 432_000_000;
 
-        const expectedPolicyValue = provider.driver.type === "local" ? undefined : fiveDaysMs;
-
         const container = await provider.makeTestContainer() as Container;
-        assert.equal(container.storage.policies?.maximumCacheDurationMs, expectedPolicyValue);
+        assert.equal(container.storage.policies?.maximumCacheDurationMs, fiveDaysMs);
     });
 });
