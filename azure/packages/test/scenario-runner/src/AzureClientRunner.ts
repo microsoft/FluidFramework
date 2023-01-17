@@ -35,9 +35,14 @@ export class AzureClientRunner extends TypedEventEmitter<IRunnerEvents> implemen
 
         const ac = await createAzureClient({
             connType: this.c.connectionConfig.type,
-            connEndpoint: this.c.connectionConfig.endpoint,
+            connEndpoint:
+                this.c.connectionConfig.endpoint ??
+                process.env.azure__fluid__relay__service__endpoint,
             userId: this.c.userId ?? "testUserId",
             userName: this.c.userName ?? "testUserId",
+            tenantId: process.env.azure__fluid__relay__service__tenantId,
+            tenantKey: process.env.azure__fluid__relay__service__tenantKey,
+            functionUrl: process.env.azure__fluid__relay__service__function__url,
         });
 
         this.status = "success";

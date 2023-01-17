@@ -4,8 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { RedBlackTree } from "./collections";
-import { AttributionKey, compareNumbers, ISegment } from "./mergeTreeNodes";
+import { AttributionKey, ISegment } from "./mergeTreeNodes";
 
 export interface SerializedAttributionCollection {
     /**
@@ -53,18 +52,30 @@ export interface IAttributionCollection<T> {
     clone(): IAttributionCollection<T>;
 }
 
+
 export class AttributionCollection implements IAttributionCollection<AttributionKey> {
-    private readonly entries: RedBlackTree<number, number> = new RedBlackTree(compareNumbers);
+    private offsets: number[];
+    private seqs: number[];
 
     public constructor(baseEntry: number, private _length: number) {
-        this.entries.put(0, baseEntry);
+        this.offsets = [0];
+        this.seqs = [baseEntry];
     }
 
     public getAtOffset(offset: number): AttributionKey {
         assert(offset >= 0 && offset < this._length, 0x443 /* Requested offset should be valid */);
-        const node = this.entries.floor(offset);
-        assert(node !== undefined, 0x444 /* Collection should have at least one entry */);
-        return { type: "op", seq: node.data };
+        return { type: "op", seq: this.seqs[this.findIndex(offset)] };
+    }
+
+    private findIndex(offset: number): number {
+        // Note: maximum length here is 256 for text segments. Perf testing shows that linear scan beats binary search
+        // for attribution collections with under ~64 entries, and even at maximum size (which would require a maximum
+        // length segment with every offset having different attribution), getAtOffset is on the order of 100ns.
+        let i = 0;
+        while (i < this.offsets.length && offset > this.offsets[i]) {
+            i++;
+        }
+        return this.offsets[i] === offset ? i : i - 1;
     }
 
     public get length(): number {
@@ -75,45 +86,44 @@ export class AttributionCollection implements IAttributionCollection<Attribution
      * Splits this attribution collection into two with entries for [0, pos) and [pos, length).
      */
     public splitAt(pos: number): AttributionCollection {
-        const splitBaseEntry = this.getAtOffset(pos);
-        const splitCollection = new AttributionCollection(splitBaseEntry.seq, this.length - pos);
-        for (let current = this.entries.ceil(pos); current !== undefined; current = this.entries.ceil(pos)) {
-            // If there happened to be an attribution change at exactly pos, it's already set in the base entry
-            if (current.key !== pos) {
-                splitCollection.entries.put(current.key - pos, current.data);
-            }
-            this.entries.remove(current.key);
+        const splitIndex = this.findIndex(pos);
+        const splitBaseEntry = this.seqs[splitIndex];
+        const splitCollection = new AttributionCollection(splitBaseEntry, this.length - pos);
+        for (let i = splitIndex + 1; i < this.seqs.length; i++) {
+            splitCollection.offsets.push(this.offsets[i] - pos);
+            splitCollection.seqs.push(this.seqs[i]);
         }
+
+        const spliceIndex = this.offsets[splitIndex] === pos ? splitIndex : splitIndex + 1
+        this.seqs.splice(spliceIndex);
+        this.offsets.splice(spliceIndex);
         this._length = pos;
         return splitCollection;
     }
 
     public append(other: AttributionCollection): void {
-        const lastEntry = this.getAtOffset(this.length - 1).seq;
-        other.entries.map(({ key, data }) => {
-            if (key !== 0 || lastEntry !== data) {
-                this.entries.put(key + this.length, data);
+        const lastEntry = this.seqs[this.seqs.length - 1];
+        for (let i = 0; i < other.seqs.length; i++) {
+            if (i !== 0 || lastEntry !== other.seqs[i]) {
+                this.offsets.push(other.offsets[i] + this.length);
+                this.seqs.push(other.seqs[i]);
             }
-            return true;
-        });
+        }
         this._length += other.length;
     }
 
     public getAll(): { offset: number; key: AttributionKey; }[] {
-        const results: { offset: number; key: AttributionKey; }[] = [];
-        this.entries.map(({ key, data }) => {
-            results.push({ offset: key, key: { type: "op", seq: data } });
-            return true;
-        });
+        const results: { offset: number; key: AttributionKey }[] = new Array(this.seqs.length);
+        for (let i = 0; i < this.seqs.length; i++) {
+            results[i] = { offset: this.offsets[i], key: { type: "op", seq: this.seqs[i] }};
+        }
         return results;
     }
 
     public clone(): AttributionCollection {
-        const copy = new AttributionCollection(this.getAtOffset(0).seq, this.length);
-        this.entries.map(({ key, data }) => {
-            copy.entries.put(key, data);
-            return true;
-        });
+        const copy = new AttributionCollection(0, this.length);
+        copy.seqs = this.seqs.slice();
+        copy.offsets = this.offsets.slice();
         return copy;
     }
 
@@ -129,15 +139,23 @@ export class AttributionCollection implements IAttributionCollection<Attribution
             seqs.length === posBreakpoints.length && seqs.length > 0,
             0x445 /* Invalid attribution summary blob provided */);
         let curIndex = 0;
-        let cumulativeSegPos = 0;
         let currentInfo = seqs[curIndex];
-
+        let cumulativeSegPos = 0;
+        
         for (const segment of segments) {
             const attribution = new AttributionCollection(currentInfo, segment.cachedLength);
             while (posBreakpoints[curIndex] < cumulativeSegPos + segment.cachedLength) {
                 currentInfo = seqs[curIndex];
-                attribution.entries.put(posBreakpoints[curIndex] - cumulativeSegPos, currentInfo);
+                const nextOffset = posBreakpoints[curIndex] - cumulativeSegPos;
+                if (attribution.offsets[attribution.offsets.length - 1] !== nextOffset) {
+                    attribution.offsets.push(nextOffset);
+                    attribution.seqs.push(currentInfo);
+                }
                 curIndex++;
+            }
+
+            if (posBreakpoints[curIndex] === cumulativeSegPos + segment.cachedLength) {
+                currentInfo = seqs[curIndex];
             }
 
             segment.attribution = attribution;
