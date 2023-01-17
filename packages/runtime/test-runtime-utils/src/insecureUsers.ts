@@ -7,7 +7,7 @@ import { IUser } from "@fluidframework/protocol-definitions";
 
 /**
  * Insecure user definition.
- * It extends the base IUser interface with a `name` property.
+ * @remarks It extends the base IUser interface with a `name` property.
  */
 export interface IInsecureUser extends IUser {
 	/**
