@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 
 import { assert } from "@fluidframework/common-utils";
-import { compareFiniteNumbers, compareFiniteNumbersReversed, fail, Mutable } from "../util";
+import { compareFiniteNumbers, compareFiniteNumbersReversed, fail, Mutable } from "./utils";
 import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from "./identifiers";
 import { AppendOnlyDoublySortedMap } from "./appendOnlySortedMap";
 import { SerializedSessionIdNormalizer } from "./persisted-types";

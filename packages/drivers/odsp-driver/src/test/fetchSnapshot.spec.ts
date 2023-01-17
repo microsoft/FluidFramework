@@ -35,6 +35,7 @@ describe("Tests for snapshot fetch", () => {
     const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
 
     const newFileParams: INewFileInfo = {
+        type: 'New',
         driveId,
         siteUrl: "https://www.localhost.xxx",
         filePath,
