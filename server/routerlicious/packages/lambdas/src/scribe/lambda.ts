@@ -119,10 +119,10 @@ export class ScribeLambda implements IPartitionLambda {
                 const value = baseMessage as ISequencedOperationMessage;
                 Lumberjack.info(`Processing ${value.operation.sequenceNumber} ${value.operation.type}`, getLumberBaseProperties(this.documentId, this.tenantId));
 
-                // if (value.operation.sequenceNumber > 10 && value.operation.sequenceNumber < 20) {
-                //     Lumberjack.info(`Skipping ${value.operation.sequenceNumber} ${value.operation.term} ${this.term}`,   getLumberBaseProperties(this.documentId, this.tenantId));
-                //     continue;
-                // }
+                if (value.operation.sequenceNumber > 10 && value.operation.sequenceNumber < 20) {
+                    Lumberjack.info(`Skipping ${value.operation.sequenceNumber} ${value.operation.term} ${this.term}`,   getLumberBaseProperties(this.documentId, this.tenantId));
+                    continue;
+                }
 
                 // The following block is only invoked once deli enables term flipping.
                 if (this.term && value.operation.term) {
@@ -170,10 +170,10 @@ export class ScribeLambda implements IPartitionLambda {
                     if (this.pendingMessageReader !== undefined) {
                         const from = lastProtocolHandlerSequenceNumber + 1;
                         const to = value.operation.sequenceNumber - 1;
-                        Lumberjack.info(`From = ${from} To = ${to} LastProtocolHandlerSequenceNumber = ${lastProtocolHandlerSequenceNumber}`);
+                        Lumberjack.info(`Missing ops between ${from} and ${to} LastProtocolHandlerSequenceNumber = $å{lastProtocolHandlerSequenceNumber}`, getLumberBaseProperties(this.documentId, this.tenantId));
                         const additionalPendingMessages = await this.pendingMessageReader.readMessages(from, to);
                         for (const additionalPendingMessage of additionalPendingMessages) {
-                            Lumberjack.info(`Adding additional pending message ${additionalPendingMessage.sequenceNumber}`);
+                            Lumberjack.info(`Adding additional pending message ${additionalPendingMessage.sequenceNumber}`, getLumberBaseProperties(this.documentId, this.tenantId));
                             this.pendingMessages.push(additionalPendingMessage);
                         }
                     } else {

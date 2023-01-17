@@ -7,7 +7,6 @@ import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ScopeType } from "@fluidframework/protocol-definitions";
 import { BasicRestWrapper } from "@fluidframework/server-services-client";
 import { IDeltaService } from "@fluidframework/server-services-core";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { generateToken, getCorrelationId } from "@fluidframework/server-services-utils";
 import { TenantManager } from "./tenant";
 
@@ -19,14 +18,14 @@ export class DeltaManager implements IDeltaService {
     }
 
     public async getDeltas(
-        collectionName: string,
+        _collectionName: string,
         tenantId: string,
         documentId: string,
         from: number,
         to: number): Promise<ISequencedDocumentMessage[]> {
-        const baseUrl = `${this.internalAlfredUrl}/deltas/${tenantId}/${documentId}`;
+        const baseUrl = `${this.internalAlfredUrl}`;
         const restWrapper = await this.getBasicRestWrapper(tenantId, documentId, baseUrl);
-        const result = restWrapper.get<ISequencedDocumentMessage[]>("", { from, to });
+        const result = restWrapper.get<ISequencedDocumentMessage[]>(`/deltas/${tenantId}/${documentId}`, { from, to });
         return result;
     }
 
@@ -46,7 +45,6 @@ export class DeltaManager implements IDeltaService {
 
     private async getBasicRestWrapper(tenantId: string, documentId: string, baseUrl: string) {
         const key = await this.getKey(tenantId);
-        Lumberjack.info(`Got key for tenant ${tenantId}: ${key}`);
 
         const defaultQueryString = {
             token: fromUtf8ToBase64(`${tenantId}`),

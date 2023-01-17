@@ -16,7 +16,7 @@ export class PendingMessageReader implements IPendingMessageReader {
     ) { }
     
     public async readMessages(from: number, to: number): Promise<ISequencedDocumentMessage[]> {
-        Lumberjack.info(`Reading messages from ${from} to ${to}`, getLumberBaseProperties(this.documentId, this.tenantId));
+        Lumberjack.info(`Fetching pending messages from ${from} to ${to}`, getLumberBaseProperties(this.documentId, this.tenantId));
         const deltasP = this.deltaService.getDeltas("", this.tenantId, this.documentId, from-1, to+1);
         return deltasP;
     }
