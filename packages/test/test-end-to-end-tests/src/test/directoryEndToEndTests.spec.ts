@@ -899,7 +899,13 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 
     it("Should not rollback creating existing subdirectory", () => {
         let error: Error | undefined;
-        sharedDir.createSubDirectory("subDirName");
+        const subDir = sharedDir.createSubDirectory("subDirName");
+        subDir.on("undisposed", (value: IDirectory) => {
+            undisposedEventData.push(value.absolutePath);
+        });
+        subDir.on("disposed", (value: IDirectory) => {
+            disposedEventData.push(value.absolutePath);
+        });
         try {
             containerRuntime.orderSequentially(() => {
                 sharedDir.createSubDirectory("subDirName");
@@ -918,6 +924,9 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
         assert.equal(subDirCreatedEventData[0], "subDirName");
         // rollback
         assert.equal(subDirDeletedEventData.length, 0);
+        // ensure that dispose/undispose aren't fired
+        assert.equal(undisposedEventData.length, 0);
+        assert.equal(disposedEventData.length, 0);
     });
 
     it("Should rollback created subdirectory with content", () => {
@@ -1005,7 +1014,6 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
         assert.equal(subDirDeletedEventData.length, 0);
         // rollback
         assert.equal(subDirCreatedEventData.length, 0);
-        assert.equal(undisposedEventData.length, 0);
     });
 
     it("Should rollback deleted subdirectory with content", () => {
