@@ -7,7 +7,9 @@
 import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
-    ITelemetryLogger, ITelemetryProperties,
+    ITelemetryLogger,
+    ITelemetryProperties,
+    TelemetryEventCategory,
 } from "@fluidframework/common-definitions";
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
 import {
@@ -645,13 +647,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 },
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
-                logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => {
+                logConnectionIssue: (eventName: string, category: TelemetryEventCategory, details?: ITelemetryProperties) => {
                     const mode = this.connectionMode;
                     // We get here when socket does not receive any ops on "write" connection, including
-                    // its own join op. Attempt recovery option.
+                    // its own join op.
+                    // Report issues only if we already loaded container - op processing is paused while container is loading,
+                    // so we always time-out processing of join op in cases where fetching snapshot takes a minute.
+                    // It's not a problem with op processing itself - such issues should be tracked as part of boot perf monitoring instead.
                     this._deltaManager.logConnectionIssue({
                         eventName,
                         mode,
+                        category: (this._lifecycleState === "loading") ? "generic" : category,
                         duration: performance.now() - this.connectionTransitionTimes[ConnectionState.CatchingUp],
                         ...(details === undefined ? {} : { details: JSON.stringify(details) }),
                     });

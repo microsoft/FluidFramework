@@ -42,7 +42,7 @@ export abstract class ReferenceCountedBase implements ReferenceCounted {
 
     public referenceRemoved(): void {
         this.refCount--;
-        assert(this.refCount >= 0, "Negative ref count");
+        assert(this.refCount >= 0, 0x4c4 /* Negative ref count */);
         if (this.refCount === 0) {
             this.dispose();
         }

@@ -5,10 +5,11 @@
 
 import React, { useEffect, useState } from "react";
 
-import type { IMigratableModel, MigrationState } from "../migrationInterfaces";
+import type { IMigratableModel, MigrationState } from "@fluid-example/example-utils";
+import type { IInventoryListAppModel } from "../modelInterfaces";
 
 export interface IDebugViewProps {
-    model: IMigratableModel;
+    model: IInventoryListAppModel;
     getUrlForContainerId?: (containerId: string) => string;
 }
 
@@ -22,14 +23,17 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
         <div>
             <h2 style={{ textDecoration: "underline" }}>Debug info</h2>
             <MigrationStatusView model={ model } getUrlForContainerId={ getUrlForContainerId } />
-            <ControlsView proposeVersion={ model.migrationTool.proposeVersion } />
+            <ControlsView
+                proposeVersion={ model.migrationTool.proposeVersion }
+                addItem={ model.inventoryList.addItem }
+            />
         </div>
     );
 };
 
 interface IMigrationStatusViewProps {
-    model: IMigratableModel;
-    getUrlForContainerId?: (containerId: string) => string;
+    readonly model: IMigratableModel;
+    readonly getUrlForContainerId?: (containerId: string) => string;
 }
 
 const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (props: IMigrationStatusViewProps) => {
@@ -108,23 +112,39 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (props: IMigrat
 };
 
 interface IControlsViewProps {
-    proposeVersion: (version: string) => void;
+    readonly proposeVersion: (version: string) => void;
+    readonly addItem: (name: string, quantity: number) => void;
 }
 
 const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
     const {
         proposeVersion,
+        addItem,
     } = props;
 
+    const addSampleItems = () => {
+        addItem("Alpha", 1);
+        addItem("Beta", 2);
+        addItem("Gamma", 3);
+        addItem("Delta", 4);
+    };
+
     return (
-        <div style={{ margin: "10px 0" }}>
-            Propose version:<br />
-            <button onClick={ () => { proposeVersion("one"); } }>
-                "one"
-            </button>
-            <button onClick={ () => { proposeVersion("two"); } }>
-                "two"
-            </button>
+        <div>
+            <div style={{ margin: "10px 0" }}>
+                Propose version:<br />
+                <button onClick={ () => { proposeVersion("one"); } }>
+                    "one"
+                </button>
+                <button onClick={ () => { proposeVersion("two"); } }>
+                    "two"
+                </button>
+            </div>
+            <div style={{ margin: "10px 0" }}>
+                <button onClick={ addSampleItems }>
+                    Add sample items
+                </button>
+            </div>
         </div>
     );
 };

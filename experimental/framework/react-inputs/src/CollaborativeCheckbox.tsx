@@ -10,10 +10,18 @@ export interface ICollaborativeCheckboxProps {
      * The SharedCell that will store the checkbox value.
      */
     data: SharedCell<boolean>;
+
     /**
      * The value for the "name" property of the checkbox input
      */
     id: string;
+
+    /**
+     * Whether or not the control should be {@link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#readonly | read-only}.
+     * @defaultValue `false`
+     */
+    readOnly?: boolean;
+
     className?: string;
     style?: React.CSSProperties;
 }
@@ -55,6 +63,7 @@ export class CollaborativeCheckbox
                 aria-checked={this.state.checked}
                 name={this.props.id}
                 checked={this.state.checked}
+                readOnly={this.props.readOnly ?? false}
                 onChange={this.updateCheckbox} />
         );
     }
