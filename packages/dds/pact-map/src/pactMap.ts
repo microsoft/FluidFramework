@@ -22,9 +22,9 @@ import { PactMapFactory } from "./pactMapFactory";
 import { IPactMap, IPactMapEvents } from "./interfaces";
 
 /**
- * The accepted value information, if any.
+ * The accepted pact information, if any.
  */
-interface IAcceptedPactMapValue<T> {
+interface IAcceptedPact<T> {
     /**
      * The accepted value of the given type or undefined (typically in case of delete).
      */
@@ -43,9 +43,9 @@ interface IAcceptedPactMapValue<T> {
 }
 
 /**
- * The pending change information, if any.
+ * The pending pact information, if any.
  */
-interface IPendingPactMapValue<T> {
+interface IPendingPact<T> {
     /**
      * The pending value of the given type or undefined (typically in case of delete).
      */
@@ -61,10 +61,10 @@ interface IPendingPactMapValue<T> {
 /**
  * Internal format of the values stored in the PactMap.
  */
-type PactMapValue<T> =
-    { accepted: IAcceptedPactMapValue<T>; pending: undefined; }
-    | { accepted: undefined; pending: IPendingPactMapValue<T>; }
-    | { accepted: IAcceptedPactMapValue<T>; pending: IPendingPactMapValue<T>; };
+type Pact<T> =
+    { accepted: IAcceptedPact<T>; pending: undefined; }
+    | { accepted: undefined; pending: IPendingPact<T>; }
+    | { accepted: IAcceptedPact<T>; pending: IPendingPact<T>; };
 
 /**
  * PactMap operation formats
@@ -174,7 +174,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
         return new PactMapFactory();
     }
 
-    private readonly values: Map<string, PactMapValue<T>> = new Map();
+    private readonly values: Map<string, Pact<T>> = new Map();
 
     private readonly incomingOp: EventEmitter = new EventEmitter();
 
@@ -308,7 +308,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
         // sent the set).
         const expectedSignoffs = this.getSignoffClients();
 
-        const newPactMapValue: PactMapValue<T> = {
+        const newPact: Pact<T> = {
             accepted,
             pending: {
                 value,
@@ -316,7 +316,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
             },
         };
 
-        this.values.set(key, newPactMapValue);
+        this.values.set(key, newPact);
 
         this.emit("pending", key);
 
@@ -397,13 +397,13 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         const allEntries = [...this.values.entries()];
         // Filter out items that are ineffectual
-        const summaryEntries = allEntries.filter(([, pactMapValue]) => {
+        const summaryEntries = allEntries.filter(([, pact]) => {
             return (
                 // Items have an effect if they are still pending, have a real value, or some client may try to
                 // reference state before the value was accepted.  Otherwise they can be dropped.
-                pactMapValue.pending !== undefined
-                || pactMapValue.accepted.value !== undefined
-                || pactMapValue.accepted.sequenceNumber > this.runtime.deltaManager.minimumSequenceNumber
+                pact.pending !== undefined
+                || pact.accepted.value !== undefined
+                || pact.accepted.sequenceNumber > this.runtime.deltaManager.minimumSequenceNumber
             );
         });
         return createSingleBlobSummary(snapshotFileName, JSON.stringify(summaryEntries));
@@ -414,7 +414,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
      * @internal
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const content = await readAndParse<[string, PactMapValue<T>][]>(storage, snapshotFileName);
+        const content = await readAndParse<[string, Pact<T>][]>(storage, snapshotFileName);
         for (const [key, value] of content) {
             this.values.set(key, value);
         }
