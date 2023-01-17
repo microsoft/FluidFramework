@@ -44,6 +44,7 @@ import {
     itExpects,
 } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
@@ -518,6 +519,73 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             container.connectionState, ConnectionState.Connected,
             "container is not connected after rapid disconnect() + connect()",
         );
+    });
+
+    it("Disposing container does not send deltaManager readonly event", async () => {
+        const container = await createConnectedContainer();
+
+        let run = 0;
+        container.deltaManager.on("readonly", () => run++);
+
+        container.dispose?.();
+        assert.strictEqual(run, 0, "DeltaManager should not send readonly event on container dispose");
+    });
+
+    it("Closing container sends deltaManager readonly event", async () => {
+        const container = await createConnectedContainer();
+
+        let run = 0;
+        container.deltaManager.on("readonly", () => run++);
+
+        container.close();
+        assert.strictEqual(run, 1, "DeltaManager should send readonly event on container close");
+    });
+
+    it("Disposing container should send dispose events", async () => {
+        const container = await createConnectedContainer();
+        const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
+
+        let containerDisposed = 0;
+        let containerClosed = 0;
+        let deltaManagerDisposed = 0;
+        let deltaManagerClosed = 0;
+        let runtimeDispose = 0;
+        container.on("disposed", () => containerDisposed++);
+        container.on("closed", () => containerClosed++);
+        (container.deltaManager as any).on("disposed", () => deltaManagerDisposed++);
+        (container.deltaManager as any).on("closed", () => deltaManagerClosed++);
+        (dataObject._context.containerRuntime as ContainerRuntime).on("dispose", () => runtimeDispose++);
+
+        container.dispose?.();
+        assert.strictEqual(containerDisposed, 1, "Container should send disposed event on container dispose");
+        assert.strictEqual(containerClosed, 0, "Container should not send closed event on container dispose");
+        assert.strictEqual(deltaManagerDisposed, 1, "DeltaManager should send disposed event on container dispose");
+        assert.strictEqual(deltaManagerClosed, 0, "DeltaManager should not send closed event on container dispose");
+        assert.strictEqual(runtimeDispose, 1, "ContainerRuntime should send dispose event on container dispose");
+    });
+
+    it("Closing then disposing container should send close and dispose events", async () => {
+        const container = await createConnectedContainer();
+        const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
+
+        let containerDisposed = 0;
+        let containerClosed = 0;
+        let deltaManagerDisposed = 0;
+        let deltaManagerClosed = 0;
+        let runtimeDispose = 0;
+        container.on("disposed", () => containerDisposed++);
+        container.on("closed", () => containerClosed++);
+        (container.deltaManager as any).on("disposed", () => deltaManagerDisposed++);
+        (container.deltaManager as any).on("closed", () => deltaManagerClosed++);
+        (dataObject._context.containerRuntime as ContainerRuntime).on("dispose", () => runtimeDispose++);
+
+        container.close();
+        container.dispose?.();
+        assert.strictEqual(containerDisposed, 1, "Container should send disposed event");
+        assert.strictEqual(containerClosed, 1, "Container should send closed event");
+        assert.strictEqual(deltaManagerDisposed, 1, "DeltaManager should send disposed event");
+        assert.strictEqual(deltaManagerClosed, 1, "DeltaManager should send closed event");
+        assert.strictEqual(runtimeDispose, 1, "ContainerRuntime should send dispose event");
     });
 });
 
