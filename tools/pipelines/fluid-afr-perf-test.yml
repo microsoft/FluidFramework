@@ -25,13 +25,6 @@ resources:
       source: Build - client packages
     - pipeline: azure
       source: Build - azure
-      trigger:
-        branches:
-          include:
-            - releases/*
-            - main
-            - next
-            - lts
 
 variables:
   - group: fluid-afr-perf-test-keys
@@ -43,7 +36,7 @@ stages:
   - stage:
     displayName: AFR Perf Tests (WestUS2)
     dependsOn: []
-    jobs:
+    jobs:q
       - template: templates/include-test-real-service.yml
         parameters:
           poolBuild: Small
