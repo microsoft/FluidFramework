@@ -443,17 +443,14 @@ export class DataStores implements IDisposable {
 
             // The requested data store is removed by gc. Create a 404 gc response exception.
             const error = responseToException(createResponseError(404, "Datastore removed by gc", request), request);
-
-            // Note: if a user writes a request to look like it's viaHandle,
-            // it will be indistinguishable in telemetry from an actual handle
             sendGCTombstoneEvent(
-                this.mc.logger,
+                this.mc,
                 {
                     eventName: "GC_Tombstone_DataStore_Requested",
-                    viaHandle: headerData.viaHandle,
+                    category: shouldFail ? "error" : "generic",
+                    isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
+                    viaHandle: headerData.viaHandle, // Note: A caller could easily spoof this header and confuse our telemetry
                 },
-                shouldFail /* logAsError */,
-                this.runtime.clientDetails.type === summarizerClientType,
                 context.isLoaded ? context.packagePath : undefined,
                 error,
             );

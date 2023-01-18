@@ -3,21 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryGenericEvent } from "@fluidframework/common-definitions";
 import { packagePathToTelemetryProperty } from "@fluidframework/runtime-utils";
+import { MonitoringContext } from "@fluidframework/telemetry-utils";
+import { disableTombstoneKey, throwOnTombstoneLoadKey, throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
 
-/** Augments and sends the given event/error via the given logger */
+/**
+ * Consolidates info / logic for logging when we encounter a Tombstone
+ */
 export function sendGCTombstoneEvent(
-    logger: ITelemetryLogger,
-    event: ITelemetryGenericEvent,
-    logAsError: boolean,
-    isSummarizerClient: boolean,
+    mc: MonitoringContext,
+    event: ITelemetryGenericEvent & { category: "error" | "generic", isSummarizerClient: boolean },
     packagePath: readonly string[] | undefined,
-    error: unknown,
+    error?: unknown,
 ) {
-    event.category = logAsError ? "error" : "generic";
     event.pkg = packagePathToTelemetryProperty(packagePath);
-    event.isSummarizerClient = isSummarizerClient;
+    event.tombstoneFlags = JSON.stringify({
+        DisableTombstone: mc.config.getBoolean(disableTombstoneKey),
+        ThrowOnTombstoneUsage: mc.config.getBoolean(throwOnTombstoneUsageKey),
+        ThrowOnTombstoneLoad: mc.config.getBoolean(throwOnTombstoneLoadKey),
+    });
 
-    logger.sendTelemetryEvent(event, error);
+    mc.logger.sendTelemetryEvent(event, error);
 }

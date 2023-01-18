@@ -778,13 +778,13 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             const error = new DataCorruptionError(messageString, safeTelemetryProps);
 
             sendGCTombstoneEvent(
-                this.mc.logger,
+                this.mc,
                 {
                     eventName: "GC_Tombstone_DataStore_Changed",
+                    category: this.throwOnTombstoneUsage ? "error" : "generic",
+                    isSummarizerClient: this.clientDetails.type === summarizerClientType,
                     callSite,
                 },
-                this.throwOnTombstoneUsage /* logAsError */,
-                this.clientDetails.type === summarizerClientType,
                 this.pkg,
                 error,
             );

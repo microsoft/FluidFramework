@@ -79,7 +79,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             }
 
             settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = true;
-            settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
             settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
         });
 
@@ -263,7 +262,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
         async () => {
             // Turn ThrowOnTombstoneUsage setting off.
             settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = false;
-            settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
 
             const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
 
@@ -382,7 +380,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             }
 
             settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = true;
-            settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
             settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
         });
 
@@ -656,7 +653,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             }
 
             settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = true;
-            settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
             settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
         });
 

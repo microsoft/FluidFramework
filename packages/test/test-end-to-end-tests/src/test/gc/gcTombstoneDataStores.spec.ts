@@ -60,9 +60,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
         if (provider.driver.type !== "local") {
             this.skip();
         }
-        settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = true;
-        settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
-    settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
+        settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
     });
 
     async function loadContainer(summaryVersion: string) {
@@ -654,34 +652,34 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
         });
     });
 
-        itExpects("does not throw tombstone errors when ThrowOnTombstoneUsage setting is not enabled",
-        [
-            { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested" },
-            { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded" },
-            {
-                eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
-                callSite: "submitMessage",
-            },
-            {
-                eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
-                callSite: "process",
-                clientType: "noninteractive/summarizer",
-            },
-            {
-                eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
-                callSite: "process",
-                clientType: "interactive",
-            },
-        ],
-        async () => {
-            settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = false;
-            settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
-            const {
-                unreferencedId,
-                summarizingContainer,
-                summarizer,
-            } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
-            await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+    itExpects("Loading/Using tombstone allowed when configured",
+    [
+        { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested" },
+        { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded" },
+        {
+            eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+            callSite: "submitMessage",
+        },
+        {
+            eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+            callSite: "process",
+            clientType: "noninteractive/summarizer",
+        },
+        {
+            eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+            callSite: "process",
+            clientType: "interactive",
+        },
+    ],
+    async () => {
+        settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = false;
+        settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
+        const {
+            unreferencedId,
+            summarizingContainer,
+            summarizer,
+        } = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+        await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
 
         // The datastore should be tombstoned now
         const { summaryVersion } = await summarize(summarizer);
