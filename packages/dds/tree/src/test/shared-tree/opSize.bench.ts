@@ -86,16 +86,10 @@ const getJsonNode = (desiredByteSize: number): JsonableTree => {
         },
     };
 
-    let nodeByteSize = new TextEncoder().encode(JSON.stringify(node)).length;
-
+    const initialNodeByteSize = new TextEncoder().encode(JSON.stringify(node)).length;
     const sizeIncrementor = "a"; // 1 byte
-    const incrementorByteSize = new TextEncoder().encode(sizeIncrementor).length;
-
-    while (nodeByteSize < desiredByteSize) {
-        node.fields.data[0].value += sizeIncrementor;
-        nodeByteSize += incrementorByteSize;
-    }
-
+    const remainingByteSizeToAdd = desiredByteSize - initialNodeByteSize;
+    node.fields.data[0].value = sizeIncrementor.repeat(remainingByteSizeToAdd);
     return node;
 };
 
@@ -378,6 +372,7 @@ describe("SharedTree Op Size Benchmarks", () => {
                 "Avg. Op Size (Bytes)": 0,
                 "Max Op Size (Bytes)": 0,
                 "Min Op Size (Bytes)": 0,
+                "Total Ops:": 0,
             };
         }
         let averageOpSizeBytes = 0;
@@ -408,6 +403,7 @@ describe("SharedTree Op Size Benchmarks", () => {
             "Avg. Op Size (Bytes)": Number.parseFloat(averageOpSizeBytes.toFixed(2)),
             "Max Op Size (Bytes)": maxOpSizeBytes,
             "Min Op Size (Bytes)": minOpSizeBytes,
+            "Total Ops:": operations.length,
         };
     };
 
