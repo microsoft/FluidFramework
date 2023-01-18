@@ -655,6 +655,8 @@ export const handlers: Handler[] = [
 ];
 
 function addPrettier(json: Record<string, any>) {
+    const hasFormatScriptResolver = Object.prototype.hasOwnProperty.call(json.scripts, "format");
+
     const hasPrettierScriptResolver = Object.prototype.hasOwnProperty.call(
         json.scripts,
         "prettier",
@@ -665,13 +667,37 @@ function addPrettier(json: Record<string, any>) {
         "prettier:fix",
     );
 
-    const hasFormatScriptResolver = Object.prototype.hasOwnProperty.call(json.scripts, "format");
-
-    if (hasPrettierScriptResolver || hasPrettierFixScriptResolver || hasFormatScriptResolver) {
-        json["scripts"]["format"] = "npm run prettier:fix";
-        json["scripts"]["prettier"] = "prettier --check .";
-        json["scripts"]["prettier:fix"] = "prettier --write .";
+    if (hasFormatScriptResolver) {
+        if (!json["scripts"]["format"].includes("lerna")) {
+            json["scripts"]["format"] = "npm run prettier:fix";
+        }
     }
+
+    if (hasPrettierScriptResolver) {
+        if (!json["scripts"]["prettier"].includes("--ignore-path")) {
+            json["scripts"]["prettier"] = "prettier --check .";
+        }
+    }
+
+    if (hasPrettierFixScriptResolver) {
+        if (!json["scripts"]["prettier:fix"].includes("--ignore-path")) {
+            json["scripts"]["prettier:fix"] = "prettier --write .";
+        }
+    }
+
+    // if (hasPrettierScriptResolver || hasPrettierFixScriptResolver || hasFormatScriptResolver) {
+    //     if (!json["scripts"]["format"].includes("lerna")) {
+    //         json["scripts"]["format"] = "npm run prettier:fix";
+    //     }
+
+    //     if (!json["scripts"]["prettier"].includes("--ignore-path")) {
+    //         json["scripts"]["prettier"] = "prettier --check .";
+    //     }
+
+    //     if (!json["scripts"]["prettier:fix"].includes("--ignore-path")) {
+    //         json["scripts"]["prettier:fix"] = "prettier --write .";
+    //     }
+    // }
 }
 
 function runNpmJsonLint(json: any, file: string) {
