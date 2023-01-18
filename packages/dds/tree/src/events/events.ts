@@ -175,7 +175,7 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E> {
             );
         assert(
             listeners.delete(listener),
-            "Listener does not exist. Event deregistration functions may only be invoked once.",
+            0x4c1 /* Listener does not exist. Event deregistration functions may only be invoked once. */,
         );
         if (listeners.size === 0) {
             this.listeners.delete(eventName);

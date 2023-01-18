@@ -67,7 +67,7 @@ export interface IConnectionArgs {
  */
 export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
     (event: "throttled", listener: (error: IThrottlingWarning) => void);
-    (event: "closed", listener: (error?: ICriticalContainerError) => void);
+    (event: "closed" | "disposed", listener: (error?: ICriticalContainerError) => void);
 }
 
 /**
@@ -102,7 +102,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     public get active(): boolean { return this._active(); }
 
-    public get disposed() { return this.closed; }
+    public get disposed() { return this._closed; }
 
     public get IDeltaSender() { return this; }
 
@@ -128,6 +128,11 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private lastProcessedMessage: ISequencedDocumentMessage | undefined;
     private baseTerm: number = 0;
 
+    /** count number of noops sent by the client which may not be acked */
+    private noOpCount: number = 0;
+    /** Track clientSequenceNumber of the last op */
+    private lastClientSequenceNumber: number = 0;
+
     /**
      * Track down the ops size.
     */
@@ -143,7 +148,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private readonly _inbound: DeltaQueue<ISequencedDocumentMessage>;
     private readonly _inboundSignal: DeltaQueue<ISignalMessage>;
 
-    private closed = false;
+    private _closed = false;
+    private _disposed = false;
 
     private handler: IDeltaHandlerStrategy | undefined;
     private deltaStorage: IDocumentDeltaStorageService | undefined;
@@ -234,6 +240,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         }
 
         this.messageBuffer.push(message);
+
+        if (message.type === MessageType.NoOp){
+            this.noOpCount++;
+        }
 
         this.emit("submitOp", message);
 
@@ -383,6 +393,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         assert(this.messageBuffer.length === 0, 0x0e9 /* "messageBuffer is not empty on new connection" */);
 
         this.opsSize = 0;
+        this.noOpCount = 0;
 
         this.emit(
             "connect",
@@ -439,7 +450,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         // we know snapshot sequence number that is set in attachOpHandler. So all such calls should be noop.
         assert(this.fetchReason === undefined, 0x268 /* "There can't be pending fetch that early in boot sequence!" */);
 
-        if (this.closed) {
+        if (this._closed) {
             return;
         }
 
@@ -584,14 +595,23 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     /**
      * Closes the connection and clears inbound & outbound queues.
+     *
+     * @param doDispose - should the DeltaManager treat this close call as a dispose?
+     * Differences between close and dispose:
+     * - dispose will emit "disposed" event while close emits "closed"
+     * - dispose will remove all listeners
+     * - dispose can be called after closure, but not vis versa
      */
-    public close(error?: ICriticalContainerError): void {
-        if (this.closed) {
+     public close(error?: ICriticalContainerError, doDispose?: boolean): void {
+        if (this._closed) {
+            if (doDispose === true) {
+                this.disposeInternal(error);
+            }
             return;
         }
-        this.closed = true;
+        this._closed = true;
 
-        this.connectionManager.dispose(error);
+        this.connectionManager.dispose(error, doDispose !== true);
 
         this.closeAbortController.abort();
 
@@ -606,11 +626,23 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         // Drop pending messages - this will ensure catchUp() does not go into infinite loop
         this.pending = [];
 
+        if (doDispose === true) {
+            this.disposeInternal(error);
+        } else {
+            this.emit("closed", error);
+        }
+    }
+
+    private disposeInternal(error?: ICriticalContainerError): void {
+        if (this._disposed) {
+            return;
+        }
+        this._disposed = true;
+
         // This needs to be the last thing we do (before removing listeners), as it causes
         // Container to dispose context and break ability of data stores / runtime to "hear"
         // from delta manager, including notification (above) about readonly state.
-        this.emit("closed", error);
-
+        this.emit("disposed", error);
         this.removeAllListeners();
     }
 
@@ -824,6 +856,20 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             message.contents = JSON.parse(message.contents);
         }
 
+        // Validate client sequence number has no gap. Decrement the noOpCount by gap
+        // If the count ends up negative, that means we have a real gap and throw error
+        if (this.connectionManager.clientId !== undefined && this.connectionManager.clientId === message.clientId) {
+            if (message.type === MessageType.NoOp){
+                this.noOpCount--;
+            }
+            const clientSeqNumGap = message.clientSequenceNumber - this.lastClientSequenceNumber - 1;
+            this.noOpCount -= clientSeqNumGap;
+            if (this.noOpCount < 0) {
+                throw new Error(`gap in client sequence number: ${clientSeqNumGap}`);
+            }
+            this.lastClientSequenceNumber = message.clientSequenceNumber;
+        }
+
         this.connectionManager.beforeProcessingIncomingOp(message);
 
         // Watch the minimum sequence number and be ready to update as needed
@@ -898,7 +944,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             return;
         }
 
-        if (this.closed) {
+        if (this._closed) {
             this.logger.sendTelemetryEvent({ eventName: "fetchMissingDeltasClosedConnection", reason });
             return;
         }
@@ -950,7 +996,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
      * Sorts pending ops and attempts to apply them
      */
     private processPendingOps(reason?: string): void {
-        if (this.closed) {
+        if (this._closed) {
             return;
         }
 
