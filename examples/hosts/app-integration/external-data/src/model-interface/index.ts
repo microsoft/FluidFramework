@@ -36,7 +36,12 @@ export interface ITaskEvents extends IEvent {
     /**
      * Emitted when the name or priority have changed respectively.
      */
-    (event: "nameChanged" | "priorityChanged", listener: () => void);
+    (event:
+        "nameChanged" |
+        "priorityChanged" |
+        "externalNameChanged" |
+        "externalPriorityChanged",
+        listener: ( changedData: string) => void);
 }
 
 /**
@@ -51,11 +56,35 @@ export interface ITask extends IEventProvider<ITaskEvents> {
     /**
      * The task name.  Modifications are persisted in Fluid and shared amongst collaborators.
      */
-    readonly name: SharedString;
+    name: SharedString;
     /**
      * The task priority.  Modifications are persisted in Fluid and shared amongst collaborators.
      */
     priority: number;
+    /**
+     * The task name coming in from the external server.
+     */
+    diffName: string;
+    /**
+     * The task priority coming in from the external server.
+     */
+    diffPriority: number;
+    /**
+     * The type of change to the task coming in from the external server.
+     */
+    diffType: string;
+    /**
+     * Trigger event to render change to UI.
+     */
+    readonly externalNameChanged:(name: string) => Promise<void>;
+    /**
+     * Trigger event to render change to UI.
+     */
+    readonly externalPriorityChanged:(priority: number) => Promise<void>;
+    /**
+     * Save the proposed changes to SavedData.
+     */
+    readonly acceptChange:() => Promise<void>;
 }
 
 /**
@@ -65,7 +94,7 @@ export interface ITaskListEvents extends IEvent {
     /**
      * Emitted when a task is added/removed respectively.
      */
-    (event: "taskAdded" | "taskDeleted" | "diffDetected", listener: (task: ITask) => void);
+    (event: "taskAdded" | "taskDeleted" | "taskChanged" | "taskHasDiff" | "externalChangesAccepted", listener: (task: ITask) => void);
 }
 
 /**
@@ -91,11 +120,6 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
      * Get the full list of tasks.
      */
     readonly getTasks: () => ITask[];
-
-    /**
-     * Get the list of hydrated draft tasks when a difference with external (savedData) is detected.
-     */
-    readonly getDiffTasks: () => ITask[];
 
     /**
      * Get the task with the specified ID.

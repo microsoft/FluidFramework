@@ -20,16 +20,32 @@ interface ITaskRowProps {
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
     const { task, deleteTask } = props;
     const priorityRef = useRef<HTMLInputElement>(null);
+    const [savedName, setSavedName] =  useState<string>(task.diffName);
+    const [savedPriority, setSavedPriority] = useState<number>(task.diffPriority);
     useEffect(() => {
         const updateFromRemotePriority = (): void => {
             if (priorityRef.current !== null) {
                 priorityRef.current.value = task.priority.toString();
             }
         };
+        const showSavedPriority = (): void => {
+            console.log('showSavedPriority has been triggered');
+            setSavedPriority(task.diffPriority);
+        }
+        const showSavedName = (): void => {
+            console.log('showsavedname has been triggered');
+            if(task.diffName !== undefined) {
+                setSavedName(task.diffName);
+            }
+        }
         task.on("priorityChanged", updateFromRemotePriority);
+        task.on("externalPriorityChanged", showSavedPriority);
+        task.on("externalNameChanged", showSavedName);
         updateFromRemotePriority();
         return (): void => {
             task.off("priorityChanged", updateFromRemotePriority);
+            task.off("externalPriorityChanged", showSavedPriority);
+            task.off("externalNameChanged", showSavedName);
         };
     }, [task]);
 
@@ -37,6 +53,25 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
         const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
         task.priority = newValue;
     };
+
+    const diffVisible = task.diffType === "none" ? "hidden": "visible";
+
+    // console.log(task);
+    let diffColor: string = "white";
+    switch(task.diffType) {
+        case "add": {
+           diffColor = "green";
+           break;
+        }
+        case "delete": {
+            diffColor = "red";
+           break;
+        }
+        default: {
+            diffColor = "orange";
+           break;
+        }
+    }
 
     return (
         <tr>
@@ -63,6 +98,12 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
                     ❌
                 </button>
             </td>
+            <td style={{ visibility: diffVisible, backgroundColor: diffColor }}>{ savedName }</td>
+            <td style={{ visibility: diffVisible , backgroundColor: diffColor }}>{ savedPriority }</td>
+            <td>
+                <button
+                    onClick={ task.acceptChange } style={{ visibility: diffVisible }}>Accept change</button>
+            </td>
         </tr>
     );
 };
@@ -81,30 +122,19 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
     const { taskList } = props;
 
     const [tasks, setTasks] = useState<ITask[]>(taskList.getTasks());
-    const [draftTasks, setDiffTasks] = useState<ITask[]>(taskList.getDiffTasks());
 
     useEffect(() => {
         const updateTasks = (): void => {
             setTasks(taskList.getTasks());
         };
-        const updateDiffTasks = (): void => {
-            setDiffTasks(taskList.getDiffTasks());
-        };
         taskList.on("taskAdded", updateTasks);
         taskList.on("taskDeleted", updateTasks);
-        taskList.on("diffDetected", updateDiffTasks);
 
         setTasks(taskList.getTasks());
-        setDiffTasks(taskList.getDiffTasks());
-
-        // Run once immediately to run without waiting.
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        taskList.importExternalData();
 
         return (): void => {
             taskList.off("taskAdded", updateTasks);
             taskList.off("taskDeleted", updateTasks);
-            taskList.off("diffDetected", updateDiffTasks);
         }
     }, [taskList]);
 
@@ -116,15 +146,6 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
         />
     ));
 
-    const draftTaskRows = draftTasks.map((task) => (
-        <TaskRow
-            key={ task.id }
-            task={ task }
-            deleteTask={ (): void => taskList.deleteTask(task.id) }
-        />
-    ));
-
-    const diffElementsArePresent = draftTasks.length === 0 ? 'hidden' : 'visible';
     return (
         // TODO: Gray button if not "authenticated" via debug controls
         // TODO: Conflict UI
@@ -140,18 +161,6 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
                 </thead>
                 <tbody>
                     { taskRows }
-                </tbody>
-            </table>
-            <table style={{ visibility: diffElementsArePresent, backgroundColor: 'orange' }}>
-                <thead>
-                    <tr>
-                        <td>ID</td>
-                        <td>Title</td>
-                        <td>Priority</td>
-                    </tr>
-                </thead>
-                <tbody>
-                    { draftTaskRows }
                 </tbody>
             </table>
             <button onClick={ taskList.saveChanges }>Save changes</button>
