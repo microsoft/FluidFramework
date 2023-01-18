@@ -14,7 +14,6 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { ITestContainerConfig, ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import {
-    describeFullCompat,
     describeNoCompat,
     ITestDataObject,
     TestDataObjectType,
@@ -177,7 +176,7 @@ async function validateDataStoreReferenceState(
 /**
  * Validates that when running in GC test mode, unreferenced content is deleted from the summary.
  */
-describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => {
+describeNoCompat("GC delete objects in test mode", (getTestObjectProvider) => {
     // If deleteContent is true, GC is run in test mode where content that is not referenced is
     // deleted after each GC run.
     const tests = (deleteContent: boolean = false) => {
@@ -226,7 +225,13 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
             // Remove its handle and verify its marked as unreferenced.
             mainDataStore._root.delete("nonRootDS");
             await validateDataStoreReferenceState(
-                provider, containerRuntime, deleteContent, dataStore._context.id, false /* referenced */);
+                provider,
+                containerRuntime,
+                deleteContent,
+                dataStore._context.id,
+                false /* referenced */,
+                deleteContent ? true : false /* deletedFromGCState */,
+            );
 
             // Add data store's handle back in root component. If deleteContent is true, the data store
             // should get deleted and should remain unreferenced. Otherwise, it should be referenced back.
@@ -263,7 +268,13 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
             // dataStore2 as unreferenced.
             mainDataStore._root.delete("nonRootDS1");
             await validateDataStoreReferenceState(
-                provider, containerRuntime, deleteContent, dataStore2._context.id, false /* referenced */);
+                provider,
+                containerRuntime,
+                deleteContent,
+                dataStore2._context.id,
+                false /* referenced */,
+                deleteContent ? true : false /* deletedFromGCState */,
+            );
         });
     };
 
