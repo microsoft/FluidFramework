@@ -1032,10 +1032,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     }
 
     /**
-     * Unmark the deleted property when rolling back delete.
+     * Unmark the deleted property only when rolling back delete.
      */
     private undispose(): void {
         this._deleted = false;
+        this.emit("undisposed", this);
     }
 
     public get disposed(): boolean {

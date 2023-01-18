@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/build-tools",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Fluid Build tools",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -52,8 +52,8 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-tools/version-tools": "^0.7.0",
-    "@fluidframework/bundle-size-tools": "^0.7.0",
+    "@fluid-tools/version-tools": "^0.7.1",
+    "@fluidframework/bundle-size-tools": "^0.7.1",
     "@rushstack/node-core-library": "^3.51.1",
     "async": "^3.2.2",
     "chalk": "^2.4.2",

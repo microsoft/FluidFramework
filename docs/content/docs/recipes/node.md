@@ -63,12 +63,6 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     npm install @fluidframework/tinylicious-client fluid-framework readline-sync
     ```
 
-{{< callout note >}}
-
-You may need to install an additional dependency to make this demo compatible with Webpack 5. If you receive a compilation error related to a "buffer" package, please run `npm install -D buffer` and try again. This will be resolved in a future release of Fluid Framework.
-
-{{< /callout >}}
-
 ## Code the project
 
 1. Create `\src\index.js` file in your code editor and add the imports. The file should look like the following:
