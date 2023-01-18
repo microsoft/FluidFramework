@@ -63,7 +63,7 @@ export class UniformChunk implements ReferenceCounted {
     public constructor(public shape: ChunkShape, public values: TreeValue[]) {
         assert(
             shape.treeShape.valuesPerTopLevelNode * shape.topLevelLength === values.length,
-            "invalid number of values for shape",
+            0x4c3 /* invalid number of values for shape */,
         );
     }
 
@@ -77,7 +77,7 @@ export class UniformChunk implements ReferenceCounted {
 
     public referenceRemoved(): void {
         this.refCount--;
-        assert(this.refCount >= 0, "Negative ref count");
+        assert(this.refCount >= 0, 0x4c4 /* Negative ref count */);
     }
 
     public isShared(): boolean {
@@ -129,7 +129,7 @@ export class TreeShape {
         ];
         let fieldIndex = 0;
         for (const [k, f, length] of fieldsArray) {
-            assert(!fields.has(k), "no duplicate keys");
+            assert(!fields.has(k), 0x4c5 /* no duplicate keys */);
             const offset = new OffsetShape(f, length, infos.length, k, fieldIndex);
             fields.set(k, offset);
             clonePositions(0, [k, f, length], fieldIndex, numberOfValues, infos);
@@ -209,7 +209,7 @@ export class ChunkShape {
         public readonly treeShape: TreeShape,
         public readonly topLevelLength: number,
     ) {
-        assert(topLevelLength > 0, "topLevelLength must be greater than 0");
+        assert(topLevelLength > 0, 0x4c6 /* topLevelLength must be greater than 0 */);
 
         // TODO: avoid duplication from inner loop
         const positions: NodePositionInfo[] = [];
@@ -223,7 +223,10 @@ export class ChunkShape {
     }
 
     atPosition(index: number): NodePositionInfo {
-        assert(index < this.positions.length, "index must not be greater than the number of nodes");
+        assert(
+            index < this.positions.length,
+            0x4c7 /* index must not be greater than the number of nodes */,
+        );
         return this.positions[index]; // TODO % this.numberOfNodesPerTopLevelNode and fixup returned indexes as needed to reduce size of positions array?
 
         // const topIndex = Math.trunc(index / this.treeShape.positions.length);
@@ -351,7 +354,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
      * providing this ensures that the caller knows what the results will mean.
      */
     private nodeInfo(requiredMode: CursorLocationType): NodePositionInfo {
-        assert(this.mode === requiredMode, "tried to access cursor when in wrong mode");
+        assert(this.mode === requiredMode, 0x4c8 /* tried to access cursor when in wrong mode */);
         return this.nodePositionInfo;
     }
 
@@ -367,7 +370,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     }
 
     exitField(): void {
-        assert(this.mode === CursorLocationType.Fields, "exitField when in wrong mode");
+        assert(this.mode === CursorLocationType.Fields, 0x4c9 /* exitField when in wrong mode */);
         this.fieldKey = undefined;
         this.mode = CursorLocationType.Nodes;
     }
@@ -398,11 +401,14 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     enterNode(childIndex: number): void {
         const info = this.nodeInfo(CursorLocationType.Fields);
         const f = info.shape.fieldsOffsetArray[this.indexOfField];
-        assert(childIndex >= 0, "index must be positive");
-        assert(childIndex < f.topLevelLength, "index must not be past the end of the field");
+        assert(childIndex >= 0, 0x4ca /* index must be positive */);
+        assert(
+            childIndex < f.topLevelLength,
+            0x4cb /* index must not be past the end of the field */,
+        );
         this.mode = CursorLocationType.Nodes;
         this.moveToPosition(this.positionIndex + f.offset + childIndex * f.shape.positions.length);
-        assert(this.fieldIndex === childIndex, "should be at selected child");
+        assert(this.fieldIndex === childIndex, 0x4cc /* should be at selected child */);
     }
 
     getFieldPath(): FieldUpPath {

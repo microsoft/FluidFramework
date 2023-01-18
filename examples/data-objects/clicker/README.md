@@ -10,8 +10,10 @@ classes.
 There is another experimental implementation of Clicker using a WiP Fluid React Component in components/experimental/clicker-react. While it uses a state update model instead of an event-listening model that some React developers may find more familiar, the code is still being developed and may contain bugs.
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) -->
-<!-- This section is automatically generated.
-To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
+
+<!-- prettier-ignore-start -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Getting Started
 
@@ -21,6 +23,8 @@ You can run this example using the following steps:
     - For an even faster build, you can add the package name to the build command, like this:
       `npm run build:fast -- --nolint @fluid-example/clicker`
 1. Run `npm run start` from this directory (examples/data-objects/clicker) and open <http://localhost:8080> in a web browser to see the app running.
+
+<!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 

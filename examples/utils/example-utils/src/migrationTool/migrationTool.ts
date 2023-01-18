@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IQuorum, Quorum } from "@fluid-experimental/quorum";
+import { IPactMap, PactMap } from "@fluid-experimental/pact-map";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -11,7 +11,7 @@ import { ConsensusRegisterCollection, IConsensusRegisterCollection } from "@flui
 
 import type { IMigrationTool } from "../migrationInterfaces";
 
-const quorumKey = "quorum";
+const pactMapKey = "pact-map";
 const crcKey = "crc";
 const taskManagerKey = "task-manager";
 const newVersionKey = "newVersion";
@@ -19,15 +19,15 @@ const migrateTaskName = "migrate";
 const newContainerIdKey = "newContainerId";
 
 export class MigrationTool extends DataObject implements IMigrationTool {
-    private _quorum: IQuorum<string> | undefined;
+    private _pactMap: IPactMap<string> | undefined;
     private _crc: IConsensusRegisterCollection<string> | undefined;
     private _taskManager: ITaskManager | undefined;
 
-    private get quorum() {
-        if (this._quorum === undefined) {
-            throw new Error("Couldn't retrieve the Quorum");
+    private get pactMap() {
+        if (this._pactMap === undefined) {
+            throw new Error("Couldn't retrieve the PactMap");
         }
-        return this._quorum;
+        return this._pactMap;
     }
 
     private get crc() {
@@ -73,29 +73,24 @@ export class MigrationTool extends DataObject implements IMigrationTool {
     }
 
     public get proposedVersion() {
-        return this.quorum.getPending(newVersionKey) ?? this.quorum.get(newVersionKey);
+        return this.pactMap.getPending(newVersionKey) ?? this.pactMap.get(newVersionKey);
     }
 
     public get acceptedVersion() {
-        return this.quorum.get(newVersionKey);
+        return this.pactMap.get(newVersionKey);
     }
 
     public readonly proposeVersion = (newVersion: string) => {
         // Don't permit changes to the version after a new one has already been accepted.
         // TODO: Consider whether we should throw on trying to set when a pending proposal exists -- currently
-        // the Quorum will silently drop these on the floor.
+        // the PactMap will silently drop these on the floor.
         if (this.acceptedVersion !== undefined) {
             throw new Error("New version was already accepted");
         }
 
         // Note that the accepted proposal could come from another client (e.g. two clients try to propose
-        // simultaneously).  Watching via the event listener will work regardless of whether our proposal or
-        // a remote client's proposal was the one that actually got accepted.
-
-        // So even if quorum.set() becomes a promise, this will remain fire-and-forget since we don't care
-        // whether our proposal or a remote client's proposal is accepted (though maybe we'd do retry
-        // logic if a remote client rejects the local client's proposal).
-        this.quorum.set(newVersionKey, newVersion);
+        // simultaneously).
+        this.pactMap.set(newVersionKey, newVersion);
     };
 
     public async volunteerForMigration(): Promise<boolean> {
@@ -111,28 +106,28 @@ export class MigrationTool extends DataObject implements IMigrationTool {
     }
 
     protected async initializingFirstTime() {
-        const quorum = Quorum.create(this.runtime);
+        const pactMap = PactMap.create(this.runtime);
         const crc = ConsensusRegisterCollection.create(this.runtime);
         const taskManager = TaskManager.create(this.runtime);
-        this.root.set(quorumKey, quorum.handle);
+        this.root.set(pactMapKey, pactMap.handle);
         this.root.set(crcKey, crc.handle);
         this.root.set(taskManagerKey, taskManager.handle);
     }
 
     protected async hasInitialized() {
-        const quorumHandle = this.root.get<IFluidHandle<IQuorum<string>>>(quorumKey);
-        this._quorum = await quorumHandle?.get();
+        const pactMapHandle = this.root.get<IFluidHandle<IPactMap<string>>>(pactMapKey);
+        this._pactMap = await pactMapHandle?.get();
 
         const crcHandle = this.root.get<IFluidHandle<IConsensusRegisterCollection<string>>>(crcKey);
         this._crc = await crcHandle?.get();
 
-        this.quorum.on("pending", (key: string) => {
+        this.pactMap.on("pending", (key: string) => {
             if (key === newVersionKey) {
                 this.emit("stopping");
             }
         });
 
-        this.quorum.on("accepted", (key: string) => {
+        this.pactMap.on("accepted", (key: string) => {
             if (key === newVersionKey) {
                 this.emit("migrating");
             }
@@ -160,7 +155,7 @@ export const MigrationToolInstantiationFactory =
         MigrationTool,
         [
             ConsensusRegisterCollection.getFactory(),
-            Quorum.getFactory(),
+            PactMap.getFactory(),
             TaskManager.getFactory(),
         ],
         {},

@@ -20,6 +20,7 @@ import {
 } from "@fluidframework/container-loader";
 import {
     DriverErrorType,
+    FiveDaysMs,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
 } from "@fluidframework/driver-definitions";
@@ -32,6 +33,7 @@ import {
     ITestObjectProvider,
     TestFluidObjectFactory,
     timeoutPromise,
+    waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl, IAnyDriverError } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -43,6 +45,7 @@ import {
     itExpects,
 } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
@@ -116,8 +119,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             runtimeFactory);
 
         const container = await localTestObjectProvider.makeTestContainer() as Container;
-        await timeoutPromise(
-            (resolve) => container.once("connected", () => resolve()),
+        await waitForContainerConnection(container, true,
             { durationMs: timeoutMs, errorMsg: "Container initial connection timeout" },
         );
         assert.strictEqual(
@@ -331,8 +333,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         assert.strictEqual(container.connectionState, ConnectionState.Disconnected, "container can't disconnect()");
 
         container.connect();
-        await timeoutPromise(
-            (resolve) => container.once("connected", () => resolve()),
+        await waitForContainerConnection(container, true,
             { durationMs: timeoutMs, errorMsg: "container connect() timeout" },
         );
         assert.strictEqual(container.connectionState, ConnectionState.Connected, "container can't connect()");
@@ -353,8 +354,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             runtimeFactory);
 
         const container1 = await localTestObjectProvider.makeTestContainer() as Container;
-        await timeoutPromise(
-            (resolve) => container1.once("connected", () => resolve()),
+        await waitForContainerConnection(container1, false,
             { durationMs: timeoutMs, errorMsg: "container1 initial connect timeout" },
         );
         assert.strictEqual(
@@ -369,8 +369,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         assert.strictEqual(value1, "value", "value1 is not set");
 
         const container2 = await localTestObjectProvider.loadTestContainer() as Container;
-        await timeoutPromise(
-            (resolve) => container2.once("connected", () => resolve()),
+        await waitForContainerConnection(container2, false,
             { durationMs: timeoutMs, errorMsg: "container2 initial connect timeout" },
         );
         const dataObjectTest = await requestFluidObject<ITestDataObject>(container2, "default");
@@ -416,8 +415,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 
         container.connect();
         container.disconnect();
-        const connectPromise = timeoutPromise(
-            (resolve) => container.once("connected", () => resolve()),
+        const connectPromise = waitForContainerConnection(container, true,
             { durationMs: timeoutMs, errorMsg: "connected timeout (expected error)" },
         );
         await assert.rejects(
@@ -442,8 +440,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 
         container.connect();
         container.connect();
-        await timeoutPromise(
-            (resolve) => container.once("connected", () => resolve()),
+        await waitForContainerConnection(container, true,
             { durationMs: timeoutMs, errorMsg: "container connected event timeout" },
         );
         assert.strictEqual(
@@ -461,8 +458,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         (container as any).deltaManager.connectionManager.shouldJoinWrite = () => { return true; };
         container.connect();
 
-        await timeoutPromise(
-            (resolve) => container.once("connected", () => resolve()),
+        await waitForContainerConnection(container, true,
             { durationMs: timeoutMs, errorMsg: "container connected event timeout" },
         );
 
@@ -480,8 +476,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         container.connect();
         container.connect();
         container.disconnect();
-        const connectPromise = timeoutPromise(
-            (resolve) => container.once("connected", () => resolve()),
+        const connectPromise = waitForContainerConnection(container, true,
             { durationMs: timeoutMs, errorMsg: "connected timeout (expected error)" },
         );
         await assert.rejects(
@@ -509,13 +504,89 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         container.connect();
         container.disconnect();
         container.connect();
-        await timeoutPromise(
-            (resolve) => container.once("connected", () => resolve()),
+        await waitForContainerConnection(container, true,
             { durationMs: timeoutMs, errorMsg: "connected event not fired after rapid disconnect() + connect()" },
         );
         assert.strictEqual(
             container.connectionState, ConnectionState.Connected,
             "container is not connected after rapid disconnect() + connect()",
         );
+    });
+
+    it("Disposing container does not send deltaManager readonly event", async () => {
+        const container = await createConnectedContainer();
+
+        let run = 0;
+        container.deltaManager.on("readonly", () => run++);
+
+        container.dispose?.();
+        assert.strictEqual(run, 0, "DeltaManager should not send readonly event on container dispose");
+    });
+
+    it("Closing container sends deltaManager readonly event", async () => {
+        const container = await createConnectedContainer();
+
+        let run = 0;
+        container.deltaManager.on("readonly", () => run++);
+
+        container.close();
+        assert.strictEqual(run, 1, "DeltaManager should send readonly event on container close");
+    });
+
+    it("Disposing container should send dispose events", async () => {
+        const container = await createConnectedContainer();
+        const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
+
+        let containerDisposed = 0;
+        let containerClosed = 0;
+        let deltaManagerDisposed = 0;
+        let deltaManagerClosed = 0;
+        let runtimeDispose = 0;
+        container.on("disposed", () => containerDisposed++);
+        container.on("closed", () => containerClosed++);
+        (container.deltaManager as any).on("disposed", () => deltaManagerDisposed++);
+        (container.deltaManager as any).on("closed", () => deltaManagerClosed++);
+        (dataObject._context.containerRuntime as ContainerRuntime).on("dispose", () => runtimeDispose++);
+
+        container.dispose?.();
+        assert.strictEqual(containerDisposed, 1, "Container should send disposed event on container dispose");
+        assert.strictEqual(containerClosed, 0, "Container should not send closed event on container dispose");
+        assert.strictEqual(deltaManagerDisposed, 1, "DeltaManager should send disposed event on container dispose");
+        assert.strictEqual(deltaManagerClosed, 0, "DeltaManager should not send closed event on container dispose");
+        assert.strictEqual(runtimeDispose, 1, "ContainerRuntime should send dispose event on container dispose");
+    });
+
+    it("Closing then disposing container should send close and dispose events", async () => {
+        const container = await createConnectedContainer();
+        const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
+
+        let containerDisposed = 0;
+        let containerClosed = 0;
+        let deltaManagerDisposed = 0;
+        let deltaManagerClosed = 0;
+        let runtimeDispose = 0;
+        container.on("disposed", () => containerDisposed++);
+        container.on("closed", () => containerClosed++);
+        (container.deltaManager as any).on("disposed", () => deltaManagerDisposed++);
+        (container.deltaManager as any).on("closed", () => deltaManagerClosed++);
+        (dataObject._context.containerRuntime as ContainerRuntime).on("dispose", () => runtimeDispose++);
+
+        container.close();
+        container.dispose?.();
+        assert.strictEqual(containerDisposed, 1, "Container should send disposed event");
+        assert.strictEqual(containerClosed, 1, "Container should send closed event");
+        assert.strictEqual(deltaManagerDisposed, 1, "DeltaManager should send disposed event");
+        assert.strictEqual(deltaManagerClosed, 1, "DeltaManager should send closed event");
+        assert.strictEqual(runtimeDispose, 1, "ContainerRuntime should send dispose event");
+    });
+});
+
+describeNoCompat("Driver", (getTestObjectProvider) => {
+    it("Driver Storage Policy Values", async () => {
+        const provider = getTestObjectProvider();
+        const fiveDaysMs: FiveDaysMs = 432_000_000;
+
+        const container = await provider.makeTestContainer() as Container;
+        assert.equal(container.storage.policies?.maximumCacheDurationMs, fiveDaysMs);
     });
 });

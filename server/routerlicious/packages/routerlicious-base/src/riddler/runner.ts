@@ -10,6 +10,7 @@ import {
     ISecretManager,
     IWebServerFactory,
     IWebServer,
+    ICache,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as winston from "winston";
@@ -29,6 +30,7 @@ export class RiddlerRunner implements IRunner {
         private readonly defaultHistorianUrl: string,
         private readonly defaultInternalHistorianUrl: string,
         private readonly secretManager: ISecretManager,
+        private readonly cache?: ICache
     ) {
     }
 
@@ -44,7 +46,8 @@ export class RiddlerRunner implements IRunner {
             this.baseOrdererUrl,
             this.defaultHistorianUrl,
             this.defaultInternalHistorianUrl,
-            this.secretManager);
+            this.secretManager,
+            this.cache);
         riddler.set("port", this.port);
 
         this.server = this.serverFactory.create(riddler);

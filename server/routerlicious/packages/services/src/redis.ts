@@ -31,6 +31,15 @@ export class RedisCache implements ICache {
             Lumberjack.error("Error with Redis", undefined, err);
         });
     }
+    public async delete(key: string): Promise<boolean> {
+        try {
+            await this.client.del(this.getKey(key));
+            return true;
+        } catch (error) {
+            Lumberjack.error(`Error deleting from cache.`, undefined, error);
+            return false;
+        }
+    }
 
     public async get(key: string): Promise<string> {
         return this.client.get(this.getKey(key));
