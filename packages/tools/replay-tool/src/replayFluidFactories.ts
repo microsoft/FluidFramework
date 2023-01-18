@@ -33,6 +33,7 @@ import {
 } from "@fluid-experimental/sequence-deprecated";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { UnknownChannelFactory } from "./unknownChannel";
+import { ReplayToolContainerEntryPoint } from "./helpers";
 
 /** Simple runtime factory that creates a container runtime */
 export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
@@ -56,7 +57,13 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
             async (containerRuntime :IContainerRuntime) => {
                 // For the replay tool, the entryPoint exposes the containerRuntime itself so the helpers for the tool
                 // can use it.
-                return { containerRuntime };
+                const entryPoint: ReplayToolContainerEntryPoint = {
+                    containerRuntime: containerRuntime as ContainerRuntime,
+                    get ReplayToolContainerEntryPoint() {
+                        return this as ReplayToolContainerEntryPoint;
+                    }
+                };
+                return entryPoint;
             },
         );
     }

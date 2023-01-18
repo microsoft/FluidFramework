@@ -17,6 +17,8 @@ import { IFileSnapshot } from "@fluidframework/replay-driver";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot, ISnapshotNormalizerConfig } from "@fluidframework/tool-utils";
 import stringify from "json-stable-stringify";
+import { FluidObject } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/common-utils";
 import {
     excludeChannelContentDdsFactories,
     ReplayDataStoreFactory,
@@ -24,6 +26,11 @@ import {
 } from "./replayFluidFactories";
 import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
 import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
+
+export interface ReplayToolContainerEntryPoint {
+    readonly containerRuntime: ContainerRuntime,
+    readonly ReplayToolContainerEntryPoint: ReplayToolContainerEntryPoint
+}
 
 const normalizeOpts: ISnapshotNormalizerConfig =
     { excludedChannelContentTypes: excludeChannelContentDdsFactories.map((f) => f.type) };
@@ -167,9 +174,9 @@ export async function loadContainer(
 }
 
 export async function uploadSummary(container: IContainer) {
-    const entryPoint: { containerRuntime: ContainerRuntime } =
-        (await container.entryPoint) as { containerRuntime: ContainerRuntime };
-    const runtime = entryPoint.containerRuntime;
+    const entryPoint: FluidObject<ReplayToolContainerEntryPoint> = await container.entryPoint;
+    const runtime = entryPoint?.ReplayToolContainerEntryPoint?.containerRuntime;
+    assert(runtime !== undefined, "ContainerRuntime entryPoint was not initialized");
     const summaryResult = await runtime.summarize({
         fullTree: true,
         trackState: false,
