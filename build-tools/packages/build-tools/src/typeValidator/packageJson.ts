@@ -388,7 +388,7 @@ export async function getAndUpdatePackageDetails(
         style ??
         // If the branch config has a configured version style, use it
         previousVersionStyle ??
-        // Otherwise use the branch config
+        // Otherwise calculate the version style based on the branch config
         (releaseType === "major"
             ? "^previousMajor"
             : releaseType === "minor"
