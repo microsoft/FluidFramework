@@ -28,7 +28,7 @@ import { IChannelServices } from "@fluidframework/datastore-definitions";
 import { DirectoryFactory, SharedDirectory } from "../../directory";
 import { IDirectory } from "../../interfaces";
 
-export interface Client {
+interface Client {
     sharedDirectory: SharedDirectory;
     containerRuntime: MockContainerRuntimeForReconnection;
 }
@@ -99,7 +99,7 @@ const defaultOptions: Required<OperationGenerationConfig> = {
 };
 
 function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Generator<Operation, FuzzTestState> {
-    const options = { ...defaultOptions, ...(optionsParam ?? {}) };
+    const options = { ...defaultOptions, ...(optionsParam ?? {})};
     type ClientOpState = FuzzTestState & { sharedDirectory: SharedDirectory; };
 
     // All subsequent helper functions are generators; note that they don't actually apply any operations.
@@ -112,6 +112,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
             for (const [_, b] of dir.subdirectories()) {
                 subDirectories.push(b);
             }
+            // If this dir already has max number of child, then choose one and continue.
             if (dir.countSubDirectory !== undefined  && dir.countSubDirectory() === options.maxSubDirectoryChild) {
                 dir = random.pick<IDirectory>(subDirectories);
                 continue;
@@ -194,10 +195,10 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
     }
 
     function createSubDirectory(state: ClientOpState): CreateSubDirectory {
-        const { random } = state;
+        const { random, sharedDirectory } = state;
         return {
             type: "createSubDirectory",
-            directoryId: state.sharedDirectory.id,
+            directoryId: sharedDirectory.id,
             name: random.pick(options.subDirectoryNamePool),
             path: pickAbsolutePathForCreateDirectoryOp(state),
         }
@@ -222,13 +223,13 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
     }
 
     function setKey(state: ClientOpState): SetKey {
-        const { random } = state;
+        const { random, sharedDirectory } = state;
         return {
             type: "set",
             key: random.pick(options.keyNamePool),
             path: pickAbsolutePathForKeyOps(state),
             value: random.string(random.integer(0, 4)),
-            directoryId: state.sharedDirectory.id,
+            directoryId: sharedDirectory.id,
         };
     }
 
@@ -247,7 +248,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         assert(dir, "dir should exist");
         return {
             type: "delete",
-            key: random.pick(Array.from(dir.keys())),
+            key: random.pick([...dir.keys()]),
             path,
             directoryId: sharedDirectory.id,
         };
@@ -255,10 +256,10 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
 
     const clientBaseOperationGenerator = createWeightedGenerator<Operation, ClientOpState>([
         [createSubDirectory, 2],
-        [deleteSubDirectory, 1, (state: ClientOpState) => state.sharedDirectory.countSubDirectory() > 0],
+        [deleteSubDirectory, 1, (state: ClientOpState): boolean => state.sharedDirectory.countSubDirectory() > 0],
         [setKey, 5],
-        [deleteKey, 2, (state: ClientOpState) => state.sharedDirectory.size > 0],
-        [clearKeys, 1, (state: ClientOpState) => state.sharedDirectory.size > 0],
+        [deleteKey, 2, (state: ClientOpState): boolean => state.sharedDirectory.size > 0],
+        [clearKeys, 1, (state: ClientOpState): boolean => state.sharedDirectory.size > 0],
     ]);
 
     const clientOperationGenerator = (state: FuzzTestState) =>
@@ -272,7 +273,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
 }
 
 interface LoggingInfo {
-    /** Clients to print */
+    // Clients to print
     clientIds: string[];
 }
 
@@ -293,7 +294,8 @@ function runSharedDirectoryFuzz(
     saveInfo?: SaveInfo,
     loggingInfo?: LoggingInfo,
 ): void {
-    // Aa reasonable point to inject logging of incremental state.
+    // Small wrapper to avoid having to return the same state repeatedly; all operations in this suite mutate.
+    // Also a reasonable point to inject logging of incremental state.
     const statefully =
         <T>(statefulReducer: (state: FuzzTestState, operation: T) => void): Reducer<T, FuzzTestState> =>
             (state, operation) => {
