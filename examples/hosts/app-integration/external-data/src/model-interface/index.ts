@@ -85,6 +85,10 @@ export interface ITask extends IEventProvider<ITaskEvents> {
      * Save the proposed changes to SavedData.
      */
     readonly acceptChange:() => Promise<void>;
+
+    readonly DEFAULT_PRIORITY: number;
+    readonly DEFAULT_NAME: string;
+    readonly DEFAULT_DIFF_TYPE: string;
 }
 
 /**

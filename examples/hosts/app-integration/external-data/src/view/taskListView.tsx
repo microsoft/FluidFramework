@@ -22,6 +22,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
     const priorityRef = useRef<HTMLInputElement>(null);
     const [savedName, setSavedName] =  useState<string>(task.diffName);
     const [savedPriority, setSavedPriority] = useState<number>(task.diffPriority);
+    const [savedDiffType, setSavedDiffType] = useState<string>(task.diffType);
     useEffect(() => {
         const updateFromRemotePriority = (): void => {
             if (priorityRef.current !== null) {
@@ -31,12 +32,16 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
         const showSavedPriority = (): void => {
             console.log('showSavedPriority has been triggered');
             setSavedPriority(task.diffPriority);
+            setSavedDiffType(task.diffType);
+            console.log(savedPriority);
+            console.log(savedDiffType);
         }
         const showSavedName = (): void => {
-            console.log('showsavedname has been triggered');
-            if(task.diffName !== undefined) {
-                setSavedName(task.diffName);
-            }
+            console.log('showSavedName has been triggered');
+            setSavedName(task.diffName);
+            setSavedDiffType(task.diffType);
+            console.log(savedName);
+            console.log(savedDiffType);
         }
         task.on("priorityChanged", updateFromRemotePriority);
         task.on("externalPriorityChanged", showSavedPriority);
@@ -54,11 +59,21 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
         task.priority = newValue;
     };
 
-    const diffVisible = task.diffType === "none" ? "hidden": "visible";
+    const diffVisible = savedDiffType === "none";
+    const showPriority = !diffVisible && savedPriority !== task.DEFAULT_PRIORITY ? "visible" : "hidden";
+    const showName = !diffVisible && savedName !== task.DEFAULT_NAME ? "visible" : "hidden";
+    const showAcceptButton = diffVisible ? "hidden" : "visible";
+    console.log(savedName);
+    console.log(showName);
+    console.log(savedPriority);
+    console.log(showPriority);
+    console.log(savedDiffType);
+    console.log(diffVisible);
+    console.log(showAcceptButton);
 
     // console.log(task);
     let diffColor: string = "white";
-    switch(task.diffType) {
+    switch(savedDiffType) {
         case "add": {
            diffColor = "green";
            break;
@@ -98,11 +113,11 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
                     ❌
                 </button>
             </td>
-            <td style={{ visibility: diffVisible, backgroundColor: diffColor }}>{ savedName }</td>
-            <td style={{ visibility: diffVisible , backgroundColor: diffColor }}>{ savedPriority }</td>
+            <td style={{ visibility: showName, backgroundColor: diffColor }}>{ savedName }</td>
+            <td style={{ visibility: showPriority, backgroundColor: diffColor }}>{ savedPriority }</td>
             <td>
                 <button
-                    onClick={ task.acceptChange } style={{ visibility: diffVisible }}>Accept change</button>
+                    onClick={ task.acceptChange } style={{ visibility: showAcceptButton }}>Accept change</button>
             </td>
         </tr>
     );

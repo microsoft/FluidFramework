@@ -29,19 +29,22 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
         }
         return cellValue;
     }
+    public set priority(newValue: number) {
+        this._priority.set(newValue);
+    }
     public diffName: string;
     public diffPriority: number;
     public diffType: string;
-    public static DEFAULT_PRIORITY = Number.POSITIVE_INFINITY;
-    public static DEFAULT_NAME = "";
-    public static DEFAULT_DIFF_TYPE = "none";
+    public DEFAULT_PRIORITY: number = Number.POSITIVE_INFINITY;
+    public DEFAULT_NAME: string = "";
+    public DEFAULT_DIFF_TYPE: string = "none";
     public constructor(
         private readonly _id: string,
         private readonly _name: SharedString,
         private readonly _priority: ISharedCell<number>,
-        diffName: string,
-        diffPriority: number,
-        diffType: string,
+        diffName: string = "",
+        diffPriority: number = Number.POSITIVE_INFINITY,
+        diffType: string = "none",
     ) {
         super();
         this._name.on("sequenceDelta", () => {
@@ -50,9 +53,9 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
         this._priority.on("valueChanged", () => {
             this.emit("priorityChanged");
         });
-        this.diffType = Task.DEFAULT_DIFF_TYPE;
-        this.diffName = Task.DEFAULT_NAME;
-        this.diffPriority = Task.DEFAULT_PRIORITY;
+        this.diffType = "none";
+        this.diffName = "";
+        this.diffPriority = Number.POSITIVE_INFINITY;
     }
     public externalNameChanged = async (savedName: string): Promise<void> => {
         this.diffName = savedName;
@@ -65,14 +68,25 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
         this.emit('externalPriorityChanged');
     }
     public acceptChange = async (): Promise<void> => {
-        if (this.diffPriority !== Number.POSITIVE_INFINITY) {
+        if (this.diffPriority !== this.DEFAULT_PRIORITY) {
+            console.log(this._priority.get());
             this._priority.set(this.diffPriority);
+            this.emit("priorityChanged");
+            console.log(this._priority.get());
         }
         if (this.diffName !== '') {
-            this._name.insertText(0, this.diffName);
+            console.log(this._name.getText());
+            const oldString = this._name.getText()
+            this._name.replaceText(0, oldString.length, this.diffName);
+            this.emit("sequenceDelta");
+            console.log(this._name.getText());
         }
-        this.diffPriority = Number.POSITIVE_INFINITY;
+        this.diffPriority = this.DEFAULT_PRIORITY;
+        this.diffType = "none";
+        this.emit('externalPriorityChanged');
         this.diffName = '';
+        this.diffType = "none";
+        this.emit('externalNameChanged');
     }
 }
 
@@ -174,7 +188,7 @@ export class TaskList extends DataObject implements ITaskList {
         if (this.root.get(id) === undefined) {
             return;
         }
-        const newTask = new Task(id, nameSharedString, prioritySharedCell, Task.DEFAULT_NAME, Task.DEFAULT_PRIORITY, Task.DEFAULT_DIFF_TYPE);
+        const newTask = new Task(id, nameSharedString, prioritySharedCell);
         this.tasks.set(id, newTask);
         this.emit("taskAdded", newTask);
     };
@@ -378,7 +392,7 @@ export class TaskList extends DataObject implements ITaskList {
                 typedTaskData.name.get(),
                 typedTaskData.priority.get(),
             ]);
-            this.tasks.set(id, new Task(id, nameSharedString, prioritySharedCell, Task.DEFAULT_NAME, Task.DEFAULT_PRIORITY, Task.DEFAULT_DIFF_TYPE));
+            this.tasks.set(id, new Task(id, nameSharedString, prioritySharedCell));
         }
     }
 }
