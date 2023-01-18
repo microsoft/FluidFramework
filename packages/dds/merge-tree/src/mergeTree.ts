@@ -463,7 +463,6 @@ export interface IRootMergeBlock extends IMergeBlock {
  * @internal
  */
 export class MergeTree {
-    static readonly zamboniSegmentsMaxCount = 2;
     public static readonly options = {
         incrementalUpdate: true,
         insertAfterRemovedSegs: true,

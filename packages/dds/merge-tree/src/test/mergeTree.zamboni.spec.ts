@@ -21,9 +21,6 @@ describe("Zamboni Logic", () => {
 
     });
     it("packParent with no children segments", () => {
-        // currently the applyMsg calls are copied from the other test I wrote that
-        // that calls zamboni and packParent indirectly --> not entirely right, but
-        // it does run how I want it to
         client.applyMsg(client.makeOpMessage(client.removeRangeLocal(0, client.getLength()-1), 1));
         packParent(client.mergeTree.root, client.mergeTree);
         assert.equal(client.mergeTree.root.cachedLength, 1);
@@ -36,8 +33,7 @@ describe("Zamboni Logic", () => {
                 undefined,
                 client.getCurrentSeq()));
         assert.equal(client.mergeTree.root.cachedLength, 0);
-        // does run with no children segments, but I think it gets called prior to this
-        // in the call stack of the applyMsg call
+
         packParent(client.mergeTree.root, client.mergeTree);
 
         assert.equal(client.mergeTree.root.childCount, 0);
