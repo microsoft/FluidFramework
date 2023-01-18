@@ -35,7 +35,25 @@ export class Throttler implements IThrottler {
             max: maxCacheSize,
             maxAge: maxCacheAge,
         };
-        this.lastThrottleUpdateAtMap = new LRUCache(cacheOptions);
+        this.lastThrottleUpdateAtMap = new LRUCache({
+            ...cacheOptions,
+            dispose: (key, value: number) => {
+                // Utilize the opportunity to log information before an item is removed from the cache.
+                // If a cache entry is removed too soon, it can negatively impact the correctness of throttling.
+                const now = Date.now();
+                if (now - value < maxCacheAge) {
+                    // lastThrottleUpdateAt value should be equal to the time that the cached value was last updated.
+                    // If it is being disposed before the maxCacheAge is reached, it indicates that the cache is full.
+                    const telemetryProperties = this.getBaseTelemetryProperties(key);
+                    const lumberjackProperties = {
+                        ...telemetryProperties.baseLumberjackProperties,
+                        ageInMs: now - value,
+                    };
+                    this.logger.warn(`Purged lastThrottleUpdateAt for ${key} before maxAge reached`, { messageMetaData: telemetryProperties.baseMessageMetaData });
+                    Lumberjack.warning(`Purged lastThrottleUpdateAt for ${key} before maxAge reached`, lumberjackProperties);
+                }
+            },
+        });
         this.countDeltaMap = new LRUCache(cacheOptions);
         this.throttlerResponseCache = new LRUCache(cacheOptions);
     }
@@ -45,13 +63,21 @@ export class Throttler implements IThrottler {
      * Uses most recently calculated throttle status to determine current throttling, while updating in the background.
      * @throws {@link ThrottlingError} if throttled
      */
-     public incrementCount(id: string,
+    public incrementCount(
+        id: string,
         weight: number = 1,
         usageStorageId?: string,
-        usageData?: IUsageData): void {
+        usageData?: IUsageData,
+    ): void {
+        const telemetryProperties = this.getBaseTelemetryProperties(id);
+
         this.updateCountDelta(id, weight);
 
-        void this.updateAndCacheThrottleStatus(id, usageStorageId, usageData);
+        this.updateAndCacheThrottleStatus(id, usageStorageId, usageData)
+            .catch((error) => {
+                this.logger?.error(`Error encountered updating and/or caching throttle status for ${id}: ${error}`, { messageMetaData: telemetryProperties.baseMessageMetaData });
+                Lumberjack.error(`Error encountered updating and/or caching throttle status for ${id}`, telemetryProperties.baseLumberjackProperties, error);
+            });
 
         // check cached throttle status, but allow operation through if status is not yet cached
         const cachedThrottlerResponse = this.throttlerResponseCache.get(id);
@@ -60,17 +86,15 @@ export class Throttler implements IThrottler {
             const retryAfterInSeconds = Math.ceil(cachedThrottlerResponse.retryAfterInMs / 1000);
             this.logger?.info(`Throttled: ${id}`, {
                 messageMetaData: {
-                    key: id,
+                    ...telemetryProperties.baseMessageMetaData,
                     reason: cachedThrottlerResponse.throttleReason,
                     retryAfterInSeconds,
-                    eventName: "throttling",
                 },
             });
             Lumberjack.info(
                 `Throttled: ${id}`,
                 {
-                    [CommonProperties.telemetryGroupName]: "throttling",
-                    [ThrottlingTelemetryProperties.key]: id,
+                    ...telemetryProperties.baseLumberjackProperties,
                     [ThrottlingTelemetryProperties.reason]: cachedThrottlerResponse.throttleReason,
                     [ThrottlingTelemetryProperties.retryAfterInSeconds]: retryAfterInSeconds,
                 },
@@ -100,23 +124,26 @@ export class Throttler implements IThrottler {
         id: string,
         usageStorageId?: string,
         usageData?: IUsageData): Promise<void> {
+        const telemetryProperties = this.getBaseTelemetryProperties(id);
+
         const now = Date.now();
         if (this.lastThrottleUpdateAtMap.get(id) === undefined) {
+            this.logger.info(`Starting to track throttling status for ${id}`, { messageMetaData: telemetryProperties.baseMessageMetaData });
+            Lumberjack.info(`Starting to track throttling status for ${id}`, telemetryProperties.baseLumberjackProperties);
             this.lastThrottleUpdateAtMap.set(id, now);
         }
+
         const lastThrottleUpdateTime = this.lastThrottleUpdateAtMap.get(id);
         if (now - lastThrottleUpdateTime > this.minThrottleIntervalInMs) {
             const countDelta = this.countDeltaMap.get(id);
             this.lastThrottleUpdateAtMap.set(id, now);
             this.countDeltaMap.set(id, 0);
             const messageMetaData = {
-                key: id,
+                ...telemetryProperties.baseMessageMetaData,
                 weight: countDelta,
-                eventName: "throttling",
             };
             const lumberjackProperties = {
-                [CommonProperties.telemetryGroupName]: "throttling",
-                [ThrottlingTelemetryProperties.key]: id,
+                ...telemetryProperties.baseLumberjackProperties,
                 [ThrottlingTelemetryProperties.weight]: countDelta,
             };
             // poplulate usageData with relevant data.
@@ -135,6 +162,19 @@ export class Throttler implements IThrottler {
                     this.logger?.error(`Failed to update throttling count for ${id}: ${err}`, { messageMetaData });
                     Lumberjack.error(`Failed to update throttling count for ${id}`, lumberjackProperties, err);
                 });
+        }
+    }
+
+    private getBaseTelemetryProperties(key: string) {
+        return {
+            baseMessageMetaData: {
+                key,
+                eventName: "throttling",
+            },
+            baseLumberjackProperties: {
+                [CommonProperties.telemetryGroupName]: "throttling",
+                [ThrottlingTelemetryProperties.key]: key,
+            },
         }
     }
 }
