@@ -667,25 +667,21 @@ function addPrettier(json: Record<string, any>) {
         "prettier:fix",
     );
 
-    if (hasFormatScriptResolver) {
-        if (!json["scripts"]["format"].includes("lerna")) {
+    if (hasFormatScriptResolver || hasPrettierScriptResolver || hasPrettierFixScriptResolver) {
+        const formatScript = json["scripts"]["format"]?.includes("lerna");
+        const prettierScript = json["scripts"]["prettier"]?.includes("--ignore-path");
+        const prettierFixScript = json["scripts"]["prettier:fix"]?.includes("--ignore-path");
+
+        if (!formatScript) {
             json["scripts"]["format"] = "npm run prettier:fix";
         }
-    }
 
-    if (hasPrettierScriptResolver) {
-        if (!json["scripts"]["prettier"].includes("--ignore-path")) {
+        if (!prettierScript) {
             json["scripts"]["prettier"] = "prettier --check .";
-            console.warn("Specify the path of this package.json");
-            console.warn("prettier --check . path")
         }
-    }
 
-    if (hasPrettierFixScriptResolver) {
-        if (!json["scripts"]["prettier:fix"].includes("--ignore-path")) {
+        if (!prettierFixScript) {
             json["scripts"]["prettier:fix"] = "prettier --write .";
-            console.warn("Specify the path of this package.json");
-            console.warn("prettier --check . path")
         }
     }
 }
