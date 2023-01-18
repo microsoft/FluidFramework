@@ -9,7 +9,6 @@ import merge from "lodash.merge";
 import { NpmPackageJsonLint } from "npm-package-json-lint";
 import { EOL as newline } from "os";
 import path from "path";
-import { stringify } from "querystring";
 import * as readline from "readline";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
