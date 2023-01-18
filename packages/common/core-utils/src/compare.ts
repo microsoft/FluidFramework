@@ -9,7 +9,7 @@
  * @param left - The first array to compare
  * @param right - The second array to compare
  * @param comparator - The function used to check if two `T`s are equivalent.
- * Defaults to `===` equality (a shallow compare)
+ * Defaults to `Object.is()` equality (a shallow compare where NaN = NaN and -0 ≠ 0)
  */
 export const compareArrays = <T>(
 	left: readonly T[],
@@ -17,12 +17,12 @@ export const compareArrays = <T>(
 	comparator: (leftItem: T, rightItem: T, index: number) => boolean = (
 		leftItem: T,
 		rightItem: T,
-	) => leftItem === rightItem,
+	) => Object.is(leftItem, rightItem),
 ): boolean => {
 	// PERF: 'for-loop' and 'Array.every()' tied.
 	//       '===' and 'Object.is()' tied.
 	//       Trivial acceptance adds no measurable overhead.
-	//       30% penalty vs. baseline for exported function. [node 14 x64]
+	//       30% penalty vs. baseline for exported function [node 14 x64].
 	return (
 		left === right || // Trivial acceptance: 'left' and 'right' are the same instance
 		(left.length === right.length && // Trivial rejection: 'left' and 'right' are different lengths

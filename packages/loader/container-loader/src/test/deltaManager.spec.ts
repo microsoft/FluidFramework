@@ -32,6 +32,7 @@ describe("Loader", () => {
             let emitter: EventEmitter;
             let seq: number;
             let immediateNoOp: boolean;
+            let expectedError: any;
             const docId = "docId";
             const submitEvent = "test-submit";
             const expectedTimeout = 2000;
@@ -104,6 +105,23 @@ describe("Loader", () => {
                 } as any as ISequencedDocumentMessage;
             }
 
+            async function sendAndReceiveOps(count: number, type: MessageType) {
+                for (let num = 0; num < count; ++num) {
+                    assert(!deltaConnection.disposed, "disposed");
+                    deltaManager.submit(type);
+                    deltaConnection.emitOp(docId, [{
+                        clientId: "test",
+                        clientSequenceNumber: ++clientSeqNumber,
+                        minimumSequenceNumber: 0,
+                        sequenceNumber: seq++,
+                        type,
+                    } as any as ISequencedDocumentMessage]);
+                }
+
+                // Yield the event loop because the inbound op will be processed asynchronously.
+                await yieldEventLoop();
+            }
+
             async function emitSequentialOps(count: number) {
                 for (let num = 0; num < count; ++num) {
                     assert(!deltaConnection.disposed, "disposed");
@@ -132,6 +150,7 @@ describe("Loader", () => {
                 immediateNoOp = false;
 
                 clientSeqNumber = 0;
+                expectedError = undefined;
             });
 
             afterEach(() => {
@@ -312,6 +331,97 @@ describe("Loader", () => {
 
                     // make extra sure
                     await tickClock(expectedTimeout);
+                });
+
+                it("Should throw error with gap in client seq num", async () => {
+                    await startDeltaManager();
+
+                    deltaManager.inbound.on("error",(error) => { expectedError = error; } );
+
+                    await sendAndReceiveOps(1, MessageType.Operation);
+
+                    // send op with gap in clientSeqNum
+                    deltaConnection.emitOp(docId, [{
+                        clientId: "test",
+                        clientSequenceNumber: clientSeqNumber + 2,
+                        minimumSequenceNumber: 0,
+                        sequenceNumber: seq++,
+                        type: MessageType.Operation,
+                    } as any as ISequencedDocumentMessage]);
+
+                    await yieldEventLoop();
+                    assert.strictEqual(expectedError.message, "gap in client sequence number: 1")
+                });
+
+                it("Should pass with one noop sent, 0 received and one gap", async () => {
+                    await startDeltaManager();
+
+                    deltaManager.inbound.on("error",(error) => { expectedError = error; } );
+
+                    await sendAndReceiveOps(1, MessageType.Operation);
+
+                    // send 1 noop without receiving
+                    deltaManager.submit(MessageType.NoOp);
+
+                    // send op with gap in clientSeqNum
+                    deltaManager.submit(MessageType.Operation);
+                    deltaConnection.emitOp(docId, [{
+                        clientId: "test",
+                        clientSequenceNumber: clientSeqNumber+2,
+                        minimumSequenceNumber: 0,
+                        sequenceNumber: seq,
+                        type: MessageType.Operation,
+                    } as any as ISequencedDocumentMessage]);
+
+                    await yieldEventLoop();
+                    assert.strictEqual(deltaManager.lastMessage?.sequenceNumber, seq, "discrepancy in last processed seqNum");
+                    assert.strictEqual(expectedError, undefined, `Error should not happen : ${expectedError}`)
+                });
+
+                it("Should throw error with one noop sent and received, gap = 1", async () => {
+                    await startDeltaManager();
+
+                    deltaManager.inbound.on("error",(error) => { expectedError = error; } );
+
+                    await sendAndReceiveOps(1, MessageType.Operation);
+                    await sendAndReceiveOps(1, MessageType.NoOp);
+
+                    // send op with gap in clientSeqNum
+                    deltaConnection.emitOp(docId, [{
+                        clientId: "test",
+                        clientSequenceNumber: clientSeqNumber+2,
+                        minimumSequenceNumber: 0,
+                        sequenceNumber: seq,
+                        type: MessageType.Operation,
+                    } as any as ISequencedDocumentMessage])
+
+                   await yieldEventLoop();
+                   assert.strictEqual(expectedError.message, "gap in client sequence number: 1")
+                });
+
+                it("Should pass with 2 noop sent, 1 received, gap = 1", async () => {
+                    await startDeltaManager();
+                    deltaManager.inbound.on("error",(error) => { expectedError = error; } );
+
+                    await sendAndReceiveOps(1, MessageType.Operation);
+                    await sendAndReceiveOps(1, MessageType.NoOp);
+
+                    // send second noop, without receiving
+                    deltaManager.submit(MessageType.NoOp);
+
+                    // send op with gap in clientSeqNum
+                    deltaManager.submit(MessageType.Operation);
+                    deltaConnection.emitOp(docId, [{
+                        clientId: "test",
+                        clientSequenceNumber: clientSeqNumber+2,
+                        minimumSequenceNumber: 0,
+                        sequenceNumber: seq,
+                        type: MessageType.Operation,
+                    } as any as ISequencedDocumentMessage]);
+
+                    await yieldEventLoop();
+                    assert.strictEqual(deltaManager.lastMessage?.sequenceNumber, seq, "discrepancy in last processed seqNum");
+                    assert.strictEqual(expectedError, undefined, `Error should not happen : ${expectedError}`)
                 });
             });
 

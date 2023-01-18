@@ -64,6 +64,7 @@ export class ContainerContext implements IContainerContext {
         submitSummaryFn: (summaryOp: ISummaryContent) => number,
         submitBatchFn: (batch: IBatchMessage[]) => number,
         submitSignalFn: (contents: any) => void,
+        disposeFn: (error?: ICriticalContainerError) => void,
         closeFn: (error?: ICriticalContainerError) => void,
         version: string,
         updateDirtyContainerState: (dirty: boolean) => void,
@@ -83,6 +84,7 @@ export class ContainerContext implements IContainerContext {
             submitSummaryFn,
             submitBatchFn,
             submitSignalFn,
+            disposeFn,
             closeFn,
             version,
             updateDirtyContainerState,
@@ -181,12 +183,12 @@ export class ContainerContext implements IContainerContext {
         /** @returns clientSequenceNumber of last message in a batch */
         public readonly submitBatchFn: (batch: IBatchMessage[]) => number,
         public readonly submitSignalFn: (contents: any) => void,
+        public readonly disposeFn: (error?: ICriticalContainerError) => void,
         public readonly closeFn: (error?: ICriticalContainerError) => void,
         public readonly version: string,
         public readonly updateDirtyContainerState: (dirty: boolean) => void,
         public readonly existing: boolean,
         public readonly pendingLocalState?: unknown,
-
     ) {
         this._connected = this.container.connected;
         this._quorum = quorum;

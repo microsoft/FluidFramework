@@ -23,8 +23,9 @@ const tests: [unknown[], unknown[], boolean][] = [
 	[[0, 1], [-1, 1], false],
 	[[0, 1], [0, 1], true],
 
-	[[Number.NaN], [Number.NaN], false],
-	[[0], [-0], true],
+	// Object.is() semantics:
+	[[Number.NaN], [Number.NaN], true],
+	[[0], [-0], false],
 
 	[[null], [undefined], false],
 	[[""], [0], false],

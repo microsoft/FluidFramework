@@ -62,9 +62,9 @@ import {
     runSessionExpiryKey,
     runSweepKey,
     stableGCVersion,
-    throwOnTombstoneUsageKey,
     trackGCStateKey
 } from "./garbageCollectionConstants";
+import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
 import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
 import {
     getGCVersion,
@@ -1243,13 +1243,17 @@ export class GarbageCollector implements IGarbageCollector {
                 eventName = "GC_Tombstone_Blob_Revived";
             }
 
-            this.mc.logger.sendTelemetryEvent({
-                eventName,
-                isSummarizerClient: this.isSummarizerClient,
-                url: trimLeadingSlashes(toNodePath),
-                nodeType,
-                throwOnTombstoneUsage: this.mc.config.getBoolean(throwOnTombstoneUsageKey) ?? false,
-            });
+            sendGCTombstoneEvent(
+                this.mc,
+                {
+                    eventName,
+                    category: "generic",
+                    isSummarizerClient: this.isSummarizerClient,
+                    url: trimLeadingSlashes(toNodePath),
+                    nodeType,
+                 },
+                undefined /* packagePath */,
+            );
         }
     }
 
