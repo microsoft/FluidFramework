@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line unicorn/prefer-node-protocol
 import { strict as assert } from "assert";
 import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
 import {
