@@ -168,6 +168,9 @@ module.exports = {
                 },
             },
         ],
+        // Rationale: Destructuring of `Array.entries()` in order to get the index variable results in a
+        //            significant performance regression [node 14 x64].
+        "unicorn/no-for-loop": "off",
         "unicorn/no-new-buffer": "error",
         "unicorn/no-unsafe-regex": "error",
 
