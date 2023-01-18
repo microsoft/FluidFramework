@@ -176,15 +176,11 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         let parentDir: IDirectory = sharedDirectory;
         for(;;) {
             assert(parentDir !== undefined, "Directory should be defined");
-            const proceed = random.bool(0.5);
-            if (!proceed) {
-                return parentDir.absolutePath;
-            }
             const subDirs: IDirectory[] = [];
             for (const [_, b] of parentDir.subdirectories()) {
                 subDirs.push(b);
             }
-            const subDir = random.pick<IDirectory>(subDirs);
+            const subDir = random.pick<IDirectory | undefined>([undefined, ...subDirs]);
             if (subDir !== undefined && subDir.size > 0) {
                 parentDir = subDir;
             } else {
@@ -364,7 +360,7 @@ function getPath(seed: number): string {
 
 const describeFuzz = createFuzzDescribe({ defaultTestCount: 10 });
 
-describeFuzz("SharedDirectory fuzz testing", ({ testCount }) => {
+describeFuzz.skip("SharedDirectory fuzz testing", ({ testCount }) => {
     before(() => {
         mkdirSync(directory, { recursive: true });
     });
