@@ -7,6 +7,7 @@ env:
             key2: SharedMap
     connectionConfig:
         type: remote
+        useSecureTokenProvider: false
 stages:
     - stage-1:
       id: 1
