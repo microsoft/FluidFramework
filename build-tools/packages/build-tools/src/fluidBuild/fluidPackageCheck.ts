@@ -161,6 +161,26 @@ export class FluidPackageCheck {
         return fixed;
     }
 
+    private static checkLintScript(
+        pkg: Package,
+        name: string,
+        expected: string | undefined,
+        expectedPackages: string[] | undefined,
+        fix: boolean,
+    ) {
+        let fixed = false;
+        const actual = pkg.getScript(name);
+
+        if (expected !== actual) {
+            this.logWarn(pkg, `${name} should only contain: ${expectedPackages}`, fix);
+            if (fix) {
+                pkg.packageJson.scripts[name] = expected;
+                fixed = true;
+            }
+        }
+        return fixed;
+    }
+
     private static checkChildrenScripts(
         pkg: Package,
         name: string,
@@ -173,7 +193,7 @@ export class FluidPackageCheck {
                 ? `concurrently ${expected.map((value) => `npm:${value}`).join(" ")}`
                 : expected.map((value) => `npm run ${value}`).join(" && ")
             : undefined;
-        return this.checkScript(pkg, name, expectedScript, fix);
+        return this.checkLintScript(pkg, name, expectedScript, expected, fix);
     }
 
     /**
@@ -488,20 +508,43 @@ export class FluidPackageCheck {
     private static checkLintScripts(pkg: Package, fix: boolean) {
         let fixed = false;
         if (pkg.getScript("build")) {
-            const hasPrettier = pkg.getScript("prettier");
-            const lintChildren = hasPrettier ? ["prettier", "eslint"] : ["eslint"];
+            // const hasPrettier = pkg.getScript("prettier");
+            // const lintChildren = hasLint ? ["prettier", "eslint"] : ["eslint"];
+            const checkLint = pkg.getScript("lint");
+            const checkLintFix = pkg.getScript("lint:fix");
+
+            let lintChildren = ["prettier", "eslint"];
+            let lintFixChildren = ["prettier:fix", "eslint:fix"];
+
+            if (checkLint) {
+                if (
+                    checkLint === "npm run eslint" ||
+                    checkLint === "npm run prettier && npm run eslint"
+                ) {
+                    const lintRegex = /npm run (\w+)(?: (?:&& )?npm run (\w+))?/;
+                    const lintMatch = checkLint?.match(lintRegex);
+
+                    lintChildren = lintMatch ? lintMatch.slice(1).filter(Boolean) : [];
+                }
+            }
+
             if (this.checkChildrenScripts(pkg, "lint", lintChildren, false, fix)) {
                 fixed = true;
             }
-            if (
-                this.checkChildrenScripts(
-                    pkg,
-                    "lint:fix",
-                    lintChildren.map((value) => `${value}:fix`),
-                    false,
-                    fix,
-                )
-            ) {
+
+            if (checkLintFix) {
+                if (
+                    checkLintFix === "npm run eslint:fix" ||
+                    checkLintFix === "npm run prettier:fix && npm run eslint:fix"
+                ) {
+                    const lintFixRegex = /npm run (\S+)(?: (?:&& )?npm run (\S+))?/;
+                    const lintFixMatch = checkLintFix?.match(lintFixRegex);
+
+                    lintFixChildren = lintFixMatch ? lintFixMatch.slice(1).filter(Boolean) : [];
+                }
+            }
+
+            if (this.checkChildrenScripts(pkg, "lint:fix", lintFixChildren, false, fix)) {
                 fixed = true;
             }
             // TODO: for now, some jest test at the root isn't linted yet
