@@ -10,7 +10,6 @@ name: routerlicious
 alfred:
   name: alfred
   replicas: 4
-  internalUrl: alfred_internal_url
   externalUrl: alfred_external_url
   host: alfred_host
   cert: cert

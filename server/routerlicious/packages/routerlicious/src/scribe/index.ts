@@ -38,7 +38,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
     const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
     const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
-    const internalAlfredUrl = config.get("worker:internalAlfredUrl");
+    const internalAlfredUrl = config.get("worker:alfredUrl");
 
     // Generate tenant manager which abstracts access to the underlying storage provider
     const authEndpoint = config.get("auth:endpoint");
