@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
-import { clone, fail, getOrAddInNestedMap, NestedMap } from "../../util";
+import { clone, fail, getOrAddInNestedMap, getOrDefaultInNestedMap, NestedMap } from "../../util";
 import { IdAllocator } from "../modular-schema";
 import {
     InputSpanningMark,
@@ -94,8 +94,8 @@ export function splitMove<T>(
     count1: number,
     count2: number,
 ): void {
-    const effect = getOrCreateEffect(effects, end, revision, id);
-    const newEffect = getOrCreateEffect(effects, end, revision, newId);
+    const effect = getOrAddEffect(effects, end, revision, id);
+    const newEffect = getOrAddEffect(effects, end, revision, newId);
     newEffect.count = count2;
     if (effect.child !== undefined) {
         newEffect.child = effect.child;
@@ -105,7 +105,7 @@ export function splitMove<T>(
     effect.count = count1;
 }
 
-export function getOrCreateEffect<T>(
+export function getOrAddEffect<T>(
     moveEffects: MoveEffectTable<T>,
     end: MoveEnd,
     revision: RevisionTag | undefined,
@@ -115,14 +115,24 @@ export function getOrCreateEffect<T>(
     const table = getTable(moveEffects, end);
     const effect = getOrAddInNestedMap(table, revision, id, {});
     if (resetMerges && effect.mergeLeft !== undefined) {
-        delete getOrCreateEffect(moveEffects, end, revision, effect.mergeLeft).mergeRight;
+        delete getOrAddEffect(moveEffects, end, revision, effect.mergeLeft).mergeRight;
         delete effect.mergeLeft;
     }
     if (resetMerges && effect.mergeRight !== undefined) {
-        delete getOrCreateEffect(moveEffects, end, revision, effect.mergeRight).mergeLeft;
+        delete getOrAddEffect(moveEffects, end, revision, effect.mergeRight).mergeLeft;
         delete effect.mergeRight;
     }
     return effect;
+}
+
+export function getMoveEffect<T>(
+    moveEffects: MoveEffectTable<T>,
+    end: MoveEnd,
+    revision: RevisionTag | undefined,
+    id: MoveId,
+): MoveEffect<T> {
+    const table = getTable(moveEffects, end);
+    return getOrDefaultInNestedMap(table, revision, id, {});
 }
 
 export function clearMergeability(
@@ -131,13 +141,13 @@ export function clearMergeability(
     revision: RevisionTag | undefined,
     id: MoveId,
 ): void {
-    const effect = getOrCreateEffect(moveEffects, end, revision, id);
+    const effect = getOrAddEffect(moveEffects, end, revision, id);
     if (effect.mergeLeft !== undefined) {
-        delete getOrCreateEffect(moveEffects, end, revision, effect.mergeLeft).mergeRight;
+        delete getOrAddEffect(moveEffects, end, revision, effect.mergeLeft).mergeRight;
         delete effect.mergeLeft;
     }
     if (effect.mergeRight !== undefined) {
-        delete getOrCreateEffect(moveEffects, end, revision, effect.mergeRight).mergeLeft;
+        delete getOrAddEffect(moveEffects, end, revision, effect.mergeRight).mergeLeft;
         delete effect.mergeRight;
     }
 }
@@ -149,8 +159,8 @@ export function makeMergeable(
     leftId: MoveId,
     rightId: MoveId,
 ): void {
-    getOrCreateEffect(moveEffects, end, revision, leftId).mergeRight = rightId;
-    getOrCreateEffect(moveEffects, end, revision, rightId).mergeLeft = leftId;
+    getOrAddEffect(moveEffects, end, revision, leftId).mergeRight = rightId;
+    getOrAddEffect(moveEffects, end, revision, rightId).mergeLeft = leftId;
 }
 
 export type MoveMark<T> = MoveOut<T> | MoveIn | ReturnFrom<T> | ReturnTo;
@@ -176,7 +186,7 @@ function applyMoveEffectsToDest<T>(
     effects: MoveEffectTable<T>,
     consumeEffect: boolean,
 ): Mark<T>[] {
-    const effect = getOrCreateEffect(effects, MoveEnd.Dest, mark.revision ?? revision, mark.id);
+    const effect = getMoveEffect(effects, MoveEnd.Dest, mark.revision ?? revision, mark.id);
     const result: Mark<T>[] = [];
 
     assert(effect.modifyAfter === undefined, "Cannot modify move destination");
@@ -200,7 +210,7 @@ function applyMoveEffectsToDest<T>(
     }
 
     if (effect.child !== undefined) {
-        const childEffect = getOrCreateEffect(
+        const childEffect = getOrAddEffect(
             effects,
             MoveEnd.Dest,
             mark.revision ?? revision,
@@ -237,7 +247,7 @@ function applyMoveEffectsToSource<T>(
     consumeEffect: boolean,
     composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
-    const effect = getOrCreateEffect(effects, MoveEnd.Source, mark.revision ?? revision, mark.id);
+    const effect = getOrAddEffect(effects, MoveEnd.Source, mark.revision ?? revision, mark.id);
     const result: Mark<T>[] = [];
     if (effect.mark !== undefined) {
         result.push(effect.mark);
@@ -268,7 +278,7 @@ function applyMoveEffectsToSource<T>(
     }
 
     if (effect.child !== undefined) {
-        const childEffect = getOrCreateEffect(
+        const childEffect = getOrAddEffect(
             effects,
             MoveEnd.Source,
             mark.revision ?? revision,

@@ -37,7 +37,8 @@ import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
 import {
     applyMoveEffectsToMark,
-    getOrCreateEffect,
+    getMoveEffect,
+    getOrAddEffect,
     makeMergeable,
     MoveEffectTable,
     MoveEnd,
@@ -439,23 +440,23 @@ function tryMergeMoves(
     }
     const rev = left.revision ?? revision;
     const oppEnd = end === MoveEnd.Source ? MoveEnd.Dest : MoveEnd.Source;
-    const prevMergeId = getOrCreateEffect(moveEffects, oppEnd, rev, left.id).mergeRight;
+    const prevMergeId = getMoveEffect(moveEffects, oppEnd, rev, left.id).mergeRight;
     if (prevMergeId !== undefined && prevMergeId !== right.id) {
         makeMergeable(moveEffects, oppEnd, rev, prevMergeId, right.id);
     } else {
         makeMergeable(moveEffects, oppEnd, rev, left.id, right.id);
     }
 
-    if (getOrCreateEffect(moveEffects, end, rev, left.id).mergeRight === right.id) {
+    if (getMoveEffect(moveEffects, end, rev, left.id).mergeRight === right.id) {
         assert(
-            getOrCreateEffect(moveEffects, end, rev, right.id).mergeLeft === left.id,
+            getMoveEffect(moveEffects, end, rev, right.id).mergeLeft === left.id,
             "Inconsistent merge info",
         );
-        const nextId = getOrCreateEffect(moveEffects, end, rev, right.id).mergeRight;
+        const nextId = getMoveEffect(moveEffects, end, rev, right.id).mergeRight;
         if (nextId !== undefined) {
             makeMergeable(moveEffects, end, rev, left.id, nextId);
         } else {
-            getOrCreateEffect(moveEffects, end, rev, left.id).mergeRight = undefined;
+            getOrAddEffect(moveEffects, end, rev, left.id).mergeRight = undefined;
         }
 
         if (recordMerges) {
@@ -671,7 +672,7 @@ export class DetachedNodeTracker {
             mark.detachedBy = updated.rev;
             mark.detachIndex = updated.index;
             if (mark.type === "ReturnTo") {
-                getOrCreateEffect(
+                getOrAddEffect(
                     moveEffects,
                     MoveEnd.Source,
                     mark.revision ?? revision,

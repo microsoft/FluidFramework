@@ -44,7 +44,8 @@ import {
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
 import {
-    getOrCreateEffect,
+    getMoveEffect,
+    getOrAddEffect,
     MoveEffectTable,
     MoveEnd,
     newMoveEffectTable,
@@ -406,7 +407,7 @@ function rebaseMark<TNodeChange>(
                 isObjMark(currMark) &&
                 (currMark.type === "MoveOut" || currMark.type === "ReturnFrom")
             ) {
-                getOrCreateEffect(
+                getOrAddEffect(
                     moveEffects,
                     MoveEnd.Dest,
                     currMark.revision,
@@ -439,7 +440,7 @@ function rebaseMark<TNodeChange>(
                     const newCurrMark = clone(currMark) as ReturnFrom<TNodeChange>;
                     delete newCurrMark.conflictsWith;
                     delete newCurrMark.detachIndex;
-                    getOrCreateEffect(
+                    getOrAddEffect(
                         moveEffects,
                         MoveEnd.Dest,
                         newCurrMark.revision,
@@ -465,7 +466,7 @@ function rebaseMark<TNodeChange>(
                     if (isActiveReattach(currMark)) {
                         // The nodes that currMark aims to reattach are being reattached by baseMark
                         if (currMarkType === "ReturnTo") {
-                            getOrCreateEffect(
+                            getOrAddEffect(
                                 moveEffects,
                                 MoveEnd.Source,
                                 currMark.revision,
@@ -513,7 +514,7 @@ function rebaseMark<TNodeChange>(
                     // The nodes that currMark aims to detach are being detached by baseMark
                     newCurrMark.conflictsWith = baseMarkRevision;
                     newCurrMark.detachIndex = baseInputOffset;
-                    getOrCreateEffect(
+                    getOrAddEffect(
                         moveEffects,
                         MoveEnd.Dest,
                         newCurrMark.revision,
@@ -536,7 +537,7 @@ function rebaseMark<TNodeChange>(
                         newCurrMark.detachedBy = baseMarkRevision;
                         newCurrMark.detachIndex = baseInputOffset;
                         delete (newCurrMark as CanConflict).conflictsWith;
-                        const effect = getOrCreateEffect(
+                        const effect = getOrAddEffect(
                             moveEffects,
                             MoveEnd.Source,
                             newCurrMark.revision,
@@ -562,7 +563,7 @@ function rebaseMark<TNodeChange>(
                     newCurrMark.detachIndex = baseInputOffset;
                     return newCurrMark;
                 } else {
-                    getOrCreateEffect(
+                    getOrAddEffect(
                         moveEffects,
                         MoveEnd.Dest,
                         baseMark.revision ?? baseRevision,
@@ -600,7 +601,7 @@ function applyMoveEffects<TNodeChange>(
     while (!queue.isEmpty()) {
         const { baseMark, newMark } = queue.pop();
         if (isObjMark(baseMark) && (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")) {
-            const effect = getOrCreateEffect(
+            const effect = getMoveEffect(
                 moveEffects,
                 MoveEnd.Dest,
                 baseMark.revision ?? baseRevision,
