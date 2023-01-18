@@ -271,22 +271,21 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         return ids as Set<string>;
     }
 
-    public async getBlob(blobId: string, allowTombstone: boolean = false): Promise<ArrayBufferLike> {
+    public async getBlob(blobId: string): Promise<ArrayBufferLike> {
         const request = { url: blobId };
         if (this.tombstonedBlobs.has(blobId) ) {
-            const shouldFail = this.throwOnTombstoneLoad && !allowTombstone;
             const error = responseToException(createResponseError(404, "Blob removed by gc", request), request);
             sendGCTombstoneEvent(
                 this.mc,
                 {
                     eventName: "GC_Tombstone_Blob_Requested",
-                    category: shouldFail ? "error" : "generic",
+                    category: this.throwOnTombstoneLoad ? "error" : "generic",
                     isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
                 },
                 [BlobManager.basePath],
                 error,
             );
-            if (shouldFail) {
+            if (this.throwOnTombstoneLoad) {
                 throw error;
             }
         }

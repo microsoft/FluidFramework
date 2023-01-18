@@ -125,12 +125,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             assert.equal(response.value, `Blob removed by gc: ${blobHandle.absolutePath.substring(8)}`, `Unexpected response value`);
             assert(container2.closed !== true, "Container should not have closed");
 
-            // If allowTombstone is passed it should succeed
-            const allowTombstoneResponse = await container2.request({ url: blobHandle.absolutePath, headers: { allowTombstone: true } });
-            assert.strictEqual(allowTombstoneResponse?.status, 200, `Expecting a 200 response`);
-            assert(allowTombstoneResponse.value !== undefined, `Expecting a value`);
-            assert((container2.closed as boolean) !== true, "Container should not have closed");
-
             // But the summarizing container should succeed (logging and error)
             const { container: summarizingContainer } = await createSummarizerWithContainer(
                 provider,
@@ -193,7 +187,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             assert(response2.value.startsWith("Blob removed by gc:"), `Unexpected response value for blob handle 2`);
         });
 
-        //* Update this
         itExpects("Can un-tombstone attachment blob by storing a handle",
         [
             {
