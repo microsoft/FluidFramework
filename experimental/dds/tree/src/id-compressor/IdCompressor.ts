@@ -576,14 +576,14 @@ export class IdCompressor {
 				const lastKnownFinal =
 					this.sessionIdNormalizer.getLastFinalId() ??
 					fail('Cluster exists but normalizer does not have an entry for it.');
-				const lastFinalInCluster = (currentBaseFinalId +
+				const lastAlignedFinalInCluster = (currentBaseFinalId +
 					Math.min(currentCluster.count + finalizeCount, currentCluster.capacity) -
 					1) as FinalCompressedId;
-				if (lastFinalInCluster > lastKnownFinal) {
-					eagerFinalIdCount = lastFinalInCluster - (lastKnownFinal + 1);
+				if (lastAlignedFinalInCluster > lastKnownFinal) {
+					eagerFinalIdCount = lastAlignedFinalInCluster - (lastKnownFinal + 1);
 					this.sessionIdNormalizer.addFinalIds(
 						(lastKnownFinal + 1) as FinalCompressedId,
-						lastFinalInCluster,
+						lastAlignedFinalInCluster,
 						currentCluster
 					);
 				}
@@ -619,9 +619,20 @@ export class IdCompressor {
 						//                  overflow = 2:    ----
 						//                       localIdPivot^
 						//                    lastFinalizedFinal^
-						const lastFinalizedFinal = (currentBaseFinalId + currentCluster.count - 1) as FinalCompressedId;
-						const finalPivot = (lastFinalizedFinal - overflow + 1) as FinalCompressedId;
-						this.sessionIdNormalizer.addFinalIds(finalPivot, lastFinalizedFinal, currentCluster);
+						const newLastFinalizedFinal = (currentBaseFinalId +
+							currentCluster.count -
+							1) as FinalCompressedId;
+						assert(
+							session.lastFinalizedLocalId !== undefined,
+							'Cluster already exists for session but there is no finalized local ID'
+						);
+						const finalPivot = (newLastFinalizedFinal - overflow + 1) as FinalCompressedId;
+						// Inform the normalizer of all IDs that we now know will end up being finalized into this cluster, including the ones
+						// that were given out as locals (non-eager) because they exceeded the bounds of the current cluster before it was expanded.
+						// It is safe to associate the unfinalized locals with their future final IDs even before the ranges for those locals are
+						// actually finalized, because total order broadcast guarantees that any usage of those final IDs will be observed after
+						// the finalization of the ranges.
+						this.sessionIdNormalizer.registerFinalIdBlock(finalPivot, expansionAmount, currentCluster);
 						this.logger?.sendTelemetryEvent({
 							eventName: 'IdCompressor:ClusterExpansion',
 							sessionId: this.localSessionId,
@@ -690,8 +701,7 @@ export class IdCompressor {
 					clusterCapacity: newCapacity,
 					clusterCount: remainingCount,
 				});
-				const lastFinalizedFinal = (newBaseFinalId + newCluster.count - 1) as FinalCompressedId;
-				this.sessionIdNormalizer.addFinalIds(newBaseFinalId, lastFinalizedFinal, newCluster);
+				this.sessionIdNormalizer.registerFinalIdBlock(newBaseFinalId, newCluster.capacity, newCluster);
 			}
 
 			this.checkClusterForCollision(newCluster);
@@ -975,10 +985,12 @@ export class IdCompressor {
 		let eagerFinalId: (FinalCompressedId & SessionSpaceCompressedId) | undefined;
 		let cluster: IdCluster | undefined;
 		if (currentClusterDetails !== undefined) {
-			const { clusterBase } = currentClusterDetails;
 			cluster = currentClusterDetails.cluster;
 			const lastFinalKnown = sessionIdNormalizer.getLastFinalId();
-			if (lastFinalKnown !== undefined && lastFinalKnown - clusterBase + 1 < cluster.capacity) {
+			if (
+				lastFinalKnown !== undefined &&
+				lastFinalKnown - currentClusterDetails.clusterBase + 1 < cluster.capacity
+			) {
 				eagerFinalId = (lastFinalKnown + 1) as FinalCompressedId & SessionSpaceCompressedId;
 			}
 		}
@@ -1155,15 +1167,14 @@ export class IdCompressor {
 				const inversionKey = IdCompressor.createInversionKey(override);
 				const compressionMapping =
 					this.clustersAndOverridesInversion.get(inversionKey) ?? fail('Bimap is malformed.');
-				if (
-					!IdCompressor.isClusterInfo(compressionMapping) &&
+				return !IdCompressor.isClusterInfo(compressionMapping) &&
 					!IdCompressor.isUnfinalizedOverride(compressionMapping) &&
 					compressionMapping.associatedLocalId === id
-				) {
-					return compressionMapping.originalOverridingFinal;
-				}
+					? compressionMapping.originalOverridingFinal
+					: (id as OpSpaceCompressedId);
 			}
-			return id as OpSpaceCompressedId;
+			const possibleFinal = this.sessionIdNormalizer.getFinalId(id);
+			return possibleFinal?.[0] ?? (id as OpSpaceCompressedId);
 		}
 		const [correspondingFinal, cluster] =
 			this.sessionIdNormalizer.getFinalId(id) ??
