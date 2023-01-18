@@ -24,7 +24,9 @@ export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
 export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
 // Feature gate key to disable the tombstone feature, i.e., tombstone information is not read / written into summary.
 export const disableTombstoneKey = "Fluid.GarbageCollection.DisableTombstone";
-// Feature gate to enable throwing an error when tombstone object is used.
+// Feature gate to enable throwing an error when tombstone object is loaded (requested).
+export const throwOnTombstoneLoadKey = "Fluid.GarbageCollection.ThrowOnTombstoneLoad";
+// Feature gate to enable throwing an error when tombstone object is used (e.g. outgoing or incoming ops).
 export const throwOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombstoneUsage";
 // Feature gate to enable GC version upgrade.
 export const gcVersionUpgradeToV2Key = "Fluid.GarbageCollection.GCVersionUpgradeToV2";

@@ -24,7 +24,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summarizerClientElection";
-import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
+import { throwOnTombstoneLoadKey } from "./garbageCollectionConstants";
 import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
 
 /**
@@ -151,7 +151,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     ));
 
     /** If true, throw an error when a tombstone attachment blob is retrieved. */
-    private readonly throwOnTombstoneUsage: boolean;
+    private readonly throwOnTombstoneLoad: boolean;
     /**
      * This stores IDs of tombstoned blobs.
      * Tombstone is a temporary feature that imitates a blob getting swept by garbage collection.
@@ -183,8 +183,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         super();
         this.mc = loggerToMonitoringContext(ChildLogger.create(this.runtime.logger, "BlobManager"));
         // Read the feature flag that tells whether to throw when a tombstone blob is requested.
-        this.throwOnTombstoneUsage =
-            this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
+        this.throwOnTombstoneLoad =
+            this.mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&
             this.runtime.clientDetails.type !== summarizerClientType;
 
         this.runtime.on("disconnected", () => this.onDisconnected());
@@ -275,12 +275,17 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         const request = { url: blobId };
         if (this.tombstonedBlobs.has(blobId) ) {
             const error = responseToException(createResponseError(404, "Blob removed by gc", request), request);
-            const event = {
-                eventName: "GC_Tombstone_Blob_Requested",
-                url: request.url,
-            };
-            sendGCTombstoneEvent(this.mc, event, this.runtime.clientDetails.type === summarizerClientType, [BlobManager.basePath], error);
-            if (this.throwOnTombstoneUsage) {
+            sendGCTombstoneEvent(
+                this.mc,
+                {
+                    eventName: "GC_Tombstone_Blob_Requested",
+                    category: this.throwOnTombstoneLoad ? "error" : "generic",
+                    isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
+                },
+                [BlobManager.basePath],
+                error,
+            );
+            if (this.throwOnTombstoneLoad) {
                 throw error;
             }
         }

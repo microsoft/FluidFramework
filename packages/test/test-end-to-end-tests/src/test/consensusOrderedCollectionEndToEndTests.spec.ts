@@ -63,7 +63,10 @@ function generate(
             const container2 = await provider.loadTestContainer(testContainerConfig);
             dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
             sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-            closeContainer2 = () => container2.close();
+            closeContainer2 = () => {
+                container2.close();
+                container2.dispose?.();
+            }
 
             // Load the Container that was created by the first client.
             const container3 = await provider.loadTestContainer(testContainerConfig);
