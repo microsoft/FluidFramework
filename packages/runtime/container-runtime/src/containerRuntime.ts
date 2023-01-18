@@ -8,6 +8,7 @@ import {
     IFluidHandle,
     IFluidHandleContext,
     IFluidRouter,
+    IProvideFluidRouter,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -501,11 +502,6 @@ export interface IContainerRuntimeOptions {
     readonly enableOpReentryCheck?: boolean;
 }
 
-export interface IContainerEntryPoint {
-    dataStoreRegistryEntries: NamedFluidDataStoreRegistryEntries,
-    containerScope: FluidObject
-}
-
 /**
  * The summary tree returned by the root node. It adds state relevant to the root of the tree.
  */
@@ -649,6 +645,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param containerRuntimeCtor - (optional) Constructor to use to create the ContainerRuntime instance.
      * This allows mixin classes to leverage this method to define their own async initializer.
      * @param existing - Pass 'true' if loading from an existing snapshot.
+     * @param registryEntries - Mapping from data store types to their corresponding factories,
+     * @param containerScop - Scope
      * @param initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
      * This object should provide all the functionality that the Container is expected to provide to the loader layer.
      */
@@ -657,7 +655,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime,
         runtimeOptions: IContainerRuntimeOptions = {},
         existing: boolean,
-        initializeEntryPoint: Promise<IContainerEntryPoint>
+        registryEntries: NamedFluidDataStoreRegistryEntries,
+        containerScope: FluidObject = context.scope,
+        initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>
     ): Promise<ContainerRuntime> {
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
@@ -673,7 +673,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (initializeEntryPoint === undefined) {
             throw new UsageError("Need to provide entryPoint initialization function");
         }
-        const entryPoint: IContainerEntryPoint = await initializeEntryPoint;
 
         const {
             summaryOptions = {},
@@ -696,7 +695,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             context.storage :
             new SerializedSnapshotStorage(() => { return context.storage; }, pendingRuntimeState.snapshotBlobs);
 
-        const registry = new FluidDataStoreRegistry(entryPoint.dataStoreRegistryEntries);
+        const registry = new FluidDataStoreRegistry(registryEntries);
 
         const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
             const blobId = baseSnapshot?.blobs[blobName];
@@ -768,14 +767,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 chunkSizeInBytes,
                 enableOpReentryCheck,
             },
-            entryPoint.containerScope,
+            containerScope,
             logger,
             existing,
             blobManagerSnapshot,
             storage,
-            undefined,
-            undefined,
-            Promise.resolve(entryPoint),
+            undefined, // requestHandler - now passed as part of the entryPoint's functionality
+            undefined, // summaryConfiguration
+            initializeEntryPoint
         );
 
         if (pendingRuntimeState) {
@@ -809,17 +808,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         existing?: boolean,
         containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime,
     ): Promise<ContainerRuntime> {
-        const entryPoint: IContainerEntryPoint | FluidObject = {
-            requestHandler,
-            dataStoreRegistryEntries: registryEntries,
-            containerScope,
-        };
         return ContainerRuntime.newLoad(
             context,
             containerRuntimeCtor,
             runtimeOptions,
             existing ?? context.existing ?? false,
-            Promise.resolve(entryPoint as unknown as IContainerEntryPoint));
+            registryEntries,
+            containerScope,
+            async (containerRuntime: IContainerRuntime) => ({
+                async request(request: IRequest): Promise<IResponse> {
+                    return requestHandler?.(request, containerRuntime) ?? create404Response(request);
+                }
+            }));
     }
 
     public get options(): ILoaderOptions {
@@ -1049,6 +1049,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         existing: boolean,
         blobManagerSnapshot: IBlobManagerLoadInfo,
         private readonly _storage: IDocumentStorageService,
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private readonly summaryConfiguration: ISummaryConfiguration = {
             // the defaults
@@ -1056,11 +1058,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // the runtime configuration overrides
             ...runtimeOptions.summaryOptions?.summaryConfigOverrides,
         },
-        entryPoint?: Promise<IContainerEntryPoint>,
+        initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
     ) {
         super();
-
-        this.entryPoint = entryPoint;
 
         // Temp checks to guarantee we're passing these things in the entryPoint. Remove before merging.
         if (requestHandler !== undefined) {
@@ -1392,6 +1392,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
         BindBatchTracker(this, this.logger);
+
+        if (initializeEntryPoint !== undefined) {
+            this.entryPoint = initializeEntryPoint(this);
+        }
     }
 
     /**
@@ -1456,22 +1460,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return create404Response(request);
             }
 
+            // The container runtime's entryPoint is now the object that should be able to handle requests;
+            // the requestHandler passed to the container runtime is now put in there
             const resolvedEntryPoint = await this.entryPoint;
             if (resolvedEntryPoint !== undefined) {
-                interface IRuntimeRequestHandler {
-                    IRuntimeRequestHandler: IRuntimeRequestHandler;
-                    requestHandler: (request: RequestParser, runtime: IContainerRuntime)
-                    => Promise<IResponse>;
+                const maybeFluidRouter: FluidObject<IProvideFluidRouter> = resolvedEntryPoint;
+                if (maybeFluidRouter?.IFluidRouter?.request !== undefined) {
+                    return maybeFluidRouter?.IFluidRouter?.request(parser);
                 }
-
-                const maybeHasRequestHandler: FluidObject<IRuntimeRequestHandler> = resolvedEntryPoint as FluidObject;
-                if (maybeHasRequestHandler?.IRuntimeRequestHandler?.requestHandler !== undefined) {
-                    return maybeHasRequestHandler?.IRuntimeRequestHandler?.requestHandler(parser, this);
-                }
-            }
-
-            if (this.requestHandler !== undefined) {
-                return this.requestHandler(parser, this);
             }
 
             return create404Response(request);
@@ -1520,7 +1516,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * {@inheritDoc @fluidframework/container-definitions#IRuntime.entrypoint}
      */
-    public readonly entryPoint?: Promise<IContainerEntryPoint>;
+    public readonly entryPoint?: Promise<FluidObject>;
 
     private internalId(maybeAlias: string): string {
         return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;

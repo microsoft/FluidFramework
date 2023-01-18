@@ -86,7 +86,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // Warning: (ae-forgotten-export) The symbol "IBlobManagerLoadInfo" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, logger: ITelemetryLogger, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration, entryPoint?: Promise<IContainerEntryPoint>);
+    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, logger: ITelemetryLogger, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration, initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>);
     // (undocumented)
     protected addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): void;
     addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
@@ -125,7 +125,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
     // (undocumented)
-    readonly entryPoint?: Promise<IContainerEntryPoint>;
+    readonly entryPoint?: Promise<FluidObject>;
     // (undocumented)
     get flushMode(): FlushMode;
     // (undocumented)
@@ -157,8 +157,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean, containerRuntimeCtor?: typeof ContainerRuntime): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLogger;
-    // Warning: (ae-forgotten-export) The symbol "IContainerEntryPoint" needs to be exported by the entry point index.d.ts
-    static newLoad(context: IContainerContext, containerRuntimeCtor: typeof ContainerRuntime | undefined, runtimeOptions: IContainerRuntimeOptions | undefined, existing: boolean, initializeEntryPoint: Promise<IContainerEntryPoint>): Promise<ContainerRuntime>;
+    static newLoad(context: IContainerContext, containerRuntimeCtor: typeof ContainerRuntime | undefined, runtimeOptions: IContainerRuntimeOptions | undefined, existing: boolean, registryEntries: NamedFluidDataStoreRegistryEntries, containerScope: FluidObject<unknown> | undefined, initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>): Promise<ContainerRuntime>;
     // (undocumented)
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     // (undocumented)

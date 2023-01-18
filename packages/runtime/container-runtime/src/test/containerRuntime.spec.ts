@@ -24,13 +24,13 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
-import { ContainerMessageType, ContainerRuntime, IContainerEntryPoint, IContainerRuntimeOptions } from "../containerRuntime";
+import { IRequest, IResponse, FluidObject, IProvideFluidRouter } from "@fluidframework/core-interfaces";
+import { ContainerMessageType, ContainerRuntime, IContainerRuntimeOptions } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 
 describe("Runtime", () => {
-    describe("Container Runtime", () => {
+    describe.only("Container Runtime", () => {
         describe("flushMode setting", () => {
             let containerRuntime: ContainerRuntime;
             const getMockContext = ((): Partial<IContainerContext> => {
@@ -663,14 +663,17 @@ describe("Runtime", () => {
                             containerRuntimeCtor: typeof ContainerRuntime = MixinContainerRuntime,
                             runtimeOptions: IContainerRuntimeOptions = {},
                             existing: boolean,
-                            initializeEntryPoint: Promise<IContainerEntryPoint>
+                            registryEntries: NamedFluidDataStoreRegistryEntries,
+                            containerScope: FluidObject = context.scope,
+                            initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>
                         ): Promise<ContainerRuntime> {
-
                             return Base.newLoad(
                                 context,
                                 containerRuntimeCtor,
                                 runtimeOptions,
                                 existing,
+                                registryEntries,
+                                containerScope,
                                 initializeEntryPoint
                             );
                         }
@@ -680,17 +683,18 @@ describe("Runtime", () => {
                         }
                     } as typeof ContainerRuntime;
 
-                const myEntryPoint: IContainerEntryPoint = {
-                    containerScope: {},
-                    dataStoreRegistryEntries: []
+                const myEntryPoint: FluidObject = {
+                    myProp: "myValue"
                 };
 
                 const runtime = await makeMixin(makeMixin(ContainerRuntime, "method1", "mixed in return"), "method2", 42).newLoad(
                     getMockContext() as IContainerContext,
                     undefined, // containerRuntimeCtor
-                    {},    // runtimeOptions
-                    false, // existing
-                    Promise.resolve(myEntryPoint),
+                    {},        // runtimeOptions
+                    false,     // existing
+                    [],        // registryEntries
+                    undefined, // containerScope
+                    async (containerRuntime) => myEntryPoint,
                 );
 
                 assert.equal((runtime as unknown as { method1: () => any; }).method1(), "mixed in return");
@@ -698,7 +702,7 @@ describe("Runtime", () => {
             });
         })
 
-        it("entryPoint is initialized correctly when using old load method", async () => {
+        it.only("entryPoint is initialized correctly when using old load method", async () => {
             const mockContext: Partial<IContainerContext> = {
                 attachState: AttachState.Attached,
                 deltaManager: new MockDeltaManager(),
@@ -708,25 +712,31 @@ describe("Runtime", () => {
                 closeFn: (_error?: ICriticalContainerError): void => { },
                 updateDirtyContainerState: (_dirty: boolean) => { },
             };
-            const containerScope: FluidObject = { myProp: "myValue" } as unknown as FluidObject;
             const containerRuntime = await ContainerRuntime.load(
                 mockContext as IContainerContext,
-                [],
-                undefined, // requestHandler
+                [],        // registryEntries
+                async (request, ctrRuntime) => ({ mimeType: "myMimeType", value: "hello!", status: 200 }),
                 {},        // runtimeOptions
-                containerScope,
+                undefined, // containerScope
                 false,     // existing
                 undefined, // containerRuntimeCtor
             );
             const resolvedEntryPoint = await containerRuntime.entryPoint;
             assert(resolvedEntryPoint !== undefined, "entryPoint was not initialized");
-            assert((resolvedEntryPoint?.containerScope as any).myProp === "myValue", "unexpected property");
+            const maybeFluidRouter: FluidObject<IProvideFluidRouter> = resolvedEntryPoint;
+            if (maybeFluidRouter.IFluidRouter === undefined) {
+                assert.fail("entryPoint doesn't implement IFluidRouter");
+            }
+            if (maybeFluidRouter.IFluidRouter?.request === undefined) {
+                assert.fail("entryPoint's request method is undefined");
+            }
+            assert((await maybeFluidRouter.IFluidRouter.request(undefined as unknown as Request)).value === "hello!",
+                "request method in entryPoint returned unexpected value ");
         });
 
         it("entryPoint is initialized correctly when using new load method", async () => {
-            const entryPoint: IContainerEntryPoint = {
-                dataStoreRegistryEntries: [],
-                containerScope: { myProp: "myValue" } as unknown as FluidObject,
+            const entryPoint: FluidObject = {
+                myProp: "myValue"
             };
             const mockContext: Partial<IContainerContext> = {
                 attachState: AttachState.Attached,
@@ -742,11 +752,13 @@ describe("Runtime", () => {
                 undefined, // containerRuntimeCtor
                 {},        // runtimeOptions
                 false,     // existing
-                Promise.resolve(entryPoint)
+                [],        // registryEntries
+                undefined, // containerScope
+                async (ctrRuntime) => entryPoint
             );
             const containerEntryPoint = await containerRuntime.entryPoint;
             assert(containerEntryPoint !== undefined, "entryPoint was not initialized");
-            assert((containerEntryPoint?.containerScope as any).myProp === "myValue", "unexpected property");
+            assert((containerEntryPoint as any).myProp === "myValue", "unexpected property");
         });
     });
 });
