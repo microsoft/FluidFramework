@@ -670,10 +670,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
         });
 
-        if (initializeEntryPoint === undefined) {
-            throw new UsageError("Need to provide entryPoint initialization function");
-        }
-
         const {
             summaryOptions = {},
             gcOptions = {},
@@ -816,7 +812,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             registryEntries,
             containerScope,
             async (containerRuntime: IContainerRuntime) => {
-                // For now, entryPoint is an IFluidRouter for backwards compat
+                // For now, default entryPoint is an IFluidRouter for backwards compat
                 const entryPoint: IFluidRouter = {
                     async request(request: IRequest): Promise<IResponse> {
                         return requestHandler?.(request, containerRuntime) ?? create404Response(request);
@@ -1056,8 +1052,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         existing: boolean,
         blobManagerSnapshot: IBlobManagerLoadInfo,
         private readonly _storage: IDocumentStorageService,
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private readonly summaryConfiguration: ISummaryConfiguration = {
             // the defaults
@@ -1400,9 +1394,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
         BindBatchTracker(this, this.logger);
 
-        if (initializeEntryPoint !== undefined) {
-            this.entryPoint = initializeEntryPoint(this);
-        }
+        this.entryPoint = initializeEntryPoint?.(this);
     }
 
     /**
@@ -1475,6 +1467,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 if (maybeFluidRouter?.IFluidRouter?.request !== undefined) {
                     return maybeFluidRouter?.IFluidRouter?.request(parser);
                 }
+            }
+
+            // Check the requestHandler from the constructor for back-compat for now.
+            // Going forward, we expect IFluidRouter functionality to be provided by the entryPoint.
+            if (this.requestHandler !== undefined) {
+                return this.requestHandler(parser, this);
             }
 
             return create404Response(request);
