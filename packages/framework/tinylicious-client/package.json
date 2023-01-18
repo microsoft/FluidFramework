@@ -80,7 +80,7 @@
     "fluid-framework": ">=2.0.0-internal.2.1.0 <2.0.0-internal.3.0.0"
   },
   "typeValidation": {
-    "version": "2.0.0-internal.2.3.0",
+    "version": "2.0.0-internal.2.3.1",
     "baselineRange": "2.0.0-internal.2.3.0",
     "broken": {}
   }

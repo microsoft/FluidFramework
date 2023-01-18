@@ -109,24 +109,8 @@
     "typescript": "~4.5.5"
   },
   "typeValidation": {
-    "version": "2.0.0-internal.2.3.0",
+    "version": "2.0.0-internal.2.3.1",
     "baselineRange": "2.0.0-internal.2.3.0",
-    "broken": {
-      "RemovedVariableDeclaration_gcBlobPrefix": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "RemovedVariableDeclaration_gcTombstoneBlobKey": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "RemovedVariableDeclaration_gcTreeKey": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "ClassDeclaration_ContainerRuntime": {
-        "forwardCompat": false
-      }
-    }
+    "broken": {}
   }
 }
