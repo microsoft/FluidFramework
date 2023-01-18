@@ -4,8 +4,8 @@
         "rootDir": "./",
         "outDir": "../../dist/test",
         "types": [
-            "mocha",
-            "node"
+            "node",
+            "mocha"
         ],
         "declaration": false,
         "declarationMap": false,
