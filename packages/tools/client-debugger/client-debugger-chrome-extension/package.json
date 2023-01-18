@@ -1,6 +1,6 @@
 {
   "name": "@fluid-tools/client-debugger-chrome-extension",
-  "version": "2.0.0-internal.2.3.0",
+  "version": "2.0.0-internal.2.4.0",
   "private": true,
   "description": "A Chrome extension visual debugger for the Fluid Client.",
   "homepage": "https://fluidframework.com",
@@ -39,7 +39,7 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-tools/client-debugger-view": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
+    "@fluid-tools/client-debugger-view": ">=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
   },

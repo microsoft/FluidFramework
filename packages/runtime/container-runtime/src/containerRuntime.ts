@@ -738,7 +738,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 if (loadSequenceNumberVerification === "log") {
                     logger.sendErrorEvent({ eventName: "SequenceNumberMismatch" }, error);
                 } else {
+                    // Call both close and dispose as close implementation will no longer dispose runtime in future (2.0.0-internal.3.0.0)
                     context.closeFn(error);
+                    context.disposeFn?.(error);
                 }
             }
         }
@@ -811,8 +813,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.reSubmit;
     }
 
+    public get disposeFn(): (error?: ICriticalContainerError) => void {
+        // In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
+        return this.context.disposeFn ?? this.context.closeFn;
+    }
+
     public get closeFn(): (error?: ICriticalContainerError) => void {
-        return this.context.closeFn;
+        // Also call disposeFn to retain functionality of runtime being disposed on close
+        return (error?: ICriticalContainerError) => {
+            this.context.closeFn(error);
+            this.context.disposeFn?.(error);
+        };
     }
 
     public get flushMode(): FlushMode {
@@ -3049,6 +3060,7 @@ const waitForSeq = async (
 ): Promise<void> => new Promise<void>((resolve, reject) => {
     // TODO: remove cast to any when actual event is determined
     deltaManager.on("closed" as any, reject);
+    deltaManager.on("disposed" as any, reject);
 
     // If we already reached target sequence number, simply resolve the promise.
     if (deltaManager.lastSequenceNumber >= targetSeq) {
