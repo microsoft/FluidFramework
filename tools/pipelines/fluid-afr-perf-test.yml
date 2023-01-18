@@ -36,7 +36,7 @@ stages:
   - stage:
     displayName: AFR Perf Tests (WestUS2)
     dependsOn: []
-    jobs:q
+    jobs:
       - template: templates/include-test-real-service.yml
         parameters:
           poolBuild: Small
