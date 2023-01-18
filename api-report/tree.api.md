@@ -798,7 +798,7 @@ type MarkList_2<TNodeChange = NodeChangeType, TMark = Mark_2<TNodeChange>> = TMa
 
 // @public
 class MarkListFactory<TNodeChange> {
-    constructor(revision?: RevisionTag | undefined, moveEffects?: MoveEffectTable<TNodeChange> | undefined);
+    constructor(revision?: RevisionTag | undefined, moveEffects?: MoveEffectTable<TNodeChange> | undefined, recordMerges?: boolean);
     // (undocumented)
     readonly list: MarkList_2<TNodeChange>;
     // (undocumented)

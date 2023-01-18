@@ -44,6 +44,7 @@ import {
     MoveMark,
     newMoveEffectTable,
     splitMarkOnOutput,
+    splitMove,
 } from "./moveEffectTable";
 
 export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<TNodeChange> {
@@ -341,6 +342,7 @@ export function tryExtendMark(
     rhs: Readonly<ObjectMark>,
     revision: RevisionTag | undefined,
     moveEffects: MoveEffectTable<unknown> | undefined,
+    recordMerges: boolean,
 ): boolean {
     if (rhs.type !== lhs.type) {
         return false;
@@ -373,7 +375,7 @@ export function tryExtendMark(
                 isEqualPlace(lhsMoveIn, rhs) &&
                 moveEffects !== undefined &&
                 lhsMoveIn.isSrcConflicted === rhs.isSrcConflicted &&
-                tryMergeMoves(MoveEnd.Dest, lhsMoveIn, rhs, revision, moveEffects)
+                tryMergeMoves(MoveEnd.Dest, lhsMoveIn, rhs, revision, moveEffects, recordMerges)
             ) {
                 return true;
             }
@@ -392,7 +394,7 @@ export function tryExtendMark(
             }
             if (
                 moveEffects !== undefined &&
-                tryMergeMoves(MoveEnd.Source, lhsMoveOut, rhs, revision, moveEffects)
+                tryMergeMoves(MoveEnd.Source, lhsMoveOut, rhs, revision, moveEffects, recordMerges)
             ) {
                 return true;
             }
@@ -424,6 +426,7 @@ function tryMergeMoves(
     right: MoveMark<unknown>,
     revision: RevisionTag | undefined,
     moveEffects: MoveEffectTable<unknown>,
+    recordMerges: boolean,
 ): boolean {
     if (left.conflictsWith !== right.conflictsWith) {
         return false;
@@ -448,9 +451,15 @@ function tryMergeMoves(
         } else {
             getOrCreateEffect(moveEffects, end, rev, left.id).mergeRight = undefined;
         }
-        left.count += right.count;
 
-        // TODO: Add effect to re-split these partitions
+        if (recordMerges) {
+            splitMove(moveEffects, end, revision, left.id, right.id, left.count, right.count);
+
+            // TODO: This breaks the nextId mergeability, and would also be overwritten if we merged again
+            makeMergeable(moveEffects, end, revision, left.id, right.id);
+        }
+
+        left.count += right.count;
         return true;
     }
     return false;
@@ -466,7 +475,7 @@ function areMergeableReturnFrom(lhs: ReturnFrom, rhs: ReturnFrom): boolean {
         return false;
     }
     if (lhs.detachIndex !== undefined) {
-        return lhs.detachIndex + 1 === rhs.detachIndex;
+        return lhs.detachIndex + lhs.count === rhs.detachIndex;
     }
     return rhs.detachIndex === undefined;
 }

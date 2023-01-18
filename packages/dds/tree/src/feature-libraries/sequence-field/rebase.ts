@@ -89,7 +89,7 @@ function rebaseMarkList<TNodeChange>(
     genId: IdAllocator,
 ): MarkList<TNodeChange> {
     const moveEffects = newMoveEffectTable<TNodeChange>();
-    const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects);
+    const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects, true);
     const queue = new RebaseQueue(baseRevision, baseMarkList, currMarkList, genId, moveEffects);
 
     // Each attach mark in `currMarkList` should have a lineage event added for `baseRevision` if a node adjacent to
@@ -574,6 +574,8 @@ function applyMoveEffects<TNodeChange>(
     rebasedMarks: MarkList<TNodeChange>,
     moveEffects: MoveEffectTable<TNodeChange>,
 ): Changeset<TNodeChange> {
+    // Is it correct to use ComposeQueue here?
+    // If we used a special AmendRebaseQueue, we could ignore any base marks which don't have associated move-ins
     const queue = new ComposeQueue<TNodeChange>(
         baseRevision,
         baseMarks,

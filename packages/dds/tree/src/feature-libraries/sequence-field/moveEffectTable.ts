@@ -184,7 +184,7 @@ function applyMoveEffectsToDest<T>(
         result.push(effect.mark);
     } else {
         if (!effect.shouldRemove) {
-            const newMark: Mark<T> = {
+            const newMark: MoveIn | ReturnTo = {
                 ...mark,
                 count: effect.count ?? mark.count,
             };
@@ -216,8 +216,6 @@ function applyMoveEffectsToDest<T>(
 
         if (mark.type === "ReturnTo" && mark.detachIndex !== undefined) {
             assert(effect.count !== undefined, "Should define count when splitting a mark");
-
-            // TODO: This assumes that effect.count has not been changed to represent a shrinking of the mark.
             (newMark as ReturnTo).detachIndex = mark.detachIndex + effect.count;
         }
 
@@ -277,18 +275,17 @@ function applyMoveEffectsToSource<T>(
             effect.child,
         );
         assert(childEffect.count !== undefined, "Child effects should have size");
+        const newMark: MoveOut<T> | ReturnFrom<T> = {
+            ...mark,
+            id: effect.child,
+            count: childEffect.count,
+        };
+        if (mark.type === "ReturnFrom" && mark.detachIndex !== undefined) {
+            assert(effect.count !== undefined, "Should define count when splitting a mark");
+            (newMark as ReturnFrom).detachIndex = mark.detachIndex + effect.count;
+        }
         result.push(
-            ...applyMoveEffectsToSource(
-                {
-                    ...mark,
-                    id: effect.child,
-                    count: childEffect.count,
-                },
-                revision,
-                effects,
-                consumeEffect,
-                composeChildren,
-            ),
+            ...applyMoveEffectsToSource(newMark, revision, effects, consumeEffect, composeChildren),
         );
     }
 
@@ -463,7 +460,6 @@ export function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(
             ] as [TMark, TMark];
         case "MoveIn":
         case "ReturnTo": {
-            // TODO: Handle detachIndex
             const newId = genId();
             splitMove(
                 moveEffects,

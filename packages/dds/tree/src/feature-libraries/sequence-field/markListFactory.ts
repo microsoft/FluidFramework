@@ -23,6 +23,7 @@ export class MarkListFactory<TNodeChange> {
         // TODO: Is there a usage of MarkListFactory where we need a non-undefined revision?
         private readonly revision?: RevisionTag | undefined,
         private readonly moveEffects?: MoveEffectTable<TNodeChange>,
+        private readonly recordMerges: boolean = false,
     ) {}
 
     public push(...marks: Mark<TNodeChange>[]): void {
@@ -46,7 +47,7 @@ export class MarkListFactory<TNodeChange> {
         }
         const prev = this.list[this.list.length - 1];
         if (isObjMark(prev) && prev.type === mark.type) {
-            if (tryExtendMark(prev, mark, this.revision, this.moveEffects)) {
+            if (tryExtendMark(prev, mark, this.revision, this.moveEffects, this.recordMerges)) {
                 return;
             }
         }
