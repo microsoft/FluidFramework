@@ -7,7 +7,7 @@ import "@hig/fonts/build/ArtifaktElement.css";
 import { createTheme } from "@material-ui/core/styles";
 import { ToggleButtonClassKey } from "@material-ui/lab/ToggleButton";
 
-declare module "@material-ui/core/styles/overrides" {
+declare module "@material-ui/core/styles" {
   interface ComponentNameToClassKey {
     MuiToggleButton: ToggleButtonClassKey;
   }
@@ -21,7 +21,7 @@ export const theme = createTheme({
         borderRadius: "2px",
       },
     },
-    MuiToggleButton: {
+    MuiStepButton: {
       root: {
         "&:not(:first-child)": {
           borderLeft: "auto",

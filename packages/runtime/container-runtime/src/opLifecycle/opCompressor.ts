@@ -5,9 +5,10 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IsoBuffer } from "@fluidframework/common-utils";
+import { UsageError } from "@fluidframework/container-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { compress } from "lz4js";
-import { CompressionAlgorithms, ContainerRuntimeMessage } from "../containerRuntime";
+import { CompressionAlgorithms } from "../containerRuntime";
 import { IBatch, BatchMessage } from "./definitions";
 
 /**
@@ -23,14 +24,8 @@ export class OpCompressor {
     }
 
     public compressBatch(batch: IBatch): IBatch {
-        const messages: BatchMessage[] = [];
-        const contentToCompress: ContainerRuntimeMessage[] = [];
-        for (const message of batch.content) {
-            contentToCompress.push(message.deserializedContent);
-        }
-
         const compressionStart = Date.now();
-        const contentsAsBuffer = new TextEncoder().encode(JSON.stringify(contentToCompress));
+        const contentsAsBuffer = new TextEncoder().encode(this.serializeBatch(batch));
         const compressedContents = compress(contentsAsBuffer);
         const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
         const duration = Date.now() - compressionStart;
@@ -44,6 +39,7 @@ export class OpCompressor {
             });
         }
 
+        const messages: BatchMessage[] = [];
         messages.push({
             ...batch.content[0], contents: JSON.stringify({ packedContents: compressedContent }),
             metadata: batch.content[0].metadata,
@@ -58,5 +54,28 @@ export class OpCompressor {
             contentSizeInBytes: compressedContent.length,
             content: messages,
         };
+    }
+
+    private serializeBatch(batch: IBatch): string {
+        try {
+            return JSON.stringify(batch.content.map((message) => message.deserializedContent))
+        } catch (e: any) {
+            if (e.message === "Invalid string length") {
+                // This is how JSON.stringify signals that
+                // the content size exceeds its capacity
+                const error = new UsageError("Payload too large");
+                this.logger.sendErrorEvent(
+                    {
+                        eventName: "BatchTooLarge",
+                        size: batch.contentSizeInBytes,
+                        length: batch.content.length,
+                    },
+                    error,
+                );
+                throw error;
+            }
+
+            throw e;
+        }
     }
 }
