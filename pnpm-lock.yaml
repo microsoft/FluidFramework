@@ -1,7 +1,0 @@
-lockfileVersion: 5.4
-
-specifiers:
-  '@fluidframework/build-tools': ^0.7.0
-
-devDependencies:
-  '@fluidframework/build-tools': link:build-tools/packages/build-tools
