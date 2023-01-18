@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/property-proxy",
-  "version": "2.0.0-internal.2.3.0",
+  "version": "2.0.0-internal.2.4.0",
   "description": "Proxify PropertyTree to interact with them in a JavaScript like manner",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -39,8 +39,8 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-experimental/property-changeset": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0",
-    "@fluid-experimental/property-properties": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0"
+    "@fluid-experimental/property-changeset": ">=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0",
+    "@fluid-experimental/property-properties": ">=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
@@ -50,6 +50,8 @@
     "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@rushstack/eslint-config": "^2.5.1",
+    "@types/jest": "22.2.3",
+    "@types/node": "^14.18.36",
     "babel-loader": "^8.0.5",
     "concurrently": "^6.2.0",
     "eslint": "~8.6.0",

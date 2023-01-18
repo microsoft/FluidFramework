@@ -23,12 +23,11 @@ export class OpDecompressor {
     private processedCount = 0;
 
     public processMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
-        // We're checking for compression = true or top level compression property so
-        // that we can enable compression without waiting on all ordering services
-        // to pick up protocol change. Eventually only the top level property should
-        // be used.
-        if (message.metadata?.batch === true
-            && (message.metadata?.compressed || message.compression !== undefined)) {
+        assert(
+            message.compression === undefined || message.compression === CompressionAlgorithms.lz4,
+            0x511 /* Only lz4 compression is supported */);
+
+        if (message.metadata?.batch === true && message.compression === CompressionAlgorithms.lz4) {
             // Beginning of a compressed batch
             assert(this.activeBatch === false, 0x4b8 /* shouldn't have multiple active batches */);
             if (message.compression) {
@@ -52,7 +51,7 @@ export class OpDecompressor {
         }
 
         if (this.rootMessageContents !== undefined && message.metadata?.batch === undefined && this.activeBatch) {
-            assert(message.contents === undefined, "Expecting empty message");
+            assert(message.contents === undefined, 0x512 /* Expecting empty message */);
 
             // Continuation of compressed batch
             return {
@@ -75,8 +74,7 @@ export class OpDecompressor {
             };
         }
 
-        if (message.metadata?.batch === undefined &&
-            (message.metadata?.compressed || message.compression === CompressionAlgorithms.lz4)) {
+        if (message.metadata?.batch === undefined && message.compression === CompressionAlgorithms.lz4) {
             // Single compressed message
             assert(this.activeBatch === false, 0x4ba /* shouldn't receive compressed message in middle of a batch */);
 
@@ -99,26 +97,9 @@ export class OpDecompressor {
 }
 
 // We should not be mutating the input message nor its metadata
-const newMessage = (originalMessage: ISequencedDocumentMessage, contents: any): ISequencedDocumentMessage =>
-    stripCompressionMarkers({
-        ...originalMessage,
-        contents,
-        metadata: { ...originalMessage.metadata },
-    });
-
-// After compression, it is irrelevant to the other layers whether or not the
-// original message was compressed, so in the interest of both correctness and safety
-// we should remove all compression markers after we decompress.
-const stripCompressionMarkers = (message: ISequencedDocumentMessage): ISequencedDocumentMessage => {
-    message.compression = undefined;
-
-    if (message.metadata?.compressed === true) {
-        message.metadata.compressed = undefined;
-
-        if (Object.keys(message.metadata).length === 0) {
-            message.metadata = undefined;
-        }
-    }
-
-    return message;
-};
+const newMessage = (originalMessage: ISequencedDocumentMessage, contents: any): ISequencedDocumentMessage => ({
+    ...originalMessage,
+    contents,
+    compression: undefined,
+    metadata: { ...originalMessage.metadata },
+});

@@ -17,9 +17,9 @@ import { SharedCounter } from "@fluidframework/counter";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { ITinyliciousAudience, TinyliciousClient } from "@fluidframework/tinylicious-client";
+import { ITinyliciousAudience } from "@fluidframework/tinylicious-client";
 
-import { CollaborativeTextView } from "@fluid-example/collaborative-textarea";
+import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import { closeFluidClientDebugger } from "@fluid-tools/client-debugger";
 
 import {
@@ -96,20 +96,16 @@ function useContainerInfo(): ContainerInfo | undefined {
     // Get the Fluid Data data on app startup and store in the state
     React.useEffect(() => {
         async function getFluidData(): Promise<ContainerInfo> {
-            const client: TinyliciousClient = new TinyliciousClient();
-
             let container: IFluidContainer;
             let audience: ITinyliciousAudience;
             let containerId = getContainerIdFromLocation(window.location);
             if (containerId.length === 0) {
                 ({ container, audience, containerId } = await createFluidContainer(
-                    client,
                     containerSchema,
                     populateRootMap,
                 ));
             } else {
                 ({ container, audience } = await loadExistingFluidContainer(
-                    client,
                     containerId,
                     containerSchema,
                 ));
@@ -265,7 +261,11 @@ function TextView(props: TextViewProps): React.ReactElement {
         });
     }, [sharedTextHandle, setSharedText]);
 
-    return sharedText === undefined ? <Spinner /> : <CollaborativeTextView text={sharedText} />;
+    return sharedText === undefined ? (
+        <Spinner />
+    ) : (
+        <CollaborativeTextArea sharedStringHelper={new SharedStringHelper(sharedText)} />
+    );
 }
 
 interface CounterViewProps {

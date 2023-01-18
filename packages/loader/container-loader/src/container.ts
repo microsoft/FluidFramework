@@ -7,7 +7,9 @@
 import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
-    ITelemetryLogger, ITelemetryProperties,
+    ITelemetryLogger,
+    ITelemetryProperties,
+    TelemetryEventCategory,
 } from "@fluidframework/common-definitions";
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
 import {
@@ -236,7 +238,7 @@ const getCodeProposal =
     (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
 /**
- * Helper function to report to telemetry cases where operation takes longer than expected (1s)
+ * Helper function to report to telemetry cases where operation takes longer than expected (200ms)
  * @param logger - logger to use
  * @param eventName - event name
  * @param action - functor to call and measure
@@ -385,7 +387,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private readonly mc: MonitoringContext;
 
-    private _lifecycleState: "loading" | "loaded" | "closing" | "closed" = "loading";
+    private _lifecycleState: "loading" | "loaded" | "closing" | "closed" | "disposed" = "loading";
 
     private setLoaded() {
         // It's conceivable the container could be closed when this is called
@@ -398,7 +400,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public get closed(): boolean {
-        return (this._lifecycleState === "closing" || this._lifecycleState === "closed");
+        return (this._lifecycleState === "closing" || this._lifecycleState === "closed" || this._lifecycleState === "disposed");
     }
 
     private _attachState = AttachState.Detached;
@@ -645,13 +647,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 },
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
-                logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => {
+                logConnectionIssue: (eventName: string, category: TelemetryEventCategory, details?: ITelemetryProperties) => {
                     const mode = this.connectionMode;
                     // We get here when socket does not receive any ops on "write" connection, including
-                    // its own join op. Attempt recovery option.
+                    // its own join op.
+                    // Report issues only if we already loaded container - op processing is paused while container is loading,
+                    // so we always time-out processing of join op in cases where fetching snapshot takes a minute.
+                    // It's not a problem with op processing itself - such issues should be tracked as part of boot perf monitoring instead.
                     this._deltaManager.logConnectionIssue({
                         eventName,
                         mode,
+                        category: (this._lifecycleState === "loading") ? "generic" : category,
                         duration: performance.now() - this.connectionTransitionTimes[ConnectionState.CatchingUp],
                         ...(details === undefined ? {} : { details: JSON.stringify(details) }),
                     });
@@ -747,16 +753,25 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.protocolHandler.quorum;
     }
 
+    public dispose?(error?: ICriticalContainerError) {
+        this._deltaManager.close(error, true /* doDispose */);
+        this.verifyClosed();
+    }
+
     public close(error?: ICriticalContainerError) {
         // 1. Ensure that close sequence is exactly the same no matter if it's initiated by host or by DeltaManager
         // 2. We need to ensure that we deliver disconnect event to runtime properly. See connectionStateChanged
         //    handler. We only deliver events if container fully loaded. Transitioning from "loading" ->
         //    "closing" will lose that info (can also solve by tracking extra state).
         this._deltaManager.close(error);
+        this.verifyClosed();
+    }
+
+    private verifyClosed(): void {
         assert(this.connectionState === ConnectionState.Disconnected,
             0x0cf /* "disconnect event was not raised!" */);
 
-        assert(this._lifecycleState === "closed", 0x314 /* Container properly closed */);
+        assert(this._lifecycleState === "closed" || this._lifecycleState === "disposed", 0x314 /* Container properly closed */);
     }
 
     private closeCore(error?: ICriticalContainerError) {
@@ -795,12 +810,46 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             this.emit("closed", error);
 
-            this.removeAllListeners();
             if (this.visibilityEventHandler !== undefined) {
                 document.removeEventListener("visibilitychange", this.visibilityEventHandler);
             }
         } finally {
             this._lifecycleState = "closed";
+        }
+    }
+
+    private _disposed = false;
+    private disposeCore(error?: ICriticalContainerError) {
+        assert(!this._disposed, "Container already disposed");
+        this._disposed = true;
+
+        try {
+            // Ensure that we raise all key events even if one of these throws
+            try {
+                this._protocolHandler?.close();
+
+                this.connectionStateHandler.dispose();
+
+                this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
+
+                this.storageService.dispose();
+
+                // Notify storage about critical errors. They may be due to disconnect between client & server knowledge
+                // about file, like file being overwritten in storage, but client having stale local cache.
+                // Driver need to ensure all caches are cleared on critical errors
+                this.service?.dispose(error);
+            } catch (exception) {
+                this.mc.logger.sendErrorEvent({ eventName: "ContainerDisposeException" }, exception);
+            }
+
+            this.emit("disposed", error);
+
+            this.removeAllListeners();
+            if (this.visibilityEventHandler !== undefined) {
+                document.removeEventListener("visibilitychange", this.visibilityEventHandler);
+            }
+        } finally {
+            this._lifecycleState = "disposed";
         }
     }
 
@@ -824,6 +873,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.mc.logger.sendTelemetryEvent({ eventName: "CloseAndGetPendingLocalState" });
 
+        // Only close here as method name suggests
         this.close();
 
         return JSON.stringify(pendingState);
@@ -954,6 +1004,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     newError.addTelemetryProperties({ resolvedUrl: resolvedUrl.url });
                 }
                 this.close(newError);
+                this.dispose?.(newError);
                 throw newError;
             }
         },
@@ -1090,7 +1141,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         // pre-0.58 error message: existingContextDoesNotSatisfyIncomingProposal
-        this.close(new GenericError("Existing context does not satisfy incoming proposal"));
+        const error = new GenericError("Existing context does not satisfy incoming proposal");
+        this.close(error);
+        this.dispose?.(error);
     }
 
     private async getVersion(version: string | null): Promise<IVersion | undefined> {
@@ -1155,7 +1208,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             await this.storageService.connectToService(this.service);
         } else {
             // if we have pendingLocalState we can load without storage; don't wait for connection
-            this.storageService.connectToService(this.service).catch((error) => this.close(error));
+            this.storageService.connectToService(this.service).catch((error) => {
+                this.close(error);
+                this.dispose?.(error);
+            });
         }
 
         this._attachState = AttachState.Attached;
@@ -1226,14 +1282,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             if (opsBeforeReturnP !== undefined) {
                 this._deltaManager.inbound.resume();
 
-                await ReportIfTooLong(
+                await PerformanceEvent.timedExecAsync(
                     this.mc.logger,
-                    "WaitOps",
-                    async () => { await opsBeforeReturnP; return {}; });
-                await ReportIfTooLong(
+                    { eventName:  "WaitOps" },
+                    async () => opsBeforeReturnP
+                );
+                await PerformanceEvent.timedExecAsync(
                     this.mc.logger,
-                    "WaitOpProcessing",
-                    async () => this._deltaManager.inbound.waitTillProcessingDone());
+                    { eventName:  "WaitOpProcessing" },
+                    async () => this._deltaManager.inbound.waitTillProcessingDone()
+                );
 
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this._deltaManager.inbound.pause();
@@ -1426,7 +1484,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         });
                     }
                     this.processCodeProposal().catch((error) => {
-                        this.close(normalizeError(error));
+                        const normalizedError = normalizeError(error);
+                        this.close(normalizedError);
+                        this.dispose?.(normalizedError);
                         throw error;
                     });
                 }
@@ -1533,7 +1593,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         deltaManager.on("disconnect", (reason: string) => {
             this.collabWindowTracker?.stopSequenceNumberUpdate();
-            this.connectionStateHandler.receivedDisconnectEvent(reason);
+            if (!this.closed) {
+                this.connectionStateHandler.receivedDisconnectEvent(reason);
+            }
         });
 
         deltaManager.on("throttled", (warning: IThrottlingWarning) => {
@@ -1553,6 +1615,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         deltaManager.on("closed", (error?: ICriticalContainerError) => {
             this.closeCore(error);
+        });
+
+        deltaManager.on("disposed", (error?: ICriticalContainerError) => {
+            this.disposeCore(error);
         });
 
         return deltaManager;
@@ -1670,11 +1736,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     metadata);
             case MessageType.Summarize:
                 return this.submitSummaryMessage(contents as unknown as ISummaryContent);
-            default:
-                this.close(new GenericError("invalidContainerSubmitOpType",
+            default: {
+                const newError = new GenericError("invalidContainerSubmitOpType",
                     undefined /* error */,
-                    { messageType: type }));
+                    { messageType: type });
+                this.close(newError);
+                this.dispose?.(newError);
                 return -1;
+            }
         }
     }
 
@@ -1832,6 +1901,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             (summaryOp: ISummaryContent) => this.submitSummaryMessage(summaryOp),
             (batch: IBatchMessage[]) => this.submitBatch(batch),
             (message) => this.submitSignal(message),
+            (error?: ICriticalContainerError) => this.dispose?.(error),
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,
             (dirty: boolean) => this.updateDirtyContainerState(dirty),

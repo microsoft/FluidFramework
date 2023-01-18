@@ -83,6 +83,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     disconnect(): void;
+    // (undocumented)
+    dispose?(error?: ICriticalContainerError): void;
     forceReadonly(readonly: boolean): void;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
