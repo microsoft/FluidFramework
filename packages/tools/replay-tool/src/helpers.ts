@@ -169,7 +169,9 @@ export async function loadContainer(
 }
 
 export async function uploadSummary(container: IContainer) {
-    const runtime = (await container.entryPoint) as ContainerRuntime;
+    const entryPoint: { containerRuntime: ContainerRuntime } =
+        (await container.entryPoint) as { containerRuntime: ContainerRuntime };
+    const runtime = entryPoint.containerRuntime;
     const summaryResult = await runtime.summarize({
         fullTree: true,
         trackState: false,

@@ -35,6 +35,8 @@ import {
     SharedObjectSequence,
     SparseMatrix,
 } from "@fluid-experimental/sequence-deprecated";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { UnknownChannelFactory } from "./unknownChannel";
 
 /** Simple runtime factory that creates a container runtime */
@@ -50,15 +52,32 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
         context: IContainerContext,
         existing: boolean,
     ): Promise<ContainerRuntime> {
-        return ContainerRuntime.load(
+        return ContainerRuntime.newLoad(
             context,
-            this.registries,
-            buildRuntimeRequestHandler(
-                ...this.requestHandlers,
-            ),
+            undefined,
             this.runtimeOptions,
-            undefined, // containerScope
             existing,
+            this.registries,
+            undefined, // containerScope
+            async (containerRuntime :IContainerRuntime) => {
+                const requestHandlers = this.requestHandlers;
+                // For now, entryPoint is an IFluidRouter for backwards compat, and specifically for the replay tool,
+                // it exposes the containerRuntime itself so the helpers for the tool can use it.
+                const entryPoint: IFluidRouter | { containerRuntime: IContainerRuntime } = {
+                    async request(request: IRequest): Promise<IResponse> {
+                        const requestHandler = buildRuntimeRequestHandler(
+                            ...requestHandlers);
+                        return requestHandler(request, containerRuntime);
+                    },
+                    get IFluidRouter() {
+                        // Not sure why this complains about "Unsafe return of an `any`" without the "as IFluidRouter"
+                        // when entryPoint is typed...
+                        return this as IFluidRouter;
+                    },
+                    containerRuntime: containerRuntime as ContainerRuntime
+                };
+                return entryPoint;
+            },
         );
     }
 }
