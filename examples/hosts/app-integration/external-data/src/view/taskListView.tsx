@@ -33,8 +33,6 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
             console.log('showSavedPriority has been triggered');
             setSavedPriority(task.diffPriority);
             setSavedDiffType(task.diffType);
-            console.log(savedPriority);
-            console.log(savedDiffType);
         }
         const showSavedName = (): void => {
             console.log('showSavedName has been triggered');
@@ -65,11 +63,6 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
     const showAcceptButton = diffVisible ? "hidden" : "visible";
     console.log(savedName);
     console.log(showName);
-    console.log(savedPriority);
-    console.log(showPriority);
-    console.log(savedDiffType);
-    console.log(diffVisible);
-    console.log(showAcceptButton);
 
     // console.log(task);
     let diffColor: string = "white";

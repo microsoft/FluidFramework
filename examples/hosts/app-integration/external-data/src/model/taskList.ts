@@ -69,17 +69,13 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
     }
     public acceptChange = async (): Promise<void> => {
         if (this.diffPriority !== this.DEFAULT_PRIORITY) {
-            console.log(this._priority.get());
             this._priority.set(this.diffPriority);
-            this.emit("priorityChanged");
-            console.log(this._priority.get());
         }
         if (this.diffName !== '') {
-            console.log(this._name.getText());
             const oldString = this._name.getText()
+            console.log(this.name.getText());
             this._name.replaceText(0, oldString.length, this.diffName);
-            this.emit("sequenceDelta");
-            console.log(this._name.getText());
+            console.log(this.name.getText());
         }
         this.diffPriority = this.DEFAULT_PRIORITY;
         this.diffType = "none";
