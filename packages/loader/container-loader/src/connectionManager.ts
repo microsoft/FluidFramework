@@ -292,7 +292,6 @@ export class ConnectionManager implements IConnectionManager {
         return {
             claims: connection.claims,
             clientId: connection.clientId,
-            existing: connection.existing,
             checkpointSequenceNumber: connection.checkpointSequenceNumber,
             get initialClients() { return connection.initialClients; },
             mode: connection.mode,

@@ -9,7 +9,7 @@ import {
 import {
     IDeltaQueue,
     ReadOnlyInfo,
-    IConnectionDetails,
+    IConnectionDetailsInternal,
     ICriticalContainerError,
     IFluidCodeDetails,
     isFluidPackage,
@@ -144,7 +144,7 @@ export interface IConnectionManagerFactoryArgs {
     /**
      * Called whenever new connection to rely service is established
      */
-    readonly connectHandler: (connection: IConnectionDetails) => void;
+    readonly connectHandler: (connection: IConnectionDetailsInternal) => void;
 
     /**
      * Called whenever ping/pong messages are roundtripped on connection.

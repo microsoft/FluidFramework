@@ -37,7 +37,7 @@ export interface IConnectionDetails {
 }
 
 /**
- *  Internal version of IConnectionDetails with props are only exposed internally
+ * Internal version of IConnectionDetails with props are only exposed internally
  */
 export interface IConnectionDetailsInternal extends IConnectionDetails {
     mode: ConnectionMode;

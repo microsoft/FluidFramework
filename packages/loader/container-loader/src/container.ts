@@ -19,7 +19,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    IConnectionDetails,
     IContainer,
     IContainerEvents,
     IDeltaManager,
@@ -32,6 +31,7 @@ import {
     IFluidCodeDetails,
     isFluidCodeDetails,
     IBatchMessage,
+    IConnectionDetailsInternal,
 } from "@fluidframework/container-definitions";
 import {
     GenericError,
@@ -1530,7 +1530,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         deltaManager.inboundSignal.pause();
 
-        deltaManager.on("connect", (details: IConnectionDetails, _opsBehind?: number) => {
+        deltaManager.on("connect", (details: IConnectionDetailsInternal, _opsBehind?: number) => {
             assert(this.connectionMode === details.mode, 0x4b7 /* mismatch */);
             this.connectionStateHandler.receivedConnectEvent(
                 details,

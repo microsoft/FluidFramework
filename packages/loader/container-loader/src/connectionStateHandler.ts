@@ -5,7 +5,7 @@
 
 import { ITelemetryLogger, ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/common-definitions";
 import { assert, Timer } from "@fluidframework/common-utils";
-import { IConnectionDetails, IDeltaManager } from "@fluidframework/container-definitions";
+import { IConnectionDetails, IConnectionDetailsInternal, IDeltaManager } from "@fluidframework/container-definitions";
 import { ILocalSequencedClient } from "@fluidframework/protocol-base";
 import { ISequencedClient, IClient } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
@@ -233,7 +233,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
     private readonly prevClientLeftTimer: Timer;
     private readonly joinOpTimer: Timer;
     private protocol?: IProtocolHandler;
-    private connection?: IConnectionDetails;
+    private connection?: IConnectionDetailsInternal;
     private _clientId?: string;
 
     private waitEvent: PerformanceEvent | undefined;
@@ -404,7 +404,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
      * If it's undefined, then don't delay and transition to Connected as soon as Leave/Join op are accounted for
      */
     public receivedConnectEvent(
-        details: IConnectionDetails,
+        details: IConnectionDetailsInternal,
     ) {
         this.connection = details;
 
