@@ -4,8 +4,6 @@
 
 ```ts
 
-/// <reference types="node" />
-
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
 import { EventEmitter } from 'events';
@@ -122,6 +120,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     dispose(error?: Error): void;
     // (undocumented)
     get disposed(): boolean;
+    // (undocumented)
+    get disposeFn(): (error?: ICriticalContainerError) => void;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
     // (undocumented)
@@ -514,6 +514,8 @@ export interface ISummarizerInternalsProvider {
 export interface ISummarizerRuntime extends IConnectableRuntime {
     // (undocumented)
     closeFn(): void;
+    // (undocumented)
+    disposeFn?(): void;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // @deprecated (undocumented)

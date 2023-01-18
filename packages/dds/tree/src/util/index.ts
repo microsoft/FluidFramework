@@ -34,16 +34,10 @@ export { StackyIterator } from "./stackyIterator";
 export {
     clone,
     compareArrays,
-    compareFiniteNumbers,
-    compareFiniteNumbersReversed,
-    compareMaps,
     compareSets,
-    compareStrings,
-    copyPropertyIfDefined,
     fail,
     getOrAddEmptyToMap,
     getOrCreate,
-    hasAtLeastLength,
     isJsonObject,
     isReadonlyArray,
     JsonCompatible,
@@ -52,6 +46,5 @@ export {
     makeArray,
     Mutable,
     RecursiveReadonly,
-    setPropertyIfDefined,
     unreachableCase,
 } from "./utils";

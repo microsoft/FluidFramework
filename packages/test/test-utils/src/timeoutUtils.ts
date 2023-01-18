@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Container } from "@fluidframework/container-loader";
-
 export const defaultTimeoutDurationMs = 250;
 
 export interface TimeoutWithError {
@@ -18,17 +16,13 @@ export interface TimeoutWithValue<T = void> {
     value: T;
 }
 
+export type PromiseExecutor<T = void> = (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void;
+
 export async function timeoutAwait<T = void>(
     promise: PromiseLike<T>,
     timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},
 ) {
     return Promise.race([promise, timeoutPromise<T>(() => { }, timeoutOptions)]);
-}
-
-export async function ensureContainerConnected(container: Container): Promise<void> {
-    if (!container.connected) {
-        return timeoutPromise((resolve) => container.once("connected", () => resolve()));
-    }
 }
 
 export async function timeoutPromise<T = void>(

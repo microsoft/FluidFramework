@@ -107,7 +107,7 @@ export enum DataObjectFactoryType {
 // @public (undocumented)
 export const defaultTimeoutDurationMs = 250;
 
-// @public (undocumented)
+// @public @deprecated
 export function ensureContainerConnected(container: Container): Promise<void>;
 
 // @public
@@ -235,10 +235,11 @@ export const mockConfigProvider: (settings?: Record<string, ConfigTypes>) => ICo
 // @public
 export const retryWithEventualValue: <T>(callback: () => Promise<T>, check: (value: T) => boolean, defaultValue: T, maxTries?: number, backOffMs?: number) => Promise<T>;
 
-// @public (undocumented)
+// @public
 export function summarizeNow(summarizer: ISummarizer, reason?: string): Promise<{
     summaryTree: ISummaryTree;
     summaryVersion: string;
+    summaryRefSeq: number;
 }>;
 
 // @public (undocumented)
@@ -364,8 +365,8 @@ export interface TimeoutWithValue<T = void> {
     value: T;
 }
 
-// @public (undocumented)
-export function waitForContainerConnection(container: IContainer): Promise<void>;
+// @public
+export function waitForContainerConnection(container: IContainer, failOnContainerClose?: boolean, timeoutOptions?: TimeoutWithError): Promise<void>;
 
 // @public
 export function wrapDocumentService(innerDocService: IDocumentService, uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => ISummaryContext): IDocumentService;
