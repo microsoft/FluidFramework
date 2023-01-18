@@ -75,6 +75,7 @@
     "lz4js": "^0.2.0"
   },
   "devDependencies": {
+    "@fluid-tools/build-cli": "^0.7.0",
     "@fluid-internal/stochastic-test-utils": ">=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0",
     "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/build-tools": "^0.7.0",
