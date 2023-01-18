@@ -49,7 +49,7 @@ export class Throttler implements IThrottler {
                         ...telemetryProperties.baseLumberjackProperties,
                         ageInMs: now - value,
                     };
-                    this.logger.warn(`Purged lastThrottleUpdateAt for ${key} before maxAge reached`, { messageMetaData: telemetryProperties.baseMessageMetaData });
+                    this.logger?.warn(`Purged lastThrottleUpdateAt for ${key} before maxAge reached`, { messageMetaData: telemetryProperties.baseMessageMetaData });
                     Lumberjack.warning(`Purged lastThrottleUpdateAt for ${key} before maxAge reached`, lumberjackProperties);
                 }
             },
@@ -128,7 +128,7 @@ export class Throttler implements IThrottler {
 
         const now = Date.now();
         if (this.lastThrottleUpdateAtMap.get(id) === undefined) {
-            this.logger.info(`Starting to track throttling status for ${id}`, { messageMetaData: telemetryProperties.baseMessageMetaData });
+            this.logger?.info(`Starting to track throttling status for ${id}`, { messageMetaData: telemetryProperties.baseMessageMetaData });
             Lumberjack.info(`Starting to track throttling status for ${id}`, telemetryProperties.baseLumberjackProperties);
             this.lastThrottleUpdateAtMap.set(id, now);
         }
