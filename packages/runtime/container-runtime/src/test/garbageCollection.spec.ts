@@ -110,7 +110,7 @@ describe("Garbage Collection Tests", () => {
             updateStateBeforeGC: async () => { },
             getGCData: async (fullGC?: boolean) => defaultGCData,
             updateUsedRoutes: (usedRoutes: string[]) => { return { totalNodeCount: 0, unusedNodeCount: 0 }; },
-            updateUnusedRoutes: (unusedRoutes: string[]) => { return []; },
+            updateUnusedRoutes: (unusedRoutes: string[], safeRoutes: string[]) => { return []; },
             updateTombstonedRoutes: (tombstoneRoutes: string[]) => { },
             getNodeType,
             getCurrentReferenceTimestampMs: () => Date.now(),
@@ -297,7 +297,7 @@ describe("Garbage Collection Tests", () => {
                 injectedSettings[testOverrideSweepTimeoutKey] = 123;
                 injectedSettings[runSessionExpiryKey] = true;
                 gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: false });
-                assert(gc.sweepEnabled, "sweepEnabled incorrect");
+                assert(gc.sweepEnabled === false, "sweepEnabled incorrect");
                 assert(gc.sessionExpiryTimeoutMs === defaultSessionExpiryDurationMs, "sessionExpiryTimeoutMs incorrect");
                 assert(gc.sweepTimeoutMs === 123, "sweepTimeoutMs incorrect");
             });
@@ -305,7 +305,7 @@ describe("Garbage Collection Tests", () => {
                 injectedSettings[testOverrideSweepTimeoutKey] = 123;
                 injectedSettings[runSessionExpiryKey] = false;
                 gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: false });
-                assert(gc.sweepEnabled, "sweepEnabled incorrect");
+                assert(gc.sweepEnabled === false, "sweepEnabled incorrect");
                 assert(gc.sessionExpiryTimeoutMs === undefined, "sessionExpiryTimeoutMs incorrect");
                 assert(gc.sweepTimeoutMs === 123, "sweepTimeoutMs incorrect");
             });
