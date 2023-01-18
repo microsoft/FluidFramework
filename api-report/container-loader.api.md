@@ -85,6 +85,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     disconnect(): void;
     // (undocumented)
     dispose?(error?: ICriticalContainerError): void;
+    // (undocumented)
     get entryPoint(): Promise<FluidObject | undefined>;
     forceReadonly(readonly: boolean): void;
     // (undocumented)

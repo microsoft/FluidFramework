@@ -107,7 +107,7 @@ export interface IRuntime extends IDisposable {
      * Exposes the root object / entryPoint of the container.
      * Use this as the primary way of getting access to the user-defined logic within the container runtime.
      *
-     * See {@link @fluidframework/common-definitions#IContainer.entryPoint}
+     * See {@link IContainer.entryPoint}
      *
      * @remarks The plan is that eventually IRuntime will no longer have a request() method, this promise will no
      * longer return undefined, and it will become the only way to access the entryPoint for the container.
