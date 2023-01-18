@@ -18,13 +18,13 @@ import {
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
-import { QuorumFactory } from "./quorumFactory";
-import { IQuorum, IQuorumEvents } from "./interfaces";
+import { PactMapFactory } from "./pactMapFactory";
+import { IPactMap, IPactMapEvents } from "./interfaces";
 
 /**
- * The accepted value information, if any.
+ * The accepted pact information, if any.
  */
-interface IAcceptedQuorumValue<T> {
+interface IAcceptedPact<T> {
     /**
      * The accepted value of the given type or undefined (typically in case of delete).
      */
@@ -43,9 +43,9 @@ interface IAcceptedQuorumValue<T> {
 }
 
 /**
- * The pending change information, if any.
+ * The pending pact information, if any.
  */
-interface IPendingQuorumValue<T> {
+interface IPendingPact<T> {
     /**
      * The pending value of the given type or undefined (typically in case of delete).
      */
@@ -59,17 +59,17 @@ interface IPendingQuorumValue<T> {
 }
 
 /**
- * Internal format of the values stored in the Quorum.
+ * Internal format of the values stored in the PactMap.
  */
-type QuorumValue<T> =
-    { accepted: IAcceptedQuorumValue<T>; pending: undefined; }
-    | { accepted: undefined; pending: IPendingQuorumValue<T>; }
-    | { accepted: IAcceptedQuorumValue<T>; pending: IPendingQuorumValue<T>; };
+type Pact<T> =
+    { accepted: IAcceptedPact<T>; pending: undefined; }
+    | { accepted: undefined; pending: IPendingPact<T>; }
+    | { accepted: IAcceptedPact<T>; pending: IPendingPact<T>; };
 
 /**
- * Quorum operation formats
+ * PactMap operation formats
  */
-interface IQuorumSetOperation<T> {
+interface IPactMapSetOperation<T> {
     type: "set";
     key: string;
     value: T | undefined;
@@ -86,17 +86,17 @@ interface IQuorumSetOperation<T> {
     refSeq: number;
 }
 
-interface IQuorumAcceptOperation {
+interface IPactMapAcceptOperation {
     type: "accept";
     key: string;
 }
 
-type IQuorumOperation<T> = IQuorumSetOperation<T> | IQuorumAcceptOperation;
+type IPactMapOperation<T> = IPactMapSetOperation<T> | IPactMapAcceptOperation;
 
 const snapshotFileName = "header";
 
 /**
- * The Quorum distributed data structure provides key/value storage with a cautious conflict resolution strategy.
+ * The PactMap distributed data structure provides key/value storage with a cautious conflict resolution strategy.
  * This strategy optimizes for all clients being aware of the change prior to considering the value as accepted.
  *
  * It is still experimental and under development.  Please do try it out, but expect breaking changes in the future.
@@ -104,10 +104,10 @@ const snapshotFileName = "header";
  * @remarks
  * ### Creation
  *
- * To create a `Quorum`, call the static create method:
+ * To create a `PactMap`, call the static create method:
  *
  * ```typescript
- * const quorum = Quorum.create(this.runtime, id);
+ * const pactMap = PactMap.create(this.runtime, id);
  * ```
  *
  * ### Usage
@@ -117,16 +117,16 @@ const snapshotFileName = "header";
  * after the consensus is reached.
  *
  * ```typescript
- * quorum.on("pending", (key: string) => {
- *     console.log(quorum.getPending(key));
+ * pactMap.on("pending", (key: string) => {
+ *     console.log(pactMap.getPending(key));
  * });
- * quorum.on("accepted", (key: string) => {
- *     console.log(quorum.get(key));
+ * pactMap.on("accepted", (key: string) => {
+ *     console.log(pactMap.get(key));
  * });
- * quorum.set("myKey", "myValue");
+ * pactMap.set("myKey", "myValue");
  *
- * // Reading from the quorum prior to the async operation's completion will still return the old value.
- * console.log(quorum.get("myKey"));
+ * // Reading from the pact map prior to the async operation's completion will still return the old value.
+ * console.log(pactMap.get("myKey"));
  * ```
  *
  * The acceptance process has two stages.  When an op indicating a client's attempt to set a value is sequenced,
@@ -138,55 +138,55 @@ const snapshotFileName = "header";
  * consensus-like FWW resolution.
  *
  * Since all connected clients must explicitly accept the new value, it is important that all connected clients
- * have the Quorum loaded, including e.g. the summarizing client.  Otherwise, those clients who have not loaded
- * the Quorum will not be responding to proposals and delay their acceptance (until they disconnect, which implicitly
- * removes them from consideration).  The easiest way to ensure all clients load the Quorum is to instantiate it
+ * have the PactMap loaded, including e.g. the summarizing client.  Otherwise, those clients who have not loaded
+ * the PactMap will not be responding to proposals and delay their acceptance (until they disconnect, which implicitly
+ * removes them from consideration).  The easiest way to ensure all clients load the PactMap is to instantiate it
  * as part of instantiating the IRuntime for the container (containerHasInitialized if using Aqueduct).
  *
  * ### Eventing
  *
- * `Quorum` is an `EventEmitter`, and will emit events when a new value is accepted for a key.
+ * `PactMap` is an `EventEmitter`, and will emit events when a new value is accepted for a key.
  *
  * ```typescript
- * quorum.on("accept", (key: string) => {
- *     console.log(`New value was accepted for key: ${ key }, value: ${ quorum.get(key) }`);
+ * pactMap.on("accept", (key: string) => {
+ *     console.log(`New value was accepted for key: ${ key }, value: ${ pactMap.get(key) }`);
  * });
  * ```
  */
-export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements IQuorum<T> {
+export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implements IPactMap<T> {
     /**
-     * Create a new Quorum
+     * Create a new PactMap
      *
-     * @param runtime - data store runtime the new quorum belongs to
-     * @param id - optional name of the quorum
-     * @returns newly created quorum (but not attached yet)
+     * @param runtime - data store runtime the new PactMap belongs to
+     * @param id - optional name of the PactMap
+     * @returns newly created PactMap (but not attached yet)
      */
-    public static create(runtime: IFluidDataStoreRuntime, id?: string): Quorum {
-        return runtime.createChannel(id, QuorumFactory.Type) as Quorum;
+    public static create(runtime: IFluidDataStoreRuntime, id?: string): PactMap {
+        return runtime.createChannel(id, PactMapFactory.Type) as PactMap;
     }
 
     /**
-     * Get a factory for Quorum to register with the data store.
+     * Get a factory for PactMap to register with the data store.
      *
-     * @returns a factory that creates and load Quorum
+     * @returns a factory that creates and loads PactMaps
      */
     public static getFactory(): IChannelFactory {
-        return new QuorumFactory();
+        return new PactMapFactory();
     }
 
-    private readonly values: Map<string, QuorumValue<T>> = new Map();
+    private readonly values: Map<string, Pact<T>> = new Map();
 
     private readonly incomingOp: EventEmitter = new EventEmitter();
 
     /**
-     * Constructs a new quorum. If the object is non-local an id and service interfaces will
+     * Constructs a new PactMap. If the object is non-local an id and service interfaces will
      * be provided
      *
-     * @param runtime - data store runtime the quorum belongs to
-     * @param id - optional name of the quorum
+     * @param runtime - data store runtime the PactMap belongs to
+     * @param id - optional name of the PactMap
      */
     public constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
-        super(id, runtime, attributes, "fluid_quorum_");
+        super(id, runtime, attributes, "fluid_pactMap_");
 
         this.incomingOp.on("set", this.handleIncomingSet);
         this.incomingOp.on("accept", this.handleIncomingAccept);
@@ -195,28 +195,28 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
     }
 
     /**
-     * {@inheritDoc IQuorum.get}
+     * {@inheritDoc IPactMap.get}
      */
     public get(key: string): T | undefined {
         return this.values.get(key)?.accepted?.value;
     }
 
     /**
-     * {@inheritDoc IQuorum.isPending}
+     * {@inheritDoc IPactMap.isPending}
      */
     public isPending(key: string): boolean {
         return this.values.get(key)?.pending !== undefined;
     }
 
     /**
-     * {@inheritDoc IQuorum.getPending}
+     * {@inheritDoc IPactMap.getPending}
      */
     public getPending(key: string): T | undefined {
         return this.values.get(key)?.pending?.value;
     }
 
     /**
-     * {@inheritDoc IQuorum.set}
+     * {@inheritDoc IPactMap.set}
      */
     public set(key: string, value: T | undefined): void {
         const currentValue = this.values.get(key);
@@ -242,7 +242,7 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
             return;
         }
 
-        const setOp: IQuorumSetOperation<T> = {
+        const setOp: IPactMapSetOperation<T> = {
             type: "set",
             key,
             value,
@@ -253,7 +253,7 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
     }
 
     /**
-     * {@inheritDoc IQuorum.delete}
+     * {@inheritDoc IPactMap.delete}
      */
     public delete(key: string): void {
         const currentValue = this.values.get(key);
@@ -308,7 +308,7 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
         // sent the set).
         const expectedSignoffs = this.getSignoffClients();
 
-        const newQuorumValue: QuorumValue<T> = {
+        const newPact: Pact<T> = {
             accepted,
             pending: {
                 value,
@@ -316,7 +316,7 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
             },
         };
 
-        this.values.set(key, newQuorumValue);
+        this.values.set(key, newPact);
 
         this.emit("pending", key);
 
@@ -330,7 +330,7 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
             this.emit("accepted", key);
         } else if (this.runtime.clientId !== undefined && expectedSignoffs.includes(this.runtime.clientId)) {
             // Emit an accept upon a new key entering pending state if our accept is expected.
-            const acceptOp: IQuorumAcceptOperation = {
+            const acceptOp: IPactMapAcceptOperation = {
                 type: "accept",
                 key,
             };
@@ -389,21 +389,21 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
     };
 
     /**
-     * Create a summary for the quorum
+     * Create a summary for the PactMap
      *
-     * @returns the summary of the current state of the quorum
+     * @returns the summary of the current state of the PactMap
      * @internal
      */
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         const allEntries = [...this.values.entries()];
         // Filter out items that are ineffectual
-        const summaryEntries = allEntries.filter(([, quorumValue]) => {
+        const summaryEntries = allEntries.filter(([, pact]) => {
             return (
                 // Items have an effect if they are still pending, have a real value, or some client may try to
                 // reference state before the value was accepted.  Otherwise they can be dropped.
-                quorumValue.pending !== undefined
-                || quorumValue.accepted.value !== undefined
-                || quorumValue.accepted.sequenceNumber > this.runtime.deltaManager.minimumSequenceNumber
+                pact.pending !== undefined
+                || pact.accepted.value !== undefined
+                || pact.accepted.sequenceNumber > this.runtime.deltaManager.minimumSequenceNumber
             );
         });
         return createSingleBlobSummary(snapshotFileName, JSON.stringify(summaryEntries));
@@ -414,7 +414,7 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
      * @internal
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const content = await readAndParse<[string, QuorumValue<T>][]>(storage, snapshotFileName);
+        const content = await readAndParse<[string, Pact<T>][]>(storage, snapshotFileName);
         for (const [key, value] of content) {
             this.values.set(key, value);
         }
@@ -437,32 +437,32 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
      * @internal
      */
     protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
-        const quorumOp = content as IQuorumOperation<T>;
+        const pactMapOp = content as IPactMapOperation<T>;
         // Filter out accept messages - if we're coming back from a disconnect, our acceptance is never required
         // because we're implicitly removed from the list of expected accepts.
-        if (quorumOp.type === "accept") {
+        if (pactMapOp.type === "accept") {
             return;
         }
 
         // Filter out set messages that have no chance of being accepted because there's another value pending
         // or another value was accepted while we were disconnected.
-        const currentValue = this.values.get(quorumOp.key);
+        const currentValue = this.values.get(pactMapOp.key);
         if (
             currentValue !== undefined
             && (
                 currentValue.pending !== undefined
-                || quorumOp.refSeq < currentValue.accepted?.sequenceNumber
+                || pactMapOp.refSeq < currentValue.accepted?.sequenceNumber
             )
         ) {
             return;
         }
 
         // Otherwise we can resubmit
-        this.submitLocalMessage(quorumOp, localOpMetadata);
+        this.submitLocalMessage(pactMapOp, localOpMetadata);
     }
 
     /**
-     * Process a quorum operation
+     * Process a PactMap operation
      *
      * @param message - the message to prepare
      * @param local - whether the message was sent by the local client
@@ -472,7 +472,7 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         if (message.type === MessageType.Operation) {
-            const op = message.contents as IQuorumOperation<T>;
+            const op = message.contents as IPactMapOperation<T>;
 
             switch (op.type) {
                 case "set":

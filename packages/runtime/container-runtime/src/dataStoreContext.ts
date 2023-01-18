@@ -782,11 +782,17 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
             // Always log an error when tombstoned data store is used. However, throw an error only if
             // throwOnTombstoneUsage is set.
-            const event = {
-                eventName: "GC_Tombstone_DataStore_Changed",
-                callSite,
-            };
-            sendGCTombstoneEvent(this.mc, event, this.clientDetails.type === summarizerClientType, this.pkg, error);
+            sendGCTombstoneEvent(
+                this.mc,
+                {
+                    eventName: "GC_Tombstone_DataStore_Changed",
+                    category: this.throwOnTombstoneUsage ? "error" : "generic",
+                    isSummarizerClient: this.clientDetails.type === summarizerClientType,
+                    callSite,
+                },
+                this.pkg,
+                error,
+            );
             // Always log an error when tombstoned data store is used. However, throw an error only if
             // throwOnTombstoneUsage is set and the client is not a summarizer.
             if (this.throwOnTombstoneUsage) {

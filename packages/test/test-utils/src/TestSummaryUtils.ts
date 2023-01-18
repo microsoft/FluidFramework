@@ -6,7 +6,6 @@
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
-import { ConnectionState } from "@fluidframework/container-loader";
 import {
     IGCRuntimeOptions,
     ISummarizer,
@@ -24,6 +23,7 @@ import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
+import { waitForContainerConnection } from "./containerUtils";
 
 const summarizerClientType = "summarizer";
 
@@ -161,10 +161,4 @@ export async function summarizeNow(summarizer: ISummarizer, reason: string = "en
         summaryVersion: ackNackResult.data.summaryAckOp.contents.handle,
         summaryRefSeq: submitResult.data.referenceSequenceNumber,
     };
-}
-
-export async function waitForContainerConnection(container: IContainer): Promise<void> {
-    if (container.connectionState !== ConnectionState.Connected) {
-        return new Promise((resolve) => container.once("connected", () => resolve()));
-    }
 }
