@@ -90,7 +90,7 @@ export function allowsPrimitiveValueType(nodeValue: Value, schema: TreeSchema): 
 export function assertPrimitiveValueType(nodeValue: Value, schema: TreeSchema): void {
     assert(
         allowsPrimitiveValueType(nodeValue, schema),
-        "unsupported schema for provided primitive",
+        0x4d3 /* unsupported schema for provided primitive */,
     );
 }
 
@@ -337,10 +337,13 @@ export function applyTypesFromContext(
 ): MapTree {
     const possibleTypes: TreeSchemaIdentifier[] = getPossibleTypes(schemaData, typeSet, data);
 
-    assert(possibleTypes.length !== 0, "data incompatible with all types allowed by the schema");
+    assert(
+        possibleTypes.length !== 0,
+        0x4d4 /* data incompatible with all types allowed by the schema */,
+    );
     assert(
         possibleTypes.length === 1,
-        "data compatible with more than one type allowed by the schema",
+        0x4d5 /* data compatible with more than one type allowed by the schema */,
     );
 
     const type = possibleTypes[0];
@@ -352,7 +355,7 @@ export function applyTypesFromContext(
         const primary = getPrimaryField(schema);
         assert(
             primary !== undefined,
-            "array data reported comparable with the schema without a primary field",
+            0x4d6 /* array data reported comparable with the schema without a primary field */,
         );
         const children = applyFieldTypesFromContext(schemaData, primary.schema, data);
         const value = allowsValue(schema.value, data) ? data : undefined;
@@ -371,7 +374,10 @@ export function applyTypesFromContext(
                 }),
         );
         const value = data[valueSymbol];
-        assert(allowsValue(schema.value, value), "provided value not permitted by the schema");
+        assert(
+            allowsValue(schema.value, value),
+            0x4d7 /* provided value not permitted by the schema */,
+        );
         return { value, type, fields };
     }
 }
@@ -390,12 +396,12 @@ export function applyFieldTypesFromContext(
     if (data === undefined) {
         assert(
             multiplicity === Multiplicity.Forbidden || multiplicity === Multiplicity.Optional,
-            "`undefined` provided for a field that does not support `undefined`",
+            0x4d8 /* `undefined` provided for a field that does not support `undefined` */,
         );
         return [];
     }
     if (multiplicity === Multiplicity.Sequence) {
-        assert(isArrayLike(data), "expected array for a sequence field");
+        assert(isArrayLike(data), 0x4d9 /* expected array for a sequence field */);
         const children = Array.from(data, (child) =>
             applyTypesFromContext(schemaData, field.types, child),
         );
@@ -403,7 +409,7 @@ export function applyFieldTypesFromContext(
     }
     assert(
         multiplicity === Multiplicity.Value || multiplicity === Multiplicity.Optional,
-        "single value provided for an unsupported field",
+        0x4da /* single value provided for an unsupported field */,
     );
     return [applyTypesFromContext(schemaData, field.types, data)];
 }

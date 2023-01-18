@@ -5,7 +5,8 @@
 
 import assert from "assert";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerPropertyBags, ITelemetryLoggerPropertyBag, TelemetryLogger } from "../logger";
+import { ITelemetryLoggerPropertyBags, ITelemetryLoggerPropertyBag, TelemetryLogger, convertToBasePropertyType } from "../logger";
+import { ITaggedTelemetryPropertyTypeExt, TelemetryEventPropertyTypeExt } from "../telemetryTypes";
 
 class TestTelemetryLogger extends TelemetryLogger {
     public events: ITelemetryBaseEvent[] = [];
@@ -159,6 +160,174 @@ describe("TelemetryLogger", () => {
                     propsKeys.length + 2,
                     `actual:\n${JSON.stringify(event)}\nexpected:${props ? JSON.stringify(props) : "undefined"}`);
             }
+        });
+    });
+});
+
+describe("convertToBasePropertyType", () => {
+    describe("tagged properties", () => {
+        it("tagged number", () => {
+            const taggedProperty: ITaggedTelemetryPropertyTypeExt = {
+                value: 123,
+                tag: "tag"
+            };
+            const converted = convertToBasePropertyType(taggedProperty);
+            const expected: ITaggedTelemetryPropertyTypeExt = {
+                value: 123,
+                tag: "tag"
+            };
+            assert.deepStrictEqual(converted, expected);
+        });
+        it("tagged string", () => {
+            const taggedProperty: ITaggedTelemetryPropertyTypeExt = {
+                value: "test",
+                tag: "tag"
+            };
+            const converted = convertToBasePropertyType(taggedProperty);
+            const expected: ITaggedTelemetryPropertyTypeExt = {
+                value: "test",
+                tag: "tag"
+            };
+            assert.deepStrictEqual(converted, expected);
+        });
+        it("tagged boolean", () => {
+            const taggedProperty: ITaggedTelemetryPropertyTypeExt = {
+                value: true,
+                tag: "tag"
+            };
+            const converted = convertToBasePropertyType(taggedProperty);
+            const expected: ITaggedTelemetryPropertyTypeExt = {
+                value: true,
+                tag: "tag"
+            };
+            assert.deepStrictEqual(converted, expected);
+        });
+        it("tagged array", () => {
+            const taggedProperty: ITaggedTelemetryPropertyTypeExt = {
+                value: [true, "test"],
+                tag: "tag"
+            };
+            const converted = convertToBasePropertyType(taggedProperty);
+            const expected: ITaggedTelemetryPropertyTypeExt = {
+                value: JSON.stringify([true, "test"]),
+                tag: "tag"
+            };
+            assert.deepStrictEqual(converted, expected);
+        });
+    });
+    describe("untagged properties", () => {
+        it("number", () => {
+            const property: TelemetryEventPropertyTypeExt = 123;
+            const converted = convertToBasePropertyType(property);
+            const expected: TelemetryEventPropertyTypeExt = 123;
+            assert.deepStrictEqual(converted, expected);
+        });
+        it("string", () => {
+            const property: TelemetryEventPropertyTypeExt = "test";
+            const converted = convertToBasePropertyType(property);
+            const expected: TelemetryEventPropertyTypeExt = "test";
+            assert.deepStrictEqual(converted, expected);
+        });
+        it("boolean", () => {
+            const property: TelemetryEventPropertyTypeExt = true;
+            const converted = convertToBasePropertyType(property);
+            const expected: TelemetryEventPropertyTypeExt = true;
+            assert.deepStrictEqual(converted, expected);
+        });
+        it("array", () => {
+            const property: TelemetryEventPropertyTypeExt = [true, "test"];
+            const converted = convertToBasePropertyType(property);
+            const expected: TelemetryEventPropertyTypeExt = JSON.stringify([true, "test"]);
+            assert.deepStrictEqual(converted, expected);
+        });
+    });
+    // Note the "as any" required in each of these cases.
+    // These are unexpected, but it's good to have coverage to ensure they behave "well enough"
+    // (e.g. they shouldn't crash)
+    describe("Check various invalid (per typings) cases", () => {
+        it("nested ITaggedTelemetryPropertyTypeExt", () => {
+            const taggedProperty: ITaggedTelemetryPropertyTypeExt = {
+                value: { value: true, tag: "tag" } as any,
+                tag: "tag"
+            };
+            const converted = convertToBasePropertyType(taggedProperty);
+            const expected: ITaggedTelemetryPropertyTypeExt = {
+                value: "{\"value\":true,\"tag\":\"tag\"}",
+                tag: "tag"
+            };
+            assert.deepStrictEqual(converted, expected);
+        });
+        it("nested non ITaggedTelemetryPropertyTypeExt", () => {
+            const taggedProperty: ITaggedTelemetryPropertyTypeExt = {
+                value: { foo: 3 } as any,
+                tag: "tag"
+            };
+            const converted = convertToBasePropertyType(taggedProperty);
+            const expected: ITaggedTelemetryPropertyTypeExt = {
+                value: "{\"foo\":3}" as any,
+                tag: "tag"
+            };
+            assert.deepStrictEqual(converted, expected);
+        });
+        it("tagged function", () => {
+            const taggedProperty: ITaggedTelemetryPropertyTypeExt = {
+                value: function x() { return 54; } as any,
+                tag: "tag"
+            };
+            const converted = convertToBasePropertyType(taggedProperty);
+            const expected: ITaggedTelemetryPropertyTypeExt = {
+                value: "INVALID PROPERTY (typed as function)",
+                tag: "tag"
+            };
+            assert.deepStrictEqual(converted, expected);
+        });
+        it("tagged null value", () => {
+            const taggedProperty: ITaggedTelemetryPropertyTypeExt = {
+                value: null as any,
+                tag: "tag"
+            };
+            const converted = convertToBasePropertyType(taggedProperty);
+            const expected: ITaggedTelemetryPropertyTypeExt = {
+                value: "null",
+                tag: "tag"
+            };
+            assert.deepStrictEqual(converted, expected);
+        });
+        it("tagged symbol", () => {
+            const taggedProperty: ITaggedTelemetryPropertyTypeExt = {
+                value: Symbol("Test") as any,
+                tag: "tag"
+            };
+            const converted = convertToBasePropertyType(taggedProperty);
+            const expected: ITaggedTelemetryPropertyTypeExt = {
+                value: "INVALID PROPERTY (typed as symbol)",
+                tag: "tag"
+            };
+            assert.deepStrictEqual(converted, expected);
+        });
+        it("nested object", () => {
+            const nestedObject = {
+                foo: { foo: true, test: "test" },
+                test: "test"
+            };
+            const converted = convertToBasePropertyType(nestedObject as any);
+            const expected = '{"foo":{"foo":true,"test":"test"},"test":"test"}';
+            assert.deepStrictEqual(converted, expected);
+        });
+        it("function", () => {
+            const converted = convertToBasePropertyType(function x() { return 54; } as any);
+            const expected = "INVALID PROPERTY (typed as function)";
+            assert.deepStrictEqual(converted, expected);
+        });
+        it("null", () => {
+            const converted = convertToBasePropertyType(null as any);
+            const expected = "null";
+            assert.deepStrictEqual(converted, expected);
+        });
+        it("symbol", () => {
+            const converted = convertToBasePropertyType(Symbol("Test") as any);
+            const expected = "INVALID PROPERTY (typed as symbol)";
+            assert.deepStrictEqual(converted, expected);
         });
     });
 });

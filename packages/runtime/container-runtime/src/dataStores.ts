@@ -54,7 +54,7 @@ import {
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { GCNodeType } from "./garbageCollection";
-import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
+import { throwOnTombstoneLoadKey } from "./garbageCollectionConstants";
 import { summarizerClientType } from "./summarizerClientElection";
 import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
 
@@ -85,7 +85,7 @@ export class DataStores implements IDisposable {
     // root data stores that are added.
     private dataStoresSinceLastGC: string[] = [];
     /** If true, throw an error when a tombstone data store is retrieved. */
-    private readonly throwOnTombstoneUsage: boolean;
+    private readonly throwOnTombstoneLoad: boolean;
     // The handle to the container runtime. This is used mainly for GC purposes to represent outbound reference from
     // the container runtime to other nodes.
     private readonly containerRuntimeHandle: IFluidHandle;
@@ -118,8 +118,8 @@ export class DataStores implements IDisposable {
             return baseGCDetails.get(dataStoreId);
         };
         // Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
-        this.throwOnTombstoneUsage =
-            this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
+        this.throwOnTombstoneLoad =
+            this.mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&
             this.runtime.clientDetails.type !== summarizerClientType;
 
         // Extract stores stored inside the snapshot
@@ -441,22 +441,20 @@ export class DataStores implements IDisposable {
         if (context.tombstoned) {
             // The requested data store is removed by gc. Create a 404 gc response exception.
             const error = responseToException(createResponseError(404, "Datastore removed by gc", request), request);
-            // Note: if a user writes a request to look like it's viaHandle, we will also send this telemetry event
-            const event = {
-                eventName: "GC_Tombstone_DataStore_Requested",
-                url: request.url,
-                viaHandle,
-            };
             sendGCTombstoneEvent(
                 this.mc,
-                event,
-                this.runtime.clientDetails.type === summarizerClientType,
+                {
+                    eventName: "GC_Tombstone_DataStore_Requested",
+                    category: this.throwOnTombstoneLoad ? "error" : "generic",
+                    isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
+                    viaHandle,  // Note: A consumer could easily spoof this header and confuse our telemetry
+                },
                 context.isLoaded ? context.packagePath : undefined,
                 error,
             );
             // Always log an error when tombstoned data store is used. However, throw an error only if
-            // throwOnTombstoneUsage is set.
-            if (this.throwOnTombstoneUsage) {
+            // throwOnTombstoneLoad is set.
+            if (this.throwOnTombstoneLoad) {
                 throw error;
             }
         }
@@ -674,7 +672,7 @@ export class DataStores implements IDisposable {
                 continue;
             }
             const dataStoreId = pathParts[1];
-            assert(this.contexts.has(dataStoreId), "No data store with specified id");
+            assert(this.contexts.has(dataStoreId), 0x510 /* No data store with specified id */);
             tombstonedDataStoresSet.add(dataStoreId);
         }
 
