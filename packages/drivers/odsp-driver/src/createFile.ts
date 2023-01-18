@@ -265,5 +265,5 @@ export async function createNewFluidFileFromSummary(
                     { driverVersion });
             }
         }
-});
+    });
 }

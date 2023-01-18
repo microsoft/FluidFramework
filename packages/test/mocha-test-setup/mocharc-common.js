@@ -21,13 +21,19 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 
     // mocha install node_modules directory might not be the same as the module required because of hoisting
     // We need to give the full path in that case.
+    // TODO: this path mapping might not be necessary once we move to pnpm, since it sets up node_modules differently
+    // from what Lerna does (all dependencies of a given package show up in its own node_modules folder and just symlink
+    // to the actual location of the installed package, instead of common dependencies being hoisted to a parent
+    // node_modules folder and not being present at all in the package's own node_modules).
     const requiredModulePaths = requiredModules.map((mod) => {
         // Just return if it is path already
         if (existsSync(mod) || existsSync(`${mod}.js`)) { return mod; }
 
-        // Try the test's packageDirectory
+        // Try to find it in the test package's directory
         const modulePath = path.join(moduleDir, mod);
         if (existsSync(modulePath)) { return modulePath; }
+
+        // Otherwise keep it as is
         return mod;
     });
 
