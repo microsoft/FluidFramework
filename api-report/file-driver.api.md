@@ -83,7 +83,6 @@ export const FileSnapshotWriterClassFactory: <TBase extends ReaderConstructor>(B
         readonly policies?: IDocumentStorageServicePolicies | undefined;
         createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
         downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree>;
-        getTime?(): number;
         readonly disposed?: boolean | undefined;
         dispose?: ((error?: Error | undefined) => void) | undefined;
     };
@@ -120,7 +119,6 @@ export const FluidFetchReaderFileSnapshotWriter: {
         readonly policies?: IDocumentStorageServicePolicies | undefined;
         createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
         downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree>;
-        getTime?(): number;
         readonly disposed?: boolean | undefined;
         dispose?: ((error?: Error | undefined) => void) | undefined;
     };
