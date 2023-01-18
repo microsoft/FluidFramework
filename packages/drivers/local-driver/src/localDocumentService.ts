@@ -47,7 +47,10 @@ export class LocalDocumentService implements IDocumentService {
         return new LocalDocumentStorageService(
             this.documentId,
             new GitManager(new TestHistorian(this.localDeltaConnectionServer.testDbFactory.testDatabase)),
-            { minBlobSize: 2048 }, // Test blob aggregation.
+            {
+                minBlobSize: 2048, // Test blob aggregation
+                maximumCacheDurationMs: 432_000_000, // 5 days in ms. Not actually enforced but shouldn't matter for any local driver scenario
+            },
         );
     }
 

@@ -18,7 +18,6 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 # 2.0.0-internal.2.4.0
 
 ## 2.0.0-internal.2.4.0 Upcoming changes
-
 - [Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`](#deprecate-ensurecontainerconnected-in-fluidframeworktest-utils)
 
 ### Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`
@@ -36,6 +35,16 @@ preparation for this upcoming breaking change.
 # 2.0.0-internal.2.3.0
 
 ## 2.0.0-internal.2.3.0 Upcoming changes
+- [Upcoming changes to container closure](#Upcoming-changes-to-container-closure)
+
+### Upcoming changes to container closure
+
+In the next major release, calling `IContainer.close(...)` will no longer dispose the container runtime, document service, or document storage service.
+
+If the container is not expected to be used after the `close(...)` call, replace it instead with a `IContainer.dispose(...)` call. This change will no longer switch the container to "readonly" mode and relevant code should instead listen to the Container's "disposed" event.
+Otherwise, to retain all current behavior, add a call to `IContainer.dispose(...)` after every `close(...)` call (passing the same error object if present).
+
+Please see the [Closure](packages/loader/container-loader/README.md#Closure) section of Loader README.md for more details.
 
 # 2.0.0-internal.2.2.0
 
