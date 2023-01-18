@@ -25,8 +25,8 @@ export class DeltaManager implements IDeltaService {
         to: number): Promise<ISequencedDocumentMessage[]> {
         const baseUrl = `${this.internalAlfredUrl}`;
         const restWrapper = await this.getBasicRestWrapper(tenantId, documentId, baseUrl);
-        const result = restWrapper.get<ISequencedDocumentMessage[]>(`/deltas/${tenantId}/${documentId}`, { from, to });
-        return result;
+        const resultP = restWrapper.get<ISequencedDocumentMessage[]>(`/deltas/${tenantId}/${documentId}`, { from, to });
+        return resultP;
     }
 
     public async getDeltasFromStorage(collectionName: string, tenantId: string, documentId: string, fromTerm: number, toTerm: number, fromSeq?: number, toSeq?: number): Promise<ISequencedDocumentMessage[]> {
@@ -39,8 +39,8 @@ export class DeltaManager implements IDeltaService {
 
     private async getKey(tenantId: string, includeDisabledTenant = false): Promise<string> {
         const tenantManager = new TenantManager(this.authEndpoint, "");
-        const key = await tenantManager.getKey(tenantId, includeDisabledTenant);
-        return key;
+        const keyP = await tenantManager.getKey(tenantId, includeDisabledTenant);
+        return keyP;
     }
 
     private async getBasicRestWrapper(tenantId: string, documentId: string, baseUrl: string) {
