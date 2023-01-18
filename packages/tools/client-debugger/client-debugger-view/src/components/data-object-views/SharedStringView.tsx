@@ -6,6 +6,7 @@ import { Stack, StackItem } from "@fluentui/react";
 import React from "react";
 
 import { SharedString } from "@fluidframework/sequence";
+import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 
 /**
  * {@link SharedStringView} input props.
@@ -44,6 +45,7 @@ export function SharedStringView(props: SharedStringViewProps): React.ReactEleme
                 <b>SharedString</b>
             </StackItem>
             <StackItem>{text}</StackItem>
+            <StackItem> <CollaborativeTextArea sharedStringHelper={new SharedStringHelper(sharedString)}/> </StackItem>
         </Stack>
     );
 }
