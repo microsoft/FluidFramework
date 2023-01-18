@@ -107,6 +107,9 @@ interface PendingBlob {
     storageId?: string;
     handleP: Deferred<IFluidHandle<ArrayBufferLike>>;
     uploadP: Promise<ICreateBlobResponse>;
+    localUploadTime?: number;
+    serverUploadTime?: number;
+    minTTL?: number;
 }
 
 export interface IPendingBlobs { [id: string]: { blob: string; }; }
@@ -359,7 +362,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         return PerformanceEvent.timedExecAsync(
             this.mc.logger,
             { eventName: "createBlob" },
-            async () => this.getStorage().createBlob(blob),
+            async () => {
+                const res: ICreateBlobResponse & Partial<Record<"minTTLInSeconds", number>> = await this.getStorage().createBlob(blob);
+                return res;
+            },
             { end: true, cancel: this.runtime.connected ? "error" : "generic" },
         ).then(
             (response) => this.onUploadResolve(localId, response),
@@ -374,12 +380,16 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         }
     }
 
-    private onUploadResolve(localId: string, response: ICreateBlobResponse) {
+    private onUploadResolve(localId: string, response: ICreateBlobResponse & Partial<Record<"minTTLInSeconds", number>>) {
         const entry = this.pendingBlobs.get(localId);
         assert(entry?.status === PendingBlobStatus.OnlinePendingUpload ||
             entry?.status === PendingBlobStatus.OfflinePendingUpload,
             0x386 /* Must have pending blob entry for uploaded blob */);
         entry.storageId = response.id;
+        entry.localUploadTime = Date.now();
+        entry.serverUploadTime = this.getStorage().getTime?.();
+        entry.minTTL = response.minTTLInSeconds;
+
         if (this.runtime.connected) {
             if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
                 if (this.storageIds.has(response.id)) {
@@ -390,6 +400,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
                 } else {
                     // Check for still-pending duplicates too; if an op is already in flight we can wait for that one
                     if (!this.opsInFlight.has(response.id)) {
+                        this.getTimeInfo(entry, "sendBlobAttachOpOnResolve", "sendBlobAttachOnOnResolveNoTTL");
                         this.sendBlobAttachOp(response.id);
                     }
                     this.opsInFlight.set(response.id, (this.opsInFlight.get(response.id) ?? []).concat(localId));
@@ -437,6 +448,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
             ? PendingBlobStatus.OfflinePendingUpload
             : PendingBlobStatus.OfflinePendingOp;
 
+        this.getTimeInfo(entry, "sendBlobAttachOfflineTTL", "sendBlobAttachOfflineNoTTL");
         // Submit a BlobAttach op. It's important we submit this op now before returning the blob handle so the
         // BlobAttach op is sequenced prior to any ops referencing the handle. Otherwise an invalid handle could be
         // added to the document if the ops are not all successfully submitted upon reconnection.
@@ -444,6 +456,37 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         // is called
         this.sendBlobAttachOp(entry.storageId, localId);
         entry.handleP.resolve(this.getBlobHandle(localId));
+    }
+
+    private getTimeInfo(pendingEntry: PendingBlob, eventName: string, noTTLEventName: string) {
+        const serverSendBlobTime: number = this.getStorage().getTime?.()?? 0;
+        let timeLapseSinceServerUpload: number = 0;
+        let timeLapseSinceLocalUpload: number = 0;
+        let expiredUsingLocalTime;
+        let expiredUsingServerTime;
+        const minTTL: number  | undefined = pendingEntry.minTTL;
+        if(minTTL) {
+            if(pendingEntry.localUploadTime){
+                timeLapseSinceLocalUpload = (Date.now() - pendingEntry.localUploadTime) / 1000;
+                expiredUsingLocalTime = minTTL - timeLapseSinceLocalUpload < 0 ? true : false;
+            }
+            if (!!serverSendBlobTime && !!pendingEntry.serverUploadTime) {
+                timeLapseSinceServerUpload = (serverSendBlobTime - pendingEntry.serverUploadTime) / 1000;
+                expiredUsingServerTime = minTTL - timeLapseSinceServerUpload < 0 ? true : false;
+            }
+            this.mc.logger.sendTelemetryEvent({
+                eventName,
+                entryStatus: pendingEntry.status,
+                timeLapseSinceLocalUpload,
+                timeLapseSinceServerUpload,
+                minTTL,
+                expiredUsingLocalTime,
+                expiredUsingServerTime,
+            });
+        } else {
+            this.mc.logger.sendTelemetryEvent({ eventName: noTTLEventName, entryStatus: pendingEntry.status, });
+        }
+
     }
 
     /**
@@ -460,6 +503,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
             const pendingEntry = this.pendingBlobs.get(localId);
             assert(pendingEntry?.status === PendingBlobStatus.OfflinePendingOp &&
                 !!pendingEntry?.storageId, 0x38d /* blob must be uploaded before resubmitting BlobAttach op */);
+            this.getTimeInfo(pendingEntry, "sendBlobAttachResubmitTTL", "sendBlobAttachResubmitNoTTL");
             return this.sendBlobAttachOp(pendingEntry.storageId, localId);
         }
         return this.sendBlobAttachOp(blobId, localId);

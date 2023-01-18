@@ -177,6 +177,11 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
      * server has deleted it this call may result in a broken promise.
      */
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+
+    /**
+     * Retrieves server time for TTL calculations.
+     */
+    getTime?(): number
 }
 
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
