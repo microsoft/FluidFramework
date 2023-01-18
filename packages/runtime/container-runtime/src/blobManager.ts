@@ -421,6 +421,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
                 //    until its storage ID is added to the next summary.
                 // 2. It will create a local ID to storage ID mapping in all clients which is needed to retrieve the
                 //    blob from the server via the storage ID.
+                this.getTimeInfo(entry, "sendBlobAttachResolveTTL", "sendBlobAttachResolveNoTTL");
                 this.sendBlobAttachOp(localId, response.id);
                 if (this.storageIds.has(response.id)) {
                     // The blob is de-duped. Set up a local ID to storage ID mapping and return the blob. Since this is
@@ -482,6 +483,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
          * is called on reconnection.
          */
         if (entry.status !== PendingBlobStatus.OnlinePendingOp) {
+            this.getTimeInfo(entry, "sendBlobAttachTransitionOfflineTTL", "sendBlobAttachTransitionOfflineNoTTL");
             this.sendBlobAttachOp(localId, entry.storageId);
         }
 
