@@ -161,6 +161,7 @@ export class FluidPackageCheck {
         return fixed;
     }
 
+    // function to check if "lint" or "lint:fix" misses "eslint" and "prettier" packages
     private static checkLintScript(
         pkg: Package,
         name: string,
@@ -508,6 +509,7 @@ export class FluidPackageCheck {
     private static checkLintScripts(pkg: Package, fix: boolean) {
         let fixed = false;
         if (pkg.getScript("build")) {
+            // TODO: add prettier check comment once prettier is enforced globally, hasPrettier commented out to discard build warnings from "lint" & "lint:fix" scripts
             // const hasPrettier = pkg.getScript("prettier");
             // const lintChildren = hasLint ? ["prettier", "eslint"] : ["eslint"];
             const checkLint = pkg.getScript("lint");
@@ -517,6 +519,11 @@ export class FluidPackageCheck {
             let lintFixChildren = ["prettier:fix", "eslint:fix"];
 
             if (checkLint) {
+                /* Regular Expression
+                    * lintRegex is a regex to extract package names from checkLint
+                    * if "npm run foo" -> ["foo"]
+                    * if "npm run foo && npm run bar" -> ["foo", "bar"]
+                */
                 if (
                     checkLint === "npm run eslint" ||
                     checkLint === "npm run prettier && npm run eslint"
@@ -533,6 +540,12 @@ export class FluidPackageCheck {
             }
 
             if (checkLintFix) {
+                /* Regular Expression
+                    * lintFixRegex is a regex to extract package names from checkLintFix
+                    * if "npm run foo:fix" -> ["foo:fix"]
+                    * if "npm run foo:fix && npm run bar:fix" -> ["foo:fix", "bar:fix"]
+                */
+
                 if (
                     checkLintFix === "npm run eslint:fix" ||
                     checkLintFix === "npm run prettier:fix && npm run eslint:fix"
