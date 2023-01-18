@@ -426,9 +426,11 @@ export class IdCompressorTestNetwork {
         for (const [compressor, ids] of sequencedLogs) {
             const allUuids = new Set<StableId | string>();
             for (const idData of ids) {
-                const uuid = compressor.decompress(idData.id);
-                assert.strictEqual(!allUuids.has(uuid), true, "Duplicate UUID generated.");
-                allUuids.add(uuid);
+                if (idData.expectedOverride === undefined) {
+                    const uuid = compressor.decompress(idData.id);
+                    assert.strictEqual(!allUuids.has(uuid), true, "Duplicate UUID generated.");
+                    allUuids.add(uuid);
+                }
             }
         }
 

@@ -81,7 +81,7 @@ describe("SessionIdNormalizer", () => {
             (e) => validateAssertionError(e, "Malformed normalization block."),
         );
         assert.throws(
-            () => () => {
+            () => {
                 normalizer.registerFinalIdBlock(final(1), -1, dummy);
             },
             (e) => validateAssertionError(e, "Malformed normalization block."),
