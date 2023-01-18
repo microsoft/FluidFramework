@@ -518,10 +518,9 @@ export function configureWebSocketServices(
                     let messageCount = 0;
                     for (const messageBatch of messageBatches) {
                         // Count all messages in each batch for accurate throttling calculation.
-                        // Note: This is happening before message size checking. It might be more helpful
-                        // to the user to deny with a 413 for op size before a 429 for throttling, because the
-                        // 413 will be retried, but initial batch will not be processed, effectively doubling
-                        // the throttled increment count for those messages.
+                        // Note: This is happening before message size checking. We won't process
+                        // messages that are too large, so it is inaccurate to increment throttle
+                        // counts for unprocessed messages.
                         messageCount += (Array.isArray(messageBatch) ? messageBatch.length : 1);
                     }
                     const throttleError = checkThrottleAndUsage(
