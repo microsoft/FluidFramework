@@ -520,10 +520,10 @@ export class FluidPackageCheck {
 
             if (checkLint) {
                 /* Regular Expression
-                    * lintRegex is a regex to extract package names from checkLint
-                    * if "npm run foo" -> ["foo"]
-                    * if "npm run foo && npm run bar" -> ["foo", "bar"]
-                */
+                 * lintRegex is a regex to extract package names from checkLint
+                 * if "npm run foo" -> ["foo"]
+                 * if "npm run foo && npm run bar" -> ["foo", "bar"]
+                 */
                 if (
                     checkLint === "npm run eslint" ||
                     checkLint === "npm run prettier && npm run eslint"
@@ -541,10 +541,10 @@ export class FluidPackageCheck {
 
             if (checkLintFix) {
                 /* Regular Expression
-                    * lintFixRegex is a regex to extract package names from checkLintFix
-                    * if "npm run foo:fix" -> ["foo:fix"]
-                    * if "npm run foo:fix && npm run bar:fix" -> ["foo:fix", "bar:fix"]
-                */
+                 * lintFixRegex is a regex to extract package names from checkLintFix
+                 * if "npm run foo:fix" -> ["foo:fix"]
+                 * if "npm run foo:fix && npm run bar:fix" -> ["foo:fix", "bar:fix"]
+                 */
 
                 if (
                     checkLintFix === "npm run eslint:fix" ||
