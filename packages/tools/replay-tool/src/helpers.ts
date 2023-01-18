@@ -14,7 +14,6 @@ import {
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { IFileSnapshot } from "@fluidframework/replay-driver";
-import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot, ISnapshotNormalizerConfig } from "@fluidframework/tool-utils";
 import stringify from "json-stable-stringify";
@@ -95,7 +94,6 @@ export async function loadContainer(
     documentName: string,
     strictChannels: boolean,
     logger?: TelemetryLogger,
-    requestHandlers?: RuntimeRequestHandler[],
     loaderOptions?: ILoaderOptions,
 ): Promise<IContainer> {
     const resolved: IFluidResolvedUrl = {
@@ -151,7 +149,7 @@ export async function loadContainer(
         },
     };
     const codeLoader = new ReplayCodeLoader(
-        new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries, requestHandlers),
+        new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries),
     );
 
     // Load the Fluid document while forcing summarizeProtocolTree option

@@ -14,10 +14,6 @@ import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import {
-    buildRuntimeRequestHandler,
-    RuntimeRequestHandler,
-} from "@fluidframework/request-handler";
-import {
     FluidDataStoreRegistryEntry,
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
@@ -36,15 +32,13 @@ import {
     SparseMatrix,
 } from "@fluid-experimental/sequence-deprecated";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { UnknownChannelFactory } from "./unknownChannel";
 
 /** Simple runtime factory that creates a container runtime */
 export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
     constructor(
         private readonly runtimeOptions: IContainerRuntimeOptions,
-        private readonly registries: NamedFluidDataStoreRegistryEntries,
-        private readonly requestHandlers: RuntimeRequestHandler[] = []) {
+        private readonly registries: NamedFluidDataStoreRegistryEntries) {
         super();
     }
 
@@ -60,23 +54,9 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
             this.registries,
             undefined, // containerScope
             async (containerRuntime :IContainerRuntime) => {
-                const requestHandlers = this.requestHandlers;
-                // For now, entryPoint is an IFluidRouter for backwards compat, and specifically for the replay tool,
-                // it exposes the containerRuntime itself so the helpers for the tool can use it.
-                const entryPoint: IFluidRouter | { containerRuntime: IContainerRuntime } = {
-                    async request(request: IRequest): Promise<IResponse> {
-                        const requestHandler = buildRuntimeRequestHandler(
-                            ...requestHandlers);
-                        return requestHandler(request, containerRuntime);
-                    },
-                    get IFluidRouter() {
-                        // Not sure why this complains about "Unsafe return of an `any`" without the "as IFluidRouter"
-                        // when entryPoint is typed...
-                        return this as IFluidRouter;
-                    },
-                    containerRuntime: containerRuntime as ContainerRuntime
-                };
-                return entryPoint;
+                // For the replay tool, the entryPoint exposes the containerRuntime itself so the helpers for the tool
+                // can use it.
+                return { containerRuntime };
             },
         );
     }
