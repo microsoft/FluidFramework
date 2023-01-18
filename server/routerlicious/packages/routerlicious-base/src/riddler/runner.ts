@@ -30,7 +30,7 @@ export class RiddlerRunner implements IRunner {
         private readonly defaultHistorianUrl: string,
         private readonly defaultInternalHistorianUrl: string,
         private readonly secretManager: ISecretManager,
-        private readonly cache: ICache = undefined
+        private readonly cache?: ICache
     ) {
     }
 
