@@ -815,11 +815,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             existing ?? context.existing ?? false,
             registryEntries,
             containerScope,
-            async (containerRuntime: IContainerRuntime) => ({
-                async request(request: IRequest): Promise<IResponse> {
-                    return requestHandler?.(request, containerRuntime) ?? create404Response(request);
-                }
-            }));
+            async (containerRuntime: IContainerRuntime) => {
+                // For now, entryPoint is an IFluidRouter for backwards compat
+                const entryPoint: IFluidRouter = {
+                    async request(request: IRequest): Promise<IResponse> {
+                        return requestHandler?.(request, containerRuntime) ?? create404Response(request);
+                    },
+                    get IFluidRouter() {
+                        return this;
+                    }
+                };
+                return entryPoint;
+            });
     }
 
     public get options(): ILoaderOptions {
