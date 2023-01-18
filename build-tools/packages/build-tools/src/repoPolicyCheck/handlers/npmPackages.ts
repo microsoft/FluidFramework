@@ -670,7 +670,7 @@ function addPrettier(json: Record<string, any>) {
     if (hasPrettierScriptResolver || hasPrettierFixScriptResolver || hasFormatScriptResolver) {
         json["scripts"]["format"] = "npm run prettier:fix";
         json["scripts"]["prettier"] = "prettier --check .";
-        json["scripts"]["prettier:"] = "prettier --write .";
+        json["scripts"]["prettier:fix"] = "prettier --write .";
     }
 }
 
