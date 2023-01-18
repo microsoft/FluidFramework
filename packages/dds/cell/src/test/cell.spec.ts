@@ -18,7 +18,7 @@ import { SharedCell } from "../cell";
 import { CellFactory } from "../cellFactory";
 import { ISharedCell } from "../interfaces";
 
-function createConnectedCell(id: string, runtimeFactory: MockContainerRuntimeFactory, trackAttribution?: boolean): ISharedCell {
+function createConnectedCell(id: string, runtimeFactory: MockContainerRuntimeFactory): ISharedCell {
     // Create and connect a second SharedCell.
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
     const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
@@ -27,7 +27,7 @@ function createConnectedCell(id: string, runtimeFactory: MockContainerRuntimeFac
         objectStorage: new MockStorage(),
     };
 
-    const cell = new SharedCell(id, dataStoreRuntime, CellFactory.Attributes, trackAttribution);
+    const cell = new SharedCell(id, dataStoreRuntime, CellFactory.Attributes);
     cell.connect(services);
     return cell;
 }
@@ -211,36 +211,6 @@ describe("Cell", () => {
                 assert.equal(cell2.empty(), false, "could not find the set value in pending cell");
                 assert.equal(cell2.get(), pending2, "could not get the set value from pending cell");
             });
-        });
-
-        describe("Attributor", () => {
-            beforeEach(() => {
-                containerRuntimeFactory = new MockContainerRuntimeFactory();
-                // Connect the first SharedCell with attribution enabled.
-                cell1 = createConnectedCell("cell1", containerRuntimeFactory, true);
-                // Create a second SharedCell with attribution enabled.
-                cell2 = createConnectedCell("cell2", containerRuntimeFactory, true);
-            });
-
-            it("Retrive proper attribution information", () => {
-                const value1 = "value1";
-                const value2 = "value2";
-                cell1.set(value1);
-                cell2.set(value2);
-                cell2.delete();
-
-                containerRuntimeFactory.processSomeMessages(1);
-
-                // Verify the attributionInfo of SharedCell with 1 pending message
-                assert.notEqual(cell1.getAttributor().getAttributionInfo().user, cell2.getAttributor().getAttributionInfo().user, "could not sync the attribution");
-                assert.equal(cell1.getAttributor().getAttributionInfo().timestamp, cell2.getAttributor().getAttributionInfo().timestamp, "the update time is the same");
-
-                containerRuntimeFactory.processAllMessages();
-
-                // Verify the attributionInfo of SharedCell with all pending messages processed
-                assert.equal(cell1.getAttributor().getAttributionInfo().user, cell2.getAttributor().getAttributionInfo().user, "sync the attribution");
-                assert.equal(cell1.getAttributor().getAttributionInfo().timestamp, cell2.getAttributor().getAttributionInfo().timestamp, "the update time is the same");
-            })
         });
     });
 

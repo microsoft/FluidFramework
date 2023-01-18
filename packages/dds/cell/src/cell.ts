@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
-import { ISequencedDocumentMessage, MessageType, IUser } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
@@ -68,22 +68,7 @@ export interface ICellAttributionOptions {
 }
 
 /**
- * Attribution information associated with a change.
- * @alpha
- */
-export interface AttributionInfo {
-    /**
-     * The user that performed the change.
-     */
-    user: IUser;
-    /**
-     * When the change happened.
-     */
-    timestamp: number;
-}
-
-/**
- * Can be indexed into the ContainerRuntime in order to retrieve {@link AttributionInfo}.
+ * Can be indexed into the ContainerRuntime in order to retrieve attribution info.
  * @alpha
  */
 export interface AttributionKey {
@@ -153,9 +138,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
 
     private readonly pendingMessageIds: number[] = [];
 
-    private attributionKey?: AttributionKey;
-
-    private readonly attributor: { [ key: number ]: AttributionInfo } = {};
+    private attribution?: AttributionKey;
 
     /**
      * Constructs a new `SharedCell`.
@@ -240,23 +223,22 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     /**
      * {@inheritDoc ISharedCell.getAttribution}
      */
-    public getAttribution(key: AttributionKey): AttributionInfo {
-        return this.attributor[key.seq];
+    public getAttribution(): AttributionKey | undefined {
+        return this.attribution;
     }
 
     /**
      * {@inheritDoc ISharedCell.setAttribution}
      */
     public setAttribution(message: ISequencedDocumentMessage): void {
-        this.attributionKey = { type: "op", seq: message.sequenceNumber };
-        this.attributor[message.sequenceNumber] = { user: { id: message.clientId }, timestamp: message.timestamp };
+        this.attribution = { type: "op", seq: message.sequenceNumber };
     }
 
     /**
      * {@inheritDoc ISharedCell.hastAttribution}
      */
     public hasAttribution(): boolean {
-        return this.attributionKey !== undefined;
+        return this.attribution !== undefined;
     }
 
     /**
