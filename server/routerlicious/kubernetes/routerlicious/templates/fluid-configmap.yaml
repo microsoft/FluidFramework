@@ -238,6 +238,7 @@ data:
             "alfredUrl": "http://{{ template "alfred.fullname" . }}",
             "serverUrl": "{{ .Values.alfred.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
+            "internalAlfredUrl": "{{ .Values.alfred.internalUrl }}",
             "internalBlobStorageUrl": "{{ .Values.historian.internalUrl }}",
             "permission": ["snapshot", "spell", "intel", "translation", "search", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation", "chain-search"],
             "enforceDiscoveryFlow": {{ .Values.session.enforceDiscoveryFlow }}
