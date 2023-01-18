@@ -676,28 +676,18 @@ function addPrettier(json: Record<string, any>) {
     if (hasPrettierScriptResolver) {
         if (!json["scripts"]["prettier"].includes("--ignore-path")) {
             json["scripts"]["prettier"] = "prettier --check .";
+            console.warn("Specify the path of this package.json");
+            console.warn("prettier --check . path")
         }
     }
 
     if (hasPrettierFixScriptResolver) {
         if (!json["scripts"]["prettier:fix"].includes("--ignore-path")) {
             json["scripts"]["prettier:fix"] = "prettier --write .";
+            console.warn("Specify the path of this package.json");
+            console.warn("prettier --check . path")
         }
     }
-
-    // if (hasPrettierScriptResolver || hasPrettierFixScriptResolver || hasFormatScriptResolver) {
-    //     if (!json["scripts"]["format"].includes("lerna")) {
-    //         json["scripts"]["format"] = "npm run prettier:fix";
-    //     }
-
-    //     if (!json["scripts"]["prettier"].includes("--ignore-path")) {
-    //         json["scripts"]["prettier"] = "prettier --check .";
-    //     }
-
-    //     if (!json["scripts"]["prettier:fix"].includes("--ignore-path")) {
-    //         json["scripts"]["prettier:fix"] = "prettier --write .";
-    //     }
-    // }
 }
 
 function runNpmJsonLint(json: any, file: string) {
