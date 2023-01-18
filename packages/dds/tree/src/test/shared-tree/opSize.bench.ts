@@ -135,16 +135,14 @@ const assertChildValuesEqualExpected = (
 // Creates a json tree with the desired number of children and the size of each child in bytes.
 const getInitialJsonTreeWithChildren = (numChildNodes: number, childNodeByteSize: number) => {
     const childNode = getJsonNode(childNodeByteSize);
-    const jsonTree = {
+    const jsonTree: JsonableTree = {
         type: parentSchema.name,
         fields: {
             children: [],
         },
     };
     for (let i = 0; i < numChildNodes; i++) {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        jsonTree.fields.children.push({ ...childNode });
+        jsonTree.fields?.children?.push({ ...childNode });
     }
     return jsonTree;
 };
