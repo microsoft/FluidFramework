@@ -422,9 +422,9 @@ export class GarbageCollector implements IGarbageCollector {
     // Keeps a list of references (edges in the GC graph) between GC runs. Each entry has a node id and a list of
     // outbound routes from that node.
     private readonly newReferencesSinceLastRun: Map<string, string[]> = new Map();
-    private tombstoned: Set<string> = new Set<string>();
+    private tombstoneSet: Set<string> = new Set<string>();
     private get tombstones(): string[] {
-        return Array.from(this.tombstoned);
+        return Array.from(this.tombstoneSet);
     };
 
     /**
@@ -806,7 +806,7 @@ export class GarbageCollector implements IGarbageCollector {
         if (!this.tombstoneMode || baseSnapshotData?.tombstones === undefined) {
             return;
         }
-        this.tombstoned = new Set<string>(baseSnapshotData.tombstones);
+        this.tombstoneSet = new Set<string>(baseSnapshotData.tombstones);
         this.runtime.updateTombstonedRoutes(this.tombstones);
     }
 
@@ -842,7 +842,7 @@ export class GarbageCollector implements IGarbageCollector {
         // If tombstone mode is enabled, update tombstone information and also update all tombstoned nodes in the
         // container as per the state in the snapshot data.
         if (this.tombstoneMode) {
-            this.tombstoned = new Set<string>(snapshotData?.tombstones);
+            this.tombstoneSet = new Set<string>(snapshotData?.tombstones);
             this.runtime.updateTombstonedRoutes(this.tombstones);
         }
 
@@ -1246,7 +1246,7 @@ export class GarbageCollector implements IGarbageCollector {
             this.inactiveNodeUsed("Revived", toNodePath, nodeStateTracker, fromNodePath);
         }
 
-        if (this.tombstoned.has(toNodePath)) {
+        if (this.tombstoneSet.has(toNodePath)) {
             const nodeType = this.runtime.getNodeType(toNodePath)
 
             let eventName = "GC_Tombstone_SubDatastore_Revived";
@@ -1301,7 +1301,7 @@ export class GarbageCollector implements IGarbageCollector {
                 // Delete the node as we don't need to track it any more.
                 this.unreferencedNodesState.delete(nodeId);
             }
-            this.tombstoned.delete(nodeId);
+            this.tombstoneSet.delete(nodeId);
         }
 
         /**
@@ -1324,7 +1324,7 @@ export class GarbageCollector implements IGarbageCollector {
             } else {
                 nodeStateTracker.updateTracking(currentReferenceTimestampMs);
                 if (this.tombstoneMode && nodeStateTracker.state === UnreferencedState.SweepReady) {
-                    this.tombstoned.add(nodeId);
+                    this.tombstoneSet.add(nodeId);
                 }
             }
         }

@@ -12,7 +12,7 @@ import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions"
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
-import { ITestContainerConfig, ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
+import { ITestContainerConfig, ITestObjectProvider, mockConfigProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import {
     describeNoCompat,
     ITestDataObject,
@@ -189,6 +189,7 @@ describeNoCompat("GC delete objects in test mode", (getTestObjectProvider) => {
             if (provider.driver.type !== "local") {
                 this.skip();
             }
+            const settings = {};
             const testContainerConfig: ITestContainerConfig = {
                 ...defaultGCConfig,
                 runtimeOptions: {
@@ -198,7 +199,9 @@ describeNoCompat("GC delete objects in test mode", (getTestObjectProvider) => {
                         runGCInTestMode: deleteContent,
                     },
                 },
+                loaderProps: { configProvider: mockConfigProvider(settings) },
             };
+            settings["Fluid.GarbageCollection.SweepDatastores"] = deleteContent;
             const container = await provider.makeTestContainer(testContainerConfig);
             mainDataStore = await requestFluidObject<ITestDataObject>(container, "/");
             containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;

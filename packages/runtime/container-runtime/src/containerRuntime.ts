@@ -173,6 +173,7 @@ import {
     OpSplitter,
     RemoteMessageProcessor,
 } from "./opLifecycle";
+import { sweepDatastoresKey } from "./garbageCollectionConstants";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -2214,11 +2215,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const sweptRoutes: string[] = [];
         this.updateTombstonedRoutes(unusedRoutes);
         this.blobManager.updateUnusedRoutes(blobManagerRoutes);
-        const sweptDataStoreRoutes = this.dataStores.updateUnusedRoutes(dataStoreRoutes, safeRoutes);
-        // Potentially a feature flag here for checking for sweptDataStoreRoutes?
-        // No need, but it can be possible.
-        // This is a more generic solution
-        sweptRoutes.push(...sweptDataStoreRoutes);
+        if (this.mc.config.getBoolean(sweepDatastoresKey) === true) {
+            const sweptDataStoreRoutes = this.dataStores.updateUnusedRoutes(dataStoreRoutes, safeRoutes);
+            sweptRoutes.push(...sweptDataStoreRoutes);
+        }
         return sweptRoutes;
     }
 
