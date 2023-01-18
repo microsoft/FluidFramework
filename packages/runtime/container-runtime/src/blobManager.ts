@@ -542,6 +542,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
             this.getTimeInfo(pendingEntry, "sendBlobAttachResubmitTTL", "sendBlobAttachResubmitNoTTL");
             return this.sendBlobAttachOp(localId, pendingEntry.storageId);
         }
+        const pendingEntry = this.pendingBlobs.get(localId);
+        if (pendingEntry) {
+            this.getTimeInfo(pendingEntry, "sendBlobAttachResubmitTTL", "sendBlobAttachResubmitNoTTL");
+        }
         return this.sendBlobAttachOp(localId, blobId);
     }
 
