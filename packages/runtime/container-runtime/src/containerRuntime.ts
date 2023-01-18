@@ -88,6 +88,8 @@ import {
     IAttachMessage,
     IDataStore,
     ITelemetryContext,
+    SerializedIdCompressorWithOngoingSession,
+    SerializedIdCompressorWithNoSession
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
@@ -496,7 +498,7 @@ export interface IContainerRuntimeOptions {
      * Enable the IdCompressor in the runtime.
      * @experimental Not ready for use.
      */
-    readonly enableRuntimeCompressor?: boolean;
+    readonly enableRuntimeIdCompressor?: boolean;
 
     /**
      * If enabled, the runtime will block all attempts to send an op with a different reference sequence number
@@ -688,7 +690,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
             maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
             chunkSizeInBytes = Number.POSITIVE_INFINITY,
-            enableRuntimeCompressor = false,
+            enableRuntimeIdCompressor: enableRuntimeCompressor = false,
             enableOpReentryCheck = false,
         } = runtimeOptions;
 
@@ -769,7 +771,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 compressionOptions,
                 maxBatchSizeInBytes,
                 chunkSizeInBytes,
-                enableRuntimeCompressor,
+                enableRuntimeIdCompressor: enableRuntimeCompressor,
                 enableOpReentryCheck,
             },
             containerScope,
@@ -1016,7 +1018,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         existing: boolean,
         blobManagerSnapshot: IBlobManagerLoadInfo,
         private readonly _storage: IDocumentStorageService,
-        idCompressorSnapshot: any,
+        idCompressorSnapshot: SerializedIdCompressorWithNoSession | SerializedIdCompressorWithOngoingSession,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private readonly summaryConfiguration: ISummaryConfiguration = {
             // the defaults
@@ -1076,9 +1078,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summarizerClientElectionEnabled = this.isSummarizerClientElectionEnabled();
         this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
         this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
-        if (this.runtimeOptions.enableRuntimeCompressor) {
+        if (this.runtimeOptions.enableRuntimeIdCompressor) {
             if (idCompressorSnapshot !== undefined) {
-                this._idCompressor = hasOngoingSession(idCompressorSnapshot) ? IdCompressor.deserialize(idCompressorSnapshot) : IdCompressor.deserialize(idCompressorSnapshot, createSessionId(), )
+                this._idCompressor = hasOngoingSession(idCompressorSnapshot) ? IdCompressor.deserialize(idCompressorSnapshot) : IdCompressor.deserialize(idCompressorSnapshot, createSessionId())
             } else {
                 this._idCompressor = new IdCompressor(createSessionId(), 10, this.logger);
             }
@@ -1533,7 +1535,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ) {
         this.addMetadataToSummary(summaryTree);
 
-        if (this.runtimeOptions.enableRuntimeCompressor && this.idCompressor !== undefined) {
+        if (this.runtimeOptions.enableRuntimeIdCompressor && this.idCompressor !== undefined) {
             const idCompressorState = JSON.stringify(this.idCompressor.serialize(false));
             addBlobToSummary(summaryTree, '.idCompressor', idCompressorState);
         }

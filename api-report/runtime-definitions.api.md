@@ -303,13 +303,9 @@ export interface IIdCompressor {
     normalizeToSessionSpace(id: FinalCompressedId): SessionSpaceCompressedId;
     // (undocumented)
     normalizeToSessionSpace(id: OpSpaceCompressedId, sessionIdIfLocal?: SessionId): SessionSpaceCompressedId;
-    // Warning: (ae-forgotten-export) The symbol "SerializedIdCompressorWithOngoingSession" needs to be exported by the entry point index.d.ts
-    // Warning: (ae-forgotten-export) The symbol "SerializedIdCompressorWithNoSession" needs to be exported by the entry point index.d.ts
     serialize(withSession: boolean): SerializedIdCompressorWithOngoingSession | SerializedIdCompressorWithNoSession;
     serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
     serialize(withSession: false): SerializedIdCompressorWithNoSession;
-    // Warning: (ae-forgotten-export) The symbol "SerializedIdCompressor" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     serialize(withSession: boolean): SerializedIdCompressor;
     // Warning: (ae-forgotten-export) The symbol "StableId" needs to be exported by the entry point index.d.ts
@@ -449,6 +445,33 @@ export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreReg
 
 // @public
 export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
+
+// Warning: (ae-forgotten-export) The symbol "VersionedSerializedIdCompressor" needs to be exported by the entry point index.d.ts
+//
+// @public
+export interface SerializedIdCompressor extends VersionedSerializedIdCompressor {
+    readonly clusterCapacity: number;
+    // Warning: (ae-forgotten-export) The symbol "SerializedCluster" needs to be exported by the entry point index.d.ts
+    readonly clusters: readonly SerializedCluster[];
+    readonly reservedIdCount: number;
+    // Warning: (ae-forgotten-export) The symbol "SerializedSessionData" needs to be exported by the entry point index.d.ts
+    readonly sessions: readonly SerializedSessionData[];
+}
+
+// @public
+export interface SerializedIdCompressorWithNoSession extends SerializedIdCompressor {
+    // (undocumented)
+    readonly _noLocalState: "3aa2e1e8-cc28-4ea7-bc1a-a11dc3f26dfb";
+}
+
+// @public
+export interface SerializedIdCompressorWithOngoingSession extends SerializedIdCompressor {
+    // (undocumented)
+    readonly _hasLocalState: "1281acae-6d14-47e7-bc92-71c8ee0819cb";
+    readonly localSessionIndex: number;
+    // Warning: (ae-forgotten-export) The symbol "SerializedLocalState" needs to be exported by the entry point index.d.ts
+    readonly localState?: SerializedLocalState;
+}
 
 // @public (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) => Promise<ISummarizeInternalResult>;

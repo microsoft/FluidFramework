@@ -56,5 +56,8 @@ export {
 } from "./summary";
 export {
     IIdCompressorCore,
-    IIdCompressor
+    IIdCompressor,
+    SerializedIdCompressor,
+    SerializedIdCompressorWithOngoingSession,
+    SerializedIdCompressorWithNoSession
 } from "./id-compressor";
