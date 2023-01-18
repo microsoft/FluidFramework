@@ -20,13 +20,6 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
      * A task tracker list.
      */
     readonly taskList: ITaskList;
-
-    /**
-    * Send custom signals to the server which will cause the server to respond
-    * with the (currently experimental) RuntimeMessage Signal to communicate
-    * an external data change and and possibly the changed data as well
-    */
-    readonly debugSendCustomSignal: () => void;
 }
 
 /**
