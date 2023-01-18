@@ -1,4 +1,4 @@
-# @fluid-experimental/quorum
+# @fluid-experimental/pact-map
 
 <!-- AUTO-GENERATED-CONTENT:START (README_SIMPLE:scripts=FALSE) -->
 
@@ -11,12 +11,12 @@
 To get started, install the package by running the following command:
 
 ```bash
-npm i @fluid-experimental/quorum
+npm i @fluid-experimental/pact-map
 ```
 
 ## API Documentation
 
-API documentation for **@fluid-experimental/quorum** is available at <https://fluidframework.com/docs/apis/quorum>.
+API documentation for **@fluid-experimental/pact-map** is available at <https://fluidframework.com/docs/apis/pact-map>.
 
 ## Contribution Guidelines
 

@@ -24,7 +24,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summarizerClientElection";
-import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
+import { throwOnTombstoneLoadKey } from "./garbageCollectionConstants";
 import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
 
 /**
@@ -151,7 +151,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     ));
 
     /** If true, throw an error when a tombstone attachment blob is retrieved. */
-    private readonly throwOnTombstoneUsage: boolean;
+    private readonly throwOnTombstoneLoad: boolean;
     /**
      * This stores IDs of tombstoned blobs.
      * Tombstone is a temporary feature that imitates a blob getting swept by garbage collection.
@@ -183,8 +183,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         super();
         this.mc = loggerToMonitoringContext(ChildLogger.create(this.runtime.logger, "BlobManager"));
         // Read the feature flag that tells whether to throw when a tombstone blob is requested.
-        this.throwOnTombstoneUsage =
-            this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
+        this.throwOnTombstoneLoad =
+            this.mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&
             this.runtime.clientDetails.type !== summarizerClientType;
 
         this.runtime.on("disconnected", () => this.onDisconnected());
@@ -275,12 +275,17 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         const request = { url: blobId };
         if (this.tombstonedBlobs.has(blobId) ) {
             const error = responseToException(createResponseError(404, "Blob removed by gc", request), request);
-            const event = {
-                eventName: "GC_Tombstone_Blob_Requested",
-                url: request.url,
-            };
-            sendGCTombstoneEvent(this.mc, event, this.runtime.clientDetails.type === summarizerClientType, [BlobManager.basePath], error);
-            if (this.throwOnTombstoneUsage) {
+            sendGCTombstoneEvent(
+                this.mc,
+                {
+                    eventName: "GC_Tombstone_Blob_Requested",
+                    category: this.throwOnTombstoneLoad ? "error" : "generic",
+                    isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
+                },
+                [BlobManager.basePath],
+                error,
+            );
+            if (this.throwOnTombstoneLoad) {
                 throw error;
             }
         }
@@ -485,7 +490,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     public reSubmit(metadata: Record<string, unknown> | undefined) {
         assert(!!metadata, 0x38b /* Resubmitted ops must have metadata */);
         const { localId, blobId }: { localId?: string; blobId?: string } = metadata;
-        assert(localId !== undefined, "local ID not available on reSubmit");
+        assert(localId !== undefined, 0x50d /* local ID not available on reSubmit */);
         if (!blobId) {
             // We submitted this op while offline. The blob should have been uploaded by now.
             const pendingEntry = this.pendingBlobs.get(localId);
@@ -512,7 +517,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         this.setRedirection(blobId, blobId);
 
         if (local) {
-            assert(localId !== undefined, "local ID not present in blob attach message");
+            assert(localId !== undefined, 0x50e /* local ID not present in blob attach message */);
             const waitingBlobs = this.opsInFlight.get(blobId);
             if (waitingBlobs !== undefined) {
                 // For each op corresponding to this storage ID that we are waiting for, resolve the pending blob.
@@ -627,7 +632,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
             const pathParts = route.split("/");
             assert(
                 pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
-                "Invalid blob node id in tombstoned routes.",
+                0x50f /* Invalid blob node id in tombstoned routes. */,
             );
             tombstonedBlobsSet.add(pathParts[2]);
         }
