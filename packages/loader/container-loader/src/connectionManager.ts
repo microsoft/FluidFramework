@@ -177,7 +177,7 @@ export class ConnectionManager implements IConnectionManager {
 
     private clientSequenceNumber = 0;
     private clientSequenceNumberObserved = 0;
-    /** Counts the number of noops sent by the client which may not be acked. */
+    /** Counts the number of non-runtime ops sent by the client which may not be acked. */
     private localOpsToIgnore = 0;
 
     /** track clientId used last time when we sent any ops */
