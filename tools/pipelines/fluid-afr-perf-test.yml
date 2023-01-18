@@ -21,8 +21,10 @@ resources:
   pipelines:
     - pipeline: client
       source: Build - client packages
+      branch: ${{ Build.SourceBranchName }}
     - pipeline: azure
       source: Build - azure
+      branch: ${{ Build.SourceBranchName }}
 
 variables:
   - group: fluid-afr-perf-test-keys
