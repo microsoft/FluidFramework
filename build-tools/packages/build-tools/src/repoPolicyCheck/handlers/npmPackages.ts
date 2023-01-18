@@ -673,13 +673,14 @@ function addPrettier(json: Record<string, any>) {
 
         if (!formatScript) {
             json["scripts"]["format"] = "npm run prettier:fix";
-        }
-        if (!prettierScript) {
-            json["scripts"]["prettier"] = "prettier --check .";
-        }
 
-        if (!prettierFixScript) {
-            json["scripts"]["prettier:fix"] = "prettier --write .";
+            if (!prettierScript) {
+                json["scripts"]["prettier"] = "prettier --check .";
+            }
+
+            if (!prettierFixScript) {
+                json["scripts"]["prettier:fix"] = "prettier --write .";
+            }
         }
     }
 }
