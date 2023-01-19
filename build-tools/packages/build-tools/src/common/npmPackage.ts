@@ -10,6 +10,7 @@ import * as path from "path";
 import sortPackageJson from "sort-package-json";
 
 import { options } from "../fluidBuild/options";
+import type { PreviousVersionStyle } from "../typeValidator/packageJson";
 import { IFluidBuildConfig } from "./fluidRepo";
 import { defaultLogger } from "./logging";
 import { MonoRepo, MonoRepoKind, PackageManager } from "./monoRepo";
@@ -92,6 +93,12 @@ export interface PackageJson {
          * If true, disables type test preparation and generation for the package.
          */
         disabled?: boolean;
+
+        /**
+         * The previous version style that was used when the prepare phase was run. This value is cached so that
+         * generation can work even on branches without the correct config.
+         */
+        previousVersionStyle?: PreviousVersionStyle;
 
         /**
          * The version range used as the "previous" version to compare against when generating type tests. This may be
