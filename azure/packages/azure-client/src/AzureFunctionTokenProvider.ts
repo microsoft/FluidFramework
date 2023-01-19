@@ -12,6 +12,11 @@ import { AzureMember } from "./interfaces";
  * Token Provider implementation for connecting to an Azure Function endpoint for
  * Azure Fluid Relay token resolution.
  */
+/**
+ * @deprecated 1.1.2, This API will be removed in 1.1.3
+ * No replacement since it is not expected anyone will use this token provider as is
+ * See https://github.com/microsoft/FluidFramework/issues/13693 for context
+ */
 export class AzureFunctionTokenProvider implements ITokenProvider {
     /**
      * Creates a new instance using configuration parameters.

@@ -44,7 +44,7 @@ Dice Roller uses the following distributed data structures:
 
 -   SharedDirectory - root
 
-## Backed Locally and running with live Azure Fluid Relay service instance
+## Backed Locally
 
 We can connect to a live Azure Fluid Relay instance by passing in the tenant ID and discovery endpoint URL, or we can connect to a local Tinylicious server for development purposes by setting the `type` as `"local"`.
 
@@ -55,33 +55,13 @@ the endpoint URL would point to the Tinylicious instance on the default values o
 
 To launch the local Tinylicious service instance, run `npm run start:tinylicious` from your terminal window.
 
-When running the live Azure Fluid Relay Instance, we would require the tenant ID and service discovery endpoint URL. We make use of
-`AzureFunctionTokenProvider` which takes in the Azure function URL and an object identifying the current user, thereby
-making an axios `GET` request call to the Azure Function. This axios call takes in the tenant ID, documentId and
-userID/userName as optional parameters. The Azure Function is responsible for mapping the tenantId to tenant key secret
-to generate and sign the token such that the service will accept it.
-
 ```typescript
-const connectionConfig: AzureConnectionConfig = useAzure
-    ? {
-          type: "remote",
-          tenantId: "YOUR-TENANT-ID-HERE",
-          tokenProvider: new AzureFunctionTokenProvider(
-              "AZURE-FUNCTION-URL" + "/api/GetAzureToken",
-              { userId: "test-user", userName: "Test User" },
-          ),
-          endpoint: "ENTER-DISCOVERY-ENDPOINT-URL-HERE",
-      }
-    : {
-          type: "local",
-          tokenProvider: new InsecureTokenProvider("fooBar", user),
-          endpoint: "http://localhost:7070",
-      };
+const connectionConfig: AzureConnectionConfig = {
+        type: "local",
+        tokenProvider: new InsecureTokenProvider("fooBar", user),
+        endpoint: "http://localhost:7070",
+    };
 ```
-
-In this way, we can toggle between remote and local mode using the same config format. We make use of
-`AzureFunctionTokenProvider` for running against live Azure Fluid Relay instance since it is more secured, without exposing the tenant
-secret key in the client-side code whereas while running the service locally for development purpose, we make use of `InsecureTokenProvider`.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
