@@ -24,8 +24,7 @@ export interface SharedStringViewProps {
 export function SharedStringView(props: SharedStringViewProps): React.ReactElement {
     const { sharedString } = props;
 
-    const [text, setText] = React.useState<string>(sharedString.getText());
-    console.log(text);
+    const [_text, setText] = React.useState<string>(sharedString.getText());
 
     React.useEffect(() => {
         function updateText(): void {
@@ -40,10 +39,15 @@ export function SharedStringView(props: SharedStringViewProps): React.ReactEleme
         };
     }, []);
 
-
     return (
         <Stack>
-            <StackItem> <CollaborativeTextArea style={{ height: 30, width: 200 }} sharedStringHelper={new SharedStringHelper(sharedString)}/> </StackItem>
+            <StackItem>
+                {" "}
+                <CollaborativeTextArea
+                    style={{ height: 30, width: 200 }}
+                    sharedStringHelper={new SharedStringHelper(sharedString)}
+                />{" "}
+            </StackItem>
         </Stack>
     );
 }
