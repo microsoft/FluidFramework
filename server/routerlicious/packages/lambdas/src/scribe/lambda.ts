@@ -200,7 +200,7 @@ export class ScribeLambda implements IPartitionLambda {
                 if (value.operation.type === MessageType.Summarize && !value.operation.serverMetadata?.deliAcked) {
                     // ensure the client is requesting a summary for a state that scribe can achieve
                     // the clients summary state (ref seq num) must be at least as high as scribes (protocolHandler.sequenceNumber)
-                    if (value.operation.referenceSequenceNumber >= this.protocolHandler.sequenceNumber) {
+                    if (!this.summaryWriter.isExternal || value.operation.referenceSequenceNumber >= this.protocolHandler.sequenceNumber) {
                         // Process up to the summary op ref seq to get the protocol state at the summary op.
                         // Capture state first in case the summary is nacked.
                         const prevState = {
@@ -212,7 +212,7 @@ export class ScribeLambda implements IPartitionLambda {
                         // When external, only process the op if the protocol state advances.
                         // This eliminates the corner case where we have
                         // already captured this summary and are processing this message due to a replay of the stream.
-                        if (!this.summaryWriter.isExternal || this.protocolHead < this.protocolHandler.sequenceNumber) {
+                        if (this.protocolHead < this.protocolHandler.sequenceNumber) {
                             try {
                                 const scribeCheckpoint = this.generateScribeCheckpoint(this.lastOffset);
                                 const operation = value.operation as ISequencedDocumentAugmentedMessage;
