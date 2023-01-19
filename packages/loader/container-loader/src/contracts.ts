@@ -144,7 +144,7 @@ export interface IConnectionManagerFactoryArgs {
     /**
      * Called whenever new connection to rely service is established
      */
-    readonly connectHandler: (connection:  IConnectionDetailsInternal) => void;
+    readonly connectHandler: (connection: IConnectionDetailsInternal) => void;
 
     /**
      * Called whenever ping/pong messages are roundtripped on connection.

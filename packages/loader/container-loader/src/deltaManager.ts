@@ -327,7 +327,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
             closeHandler: (error: any) => this.close(error),
             disconnectHandler: (reason: string) => this.disconnectHandler(reason),
-            connectHandler: (connection:  IConnectionDetailsInternal,) => this.connectHandler(connection),
+            connectHandler: (connection: IConnectionDetailsInternal) => this.connectHandler(connection),
             pongHandler: (latency: number) => this.emit("pong", latency),
             readonlyChangeHandler: (readonly?: boolean) => safeRaiseEvent(this, this.logger, "readonly", readonly),
         };
@@ -363,7 +363,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         // - inbound & inboundSignal are resumed in attachOpHandler() when we have handler setup
     }
 
-    private connectHandler(connection:  IConnectionDetailsInternal,) {
+    private connectHandler(connection: IConnectionDetailsInternal) {
         this.refreshDelayInfo(this.deltaStreamDelayId);
 
         const props = this.connectionManager.connectionVerboseProps;
