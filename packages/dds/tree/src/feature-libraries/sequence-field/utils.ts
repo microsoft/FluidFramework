@@ -393,15 +393,22 @@ export function tryExtendMark(
             lhsDetach.count += rhs.count;
             return true;
         }
-        case "MoveOut":
-        case "ReturnFrom": {
-            const lhsMoveOut = lhs as MoveOut | ReturnFrom;
-            if (!areMergeableReturnFrom(lhs as ReturnFrom, rhs as ReturnFrom)) {
-                break;
-            }
+        case "MoveOut": {
+            const lhsMoveOut = lhs as MoveOut;
             if (
                 moveEffects !== undefined &&
                 tryMergeMoves(MoveEnd.Source, lhsMoveOut, rhs, revision, moveEffects, recordMerges)
+            ) {
+                return true;
+            }
+            break;
+        }
+        case "ReturnFrom": {
+            const lhsReturn = lhs as ReturnFrom;
+            if (
+                areMergeableReturnFrom(lhsReturn, rhs) &&
+                moveEffects !== undefined &&
+                tryMergeMoves(MoveEnd.Source, lhsReturn, rhs, revision, moveEffects, recordMerges)
             ) {
                 return true;
             }
