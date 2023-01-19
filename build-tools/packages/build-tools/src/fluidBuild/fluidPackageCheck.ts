@@ -493,7 +493,7 @@ export class FluidPackageCheck {
             // const lintChildren = hasLint ? ["prettier", "eslint"] : ["eslint"];
 
             const lintScript = pkg.getScript("lint");
-            const linstFixScript = pkg.getScript("lint:fix");
+            const lintFixScript = pkg.getScript("lint:fix");
 
             const expectedEndScript = "npm run eslint";
             const expectedEndScriptFix = "npm run eslint:fix";
@@ -509,10 +509,10 @@ export class FluidPackageCheck {
                 }
             }
 
-            if (linstFixScript === undefined || !linstFixScript.endsWith(expectedEndScriptFix)) {
+            if (lintFixScript === undefined || !lintFixScript.endsWith(expectedEndScriptFix)) {
                 this.logWarn(pkg, `non-conformant lint:fix script`, fix);
                 this.logWarn(pkg, `expected to end with ${expectedEndScriptFix}`, fix);
-                this.logWarn(pkg, `actual: ${linstFixScript}`, fix);
+                this.logWarn(pkg, `actual: ${lintFixScript}`, fix);
 
                 if (fix) {
                     pkg.packageJson.scripts["lint:fix"] = expectedEndScriptFix;
