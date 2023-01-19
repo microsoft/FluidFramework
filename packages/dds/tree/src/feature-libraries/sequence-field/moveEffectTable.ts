@@ -425,6 +425,17 @@ export function splitMarkOnInput<TMark extends InputSpanningMark<unknown>>(
                 length,
                 remainder,
             );
+            if (recordMoveEffect) {
+                splitMove(
+                    moveEffects,
+                    MoveEnd.Dest,
+                    mark.revision ?? revision,
+                    mark.id,
+                    newId,
+                    length,
+                    remainder,
+                );
+            }
             return [
                 { ...markObj, count: length },
                 { ...markObj, id: newId, count: remainder, detachIndex: mark.detachIndex + length },
