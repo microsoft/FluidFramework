@@ -25,16 +25,60 @@ export interface MoveEffectTable<T> {
     dstEffects: NestedMap<RevisionTag | undefined, MoveId, MoveEffect<T>>;
 }
 
+/**
+ * Changes to be applied to a move mark.
+ */
 export interface MoveEffect<T> {
+    /**
+     * The size of the mark after splitting. Only defined if child is defined.
+     */
     count?: number;
-    shouldRemove?: boolean;
+
+    /**
+     * The ID of a new mark which should be created by splitting off a portion of the end of this mark.
+     * There should be an entry in the MoveEffectTable for this ID.
+     */
     child?: MoveId;
-    mergeLeft?: MoveId;
-    mergeRight?: MoveId;
+
+    /**
+     * When true, this mark should be deleted.
+     */
+    shouldRemove?: boolean;
+
+    /**
+     * If defined, this move mark should be replaced by `mark`.
+     */
     mark?: Mark<T>;
+
+    /**
+     * The ID of a mark which this mark is allowed to merge left into.
+     */
+    mergeLeft?: MoveId;
+
+    /**
+     * The ID of a mark which can be merged into this mark from the right.
+     */
+    mergeRight?: MoveId;
+
+    /**
+     * Node changes which should be applied to this mark.
+     * If this mark already has node changes, `modifyAfter` should be composed as later changes.
+     */
     modifyAfter?: T;
+
+    /**
+     * A mark which should be moved to the same position as this mark.
+     */
     movedMark?: Mark<T>;
+
+    /**
+     * Represents the new value for the `isSrcConflicted` or `isDstConflicted` field of this mark.
+     */
     pairedMarkStatus?: PairedMarkUpdate;
+
+    /**
+     * The new value for this mark's `detachedBy` field.
+     */
     detacher?: RevisionTag;
 }
 
@@ -338,7 +382,12 @@ export function applyMoveEffectsToMark<T>(
 /**
  * Splits the `mark` into two marks such that the first returned mark has input length `length`.
  * @param mark - The mark to split.
+ * @param revision - The revision of the changeset the mark is part of.
  * @param length - The desired length for the first of the two returned marks.
+ * @param genId - An ID allocator
+ * @param moveEffects - The table in which to record splitting of move marks
+ * @param recordMoveEffect - Whether when splitting a move an entry should be added to `moveEffects` indicating that the mark should be split (in case we process this mark again).
+ * An entry is always added to `moveEffects` indicating that the opposite end of the move should be split.
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has input length `length`.
  */
@@ -430,7 +479,12 @@ export function splitMarkOnInput<TMark extends InputSpanningMark<unknown>>(
 /**
  * Splits the `mark` into two marks such that the first returned mark has output length `length`.
  * @param mark - The mark to split.
+ * @param revision - The revision of the changeset the mark is part of.
  * @param length - The desired length for the first of the two returned marks.
+ * @param genId - An ID allocator
+ * @param moveEffects - The table in which to record splitting of move marks
+ * @param recordMoveEffect - Whether when splitting a move an entry should be added to `moveEffects` indicating that the mark should be split (in case we process this mark again).
+ * An entry is always added to `moveEffects` indicating that the opposite end of the move should be split.
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has output length `length`.
  */

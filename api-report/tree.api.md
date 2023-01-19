@@ -899,27 +899,17 @@ export class ModularEditBuilder extends ProgressiveEditBuilderBase<ModularChange
     submitChange(path: UpPath | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset, maxId?: ChangesetLocalId): void;
 }
 
-// @public (undocumented)
+// @public
 interface MoveEffect<T> {
-    // (undocumented)
     child?: MoveId_2;
-    // (undocumented)
     count?: number;
-    // (undocumented)
     detacher?: RevisionTag;
-    // (undocumented)
     mark?: Mark_2<T>;
-    // (undocumented)
     mergeLeft?: MoveId_2;
-    // (undocumented)
     mergeRight?: MoveId_2;
-    // (undocumented)
     modifyAfter?: T;
-    // (undocumented)
     movedMark?: Mark_2<T>;
-    // (undocumented)
     pairedMarkStatus?: PairedMarkUpdate;
-    // (undocumented)
     shouldRemove?: boolean;
 }
 
