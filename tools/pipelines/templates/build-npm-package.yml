@@ -462,6 +462,7 @@ stages:
               git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|build-tools/.npmrc|\(use.*' | grep '^\s' > git_status.log
               if [ `cat git_status.log | wc -l` != "0" ]; then
                 cat git_status.log
+                cat build-tools/packages/build-cli/README.md
                 echo "##vso[task.logissue type=error]Build should not create extraneous files"
                 exit -1;
               fi
