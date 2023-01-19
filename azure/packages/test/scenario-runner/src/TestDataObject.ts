@@ -2,10 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct";
-import { SharedCounter } from "@fluidframework/counter";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { SharedCounter } from "@fluidframework/counter";
 
 export class TestDataObject extends DataObject {
     public static get Name(): string {

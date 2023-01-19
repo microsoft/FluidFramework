@@ -1185,6 +1185,9 @@
                 }
             }
         ],
+        "unicorn/no-for-loop": [
+            "off"
+        ],
         "unicorn/no-nested-ternary": [
             "off"
         ],
