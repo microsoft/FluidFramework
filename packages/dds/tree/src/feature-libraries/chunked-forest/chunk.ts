@@ -26,7 +26,24 @@ export interface ReferenceCounted {
  * This allows for efficient cloning without major performance overheads for non-cloning scenarios.
  */
 export interface TreeChunk extends ReferenceCounted {
+    /**
+     * The number of nodes at the top level of this chunk.
+     *
+     * If this chunk is included in a field, this is the amount this chunk contributes to the length of the field.
+     */
     readonly topLevelLength: number;
+
+    /**
+     * Creates a cursor for navigating the content of this chunk.
+     *
+     * Starts in "nodes" mode at the first top level node.
+     *
+     * This cursor does not own a reference to the data:
+     * it is up to the caller of this function to ensure the cursor is not used after they release their owning ref to this chunk.
+     *
+     * TODO: consider starting this in "fields" mode above the top level
+     * which would compose better with utilities for processing sequences of nodes.
+     */
     cursor(): ChunkedCursor;
 }
 
