@@ -50,7 +50,6 @@ export const typedEmptyLocalField = typedFieldSchema(forbidden, []);
 
 export interface TreeInfoFromBuilder<T extends TypedTreeSchemaBuilder> {
     readonly name: T["name"] & TreeSchemaIdentifier;
-    // eslint-disable-next-line @typescript-eslint/ban-types
     readonly local: WithDefault<T["local"], EmptyObject>;
     readonly global: ProcessNames<WithDefault<T["global"], EmptyStringArray>>;
     readonly extraLocalFields: WithDefault<T["extraLocalFields"], typeof typedEmptyLocalField>;
@@ -80,19 +79,6 @@ export function typedTreeSchema<T extends TypedTreeSchemaBuilder>(
         TreeInfoFromBuilder<T>
     >;
 }
-
-/**
- * Builds a FieldSchema with the type information also captured in the
- * typescript type to allow for deriving schema aware APIs.
- */
-// export function typedFieldSchema<T extends TypedFieldSchemaTypeBuilder>(
-//     t: T,
-// ): LabeledFieldSchema<FieldInfoFromBuilder<T>> {
-//     return fieldSchema(
-//         t.kind,
-//         t.types === undefined ? undefined : (extractNames(t.types) as TreeSchemaIdentifier[]),
-//     );
-// }
 
 /**
  * Builds a FieldSchema with the type information also captured in the
