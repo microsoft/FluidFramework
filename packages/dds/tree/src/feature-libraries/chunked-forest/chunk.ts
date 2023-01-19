@@ -23,7 +23,7 @@ export interface ReferenceCounted {
 /**
  * Contiguous part of the tree which get stored together in some data format.
  * Copy-on-write, but optimized to be mutated in place when a chunk only has a single user (detected using reference counting).
- * This allows for efficient cloning of without major performance overheads for non-cloning scenarios.
+ * This allows for efficient cloning without major performance overheads for non-cloning scenarios.
  */
 export interface TreeChunk extends ReferenceCounted {
     readonly topLevelLength: number;

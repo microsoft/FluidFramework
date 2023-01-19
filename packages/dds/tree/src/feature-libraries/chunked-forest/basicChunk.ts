@@ -70,7 +70,7 @@ export type SiblingsOrKey = readonly TreeChunk[] | readonly FieldKey[];
 /**
  * Cursor over basic chunks.
  *
- * This implementation is similar to StackCursor, however it is distinct because:
+ * @remarks This implementation is similar to StackCursor, however it is distinct because:
  * 1. The children are chunks, which might have a top level length that greater than 1.
  * 2. It needs to be able to delegate to cursors of other chunk formats it does not natively understand (See TODO below).
  *

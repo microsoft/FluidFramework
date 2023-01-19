@@ -9,7 +9,7 @@ import { BasicChunk } from "./basicChunk";
 
 /**
  * Get a TreeChunk for the current node (and its children) of cursor.
- * This will copy if needed, but add refs to existing chunks with hold the data.
+ * This will copy if needed, but add refs to existing chunks which hold the data.
  */
 export function chunkTree(cursor: ITreeCursorSynchronous, schema?: SchemaData): TreeChunk {
     // symbol based fast path to check for chunk:
