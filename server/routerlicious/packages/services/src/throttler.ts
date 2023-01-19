@@ -28,8 +28,25 @@ export class Throttler implements IThrottler {
         private readonly throttlerHelper: IThrottlerHelper,
         private readonly minThrottleIntervalInMs: number = 1000000,
         private readonly logger?: ILogger,
+        /**
+         * Maximum number of keys that should be internally tracked at a given time.
+         * Fine tune this and cache age to balance accuracy and memory consumption.
+         * If this value is less than number of keys (traffic) per cache age time, the in-memry cache can overflow.
+         * Default: 1,000
+         */
         maxCacheSize: number = 1000,
+        /**
+         * When to mark internal cache values as stale, in milliseconds. In production, this value should not be
+         * lower than minThrottleIntervalInMs, otherwise throttle counts will be lost between calculation intervals.
+         * Default: 1min
+         */
         maxCacheAge: number = 1000 * 60,
+        /**
+         * Throttling can generate a lot of telemetry, which can be expensive and/or taxing on resources.
+         * Use this flag to enable/disable extra telemetry that is useful for validating throttling config correctness.
+         * Default: false
+         */
+        private readonly enableEnhancedTelemetry: boolean = false,
     ) {
         const cacheOptions: LRUCache.Options<string, any> = {
             max: maxCacheSize,
@@ -37,7 +54,7 @@ export class Throttler implements IThrottler {
         };
         this.lastThrottleUpdateAtMap = new LRUCache({
             ...cacheOptions,
-            dispose: (key, value: number) => {
+            dispose: this.enableEnhancedTelemetry ? (key, value: number) => {
                 // Utilize the opportunity to log information before an item is removed from the cache.
                 // If a cache entry is removed too soon, it can negatively impact the correctness of throttling.
                 const now = Date.now();
@@ -52,7 +69,7 @@ export class Throttler implements IThrottler {
                     this.logger?.warn(`Purged lastThrottleUpdateAt for ${key} before maxAge reached`, { messageMetaData: telemetryProperties.baseMessageMetaData });
                     Lumberjack.warning(`Purged lastThrottleUpdateAt for ${key} before maxAge reached`, lumberjackProperties);
                 }
-            },
+            } : undefined,
         });
         this.countDeltaMap = new LRUCache(cacheOptions);
         this.throttlerResponseCache = new LRUCache(cacheOptions);
@@ -128,8 +145,10 @@ export class Throttler implements IThrottler {
 
         const now = Date.now();
         if (this.lastThrottleUpdateAtMap.get(id) === undefined) {
-            this.logger?.info(`Starting to track throttling status for ${id}`, { messageMetaData: telemetryProperties.baseMessageMetaData });
-            Lumberjack.info(`Starting to track throttling status for ${id}`, telemetryProperties.baseLumberjackProperties);
+            if (this.enableEnhancedTelemetry) {
+                this.logger?.info(`Starting to track throttling status for ${id}`, { messageMetaData: telemetryProperties.baseMessageMetaData });
+                Lumberjack.info(`Starting to track throttling status for ${id}`, telemetryProperties.baseLumberjackProperties);
+            }
             this.lastThrottleUpdateAtMap.set(id, now);
         }
 
@@ -154,8 +173,10 @@ export class Throttler implements IThrottler {
             }
             await this.throttlerHelper.updateCount(id, countDelta, usageStorageId, usageData)
                 .then((throttlerResponse) => {
-                    this.logger?.info(`Incremented throttle count for ${id} by ${countDelta}`, { messageMetaData });
-                    Lumberjack.info(`Incremented throttle count for ${id} by ${countDelta}`, lumberjackProperties);
+                    if (this.enableEnhancedTelemetry) {
+                        this.logger?.info(`Incremented throttle count for ${id} by ${countDelta}`, { messageMetaData });
+                        Lumberjack.info(`Incremented throttle count for ${id} by ${countDelta}`, lumberjackProperties);
+                    }
                     this.throttlerResponseCache.set(id, throttlerResponse);
                 })
                 .catch((err) => {
