@@ -186,7 +186,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         const path = pickAbsolutePathForDeleteDirectoryOp(state);
         const parentDir = sharedDirectory.getWorkingDirectory(path);
         assert(parentDir !== undefined, "parent dir should be defined");
-        assert(parentDir.countSubDirectory && parentDir.countSubDirectory() > 0, "Atleast 1 sudir should be there");
+        assert(parentDir.countSubDirectory && parentDir.countSubDirectory() > 0, "Atleast 1 subdir should be there");
         const subDirName: string[] = [];
         for (const [a, _] of parentDir.subdirectories()) {
             subDirName.push(a);
