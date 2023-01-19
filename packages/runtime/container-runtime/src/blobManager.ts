@@ -534,17 +534,15 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         assert(!!metadata, 0x38b /* Resubmitted ops must have metadata */);
         const { localId, blobId }: { localId?: string; blobId?: string } = metadata;
         assert(localId !== undefined, 0x50d /* local ID not available on reSubmit */);
-        if (!blobId) {
-            // We submitted this op while offline. The blob should have been uploaded by now.
-            const pendingEntry = this.pendingBlobs.get(localId);
-            assert(pendingEntry?.status === PendingBlobStatus.OfflinePendingOp &&
-                !!pendingEntry?.storageId, 0x38d /* blob must be uploaded before resubmitting BlobAttach op */);
-            this.getTimeInfo(pendingEntry, "sendBlobAttachResubmitTTL", "sendBlobAttachResubmitNoTTL");
-            return this.sendBlobAttachOp(localId, pendingEntry.storageId);
-        }
         const pendingEntry = this.pendingBlobs.get(localId);
         if (pendingEntry) {
             this.getTimeInfo(pendingEntry, "sendBlobAttachResubmitTTL", "sendBlobAttachResubmitNoTTL");
+        }
+        if (!blobId) {
+            // We submitted this op while offline. The blob should have been uploaded by now.
+            assert(pendingEntry?.status === PendingBlobStatus.OfflinePendingOp &&
+                !!pendingEntry?.storageId, 0x38d /* blob must be uploaded before resubmitting BlobAttach op */);
+            return this.sendBlobAttachOp(localId, pendingEntry.storageId);
         }
         return this.sendBlobAttachOp(localId, blobId);
     }
