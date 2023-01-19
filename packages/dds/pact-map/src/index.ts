@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { IQuorum, IQuorumEvents } from "./interfaces";
-export { Quorum } from "./quorum";
+export { IPactMap, IPactMapEvents } from "./interfaces";
+export { PactMap } from "./pactMap";

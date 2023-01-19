@@ -201,7 +201,8 @@ export interface IDirectoryEvents extends IEvent {
     ) => void);
 
     /**
-     * Emitted when a subdirectory is created.
+     * Emitted when a subdirectory is created. Also emitted when a delete
+     * of a subdirectory is rolled back.
      *
      * @remarks Listener parameters:
      *
@@ -244,6 +245,19 @@ export interface IDirectoryEvents extends IEvent {
      * - `target` - The {@link IDirectory} itself.
      */
     (event: "disposed", listener: (
+        target: IEventThisPlaceHolder,
+    ) => void);
+
+    /**
+     * Emitted when this previously deleted sub directory is restored.
+     * This event only needs to be handled in the case of rollback. If your application does
+     * not use the local rollback feature, you can ignore this event.
+     *
+     * @remarks Listener parameters:
+     *
+     * - `target` - The {@link IDirectory} itself.
+     */
+    (event: "undisposed", listener: (
         target: IEventThisPlaceHolder,
     ) => void);
 }
