@@ -110,7 +110,7 @@ describe("Garbage Collection Tests", () => {
             updateStateBeforeGC: async () => { },
             getGCData: async (fullGC?: boolean) => defaultGCData,
             updateUsedRoutes: (usedRoutes: string[]) => { return { totalNodeCount: 0, unusedNodeCount: 0 }; },
-            updateUnusedRoutes: (unusedRoutes: string[], safeRoutes: string[]) => { return []; },
+            updateUnusedRoutes: (unusedRoutes: string[]) => { return []; },
             updateTombstonedRoutes: (tombstoneRoutes: string[]) => { },
             getNodeType,
             getCurrentReferenceTimestampMs: () => Date.now(),

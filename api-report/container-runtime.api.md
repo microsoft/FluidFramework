@@ -199,7 +199,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get summarizerClientId(): string | undefined;
     updateStateBeforeGC(): Promise<void>;
     updateTombstonedRoutes(tombstonedRoutes: string[]): void;
-    updateUnusedRoutes(unusedRoutes: string[], safeRoutes: string[]): string[];
+    updateUnusedRoutes(unusedRoutes: string[]): string[];
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;

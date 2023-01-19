@@ -122,7 +122,7 @@ export interface IGarbageCollectionRuntime {
     /** After GC has run, called to notify the runtime of routes that are used in it. */
     updateUsedRoutes(usedRoutes: string[]): void;
     /** After GC has run, called to notify the runtime of routes that are unused in it. */
-    updateUnusedRoutes(unusedRoutes: string[], allRoutes: string[]): string[];
+    updateUnusedRoutes(unusedRoutes: string[]): string[];
     /** Called to notify the runtime of routes that are tombstones. */
     updateTombstonedRoutes(tombstoneRoutes: string[]): void;
     /** Called to notify the runtime of datastore routes to be swept. */
@@ -422,10 +422,7 @@ export class GarbageCollector implements IGarbageCollector {
     // Keeps a list of references (edges in the GC graph) between GC runs. Each entry has a node id and a list of
     // outbound routes from that node.
     private readonly newReferencesSinceLastRun: Map<string, string[]> = new Map();
-    private tombstoneSet: Set<string> = new Set<string>();
-    private get tombstones(): string[] {
-        return Array.from(this.tombstoneSet);
-    };
+    private tombstones: string[] = [];
 
     /**
      * Keeps track of the GC data from the latest summary successfully submitted to and acked from the server.
@@ -806,7 +803,7 @@ export class GarbageCollector implements IGarbageCollector {
         if (!this.tombstoneMode || baseSnapshotData?.tombstones === undefined) {
             return;
         }
-        this.tombstoneSet = new Set<string>(baseSnapshotData.tombstones);
+        this.tombstones = baseSnapshotData.tombstones;
         this.runtime.updateTombstonedRoutes(this.tombstones);
     }
 
@@ -842,7 +839,7 @@ export class GarbageCollector implements IGarbageCollector {
         // If tombstone mode is enabled, update tombstone information and also update all tombstoned nodes in the
         // container as per the state in the snapshot data.
         if (this.tombstoneMode) {
-            this.tombstoneSet = new Set<string>(snapshotData?.tombstones);
+            this.tombstones = snapshotData?.tombstones ?? [];
             this.runtime.updateTombstonedRoutes(this.tombstones);
         }
 
@@ -990,10 +987,11 @@ export class GarbageCollector implements IGarbageCollector {
         // involving access to deleted data.
         if (this.sweepDataStoresMode) {
             const allRoutes = gcResult.deletedNodeIds.concat(gcResult.referencedNodeIds);
-            const removedRoutes = this.runtime.updateUnusedRoutes(this.tombstones, allRoutes);
+            this.verifyDataStoreSweepRoutes(this.tombstones, allRoutes);
+            const removedRoutes = this.runtime.updateUnusedRoutes(this.tombstones);
             this.removeSweptNodes(removedRoutes);
         } else if (this.testMode) {
-            const removedRoutes = this.runtime.updateUnusedRoutes(gcResult.deletedNodeIds, []/* allRoutes */ );
+            const removedRoutes = this.runtime.updateUnusedRoutes(gcResult.deletedNodeIds);
             this.removeSweptNodes(removedRoutes);
         } else if (this.tombstoneMode) {
             // If we are running in GC tombstone mode, update tombstoned routes. This enables testing scenarios
@@ -1246,7 +1244,7 @@ export class GarbageCollector implements IGarbageCollector {
             this.inactiveNodeUsed("Revived", toNodePath, nodeStateTracker, fromNodePath);
         }
 
-        if (this.tombstoneSet.has(toNodePath)) {
+        if (this.tombstones.includes(toNodePath)) {
             const nodeType = this.runtime.getNodeType(toNodePath)
 
             let eventName = "GC_Tombstone_SubDatastore_Revived";
@@ -1290,6 +1288,7 @@ export class GarbageCollector implements IGarbageCollector {
         currentReferenceTimestampMs: number,
     ) {
         this.gcDataFromLastRun = cloneGCData(gcData);
+        this.tombstones = [];
         this.newReferencesSinceLastRun.clear();
 
         // Iterate through the referenced nodes and stop tracking if they were unreferenced before.
@@ -1301,7 +1300,6 @@ export class GarbageCollector implements IGarbageCollector {
                 // Delete the node as we don't need to track it any more.
                 this.unreferencedNodesState.delete(nodeId);
             }
-            this.tombstoneSet.delete(nodeId);
         }
 
         /**
@@ -1323,11 +1321,34 @@ export class GarbageCollector implements IGarbageCollector {
                 );
             } else {
                 nodeStateTracker.updateTracking(currentReferenceTimestampMs);
-                if (this.tombstoneMode && nodeStateTracker.state === UnreferencedState.SweepReady) {
-                    this.tombstoneSet.add(nodeId);
+                if ((this.tombstoneMode || this.shouldRunSweep) && nodeStateTracker.state === UnreferencedState.SweepReady) {
+                    this.tombstones.push(nodeId);
                 }
             }
         }
+    }
+
+    private verifyDataStoreSweepRoutes(sweepRoutes: string[], allRoutes: string[]) {
+        const deletedDataStoreRoutes: Set<string> = new Set();
+        const notDeletedRoutes = allRoutes.filter((route) => !sweepRoutes.includes(route));
+
+        for (const route of sweepRoutes) {
+            // skip non datastore routes
+            if (this.runtime.getNodeType(route) === GCNodeType.DataStore) {
+                deletedDataStoreRoutes.add(this.getDataStoreId(route));
+            }
+        }
+
+        // Verify that if the datastore is deleted, all its sub datastore routes are deleted as well
+        for (const route of notDeletedRoutes) {
+            if (this.runtime.getNodeType(route) === GCNodeType.SubDataStore) {
+                assert(!deletedDataStoreRoutes.has(this.getDataStoreId(route)), "Sub datastores should be deleted when deleting their datastore!");
+            }
+        }
+    }
+
+    private getDataStoreId(route: string): string {
+        return route.split("/")[1];
     }
 
     /**

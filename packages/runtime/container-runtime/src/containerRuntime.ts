@@ -2210,13 +2210,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param unusedRoutes - Data store and attachment blob routes that are unused in this Container.
      * @returns - routes deleted from the runtime
      */
-    public updateUnusedRoutes(unusedRoutes: string[], allRoutes: string[]): string[] {
+    public updateUnusedRoutes(unusedRoutes: string[]): string[] {
         const { blobManagerRoutes, dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
         const sweptRoutes: string[] = [];
         this.updateTombstonedRoutes(unusedRoutes);
         this.blobManager.updateUnusedRoutes(blobManagerRoutes);
         if (this.mc.config.getBoolean(sweepDatastoresKey) === true) {
-            const sweptDataStoreRoutes = this.dataStores.updateUnusedRoutes(dataStoreRoutes, allRoutes);
+            const sweptDataStoreRoutes = this.dataStores.updateUnusedRoutes(dataStoreRoutes);
             sweptRoutes.push(...sweptDataStoreRoutes);
         }
         return sweptRoutes;
