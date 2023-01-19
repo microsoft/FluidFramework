@@ -5,15 +5,13 @@
 
 export {
     Attach,
+    NewAttach,
     Changeset,
-    ClientId,
     Delete,
     Detach,
     Effects,
-    GapCount,
     HasChanges,
     HasMoveId,
-    HasLength,
     HasPlaceFields,
     HasRevisionTag,
     HasTiebreakPolicy,
@@ -34,15 +32,16 @@ export {
     ReturnFrom,
     ReturnTo,
     Revive,
-    SizedMark,
-    SizedObjectMark,
     Tiebreak,
-    Tombstones,
-    TreeForestPath,
-    TreeRootPath,
     Skip,
     LineageEvent,
     HasReattachFields,
+    CellSpanningMark,
+    InputSpanningMark,
+    OutputSpanningMark,
+    SkipLikeReattach,
+    Conflicted,
+    CanConflict,
 } from "./format";
 export {
     SequenceFieldChangeHandler,
@@ -63,9 +62,20 @@ export { NodeChangeRebaser, rebase } from "./rebase";
 export { amendInvert, invert, NodeChangeInverter } from "./invert";
 export { compose, NodeChangeComposer } from "./compose";
 export {
+    areComposable,
+    areRebasable,
+    isActiveReattach,
+    getInputLength,
+    isDetachMark,
+    isReattach,
+    DetachedNodeTracker,
+} from "./utils";
+export {
     isMoveMark,
     MoveMark,
     MoveEffectTable,
     MovePartition,
     newMoveEffectTable,
+    PairedMarkUpdate,
+    splitMarkOnOutput,
 } from "./moveEffectTable";

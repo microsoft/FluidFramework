@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
 import { CrossFieldManager, CrossFieldTarget, IdAllocator } from "../modular-schema";
 import { Changeset, Mark, MarkList } from "./format";
-import { getInputLength, isObjMark, isSkipMark } from "./utils";
+import { MarkListFactory } from "./markListFactory";
+import { getInputLength, isConflicted, isObjMark, isSkipMark } from "./utils";
 
 export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChange;
 
@@ -44,6 +46,7 @@ export function amendInvert<TNodeChange>(
         invertedChange,
         originalRevision,
         crossFieldManager as CrossFieldManager<TNodeChange>,
+        invertChild,
     );
     return invertedChange;
 }
@@ -54,7 +57,7 @@ function invertMarkList<TNodeChange>(
     invertChild: NodeChangeInverter<TNodeChange>,
     crossFieldManager: CrossFieldManager<TNodeChange>,
 ): MarkList<TNodeChange> {
-    const inverseMarkList: MarkList<TNodeChange> = [];
+    const inverseMarkList = new MarkListFactory<TNodeChange>();
     let inputIndex = 0;
 
     for (const mark of markList) {
@@ -63,7 +66,7 @@ function invertMarkList<TNodeChange>(
         inputIndex += getInputLength(mark);
     }
 
-    return inverseMarkList;
+    return inverseMarkList.list;
 }
 
 function invertMark<TNodeChange>(
@@ -96,12 +99,27 @@ function invertMark<TNodeChange>(
                 ];
             }
             case "Revive": {
-                return [
-                    {
-                        type: "Delete",
-                        count: mark.count,
-                    },
-                ];
+                if (!isConflicted(mark)) {
+                    return [
+                        {
+                            type: "Delete",
+                            count: mark.count,
+                        },
+                    ];
+                }
+                if (mark.lastDetachedBy === undefined) {
+                    // The nodes were already revived, so the revive mark did not affect them.
+                    return mark.changes === undefined
+                        ? [mark.count]
+                        : [
+                              {
+                                  type: "Modify",
+                                  changes: invertChild(mark.changes),
+                              },
+                          ];
+                }
+                // The nodes were not revived and could not be revived.
+                return [];
             }
             case "Modify": {
                 return [
@@ -113,6 +131,25 @@ function invertMark<TNodeChange>(
             }
             case "MoveOut":
             case "ReturnFrom": {
+                if (isConflicted(mark)) {
+                    assert(
+                        mark.changes === undefined,
+                        0x4e1 /* Nested changes should have been moved to the destination of the move/return that detached them */,
+                    );
+                    // The nodes were already detached so the mark had no effect
+                    return [];
+                }
+                if (mark.isDstConflicted) {
+                    // The nodes were present but the destination was conflicted, the mark had no effect on the nodes.
+                    return mark.changes === undefined
+                        ? [mark.count]
+                        : [
+                              {
+                                  type: "Modify",
+                                  changes: invertChild(mark.changes),
+                              },
+                          ];
+                }
                 if (mark.changes !== undefined) {
                     crossFieldManager.getOrCreate(
                         CrossFieldTarget.Destination,
@@ -133,14 +170,26 @@ function invertMark<TNodeChange>(
             }
             case "MoveIn":
             case "ReturnTo": {
-                return [
-                    {
-                        type: "ReturnFrom",
-                        id: mark.id,
-                        count: mark.count,
-                        detachedBy: mark.revision ?? revision,
-                    },
-                ];
+                if (!isConflicted(mark)) {
+                    if (mark.isSrcConflicted) {
+                        // The nodes could have been attached but were not because of the source.
+                        return [];
+                    }
+                    return [
+                        {
+                            type: "ReturnFrom",
+                            id: mark.id,
+                            count: mark.count,
+                            detachedBy: mark.revision ?? revision,
+                        },
+                    ];
+                }
+                if (mark.type === "ReturnTo" && mark.lastDetachedBy === undefined) {
+                    // The nodes were already attached, so the mark did not affect them.
+                    return [mark.count];
+                }
+                // The nodes were not attached and could not be attached.
+                return [];
             }
             default:
                 fail("Not implemented");
@@ -152,6 +201,7 @@ function transferMovedChanges<TNodeChange>(
     marks: MarkList<TNodeChange>,
     revision: RevisionTag | undefined,
     crossFieldManager: CrossFieldManager<TNodeChange>,
+    invertChild: NodeChangeInverter<TNodeChange>,
 ): void {
     for (const mark of marks) {
         if (isObjMark(mark) && (mark.type === "MoveOut" || mark.type === "ReturnFrom")) {
@@ -161,7 +211,7 @@ function transferMovedChanges<TNodeChange>(
                 mark.id,
             );
             if (change !== undefined) {
-                mark.changes = change;
+                mark.changes = invertChild(change);
             }
         }
     }

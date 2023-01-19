@@ -3,29 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import { assert, Uint8ArrayToString } from "@fluidframework/common-utils";
-import { getDocAttributesFromProtocolSummary, NonRetryableError } from "@fluidframework/driver-utils";
-import { getGitType } from "@fluidframework/protocol-base";
-import { SummaryType, ISummaryTree, ISummaryBlob } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/common-utils";
+import { NonRetryableError } from "@fluidframework/driver-utils";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
-    IFileEntry,
     InstrumentedStorageTokenFetcher,
     IOdspResolvedUrl,
     OdspErrorType,
     ShareLinkInfoType,
     ISharingLinkKind,
     ShareLinkTypes,
+    IFileEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
-    IOdspSummaryTree,
-    OdspSummaryTreeValue,
-    OdspSummaryTreeEntry,
     ICreateFileResponse,
-    IOdspSummaryPayload,
 } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
@@ -33,15 +27,14 @@ import {
     createCacheSnapshotKey,
     getWithRetryForTokenRefresh,
     INewFileInfo,
-    getOrigin,
-    maxUmpPostBodySize,
+    getOrigin
 } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { convertCreateNewSummaryTreeToTreeAndBlobs } from "./createNewUtils";
+import { convertCreateNewSummaryTreeToTreeAndBlobs, convertSummaryIntoContainerSnapshot, createNewFluidContainerCore } from "./createNewUtils";
 import { runWithRetry } from "./retryUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ClpCompliantAppHeader } from "./contractsPublic";
@@ -66,7 +59,7 @@ export async function createNewFluidFile(
     forceAccessTokenViaAuthorizationHeader: boolean,
     isClpCompliantApp?: boolean,
     enableSingleRequestForShareLinkWithCreate?: boolean,
-    enableShareLinkWithCreate?: boolean,
+    enableShareLinkWithCreate?: boolean
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
@@ -255,160 +248,22 @@ export async function createNewFluidFileFromSummary(
     const initialUrl =
         `${baseUrl}:/opStream/snapshots/snapshot${createShareLinkParam ? `?${createShareLinkParam}` : ""}`;
 
-    return getWithRetryForTokenRefresh(async (options) => {
-        const storageToken = await getStorageToken(options, "CreateNewFile");
-
-        return PerformanceEvent.timedExecAsync(
-            logger,
-            { eventName: "createNewFile" },
-            async (event) => {
-                const snapshotBody = JSON.stringify(containerSnapshot);
-                let url: string;
-                let headers: { [index: string]: string; };
-                let addInBody = false;
-                const formBoundary = uuid();
-                let postBody = `--${formBoundary}\r\n`;
-                postBody += `Authorization: Bearer ${storageToken}\r\n`;
-                postBody += `X-HTTP-Method-Override: POST\r\n`;
-                postBody += `Content-Type: application/json\r\n`;
-                postBody += `_post: 1\r\n`;
-                postBody += `\r\n${snapshotBody}\r\n`;
-                postBody += `\r\n--${formBoundary}--`;
-
-                if (postBody.length <= maxUmpPostBodySize) {
-                    const urlObj = new URL(initialUrl);
-                    urlObj.searchParams.set("ump", "1");
-                    url = urlObj.href;
-                    headers = {
-                        "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
-                    };
-                    addInBody = true;
-                } else {
-                    const parts = getUrlAndHeadersWithAuth(
-                        initialUrl, storageToken, forceAccessTokenViaAuthorizationHeader);
-                    url = parts.url;
-                    headers = {
-                        ...parts.headers,
-                        "Content-Type": "application/json",
-                    };
-                    postBody = snapshotBody;
-                }
-
-                const fetchResponse = await runWithRetry(
-                    async () => epochTracker.fetchAndParseAsJSON<ICreateFileResponse>(
-                        url,
-                        {
-                            body: postBody,
-                            headers,
-                            method: "POST",
-                        },
-                        "createFile",
-                        addInBody,
-                    ),
-                    "createFile",
-                    logger,
-                );
-
-                const content = fetchResponse.content;
-                if (!content || !content.itemId) {
-                    throw new NonRetryableError(
-                        "ODSP CreateFile call returned no item ID",
-                        DriverErrorType.incorrectServerResponse,
-                        { driverVersion });
-                }
-                event.end({
-                    headers: Object.keys(headers).length !== 0 ? true : undefined,
-                    attempts: options.refresh ? 2 : 1,
-                    ...fetchResponse.propsToLog,
-                });
-                return content;
-            },
-        );
-    });
-}
-
-function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
-    const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
-    const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
-    if (!(appSummary && protocolSummary)) {
-        throw new Error("App and protocol summary required for create new path!!");
-    }
-    const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
-    const attributesSummaryBlob: ISummaryBlob = {
-        type: SummaryType.Blob,
-        content: JSON.stringify(documentAttributes),
-    };
-    protocolSummary.tree.attributes = attributesSummaryBlob;
-    const convertedCreateNewSummary: ISummaryTree = {
-        type: SummaryType.Tree,
-        tree: {
-            ".protocol": protocolSummary,
-            ".app": appSummary,
-        },
-    };
-    const snapshotTree = convertSummaryToSnapshotTreeForCreateNew(convertedCreateNewSummary);
-    const snapshot: IOdspSummaryPayload = {
-        entries: snapshotTree.entries ?? [],
-        message: "app",
-        sequenceNumber: documentAttributes.sequenceNumber,
-        type: "container",
-    };
-    return snapshot;
-}
-
-/**
- * Converts a summary tree to ODSP tree
- */
-export function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspSummaryTree {
-    const snapshotTree: IOdspSummaryTree = {
-        type: "tree",
-        entries: [],
-    };
-
-    const keys = Object.keys(summary.tree);
-    for (const key of keys) {
-        const summaryObject = summary.tree[key];
-
-        let value: OdspSummaryTreeValue;
-        // Tracks if an entry is unreferenced. Currently, only tree entries can be marked as unreferenced. If the
-        // property is not present, the tree entry is considered referenced. If the property is present and is true,
-        // the tree entry is considered unreferenced.
-        let unreferenced: true | undefined;
-
-        switch (summaryObject.type) {
-            case SummaryType.Tree: {
-                value = convertSummaryToSnapshotTreeForCreateNew(summaryObject);
-                unreferenced = summaryObject.unreferenced;
-                break;
-            }
-            case SummaryType.Blob: {
-                const content = typeof summaryObject.content === "string" ?
-                    summaryObject.content : Uint8ArrayToString(summaryObject.content, "base64");
-                const encoding = typeof summaryObject.content === "string" ? "utf-8" : "base64";
-
-                value = {
-                    type: "blob",
-                    content,
-                    encoding,
-                };
-                break;
-            }
-            case SummaryType.Handle: {
-                throw new Error("No handle should be present for first summary!!");
-            }
-            default: {
-                throw new Error(`Unknown tree type ${summaryObject.type}`);
+    return createNewFluidContainerCore<ICreateFileResponse>({
+        containerSnapshot,
+        getStorageToken,
+        logger,
+        initialUrl,
+        forceAccessTokenViaAuthorizationHeader,
+        epochTracker,
+        telemetryName: "CreateNewFile",
+        fetchType: "createFile",
+        validateResponseCallback: content => {
+            if (!content || !content.itemId) {
+                throw new NonRetryableError(
+                    "ODSP CreateFile call returned no item ID",
+                    DriverErrorType.incorrectServerResponse,
+                    { driverVersion });
             }
         }
-
-        const entry: OdspSummaryTreeEntry = {
-            path: encodeURIComponent(key),
-            type: getGitType(summaryObject),
-            value,
-            unreferenced,
-        };
-        snapshotTree.entries?.push(entry);
-    }
-
-    return snapshotTree;
+    });
 }

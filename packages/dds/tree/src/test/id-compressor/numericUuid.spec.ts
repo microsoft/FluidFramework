@@ -19,8 +19,8 @@ import {
     StableId,
     assertIsStableId,
     isStableId,
+    compareStrings,
 } from "../../id-compressor";
-import { compareStrings } from "../../util";
 import { integerToStableId } from "./idCompressorTestUtilities";
 
 describe("NumericUuid", () => {

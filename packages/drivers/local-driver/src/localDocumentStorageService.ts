@@ -32,7 +32,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	constructor(
 		private readonly id: string,
 		private readonly manager: GitManager,
-		public readonly policies: IDocumentStorageServicePolicies = {},
+		public readonly policies: IDocumentStorageServicePolicies,
 	) {
 		this.summaryTreeUploadManager = new SummaryTreeUploadManager(
 			manager,

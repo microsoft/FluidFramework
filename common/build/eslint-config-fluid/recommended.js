@@ -3,6 +3,14 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * "Recommended" eslint configuration.
+ *
+ * This is the fluid-framework repository's default configuration.
+ * Recommended for use production packages whose APIs we do not expect the majority of our customers to use directly.
+ *
+ * For packages whose APIs are intended for wide use, the "Strict" configuration should be used instead.
+ */
 module.exports = {
     extends: ["./minimal.js", "plugin:unicorn/recommended", "plugin:editorconfig/all"],
     plugins: ["editorconfig", "eslint-plugin-tsdoc"],
@@ -30,6 +38,11 @@ module.exports = {
             },
         ],
         "unicorn/empty-brace-spaces": "off",
+
+        // Rationale: Destructuring of `Array.entries()` in order to get the index variable results in a
+        //            significant performance regression [node 14 x64].
+        "unicorn/no-for-loop": "off",
+
         "unicorn/prevent-abbreviations": "off",
 
         /**

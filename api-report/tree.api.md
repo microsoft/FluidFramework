@@ -35,8 +35,14 @@ export class AnchorSet {
     track(path: UpPath | null): Anchor;
 }
 
+// @public
+function areComposable(changes: TaggedChange<Changeset<unknown>>[]): boolean;
+
+// @public
+function areRebasable(branch: Changeset<unknown>, target: Changeset<unknown>): boolean;
+
 // @public (undocumented)
-type Attach<TNodeChange = NodeChangeType> = Insert_2<TNodeChange> | MoveIn_2 | Reattach<TNodeChange>;
+type Attach<TNodeChange = NodeChangeType> = NewAttach<TNodeChange> | Reattach<TNodeChange>;
 
 // @public
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
@@ -56,6 +62,12 @@ export function brandOpaque<T extends BrandedType<any, string>>(value: isAny<Val
 
 // @public (undocumented)
 export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest;
+
+// @public (undocumented)
+type CanConflict = Partial<Conflicted>;
+
+// @public
+type CellSpanningMark<TNodeChange> = Exclude<Mark_2<TNodeChange>, NewAttach<TNodeChange>>;
 
 // @public
 export abstract class ChangeEncoder<TChange> {
@@ -106,11 +118,13 @@ export interface ChildLocation {
     readonly index: number;
 }
 
-// @public (undocumented)
-type ClientId = number;
-
 // @public
 function compose<TNodeChange>(changes: TaggedChange<Changeset<TNodeChange>>[], composeChild: NodeChangeComposer_2<TNodeChange>, genId: IdAllocator): Changeset<TNodeChange>;
+
+// @public (undocumented)
+interface Conflicted {
+    conflictsWith: RevisionTag;
+}
 
 // @public
 export type ContextuallyTypedNodeData = ContextuallyTypedNodeDataObject | PrimitiveValue | readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData>;
@@ -183,11 +197,9 @@ interface Delete {
 }
 
 // @public (undocumented)
-interface Delete_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasChanges<TNodeChange> {
+interface Delete_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasChanges<TNodeChange>, CanConflict {
     // (undocumented)
     count: NodeCount;
-    // (undocumented)
-    tomb?: RevisionTag;
     // (undocumented)
     type: "Delete";
 }
@@ -236,6 +248,14 @@ type Detach<TNodeChange = NodeChangeType> = Delete_2<TNodeChange> | MoveOut_2<TN
 
 // @public
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
+}
+
+// @public
+class DetachedNodeTracker {
+    constructor();
+    apply(change: TaggedChange<Changeset<unknown>>): void;
+    isApplicable(change: Changeset<unknown>): boolean;
+    update<T>(change: TaggedChange<Changeset<T>>, genId: IdAllocator): TaggedChange<Changeset<T>>;
 }
 
 // @public
@@ -451,9 +471,6 @@ export interface FullSchemaPolicy extends SchemaPolicy {
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
 }
 
-// @public (undocumented)
-type GapCount = number;
-
 // @public
 export interface GenericFieldsNode<TChild> {
     // (undocumented)
@@ -468,6 +485,9 @@ export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, Node
 
 // @public
 export const getField: unique symbol;
+
+// @public (undocumented)
+function getInputLength(mark: Mark_2<unknown>): number;
 
 // @public (undocumented)
 export function getPrimaryField(schema: TreeSchema): {
@@ -488,11 +508,6 @@ interface HasChanges<TNodeChange = NodeChangeType> {
 }
 
 // @public (undocumented)
-interface HasLength {
-    length?: number;
-}
-
-// @public (undocumented)
 interface HasMoveId {
     id: MoveId_2;
 }
@@ -507,6 +522,8 @@ interface HasPlaceFields {
 interface HasReattachFields extends HasPlaceFields {
     detachedBy: RevisionTag | undefined;
     detachIndex: number;
+    isIntention?: true;
+    lastDetachedBy?: RevisionTag;
 }
 
 // @public (undocumented)
@@ -568,6 +585,9 @@ export const indexSymbol: unique symbol;
 function inputLength(mark: Mark<unknown>): number;
 
 // @public
+type InputSpanningMark<TNodeChange> = Skip_2 | Detach<TNodeChange> | Modify_2<TNodeChange> | SkipLikeReattach<TNodeChange>;
+
+// @public
 interface Insert<TTree = ProtoNode> {
     // (undocumented)
     readonly content: readonly TTree[];
@@ -611,11 +631,19 @@ export interface Invariant<T> extends Contravariant<T>, Covariant<T> {
 // @public
 function invert<TNodeChange>(change: TaggedChange<Changeset<TNodeChange>>, invertChild: NodeChangeInverter_2<TNodeChange>, genId: IdAllocator, crossFieldManager: CrossFieldManager): Changeset<TNodeChange>;
 
+// @public (undocumented)
+function isActiveReattach<TNodeChange>(mark: Mark_2<TNodeChange>): mark is Reattach<TNodeChange> & {
+    conflictsWith?: undefined;
+};
+
 // @public
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
 
 // @public
 export function isContextuallyTypedNodeDataObject(data: ContextuallyTypedNodeData | undefined): data is ContextuallyTypedNodeDataObject;
+
+// @public (undocumented)
+function isDetachMark<TNodeChange>(mark: Mark_2<TNodeChange> | undefined): mark is Detach<TNodeChange>;
 
 // @public
 export function isEditableField(field: UnwrappedEditableField): field is EditableField;
@@ -645,6 +673,9 @@ export function isPrimitive(schema: TreeSchema): boolean;
 
 // @public (undocumented)
 export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
+
+// @public (undocumented)
+function isReattach<TNodeChange>(mark: Mark_2<TNodeChange>): mark is Reattach<TNodeChange>;
 
 // @public (undocumented)
 function isSkipMark(mark: Mark<unknown>): mark is Skip;
@@ -775,7 +806,7 @@ export interface MakeNominal {
 type Mark<TTree = ProtoNode> = Skip | Modify<TTree> | Delete | MoveOut | MoveIn | Insert<TTree> | ModifyAndDelete<TTree> | ModifyAndMoveOut<TTree> | MoveInAndModify<TTree> | InsertAndModify<TTree>;
 
 // @public (undocumented)
-type Mark_2<TNodeChange = NodeChangeType> = SizedMark<TNodeChange> | Attach<TNodeChange>;
+type Mark_2<TNodeChange = NodeChangeType> = InputSpanningMark<TNodeChange> | OutputSpanningMark<TNodeChange>;
 
 // @public
 export interface MarkedArrayLike<T> extends ArrayLike<T> {
@@ -832,8 +863,6 @@ interface Modify<TTree = ProtoNode> {
 interface Modify_2<TNodeChange = NodeChangeType> {
     // (undocumented)
     changes: TNodeChange;
-    // (undocumented)
-    tomb?: RevisionTag;
     // (undocumented)
     type: "Modify";
 }
@@ -932,8 +961,9 @@ interface MoveIn {
 }
 
 // @public (undocumented)
-interface MoveIn_2 extends HasMoveId, HasPlaceFields, HasRevisionTag {
+interface MoveIn_2 extends HasMoveId, HasPlaceFields, HasRevisionTag, CanConflict {
     count: NodeCount;
+    isSrcConflicted?: true;
     // (undocumented)
     type: "MoveIn";
 }
@@ -960,11 +990,10 @@ interface MoveOut {
 }
 
 // @public (undocumented)
-interface MoveOut_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMoveId, HasChanges<TNodeChange> {
+interface MoveOut_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMoveId, HasChanges<TNodeChange>, CanConflict {
     // (undocumented)
     count: NodeCount;
-    // (undocumented)
-    tomb?: RevisionTag;
+    isDstConflicted?: true;
     // (undocumented)
     type: "MoveOut";
 }
@@ -973,10 +1002,12 @@ interface MoveOut_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMov
 interface MovePartition<TNodeChange> {
     // (undocumented)
     count?: number;
+    detachedBy?: RevisionTag;
     // (undocumented)
     id: MoveId_2;
     // (undocumented)
     modifyAfter?: TNodeChange;
+    pairedMarkStatus?: PairedMarkUpdate;
     // (undocumented)
     replaceWith?: Mark_2<TNodeChange>[];
 }
@@ -1010,6 +1041,9 @@ export type NameFromBranded<T extends BrandedType<any, string>> = T extends Bran
 
 // @public
 export const neverTree: TreeSchema;
+
+// @public
+type NewAttach<TNodeChange = NodeChangeType> = Insert_2<TNodeChange> | MoveIn_2;
 
 // @public (undocumented)
 function newMoveEffectTable<T>(): MoveEffectTable<T>;
@@ -1068,7 +1102,7 @@ export interface NodeData {
 export type NodeReviver = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
 
 // @public (undocumented)
-type ObjectMark<TNodeChange = NodeChangeType> = SizedObjectMark<TNodeChange> | Attach<TNodeChange>;
+type ObjectMark<TNodeChange = NodeChangeType> = Exclude<Mark_2<TNodeChange>, Skip_2>;
 
 // @public
 export interface ObservingDependent extends Dependent {
@@ -1086,6 +1120,15 @@ export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueTy
 // @public (undocumented)
 export interface OptionalFieldEditBuilder {
     set(newContent: ITreeCursor | undefined, wasEmpty: boolean): void;
+}
+
+// @public
+type OutputSpanningMark<TNodeChange> = Skip_2 | NewAttach<TNodeChange> | Modify_2<TNodeChange> | Reattach<TNodeChange>;
+
+// @public (undocumented)
+enum PairedMarkUpdate {
+    Deactivated = 0,
+    Reactivated = 1
 }
 
 // @public (undocumented)
@@ -1155,21 +1198,21 @@ export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepair
 export const replaceField: unique symbol;
 
 // @public (undocumented)
-interface ReturnFrom<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMoveId, HasChanges<TNodeChange> {
+interface ReturnFrom<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMoveId, HasChanges<TNodeChange>, CanConflict {
     // (undocumented)
     count: NodeCount;
-    // (undocumented)
     detachedBy: RevisionTag | undefined;
-    // (undocumented)
-    tomb?: RevisionTag;
+    detachIndex?: number;
+    isDstConflicted?: true;
     // (undocumented)
     type: "ReturnFrom";
 }
 
 // @public (undocumented)
-interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId {
+interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId, CanConflict {
     // (undocumented)
     count: NodeCount;
+    isSrcConflicted?: true;
     // (undocumented)
     type: "ReturnTo";
 }
@@ -1178,7 +1221,7 @@ interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId {
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
 
 // @public (undocumented)
-interface Revive<TNodeChange = NodeChangeType> extends HasReattachFields, HasRevisionTag, HasChanges<TNodeChange> {
+interface Revive<TNodeChange = NodeChangeType> extends HasReattachFields, HasRevisionTag, HasChanges<TNodeChange>, CanConflict {
     // (undocumented)
     count: NodeCount;
     // (undocumented)
@@ -1228,15 +1271,13 @@ type SequenceChangeRebaser = FieldChangeRebaser<Changeset>;
 declare namespace SequenceField {
     export {
         Attach,
+        NewAttach,
         Changeset,
-        ClientId,
         Delete_2 as Delete,
         Detach,
         Effects,
-        GapCount,
         HasChanges,
         HasMoveId,
-        HasLength,
         HasPlaceFields,
         HasRevisionTag,
         HasTiebreakPolicy,
@@ -1257,15 +1298,16 @@ declare namespace SequenceField {
         ReturnFrom,
         ReturnTo,
         Revive,
-        SizedMark,
-        SizedObjectMark,
         Tiebreak,
-        Tombstones,
-        TreeForestPath,
-        TreeRootPath,
         Skip_2 as Skip,
         LineageEvent,
         HasReattachFields,
+        CellSpanningMark,
+        InputSpanningMark,
+        OutputSpanningMark,
+        SkipLikeReattach,
+        Conflicted,
+        CanConflict,
         SequenceFieldChangeHandler,
         sequenceFieldChangeHandler,
         SequenceChangeRebaser,
@@ -1287,11 +1329,20 @@ declare namespace SequenceField {
         NodeChangeInverter_2 as NodeChangeInverter,
         compose,
         NodeChangeComposer_2 as NodeChangeComposer,
+        areComposable,
+        areRebasable,
+        isActiveReattach,
+        getInputLength,
+        isDetachMark,
+        isReattach,
+        DetachedNodeTracker,
         isMoveMark,
         MoveMark,
         MoveEffectTable,
         MovePartition,
-        newMoveEffectTable
+        newMoveEffectTable,
+        PairedMarkUpdate,
+        splitMarkOnOutput
     }
 }
 export { SequenceField }
@@ -1320,6 +1371,7 @@ export interface SequenceFieldEditBuilder {
     delete(index: number, count: number): void;
     insert(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
     move(sourceIndex: number, count: number, destIndex: number): void;
+    revive(index: number, count: number, detachedBy: RevisionTag, detachIndex: number, isIntention?: true): void;
 }
 
 // @public (undocumented)
@@ -1333,7 +1385,7 @@ interface SequenceFieldEditor extends FieldEditor<Changeset> {
     // (undocumented)
     return(sourceIndex: number, count: number, destIndex: number, detachedBy: RevisionTag, detachIndex: number): Changeset<never>;
     // (undocumented)
-    revive(index: number, count: number, detachIndex: number, revision: RevisionTag): Changeset<never>;
+    revive(index: number, count: number, detachedBy: RevisionTag, detachIndex: number, isIntention?: true): Changeset<never>;
 }
 
 // @public (undocumented)
@@ -1341,7 +1393,7 @@ const sequenceFieldEditor: {
     buildChildChange: <TNodeChange = NodeChangeset>(index: number, change: TNodeChange) => Changeset<TNodeChange>;
     insert: (index: number, cursors: ITreeCursor | ITreeCursor[]) => Changeset<never>;
     delete: (index: number, count: number) => Changeset<never>;
-    revive: (index: number, count: number, detachIndex: number, revision: RevisionTag) => Changeset<never>;
+    revive: (index: number, count: number, detachedBy: RevisionTag, detachIndex: number, isIntention?: true | undefined) => Changeset<never>;
     move(sourceIndex: number, count: number, destIndex: number): Changeset<never>;
     return(sourceIndex: number, count: number, destIndex: number, detachedBy: RevisionTag, detachIndex: number): Changeset<never>;
 };
@@ -1378,17 +1430,19 @@ export class SimpleDependee implements Dependee {
 // @public
 export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous;
 
-// @public (undocumented)
-type SizedMark<TNodeChange = NodeChangeType> = Skip_2 | SizedObjectMark<TNodeChange>;
-
-// @public (undocumented)
-type SizedObjectMark<TNodeChange = NodeChangeType> = Modify_2<TNodeChange> | Detach<TNodeChange>;
-
 // @public
 type Skip = number;
 
 // @public (undocumented)
 type Skip_2 = number;
+
+// @public
+type SkipLikeReattach<TNodeChange> = Reattach<TNodeChange> & Conflicted & {
+    lastDeletedBy?: never;
+};
+
+// @public
+function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(mark: TMark, length: number, genId: IdAllocator, moveEffects: MoveEffectTable<unknown>, ignorePairing?: boolean): [TMark, TMark];
 
 // @public
 export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, ISubscribable<SchemaEvents>, SchemaDataAndPolicy<TPolicy> {
@@ -1424,26 +1478,12 @@ export type ToDelta = (child: NodeChangeset, index: number | undefined) => Delta
 // @public (undocumented)
 type ToDelta_2<TNodeChange> = (child: TNodeChange, index: number | undefined) => Delta.Modify;
 
-// @public
-interface Tombstones {
-    // (undocumented)
-    change: RevisionTag;
-    // (undocumented)
-    count: NodeCount;
-}
-
 // @public (undocumented)
 export enum TransactionResult {
     // (undocumented)
     Abort = 0,
     // (undocumented)
     Apply = 1
-}
-
-// @public (undocumented)
-interface TreeForestPath {
-    // (undocumented)
-    [label: string]: TreeRootPath;
 }
 
 // @public (undocumented)
@@ -1460,11 +1500,6 @@ export const enum TreeNavigationResult {
     Ok = 1,
     Pending = 0
 }
-
-// @public (undocumented)
-type TreeRootPath = number | {
-    [label: number]: TreeForestPath;
-};
 
 // @public (undocumented)
 export interface TreeSchema {
