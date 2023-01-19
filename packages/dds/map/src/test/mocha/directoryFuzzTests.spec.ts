@@ -92,7 +92,7 @@ interface OperationGenerationConfig {
 }
 
 const defaultOptions: Required<OperationGenerationConfig> = {
-    validateInterval: 2,
+    validateInterval: 10,
     maxSubDirectoryChild: 3,
     subDirectoryNamePool: ["dir1", "dir2", "dir3"],
     keyNamePool: ["prop1", "prop2", "prop3"],
@@ -152,7 +152,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         return parentDir.absolutePath;
     }
 
-    function pickAbsolutePathForKeyOps(state: ClientOpState): string {
+    function pickAbsolutePathForKeyOps(state: ClientOpState, shouldHaveKey: boolean): string {
         const { random, sharedDirectory } = state;
         let parentDir: IDirectory = sharedDirectory;
         for(;;) {
@@ -162,26 +162,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
                 subDirs.push(b);
             }
             const subDir = random.pick<IDirectory | undefined>([undefined, ...subDirs]);
-            if (subDir !== undefined) {
-                parentDir = subDir;
-            } else {
-                break;
-            }
-        }
-        return parentDir.absolutePath;
-    }
-
-    function pickAbsolutePathForClearOps(state: ClientOpState): string {
-        const { random, sharedDirectory } = state;
-        let parentDir: IDirectory = sharedDirectory;
-        for(;;) {
-            assert(parentDir !== undefined, "Directory should be defined");
-            const subDirs: IDirectory[] = [];
-            for (const [_, b] of parentDir.subdirectories()) {
-                subDirs.push(b);
-            }
-            const subDir = random.pick<IDirectory | undefined>([undefined, ...subDirs]);
-            if (subDir !== undefined && subDir.size > 0) {
+            if (subDir !== undefined && (!shouldHaveKey || subDir.size > 0)) {
                 parentDir = subDir;
             } else {
                 break;
@@ -223,7 +204,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         return {
             type: "set",
             key: random.pick(options.keyNamePool),
-            path: pickAbsolutePathForKeyOps(state),
+            path: pickAbsolutePathForKeyOps(state, false),
             value: random.string(random.integer(0, 4)),
             directoryId: sharedDirectory.id,
         };
@@ -232,14 +213,14 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
     function clearKeys(state: ClientOpState): ClearKeys {
         return {
             type: "clear",
-            path: pickAbsolutePathForClearOps(state),
+            path: pickAbsolutePathForKeyOps(state, true),
             directoryId: state.sharedDirectory.id,
         };
     }
 
     function deleteKey(state: ClientOpState): DeleteKey {
         const { random, sharedDirectory } = state;
-        const path = pickAbsolutePathForClearOps(state);
+        const path = pickAbsolutePathForKeyOps(state, true);
         const dir = sharedDirectory.getWorkingDirectory(path);
         assert(dir, "dir should exist");
         return {
