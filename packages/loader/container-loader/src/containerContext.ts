@@ -172,7 +172,7 @@ export class ContainerContext implements IContainerContext {
     /**
      * {@inheritDoc @fluidframework/container-definitions#IContainerContext.entryPoint}
      */
-    public readonly entryPoint: Promise<FluidObject | undefined>
+    public readonly entryPoint?: Promise<FluidObject | undefined>
     private _entryPointPromiseResolver: (entryPoint: FluidObject | undefined) => void
         = (entryPoint: FluidObject | undefined) => {};
     private _entryPointPromiseRejecter: (reason?: unknown) => void

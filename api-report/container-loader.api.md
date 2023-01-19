@@ -86,7 +86,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     dispose?(error?: ICriticalContainerError): void;
     // (undocumented)
-    get entryPoint(): Promise<FluidObject | undefined>;
+    readonly entryPoint?: Promise<FluidObject | undefined>;
     forceReadonly(readonly: boolean): void;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;

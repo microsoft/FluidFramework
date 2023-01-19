@@ -559,9 +559,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     /**
      * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
      */
-    public get entryPoint() : Promise<FluidObject | undefined> {
-        return this.context.entryPoint;
-    }
+    public readonly entryPoint?: Promise<FluidObject | undefined>;
 
     constructor(
         private readonly loader: Loader,
@@ -576,6 +574,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 },
                 error);
         });
+
+        this.entryPoint = this.context.entryPoint;
 
         this.clientDetailsOverride = config.clientDetailsOverride;
         this._resolvedUrl = config.resolvedUrl;
