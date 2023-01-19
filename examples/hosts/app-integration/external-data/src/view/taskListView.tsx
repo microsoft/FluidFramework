@@ -61,8 +61,6 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
     const showPriority = !diffVisible && savedPriority !== task.DEFAULT_PRIORITY ? "visible" : "hidden";
     const showName = !diffVisible && savedName !== task.DEFAULT_NAME ? "visible" : "hidden";
     const showAcceptButton = diffVisible ? "hidden" : "visible";
-    console.log(savedName);
-    console.log(showName);
 
     // console.log(task);
     let diffColor: string = "white";
