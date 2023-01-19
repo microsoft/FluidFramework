@@ -3685,7 +3685,7 @@ importers:
       sinon: ^7.4.2
       traverse: 0.6.6
       typescript: ~4.5.5
-      underscore: ^1.12.1
+      underscore: ^1.13.6
     dependencies:
       '@fluid-experimental/property-changeset': link:../property-changeset
       '@fluid-experimental/property-common': link:../property-common
@@ -4052,6 +4052,7 @@ importers:
     specifiers:
       '@fluid-experimental/sequence-deprecated-previous': npm:@fluid-experimental/sequence-deprecated@2.0.0-internal.2.0.0
       '@fluid-internal/test-dds-utils': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
+      '@fluid-tools/build-cli': ^0.7.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.7.0
       '@fluidframework/common-utils': ^1.0.0
@@ -4088,6 +4089,7 @@ importers:
     devDependencies:
       '@fluid-experimental/sequence-deprecated-previous': /@fluid-experimental/sequence-deprecated/2.0.0-internal.2.0.0
       '@fluid-internal/test-dds-utils': link:../../../packages/dds/test-dds-utils
+      '@fluid-tools/build-cli': 0.7.0
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.7.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
@@ -6837,6 +6839,7 @@ importers:
   packages/framework/attributor:
     specifiers:
       '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
+      '@fluid-tools/build-cli': ^0.7.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.7.0
       '@fluidframework/common-utils': ^1.0.0
@@ -6884,6 +6887,7 @@ importers:
       lz4js: 0.2.0
     devDependencies:
       '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
+      '@fluid-tools/build-cli': 0.7.0
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.7.0
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
@@ -7222,6 +7226,7 @@ importers:
       '@rushstack/eslint-config': ^2.5.1
       '@types/diff': ^3.5.1
       '@types/mocha': ^9.1.1
+      '@types/node': ^14.18.36
       '@types/random-js': ^1.0.31
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
@@ -7252,6 +7257,7 @@ importers:
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/diff': 3.5.5
       '@types/mocha': 9.1.1
+      '@types/node': 14.18.36
       '@types/random-js': 1.0.31
       concurrently: 6.3.0
       copyfiles: 2.4.1
@@ -7354,6 +7360,7 @@ importers:
 
   packages/framework/tinylicious-client:
     specifiers:
+      '@fluid-tools/build-cli': ^0.7.0
       '@fluidframework/aqueduct': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.7.0
@@ -7403,6 +7410,7 @@ importers:
       '@fluidframework/tinylicious-driver': link:../../drivers/tinylicious-driver
       uuid: 8.3.2
     devDependencies:
+      '@fluid-tools/build-cli': 0.7.0
       '@fluidframework/aqueduct': link:../aqueduct
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.7.0
