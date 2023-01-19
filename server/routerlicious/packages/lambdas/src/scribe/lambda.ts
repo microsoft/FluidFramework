@@ -200,7 +200,8 @@ export class ScribeLambda implements IPartitionLambda {
                 if (value.operation.type === MessageType.Summarize && !value.operation.serverMetadata?.deliAcked) {
                     // ensure the client is requesting a summary for a state that scribe can achieve
                     // the clients summary state (ref seq num) must be at least as high as scribes (protocolHandler.sequenceNumber)
-                    if (!this.summaryWriter.isExternal || value.operation.referenceSequenceNumber >= this.protocolHandler.sequenceNumber) {
+                    if (!this.summaryWriter.isExternal ||
+                        value.operation.referenceSequenceNumber >= this.protocolHandler.sequenceNumber) {
                         // Process up to the summary op ref seq to get the protocol state at the summary op.
                         // Capture state first in case the summary is nacked.
                         const prevState = {
