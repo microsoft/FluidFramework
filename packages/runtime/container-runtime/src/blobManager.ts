@@ -411,7 +411,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
             0x386 /* Must have pending blob entry for uploaded blob */);
         entry.storageId = response.id;
         entry.localUploadTime = Date.now();
-        // entry.serverUploadTime = this.getStorage().getTime?.();
         entry.minTTL = response.minTTLInSeconds;
 
         if (this.runtime.connected) {
@@ -495,29 +494,20 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
     }
 
     private getTimeInfo(pendingEntry: PendingBlob, eventName: string, noTTLEventName: string) {
-        // const serverSendBlobTime: number = this.getStorage().getTime?.()?? 0;
-        // let timeLapseSinceServerUpload: number = 0;
         let timeLapseSinceLocalUpload: number = 0;
         let expiredUsingLocalTime;
-        // let expiredUsingServerTime;
         const minTTL: number  | undefined = pendingEntry.minTTL;
         if(minTTL) {
             if(pendingEntry.localUploadTime){
                 timeLapseSinceLocalUpload = (Date.now() - pendingEntry.localUploadTime) / 1000;
                 expiredUsingLocalTime = minTTL - timeLapseSinceLocalUpload < 0 ? true : false;
             }
-            // if (!!serverSendBlobTime && !!pendingEntry.serverUploadTime) {
-            //     timeLapseSinceServerUpload = (serverSendBlobTime - pendingEntry.serverUploadTime) / 1000;
-            //     expiredUsingServerTime = minTTL - timeLapseSinceServerUpload < 0 ? true : false;
-            // }
             this.mc.logger.sendTelemetryEvent({
                 eventName,
                 entryStatus: pendingEntry.status,
                 timeLapseSinceLocalUpload,
-                // timeLapseSinceServerUpload,
                 minTTL,
                 expiredUsingLocalTime,
-                // expiredUsingServerTime,
             });
         } else {
             this.mc.logger.sendTelemetryEvent({ eventName: noTTLEventName, entryStatus: pendingEntry.status, });
