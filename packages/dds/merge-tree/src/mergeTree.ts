@@ -31,6 +31,7 @@ import {
     LocalReferencePosition,
 } from "./localReference";
 import {
+    AttributionKey,
 	BaseSegment,
 	BlockAction,
 	BlockUpdateActions,
@@ -65,6 +66,7 @@ import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } fro
 import {
     ICombiningOp,
     IMergeTreeDeltaOp,
+    IMergeTreeOp,
     IRelativePosition,
     MergeTreeDeltaType,
     ReferenceType,
@@ -434,6 +436,8 @@ export interface IMergeTreeAttributionOptions {
      * default: false
      */
     track?: boolean;
+
+    interpreter?: IAttributionInterpreter;
 }
 
 /**
@@ -470,6 +474,8 @@ export class MergeTree {
         zamboniSegments: true,
     };
 
+    private readonly interpreter: IAttributionInterpreter;
+
     private static readonly initBlockUpdateActions: BlockUpdateActions;
     private static readonly theUnfinishedNode = <IMergeBlock>{ childCount: -1 };
 
@@ -495,6 +501,7 @@ export class MergeTree {
     public constructor(public options?: IMergeTreeOptions) {
         this._root = this.makeBlock(0);
         this._root.mergeTree = this;
+        this.interpreter = options?.attribution?.interpreter ?? defaultInterpreter
     }
 
     private _root: IRootMergeBlock;
@@ -1279,17 +1286,8 @@ export class MergeTree {
         if (pendingSegmentGroup !== undefined) {
             const deltaSegments: IMergeTreeSegmentDelta[] = [];
             pendingSegmentGroup.segments.map((pendingSegment) => {
-                const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs);
-                // TODO: This work should likely be done as part of the above `ack` call. However the exact format
-                // of the argument to pass isn't obvious given some planned extensibility points around customizing
-                // what types of operations are attributed and how. Since `ack` is in the public API, leaving it
-                // here for now should reduce future breaking changes.
-                if (opArgs.op.type === MergeTreeDeltaType.INSERT && this.options?.attribution?.track) {
-                    pendingSegment.attribution = new AttributionCollection(
-                        seq,
-                        pendingSegment.cachedLength
-                    );
-                }
+                const attributionDeltas = this.options?.attribution?.track ? this.interpreter.getAttributionChanges(pendingSegment, opArgs.op, seq) : undefined;
+                const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs, attributionDeltas);
 
                 overwrite = overlappingRemove || overwrite;
 
@@ -1400,6 +1398,17 @@ export class MergeTree {
         const localSeq = seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
 
         this.blockInsert(pos, refSeq, clientId, seq, localSeq, segments);
+        for (const newSegment of segments) {
+            if (this.options?.attribution?.track && seq !== UnassignedSequenceNumber) {
+                if (!newSegment.attribution && opArgs !== undefined) {
+                    newSegment.attribution = new AttributionCollection(newSegment.cachedLength);
+                    const deltas = this.interpreter.getAttributionChanges(newSegment, opArgs.op, seq);
+                    if (deltas) {
+                        newSegment.attribution.ackDeltas(deltas, newSegment.propertyManager);
+                    }
+                }
+            }
+        }
 
         // opArgs == undefined => loading snapshot or test code
         if (this.mergeTreeDeltaCallback && opArgs !== undefined) {
@@ -1641,13 +1650,6 @@ export class MergeTree {
                 newSegment.seq = seq;
                 newSegment.localSeq = localSeq;
                 newSegment.clientId = clientId;
-                if (this.options?.attribution?.track && seq !== UnassignedSequenceNumber) {
-                    newSegment.attribution ??= new AttributionCollection(
-                        newSegment.seq,
-                        newSegment.cachedLength
-                    );
-                }
-
                 if (Marker.is(newSegment)) {
                     const markerId = newSegment.getId();
                     if (markerId) {
@@ -1876,6 +1878,14 @@ export class MergeTree {
                 } else {
                     if (MergeTree.options.zamboniSegments) {
                         this.addToLRUSet(segment, seq);
+                    }
+                    if (this.options?.attribution?.track && seq !== UnassignedSequenceNumber) {
+                        if (segment.attribution && opArgs !== undefined) {
+                            const deltas = this.interpreter.getAttributionChanges(segment, opArgs.op, seq);
+                            if (deltas) {
+                                segment.attribution.ackDeltas(deltas, segment.propertyManager);
+                            }
+                        }
                     }
                 }
             }
@@ -2322,5 +2332,45 @@ export class MergeTree {
                 ? undefined
                 : (block) => post(block, pos, refSeq, clientId, start - pos, endPos - pos, accum),
         );
+    }
+}
+
+// TODO: fast-paths for simple changes, simpler format which also doesn't limit expression
+export interface AttributionChannelChange {
+    key: AttributionKey;
+    start?: number;
+}
+
+export interface AttributionInsertionEntry {
+    type: 'insert';
+    changes: AttributionChannelChange[];
+}
+
+export interface AttributionPropEntry {
+    type: 'prop';
+    // prop-based attribution needs to be vetted based on pending writes to the property it's derived from. If there's a pending
+    // write to that prop, that overrules this.
+    dependentPropName: string;
+    channel: string;
+    changes: AttributionChannelChange[];
+}
+
+export type AttributionChangeEntry = AttributionInsertionEntry | AttributionPropEntry;
+
+export interface IAttributionInterpreter {
+    getAttributionChanges(segment: ISegment, op: IMergeTreeOp, seq: number): AttributionChangeEntry[] | undefined;
+}
+
+export const defaultInterpreter: IAttributionInterpreter = {
+    getAttributionChanges: (seg: ISegment, op: IMergeTreeOp, seq: number) => {
+        const results: AttributionChangeEntry[] = [];
+        if (op.type === MergeTreeDeltaType.INSERT) {
+            // TODO: some kind of validation or API contract that seg.seq is set in time here.
+            results.push({
+                type: 'insert',
+                changes: [{ key: { type: 'op', seq }}]
+            });
+        }
+        return results;
     }
 }

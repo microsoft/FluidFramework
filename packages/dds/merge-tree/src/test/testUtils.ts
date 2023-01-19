@@ -12,9 +12,9 @@ import {
 } from "../mergeTreeNodes";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { TextSegment } from "../textSegment";
-import { ReferenceType } from "../ops";
+import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
-import { MergeTree } from "../mergeTree";
+import { AttributionChangeEntry, IAttributionInterpreter, MergeTree } from "../mergeTree";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { loadText } from "./text";
 
@@ -244,5 +244,38 @@ export function validatePartialLengths(
 
         assert.equal(partialLen, len);
         assert.equal(actualLen, len);
+    }
+}
+
+export function trackProperties(...propertiesToTrack: (string | { propName: string; channelName: string })[]): IAttributionInterpreter {
+    const toTrack = propertiesToTrack.map(entry => typeof entry === 'string' ? { propName: entry, channelName: entry } : entry);
+    return {
+        getAttributionChanges: (seg: ISegment, op: IMergeTreeOp, seq: number) => {
+            const results: AttributionChangeEntry[] = [];
+            if (op.type === MergeTreeDeltaType.ANNOTATE) {
+                for (const { propName, channelName } of toTrack) {
+                    if (op.props[propName] !== undefined) {
+                        results.push({
+                            type: 'prop',
+                            dependentPropName: propName,
+                            channel: channelName,
+                            changes: [{ key: { type: 'op', seq }}]
+                        });
+                    }
+                }
+            } else if (op.type === MergeTreeDeltaType.INSERT) {
+                for (const { propName, channelName } of toTrack) {
+                    if (seg.properties?.[propName] !== undefined) {
+                        results.push({
+                            type: 'prop',
+                            dependentPropName: propName,
+                            channel: channelName,
+                            changes: [{ key: { type: 'op', seq }}]
+                        })
+                    }
+                }
+            }
+            return results;
+        }
     }
 }

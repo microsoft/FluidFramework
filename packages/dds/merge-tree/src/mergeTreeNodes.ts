@@ -8,7 +8,7 @@
 /* eslint-disable @typescript-eslint/prefer-optional-chain */
 
 import { assert } from "@fluidframework/common-utils";
-import { IAttributionCollection } from "./attributionCollection";
+import { AttributionCollection, IAttributionCollection } from "./attributionCollection";
 import {
     LocalClientId,
     UnassignedSequenceNumber,
@@ -17,6 +17,7 @@ import {
 import {
      LocalReferenceCollection,
 } from "./localReference";
+import { AttributionChangeEntry } from "./mergeTree";
 import {
     IMergeTreeDeltaOpArgs,
 } from "./mergeTreeDeltaCallback";
@@ -243,7 +244,12 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
      * E.g. if the segment group is not first in the pending queue, or
      * an inserted segment does not have unassigned sequence number.
      */
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
+    ack(
+        segmentGroup: SegmentGroup,
+        opArgs: IMergeTreeDeltaOpArgs,
+        // TODO: doc
+        attributionDeltas: AttributionChangeEntry[] | undefined,
+    ): boolean;
 }
 
 export interface IMarkerModifiedAction {
@@ -472,21 +478,21 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
     public abstract toJSONObject(): any;
 
-    public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
+    public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, attributionDeltas: AttributionChangeEntry[] | undefined): boolean {
         const currentSegmentGroup = this.segmentGroups.dequeue();
         assert(currentSegmentGroup === segmentGroup, 0x043 /* "On ack, unexpected segmentGroup!" */);
         switch (opArgs.op.type) {
             case MergeTreeDeltaType.ANNOTATE:
                 assert(!!this.propertyManager, 0x044 /* "On annotate ack, missing segment property manager!" */);
                 this.propertyManager.ackPendingProperties(opArgs.op);
-                return true;
+                break;
 
             case MergeTreeDeltaType.INSERT:
                 assert(this.seq === UnassignedSequenceNumber, 0x045 /* "On insert, seq number already assigned!" */);
                 this.seq = opArgs.sequencedMessage!.sequenceNumber;
                 this.localSeq = undefined;
-                return true;
-
+                break;
+                
             case MergeTreeDeltaType.REMOVE:
                 const removalInfo: IRemovalInfo | undefined = toRemovalInfo(this);
                 assert(removalInfo !== undefined, 0x046 /* "On remove ack, missing removal info!" */);
@@ -500,6 +506,13 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
             default:
                 throw new Error(`${opArgs.op.type} is in unrecognized operation type`);
         }
+
+        if (attributionDeltas !== undefined) {
+            // prop exclusion of those with pending writes could be excluded in this function perhaps
+            this.attribution ??= new AttributionCollection(this.cachedLength);
+            this.attribution.ackDeltas(attributionDeltas, this.propertyManager);
+        }
+        return true;
     }
 
     public splitAt(pos: number): ISegment | undefined {

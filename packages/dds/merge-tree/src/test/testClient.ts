@@ -15,7 +15,7 @@ import {
 } from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
 import { IMergeBlock, ISegment, Marker, MaxNodesInBlock, MergeTreeStats } from "../mergeTreeNodes";
-import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
+import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
 import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
 import { SnapshotLegacy } from "../snapshotlegacy";
@@ -221,6 +221,22 @@ export class TestClient extends Client {
             longClientId));
     }
 
+    public annotateRangeRemote(
+        start: number,
+        end: number,
+        props: PropertySet,
+        seq: number,
+        refSeq: number,
+        longClientId: string,
+    ) {
+        this.applyMsg(this.makeOpMessage(
+            createAnnotateRangeOp(start, end, props, undefined),
+            seq,
+            refSeq,
+            longClientId,
+        ));
+    }
+
     public insertMarkerLocal(
         pos: number,
         behaviors: ReferenceType,
@@ -412,29 +428,30 @@ export class TestClient extends Client {
     }
 
     /**
+     * TODO: update this doc
      * @returns an array of all attribution seq#s from the current perspective.
      * The `i`th entry of the array is the attribution key for the character at position `i`.
      * Validates segments either all have attribution information or none of them.
      * If no segment has attribution information, returns undefined.
      */
-    public getAllAttributionSeqs(): number[] | undefined {
-        const seqs: number[] | undefined = [];
+    public getAllAttributionSeqs(channel?: string): (number | undefined)[] {
+        const seqs: (number | undefined)[] | undefined = [];
         let segmentsWithAttribution = 0;
         let segmentsWithoutAttribution = 0;
         this.walkAllSegments((segment) => {
             if (segment.attribution) {
                 segmentsWithAttribution++;
-                for (let i = 0; i < segment.cachedLength; i++) {
-                    seqs.push(segment.attribution.getAtOffset(i).seq);
-                }
             } else {
                 segmentsWithoutAttribution++;
+            }
+            for (let i = 0; i < segment.cachedLength; i++) {
+                seqs.push(segment.attribution?.getAtOffset(i, channel)?.seq);
             }
             return true;
         });
 
         assert(segmentsWithAttribution === 0 || segmentsWithoutAttribution === 0);
-        return segmentsWithAttribution !== 0 ? seqs : undefined;
+        return seqs;
     }
 }
 

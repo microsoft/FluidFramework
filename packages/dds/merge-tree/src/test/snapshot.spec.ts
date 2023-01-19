@@ -13,7 +13,8 @@ import { IMergeTreeOp } from "../ops";
 import { SnapshotV1 } from "../snapshotV1";
 import { IMergeTreeOptions } from "../mergeTree";
 import { TestSerializer } from "./testSerializer";
-import { ISegment, TestClient } from ".";
+import { ISegment, PropertySet, TestClient } from ".";
+import { trackProperties } from "./testUtils";
 
 // Reconstitutes a MergeTree client from a summary
 async function loadSnapshot(summary: ISummaryTree, options?: IMergeTreeOptions) {
@@ -36,13 +37,17 @@ class TestString {
     private seq = 0;
     private minSeq = 0;
 
-    constructor(id: string, options?: IMergeTreeOptions) {
-        this.client = new TestClient(options);
+    constructor(id: string, private readonly options?: IMergeTreeOptions) {
+        this.client = new TestClient(this.options);
         this.client.startOrUpdateCollaboration(id);
     }
 
     public insert(pos: number, text: string, increaseMsn: boolean) {
         this.queue(this.client.insertTextLocal(pos, text, { segment: this.pending.length })!, increaseMsn);
+    }
+
+    public annotate(start: number, end: number, props: PropertySet, increaseMsn: boolean) {
+        this.queue(this.client.annotateRangeLocal(start, end, props, undefined)!, increaseMsn);
     }
 
     public append(text: string, increaseMsn: boolean) {
@@ -60,7 +65,7 @@ class TestString {
         assert.equal(this.client.getText(), expected,
             "MergeTree must contain the expected text prior to applying ops.");
 
-        await this.checkSnapshot();
+        await this.checkSnapshot(this.options);
     }
 
     // Ensures the MergeTree client's contents successfully roundtrip through a snapshot.
@@ -220,11 +225,27 @@ function makeSnapshotSuite(options?: IMergeTreeOptions): void {
 
         await str.checkSnapshot();
     });
+
+    it("recovers annotated segments", async () => {
+        str.append("123", false);
+        str.annotate(1, 2, { foo: 1 }, false);
+
+        await str.checkSnapshot();
+    });
 }
 
 describe("snapshot", () => {
     describe("with attribution", () => {
         makeSnapshotSuite({ attribution: { track: true } });
+    });
+
+    describe("with attribution and custom channels", () => {
+        makeSnapshotSuite({ 
+            attribution: {
+                track: true,
+                interpreter: trackProperties("foo"),
+            }
+        });
     });
 
     describe("without attribution", () => {

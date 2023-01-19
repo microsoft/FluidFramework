@@ -8,11 +8,17 @@ import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import {
     AttributionCollection,
     IAttributionCollection,
+    IAttributionCollectionSpec,
     SerializedAttributionCollection,
 } from "../attributionCollection";
 import { TextSegmentGranularity } from "../textSegment";
-import { AttributionKey, compareNumbers, ISegment } from "../mergeTreeNodes";
+import { 
+    AttributionKey,
+    compareNumbers,
+    ISegment
+} from "../mergeTreeNodes";
 import { RedBlackTree } from "../collections";
+import { AttributionChangeEntry } from "../mergeTree";
 
 interface IAttributionCollectionCtor {
     new (seq: number, length: number): IAttributionCollection<AttributionKey>;
@@ -35,14 +41,14 @@ function getCollectionSizes(
     collection: IAttributionCollection<AttributionKey>;
     type: BenchmarkType;
 }[] {
-    const singleKeyCollection = new ctor(5, 42);
-    const tenKeyCollection = new ctor(0, 2);
+    const singleKeyCollection = new ctor(42, 5);
+    const tenKeyCollection = new ctor(2, 0);
     for (let i = 1; i < 10; i++) {
-        tenKeyCollection.append(new ctor(i, i * 3));
+        tenKeyCollection.append(new ctor(3 * i, i));
     }
-    const maxSizeCollection = new ctor(0, 1);
+    const maxSizeCollection = new ctor(1, 0);
     for (let i = 1; i < TextSegmentGranularity; i++) {
-        maxSizeCollection.append(new ctor(i, 1));
+        maxSizeCollection.append(new ctor(1, i));
     }
     return [
         { name: "one key", collection: singleKeyCollection, type: BenchmarkType.Diagnostic },
@@ -128,17 +134,20 @@ function runAttributionCollectionSuite(ctor: IAttributionCollectionCtor, suiteBa
     })
 }
 
+// Note: channel functionality is left unimplemented.
 export class TreeAttributionCollection implements IAttributionCollection<AttributionKey> {
     private readonly entries: RedBlackTree<number, number> = new RedBlackTree(compareNumbers);
 
-    public constructor(baseEntry: number, private _length: number) {
-        this.entries.put(0, baseEntry);
+    public constructor(private _length: number, baseEntry?: number) {
+        if (baseEntry !== undefined) {
+            this.entries.put(0, baseEntry);
+        }
     }
 
     public getAtOffset(offset: number): AttributionKey {
         assert(offset >= 0 && offset < this._length, 0x443 /* Requested offset should be valid */);
         const node = this.entries.floor(offset);
-        assert(node !== undefined, 0x444 /* Collection should have at least one entry */);
+        assert(node?.data !== undefined, 0x444 /* Collection should have at least one entry */);
         return { type: "op", seq: node.data };
     }
 
@@ -151,7 +160,7 @@ export class TreeAttributionCollection implements IAttributionCollection<Attribu
      */
     public splitAt(pos: number): TreeAttributionCollection {
         const splitBaseEntry = this.getAtOffset(pos);
-        const splitCollection = new TreeAttributionCollection(splitBaseEntry.seq, this.length - pos);
+        const splitCollection = new TreeAttributionCollection(this.length - pos, splitBaseEntry.seq);
         for (let current = this.entries.ceil(pos); current !== undefined; current = this.entries.ceil(pos)) {
             // If there happened to be an attribution change at exactly pos, it's already set in the base entry
             if (current.key !== pos) {
@@ -174,17 +183,17 @@ export class TreeAttributionCollection implements IAttributionCollection<Attribu
         this._length += other.length;
     }
 
-    public getAll(): { offset: number; key: AttributionKey; }[] {
+    public getAll(): IAttributionCollectionSpec<AttributionKey> {
         const results: { offset: number; key: AttributionKey; }[] = [];
         this.entries.map(({ key, data }) => {
             results.push({ offset: key, key: { type: "op", seq: data } });
             return true;
         });
-        return results;
+        return { root: results };
     }
 
     public clone(): TreeAttributionCollection {
-        const copy = new TreeAttributionCollection(this.getAtOffset(0).seq, this.length);
+        const copy = new TreeAttributionCollection(this.length, this.getAtOffset(0).seq);
         this.entries.map(({ key, data }) => {
             copy.entries.put(key, data);
             return true;
@@ -205,12 +214,12 @@ export class TreeAttributionCollection implements IAttributionCollection<Attribu
             0x445 /* Invalid attribution summary blob provided */);
         let curIndex = 0;
         let cumulativeSegPos = 0;
-        let currentInfo = seqs[curIndex];
+        let currentInfo = seqs[curIndex]!;
 
         for (const segment of segments) {
-            const attribution = new TreeAttributionCollection(currentInfo, segment.cachedLength);
+            const attribution = new TreeAttributionCollection(segment.cachedLength, currentInfo);
             while (posBreakpoints[curIndex] < cumulativeSegPos + segment.cachedLength) {
-                currentInfo = seqs[curIndex];
+                currentInfo = seqs[curIndex]!;
                 attribution.entries.put(posBreakpoints[curIndex] - cumulativeSegPos, currentInfo);
                 curIndex++;
             }
@@ -218,6 +227,26 @@ export class TreeAttributionCollection implements IAttributionCollection<Attribu
             segment.attribution = attribution;
             cumulativeSegPos += segment.cachedLength;
         }
+    }
+
+    public ackDeltas(deltas: AttributionChangeEntry[]): void {
+        throw new Error("unimplmeented");
+        // for (const delta of deltas) {
+        //     // TODO: handle, test
+        //     assert(delta.type === "insert", "unhandled type");
+        //     // TODO: With current representation, consider sorting here.
+        //     // Note: lots of implicit assumptions here
+        //     this.
+        //     this.offsets = [0];
+        //     this.seqs = [];
+        //     for (const change of delta.changes) {
+        //         assert(change.key.type === "op", "non-op based attribution keys unsupported.");
+        //         this.seqs.push(change.key.seq);
+        //         if (change.start !== undefined && change.start > 0) {
+        //             this.offsets.push(change.start)
+        //         }
+        //     }
+        // }
     }
 
     /**
@@ -236,12 +265,14 @@ export class TreeAttributionCollection implements IAttributionCollection<Attribu
         for (const segment of segments) {
             if (segment.attribution) {
                 segmentsWithAttribution++;
-                for (const { offset, key: info } of segment.attribution?.getAll() ?? []) {
-                    if (info.seq !== mostRecentAttributionKey) {
-                        posBreakpoints.push(offset + cumulativePos);
-                        seqs.push(info.seq);
+                for (const { offset, key: info } of segment.attribution?.getAll()?.root ?? []) {
+                    if (info !== undefined) {
+                        if (info.seq !== mostRecentAttributionKey) {
+                            posBreakpoints.push(offset + cumulativePos);
+                            seqs.push(info.seq);
+                        }
+                        mostRecentAttributionKey = info.seq;
                     }
-                    mostRecentAttributionKey = info.seq;
                 }
             } else {
                 segmentsWithoutAttribution++;
