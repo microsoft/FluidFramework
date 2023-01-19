@@ -297,7 +297,7 @@ describe("Garbage Collection Tests", () => {
                 injectedSettings[testOverrideSweepTimeoutKey] = 123;
                 injectedSettings[runSessionExpiryKey] = true;
                 gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: false });
-                assert(gc.sweepEnabled, "sweepEnabled incorrect");
+                assert(!gc.sweepEnabled, "sweepEnabled incorrect");
                 assert(gc.sessionExpiryTimeoutMs === defaultSessionExpiryDurationMs, "sessionExpiryTimeoutMs incorrect");
                 assert(gc.sweepTimeoutMs === 123, "sweepTimeoutMs incorrect");
             });
@@ -305,7 +305,7 @@ describe("Garbage Collection Tests", () => {
                 injectedSettings[testOverrideSweepTimeoutKey] = 123;
                 injectedSettings[runSessionExpiryKey] = false;
                 gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: false });
-                assert(gc.sweepEnabled, "sweepEnabled incorrect");
+                assert(!gc.sweepEnabled, "sweepEnabled incorrect");
                 assert(gc.sessionExpiryTimeoutMs === undefined, "sessionExpiryTimeoutMs incorrect");
                 assert(gc.sweepTimeoutMs === 123, "sweepTimeoutMs incorrect");
             });
