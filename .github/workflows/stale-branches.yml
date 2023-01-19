@@ -1,0 +1,16 @@
+name: Mark and Remove Stale Branches
+on: workflow_dispatch
+
+jobs:
+  remove-stale-branches:
+    name: Remove Stale Branches
+    runs-on: ubuntu-latest
+    steps:
+      - uses: fpicalausa/remove-stale-branches@859dde72c29b4f69af188b7adaeabf21497534d9
+        with:
+          dry-run: true
+          exempt-authors-regex: "^dependabot"
+          exempt-branches-regex: ^(main|next|release.*)$
+          days-before-branch-stale: 90
+          days-before-branch-delete: 7
+          stale-branch-message: "@{author} Your branch [{branchName}]({branchUrl}) hasn't been updated in the last {daysBeforeBranchStale} days and is marked as stale. It will be removed in {daysBeforeBranchDelete} days.\r\nIf you want to keep this branch around, delete this comment or add new commits to this branch."
