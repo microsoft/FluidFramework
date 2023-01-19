@@ -32,8 +32,9 @@ function createConnectedCell(id: string, runtimeFactory: MockContainerRuntimeFac
     return cell;
 }
 
-function createLocalCell(id: string): ISharedCell {
-    const subCell = new SharedCell("cell", new MockFluidDataStoreRuntime(), CellFactory.Attributes);
+function createLocalCell(id: string, track: boolean = false): ISharedCell {
+    const options: ICellOptions = track ? { attribution: { track: true } } : {};
+    const subCell = new SharedCell(id, new MockFluidDataStoreRuntime(), CellFactory.Attributes, options);
     return subCell;
 }
 
@@ -142,6 +143,22 @@ describe("Cell", () => {
                 assert.equal(cell2.get(), newValue, "The second cell did not get the new value");
             });
         });
+
+        describe("Summarization of the Attribution", () => {
+            it("Should sync with the attribution", async () => {
+                // overwrite the cell with attribution tracking enabled
+                cell = createLocalCell("cell", true);
+                cell.set("value");
+
+                // load a cell from the snapshot
+                const services = MockSharedObjectServices.createFromSummary(cell.getAttachSummary().summary);
+                const cell2 = new SharedCell("cell2", new MockFluidDataStoreRuntime(), CellFactory.Attributes);
+                await cell2.load(services);
+
+                // Verify the attribution of SharedCell with all pending messages processed
+                assert.equal(cell.getAttribution()?.seq, cell2.getAttribution()?.seq, "the attribution key should be consistent");
+            });
+        });
     });
 
     describe("Connected state", () => {
@@ -231,12 +248,12 @@ describe("Cell", () => {
 
                 containerRuntimeFactory.processSomeMessages(1);
 
-                // Verify the attributionInfo of SharedCell with 1 pending message
+                // Verify the attribution of SharedCell with 1 pending message
                 assert.notEqual(cell1.getAttribution()?.seq, cell2.getAttribution()?.seq, "the attribution key should not be consistent");
 
                 containerRuntimeFactory.processAllMessages();
 
-                // Verify the attributionInfo of SharedCell with all pending messages processed
+                // Verify the attribution of SharedCell with all pending messages processed
                 assert.equal(cell1.getAttribution()?.seq, cell2.getAttribution()?.seq, "the attribution key should be consistent");
             })
         });
