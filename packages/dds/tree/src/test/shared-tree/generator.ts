@@ -6,11 +6,12 @@ import {
     createWeightedAsyncGenerator,
     done,
 } from "@fluid-internal/stochastic-test-utils";
+import { assert } from "console";
 import { FieldKey, UpPath } from "../../tree";
 import { ITestTreeProvider } from "../utils";
 import { getRandomNodePosition } from "./treeGenerator";
 
-export type Operation = TreeEdit;
+export type Operation = TreeEdit | Synchronize;
 
 export interface TreeEdit {
     type: "edit";
@@ -36,11 +37,25 @@ export interface FuzzDelete {
     treeIndex: number;
 }
 
-export type FuzzChange = FuzzInsert | FuzzDelete;
+export interface FuzzSetPayload {
+    fuzzType: "setPayload";
+    path: UpPath | undefined;
+    field: FieldKey | undefined;
+    index: number | undefined;
+    value: number
+    treeIndex: number;
+}
+
+export type FuzzChange = FuzzInsert | FuzzDelete | FuzzSetPayload;
+
+export interface Synchronize {
+	type: 'synchronize';
+}
 
 export interface FuzzTestState extends BaseFuzzTestState {
     testTreeProvider: ITestTreeProvider;
     numberOfEdits: number;
+    edits: Operation[];
 }
 
 export interface TreeContext {
@@ -60,6 +75,7 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
             nodeField,
             nodeIndex,
         } = getRandomNodePosition(tree, state.random);
+        assert(typeof(nodeField) !== 'object')
         const insert: FuzzInsert = {
             fuzzType: "insert",
             path,
@@ -81,21 +97,54 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
             path,
             nodeField,
             nodeIndex,
-            isNewPath: newPath,
+            onlyRootNode
         } = getRandomNodePosition(tree, state.random, true);
-        const fuzzDelete: FuzzDelete = {
-            fuzzType: "delete",
+        return onlyRootNode ? {
+                fuzzType: "delete",
+                path: undefined,
+                field: undefined,
+                index: undefined,
+                treeIndex: state.treeIndex,
+            } : {
+                fuzzType: "delete",
+                path,
+                field: nodeField,
+                index: nodeIndex,
+                treeIndex: state.treeIndex,
+            };
+    }
+
+    async function setPayloadGenerator(state: EditState): Promise<FuzzSetPayload> {
+        // randomly select a tree in the testTreeProvider
+        const trees = state.testTreeProvider.trees;
+        const tree = trees[state.treeIndex];
+
+        // generate edit for that specific tree
+        const {
+            path,
+            nodeField,
+            nodeIndex,
+        } = getRandomNodePosition(tree, state.random, true);
+        const fuzzSetPayload: FuzzSetPayload = {
+            fuzzType: 'setPayload',
             path,
             field: nodeField,
             index: nodeIndex,
+            value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
             treeIndex: state.treeIndex,
         };
-        return fuzzDelete;
+        return fuzzSetPayload;
     }
 
+    /**
+     * currently the acceptance conditions are based on some arbitrary number of edits.
+     * This should be changed to the max number of nodes allowed in tree.
+     * TODO: create helper function to get number of nodes in tree and use that to set acceptance condition
+     * */
     const baseEditGenerator = createWeightedAsyncGenerator<FuzzChange, EditState>([
-        [insertGenerator, 2, (state: EditState) => state.numberOfEdits < 10],
-        [deleteGenerator, 1, (state: EditState) => state.numberOfEdits < 10]
+        [insertGenerator, 5, (state: EditState) => state.numberOfEdits < 3000],
+        [deleteGenerator, 1, (state: EditState) => state.numberOfEdits < 3000],
+        [setPayloadGenerator, 1, (state: EditState) => state.numberOfEdits < 3000]
     ]);
 
     return async (state: FuzzTestState): Promise<Operation | typeof done> => {
@@ -114,10 +163,11 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
 };
 
 export function makeOpGenerator(): AsyncGenerator<Operation, FuzzTestState> {
-    const atLeastOneActiveClient: AcceptanceCondition<FuzzTestState> = ({ numberOfEdits }) =>
-		numberOfEdits > -1;
+    const maximumEdits: AcceptanceCondition<FuzzTestState> = ({ numberOfEdits }) =>
+		numberOfEdits < 4000;
 	const opWeights: AsyncWeights<Operation, FuzzTestState> = [
-		[makeEditGenerator(), 1, atLeastOneActiveClient],
+		[makeEditGenerator(), 3, maximumEdits],
+        [{ type: 'synchronize' }, 1, maximumEdits]
 	];
 	return createWeightedAsyncGenerator(opWeights);
 }
