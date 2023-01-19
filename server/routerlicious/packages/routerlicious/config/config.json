@@ -242,6 +242,11 @@
         "port": 6379,
         "tls": false
     },
+    "redisForTenantCache": {
+        "host": "redis",
+        "port": 6379,
+        "tls": false
+    },
     "redis2": {
         "host": "redis",
         "port": 6379,
@@ -257,7 +262,7 @@
         "endpoint": ""
     },
     "worker": {
-        "alfredUrl": "http://alfred:3003",
+        "alfredUrl": "http://alfred:3000",
         "deltaStreamUrl": "http://localhost:3003",
         "serverUrl": "http://localhost:3003",
         "blobStorageUrl": "http://localhost:3001",
