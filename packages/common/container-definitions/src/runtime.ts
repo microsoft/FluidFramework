@@ -198,7 +198,6 @@ export interface IContainerContext extends IDisposable {
      * Proxy for {@link IRuntime.entryPoint}, the entryPoint defined in the container's runtime.
      *
      * @see {@link IContainer.entryPoint}
-     *
      */
     readonly entryPoint?: Promise<FluidObject | undefined>;
 }
