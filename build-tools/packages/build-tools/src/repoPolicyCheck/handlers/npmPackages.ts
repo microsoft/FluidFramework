@@ -614,16 +614,18 @@ export const handlers: Handler[] = [
                     "format",
                 );
 
-                if (!hasPrettierScript) {
-                    missingScripts.push(`prettier`);
-                }
+                if (hasPrettierScript || hasPrettierFixScript || hasFormatScript) {
+                    if (!hasPrettierScript) {
+                        missingScripts.push(`prettier`);
+                    }
 
-                if (!hasPrettierFixScript) {
-                    missingScripts.push(`prettier:fix`);
-                }
+                    if (!hasPrettierFixScript) {
+                        missingScripts.push(`prettier:fix`);
+                    }
 
-                if (!hasFormatScript) {
-                    missingScripts.push(`format`);
+                    if (!hasFormatScript) {
+                        missingScripts.push(`format`);
+                    }
                 }
             }
 
