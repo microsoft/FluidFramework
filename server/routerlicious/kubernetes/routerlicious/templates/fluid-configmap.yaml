@@ -84,7 +84,7 @@ data:
                     "minThrottleIntervalInMs": {{ .Values.alfred.throttling.socketConnections.minThrottleIntervalInMs }},
                     "maxInMemoryCacheSize": {{ .Values.alfred.throttling.socketConnections.maxInMemoryCacheSize }},
                     "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.socketConnections.maxInMemoryCacheAgeInMs }},
-                    "enableEnhancedTelemetry": {{ .Values.alfred.throttling.restCalls.enableEnhancedTelemetry }}
+                    "enableEnhancedTelemetry": {{ .Values.alfred.throttling.socketConnections.enableEnhancedTelemetry }}
                 },
                 "submitOps": {
                     "maxPerMs": {{ .Values.alfred.throttling.submitOps.maxPerMs }},
@@ -93,7 +93,7 @@ data:
                     "minThrottleIntervalInMs": {{ .Values.alfred.throttling.submitOps.minThrottleIntervalInMs }},
                     "maxInMemoryCacheSize": {{ .Values.alfred.throttling.submitOps.maxInMemoryCacheSize }},
                     "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.submitOps.maxInMemoryCacheAgeInMs }},
-                    "enableEnhancedTelemetry": {{ .Values.alfred.throttling.restCalls.enableEnhancedTelemetry }}
+                    "enableEnhancedTelemetry": {{ .Values.alfred.throttling.submitOps.enableEnhancedTelemetry }}
                 },
                 "submitSignal": {
                     "maxPerMs": {{ .Values.alfred.throttling.submitSignal.maxPerMs }},
@@ -102,7 +102,7 @@ data:
                     "minThrottleIntervalInMs": {{ .Values.alfred.throttling.submitSignal.minThrottleIntervalInMs }},
                     "maxInMemoryCacheSize": {{ .Values.alfred.throttling.submitSignal.maxInMemoryCacheSize }},
                     "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.submitSignal.maxInMemoryCacheAgeInMs }},
-                    "enableEnhancedTelemetry": {{ .Values.alfred.throttling.restCalls.enableEnhancedTelemetry }}
+                    "enableEnhancedTelemetry": {{ .Values.alfred.throttling.submitSignal.enableEnhancedTelemetry }}
                 }
             },
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
