@@ -48,7 +48,8 @@ export interface FluidClientDebuggerProps {
 }
 
 /**
- *
+ * Event to montor client debugger list change.
+ * @internal
  */
 export interface DebuggerRegistryEvents extends IEvent {
 	/**
@@ -67,7 +68,8 @@ export interface DebuggerRegistryEvents extends IEvent {
 }
 
 /**
- *
+ * Contract for maintaining a global client debugger registry to store all registered client debugger.
+ * @internal
  */
 export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> {
 	private readonly registeredDebuggers: Map<string, FluidClientDebugger> = new Map();
