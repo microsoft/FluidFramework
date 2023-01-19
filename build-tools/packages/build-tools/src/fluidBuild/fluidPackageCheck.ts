@@ -512,54 +512,35 @@ export class FluidPackageCheck {
             // TODO: add prettier check comment once prettier is enforced globally, hasPrettier commented out to discard build warnings from "lint" & "lint:fix" scripts
             // const hasPrettier = pkg.getScript("prettier");
             // const lintChildren = hasLint ? ["prettier", "eslint"] : ["eslint"];
-            const checkLint = pkg.getScript("lint");
-            const checkLintFix = pkg.getScript("lint:fix");
 
-            let lintChildren = ["prettier", "eslint"];
-            let lintFixChildren = ["prettier:fix", "eslint:fix"];
+            const lintScript = pkg.getScript("lint");
+            const linstFixScript = pkg.getScript("lint:fix");
 
-            if (checkLint) {
-                /* Regular Expression
-                 * lintRegex is a regex to extract package names from checkLint
-                 * if "npm run foo" -> ["foo"]
-                 * if "npm run foo && npm run bar" -> ["foo", "bar"]
-                 */
-                if (
-                    checkLint === "npm run eslint" ||
-                    checkLint === "npm run prettier && npm run eslint"
-                ) {
-                    const lintRegex = /npm run (\w+)(?: (?:&& )?npm run (\w+))?/;
-                    const lintMatch = checkLint?.match(lintRegex);
+            const expectedEndScript = "npm run eslint";
+            const expectedEndScriptFix = "npm run eslint:fix";
 
-                    lintChildren = lintMatch ? lintMatch.slice(1).filter(Boolean) : [];
+            if (lintScript === undefined || !lintScript.endsWith(expectedEndScript)) {
+                this.logWarn(pkg, `non-conformant lint script`, fix);
+                this.logWarn(pkg, `expected to end with ${expectedEndScript}`, fix);
+                this.logWarn(pkg, `actual: ${lintScript}`, fix);
+
+                if (fix) {
+                    pkg.packageJson.scripts["lint"] = expectedEndScript;
+                    fixed = true;
                 }
             }
 
-            if (this.checkChildrenScripts(pkg, "lint", lintChildren, false, fix)) {
-                fixed = true;
-            }
+            if (linstFixScript === undefined || !linstFixScript.endsWith(expectedEndScriptFix)) {
+                this.logWarn(pkg, `non-conformant lint:fix script`, fix);
+                this.logWarn(pkg, `expected to end with ${expectedEndScriptFix}`, fix);
+                this.logWarn(pkg, `actual: ${linstFixScript}`, fix);
 
-            if (checkLintFix) {
-                /* Regular Expression
-                 * lintFixRegex is a regex to extract package names from checkLintFix
-                 * if "npm run foo:fix" -> ["foo:fix"]
-                 * if "npm run foo:fix && npm run bar:fix" -> ["foo:fix", "bar:fix"]
-                 */
-
-                if (
-                    checkLintFix === "npm run eslint:fix" ||
-                    checkLintFix === "npm run prettier:fix && npm run eslint:fix"
-                ) {
-                    const lintFixRegex = /npm run (\S+)(?: (?:&& )?npm run (\S+))?/;
-                    const lintFixMatch = checkLintFix?.match(lintFixRegex);
-
-                    lintFixChildren = lintFixMatch ? lintFixMatch.slice(1).filter(Boolean) : [];
+                if (fix) {
+                    pkg.packageJson.scripts["lint:fix"] = expectedEndScriptFix;
+                    fixed = true;
                 }
             }
 
-            if (this.checkChildrenScripts(pkg, "lint:fix", lintFixChildren, false, fix)) {
-                fixed = true;
-            }
             // TODO: for now, some jest test at the root isn't linted yet
             const eslintScript = pkg.getScript("eslint");
             const hasFormatStylish = eslintScript && eslintScript.search("--format stylish") >= 0;
