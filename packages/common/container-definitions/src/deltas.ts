@@ -21,10 +21,6 @@ import {
 export interface IConnectionDetails {
     clientId: string;
     claims: ITokenClaims;
-    existing: boolean;
-    mode: ConnectionMode;
-    version: string;
-    initialClients: ISignalClient[];
     serviceConfiguration: IClientConfiguration;
 
     /**
@@ -39,6 +35,16 @@ export interface IConnectionDetails {
      */
     checkpointSequenceNumber: number | undefined;
 }
+
+/**
+ * Internal version of IConnectionDetails with props are only exposed internally
+ */
+export interface IConnectionDetailsInternal extends IConnectionDetails {
+    mode: ConnectionMode;
+    version: string;
+    initialClients: ISignalClient[];
+}
+
 
 /**
  * Interface used to define a strategy for handling incoming delta messages

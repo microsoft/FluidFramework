@@ -19,9 +19,15 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
 - [Deprecated IPendingFlush](#Deprecated-IPendingFlush)
+- [Removing internal connection details from `IConnectionDetails`](#Removing-internal-connection-details-from-IConnectionDetails)
 
 ### Deprecated IPendingFlush
 `IPendingFlush` has been deprecated. Use batch metadata on `IPendingMessage` instead to indicate the end of a batch.
+
+### Removing internal connection details from `IConnectionDetails`
+
+Removing `mode`, `version` and `initialClients` from `IConnectionDetails`, no longer exposing these to runtime. They will only be used internally. Removing `existing` altogether as it no longer provides value.
+
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 - [Existing flag is now required in IRuntimeFactory](#existing-parameter-is-now-required-in-iruntimefactory)
@@ -79,7 +85,7 @@ If these methods are needed, please refer to the `IContainerRuntimeBase` interfa
 There will be no replacement for this property.'
 
 ### Remove Deprecated IFluidObject Interface
-IFluidObject is removed and has been replaced with [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject). 
+IFluidObject is removed and has been replaced with [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
 
 # 2.0.0-internal.2.2.0
 
