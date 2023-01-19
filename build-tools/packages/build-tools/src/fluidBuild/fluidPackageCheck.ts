@@ -161,27 +161,6 @@ export class FluidPackageCheck {
         return fixed;
     }
 
-    // function to check if "lint" or "lint:fix" misses "eslint" and "prettier" packages
-    private static checkLintScript(
-        pkg: Package,
-        name: string,
-        expected: string | undefined,
-        expectedPackages: string[] | undefined,
-        fix: boolean,
-    ) {
-        let fixed = false;
-        const actual = pkg.getScript(name);
-
-        if (expected !== actual) {
-            this.logWarn(pkg, `${name} should only contain: ${expectedPackages}`, fix);
-            if (fix) {
-                pkg.packageJson.scripts[name] = expected;
-                fixed = true;
-            }
-        }
-        return fixed;
-    }
-
     private static checkChildrenScripts(
         pkg: Package,
         name: string,
@@ -194,7 +173,7 @@ export class FluidPackageCheck {
                 ? `concurrently ${expected.map((value) => `npm:${value}`).join(" ")}`
                 : expected.map((value) => `npm run ${value}`).join(" && ")
             : undefined;
-        return this.checkLintScript(pkg, name, expectedScript, expected, fix);
+            return this.checkScript(pkg, name, expectedScript, fix);
     }
 
     /**
