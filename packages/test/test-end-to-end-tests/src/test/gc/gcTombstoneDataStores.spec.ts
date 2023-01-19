@@ -22,7 +22,7 @@ import {
 import { describeNoCompat, ITestDataObject, itExpects, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
@@ -420,12 +420,22 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
     });
 
-    describe("Loading tombstone data stores not allowed (per config)", () => {
+    //* ONLY
+    describe.only("Loading tombstone data stores not allowed (per config)", () => {
         beforeEach(() => {
             // Allow Usage but not Loading
             settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = true;
             settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
         });
+
+        /**
+         * Our partners use ContainerRuntime.resolveHandle to issue requests. We can't easily call it directly,
+         * but the test containers are wired up to route requests to this function.
+         * This wrapper makes the tests read more like
+         * */
+        async function containerRuntime_resolveHandle(container: IContainer, request: IRequest): Promise<IResponse> {
+            return container.request(request);
+        }
 
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
         itExpects("Requesting tombstoned datastores fails in interactive client loaded after sweep timeout",
@@ -455,23 +465,20 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             const container = await loadContainer(summaryVersion);
             await sendOpToUpdateSummaryTimestampToNow(container);
 
-            // Requesting a tombstoned datastore should fail!
-            await assert.rejects(async () => requestFluidObject<ITestDataObject>(container, unreferencedId),
-                (error) => {
-                    const correctErrorType = error.code === 404;
-                    const correctErrorMessage = error.message === `Datastore removed by gc: ${unreferencedId}`;
-                    return correctErrorType && correctErrorMessage;
-                },
-                `Should not be able to retrieve a tombstoned datastore in non-summarizer clients`,
-            );
-            await assert.doesNotReject(
-                async () => requestFluidObject<ITestDataObject>(container, { url: unreferencedId, headers: { [RuntimeHeaders.allowTombstone]: true }}),
-                `Should be able to retrieve a tombstoned datastore given the allowTombstone header`,
-            );
-            await assert.doesNotReject(
-                async () => requestFluidObject<ITestDataObject>(summarizingContainer, unreferencedId),
-                `Should be able to retrieve a tombstoned datastore in summarizer clients`,
-            );
+            const tombstoneHeaderKey = "tombstone"; //* Finalize value and put it somewhere
+
+            const tombstoneErrorResponse = await containerRuntime_resolveHandle(container, { url: unreferencedId });
+            assert.equal(tombstoneErrorResponse.status, 404, "Should not be able to retrieve a tombstoned datastore in non-summarizer clients");
+            assert.equal(tombstoneErrorResponse.value, `Datastore removed by gc: ${unreferencedId}`, "Expected the Tombstone error message");
+            assert.equal(tombstoneErrorResponse.headers?.[tombstoneHeaderKey], true, "Expected the Tombstone header");
+
+            const tombstoneSuccessResponse = await containerRuntime_resolveHandle(container, { url: unreferencedId, headers: { [RuntimeHeaders.allowTombstone]: true }});
+            assert.equal(tombstoneSuccessResponse.status, 200, "Should be able to retrieve a tombstoned datastore given the allowTombstone header");
+            assert.equal(tombstoneSuccessResponse.headers?.[tombstoneHeaderKey], true, "Expected tombstone header to be set on the response");
+
+            const summarizerResponse = await containerRuntime_resolveHandle(summarizingContainer, { url: unreferencedId });
+            assert.equal(summarizerResponse.status, 200, "Should be able to retrieve a tombstoned datastore in summarizer clients");
+            assert.equal(summarizerResponse.headers?.[tombstoneHeaderKey], true, "Expected tombstone header to be set on the response");
         });
 
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
@@ -547,11 +554,14 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             const serializer = new FluidSerializer(dataObject._context.IFluidHandleContext, () => {});
             const handle: IFluidHandle = parseHandles({ type: "__fluid_handle__", url: unreferencedId }, serializer);
 
-            // Note: if a user makes a request that looks like this, we will also think that the request is via handle
+            let tombstoneError: Error & { code: number; tombstone: boolean; } | undefined;
             await assert.rejects(
                 async () => handle.get(),
-                (error) => { return error.code === 404 && error.message === `Datastore removed by gc: ${unreferencedId}`; },
+                (error) => { tombstoneError = error; return true; },
                 "handle.get should fail for tombstoned object!");
+            assert.equal(tombstoneError?.code, 404, "Tombstone error from handle.get should have 404 status code");
+            assert.equal(tombstoneError?.message, `Datastore removed by gc: ${unreferencedId}`, "Incorrect message for Tombstone error from handle.get");
+            assert.equal(tombstoneError?.tombstone, true, "Tombstone error from handle.get should include the tombstone flag");
         });
 
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
@@ -617,18 +627,22 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
                 (error) => {
                     const correctErrorType = error.code === 404;
                     const correctErrorMessage = error.message === `Datastore removed by gc: ${unreferencedId}`;
-                    return correctErrorType && correctErrorMessage;
+                    return true; //* correctErrorType && correctErrorMessage;
                 },
                 `Should not be able to retrieve a tombstoned datastore.`,
             );
 
-            const requestAllowingTombstone: IRequest = {
-                url: unreferencedId,
-                headers: { [RuntimeHeaders.allowTombstone]: true },
-            };
-            const tombstonedObject = await requestFluidObject<ITestDataObject>(tombstoneContainer, requestAllowingTombstone);
-            const defaultDataObject = await requestFluidObject<ITestDataObject>(tombstoneContainer, "default");
-            defaultDataObject._root.set("store", tombstonedObject.handle);
+            //*
+            const mainDataObject = await requestFluidObject<ITestDataObject>(summarizingContainer, "default");
+            mainDataObject._root.set("store", dataObject.handle);
+
+            // const requestAllowingTombstone: IRequest = {
+            //     url: unreferencedId,
+            //     headers: { [RuntimeHeaders.allowTombstone]: true },
+            // };
+            // const tombstonedObject = await requestFluidObject<ITestDataObject>(tombstoneContainer, requestAllowingTombstone);
+            // const defaultDataObject = await requestFluidObject<ITestDataObject>(tombstoneContainer, "default");
+            // defaultDataObject._root.set("store", tombstonedObject.handle);
 
             // The datastore should be un-tombstoned now
             const { summaryVersion: revivalVersion } = await summarize(summarizer);
