@@ -99,6 +99,8 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
         protected readonly siblingStack: SiblingsOrKey[],
         protected readonly indexStack: number[],
         protected readonly indexOfChunkStack: number[],
+        // TODO: Currently only BasicChunks are supported, and the currently always have a top level length of 1.
+        // That makes this stack unneeded. When BasicChunkCursor is more feature complete, this stack should be reevaluated, and removed if possible.
         protected readonly indexWithinChunkStack: number[],
         protected siblings: SiblingsOrKey,
         protected index: number,
