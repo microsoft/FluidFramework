@@ -24,12 +24,10 @@ export class Bubblebench extends DataObject {
 
         this.initializeTree(this.maybeTree);
 
-        // This line will fail with the error 0x17b /* "Channel to be binded should be in not bounded set" */);
         this.root.set("unique-bubblebench-key-1337", this.maybeTree.handle);
     }
 
     protected async initializingFromExisting() {
-        // console.log("existing initialization called, delaying tree connection for 3 seconds");
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.maybeTree = await this.root
             .get<IFluidHandle<ISharedTree>>("unique-bubblebench-key-1337")!
@@ -105,6 +103,6 @@ export class Bubblebench extends DataObject {
 export const BubblebenchInstantiationFactory = new DataObjectFactory(
     Bubblebench.Name,
     Bubblebench,
-    [new SharedTreeFactory()], // Is this correct?
+    [new SharedTreeFactory()], // This is fine for now  but we will have to adjust this API later to allow control of write format
     {},
 );

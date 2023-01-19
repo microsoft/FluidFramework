@@ -178,9 +178,17 @@ export {
     OptionalFieldEditBuilder,
     SequenceFieldEditBuilder,
     SequenceField,
-    FieldKinds,
     singleTextCursor,
     namedTreeSchema,
 } from "./feature-libraries";
+
+import { FieldKind, FieldKinds as FieldKindsOriginal } from "./feature-libraries";
+interface FieldKinds {
+    value: FieldKind;
+    optional: FieldKind;
+    sequence: FieldKind;
+}
+const FieldKinds: FieldKinds = FieldKindsOriginal;
+export { FieldKinds };
 
 export { ISharedTree, SharedTreeFactory } from "./shared-tree";

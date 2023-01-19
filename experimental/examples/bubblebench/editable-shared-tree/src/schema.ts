@@ -6,11 +6,8 @@
 import {
     brand,
     EditableTree,
-    emptyField,
-    EmptyKey,
     FieldKinds,
     fieldSchema,
-    JsonableTree,
     namedTreeSchema,
     rootFieldKey,
     SchemaData,
@@ -19,13 +16,11 @@ import {
 
 export const stringSchema = namedTreeSchema({
     name: brand("String"),
-    extraLocalFields: emptyField,
     value: ValueSchema.String,
 });
 
 export const numberSchema = namedTreeSchema({
     name: brand("number"),
-    extraLocalFields: emptyField,
     value: ValueSchema.Number,
 });
 
@@ -38,15 +33,6 @@ export const iBubbleSchema = namedTreeSchema({
         vx: fieldSchema(FieldKinds.value, [numberSchema.name]),
         vy: fieldSchema(FieldKinds.value, [numberSchema.name]),
     },
-    extraLocalFields: emptyField,
-});
-
-export const iBubbleSequenceSchema = namedTreeSchema({
-    name: brand("Test:BubbleBenchAppStateiBubbleSequence-1.0.0"),
-    localFields: {
-        [EmptyKey]: fieldSchema(FieldKinds.sequence, [iBubbleSchema.name]),
-    },
-    extraLocalFields: emptyField,
 });
 
 export const iClientSchema = namedTreeSchema({
@@ -54,25 +40,15 @@ export const iClientSchema = namedTreeSchema({
     localFields: {
         clientId: fieldSchema(FieldKinds.value, [stringSchema.name]),
         color: fieldSchema(FieldKinds.value, [stringSchema.name]),
-        bubbles: fieldSchema(FieldKinds.sequence, [iBubbleSequenceSchema.name]),
+        bubbles: fieldSchema(FieldKinds.sequence, [iBubbleSchema.name]),
     },
-    extraLocalFields: emptyField,
-});
-
-export const iClientSequenceSchema = namedTreeSchema({
-    name: brand("Test:BubbleBenchAppStateiClientSequence-1.0.0"),
-    localFields: {
-        [EmptyKey]: fieldSchema(FieldKinds.sequence, [iClientSchema.name]),
-    },
-    extraLocalFields: emptyField,
 });
 
 export const AppStateSchema = namedTreeSchema({
     name: brand("Test:BubbleBenchAppState-1.0.0"),
     localFields: {
-        clients: fieldSchema(FieldKinds.sequence, [iClientSequenceSchema.name]),
+        clients: fieldSchema(FieldKinds.sequence, [iClientSchema.name]),
     },
-    extraLocalFields: emptyField,
 });
 
 export type BubbleTreeProxy = EditableTree & {
@@ -100,9 +76,7 @@ export const AppStateSchemaData: SchemaData = {
         [stringSchema.name, stringSchema],
         [numberSchema.name, numberSchema],
         [iBubbleSchema.name, iBubbleSchema],
-        [iBubbleSequenceSchema.name, iBubbleSequenceSchema],
         [iClientSchema.name, iClientSchema],
-        [iClientSequenceSchema.name, iClientSequenceSchema],
         [AppStateSchema.name, AppStateSchema],
     ]),
     globalFieldSchema: new Map([
@@ -110,125 +84,4 @@ export const AppStateSchemaData: SchemaData = {
     ]),
 };
 
-export const mockAppStateJsonTree: JsonableTree = {
-    type: AppStateSchema.name,
-    fields: {
-        clients: [
-            {
-                type: iClientSchema.name,
-                fields: {
-                    clientId: [{ type: stringSchema.name, value: "1" }],
-                    color: [{ type: stringSchema.name, value: "red" }],
-                    bubbles: [
-                        {
-                            type: iBubbleSchema.name,
-                            fields: {
-                                x: [{ type: numberSchema.name, value: 10 }],
-                                y: [{ type: numberSchema.name, value: 11 }],
-                                r: [{ type: numberSchema.name, value: 12 }],
-                                vx: [{ type: numberSchema.name, value: 13 }],
-                                vy: [{ type: numberSchema.name, value: 14 }],
-                            },
-                        },
-                        {
-                            type: iBubbleSchema.name,
-                            fields: {
-                                x: [{ type: numberSchema.name, value: 20 }],
-                                y: [{ type: numberSchema.name, value: 20 }],
-                                r: [{ type: numberSchema.name, value: 20 }],
-                                vx: [{ type: numberSchema.name, value: 20 }],
-                                vy: [{ type: numberSchema.name, value: 20 }],
-                            },
-                        },
-                    ],
-                },
-            },
-            {
-                type: iClientSequenceSchema.name,
-                fields: {
-                    [EmptyKey]: [
-                        {
-                            type: iClientSchema.name,
-                            fields: {
-                                clientId: [{ type: stringSchema.name, value: "2" }],
-                                color: [{ type: stringSchema.name, value: "blue" }],
-                                bubbles: [
-                                    {
-                                        type: iBubbleSchema.name,
-                                        fields: {
-                                            x: [
-                                                {
-                                                    type: numberSchema.name,
-                                                    value: 10,
-                                                },
-                                            ],
-                                            y: [
-                                                {
-                                                    type: numberSchema.name,
-                                                    value: 10,
-                                                },
-                                            ],
-                                            r: [
-                                                {
-                                                    type: numberSchema.name,
-                                                    value: 10,
-                                                },
-                                            ],
-                                            vx: [
-                                                {
-                                                    type: numberSchema.name,
-                                                    value: 10,
-                                                },
-                                            ],
-                                            vy: [
-                                                {
-                                                    type: numberSchema.name,
-                                                    value: 10,
-                                                },
-                                            ],
-                                        },
-                                    },
-                                    {
-                                        type: iBubbleSchema.name,
-                                        fields: {
-                                            x: [
-                                                {
-                                                    type: numberSchema.name,
-                                                    value: 20,
-                                                },
-                                            ],
-                                            y: [
-                                                {
-                                                    type: numberSchema.name,
-                                                    value: 20,
-                                                },
-                                            ],
-                                            r: [
-                                                {
-                                                    type: numberSchema.name,
-                                                    value: 20,
-                                                },
-                                            ],
-                                            vx: [
-                                                {
-                                                    type: numberSchema.name,
-                                                    value: 20,
-                                                },
-                                            ],
-                                            vy: [
-                                                {
-                                                    type: numberSchema.name,
-                                                    value: 20,
-                                                },
-                                            ],
-                                        },
-                                    },
-                                ],
-                            },
-                        },
-                    ],
-                },
-            },
-        ],
-    },
-};
+

@@ -124,12 +124,6 @@ export interface Contravariant<T> {
 }
 
 // @public
-const counter: FieldKind;
-
-// @public
-const counterHandle: FieldChangeHandler<number>;
-
-// @public
 export interface Covariant<T> {
     // (undocumented)
     _removeContravariance?: T;
@@ -370,34 +364,18 @@ export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>> {
 // @public
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 
-declare namespace FieldKinds {
-    export {
-        lastWriteWinsRebaser,
-        replaceRebaser,
-        UnitEncoder,
-        ValueEncoder,
-        Replacement,
-        ReplaceOp,
-        noChangeHandler,
-        counterHandle,
-        counter,
-        NodeUpdate,
-        ValueChangeset,
-        ValueFieldEditor,
-        value,
-        OptionalFieldChange,
-        OptionalChangeset,
-        OptionalFieldEditor,
-        optional,
-        sequence,
-        forbidden,
-        fieldKinds
-    }
+// @public (undocumented)
+export interface FieldKinds {
+    // (undocumented)
+    optional: FieldKind;
+    // (undocumented)
+    sequence: FieldKind;
+    // (undocumented)
+    value: FieldKind;
 }
-export { FieldKinds }
 
-// @public
-const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
+// @public (undocumented)
+export const FieldKinds: FieldKinds;
 
 // @public
 export interface FieldLocation {
@@ -444,9 +422,6 @@ export interface FieldUpPath {
     readonly field: FieldKey;
     readonly parent: UpPath | undefined;
 }
-
-// @public
-const forbidden: FieldKind;
 
 // @public
 export interface ForestEvents {
@@ -761,12 +736,6 @@ export const jsonString: NamedTreeSchema;
 export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey;
 
 // @public
-function lastWriteWinsRebaser<TChange>(data: {
-    noop: TChange;
-    invert: (changes: TChange) => TChange;
-}): FieldChangeRebaser<TChange>;
-
-// @public
 interface LineageEvent {
     readonly offset: number;
     // (undocumented)
@@ -1022,9 +991,6 @@ export const neverTree: TreeSchema;
 // @public (undocumented)
 function newMoveEffectTable<T>(): MoveEffectTable<T>;
 
-// @public
-const noChangeHandler: FieldChangeHandler<0>;
-
 // @public (undocumented)
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
 
@@ -1079,13 +1045,6 @@ export interface NodeData {
 export type NodeReviver = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
 
 // @public (undocumented)
-type NodeUpdate = {
-    set: JsonableTree;
-} | {
-    revert: RevisionTag | undefined;
-};
-
-// @public (undocumented)
 type ObjectMark<TNodeChange = NodeChangeType> = SizedObjectMark<TNodeChange> | Attach<TNodeChange>;
 
 // @public
@@ -1101,29 +1060,9 @@ type Offset = number;
 // @public
 export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
 
-// @public
-const optional: FieldKind<OptionalFieldEditor>;
-
-// @public (undocumented)
-interface OptionalChangeset {
-    childChange?: NodeChangeset;
-    fieldChange?: OptionalFieldChange;
-}
-
-// @public (undocumented)
-interface OptionalFieldChange {
-    newContent?: NodeUpdate;
-    wasEmpty: boolean;
-}
-
 // @public (undocumented)
 export interface OptionalFieldEditBuilder {
     set(newContent: ITreeCursor | undefined, wasEmpty: boolean): void;
-}
-
-// @public (undocumented)
-interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
-    set(newContent: ITreeCursor | undefined, wasEmpty: boolean): OptionalChangeset;
 }
 
 // @public (undocumented)
@@ -1191,20 +1130,6 @@ export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepair
 
 // @public
 export const replaceField: unique symbol;
-
-// @public (undocumented)
-interface Replacement<T> {
-    // (undocumented)
-    new: T;
-    // (undocumented)
-    old: T;
-}
-
-// @public (undocumented)
-type ReplaceOp<T> = Replacement<T> | 0;
-
-// @public
-function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>>;
 
 // @public (undocumented)
 interface ReturnFrom<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMoveId, HasChanges<TNodeChange> {
@@ -1277,9 +1202,6 @@ export interface SchemaPolicy {
     readonly defaultGlobalFieldSchema: FieldSchema;
     readonly defaultTreeSchema: TreeSchema;
 }
-
-// @public
-const sequence: FieldKind<SequenceFieldEditor>;
 
 // @public (undocumented)
 type SequenceChangeRebaser = FieldChangeRebaser<Changeset>;
@@ -1543,18 +1465,6 @@ export const typeNameSymbol: unique symbol;
 // @public
 export const typeSymbol: unique symbol;
 
-// @public @sealed
-class UnitEncoder extends ChangeEncoder<0> {
-    // (undocumented)
-    decodeBinary(formatVersion: number, change: IsoBuffer): 0;
-    // (undocumented)
-    decodeJson(formatVersion: number, change: JsonCompatible): 0;
-    // (undocumented)
-    encodeBinary(formatVersion: number, change: 0): IsoBuffer;
-    // (undocumented)
-    encodeForJson(formatVersion: number, change: 0): JsonCompatible;
-}
-
 // @public
 export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EditableField;
 
@@ -1571,9 +1481,6 @@ export interface UpPath {
 // @public
 export type Value = undefined | TreeValue;
 
-// @public
-const value: FieldKind<ValueFieldEditor>;
-
 // @public (undocumented)
 export type ValueChange = {
     revision?: RevisionTag;
@@ -1584,29 +1491,8 @@ export type ValueChange = {
 };
 
 // @public (undocumented)
-interface ValueChangeset {
-    // (undocumented)
-    changes?: NodeChangeset;
-    // (undocumented)
-    value?: NodeUpdate;
-}
-
-// @public @sealed
-class ValueEncoder<T extends JsonCompatibleReadOnly> extends ChangeEncoder<T> {
-    // (undocumented)
-    decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): T;
-    // (undocumented)
-    encodeForJson(formatVersion: number, change: T): JsonCompatibleReadOnly;
-}
-
-// @public (undocumented)
 export interface ValueFieldEditBuilder {
     set(newContent: ITreeCursor): void;
-}
-
-// @public (undocumented)
-interface ValueFieldEditor extends FieldEditor<ValueChangeset> {
-    set(newValue: ITreeCursor): ValueChangeset;
 }
 
 // @public

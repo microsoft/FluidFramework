@@ -87,14 +87,10 @@ export class AppState implements IAppState {
     }
 
     public increaseBubbles() {
-        // console.log("about to increase bubble");
         this.localClient.increaseBubbles(makeBubble(this._width, this._height));
-        // console.log("increased bubble");
     }
 
     public decreaseBubbles() {
-        // console.log("about to pop bubble");
         this.localClient.decreaseBubbles();
-        // console.log("popped bubble");
     }
 }
