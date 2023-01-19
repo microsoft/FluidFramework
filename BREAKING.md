@@ -19,6 +19,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ## 2.0.0-internal.2.4.0 Upcoming changes
 - [Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`](#deprecate-ensurecontainerconnected-in-fluidframeworktest-utils)
+- [Removing internal connection details from `IConnectionDetails`](#Removing-internal-connection-details-from-IConnectionDetailsInternal)
 
 ### Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`
 
@@ -31,6 +32,12 @@ This is overall a safer default because it ensures that unexpected errors which 
 immediately, instead of potentially being hidden by a timeout.
 It is recommended that you start passing `failOnContainerClose=true` when calling `waitForContainerConnection()` in
 preparation for this upcoming breaking change.
+
+
+### Removing internal connection details from `IConnectionDetails`
+
+Removing `mode`, `version` and `initialClients` from `IConnectionDetails`, no longer exposing these to runtime. They will only be used internally. Removing `existing` altogether as it no longer provides value.
+
 
 # 2.0.0-internal.2.3.0
 

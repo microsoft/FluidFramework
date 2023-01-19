@@ -5,7 +5,7 @@
 
 import { ITelemetryLogger, ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/common-definitions";
 import { assert, Timer } from "@fluidframework/common-utils";
-import { IConnectionDetails, IConnectionDetailsInternal, IDeltaManager } from "@fluidframework/container-definitions";
+import { IConnectionDetailsInternal, IDeltaManager } from "@fluidframework/container-definitions";
 import { ILocalSequencedClient } from "@fluidframework/protocol-base";
 import { ISequencedClient, IClient } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
@@ -45,7 +45,7 @@ export interface IConnectionStateHandler {
     containerSaved(): void;
     dispose(): void;
     initProtocol(protocol: IProtocolHandler): void;
-    receivedConnectEvent(details: IConnectionDetails): void;
+    receivedConnectEvent(details: IConnectionDetailsInternal): void;
     receivedDisconnectEvent(reason: string): void;
 }
 
@@ -118,7 +118,7 @@ class ConnectionStateHandlerPassThrough implements IConnectionStateHandler, ICon
     public initProtocol(protocol: IProtocolHandler) { return this.pimpl.initProtocol(protocol); }
     public receivedDisconnectEvent(reason: string) { return this.pimpl.receivedDisconnectEvent(reason); }
 
-    public receivedConnectEvent(details: IConnectionDetails) {
+    public receivedConnectEvent(details: IConnectionDetailsInternal) {
         return this.pimpl.receivedConnectEvent(details);
     }
 
