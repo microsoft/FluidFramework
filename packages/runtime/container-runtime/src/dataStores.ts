@@ -641,11 +641,31 @@ export class DataStores implements IDisposable {
      * This is called to update objects whose routes are unused. The unused objects are deleted.
      * @param unusedRoutes - The routes that are unused in all data stores in this Container.
      */
-    public updateUnusedRoutes(unusedRoutes: string[], safeRoutes: string[]): string[] {
+    public updateUnusedRoutes(unusedRoutes: string[], allRoutes: string[]): string[] {
         const deletedRoutes: string[] = [];
-        const deletedDatastoreIds: Set<string> = new Set();
-        const notDeletedRoutes = safeRoutes.filter((route) => !unusedRoutes.includes(route));
-        const notDeletedDataStoreIds: Set<string> = new Set();
+        const deletedDataStoreIds: Set<string> = new Set();
+        const notDeletedRoutes = allRoutes.filter((route) => !unusedRoutes.includes(route));
+
+        for (const route of unusedRoutes) {
+            const pathParts = route.split("/");
+            const dataStoreId = pathParts[1];
+            // skip non datastore routes
+            if (!this.contexts.has(dataStoreId)) {
+                continue;
+            }
+
+            // Push all deleted DataStore (/datastoreId) and sub DataStore (/datastoreId/...) routes to deleted routes
+            deletedRoutes.push(route);
+
+            // Note all deleted datastores
+            if (pathParts.length > 2) {
+                continue;
+            }
+
+            deletedDataStoreIds.add(dataStoreId);
+        }
+
+        // Verify that if the datastore is deleted, all its sub datastore routes are deleted as well
         for (const route of notDeletedRoutes) {
             const pathParts = route.split("/");
             if (pathParts.length < 2) {
@@ -656,41 +676,13 @@ export class DataStores implements IDisposable {
             if (!this.contexts.has(dataStoreId)) {
                 continue;
             }
-            notDeletedDataStoreIds.add(dataStoreId);
+
+            // How should recovery go in this situation?
+            assert(!deletedDataStoreIds.has(dataStoreId), "Sub datastores should be deleted when deleting their datastore!");
         }
-
-        const missingDeletedDataStoreIds: Set<string> = new Set();
-        for (const route of unusedRoutes) {
-            const pathParts = route.split("/");
-            if (pathParts.length < 2) {
-                continue;
-            }
-            const dataStoreId = pathParts[1];
-            // skip non datastore routes
-            if (!this.contexts.has(dataStoreId)) {
-                continue;
-            }
-            assert(!notDeletedDataStoreIds.has(dataStoreId), "Not deleting all datastore and sub datastore routes!");
-
-            // If a sub datastore is being deleted, its parent datastore should also be deleted
-            if (pathParts.length > 2 && !deletedDatastoreIds.has(dataStoreId)) {
-                missingDeletedDataStoreIds.add(dataStoreId);
-            }
-
-            // Push all deleted DataStore (/datastoreId) and DDS (/datastoreId/DDSId) routes to deleted routes
-            deletedRoutes.push(route);
-
-            // Mark datastores for deletion
-            if (pathParts.length === 2) {
-                deletedDatastoreIds.add(dataStoreId);
-                missingDeletedDataStoreIds.delete(dataStoreId);
-            }
-        }
-
-        assert(missingDeletedDataStoreIds.size === 0, "Deleting sub datastores without deleting their parent datastores!");
 
         // Actually delete the datastore
-        for (const dataStoreId of deletedDatastoreIds) {
+        for (const dataStoreId of deletedDataStoreIds) {
             // Delete the contexts of unused data stores.
             this.contexts.delete(dataStoreId);
             // Delete the summarizer node of the unused data stores.

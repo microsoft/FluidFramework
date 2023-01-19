@@ -122,7 +122,7 @@ export interface IGarbageCollectionRuntime {
     /** After GC has run, called to notify the runtime of routes that are used in it. */
     updateUsedRoutes(usedRoutes: string[]): void;
     /** After GC has run, called to notify the runtime of routes that are unused in it. */
-    updateUnusedRoutes(unusedRoutes: string[], safeRoutes: string[]): string[];
+    updateUnusedRoutes(unusedRoutes: string[], allRoutes: string[]): string[];
     /** Called to notify the runtime of routes that are tombstones. */
     updateTombstonedRoutes(tombstoneRoutes: string[]): void;
     /** Called to notify the runtime of datastore routes to be swept. */
@@ -989,11 +989,11 @@ export class GarbageCollector implements IGarbageCollector {
         // If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
         // involving access to deleted data.
         if (this.sweepDataStoresMode) {
-            const safeRoutes = gcResult.deletedNodeIds.concat(gcResult.referencedNodeIds);
-            const removedRoutes = this.runtime.updateUnusedRoutes(this.tombstones, safeRoutes);
+            const allRoutes = gcResult.deletedNodeIds.concat(gcResult.referencedNodeIds);
+            const removedRoutes = this.runtime.updateUnusedRoutes(this.tombstones, allRoutes);
             this.removeSweptNodes(removedRoutes);
         } else if (this.testMode) {
-            const removedRoutes = this.runtime.updateUnusedRoutes(gcResult.deletedNodeIds, []/* safeRoutes */ );
+            const removedRoutes = this.runtime.updateUnusedRoutes(gcResult.deletedNodeIds, []/* allRoutes */ );
             this.removeSweptNodes(removedRoutes);
         } else if (this.tombstoneMode) {
             // If we are running in GC tombstone mode, update tombstoned routes. This enables testing scenarios
