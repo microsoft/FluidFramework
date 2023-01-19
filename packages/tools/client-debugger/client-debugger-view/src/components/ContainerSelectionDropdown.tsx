@@ -5,80 +5,77 @@
 import { Dropdown, IDropdownOption, IDropdownStyles, IStackTokens, Stack } from "@fluentui/react";
 import React from "react";
 
-import {
-	DebuggerRegistry,
-	IFluidClientDebugger,
-	getDebuggerRegistry,
-	getFluidClientDebuggers,
-} from "@fluid-tools/client-debugger";
+import { IFluidClientDebugger } from "@fluid-tools/client-debugger";
+import { HasClientDebuggers, HasContainerId } from "../CommonProps";
+
+/**
+ * {@link ContainerSelectionDropdownProps} input props.
+ *
+ * @internal
+ */
+export interface ContainerSelectionDropdownProps extends HasClientDebuggers, HasContainerId {
+    /**
+     * Take the selected container id to set as current viewed container id.
+     * @param containerId current selected container id.
+     */
+    onChangeSelection(containerId: string): void;
+}
 
 /**
  * Small header that displays core container data.
  *
  */
-export function ContainerSelectionDropdown(): React.ReactElement {
-	const dropdownStyles: Partial<IDropdownStyles> = {
-		dropdown: { width: "300px", zIndex: "1" },
-	};
+export function ContainerSelectionDropdown(
+    props: ContainerSelectionDropdownProps,
+): React.ReactElement {
+    const dropdownStyles: Partial<IDropdownStyles> = {
+        dropdown: { width: "300px", zIndex: "1" },
+    };
 
-	const stackTokens: IStackTokens = { childrenGap: 20 };
+    const stackTokens: IStackTokens = { childrenGap: 20 };
 
-	const debuggerRegistry: DebuggerRegistry = getDebuggerRegistry();
+    const { clientDebuggers, containerId } = props;
 
-	function renewContainerOptions(debuggers: IFluidClientDebugger[]): IDropdownOption[] {
-		const options: IDropdownOption[] = [];
-		for (const x of debuggers) {
-			console.log(x.containerId);
-			options.push({
-				key: x.containerId,
-				text: x.containerNickname ?? x.containerId,
-			});
-		}
-		return options;
-	}
+    let selectedKey = containerId;
 
-	const [clientDebuggers, setClientDebuggers] = React.useState<IFluidClientDebugger[]>(
-		getFluidClientDebuggers(),
-	);
+    function renewContainerOptions(debuggers: IFluidClientDebugger[]): IDropdownOption[] {
+        const options: IDropdownOption[] = [];
+        for (const x of debuggers) {
+            if (x.containerId === containerId) {
+                selectedKey = x.containerNickname ?? x.containerId;
+            }
+            options.push({
+                key: x.containerId,
+                text: x.containerNickname ?? x.containerId,
+            });
+        }
+        return options;
+    }
 
-	let clientDebuggerOptions = renewContainerOptions(clientDebuggers);
+    const clientDebuggerOptions = renewContainerOptions(clientDebuggers);
 
-	React.useEffect(() => {
-		function onDebuggerChanged(): void {
-			setClientDebuggers(getFluidClientDebuggers());
-			clientDebuggerOptions = renewContainerOptions(clientDebuggers);
-		}
+    const _onClientDebuggerDropdownChange = (
+        event: React.FormEvent<HTMLDivElement>,
+        option?: IDropdownOption,
+    ): void => {
+        if (option) {
+            const selectedDebugger = clientDebuggers.find((c) => {
+                return c.containerId === (option.key as string);
+            }) as IFluidClientDebugger;
+            props.onChangeSelection(selectedDebugger.containerId);
+        }
+    };
 
-		debuggerRegistry.on("debuggerRegistered", onDebuggerChanged);
-		debuggerRegistry.on("debuggerClosed", onDebuggerChanged);
-
-		return (): void => {
-			debuggerRegistry.off("debuggerRegistered");
-			debuggerRegistry.off("debuggerClosed");
-		};
-	}, [clientDebuggers, clientDebuggerOptions, setClientDebuggers]);
-
-	const _onClientDebuggerDropdownChange = (
-		event: React.FormEvent<HTMLDivElement>,
-		option?: IDropdownOption,
-	): void => {
-		if (option) {
-			const selectedDebugger = clientDebuggers.find((c) => {
-				return c.containerId === (option.key as string);
-			}) as IFluidClientDebugger;
-			debuggerRegistry.setCurrentDisplayDebugger(selectedDebugger);
-		}
-	};
-
-	return (
-		<Stack tokens={stackTokens}>
-			<Dropdown
-				placeholder="Select an option"
-				label="Containers: "
-				options={clientDebuggerOptions}
-				styles={dropdownStyles}
-				onChange={_onClientDebuggerDropdownChange}
-			/>
-		</Stack>
-	);
+    return (
+        <Stack tokens={stackTokens}>
+            <Dropdown
+                placeholder="Select an option"
+                selectedKey={selectedKey}
+                label="Containers: "
+                options={clientDebuggerOptions}
+                styles={dropdownStyles}
+                onChange={_onClientDebuggerDropdownChange}
+            />
+        </Stack>
+    );
 }

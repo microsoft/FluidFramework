@@ -7,11 +7,18 @@ import { useId } from "@fluentui/react-hooks";
 import { Resizable } from "re-resizable";
 import React from "react";
 
-import { IFluidClientDebugger, getFluidClientDebuggers } from "@fluid-tools/client-debugger";
+import {
+    DebuggerRegistry,
+    IFluidClientDebugger,
+    getFluidClientDebuggers,
+    getFluidClientDebugger,
+    getDebuggerRegistry,
+} from "@fluid-tools/client-debugger";
 
 import { HasContainerId } from "./CommonProps";
 import { RenderOptions } from "./RendererOptions";
 import { ClientDebugView } from "./components";
+import { ContainerSelectionDropdown } from "./components/ContainerSelectionDropdown";
 
 /**
  * {@link FluidClientDebugger} input props.
@@ -32,48 +39,68 @@ export interface FluidClientDebuggerProps {
  * @remarks If no debugger has been initialized, will display a note to the user and a refresh button to search again.
  */
 export function FluidClientDebugger(props: FluidClientDebuggerProps): React.ReactElement {
-    /**
-     * This function will retrieve all client debuggers and return the first one.
-     * TODO: update it to check container id after support multi-containers app.
-     */
     function getFirstDebugger(): IFluidClientDebugger | undefined {
-        const clientDebuggers = getFluidClientDebuggers();
-        return clientDebuggers.length === 0 ? undefined : clientDebuggers[0];
+        const debuggers = getFluidClientDebuggers();
+        return debuggers.length === 0 ? undefined : debuggers[0];
     }
 
+    const [clientDebuggers, setClientDebuggers] = React.useState<IFluidClientDebugger[]>(getFluidClientDebuggers());
+
+    const [selectedContainerId, setSelectedContainerId] = React.useState<string>(
+        getFirstDebugger()?.containerId ?? "",
+    );
+
     const [clientDebugger, setClientDebugger] = React.useState<IFluidClientDebugger | undefined>(
-        getFirstDebugger(),
+        selectedContainerId === undefined ? undefined : getFluidClientDebugger(selectedContainerId),
     );
 
     const [isContainerDisposed, setIsContainerDisposed] = React.useState<boolean>(
         clientDebugger?.disposed ?? false,
     );
 
+    const debuggerRegistry: DebuggerRegistry = getDebuggerRegistry();
+
     React.useEffect(() => {
         function onDebuggerDisposed(): void {
             setIsContainerDisposed(true);
         }
 
+        function onDebuggerChanged(): void {
+            setClientDebuggers(getFluidClientDebuggers());
+        }
+
+        debuggerRegistry.on("debuggerRegistered", onDebuggerChanged);
+        debuggerRegistry.on("debuggerClosed", onDebuggerChanged);
         clientDebugger?.on("disposed", onDebuggerDisposed);
 
         return (): void => {
             clientDebugger?.off("disposed", onDebuggerDisposed);
+            debuggerRegistry.off("debuggerRegistered", onDebuggerChanged);
+            debuggerRegistry.off("debuggerClosed", onDebuggerChanged);
         };
-    }, [clientDebugger, setIsContainerDisposed]);
+    }, [clientDebugger, clientDebuggers, setIsContainerDisposed, setClientDebuggers]);
 
     let view: React.ReactElement;
     if (clientDebugger === undefined) {
         view = (
             <NoDebuggerInstance
                 containerId={"No container found"}
-                onRetryDebugger={(): void => setClientDebugger(getFirstDebugger())}
+                onRetryDebugger={(): void => {
+                    setClientDebuggers(getFluidClientDebuggers());
+                    setClientDebugger(getFirstDebugger());
+                    setSelectedContainerId(getFirstDebugger()?.containerId ?? "");
+                }}
             />
         );
     } else if (isContainerDisposed) {
         view = (
             <DebuggerDisposed
                 containerId={clientDebugger.containerId}
-                onRetryDebugger={(): void => setClientDebugger(getFirstDebugger())}
+                onRetryDebugger={(): void => {
+                    setClientDebuggers(getFluidClientDebuggers());
+                    setClientDebugger(getFirstDebugger());
+                    setSelectedContainerId(clientDebugger?.containerId);
+                }}
             />
         );
     } else {
@@ -85,6 +112,17 @@ export function FluidClientDebugger(props: FluidClientDebuggerProps): React.Reac
         );
     }
 
+    const slectionView: React.ReactElement =
+        clientDebuggers?.length > 1 ? (
+            <ContainerSelectionDropdown
+                containerId={selectedContainerId}
+                clientDebuggers={clientDebuggers}
+                onChangeSelection={(containerId): void => setSelectedContainerId(containerId)}
+            />
+        ) : (
+            <></>
+        );
+
     return (
         <Resizable
             style={{
@@ -94,11 +132,12 @@ export function FluidClientDebugger(props: FluidClientDebuggerProps): React.Reac
                 top: "0px",
                 right: "0px",
                 bottom: "0px",
-				zIndex: "2",
+                zIndex: "2",
                 backgroundColor: "lightgray", // TODO: remove
             }}
             className={"debugger-panel"}
         >
+            {slectionView}
             {view}
         </Resizable>
     );
