@@ -613,18 +613,21 @@ export const handlers: Handler[] = [
                     json.scripts,
                     "format",
                 );
+                const isLernaFormat = json["scripts"]["format"]?.includes("lerna");
 
-                if (hasPrettierScript || hasPrettierFixScript || hasFormatScript) {
-                    if (!hasPrettierScript) {
-                        missingScripts.push(`prettier`);
-                    }
+                if (!isLernaFormat) {
+                    if (hasPrettierScript || hasPrettierFixScript || hasFormatScript) {
+                        if (!hasPrettierScript) {
+                            missingScripts.push(`prettier`);
+                        }
 
-                    if (!hasPrettierFixScript) {
-                        missingScripts.push(`prettier:fix`);
-                    }
+                        if (!hasPrettierFixScript) {
+                            missingScripts.push(`prettier:fix`);
+                        }
 
-                    if (!hasFormatScript) {
-                        missingScripts.push(`format`);
+                        if (!hasFormatScript) {
+                            missingScripts.push(`format`);
+                        }
                     }
                 }
             }
