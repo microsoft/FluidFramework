@@ -394,6 +394,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * "loading" - "loaded" - "closing" - "disposing" - "closed" - "disposed"
      *
      * For example, moving from "closed" to "disposing" is not allowed since it is an earlier state.
+     *
+     * loading: Container has been created, but is not yet in normal/loaded state
+     * loaded: Container is in normal/loaded state
+     * closing: Container has started closing process (for re-entrancy prevention)
+     * disposing: Container has started disposing process (for re-entrancy prevention)
+     * closed: Container has closed
+     * disposed: Container has been disposed
      */
     private _lifecycleState: "loading" | "loaded" | "closing" | "disposing" | "closed" | "disposed" = "loading";
 
