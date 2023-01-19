@@ -387,7 +387,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private readonly mc: MonitoringContext;
 
-    private _lifecycleState: "loading" | "loaded" | "closing" | "closed" | "disposed" = "loading";
+    private _lifecycleState: "loading" | "loaded" | "closing" | "closed" | "disposing" | "disposed" = "loading";
 
     private setLoaded() {
         // It's conceivable the container could be closed when this is called
@@ -400,7 +400,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public get closed(): boolean {
-        return (this._lifecycleState === "closing" || this._lifecycleState === "closed" || this._lifecycleState === "disposed");
+        return (this._lifecycleState === "closing" || this._lifecycleState === "closed"
+            || this._lifecycleState === "disposing" || this._lifecycleState === "disposed");
     }
 
     private _attachState = AttachState.Detached;
@@ -826,6 +827,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         try {
             // Ensure that we raise all key events even if one of these throws
             try {
+                // Raise event first, to ensure we capture _lifecycleState before transition.
+                // This gives us a chance to know what errors happened on open vs. on fully loaded container.
+                this.mc.logger.sendTelemetryEvent(
+                    {
+                        eventName: "ContainerDispose",
+                        category: error === undefined ? "generic" : "error",
+                    },
+                    error,
+                );
+
+                this._lifecycleState = "disposing";
+
                 this._protocolHandler?.close();
 
                 this.connectionStateHandler.dispose();
