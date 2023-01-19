@@ -45,7 +45,13 @@ interface ICellValue {
 }
 
 interface ICellContent {
+    /**
+     * The actual value contained in the `Cell`, which needs to be wrapped to handle `undefined`.
+     */
     value: unknown;
+    /**
+     * The attribution key contained in the `Cell`.
+     */
     attribution: unknown;
 }
 
@@ -263,6 +269,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
         const content = await readAndParse<ICellContent>(storage, snapshotFileName);
 
         this.data = this.decode({ value: content.value });
+        this.attribution = content.attribution as AttributionKey | undefined;
     }
 
     /**
