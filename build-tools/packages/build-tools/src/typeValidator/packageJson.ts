@@ -353,6 +353,7 @@ export async function getAndUpdatePackageDetails(
     }
 
     const version = packageDetails.json.version;
+    const cachedPreviousVersionStyle = packageDetails.json.typeValidation?.previousVersionStyle;
     const fluidConfig = pkg.monoRepo?.fluidBuildConfig ?? pkg.fluidBuildConfig;
     const branch = branchName ?? context.originalBranchName;
     let releaseType: VersionBumpType | undefined;
@@ -385,20 +386,23 @@ export async function getAndUpdatePackageDetails(
     previousVersionStyle =
         // If the style was explicitly passed in, use it
         style ??
-        // if the branch config was a version style, use it
+        // If the branch config has a configured version style, use it
         previousVersionStyle ??
+        // Otherwise calculate the version style based on the branch config
         (releaseType === "major"
             ? "^previousMajor"
             : releaseType === "minor"
             ? "~previousMinor"
             : releaseType === "patch"
             ? "previousPatch"
-            : undefined);
+            : undefined) ??
+        // Finally if the branch is unknown, use the cached version style from the package.json
+        cachedPreviousVersionStyle;
 
     if (previousVersionStyle === undefined) {
         // Skip if there's no previous version style defined for the package.
         return {
-            skipReason: `Skipping package: no previousVersionStyle is defined for the branch`,
+            skipReason: `Skipping package: no previousVersionStyle is defined`,
         };
     }
 
@@ -456,6 +460,7 @@ export async function getAndUpdatePackageDetails(
 
         packageDetails.json.typeValidation = {
             version,
+            previousVersionStyle,
             baselineRange: baseline,
             baselineVersion: baseline === prevVersion ? undefined : prevVersion,
             broken: resetBroken === true ? {} : packageDetails.json.typeValidation?.broken ?? {},

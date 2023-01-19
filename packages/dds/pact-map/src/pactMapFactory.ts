@@ -9,28 +9,28 @@ import {
     IChannelServices,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { Quorum } from "./quorum";
-import { IQuorum } from "./interfaces";
+import { PactMap } from "./pactMap";
+import { IPactMap } from "./interfaces";
 import { pkgVersion } from "./packageVersion";
 
 /**
- * The factory that produces the Quorum
+ * The factory that produces the PactMap
  */
-export class QuorumFactory implements IChannelFactory {
-    public static readonly Type = "https://graph.microsoft.com/types/quorum";
+export class PactMapFactory implements IChannelFactory {
+    public static readonly Type = "https://graph.microsoft.com/types/pact-map";
 
     public static readonly Attributes: IChannelAttributes = {
-        type: QuorumFactory.Type,
+        type: PactMapFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
     };
 
     public get type(): string {
-        return QuorumFactory.Type;
+        return PactMapFactory.Type;
     }
 
     public get attributes(): IChannelAttributes {
-        return QuorumFactory.Attributes;
+        return PactMapFactory.Attributes;
     }
 
     /**
@@ -40,15 +40,15 @@ export class QuorumFactory implements IChannelFactory {
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        attributes: IChannelAttributes): Promise<IQuorum> {
-        const quorum = new Quorum(id, runtime, attributes);
-        await quorum.load(services);
-        return quorum;
+        attributes: IChannelAttributes): Promise<IPactMap> {
+        const pactMap = new PactMap(id, runtime, attributes);
+        await pactMap.load(services);
+        return pactMap;
     }
 
-    public create(document: IFluidDataStoreRuntime, id: string): IQuorum {
-        const quorum = new Quorum(id, document, this.attributes);
-        quorum.initializeLocal();
-        return quorum;
+    public create(document: IFluidDataStoreRuntime, id: string): IPactMap {
+        const pactMap = new PactMap(id, document, this.attributes);
+        pactMap.initializeLocal();
+        return pactMap;
     }
 }

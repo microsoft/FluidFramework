@@ -11,10 +11,19 @@ export interface ICollaborativeTextAreaProps {
      * The SharedString that will store the text from the textarea.
      */
     sharedStringHelper: SharedStringHelper;
+
     /**
-     * Whether spellCheck should be enabled.  Defaults to false.
+     * Whether or not the control should be {@link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/textarea#attr-readonly | read-only}.
+     * @defaultValue `false`
+     */
+    readOnly?: boolean;
+
+    /**
+     * Whether `spellCheck` should be enabled.
+     * @defaultValue `false`
      */
     spellCheck?: boolean;
+
     className?: string;
     style?: React.CSSProperties;
 }
@@ -22,6 +31,7 @@ export interface ICollaborativeTextAreaProps {
 export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (props: ICollaborativeTextAreaProps) => {
     const {
         sharedStringHelper,
+        readOnly,
         spellCheck,
         className,
         style,
@@ -149,7 +159,8 @@ export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (pro
             ref={textareaRef}
             className={className}
             style={style}
-            spellCheck={spellCheck ? spellCheck : false}
+            spellCheck={spellCheck ?? false}
+            readOnly={readOnly ?? false}
             onBeforeInput={storeSelectionInReact}
             onKeyDown={storeSelectionInReact}
             onClick={storeSelectionInReact}

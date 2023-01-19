@@ -9,7 +9,6 @@ import merge from "lodash.merge";
 import { NpmPackageJsonLint } from "npm-package-json-lint";
 import { EOL as newline } from "os";
 import path from "path";
-import { stringify } from "querystring";
 import * as readline from "readline";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
@@ -655,6 +654,8 @@ export const handlers: Handler[] = [
 ];
 
 function addPrettier(json: Record<string, any>) {
+    const hasFormatScriptResolver = Object.prototype.hasOwnProperty.call(json.scripts, "format");
+
     const hasPrettierScriptResolver = Object.prototype.hasOwnProperty.call(
         json.scripts,
         "prettier",
@@ -665,12 +666,22 @@ function addPrettier(json: Record<string, any>) {
         "prettier:fix",
     );
 
-    const hasFormatScriptResolver = Object.prototype.hasOwnProperty.call(json.scripts, "format");
+    if (hasFormatScriptResolver || hasPrettierScriptResolver || hasPrettierFixScriptResolver) {
+        const formatScript = json["scripts"]["format"]?.includes("lerna");
+        const prettierScript = json["scripts"]["prettier"]?.includes("--ignore-path");
+        const prettierFixScript = json["scripts"]["prettier:fix"]?.includes("--ignore-path");
 
-    if (hasPrettierScriptResolver || hasPrettierFixScriptResolver || hasFormatScriptResolver) {
-        json["scripts"]["format"] = "npm run prettier:fix";
-        json["scripts"]["prettier"] = "prettier --check .";
-        json["scripts"]["prettier:"] = "prettier --write .";
+        if (!formatScript) {
+            json["scripts"]["format"] = "npm run prettier:fix";
+
+            if (!prettierScript) {
+                json["scripts"]["prettier"] = "prettier --check .";
+            }
+
+            if (!prettierFixScript) {
+                json["scripts"]["prettier:fix"] = "prettier --write .";
+            }
+        }
     }
 }
 

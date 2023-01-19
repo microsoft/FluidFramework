@@ -19,6 +19,8 @@ import {
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
+import Redis from "ioredis";
+import { RedisCache } from "@fluidframework/server-services";
 import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
 
@@ -35,6 +37,7 @@ export class RiddlerResources implements IResources {
         public readonly defaultHistorianUrl: string,
         public readonly defaultInternalHistorianUrl: string,
         public readonly secretManager: ISecretManager,
+        public readonly cache: RedisCache,
     ) {
         const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
         this.webServerFactory = new services.BasicWebServerFactory(httpServerConfig);
@@ -47,6 +50,27 @@ export class RiddlerResources implements IResources {
 
 export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResources> {
     public async create(config: Provider): Promise<RiddlerResources> {
+        // Cache connection
+        const redisConfig = config.get("redisForTenantCache");
+        let cache: RedisCache;
+        if(redisConfig) {
+            const redisOptions: Redis.RedisOptions = {
+                host: redisConfig.host,
+                port: redisConfig.port,
+                password: redisConfig.pass,
+            };
+            if (redisConfig.tls) {
+                redisOptions.tls = {
+                    servername: redisConfig.host,
+                };
+            }
+            const redisParams = {
+                expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
+            };
+            const redisClient = new Redis(redisOptions);
+
+            cache = new RedisCache(redisClient, redisParams);
+        }
         // Database connection
         const factory = await services.getDbFactory(config);
 
@@ -101,7 +125,8 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
             serverUrl,
             defaultHistorianUrl,
             defaultInternalHistorianUrl,
-            secretManager);
+            secretManager,
+            cache);
     }
 }
 
@@ -116,6 +141,7 @@ export class RiddlerRunnerFactory implements IRunnerFactory<RiddlerResources> {
             resources.baseOrdererUrl,
             resources.defaultHistorianUrl,
             resources.defaultInternalHistorianUrl,
-            resources.secretManager);
+            resources.secretManager,
+            resources.cache);
     }
 }
