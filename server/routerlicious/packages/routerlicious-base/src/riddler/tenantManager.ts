@@ -109,7 +109,7 @@ export class TenantManager {
                             Lumberjack.error(`Error deleting keys from the cache.`, lumberProperties, err);
                         });
                     }
-                    if (bypassCache === false && this.isCacheEnabled) {
+                    if (!bypassCache && this.isCacheEnabled) {
                         // Assume we used a cached key, and try again by bypassing cache.
                         return this.validateToken(
                             tenantId,
@@ -286,14 +286,14 @@ export class TenantManager {
     /**
      * Retrieves the secret for the given tenant
      */
-    public async getTenantKeys(tenantId: string, includeDisabledTenant = false, disableCache=false): Promise<ITenantKeys> {
-        const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId, includeDisabledTenant, disableCache };
+    public async getTenantKeys(tenantId: string, includeDisabledTenant = false, bypassCache=false): Promise<ITenantKeys> {
+        const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId, includeDisabledTenant, bypassCache };
         const fetchTenantKeyMetric = Lumberjack.newLumberMetric(LumberEventName.RiddlerFetchTenantKey);
         let uncaughtException;
         let retrievedFromCache = false;
 
         try {
-            if(!disableCache && this.isCacheEnabled) {
+            if(!bypassCache && this.isCacheEnabled) {
                 // Read from cache first
                 const cachedKey = await this.getKeyFromCache(tenantId);
 
@@ -340,7 +340,7 @@ export class TenantManager {
             Lumberjack.info("Tenant key2 doesn't exist.", lumberProperties);
         }
 
-        if (!disableCache && this.isCacheEnabled) {
+        if (!bypassCache && this.isCacheEnabled) {
             const cacheKeys = {
                 key1: encryptedTenantKey1,
                 key2: encryptedTenantKey2,
