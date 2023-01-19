@@ -172,6 +172,8 @@ export interface IGarbageCollector {
     ): void;
     /** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
     addedOutboundReference(fromNodePath: string, toNodePath: string): void;
+    /** Returns true if this node has been deleted by GC during sweep phase. */
+    isNodeDeleted(nodePath: string): boolean;
     setConnectionState(connected: boolean, clientId?: string): void;
     dispose(): void;
 }
@@ -419,7 +421,10 @@ export class GarbageCollector implements IGarbageCollector {
     // Keeps a list of references (edges in the GC graph) between GC runs. Each entry has a node id and a list of
     // outbound routes from that node.
     private readonly newReferencesSinceLastRun: Map<string, string[]> = new Map();
+    // A list of nodes that have been tombstoned.
     private tombstones: string[] = [];
+    // A list of nodes that have been deleted during sweep phase.
+    private deletedNodes: Set<string> = new Set();
 
     /**
      * Keeps track of the GC data from the latest summary successfully submitted to and acked from the server.
@@ -565,8 +570,7 @@ export class GarbageCollector implements IGarbageCollector {
             // flag in GC options to false.
             this.gcEnabled = this.gcOptions.gcAllowed !== false;
             // The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true.
-            // ...unless we're using the TestOverride
-            this.sweepEnabled = this.gcOptions.sweepAllowed === true || testOverrideSweepTimeoutMs !== undefined;
+            this.sweepEnabled = this.gcOptions.sweepAllowed === true;
 
             // Set the Session Expiry only if the flag is enabled and GC is enabled.
             if (this.mc.config.getBoolean(runSessionExpiryKey) && this.gcEnabled) {
@@ -640,8 +644,9 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
         this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? this.gcOptions.runGCInTestMode === true;
-        // Whether we are running in tombstone mode. This is true by default unless disabled via feature flags.
-        this.tombstoneMode = this.mc.config.getBoolean(disableTombstoneKey) !== true;
+        // Whether we are running in tombstone mode. This is enabled by default if sweep won't run. It can be disabled
+        // via feature flags.
+        this.tombstoneMode = !this.shouldRunSweep && this.mc.config.getBoolean(disableTombstoneKey) !== true;
 
         // If GC ran in the container that generated the base snapshot, it will have a GC tree.
         this.wasGCRunInLatestSummary = baseSnapshot?.trees[gcTreeKey] !== undefined;
@@ -782,9 +787,8 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Called during container initialization. Initialize the tombstone state so that object are marked as tombstones
-     * before they are loaded or used. This is important to get accurate information of whether tombstoned object are
-     * in use or not.
+     * Called during container initialization. Initialize from the tombstone state in the base snapshot. This is done
+     * during initialization so that deleted or tombstoned objects are marked as such before they are loaded or used.
      */
     public async initializeBaseState(): Promise<void> {
         const baseSnapshotData = await this.baseSnapshotDataP;
@@ -795,11 +799,22 @@ export class GarbageCollector implements IGarbageCollector {
          * 3. A summary that was generated before GC even existed.
          * 4. A summary that was generated with tombstone feature disabled.
          */
-        if (!this.tombstoneMode || baseSnapshotData?.tombstones === undefined) {
+        if (baseSnapshotData?.tombstones === undefined) {
             return;
         }
-        this.tombstones = Array.from(baseSnapshotData.tombstones);
-        this.runtime.updateTombstonedRoutes(this.tombstones);
+
+        // If running sweep, the tombstone state represents the list of nodes that were deleted during sweep.
+        if (this.shouldRunSweep) {
+            this.deletedNodes = new Set(baseSnapshotData.tombstones);
+            return;
+        }
+
+        // If running in tombstone mode, the tombstone state represents the list of nodes that have been marked as
+        // tombstones.
+        if (this.tombstoneMode) {
+            this.tombstones = Array.from(baseSnapshotData.tombstones);
+            this.runtime.updateTombstonedRoutes(this.tombstones);
+        }
     }
 
     /**
@@ -831,9 +846,29 @@ export class GarbageCollector implements IGarbageCollector {
         };
         this.unreferencedNodesState.clear();
 
-        // If tombstone mode is enabled, update tombstone information and also update all tombstoned nodes in the
-        // container as per the state in the snapshot data.
-        if (this.tombstoneMode) {
+        // If running sweep, the tombstone state represents the list of nodes that have been deleted during sweep.
+        // If running in tombstone mode, the tombstone state represents the list of nodes that have been marked as
+        // tombstones.
+        // If this call is because we are refreshing from a snapshot due to an ack, it is likely that the GC state
+        // in the snapshot is newer than this client's. And so, the deleted / tombstone nodes need to be updated.
+        if (this.shouldRunSweep) {
+            const snapshotDeletedNodes = snapshotData?.tombstones ? new Set(snapshotData.tombstones) : undefined;
+            // If the snapshot contains deleted nodes that are not yet deleted by this client, ask the runtime to
+            // delete them.
+            if (snapshotDeletedNodes !== undefined) {
+                const newDeletedNodes: string[] = [];
+                for (const nodeId of snapshotDeletedNodes) {
+                    if (!this.deletedNodes.has(nodeId)) {
+                        newDeletedNodes.push(nodeId);
+                    }
+                }
+                if (newDeletedNodes.length > 0) {
+                    // Call container runtime to delete these nodes and add deleted nodes to this.deletedNodes.
+                }
+            }
+        } else if (this.tombstoneMode) {
+            // The snapshot may contain more or fewer tombstone nodes than this client. Update tombstone state and
+            // notify the runtime to update its state as well.
             this.tombstones = snapshotData?.tombstones ? Array.from(snapshotData.tombstones) : [];
             this.runtime.updateTombstonedRoutes(this.tombstones);
         }
@@ -1020,9 +1055,16 @@ export class GarbageCollector implements IGarbageCollector {
         }
 
         const serializedGCState = JSON.stringify(generateSortedGCState(gcState));
-        const serializedTombstones = this.tombstoneMode
-            ? (this.tombstones.length > 0 ? JSON.stringify(this.tombstones.sort()) : undefined)
-            : undefined;
+        let serializedTombstones: string | undefined;
+        // If running sweep, the tombstone blob represents the list of nodes that have been deleted by sweep.
+        // Otherwise, if running in tombstone mode, the tombstone blob represent the list of nodes that have been
+        // marked as tombstones.
+        if (this.shouldRunSweep) {
+            serializedTombstones =
+                this.deletedNodes.size > 0 ? JSON.stringify(Array.from(this.deletedNodes).sort()) : undefined;
+        } else if (this.tombstoneMode) {
+            serializedTombstones = this.tombstones.length > 0 ? JSON.stringify(this.tombstones.sort()) : undefined;
+        }
 
         /**
          * Incremental summary of GC data - If any of the GC state or tombstone state hasn't changed since the last
@@ -1251,6 +1293,14 @@ export class GarbageCollector implements IGarbageCollector {
                 throwOnTombstoneUsage: this.mc.config.getBoolean(throwOnTombstoneUsageKey) ?? false,
             });
         }
+    }
+
+    /**
+     * Returns whether a node with the given path has been deleted or not. This can be used by the runtime to identify
+     * cases where objects are used after they are deleted and throw / log errors accordingly.
+     */
+    public isNodeDeleted(nodePath: string): boolean {
+        return this.deletedNodes.has(nodePath);
     }
 
     public dispose(): void {
@@ -1636,7 +1686,7 @@ export class GarbageCollector implements IGarbageCollector {
                 }
             }
 
-            // If SweepReady Usage Detection is enabed, the handler may close the interactive container.
+            // If SweepReady Usage Detection is enabled, the handler may close the interactive container.
             // Once Sweep is fully implemented, this will be removed since the objects will be gone
             // and errors will arise elsewhere in the runtime
             if (state === UnreferencedState.SweepReady) {
