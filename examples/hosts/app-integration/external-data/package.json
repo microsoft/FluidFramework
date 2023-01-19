@@ -41,7 +41,7 @@
     "start:test": "start-server-and-test start:tinylicious 7070 start:app:test",
     "start:tinylicious": "tinylicious",
     "test": "npm run test:jest",
-    "test:jest": "jest --detectOpenHandles",
+    "test:jest": "jest --detectOpenHandles --runInBand --no-cache",
     "test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --detectOpenHandles",
     "test:verbose": "npm run test:jest:verbose",
     "tsc": "tsc",

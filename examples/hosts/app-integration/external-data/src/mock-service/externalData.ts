@@ -70,7 +70,8 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
      * @remarks This is async to simulate the more-realistic scenario of a network request.
      */
     public async fetchData(): Promise<Response> {
-        return new Response(JSON.stringify(this.data), {
+        const jsonData = {taskList: this.data};
+        return new Response(JSON.stringify(jsonData), {
             status: 200,
             statusText: 'OK',
             headers: { 'Content-Type': 'application/json' },

@@ -114,8 +114,8 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
         console.log(`SERVICE: Fetching task list data...`);
         externalDataSource.fetchData().then(
             (data) => {
-                console.log(`SERVICE: Returning current task list:\n"${data}".`);
-                result.send({ taskList: JSON.parse(data.body.toString()) as object });
+                console.log(`SERVICE: Returning current task list:\n"${data.body}".`);
+                result.send(JSON.parse(data.body.toString()) as TaskData);
             },
             (error) => {
                 console.error(`SERVICE: Encountered an error while reading mock external data file:\n${error}`);
@@ -142,6 +142,8 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
         } else {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             const taskList = request.body.taskList as TaskData;
+            console.log(taskList)
+
             console.log(`SERVICE: Setting task list to "${taskList}"...`);
             externalDataSource.writeData(taskList).then(
                 () => {
