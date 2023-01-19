@@ -70,7 +70,7 @@ export type SiblingsOrKey = readonly TreeChunk[] | readonly FieldKey[];
 /**
  * Cursor over basic chunks.
  *
- * This implementation is similar to StackCursor, however it is distinct because:
+ * @remarks This implementation is similar to StackCursor, however it is distinct because:
  * 1. The children are chunks, which might have a top level length that greater than 1.
  * 2. It needs to be able to delegate to cursors of other chunk formats it does not natively understand (See TODO below).
  *
@@ -99,6 +99,8 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
         protected readonly siblingStack: SiblingsOrKey[],
         protected readonly indexStack: number[],
         protected readonly indexOfChunkStack: number[],
+        // TODO: Currently only BasicChunks are supported, and the currently always have a top level length of 1.
+        // That makes this stack unneeded. When BasicChunkCursor is more feature complete, this stack should be reevaluated, and removed if possible.
         protected readonly indexWithinChunkStack: number[],
         protected siblings: SiblingsOrKey,
         protected index: number,
