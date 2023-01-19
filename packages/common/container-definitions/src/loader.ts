@@ -466,14 +466,14 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     forceReadonly?(readonly: boolean);
 
     /**
-     * Exposes the root object / entryPoint of the container.
+     * Exposes the entryPoint for the container.
      * Use this as the primary way of getting access to the user-defined logic within the container.
      * If this promise returns undefined (meaning that exposing the entryPoint hasn't been implemented in a particular
-     * scenario) fall back to the current approach of requesting the root object of the container through the request
+     * scenario) fall back to the current approach of requesting the default object of the container through the request
      * pattern.
      *
      * @remarks The plan is that eventually IContainer will no longer implement IFluidRouter (and thus won't have a
-     * request() method), this promise will no longer return undefined, and it will become the only way to access
+     * request() method), this property will no longer be optional, and it will become the only way to access
      * the entryPoint for the container.
      */
     readonly entryPoint?: Promise<FluidObject | undefined>;
