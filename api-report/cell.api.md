@@ -21,9 +21,11 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
     delete(): void;
     empty(): boolean;
     get(): Serializable<T> | undefined;
-    // Warning: (ae-forgotten-export) The symbol "CellAttributor" needs to be exported by the entry point index.d.ts
-    getAttributor(): CellAttributor;
+    // Warning: (ae-forgotten-export) The symbol "AttributionKey" needs to be exported by the entry point index.d.ts
+    getAttribution(): AttributionKey | undefined;
+    hasAttribution(): boolean;
     set(value: Serializable<T>): void;
+    setAttribution(message: ISequencedDocumentMessage): void;
 }
 
 // @public
@@ -34,22 +36,31 @@ export interface ISharedCellEvents<T> extends ISharedObjectEvents {
 
 // @public
 export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> implements ISharedCell<T> {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, trackAttribution?: boolean);
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, options?: ICellOptions | undefined);
     // @internal (undocumented)
     protected applyStashedOp(content: unknown): unknown;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCell;
     delete(): void;
     empty(): boolean;
     get(): Serializable<T> | undefined;
-    getAttributor(): CellAttributor;
+    getAttribution(): AttributionKey | undefined;
     static getFactory(): IChannelFactory;
+    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: No member was found with name "hastAttribution"
+    //
+    // (undocumented)
+    hasAttribution(): boolean;
     protected initializeLocalCore(): void;
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     protected onDisconnect(): void;
+    // Warning: (ae-forgotten-export) The symbol "ICellOptions" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    options?: ICellOptions | undefined;
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected rollback(content: any, localOpMetadata: unknown): void;
     set(value: Serializable<T>): void;
+    setAttribution(message: ISequencedDocumentMessage): void;
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }
 
