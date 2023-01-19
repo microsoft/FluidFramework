@@ -22,7 +22,7 @@ export interface ContainerSelectionDropdownProps extends HasClientDebuggers, Has
 }
 
 /**
- * Small header that displays core container data.
+ * A dropdown that displays all registered containers.
  *
  */
 export function ContainerSelectionDropdown(

@@ -10,7 +10,7 @@ import { IFluidClientDebugger } from "@fluid-tools/client-debugger";
  */
 
 /**
- * Base interface for component props that observe data and updates coming from the Client debuggers.
+ * Base interface for component props that observe the Client debuggers list update.
  *
  * @internal
  */
