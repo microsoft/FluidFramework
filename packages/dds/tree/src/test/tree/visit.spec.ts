@@ -5,59 +5,10 @@
 
 import { strict as assert } from "assert";
 import { jsonString } from "../../domains";
-import { emptyField, FieldKinds, namedTreeSchema, singleTextCursor } from "../../feature-libraries";
-import { FieldKey, Delta, DeltaVisitor, visitDelta, JsonableTree, fieldSchema, TreeSchemaIdentifier } from "../../core";
+import { singleTextCursor } from "../../feature-libraries";
+import { FieldKey, Delta, DeltaVisitor, visitDelta } from "../../core";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
-import { stringSchema } from "../feature-libraries/editable-tree/mockData";
-
-export const childSchema = namedTreeSchema({
-    name: brand("Test:Opsize-Bench-Child"),
-    localFields: {
-        data: fieldSchema(FieldKinds.value, [stringSchema.name]),
-    },
-    extraLocalFields: emptyField,
-});
-
-export const parentSchema = namedTreeSchema({
-    name: brand("Test:Opsize-Bench-Root"),
-    localFields: {
-        children: fieldSchema(FieldKinds.sequence, [childSchema.name]),
-    },
-    extraLocalFields: emptyField,
-});
-
-const getJsonNode = (desiredByteSize: number): JsonableTree => {
-    const node = {
-        type: childSchema.name,
-        fields: {
-            data: [{ value: "", type: stringSchema.name }],
-        },
-    };
-
-    const initialNodeByteSize = new TextEncoder().encode(JSON.stringify(node)).length;
-    const sizeIncrementor = "a"; // 1 byte
-    const remainingByteSizeToAdd = desiredByteSize - initialNodeByteSize;
-    node.fields.data[0].value = sizeIncrementor.repeat(remainingByteSizeToAdd);
-    return node;
-};
-
-const getInitialJsonTreeWithChildren = (numChildNodes: number, childNodeByteSize: number) => {
-    const childNode = getJsonNode(childNodeByteSize);
-    const jsonTree: {
-        type: TreeSchemaIdentifier,
-        fields: { children: JsonableTree[] }
-    } = {
-        type: parentSchema.name,
-        fields: {
-            children: [],
-        },
-    };
-    for (let i = 0; i < numChildNodes; i++) {
-        jsonTree.fields.children.push({ ...childNode });
-    }
-    return jsonTree;
-};
 
 function visit(delta: Delta.Root, visitor: DeltaVisitor): void {
     deepFreeze(delta);
