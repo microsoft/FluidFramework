@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/ban-types */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable @typescript-eslint/ban-types */
 
 import {
     typedTreeSchema,
