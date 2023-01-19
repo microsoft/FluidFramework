@@ -23,6 +23,7 @@ interface IResponseException extends Error {
     message: string;
     code: number;
     stack?: string;
+    headers?: { [key: string]: any; };
 }
 
 export function exceptionToResponse(err: any): IResponse {
@@ -34,6 +35,7 @@ export function exceptionToResponse(err: any): IResponse {
             status: responseErr.code,
             value: responseErr.message,
             get stack() { return responseErr.stack; },
+            headers: responseErr.headers,
         };
     }
 
@@ -57,6 +59,7 @@ export function responseToException(response: IResponse, request: IRequest): Err
         name: "Error",
         code: response.status,
         get stack() { return response.stack ?? errWithStack.stack; },
+        headers: response.headers,
     };
 
     return responseErr;
@@ -86,7 +89,7 @@ export async function requestFluidObject<T = FluidObject>(
 
 export const create404Response = (request: IRequest) => createResponseError(404, "not found", request);
 
-export function createResponseError(status: number, value: string, request: IRequest): IResponse {
+export function createResponseError(status: number, value: string, request: IRequest, headers?: { [key: string]: any }): IResponse {
     assert(status !== 200, 0x19b /* "Cannot not create response error on 200 status" */);
     // Omit query string which could contain personal data (aka "PII")
     const urlNoQuery = request.url?.split("?")[0];
@@ -99,6 +102,7 @@ export function createResponseError(status: number, value: string, request: IReq
         status,
         value: urlNoQuery === undefined ? value : `${value}: ${urlNoQuery}`,
         get stack() { return errWithStack.stack; },
+        headers,
     };
 }
 
