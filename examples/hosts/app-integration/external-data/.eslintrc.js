@@ -4,12 +4,11 @@
  */
 
 module.exports = {
-    extends: [
-        require.resolve("@fluidframework/eslint-config-fluid/strict"),
-        "prettier",
+    "extends": [
+        require.resolve("@fluidframework/eslint-config-fluid"), "prettier",
     ],
-    rules: { },
-    overrides: [
+    "rules": { },
+    "overrides": [
         {
             files: ["tests/*"],
             rules: {
