@@ -114,13 +114,8 @@ export function getOrAddEffect<T>(
 ): MoveEffect<T> {
     const table = getTable(moveEffects, end);
     const effect = getOrAddInNestedMap(table, revision, id, {});
-    if (resetMerges && effect.mergeLeft !== undefined) {
-        delete getOrAddEffect(moveEffects, end, revision, effect.mergeLeft).mergeRight;
-        delete effect.mergeLeft;
-    }
-    if (resetMerges && effect.mergeRight !== undefined) {
-        delete getOrAddEffect(moveEffects, end, revision, effect.mergeRight).mergeLeft;
-        delete effect.mergeRight;
+    if (resetMerges) {
+        clearMergeability(moveEffects, end, revision, id);
     }
     return effect;
 }
@@ -210,7 +205,7 @@ function applyMoveEffectsToDest<T>(
     }
 
     if (effect.child !== undefined) {
-        const childEffect = getOrAddEffect(
+        const childEffect = getMoveEffect(
             effects,
             MoveEnd.Dest,
             mark.revision ?? revision,
@@ -278,7 +273,7 @@ function applyMoveEffectsToSource<T>(
     }
 
     if (effect.child !== undefined) {
-        const childEffect = getOrAddEffect(
+        const childEffect = getMoveEffect(
             effects,
             MoveEnd.Source,
             mark.revision ?? revision,
