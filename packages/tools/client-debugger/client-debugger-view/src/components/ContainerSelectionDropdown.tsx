@@ -71,7 +71,6 @@ export function ContainerSelectionDropdown(
             <Dropdown
                 placeholder="Select an option"
                 selectedKey={selectedKey}
-                label="Containers: "
                 options={clientDebuggerOptions}
                 styles={dropdownStyles}
                 onChange={_onClientDebuggerDropdownChange}

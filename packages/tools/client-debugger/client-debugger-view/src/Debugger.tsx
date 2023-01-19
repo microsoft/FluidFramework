@@ -112,16 +112,13 @@ export function FluidClientDebugger(props: FluidClientDebuggerProps): React.Reac
         );
     }
 
-    const slectionView: React.ReactElement =
-        clientDebuggers?.length > 1 ? (
-            <ContainerSelectionDropdown
-                containerId={selectedContainerId}
-                clientDebuggers={clientDebuggers}
-                onChangeSelection={(containerId): void => setSelectedContainerId(containerId)}
-            />
-        ) : (
-            <></>
-        );
+    const slectionView: React.ReactElement = (
+        <ContainerSelectionDropdown
+            containerId={selectedContainerId}
+            clientDebuggers={clientDebuggers}
+            onChangeSelection={(containerId): void => setSelectedContainerId(containerId)}
+        />
+    );
 
     return (
         <Resizable
