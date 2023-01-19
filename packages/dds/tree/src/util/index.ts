@@ -29,6 +29,7 @@ export {
     MakeNominal,
     requireFalse,
     requireTrue,
+    requireAssignableTo,
 } from "./typeCheck";
 export { StackyIterator } from "./stackyIterator";
 export {
