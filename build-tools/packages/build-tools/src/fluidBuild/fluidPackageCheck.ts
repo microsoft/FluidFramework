@@ -173,7 +173,7 @@ export class FluidPackageCheck {
                 ? `concurrently ${expected.map((value) => `npm:${value}`).join(" ")}`
                 : expected.map((value) => `npm run ${value}`).join(" && ")
             : undefined;
-            return this.checkScript(pkg, name, expectedScript, fix);
+        return this.checkScript(pkg, name, expectedScript, fix);
     }
 
     /**
