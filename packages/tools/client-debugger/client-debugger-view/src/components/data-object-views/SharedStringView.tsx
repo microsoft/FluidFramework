@@ -42,11 +42,10 @@ export function SharedStringView(props: SharedStringViewProps): React.ReactEleme
     return (
         <Stack>
             <StackItem>
-                {" "}
                 <CollaborativeTextArea
                     style={{ height: 30, width: 200 }}
                     sharedStringHelper={new SharedStringHelper(sharedString)}
-                />{" "}
+                />
             </StackItem>
         </Stack>
     );
