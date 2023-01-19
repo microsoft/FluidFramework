@@ -526,6 +526,9 @@ export enum RuntimeHeaders {
     allowTombstone = "allowTombstone",
 }
 
+/** Tombstone error responses will have this header set to true */
+export const TombstoneResponseHeaderKey = "isTombstoned"
+
 /**
  * The full set of parsed header data that may be found on Runtime requests
  */

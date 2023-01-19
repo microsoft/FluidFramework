@@ -43,7 +43,7 @@ import { assert, Lazy, LazyPromise } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import { GCDataBuilder, unpackChildNodesGCDetails, unpackChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
-import { ContainerRuntime, RuntimeHeaderData } from "./containerRuntime";
+import { ContainerRuntime, RuntimeHeaderData, TombstoneResponseHeaderKey } from "./containerRuntime";
 import {
     FluidDataStoreContext,
     RemoteFluidDataStoreContext,
@@ -442,7 +442,12 @@ export class DataStores implements IDisposable {
             const shouldFail = this.throwOnTombstoneLoad && !headerData.allowTombstone;
 
             // The requested data store is removed by gc. Create a 404 gc response exception.
-            const error = responseToException(createResponseError(404, "Datastore removed by gc", request, { tombstone: true }), request);
+            const error = responseToException(createResponseError(
+                404,
+                "Datastore removed by gc",
+                request,
+                { [TombstoneResponseHeaderKey]: true },
+            ), request);
             sendGCTombstoneEvent(
                 this.mc,
                 {
