@@ -55,7 +55,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
         public readonly schema: StoredSchemaRepository,
         public readonly anchors: AnchorSet = new AnchorSet(),
     ) {
-        super("object-forest.ObjectForest");
+        super("object-forest.ChunkedForest");
         // Invalidate forest if schema change.
         recordDependency(this.dependent, this.schema);
     }
@@ -251,9 +251,9 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
     moveCursorToPath(destination: UpPath | undefined, cursorToMove: ITreeSubscriptionCursor): void {
         assert(
             cursorToMove instanceof Cursor,
-            "ObjectForest must only be given its own Cursor type",
+            "ChunkedForest must only be given its own Cursor type",
         );
-        assert(cursorToMove.forest === this, "ObjectForest must only be given its own Cursor");
+        assert(cursorToMove.forest === this, "ChunkedForest must only be given its own Cursor");
 
         const indexStack: number[] = [];
         const keyStack: FieldKey[] = [];
@@ -271,8 +271,6 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             cursorToMove.enterNode(indexStack.pop()!);
         }
-
-        return;
     }
 }
 
