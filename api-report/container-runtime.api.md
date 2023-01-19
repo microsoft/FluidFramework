@@ -157,7 +157,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean, containerRuntimeCtor?: typeof ContainerRuntime): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLogger;
-    static newLoad(context: IContainerContext, containerRuntimeCtor: typeof ContainerRuntime | undefined, runtimeOptions: IContainerRuntimeOptions | undefined, existing: boolean, registryEntries: NamedFluidDataStoreRegistryEntries, containerScope: FluidObject<unknown> | undefined, initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>): Promise<ContainerRuntime>;
+    static newLoad(context: IContainerContext, containerRuntimeCtor: typeof ContainerRuntime | undefined, initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, existing: boolean | undefined, runtimeOptions: IContainerRuntimeOptions | undefined, registryEntries: NamedFluidDataStoreRegistryEntries, containerScope?: FluidObject): Promise<ContainerRuntime>;
     // (undocumented)
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     // (undocumented)

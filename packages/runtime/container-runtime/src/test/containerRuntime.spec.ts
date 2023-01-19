@@ -639,20 +639,20 @@ describe("Runtime", () => {
                         public static async newLoad(
                             context: IContainerContext,
                             containerRuntimeCtor: typeof ContainerRuntime = MixinContainerRuntime,
-                            runtimeOptions: IContainerRuntimeOptions = {},
+                            initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
                             existing: boolean,
+                            runtimeOptions: IContainerRuntimeOptions = {},
                             registryEntries: NamedFluidDataStoreRegistryEntries,
-                            containerScope: FluidObject = context.scope,
-                            initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>
+                            containerScope: FluidObject = context.scope
                         ): Promise<ContainerRuntime> {
                             return Base.newLoad(
                                 context,
                                 containerRuntimeCtor,
-                                runtimeOptions,
+                                initializeEntryPoint,
                                 existing,
+                                runtimeOptions,
                                 registryEntries,
                                 containerScope,
-                                initializeEntryPoint
                             );
                         }
 
@@ -668,11 +668,11 @@ describe("Runtime", () => {
                 const runtime = await makeMixin(makeMixin(ContainerRuntime, "method1", "mixed in return"), "method2", 42).newLoad(
                     getMockContext() as IContainerContext,
                     undefined, // containerRuntimeCtor
-                    {},        // runtimeOptions
+                    async (containerRuntime) => myEntryPoint,
                     false,     // existing
+                    {},        // runtimeOptions
                     [],        // registryEntries
                     undefined, // containerScope
-                    async (containerRuntime) => myEntryPoint,
                 );
 
                 assert.equal((runtime as unknown as { method1: () => any; }).method1(), "mixed in return");
@@ -713,11 +713,11 @@ describe("Runtime", () => {
                 const containerRuntime = await ContainerRuntime.newLoad(
                     getMockContext() as IContainerContext,
                     undefined, // containerRuntimeCtor
-                    {},        // runtimeOptions
+                    async (ctrRuntime) => entryPoint,
                     false,     // existing
+                    {},        // runtimeOptions
                     [],        // registryEntries
                     undefined, // containerScope
-                    async (ctrRuntime) => entryPoint
                 );
 
                 const actualEntryPoint = await containerRuntime.entryPoint;

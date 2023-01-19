@@ -50,10 +50,6 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
         return ContainerRuntime.newLoad(
             context,
             undefined,
-            this.runtimeOptions,
-            existing,
-            this.registries,
-            undefined, // containerScope
             async (containerRuntime :IContainerRuntime) => {
                 // For the replay tool, the entryPoint exposes the containerRuntime itself so the helpers for the tool
                 // can use it.
@@ -65,6 +61,10 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
                 };
                 return entryPoint;
             },
+            existing,
+            this.runtimeOptions,
+            this.registries,
+            undefined, // containerScope
         );
     }
 }

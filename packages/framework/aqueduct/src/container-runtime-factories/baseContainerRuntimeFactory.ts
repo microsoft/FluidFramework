@@ -87,10 +87,6 @@ export class BaseContainerRuntimeFactory
         // const runtime: ContainerRuntime = await ContainerRuntime.newLoad(
         //     context,
         //     undefined,
-        //     this.runtimeOptions,
-        //     existing,
-        //     this.registryEntries,
-        //     scope,
         //     async (containerRuntime :IContainerRuntime) => {
         //         const requestHandlers = this.requestHandlers;
         //         // For now, entryPoint is an IFluidRouter for backwards compat
@@ -105,7 +101,11 @@ export class BaseContainerRuntimeFactory
         //             }
         //         };
         //         return entryPoint;
-        //     }
+        //     },
+        //     existing,
+        //     this.runtimeOptions,
+        //     this.registryEntries,
+        //     scope,
         // );
 
         // we register the runtime so developers of providers can use it in the factory pattern.

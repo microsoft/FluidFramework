@@ -653,11 +653,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public static async newLoad(
         context: IContainerContext,
         containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime,
+        initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
+        existing: boolean = false,
         runtimeOptions: IContainerRuntimeOptions = {},
-        existing: boolean,
         registryEntries: NamedFluidDataStoreRegistryEntries,
         containerScope: FluidObject = context.scope,
-        initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>
     ): Promise<ContainerRuntime> {
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
@@ -804,25 +804,26 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         existing?: boolean,
         containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime,
     ): Promise<ContainerRuntime> {
+        const entryPointInitialization = async (containerRuntime: IContainerRuntime) => {
+            // For now, default entryPoint is an IFluidRouter for backwards compat
+            const entryPoint: IFluidRouter = {
+                async request(request: IRequest): Promise<IResponse> {
+                    return requestHandler?.(request, containerRuntime) ?? create404Response(request);
+                },
+                get IFluidRouter() {
+                    return this;
+                }
+            };
+            return entryPoint;
+        };
         return ContainerRuntime.newLoad(
             context,
             containerRuntimeCtor,
-            runtimeOptions,
+            entryPointInitialization,
             existing ?? context.existing ?? false,
+            runtimeOptions,
             registryEntries,
-            containerScope,
-            async (containerRuntime: IContainerRuntime) => {
-                // For now, default entryPoint is an IFluidRouter for backwards compat
-                const entryPoint: IFluidRouter = {
-                    async request(request: IRequest): Promise<IResponse> {
-                        return requestHandler?.(request, containerRuntime) ?? create404Response(request);
-                    },
-                    get IFluidRouter() {
-                        return this;
-                    }
-                };
-                return entryPoint;
-            });
+            containerScope);
     }
 
     public get options(): ILoaderOptions {
