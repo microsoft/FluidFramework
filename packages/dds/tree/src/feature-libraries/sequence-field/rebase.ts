@@ -593,7 +593,6 @@ function applyMoveEffects<TNodeChange>(
         rebasedMarks,
         () => fail("Should not generate new IDs when applying move effects"),
         moveEffects,
-        true,
     );
     const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects);
 

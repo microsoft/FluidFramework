@@ -88,7 +88,6 @@ function composeMarkLists<TNodeChange>(
         newMarkList,
         genId,
         moveEffects,
-        true,
         (a, b) => composeChildChanges(a, b, newRev, composeChild),
     );
     while (!queue.isEmpty()) {
@@ -533,7 +532,6 @@ export class ComposeQueue<T> {
         newMarks: Changeset<T>,
         genId: IdAllocator,
         moveEffects: MoveEffectTable<T>,
-        updatePairedMarkStatus: boolean = true,
         composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
     ) {
         this.baseIndex = new IndexTracker();
