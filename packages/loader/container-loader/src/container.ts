@@ -387,7 +387,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private readonly mc: MonitoringContext;
 
-    private _lifecycleState: "loading" | "loaded" | "closing" | "closed" | "disposing" | "disposed" = "loading";
+    /**
+     * Lifecycle state of the container, used mainly to prevent re-entrancy and telemetry
+     *
+     * States are allowed to progress to further states:
+     * "loading" - "loaded" - "closing" - "disposing" - "closed" - "disposed"
+     *
+     * For example, moving from "closed" to "disposing" is not allowed since it is an earlier state.
+     */
+    private _lifecycleState: "loading" | "loaded" | "closing" | "disposing" | "closed" | "disposed" = "loading";
 
     private setLoaded() {
         // It's conceivable the container could be closed when this is called
@@ -827,7 +835,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         try {
             // Ensure that we raise all key events even if one of these throws
             try {
-                this._lifecycleState = "disposing";
+                // ! Progressing from "closed" to "disposing" is not allowed
+                if (this._lifecycleState !== "closed") {
+                    this._lifecycleState = "disposing";
+                }
 
                 this._protocolHandler?.close();
 
