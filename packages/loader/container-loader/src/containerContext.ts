@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { LazyPromise } from "@fluidframework/common-utils";
+import { Deferred, LazyPromise } from "@fluidframework/common-utils";
 import {
     IAudience,
     IContainerContext,
@@ -172,11 +172,8 @@ export class ContainerContext implements IContainerContext {
     /**
      * {@inheritDoc @fluidframework/container-definitions#IContainerContext.entryPoint}
      */
-    public readonly entryPoint?: Promise<FluidObject | undefined>
-    private _entryPointPromiseResolver: (entryPoint: FluidObject | undefined) => void
-        = (entryPoint: FluidObject | undefined) => {};
-    private _entryPointPromiseRejecter: (reason?: unknown) => void
-        = (reason?: unknown) => {};
+    public readonly entryPoint?: Promise<FluidObject | undefined>;
+    private readonly _deferredEntryPoint: Deferred<FluidObject | undefined> = new Deferred<FluidObject>();
 
     constructor(
         private readonly container: Container,
@@ -206,11 +203,7 @@ export class ContainerContext implements IContainerContext {
             async () => this.loadCodeModule(_codeDetails),
         );
         this.attachListener();
-        this.entryPoint = new Promise<FluidObject | undefined>((resolve, reject) => {
-            this._entryPointPromiseResolver = resolve;
-            this._entryPointPromiseRejecter = reject;
-        });
-
+        this.entryPoint = this._deferredEntryPoint.promise;
     }
 
     /**
@@ -355,9 +348,9 @@ export class ContainerContext implements IContainerContext {
                 this.taggedLogger,
                 { eventName: "InstantiateRuntime" },
                 async () => runtimeFactory.instantiateRuntime(this, existing));
-            this._entryPointPromiseResolver(this._runtime.entryPoint);
+            this._deferredEntryPoint.resolve(this._runtime.entryPoint);
         } catch (err: unknown) {
-            this._entryPointPromiseRejecter(err);
+            this._deferredEntryPoint.reject(err);
             throw err;
         }
     }
