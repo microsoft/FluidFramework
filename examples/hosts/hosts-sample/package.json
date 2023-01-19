@@ -46,7 +46,7 @@
     "semver": "^7.3.4"
   },
   "devDependencies": {
-    "@fluid-tools/build-cli": "^0.7.0",
+    "@fluid-tools/build-cli": "^0.8.0-121495",
     "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@rushstack/eslint-config": "^2.5.1",
