@@ -81,7 +81,7 @@ export class TenantManager {
             if (isNetworkError(error)) {
                 if (error.code === 403 && !tenantKeys.key2){
                     // Delete key from cache when there is a 403 error and no key2 to validate
-                    if (bypassCache && this.isCacheEnabled) {
+                    if (!bypassCache && this.isCacheEnabled) {
                         Lumberjack.info(`Error with tenant key 1 token verification while key 2 is not present. Deleting key from cache.`, lumberProperties);
                         await this.deleteKeyFromCache(tenantId).catch((err) => {
                             Lumberjack.error(`Error deleting keys from the cache.`, lumberProperties, err);
@@ -103,13 +103,12 @@ export class TenantManager {
             if (isNetworkError(error)) {
                 if (error.code === 403) {
                     // Delete key from cache on 403
-                    if (bypassCache && this.isCacheEnabled) {
+                    if (!bypassCache && this.isCacheEnabled) {
+                        // We tried reading from the cache and it failed
                         Lumberjack.info(`Error with key 2 token validation. Deleting key from cache.`, lumberProperties);
                         await this.deleteKeyFromCache(tenantId).catch((err) => {
                             Lumberjack.error(`Error deleting keys from the cache.`, lumberProperties, err);
                         });
-                    }
-                    if (!bypassCache && this.isCacheEnabled) {
                         // Assume we used a cached key, and try again by bypassing cache.
                         return this.validateToken(
                             tenantId,
