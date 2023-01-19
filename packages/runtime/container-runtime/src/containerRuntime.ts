@@ -1443,6 +1443,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * Notifies this object about the request made to the container.
      * @param request - Request made to the handler.
+     *
+     * @deprecated This method will be removed in a future release.
+     * {@link ContainerRuntime.entryPoint} is now the primary way to get access to the user-defined functionality in the
+     * container runtime.
+     * Start using the new static methods on the ContainerRuntime to provide a function that initializes the entryPoint.
+     * If you want to keep using the request pattern, provide an entryPoint that implements
+     * {@link @fluidframework/core-interfaces#IFluidRouter} and issue requests directly to it.
      */
     public async request(request: IRequest): Promise<IResponse> {
         try {

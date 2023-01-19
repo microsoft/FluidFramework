@@ -486,6 +486,7 @@ export interface IRuntime extends IDisposable {
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     process(message: ISequencedDocumentMessage, local: boolean): any;
     processSignal(message: any, local: boolean): any;
+    // @deprecated
     request(request: IRequest): Promise<IResponse>;
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     setConnectionState(connected: boolean, clientId?: string): any;
