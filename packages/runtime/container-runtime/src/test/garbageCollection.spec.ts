@@ -18,6 +18,7 @@ import {
     IGarbageCollectionDetailsBase,
     IGarbageCollectionSummaryDetailsLegacy,
     ISummarizeResult,
+    gcDeletedBlobKey,
 } from "@fluidframework/runtime-definitions";
 import {
     MockLogger,
@@ -92,9 +93,17 @@ describe("Garbage Collection Tests", () => {
     // The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
     const defaultGCData: IGarbageCollectionData = { gcNodes: {} };
 
+    // Returns a dummy snapshot tree to be built upon.
+    const getDummySnapshotTree = (): ISnapshotTree => {
+        return {
+            blobs: {},
+            trees: {},
+        };
+    };
+
     function createGarbageCollector(
         createParams: Partial<IGarbageCollectorCreateParams> = {},
-        gcBlobsMap: Map<string, IGarbageCollectionState | IGarbageCollectionDetailsBase> = new Map(),
+        gcBlobsMap: Map<string, IGarbageCollectionState | IGarbageCollectionDetailsBase | string[]> = new Map(),
         closeFn: (error?: ICriticalContainerError) => void = () => {},
         isSummarizerClient: boolean = true,
     ) {
@@ -567,14 +576,6 @@ describe("Garbage Collection Tests", () => {
             defaultGCData.gcNodes[nodes[2]] = [nodes[3]];
             defaultGCData.gcNodes[nodes[3]] = [nodes[0]];
         });
-
-        // Returns a dummy snapshot tree to be built upon.
-        const getDummySnapshotTree = (): ISnapshotTree => {
-            return {
-                blobs: {},
-                trees: {},
-            };
-        };
 
         const summarizerContainerTests = (
             timeout: number,
@@ -1116,6 +1117,45 @@ describe("Garbage Collection Tests", () => {
                 ],
                 "sweep ready events not generated as expected",
             );
+        });
+    });
+
+    describe("Deleted blobs in GC summary tree", () => {
+        it("correctly reads and write deleted blobs in summary", async () => {
+            // Set up the GC reference graph to have something to work with.
+            defaultGCData.gcNodes["/"] = [nodes[0]];
+
+            // Create a snapshot tree to be used as the GC snapshot tree.
+            const gcSnapshotTree = getDummySnapshotTree();
+            // Add a blob to the tree for deleted nodes.
+            const deletedNodesBlobId = "deletedNodes";
+            gcSnapshotTree.blobs[gcDeletedBlobKey] = deletedNodesBlobId;
+            const deletedNodeIds = [...nodes];
+            // Add deleted nodes list the blobs map that will service read and parse blob calls from GC.
+            const gcBlobsMap: Map<string, string[]> = new Map([[deletedNodesBlobId, deletedNodeIds]]);
+            // Create a base snapshot that contains the GC snapshot tree.
+            const baseSnapshot = getDummySnapshotTree();
+            baseSnapshot.trees[gcTreeKey] = gcSnapshotTree;
+
+            // Create and initialize garbage collector.
+            const garbageCollector = createGarbageCollector({ baseSnapshot }, gcBlobsMap);
+            await garbageCollector.initializeBaseState();
+
+            // The nodes in deletedNodeIds should be marked as deleted.
+            for (const nodeId of deletedNodeIds) {
+                assert(garbageCollector.isNodeDeleted(nodeId) === true, `${nodeId} should be marked deleted`);
+            }
+
+            // Run GC and summarize. The summary should contain the deleted nodes.
+            await garbageCollector.collectGarbage({});
+            const summaryTree = garbageCollector.summarize(false, true);
+            assert(summaryTree?.summary.type === SummaryType.Tree, "The summary should be a tree");
+
+            // Get the deleted node ids from summary and validate that its the same as the one GC loaded from.
+            const deletedNodesBlob = summaryTree.summary.tree[gcDeletedBlobKey];
+            assert(deletedNodesBlob.type === SummaryType.Blob, "Deleted blob not present in summary");
+            const deletedNodeIdsInSummary = JSON.parse(deletedNodesBlob.content as string) as string[];
+            assert.deepStrictEqual(deletedNodeIdsInSummary, deletedNodeIds, "Unexpected deleted nodes in summary");
         });
     });
 
