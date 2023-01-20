@@ -23,8 +23,8 @@ export class MarkQueue<T> {
         private readonly list: readonly Mark<T>[],
         public readonly revision: RevisionTag | undefined,
         private readonly moveEffects: MoveEffectTable<T>,
+        private readonly consumeEffects: boolean,
         private readonly genId: IdAllocator,
-        private readonly reassignMoveIds: boolean = false,
         private readonly composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
     ) {
         this.list = list;
@@ -41,38 +41,32 @@ export class MarkQueue<T> {
     }
 
     public tryDequeue(): Mark<T> | undefined {
-        let reassignMoveIds = this.reassignMoveIds;
-        let mark: Mark<T> | undefined;
         if (this.stack.length > 0) {
-            mark = this.stack.pop();
-            reassignMoveIds = false;
+            return this.stack.pop();
         } else if (this.index < this.list.length) {
-            mark = this.list[this.index++];
+            const mark = this.list[this.index++];
+            if (mark === undefined) {
+                return undefined;
+            }
+
+            const splitMarks = applyMoveEffectsToMark(
+                mark,
+                this.revision,
+                this.moveEffects,
+                this.consumeEffects,
+                this.composeChanges,
+            );
+
+            if (splitMarks.length === 0) {
+                return undefined;
+            }
+
+            const result = splitMarks[0];
+            for (let i = splitMarks.length - 1; i > 0; i--) {
+                this.stack.push(splitMarks[i]);
+            }
+            return result;
         }
-
-        if (mark === undefined) {
-            return undefined;
-        }
-
-        const splitMarks = applyMoveEffectsToMark(
-            mark,
-            this.revision,
-            this.moveEffects,
-            this.genId,
-            reassignMoveIds,
-            this.composeChanges,
-        );
-
-        if (splitMarks.length === 0) {
-            return undefined;
-        }
-
-        const result = splitMarks[0];
-        for (let i = splitMarks.length - 1; i > 0; i--) {
-            this.stack.push(splitMarks[i]);
-        }
-
-        return result;
     }
 
     /**
@@ -83,7 +77,14 @@ export class MarkQueue<T> {
     public dequeueInput(length: number): InputSpanningMark<T> {
         const mark = this.dequeue();
         assert(isInputSpanningMark(mark), 0x4e3 /* Can only split sized marks on input */);
-        const [mark1, mark2] = splitMarkOnInput(mark, length, this.genId, this.moveEffects);
+        const [mark1, mark2] = splitMarkOnInput(
+            mark,
+            this.revision,
+            length,
+            this.genId,
+            this.moveEffects,
+            !this.consumeEffects,
+        );
         this.stack.push(mark2);
         return mark1;
     }
@@ -100,7 +101,14 @@ export class MarkQueue<T> {
             isOutputSpanningMark(mark) || (includeBlockedCells && isBlockedReattach(mark)),
             0x4e4 /* Should only dequeue output if the next mark has output length > 0 */,
         );
-        const [mark1, mark2] = splitMarkOnOutput(mark, length, this.genId, this.moveEffects);
+        const [mark1, mark2] = splitMarkOnOutput(
+            mark,
+            this.revision,
+            length,
+            this.genId,
+            this.moveEffects,
+            !this.consumeEffects,
+        );
         this.stack.push(mark2);
         return mark1;
     }

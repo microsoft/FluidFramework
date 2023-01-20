@@ -37,9 +37,15 @@ import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
 import {
     applyMoveEffectsToMark,
+    getMoveEffect,
+    getOrAddEffect,
+    makeMergeable,
     MoveEffectTable,
+    MoveEnd,
+    MoveMark,
     newMoveEffectTable,
     splitMarkOnOutput,
+    splitMove,
 } from "./moveEffectTable";
 
 export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<TNodeChange> {
@@ -341,7 +347,9 @@ export function isOutputSpanningMark<TNodeChange>(
 export function tryExtendMark(
     lhs: ObjectMark,
     rhs: Readonly<ObjectMark>,
+    revision: RevisionTag | undefined,
     moveEffects: MoveEffectTable<unknown> | undefined,
+    recordMerges: boolean,
 ): boolean {
     if (rhs.type !== lhs.type) {
         return false;
@@ -373,38 +381,10 @@ export function tryExtendMark(
             if (
                 isEqualPlace(lhsMoveIn, rhs) &&
                 moveEffects !== undefined &&
-                lhsMoveIn.conflictsWith === rhs.conflictsWith &&
-                lhsMoveIn.isSrcConflicted === rhs.isSrcConflicted
+                lhsMoveIn.isSrcConflicted === rhs.isSrcConflicted &&
+                tryMergeMoves(MoveEnd.Dest, lhsMoveIn, rhs, revision, moveEffects, recordMerges)
             ) {
-                if (lhsMoveIn.type === "ReturnTo") {
-                    // Verify that the ReturnTo fields line up
-                    const rhsReturnTo = rhs as ReturnTo;
-                    if (
-                        lhsMoveIn.detachedBy !== rhsReturnTo.detachedBy ||
-                        lhsMoveIn.lastDetachedBy !== rhsReturnTo.lastDetachedBy ||
-                        lhsMoveIn.detachIndex + lhsMoveIn.count !== rhsReturnTo.detachIndex
-                    ) {
-                        break;
-                    }
-                }
-                const prevMerge = moveEffects.dstMergeable.get(lhsMoveIn.id);
-                if (prevMerge !== undefined) {
-                    moveEffects.dstMergeable.set(prevMerge, rhs.id);
-                } else {
-                    moveEffects.dstMergeable.set(lhsMoveIn.id, rhs.id);
-                }
-
-                if (
-                    moveEffects.allowMerges &&
-                    moveEffects.srcMergeable.get(lhsMoveIn.id) === rhs.id
-                ) {
-                    const nextId = moveEffects.srcMergeable.get(rhs.id);
-                    if (nextId !== undefined) {
-                        moveEffects.srcMergeable.set(lhsMoveIn.id, nextId);
-                    }
-                    lhsMoveIn.count += rhs.count;
-                    return true;
-                }
+                return true;
             }
             break;
         }
@@ -413,38 +393,24 @@ export function tryExtendMark(
             lhsDetach.count += rhs.count;
             return true;
         }
-        case "MoveOut":
-        case "ReturnFrom": {
-            const lhsMoveOut = lhs as MoveOut | ReturnFrom;
+        case "MoveOut": {
+            const lhsMoveOut = lhs as MoveOut;
             if (
                 moveEffects !== undefined &&
-                lhsMoveOut.conflictsWith === rhs.conflictsWith &&
-                lhsMoveOut.isDstConflicted === rhs.isDstConflicted
+                tryMergeMoves(MoveEnd.Source, lhsMoveOut, rhs, revision, moveEffects, recordMerges)
             ) {
-                if (
-                    lhsMoveOut.type === "ReturnFrom" &&
-                    !areMergeableReturnFrom(lhs as ReturnFrom, rhs as ReturnFrom)
-                ) {
-                    break;
-                }
-                const prevMerge = moveEffects.srcMergeable.get(lhsMoveOut.id);
-                if (prevMerge !== undefined) {
-                    moveEffects.srcMergeable.set(prevMerge, rhs.id);
-                } else {
-                    moveEffects.srcMergeable.set(lhsMoveOut.id, rhs.id);
-                }
-
-                if (
-                    moveEffects.allowMerges &&
-                    moveEffects.dstMergeable.get(lhsMoveOut.id) === rhs.id
-                ) {
-                    const nextId = moveEffects.dstMergeable.get(rhs.id);
-                    if (nextId !== undefined) {
-                        moveEffects.dstMergeable.set(lhsMoveOut.id, nextId);
-                    }
-                    lhsMoveOut.count += rhs.count;
-                    return true;
-                }
+                return true;
+            }
+            break;
+        }
+        case "ReturnFrom": {
+            const lhsReturn = lhs as ReturnFrom;
+            if (
+                areMergeableReturnFrom(lhsReturn, rhs) &&
+                moveEffects !== undefined &&
+                tryMergeMoves(MoveEnd.Source, lhsReturn, rhs, revision, moveEffects, recordMerges)
+            ) {
+                return true;
             }
             break;
         }
@@ -468,6 +434,50 @@ export function tryExtendMark(
     return false;
 }
 
+function tryMergeMoves(
+    end: MoveEnd,
+    left: MoveMark<unknown>,
+    right: MoveMark<unknown>,
+    revision: RevisionTag | undefined,
+    moveEffects: MoveEffectTable<unknown>,
+    recordMerges: boolean,
+): boolean {
+    if (left.conflictsWith !== right.conflictsWith) {
+        return false;
+    }
+    const rev = left.revision ?? revision;
+    const oppEnd = end === MoveEnd.Source ? MoveEnd.Dest : MoveEnd.Source;
+    const prevMergeId = getMoveEffect(moveEffects, oppEnd, rev, left.id).mergeRight;
+    if (prevMergeId !== undefined && prevMergeId !== right.id) {
+        makeMergeable(moveEffects, oppEnd, rev, prevMergeId, right.id);
+    } else {
+        makeMergeable(moveEffects, oppEnd, rev, left.id, right.id);
+    }
+
+    const leftEffect = getOrAddEffect(moveEffects, end, rev, left.id);
+    if (leftEffect.mergeRight === right.id) {
+        const rightEffect = getMoveEffect(moveEffects, end, rev, right.id);
+        assert(rightEffect.mergeLeft === left.id, "Inconsistent merge info");
+        const nextId = rightEffect.mergeRight;
+        if (nextId !== undefined) {
+            makeMergeable(moveEffects, end, rev, left.id, nextId);
+        } else {
+            leftEffect.mergeRight = undefined;
+        }
+
+        if (recordMerges) {
+            splitMove(moveEffects, end, revision, left.id, right.id, left.count, right.count);
+
+            // TODO: This breaks the nextId mergeability, and would also be overwritten if we merged again
+            makeMergeable(moveEffects, end, revision, left.id, right.id);
+        }
+
+        left.count += right.count;
+        return true;
+    }
+    return false;
+}
+
 function areMergeableReturnFrom(lhs: ReturnFrom, rhs: ReturnFrom): boolean {
     if (
         lhs.detachedBy !== rhs.detachedBy ||
@@ -478,7 +488,7 @@ function areMergeableReturnFrom(lhs: ReturnFrom, rhs: ReturnFrom): boolean {
         return false;
     }
     if (lhs.detachIndex !== undefined) {
-        return lhs.detachIndex + 1 === rhs.detachIndex;
+        return lhs.detachIndex + lhs.count === rhs.detachIndex;
     }
     return rhs.detachIndex === undefined;
 }
@@ -608,18 +618,12 @@ export class DetachedNodeTracker {
         genId: IdAllocator,
     ): TaggedChange<Changeset<T>> {
         const moveEffects = newMoveEffectTable<T>();
-        const factory = new MarkListFactory<T>(moveEffects);
+        const factory = new MarkListFactory<T>(change.revision, moveEffects);
         const iter = new StackyIterator(change.change);
         while (!iter.done) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const preSplit = iter.pop()!;
-            const splitMarks = applyMoveEffectsToMark(
-                preSplit,
-                undefined,
-                moveEffects,
-                genId,
-                false,
-            );
+            const splitMarks = applyMoveEffectsToMark(preSplit, change.revision, moveEffects, true);
 
             const mark = splitMarks[0];
             for (let i = splitMarks.length - 1; i > 0; i--) {
@@ -629,12 +633,20 @@ export class DetachedNodeTracker {
             if (isReattach(cloned)) {
                 let remainder: Reattach<T> = cloned;
                 for (let i = 1; i < cloned.count; ++i) {
-                    const [head, tail] = splitMarkOnOutput(remainder, 1, genId, moveEffects, true);
-                    this.updateMark(head, moveEffects);
+                    const [head, tail] = splitMarkOnOutput(
+                        remainder,
+                        change.revision,
+                        1,
+                        genId,
+                        moveEffects,
+                        false,
+                        true,
+                    );
+                    this.updateMark(head, change.revision, moveEffects);
                     factory.push(head);
                     remainder = tail;
                 }
-                this.updateMark(remainder, moveEffects);
+                this.updateMark(remainder, change.revision, moveEffects);
                 factory.push(remainder);
             } else {
                 factory.push(cloned);
@@ -643,9 +655,9 @@ export class DetachedNodeTracker {
 
         // We may need to apply the effects of updateMoveSrcDetacher for some marks if those were located
         // before their corresponding detach mark.
-        const factory2 = new MarkListFactory<T>(moveEffects);
+        const factory2 = new MarkListFactory<T>(change.revision, moveEffects);
         for (const mark of factory.list) {
-            const splitMarks = applyMoveEffectsToMark(mark, undefined, moveEffects, genId, false);
+            const splitMarks = applyMoveEffectsToMark(mark, change.revision, moveEffects, true);
             factory2.push(...splitMarks);
         }
         return {
@@ -654,7 +666,11 @@ export class DetachedNodeTracker {
         };
     }
 
-    private updateMark(mark: Reattach<unknown>, moveEffects: MoveEffectTable<unknown>): void {
+    private updateMark(
+        mark: Reattach<unknown>,
+        revision: RevisionTag | undefined,
+        moveEffects: MoveEffectTable<unknown>,
+    ): void {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const original = { rev: mark.detachedBy!, index: mark.detachIndex };
         const updated = this.getUpdatedDetach(original);
