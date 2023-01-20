@@ -8,7 +8,7 @@ import fs from "fs";
 import ps from "ps-node";
 import commander from "commander";
 import xml from "xml";
-import { TestDriverTypes, DriverEndpoint } from "@fluidframework/test-driver-definitions";
+import { TestDriverTypes, DriverEndpoint, ITestDriver } from "@fluidframework/test-driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { createLogger, createTestDriver, getProfile, initialize, safeExit } from "./utils";
@@ -143,15 +143,20 @@ async function orchestratorProcess(
 		runId: undefined,
 	});
 
-	const testDriver = await createTestDriver(driver, endpoint, seed, undefined, args.browserAuth);
+    const testDriver: ITestDriver = await createTestDriver(
+        driver,
+        endpoint,
+        seed,
+        undefined,
+        args.browserAuth);
 
-	const url = await (args.testId !== undefined && args.createTestId === false
-		? // If testId is provided and createTestId is false, then load the file;
-		  testDriver.createContainerUrl(args.testId)
-		: // If no testId is provided, (or) if testId is provided but createTestId is not false, then
-		  // create a file;
-		  // In case testId is provided, name of the file to be created is taken as the testId provided
-		  initialize(testDriver, seed, endpoint, profile, args.verbose === true, args.testId));
+    const url = await (args.testId !== undefined && args.createTestId === false
+        // If testId is provided and createTestId is false, then load the file;
+        ? testDriver.createContainerUrl(args.testId)
+        // If no testId is provided, (or) if testId is provided but createTestId is not false, then
+        // create a file;
+        // In case testId is provided, name of the file to be created is taken as the testId provided
+        : initialize(testDriver, endpoint, seed, profile, args.verbose === true, args.testId));
 
     const estRunningTimeMin = Math.floor(profile.totalSendCount / profile.opRatePerMin);
     console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);

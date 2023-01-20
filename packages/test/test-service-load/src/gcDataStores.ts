@@ -332,13 +332,16 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
                     activityFailed = true;
                 });
 
-                this.performBlobActivity(config).then((done: boolean) => {
-                    if (!done) {
+                // Skip performing blob activity for ODSP. It creates too many network requests resulting in throttling.
+                if (config.testConfig.driverType !== "odsp") {
+                    this.performBlobActivity(config).then((done: boolean) => {
+                        if (!done) {
+                            activityFailed = true;
+                        }
+                    }).catch((error) => {
                         activityFailed = true;
-                    }
-                }).catch((error) => {
-                    activityFailed = true;
-                });
+                    });
+                }
             }
 
             this.counter.increment(1);
@@ -504,12 +507,12 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
                     break;
                 }
                 case GCActivityType.Revive: {
-                    const nextunreferencedAttachmentBlobs = this.unreferencedAttachmentBlobs.shift();
-                    if (nextunreferencedAttachmentBlobs !== undefined) {
-                        console.log(`########## Reviving blob [${nextunreferencedAttachmentBlobs.id}]`);
-                        this.blobMap.set(nextunreferencedAttachmentBlobs.id, nextunreferencedAttachmentBlobs.object.handle);
-                        this.referencedAttachmentBlobs.push(nextunreferencedAttachmentBlobs);
-                        return nextunreferencedAttachmentBlobs.object.run(this.childRunConfig, nextunreferencedAttachmentBlobs.id);
+                    const nextUnreferencedAttachmentBlobs = this.unreferencedAttachmentBlobs.shift();
+                    if (nextUnreferencedAttachmentBlobs !== undefined) {
+                        console.log(`########## Reviving blob [${nextUnreferencedAttachmentBlobs.id}]`);
+                        this.blobMap.set(nextUnreferencedAttachmentBlobs.id, nextUnreferencedAttachmentBlobs.object.handle);
+                        this.referencedAttachmentBlobs.push(nextUnreferencedAttachmentBlobs);
+                        return nextUnreferencedAttachmentBlobs.object.run(this.childRunConfig, nextUnreferencedAttachmentBlobs.id);
                     }
                     break;
                 }

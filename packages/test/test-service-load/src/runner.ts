@@ -179,19 +179,16 @@ async function runnerProcess(
     let metricsCleanup: () => void = () => {};
     let testFailed: boolean = false;
 
-	const optionsOverride = `${driver}${endpoint !== undefined ? `-${endpoint}` : ""}`;
-	const loaderOptions = generateLoaderOptions(
-		seed,
-		runConfig.testConfig?.optionOverrides?.[optionsOverride]?.loader,
-	);
-
-	const containerOptions = generateRuntimeOptions(
-		seed,
-		runConfig.testConfig?.optionOverrides?.[optionsOverride]?.container,
-	);
-
+    try {
+        // Added temporarily to disable attachment blob testing for ODSP.
+        runConfig.testConfig.driverType = driver;
+        const optionsOverride = `${driver}${endpoint !== undefined ? `-${endpoint}` : ""}`;
+        const loaderOptions = generateLoaderOptions(
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.loader)[0];
+        const containerOptions = generateRuntimeOptions(
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.container)[0];
         const configurations = generateConfigurations(
-            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.configurations);
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.configurations)[0];
         const testDriver: ITestDriver = await createTestDriver(driver, endpoint, seed, runConfig.runId);
         const baseLogger = await loggerP;
         const logger = ChildLogger.create(baseLogger, undefined,
@@ -220,21 +217,39 @@ async function runnerProcess(
             }
         });
 
-			// Construct the loader
-			const loader = new Loader({
-				urlResolver: testDriver.createUrlResolver(),
-				documentServiceFactory,
-				codeLoader: createCodeLoader(
-					containerOptions[runConfig.runId % containerOptions.length],
-				),
-				logger: runConfig.logger,
-				options: loaderOptions[runConfig.runId % containerOptions.length],
-				configProvider: {
-					getRawConfig(name) {
-						return configurations[runConfig.runId % configurations.length][name];
-					},
-				},
-			});
+		// Cycle between creating new factory vs. reusing factory.
+		// Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
+		// At the same time we want to test newly created factory.
+		const iterator = factoryPermutations(
+			() =>
+				new FaultInjectionDocumentServiceFactory(testDriver.createDocumentServiceFactory()),
+		);
+
+		let done = false;
+		// Reset the workload once, on the first iteration
+		let reset = true;
+		while (!done) {
+			let container: IContainer | undefined;
+			try {
+				const nextFactoryPermutation = iterator.next();
+				if (nextFactoryPermutation.done === true) {
+					throw new Error("Factory permutation iterator is expected to cycle forever");
+				}
+				const { documentServiceFactory, headers } = nextFactoryPermutation.value;
+
+                // Construct the loader
+                const loader = new Loader({
+                    urlResolver: testDriver.createUrlResolver(),
+                    documentServiceFactory,
+                    codeLoader: createCodeLoader(containerOptions),
+                    logger,
+                    options: loaderOptions,
+                    configProvider: {
+                        getRawConfig(name) {
+                            return configurations[name];
+                        },
+                    },
+                });
 
 			container = await loader.resolve({ url, headers });
 			container.connect();
