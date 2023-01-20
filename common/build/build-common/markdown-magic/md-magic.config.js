@@ -510,6 +510,24 @@ function readmeHelpSectionTransform(content, options, config) {
 }
 
 /**
+ * Generates a README section with a table enumerating the dev scripts in the specified package.json.
+ *
+ * @param {object} content - The original document file contents.
+ * @param {object} options - Transform options.
+ * @param {string} options.packageJsonPath - (optional) Relative file path to the package.json file for the package.
+ * Default: "./package.json".
+ * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
+ * Default: `TRUE`.
+ * @param {object} config - Transform configuration.
+ * @param {string} config.originalPath - Path to the document being modified.
+ */
+function packageJsonScriptsSectionTransform(content, options, config) {
+	const includeHeading = options.includeHeading !== "FALSE";
+	const scriptsTable = scripts(content, options, config);
+	return formattedGeneratedContentBody(generateScriptsSection(scriptsTable, includeHeading));
+}
+
+/**
  * markdown-magic config
  */
 module.exports = {
@@ -620,18 +638,18 @@ module.exports = {
 		 */
 		README_HELP_SECTION: readmeHelpSectionTransform,
 
-		/* Match <!-- AUTO-GENERATED-CONTENT:START (PACKAGE_JSON_SCRIPTS:includeHeading=TRUE) --> */
-		PACKAGE_JSON_SCRIPTS(content, options, config) {
-			const includeHeading = options.includeHeading !== "FALSE";
-			const scriptsTable = scripts(content, options, config);
-			return formattedGeneratedContentBody(
-				generateScriptsSection(scriptsTable, includeHeading),
-			);
-		},
+		/**
+		 * See {@link packageJsonScriptsSectionTransform}.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (PACKAGE_JSON_SCRIPTS:includeHeading=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:END -->
+		 * ```
+		 */
+		PACKAGE_JSON_SCRIPTS: packageJsonScriptsSectionTransform,
 	},
-	// callback: function () {
-	// 	console.log("done");
-	// },
 	globbyOptions: {
 		gitignore: true,
 		onlyFiles: true,
