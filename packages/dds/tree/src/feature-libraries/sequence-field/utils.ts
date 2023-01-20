@@ -40,7 +40,6 @@ import {
     MoveEffectTable,
     newMoveEffectTable,
     splitMarkOnOutput,
-    updateMoveSrcDetacher,
 } from "./moveEffectTable";
 
 export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<TNodeChange> {
@@ -620,7 +619,6 @@ export class DetachedNodeTracker {
                 moveEffects,
                 genId,
                 false,
-                false,
             );
 
             const mark = splitMarks[0];
@@ -647,14 +645,7 @@ export class DetachedNodeTracker {
         // before their corresponding detach mark.
         const factory2 = new MarkListFactory<T>(moveEffects);
         for (const mark of factory.list) {
-            const splitMarks = applyMoveEffectsToMark(
-                mark,
-                undefined,
-                moveEffects,
-                genId,
-                false,
-                false,
-            );
+            const splitMarks = applyMoveEffectsToMark(mark, undefined, moveEffects, genId, false);
             factory2.push(...splitMarks);
         }
         return {
@@ -670,9 +661,6 @@ export class DetachedNodeTracker {
         if (updated.rev !== original.rev || updated.index !== original.index) {
             mark.detachedBy = updated.rev;
             mark.detachIndex = updated.index;
-            if (mark.type === "ReturnTo") {
-                updateMoveSrcDetacher(moveEffects, mark.id, mark.detachedBy);
-            }
         }
     }
 

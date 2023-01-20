@@ -975,7 +975,6 @@ interface MoveOut_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMov
 interface MovePartition<TNodeChange> {
     // (undocumented)
     count?: number;
-    detachedBy?: RevisionTag;
     // (undocumented)
     id: MoveId_2;
     // (undocumented)

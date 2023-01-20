@@ -67,10 +67,6 @@ export interface MovePartition<TNodeChange> {
      * When set, updates the mark's paired mark status.
      */
     pairedMarkStatus?: PairedMarkUpdate;
-    /**
-     * When set, updates the mark's `detachedBy` field.
-     */
-    detachedBy?: RevisionTag;
 }
 
 export function splitMoveSrc<T>(
@@ -259,22 +255,6 @@ export function updateMoveDestPairing<T>(
     }
 }
 
-export function updateMoveSrcDetacher<T>(
-    table: MoveEffectTable<T>,
-    id: MoveId,
-    detachedBy: RevisionTag | undefined,
-): void {
-    const origId = table.splitIdToOrigId.get(id);
-    if (origId !== undefined) {
-        const effect = getOrAddEmptyToMap(table.srcEffects, origId);
-        const partition = getOrAddMovePartition(effect, id);
-        partition.detachedBy = detachedBy;
-    } else {
-        table.srcEffects.set(id, [{ id, detachedBy }]);
-        table.splitIdToOrigId.set(id, id);
-    }
-}
-
 export function removeMoveSrc(table: MoveEffectTable<unknown>, id: MoveId): void {
     const origId = table.splitIdToOrigId.get(id);
     if (origId !== undefined) {
@@ -359,11 +339,7 @@ export function isMoveMark<T>(mark: Mark<T>): mark is MoveMark<T> {
     }
 }
 
-export function splitMoveIn<T>(
-    mark: MoveIn | ReturnTo,
-    updatePairedMarkStatus: boolean,
-    parts: MovePartition<T>[],
-): Mark<T>[] {
+export function splitMoveIn<T>(mark: MoveIn | ReturnTo, parts: MovePartition<T>[]): Mark<T>[] {
     const result: Mark<T>[] = [];
     let cumulativeCount = 0;
     for (const part of parts) {
@@ -381,7 +357,7 @@ export function splitMoveIn<T>(
                 const returnTo = portion as ReturnTo;
                 returnTo.detachIndex = mark.detachIndex + cumulativeCount;
                 cumulativeCount += portion.count;
-                if (updatePairedMarkStatus && part.pairedMarkStatus !== undefined) {
+                if (part.pairedMarkStatus !== undefined) {
                     if (part.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
                         returnTo.isSrcConflicted = true;
                     } else {
@@ -398,7 +374,6 @@ export function splitMoveIn<T>(
 export function splitMoveOut<T>(
     mark: MoveOut<T> | ReturnFrom<T>,
     parts: MovePartition<T>[],
-    updatePairedMarkStatus: boolean,
     composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
     const result: Mark<T>[] = [];
@@ -425,7 +400,7 @@ export function splitMoveOut<T>(
                     delete splitMark.changes;
                 }
             }
-            if (updatePairedMarkStatus && part.pairedMarkStatus !== undefined) {
+            if (part.pairedMarkStatus !== undefined) {
                 assert(
                     splitMark.type === "ReturnFrom",
                     0x4f0 /* TODO: support updating MoveOut.isSrcConflicted */,
@@ -435,13 +410,6 @@ export function splitMoveOut<T>(
                 } else {
                     delete splitMark.isDstConflicted;
                 }
-            }
-            if (part.detachedBy !== undefined) {
-                assert(
-                    splitMark.type === "ReturnFrom",
-                    0x4f1 /* Only ReturnFrom marks can have their detachBy field set */,
-                );
-                splitMark.detachedBy = part.detachedBy;
             }
             if (splitMark.type === "ReturnFrom" && isConflicted(mark)) {
                 assert(
@@ -464,7 +432,6 @@ export function applyMoveEffectsToMark<T>(
     moveEffects: MoveEffectTable<T>,
     genId: IdAllocator,
     reassignIds: boolean,
-    updatePairedMarkStatus: boolean,
     composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
     let mark = inputMark;
@@ -484,12 +451,7 @@ export function applyMoveEffectsToMark<T>(
                 const effect = moveEffects.srcEffects.get(mark.id);
                 if (effect !== undefined) {
                     moveEffects.srcEffects.delete(mark.id);
-                    const splitMarks = splitMoveOut(
-                        mark,
-                        effect,
-                        updatePairedMarkStatus,
-                        composeChildren,
-                    );
+                    const splitMarks = splitMoveOut(mark, effect, composeChildren);
                     return splitMarks;
                 }
                 break;
@@ -499,7 +461,7 @@ export function applyMoveEffectsToMark<T>(
                 const effect = moveEffects.dstEffects.get(mark.id);
                 if (effect !== undefined) {
                     moveEffects.dstEffects.delete(mark.id);
-                    const splitMarks = splitMoveIn(mark, updatePairedMarkStatus, effect);
+                    const splitMarks = splitMoveIn(mark, effect);
                     return splitMarks;
                 }
                 break;

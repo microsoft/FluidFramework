@@ -98,7 +98,6 @@ function composeMarkLists<TNodeChange>(
         genId,
         moveEffects,
         true,
-        true,
         (a, b) => composeChildChanges(a, b, newRev, composeChild),
     );
     while (!queue.isEmpty()) {
@@ -413,7 +412,6 @@ function applyMoveEffects<TNodeChange>(
         moveEffects,
         () => fail("Should not generate IDs"),
         false,
-        false,
         // TODO: Should pass in revision for new changes
         (a, b) => composeChildChanges(a, b, undefined, composeChild),
     );
@@ -439,7 +437,6 @@ export class ComposeQueue<T> {
         genId: IdAllocator,
         moveEffects: MoveEffectTable<T>,
         reassignNewMoveIds: boolean = true,
-        updatePairedMarkStatus: boolean = true,
         composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
     ) {
         this.baseIndex = new IndexTracker();
@@ -450,7 +447,6 @@ export class ComposeQueue<T> {
             moveEffects,
             genId,
             false,
-            false,
             composeChanges,
         );
         this.newMarks = new MarkQueue(
@@ -459,7 +455,6 @@ export class ComposeQueue<T> {
             moveEffects,
             genId,
             reassignNewMoveIds,
-            updatePairedMarkStatus,
             composeChanges,
         );
     }

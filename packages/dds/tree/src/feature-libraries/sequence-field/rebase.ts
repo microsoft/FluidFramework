@@ -49,7 +49,6 @@ import {
     PairedMarkUpdate,
     removeMoveDest,
     updateMoveDestPairing,
-    updateMoveSrcDetacher,
     updateMoveSrcPairing,
 } from "./moveEffectTable";
 import { MarkQueue } from "./markQueue";
@@ -530,24 +529,13 @@ function rebaseMark<TNodeChange>(
                         isSkipLikeReattach(newCurrMark),
                         0x4fe /* Only a skip-like reattach can overlap with a ReturnFrom */,
                     );
-                    if (
-                        newCurrMark.conflictsWith === baseMarkRevision ||
-                        (baseMark.type === "ReturnFrom" &&
-                            newCurrMark.conflictsWith === baseMark.detachedBy)
-                    ) {
-                        // The already populated cells that currMark aimed to reattach content into
-                        // are having their contents detached by baseMark.
-                        // This makes it possible for currMark to be active again.
-                        newCurrMark.detachedBy = baseMarkRevision;
-                        newCurrMark.detachIndex = baseInputOffset;
-                        delete (newCurrMark as CanConflict).conflictsWith;
-                        updateMoveSrcDetacher(moveEffects, newCurrMark.id, baseMarkRevision);
-                        updateMoveSrcPairing(
-                            moveEffects,
-                            newCurrMark.id,
-                            PairedMarkUpdate.Reactivated,
-                        );
-                    }
+                    // The already populated cells that currMark aimed to reattach content into
+                    // are having their contents detached by baseMark.
+                    // This makes it possible for currMark to be active again.
+                    newCurrMark.detachedBy = baseMarkRevision;
+                    newCurrMark.detachIndex = baseInputOffset;
+                    delete (newCurrMark as CanConflict).conflictsWith;
+                    updateMoveSrcPairing(moveEffects, newCurrMark.id, PairedMarkUpdate.Reactivated);
                     return newCurrMark;
                 } else if (newCurrMark.type === "Revive" && !newCurrMark.isIntention) {
                     assert(
@@ -589,7 +577,6 @@ function applyMoveEffects<TNodeChange>(
         () => fail("Should not split moves while applying move effects"),
         moveEffects,
         false,
-        true,
     );
     const factory = new MarkListFactory<TNodeChange>(moveEffects);
 

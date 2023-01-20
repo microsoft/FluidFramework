@@ -25,7 +25,6 @@ export class MarkQueue<T> {
         private readonly moveEffects: MoveEffectTable<T>,
         private readonly genId: IdAllocator,
         private readonly reassignMoveIds: boolean = false,
-        private readonly updatePairedMarkStatus: boolean = false,
         private readonly composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
     ) {
         this.list = list;
@@ -61,7 +60,6 @@ export class MarkQueue<T> {
             this.moveEffects,
             this.genId,
             reassignMoveIds,
-            this.updatePairedMarkStatus,
             this.composeChanges,
         );
 
