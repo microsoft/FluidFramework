@@ -61,4 +61,4 @@ const schemaData: SchemaDataAndPolicy = {
 // TODO: use compile time type information from schemaData to generate useful APIs, like a strongly typed EditableTree.
 // Note that generating such APIs needs to involve collections of schema so that child types can be looked up by name.
 // This makes modularizing the system harder. For example a library that only knows a subset of the app schema needs to be able to use EditableTree.
-// TODO: Make this possible and provide an example os such modular use.
+// TODO: Make this possible and provide an example of such modular use.
