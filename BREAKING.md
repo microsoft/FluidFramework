@@ -94,6 +94,8 @@ const tokenProvider = new InsecureTokenProvider("myTenantKey", user);
 Now you would either pass `{ id: "userId", name: "userName" }` inline to `InsecureTokenProvider` or:
 
 ```typescript
+import { IInsecureUser, InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+
 const user: IInsecureUser = { id: "userId", name: "userName" };
 const tokenProvider = new InsecureTokenProvider("myTenantKey", user);
 ```
