@@ -349,6 +349,7 @@ function libraryPackageReadmeTransform(content, options, config) {
  */
 function examplePackageReadmeTransform(content, options, config) {
 	const { packageJsonPath: relativeackageJsonPath } = options;
+
 	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
 		config.originalPath,
 		relativeackageJsonPath,
@@ -394,19 +395,45 @@ function examplePackageReadmeTransform(content, options, config) {
  * Default: "./package.json".
  * @param {"TRUE" | "FALSE" | undefined} options.usesTinylicious - (optional) Whether or not the example app workflow uses {@link https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious | Tinylicious}.
  * Default: `TRUE`.
+ * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
+ * Default: `TRUE`.
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
 function readmeExampleGettingStartedSectionTransform(content, options, config) {
+	const usesTinylicious = options.usesTinylicious !== "FALSE";
+	const includeHeading = options.includeHeading !== "FALSE";
+
 	const packageJsonPath = resolveRelativePackageJsonPath(
 		config.originalPath,
 		options.packageJsonPath,
 	);
-	const usesTinylicious = options.usesTinylicious !== "FALSE";
-	const includeHeading = options.includeHeading !== "FALSE";
 	return formattedGeneratedContentBody(
 		generateGettingStartedSection(packageJsonPath, usesTinylicious, includeHeading),
 	);
+}
+
+/**
+ * Generates a README section pointing readers to the published library API docs on <fluidframework.com>.
+ *
+ * @param {object} content - The original document file contents.
+ * @param {object} options - Transform options.
+ * @param {string} options.packageJsonPath - (optional) Relative file path to the package.json file for the package.
+ * Default: "./package.json".
+ * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
+ * Default: `TRUE`.
+ * @param {object} config - Transform configuration.
+ * @param {string} config.originalPath - Path to the document being modified.
+ */
+function readmeApiDocsSectionTransform(content, options, config) {
+	const includeHeading = options.includeHeading !== "FALSE";
+
+	const packageMetadata = getPackageMetadataFromRelativePath(
+		config.originalPath,
+		options.packageJsonPath,
+	);
+	const packageName = packageMetadata.name;
+	return formattedGeneratedContentBody(generateApiDocsLinkSection(packageName, includeHeading));
 }
 
 /**
@@ -458,18 +485,14 @@ module.exports = {
 		 */
 		README_EXAMPLE_GETTING_STARTED_SECTION: readmeExampleGettingStartedSectionTransform,
 
-		/* Match <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:packageJsonPath=./package.json&includeHeading=TRUE) --> */
-		README_API_DOCS_SECTION(content, options, config) {
-			const includeHeading = options.includeHeading !== "FALSE";
-			const packageMetadata = getPackageMetadataFromRelativePath(
-				config.originalPath,
-				options.packageJsonPath,
-			);
-			const packageName = packageMetadata.name;
-			return formattedGeneratedContentBody(
-				generateApiDocsLinkSection(packageName, includeHeading),
-			);
-		},
+		/**
+		 * See {@link readmeApiDocsSectionTransform}.
+		 *
+		 * @example
+		 *
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:packageJsonPath=./package.json&includeHeading=TRUE) -->
+		 */
+		README_API_DOCS_SECTION: readmeApiDocsSectionTransform,
 
 		/* Match <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:packageJsonPath=./package.json&includeHeading=TRUE&devDependency=FALSE) --> */
 		README_INSTALLATION_SECTION(content, options, config) {
