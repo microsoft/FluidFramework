@@ -225,12 +225,6 @@ function getPackageMetadataFromRelativePath(documentFilePath, packageJsonFilePat
  * If specified, must be on (`startLine`,<file-line-count> + 1].
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
- *
- * @example
- *
- * ```markdown
- * <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../file.js) -->
- * ```
  */
 function includeTransform(content, options, config) {
 	const { path: relativeFilePath, start: startLine, end: endLine } = options;
@@ -275,28 +269,22 @@ function includeTransform(content, options, config) {
  * @param {string | undefined} options.packageJsonPath - (optional) Relative path from the document to the package's package.json file.
  * Default: "./package.json".
  * @param {"TRUE" | "FALSE" | undefined} options.installation - (optional) Whether or not to include the package installation instructions section.
- * Default: `true`.
+ * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a devDependency.
  * Only used if `installation` is specified.
- * Default: `false`.
+ * Default: `FALSE`.
  * @param {"TRUE" | "FALSE" | undefined} options.apiDocs - (optional) Whether or not to include a section pointing readers to the package's generated API documentation on <fluidframework.com>.
- * Default: `true`.
+ * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.scripts - (optional) Whether or not to include a section enumerating the package.json file's dev scripts.
- * Default: `false`.
+ * Default: `FALSE`.
  * @param {"TRUE" | "FALSE" | undefined} options.contributionGuidelines - (optional) Whether or not to include a section outlining fluid-framework's contribution guidelines.
- * Default: `true`.
+ * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.help - (optional) Whether or not to include a developer help section.
- * Default: `true`.
+ * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.trademark - (optional) Whether or not to include a section with Microsoft's trademark info.
- * Default: `true`.
+ * Default: `TRUE`.
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
- *
- * @example
- *
- * ```markdown
- * <!-- AUTO-GENERATED-CONTENT:START (README_LIBRARY_PACKAGE:packageJsonPath=./package.json&installation=TRUE&devDependency=FALSE&apiDocs=TRUE&scripts=FALSE&contributionGuidelines=TRUE&help=TRUE&trademark=TRUE&devDependency=FALSE) -->
- * ```
  */
 function libraryPackageReadmeTransform(content, options, config) {
 	const { packageJsonPath: relativeackageJsonPath } = options;
@@ -344,26 +332,20 @@ function libraryPackageReadmeTransform(content, options, config) {
  * @param {string | undefined} options.packageJsonPath - (optional) Relative path from the document to the package's package.json file.
  * Default: "./package.json".
  * @param {"TRUE" | "FALSE" | undefined} options.gettingStarted - (optional) Whether or not to include developer getting started instructions section.
- * Default: `true`.
+ * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.usesTinylicious - (optional) Whether or not the example app workflow uses {@link https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious | Tinylicious}.
  * Only used if `gettingStarted` is specified.
- * Default: `true`.
+ * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.scripts - (optional) Whether or not to include a section enumerating the package.json file's dev scripts.
- * Default: `false`.
+ * Default: `FALSE`.
  * @param {"TRUE" | "FALSE" | undefined} options.contributionGuidelines - (optional) Whether or not to include a section outlining fluid-framework's contribution guidelines.
- * Default: `true`.
+ * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.help - (optional) Whether or not to include a developer help section.
- * Default: `true`.
+ * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.trademark - (optional) Whether or not to include a section with Microsoft's trademark info.
- * Default: `true`.
+ * Default: `TRUE`.
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
- *
- * @example
- *
- * ```markdown
- * <!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_PACKAGE:packageJsonPath=./package.json&gettingStarted=TRUE&usesTinylicious=TRUE&scripts=FALSE&contributionGuidelines=TRUE&help=TRUE&trademark=TRUE&devDependency=FALSE) -->
- * ```
  */
 function examplePackageReadmeTransform(content, options, config) {
 	const { packageJsonPath: relativeackageJsonPath } = options;
@@ -404,26 +386,77 @@ function examplePackageReadmeTransform(content, options, config) {
 }
 
 /**
+ * Generates a "Getting Started" section for an example app README.
+ *
+ * @param {object} content - The original document file contents.
+ * @param {object} options - Transform options.
+ * @param {string} options.packageJsonPath - (optional) Relative file path to the package.json file for the package.
+ * Default: "./package.json".
+ * @param {"TRUE" | "FALSE" | undefined} options.usesTinylicious - (optional) Whether or not the example app workflow uses {@link https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious | Tinylicious}.
+ * Default: `TRUE`.
+ * @param {object} config - Transform configuration.
+ * @param {string} config.originalPath - Path to the document being modified.
+ */
+function readmeExampleGettingStartedSectionTransform(content, options, config) {
+	const packageJsonPath = resolveRelativePackageJsonPath(
+		config.originalPath,
+		options.packageJsonPath,
+	);
+	const usesTinylicious = options.usesTinylicious !== "FALSE";
+	const includeHeading = options.includeHeading !== "FALSE";
+	return formattedGeneratedContentBody(
+		generateGettingStartedSection(packageJsonPath, usesTinylicious, includeHeading),
+	);
+}
+
+/**
  * markdown-magic config
  */
 module.exports = {
 	transforms: {
+		/**
+		 * See {@link includeTransform}.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../file.js) -->
+		 * ```
+		 */
 		INCLUDE: includeTransform,
+
+		/**
+		 * See {@link libraryPackageReadmeTransform}.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_LIBRARY_PACKAGE:packageJsonPath=./package.json&installation=TRUE&devDependency=FALSE&apiDocs=TRUE&scripts=FALSE&       contributionGuidelines=TRUE&help=TRUE&trademark=TRUE&devDependency=FALSE) -->
+		 * ```
+		 */
 		LIBRARY_PACKAGE_README: libraryPackageReadmeTransform,
+
+		/**
+		 * See {@link examplePackageReadmeTransform}.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_PACKAGE:packageJsonPath=./package.json&gettingStarted=TRUE&usesTinylicious=TRUE&scripts=FALSE&     contributionGuidelines=TRUE&help=TRUE&trademark=TRUE&devDependency=FALSE) -->
+		 * ```
+		 */
 		EXAMPLE_PACKAGE_README: examplePackageReadmeTransform,
 
-		/* Match <!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_GETTING_STARTED_SECTION:packageJsonPath=./package.json&includeHeading=TRUE&usesTinylicious=TRUE) --> */
-		README_EXAMPLE_GETTING_STARTED_SECTION(content, options, config) {
-			const packageJsonPath = resolveRelativePackageJsonPath(
-				config.originalPath,
-				options.packageJsonPath,
-			);
-			const usesTinylicious = options.usesTinylicious !== "FALSE";
-			const includeHeading = options.includeHeading !== "FALSE";
-			return formattedGeneratedContentBody(
-				generateGettingStartedSection(packageJsonPath, usesTinylicious, includeHeading),
-			);
-		},
+		/**
+		 * See {@link readmeExampleGettingStartedSectionTransform}.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_GETTING_STARTED_SECTION:packageJsonPath=./package.json&usesTinylicious=TRUE) -->
+		 * ```
+		 */
+		README_EXAMPLE_GETTING_STARTED_SECTION: readmeExampleGettingStartedSectionTransform,
 
 		/* Match <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:packageJsonPath=./package.json&includeHeading=TRUE) --> */
 		README_API_DOCS_SECTION(content, options, config) {
