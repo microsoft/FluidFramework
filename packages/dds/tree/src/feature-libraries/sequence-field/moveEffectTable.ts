@@ -123,10 +123,6 @@ export interface MovePartition<TNodeChange> {
      * When set, updates the mark's paired mark status.
      */
     pairedMarkStatus?: PairedMarkUpdate;
-    /**
-     * When set, updates the mark's `detachedBy` field.
-     */
-    detachedBy?: RevisionTag;
 }
 
 export function splitMove<T>(
@@ -288,6 +284,7 @@ function applyMoveEffectsToSource<T>(
 ): Mark<T>[] {
     const effect = getOrAddEffect(effects, MoveEnd.Source, mark.revision ?? revision, mark.id);
     const result: Mark<T>[] = [];
+
     if (effect.mark !== undefined) {
         result.push(effect.mark);
     } else if (!effect.shouldRemove) {

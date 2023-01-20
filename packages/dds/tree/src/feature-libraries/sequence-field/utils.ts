@@ -677,14 +677,6 @@ export class DetachedNodeTracker {
         if (updated.rev !== original.rev || updated.index !== original.index) {
             mark.detachedBy = updated.rev;
             mark.detachIndex = updated.index;
-            if (mark.type === "ReturnTo") {
-                getOrAddEffect(
-                    moveEffects,
-                    MoveEnd.Source,
-                    mark.revision ?? revision,
-                    mark.id,
-                ).detacher = mark.detachedBy;
-            }
         }
     }
 
