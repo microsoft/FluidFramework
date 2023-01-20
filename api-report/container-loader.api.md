@@ -106,7 +106,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get readOnlyInfo(): ReadOnlyInfo;
     static rehydrateDetachedFromSnapshot(loader: Loader, snapshot: string, protocolHandlerBuilder?: ProtocolHandlerBuilder): Promise<Container>;
-    // @deprecated (undocumented)
+    // (undocumented)
     request(path: IRequest): Promise<IResponse>;
     // (undocumented)
     get resolvedUrl(): IResolvedUrl | undefined;

@@ -1036,14 +1036,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             { start: true, end: true, cancel: "generic" });
     }
 
-    /**
-     * @deprecated This method will be removed in a future release.
-     * {@link @fluidframework/container-definitions#IContainer.entryPoint} is now the primary way to get access to the
-     * user-defined functionality in the container runtime.
-     * Start using the new static methods on the ContainerRuntime to provide a function that initializes the entryPoint.
-     * If you want to keep using the request pattern, provide an entryPoint that implements
-     * {@link @fluidframework/core-interfaces#IFluidRouter} and issue requests directly to it.
-     */
     public async request(path: IRequest): Promise<IResponse> {
         return PerformanceEvent.timedExecAsync(
             this.mc.logger,
