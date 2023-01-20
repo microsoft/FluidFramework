@@ -762,6 +762,9 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary>;
 }
 
+// @public
+export const TombstoneResponseHeaderKey = "isTombstoned";
+
 // @internal
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
