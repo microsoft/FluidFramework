@@ -178,43 +178,6 @@ const generateScriptsSection = (scriptsTable, includeHeading) => {
 };
 
 /**
- * Embeds contents from the specified file paths within the provided (optional) line boundaries.
- *
- * @param {string} filePath - Resolved path to the file whose contents will be embedded in the document.
- * @param {number | undefined} startLine - (optional) First line from the target file to be embedded (inclusive).
- * Default: 0.
- * If specified, must be on [0,`endLine`).
- * @param {number | undefined} endLine - (optional) Line of the target file at which to end the embedded range (exclusive).
- * Default: <file-line-count> + 1.
- * If specified, must be on (`startLine`,<file-line-count> + 1].
- *
- * @returns The string contents to embed.
- */
-function embedFileContents(filePath, startLine, endLine) {
-	if (startLine && endLine && startLine >= endLine) {
-		throw new Error(
-			`Start line must be less than end line. Got: "start: ${startLine}, end: ${endLine}".`,
-		);
-	}
-
-	if (startLine < 0) {
-		throw new Error("Invalid start line index. Must be 0 or positive.");
-	}
-
-	try {
-		let fileContents = fs.readFileSync(filePath, "utf8");
-		if (startLine || endLine) {
-			const split = fileContents.split(/\r?\n/);
-			fileContents = split.slice(startLine ?? 0, endLine).join("\n");
-		}
-		return formattedSectionText(fileContents.trim());
-	} catch (error) {
-		console.error(`Exception processing "${filePath}":`, error);
-		throw error;
-	}
-}
-
-/**
  * Resolves the optionally provided file path, expressed relative to the path of the document being modified.
  *
  * @param {string} documentFilePath - Path to the document file being modified by this tooling.
@@ -248,24 +211,64 @@ function getPackageMetadataFromRelativePath(documentFilePath, packageJsonFilePat
 	return getPackageMetadata(resolvedPackageJsonPath);
 }
 
-/* markdown-magic config */
-const mdMagicConfig = {
+/**
+ * Embeds contents from the specified file paths within the provided (optional) line boundaries.
+ *
+ * @param {object} originalContent - The original document file contents.
+ * @param {object} options - Transform options.
+ * @param {string} options.path - Relative path from the document to the file being embedded.
+ * @param {number | undefined} options.start - (optional) First line from the target file to be embedded (inclusive).
+ * Default: 0.
+ * If specified, must be on [0,`endLine`).
+ * @param {number | undefined} options.end - (optional) Line of the target file at which to end the embedded range (exclusive).
+ * Default: <file-line-count> + 1.
+ * If specified, must be on (`startLine`,<file-line-count> + 1].
+ * @param {object} config - TODO
+ */
+function includeTransform(originalContent, options, config) {
+    const {path: relativeFilePath, start: startLine, end: endLine } = options;
+    if (!relativeFilePath) {
+        throw new Error(
+            "No 'path' parameter provided. Must specify a file path whose contents will be embedded.",
+        );
+    }
+
+    if (startLine && endLine && startLine >= endLine) {
+		throw new Error(
+			`Start line must be less than end line. Got: "start: ${startLine}, end: ${endLine}".`,
+		);
+	}
+
+	if (startLine < 0) {
+		throw new Error("Invalid start line index. Must be 0 or positive.");
+	}
+
+    const resolvedFilePath = resolveRelativePath(config.originalPath, relativeFilePath);
+
+	try {
+		let fileContents = fs.readFileSync(resolvedFilePath, "utf8");
+		if (startLine || endLine) {
+			const split = fileContents.split(/\r?\n/);
+			fileContents = split.slice(startLine ?? 0, endLine).join("\n");
+		}
+		const section = formattedSectionText(fileContents.trim());
+
+        return formattedEmbeddedContentBody(section);
+	} catch (error) {
+		console.error(`Exception processing "${resolvedFilePath}":`, error);
+		throw error;
+	}
+
+}
+
+/**
+ * markdown-magic config
+ */
+module.exports = {
 	transforms: {
 		/* Match <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../file.js) --> */
 		// includes relative to the file calling the include
-		INCLUDE(content, options, config) {
-			const relativePath = options.path;
-			if (!relativePath) {
-				throw new Error(
-					"No 'path' parameter provided. Must specify a file path whose contents will be embedded.",
-				);
-			}
-
-			const resolvedFilePath = resolveRelativePath(config.originalPath, relativePath);
-			return formattedEmbeddedContentBody(
-				embedFileContents(resolvedFilePath, options.start, options.end),
-			);
-		},
+		INCLUDE: includeTransform,
 
 		/* Match <!-- AUTO-GENERATED-CONTENT:START (README_LIBRARY_PACKAGE:packageJsonPath=./package.json&installation=TRUE&devDependency=FALSE&apiDocs=TRUE&scripts=TRUE&contributionGuidelines=TRUE&help=TRUE&trademark=TRUE&devDependency=FALSE) --> */
 		README_LIBRARY_PACKAGE(content, options, config) {
@@ -390,5 +393,3 @@ const mdMagicConfig = {
 		deep: 5,
 	},
 };
-
-module.exports = mdMagicConfig;
