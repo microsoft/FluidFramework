@@ -476,7 +476,22 @@ function readmeInstallationSectionTransform(content, options, config) {
  */
 function readmeTrademarkSectionTransform(content, options, config) {
 	const includeHeading = options.includeHeading !== "FALSE";
-    return formattedGeneratedContentBody(generateTrademarkSection(includeHeading));
+	return formattedGeneratedContentBody(generateTrademarkSection(includeHeading));
+}
+
+/**
+ * Generates a README section with fluid-framework contribution guidelines.
+ *
+ * @param {object} content - The original document file contents.
+ * @param {object} options - Transform options.
+ * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
+ * Default: `TRUE`.
+ * @param {object} config - Transform configuration.
+ * @param {string} config.originalPath - Path to the document being modified.
+ */
+function readmeContributionGuidelinesSectionTransform(content, options, config) {
+	const includeHeading = options.includeHeading !== "FALSE";
+	return formattedGeneratedContentBody(generateContributionGuidelinesSection(includeHeading));
 }
 
 /**
@@ -551,23 +566,26 @@ module.exports = {
 		README_INSTALLATION_SECTION: readmeInstallationSectionTransform,
 
 		/**
-         * See {@link readmeTrademarkSectionTransform}.
-         *
-         * @example
-         *
-         * ```markdown
-         * <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
-         * ```
-         */
+		 * See {@link readmeTrademarkSectionTransform}.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+		 * ```
+		 */
 		README_TRADEMARK_SECTION: readmeTrademarkSectionTransform,
 
-		/* Match <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) --> */
-		README_CONTRIBUTION_GUIDELINES_SECTION(content, options, config) {
-			const includeHeading = options.includeHeading !== "FALSE";
-			return formattedGeneratedContentBody(
-				generateContributionGuidelinesSection(includeHeading),
-			);
-		},
+		/**
+		 * See {@link readmeContributionGuidelinesSectionTransform}.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
+		 * ```
+		 */
+		README_CONTRIBUTION_GUIDELINES_SECTION: readmeContributionGuidelinesSectionTransform,
 
 		/* Match <!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) --> */
 		README_HELP_SECTION(content, options, config) {
