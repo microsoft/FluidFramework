@@ -51,6 +51,7 @@ export const AppStateSchema = namedTreeSchema({
     },
 });
 
+// TODO: Generate this from schema automatically instead of hand coding it.
 export type BubbleTreeProxy = EditableTree & {
     x: number;
     y: number;
@@ -59,12 +60,14 @@ export type BubbleTreeProxy = EditableTree & {
     r: number;
 };
 
+// TODO: Generate this from schema automatically instead of hand coding it.
 export type ClientTreeProxy = EditableTree & {
     clientId: string;
     color: string;
     bubbles: BubbleTreeProxy[];
 };
 
+// TODO: Generate this from schema automatically instead of hand coding it.
 export type AppStateTreeProxy = EditableTree & {
     clients: ClientTreeProxy[];
 };

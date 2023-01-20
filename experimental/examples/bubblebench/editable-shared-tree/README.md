@@ -1,14 +1,10 @@
 # @fluid-example/bubblebench-editable-shared-tree
 
-## Getting Started
-
-You can run this example using the following steps:
-
-1. Run `npm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
-   a. For an even faster build, you can add the package name to the build command, like this:
-   `npm run build:fast -- --nolint @fluid-example/bubblebench`
-1. Run `npm run start` from this directory (experimental/examples/bubblebench/sharedtree) and open <http://localhost:8080> in a web browser to see the app running.
- <!-- AUTO-GENERATED-CONTENT:END -->
+### Running the test locally
+ > Bubble bench is currently at a state where it fails to run in a normal state with 2 clients due to the inability of the front end application to observe and react accordingly to backpressure on the server. So, at this point in time, to get it to run you must take the following steps:
+ >   1. execute the command `npm run start`
+ >   2. when navigating to the url/port the front end is running on you MUST put `/manualAttach` For example, `localhost:8080/manualAttach`
+> Note that this mode will run only 1 client. But, its still good for getting an idea of how editable shared tree compares to the other versions of bubble bench running 1 client.
 
 ## Benchmarking
 
