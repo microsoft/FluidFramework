@@ -247,6 +247,21 @@ export function validatePartialLengths(
     }
 }
 
+export function combineInterpreters(...interpreters: IAttributionInterpreter[]): IAttributionInterpreter {
+    return {
+        getAttributionChanges: (seg, op, seq) => {
+            const results: AttributionChangeEntry[] = [];
+            for (const interpreter of interpreters) {
+                const deltas = interpreter.getAttributionChanges(seg, op, seq);
+                if (deltas) {
+                    results.push(...deltas);
+                }
+            }
+            return results;
+        }
+    }
+}
+
 export function trackProperties(...propertiesToTrack: (string | { propName: string; channelName: string })[]): IAttributionInterpreter {
     const toTrack = propertiesToTrack.map(entry => typeof entry === 'string' ? { propName: entry, channelName: entry } : entry);
     return {

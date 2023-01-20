@@ -12,7 +12,7 @@ import { SnapshotLegacy } from "../snapshotlegacy";
 import { TestSerializer } from "./testSerializer";
 import { createClientsAtInitialState } from "./testClientLogger";
 import { TestClient } from ".";
-import { trackProperties } from "./testUtils";
+import { combineInterpreters, trackProperties } from "./testUtils";
 import { defaultInterpreter } from "../mergeTree";
 
 describe("snapshot", () => {
@@ -127,12 +127,7 @@ describe("snapshot", () => {
             options: { 
                 attribution: { 
                     track: true,
-                    interpreter: {
-                        getAttributionChanges: (seg, op, seq) => [
-                            ...(trackProperties("foo").getAttributionChanges(seg, op, seq) ?? []),
-                            ...(defaultInterpreter.getAttributionChanges(seg, op, seq) ?? [])
-                        ]
-                    }
+                    interpreter: combineInterpreters(trackProperties("foo"), defaultInterpreter)
                 },
             }
         }, "A", "B");

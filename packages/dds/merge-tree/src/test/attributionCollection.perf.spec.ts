@@ -144,6 +144,10 @@ export class TreeAttributionCollection implements IAttributionCollection<Attribu
         }
     }
 
+    public get channelNames() {
+        return [];
+    }
+
     public getAtOffset(offset: number): AttributionKey {
         assert(offset >= 0 && offset < this._length, 0x443 /* Requested offset should be valid */);
         const node = this.entries.floor(offset);

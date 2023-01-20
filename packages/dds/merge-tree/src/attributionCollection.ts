@@ -53,6 +53,8 @@ export interface IAttributionCollection<T> {
      */
     readonly length: number;
 
+    readonly channelNames: Iterable<string>;
+
     /**
      * Retrieve all key/offset pairs stored on this segment. Entries should be ordered by offset, such that
      * the `i`th result's attribution key applies to offsets in the open range between the `i`th offset and the
@@ -91,6 +93,10 @@ export class AttributionCollection implements IAttributionCollection<Attribution
             this.offsets.push(0);
             this.seqs.push(baseEntry);
         }
+    }
+
+    public get channelNames(): string[] {
+        return Object.keys(this.channels ?? {});
     }
 
     public getAtOffset(offset: number): AttributionKey;
