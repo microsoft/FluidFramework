@@ -387,7 +387,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private readonly mc: MonitoringContext;
 
-    private _lifecycleState: "loading" | "loaded" | "closing" | "closed" | "disposed" = "loading";
+    /**
+     * Lifecycle state of the container, used mainly to prevent re-entrancy and telemetry
+     *
+     * States are allowed to progress to further states:
+     * "loading" - "loaded" - "closing" - "disposing" - "closed" - "disposed"
+     *
+     * For example, moving from "closed" to "disposing" is not allowed since it is an earlier state.
+     *
+     * loading: Container has been created, but is not yet in normal/loaded state
+     * loaded: Container is in normal/loaded state
+     * closing: Container has started closing process (for re-entrancy prevention)
+     * disposing: Container has started disposing process (for re-entrancy prevention)
+     * closed: Container has closed
+     * disposed: Container has been disposed
+     */
+    private _lifecycleState: "loading" | "loaded" | "closing" | "disposing" | "closed" | "disposed" = "loading";
 
     private setLoaded() {
         // It's conceivable the container could be closed when this is called
@@ -400,7 +415,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public get closed(): boolean {
-        return (this._lifecycleState === "closing" || this._lifecycleState === "closed" || this._lifecycleState === "disposed");
+        return (this._lifecycleState === "closing" || this._lifecycleState === "closed"
+            || this._lifecycleState === "disposing" || this._lifecycleState === "disposed");
     }
 
     private _attachState = AttachState.Detached;
@@ -826,6 +842,21 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         try {
             // Ensure that we raise all key events even if one of these throws
             try {
+                // Raise event first, to ensure we capture _lifecycleState before transition.
+                // This gives us a chance to know what errors happened on open vs. on fully loaded container.
+                this.mc.logger.sendTelemetryEvent(
+                    {
+                        eventName: "ContainerDispose",
+                        category: "generic",
+                    },
+                    error,
+                );
+
+                // ! Progressing from "closed" to "disposing" is not allowed
+                if (this._lifecycleState !== "closed") {
+                    this._lifecycleState = "disposing";
+                }
+
                 this._protocolHandler?.close();
 
                 this.connectionStateHandler.dispose();
