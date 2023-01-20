@@ -55,7 +55,7 @@ export interface ForestTestConfiguration {
     /**
      * If true, skip the tests that ensure errors are thrown when applying deltas without clearing cursors.
      *
-     * @remarks Errors on from current cursors during edits are not required by the Forest API specification,
+     * @remarks Errors from current cursors during edits are not required by the Forest API specification,
      * but are nice for debugging.
      * Performance oriented forest implementations may opt out of this check.
      * Applications wanting help debugging invalid forest API use should use cursors that include this check.
