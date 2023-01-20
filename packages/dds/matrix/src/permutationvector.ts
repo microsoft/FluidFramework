@@ -153,8 +153,8 @@ export class PermutationVector extends Client {
             newMergeTreeSnapshotFormat: true,   // Temporarily force new snapshot format until it is the default.
         });                                     // (See https://github.com/microsoft/FluidFramework/issues/84)
 
-        this.mergeTreeDeltaCallback = this.onDelta;
-        this.mergeTreeMaintenanceCallback = this.onMaintenance;
+        this.on("delta", this.onDelta);
+        this.on("maintenance", this.onMaintenance);
     }
 
     public insert(start: number, length: number) {
@@ -207,7 +207,7 @@ export class PermutationVector extends Client {
     }
 
     public adjustPosition(pos: number, op: ISequencedDocumentMessage) {
-        const { segment, offset } = this.getContainingSegment(pos, op);
+        const { segment, offset } = this.getContainingSegment(pos, { referenceSequenceNumber: op.referenceSequenceNumber, clientId: op.clientId });
 
         // Note that until the MergeTree GCs, the segment is still reachable via `getContainingSegment()` with
         // a `refSeq` in the past.  Prevent remote ops from accidentally allocating or using recycled handles
