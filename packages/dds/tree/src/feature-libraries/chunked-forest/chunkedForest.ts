@@ -179,7 +179,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
                 mutableChunk = undefined;
             },
             exitField: (key: FieldKey): void => {
-                const top = mutableChunkStack.pop() ?? fail("should not be aty root");
+                const top = mutableChunkStack.pop() ?? fail("should not be at root");
                 assert(mutableChunk === undefined, "should be in field");
                 mutableChunk = top.mutableChunk;
             },

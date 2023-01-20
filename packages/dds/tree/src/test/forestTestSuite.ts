@@ -53,9 +53,9 @@ export interface ForestTestConfiguration {
     factory: (schema: StoredSchemaRepository) => IEditableForest;
 
     /**
-     * Giving errors on active cursors during edits is not required the the Forest API specification,
+     * Giving errors on active cursors during edits is not required by the Forest API specification,
      * but is nice for debugging.
-     * Performance oriented forest implementations may opt ouf of this check.
+     * Performance oriented forest implementations may opt out of this check.
      * Applications wanting help debugging invalid forest API use should use cursors that include this check.
      */
     skipCursorErrorCheck?: true;
