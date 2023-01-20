@@ -43,6 +43,18 @@ export async function runWithRetry<T>(
 
             const coherencyError = error?.[Odsp409Error] === true;
             const serviceReadonlyError = error?.errorType === OdspErrorType.serviceReadOnly;
+
+            if(attempts === 1){
+                logger.sendTelemetryEvent(
+                    {
+                        eventName: `${callName}_firstFailed`,
+                        callName,
+                        attempts,
+                        duration: performance.now() - start, // record total wait time.
+                    },
+                    error);
+            }
+
             // Retry for retriable 409 coherency errors or serviceReadOnly errors. These errors are always retriable
             // unless someone specifically set canRetry = false on the error like in fetchSnapshot() flow. So in
             // that case don't retry.
