@@ -1,19 +1,17 @@
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:packageJsonPath=./package.json&devDependency=TRUE&scripts=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_PACKAGE_README:packageJsonPath=./package.json&scripts=TRUE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluidframework/build-common/markdown-magic. Do not update these generated contents directly. -->
 
-## Installation
+## Getting Started
 
-To get started, install the package by running the following command:
+You can run this example using the following steps:
 
-```bash
-npm i @test/test-package -D
-```
-
-## API Documentation
-
-API documentation for **@test/test-package** is available at <https://fluidframework.com/docs/apis/test-package>.
+1. Run `npm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
+    - For an even faster build, you can add the package name to the build command, like this:
+      `npm run build:fast -- --nolint @test/test-package`
+1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious).
+1. Run `npm run start` from this directory (/workspaces/FluidFramework/common/build/build-common/markdown-magic/test) and open <http://localhost:8080> in a web browser to see the app running.
 
 ## Scripts
 
