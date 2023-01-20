@@ -461,7 +461,6 @@ export interface IRootMergeBlock extends IMergeBlock {
 }
 
 /**
- * @deprecated For internal use only. public export will be removed.
  * @internal
  */
 export class MergeTree {

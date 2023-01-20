@@ -84,6 +84,8 @@ export interface IMapDataObjectSerialized {
 type MapKeyLocalOpMetadata = IMapKeyEditLocalOpMetadata | IMapKeyAddLocalOpMetadata;
 type MapLocalOpMetadata = IMapClearLocalOpMetadata | MapKeyLocalOpMetadata;
 
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
+
 function isMapKeyLocalOpMetadata(metadata: any): metadata is MapKeyLocalOpMetadata {
     return metadata !== undefined && typeof metadata.pendingMessageId === "number" &&
         (metadata.type === "add" || metadata.type === "edit");
@@ -97,6 +99,8 @@ function isMapLocalOpMetadata(metadata: any): metadata is MapLocalOpMetadata {
     return metadata !== undefined && typeof metadata.pendingMessageId === "number" &&
         (metadata.type === "add" || metadata.type === "edit" || metadata.type === "clear");
 }
+
+/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
 
 function createClearLocalOpMetadata(op: IMapClearOperation,
     pendingClearMessageId: number, previousMap?: Map<string, ILocalValue>): IMapClearLocalOpMetadata {
@@ -165,10 +169,10 @@ export class MapKernel {
      * @param valueTypes - The value types to register
      * @param eventEmitter - The object that will emit map events
      */
-    constructor(
+    public constructor(
         private readonly serializer: IFluidSerializer,
         private readonly handle: IFluidHandle,
-        private readonly submitMessage: (op: any, localOpMetadata: unknown) => void,
+        private readonly submitMessage: (op: unknown, localOpMetadata: unknown) => void,
         private readonly isAttached: () => boolean,
         private readonly eventEmitter: TypedEventEmitter<ISharedMapEvents>,
     ) {
@@ -188,17 +192,19 @@ export class MapKernel {
      * Get an iterator over the entries in this map.
      * @returns The iterator
      */
+    // TODO: Use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public entries(): IterableIterator<[string, any]> {
         const localEntriesIterator = this.data.entries();
         const iterator = {
-            next(): IteratorResult<[string, any]> {
+            next(): IteratorResult<[string, unknown]> {
                 const nextVal = localEntriesIterator.next();
                 return nextVal.done
                     ? { value: undefined, done: true }
                     // Unpack the stored value
                     : { value: [nextVal.value[0], nextVal.value[1].value], done: false };
             },
-            [Symbol.iterator]() {
+            [Symbol.iterator](): IterableIterator<[string, unknown]> {
                 return this;
             },
         };
@@ -209,17 +215,19 @@ export class MapKernel {
      * Get an iterator over the values in this map.
      * @returns The iterator
      */
+    // TODO: Use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public values(): IterableIterator<any> {
         const localValuesIterator = this.data.values();
         const iterator = {
-            next(): IteratorResult<any> {
+            next(): IteratorResult<unknown> {
                 const nextVal = localValuesIterator.next();
                 return nextVal.done
                     ? { value: undefined, done: true }
                     // Unpack the stored value
-                    : { value: nextVal.value.value, done: false };
+                    : { value: nextVal.value.value as unknown, done: false };
             },
-            [Symbol.iterator]() {
+            [Symbol.iterator](): IterableIterator<unknown> {
                 return this;
             },
         };
@@ -230,6 +238,8 @@ export class MapKernel {
      * Get an iterator over the entries in this map.
      * @returns The iterator
      */
+    // TODO: Use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public [Symbol.iterator](): IterableIterator<[string, any]> {
         return this.entries();
     }
@@ -238,7 +248,8 @@ export class MapKernel {
      * Executes the given callback on each entry in the map.
      * @param callbackFn - Callback function
      */
-    public forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void {
+    public forEach(callbackFn: (value: unknown, key: string, map: Map<string, unknown>) => void): void {
+        // eslint-disable-next-line unicorn/no-array-for-each
         this.data.forEach((localValue, key, m) => {
             callbackFn(localValue.value, key, m);
         });
@@ -247,6 +258,8 @@ export class MapKernel {
     /**
      * {@inheritDoc ISharedMap.get}
      */
+    // TODO: Use `unknown` instead (breaking change).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public get<T = any>(key: string): T | undefined {
         const localValue = this.data.get(key);
         return localValue === undefined ? undefined : localValue.value as T;
@@ -264,7 +277,7 @@ export class MapKernel {
     /**
      * {@inheritDoc ISharedMap.set}
      */
-    public set(key: string, value: any) {
+    public set(key: string, value: unknown): void {
         // Undefined/null keys can't be serialized to JSON in the manner we currently snapshot.
         if (key === undefined || key === null) {
             throw new Error("Undefined and null keys are not supported");
@@ -347,17 +360,17 @@ export class MapKernel {
      */
     public getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
         const serializableMapData: IMapDataObjectSerialized = {};
-        this.data.forEach((localValue, key) => {
+        for (const [key, localValue] of this.data.entries()) {
             serializableMapData[key] = localValue.makeSerialized(serializer, this.handle);
-        });
+        }
         return serializableMapData;
     }
 
     public getSerializableStorage(serializer: IFluidSerializer): IMapDataObjectSerializable {
         const serializableMapData: IMapDataObjectSerializable = {};
-        this.data.forEach((localValue, key) => {
+        for (const [key, localValue] of this.data.entries()) {
             serializableMapData[key] = makeSerializable(localValue, serializer, this.handle);
-        });
+        }
         return serializableMapData;
     }
 
@@ -392,21 +405,21 @@ export class MapKernel {
      * also sent if we are asked to resubmit the message.
      * @returns True if the operation was submitted, false otherwise.
      */
-    public trySubmitMessage(op: any, localOpMetadata: unknown): boolean {
+    public trySubmitMessage(op: IMapOperation, localOpMetadata: unknown): boolean {
         const handler = this.messageHandlers.get(op.type);
         if (handler === undefined) {
             return false;
         }
-        handler.submit(op as IMapOperation, localOpMetadata as MapLocalOpMetadata);
+        handler.submit(op, localOpMetadata as MapLocalOpMetadata);
         return true;
     }
 
-    public tryApplyStashedOp(op: any): unknown {
+    public tryApplyStashedOp(op: IMapOperation): unknown {
         const handler = this.messageHandlers.get(op.type);
         if (handler === undefined) {
             throw new Error("no apply stashed op handler");
         }
-        return handler.applyStashedOp(op as IMapOperation);
+        return handler.applyStashedOp(op);
     }
 
     /**
@@ -430,12 +443,15 @@ export class MapKernel {
         return true;
     }
 
+    /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
     /**
      * Rollback a local op
      * @param op - The operation to rollback
      * @param localOpMetadata - The local metadata associated with the op.
      */
-    public rollback(op: any, localOpMetadata: unknown) {
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+    public rollback(op: any, localOpMetadata: unknown): void {
         if (!isMapLocalOpMetadata(localOpMetadata)) {
             throw new Error("Invalid localOpMetadata");
         }
@@ -444,9 +460,9 @@ export class MapKernel {
             if (localOpMetadata.previousMap === undefined) {
                 throw new Error("Cannot rollback without previous map");
             }
-            localOpMetadata.previousMap.forEach((localValue, key) => {
+            for (const [key, localValue] of localOpMetadata.previousMap.entries()) {
                 this.setCore(key, localValue, true);
-            });
+            }
 
             const lastPendingClearId = this.pendingClearMessageIds.pop();
             if (lastPendingClearId === undefined || lastPendingClearId !== localOpMetadata.pendingMessageId) {
@@ -454,25 +470,27 @@ export class MapKernel {
             }
         } else if (op.type === "delete" || op.type === "set") {
             if (localOpMetadata.type === "add") {
-                this.deleteCore(op.key, true);
+                this.deleteCore(op.key as string, true);
             } else if (localOpMetadata.type === "edit" && localOpMetadata.previousValue !== undefined) {
-                this.setCore(op.key, localOpMetadata.previousValue, true);
+                this.setCore(op.key as string, localOpMetadata.previousValue, true);
             } else {
                 throw new Error("Cannot rollback without previous value");
             }
 
-            const pendingMessageIds = this.pendingKeys.get(op.key);
+            const pendingMessageIds = this.pendingKeys.get(op.key as string);
             const lastPendingMessageId = pendingMessageIds?.pop();
             if (!pendingMessageIds || lastPendingMessageId !== localOpMetadata.pendingMessageId) {
                 throw new Error("Rollback op does not match last pending");
             }
             if (pendingMessageIds.length === 0) {
-                this.pendingKeys.delete(op.key);
+                this.pendingKeys.delete(op.key as string);
             }
         } else {
             throw new Error("Unsupported op for rollback");
         }
     }
+
+    /* eslint-enable @typescript-eslint/no-unsafe-member-access */
 
     /**
      * Set implementation used for both locally sourced sets as well as incoming remote sets.
@@ -483,7 +501,7 @@ export class MapKernel {
      */
     private setCore(key: string, value: ILocalValue, local: boolean): ILocalValue | undefined {
         const previousLocalValue = this.data.get(key);
-        const previousValue = previousLocalValue?.value;
+        const previousValue: unknown = previousLocalValue?.value;
         this.data.set(key, value);
         this.eventEmitter.emit("valueChanged", { key, previousValue }, local, this.eventEmitter);
         return previousLocalValue;
@@ -506,7 +524,7 @@ export class MapKernel {
      */
     private deleteCore(key: string, local: boolean): ILocalValue | undefined {
         const previousLocalValue = this.data.get(key);
-        const previousValue = previousLocalValue?.value;
+        const previousValue: unknown = previousLocalValue?.value;
         const successfullyRemoved = this.data.delete(key);
         if (successfullyRemoved) {
             this.eventEmitter.emit("valueChanged", { key, previousValue }, local, this.eventEmitter);
@@ -521,14 +539,14 @@ export class MapKernel {
         // Assuming the pendingKeys is small and the map is large
         // we will get the value for the pendingKeys and clear the map
         const temp = new Map<string, ILocalValue>();
-        this.pendingKeys.forEach((value, key) => {
+        for (const key of this.pendingKeys.keys()) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             temp.set(key, this.data.get(key)!);
-        });
+        }
         this.clearCore(false);
-        temp.forEach((value, key) => {
+        for (const [key, value] of temp.entries()) {
             this.setCore(key, value, true);
-        });
+        }
     }
 
     /**
@@ -599,7 +617,7 @@ export class MapKernel {
      * Get the message handlers for the map.
      * @returns A map of string op names to IMapMessageHandlers for those ops
      */
-    private getMessageHandlers() {
+    private getMessageHandlers(): Map<string, IMapMessageHandler> {
         const messageHandlers = new Map<string, IMapMessageHandler>();
         messageHandlers.set(
             "clear",
@@ -613,7 +631,7 @@ export class MapKernel {
                             0x2fb /* pendingMessageId does not match */);
                         return;
                     }
-                    if (this.pendingKeys.size !== 0) {
+                    if (this.pendingKeys.size > 0) {
                         this.clearExceptPendingKeys();
                         return;
                     }

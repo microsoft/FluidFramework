@@ -69,13 +69,14 @@
     "@fluidframework/core-interfaces": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluidframework/datastore-definitions": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluidframework/merge-tree": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/protocol-base": "^0.1038.2000-98212",
+    "@fluidframework/protocol-base": "^0.1038.2000",
     "@fluidframework/protocol-definitions": "^1.1.0",
     "@fluidframework/runtime-definitions": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluidframework/runtime-utils": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluidframework/shared-object-base": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluidframework/telemetry-utils": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@tiny-calc/nano": "0.0.0-alpha.5",
+    "events": "^3.1.0",
     "tslib": "^1.10.0"
   },
   "devDependencies": {
