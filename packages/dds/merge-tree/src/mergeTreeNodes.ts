@@ -327,23 +327,11 @@ export interface SearchResult {
     pos: number;
 }
 
-export interface MergeTreeStats {
-    maxHeight: number;
-    nodeCount: number;
-    leafCount: number;
-    removedLeafCount: number;
-    liveCount: number;
-    histo: number[];
-    windowTime?: number;
-    packTime?: number;
-    ordTime?: number;
-    maxOrdTime?: number;
-}
-
 export interface SegmentGroup {
     segments: ISegment[];
     previousProps?: PropertySet[];
     localSeq: number;
+    refSeq: number;
 }
 
 export class MergeNode implements IMergeNodeCommon {

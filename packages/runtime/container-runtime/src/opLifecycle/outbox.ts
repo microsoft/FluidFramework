@@ -207,8 +207,6 @@ export class Outbox {
 
             clientSequenceNumber++;
         }
-
-        this.params.pendingStateManager.onFlush();
     }
 
     public checkpoint() {
