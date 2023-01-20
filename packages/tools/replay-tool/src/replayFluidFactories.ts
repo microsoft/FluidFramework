@@ -52,7 +52,11 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
             undefined,
             async (containerRuntime :IContainerRuntime) => {
                 // For the replay tool, the entryPoint exposes the containerRuntime itself so the helpers for the tool
-                // can use it.
+                // can use it. This is an anti-pattern, and is *not* what an actual application should do (it should
+                // expose an object with a defined API that allows hosts that consume the container to interact with it).
+                // In our tests and internal tools it might sometimes be ok to use this anti-pattern for simplicity,
+                // where we might need to use/validate internal bits. In this case the replay tool reaches into our
+                // implementation of the container runtime to trigger summarization (see uploadSummary() in helpers.ts).
                 const entryPoint: ReplayToolContainerEntryPoint = {
                     containerRuntime: containerRuntime as ContainerRuntime,
                     get ReplayToolContainerEntryPoint() {
