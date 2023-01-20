@@ -77,7 +77,7 @@ const formattedEmbeddedContentBody = (contents) => {
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
  */
 const generateGettingStartedSection = (packageJsonPath, includeTinyliciousStep, includeHeading) => {
-    const packageJsonMetadata = getPackageMetadata(packageJsonPath);
+	const packageJsonMetadata = getPackageMetadata(packageJsonPath);
 	const packageName = packageJsonMetadata.name;
 	const packageDirectory = pathLib.dirname(packageJsonPath);
 
@@ -300,7 +300,10 @@ function includeTransform(content, options, config) {
  */
 function libraryPackageReadmeTransform(content, options, config) {
 	const { packageJsonPath: relativeackageJsonPath } = options;
-    const resolvedPackageJsonPath = resolveRelativePackageJsonPath(config.originalPath, relativeackageJsonPath);
+	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
+		config.originalPath,
+		relativeackageJsonPath,
+	);
 	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
 	const packageName = packageMetadata.name;
 
@@ -333,7 +336,6 @@ function libraryPackageReadmeTransform(content, options, config) {
 	return formattedGeneratedContentBody(sections.join(""));
 }
 
-
 /**
  * Generates simple README contents for a example app package.
  *
@@ -365,11 +367,20 @@ function libraryPackageReadmeTransform(content, options, config) {
  */
 function examplePackageReadmeTransform(content, options, config) {
 	const { packageJsonPath: relativeackageJsonPath } = options;
-    const resolvedPackageJsonPath = resolveRelativePackageJsonPath(config.originalPath, relativeackageJsonPath);
+	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
+		config.originalPath,
+		relativeackageJsonPath,
+	);
 
 	const sections = [];
 	if (options.gettingStarted !== "FALSE") {
-		sections.push(generateGettingStartedSection(resolvedPackageJsonPath, options.usesTinylicious !== "FALSE", true));
+		sections.push(
+			generateGettingStartedSection(
+				resolvedPackageJsonPath,
+				options.usesTinylicious !== "FALSE",
+				true,
+			),
+		);
 	}
 
 	if (options.scripts === "TRUE") {
@@ -399,7 +410,7 @@ module.exports = {
 	transforms: {
 		INCLUDE: includeTransform,
 		LIBRARY_PACKAGE_README: libraryPackageReadmeTransform,
-        EXAMPLE_PACKAGE_README: examplePackageReadmeTransform,
+		EXAMPLE_PACKAGE_README: examplePackageReadmeTransform,
 
 		/* Match <!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_GETTING_STARTED_SECTION:packageJsonPath=./package.json&includeHeading=TRUE&usesTinylicious=TRUE) --> */
 		README_EXAMPLE_GETTING_STARTED_SECTION(content, options, config) {
