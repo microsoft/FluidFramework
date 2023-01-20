@@ -13,9 +13,9 @@ describe("taskList", () => {
     }, 45_000);
 
     beforeEach(async () => {
-        await page.goto(globals.PATH, { waitUntil: "load" });
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
-        await page.waitFor(() => (window as any).fluidStarted);
+        await page.goto(globals.PATH, { waitUntil: "load", timeout:0 });
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/dot-notation
+        await page.waitFor(() => window["fluidStarted"]);
     });
 
     it("loads and there's an input", async () => {
