@@ -76,7 +76,9 @@ Once closed, container terminates connection to ordering service, and any local 
 
 The "closed" state effectively means the container is disconnected forever and cannot be reconnected.
 
-Container can also be closed by runtime itself as result of some critical error. Critical errors can be internal (like violation in op ordering invariants), or external (file was deleted). Please see [Error Handling](#Error-handling) for more details
+If after some time a closed container is no longer needed, calling `Container.dispose()` will dispose the runtime resources.
+
+Container can also be closed and disposed by runtime itself as result of some critical error. Critical errors can be internal (like violation in op ordering invariants), or external (file was deleted). Please see [Error Handling](#Error-handling) for more details
 
 When container is closed, the following is true (in no particular order):
 
@@ -85,7 +87,7 @@ When container is closed, the following is true (in no particular order):
 3. "readonly" event fires on DeltaManager & Container (and Container.readonly property is set to true)  indicating to all data stores that container is read-only, and data stores should not allow local edits, as they are not going to make it.
 4. "disconnected" event fires, if connection was active at the moment of container closure.
 
-`"closed"` event is available on Container for hosts. `"disposed"` event is delivered to container runtime when container is closed. But container runtime can be also disposed when new code proposal is made and new version of the code (and container runtime) is loaded in accordance with it.
+`"closed"` event is available on Container for hosts.
 
 #### `Container.dispose()`
 

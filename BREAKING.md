@@ -31,6 +31,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Remove ISummarizerRuntime batchEnd listener](#Remove-ISummarizerRuntime-batchEnd-listener)
 - [Remove ISummaryBaseConfiguration.summarizerClientElection](#Remove-ISummaryBaseConfigurationsummarizerClientElection)
 - [Remove Deprecated IFluidObject Interface](#Remove-Deprecated-IFluidObject-Interface)
+- [Closing Container no longer disposes](#Closing-Container-no-longer-disposes)
 
 ### existing parameter is now required in IRuntimeFactory::instantiateRuntime
 The `existing` flag was added as optional in client version 0.44 and has been updated to be expected
@@ -80,6 +81,14 @@ There will be no replacement for this property.'
 
 ### Remove Deprecated IFluidObject Interface
 IFluidObject is removed and has been replaced with [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
+
+### Closing Container no longer disposes
+Calling `IContainer.close(...)` will no longer dispose the container runtime, document service, or document storage service.
+
+If the container is not expected to be used after the `close(...)` call, replace it instead with a `IContainer.dispose(...)` call. Using `IContainer.dispose(...)` will no longer switch the container to "readonly" mode and relevant code should instead listen to the Container's "disposed" event.
+Otherwise, to retain all previous behavior, add a call to `IContainer.dispose(...)` after every `close(...)` call (passing the same error object if present).
+
+Please see the [Closure](packages/loader/container-loader/README.md#Closure) section of Loader README.md for more details.
 
 # 2.0.0-internal.2.4.0
 
