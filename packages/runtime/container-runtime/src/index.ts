@@ -19,6 +19,7 @@ export {
     agentSchedulerId,
     ContainerRuntime,
     RuntimeHeaders,
+    AllowTombstoneRequestHeaderKey,
     TombstoneResponseHeaderKey,
     ISummaryConfiguration,
     DefaultSummaryConfiguration,

@@ -43,7 +43,7 @@ import { assert, Lazy, LazyPromise } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import { GCDataBuilder, unpackChildNodesGCDetails, unpackChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
-import { ContainerRuntime, RuntimeHeaderData, TombstoneResponseHeaderKey } from "./containerRuntime";
+import { ContainerRuntime, defaultRuntimeHeaderData, RuntimeHeaderData, TombstoneResponseHeaderKey } from "./containerRuntime";
 import {
     FluidDataStoreContext,
     RemoteFluidDataStoreContext,
@@ -430,7 +430,9 @@ export class DataStores implements IDisposable {
         );
     }
 
-    public async getDataStore(id: string, headerData: RuntimeHeaderData): Promise<FluidDataStoreContext> {
+    public async getDataStore(id: string, requestHeaderData: RuntimeHeaderData): Promise<FluidDataStoreContext> {
+        const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
+
         const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
         const request = { url: id };
         if (context === undefined) {
@@ -454,7 +456,7 @@ export class DataStores implements IDisposable {
                     eventName: "GC_Tombstone_DataStore_Requested",
                     category: shouldFail ? "error" : "generic",
                     isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
-                    viaHandle: headerData.viaHandle, // Note: A caller could easily spoof this header and confuse our telemetry
+                    headers: JSON.stringify(requestHeaderData),
                 },
                 context.isLoaded ? context.packagePath : undefined,
                 error,

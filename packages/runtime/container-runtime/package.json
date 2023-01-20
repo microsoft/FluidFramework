@@ -127,9 +127,6 @@
       },
       "ClassDeclaration_ContainerRuntime": {
         "forwardCompat": false
-      },
-      "EnumDeclaration_RuntimeHeaders": {
-        "backCompat": false
       }
     }
   }

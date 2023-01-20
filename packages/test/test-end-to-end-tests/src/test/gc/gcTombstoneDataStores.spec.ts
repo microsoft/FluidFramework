@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import {
+    AllowTombstoneRequestHeaderKey,
     IGCRuntimeOptions,
     ISummarizer,
     RuntimeHeaders,
@@ -466,7 +467,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             assert.equal(tombstoneErrorResponse.value, `Datastore removed by gc: ${unreferencedId}`, "Expected the Tombstone error message");
             assert.equal(tombstoneErrorResponse.headers?.[TombstoneResponseHeaderKey], true, "Expected the Tombstone header");
 
-            const tombstoneSuccessResponse = await containerRuntime_resolveHandle(container, { url: unreferencedId, headers: { [RuntimeHeaders.allowTombstone]: true }});
+            const tombstoneSuccessResponse = await containerRuntime_resolveHandle(container, { url: unreferencedId, headers: { [AllowTombstoneRequestHeaderKey]: true }});
             assert.equal(tombstoneSuccessResponse.status, 200, "Should be able to retrieve a tombstoned datastore given the allowTombstone header");
             assert.notEqual(tombstoneSuccessResponse.headers?.[TombstoneResponseHeaderKey], true, "DID NOT Expect tombstone header to be set on the response");
 
@@ -608,7 +609,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
             const requestAllowingTombstone: IRequest = {
                 url: unreferencedId,
-                headers: { [RuntimeHeaders.allowTombstone]: true },
+                headers: { [AllowTombstoneRequestHeaderKey]: true },
             };
             const tombstonedObject = await requestFluidObject<ITestDataObject>(tombstoneContainer, requestAllowingTombstone);
             const defaultDataObject = await requestFluidObject<ITestDataObject>(tombstoneContainer, "default");

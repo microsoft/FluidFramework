@@ -522,9 +522,10 @@ export enum RuntimeHeaders {
     externalRequest = "externalRequest",
     /** True if the request is coming from an IFluidHandle. */
     viaHandle = "viaHandle",
-    /** True if a tombstoned object should be returned without erroring */
-    allowTombstone = "allowTombstone",
 }
+
+/** True if a tombstoned object should be returned without erroring */
+export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
 
 /** Tombstone error responses will have this header set to true */
 export const TombstoneResponseHeaderKey = "isTombstoned"
@@ -533,14 +534,14 @@ export const TombstoneResponseHeaderKey = "isTombstoned"
  * The full set of parsed header data that may be found on Runtime requests
  */
 export interface RuntimeHeaderData {
-    wait: boolean;
-    externalRequest: boolean;
-    viaHandle: boolean;
-    allowTombstone: boolean;
+    wait?: boolean;
+    externalRequest?: boolean;
+    viaHandle?: boolean;
+    allowTombstone?: boolean;
 }
 
 /** Default values for Runtime Headers */
-export const defaultRuntimeHeaderData: RuntimeHeaderData = {
+export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
     wait: true,
     externalRequest: false,
     viaHandle: false,
@@ -1483,21 +1484,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private async getDataStoreFromRequest(id: string, request: IRequest): Promise<IFluidRouter> {
-        const headerData: RuntimeHeaderData = { ...defaultRuntimeHeaderData };
-
-        const [ wait, viaHandle, allowTombstone ] = [
-            request.headers?.[RuntimeHeaders.wait],
-            request.headers?.[RuntimeHeaders.viaHandle],
-            request.headers?.[RuntimeHeaders.allowTombstone],
-        ];
-        if (typeof wait === "boolean") {
-            headerData.wait = wait;
+        const headerData: RuntimeHeaderData = {};
+        if (typeof request.headers?.[RuntimeHeaders.wait] === "boolean") {
+            headerData.wait = request.headers[RuntimeHeaders.wait];
         }
-        if (typeof viaHandle === "boolean") {
-            headerData.viaHandle = viaHandle;
+        if (typeof request.headers?.[RuntimeHeaders.viaHandle] === "boolean") {
+            headerData.viaHandle = request.headers[RuntimeHeaders.viaHandle];
         }
-        if (typeof allowTombstone === "boolean") {
-            headerData.allowTombstone = allowTombstone;
+        if (typeof request.headers?.[AllowTombstoneRequestHeaderKey] === "boolean") {
+            headerData.allowTombstone = request.headers[AllowTombstoneRequestHeaderKey];
         }
 
         await this.dataStores.waitIfPendingAlias(id);
@@ -1893,7 +1888,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private async getRootDataStoreChannel(id: string, wait = true): Promise<IFluidDataStoreChannel> {
         await this.dataStores.waitIfPendingAlias(id);
         const internalId = this.internalId(id);
-        const context = await this.dataStores.getDataStore(internalId, { ...defaultRuntimeHeaderData, wait });
+        const context = await this.dataStores.getDataStore(internalId, { wait });
         assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
         return context.realize();
     }
