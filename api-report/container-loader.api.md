@@ -85,11 +85,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     disconnect(): void;
     // (undocumented)
     dispose?(error?: ICriticalContainerError): void;
-    // (undocumented)
-    readonly entryPoint?: Promise<FluidObject | undefined>;
     forceReadonly(readonly: boolean): void;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+    // (undocumented)
+    getEntryPoint?(): Promise<FluidObject | undefined>;
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorumClients;
     getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
