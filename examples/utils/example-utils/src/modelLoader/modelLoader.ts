@@ -40,13 +40,14 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
     private readonly generateCreateNewRequest: () => IRequest;
 
     // TODO: See if there's a nicer way to parameterize the createNew request.
+    // Here we specifically pick just the loader props we know we need to keep API exposure low.  Fine to add more
+    // here if we determine they're needed, but they should be picked explicitly (e.g. avoid "scope").
     public constructor(
-        props: ILoaderProps
+        props: Pick<ILoaderProps, "urlResolver" | "documentServiceFactory" | "codeLoader">
         & {
             generateCreateNewRequest: () => IRequest;
         },
     ) {
-        // TODO: Also probably pass through other loader props, they just don't matter for this demo.
         this.loader = new Loader({
             urlResolver: props.urlResolver,
             documentServiceFactory: props.documentServiceFactory,
