@@ -74,7 +74,7 @@ export {
     isMoveMark,
     MoveMark,
     MoveEffectTable,
-    MovePartition,
+    MoveEffect,
     newMoveEffectTable,
     PairedMarkUpdate,
     splitMarkOnOutput,

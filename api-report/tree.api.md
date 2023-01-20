@@ -825,7 +825,7 @@ type MarkList_2<TNodeChange = NodeChangeType, TMark = Mark_2<TNodeChange>> = TMa
 
 // @public
 class MarkListFactory<TNodeChange> {
-    constructor(moveEffects?: MoveEffectTable<TNodeChange> | undefined);
+    constructor(revision?: RevisionTag | undefined, moveEffects?: MoveEffectTable<TNodeChange> | undefined, recordMerges?: boolean);
     // (undocumented)
     readonly list: MarkList_2<TNodeChange>;
     // (undocumented)
@@ -926,24 +926,26 @@ export class ModularEditBuilder extends ProgressiveEditBuilderBase<ModularChange
     submitChange(path: UpPath | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset, maxId?: ChangesetLocalId): void;
 }
 
+// @public
+interface MoveEffect<T> {
+    child?: MoveId_2;
+    count?: number;
+    detacher?: RevisionTag;
+    mark?: Mark_2<T>;
+    mergeLeft?: MoveId_2;
+    mergeRight?: MoveId_2;
+    modifyAfter?: T;
+    movedMark?: Mark_2<T>;
+    pairedMarkStatus?: PairedMarkUpdate;
+    shouldRemove?: boolean;
+}
+
 // @public (undocumented)
 interface MoveEffectTable<T> {
     // (undocumented)
-    allowMerges: boolean;
+    dstEffects: NestedMap<RevisionTag | undefined, MoveId_2, MoveEffect<T>>;
     // (undocumented)
-    dstEffects: Map<MoveId_2, MovePartition<T>[]>;
-    // (undocumented)
-    dstMergeable: Map<MoveId_2, MoveId_2>;
-    // (undocumented)
-    idRemappings: Map<MoveId_2, MoveId_2>;
-    // (undocumented)
-    movedMarks: Map<MoveId_2, Mark_2<T>[]>;
-    // (undocumented)
-    splitIdToOrigId: Map<MoveId_2, MoveId_2>;
-    // (undocumented)
-    srcEffects: Map<MoveId_2, MovePartition<T>[]>;
-    // (undocumented)
-    srcMergeable: Map<MoveId_2, MoveId_2>;
+    srcEffects: NestedMap<RevisionTag | undefined, MoveId_2, MoveEffect<T>>;
 }
 
 // @public
@@ -998,20 +1000,6 @@ interface MoveOut_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMov
     type: "MoveOut";
 }
 
-// @public (undocumented)
-interface MovePartition<TNodeChange> {
-    // (undocumented)
-    count?: number;
-    detachedBy?: RevisionTag;
-    // (undocumented)
-    id: MoveId_2;
-    // (undocumented)
-    modifyAfter?: TNodeChange;
-    pairedMarkStatus?: PairedMarkUpdate;
-    // (undocumented)
-    replaceWith?: Mark_2<TNodeChange>[];
-}
-
 // @public
 export enum Multiplicity {
     Forbidden = 3,
@@ -1038,6 +1026,9 @@ export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
 
 // @public
 export type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<any, infer Name> ? Name : never;
+
+// @public
+export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 
 // @public
 export const neverTree: TreeSchema;
@@ -1339,7 +1330,7 @@ declare namespace SequenceField {
         isMoveMark,
         MoveMark,
         MoveEffectTable,
-        MovePartition,
+        MoveEffect,
         newMoveEffectTable,
         PairedMarkUpdate,
         splitMarkOnOutput
@@ -1442,7 +1433,7 @@ type SkipLikeReattach<TNodeChange> = Reattach<TNodeChange> & Conflicted & {
 };
 
 // @public
-function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(mark: TMark, length: number, genId: IdAllocator, moveEffects: MoveEffectTable<unknown>, ignorePairing?: boolean): [TMark, TMark];
+function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(mark: TMark, revision: RevisionTag | undefined, length: number, genId: IdAllocator, moveEffects: MoveEffectTable<unknown>, recordMoveEffect?: boolean, ignorePairing?: boolean): [TMark, TMark];
 
 // @public
 export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, ISubscribable<SchemaEvents>, SchemaDataAndPolicy<TPolicy> {
