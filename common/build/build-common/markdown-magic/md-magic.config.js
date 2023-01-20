@@ -465,6 +465,21 @@ function readmeInstallationSectionTransform(content, options, config) {
 }
 
 /**
+ * Generates a README section with Microsoft trademark info.
+ *
+ * @param {object} content - The original document file contents.
+ * @param {object} options - Transform options.
+ * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
+ * Default: `TRUE`.
+ * @param {object} config - Transform configuration.
+ * @param {string} config.originalPath - Path to the document being modified.
+ */
+function readmeTrademarkSectionTransform(content, options, config) {
+	const includeHeading = options.includeHeading !== "FALSE";
+    return formattedGeneratedContentBody(generateTrademarkSection(includeHeading));
+}
+
+/**
  * markdown-magic config
  */
 module.exports = {
@@ -525,7 +540,7 @@ module.exports = {
 		README_API_DOCS_SECTION: readmeApiDocsSectionTransform,
 
 		/**
-		 * See {@link }.
+		 * See {@link readmeInstallationSectionTransform}.
 		 *
 		 * @example
 		 *
@@ -535,11 +550,16 @@ module.exports = {
 		 */
 		README_INSTALLATION_SECTION: readmeInstallationSectionTransform,
 
-		/* Match <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) --> */
-		README_TRADEMARK_SECTION(content, options, config) {
-			const includeHeading = options.includeHeading !== "FALSE";
-			return formattedGeneratedContentBody(generateTrademarkSection(includeHeading));
-		},
+		/**
+         * See {@link readmeTrademarkSectionTransform}.
+         *
+         * @example
+         *
+         * ```markdown
+         * <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+         * ```
+         */
+		README_TRADEMARK_SECTION: readmeTrademarkSectionTransform,
 
 		/* Match <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) --> */
 		README_CONTRIBUTION_GUIDELINES_SECTION(content, options, config) {
