@@ -17,6 +17,11 @@ export interface ReferenceCounted {
 
     referenceRemoved(): void;
 
+    /**
+     * @returns true if mutating this object may impact other users of it.
+     *
+     * Implementations can return true if the refcount is 1 OR the content is logically immutable.
+     */
     isShared(): boolean;
 }
 
