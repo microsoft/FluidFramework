@@ -1,11 +1,6 @@
 {
     "extends": "@fluidframework/build-common/ts-common-config.json",
-    "exclude": [
-        "dist",
-        "node_modules"
-    ],
     "compilerOptions": {
-        "module": "CommonJS",
         "outDir": "dist",
         "jsx": "react",
         "types": [

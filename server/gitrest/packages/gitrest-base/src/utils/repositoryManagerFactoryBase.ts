@@ -17,7 +17,7 @@ import {
     IStorageDirectoryConfig,
     Constants,
 } from "./definitions";
-import { BaseGitRestTelemetryProperties } from "./gitrestTelemetryDefinitions";
+import { BaseGitRestTelemetryProperties, GitRestLumberEventName } from "./gitrestTelemetryDefinitions";
 
 type RepoOperationType = "create" | "open";
 
@@ -78,7 +78,13 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
                 });
         };
 
-        return this.internalHandler(params, onRepoNotExists, "create");
+        return this.enableRepositoryManagerMetrics
+            ? helpers.executeApiWithMetric(
+                async () => this.internalHandler(params, onRepoNotExists, "create"),
+                GitRestLumberEventName.CreateRepo,
+                helpers.getLumberjackBasePropertiesFromRepoManagerParams(params),
+            )
+            : this.internalHandler(params, onRepoNotExists, "create");
     }
 
     public async open(params: IRepoManagerParams): Promise<IRepositoryManager> {
@@ -98,7 +104,13 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
             throw new NetworkError(400, `Repo does not exist ${gitdir}`);
         };
 
-        return this.internalHandler(params, onRepoNotExists, "open");
+        return this.enableRepositoryManagerMetrics
+            ? helpers.executeApiWithMetric(
+                async () => this.internalHandler(params, onRepoNotExists, "open"),
+                GitRestLumberEventName.OpenRepo,
+                helpers.getLumberjackBasePropertiesFromRepoManagerParams(params),
+            )
+            : this.internalHandler(params, onRepoNotExists, "open");
     }
 
     private async repoPerDocInternalHandler(

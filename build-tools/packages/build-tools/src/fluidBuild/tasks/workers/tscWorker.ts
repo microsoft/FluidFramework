@@ -48,7 +48,7 @@ export async function compile(msg: WorkerMessage): Promise<WorkerExecResult> {
                 },
             })!;
         } else {
-            throw new Error("Unknown config file in commane line");
+            throw new Error("Unknown config file in command line");
         }
     }
 
@@ -71,7 +71,9 @@ export async function compile(msg: WorkerMessage): Promise<WorkerExecResult> {
         const emitResult = program.emit();
         diagnostics.push(...emitResult.diagnostics);
 
-        if (!emitResult.emitSkipped) {
+        if (emitResult.emitSkipped && diagnostics.length > 0) {
+            code = ts.ExitStatus.DiagnosticsPresent_OutputsSkipped;
+        } else {
             code =
                 diagnostics.length !== 0
                     ? ts.ExitStatus.DiagnosticsPresent_OutputsGenerated

@@ -1298,7 +1298,7 @@
             "error"
         ],
         "unicorn/no-for-loop": [
-            "error"
+            "off"
         ],
         "unicorn/no-hex-escape": [
             "error"
