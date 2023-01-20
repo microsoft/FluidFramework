@@ -838,7 +838,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this.mc.logger.sendTelemetryEvent(
                     {
                         eventName: "ContainerDispose",
-                        category: "generic",
+                        category: error === undefined ? "generic" : "error",
                     },
                     error,
                 );

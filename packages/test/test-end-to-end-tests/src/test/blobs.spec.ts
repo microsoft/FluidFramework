@@ -48,10 +48,14 @@ const testContainerConfig: ITestContainerConfig = {
 
 const usageErrorMessage = "Empty file summary creation isn't supported in this driver.";
 
+const containerCloseAndDisposeUsageErrors = [
+    { eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage },
+    { eventName: "fluid:telemetry:Container:ContainerDispose", error: usageErrorMessage },
+];
 const ContainerCloseUsageError: ExpectedEvents = {
-    local: [{ eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage }],
-    routerlicious: [{ eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage }],
-    tinylicious: [{ eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage }],
+    local: containerCloseAndDisposeUsageErrors,
+    routerlicious: containerCloseAndDisposeUsageErrors,
+    tinylicious: containerCloseAndDisposeUsageErrors,
 };
 
 describeFullCompat("blobs", (getTestObjectProvider) => {
