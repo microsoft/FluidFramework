@@ -3,20 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import React, { useEffect, useRef, useState } from "react";
+const startingExternalData =
+`12:Alpha:1
+34:Beta:2
+56:Gamma:3
+78:Delta:4`;
 
-import { CollaborativeInput } from "@fluid-experimental/react-inputs";
-import type { IAppModel, ITask } from "../model-interface";
+import React, { useEffect, useState } from "react";
+
 import { customerServicePort, parseStringData } from "../mock-service-interface";
 
 /**
  * {@link DebugView} input props.
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IDebugViewProps {
-    /**
-     * The Task List app model to be visualized.
-     */
-    model: IAppModel;
 }
 
 /**
@@ -29,16 +30,14 @@ export interface IDebugViewProps {
  *
  * For the purposes of this test app, it is useful to be able to see both data sources side-by-side.
  */
-export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
-    const { model } = props;
-
+export const DebugView: React.FC<IDebugViewProps> = () => {
     return (
         <div>
             <h2 style={{ textDecoration: "underline" }}>External Data Server App</h2>
-            <TaskListView model={ model }/>
+            <TaskListView />
             <ExternalDataView />
             <SyncStatusView />
-            <ControlsView model={ model }/>
+            <ControlsView />
         </div>
     );
 };
@@ -92,7 +91,6 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
         ? []
         : parseStringData(externalData);
 
-    console.log(parsedExternalData);
     const taskRows = parsedExternalData.map(({ id, name, priority }) => (
         <tr key={ id }>
             <td>{ id }</td>
@@ -139,8 +137,8 @@ const SyncStatusView: React.FC<ISyncStatusViewProps> = (props: ISyncStatusViewPr
     );
 };
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface IControlsViewProps {
-    model: IAppModel;
 }
 
 /**
@@ -165,7 +163,6 @@ function debugResetExternalData(): void {
 // themselves (as if they were editing it outside of Fluid).
 // TODO: Consider how we might simulate errors/failures here to play with retry and recovery.
 const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
-    // console.log(props.model);
     return (
         <div>
             <h3>Debug controls</h3>
@@ -177,92 +174,78 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
 };
 
 interface ITaskRowProps {
-    readonly task: ITask;
-    readonly deleteTask: () => void;
+    task: ExternalDataTask
 }
 
 /**
  * The view for a single task in the TaskListView, as a table row.
  */
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
-    const { task, deleteTask } = props;
-    const priorityRef = useRef<HTMLInputElement>(null);
-    useEffect(() => {
-        const updateFromRemotePriority = (): void => {
-            if (priorityRef.current !== null) {
-                priorityRef.current.value = task.priority.toString();
-            }
-        };
-        task.on("priorityChanged", updateFromRemotePriority);
-        updateFromRemotePriority();
-        return (): void => {
-            task.off("priorityChanged", updateFromRemotePriority);
-        };
-    }, [task]);
+    const { task } = props;
 
-    const inputHandler = (e: React.FormEvent): void => {
-        const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
-        task.priority = newValue;
+    const IdChangeHandler = (e: React.SyntheticEvent<HTMLInputElement>): void => {
+        task.id = e.currentTarget.value;
+    };
+    const NameChangeHandler = (e: React.SyntheticEvent<HTMLInputElement>): void => {
+        task.name = e.currentTarget.value;
+    };
+    const PriorityChangeHandler = (e: React.SyntheticEvent<HTMLInputElement>): void => {
+        task.priority =  Number.parseInt(e.currentTarget.value, 10);
     };
 
     return (
         <tr>
-            <td>{ task.id }</td>
-            <td>
-                <CollaborativeInput
-                    sharedString={ task.name }
-                    style={{ width: "200px" }}
-                ></CollaborativeInput>
-            </td>
-            <td>
-                <input
-                    ref={ priorityRef }
-                    onInput={ inputHandler }
-                    type="number"
-                    style={{ width: "50px" }}
-                ></input>
-            </td>
-            <td>
-                <button
-                    onClick={ deleteTask }
-                    style={{ background: "none", border: "none" }}
-                >
-                    ❌
-                </button>
-            </td>
+            <td><input defaultValue={ task.id }  style={{ width: "30px" }} onChange={ IdChangeHandler }></input></td>
+            <td><input defaultValue={ task.name } style={{ width: "200px" }} onChange={ NameChangeHandler }></input></td>
+            <td><input defaultValue={ task.priority } type="number" style={{ width: "50px" }} onChange={ PriorityChangeHandler }></input></td>
         </tr>
     );
 };
 
+class ExternalDataTask {
+    public id: string;
+    public name: string;
+    public priority: number;
+    public constructor(id: string, name: string, priority: number) {
+        this.id = id;
+        this.name = name;
+        this.priority = priority;
+    }
+}
 /**
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
  */
-export const TaskListView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
-    const { model } = props;
-
-    const taskList = model.taskList;
-
-    const [tasks, setTasks] = useState<ITask[]>(taskList.getTasks());
-    useEffect(() => {
-        const updateTasks = (): void => {
-            setTasks(taskList.getTasks());
-        };
-        taskList.on("taskAdded", updateTasks);
-        taskList.on("taskDeleted", updateTasks);
-
-        return (): void => {
-            taskList.off("taskAdded", updateTasks);
-            taskList.off("taskDeleted", updateTasks);
-        };
-    }, [taskList]);
-
-    const taskRows = tasks.map((task) => (
-        <TaskRow
-            key={ task.id }
-            task={ task }
-            deleteTask={ (): void => taskList.deleteTask(task.id) }
-        />
+export const TaskListView: React.FC<IDebugViewProps> = () => {
+    const parsedExternalData = parseStringData(startingExternalData);
+    const tasks: ExternalDataTask[] = parsedExternalData.map(({ id, name, priority }) => (
+        new ExternalDataTask(id, name, priority)
     ));
+    const taskRows = tasks.map((task: ExternalDataTask) => (
+        <TaskRow key={task.id} task={ task } />
+    ));
+    const saveChanges = async (): Promise<void> => {
+        const taskStrings = tasks.map((task) => {
+            return `${task.id}:${task.name}:${task.priority}`;
+        });
+        const stringDataToWrite = `${taskStrings.join("\n")}`;
+        try {
+            await fetch(
+                `http://localhost:${customerServicePort}/set-tasks`,
+                {
+                    method: 'POST',
+                    headers: {
+                        "Access-Control-Allow-Origin": "*",
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ taskList: stringDataToWrite }),
+                }
+            );
+        } catch (error) {
+            console.error(`Task list submition failed due to an error:\n${error}`);
+
+            // TODO: display error status to user?
+        }
+    }
 
     return (
         // TODO: Gray button if not "authenticated" via debug controls
@@ -281,7 +264,7 @@ export const TaskListView: React.FC<IDebugViewProps> = (props: IDebugViewProps) 
                     { taskRows }
                 </tbody>
             </table>
-            <button onClick={ taskList.saveChanges }>Save changes</button>
+            <button onClick={ saveChanges }>Save changes</button>
         </div>
     );
 };

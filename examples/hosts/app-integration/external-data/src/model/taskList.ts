@@ -281,17 +281,10 @@ export class TaskList extends DataObject implements ITaskList {
                 return;
             }
             if (task.name.getText() !== name) {
-                // TODO: Currently replacing existing Fluid data.  But eventually this is where
-                // we'd want conflict resolution UX.
-                // await this.addDiffTask(id);
                 console.log('task.name.getText() !== name');
                 await task.externalNameChanged(name);
             }
             if (task.priority !== priority) {
-                // TODO: Currently replacing existing Fluid data. But eventually this is where
-                // we'd want conflict resolution UX.
-                // console.log(currPriority.get(), priority, "notEqual");
-                // await this.addDiffTask(id);
                 console.log('task.priority !== priority');
                 await task.externalPriorityChanged(priority);
             }

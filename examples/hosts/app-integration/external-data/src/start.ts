@@ -20,7 +20,7 @@ const updateTabForId = (id: string): void => {
     document.title = id;
 };
 
-const render = (ffModel: IAppModel, externalModel: IAppModel): void => {
+const render = (ffModel: IAppModel, showExternalServerView: boolean): void => {
     const appDiv = document.querySelector("#app") as HTMLDivElement;
     ReactDOM.unmountComponentAtNode(appDiv);
     ReactDOM.render(
@@ -30,12 +30,14 @@ const render = (ffModel: IAppModel, externalModel: IAppModel): void => {
 
     // The DebugView is just for demo purposes, to offer manual controls and inspectability for things that normally
     // would be some external system or arbitrarily occurring.
-    const debugDiv = document.querySelector("#debug") as HTMLDivElement;
-    ReactDOM.unmountComponentAtNode(debugDiv);
-    ReactDOM.render(
-        React.createElement(DebugView, {  model: externalModel }),
-        debugDiv,
-    );
+    if (showExternalServerView) {
+        const debugDiv = document.querySelector("#debug") as HTMLDivElement;
+        ReactDOM.unmountComponentAtNode(debugDiv);
+        ReactDOM.render(
+            React.createElement(DebugView),
+            debugDiv,
+        );
+    }
 };
 
 async function start(): Promise<void> {
@@ -45,6 +47,7 @@ async function start(): Promise<void> {
 
     let id: string;
     let ffModel: IAppModel;
+    let showExternalServerView = true;
 
     if (location.hash.length === 0) {
         // Normally our code loader is expected to match up with the version passed here.
@@ -57,17 +60,10 @@ async function start(): Promise<void> {
     } else {
         id = location.hash.slice(1);
         ffModel = await tinyliciousModelLoader.loadExisting(id);
+        showExternalServerView = false;
     }
 
-    // Create a different model to represent the external data view
-    const tinyliciousExternalModelLoader = new TinyliciousModelLoader<IAppModel>(
-        new StaticCodeLoader(new TaskListContainerRuntimeFactory()),
-    );
-    const externalCreateResponse = await tinyliciousExternalModelLoader.createDetached("one");
-    const externalModel: IAppModel = externalCreateResponse.model;
-    await externalCreateResponse.attach();
-
-    render(ffModel, externalModel);
+    render(ffModel, showExternalServerView);
     updateTabForId(id);
 }
 
