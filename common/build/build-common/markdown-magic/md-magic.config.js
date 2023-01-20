@@ -7,13 +7,17 @@ const fs = require("fs");
 const pathLib = require("path");
 const scripts = require("markdown-magic-package-scripts");
 
-const {
-	embeddedContentNotice,
-	generatedContentNotice,
-	templatesDirectoryPath,
-} = require("./constants");
+const { templatesDirectoryPath } = require("./constants");
 
-const { resolveRelativePath, getPackageMetadata, getShortPackageName } = require("./utilities");
+const {
+	resolveRelativePath,
+	getPackageMetadata,
+	getShortPackageName,
+	formattedSectionText,
+	formattedGeneratedContentBody,
+	formattedEmbeddedContentBody,
+} = require("./utilities");
+const { generatePackageScriptsSection, packageScriptsSectionTransform } = require("./transforms");
 
 /**
  * Reads and returns the contents from the specified template file.
@@ -26,47 +30,6 @@ const readTemplate = (templateFileName) => {
 			encoding: "utf-8",
 		})
 		.trim();
-};
-
-/**
- * Generates the appropriately formatted Markdown section contents for the provided section body.
- * If header text is provided, a level 2 heading (i.e. `##`) will be included with the provided text.
- * The section will be wrapped in leading and trailing newlines to ensure adequate spacing between generated contents.
- *
- * @param {string} sectionBody - Body text to include in the section.
- * @param {string | undefined} maybeHeaderText - (optional) header text to display.
- * If not provided, will not include header in output.
- */
-const formattedSectionText = (sectionBody, maybeHeaderText) => {
-	return `\n${maybeHeaderText === undefined ? "" : `## ${maybeHeaderText}\n\n`}${sectionBody}\n`;
-};
-
-function bundlePrettierPragmas(contents) {
-	return ["\n<!-- prettier-ignore-start -->", contents, "<!-- prettier-ignore-end -->\n"].join(
-		"\n",
-	);
-}
-
-/**
- * Bundles the provided generated contents with the {@link generatedContentNotice}, as well as
- * prettier-ignore pragmas to ensure there is not contention between our content generation and prettier's
- * formatting opinions.
- *
- * @param {string} contents - The generated Markdown contents to be included.
- */
-const formattedGeneratedContentBody = (contents) => {
-	return bundlePrettierPragmas([generatedContentNotice, contents].join("\n"));
-};
-
-/**
- * Bundles the provided generated contents with the {@link generatedContentNotice}, as well as
- * prettier-ignore pragmas to ensure there is not contention between our content generation and prettier's
- * formatting opinions.
- *
- * @param {string} contents - The generated Markdown contents to be included.
- */
-const formattedEmbeddedContentBody = (contents) => {
-	return bundlePrettierPragmas([embeddedContentNotice, contents].join("\n"));
 };
 
 /**
@@ -164,17 +127,6 @@ const generateApiDocsLinkSection = (packageName, includeHeading) => {
 	const shortName = getShortPackageName(packageName);
 	const sectionBody = `API documentation for **${packageName}** is available at <https://fluidframework.com/docs/apis/${shortName}>.`;
 	return formattedSectionText(sectionBody, includeHeading ? "API Documentation" : undefined);
-};
-
-/**
- * Generats a simple Markdown heading and contents with a table describing all of the package's npm scripts.
- *
- * @param {string} scriptsTable - Table of scripts to display.
- * See `markdown-magic-package-scripts` (imported as `scripts`).
- * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
- */
-const generateScriptsSection = (scriptsTable, includeHeading) => {
-	return formattedSectionText(scriptsTable, includeHeading ? "Scripts" : undefined);
 };
 
 /**
@@ -306,7 +258,7 @@ function libraryPackageReadmeTransform(content, options, config) {
 
 	if (options.scripts === "TRUE") {
 		const scriptsTable = scripts(content, options, config);
-		sections.push(generateScriptsSection(scriptsTable, true));
+		sections.push(generatePackageScriptsSection(scriptsTable, true));
 	}
 
 	if (options.contributionGuidelines !== "FALSE") {
@@ -368,7 +320,7 @@ function examplePackageReadmeTransform(content, options, config) {
 
 	if (options.scripts === "TRUE") {
 		const scriptsTable = scripts(content, options, config);
-		sections.push(generateScriptsSection(scriptsTable, true));
+		sections.push(generatePackageScriptsSection(scriptsTable, true));
 	}
 
 	if (options.contributionGuidelines !== "FALSE") {
@@ -510,24 +462,6 @@ function readmeHelpSectionTransform(content, options, config) {
 }
 
 /**
- * Generates a README section with a table enumerating the dev scripts in the specified package.json.
- *
- * @param {object} content - The original document file contents.
- * @param {object} options - Transform options.
- * @param {string} options.packageJsonPath - (optional) Relative file path to the package.json file for the package.
- * Default: "./package.json".
- * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
- * Default: `TRUE`.
- * @param {object} config - Transform configuration.
- * @param {string} config.originalPath - Path to the document being modified.
- */
-function packageJsonScriptsSectionTransform(content, options, config) {
-	const includeHeading = options.includeHeading !== "FALSE";
-	const scriptsTable = scripts(content, options, config);
-	return formattedGeneratedContentBody(generateScriptsSection(scriptsTable, includeHeading));
-}
-
-/**
  * markdown-magic config
  */
 module.exports = {
@@ -639,7 +573,7 @@ module.exports = {
 		README_HELP_SECTION: readmeHelpSectionTransform,
 
 		/**
-		 * See {@link packageJsonScriptsSectionTransform}.
+		 * See {@link packageScriptsSectionTransform}.
 		 *
 		 * @example
 		 *
@@ -648,7 +582,7 @@ module.exports = {
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		PACKAGE_JSON_SCRIPTS: packageJsonScriptsSectionTransform,
+		PACKAGE_SCRIPTS: packageScriptsSectionTransform,
 	},
 	globbyOptions: {
 		gitignore: true,
