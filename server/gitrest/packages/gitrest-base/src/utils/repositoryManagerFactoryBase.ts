@@ -36,7 +36,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
         repoOperationType: RepoOperationType) => Promise<IRepositoryManager>;
     // Cache repositories to allow for reuse
     protected readonly repositoryCache = new Map<string, TRepo>();
-    protected abstract initGitRepo(fs: IFileSystemManager, gitdir: string, defaultBranch?: string): Promise<TRepo>;
+    protected abstract initGitRepo(fs: IFileSystemManager, gitdir: string): Promise<TRepo>;
     protected abstract openGitRepo(gitdir: string): Promise<TRepo>;
     protected abstract createRepoManager(
         fileSystemManager: IFileSystemManager,
@@ -67,10 +67,8 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
             gitdir: string,
             lumberjackBaseProperties: Record<string, any>,
         ) => {
-            // Setting default branch to documentId allows us to skip unnecessary creation of a "master" branch during initial summary write.
-            const defaultBranch = params.optimizeForInitialSummary ? params.storageRoutingId.documentId : undefined;
             // Create and then cache the repository
-            const repository = await this.initGitRepo(fileSystemManager, gitdir, defaultBranch);
+            const repository = await this.initGitRepo(fileSystemManager, gitdir);
             this.repositoryCache.set(repoPath, repository);
             Lumberjack.info(
                 "Created a new repo",

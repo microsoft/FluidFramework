@@ -115,6 +115,7 @@ async function createSummary(
     payload: IWholeSummaryPayload,
     repoManagerParams: IRepoManagerParams,
     externalWriterConfig?: IExternalWriterConfig,
+    isInitialSummary?: boolean,
     persistLatestFullSummary = false,
     enableLowIoWrite: "initial" | boolean = false,
     optimizeForInitialSummary: boolean = false,
@@ -137,7 +138,7 @@ async function createSummary(
 
     Lumberjack.info("Creating summary", lumberjackProperties);
 
-    const { isNew, writeSummaryResponse } = await wholeSummaryManager.writeSummary(payload);
+    const { isNew, writeSummaryResponse } = await wholeSummaryManager.writeSummary(payload, isInitialSummary);
 
     // Waiting to pre-compute and persist latest summary would slow down document creation,
     // so skip this step if it is a new document.
@@ -305,6 +306,7 @@ export function create(
                 wholeSummaryPayload,
                 repoManagerParams,
                 getExternalWriterParams(request.query?.config as string | undefined),
+                isInitialSummary,
                 persistLatestFullSummary,
                 enableLowIoWrite,
                 optimizeForInitialSummary,

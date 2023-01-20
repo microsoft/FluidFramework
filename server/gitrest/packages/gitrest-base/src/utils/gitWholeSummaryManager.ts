@@ -433,11 +433,14 @@ export class GitWholeSummaryManager {
 
     public async writeSummary(
         payload: IWholeSummaryPayload,
+        isInitial?: boolean,
     ): Promise<IWriteSummaryInfo> {
         const writeSummaryMetric = Lumberjack.newLumberMetric(
             GitRestLumberEventName.WholeSummaryManagerWriteSummary,
             this.lumberjackProperties);
         writeSummaryMetric.setProperty("enableLowIoWrite", this.writeOptions.enableLowIoWrite);
+        writeSummaryMetric.setProperty("optimizeForInitialSummary", this.writeOptions.optimizeForInitialSummary);
+        writeSummaryMetric.setProperty("isInitial", isInitial);
         try {
             if (isChannelSummary(payload)) {
                 writeSummaryMetric.setProperty("summaryType", "channel");
@@ -453,7 +456,7 @@ export class GitWholeSummaryManager {
             }
             if (isContainerSummary(payload)) {
                 writeSummaryMetric.setProperty("summaryType", "container");
-                const writeSummaryInfo = await this.writeContainerSummary(payload);
+                const writeSummaryInfo = await this.writeContainerSummary(payload, isInitial);
                 writeSummaryMetric.setProperty("newDocument", writeSummaryInfo.isNew);
                 writeSummaryMetric.setProperty("commitSha", writeSummaryInfo.writeSummaryResponse.id);
                 writeSummaryMetric.success("GitWholeSummaryManager succeeded in writing container summary");
@@ -490,19 +493,20 @@ export class GitWholeSummaryManager {
 
     private async writeContainerSummary(
         payload: IWholeSummaryPayload,
+        isInitial?: boolean,
     ): Promise<IWriteSummaryInfo> {
-        const existingRef = await this.getDocRef();
+        // Ref will not exist for an initial summary, so do not bother checking.
+        const existingRef = this.writeOptions.optimizeForInitialSummary && isInitial === true
+            ? undefined
+            : await this.getDocRef();
 
-        // For backwards compatibility, do not assume that API consumer provided initial summary flag.
-        // Instead, check that the document ref exists and points to a commit.
-        const isNewDocument = !existingRef?.object?.sha && payload.sequenceNumber === 0;
+        const isNewDocument = !existingRef && payload.sequenceNumber === 0;
         const useLowIoWrite = this.writeOptions.enableLowIoWrite === true
             || (isNewDocument && this.writeOptions.enableLowIoWrite === "initial");
 
         const treeHandle = await this.writeSummaryTree(
             payload.entries,
-            //
-            isNewDocument ? undefined : existingRef,
+            existingRef,
             useLowIoWrite,
         );
 
@@ -518,7 +522,7 @@ export class GitWholeSummaryManager {
                 name: "GitRest Service",
             },
             message: commitMessage,
-            parents: existingRef?.object?.sha ? [existingRef.object.sha] : [],
+            parents: existingRef ? [existingRef.object.sha] : [],
             tree: treeHandle,
         };
         const commit = await this.repoManager.createCommit(commitParams);
@@ -538,6 +542,8 @@ export class GitWholeSummaryManager {
                 {
                     ref: `refs/heads/${this.documentId}`,
                     sha: commit.sha,
+                    // Bypass internal check for ref existance if possible, because we already know the ref does not exist.
+                    force: true,
                 },
                 { enabled: this.externalStorageEnabled },
             );
@@ -585,7 +591,7 @@ export class GitWholeSummaryManager {
             }
         );
 
-        if (existingRef?.object?.sha) {
+        if (existingRef) {
             // Update in-memory repo manager with previous summary for handle references.
             const previousSummary = await this.readSummary(existingRef.object.sha);
             const fullSummaryPayload = convertFullSummaryToWholeSummaryEntries({

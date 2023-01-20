@@ -299,7 +299,7 @@ export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
     }
 
     protected async createRefCore(
-        createRefParams: resources.ICreateRefParams,
+        createRefParams: resources.ICreateRefParams & { force?: boolean },
         externalWriterConfig?: IExternalWriterConfig,
     ): Promise<resources.IRef> {
         await isomorphicGit.writeRef({
@@ -307,6 +307,7 @@ export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
             gitdir: this.directory,
             ref: createRefParams.ref,
             value: createRefParams.sha,
+            force: createRefParams.force,
         });
         return conversions.refToIRef(createRefParams.sha, createRefParams.ref);
     }
@@ -374,12 +375,11 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
             enableRepositoryManagerMetrics);
     }
 
-    protected async initGitRepo(fs: IFileSystemManager, gitdir: string, defaultBranch?: string): Promise<void> {
+    protected async initGitRepo(fs: IFileSystemManager, gitdir: string): Promise<void> {
         return isomorphicGit.init({
             fs,
             gitdir,
             bare: true,
-            defaultBranch,
         });
     }
 
