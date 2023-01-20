@@ -2360,6 +2360,7 @@ importers:
       '@types/fs-extra': ^9.0.11
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
+      '@types/lodash.isequal': ^4.5.6
       '@types/node': ^14.18.36
       '@types/node-fetch': ^2.5.10
       '@types/puppeteer': 1.3.0
@@ -2385,6 +2386,7 @@ importers:
       jest: ^26.6.3
       jest-junit: ^10.0.0
       jest-puppeteer: ^4.3.0
+      lodash.isequal: ^4.5.0
       node-fetch: ^2.6.1
       prettier: ~2.6.2
       process: ^0.11.10
@@ -2432,6 +2434,7 @@ importers:
       css-loader: 1.0.1_webpack@5.74.0
       express: 4.18.2
       good-fences: 1.1.2
+      lodash.isequal: 4.5.0
       node-fetch: 2.6.7
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -2448,6 +2451,7 @@ importers:
       '@types/fs-extra': 9.0.13
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
+      '@types/lodash.isequal': 4.5.6
       '@types/node': 14.18.36
       '@types/node-fetch': 2.6.2
       '@types/puppeteer': 1.3.0
@@ -5064,6 +5068,7 @@ importers:
 
   packages/dds/map:
     specifiers:
+      '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
       '@fluid-internal/test-dds-utils': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
       '@fluid-tools/benchmark': ^0.45.0
       '@fluid-tools/build-cli': ^0.7.0
@@ -5111,6 +5116,7 @@ importers:
       '@fluidframework/shared-object-base': link:../shared-object-base
       path-browserify: 1.0.1
     devDependencies:
+      '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-internal/test-dds-utils': link:../test-dds-utils
       '@fluid-tools/benchmark': 0.45.112032
       '@fluid-tools/build-cli': 0.7.0
@@ -20644,6 +20650,12 @@ packages:
     dependencies:
       '@types/node': 14.18.36
       '@types/webpack': 4.41.33
+    dev: true
+
+  /@types/lodash.isequal/4.5.6:
+    resolution: {integrity: sha512-Ww4UGSe3DmtvLLJm2F16hDwEQSv7U0Rr8SujLUA2wHI2D2dm8kPu6Et+/y303LfjTIwSBKXB/YTUcAKpem/XEg==}
+    dependencies:
+      '@types/lodash': 4.14.189
     dev: true
 
   /@types/lodash/4.14.188:
