@@ -355,6 +355,9 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
  */
-export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest {
+export function buildChunkedForest(
+    schema: StoredSchemaRepository,
+    anchors?: AnchorSet,
+): IEditableForest {
     return new ChunkedForest(makeRoot(), schema, anchors);
 }

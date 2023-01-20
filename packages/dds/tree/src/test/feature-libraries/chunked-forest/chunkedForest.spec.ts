@@ -5,7 +5,7 @@
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { buildForest } from "../../../feature-libraries/chunked-forest/chunkedForest";
+import { buildChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest";
 
 import { InMemoryStoredSchemaRepository } from "../../../core";
 import { jsonSchemaData } from "../../../domains";
@@ -15,6 +15,6 @@ import { testForest } from "../../forestTestSuite";
 testForest({
     suiteName: "chunked-forest",
     factory: () =>
-        buildForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData)),
+        buildChunkedForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData)),
     skipCursorErrorCheck: true,
 });
