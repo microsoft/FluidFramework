@@ -6,7 +6,7 @@
 module.exports = {
     extends: ['@commitlint/config-conventional'],
     rules: {
-        'body-case': [1, 'sentence-case', 'always'],
-        'subject-case': [1, 'sentence-case', 'always'],
-    }
+        'body-case': [2, 'always', 'sentence-case'],
+        'subject-case': [2, 'always', 'sentence-case'],
+    },
 };
