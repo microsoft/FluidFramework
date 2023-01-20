@@ -14,6 +14,17 @@ export {
     Opaque,
     ValueFromBranded,
 } from "./brand";
+export {
+    deleteFromNestedMap,
+    getOrAddInMap,
+    getOrAddInNestedMap,
+    getOrDefaultInNestedMap,
+    NestedMap,
+    SizedNestedMap,
+    setInNestedMap,
+    tryAddToNestedMap,
+    tryGetFromNestedMap,
+} from "./nestedMap";
 export { OffsetList, OffsetListFactory } from "./offsetList";
 export {
     areSafelyAssignable,
