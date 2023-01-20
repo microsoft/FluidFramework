@@ -559,7 +559,30 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     /**
      * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
      */
-    public readonly entryPoint?: Promise<FluidObject | undefined>;
+    public get entryPoint(): Promise<FluidObject | undefined> | undefined {
+        if (this._lifecycleState === "closed" || this._lifecycleState === "disposed") {
+            throw new UsageError("The container is already closed or disposed");
+        }
+
+        // Bit of magic to be able to use await inside a getter
+        return (async () => {
+            while(this._context === undefined){
+                await new Promise<void>((resolve,reject)=>{
+                    const contextChangedHandler = () => {
+                        resolve();
+                        this.off("closed", closedHandler);
+                    };
+                    const closedHandler = (error) => {
+                        reject(error);
+                        this.off("contextChanged", contextChangedHandler);
+                    };
+                    this.once("contextChanged", contextChangedHandler);
+                    this.once("closed", closedHandler);
+                });
+            }
+            return this._context.entryPoint;
+        })();
+    }
 
     constructor(
         private readonly loader: Loader,
@@ -574,8 +597,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 },
                 error);
         });
-
-        this.entryPoint = this.context.entryPoint;
 
         this.clientDetailsOverride = config.clientDetailsOverride;
         this._resolvedUrl = config.resolvedUrl;
