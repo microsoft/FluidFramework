@@ -205,7 +205,7 @@ export interface HasReattachFields extends HasPlaceFields {
 
     /**
      * The changeset that last detached the nodes that this mark intends to revive.
-     * For this property to be set, the target nodes must have been reattached my another changeset,
+     * For this property to be set, the target nodes must have been reattached by another changeset,
      * then detached by a changeset other than `Reattach.detachedBy`.
      *
      * This property should only be set or read when `Reattach.isIntention` is undefined.

@@ -534,6 +534,47 @@ describe("SequenceField - Rebase", () => {
         assert.deepEqual(rebased, expected);
     });
 
+    it("return-from + conflicted return-to ↷ move-out ", () => {
+        const ret: SF.Changeset<never> = [
+            {
+                type: "ReturnTo",
+                count: 1,
+                id: brand(0),
+                detachedBy: tag1,
+                detachIndex: 0,
+                conflictsWith: tag2,
+            },
+            10,
+            {
+                type: "ReturnFrom",
+                count: 1,
+                id: brand(0),
+                detachedBy: tag1,
+                isDstConflicted: true,
+            },
+        ];
+        const move = Change.move(0, 1, 20);
+        const actual = rebase(ret, move, tag3);
+        const expected: SF.Changeset<never> = [
+            {
+                type: "ReturnTo",
+                count: 1,
+                id: brand(0),
+                detachedBy: tag3,
+                detachIndex: 0,
+            },
+            10,
+            {
+                type: "ReturnFrom",
+                count: 1,
+                id: brand(0),
+                detachedBy: tag1,
+            },
+        ];
+        normalizeMoveIds(actual);
+        assert.deepEqual(actual, expected);
+    });
+
     it("return ↷ related revive ", () => {
         const revive = Change.revive(2, 1, tag1, 0);
         const ret = Change.return(0, 1, 1, tag1, 0);
