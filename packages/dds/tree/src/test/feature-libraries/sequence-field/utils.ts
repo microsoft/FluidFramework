@@ -3,11 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { ChangesetLocalId, IdAllocator, SequenceField as SF } from "../../../feature-libraries";
-import { Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
+import { assert } from "@fluidframework/common-utils";
+import {
+    ChangesetLocalId,
+    CrossFieldManager,
+    CrossFieldTarget,
+    IdAllocator,
+    SequenceField as SF,
+} from "../../../feature-libraries";
+import { Delta, TaggedChange, makeAnonChange, tagChange, RevisionTag } from "../../../core";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze, fakeRepair } from "../../utils";
-import { brand, fail } from "../../../util";
+import {
+    brand,
+    deleteFromNestedMap,
+    fail,
+    getOrAddInNestedMap,
+    getOrDefaultInNestedMap,
+    NestedMap,
+    setInNestedMap,
+    tryGetFromNestedMap,
+} from "../../../util";
 import { TestChangeset } from "./testEdits";
 
 export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
@@ -41,28 +57,85 @@ export function rebaseTagged(
     return currChange;
 }
 
-const dummyCrossFieldManager = {
-    get: () => fail("Not implemented"),
-    getOrCreate: () => fail("Not implemented"),
-    consume: () => fail("Not implemented"),
-};
+type NestedSet<Key1, Key2> = NestedMap<Key1, Key2, boolean>;
+type MoveQuerySet = NestedSet<RevisionTag | undefined, SF.MoveId>;
+
+function addToNestedSet<Key1, Key2>(set: NestedSet<Key1, Key2>, key1: Key1, key2: Key2): void {
+    setInNestedMap(set, key1, key2, true);
+}
+
+function nestedSetContains<Key1, Key2>(
+    set: NestedSet<Key1, Key2>,
+    key1: Key1,
+    key2: Key2,
+): boolean {
+    return getOrDefaultInNestedMap(set, key1, key2, false);
+}
+
+interface CrossFieldTable {
+    srcQueries: MoveQuerySet;
+    dstQueries: MoveQuerySet;
+    invalidated: boolean;
+}
+
+function newCrossFieldTable(): CrossFieldTable {
+    return {
+        srcQueries: new Map(),
+        dstQueries: new Map(),
+        invalidated: false,
+    };
+}
+
+function newCrossFieldManager(table: CrossFieldTable): CrossFieldManager {
+    const mapSrc: NestedMap<RevisionTag | undefined, SF.MoveId, unknown> = new Map();
+    const mapDst: NestedMap<RevisionTag | undefined, SF.MoveId, unknown> = new Map();
+    const getMap = (target: CrossFieldTarget) =>
+        target === CrossFieldTarget.Source ? mapSrc : mapDst;
+
+    const getQueries = (target: CrossFieldTarget) =>
+        target === CrossFieldTarget.Source ? table.srcQueries : table.dstQueries;
+
+    const manager: CrossFieldManager = {
+        get: (target, revision, id) => {
+            const result = tryGetFromNestedMap(getMap(target), revision, id);
+            addToNestedSet(getQueries(target), revision, id);
+            return result;
+        },
+        getOrCreate: (target, revision, id, defaultValue) => {
+            getOrAddInNestedMap(getMap(target), revision, id, defaultValue);
+            if (nestedSetContains(getQueries(target), revision, id)) {
+                table.invalidated = true;
+            }
+        },
+        consume: (target, revision, id) => deleteFromNestedMap(getMap(target), revision, id),
+    };
+    return manager;
+}
 
 export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
-    return SF.invert(
+    const table = newCrossFieldTable();
+    let inverted = SF.invert(
         change,
         TestChange.invert,
         () => fail("Sequence fields should not generate IDs during invert"),
-        dummyCrossFieldManager,
+        newCrossFieldManager(table),
     );
-}
 
-export function shallowInvert(change: TaggedChange<TestChangeset>): TestChangeset {
-    return SF.invert(
-        change,
-        () => fail("Unexpected call to child inverter"),
-        () => fail("Sequence fields should not generate IDs during invert"),
-        dummyCrossFieldManager,
-    );
+    if (table.invalidated) {
+        table.invalidated = false;
+        table.srcQueries.clear();
+        table.dstQueries.clear();
+        inverted = SF.amendInvert(
+            inverted,
+            change.revision,
+            TestChange.invert,
+            () => fail("Sequence fields should not generate IDs during invert"),
+            newCrossFieldManager(table),
+        );
+        assert(!table.invalidated, "Invert should not need more than one amend pass");
+    }
+
+    return inverted;
 }
 
 export function checkDeltaEquality(actual: TestChangeset, expected: TestChangeset) {

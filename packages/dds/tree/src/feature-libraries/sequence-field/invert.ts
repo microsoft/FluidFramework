@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
 import { CrossFieldManager, CrossFieldTarget, IdAllocator } from "../modular-schema";
-import { Changeset, Mark, MarkList } from "./format";
+import { Changeset, Mark, MarkList, ReturnFrom } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { getInputLength, isConflicted, isObjMark, isSkipMark } from "./utils";
 
@@ -175,14 +175,22 @@ function invertMark<TNodeChange>(
                         // The nodes could have been attached but were not because of the source.
                         return [];
                     }
-                    return [
-                        {
-                            type: "ReturnFrom",
-                            id: mark.id,
-                            count: mark.count,
-                            detachedBy: mark.revision ?? revision,
-                        },
-                    ];
+                    const invertedMark: ReturnFrom<TNodeChange> = {
+                        type: "ReturnFrom",
+                        id: mark.id,
+                        count: mark.count,
+                        detachedBy: mark.revision ?? revision,
+                    };
+
+                    const movedChanges = crossFieldManager.get(
+                        CrossFieldTarget.Destination,
+                        mark.revision ?? revision,
+                        mark.id,
+                    );
+                    if (movedChanges !== undefined) {
+                        invertedMark.changes = invertChild(movedChanges);
+                    }
+                    return [invertedMark];
                 }
                 if (mark.type === "ReturnTo" && mark.lastDetachedBy === undefined) {
                     // The nodes were already attached, so the mark did not affect them.
