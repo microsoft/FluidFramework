@@ -8,7 +8,6 @@ import {
     IFluidHandle,
     IFluidHandleContext,
     IFluidRouter,
-    IProvideFluidRouter,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -642,15 +641,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * Load the stores from a snapshot and returns the runtime.
      * @param context - Context of the container.
-     * @param containerRuntimeCtor - (optional) Constructor to use to create the ContainerRuntime instance.
-     * This allows mixin classes to leverage this method to define their own async initializer.
+     * @param containerRuntimeCtor - Constructor to use to create the ContainerRuntime instance.
+     * @see {@link ContainerRuntime.load} and {@link ContainerRuntime.newLoad} for more details.
+     * @param initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
+     * This object should provide all the functionality that the Container is expected to provide to the loader layer.
      * @param existing - Pass 'true' if loading from an existing snapshot.
      * @param registryEntries - Mapping from data store types to their corresponding factories,
      * @param containerScop - Scope
-     * @param initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
-     * This object should provide all the functionality that the Container is expected to provide to the loader layer.
+     * @param requestHandler - (optional) Request handler for the request() method of the container runtime.
+     * Only relevant for back-compat while we remove the request() method and move fully to entryPoint as the main
+     * pattern.
      */
-    public static async newLoad(
+    private static async privateLoad(
         context: IContainerContext,
         containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime,
         initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
@@ -658,6 +660,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         runtimeOptions: IContainerRuntimeOptions = {},
         registryEntries: NamedFluidDataStoreRegistryEntries,
         containerScope: FluidObject = context.scope,
+        requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
     ): Promise<ContainerRuntime> {
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
@@ -768,7 +771,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             existing,
             blobManagerSnapshot,
             storage,
-            undefined, // requestHandler - now passed as part of the entryPoint's functionality
+            requestHandler,
             undefined, // summaryConfiguration
             initializeEntryPoint
         );
@@ -788,12 +791,48 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * Load the stores from a snapshot and returns the runtime.
      * @param context - Context of the container.
+     * @param containerRuntimeCtor - (optional) Constructor to use to create the ContainerRuntime instance.
+     * This allows mixin classes to leverage this method to define their own async initializer.
+     * @param initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
+     * This object should provide all the functionality that the Container is expected to provide to the loader layer.
+     * @param existing - Pass 'true' if loading from an existing snapshot.
+     * @param registryEntries - Mapping from data store types to their corresponding factories,
+     * @param containerScop - Scope
+     */
+    public static async newLoad(
+        context: IContainerContext,
+        containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime,
+        initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
+        existing: boolean = false,
+        runtimeOptions: IContainerRuntimeOptions = {},
+        registryEntries: NamedFluidDataStoreRegistryEntries,
+        containerScope: FluidObject = context.scope,
+    ): Promise<ContainerRuntime> {
+        // Disabling lint rule for the sake of more complete stack traces
+        // eslint-disable-next-line no-return-await
+        return await ContainerRuntime.privateLoad(
+            context,
+            containerRuntimeCtor,
+            initializeEntryPoint,
+            existing,
+            runtimeOptions,
+            registryEntries,
+            containerScope);
+    }
+
+    /**
+     * Load the stores from a snapshot and returns the runtime.
+     * @param context - Context of the container.
      * @param registryEntries - Mapping to the stores.
      * @param requestHandler - Request handlers for the container runtime
      * @param runtimeOptions - Additional options to be passed to the runtime
      * @param existing - (optional) When loading from an existing snapshot. Precedes context.existing if provided
      * @param containerRuntimeCtor - (optional) Constructor to use to create the ContainerRuntime instance. This
      * allows mixin classes to leverage this method to define their own async initializer.
+     * @param initializeEntryPoint - (optional) Promise that resolves to an object which will act as entryPoint for
+     * the Container.
+     * This object should provide all the functionality that the Container is expected to provide to the loader layer.
+     * If not provided, the entryPoint will be set to the container runtime itself.
      */
     public static async load(
         context: IContainerContext,
@@ -803,27 +842,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         containerScope: FluidObject = context.scope,
         existing?: boolean,
         containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntime,
+        initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
     ): Promise<ContainerRuntime> {
-        const entryPointInitialization = async (containerRuntime: IContainerRuntime) => {
-            // For now, default entryPoint is an IFluidRouter for backwards compat
-            const entryPoint: IFluidRouter = {
-                async request(request: IRequest): Promise<IResponse> {
-                    return requestHandler?.(request, containerRuntime) ?? create404Response(request);
-                },
-                get IFluidRouter() {
-                    return this;
-                }
-            };
-            return entryPoint;
-        };
-        return ContainerRuntime.newLoad(
+        // Disabling lint rule for the sake of more complete stack traces
+        // eslint-disable-next-line no-return-await
+        return await ContainerRuntime.privateLoad(
             context,
             containerRuntimeCtor,
-            entryPointInitialization,
+            initializeEntryPoint ?? (async (containerRuntime: IContainerRuntime) => containerRuntime),
             existing ?? context.existing ?? false,
             runtimeOptions,
             registryEntries,
-            containerScope);
+            containerScope,
+            requestHandler);
     }
 
     public get options(): ILoaderOptions {
@@ -1063,11 +1094,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
     ) {
         super();
-
-        // Temp checks to guarantee we're passing these things in the entryPoint. Remove before merging.
-        if (requestHandler !== undefined) {
-            throw new Error("requestHandler was passed directly to the ContainerRuntime constructor");
-        }
 
         let loadSummaryNumber: number;
         // Get the container creation metadata. For new container, we initialize these. For existing containers,
@@ -1445,11 +1471,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param request - Request made to the handler.
      *
      * @deprecated This method will be removed in a future release.
-     * {@link ContainerRuntime.entryPoint} is now the primary way to get access to the user-defined functionality in the
-     * container runtime.
-     * Start using the new static methods on the ContainerRuntime to provide a function that initializes the entryPoint.
-     * If you want to keep using the request pattern, provide an entryPoint that implements
-     * {@link @fluidframework/core-interfaces#IFluidRouter} and issue requests directly to it.
+     * If your Container does not need {@link @fluidframework/core-interfaces#IFluidRouter} functionality and its
+     * consumers don't issue requests to it, you can start using {@link ContainerRuntime.newLoad} to start providing
+     * an entryPoint object which consumers of the Container can leverage through
+     * {@link @fluidframework/container-definitions#IContainer.entryPoint}.
+     * To maintain the existing request() workflow while you move to the entryPoint pattern, keep using
+     * {@link ContainerRuntime.load} but start providing the new `initializeEntrypoint` parameter, and have the
+     * consumers of the Container start interacting with it through the entryPoint.
+     * If you want to preserve {@link @fluidframework/core-interfaces#IFluidRouter} functionality in your Container
+     * in the long term, have your entryPoint implement {@link @fluidframework/core-interfaces#IFluidRouter}, use the
+     * same request handler that you currently pass to the Container Runtime (used by this method), and have the
+     * consumers of the Container issue requests to the entryPoint directly, in preparation for the removal of this method
+     * and the corresponding methods in ContainerContext and IContainer.
+     *
+     * This method will keep working with no changes until it is removed.
+     * In particular, it will keep using the request handler passed to the runtime's constructor (the same that is provided
+     * to {@link ContainerRuntime.load}) and it will *not* try to use the entryPoint to handle requests.
      */
     public async request(request: IRequest): Promise<IResponse> {
         try {
@@ -1467,18 +1504,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return create404Response(request);
             }
 
-            // The container runtime's entryPoint is now the object that should be able to handle requests;
-            // the requestHandler passed to the container runtime is now put in there
-            const resolvedEntryPoint = await this.entryPoint;
-            if (resolvedEntryPoint !== undefined) {
-                const maybeFluidRouter: FluidObject<IProvideFluidRouter> = resolvedEntryPoint;
-                if (maybeFluidRouter?.IFluidRouter?.request !== undefined) {
-                    return maybeFluidRouter?.IFluidRouter?.request(parser);
-                }
-            }
-
-            // Check the requestHandler from the constructor for back-compat for now.
-            // Going forward, we expect IFluidRouter functionality to be provided by the entryPoint.
             if (this.requestHandler !== undefined) {
                 return this.requestHandler(parser, this);
             }

@@ -154,7 +154,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get IFluidTokenProvider(): IFluidTokenProvider | undefined;
     get isDirty(): boolean;
-    static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean, containerRuntimeCtor?: typeof ContainerRuntime): Promise<ContainerRuntime>;
+    static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean, containerRuntimeCtor?: typeof ContainerRuntime, initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     static newLoad(context: IContainerContext, containerRuntimeCtor: typeof ContainerRuntime | undefined, initializeEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, existing: boolean | undefined, runtimeOptions: IContainerRuntimeOptions | undefined, registryEntries: NamedFluidDataStoreRegistryEntries, containerScope?: FluidObject): Promise<ContainerRuntime>;
