@@ -842,15 +842,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         try {
             // Ensure that we raise all key events even if one of these throws
             try {
+                // Raise event first, to ensure we capture _lifecycleState before transition.
+                // This gives us a chance to know what errors happened on open vs. on fully loaded container.
+                this.mc.logger.sendTelemetryEvent(
+                    {
+                        eventName: "ContainerDispose",
+                        category: "generic",
+                    },
+                    error,
+                );
+
                 // ! Progressing from "closed" to "disposing" is not allowed
                 if (this._lifecycleState !== "closed") {
-                    this.mc.logger.sendTelemetryEvent(
-                        {
-                            eventName: "ContainerClose",
-                            category: error === undefined ? "generic" : "error",
-                        },
-                        error,
-                    );
                     this._lifecycleState = "disposing";
                 }
 
