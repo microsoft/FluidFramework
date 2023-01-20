@@ -524,6 +524,30 @@ export enum RuntimeHeaders {
     viaHandle = "viaHandle",
 }
 
+/** True if a tombstoned object should be returned without erroring */
+export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
+
+/** Tombstone error responses will have this header set to true */
+export const TombstoneResponseHeaderKey = "isTombstoned"
+
+/**
+ * The full set of parsed header data that may be found on Runtime requests
+ */
+export interface RuntimeHeaderData {
+    wait?: boolean;
+    externalRequest?: boolean;
+    viaHandle?: boolean;
+    allowTombstone?: boolean;
+}
+
+/** Default values for Runtime Headers */
+export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
+    wait: true,
+    externalRequest: false,
+    viaHandle: false,
+    allowTombstone: false,
+}
+
 /**
  * Available compression algorithms for op compression.
  */
@@ -738,7 +762,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 if (loadSequenceNumberVerification === "log") {
                     logger.sendErrorEvent({ eventName: "SequenceNumberMismatch" }, error);
                 } else {
+                    // Call both close and dispose as close implementation will no longer dispose runtime in future (2.0.0-internal.3.0.0)
                     context.closeFn(error);
+                    context.disposeFn?.(error);
                 }
             }
         }
@@ -811,8 +837,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.reSubmit;
     }
 
+    public get disposeFn(): (error?: ICriticalContainerError) => void {
+        // In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
+        return this.context.disposeFn ?? this.context.closeFn;
+    }
+
     public get closeFn(): (error?: ICriticalContainerError) => void {
-        return this.context.closeFn;
+        // Also call disposeFn to retain functionality of runtime being disposed on close
+        return (error?: ICriticalContainerError) => {
+            this.context.closeFn(error);
+            this.context.disposeFn?.(error);
+        };
     }
 
     public get flushMode(): FlushMode {
@@ -1038,7 +1073,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const opSplitter = new OpSplitter(
             chunks,
             this.context.submitBatchFn,
-            runtimeOptions.chunkSizeInBytes,
+            this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableCompressionChunking") === true ?
+                Number.POSITIVE_INFINITY : runtimeOptions.chunkSizeInBytes,
             runtimeOptions.maxBatchSizeInBytes,
             this.mc.logger);
         this.remoteMessageProcessor = new RemoteMessageProcessor(opSplitter, new OpDecompressor());
@@ -1049,10 +1085,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
         }
 
-        this.enableOpReentryCheck = (runtimeOptions.enableOpReentryCheck === true
-            // If compression is enabled, we need to disallow op reentry as it is required that
-            // ops within the same batch have the same reference sequence number.
-            || runtimeOptions.compressionOptions.minimumBatchSizeInBytes !== Number.POSITIVE_INFINITY)
+        this.enableOpReentryCheck = runtimeOptions.enableOpReentryCheck === true
             // Allow for a break-glass config to override the options
             && this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableOpReentryCheck") !== true;
 
@@ -1156,12 +1189,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.handleContext,
             blobManagerSnapshot,
             () => this.storage,
-            (blobId, localId) => {
+            (localId: string, blobId?: string) => {
                 if (!this.disposed) {
-                    this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId, localId });
+                    this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { localId, blobId });
                 }
             },
             (blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
+            (fromPath: string, toPath: string) => this.garbageCollector.addedOutboundReference(fromPath, toPath),
             this,
             pendingRuntimeState?.pendingAttachmentBlobs,
         );
@@ -1186,6 +1220,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
             pendingRuntimeState?.pending);
 
+        const compressionOptions = this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableCompression") === true ?
+        {
+            minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+            compressionAlgorithm: CompressionAlgorithms.lz4
+        } : runtimeOptions.compressionOptions;
+
         this.outbox = new Outbox({
             shouldSend: () => this.canSendOps(),
             pendingStateManager: this.pendingStateManager,
@@ -1193,7 +1233,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             compressor: new OpCompressor(this.mc.logger),
             splitter: opSplitter,
             config: {
-                compressionOptions: runtimeOptions.compressionOptions,
+                compressionOptions,
                 maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
                 enableOpReentryCheck: this.enableOpReentryCheck,
             },
@@ -1444,16 +1484,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private async getDataStoreFromRequest(id: string, request: IRequest): Promise<IFluidRouter> {
-        const wait = typeof request.headers?.[RuntimeHeaders.wait] === "boolean"
-            ? request.headers?.[RuntimeHeaders.wait]
-            : true;
-        const viaHandle = typeof request.headers?.[RuntimeHeaders.viaHandle] === "boolean"
-            ? request.headers?.[RuntimeHeaders.viaHandle]
-            : false;
+        const headerData: RuntimeHeaderData = {};
+        if (typeof request.headers?.[RuntimeHeaders.wait] === "boolean") {
+            headerData.wait = request.headers[RuntimeHeaders.wait];
+        }
+        if (typeof request.headers?.[RuntimeHeaders.viaHandle] === "boolean") {
+            headerData.viaHandle = request.headers[RuntimeHeaders.viaHandle];
+        }
+        if (typeof request.headers?.[AllowTombstoneRequestHeaderKey] === "boolean") {
+            headerData.allowTombstone = request.headers[AllowTombstoneRequestHeaderKey];
+        }
 
         await this.dataStores.waitIfPendingAlias(id);
         const internalId = this.internalId(id);
-        const dataStoreContext = await this.dataStores.getDataStore(internalId, wait, viaHandle);
+        const dataStoreContext = await this.dataStores.getDataStore(internalId, headerData);
 
         /**
          * If GC should run and this an external app request with "externalRequest" header, we need to return
@@ -1848,7 +1892,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private async getRootDataStoreChannel(id: string, wait = true): Promise<IFluidDataStoreChannel> {
         await this.dataStores.waitIfPendingAlias(id);
         const internalId = this.internalId(id);
-        const context = await this.dataStores.getDataStore(internalId, wait, false /* viaHandle */);
+        const context = await this.dataStores.getDataStore(internalId, { wait });
         assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
         return context.realize();
     }
@@ -2762,17 +2806,42 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // It should only be done by the summarizerNode, if required.
         // When fetching from storage we will always get the latest version and do not use the ackHandle.
         const snapshotTreeFetcher = async () => {
-            const fetchResult = await this.fetchSnapshotFromStorage(
-                null,
+            const fetchResult = await this.fetchLatestSnapshotFromStorage(
                 summaryLogger,
                 {
                     eventName: "RefreshLatestSummaryGetSnapshot",
                     ackHandle,
                     summaryRefSeq,
                     fetchLatest: true,
-                });
+                },
+            );
 
             const latestSnapshotRefSeq = await seqFromTree(fetchResult.snapshotTree, readAndParseBlob);
+            /**
+             * If the fetched snapshot is older than the one for which the ack was received, close the container.
+             * This should never happen because an ack should be sent after the latest summary is updated in the server.
+             * However, there are couple of scenarios where it's possible:
+             * 1. A file was modified externally resulting in modifying the snapshot's sequence number. This can lead to
+             * the document being unusable and we should not proceed.
+             * 2. The server DB failed after the ack was sent which may delete the corresponding snapshot. Ideally, in
+             * such cases, the file will be rolled back along with the ack and we will eventually reach a consistent
+             * state.
+             */
+            if (latestSnapshotRefSeq < summaryRefSeq) {
+                const error = DataProcessingError.create(
+                    "Fetched snapshot is older than the received ack",
+                    "RefreshLatestSummaryAck",
+                    undefined /* sequencedMessage */,
+                    {
+                        ackHandle,
+                        summaryRefSeq,
+                        latestSnapshotRefSeq,
+                    },
+                );
+                this.closeFn(error);
+                throw error;
+            }
+
             summaryLogger.sendTelemetryEvent(
                 {
                     eventName: "LatestSummaryRetrieved",
@@ -2815,11 +2884,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private async refreshLatestSummaryAckFromServer(
         summaryLogger: ITelemetryLogger,
     ): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined; }> {
-        const { snapshotTree, versionId } = await this.fetchSnapshotFromStorage(null, summaryLogger, {
-            eventName: "RefreshLatestSummaryGetSnapshot",
-            fetchLatest: true,
-        },
-            FetchSource.noCache,
+        const { snapshotTree, versionId } = await this.fetchLatestSnapshotFromStorage(
+            summaryLogger,
+            {
+                eventName: "RefreshLatestSummaryGetSnapshot",
+                fetchLatest: true,
+            },
         );
 
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
@@ -2844,11 +2914,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return { latestSnapshotRefSeq, latestSnapshotVersionId: versionId };
     }
 
-    private async fetchSnapshotFromStorage(
-        versionId: string | null,
+    private async fetchLatestSnapshotFromStorage(
         logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
-        fetchSource?: FetchSource,
     ): Promise<{ snapshotTree: ISnapshotTree; versionId: string; }> {
         return PerformanceEvent.timedExecAsync(
             logger, event, async (perfEvent: {
@@ -2861,7 +2929,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const trace = Trace.start();
 
             const versions = await this.storage.getVersions(
-                versionId, 1, "refreshLatestSummaryAckFromServer", fetchSource);
+                null, 1, "refreshLatestSummaryAckFromServer", FetchSource.noCache);
             assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
             stats.getVersionDuration = trace.trace().duration;
 
@@ -3024,6 +3092,7 @@ const waitForSeq = async (
 ): Promise<void> => new Promise<void>((resolve, reject) => {
     // TODO: remove cast to any when actual event is determined
     deltaManager.on("closed" as any, reject);
+    deltaManager.on("disposed" as any, reject);
 
     // If we already reached target sequence number, simply resolve the promise.
     if (deltaManager.lastSequenceNumber >= targetSeq) {

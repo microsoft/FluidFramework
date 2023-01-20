@@ -9,7 +9,7 @@ import {
 import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { DirectoryFactory, SharedDirectory } from "../../directory";
 
-function createLocalDirectory(id: string) {
+function createLocalDirectory(id: string): SharedDirectory {
     const directory = new SharedDirectory(id, new MockFluidDataStoreRuntime(), DirectoryFactory.Attributes);
     return directory;
 }
@@ -34,48 +34,48 @@ describe("SharedDirectory memory usage", () => {
     });
 
     benchmarkMemory(new class implements IMemoryTestObject {
-        title = "Create empty directory";
-        minSampleCount = 500;
+        public readonly title = "Create empty directory";
+        public readonly minSampleCount = 500;
 
         private dir: SharedDirectory = createLocalDirectory("testDirectory");
 
-        async run () {
+        public async run (): Promise<void> {
             this.dir = createLocalDirectory("testDirectory");
         };
     }());
 
     const numbersOfEntriesForTests = [1000, 10_000, 100_000];
 
-    numbersOfEntriesForTests.forEach((x) => {
+    for (const x of numbersOfEntriesForTests) {
         benchmarkMemory(new class implements IMemoryTestObject {
-            title = `Add ${x} integers to a local directory`;
+            public readonly title = `Add ${x} integers to a local directory`;
             private dir: SharedDirectory = createLocalDirectory("testDirectory");
 
-            async run () {
+            public async run (): Promise<void> {
                 for (let i = 0; i < x; i++) {
                     this.dir.set(i.toString().padStart(6, "0"), i);
                 }
             }
 
-            beforeIteration() {
+            public beforeIteration(): void {
                 this.dir = createLocalDirectory("testDirectory");
             }
         }());
 
         benchmarkMemory(new class implements IMemoryTestObject {
-            title = `Add ${x} integers to a local directory, clear it`;
+            public readonly title = `Add ${x} integers to a local directory, clear it`;
             private dir: SharedDirectory = createLocalDirectory("testDirectory");
 
-            async run() {
+            public async run(): Promise<void> {
                 for (let i = 0; i < x; i++) {
                     this.dir.set(i.toString().padStart(6, "0"), i);
                 }
                 this.dir.clear();
             }
 
-            beforeIteration() {
+            public beforeIteration(): void {
                 this.dir = createLocalDirectory("testDirectory");
             }
         });
-    });
+    }
 });

@@ -61,6 +61,10 @@ export class InventoryList extends DataObject implements IInventoryList {
         this.root.set(id, { name: nameString.handle, quantity: quantityCell.handle });
     };
 
+    public readonly deleteItem = (id: string) => {
+        this.root.delete(id);
+    };
+
     public readonly getItems = () => {
         return [...this.inventoryItems.values()];
     };

@@ -64,7 +64,8 @@
                 "minCooldownIntervalInMs": 1000000,
                 "minThrottleIntervalInMs": 1000000,
                 "maxInMemoryCacheSize": 1000,
-                "maxInMemoryCacheAgeInMs": 60000
+                "maxInMemoryCacheAgeInMs": 60000,
+                "enableEnhancedTelemetry": false
             },
             "socketConnections": {
                 "maxPerMs": 1000000,
@@ -72,7 +73,8 @@
                 "minCooldownIntervalInMs": 1000000,
                 "minThrottleIntervalInMs": 1000000,
                 "maxInMemoryCacheSize": 1000,
-                "maxInMemoryCacheAgeInMs": 60000
+                "maxInMemoryCacheAgeInMs": 60000,
+                "enableEnhancedTelemetry": false
             },
             "submitOps": {
                 "maxPerMs": 1000000,
@@ -80,7 +82,8 @@
                 "minCooldownIntervalInMs": 1000000,
                 "minThrottleIntervalInMs": 1000000,
                 "maxInMemoryCacheSize": 1000,
-                "maxInMemoryCacheAgeInMs": 60000
+                "maxInMemoryCacheAgeInMs": 60000,
+                "enableEnhancedTelemetry": false
             },
             "submitSignal": {
                 "maxPerMs": 1000000,
@@ -88,7 +91,8 @@
                 "minCooldownIntervalInMs": 1000000,
                 "minThrottleIntervalInMs": 1000000,
                 "maxInMemoryCacheSize": 1000,
-                "maxInMemoryCacheAgeInMs": 60000
+                "maxInMemoryCacheAgeInMs": 60000,
+                "enableEnhancedTelemetry": false
             }
         },
         "topic": "rawdeltas",
@@ -132,7 +136,7 @@
         "checkpointBatchSize": 10,
         "checkpointTimeIntervalMsec": 1000,
         "checkpointHeuristics": {
-            "enable": false,
+            "enable": true,
             "idleTime": 10000,
             "maxTime": 60000,
             "maxMessages": 500
@@ -141,7 +145,7 @@
     "scribe": {
         "kafkaClientId": "scribe",
         "checkpointHeuristics": {
-            "enable": false,
+            "enable": true,
             "idleTime": 10000,
             "maxTime": 60000,
             "maxMessages": 500
@@ -242,6 +246,11 @@
         "port": 6379,
         "tls": false
     },
+    "redisForTenantCache": {
+        "host": "redis",
+        "port": 6379,
+        "tls": false
+    },
     "redis2": {
         "host": "redis",
         "port": 6379,
@@ -257,7 +266,7 @@
         "endpoint": ""
     },
     "worker": {
-        "alfredUrl": "http://alfred:3003",
+        "alfredUrl": "http://alfred:3000",
         "deltaStreamUrl": "http://localhost:3003",
         "serverUrl": "http://localhost:3003",
         "blobStorageUrl": "http://localhost:3001",

@@ -5,6 +5,7 @@
 
 export {
     Attach,
+    NewAttach,
     Changeset,
     Delete,
     Detach,
@@ -31,12 +32,16 @@ export {
     ReturnFrom,
     ReturnTo,
     Revive,
-    SizedMark,
-    SizedObjectMark,
     Tiebreak,
     Skip,
     LineageEvent,
     HasReattachFields,
+    CellSpanningMark,
+    InputSpanningMark,
+    OutputSpanningMark,
+    SkipLikeReattach,
+    Conflicted,
+    CanConflict,
 } from "./format";
 export {
     SequenceFieldChangeHandler,
@@ -57,9 +62,20 @@ export { NodeChangeRebaser, rebase } from "./rebase";
 export { invert, NodeChangeInverter } from "./invert";
 export { compose, NodeChangeComposer } from "./compose";
 export {
+    areComposable,
+    areRebasable,
+    isActiveReattach,
+    getInputLength,
+    isDetachMark,
+    isReattach,
+    DetachedNodeTracker,
+} from "./utils";
+export {
     isMoveMark,
     MoveMark,
     MoveEffectTable,
-    MovePartition,
+    MoveEffect,
     newMoveEffectTable,
+    PairedMarkUpdate,
+    splitMarkOnOutput,
 } from "./moveEffectTable";
