@@ -122,7 +122,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             // not have access to the blob's handle since it loaded after the blob was tombstoned.
             const response = await container2.request({ url: blobHandle.absolutePath });
             assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
-            assert.equal(response.value, `Blob removed by gc: ${blobHandle.absolutePath.substring(8)}`, `Unexpected response value`);
+            assert.equal(response.value, `Blob was deleted: ${blobHandle.absolutePath.substring(8)}`, `Unexpected response value`);
             assert(container2.closed !== true, "Container should not have closed");
 
             // But the summarizing container should succeed (logging and error)
@@ -180,11 +180,11 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             const container2 = await loadContainer(summary2.summaryVersion);
             const response1 = await container2.request({ url: blobHandle1.absolutePath });
             assert.strictEqual(response1?.status, 404, `Expecting a 404 response for blob handle 1`);
-            assert(response1.value.startsWith("Blob removed by gc:"), `Unexpected response value for blob handle 1`);
+            assert(response1.value.startsWith("Blob was deleted:"), `Unexpected response value for blob handle 1`);
 
             const response2 = await container2.request({ url: blobHandle2.absolutePath });
             assert.strictEqual(response2?.status, 404, `Expecting a 404 response for blob handle 2`);
-            assert(response2.value.startsWith("Blob removed by gc:"), `Unexpected response value for blob handle 2`);
+            assert(response2.value.startsWith("Blob was deleted:"), `Unexpected response value for blob handle 2`);
         });
 
         itExpects("Can un-tombstone attachment blob by storing a handle",
@@ -224,7 +224,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             const container2 = await loadContainer(summary2.summaryVersion);
             const response1 = await container2.request({ url: blobHandle1.absolutePath });
             assert.strictEqual(response1?.status, 404, `Expecting a 404 response for blob handle 1`);
-            assert(response1.value.startsWith("Blob removed by gc:"), `Unexpected response value for blob handle 1`);
+            assert(response1.value.startsWith("Blob was deleted:"), `Unexpected response value for blob handle 1`);
             container2.close();
 
             // Reference the blob in the main container where it's not a tombstone yet. This should un-tombstone the
@@ -433,7 +433,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             // not have access to the blob's handle.
             const response = await container2.request({ url: blobHandle.absolutePath });
             assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
-            assert(response.value.startsWith("Blob removed by gc:"), `Unexpected response value`);
+            assert(response.value.startsWith("Blob was deleted:"), `Unexpected response value`);
             assert(container2.closed !== true, "Container should not have closed");
         });
 
@@ -506,11 +506,11 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             // this container does not have access to the blob's handle.
             const localResponse1 = await container2.request({ url: localHandle1.absolutePath });
             assert.strictEqual(localResponse1?.status, 404, `Expecting a 404 response for local handle`);
-            assert(localResponse1.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 1`);
+            assert(localResponse1.value.startsWith("Blob was deleted:"), `Unexpected value for local handle 1`);
 
             const localResponse2 = await container2.request({ url: localHandle2.absolutePath });
             assert.strictEqual(localResponse2?.status, 404, `Expecting a 404 response for storage handle`);
-            assert(localResponse2.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 2`);
+            assert(localResponse2.value.startsWith("Blob was deleted:"), `Unexpected value for local handle 2`);
         });
 
         itExpects("tombstones blobs uploaded and de-duped in detached container",
@@ -590,15 +590,15 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             // this container does not have access to the blob's handle.
             const localResponse1 = await container2.request({ url: localHandle1.absolutePath });
             assert.strictEqual(localResponse1?.status, 404, `Expecting a 404 response for local handle 1`);
-            assert(localResponse1.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 1`);
+            assert(localResponse1.value.startsWith("Blob was deleted:"), `Unexpected value for local handle 1`);
 
             const localResponse2 = await container2.request({ url: localHandle2.absolutePath });
             assert.strictEqual(localResponse2?.status, 404, `Expecting a 404 response for local handle 2`);
-            assert(localResponse2.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 2`);
+            assert(localResponse2.value.startsWith("Blob was deleted:"), `Unexpected value for local handle 2`);
 
             const localResponse3 = await container2.request({ url: localHandle3.absolutePath });
             assert.strictEqual(localResponse3?.status, 404, `Expecting a 404 response for storage handle`);
-            assert(localResponse3.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 3`);
+            assert(localResponse3.value.startsWith("Blob was deleted:"), `Unexpected value for local handle 3`);
         });
     });
 
@@ -696,7 +696,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             // not have access to the blob's handle.
             const response = await container2.request({ url: blobHandle.absolutePath });
             assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
-            assert(response.value.startsWith("Blob removed by gc:"), `Unexpected response value`);
+            assert(response.value.startsWith("Blob was deleted:"), `Unexpected response value`);
             assert(container2.closed !== true, "Container should not have closed");
         });
 
@@ -759,11 +759,11 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             // this container does not have access to the blob's handle.
             const localResponse1 = await container2.request({ url: localHandle1.absolutePath });
             assert.strictEqual(localResponse1?.status, 404, `Expecting a 404 response for local handle`);
-            assert(localResponse1.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 1`);
+            assert(localResponse1.value.startsWith("Blob was deleted:"), `Unexpected value for local handle 1`);
 
             const localResponse2 = await container2.request({ url: localHandle2.absolutePath });
             assert.strictEqual(localResponse2?.status, 404, `Expecting a 404 response for storage handle`);
-            assert(localResponse2.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 2`);
+            assert(localResponse2.value.startsWith("Blob was deleted:"), `Unexpected value for local handle 2`);
         });
 
         itExpects("tombstones blobs uploaded and de-duped in disconnected container",
@@ -832,15 +832,15 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
             // this container does not have access to the blob's handle.
             const localResponse1 = await container2.request({ url: localHandle1.absolutePath });
             assert.strictEqual(localResponse1?.status, 404, `Expecting a 404 response for local handle 1`);
-            assert(localResponse1.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 1`);
+            assert(localResponse1.value.startsWith("Blob was deleted:"), `Unexpected value for local handle 1`);
 
             const localResponse2 = await container2.request({ url: localHandle2.absolutePath });
             assert.strictEqual(localResponse2?.status, 404, `Expecting a 404 response for local handle 2`);
-            assert(localResponse2.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 2`);
+            assert(localResponse2.value.startsWith("Blob was deleted:"), `Unexpected value for local handle 2`);
 
             const localResponse3 = await container2.request({ url: localHandle3.absolutePath });
             assert.strictEqual(localResponse3?.status, 404, `Expecting a 404 response for storage handle`);
-            assert(localResponse3.value.startsWith("Blob removed by gc:"), `Unexpected value for local handle 2`);
+            assert(localResponse3.value.startsWith("Blob was deleted:"), `Unexpected value for local handle 2`);
         });
     });
 });
