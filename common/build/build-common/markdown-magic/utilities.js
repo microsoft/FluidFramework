@@ -19,6 +19,22 @@ function resolveRelativePath(documentPath, relativePath) {
 }
 
 /**
+ * Resolves the optionally provided file path, expressed relative to the path of the document being modified.
+ *
+ * @param {string} documentFilePath - Path to the document file being modified by this tooling.
+ * @param {string} packageJsonFilePath - (optional) Relative file path to the package.json file for the package.
+ * Default: "./package.json".
+ *
+ * @returns The resolved path to the package.json file.
+ */
+function resolveRelativePackageJsonPath(documentFilePath, packageJsonFilePath) {
+	if (!packageJsonFilePath) {
+		packageJsonFilePath = "./package.json";
+	}
+	return resolveRelativePath(documentFilePath, packageJsonFilePath);
+}
+
+/**
  * Gets the package's `package.json` contents, given the path to its package.json file.
  *
  * @param {string} packageJsonFilePath - Path to a `package.json` file.
@@ -101,11 +117,12 @@ function formattedEmbeddedContentBody(contents) {
 }
 
 module.exports = {
-	resolveRelativePath,
-	getPackageMetadata,
-	getShortPackageName,
-	getPackageDirectoryPath,
 	formattedSectionText,
 	formattedGeneratedContentBody,
 	formattedEmbeddedContentBody,
+	getPackageDirectoryPath,
+	getPackageMetadata,
+	getShortPackageName,
+	resolveRelativePackageJsonPath,
+	resolveRelativePath,
 };

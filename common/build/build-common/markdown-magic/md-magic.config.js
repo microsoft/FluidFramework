@@ -8,16 +8,20 @@ const pathLib = require("path");
 const scripts = require("markdown-magic-package-scripts");
 
 const { templatesDirectoryPath } = require("./constants");
-
 const {
-	resolveRelativePath,
-	getPackageMetadata,
-	getShortPackageName,
-	formattedSectionText,
-	formattedGeneratedContentBody,
 	formattedEmbeddedContentBody,
+	formattedGeneratedContentBody,
+	formattedSectionText,
+	getPackageMetadata,
+	resolveRelativePackageJsonPath,
+	resolveRelativePath,
 } = require("./utilities");
-const { generatePackageScriptsSection, packageScriptsSectionTransform } = require("./transforms");
+const {
+	apiDocsLinkSectionTransform,
+	generateApiDocsLinkSection,
+	generatePackageScriptsSection,
+	packageScriptsSectionTransform,
+} = require("./transforms");
 
 /**
  * Reads and returns the contents from the specified template file.
@@ -116,34 +120,6 @@ const generateHelpSection = (includeHeading) => {
 	const sectionBody = readTemplate("Help-Template.md");
 	return formattedSectionText(sectionBody, includeHeading ? "Help" : undefined);
 };
-
-/**
- * Generats a simple Markdown heading and contents with information about API documentation for the package.
- *
- * @param {string} packageName - Name of the package (fully scoped).
- * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
- */
-const generateApiDocsLinkSection = (packageName, includeHeading) => {
-	const shortName = getShortPackageName(packageName);
-	const sectionBody = `API documentation for **${packageName}** is available at <https://fluidframework.com/docs/apis/${shortName}>.`;
-	return formattedSectionText(sectionBody, includeHeading ? "API Documentation" : undefined);
-};
-
-/**
- * Resolves the optionally provided file path, expressed relative to the path of the document being modified.
- *
- * @param {string} documentFilePath - Path to the document file being modified by this tooling.
- * @param {string} packageJsonFilePath - (optional) Relative file path to the package.json file for the package.
- * Default: "./package.json".
- *
- * @returns The resolved path to the package.json file.
- */
-function resolveRelativePackageJsonPath(documentFilePath, packageJsonFilePath) {
-	if (!packageJsonFilePath) {
-		packageJsonFilePath = "./package.json";
-	}
-	return resolveRelativePath(documentFilePath, packageJsonFilePath);
-}
 
 /**
  * Gets the package.json metadata from the optionally provided file path, expressed relative
@@ -366,29 +342,6 @@ function readmeExampleGettingStartedSectionTransform(content, options, config) {
 }
 
 /**
- * Generates a README section pointing readers to the published library API docs on <fluidframework.com>.
- *
- * @param {object} content - The original document file contents.
- * @param {object} options - Transform options.
- * @param {string} options.packageJsonPath - (optional) Relative file path to the package.json file for the package.
- * Default: "./package.json".
- * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
- * Default: `TRUE`.
- * @param {object} config - Transform configuration.
- * @param {string} config.originalPath - Path to the document being modified.
- */
-function readmeApiDocsSectionTransform(content, options, config) {
-	const includeHeading = options.includeHeading !== "FALSE";
-
-	const packageMetadata = getPackageMetadataFromRelativePath(
-		config.originalPath,
-		options.packageJsonPath,
-	);
-	const packageName = packageMetadata.name;
-	return formattedGeneratedContentBody(generateApiDocsLinkSection(packageName, includeHeading));
-}
-
-/**
  * Generates a README section with package installation instructions.
  *
  * @param {object} content - The original document file contents.
@@ -522,7 +475,7 @@ module.exports = {
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		README_API_DOCS_SECTION: readmeApiDocsSectionTransform,
+		API_DOCS_LINK_SECTION: apiDocsLinkSectionTransform,
 
 		/**
 		 * See {@link readmeInstallationSectionTransform}.

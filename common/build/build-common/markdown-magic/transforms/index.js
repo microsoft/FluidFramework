@@ -4,11 +4,18 @@
  */
 
 const {
+	apiDocsLinkSectionTransform,
+	generateApiDocsLinkSection,
+} = require("./apiDocsLinkSectionTransform");
+
+const {
 	generatePackageScriptsSection,
 	packageScriptsSectionTransform,
 } = require("./packageScriptsTransform");
 
 module.exports = {
+	apiDocsLinkSectionTransform,
+	generateApiDocsLinkSection,
 	generatePackageScriptsSection,
 	packageScriptsSectionTransform,
 };
