@@ -423,6 +423,12 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
     });
 
     describe("Loading tombstone data stores not allowed (per config)", () => {
+        const expectedHeadersLogged = {
+            request: "{}",
+            handleGet: JSON.stringify({ viaHandle: true }),
+            request_allowTombstone: JSON.stringify({ allowTombstone: true }),
+        };
+
         beforeEach(() => {
             // Allow Usage but not Loading
             settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = true;
@@ -442,12 +448,12 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
         itExpects("Requesting tombstoned datastores fails in interactive client loaded after sweep timeout",
         [
             // Interactive client's request
-            { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested", viaHandle: false },
+            { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested", headers: expectedHeadersLogged.request },
             // Interactive client's request w/ allowTombstone
-            { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested", viaHandle: false, category: "generic" },
+            { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested", category: "generic", headers: expectedHeadersLogged.request_allowTombstone },
             { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded" },
             // Summarizer client's request
-            { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested", viaHandle: false, category: "generic" },
+            { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested", category: "generic", headers: expectedHeadersLogged.request, isSummarizerClient: true },
         ],
         async () => {
             const {
@@ -516,7 +522,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
         itExpects("Handle request for tombstoned datastores fails in summarizing container loaded after sweep timeout",
         [
             // Interactive client's handle.get
-            { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested", viaHandle: false },
+            { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested", headers: expectedHeadersLogged.handleGet },
         ],
         async () => {
             const {
