@@ -480,8 +480,20 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
                             assert.equal(cursor.getFieldLength(), 1);
                             cursor.enterNode(0);
                         });
+
+                        it(`traversal with key: ${key.toString()}`, () => {
+                            const dataWithKey = dataFactory();
+                            const cursor = cursorFactory(dataWithKey);
+                            checkTraversal(cursor, parent);
+                        });
                     }
                 }
+            });
+
+            it("traverse with no keys", () => {
+                const data = withLocalKeys([]);
+                const cursor = cursorFactory(data);
+                checkTraversal(cursor, parent);
             });
 
             describe("cursor prefix tests", () => {

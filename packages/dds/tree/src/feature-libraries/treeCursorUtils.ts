@@ -159,12 +159,17 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
     public getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
         assert(this.mode === CursorLocationType.Fields, 0x449 /* must be in fields mode */);
         return {
-            field: this.getFieldKey(),
+            field:
+                this.indexStack.length === 1
+                    ? prefix?.rootFieldOverride ?? this.getFieldKey()
+                    : this.getFieldKey(),
             parent: this.getOffsetPath(1, prefix),
         };
     }
 
     private getOffsetPath(offset: number, prefix: PathRootPrefix | undefined): UpPath | undefined {
+        // It is more efficient to handle prefix directly in here rather than delegating to PrefixedPath.
+
         const length = this.indexStack.length - offset;
         if (length === 0) {
             return prefix?.parent; // At root
@@ -342,5 +347,70 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
     public get chunkLength(): number {
         return 1;
+    }
+}
+
+/**
+ * Apply `prefix` to `path`.
+ */
+export function prefixPath(
+    prefix: PathRootPrefix | undefined,
+    path: UpPath | undefined,
+): UpPath | undefined {
+    if (prefix === undefined) {
+        return path;
+    }
+    if (
+        prefix.parent === undefined &&
+        prefix.rootFieldOverride === undefined &&
+        (prefix.indexOffset ?? 0) === 0
+    ) {
+        return path;
+    }
+    return applyPrefix(prefix, path);
+}
+
+function applyPrefix(prefix: PathRootPrefix, path: UpPath | undefined): UpPath | undefined {
+    if (path === undefined) {
+        return prefix.parent;
+    } else {
+        // As an optimization, avoid double wrapping paths with multiple prefixes
+        if (path instanceof PrefixedPath) {
+            const inner = path.prefix;
+            if (inner.parent !== undefined) {
+                const composedPrefix: PathRootPrefix = {
+                    parent: new PrefixedPath(prefix, inner.parent),
+                    rootFieldOverride: inner.rootFieldOverride,
+                    indexOffset: inner.indexOffset,
+                };
+                return new PrefixedPath(composedPrefix, path);
+            } else {
+                const composedPrefix: PathRootPrefix = {
+                    parent: prefix.parent,
+                    rootFieldOverride: prefix.rootFieldOverride ?? inner.rootFieldOverride,
+                    indexOffset: (inner.indexOffset ?? 0) + (prefix.indexOffset ?? 0),
+                };
+                return new PrefixedPath(composedPrefix, path);
+            }
+        } else {
+            return new PrefixedPath(prefix, path);
+        }
+    }
+}
+
+class PrefixedPath implements UpPath {
+    public readonly parentField: FieldKey;
+    public readonly parentIndex: number;
+    public constructor(public readonly prefix: PathRootPrefix, public readonly path: UpPath) {
+        if (path.parent === undefined) {
+            this.parentField = prefix.rootFieldOverride ?? path.parentField;
+            this.parentIndex = path.parentIndex + (prefix.indexOffset ?? 0);
+        } else {
+            this.parentField = path.parentField;
+            this.parentIndex = path.parentIndex;
+        }
+    }
+    public get parent(): UpPath | undefined {
+        return applyPrefix(this.prefix, this.path.parent);
     }
 }
