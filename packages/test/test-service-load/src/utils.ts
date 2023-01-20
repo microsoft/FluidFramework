@@ -141,9 +141,15 @@ export async function initialize(
 	testDriver: ITestDriver,
 	seed: number,
     endpoint: DriverEndpoint | undefined,
+<<<<<<< HEAD
 	testConfig: ILoadTestConfig,
 	verbose: boolean,
 	testIdn?: string,
+=======
+    testConfig: ILoadTestConfig,
+    verbose: boolean,
+    testIdn?: string,
+>>>>>>> nit
 ) {
 	const randEng = random.engines.mt19937();
 	randEng.seed(seed);
