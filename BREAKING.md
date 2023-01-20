@@ -19,14 +19,9 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
 - [Deprecated IPendingFlush](#Deprecated-IPendingFlush)
-- [Removing internal connection details from `IConnectionDetails`](#Removing-internal-connection-details-from-IConnectionDetails)
 
 ### Deprecated IPendingFlush
 `IPendingFlush` has been deprecated. Use batch metadata on `IPendingMessage` instead to indicate the end of a batch.
-
-### Removing internal connection details from `IConnectionDetails`
-
-Removing `mode`, `version` and `initialClients` from `IConnectionDetails`, no longer exposing these to runtime. They will only be used internally. Removing `existing` altogether as it no longer provides value.
 
 
 ## 2.0.0-internal.3.0.0 Breaking changes
@@ -37,6 +32,7 @@ Removing `mode`, `version` and `initialClients` from `IConnectionDetails`, no lo
 - [Remove ISummarizerRuntime batchEnd listener](#Remove-ISummarizerRuntime-batchEnd-listener)
 - [Remove ISummaryBaseConfiguration.summarizerClientElection](#Remove-ISummaryBaseConfigurationsummarizerClientElection)
 - [Remove Deprecated IFluidObject Interface](#Remove-Deprecated-IFluidObject-Interface)
+- [Remove internal connection details from `IConnectionDetails`](#Remove-internal-connection-details-from-IConnectionDetails)
 
 ### existing parameter is now required in IRuntimeFactory::instantiateRuntime
 The `existing` flag was added as optional in client version 0.44 and has been updated to be expected
@@ -86,6 +82,13 @@ There will be no replacement for this property.'
 
 ### Remove Deprecated IFluidObject Interface
 IFluidObject is removed and has been replaced with [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
+
+### Remove internal connection details from `IConnectionDetails`
+
+Removing `existing`, `mode`, `version` and `initialClients` from `IConnectionDetails`, no longer exposing these to runtime. Reasons for removing each of them:
+- `existing` : this will always be true, which no longer provides useful information
+- `mode` : this is implementation detail of connection
+- `initialClients` and `version` : these are implementation details of handshake protocol of establishing connection, and should not be accessible.
 
 # 2.0.0-internal.2.2.0
 
