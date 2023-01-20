@@ -214,7 +214,7 @@ function getPackageMetadataFromRelativePath(documentFilePath, packageJsonFilePat
 /**
  * Embeds contents from the specified file paths within the provided (optional) line boundaries.
  *
- * @param {object} originalContent - The original document file contents.
+ * @param {object} content - The original document file contents.
  * @param {object} options - Transform options.
  * @param {string} options.path - Relative path from the document to the file being embedded.
  * @param {number | undefined} options.start - (optional) First line from the target file to be embedded (inclusive).
@@ -223,9 +223,10 @@ function getPackageMetadataFromRelativePath(documentFilePath, packageJsonFilePat
  * @param {number | undefined} options.end - (optional) Line of the target file at which to end the embedded range (exclusive).
  * Default: <file-line-count> + 1.
  * If specified, must be on (`startLine`,<file-line-count> + 1].
- * @param {object} config - TODO
+ * @param {object} config - Transform configuration.
+ * @param {string} config.originalPath - Path to the document being modified.
  */
-function includeTransform(originalContent, options, config) {
+function includeTransform(content, options, config) {
 	const { path: relativeFilePath, start: startLine, end: endLine } = options;
 	if (!relativeFilePath) {
 		throw new Error(
