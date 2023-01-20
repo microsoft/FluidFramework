@@ -437,6 +437,34 @@ function readmeApiDocsSectionTransform(content, options, config) {
 }
 
 /**
+ * Generates a README section with package installation instructions.
+ *
+ * @param {object} content - The original document file contents.
+ * @param {object} options - Transform options.
+ * @param {string} options.packageJsonPath - (optional) Relative file path to the package.json file for the package.
+ * Default: "./package.json".
+ * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
+ * Default: `TRUE`.
+ * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a dev dependency.
+ * Default: `FALSE`.
+ * @param {object} config - Transform configuration.
+ * @param {string} config.originalPath - Path to the document being modified.
+ */
+function readmeInstallationSectionTransform(content, options, config) {
+	const includeHeading = options.includeHeading !== "FALSE";
+	const devDependency = options.devDependency === "TRUE";
+
+	const packageMetadata = getPackageMetadataFromRelativePath(
+		config.originalPath,
+		options.packageJsonPath,
+	);
+	const packageName = packageMetadata.name;
+	return formattedGeneratedContentBody(
+		generateInstallationSection(packageName, devDependency, includeHeading),
+	);
+}
+
+/**
  * markdown-magic config
  */
 module.exports = {
@@ -490,22 +518,22 @@ module.exports = {
 		 *
 		 * @example
 		 *
+		 * ```markdown
 		 * <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:packageJsonPath=./package.json&includeHeading=TRUE) -->
+		 * ```
 		 */
 		README_API_DOCS_SECTION: readmeApiDocsSectionTransform,
 
-		/* Match <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:packageJsonPath=./package.json&includeHeading=TRUE&devDependency=FALSE) --> */
-		README_INSTALLATION_SECTION(content, options, config) {
-			const includeHeading = options.includeHeading !== "FALSE";
-			const packageMetadata = getPackageMetadataFromRelativePath(
-				config.originalPath,
-				options.packageJsonPath,
-			);
-			const packageName = packageMetadata.name;
-			return formattedGeneratedContentBody(
-				generateInstallationSection(packageName, options.devDependency, includeHeading),
-			);
-		},
+		/**
+		 * See {@link }.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:packageJsonPath=./package.json&includeHeading=TRUE&devDependency=FALSE) -->
+		 * ```
+		 */
+		README_INSTALLATION_SECTION: readmeInstallationSectionTransform,
 
 		/* Match <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) --> */
 		README_TRADEMARK_SECTION(content, options, config) {
