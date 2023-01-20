@@ -141,21 +141,23 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
     }
 }
 
-export async function initialize(testDriver: ITestDriver, seed: number, testConfig: ILoadTestConfig,
-    verbose: boolean, testIdn?: string) {
+export async function initialize(
+    testDriver: ITestDriver,
+    endpoint: DriverEndpoint | undefined,
+    seed: number,
+    testConfig: ILoadTestConfig,
+    verbose: boolean,
+    testIdn?: string,
+) {
     const randEng = random.engines.mt19937();
     randEng.seed(seed);
-    const optionsOverride =
-        `${testDriver.type}${testDriver.endpointName !== undefined ? `-${testDriver.endpointName}` : ""}`;
-    const loaderOptions = random.pick(
-        randEng,
-        generateLoaderOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.loader));
-    const containerOptions = random.pick(
-        randEng,
-        generateRuntimeOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.container));
-    const configurations = random.pick(
-        randEng,
-        generateConfigurations(seed, testConfig?.optionOverrides?.[optionsOverride]?.configurations));
+    const optionsOverride = `${testDriver.type}${endpoint !== undefined ? `-${endpoint}` : ""}`;
+    const loaderOptions = generateLoaderOptions(
+        seed, testConfig.optionOverrides?.[optionsOverride]?.loader)[0];
+    const containerOptions = generateRuntimeOptions(
+        seed, testConfig.optionOverrides?.[optionsOverride]?.container)[0];
+    const configurations = generateConfigurations(
+        seed, testConfig?.optionOverrides?.[optionsOverride]?.configurations)[0];
 
     const logger = ChildLogger.create(await loggerP, undefined,
     {

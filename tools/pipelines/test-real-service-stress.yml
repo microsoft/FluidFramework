@@ -34,25 +34,25 @@ variables:
 
 lockBehavior: sequential
 stages:
-  # stress tests odsp
-  # - stage:
-  #   displayName:  Stress tests - Odsp
-  #   dependsOn: []
-  #   # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
-  #   variables:
-  #   - group: stress-odsp-lock
-  #   jobs:
-  #   - template: templates/include-test-real-service.yml
-  #     parameters:
-  #       poolBuild: Large
-  #       testPackage: "@fluid-internal/test-service-load"
-  #       testWorkspace: ${{ variables.testWorkspace }}
-  #       timeoutInMinutes: 150
-  #       testCommand: start:odsp:gc:ci
-  #       env:
-  #         login__microsoft__clientId: $(login-microsoft-clientId)
-  #         login__microsoft__secret: $(login-microsoft-secret)
-  #         login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
+  stress tests odsp
+  - stage:
+    displayName:  Stress tests - Odsp
+    dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: stress-odsp-lock
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Large
+        testPackage: "@fluid-internal/test-service-load"
+        testWorkspace: ${{ variables.testWorkspace }}
+        timeoutInMinutes: 150
+        testCommand: start:odsp:gc:ci
+        env:
+          login__microsoft__clientId: $(login-microsoft-clientId)
+          login__microsoft__secret: $(login-microsoft-secret)
+          login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
           #FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
   # stress tests tinylicious
