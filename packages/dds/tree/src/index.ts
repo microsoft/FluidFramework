@@ -77,6 +77,7 @@ export {
     ReadonlyRepairDataStore,
     SchemaEvents,
     ForestEvents,
+    PathRootPrefix,
 } from "./core";
 
 export {

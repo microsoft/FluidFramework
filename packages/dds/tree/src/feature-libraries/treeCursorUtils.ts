@@ -12,6 +12,7 @@ import {
     ITreeCursorSynchronous,
     Value,
     FieldUpPath,
+    PathRootPrefix,
 } from "../core";
 import { fail } from "../util";
 
@@ -150,27 +151,36 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
         this.siblings = siblings;
     }
 
-    public getPath(): UpPath | undefined {
+    public getPath(prefix?: PathRootPrefix): UpPath | undefined {
         assert(this.mode === CursorLocationType.Nodes, 0x3b9 /* must be in nodes mode */);
-        return this.getOffsetPath(0);
+        return this.getOffsetPath(0, prefix);
     }
 
-    public getFieldPath(): FieldUpPath {
+    public getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
         assert(this.mode === CursorLocationType.Fields, 0x449 /* must be in fields mode */);
         return {
             field: this.getFieldKey(),
-            parent: this.getOffsetPath(1),
+            parent: this.getOffsetPath(1, prefix),
         };
     }
 
-    private getOffsetPath(offset: number): UpPath | undefined {
+    private getOffsetPath(offset: number, prefix: PathRootPrefix | undefined): UpPath | undefined {
         const length = this.indexStack.length - offset;
         if (length === 0) {
-            return undefined; // At root
+            return prefix?.parent; // At root
         }
 
         assert(length > 0, 0x44a /* invalid offset to above root */);
         assert(length % 2 === 0, 0x44b /* offset path must point to node not field */);
+
+        const getIndex = (height: number): number => {
+            let parentIndex: number =
+                height === this.indexStack.length ? this.index : this.getStackedNodeIndex(height);
+            if (prefix !== undefined && height === 2) {
+                parentIndex += prefix.indexOffset ?? 0;
+            }
+            return parentIndex;
+        };
 
         // Perf Note:
         // This is O(depth) in tree.
@@ -180,22 +190,17 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
         // Could cache this at one depth, and remember the depth.
         // When navigating up, adjust cached anchor if present.
 
-        let path: UpPath | undefined;
+        let path: UpPath | undefined = prefix?.parent;
         // Skip top level, since root node in path is "undefined" and does not have a parent or index.
-        for (let height = 2; height < length; height += 2) {
-            const key = this.getStackedFieldKey(height - 1);
+        for (let height = 2; height <= length; height += 2) {
+            const fieldOverride = height === 2 ? prefix?.rootFieldOverride : undefined;
             path = {
                 parent: path,
-                parentIndex: this.getStackedNodeIndex(height),
-                parentField: key,
+                parentIndex: getIndex(height),
+                parentField: fieldOverride ?? this.getStackedFieldKey(height - 1),
             };
         }
 
-        path = {
-            parent: path,
-            parentIndex: offset === 0 ? this.index : this.getStackedNodeIndex(length),
-            parentField: this.getStackedFieldKey(length - 1),
-        };
         return path;
     }
 

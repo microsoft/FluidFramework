@@ -483,8 +483,76 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
                     }
                 }
             });
+
+            describe("cursor prefix tests", () => {
+                it("at root", () => {
+                    const data = withLocalKeys([]);
+                    const cursor = cursorFactory(data);
+                    expectEqualPaths(cursor.getPath(), parent);
+                    expectEqualPaths(cursor.getPath(undefined), parent);
+                    expectEqualPaths(cursor.getPath({}), parent);
+
+                    const prefixParent: UpPath = {
+                        parent: undefined,
+                        parentField: brand("prefixParentField"),
+                        parentIndex: 5,
+                    };
+                    if (extraRoot) {
+                        // TODO
+                    } else {
+                        expectEqualPaths(
+                            cursor.getPath({ indexOffset: 10, rootFieldOverride: EmptyKey }),
+                            undefined,
+                        );
+
+                        assert.equal(cursor.getPath({ parent: prefixParent }), prefixParent);
+                        assert.equal(
+                            cursor.getPath({
+                                parent: prefixParent,
+                                indexOffset: 10,
+                                rootFieldOverride: EmptyKey,
+                            }),
+                            prefixParent,
+                        );
+                        cursor.enterField(brand("testField"));
+                        assert(
+                            compareFieldUpPaths(cursor.getFieldPath(), {
+                                field: brand("testField"),
+                                parent: undefined,
+                            }),
+                        );
+                        assert(
+                            compareFieldUpPaths(cursor.getFieldPath({}), {
+                                field: brand("testField"),
+                                parent: undefined,
+                            }),
+                        );
+                        assert(
+                            compareFieldUpPaths(cursor.getFieldPath({ parent: prefixParent }), {
+                                field: brand("testField"),
+                                parent: prefixParent,
+                            }),
+                        );
+                        assert(
+                            compareFieldUpPaths(cursor.getFieldPath({ parent: prefixParent }), {
+                                field: brand("testField"),
+                                parent: prefixParent,
+                            }),
+                        );
+                    }
+                });
+            });
         }
     });
+}
+
+function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath | undefined): void {
+    if (!compareUpPaths(path, expectedPath)) {
+        // This is slower than above compare, so only do it in the error case.
+        // Make a nice error message:
+        assert.deepEqual(clonePath(path), clonePath(expectedPath));
+        assert.fail("unequal paths, but clones compared equal");
+    }
 }
 
 /**
@@ -500,12 +568,7 @@ function checkTraversal(cursor: ITreeCursor, expectedPath: UpPath | undefined) {
     const originalNodeType = cursor.type;
 
     const path = cursor.getPath();
-    if (!compareUpPaths(path, expectedPath)) {
-        // This is slower than above compare, so only do it in the error case.
-        // Make a nice error message:
-        assert.deepEqual(clonePath(path), clonePath(expectedPath));
-        assert.fail("unequal paths, but clones compared equal");
-    }
+    expectEqualPaths(path, expectedPath);
 
     const fieldLengths: Map<FieldKey, number> = new Map();
 

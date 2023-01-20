@@ -100,14 +100,13 @@ export interface ITreeCursor {
      * @returns a path to the current field. See {@link FieldUpPath}.
      *
      * Only valid when `mode` is `Fields`.
-     * Assumes this cursor has a root node where its field keys are actually detached sequences.
-     * If the cursor is not rooted at such a node,
-     * calling this function is invalid, and the returned FieldUpPath (if any) may not be meaningful.
+     *
+     * If no prefix is provided, assumes this cursor is treated as if it has a root node where its field keys are actually detached sequences.
+     * If the cursor is not rooted at such a node, the `prefix` should be used to ensure the path has the correct root.
      * This requirement exists because {@link FieldUpPath}s are absolute paths
      * and thus must be rooted in a detached sequence.
-     * TODO: consider adding an optional base path to append to remove/clarify this restriction.
      */
-    getFieldPath(): FieldUpPath;
+    getFieldPath(prefix?: PathRootPrefix): FieldUpPath;
 
     // ********** APIs for when mode = Nodes ********** //
 
@@ -115,14 +114,13 @@ export interface ITreeCursor {
      * @returns a path to the current node. See {@link UpPath}.
      *
      * Only valid when `mode` is `Nodes`.
-     * Assumes this cursor has a root node where its field keys are actually detached sequences.
-     * If the cursor is not rooted at such a node,
-     * calling this function is invalid, and the returned UpPath (if any) may not be meaningful.
+     *
+     * If no prefix is provided, assumes this cursor is treated as if it has a root node where its field keys are actually detached sequences.
+     * If the cursor is not rooted at such a node, the `prefix` should be used to ensure the path has the correct root.
      * This requirement exists because {@link UpPath}s are absolute paths
      * and thus must be rooted in a detached sequence.
-     * TODO: consider adding an optional base path to append to remove/clarify this restriction.
      */
-    getPath(): UpPath | undefined;
+    getPath(prefix?: PathRootPrefix): UpPath | undefined;
 
     /**
      * Index (within its parent field) of the current node.
@@ -209,6 +207,33 @@ export interface ITreeCursor {
      * Only valid when `mode` is `Nodes`, and not `pending`.
      */
     readonly value: Value;
+}
+
+/**
+ * Prefix to use as the root of a path.
+ *
+ * This describes a location that the content accessible through the cursor could be parented,
+ * and is used to adjust the paths to be as if the content were parented there.
+ *
+ * Typically this is used to make trees appear to be part of a forest when getting their path.
+ */
+export interface PathRootPrefix {
+    /**
+     * The parent, replacing "undefined" at the root of the prefixed path.
+     */
+    parent?: UpPath | undefined;
+
+    /**
+     * Overrides `parentField` for the top most {@link UpPath} in the path.
+     * This has no effect if the whole path is just `undefined`.
+     */
+    rootFieldOverride?: FieldKey;
+
+    /**
+     * Added to `parentIndex` of the top most {@link UpPath} in the path.
+     * This has no effect if the whole path is just `undefined`.
+     */
+    indexOffset?: number;
 }
 
 export const enum CursorLocationType {

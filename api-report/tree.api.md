@@ -679,9 +679,9 @@ export interface ITreeCursor {
     // (undocumented)
     getFieldLength(): number;
     // (undocumented)
-    getFieldPath(): FieldUpPath;
+    getFieldPath(prefix?: PathRootPrefix): FieldUpPath;
     // (undocumented)
-    getPath(): UpPath | undefined;
+    getPath(prefix?: PathRootPrefix): UpPath | undefined;
     readonly mode: CursorLocationType;
     nextField(): boolean;
     nextNode(): boolean;
@@ -1102,6 +1102,13 @@ type OutputSpanningMark<TNodeChange> = Skip_2 | NewAttach<TNodeChange> | Modify_
 enum PairedMarkUpdate {
     Deactivated = 0,
     Reactivated = 1
+}
+
+// @public
+export interface PathRootPrefix {
+    indexOffset?: number;
+    parent?: UpPath | undefined;
+    rootFieldOverride?: FieldKey;
 }
 
 // @public (undocumented)
