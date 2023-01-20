@@ -13,16 +13,6 @@ import { SharedString } from "@fluidframework/sequence";
 export interface IAppModelEvents extends IEvent { }
 
 /**
-* Mock model for external task data
-*/
-export interface TaskData {
-    [key: string]: {
-        name: string;
-        priority: number;
-    };
-};
-
-/**
  * For this simple demo, our app model only needs a single member taskList.
  */
 export interface IAppModel extends IEventProvider<IAppModelEvents> {

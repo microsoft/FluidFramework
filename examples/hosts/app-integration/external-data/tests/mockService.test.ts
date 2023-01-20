@@ -8,7 +8,6 @@ import { Server } from 'http';
 import request from "supertest";
 
 import { ExternalDataSource, initializeCustomerService } from "../src/mock-service";
-import { TaskData } from '../src/model-interface';
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
@@ -53,24 +52,16 @@ describe("mockCustomerService", () => {
     /* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 
     it("fetch-tasks: Ensure server yields the data we expect", async () => {
-        const expectedData = await externalDataSource!.fetchData().then((data)=>{
-            return JSON.parse(data.body.toString()) as object
-        });
-        await request(server!).get("/fetch-tasks").expect(200, expectedData);
+        const expectedData = await externalDataSource!.fetchData();
+        await request(server!).get("/fetch-tasks").expect(200, {taskList: expectedData});
     });
 
     it("set-tasks: Ensure external data is updated with provided data", async () => {
-        const newData = {
-            42: {
-                name: "Determine meaning of life",
-                priority: 37
-            }
-        };
+        const newData = "42:Determine meaning of life:37";
+        await request(server!).post("/set-tasks").send({taskList: newData}).expect(200);
 
-        await request(server!).post("/set-tasks").send({ taskList: newData }).expect(200);
         const externalData = await externalDataSource!.fetchData();
-        const parsed = JSON.parse(externalData.body.toString()).taskList as TaskData;
-        expect(parsed).toEqual(newData);
+        expect(externalData).toEqual(newData);
     });
 
     it("set-tasks: Ensure server rejects update with no data", async () => {

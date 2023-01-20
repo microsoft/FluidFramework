@@ -19,7 +19,7 @@ import cors from "cors";
 import express from "express";
 import type { Express } from "express";
 import { isWebUri } from "valid-url";
-import { TaskData } from '../model-interface';
+
 import { ExternalDataSource } from './externalData';
 import { MockWebhook } from './webhook';
 
@@ -54,7 +54,7 @@ export interface ServiceProps {
 export async function initializeCustomerService(props: ServiceProps): Promise<Server> {
     const { externalDataSource, port } = props;
 
-    if (expressApp !== undefined) {
+    if(expressApp !== undefined) {
         throw new Error("Customer service has already been initialized.");
     }
 
@@ -94,12 +94,12 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const subscriberUrl = request.body.url as string;
         if (subscriberUrl === undefined) {
-            result.status(400).json({ message: "Client failed to provide URL for subscription." })
+            result.status(400).json({message: "Client failed to provide URL for subscription."})
         } else if (isWebUri(subscriberUrl) === undefined) {
-            result.status(400).json({ message: "Provided subscription URL is invalid." })
+            result.status(400).json({message: "Provided subscription URL is invalid."})
         } else {
             console.log(`SERVICE: Registering for webhook notifications at URL: "${subscriberUrl}".`);
-            if (webhook === undefined) {
+            if(webhook === undefined) {
                 webhook = new MockWebhook(externalDataSource);
             }
             webhook.registerSubscriber(subscriberUrl);
@@ -114,14 +114,14 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
         console.log(`SERVICE: Fetching task list data...`);
         externalDataSource.fetchData().then(
             (data) => {
-                console.log(`SERVICE: Returning current task list:\n"${data.body}".`);
-                result.send(JSON.parse(data.body.toString()) as TaskData);
+                console.log(`SERVICE: Returning current task list:\n"${data}".`);
+                result.send({taskList: data});
             },
             (error) => {
                 console.error(`SERVICE: Encountered an error while reading mock external data file:\n${error}`);
                 result.status(500).json({ message: "Failed to fetch task data." });
             }
-        )
+        );
     });
 
     /**
@@ -138,12 +138,10 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
     expressApp.post("/set-tasks", (request, result) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (request.body.taskList === undefined) {
-            result.status(400).json({ message: "Client failed to provide task list to set." });
+            result.status(400).json({message: "Client failed to provide task list to set."});
         } else {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            const taskList = request.body.taskList as TaskData;
-            console.log(taskList)
-
+            const taskList = request.body.taskList as string;
             console.log(`SERVICE: Setting task list to "${taskList}"...`);
             externalDataSource.writeData(taskList).then(
                 () => {
@@ -178,7 +176,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 }
 
 function closeCustomerService(): void {
-    if (expressApp === undefined) {
+    if(expressApp === undefined) {
         console.warn("SERVICE: Service has already been closed.")
     } else {
         expressApp.removeAllListeners();

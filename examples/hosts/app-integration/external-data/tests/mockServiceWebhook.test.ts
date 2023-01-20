@@ -46,12 +46,6 @@ describe("mockCustomerService", () => {
                 fail(`Webhook registration failed. Code: ${webhookRegistrationResponse.status}.`);
             }
 
-            const newData = {
-                42: {
-                    name: "Determine meaning of life",
-                    priority: 37
-                }
-            };
             // Update external data
             const dataUpdateResponse = await fetch(`http://localhost:${customerServicePort}/set-tasks`, {
                 method: 'POST',
@@ -59,7 +53,7 @@ describe("mockCustomerService", () => {
                     "Access-Control-Allow-Origin": "*",
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ taskList: newData })
+                body: JSON.stringify({ taskList: "42:Determine meaning of life:37" })
             });
 
             if (!dataUpdateResponse.ok) {
