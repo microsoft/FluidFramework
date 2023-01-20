@@ -6,20 +6,6 @@
  >   2. when navigating to the url/port the front end is running on you MUST put `/manualAttach` For example, `localhost:8080/manualAttach`
 > Note that this mode will run only 1 client. But, its still good for getting an idea of how editable shared tree compares to the other versions of bubble bench running 1 client.
 
-## Benchmarking
-
-Remember to produce a production bundle when taking measurements:
-
-```bash
-npm run start -- --env.production
-```
-
-## Testing
-
-```bash
-npm run test:jest
-```
-
 For in browser testing update `./jest-puppeteer.config.js` to:
 
 ```javascript
