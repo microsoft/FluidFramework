@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { Deferred, LazyPromise } from "@fluidframework/common-utils";
+import { assert, LazyPromise } from "@fluidframework/common-utils";
 import {
     IAudience,
     IContainerContext,
@@ -46,6 +47,7 @@ import {
     ISummaryContent,
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/container-utils";
 import { Container } from "./container";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
@@ -170,10 +172,34 @@ export class ContainerContext implements IContainerContext {
     private readonly _fluidModuleP: Promise<IFluidModuleWithDetails>;
 
     /**
-     * {@inheritDoc @fluidframework/container-definitions#IContainerContext.entryPoint}
+     * {@inheritDoc @fluidframework/container-definitions#IContainerContext.getEntryPoint}
      */
-    public readonly entryPoint?: Promise<FluidObject | undefined>;
-    private readonly _deferredEntryPoint: Deferred<FluidObject | undefined> = new Deferred<FluidObject>();
+    public getEntryPoint?(): Promise<FluidObject | undefined> | undefined {
+        if (this._disposed) {
+            throw new UsageError("The context is already disposed");
+        }
+        return this._runtime !== undefined
+            ? this._runtime.entryPoint
+            : new Promise<FluidObject | undefined>((resolve, reject) => {
+                const runtimeInstantiatedHandler = () => {
+                    assert(this._runtime !== undefined, "runtimeInstantiated fired but runtime is still undefined");
+                    resolve(this._runtime.entryPoint);
+                    this.lifecycleEvents.off("disposed", disposedHandler);
+                };
+                const disposedHandler = () => {
+                    reject(new Error("ContainerContext was disposed"));
+                    this.lifecycleEvents.off("runtimeInstantiated", runtimeInstantiatedHandler);
+                };
+                this.lifecycleEvents.once("runtimeInstantiated", runtimeInstantiatedHandler);
+                this.lifecycleEvents.once("disposed", disposedHandler);
+            });
+    }
+
+    /**
+     * Emits events about the container context's lifecycle.
+     * Use it to coordinate things inside the ContainerContext class.
+     */
+    private readonly lifecycleEvents = new EventEmitter();
 
     constructor(
         private readonly container: Container,
@@ -203,7 +229,6 @@ export class ContainerContext implements IContainerContext {
             async () => this.loadCodeModule(_codeDetails),
         );
         this.attachListener();
-        this.entryPoint = this._deferredEntryPoint.promise;
     }
 
     /**
@@ -222,6 +247,7 @@ export class ContainerContext implements IContainerContext {
         }
         this._disposed = true;
 
+        this.lifecycleEvents.emit("disposed");
         this.runtime.dispose(error);
         this._quorum.dispose();
         this.deltaManager.dispose();
@@ -333,16 +359,11 @@ export class ContainerContext implements IContainerContext {
 
     private async instantiateRuntime(existing: boolean) {
         const runtimeFactory = await this.getRuntimeFactory();
-        try {
-            this._runtime = await PerformanceEvent.timedExecAsync(
-                this.taggedLogger,
-                { eventName: "InstantiateRuntime" },
-                async () => runtimeFactory.instantiateRuntime(this, existing));
-            this._deferredEntryPoint.resolve(this._runtime.entryPoint);
-        } catch (err: unknown) {
-            this._deferredEntryPoint.reject(err);
-            throw err;
-        }
+        this._runtime = await PerformanceEvent.timedExecAsync(
+            this.taggedLogger,
+            { eventName: "InstantiateRuntime" },
+            async () => runtimeFactory.instantiateRuntime(this, existing));
+        this.lifecycleEvents.emit("runtimeInstantiated")
     }
 
     private attachListener() {

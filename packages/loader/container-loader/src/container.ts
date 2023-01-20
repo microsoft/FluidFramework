@@ -577,7 +577,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this.once("closed", closedHandler);
             });
         }
-        return this._context.entryPoint;
+        // Disable lint rule for the sake of more complete stack traces
+        // eslint-disable-next-line no-return-await
+        return await this._context.getEntryPoint?.();
     };
 
     constructor(
