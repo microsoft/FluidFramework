@@ -31,7 +31,6 @@ const flushPromises = async () => new Promise((resolve) => process.nextTick(reso
 const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: {
         summaryOptions: {
-            initialSummarizerDelayMs: 0, // back-compat - Old runtime takes 5 seconds to start summarizer without this.
             summaryConfigOverrides: {
                 ...DefaultSummaryConfiguration,
                 ...{ maxOps: 10, initialSummarizerDelayMs: 0, minIdleTime: 10, maxIdleTime: 10 },
