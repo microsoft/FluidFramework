@@ -1251,7 +1251,7 @@ export class GarbageCollector implements IGarbageCollector {
                     isSummarizerClient: this.isSummarizerClient,
                     url: trimLeadingSlashes(toNodePath),
                     nodeType,
-                },
+                 },
                 undefined /* packagePath */,
             );
         }
