@@ -226,14 +226,14 @@ function getPackageMetadataFromRelativePath(documentFilePath, packageJsonFilePat
  * @param {object} config - TODO
  */
 function includeTransform(originalContent, options, config) {
-    const {path: relativeFilePath, start: startLine, end: endLine } = options;
-    if (!relativeFilePath) {
-        throw new Error(
-            "No 'path' parameter provided. Must specify a file path whose contents will be embedded.",
-        );
-    }
+	const { path: relativeFilePath, start: startLine, end: endLine } = options;
+	if (!relativeFilePath) {
+		throw new Error(
+			"No 'path' parameter provided. Must specify a file path whose contents will be embedded.",
+		);
+	}
 
-    if (startLine && endLine && startLine >= endLine) {
+	if (startLine && endLine && startLine >= endLine) {
 		throw new Error(
 			`Start line must be less than end line. Got: "start: ${startLine}, end: ${endLine}".`,
 		);
@@ -243,7 +243,7 @@ function includeTransform(originalContent, options, config) {
 		throw new Error("Invalid start line index. Must be 0 or positive.");
 	}
 
-    const resolvedFilePath = resolveRelativePath(config.originalPath, relativeFilePath);
+	const resolvedFilePath = resolveRelativePath(config.originalPath, relativeFilePath);
 
 	try {
 		let fileContents = fs.readFileSync(resolvedFilePath, "utf8");
@@ -253,12 +253,11 @@ function includeTransform(originalContent, options, config) {
 		}
 		const section = formattedSectionText(fileContents.trim());
 
-        return formattedEmbeddedContentBody(section);
+		return formattedEmbeddedContentBody(section);
 	} catch (error) {
 		console.error(`Exception processing "${resolvedFilePath}":`, error);
 		throw error;
 	}
-
 }
 
 /**
