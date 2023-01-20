@@ -113,7 +113,7 @@ describe("SequenceField - Invert", () => {
     it("revert-only blocked revive => no-op", () => {
         const input = composeAnonChanges([
             Change.modify(0, childChange1),
-            Change.revive(1, 2, tag, 0, tag2, undefined, tag3),
+            Change.revive(1, 2, tag, 1, tag2, undefined, tag3),
             Change.modify(1, childChange2),
         ]);
         const expected = composeAnonChanges([
@@ -149,7 +149,17 @@ describe("SequenceField - Invert", () => {
         const input = composeAnonChanges([Change.modify(0, childChange1), Change.move(0, 2, 3)]);
         const expected = composeAnonChanges([
             Change.modify(3, inverseChildChange1),
-            Change.return(3, 2, 0, tag, 0),
+            Change.return(3, 2, 0, tag),
+        ]);
+        const actual = invert(input);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("move backward => return", () => {
+        const input = composeAnonChanges([Change.modify(3, childChange1), Change.move(2, 2, 0)]);
+        const expected = composeAnonChanges([
+            Change.modify(1, inverseChildChange1),
+            Change.return(0, 2, 2, tag),
         ]);
         const actual = invert(input);
         assert.deepEqual(actual, expected);
@@ -158,11 +168,11 @@ describe("SequenceField - Invert", () => {
     it("return => return", () => {
         const input = composeAnonChanges([
             Change.modify(0, childChange1),
-            Change.return(0, 2, 3, brand(41), 0),
+            Change.return(0, 2, 3, brand(41)),
         ]);
         const expected = composeAnonChanges([
             Change.modify(3, inverseChildChange1),
-            Change.return(3, 2, 0, tag, 0),
+            Change.return(3, 2, 0, tag),
         ]);
         const actual = invert(input);
         assert.deepEqual(actual, expected);

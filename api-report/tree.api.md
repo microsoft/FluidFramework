@@ -1353,9 +1353,9 @@ const sequenceFieldEditor: {
     buildChildChange: <TNodeChange = NodeChangeset>(index: number, change: TNodeChange) => Changeset<TNodeChange>;
     insert: (index: number, cursors: ITreeCursor | ITreeCursor[]) => Changeset<never>;
     delete: (index: number, count: number) => Changeset<never>;
-    revive: (index: number, count: number, detachedBy: RevisionTag, detachIndex: number, isIntention?: true | undefined) => Changeset<never>;
+    revive: (index: number, count: number, detachedBy: RevisionTag, detachIndex?: number | undefined, isIntention?: true | undefined) => Changeset<never>;
     move(sourceIndex: number, count: number, destIndex: number): Changeset<never>;
-    return(sourceIndex: number, count: number, destIndex: number, detachedBy: RevisionTag, detachIndex: number): Changeset<never>;
+    return(sourceIndex: number, count: number, destIndex: number, detachedBy: RevisionTag, detachIndex?: number | undefined): Changeset<never>;
 };
 
 // @public (undocumented)
