@@ -144,15 +144,15 @@ async function runnerProcess(
     let testFailed: boolean = false;
 
     try {
+        // Added temporarily to disable attachment blob testing for ODSP.
+        runConfig.testConfig.driverType = driver;
         const optionsOverride = `${driver}${endpoint !== undefined ? `-${endpoint}` : ""}`;
         const loaderOptions = generateLoaderOptions(
-            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.loader);
-
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.loader)[0];
         const containerOptions = generateRuntimeOptions(
-            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.container);
-
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.container)[0];
         const configurations = generateConfigurations(
-            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.configurations);
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.configurations)[0];
         const testDriver: ITestDriver = await createTestDriver(driver, endpoint, seed, runConfig.runId);
         const baseLogger = await loggerP;
         const logger = ChildLogger.create(baseLogger, undefined,
@@ -203,12 +203,12 @@ async function runnerProcess(
                 const loader = new Loader({
                     urlResolver: testDriver.createUrlResolver(),
                     documentServiceFactory,
-                    codeLoader: createCodeLoader(containerOptions[runConfig.runId % containerOptions.length]),
+                    codeLoader: createCodeLoader(containerOptions),
                     logger,
-                    options: loaderOptions[runConfig.runId % containerOptions.length],
+                    options: loaderOptions,
                     configProvider: {
                         getRawConfig(name) {
-                            return configurations[runConfig.runId % configurations.length][name];
+                            return configurations[name];
                         },
                     },
                 });

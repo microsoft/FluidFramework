@@ -68,6 +68,10 @@ export interface ILoadTestConfig {
      * Specify Ops payload size for the test run.
      */
     opSizeinBytes?: number;
+    /**
+     * The driver type for a given run. This is added temporarily to skip testing attachment blobs for ODSP.
+     */
+    driverType?: TestDriverTypes;
 }
 
 export interface OptionOverride{

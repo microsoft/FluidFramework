@@ -8,7 +8,7 @@ import fs from "fs";
 import ps from "ps-node";
 import commander from "commander";
 import xml from "xml";
-import { TestDriverTypes, DriverEndpoint } from "@fluidframework/test-driver-definitions";
+import { TestDriverTypes, DriverEndpoint, ITestDriver } from "@fluidframework/test-driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { createTestDriver, getProfile, initialize, loggerP, safeExit, writeToFile } from "./utils";
@@ -110,7 +110,7 @@ async function orchestratorProcess(
     const seedArg = `0x${seed.toString(16)}`;
     const logger = await loggerP;
 
-    const testDriver = await createTestDriver(
+    const testDriver: ITestDriver = await createTestDriver(
         driver,
         endpoint,
         seed,
@@ -123,7 +123,7 @@ async function orchestratorProcess(
         // If no testId is provided, (or) if testId is provided but createTestId is not false, then
         // create a file;
         // In case testId is provided, name of the file to be created is taken as the testId provided
-        : initialize(testDriver, seed, profile, args.verbose === true, args.testId));
+        : initialize(testDriver, endpoint, seed, profile, args.verbose === true, args.testId));
 
     const estRunningTimeMin = Math.floor(profile.totalSendCount / profile.opRatePerMin);
     console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);
