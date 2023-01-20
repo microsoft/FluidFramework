@@ -550,7 +550,7 @@ export abstract class RestWrapper {
 export class SummaryTreeUploadManager implements ISummaryUploadManager {
     constructor(manager: IGitManager, blobsShaCache: Map<string, string>, getPreviousFullSnapshot: (parentHandle: string) => Promise<ISnapshotTreeEx | null | undefined>);
     // (undocumented)
-    writeSummaryTree(summaryTree: ISummaryTree_2, parentHandle: string): Promise<string>;
+    writeSummaryTree(summaryTree: ISummaryTree_2, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number, initial?: boolean): Promise<string>;
 }
 
 // @public

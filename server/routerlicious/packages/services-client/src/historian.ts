@@ -129,8 +129,12 @@ export class Historian implements IHistorian {
             `/git/trees/${encodeURIComponent(sha)}`,
             this.getQueryString({ recursive: recursive ? 1 : 0 }));
     }
-    public async createSummary(summary: IWholeSummaryPayload, initial: boolean = false): Promise<IWriteSummaryResponse> {
-        return this.restWrapper.post<IWriteSummaryResponse>(`/git/summaries`, summary, this.getQueryString({ initial }));
+    public async createSummary(summary: IWholeSummaryPayload, initial?: boolean): Promise<IWriteSummaryResponse> {
+        return this.restWrapper.post<IWriteSummaryResponse>(
+            `/git/summaries`,
+            summary,
+            this.getQueryString(initial === undefined ? undefined : { initial }),
+        );
     }
     public async deleteSummary(softDelete: boolean): Promise<void> {
         const headers = { "Soft-Delete": softDelete };
