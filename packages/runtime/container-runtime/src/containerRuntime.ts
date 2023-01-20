@@ -1091,7 +1091,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // the runtime configuration overrides
             ...runtimeOptions.summaryOptions?.summaryConfigOverrides,
         },
-        initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
+        private readonly initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
     ) {
         super();
 
@@ -1420,8 +1420,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
         BindBatchTracker(this, this.logger);
-
-        this.entryPoint = initializeEntryPoint?.(this);
     }
 
     /**
@@ -1536,7 +1534,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * {@inheritDoc @fluidframework/container-definitions#IRuntime.entrypoint}
      */
-    public readonly entryPoint?: Promise<FluidObject>;
+    public get entryPoint(): Promise<FluidObject> | undefined {
+        if (this._entryPoint === undefined && this.initializeEntryPoint !== undefined) {
+            this._entryPoint = this.initializeEntryPoint?.(this)
+        }
+        return this._entryPoint;
+    }
+    private _entryPoint: Promise<FluidObject> | undefined;
 
     private internalId(maybeAlias: string): string {
         return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;
