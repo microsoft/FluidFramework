@@ -36,8 +36,8 @@ const ballSchema = tree({
 // So it would be possible to derive a type safe editing API from this type.
 const xField = ballSchema.localFields.get("x");
 
-// This is an error since this field does not exist:
-// const invalidChildSchema = ballSchema.localFields.get("z");
+// @ts-expect-error This is an error since this field does not exist:
+const invalidChildSchema = ballSchema.localFields.get("z");
 
 // Declare an recursive aggregate type via local fields.
 // Note that the type name can be used instead of the schema to allow recursion.

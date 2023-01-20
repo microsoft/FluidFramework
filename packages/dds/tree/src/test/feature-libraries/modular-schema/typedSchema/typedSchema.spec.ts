@@ -58,14 +58,15 @@ const testField = typedFieldSchema(FieldKinds.value, [testTypeIdentifier]);
 
     type child = FieldInfo<TestTreeSchema["local"][typeof lk1]>;
 
-    // This is an error since this field does not exist:
-    // type invalidChildType = FieldInfo<TestTreeSchema["local"][typeof lk2]>;
-    // type invalidChildType2 = FieldInfo<TestTreeSchema["local"][typeof lk2]>;
+    // @ts-expect-error This is an error since this field does not exist:
+    type invalidChildType = FieldInfo<TestTreeSchema["local"][typeof lk2]>;
+    // @ts-expect-error Same as above but for other one:
+    type invalidChildType2 = FieldInfo<TestTreeSchema["local"][typeof lk2]>;
 
     const xxxx = testTreeSchema.localFields.get(lk1);
 
-    // This is an error since this field does not exist:
-    // const invalidChildSchema = testTreeSchema.localFields.get(lk2);
+    // @ts-expect-error This is an error since this field does not exist:
+    const invalidChildSchema = testTreeSchema.localFields.get(lk2);
 }
 
 {
