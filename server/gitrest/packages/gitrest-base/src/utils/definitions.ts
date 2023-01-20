@@ -83,6 +83,7 @@ export interface IRepoManagerParams {
     repoName: string;
     storageRoutingId?: IStorageRoutingId;
     fileSystemManagerParams?: IFileSystemManagerParams;
+    optimizeForInitialSummary?: boolean;
 }
 
 export interface IRepositoryManagerFactory {

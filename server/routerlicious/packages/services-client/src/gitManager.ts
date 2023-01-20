@@ -140,7 +140,7 @@ export class GitManager implements IGitManager {
         return this.historian.createCommit(commit);
     }
 
-    public async createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
+    public async createSummary(summary: IWholeSummaryPayload, initial: boolean = false): Promise<IWriteSummaryResponse> {
         return this.historian.createSummary(summary);
     }
 

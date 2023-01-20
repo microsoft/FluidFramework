@@ -100,7 +100,7 @@ export class GitManager implements IGitManager {
     // (undocumented)
     createRef(branch: string, sha: string): Promise<resources.IRef>;
     // (undocumented)
-    createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse>;
+    createSummary(summary: IWholeSummaryPayload, initial?: boolean): Promise<IWriteSummaryResponse>;
     // (undocumented)
     createTree(files: api.ITree): Promise<resources.ITree>;
     // (undocumented)
@@ -137,7 +137,7 @@ export class Historian implements IHistorian {
     // (undocumented)
     createRef(params: resources.ICreateRefParams): Promise<resources.IRef>;
     // (undocumented)
-    createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse>;
+    createSummary(summary: IWholeSummaryPayload, initial?: boolean): Promise<IWriteSummaryResponse>;
     // (undocumented)
     createTag(tag: resources.ICreateTagParams): Promise<resources.ITag>;
     // (undocumented)
@@ -235,7 +235,7 @@ export interface IGitManager {
     // (undocumented)
     createRef(branch: string, sha: string): Promise<resources.IRef>;
     // (undocumented)
-    createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse>;
+    createSummary(summary: IWholeSummaryPayload, initial?: boolean): Promise<IWriteSummaryResponse>;
     // (undocumented)
     createTree(files: api.ITree): Promise<resources.ITree>;
     // (undocumented)
@@ -275,7 +275,7 @@ export interface IGitService {
     // (undocumented)
     createRef(params: resources.ICreateRefParams): Promise<resources.IRef>;
     // (undocumented)
-    createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse>;
+    createSummary(summary: IWholeSummaryPayload, initial?: boolean): Promise<IWriteSummaryResponse>;
     // (undocumented)
     createTag(tag: resources.ICreateTagParams): Promise<resources.ITag>;
     // (undocumented)
@@ -550,7 +550,7 @@ export abstract class RestWrapper {
 export class SummaryTreeUploadManager implements ISummaryUploadManager {
     constructor(manager: IGitManager, blobsShaCache: Map<string, string>, getPreviousFullSnapshot: (parentHandle: string) => Promise<ISnapshotTreeEx | null | undefined>);
     // (undocumented)
-    writeSummaryTree(summaryTree: ISummaryTree_2, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number): Promise<string>;
+    writeSummaryTree(summaryTree: ISummaryTree_2, parentHandle: string): Promise<string>;
 }
 
 // @public
@@ -572,7 +572,7 @@ export type WholeSummaryTreeValue = IWholeSummaryTree | IWholeSummaryBlob;
 export class WholeSummaryUploadManager implements ISummaryUploadManager {
     constructor(manager: IGitManager);
     // (undocumented)
-    writeSummaryTree(summaryTree: ISummaryTree, parentHandle: string | undefined, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number): Promise<string>;
+    writeSummaryTree(summaryTree: ISummaryTree, parentHandle: string | undefined, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number, initial?: boolean): Promise<string>;
 }
 
 // (No @packageDocumentation comment for this package)

@@ -116,7 +116,8 @@ async function createSummary(
     repoManagerParams: IRepoManagerParams,
     externalWriterConfig?: IExternalWriterConfig,
     persistLatestFullSummary = false,
-    enableLowIoWrite: "initial" | boolean = false
+    enableLowIoWrite: "initial" | boolean = false,
+    optimizeForInitialSummary: boolean = false,
 ): Promise<IWriteSummaryResponse | IWholeFlatSummary> {
     const lumberjackProperties = {
         ...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
@@ -128,7 +129,10 @@ async function createSummary(
         repoManager,
         lumberjackProperties,
         externalWriterConfig?.enabled ?? false,
-        { enableLowIoWrite },
+        {
+            enableLowIoWrite,
+            optimizeForInitialSummary,
+        },
     );
 
     Lumberjack.info("Creating summary", lumberjackProperties);
@@ -269,6 +273,9 @@ export function create(
      */
     router.post("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
+        const isInitialSummary: boolean | undefined = typeof request.params.initial === "string"
+            ? request.params.initial === "true"
+            : undefined;
         if (!repoManagerParams.storageRoutingId?.tenantId ||
             !repoManagerParams.storageRoutingId?.documentId) {
             handleResponse(
@@ -277,20 +284,28 @@ export function create(
             return;
         }
         const wholeSummaryPayload: IWholeSummaryPayload = request.body;
-        const resultP = getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
-            .then(async (repoManager): Promise<IWriteSummaryResponse | IWholeFlatSummary> => {
-                const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
+        const resultP = (async () => {
+            // There are possible optimizations we can make throughout the summary write process
+            // if we are using repoPerDoc model and it is the first summary for that document.
+            const optimizeForInitialSummary = isInitialSummary && repoPerDocEnabled;
+            // If creating a repo per document, we do not need to check for an existing repo on initial summary write.
+            const repoManager = await getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled, optimizeForInitialSummary);
+            const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
+            // A new document cannot already be soft-deleted.
+            if (!optimizeForInitialSummary) {
                 await checkSoftDeleted(fsManager, repoManager.path, repoManagerParams, repoPerDocEnabled);
-                return createSummary(
-                    repoManager,
-                    fsManager,
-                    wholeSummaryPayload,
-                    repoManagerParams,
-                    getExternalWriterParams(request.query?.config as string | undefined),
-                    persistLatestFullSummary,
-                    enableLowIoWrite,
-                );
-            }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
+            }
+            return createSummary(
+                repoManager,
+                fsManager,
+                wholeSummaryPayload,
+                repoManagerParams,
+                getExternalWriterParams(request.query?.config as string | undefined),
+                persistLatestFullSummary,
+                enableLowIoWrite,
+                optimizeForInitialSummary,
+            );
+        })().catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response, undefined, undefined, 201);
     });
 

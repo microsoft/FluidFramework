@@ -374,11 +374,12 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
             enableRepositoryManagerMetrics);
     }
 
-    protected async initGitRepo(fs: IFileSystemManager, gitdir: string): Promise<void> {
+    protected async initGitRepo(fs: IFileSystemManager, gitdir: string, defaultBranch?: string): Promise<void> {
         return isomorphicGit.init({
             fs,
             gitdir,
             bare: true,
+            defaultBranch,
         });
     }
 
@@ -395,12 +396,12 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
         externalStorageManager: IExternalStorageManager,
         lumberjackBaseProperties: Record<string, any>,
         enableRepositoryManagerMetrics: boolean): IRepositoryManager {
-            return new IsomorphicGitRepositoryManager(
-                fileSystemManager,
-                repoOwner,
-                repoName,
-                gitdir,
-                lumberjackBaseProperties,
-                enableRepositoryManagerMetrics);
+        return new IsomorphicGitRepositoryManager(
+            fileSystemManager,
+            repoOwner,
+            repoName,
+            gitdir,
+            lumberjackBaseProperties,
+            enableRepositoryManagerMetrics);
     }
 }

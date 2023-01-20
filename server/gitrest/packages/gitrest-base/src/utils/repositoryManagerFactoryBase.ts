@@ -36,7 +36,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
         repoOperationType: RepoOperationType) => Promise<IRepositoryManager>;
     // Cache repositories to allow for reuse
     protected readonly repositoryCache = new Map<string, TRepo>();
-    protected abstract initGitRepo(fs: IFileSystemManager, gitdir: string): Promise<TRepo>;
+    protected abstract initGitRepo(fs: IFileSystemManager, gitdir: string, defaultBranch?: string): Promise<TRepo>;
     protected abstract openGitRepo(gitdir: string): Promise<TRepo>;
     protected abstract createRepoManager(
         fileSystemManager: IFileSystemManager,
@@ -67,8 +67,10 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
             gitdir: string,
             lumberjackBaseProperties: Record<string, any>,
         ) => {
+            // Setting default branch to documentId allows us to skip unnecessary creation of a "master" branch during initial summary write.
+            const defaultBranch = params.optimizeForInitialSummary ? params.storageRoutingId.documentId : undefined;
             // Create and then cache the repository
-            const repository = await this.initGitRepo(fileSystemManager, gitdir);
+            const repository = await this.initGitRepo(fileSystemManager, gitdir, defaultBranch);
             this.repositoryCache.set(repoPath, repository);
             Lumberjack.info(
                 "Created a new repo",
@@ -187,28 +189,37 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
         const fileSystemManager = this.fileSystemManagerFactory.create(params.fileSystemManagerParams);
         // We define the function below to be able to call it either on its own or within the mutex.
         const action = async () => {
-            // We only lock on the mutex for "create repo" operations, since we want repo creation to happen
-            // atomically. That means that "open repo" operations can happen in parallel, without the need
-            // for acquiring the lock/mutex. However, imagine the following scenario: one "create repo" operation
-            // acquired the lock for repo A, and then a concurrent "open repo" request comes for repo A. The
-            // "open repo" request will not try to acquire the mutex. However, it still needs to wait just in
-            // case there is an ongoing "create repo" operation, in order for the "open repo" to succeed.
-            // The conditional below makes sure we only proceed with the "open repo" operation if there
-            // is no ongoing "create repo".
-            if (repoOperationType === "open" && this.mutexes.get(repoName)?.isLocked()) {
-                await this.mutexes.get(repoName).waitForUnlock();
-            }
-            if (!this.repositoryCache.has(repoPath)) {
-                const repoExists = await helpers.exists(fileSystemManager, directoryPath);
-                if (!repoExists || !repoExists.isDirectory()) {
-                    await onRepoNotExists(
-                        fileSystemManager,
-                        repoPath,
-                        directoryPath,
-                        lumberjackBaseProperties);
-                } else {
-                    const repo = await this.openGitRepo(directoryPath);
-                    this.repositoryCache.set(repoPath, repo);
+            if (params.optimizeForInitialSummary && repoOperationType === "create") {
+                // Skip checking if repo exists when optimizing for an initial summary.
+                await onRepoNotExists(
+                    fileSystemManager,
+                    repoPath,
+                    directoryPath,
+                    lumberjackBaseProperties);
+            } else {
+                // We only lock on the mutex for "create repo" operations, since we want repo creation to happen
+                // atomically. That means that "open repo" operations can happen in parallel, without the need
+                // for acquiring the lock/mutex. However, imagine the following scenario: one "create repo" operation
+                // acquired the lock for repo A, and then a concurrent "open repo" request comes for repo A. The
+                // "open repo" request will not try to acquire the mutex. However, it still needs to wait just in
+                // case there is an ongoing "create repo" operation, in order for the "open repo" to succeed.
+                // The conditional below makes sure we only proceed with the "open repo" operation if there
+                // is no ongoing "create repo".
+                if (repoOperationType === "open" && this.mutexes.get(repoName)?.isLocked()) {
+                    await this.mutexes.get(repoName).waitForUnlock();
+                }
+                if (!this.repositoryCache.has(repoPath)) {
+                    const repoExists = await helpers.exists(fileSystemManager, directoryPath);
+                    if (!repoExists || !repoExists.isDirectory()) {
+                        await onRepoNotExists(
+                            fileSystemManager,
+                            repoPath,
+                            directoryPath,
+                            lumberjackBaseProperties);
+                    } else {
+                        const repo = await this.openGitRepo(directoryPath);
+                        this.repositoryCache.set(repoPath, repo);
+                    }
                 }
             }
 

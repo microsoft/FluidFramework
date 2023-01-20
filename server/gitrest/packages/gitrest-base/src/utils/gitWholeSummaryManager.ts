@@ -106,10 +106,16 @@ interface ISummaryWriteOptions {
      * "initial": First summary write for a document will use low I/O mode
      */
     enableLowIoWrite: "initial" | boolean;
+    /**
+     * When writing a summary, we can skip or alter certain aspects of the summary write process
+     * to avoid unnecessary storage operations. This can improve performance when creating a new document.
+     */
+    optimizeForInitialSummary: boolean;
 }
 
 const DefaultSummaryWriteOptions: ISummaryWriteOptions = {
     enableLowIoWrite: false,
+    optimizeForInitialSummary: false,
 };
 
 /**
@@ -487,13 +493,16 @@ export class GitWholeSummaryManager {
     ): Promise<IWriteSummaryInfo> {
         const existingRef = await this.getDocRef();
 
-        const isNewDocument = !existingRef && payload.sequenceNumber === 0;
+        // For backwards compatibility, do not assume that API consumer provided initial summary flag.
+        // Instead, check that the document ref exists and points to a commit.
+        const isNewDocument = !existingRef?.object?.sha && payload.sequenceNumber === 0;
         const useLowIoWrite = this.writeOptions.enableLowIoWrite === true
             || (isNewDocument && this.writeOptions.enableLowIoWrite === "initial");
 
         const treeHandle = await this.writeSummaryTree(
             payload.entries,
-            existingRef,
+            //
+            isNewDocument ? undefined : existingRef,
             useLowIoWrite,
         );
 
@@ -509,7 +518,7 @@ export class GitWholeSummaryManager {
                 name: "GitRest Service",
             },
             message: commitMessage,
-            parents: existingRef ? [existingRef.object.sha] : [],
+            parents: existingRef?.object?.sha ? [existingRef.object.sha] : [],
             tree: treeHandle,
         };
         const commit = await this.repoManager.createCommit(commitParams);
@@ -576,7 +585,7 @@ export class GitWholeSummaryManager {
             }
         );
 
-        if (existingRef) {
+        if (existingRef?.object?.sha) {
             // Update in-memory repo manager with previous summary for handle references.
             const previousSummary = await this.readSummary(existingRef.object.sha);
             const fullSummaryPayload = convertFullSummaryToWholeSummaryEntries({
