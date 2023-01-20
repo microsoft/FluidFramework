@@ -55,7 +55,9 @@ const rootField = field(optional, [diagramSchema]);
 const schemaData: SchemaDataAndPolicy = {
     policy: defaultSchemaPolicy,
     globalFieldSchema: new Map([[rootFieldKey, rootField]]),
-    treeSchema: new Map([numberSchema, diagramSchema].map((schema) => [schema.name, schema])),
+    treeSchema: new Map(
+        [numberSchema, diagramSchema, ballSchema].map((schema) => [schema.name, schema]),
+    ),
 };
 
 // TODO: use compile time type information from schemaData to generate useful APIs, like a strongly typed EditableTree.
