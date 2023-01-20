@@ -38,7 +38,6 @@ export function invert<TNodeChange>(
 export function amendInvert<TNodeChange>(
     invertedChange: Changeset<TNodeChange>,
     originalRevision: RevisionTag | undefined,
-    invertChild: NodeChangeInverter<TNodeChange>,
     genId: IdAllocator,
     crossFieldManager: CrossFieldManager,
 ): Changeset<TNodeChange> {
@@ -46,7 +45,6 @@ export function amendInvert<TNodeChange>(
         invertedChange,
         originalRevision,
         crossFieldManager as CrossFieldManager<TNodeChange>,
-        invertChild,
     );
     return invertedChange;
 }
@@ -155,7 +153,7 @@ function invertMark<TNodeChange>(
                         CrossFieldTarget.Destination,
                         mark.revision ?? revision,
                         mark.id,
-                        mark.changes,
+                        invertChild(mark.changes),
                     );
                 }
                 return [
@@ -188,7 +186,7 @@ function invertMark<TNodeChange>(
                         mark.id,
                     );
                     if (movedChanges !== undefined) {
-                        invertedMark.changes = invertChild(movedChanges);
+                        invertedMark.changes = movedChanges;
                     }
                     return [invertedMark];
                 }
@@ -209,7 +207,6 @@ function transferMovedChanges<TNodeChange>(
     marks: MarkList<TNodeChange>,
     revision: RevisionTag | undefined,
     crossFieldManager: CrossFieldManager<TNodeChange>,
-    invertChild: NodeChangeInverter<TNodeChange>,
 ): void {
     for (const mark of marks) {
         if (isObjMark(mark) && (mark.type === "MoveOut" || mark.type === "ReturnFrom")) {
@@ -219,7 +216,7 @@ function transferMovedChanges<TNodeChange>(
                 mark.id,
             );
             if (change !== undefined) {
-                mark.changes = invertChild(change);
+                mark.changes = change;
             }
         }
     }

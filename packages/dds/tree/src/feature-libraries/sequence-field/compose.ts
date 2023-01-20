@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
 import { clone, fail } from "../../util";
-import { IdAllocator } from "../modular-schema";
+import { CrossFieldManager, CrossFieldTarget, IdAllocator } from "../modular-schema";
 import {
     Changeset,
     HasChanges,
@@ -20,7 +20,7 @@ import {
 import { GapTracker, IndexTracker } from "./tracker";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
-import { getOrAddEffect, MoveEffectTable, MoveEnd, newMoveEffectTable } from "./moveEffectTable";
+import { getOrAddEffect, MoveEffectTable } from "./moveEffectTable";
 import {
     getInputLength,
     getOutputLength,
@@ -55,18 +55,17 @@ export function compose<TNodeChange>(
     changes: TaggedChange<Changeset<TNodeChange>>[],
     composeChild: NodeChangeComposer<TNodeChange>,
     genId: IdAllocator,
+    manager: CrossFieldManager,
 ): Changeset<TNodeChange> {
     let composed: Changeset<TNodeChange> = [];
     for (const change of changes) {
-        const moveEffects: MoveEffectTable<TNodeChange> = newMoveEffectTable();
-
         composed = composeMarkLists(
             composed,
             change.revision,
             change.change,
             composeChild,
             genId,
-            moveEffects,
+            manager as MoveEffectTable<TNodeChange>,
         );
     }
     return composed;
@@ -125,7 +124,7 @@ function composeMarkLists<TNodeChange>(
         }
     }
 
-    return applyMoveEffects(factory.list, composeChild, moveEffects);
+    return amendComposeI(factory.list, composeChild, moveEffects);
 }
 
 /**
@@ -180,7 +179,7 @@ function composeMarks<TNodeChange>(
                     // We can represent net effect of the two marks as an insert at the move destination.
                     getOrAddEffect(
                         moveEffects,
-                        MoveEnd.Dest,
+                        CrossFieldTarget.Destination,
                         newMark.revision ?? newRev,
                         newMark.id,
                         true,
@@ -229,7 +228,7 @@ function composeMarks<TNodeChange>(
                 case "Delete": {
                     getOrAddEffect(
                         moveEffects,
-                        MoveEnd.Source,
+                        CrossFieldTarget.Source,
                         baseMark.revision,
                         baseMark.id,
                         true,
@@ -239,14 +238,14 @@ function composeMarks<TNodeChange>(
                 case "MoveOut": {
                     getOrAddEffect(
                         moveEffects,
-                        MoveEnd.Source,
+                        CrossFieldTarget.Source,
                         baseMark.revision,
                         baseMark.id,
                         true,
                     ).mark = composeMark(newMark, newRev, composeChild);
                     getOrAddEffect(
                         moveEffects,
-                        MoveEnd.Dest,
+                        CrossFieldTarget.Destination,
                         newMark.revision ?? newRev,
                         newMark.id,
                         true,
@@ -257,14 +256,14 @@ function composeMarks<TNodeChange>(
                     if (newMark.detachedBy === baseMark.revision) {
                         getOrAddEffect(
                             moveEffects,
-                            MoveEnd.Source,
+                            CrossFieldTarget.Source,
                             baseMark.revision,
                             baseMark.id,
                             true,
                         ).shouldRemove = true;
                         getOrAddEffect(
                             moveEffects,
-                            MoveEnd.Dest,
+                            CrossFieldTarget.Destination,
                             newMark.revision ?? newRev,
                             newMark.id,
                             true,
@@ -273,14 +272,14 @@ function composeMarks<TNodeChange>(
                     } else {
                         getOrAddEffect(
                             moveEffects,
-                            MoveEnd.Source,
+                            CrossFieldTarget.Source,
                             baseMark.revision,
                             baseMark.id,
                             true,
                         ).mark = composeMark(newMark, newRev, composeChild);
                         getOrAddEffect(
                             moveEffects,
-                            MoveEnd.Dest,
+                            CrossFieldTarget.Destination,
                             newMark.revision ?? newRev,
                             newMark.id,
                             true,
@@ -297,7 +296,7 @@ function composeMarks<TNodeChange>(
                 case "Modify": {
                     getOrAddEffect(
                         moveEffects,
-                        MoveEnd.Source,
+                        CrossFieldTarget.Source,
                         baseMark.revision,
                         baseMark.id,
                         true,
@@ -307,7 +306,7 @@ function composeMarks<TNodeChange>(
                 case "Delete": {
                     getOrAddEffect(
                         moveEffects,
-                        MoveEnd.Source,
+                        CrossFieldTarget.Source,
                         baseMark.revision,
                         baseMark.id,
                         true,
@@ -318,14 +317,14 @@ function composeMarks<TNodeChange>(
                     if (baseMark.detachedBy === (newMark.revision ?? newRev)) {
                         getOrAddEffect(
                             moveEffects,
-                            MoveEnd.Source,
+                            CrossFieldTarget.Source,
                             baseMark.revision,
                             baseMark.id,
                             true,
                         ).shouldRemove = true;
                         getOrAddEffect(
                             moveEffects,
-                            MoveEnd.Dest,
+                            CrossFieldTarget.Destination,
                             newMark.revision ?? newRev,
                             newMark.id,
                             true,
@@ -334,14 +333,14 @@ function composeMarks<TNodeChange>(
                     } else {
                         getOrAddEffect(
                             moveEffects,
-                            MoveEnd.Source,
+                            CrossFieldTarget.Source,
                             baseMark.revision,
                             baseMark.id,
                             true,
                         ).mark = composeMark(newMark, newRev, composeChild);
                         getOrAddEffect(
                             moveEffects,
-                            MoveEnd.Dest,
+                            CrossFieldTarget.Destination,
                             newMark.revision ?? newRev,
                             newMark.id,
                             true,
@@ -356,14 +355,14 @@ function composeMarks<TNodeChange>(
                     ) {
                         getOrAddEffect(
                             moveEffects,
-                            MoveEnd.Source,
+                            CrossFieldTarget.Source,
                             baseMark.revision,
                             baseMark.id,
                             true,
                         ).shouldRemove = true;
                         getOrAddEffect(
                             moveEffects,
-                            MoveEnd.Dest,
+                            CrossFieldTarget.Destination,
                             newMark.revision ?? newRev,
                             newMark.id,
                             true,
@@ -373,7 +372,7 @@ function composeMarks<TNodeChange>(
                         if (newMark.changes !== undefined) {
                             getOrAddEffect(
                                 moveEffects,
-                                MoveEnd.Source,
+                                CrossFieldTarget.Source,
                                 baseMark.revision,
                                 baseMark.id,
                                 true,
@@ -381,14 +380,14 @@ function composeMarks<TNodeChange>(
                         }
                         getOrAddEffect(
                             moveEffects,
-                            MoveEnd.Source,
+                            CrossFieldTarget.Source,
                             baseMark.revision,
                             baseMark.id,
                             true,
                         ).mark = composeMark(newMark, newRev, composeChild);
                         getOrAddEffect(
                             moveEffects,
-                            MoveEnd.Dest,
+                            CrossFieldTarget.Destination,
                             newMark.revision ?? newRev,
                             newMark.id,
                             true,
@@ -496,7 +495,16 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
     return cloned;
 }
 
-function applyMoveEffects<TNodeChange>(
+export function amendCompose<TNodeChange>(
+    marks: MarkList<TNodeChange>,
+    composeChild: NodeChangeComposer<TNodeChange>,
+    genId: IdAllocator,
+    manager: CrossFieldManager,
+): MarkList<TNodeChange> {
+    return amendComposeI(marks, composeChild, manager as MoveEffectTable<TNodeChange>);
+}
+
+function amendComposeI<TNodeChange>(
     marks: MarkList<TNodeChange>,
     composeChild: NodeChangeComposer<TNodeChange>,
     moveEffects: MoveEffectTable<TNodeChange>,

@@ -13,7 +13,13 @@ import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
 
 // @public (undocumented)
-function amendInvert<TNodeChange>(invertedChange: Changeset<TNodeChange>, originalRevision: RevisionTag | undefined, invertChild: NodeChangeInverter_2<TNodeChange>, genId: IdAllocator, crossFieldManager: CrossFieldManager): Changeset<TNodeChange>;
+function amendCompose<TNodeChange>(marks: MarkList_2<TNodeChange>, composeChild: NodeChangeComposer_2<TNodeChange>, genId: IdAllocator, manager: CrossFieldManager): MarkList_2<TNodeChange>;
+
+// @public (undocumented)
+function amendInvert<TNodeChange>(invertedChange: Changeset<TNodeChange>, originalRevision: RevisionTag | undefined, genId: IdAllocator, crossFieldManager: CrossFieldManager): Changeset<TNodeChange>;
+
+// @public (undocumented)
+function amendRebase<TNodeChange>(rebasedMarks: MarkList_2<TNodeChange>, baseMarks: TaggedChange<MarkList_2<TNodeChange>>, genId: IdAllocator, crossFieldManager: CrossFieldManager): Changeset<TNodeChange>;
 
 // @public
 export type Anchor = Brand<number, "rebaser.Anchor">;
@@ -119,7 +125,7 @@ export interface ChildLocation {
 }
 
 // @public
-function compose<TNodeChange>(changes: TaggedChange<Changeset<TNodeChange>>[], composeChild: NodeChangeComposer_2<TNodeChange>, genId: IdAllocator): Changeset<TNodeChange>;
+function compose<TNodeChange>(changes: TaggedChange<Changeset<TNodeChange>>[], composeChild: NodeChangeComposer_2<TNodeChange>, genId: IdAllocator, manager: CrossFieldManager): Changeset<TNodeChange>;
 
 // @public (undocumented)
 interface Conflicted {
@@ -163,6 +169,16 @@ export interface CrossFieldManager<T = unknown> {
     get: (target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId) => T | undefined;
     // (undocumented)
     getOrCreate: (target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, newValue: T) => T;
+}
+
+// @public (undocumented)
+interface CrossFieldTable {
+    // (undocumented)
+    dstQueries: MoveQuerySet;
+    // (undocumented)
+    isInvalidated: boolean;
+    // (undocumented)
+    srcQueries: MoveQuerySet;
 }
 
 // @public (undocumented)
@@ -378,9 +394,9 @@ export interface FieldChangeRebaser<TChangeset> {
     // (undocumented)
     amendCompose(composeChange: TChangeset, composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
     // (undocumented)
-    amendInvert(invertedChange: TChangeset, originalRevision: RevisionTag | undefined, invertChild: NodeChangeInverter, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
+    amendInvert(invertedChange: TChangeset, originalRevision: RevisionTag | undefined, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
     // (undocumented)
-    amendRebase(rebasedChange: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
+    amendRebase(rebasedChange: TChangeset, over: TaggedChange<TChangeset>, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
     compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
     // (undocumented)
     invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
@@ -941,12 +957,7 @@ interface MoveEffect<T> {
 }
 
 // @public (undocumented)
-interface MoveEffectTable<T> {
-    // (undocumented)
-    dstEffects: NestedMap<RevisionTag | undefined, MoveId_2, MoveEffect<T>>;
-    // (undocumented)
-    srcEffects: NestedMap<RevisionTag | undefined, MoveId_2, MoveEffect<T>>;
-}
+type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 
 // @public
 interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {
@@ -1000,6 +1011,9 @@ interface MoveOut_2<TNodeChange = NodeChangeType> extends HasRevisionTag, HasMov
     type: "MoveOut";
 }
 
+// @public (undocumented)
+type MoveQuerySet = NestedSet<RevisionTag | undefined, MoveId_2>;
+
 // @public
 export enum Multiplicity {
     Forbidden = 3,
@@ -1030,11 +1044,20 @@ export type NameFromBranded<T extends BrandedType<any, string>> = T extends Bran
 // @public
 export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 
+// @public (undocumented)
+type NestedSet<Key1, Key2> = NestedMap<Key1, Key2, boolean>;
+
 // @public
 export const neverTree: TreeSchema;
 
 // @public
 type NewAttach<TNodeChange = NodeChangeType> = Insert_2<TNodeChange> | MoveIn_2;
+
+// @public (undocumented)
+function newCrossFieldManager<T = unknown>(table?: CrossFieldTable): CrossFieldManager<T>;
+
+// @public (undocumented)
+function newCrossFieldTable(): CrossFieldTable;
 
 // @public (undocumented)
 function newMoveEffectTable<T>(): MoveEffectTable<T>;
@@ -1175,7 +1198,7 @@ export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode> {
 type Reattach<TNodeChange = NodeChangeType> = Revive<TNodeChange> | ReturnTo;
 
 // @public
-function rebase<TNodeChange>(change: Changeset<TNodeChange>, base: TaggedChange<Changeset<TNodeChange>>, rebaseChild: NodeChangeRebaser_2<TNodeChange>, genId: IdAllocator): Changeset<TNodeChange>;
+function rebase<TNodeChange>(change: Changeset<TNodeChange>, base: TaggedChange<Changeset<TNodeChange>>, rebaseChild: NodeChangeRebaser_2<TNodeChange>, genId: IdAllocator, manager: CrossFieldManager): Changeset<TNodeChange>;
 
 // @public
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
@@ -1313,11 +1336,13 @@ declare namespace SequenceField {
         SequenceFieldEditor,
         sequenceFieldEditor,
         MarkListFactory,
+        amendRebase,
         NodeChangeRebaser_2 as NodeChangeRebaser,
         rebase,
         amendInvert,
         invert,
         NodeChangeInverter_2 as NodeChangeInverter,
+        amendCompose,
         compose,
         NodeChangeComposer_2 as NodeChangeComposer,
         areComposable,
@@ -1327,11 +1352,16 @@ declare namespace SequenceField {
         isDetachMark,
         isReattach,
         DetachedNodeTracker,
+        newCrossFieldManager,
+        newCrossFieldTable,
+        newMoveEffectTable,
+        CrossFieldTable,
+        MoveQuerySet,
+        NestedSet,
         isMoveMark,
         MoveMark,
         MoveEffectTable,
         MoveEffect,
-        newMoveEffectTable,
         PairedMarkUpdate,
         splitMarkOnOutput
     }
@@ -1350,11 +1380,11 @@ const sequenceFieldChangeHandler: SequenceFieldChangeHandler;
 // @public (undocumented)
 const sequenceFieldChangeRebaser: {
     compose: typeof compose;
+    amendCompose: typeof amendCompose;
     invert: typeof invert;
-    rebase: typeof rebase;
-    amendCompose: () => never;
     amendInvert: typeof amendInvert;
-    amendRebase: () => never;
+    rebase: typeof rebase;
+    amendRebase: typeof amendRebase;
 };
 
 // @public (undocumented)
@@ -1433,7 +1463,7 @@ type SkipLikeReattach<TNodeChange> = Reattach<TNodeChange> & Conflicted & {
 };
 
 // @public
-function splitMarkOnOutput<TMark extends OutputSpanningMark<unknown>>(mark: TMark, revision: RevisionTag | undefined, length: number, genId: IdAllocator, moveEffects: MoveEffectTable<unknown>, recordMoveEffect?: boolean, ignorePairing?: boolean): [TMark, TMark];
+function splitMarkOnOutput<T, TMark extends OutputSpanningMark<T>>(mark: TMark, revision: RevisionTag | undefined, length: number, genId: IdAllocator, moveEffects: MoveEffectTable<T>, recordMoveEffect?: boolean, ignorePairing?: boolean): [TMark, TMark];
 
 // @public
 export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, ISubscribable<SchemaEvents>, SchemaDataAndPolicy<TPolicy> {

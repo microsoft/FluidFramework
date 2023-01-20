@@ -4,135 +4,100 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import {
-    ChangesetLocalId,
-    CrossFieldManager,
-    CrossFieldTarget,
-    IdAllocator,
-    SequenceField as SF,
-} from "../../../feature-libraries";
-import { Delta, TaggedChange, makeAnonChange, tagChange, RevisionTag } from "../../../core";
+import { ChangesetLocalId, IdAllocator, SequenceField as SF } from "../../../feature-libraries";
+import { Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze, fakeRepair } from "../../utils";
-import {
-    brand,
-    deleteFromNestedMap,
-    fail,
-    getOrAddInNestedMap,
-    getOrDefaultInNestedMap,
-    NestedMap,
-    setInNestedMap,
-    tryGetFromNestedMap,
-} from "../../../util";
+import { brand, fail } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
 export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
-    const taggedChanges = changes.map(makeAnonChange);
-    return SF.sequenceFieldChangeRebaser.compose(
-        taggedChanges,
-        TestChange.compose,
-        continuingAllocator(taggedChanges),
+    return compose(changes.map(makeAnonChange));
+}
+
+export function compose(changes: TaggedChange<TestChangeset>[]): TestChangeset {
+    return composeI(changes, TestChange.compose);
+}
+
+export function shallowCompose<T>(changes: TaggedChange<SF.Changeset<T>>[]): SF.Changeset<T> {
+    return composeI(changes, () => fail("Should not have children to compose"));
+}
+
+function composeI<T>(
+    changes: TaggedChange<SF.Changeset<T>>[],
+    composer: (childChanges: TaggedChange<T>[]) => T,
+): SF.Changeset<T> {
+    const table = SF.newCrossFieldTable();
+    const idAllocator = continuingAllocator(changes);
+    const composed = SF.compose(changes, composer, idAllocator, SF.newCrossFieldManager(table));
+
+    if (table.isInvalidated) {
+        resetCrossFieldTable(table);
+        SF.amendCompose(composed, composer, idAllocator, SF.newCrossFieldManager(table));
+        assert(!table.isInvalidated, "Compose should not need more than one amend pass");
+    }
+    return composed;
+}
+
+export function rebase(change: TestChangeset, base: TaggedChange<TestChangeset>): TestChangeset {
+    deepFreeze(change);
+    deepFreeze(base);
+
+    const table = SF.newCrossFieldTable();
+    const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
+    let rebasedChange = SF.rebase(
+        change,
+        base,
+        TestChange.rebase,
+        idAllocator,
+        SF.newCrossFieldManager(table),
     );
+    if (table.isInvalidated) {
+        resetCrossFieldTable(table);
+        rebasedChange = SF.amendRebase(change, base, idAllocator, SF.newCrossFieldManager(table));
+        assert(!table.isInvalidated, "Rebase should not need more than one amend pass");
+    }
+    return rebasedChange;
 }
 
 export function rebaseTagged(
     change: TaggedChange<TestChangeset>,
-    ...base: TaggedChange<TestChangeset>[]
+    ...baseChanges: TaggedChange<TestChangeset>[]
 ): TaggedChange<TestChangeset> {
-    deepFreeze(change);
-    deepFreeze(base);
-
     let currChange = change;
-    for (const baseChange of base) {
-        currChange = tagChange(
-            SF.rebase(
-                currChange.change,
-                baseChange,
-                TestChange.rebase,
-                idAllocatorFromMaxId(getMaxId(currChange.change, baseChange.change)),
-            ),
-            change.revision,
-        );
+    for (const base of baseChanges) {
+        currChange = tagChange(rebase(currChange.change, base), currChange.revision);
     }
+
     return currChange;
 }
 
-type NestedSet<Key1, Key2> = NestedMap<Key1, Key2, boolean>;
-type MoveQuerySet = NestedSet<RevisionTag | undefined, SF.MoveId>;
-
-function addToNestedSet<Key1, Key2>(set: NestedSet<Key1, Key2>, key1: Key1, key2: Key2): void {
-    setInNestedMap(set, key1, key2, true);
-}
-
-function nestedSetContains<Key1, Key2>(
-    set: NestedSet<Key1, Key2>,
-    key1: Key1,
-    key2: Key2,
-): boolean {
-    return getOrDefaultInNestedMap(set, key1, key2, false);
-}
-
-interface CrossFieldTable {
-    srcQueries: MoveQuerySet;
-    dstQueries: MoveQuerySet;
-    invalidated: boolean;
-}
-
-function newCrossFieldTable(): CrossFieldTable {
-    return {
-        srcQueries: new Map(),
-        dstQueries: new Map(),
-        invalidated: false,
-    };
-}
-
-function newCrossFieldManager(table: CrossFieldTable): CrossFieldManager {
-    const mapSrc: NestedMap<RevisionTag | undefined, SF.MoveId, unknown> = new Map();
-    const mapDst: NestedMap<RevisionTag | undefined, SF.MoveId, unknown> = new Map();
-    const getMap = (target: CrossFieldTarget) =>
-        target === CrossFieldTarget.Source ? mapSrc : mapDst;
-
-    const getQueries = (target: CrossFieldTarget) =>
-        target === CrossFieldTarget.Source ? table.srcQueries : table.dstQueries;
-
-    const manager: CrossFieldManager = {
-        get: (target, revision, id) => {
-            const result = tryGetFromNestedMap(getMap(target), revision, id);
-            addToNestedSet(getQueries(target), revision, id);
-            return result;
-        },
-        getOrCreate: (target, revision, id, defaultValue) => {
-            getOrAddInNestedMap(getMap(target), revision, id, defaultValue);
-            if (nestedSetContains(getQueries(target), revision, id)) {
-                table.invalidated = true;
-            }
-        },
-        consume: (target, revision, id) => deleteFromNestedMap(getMap(target), revision, id),
-    };
-    return manager;
+function resetCrossFieldTable(table: SF.CrossFieldTable) {
+    table.isInvalidated = false;
+    table.srcQueries.clear();
+    table.dstQueries.clear();
 }
 
 export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
-    const table = newCrossFieldTable();
+    const table = SF.newCrossFieldTable();
     let inverted = SF.invert(
         change,
         TestChange.invert,
         () => fail("Sequence fields should not generate IDs during invert"),
-        newCrossFieldManager(table),
+        SF.newCrossFieldManager(table),
     );
 
-    if (table.invalidated) {
-        table.invalidated = false;
+    if (table.isInvalidated) {
+        table.isInvalidated = false;
         table.srcQueries.clear();
         table.dstQueries.clear();
         inverted = SF.amendInvert(
             inverted,
             change.revision,
-            TestChange.invert,
             () => fail("Sequence fields should not generate IDs during invert"),
-            newCrossFieldManager(table),
+            SF.newCrossFieldManager(table),
         );
-        assert(!table.invalidated, "Invert should not need more than one amend pass");
+        assert(!table.isInvalidated, "Invert should not need more than one amend pass");
     }
 
     return inverted;

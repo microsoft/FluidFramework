@@ -77,7 +77,7 @@ export class MarkQueue<T> {
     public dequeueInput(length: number): InputSpanningMark<T> {
         const mark = this.dequeue();
         assert(isInputSpanningMark(mark), 0x4e3 /* Can only split sized marks on input */);
-        const [mark1, mark2] = splitMarkOnInput(
+        const [mark1, mark2] = splitMarkOnInput<T, InputSpanningMark<T>>(
             mark,
             this.revision,
             length,
