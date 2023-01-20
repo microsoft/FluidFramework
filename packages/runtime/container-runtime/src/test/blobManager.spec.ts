@@ -106,6 +106,7 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
     public attachedStorage = new DedupeStorage();
     public detachedStorage = new NonDedupeStorage();
     public logger = new TelemetryNullLogger();
+    public currentReferenceTimestampMs: number | undefined;
 
     private ops: any[] = [];
     private processBlobsP = new Deferred<void>();

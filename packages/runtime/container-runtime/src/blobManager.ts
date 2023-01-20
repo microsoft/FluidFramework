@@ -14,7 +14,7 @@ import {
     SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
 import { assert, bufferToString, Deferred, stringToBuffer, TypedEventEmitter } from "@fluidframework/common-utils";
-import { IContainerRuntime, IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ChildLogger, loggerToMonitoringContext, MonitoringContext, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
@@ -26,6 +26,7 @@ import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summarizerClientElection";
 import { throwOnTombstoneLoadKey } from "./garbageCollectionConstants";
 import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
+import { ContainerRuntime } from "./containerRuntime";
 
 /**
  * This class represents blob (long string)
@@ -90,7 +91,7 @@ export interface IBlobManagerLoadInfo {
 // Restrict the IContainerRuntime interface to the subset required by BlobManager.  This helps to make
 // the contract explicit and reduces the amount of mocking required for tests.
 export type IBlobManagerRuntime =
-    Pick<IContainerRuntime, "attachState" | "connected" | "logger" | "clientDetails"> & TypedEventEmitter<IContainerRuntimeEvents>;
+    Pick<ContainerRuntime, "attachState" | "connected" | "logger" | "clientDetails" | "currentReferenceTimestampMs"> & TypedEventEmitter<IContainerRuntimeEvents>;
 
 // Note that while offline we "submit" an op before uploading the blob, but we always
 // expect blobs to be uploaded before we actually see the op round-trip
@@ -100,6 +101,8 @@ enum PendingBlobStatus {
     OfflinePendingUpload,
     OfflinePendingOp,
 }
+
+type ICreateBlobResponseWithTTL = ICreateBlobResponse & Partial<Record<"minTTLInSeconds", number>>
 
 interface PendingBlob {
     blob: ArrayBufferLike;
@@ -372,7 +375,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
             this.mc.logger,
             { eventName: "createBlob" },
             async () => {
-                const res: ICreateBlobResponse & Partial<Record<"minTTLInSeconds", number>> = await this.getStorage().createBlob(blob);
+                const res: ICreateBlobResponseWithTTL = await this.getStorage().createBlob(blob);
                 return res;
             },
             { end: true, cancel: this.runtime.connected ? "error" : "generic" },
@@ -404,7 +407,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         }
     }
 
-    private onUploadResolve(localId: string, response: ICreateBlobResponse & Partial<Record<"minTTLInSeconds", number>>) {
+    private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
         const entry = this.pendingBlobs.get(localId);
         assert(entry?.status === PendingBlobStatus.OnlinePendingUpload ||
             entry?.status === PendingBlobStatus.OfflinePendingUpload,
@@ -412,6 +415,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         entry.storageId = response.id;
         entry.localUploadTime = Date.now();
         entry.minTTL = response.minTTLInSeconds;
+        entry.serverUploadTime = this.runtime.currentReferenceTimestampMs;
 
         if (this.runtime.connected) {
             if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
@@ -420,7 +424,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
                 //    until its storage ID is added to the next summary.
                 // 2. It will create a local ID to storage ID mapping in all clients which is needed to retrieve the
                 //    blob from the server via the storage ID.
-                this.getTimeInfo(entry, "sendBlobAttachResolveTTL", "sendBlobAttachResolveNoTTL");
+                this.logTimeInfo(entry, "sendBlobAttachResolveTTL", "sendBlobAttachResolveNoTTL");
                 this.sendBlobAttachOp(localId, response.id);
                 if (this.storageIds.has(response.id)) {
                     // The blob is de-duped. Set up a local ID to storage ID mapping and return the blob. Since this is
@@ -482,7 +486,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
          * is called on reconnection.
          */
         if (entry.status !== PendingBlobStatus.OnlinePendingOp) {
-            this.getTimeInfo(entry, "sendBlobAttachTransitionOfflineTTL", "sendBlobAttachTransitionOfflineNoTTL");
+            this.logTimeInfo(entry, "sendBlobAttachTransitionOfflineTTL", "sendBlobAttachTransitionOfflineNoTTL");
             this.sendBlobAttachOp(localId, entry.storageId);
         }
 
@@ -493,21 +497,29 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         entry.handleP.resolve(this.getBlobHandle(localId));
     }
 
-    private getTimeInfo(pendingEntry: PendingBlob, eventName: string, noTTLEventName: string) {
+    private logTimeInfo(pendingEntry: PendingBlob, eventName: string, noTTLEventName: string) {
         let timeLapseSinceLocalUpload: number = 0;
+        let timeLapseSinceServerUpload: number = 0;
         let expiredUsingLocalTime;
+        let expiredUsingServerTime;
         const minTTL: number  | undefined = pendingEntry.minTTL;
         if(minTTL) {
             if(pendingEntry.localUploadTime){
                 timeLapseSinceLocalUpload = (Date.now() - pendingEntry.localUploadTime) / 1000;
                 expiredUsingLocalTime = minTTL - timeLapseSinceLocalUpload < 0 ? true : false;
             }
+            if(pendingEntry.serverUploadTime){
+                timeLapseSinceServerUpload = (Date.now() - pendingEntry.serverUploadTime) / 1000;
+                expiredUsingServerTime = minTTL - timeLapseSinceServerUpload < 0 ? true : false;
+            }
             this.mc.logger.sendTelemetryEvent({
                 eventName,
                 entryStatus: pendingEntry.status,
                 timeLapseSinceLocalUpload,
+                timeLapseSinceServerUpload,
                 minTTL,
                 expiredUsingLocalTime,
+                expiredUsingServerTime,
             });
         } else {
             this.mc.logger.sendTelemetryEvent({ eventName: noTTLEventName, entryStatus: pendingEntry.status, });
@@ -526,7 +538,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         assert(localId !== undefined, 0x50d /* local ID not available on reSubmit */);
         const pendingEntry = this.pendingBlobs.get(localId);
         if (pendingEntry) {
-            this.getTimeInfo(pendingEntry, "sendBlobAttachResubmitTTL", "sendBlobAttachResubmitNoTTL");
+            this.logTimeInfo(pendingEntry, "sendBlobAttachResubmitTTL", "sendBlobAttachResubmitNoTTL");
         }
         if (!blobId) {
             // We submitted this op while offline. The blob should have been uploaded by now.

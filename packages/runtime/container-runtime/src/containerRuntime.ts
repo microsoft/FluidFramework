@@ -842,6 +842,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.attachState;
     }
 
+    public get currentReferenceTimestampMs() : number | undefined {
+        return this.deltaManager.lastMessage?.timestamp ?? this.messageAtLastSummary?.timestamp;
+    }
+
     public get IFluidHandleContext(): IFluidHandleContext {
         return this.handleContext;
     }
