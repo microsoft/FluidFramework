@@ -83,6 +83,7 @@
     "@fluidframework/build-tools": "^0.7.0",
     "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
+    "@fluidframework/task-manager-previous": "npm:@fluidframework/task-manager@2.0.0-internal.2.2.0",
     "@fluidframework/test-runtime-utils": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
@@ -101,9 +102,8 @@
   },
   "typeValidation": {
     "version": "2.0.0-internal.3.0.0",
-    "disabled": true,
     "baselineRange": ">=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0",
-    "baselineVersion": "2.0.0-internal.2.1.1",
+    "baselineVersion": "2.0.0-internal.2.2.0",
     "broken": {}
   }
 }

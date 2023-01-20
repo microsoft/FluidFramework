@@ -225,8 +225,14 @@ export class LoadTestDataStoreModel {
         this.partnerId = (this.config.runId + halfClients) % this.config.testConfig.numClients;
         const changed = (taskId) => {
             if (taskId === this.taskId && this.taskStartTime !== 0) {
-                this.dir.set(taskTimeKey, this.totalTaskTime);
-                this.taskStartTime = 0;
+                Promise.resolve().then(() => {
+                    this.dir.set(taskTimeKey, this.totalTaskTime);
+                    this.taskStartTime = 0;
+                }).catch((error) => {
+                    this.logger.sendErrorEvent({
+                        eventName: "TaskManager_OnValueChanged",
+                    }, error);
+                });
             }
         };
         this.taskManager.on("lost", changed);
@@ -256,7 +262,12 @@ export class LoadTestDataStoreModel {
                     : Math.trunc(value * blobsPerOp - this.blobCount);
 
                 if (newBlobs > 0) {
-                    this.blobUploads.push(...[...Array(newBlobs)].map(async () => this.writeBlob(this.blobCount++)));
+                    Promise.resolve().then(() => {
+                        this.blobUploads.push(...[...Array(newBlobs)].map(async () => this.writeBlob(this.blobCount++)));
+                    }).catch((error) => this.logger.sendErrorEvent({
+                        eventName: "WriteBlobFailed_OnCounterValueChanged",
+                        count: this.blobCount,
+                    }, error));
                 }
             });
         }
