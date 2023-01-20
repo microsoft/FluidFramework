@@ -681,49 +681,87 @@ describe("Runtime", () => {
         })
 
         describe("EntryPoint initialized correctly", () => {
-            it("when using old load method", async () => {
-                // This test passes in a requestHandler because the old load method creates an entryPoint
-                // that only has the requestHandler that was passed in.
+            it("when using old load method and no entryPoint initialization function", async () => {
                 const myResponse: IResponse = { mimeType: "myMimeType", value: "hello!", status: 200 };
                 const containerRuntime = await ContainerRuntime.load(
                     getMockContext() as IContainerContext,
                     [],        // registryEntries
-                    async (request, ctrRuntime) => myResponse,
+                    async (req, ctrRuntime) => myResponse,
                     {},        // runtimeOptions
                     undefined, // containerScope
                     false,     // existing
                     undefined, // containerRuntimeCtor
                 );
+                const request: IRequest = { url: "myUrl" };
 
+                // Calling request on the runtime should use the request handler we passed in the runtime's constructor.
+                const responseFromRequestMethod = await containerRuntime.request(request);
+                assert.deepEqual(responseFromRequestMethod, myResponse,
+                "request method in runtime did not return the expected object");
+
+                // The entryPoint should be defined with our default logic so it should be the runtime itself.
+                // Since IProvideContainerRuntime is deprecated, we check it implements IFluidRouter.
                 const actualEntryPoint = await containerRuntime.entryPoint;
-
                 assert(actualEntryPoint !== undefined, "entryPoint was not initialized");
                 const maybeFluidRouter: FluidObject<IProvideFluidRouter> = actualEntryPoint;
                 if (maybeFluidRouter.IFluidRouter?.request === undefined) {
-                    assert.fail("entryPoint's doesn't implement IFluidRouter");
+                    assert.fail("entryPoint doesn't implement IFluidRouter");
                 }
-                const actualResponse = await maybeFluidRouter.IFluidRouter.request(undefined as unknown as Request);
-                assert.deepEqual(actualResponse, myResponse, "request method in entryPoint returned unexpected Response");
+
+                // Since no entryPoint initialization function was provided to the runtime's constructor, we default to
+                // the runtime itself being the entryPoint, so the entryPoint will still have a request() method that
+                // behaves exactly like calling request() directly on the runtime (in fact it is the same method).
+                const responseFromEntryPoint = await maybeFluidRouter.IFluidRouter.request(request);
+                assert.deepEqual(responseFromEntryPoint, myResponse,
+                    "request method in entryPoint did not return the expected object");
+            });
+
+            it("when using old load method and entryPoint initialization function is provided", async () => {
+                const myResponse: IResponse = { mimeType: "myMimeType", value: "hello!", status: 200 };
+                const myEntryPoint: FluidObject = {
+                    myProp: "myValue"
+                };
+                const containerRuntime = await ContainerRuntime.load(
+                    getMockContext() as IContainerContext,
+                    [],        // registryEntries
+                    async (req, ctrRuntime) => myResponse,
+                    {},        // runtimeOptions
+                    undefined, // containerScope
+                    false,     // existing
+                    undefined, // containerRuntimeCtor
+                    async (runtime: IContainerRuntime) => myEntryPoint
+                );
+                const request: IRequest = { url: "myUrl" };
+
+                // Calling request on the runtime should use the request handler we passed in the runtime's constructor.
+                const responseFromRequestMethod = await containerRuntime.request(request);
+                    assert.deepEqual(responseFromRequestMethod, myResponse,
+                    "request method in runtime did not return the expected object");
+
+                // The entryPoint should come from the provided initialization function.
+                const actualEntryPoint = await containerRuntime.entryPoint;
+                assert.notStrictEqual(actualEntryPoint, undefined, "entryPoint was not initialized");
+                assert.deepEqual(actualEntryPoint, myEntryPoint, "entryPoint does not match the expected object");
             });
 
             it("when using new load method", async () => {
-                const entryPoint: FluidObject = {
+                const myEntryPoint: FluidObject = {
                     myProp: "myValue"
                 };
                 const containerRuntime = await ContainerRuntime.newLoad(
                     getMockContext() as IContainerContext,
                     undefined, // containerRuntimeCtor
-                    async (ctrRuntime) => entryPoint,
+                    async (ctrRuntime) => myEntryPoint,
                     false,     // existing
                     {},        // runtimeOptions
                     [],        // registryEntries
                     undefined, // containerScope
                 );
 
+                // The entryPoint should come from the provided initialization function.
                 const actualEntryPoint = await containerRuntime.entryPoint;
-
                 assert(actualEntryPoint !== undefined, "entryPoint was not initialized");
-                assert.deepEqual(actualEntryPoint, entryPoint, "entryPoint does not match expected object");
+                assert.deepEqual(actualEntryPoint, myEntryPoint, "entryPoint does not match expected object");
             });
         })
     });
