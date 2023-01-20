@@ -495,6 +495,21 @@ function readmeContributionGuidelinesSectionTransform(content, options, config) 
 }
 
 /**
+ * Generates a README "help" section.
+ *
+ * @param {object} content - The original document file contents.
+ * @param {object} options - Transform options.
+ * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
+ * Default: `TRUE`.
+ * @param {object} config - Transform configuration.
+ * @param {string} config.originalPath - Path to the document being modified.
+ */
+function readmeHelpSectionTransform(content, options, config) {
+	const includeHeading = options.includeHeading !== "FALSE";
+	return formattedGeneratedContentBody(generateHelpSection(includeHeading));
+}
+
+/**
  * markdown-magic config
  */
 module.exports = {
@@ -528,6 +543,7 @@ module.exports = {
 		 *
 		 * ```markdown
 		 * <!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_PACKAGE:packageJsonPath=./package.json&gettingStarted=TRUE&usesTinylicious=TRUE&scripts=FALSE&     contributionGuidelines=TRUE&help=TRUE&trademark=TRUE&devDependency=FALSE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
 		EXAMPLE_PACKAGE_README: examplePackageReadmeTransform,
@@ -539,6 +555,7 @@ module.exports = {
 		 *
 		 * ```markdown
 		 * <!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_GETTING_STARTED_SECTION:packageJsonPath=./package.json&usesTinylicious=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
 		README_EXAMPLE_GETTING_STARTED_SECTION: readmeExampleGettingStartedSectionTransform,
@@ -550,6 +567,7 @@ module.exports = {
 		 *
 		 * ```markdown
 		 * <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:packageJsonPath=./package.json&includeHeading=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
 		README_API_DOCS_SECTION: readmeApiDocsSectionTransform,
@@ -561,6 +579,7 @@ module.exports = {
 		 *
 		 * ```markdown
 		 * <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:packageJsonPath=./package.json&includeHeading=TRUE&devDependency=FALSE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
 		README_INSTALLATION_SECTION: readmeInstallationSectionTransform,
@@ -572,6 +591,7 @@ module.exports = {
 		 *
 		 * ```markdown
 		 * <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
 		README_TRADEMARK_SECTION: readmeTrademarkSectionTransform,
@@ -583,15 +603,22 @@ module.exports = {
 		 *
 		 * ```markdown
 		 * <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
 		README_CONTRIBUTION_GUIDELINES_SECTION: readmeContributionGuidelinesSectionTransform,
 
-		/* Match <!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) --> */
-		README_HELP_SECTION(content, options, config) {
-			const includeHeading = options.includeHeading !== "FALSE";
-			return formattedGeneratedContentBody(generateHelpSection(includeHeading));
-		},
+		/**
+		 * See {@link readmeHelpSectionTransform}.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:END -->
+		 * ```
+		 */
+		README_HELP_SECTION: readmeHelpSectionTransform,
 
 		/* Match <!-- AUTO-GENERATED-CONTENT:START (PACKAGE_JSON_SCRIPTS:includeHeading=TRUE) --> */
 		PACKAGE_JSON_SCRIPTS(content, options, config) {
