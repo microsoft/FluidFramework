@@ -446,7 +446,7 @@ export class DataStores implements IDisposable {
             // The requested data store is removed by gc. Create a 404 gc response exception.
             const error = responseToException(createResponseError(
                 404,
-                "Datastore removed by gc",
+                "DataStore was deleted",
                 request,
                 { [TombstoneResponseHeaderKey]: true },
             ), request);

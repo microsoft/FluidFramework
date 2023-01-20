@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import {
     AllowTombstoneRequestHeaderKey,
+    ContainerRuntime,
     IGCRuntimeOptions,
     ISummarizer,
     RuntimeHeaders,
@@ -468,15 +469,18 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             const container = await loadContainer(summaryVersion);
             await sendOpToUpdateSummaryTimestampToNow(container);
 
+            // This request fails since the datastore is tombstoned
             const tombstoneErrorResponse = await containerRuntime_resolveHandle(container, { url: unreferencedId });
             assert.equal(tombstoneErrorResponse.status, 404, "Should not be able to retrieve a tombstoned datastore in non-summarizer clients");
-            assert.equal(tombstoneErrorResponse.value, `Datastore removed by gc: ${unreferencedId}`, "Expected the Tombstone error message");
+            assert.equal(tombstoneErrorResponse.value, `DataStore was deleted: ${unreferencedId}`, "Expected the Tombstone error message");
             assert.equal(tombstoneErrorResponse.headers?.[TombstoneResponseHeaderKey], true, "Expected the Tombstone header");
 
+            // This request succeeds because the "allowTombstone" header is set to true
             const tombstoneSuccessResponse = await containerRuntime_resolveHandle(container, { url: unreferencedId, headers: { [AllowTombstoneRequestHeaderKey]: true }});
             assert.equal(tombstoneSuccessResponse.status, 200, "Should be able to retrieve a tombstoned datastore given the allowTombstone header");
             assert.notEqual(tombstoneSuccessResponse.headers?.[TombstoneResponseHeaderKey], true, "DID NOT Expect tombstone header to be set on the response");
 
+            // This request succeeds because the summarizer never fails for tombstones
             const summarizerResponse = await containerRuntime_resolveHandle(summarizingContainer, { url: unreferencedId });
             assert.equal(summarizerResponse.status, 200, "Should be able to retrieve a tombstoned datastore in summarizer clients");
             assert.notEqual(summarizerResponse.headers?.[TombstoneResponseHeaderKey], true, "DID NOT Expect tombstone header to be set on the response");
@@ -511,7 +515,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             await assert.rejects(async () => requestFluidObject<ITestDataObject>(container, unreferencedId),
                 (error) => {
                     const correctErrorType = error.code === 404;
-                    const correctErrorMessage = error.message === `Datastore removed by gc: ${unreferencedId}`;
+                    const correctErrorMessage = error.message === `DataStore was deleted: ${unreferencedId}`;
                     return correctErrorType && correctErrorMessage;
                 },
                 `Should not be able to retrieve a tombstoned datastore.`,
@@ -523,6 +527,9 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
         [
             // Interactive client's handle.get
             { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested", headers: expectedHeadersLogged.handleGet },
+            // Interactive client's request w/ allowTombstone
+            { eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested", category: "generic", headers: expectedHeadersLogged.request_allowTombstone },
+            { eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded" },
         ],
         async () => {
             const {
@@ -539,6 +546,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             const serializer = new FluidSerializer(dataObject._context.IFluidHandleContext, () => {});
             const handle: IFluidHandle = parseHandles({ type: "__fluid_handle__", url: unreferencedId }, serializer);
 
+            // This fails because the DataStore is tombstoned
             let tombstoneError: Error & { code: number; underlyingResponseHeaders?: { [TombstoneResponseHeaderKey]: boolean; }; } | undefined;
             try {
                 await handle.get();
@@ -546,8 +554,13 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
                 tombstoneError = error
             }
             assert.equal(tombstoneError?.code, 404, "Tombstone error from handle.get should have 404 status code");
-            assert.equal(tombstoneError?.message, `Datastore removed by gc: ${unreferencedId}`, "Incorrect message for Tombstone error from handle.get");
+            assert.equal(tombstoneError?.message, `DataStore was deleted: ${unreferencedId}`, "Incorrect message for Tombstone error from handle.get");
             assert.equal(tombstoneError?.underlyingResponseHeaders?.[TombstoneResponseHeaderKey], true, "Tombstone error from handle.get should include the tombstone flag");
+
+            // This demonstrates how a consumer could then fetch the tombstoned object to facilitate recovery (actual revival is covered in another test below)
+            const tombstoneSuccessResponse = await (dataObject._context.containerRuntime as ContainerRuntime).resolveHandle({ url: unreferencedId, headers: { [AllowTombstoneRequestHeaderKey]: true }});
+            assert.equal(tombstoneSuccessResponse.status, 200, "Should be able to retrieve a tombstoned datastore given the allowTombstone header");
+            assert.notEqual(tombstoneSuccessResponse.headers?.[TombstoneResponseHeaderKey], true, "DID NOT Expect tombstone header to be set on the response");
         });
 
         // SKIPPED: This test is redundant with the previous one; SweepReady calculation/timers has coverage elsewhere
@@ -579,7 +592,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
             assert(response !== undefined, `Expecting a response!`);
             assert(response.status === 404);
-            assert(response.value === `Datastore removed by gc: ${unreferencedId}`);
+            assert(response.value === `DataStore was deleted: ${unreferencedId}`);
         });
 
         // If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
@@ -999,7 +1012,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             await assert.rejects(async () => requestFluidObject<ITestDataObject>(container2, unreferencedId),
                 (error) => {
                     const correctErrorType = error.code === 404;
-                    const correctErrorMessage = error.message === `Datastore removed by gc: ${unreferencedId}`;
+                    const correctErrorMessage = error.message === `DataStore was deleted: ${unreferencedId}`;
                     return correctErrorType && correctErrorMessage;
                 },
                 `Should not be able to retrieve a tombstoned datastore.`,
