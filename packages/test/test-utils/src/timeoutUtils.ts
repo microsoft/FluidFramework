@@ -119,6 +119,8 @@ export interface TimeoutWithValue<T = void> {
     value: T;
 }
 
+export type PromiseExecutor<T = void> = (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void;
+
 export async function timeoutAwait<T = void>(
     promise: PromiseLike<T>,
     timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},

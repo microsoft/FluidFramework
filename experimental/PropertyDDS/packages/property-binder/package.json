@@ -71,7 +71,8 @@
     "@fluid-experimental/property-changeset": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluid-experimental/property-dds": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluid-experimental/property-properties": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "underscore": "^1.13.6"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
@@ -84,6 +85,9 @@
     "@fluidframework/test-utils": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/jest": "22.2.3",
+    "@types/lodash": "^4.14.118",
+    "@types/node": "^14.18.36",
+    "@types/underscore": "^1.11.4",
     "async": "^3.2.2",
     "babel-eslint": "^10.0.1",
     "babel-loader": "^8.0.5",

@@ -82,7 +82,7 @@ export class SnapshotLegacy {
         }
 
         assert(segsWithAttribution === 0 || segsWithAttribution === segCount,
-            "all or no segments should have attribution");
+            0x4bf /* all or no segments should have attribution */);
 
         return {
             version: undefined,

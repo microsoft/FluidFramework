@@ -17,9 +17,10 @@ import {
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils";
 import { createNewFluidFile } from "../createFile";
+import { createNewContainerOnExistingFile } from "../createNewContainerOnExistingFile";
 import { EpochTracker } from "../epochTracker";
 import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
-import { INewFileInfo, createCacheSnapshotKey } from "../odspUtils";
+import { INewFileInfo, createCacheSnapshotKey, IExistingFileInfo } from "../odspUtils";
 import { LocalPersistentCache } from "../odspCache";
 import { mockFetchOk } from "./mockFetch";
 
@@ -137,6 +138,32 @@ describe("Create New Utils Tests", () => {
             async () => createNewFluidFile(
                 async (_options) => "token",
                 newFileParams,
+                new TelemetryNullLogger(),
+                createSummary(),
+                epochTracker,
+                fileEntry,
+                true /* createNewCaching */,
+                false /* forceAccessTokenViaAuthorizationHeader */,
+            ),
+            { itemId: "itemId1", id: "Summary handle" },
+            { "x-fluid-epoch": "epoch1" },
+        );
+        const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
+        test(snapshot);
+        await epochTracker.removeEntries().catch(() => { });
+    });
+
+    it("Should cache converted summary during createNewContainerOnExistingFile", async () => {
+        const existingFileParams: IExistingFileInfo = {
+            type: 'Existing',
+            itemId: "itemId1",
+            siteUrl,
+            driveId
+        };
+        const odspResolvedUrl = await mockFetchOk(
+            async () => createNewContainerOnExistingFile(
+                async (_options) => "token",
+                existingFileParams,
                 new TelemetryNullLogger(),
                 createSummary(),
                 epochTracker,
@@ -317,11 +344,54 @@ describe("Create New Utils Tests", () => {
         await epochTracker.removeEntries().catch(() => { });
     });
 
-    it("Should set the isClpCompliantApp prop on resolved url if already present", async () => {
+    it("Should set the isClpCompliantApp prop on resolved url if already present when createNewFluidFile", async () => {
         const odspResolvedUrl1 = await mockFetchOk(
             async () => createNewFluidFile(
                 async (_options) => "token",
                 newFileParams,
+                new TelemetryNullLogger(),
+                createSummary(),
+                epochTracker,
+                fileEntry,
+                true /* createNewCaching */,
+                false /* forceAccessTokenViaAuthorizationHeader */,
+                true /* isClpCompliantApp */,
+            ),
+            { itemId: "itemId1", id: "Summary handle" },
+            { "x-fluid-epoch": "epoch1" },
+        );
+        assert(odspResolvedUrl1.isClpCompliantApp, "isClpCompliantApp should be set");
+
+        const odspResolvedUrl2 = await mockFetchOk(
+            async () => createNewFluidFile(
+                async (_options) => "token",
+                newFileParams,
+                new TelemetryNullLogger(),
+                createSummary(),
+                epochTracker,
+                fileEntry,
+                true /* createNewCaching */,
+                false /* forceAccessTokenViaAuthorizationHeader */,
+                undefined /* isClpCompliantApp */,
+            ),
+            { itemId: "itemId1", id: "Summary handle" },
+            { "x-fluid-epoch": "epoch1" },
+        );
+        assert(!odspResolvedUrl2.isClpCompliantApp, "isClpCompliantApp should be falsy");
+        await epochTracker.removeEntries().catch(() => { });
+    });
+
+    it("Should set the isClpCompliantApp prop on resolved url if already present when createNewContainerOnExistingFile", async () => {
+        const existingFileParams: IExistingFileInfo = {
+            type: 'Existing',
+            itemId: "itemId1",
+            siteUrl,
+            driveId
+        };
+        const odspResolvedUrl1 = await mockFetchOk(
+            async () => createNewContainerOnExistingFile(
+                async (_options) => "token",
+                existingFileParams,
                 new TelemetryNullLogger(),
                 createSummary(),
                 epochTracker,

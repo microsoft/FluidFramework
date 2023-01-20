@@ -6,26 +6,23 @@
 import { ITelemetryGenericEvent } from "@fluidframework/common-definitions";
 import { packagePathToTelemetryProperty } from "@fluidframework/runtime-utils";
 import { MonitoringContext } from "@fluidframework/telemetry-utils";
-import { throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
+import { disableTombstoneKey, throwOnTombstoneLoadKey, throwOnTombstoneUsageKey } from "./garbageCollectionConstants";
 
 /**
- * Decides whether or not to send an error event or a generic event for gc tombstone scenarios
- *
- * Adds isSummarizerClient, packagePath, and error to telemetry properties.
+ * Consolidates info / logic for logging when we encounter a Tombstone
  */
 export function sendGCTombstoneEvent(
     mc: MonitoringContext,
-    event: ITelemetryGenericEvent,
-    isSummarizerClient: boolean,
+    event: ITelemetryGenericEvent & { category: "error" | "generic", isSummarizerClient: boolean },
     packagePath: readonly string[] | undefined,
-    error?: any,
+    error?: unknown,
 ) {
-    const throwOnTombstoneUsage = event.throwOnTombstoneUsage = mc.config.getBoolean(throwOnTombstoneUsageKey) ?? false;
     event.pkg = packagePathToTelemetryProperty(packagePath);
-    event.isSummarizerClient = isSummarizerClient;
-    if(throwOnTombstoneUsage) {
-        mc.logger.sendErrorEvent(event, error);
-    } else {
-        mc.logger.sendTelemetryEvent(event, error);
-    }
+    event.tombstoneFlags = JSON.stringify({
+        DisableTombstone: mc.config.getBoolean(disableTombstoneKey),
+        ThrowOnTombstoneUsage: mc.config.getBoolean(throwOnTombstoneUsageKey),
+        ThrowOnTombstoneLoad: mc.config.getBoolean(throwOnTombstoneLoadKey),
+    });
+
+    mc.logger.sendTelemetryEvent(event, error);
 }
