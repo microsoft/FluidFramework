@@ -539,7 +539,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             const serializer = new FluidSerializer(dataObject._context.IFluidHandleContext, () => {});
             const handle: IFluidHandle = parseHandles({ type: "__fluid_handle__", url: unreferencedId }, serializer);
 
-            let tombstoneError: Error & { code: number; headers?: { [TombstoneResponseHeaderKey]: boolean; }; } | undefined;
+            let tombstoneError: Error & { code: number; underlyingResponseHeaders?: { [TombstoneResponseHeaderKey]: boolean; }; } | undefined;
             try {
                 await handle.get();
             } catch (error: any) {
@@ -547,7 +547,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
             }
             assert.equal(tombstoneError?.code, 404, "Tombstone error from handle.get should have 404 status code");
             assert.equal(tombstoneError?.message, `Datastore removed by gc: ${unreferencedId}`, "Incorrect message for Tombstone error from handle.get");
-            assert.equal(tombstoneError?.headers?.[TombstoneResponseHeaderKey], true, "Tombstone error from handle.get should include the tombstone flag");
+            assert.equal(tombstoneError?.underlyingResponseHeaders?.[TombstoneResponseHeaderKey], true, "Tombstone error from handle.get should include the tombstone flag");
         });
 
         // SKIPPED: This test is redundant with the previous one; SweepReady calculation/timers has coverage elsewhere

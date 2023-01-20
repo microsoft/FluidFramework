@@ -23,7 +23,7 @@ interface IResponseException extends Error {
     message: string;
     code: number;
     stack?: string;
-    headers?: { [key: string]: any; };
+    underlyingResponseHeaders?: { [key: string]: any; };
 }
 
 export function exceptionToResponse(err: any): IResponse {
@@ -35,7 +35,7 @@ export function exceptionToResponse(err: any): IResponse {
             status: responseErr.code,
             value: responseErr.message,
             get stack() { return responseErr.stack; },
-            headers: responseErr.headers,
+            headers: responseErr.underlyingResponseHeaders,
         };
     }
 
@@ -59,7 +59,7 @@ export function responseToException(response: IResponse, request: IRequest): Err
         name: "Error",
         code: response.status,
         get stack() { return response.stack ?? errWithStack.stack; },
-        headers: response.headers,
+        underlyingResponseHeaders: response.headers,
     };
 
     return responseErr;
