@@ -56,6 +56,9 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 export const agentSchedulerId = "_scheduler";
 
 // @public
+export const AllowTombstoneRequestHeaderKey = "allowTombstone";
+
+// @public
 export enum CompressionAlgorithms {
     // (undocumented)
     lz4 = "lz4"
@@ -760,6 +763,9 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     waitFlushed(): Promise<IAckedSummary | undefined>;
     waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary>;
 }
+
+// @public
+export const TombstoneResponseHeaderKey = "isTombstoned";
 
 // @internal
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean;
