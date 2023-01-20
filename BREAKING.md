@@ -30,6 +30,8 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Op reentry will no longer be supported](#op-reentry-will-no-longer-be-supported)
 - [Remove ISummarizerRuntime batchEnd listener](#Remove-ISummarizerRuntime-batchEnd-listener)
 - [Remove ISummaryBaseConfiguration.summarizerClientElection](#Remove-ISummaryBaseConfigurationsummarizerClientElection)
+- [`InsecureTokenProvider` now takes a new type `IInsecureUser` instead of `IUser`](#InsecureTokenProvider-now-takes-a-new-type-IInsecureUser-instead-of-IUser)
+
 ### existing parameter is now required in IRuntimeFactory::instantiateRuntime
 The `existing` flag was added as optional in client version 0.44 and has been updated to be expected
 and required in the `IRuntimeFactory.instantiateRuntime` function. This flag is used to determine whether the runtime should
@@ -75,6 +77,26 @@ If these methods are needed, please refer to the `IContainerRuntimeBase` interfa
 ### Remove-ISummaryBaseConfigurationsummarizerClientElection
 `ISummaryBaseConfiguration.summarizerClientElection` was deprecated and is now being removed.
 There will be no replacement for this property.'
+
+### `InsecureTokenProvider` now takes a new type `IInsecureUser` instead of `IUser`
+
+`InsecureTokenProvider` takes a field names `user` that previously was defined as type `IUser` but also expects
+the `name` field to be present. This is not a requirement of `IUser` and is not enforced by the `IUser` interface.
+To avoid confusion, `InsecureTokenProvider` now takes a new type `IInsecureUser` that extends `IUser` and requires
+the `name` field to be present.
+Previously you would use `InsecureTokenProvider` like this:
+
+```typescript
+const user: IUser & { name: string } = { id: "userId", name: "userName" };
+const tokenProvider = new InsecureTokenProvider("myTenantKey", user);
+```
+
+Now you would either pass `{ id: "userId", name: "userName" }` inline to `InsecureTokenProvider` or:
+
+```typescript
+const user: IInsecureUser = { id: "userId", name: "userName" };
+const tokenProvider = new InsecureTokenProvider("myTenantKey", user);
+```
 
 # 2.0.0-internal.2.2.0
 
