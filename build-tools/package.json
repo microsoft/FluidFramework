@@ -39,8 +39,6 @@
     "policy-check": "node packages/build-cli/bin/dev check policy --exclusions packages/build-tools/data/exclusions.json",
     "policy-check:asserts": "node packages/build-cli/bin/dev check policy --exclusions packages/build-tools/data/exclusions.json --handler assert-short-codes --fix",
     "policy-check:fix": "node packages/build-cli/bin/dev check policy --exclusions packages/build-tools/data/exclusions.json --excludeHandler assert-short-codes --fix",
-    "prettier": "lerna run prettier --parallel --no-sort --stream",
-    "prettier:fix": "lerna run prettier:fix --parallel --no-sort --stream",
     "test": "npm run test:mocha && npm run test:jest && npm run test:realsvc",
     "test:bail": "npm run test:mocha:bail && npm run test:jest:bail",
     "test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
