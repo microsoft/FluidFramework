@@ -1,3 +1,4 @@
 nyc
 *.log
 **/*.tsbuildinfo
+markdown-magic/test.md
