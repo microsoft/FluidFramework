@@ -273,9 +273,13 @@ export function create(
      */
     router.post("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
-        const isInitialSummary: boolean | undefined = typeof request.params.initial === "string"
-            ? request.params.initial === "true"
-            : undefined;
+        // request.query type is { [string]: string } but it's actually { [string]: any }
+        // Account for possibilities of undefined, boolean, or string types. A number will be false.
+        const isInitialSummary: boolean | undefined = typeof request.query.initial === "undefined"
+            ? undefined
+            : typeof request.query.initial === "boolean"
+                ? request.query.initial
+                : request.query.initial === "true";
         if (!repoManagerParams.storageRoutingId?.tenantId ||
             !repoManagerParams.storageRoutingId?.documentId) {
             handleResponse(

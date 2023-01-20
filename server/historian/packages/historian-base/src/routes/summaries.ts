@@ -7,6 +7,7 @@ import { AsyncLocalStorage } from "async_hooks";
 import { IWholeFlatSummary, IWholeSummaryPayload, IWriteSummaryResponse } from "@fluidframework/server-services-client";
 import { IThrottler } from "@fluidframework/server-services-core";
 import { IThrottleMiddlewareOptions, throttle, getParam } from "@fluidframework/server-services-utils";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
@@ -46,7 +47,7 @@ export function create(
         tenantId: string,
         authorization: string,
         params: IWholeSummaryPayload,
-        initial: boolean,
+        initial?: boolean,
     ): Promise<IWriteSummaryResponse> {
         const service = await utils.createGitService(
             config,
@@ -94,9 +95,14 @@ export function create(
     router.post("/repos/:ignored?/:tenantId/git/summaries",
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
-            const initial = typeof request.params.initial === "string"
-                ? request.params.initial === "true"
-                : undefined;
+            // request.query type is { [string]: string } but it's actually { [string]: any }
+            // Account for possibilities of undefined, boolean, or string types. A number will be false.
+            const initial: boolean | undefined = typeof request.query.initial === "undefined"
+                ? undefined
+                : typeof request.query.initial === "boolean"
+                    ? request.query.initial
+                    : request.query.initial === "true";
+            Lumberjack.info("Writing summary", { initial, param: request.params.initial, params: request.params });
             const summaryP = createSummary(
                 request.params.tenantId,
                 request.get("Authorization"),
