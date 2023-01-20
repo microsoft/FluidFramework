@@ -225,6 +225,12 @@ function getPackageMetadataFromRelativePath(documentFilePath, packageJsonFilePat
  * If specified, must be on (`startLine`,<file-line-count> + 1].
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
+ *
+ * @example
+ *
+ * ```markdown
+ * <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../file.js) -->
+ * ```
  */
 function includeTransform(content, options, config) {
 	const { path: relativeFilePath, start: startLine, end: endLine } = options;
@@ -262,59 +268,87 @@ function includeTransform(content, options, config) {
 }
 
 /**
+ * Generates simple README contents for a library package.
+ *
+ * @param {object} content - The original document file contents.
+ * @param {object} options - Transform options.
+ * @param {string} options.packageJsonPath - Relative path from the document to the package's package.json file.
+ * @param {string} options.installation - Whether or not to include the package installation instructions section.
+ * Default: `true`.
+ * @param {string} options.devDependency - Whether or not the package is intended to be installed as a devDependency.
+ * Only used if `installation` is specified.
+ * Default: `false`.
+ * @param {string} options.apiDocs - Whether or not to include a section pointing readers to the package's
+ * generated API documentation on <fluidframework.com>.
+ * Default: `true`.
+ * @param {string} options.scripts - Whether or not to include a section enumerating the package.json file's dev scripts.
+ * Default: `false`.
+ * @param {string} options.contributionGuidelines - Whether or not to include a section outlining fluid-framework's
+ * contribution guidelines.
+ * Default: `true`.
+ * @param {string} options.help - Whether or not to include a developer help section.
+ * Default: `true`.
+ * @param {string} options.trademark - Whether or not to include a section with Microsoft's trademark info.
+ * Default: `true`.
+ * @param {object} config - Transform configuration.
+ * @param {string} config.originalPath - Path to the document being modified.
+ *
+ * @example
+ *
+ * ```markdown
+ * <!-- AUTO-GENERATED-CONTENT:START (README_LIBRARY_PACKAGE:packageJsonPath=./package.json&installation=TRUE&devDependency=FALSE&apiDocs=TRUE&scripts=TRUE&contributionGuidelines=TRUE&help=TRUE&trademark=TRUE&devDependency=FALSE) -->
+ * ```
+ */
+function libraryPackageReadmeTransform(content, options, config) {
+	const { packageJsonPath } = options;
+	const packageMetadata = getPackageMetadataFromRelativePath(
+		config.originalPath,
+		packageJsonPath,
+	);
+	const packageName = packageMetadata.name;
+
+	if (!packageName) {
+		throw new Error(
+			`package.json file at provided path "${packageJsonPath}" does not include the required "name" property.`,
+		);
+	}
+
+	const sections = [];
+	if (options.installation !== "FALSE") {
+		sections.push(generateInstallationSection(packageName, options.devDependency, true));
+	}
+
+	if (options.apiDocs !== "FALSE") {
+		sections.push(generateApiDocsLinkSection(packageName, true));
+	}
+
+	if (options.scripts !== "FALSE") {
+		const scriptsTable = scripts(content, options, config);
+		sections.push(generateScriptsSection(scriptsTable, true));
+	}
+
+	if (options.contributionGuidelines !== "FALSE") {
+		sections.push(generateContributionGuidelinesSection(true));
+	}
+
+	if (options.help !== "FALSE") {
+		sections.push(generateHelpSection(true));
+	}
+
+	if (options.trademark !== "FALSE") {
+		sections.push(generateTrademarkSection(true));
+	}
+
+	return formattedGeneratedContentBody(sections.join(""));
+}
+
+/**
  * markdown-magic config
  */
 module.exports = {
 	transforms: {
-		/* Match <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../file.js) --> */
-		// includes relative to the file calling the include
 		INCLUDE: includeTransform,
-
-		/* Match <!-- AUTO-GENERATED-CONTENT:START (README_LIBRARY_PACKAGE:packageJsonPath=./package.json&installation=TRUE&devDependency=FALSE&apiDocs=TRUE&scripts=TRUE&contributionGuidelines=TRUE&help=TRUE&trademark=TRUE&devDependency=FALSE) --> */
-		README_LIBRARY_PACKAGE(content, options, config) {
-			const { packageJsonPath } = options;
-			const packageMetadata = getPackageMetadataFromRelativePath(
-				config.originalPath,
-				packageJsonPath,
-			);
-			const packageName = packageMetadata.name;
-
-			if (!packageName) {
-				throw new Error(
-					`package.json file at provided path "${packageJsonPath}" does not include the required "name" property.`,
-				);
-			}
-
-			const sections = [];
-			if (options.installation !== "FALSE") {
-				sections.push(
-					generateInstallationSection(packageName, options.devDependency, true),
-				);
-			}
-
-			if (options.apiDocs !== "FALSE") {
-				sections.push(generateApiDocsLinkSection(packageName, true));
-			}
-
-			if (options.scripts !== "FALSE") {
-				const scriptsTable = scripts(content, options, config);
-				sections.push(generateScriptsSection(scriptsTable, true));
-			}
-
-			if (options.contributionGuidelines !== "FALSE") {
-				sections.push(generateContributionGuidelinesSection(true));
-			}
-
-			if (options.help !== "FALSE") {
-				sections.push(generateHelpSection(true));
-			}
-
-			if (options.trademark !== "FALSE") {
-				sections.push(generateTrademarkSection(true));
-			}
-
-			return formattedGeneratedContentBody(sections.join(""));
-		},
+		LIBRARY_PACKAGE_README: libraryPackageReadmeTransform,
 
 		/* Match <!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_GETTING_STARTED_SECTION:packageJsonPath=./package.json&includeHeading=TRUE&usesTinylicious=TRUE) --> */
 		README_EXAMPLE_GETTING_STARTED_SECTION(content, options, config) {
