@@ -987,7 +987,7 @@ export class GarbageCollector implements IGarbageCollector {
         // involving access to deleted data.
         if (this.sweepDataStoresMode) {
             const allRoutes = gcResult.deletedNodeIds.concat(gcResult.referencedNodeIds);
-            this.verifyDataStoreSweepRoutes(this.tombstones, allRoutes);
+            this.validateSweepRoutes(this.tombstones, allRoutes);
             const removedRoutes = this.runtime.updateUnusedRoutes(this.tombstones);
             this.removeSweptNodes(removedRoutes);
         } else if (this.testMode) {
@@ -1328,27 +1328,16 @@ export class GarbageCollector implements IGarbageCollector {
         }
     }
 
-    private verifyDataStoreSweepRoutes(sweepRoutes: string[], allRoutes: string[]) {
-        const deletedDataStoreRoutes: Set<string> = new Set();
+    private validateSweepRoutes(sweepRoutes: string[], allRoutes: string[]) {
+        const deletedRoutes: Set<string> = new Set(sweepRoutes);
         const notDeletedRoutes = allRoutes.filter((route) => !sweepRoutes.includes(route));
-
-        for (const route of sweepRoutes) {
-            // skip non datastore routes
-            if (this.runtime.getNodeType(route) === GCNodeType.DataStore) {
-                deletedDataStoreRoutes.add(this.getDataStoreId(route));
-            }
-        }
-
         // Verify that if the datastore is deleted, all its sub datastore routes are deleted as well
         for (const route of notDeletedRoutes) {
-            if (this.runtime.getNodeType(route) === GCNodeType.SubDataStore) {
-                assert(!deletedDataStoreRoutes.has(this.getDataStoreId(route)), "Sub datastores should be deleted when deleting their datastore!");
+            const pathParts = route.split("/");
+            if (pathParts.length >= 2) {
+                assert(!deletedRoutes.has(`/${pathParts[1]}`), "Sub node routes should be deleted when deleting the node!");
             }
         }
-    }
-
-    private getDataStoreId(route: string): string {
-        return route.split("/")[1];
     }
 
     /**
