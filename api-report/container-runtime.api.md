@@ -526,7 +526,7 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     // (undocumented)
     closeFn(): void;
     // (undocumented)
-    disposeFn?(): void;
+    disposeFn(): void;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     readonly summarizerClientId: string | undefined;

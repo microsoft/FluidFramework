@@ -143,9 +143,7 @@
         "forwardCompat": false
       },
       "InterfaceDeclaration_ISummarizerRuntime": {
-        "backCompat": false
-      },
-      "ClassDeclaration_ContainerRuntime": {
+        "backCompat": false,
         "forwardCompat": false
       }
     }
