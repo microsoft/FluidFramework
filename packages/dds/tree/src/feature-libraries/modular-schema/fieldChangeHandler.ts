@@ -57,7 +57,6 @@ export interface FieldChangeRebaser<TChangeset> {
     amendInvert(
         invertedChange: TChangeset,
         originalRevision: RevisionTag | undefined,
-        invertChild: NodeChangeInverter,
         genId: IdAllocator,
         crossFieldManager: CrossFieldManager,
     ): TChangeset;
@@ -77,7 +76,6 @@ export interface FieldChangeRebaser<TChangeset> {
     amendRebase(
         rebasedChange: TChangeset,
         over: TaggedChange<TChangeset>,
-        rebaseChild: NodeChangeRebaser,
         genId: IdAllocator,
         crossFieldManager: CrossFieldManager,
     ): TChangeset;

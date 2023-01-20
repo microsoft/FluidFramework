@@ -21,14 +21,7 @@ import {
     RevisionTag,
     tagChange,
 } from "../../core";
-import {
-    brand,
-    clone,
-    fail,
-    getOrAddEmptyToMap,
-    JsonCompatibleReadOnly,
-    Mutable,
-} from "../../util";
+import { brand, clone, getOrAddEmptyToMap, JsonCompatibleReadOnly, Mutable } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
 import {
     FieldChangeHandler,
@@ -248,7 +241,6 @@ export class ModularChangeFamily
                 ).rebaser.amendInvert(
                     fieldChange.change,
                     originalRevision,
-                    () => fail(""),
                     genId,
                     makeCrossFieldManager(crossFieldTable),
                 );
@@ -355,7 +347,6 @@ export class ModularChangeFamily
                 ).rebaser.amendRebase(
                     fieldChange.change,
                     baseChange,
-                    () => fail(""),
                     genId,
                     makeCrossFieldManager(crossFieldTable),
                 );

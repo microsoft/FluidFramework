@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { RevisionTag, TreeSchemaIdentifier } from "../../../core";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { NodeChangeset, SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 
 const dummyMark: SF.Detach = { type: "Delete", count: 1 };
@@ -70,7 +70,7 @@ describe("SequenceField - MarkListFactory", () => {
     });
 
     it("Can merge adjacent moves ", () => {
-        const moveEffects = SF.newMoveEffectTable();
+        const moveEffects = SF.newMoveEffectTable<NodeChangeset>();
         const factory1 = new SF.MarkListFactory(undefined, moveEffects);
         const moveOut1: SF.Detach = { type: "MoveOut", id: brand(0), count: 1 };
         const moveOut2: SF.Detach = { type: "MoveOut", id: brand(1), count: 1 };
@@ -95,7 +95,7 @@ describe("SequenceField - MarkListFactory", () => {
     });
 
     it("Can merge three adjacent moves ", () => {
-        const moveEffects = SF.newMoveEffectTable();
+        const moveEffects = SF.newMoveEffectTable<NodeChangeset>();
         const factory1 = new SF.MarkListFactory(undefined, moveEffects);
         const moveOut1: SF.Detach = { type: "MoveOut", id: brand(0), count: 1 };
         const moveOut2: SF.Detach = { type: "MoveOut", id: brand(1), count: 1 };
