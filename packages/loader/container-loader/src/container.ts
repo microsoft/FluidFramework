@@ -844,6 +844,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             try {
                 // ! Progressing from "closed" to "disposing" is not allowed
                 if (this._lifecycleState !== "closed") {
+                    this.mc.logger.sendTelemetryEvent(
+                        {
+                            eventName: "ContainerClose",
+                            category: error === undefined ? "generic" : "error",
+                        },
+                        error,
+                    );
                     this._lifecycleState = "disposing";
                 }
 
