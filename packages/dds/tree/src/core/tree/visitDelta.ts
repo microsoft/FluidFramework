@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail, unreachableCase } from "../../util";
+import { unreachableCase } from "../../util";
 import { FieldKey, Value } from "./types";
 import * as Delta from "./delta";
 
@@ -66,10 +66,9 @@ import * as Delta from "./delta";
  * @param visitor - The object to notify of the changes encountered.
  */
 export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
-    const moveInfo: MoveOutInfo = new Map();
-    const props = { visitor, moveInfo };
-    visitFieldMarks(delta, props, firstPass);
-    if (moveInfo.size > 0) {
+    const props = { visitor, hasMoves: false };
+    const needs2ndPass = visitFieldMarks(delta, props, firstPass);
+    if (needs2ndPass) {
         visitFieldMarks(delta, props, secondPass);
     }
 }
@@ -90,33 +89,34 @@ export interface DeltaVisitor {
     exitField(key: FieldKey): void;
 }
 
-type MoveOutInfo = Map<Delta.MoveId, Delta.MoveOut>;
-
 interface PassProps {
     /**
      * Can be omitted if equal to zero.
      */
     startIndex?: number;
     visitor: DeltaVisitor;
-    moveInfo: MoveOutInfo;
 }
 
-type Pass = (delta: Delta.MarkList, props: PassProps) => void;
+type Pass = (delta: Delta.MarkList, props: PassProps) => boolean;
 
 interface ModifyLike {
     setValue?: Value;
     fields?: Delta.FieldMarks;
 }
 
-function visitFieldMarks(fields: Delta.FieldMarks, props: PassProps, func: Pass): void {
+function visitFieldMarks(fields: Delta.FieldMarks, props: PassProps, func: Pass): boolean {
+    let needs2ndPass = false;
     for (const [key, field] of fields) {
         props.visitor.enterField(key);
-        func(field, { ...props, startIndex: 0 });
+        const result = func(field, { ...props, startIndex: 0 });
+        needs2ndPass ||= result;
         props.visitor.exitField(key);
     }
+    return needs2ndPass;
 }
 
-function visitModify(modify: ModifyLike, props: PassProps, func: Pass): void {
+function visitModify(modify: ModifyLike, props: PassProps, func: Pass): boolean {
+    let needs2ndPass = false;
     const { startIndex, visitor } = props;
     visitor.enterNode(startIndex ?? 0);
     // Note that the `in` operator return true for properties that are present on the object even if they
@@ -126,40 +126,43 @@ function visitModify(modify: ModifyLike, props: PassProps, func: Pass): void {
         visitor.onSetValue(modify.setValue);
     }
     if (modify.fields !== undefined) {
-        visitFieldMarks(modify.fields, props, func);
+        const result = visitFieldMarks(modify.fields, props, func);
+        needs2ndPass ||= result;
     }
     visitor.exitNode(startIndex ?? 0);
+    return needs2ndPass;
 }
 
-function firstPass(delta: Delta.MarkList, props: PassProps): void {
-    const { startIndex, visitor, moveInfo } = props;
+function firstPass(delta: Delta.MarkList, props: PassProps): boolean {
+    const { startIndex, visitor } = props;
+    let needs2ndPass = false;
     let index = startIndex ?? 0;
     for (const mark of delta) {
         if (typeof mark === "number") {
             // Untouched nodes
             index += mark;
         } else {
+            let result = false;
             // Inline into `switch(mark.type)` once we upgrade to TS 4.7
             const type = mark.type;
             switch (type) {
                 case Delta.MarkType.ModifyAndDelete:
-                    visitModify(mark, { ...props, startIndex: index }, firstPass);
+                    result = visitModify(mark, { ...props, startIndex: index }, firstPass);
                     visitor.onDelete(index, 1);
                     break;
                 case Delta.MarkType.Delete:
                     visitor.onDelete(index, mark.count);
                     break;
-                case Delta.MarkType.ModifyAndMoveOut:
-                    visitModify(mark, { ...props, startIndex: index }, firstPass);
-                    moveInfo.set(mark.moveId, { ...mark, count: 1, type: Delta.MarkType.MoveOut });
+                case Delta.MarkType.ModifyAndMoveOut: {
+                    result = visitModify(mark, { ...props, startIndex: index }, firstPass);
                     visitor.onMoveOut(index, 1, mark.moveId);
                     break;
+                }
                 case Delta.MarkType.MoveOut:
-                    moveInfo.set(mark.moveId, mark);
                     visitor.onMoveOut(index, mark.count, mark.moveId);
                     break;
                 case Delta.MarkType.Modify:
-                    visitModify(mark, { ...props, startIndex: index }, firstPass);
+                    result = visitModify(mark, { ...props, startIndex: index }, firstPass);
                     index += 1;
                     break;
                 case Delta.MarkType.Insert:
@@ -168,25 +171,25 @@ function firstPass(delta: Delta.MarkList, props: PassProps): void {
                     break;
                 case Delta.MarkType.InsertAndModify:
                     visitor.onInsert(index, [mark.content]);
-                    visitModify(mark, { ...props, startIndex: index }, firstPass);
+                    result = visitModify(mark, { ...props, startIndex: index }, firstPass);
                     index += 1;
                     break;
                 case Delta.MarkType.MoveIn:
                 case Delta.MarkType.MoveInAndModify:
                     // Handled in the second pass
+                    result = true;
                     break;
                 default:
                     unreachableCase(type);
             }
+            needs2ndPass ||= result;
         }
     }
+    return needs2ndPass;
 }
 
-const NO_MATCHING_MOVE_OUT_ERR =
-    "Encountered a MoveIn mark for which there is not corresponding MoveOut mark";
-
-function secondPass(delta: Delta.MarkList, props: PassProps): void {
-    const { startIndex, visitor, moveInfo } = props;
+function secondPass(delta: Delta.MarkList, props: PassProps): boolean {
+    const { startIndex, visitor } = props;
     let index = startIndex ?? 0;
     for (const mark of delta) {
         if (typeof mark === "number") {
@@ -215,15 +218,11 @@ function secondPass(delta: Delta.MarkList, props: PassProps): void {
                     index += 1;
                     break;
                 case Delta.MarkType.MoveIn: {
-                    const moveOut = moveInfo.get(mark.moveId) ?? fail(NO_MATCHING_MOVE_OUT_ERR);
-                    visitor.onMoveIn(index, moveOut.count, moveOut.moveId);
-                    index += moveOut.count;
+                    visitor.onMoveIn(index, mark.count, mark.moveId);
+                    index += mark.count;
                     break;
                 }
                 case Delta.MarkType.MoveInAndModify:
-                    if (!moveInfo.has(mark.moveId)) {
-                        fail(NO_MATCHING_MOVE_OUT_ERR);
-                    }
                     visitor.onMoveIn(index, 1, mark.moveId);
                     visitModify(mark, { ...props, startIndex: index }, secondPass);
                     index += 1;
@@ -233,4 +232,5 @@ function secondPass(delta: Delta.MarkList, props: PassProps): void {
             }
         }
     }
+    return false;
 }
