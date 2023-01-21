@@ -1,6 +1,6 @@
 # @fluid-example/bubblebench-ot
 
-<!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
+<!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) -->
 
 <!-- prettier-ignore-start -->
 
@@ -14,7 +14,6 @@ You can run this example using the following steps:
 1. Run `pnpm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
       `npm run build:fast -- --nolint @fluid-example/bubblebench-ot`
-1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](../../../server/tinylicious).
 1. Run `npm start` from this directory (experimental/examples/bubblebench/ot) and open <http://localhost:8080> in a web browser to see the app running.
 
 <!-- prettier-ignore-end -->
