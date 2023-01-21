@@ -930,6 +930,8 @@ type MoveId_2 = ChangesetLocalId;
 
 // @public
 interface MoveIn {
+    // (undocumented)
+    readonly count: number;
     readonly moveId: MoveId;
     // (undocumented)
     readonly type: typeof MarkType.MoveIn;
