@@ -12,6 +12,7 @@ import {
     FieldSchemaTypeInfo,
     LabeledFieldSchema,
     LabeledTreeSchema,
+    MapToken,
     TreeSchemaTypeInfo,
 } from "./outputTypes";
 import { AsNames, ListToKeys, WithDefault } from "./typeUtils";
@@ -58,15 +59,13 @@ export interface TreeInfoFromBuilder<T extends TypedTreeSchemaBuilder> {
 }
 
 export interface FieldInfoFromBuilder<T extends TypedFieldSchemaTypeBuilder> {
-    readonly kind: FieldKind;
+    readonly kind: T["kind"];
     readonly types: T["types"] extends undefined
         ? undefined
         : ProcessNames<WithDefault<T["types"], never>>;
 }
 
-type ProcessNames<T extends readonly (string | Named<string>)[]> = {
-    [key: string]: unknown;
-} & ListToKeys<AsNames<T>, unknown>;
+type ProcessNames<T extends readonly (string | Named<string>)[]> = ListToKeys<AsNames<T>, MapToken>;
 
 /**
  * Builds a TreeSchema with the type information also captured in the
@@ -113,19 +112,39 @@ export function typedTreeSchemaFromInfo<T extends TreeSchemaTypeInfo>(t: T): Lab
  * Builds a FieldSchema with the type information also captured in the
  * typescript type to allow for deriving schema aware APIs.
  */
-export function typedFieldSchemaInfo<T extends FieldSchemaTypeInfo>(t: T): LabeledFieldSchema<T> {
+export function typedFieldSchemaFromInfo<T extends FieldSchemaTypeInfo>(
+    t: T,
+): LabeledFieldSchema<T> {
     return fieldSchema(t.kind, [...Object.keys(t.types as object)] as TreeSchemaIdentifier[]);
 }
 
+/**
+ * Returns the `TreeSchemaTypeInfo` associated with `T`.
+ */
 export type TypeInfo<T extends LabeledTreeSchema<any>> = T extends LabeledTreeSchema<infer R>
     ? R
-    : unknown;
+    : InferError;
 
+/**
+ * Version of `FieldInfo` with strong input type requirements for use in generic code.
+ */
+export type FieldInfoGeneric<T extends LabeledFieldSchema<FieldSchemaTypeInfo>> =
+    T extends LabeledFieldSchema<infer R> ? R : never;
+
+/**
+ * Returns the `FieldSchemaTypeInfo` associated with `T`.
+ */
 export type FieldInfo<T extends LabeledFieldSchema<any>> = T extends LabeledFieldSchema<infer R>
     ? R
-    : unknown;
+    : InferError;
 
 /**
  * Schema for a field which must always be empty.
  */
 export const emptyField = typedFieldSchema(forbidden, []);
+
+/**
+ * Placeholder used for errors inferring types.
+ * Used instead of "never" since "never" can propagate in hard to track ways through type meta programming.
+ */
+export type InferError = "InferError";

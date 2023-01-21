@@ -26,7 +26,7 @@ import { ObjectToMap } from "./typeUtils";
 export interface TreeSchemaTypeInfo extends TreeSchemaBuilder {
     readonly name: TreeSchemaIdentifier;
     readonly local: { readonly [key: string]: LabeledFieldSchema<any> };
-    readonly global: { readonly [key: string]: unknown };
+    readonly global: { readonly [key: string]: MapToken };
     readonly extraLocalFields: LabeledFieldSchema<any>;
     readonly extraGlobalFields: boolean;
     readonly value: ValueSchema;
@@ -37,7 +37,7 @@ export interface TreeSchemaTypeInfo extends TreeSchemaBuilder {
  */
 export interface FieldSchemaTypeInfo {
     readonly kind: FieldKind;
-    readonly types?: { readonly [key: string]: unknown };
+    readonly types?: { readonly [key: string]: MapToken };
 }
 
 /**
@@ -56,3 +56,14 @@ export interface LabeledTreeSchema<T extends TreeSchemaTypeInfo> extends NamedTr
 export interface LabeledFieldSchema<T extends FieldSchemaTypeInfo> extends FieldSchema {
     readonly typeCheck?: Invariant<T>;
 }
+
+/**
+ * Placeholder used as value when storing a set in the keys of an object.
+ *
+ * These map objects should only be used as ways to capture sets of strings in the type system.
+ */
+export const MapToken = "MapToken";
+/**
+ * Placeholder type used as value when storing a set in the keys of an object.
+ */
+export type MapToken = typeof MapToken;
