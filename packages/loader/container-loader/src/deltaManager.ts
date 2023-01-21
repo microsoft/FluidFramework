@@ -128,6 +128,11 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private lastProcessedMessage: ISequencedDocumentMessage | undefined;
     private baseTerm: number = 0;
 
+    /** count number of noops sent by the client which may not be acked */
+    private noOpCount: number = 0;
+    /** Track clientSequenceNumber of the last op */
+    private lastClientSequenceNumber: number = 0;
+
     /**
      * Track down the ops size.
     */
@@ -235,6 +240,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         }
 
         this.messageBuffer.push(message);
+
+        if (message.type === MessageType.NoOp){
+            this.noOpCount++;
+        }
 
         this.emit("submitOp", message);
 
@@ -387,6 +396,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         assert(this.messageBuffer.length === 0, 0x0e9 /* "messageBuffer is not empty on new connection" */);
 
         this.opsSize = 0;
+        this.noOpCount = 0;
 
         this.emit(
             "connect",
@@ -623,6 +633,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             this.disposeInternal(error);
         } else {
             this.emit("closed", error);
+            this.disposeInternal(error); // ! TODO: remove this call in 2.0.0-internal.3.0.0 (when closed no longer disposes)
         }
     }
 
@@ -847,6 +858,20 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             && message.type !== MessageType.ClientLeave
         ) {
             message.contents = JSON.parse(message.contents);
+        }
+
+        // Validate client sequence number has no gap. Decrement the noOpCount by gap
+        // If the count ends up negative, that means we have a real gap and throw error
+        if (this.connectionManager.clientId !== undefined && this.connectionManager.clientId === message.clientId) {
+            if (message.type === MessageType.NoOp){
+                this.noOpCount--;
+            }
+            const clientSeqNumGap = message.clientSequenceNumber - this.lastClientSequenceNumber - 1;
+            this.noOpCount -= clientSeqNumGap;
+            if (this.noOpCount < 0) {
+                throw new Error(`gap in client sequence number: ${clientSeqNumGap}`);
+            }
+            this.lastClientSequenceNumber = message.clientSequenceNumber;
         }
 
         this.connectionManager.beforeProcessingIncomingOp(message);

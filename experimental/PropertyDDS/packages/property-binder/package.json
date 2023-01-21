@@ -72,7 +72,7 @@
     "@fluid-experimental/property-dds": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluid-experimental/property-properties": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "lodash": "^4.17.21",
-    "underscore": "^1.12.1"
+    "underscore": "^1.13.6"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
