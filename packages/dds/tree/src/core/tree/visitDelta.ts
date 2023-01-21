@@ -67,8 +67,8 @@ import * as Delta from "./delta";
  */
 export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
     const props = { visitor, hasMoves: false };
-    const needs2ndPass = visitFieldMarks(delta, props, firstPass);
-    if (needs2ndPass) {
+    const containsMoves = visitFieldMarks(delta, props, firstPass);
+    if (containsMoves) {
         visitFieldMarks(delta, props, secondPass);
     }
 }
@@ -105,18 +105,18 @@ interface ModifyLike {
 }
 
 function visitFieldMarks(fields: Delta.FieldMarks, props: PassProps, func: Pass): boolean {
-    let needs2ndPass = false;
+    let containsMoves = false;
     for (const [key, field] of fields) {
         props.visitor.enterField(key);
         const result = func(field, { ...props, startIndex: 0 });
-        needs2ndPass ||= result;
+        containsMoves ||= result;
         props.visitor.exitField(key);
     }
-    return needs2ndPass;
+    return containsMoves;
 }
 
 function visitModify(modify: ModifyLike, props: PassProps, func: Pass): boolean {
-    let needs2ndPass = false;
+    let containsMoves = false;
     const { startIndex, visitor } = props;
     visitor.enterNode(startIndex ?? 0);
     // Note that the `in` operator return true for properties that are present on the object even if they
@@ -127,15 +127,15 @@ function visitModify(modify: ModifyLike, props: PassProps, func: Pass): boolean 
     }
     if (modify.fields !== undefined) {
         const result = visitFieldMarks(modify.fields, props, func);
-        needs2ndPass ||= result;
+        containsMoves ||= result;
     }
     visitor.exitNode(startIndex ?? 0);
-    return needs2ndPass;
+    return containsMoves;
 }
 
 function firstPass(delta: Delta.MarkList, props: PassProps): boolean {
     const { startIndex, visitor } = props;
-    let needs2ndPass = false;
+    let containsMoves = false;
     let index = startIndex ?? 0;
     for (const mark of delta) {
         if (typeof mark === "number") {
@@ -182,10 +182,10 @@ function firstPass(delta: Delta.MarkList, props: PassProps): boolean {
                 default:
                     unreachableCase(type);
             }
-            needs2ndPass ||= result;
+            containsMoves ||= result;
         }
     }
-    return needs2ndPass;
+    return containsMoves;
 }
 
 function secondPass(delta: Delta.MarkList, props: PassProps): boolean {
