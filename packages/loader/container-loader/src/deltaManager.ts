@@ -325,7 +325,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             signalHandler: (message: ISignalMessage) => this._inboundSignal.push(message),
             reconnectionDelayHandler: (delayMs: number, error: unknown) =>
                 this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
-            closeHandler: (error: any) => this.close(error),
+            closeHandler: (error: any) => { this.close(error); this.close(error, true); },
             disconnectHandler: (reason: string) => this.disconnectHandler(reason),
             connectHandler: (connection: IConnectionDetails) => this.connectHandler(connection),
             pongHandler: (latency: number) => this.emit("pong", latency),
@@ -339,8 +339,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             });
 
         this._inbound.on("error", (error) => {
-            this.close(
-                DataProcessingError.wrapIfUnrecognized(error, "deltaManagerInboundErrorHandler", this.lastMessage));
+            const newError = DataProcessingError.wrapIfUnrecognized(error, "deltaManagerInboundErrorHandler", this.lastMessage);
+            this.close(newError);
+            this.close(newError, true);
         });
 
         // Inbound signal queue
@@ -355,7 +356,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         });
 
         this._inboundSignal.on("error", (error) => {
-            this.close(normalizeError(error));
+            const newError = normalizeError(error);
+            this.close(newError);
+            this.close(newError, true);
         });
 
         // Initially, all queues are created paused.
@@ -961,6 +964,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         } catch (error) {
             this.logger.sendErrorEvent({ eventName: "GetDeltas_Exception" }, error);
             this.close(normalizeError(error));
+            this.close(normalizeError(error), true);
         } finally {
             this.refreshDelayInfo(this.deltaStorageDelayId);
             this.fetchReason = undefined;

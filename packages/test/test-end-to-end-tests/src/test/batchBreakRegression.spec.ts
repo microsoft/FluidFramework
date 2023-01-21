@@ -335,6 +335,10 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                 eventName: "fluid:telemetry:Container:ContainerClose",
                 error: "Received a system message during batch processing",
             },
+            {
+                eventName: "fluid:telemetry:Container:ContainerDispose",
+                error: "Received a system message during batch processing",
+            },
         ],
         async function() {
             const provider = getTestObjectProvider({ resetAfterEach: true });

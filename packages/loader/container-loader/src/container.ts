@@ -324,6 +324,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                             // and continuously retrying (consider offline mode)
                             // Host has no container to close, so it's prudent to do it here
                             container.close(err);
+                            container.dispose(err);
                             onClosed(err);
                         });
             }),

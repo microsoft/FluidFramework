@@ -574,6 +574,11 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
                 error: "Context is tombstoned! Call site [processSignal]",
                 errorType: "dataCorruptionError",
             },
+            {
+                eventName: "fluid:telemetry:Container:ContainerDispose",
+                error: "Context is tombstoned! Call site [processSignal]",
+                errorType: "dataCorruptionError",
+            },
         ],
         async () => {
             const {
