@@ -82,11 +82,11 @@ The following legacy events and event parameters have been marked as deprecated 
           No replacement API recommended.
 
 
+### Added `fileIsLocked` errorType to DriverErrorType enum
+Added `fileIsLocked` errorType in DriverErrorType enum. This error happens when file is locked for read/write by storage, e.g. whole collection is locked and access is denied, or file is locked for editing.
 
-
-### Added fileIsLocked errorType to DriverErrorType enum
-Added `fileIsLocked` errorType in DriverErrorType enum. This error happens when file is locked and we have status code 423.
 This is not breaking change yet. But if clients do not add handling for this error, their existing version of applications may start receiving this error in the future, and may not handle it correctly.
+
 # 2.0.0-internal.2.1.0
 
 ## 2.0.0-internal.2.1.0 Upcoming changes
