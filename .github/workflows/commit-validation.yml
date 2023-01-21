@@ -1,3 +1,8 @@
+# We've adopted conventional commits in the build-tools release group. The CI jobs in this file require the PR title and
+# body to match our standards and that PR template placeholder content has been removed from the PR body.
+#
+# More information can be found in the wiki: https://github.com/microsoft/FluidFramework/wiki/Commit-message-style
+
 name: "Commit message validation"
 on:
   pull_request:
