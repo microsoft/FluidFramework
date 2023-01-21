@@ -32,7 +32,6 @@ jobs:
     name: PR template placeholder content
     runs-on: ubuntu-latest
     steps:
-      # - uses: actions/checkout@v3
       - uses: sitezen/pr-comment-checker@f1e956fac00c6d1163d15841886ae80b7ae58ecb # ratchet:sitezen/pr-comment-checker@v1.0.1
         with:
           pr_description_should_not_contain: |
