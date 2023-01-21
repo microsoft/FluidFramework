@@ -11,14 +11,12 @@ import {
     CursorLocationType,
     FieldUpPath,
     UpPath,
-    GlobalFieldKeySymbol,
-    symbolFromKey,
     TreeValue,
     Value,
 } from "../../core";
-import { brand, compareArrays, fail } from "../../util";
+import { compareArrays, fail } from "../../util";
 import { SynchronousCursor } from "../treeCursorUtils";
-import { ReferenceCountedBase, TreeChunk } from "./chunk";
+import { dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
 
 /**
  * Create a tree chunk with ref count 1.
@@ -65,10 +63,6 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 
     protected dispose(): void {}
 }
-
-export const dummyRoot: GlobalFieldKeySymbol = symbolFromKey(
-    brand("a1499167-8421-4639-90a6-4e543b113b06: dummyRoot"),
-);
 
 /**
  * The "shape" of a field.

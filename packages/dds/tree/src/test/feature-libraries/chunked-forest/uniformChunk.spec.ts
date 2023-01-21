@@ -8,7 +8,6 @@ import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import {
     uniformChunk,
     TreeShape,
-    dummyRoot,
     ChunkShape,
     UniformChunk,
     // eslint-disable-next-line import/no-internal-modules
@@ -33,6 +32,8 @@ import {
     singleTextCursor,
     TreeChunk,
 } from "../../../feature-libraries";
+// eslint-disable-next-line import/no-internal-modules
+import { dummyRoot } from "../../../feature-libraries/chunked-forest";
 
 const xField: FieldKey = brand("x");
 const yField: FieldKey = brand("y");

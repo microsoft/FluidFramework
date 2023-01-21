@@ -13,7 +13,9 @@ testGeneralPurposeTreeCursor(
         const inputCursor = singleTextCursor(data);
         const chunk = chunkTree(inputCursor);
         const cursor: ITreeCursor = chunk.cursor();
+        cursor.enterNode(0);
         return cursor;
     },
     jsonableTreeFromCursor,
+    true,
 );
