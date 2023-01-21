@@ -34,6 +34,7 @@ This example runs against the `tinylicious` service by default, but you can also
 To run against `azure`, run `npm run start:azure`.
 
 Note: this option requires additional steps outlined [below](#backed-locally-and-running-with-live-azure-fluid-relay-service-instance).
+
 ## Testing
 
 ```bash
