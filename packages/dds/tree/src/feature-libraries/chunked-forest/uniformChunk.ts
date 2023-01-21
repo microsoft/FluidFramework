@@ -139,7 +139,7 @@ function clonePositions(
     [key, shape, copies]: FieldShape,
     indexOfParentField: number,
     valueOffset: number,
-    outputInto: NodePositionInfo[],
+    outputInto: NodePositionInfo[] | (NodePositionInfo | undefined)[],
 ): void {
     const offset = outputInto.length;
     for (let index = 0; index < copies; index++) {
@@ -174,7 +174,7 @@ function clonePositions(
  * TODO: consider storing shape information in WASM
  */
 export class ChunkShape {
-    public readonly positions: readonly NodePositionInfo[];
+    public readonly positions: readonly (NodePositionInfo | undefined)[];
 
     public constructor(
         public readonly treeShape: TreeShape,
@@ -183,47 +183,14 @@ export class ChunkShape {
         assert(topLevelLength > 0, 0x4c6 /* topLevelLength must be greater than 0 */);
 
         // TODO: avoid duplication from inner loop
-        const positions: NodePositionInfo[] = [];
-        clonePositions(undefined, [dummyRoot, treeShape, topLevelLength], 0, 0, positions);
+        const positions: (NodePositionInfo | undefined)[] = [undefined];
+        clonePositions(0, [dummyRoot, treeShape, topLevelLength], 0, 0, positions);
         this.positions = positions;
     }
 
     equals(other: ChunkShape): boolean {
         // TODO: either dedup instances and/or store a collision resistant hash for fast compare.
         return this.topLevelLength === other.topLevelLength && this.treeShape === other.treeShape;
-    }
-
-    atPosition(index: number): NodePositionInfo {
-        assert(
-            index < this.positions.length,
-            0x4c7 /* index must not be greater than the number of nodes */,
-        );
-        return this.positions[index]; // TODO % this.numberOfNodesPerTopLevelNode and fixup returned indexes as needed to reduce size of positions array?
-
-        // const topIndex = Math.trunc(index / this.treeShape.positions.length);
-        // const indexWithinSubTree = index % this.treeShape.positions.length;
-        // assert(
-        //     topIndex < this.topLevelLength,
-        //     "index must not be greater than the number of nodes",
-        // );
-        // const info = this.treeShape.positions[indexWithinSubTree];
-        // if (indexWithinSubTree > 1) {
-        //     return new NodePositionInfo(
-        //         info.parent,
-        //         info.parentField,
-        //         info.indexOfParentPosition === undefined ? topIndex : info.parentIndex,
-        //         info.indexOfParentField,
-        //         info.indexOfParentPosition === undefined
-        //             ? undefined
-        //             : info.indexOfParentPosition + topIndex * this.treeShape.positions.length,
-        //         info.shape,
-        //         info.indexOfParentPosition === undefined
-        //             ? this.topLevelLength
-        //             : info.topLevelLength,
-        //         info.valueOffset + topIndex * this.treeShape.valuesPerTopLevelNode,
-        //     );
-        // }
-        // return info;
     }
 }
 
@@ -279,11 +246,11 @@ class NodePositionInfo implements UpPath {
  */
 class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     private positionIndex!: number; // When in fields mode, this points to the parent node.
-    private nodePositionInfo!: NodePositionInfo;
+    private nodePositionInfo: NodePositionInfo | undefined;
 
     // Cached constants for faster access
     private readonly shape: ChunkShape;
-    private readonly positions: readonly NodePositionInfo[];
+    private readonly positions: readonly (NodePositionInfo | undefined)[];
 
     mode: CursorLocationType = CursorLocationType.Nodes;
 
@@ -299,6 +266,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
         super();
         this.shape = this.chunk.shape;
         this.positions = this.shape.positions;
+        this.fieldKey = dummyRoot;
         this.moveToPosition(0);
     }
 
@@ -326,6 +294,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
      */
     private nodeInfo(requiredMode: CursorLocationType): NodePositionInfo {
         assert(this.mode === requiredMode, 0x4c8 /* tried to access cursor when in wrong mode */);
+        assert(this.nodePositionInfo !== undefined, "can not access nodeInfo in root field");
         return this.nodePositionInfo;
     }
 
@@ -385,7 +354,7 @@ class Cursor extends SynchronousCursor implements ITreeCursorSynchronous {
     getFieldPath(): FieldUpPath {
         return {
             field: this.getFieldKey(),
-            parent: this.nodeInfo(CursorLocationType.Fields),
+            parent: this.nodePositionInfo,
         };
     }
 

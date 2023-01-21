@@ -143,6 +143,9 @@ const testTrees = [
 // Validate a few aspects of shapes that are easier to verify here than via checking the cursor.
 function validateShape(shape: ChunkShape): void {
     shape.positions.forEach((info, positionIndex) => {
+        if (info === undefined) {
+            return;
+        }
         assert.equal(
             info.parent,
             info.indexOfParentPosition === undefined
@@ -154,6 +157,7 @@ function validateShape(shape: ChunkShape): void {
                 // TODO: if we keep all the duplicated position info, inline positionIndex into field offsets to save the addition.
                 const offset = v.offset + index * v.shape.positions.length;
                 const element = shape.positions[offset + positionIndex];
+                assert(element !== undefined);
                 assert.equal(element.parentIndex, index);
                 assert.equal(element.parentField, k);
                 assert.equal(element.parent, info);
@@ -202,7 +206,7 @@ describe("uniformChunk", () => {
         },
         cursorFactory: (data: [number, TreeChunk]): ITreeCursorSynchronous => {
             const cursor = data[1].cursor();
-            assert(cursor.seekNodes(data[0]));
+            cursor.enterNode(data[0]);
             return cursor;
         },
         testData,
