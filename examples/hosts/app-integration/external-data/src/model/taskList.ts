@@ -31,10 +31,19 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
     public set priority(newValue: number) {
         this._priority.set(newValue);
     }
+    public diffName: string;
+    public diffPriority: number;
+    public diffType: string;
+    public DEFAULT_PRIORITY: number = Number.POSITIVE_INFINITY;
+    public DEFAULT_NAME: string = "";
+    public DEFAULT_DIFF_TYPE: string = "none";
     public constructor(
         private readonly _id: string,
         private readonly _name: SharedString,
-        private readonly _priority: ISharedCell<number>
+        private readonly _priority: ISharedCell<number>,
+        diffName: string = "",
+        diffPriority: number = Number.POSITIVE_INFINITY,
+        diffType: string = "none",
     ) {
         super();
         this._name.on("sequenceDelta", () => {
@@ -43,6 +52,36 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
         this._priority.on("valueChanged", () => {
             this.emit("priorityChanged");
         });
+        this.diffType = "none";
+        this.diffName = "";
+        this.diffPriority = Number.POSITIVE_INFINITY;
+    }
+    public externalNameChanged = async (savedName: string): Promise<void> => {
+        this.diffName = savedName;
+        this.diffType = "change";
+        this.emit('externalNameChanged');
+    }
+    public externalPriorityChanged = async (savedPriority: number): Promise<void> => {
+        this.diffPriority = savedPriority;
+        this.diffType = "change";
+        this.emit('externalPriorityChanged');
+    }
+    public acceptChange = async (): Promise<void> => {
+        if (this.diffPriority !== this.DEFAULT_PRIORITY) {
+            this._priority.set(this.diffPriority);
+        }
+        if (this.diffName !== '') {
+            const oldString = this._name.getText()
+            console.log(this.name.getText());
+            this._name.replaceText(0, oldString.length, this.diffName);
+            console.log(this.name.getText());
+        }
+        this.diffPriority = this.DEFAULT_PRIORITY;
+        this.diffType = "none";
+        this.emit('externalPriorityChanged');
+        this.diffName = '';
+        this.diffType = "none";
+        this.emit('externalNameChanged');
     }
 }
 
@@ -97,37 +136,25 @@ export class TaskList extends DataObject implements ITaskList {
         if (this.tasks.get(id) !== undefined) {
             throw new Error("Task already exists");
         }
-        const savedNameString = SharedString.create(this.runtime);
         const draftNameString = SharedString.create(this.runtime);
 
         // TODO: addTask will be called for tasks added in Fluid. Should only write to the draftMap directly here
         // savedMap will get updated when the data syncs back
-        savedNameString.insertText(0, name);
         draftNameString.insertText(0, name);
 
-        const savedPriorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
         const draftPriorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
 
-        savedPriorityCell.set(priority);
         draftPriorityCell.set(priority);
 
         // To add a task, we update the root SharedDirectory.  This way the change is propagated to all collaborators
         // and persisted.  In turn, this will trigger the "valueChanged" event and handleTaskAdded which will update
         // the this.tasks collection.
-        const savedDataPT: PersistedTask = {
-            id,
-            name: savedNameString.handle as IFluidHandle<SharedString>,
-            priority: savedPriorityCell.handle as IFluidHandle<ISharedCell<number>>,
-        };
-        this.savedData.set(id, savedDataPT);
-
         const draftDataPT: PersistedTask = {
             id,
             name: draftNameString.handle as IFluidHandle<SharedString>,
             priority: draftPriorityCell.handle as IFluidHandle<ISharedCell<number>>,
         };
         this.draftData.set(id, draftDataPT);
-        console.log(this.root.get)
     };
 
     public readonly deleteTask = (id: string): void => {
@@ -224,33 +251,44 @@ export class TaskList extends DataObject implements ITaskList {
 
         // TODO: Delete any items that are in the root but missing from the external data
         const updateTaskPs = updatedExternalData.map(async ([id, { name, priority }]) => {
-            const currentTask = this.draftData.get<PersistedTask>(id);
             // Write external data into savedData map.
-            this.savedData.set(id, currentTask);
-
+            const currentTask = this.savedData.get<PersistedTask>(id);
+            // Create a new task because it doesn't exist already
             if (currentTask === undefined) {
+                const savedNameString = SharedString.create(this.runtime);
+                const savedPriorityCell = SharedCell.create(this.runtime) as ISharedCell<number>;
+                const savedDataPT: PersistedTask = {
+                    id,
+                    name: savedNameString.handle as IFluidHandle<SharedString>,
+                    priority: savedPriorityCell.handle as IFluidHandle<ISharedCell<number>>,
+                };
+                savedNameString.insertText(0, name);
+                savedPriorityCell.set(priority);
+                this.savedData.set(id, savedDataPT);
+            } else {
+                // Make changes to exisiting saved tasks
+                const [savedNameString, savedPriorityCell] = await Promise.all([
+                    currentTask.name.get(),
+                    currentTask.priority.get(),
+                ]);
+                savedNameString.insertText(0, name);
+                savedPriorityCell.set(priority);
+            }
+
+            // Now look for differences between draftData and savedData
+            const task = this.tasks.get(id);
+            if (task === undefined) {
                 // A new task was added from external source, add it to the Fluid data.
                 this.addTask(id, name, priority);
                 return;
             }
-            const [currName, currPriority] = await Promise.all([
-                currentTask.name.get(),
-                currentTask.priority.get(),
-            ]);
-            if (currName.getText() !== name) {
-                // TODO: Currently replacing existing Fluid data.  But eventually this is where
-                // we'd want conflict resolution UX.
-                currName.replaceText(0, currName.getLength(), name);
+            if (task.name.getText() !== name) {
+                await task.externalNameChanged(name);
             }
-            if (currPriority.get() !== priority) {
-                // TODO: Currently replacing existing Fluid data. But eventually this is where
-                // we'd want conflict resolution UX.
-                currPriority.set(priority);
+            if (task.priority !== priority) {
+                await task.externalPriorityChanged(priority);
             }
-            // Saved updated Fluid data with
-            this.draftData.set(id, currentTask);
         });
-
         await Promise.all(updateTaskPs);
     }
 
@@ -277,6 +315,7 @@ export class TaskList extends DataObject implements ITaskList {
                 priority: task.priority,
             };
         }
+        console.log(formattedTasks);
         try {
             await fetch(
                 `http://localhost:${customerServicePort}/set-tasks`,
@@ -335,7 +374,7 @@ export class TaskList extends DataObject implements ITaskList {
             } else {
                 // Since all data modifications happen within the SharedString or SharedCell (task IDs are immutable),
                 // the root directory should never see anything except adds and deletes.
-                console.error("Unexpected modification to task list");
+                // console.error("Unexpected modification to task list");
             }
         });
 

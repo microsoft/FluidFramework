@@ -57,9 +57,9 @@ export class CollaborativeInput
     public componentDidMount() {
         // Sets an event listener so we can update our state as the value changes
         this.props.sharedString.on("sequenceDelta", (ev: SequenceDeltaEvent) => {
-            if (!ev.isLocal) {
+            // if (!ev.isLocal) {
                 this.updateInputFromSharedString();
-            }
+            // }
         });
         this.updateInputFromSharedString();
     }

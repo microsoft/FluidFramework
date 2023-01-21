@@ -20,16 +20,33 @@ interface ITaskRowProps {
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
     const { task, deleteTask } = props;
     const priorityRef = useRef<HTMLInputElement>(null);
+    const [savedName, setSavedName] =  useState<string>(task.diffName);
+    const [savedPriority, setSavedPriority] = useState<number>(task.diffPriority);
+    const [savedDiffType, setSavedDiffType] = useState<string>(task.diffType);
     useEffect(() => {
         const updateFromRemotePriority = (): void => {
             if (priorityRef.current !== null) {
                 priorityRef.current.value = task.priority.toString();
             }
         };
+        const showSavedPriority = (): void => {
+            setSavedPriority(task.diffPriority);
+            setSavedDiffType(task.diffType);
+        }
+        const showSavedName = (): void => {
+            setSavedName(task.diffName);
+            setSavedDiffType(task.diffType);
+            console.log(savedName);
+            console.log(savedDiffType);
+        }
         task.on("priorityChanged", updateFromRemotePriority);
+        task.on("externalPriorityChanged", showSavedPriority);
+        task.on("externalNameChanged", showSavedName);
         updateFromRemotePriority();
         return (): void => {
             task.off("priorityChanged", updateFromRemotePriority);
+            task.on("externalPriorityChanged", showSavedPriority);
+            task.on("externalNameChanged", showSavedName);
         };
     }, [task]);
 
@@ -37,6 +54,27 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
         const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
         task.priority = newValue;
     };
+
+    const diffVisible = savedDiffType === "none";
+    const showPriority = !diffVisible && savedPriority !== task.DEFAULT_PRIORITY ? "visible" : "hidden";
+    const showName = !diffVisible && savedName !== task.DEFAULT_NAME ? "visible" : "hidden";
+    const showAcceptButton = diffVisible ? "hidden" : "visible";
+
+    let diffColor: string = "white";
+    switch(savedDiffType) {
+        case "add": {
+           diffColor = "green";
+           break;
+        }
+        case "delete": {
+            diffColor = "red";
+           break;
+        }
+        default: {
+            diffColor = "orange";
+           break;
+        }
+    }
 
     return (
         <tr>
@@ -62,6 +100,12 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
                 >
                     ❌
                 </button>
+            </td>
+            <td style={{ visibility: showName, backgroundColor: diffColor }}>{ savedName }</td>
+            <td style={{ visibility: showPriority, backgroundColor: diffColor }}>{ savedPriority }</td>
+            <td>
+                <button
+                    onClick={ task.acceptChange } style={{ visibility: showAcceptButton }}>Accept change</button>
             </td>
         </tr>
     );
@@ -94,7 +138,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
         };
     }, [taskList]);
 
-    const taskRows = tasks.map((task) => (
+    const taskRows = tasks.map((task: ITask) => (
         <TaskRow
             key={ task.id }
             task={ task }
@@ -106,6 +150,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
         // TODO: Gray button if not "authenticated" via debug controls
         // TODO: Conflict UI
         <div>
+            <h2 style={{ textDecoration: "underline" }}>Client App</h2>
             <table>
                 <thead>
                     <tr>

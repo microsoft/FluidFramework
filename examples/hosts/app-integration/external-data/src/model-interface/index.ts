@@ -30,13 +30,6 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
      * A task tracker list.
      */
     readonly taskList: ITaskList;
-
-    /**
-    * Send custom signals to the server which will cause the server to respond
-    * with the (currently experimental) RuntimeMessage Signal to communicate
-    * an external data change and and possibly the changed data as well
-    */
-    readonly debugSendCustomSignal: () => void;
 }
 
 /**
@@ -46,7 +39,12 @@ export interface ITaskEvents extends IEvent {
     /**
      * Emitted when the name or priority have changed respectively.
      */
-    (event: "nameChanged" | "priorityChanged", listener: () => void);
+    (event:
+        "nameChanged" |
+        "priorityChanged" |
+        "externalNameChanged" |
+        "externalPriorityChanged",
+        listener: ( changedData: string) => void);
 }
 
 /**
@@ -66,6 +64,34 @@ export interface ITask extends IEventProvider<ITaskEvents> {
      * The task priority.  Modifications are persisted in Fluid and shared amongst collaborators.
      */
     priority: number;
+    /**
+     * The task name coming in from the external server.
+     */
+    diffName: string;
+    /**
+     * The task priority coming in from the external server.
+     */
+    diffPriority: number;
+    /**
+     * The type of change to the task coming in from the external server.
+     */
+    diffType: string;
+    /**
+     * Trigger event to render change to UI.
+     */
+    readonly externalNameChanged:(name: string) => Promise<void>;
+    /**
+     * Trigger event to render change to UI.
+     */
+    readonly externalPriorityChanged:(priority: number) => Promise<void>;
+    /**
+     * Save the proposed changes to SavedData.
+     */
+    readonly acceptChange:() => Promise<void>;
+
+    readonly DEFAULT_PRIORITY: number;
+    readonly DEFAULT_NAME: string;
+    readonly DEFAULT_DIFF_TYPE: string;
 }
 
 /**
