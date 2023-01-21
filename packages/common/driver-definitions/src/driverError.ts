@@ -98,7 +98,8 @@ export enum DriverErrorType {
     usageError = "usageError",
 
     /**
-     * Storage supports file locking (not through Fluid protocol), and Fluid Framework can only read file, not edit.
+     * File is locked for read/write by storage, e.g. whole collection is locked and access is denied,
+     * or file is locked for editing
      */
     fileIsLocked = "fileIsLocked",
 }
