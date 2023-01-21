@@ -33,7 +33,7 @@
     "format": "lerna run format --parallel --no-sort --stream",
     "preinstall": "npx only-allow pnpm",
     "postinstall": "npm run build:compile",
-    "install:root": "pnpm install --ignore-scripts",
+    "install:commitlint": "npm install --global @commitlint/config-conventional",
     "lint": "lerna run lint --no-sort --stream",
     "lint:fix": "lerna run lint:fix --no-sort --stream",
     "policy-check": "node packages/build-cli/bin/dev check policy --exclusions packages/build-tools/data/exclusions.json",
