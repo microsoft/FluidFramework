@@ -492,32 +492,75 @@ export class FluidPackageCheck {
             // const hasPrettier = pkg.getScript("prettier");
             // const lintChildren = hasLint ? ["prettier", "eslint"] : ["eslint"];
 
-            const lintScript = pkg.getScript("lint");
-            const lintFixScript = pkg.getScript("lint:fix");
+            /* Policy for "lint" & "lint:fix" scripts
+                1. Must end with "npm run eslint" / "npm run eslint:fix" respectively
+                2. Must contain "npm run prettier" / "npm run prettier:fix" respectively
+            */
+            let lintScript = pkg.getScript("lint");
+            let lintFixScript = pkg.getScript("lint:fix");
+
+            const prettier = "npm run prettier";
+            const prettierFix = "npm run prettier:fix";
+
+            const hasPrettier = lintScript?.includes(prettier);
+            const hasPrettierFix = lintFixScript?.includes(prettierFix);
 
             const expectedEndScript = "npm run eslint";
             const expectedEndScriptFix = "npm run eslint:fix";
 
-            if (lintScript === undefined || !lintScript.endsWith(expectedEndScript)) {
-                this.logWarn(pkg, `non-conformant lint script`, fix);
-                this.logWarn(pkg, `expected to end with ${expectedEndScript}`, fix);
-                this.logWarn(pkg, `actual: ${lintScript}`, fix);
+            const endsWithEslint = lintScript?.endsWith(expectedEndScript);
+            const endsWithEslintFix = lintFixScript?.endsWith(expectedEndScriptFix);
 
-                if (fix) {
-                    pkg.packageJson.scripts["lint"] = expectedEndScript;
-                    fixed = true;
+            // check lint script
+            if (!(hasPrettier && endsWithEslint)) {
+                this.logWarn(pkg, `non-conformant lint script`, fix);
+
+                if (lintScript === undefined) {
+                    lintScript = "npm run prettier && npm run eslint";
+                } else {
+                    if (!hasPrettier) {
+                        this.logWarn(pkg, `lint script must include ${prettier}`, fix);
+                        lintScript = "npm run prettier && ".concat(lintScript);
+                    }
+
+                    if (!endsWithEslint) {
+                        this.logWarn(pkg, `lint script must end with ${expectedEndScript}`, fix);
+                        lintScript = lintScript.concat(" && npm run eslint");
+                    }
                 }
             }
 
-            if (lintFixScript === undefined || !lintFixScript.endsWith(expectedEndScriptFix)) {
-                this.logWarn(pkg, `non-conformant lint:fix script`, fix);
-                this.logWarn(pkg, `expected to end with ${expectedEndScriptFix}`, fix);
-                this.logWarn(pkg, `actual: ${lintFixScript}`, fix);
+            if (fix) {
+                pkg.packageJson.scripts["lint"] = lintScript;
+                fixed = true;
+            }
 
-                if (fix) {
-                    pkg.packageJson.scripts["lint:fix"] = expectedEndScriptFix;
-                    fixed = true;
+            // check lint:fix script
+            if (!(hasPrettierFix && expectedEndScriptFix)) {
+                this.logWarn(pkg, `non-conformant lint:fix script`, fix);
+
+                if (lintFixScript === undefined) {
+                    lintFixScript = "npm run prettier:fix && npm run eslint:fix";
+                } else {
+                    if (!hasPrettierFix) {
+                        this.logWarn(pkg, `lint:fix script must include ${prettierFix}`, fix);
+                        lintFixScript = "npm run prettier:fix && ".concat(lintFixScript);
+                    }
+
+                    if (!endsWithEslintFix) {
+                        this.logWarn(
+                            pkg,
+                            `lint:fix script must end with ${expectedEndScriptFix}`,
+                            fix,
+                        );
+                        lintFixScript = lintFixScript.concat(" && npm run eslint:fix");
+                    }
                 }
+            }
+
+            if (fix) {
+                pkg.packageJson.scripts["lint:fix"] = lintFixScript;
+                fixed = true;
             }
 
             // TODO: for now, some jest test at the root isn't linted yet
