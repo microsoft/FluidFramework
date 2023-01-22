@@ -200,6 +200,12 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         const shareLink = await this.getShareLinkPromise(odspResolvedUrl);
         const shareLinkUrl = new URL(shareLink);
 
+        let actualDataStorePath = dataStorePath;
+        // If the user has passed an empty dataStorePath, then extract it from the resolved url.
+        if (dataStorePath === "" && odspResolvedUrl.dataStorePath !== undefined) {
+            actualDataStorePath = odspResolvedUrl.dataStorePath;
+        }
+
         // back-compat: GitHub #9653
         const isFluidPackage = (pkg: any) =>
             typeof pkg === "object"
@@ -216,13 +222,13 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         }
         containerPackageName = containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName;
 
-        const context = await this.getContext?.(odspResolvedUrl, dataStorePath);
+        const context = await this.getContext?.(odspResolvedUrl, actualDataStorePath);
 
         storeLocatorInOdspUrl(shareLinkUrl, {
             siteUrl: odspResolvedUrl.siteUrl,
             driveId: odspResolvedUrl.driveId,
             itemId: odspResolvedUrl.itemId,
-            dataStorePath,
+            dataStorePath: actualDataStorePath,
             appName: this.appName,
             containerPackageName,
             fileVersion: odspResolvedUrl.fileVersion,
