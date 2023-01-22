@@ -24,6 +24,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 `IPendingFlush` has been deprecated. Use batch metadata on `IPendingMessage` instead to indicate the end of a batch.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
+- [Sub Directory creation with same name fail in Shared Directory DDS](#Sub-Directory-creation-with-same-name-fail-in-Shared-Directory-DDS)
 - [Existing flag is now required in IRuntimeFactory](#existing-parameter-is-now-required-in-iruntimefactory)
 - [Remove iframe-driver](#remove-iframe-driver)
 - [Remove Deprecated Fields from ISummaryRuntimeOptions](#Remove-Deprecated-Fields-from-ISummaryRuntimeOptions)
@@ -31,6 +32,10 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Remove ISummarizerRuntime batchEnd listener](#Remove-ISummarizerRuntime-batchEnd-listener)
 - [Remove ISummaryBaseConfiguration.summarizerClientElection](#Remove-ISummaryBaseConfigurationsummarizerClientElection)
 - [Remove Deprecated IFluidObject Interface](#Remove-Deprecated-IFluidObject-Interface)
+
+### Sub Directory creation with same name fail in Shared Directory DDS
+If user tries to create a sub directory with name `Foo` and `Foo` sub directory already exists, then instead of submitting an OP
+unneccessarily, the `createSubDirectory` method with throw an error.
 
 ### existing parameter is now required in IRuntimeFactory::instantiateRuntime
 The `existing` flag was added as optional in client version 0.44 and has been updated to be expected

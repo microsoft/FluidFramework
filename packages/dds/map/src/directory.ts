@@ -1130,6 +1130,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         // Create the sub directory locally first.
         const isNew = this.createSubDirectoryCore(subdirName, true);
 
+        if (!isNew) {
+            throw new UsageError(`Directory with name ${subdirName} already exists`);
+        }
+
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const subDir: IDirectory = this._subdirectories.get(subdirName)!;
 
