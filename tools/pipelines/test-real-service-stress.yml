@@ -69,7 +69,6 @@ stages:
         poolBuild: Large
         testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
-        artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 150
         testCommand: start:t9s:gc:ci
         env:
