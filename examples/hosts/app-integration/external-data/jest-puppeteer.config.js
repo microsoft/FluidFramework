@@ -5,7 +5,7 @@
 
 module.exports = {
     server: {
-        command: `webpack serve --config webpack.test.js --port ${process.env["PORT"]}`,
+        command: `npm run start:client:test -- --port ${process.env["PORT"]}`,
         port: process.env["PORT"],
         launchTimeout: 10000,
         usedPortAction: "error",
