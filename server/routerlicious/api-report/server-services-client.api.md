@@ -42,6 +42,9 @@ export const canWrite: (scopes: string[]) => boolean;
 export const choose: () => string;
 
 // @public
+export function convertSortedNumberArrayToRanges(numberArray: number[]): number[][];
+
+// @public
 export function convertSummaryTreeToWholeSummaryTree(parentHandle: string | undefined, tree: ISummaryTree, path?: string, rootNodeName?: string): IWholeSummaryTree;
 
 // @public

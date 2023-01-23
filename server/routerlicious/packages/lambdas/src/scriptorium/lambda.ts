@@ -15,8 +15,7 @@ import {
     isRetryEnabled,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { convertNumberArrayToRanges } from "../utils";
-
+import { convertSortedNumberArrayToRanges } from "@fluidframework/server-services-client";
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();
     private pendingOffset: IQueuedMessage | undefined;
@@ -112,14 +111,14 @@ export class ScriptoriumLambda implements IPartitionLambda {
         const tenantId = messages[0]?.tenantId ?? "";
 
         const sequenceNumbers = messages.map((message) => message.operation.sequenceNumber);
-        const sequenceNumberRanges = convertNumberArrayToRanges(sequenceNumbers);
+        const sequenceNumberRanges = convertSortedNumberArrayToRanges(sequenceNumbers);
 
         return runWithRetry(
             async () => this.opCollection.insertMany(dbOps, false),
             "insertOpScriptorium",
             3 /* maxRetries */,
             1000 /* retryAfterMs */,
-            { ...getLumberBaseProperties(documentId, tenantId), ...{ sequenceNumberRanges }},
+            { ...getLumberBaseProperties(documentId, tenantId), ...{ sequenceNumberRanges } },
             (error) => error.code === 11000,
             (error) => !this.clientFacadeRetryEnabled /* shouldRetry */,
             undefined /* calculateIntervalMs */,
