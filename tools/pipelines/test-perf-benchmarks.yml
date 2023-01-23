@@ -199,12 +199,14 @@ stages:
         #       node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
 
         - task: Bash@3
-          displayName: Test get azure monitor variable
+          displayName: Get azure monitor variable and send measurment to app insights
           inputs:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
-              echo $(seantest)
+              echo $(app-insights-connection-string)
+              ls -laR ${{ variables.consolidatedTestsOutputFolder }};
+              node --require @ff-internal/aria-logger bin/run azureMonitor --handlerModule $(toolAbsolutePath)/dist/handlers/azureMonitorExecutionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString $(app-insights-connection-string);
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - Perf tests output - execution time
