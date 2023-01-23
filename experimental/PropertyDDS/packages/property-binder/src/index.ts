@@ -16,6 +16,7 @@ import { SingletonDataBinding, StatelessDataBinding } from './data_binder/statel
 import { DataBinderHandle } from './internal/dataBinderHandle';
 import { PropertyElement } from './internal/propertyElement';
 import { UpgradeType } from './internal/semvermap';
+import { RemovalContext } from './data_binder/removalContext';
 
 import { IActivateDataBindingOptions } from './data_binder/IActivateDataBindingOptions';
 import {
@@ -42,6 +43,7 @@ export {
   representationDestroyer,
   representationGenerator,
   representationInitializer,
+  RemovalContext,
   forEachProperty,
   UpgradeType,
 };

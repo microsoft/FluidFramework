@@ -209,3 +209,12 @@ export type eitherIsAny<A, B> = true extends isAny<A> | isAny<B> ? true : false;
  */
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
+
+/**
+ * Compile time assert that A is assignable to (extends) B.
+ * To use, simply define a type:
+ * `type _check = requireAssignableTo<T, Expected>;`
+ *
+ * @public
+ */
+export type requireAssignableTo<A extends B, B> = true;

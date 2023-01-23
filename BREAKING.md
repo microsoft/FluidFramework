@@ -19,11 +19,13 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ## 2.0.0-internal.2.4.0 Upcoming changes
 - [Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`](#deprecate-ensurecontainerconnected-in-fluidframeworktest-utils)
+- [Deprecate internal connection details from `IConnectionDetails`](#deprecate-internal-connection-details-from-IConnectionDetails)
 
 ### Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`
 
 `ensureContainerConnected()` is now deprecated.
 Use `waitForContainerConnection()` from the same package instead.
+
 
 **NOTE**: the default value for the `failOnContainerClose` parameter of `waitForContainerConnection()` is currently set
 to `false` for backwards compatibility but will change to `true` in a future release.
@@ -31,6 +33,14 @@ This is overall a safer default because it ensures that unexpected errors which 
 immediately, instead of potentially being hidden by a timeout.
 It is recommended that you start passing `failOnContainerClose=true` when calling `waitForContainerConnection()` in
 preparation for this upcoming breaking change.
+
+
+### Deprecate internal connection details from `IConnectionDetails`
+
+Deprecating `existing`, `mode`, `version` and `initialClients` in `IConnectionDetails`, no longer exposing these to runtime. No replacement API recommended. Reasons for deprecation:
+- `existing` : this will always be true, which no longer provides useful information
+- `mode` : this is implementation detail of connection
+- `initialClients` and `version` : these are implementation details of handshake protocol of establishing connection, and should not be accessible.
 
 # 2.0.0-internal.2.3.0
 
