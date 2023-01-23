@@ -14,6 +14,8 @@ import {
     RevisionTag,
     ITreeCursorSynchronous,
     tagChange,
+    TreeSchemaIdentifier,
+    FieldSchema,
 } from "../core";
 import { brand, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
@@ -38,6 +40,38 @@ import {
 import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
 import { applyModifyToTree } from "./deltaUtils";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
+
+type BrandedFieldKind<
+    TName extends string,
+    TMultiplicity extends Multiplicity,
+    TEditor extends FieldEditor<any>,
+> = FieldKind<TEditor> & {
+    identifier: TName & FieldKindIdentifier;
+    multiplicity: TMultiplicity;
+};
+
+function brandedFieldKind<
+    TName extends string,
+    TMultiplicity extends Multiplicity,
+    TEditor extends FieldEditor<any>,
+>(
+    identifier: TName,
+    multiplicity: TMultiplicity,
+    changeHandler: FieldChangeHandler<any, TEditor>,
+    allowsTreeSupersetOf: (
+        originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined,
+        superset: FieldSchema,
+    ) => boolean,
+    handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
+): BrandedFieldKind<TName, TMultiplicity, TEditor> {
+    return new FieldKind<TEditor>(
+        brand(identifier),
+        multiplicity,
+        changeHandler,
+        allowsTreeSupersetOf,
+        handlesEditsFrom,
+    ) as unknown as BrandedFieldKind<TName, TMultiplicity, TEditor>;
+}
 
 /**
  * Encoder for changesets which carry no information.
@@ -199,8 +233,12 @@ export const counterHandle: FieldChangeHandler<number> = {
  * How should it use its type set?
  * How should it handle lack of associative addition due to precision and overflow?
  */
-export const counter: FieldKind = new FieldKind(
-    brand("Counter"),
+export const counter: BrandedFieldKind<
+    "Counter",
+    Multiplicity.Value,
+    FieldEditor<number>
+> = brandedFieldKind(
+    "Counter",
     Multiplicity.Value,
     counterHandle,
     (types, other) => other.kind === counter.identifier,
@@ -393,17 +431,18 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
 /**
  * Exactly one item.
  */
-export const value: FieldKind<ValueFieldEditor> = new FieldKind(
-    brand("Value"),
-    Multiplicity.Value,
-    valueChangeHandler,
-    (types, other) =>
-        (other.kind === sequence.identifier ||
-            other.kind === value.identifier ||
-            other.kind === optional.identifier) &&
-        allowsTreeSchemaIdentifierSuperset(types, other.types),
-    new Set(),
-);
+export const value: BrandedFieldKind<"Value", Multiplicity.Value, ValueFieldEditor> =
+    brandedFieldKind(
+        "Value",
+        Multiplicity.Value,
+        valueChangeHandler,
+        (types, other) =>
+            (other.kind === sequence.identifier ||
+                other.kind === value.identifier ||
+                other.kind === optional.identifier) &&
+            allowsTreeSchemaIdentifierSuperset(types, other.types),
+        new Set(),
+    );
 
 export interface OptionalFieldChange {
     /**
@@ -710,8 +749,8 @@ export const sequence: FieldKind<SequenceFieldEditor> = new FieldKind(
  *
  * See {@link emptyField} for a constant, reusable field using Forbidden.
  */
-export const forbidden: FieldKind = new FieldKind(
-    brand("Forbidden"),
+export const forbidden = brandedFieldKind(
+    "Forbidden",
     Multiplicity.Forbidden,
     noChangeHandler,
     // All multiplicities other than Value support empty.

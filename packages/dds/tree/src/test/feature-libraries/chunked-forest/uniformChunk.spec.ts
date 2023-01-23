@@ -11,7 +11,6 @@ import {
     dummyRoot,
     ChunkShape,
     UniformChunk,
-    TreeChunk,
     // eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk";
 import { testSpecializedCursor, TestTree } from "../../cursorTestSuite";
@@ -32,6 +31,7 @@ import {
     mapTreeFromCursor,
     singleMapTreeCursor,
     singleTextCursor,
+    TreeChunk,
 } from "../../../feature-libraries";
 
 const xField: FieldKey = brand("x");

@@ -76,7 +76,6 @@ import {
     createMap,
     extend,
     MapLike,
-    matchProperties,
     PropertySet,
 } from "./properties";
 import {
@@ -97,6 +96,7 @@ import {
     NodeAction,
     walkAllChildSegments,
 } from "./mergeTreeNodeWalk";
+import { zamboniSegments } from "./zamboni";
 
 const minListenerComparer: Comparer<MinListener> = {
     min: { minRequired: Number.MIN_VALUE, onMinGE: () => { assert(false, 0x048 /* "onMinGE()" */); } },
@@ -467,7 +467,6 @@ export interface IRootMergeBlock extends IMergeBlock {
  * @internal
  */
 export class MergeTree {
-    private static readonly zamboniSegmentsMaxCount = 2;
     public static readonly options = {
         incrementalUpdate: true,
         insertAfterRemovedSegs: true,
@@ -484,6 +483,10 @@ export class MergeTree {
 
     public pendingSegments: List<SegmentGroup> | undefined;
     private segmentsToScour: Heap<LRUSegment> | undefined;
+    public get getSegmentsToScour(): Heap<LRUSegment> | undefined {
+        return this.segmentsToScour;
+    }
+
     /**
      * Whether or not all blocks in the mergeTree currently have information about local partial lengths computed.
      * This information is only necessary on reconnect, and otherwise costly to bookkeep.
@@ -514,7 +517,7 @@ export class MergeTree {
         value.mergeTree = this;
     }
 
-    private makeBlock(childCount: number) {
+    public makeBlock(childCount: number) {
         const block: MergeBlock = new HierMergeBlock(childCount);
         block.ordinal = "";
         return block;
@@ -681,167 +684,8 @@ export class MergeTree {
         }
     }
 
-    private underflow(node: IMergeBlock) {
-        return node.childCount < (MaxNodesInBlock / 2);
-    }
-
-    private scourNode(node: IMergeBlock, holdNodes: IMergeNode[]) {
-        let prevSegment: ISegment | undefined;
-        for (let k = 0; k < node.childCount; k++) {
-            const childNode = node.children[k];
-            if (childNode.isLeaf()) {
-                const segment = childNode;
-                if (segment.segmentGroups.empty) {
-                    if (segment.removedSeq !== undefined) {
-                        if (segment.removedSeq > this.collabWindow.minSeq) {
-                            holdNodes.push(segment);
-                        } else if (!segment.trackingCollection.empty) {
-                            holdNodes.push(segment);
-                        } else {
-                            // Notify maintenance event observers that the segment is being unlinked from the MergeTree
-                            if (this.mergeTreeMaintenanceCallback) {
-                                this.mergeTreeMaintenanceCallback(
-                                    {
-                                        operation: MergeTreeMaintenanceType.UNLINK,
-                                        deltaSegments: [{ segment }],
-                                    },
-                                    undefined,
-                                );
-                            }
-
-                            segment.parent = undefined;
-                        }
-                        prevSegment = undefined;
-                    } else {
-                        if (segment.seq! <= this.collabWindow.minSeq) {
-                            const canAppend = prevSegment
-                                && prevSegment.canAppend(segment)
-                                && matchProperties(prevSegment.properties, segment.properties)
-                                && prevSegment.trackingCollection.matches(segment.trackingCollection)
-                                && (this.localNetLength(segment) ?? 0) > 0;
-
-                            if (canAppend) {
-                                prevSegment!.append(segment);
-                                if (this.mergeTreeMaintenanceCallback) {
-                                    this.mergeTreeMaintenanceCallback(
-                                        {
-                                            operation: MergeTreeMaintenanceType.APPEND,
-                                            deltaSegments: [{ segment: prevSegment! }, { segment }],
-                                        },
-                                        undefined,
-                                    );
-                                }
-                                segment.parent = undefined;
-                                segment.trackingCollection.trackingGroups.forEach((tg) => tg.unlink(segment));
-                            } else {
-                                holdNodes.push(segment);
-                                prevSegment = (this.localNetLength(segment) ?? 0) > 0 ? segment : undefined;
-                            }
-                        } else {
-                            holdNodes.push(segment);
-                            prevSegment = undefined;
-                        }
-                    }
-                } else {
-                    holdNodes.push(segment);
-                    prevSegment = undefined;
-                }
-            } else {
-                holdNodes.push(childNode);
-                prevSegment = undefined;
-            }
-        }
-    }
-
-    // Interior node with all node children
-    private packParent(parent: IMergeBlock) {
-        const children = parent.children;
-        let childIndex: number;
-        let childBlock: IMergeBlock;
-        const holdNodes: IMergeNode[] = [];
-        for (childIndex = 0; childIndex < parent.childCount; childIndex++) {
-            // Debug assert not isLeaf()
-            childBlock = <IMergeBlock>children[childIndex];
-            this.scourNode(childBlock, holdNodes);
-            // Will replace this block with a packed block
-            childBlock.parent = undefined;
-        }
-        const totalNodeCount = holdNodes.length;
-        const halfOfMaxNodeCount = MaxNodesInBlock / 2;
-        let childCount = Math.min(MaxNodesInBlock - 1, Math.floor(totalNodeCount / halfOfMaxNodeCount));
-        if (childCount < 1) {
-            childCount = 1;
-        }
-        const baseNodesInBlockCount = Math.floor(totalNodeCount / childCount);
-        let remainderCount = totalNodeCount % childCount;
-        const packedBlocks = new Array<IMergeBlock>(MaxNodesInBlock);
-        let childrenPackedCount = 0;
-        for (let nodeIndex = 0; nodeIndex < childCount; nodeIndex++) {
-            let nodeCount = baseNodesInBlockCount;
-            if (remainderCount > 0) {
-                nodeCount++;
-                remainderCount--;
-            }
-            const packedBlock = this.makeBlock(nodeCount);
-            for (let packedNodeIndex = 0; packedNodeIndex < nodeCount; packedNodeIndex++) {
-                const nodeToPack = holdNodes[childrenPackedCount++];
-                packedBlock.assignChild(nodeToPack, packedNodeIndex, false);
-            }
-            packedBlock.parent = parent;
-            packedBlocks[nodeIndex] = packedBlock;
-            this.nodeUpdateLengthNewStructure(packedBlock);
-        }
-        parent.children = packedBlocks;
-        for (let j = 0; j < childCount; j++) {
-            parent.assignChild(packedBlocks[j], j, false);
-        }
-        parent.childCount = childCount;
-        if (this.underflow(parent) && (parent.parent)) {
-            this.packParent(parent.parent);
-        } else {
-            this.nodeUpdateOrdinals(parent);
-            this.blockUpdatePathLengths(parent, UnassignedSequenceNumber, -1, true);
-        }
-    }
-
-    private zamboniSegments(zamboniSegmentsMaxCount = MergeTree.zamboniSegmentsMaxCount) {
-        if (!this.collabWindow.collaborating) {
-            return;
-        }
-
-        for (let i = 0; i < zamboniSegmentsMaxCount; i++) {
-            let segmentToScour = this.segmentsToScour!.peek();
-            if (!segmentToScour || segmentToScour.maxSeq > this.collabWindow.minSeq) {
-                break;
-            }
-            segmentToScour = this.segmentsToScour!.get();
-            // Only skip scouring if needs scour is explicitly false, not true or undefined
-            if (segmentToScour.segment!.parent && segmentToScour.segment!.parent.needsScour !== false) {
-                const block = segmentToScour.segment!.parent;
-                const childrenCopy: IMergeNode[] = [];
-                this.scourNode(block, childrenCopy);
-                // This will avoid the cost of re-scouring nodes
-                // that have recently been scoured
-                block.needsScour = false;
-
-                const newChildCount = childrenCopy.length;
-
-                if (newChildCount < block.childCount) {
-                    block.childCount = newChildCount;
-                    block.children = childrenCopy;
-                    for (let j = 0; j < newChildCount; j++) {
-                        block.assignChild(childrenCopy[j], j, false);
-                    }
-
-                    if (this.underflow(block) && block.parent) {
-                        this.packParent(block.parent);
-                    } else {
-                        this.nodeUpdateOrdinals(block);
-                        this.blockUpdatePathLengths(block, UnassignedSequenceNumber, -1, true);
-                    }
-                }
-            }
-        }
+    public getCollabWindow() {
+        return this.collabWindow;
     }
 
     public getLength(refSeq: number, clientId: number) {
@@ -1089,7 +933,7 @@ export class MergeTree {
         if (minSeq > this.collabWindow.minSeq) {
             this.collabWindow.minSeq = minSeq;
             if (MergeTree.options.zamboniSegments) {
-                this.zamboniSegments();
+                zamboniSegments(this);
             }
             this.notifyMinSeqListeners();
         }
@@ -1320,7 +1164,7 @@ export class MergeTree {
             }
         }
         if (MergeTree.options.zamboniSegments) {
-            this.zamboniSegments();
+            zamboniSegments(this);
         }
     }
 
@@ -1422,7 +1266,7 @@ export class MergeTree {
 
         if (this.collabWindow.collaborating && MergeTree.options.zamboniSegments &&
             (seq !== UnassignedSequenceNumber)) {
-            this.zamboniSegments();
+                zamboniSegments(this);
         }
     }
 
@@ -1836,7 +1680,7 @@ export class MergeTree {
         return newNode;
     }
 
-    private nodeUpdateOrdinals(block: IMergeBlock) {
+    public nodeUpdateOrdinals(block: IMergeBlock) {
         for (let i = 0; i < block.childCount; i++) {
             const child = block.children[i];
             block.setOrdinal(child, i);
@@ -1905,7 +1749,7 @@ export class MergeTree {
         }
         if (this.collabWindow.collaborating && (seq !== UnassignedSequenceNumber)) {
             if (MergeTree.options.zamboniSegments) {
-                this.zamboniSegments();
+                zamboniSegments(this);
             }
         }
     }
@@ -1999,7 +1843,7 @@ export class MergeTree {
 
         if (this.collabWindow.collaborating && (seq !== UnassignedSequenceNumber)) {
             if (MergeTree.options.zamboniSegments) {
-                this.zamboniSegments();
+                zamboniSegments(this);
             }
         }
     }
@@ -2107,7 +1951,7 @@ export class MergeTree {
         return segmentPosition;
     }
 
-    private nodeUpdateLengthNewStructure(node: IMergeBlock, recur = false) {
+    public nodeUpdateLengthNewStructure(node: IMergeBlock, recur = false) {
         this.blockUpdate(node);
         if (this.collabWindow.collaborating) {
             this.localPartialsComputed = false;
@@ -2173,7 +2017,7 @@ export class MergeTree {
         block.cachedLength = len;
     }
 
-    private blockUpdatePathLengths(
+    public blockUpdatePathLengths(
         startBlock: IMergeBlock | undefined,
         seq: number,
         clientId: number,

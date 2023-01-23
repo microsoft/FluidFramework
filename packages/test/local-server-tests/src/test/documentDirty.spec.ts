@@ -18,6 +18,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
     createAndAttachContainer,
+    waitForContainerConnection,
     ITestFluidObject,
     LoaderContainerTracker,
     LocalCodeLoader,
@@ -51,13 +52,7 @@ describe("Document Dirty", () => {
          */
         async function waitForContainerReconnection(c: Container): Promise<void> {
             assert.equal(c.connected, false);
-            return new Promise((resolve) => c.once("connected", () => resolve()));
-        }
-
-        async function ensureContainerConnected(c: Container): Promise<void> {
-            if (!c.connected) {
-                return waitForContainerReconnection(c);
-            }
+            return waitForContainerConnection(c, true);
         }
 
         /**
@@ -339,7 +334,7 @@ describe("Document Dirty", () => {
         describe("Force readonly", () => {
             it(`sets operations when force readonly and then turn off force readonly to process them`, async () => {
                 container.forceReadonly(true);
-                await ensureContainerConnected(container);
+                await waitForContainerConnection(container, true);
 
                 // Set values in DDSes in force read only state.
                 sharedMap.set("key", "value");
@@ -370,7 +365,7 @@ describe("Document Dirty", () => {
 
                     // force readonly
                     container.forceReadonly(true);
-                    await ensureContainerConnected(container);
+                    await waitForContainerConnection(container, true);
 
                     await loaderContainerTracker.ensureSynchronized();
 

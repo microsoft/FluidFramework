@@ -71,7 +71,7 @@ describe("SequenceField - MarkListFactory", () => {
 
     it("Can merge adjacent moves ", () => {
         const moveEffects = SF.newMoveEffectTable();
-        const factory1 = new SF.MarkListFactory(moveEffects);
+        const factory1 = new SF.MarkListFactory(undefined, moveEffects);
         const moveOut1: SF.Detach = { type: "MoveOut", id: brand(0), count: 1 };
         const moveOut2: SF.Detach = { type: "MoveOut", id: brand(1), count: 1 };
         const moveIn1: SF.Mark = { type: "MoveIn", id: brand(0), count: 1 };
@@ -82,7 +82,7 @@ describe("SequenceField - MarkListFactory", () => {
         factory1.pushContent(moveIn1);
         factory1.pushContent(moveIn2);
 
-        const factory2 = new SF.MarkListFactory(moveEffects);
+        const factory2 = new SF.MarkListFactory(undefined, moveEffects);
         for (const mark of factory1.list) {
             factory2.push(mark);
         }
@@ -91,6 +91,35 @@ describe("SequenceField - MarkListFactory", () => {
             { type: "MoveOut", id: 0, count: 2 },
             3,
             { type: "MoveIn", id: 0, count: 2 },
+        ]);
+    });
+
+    it("Can merge three adjacent moves ", () => {
+        const moveEffects = SF.newMoveEffectTable();
+        const factory1 = new SF.MarkListFactory(undefined, moveEffects);
+        const moveOut1: SF.Detach = { type: "MoveOut", id: brand(0), count: 1 };
+        const moveOut2: SF.Detach = { type: "MoveOut", id: brand(1), count: 1 };
+        const moveOut3: SF.Detach = { type: "MoveOut", id: brand(2), count: 1 };
+        const moveIn1: SF.Mark = { type: "MoveIn", id: brand(0), count: 1 };
+        const moveIn2: SF.Mark = { type: "MoveIn", id: brand(1), count: 1 };
+        const moveIn3: SF.Mark = { type: "MoveIn", id: brand(2), count: 1 };
+        factory1.pushContent(moveOut1);
+        factory1.pushContent(moveOut2);
+        factory1.pushContent(moveOut3);
+        factory1.pushOffset(3);
+        factory1.pushContent(moveIn1);
+        factory1.pushContent(moveIn2);
+        factory1.pushContent(moveIn3);
+
+        const factory2 = new SF.MarkListFactory(undefined, moveEffects);
+        for (const mark of factory1.list) {
+            factory2.push(mark);
+        }
+
+        assert.deepStrictEqual(factory2.list, [
+            { type: "MoveOut", id: 0, count: 3 },
+            3,
+            { type: "MoveIn", id: 0, count: 3 },
         ]);
     });
 
