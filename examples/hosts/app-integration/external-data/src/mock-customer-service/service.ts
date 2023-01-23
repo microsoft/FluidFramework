@@ -11,6 +11,7 @@ import fetch from 'node-fetch';
 import { isWebUri } from "valid-url";
 
 import { MockWebhook } from '../utilities';
+import { assertValidTaskData, TaskData } from '../model-interface';
 
 /**
  * {@link initializeCustomerService} input properties.
@@ -51,7 +52,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
     /**
      * Mock webhook for echoing webhook notifications from the external data service.
      */
-    const webhook = new MockWebhook<string>();
+    const webhook = new MockWebhook<TaskData>();
 
     // Register with external data service for webhook notifications.
     try {
@@ -147,14 +148,26 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
      */
     expressApp.post("/echo-external-data-webhook", (request, result) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const data = request.body.data as string;
-        if (data === undefined) {
-            const errorMessage = "No tasklist data provided by external data service webhook.";
+        if (request.body.data === undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+            const errorMessage = `No tasklist data provided by external data service webhook. Request body received: "${request.body.toString()}"`;
             console.error(formatLogMessage(errorMessage));
             result.status(400).json({ message: errorMessage });
         } else {
-            webhook.notifySubscribers(data);
-            console.log(formatLogMessage(`External data update echoed to subscribers.`));
+            let taskData: TaskData;
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                taskData = assertValidTaskData(request.body.data as unknown);
+            } catch (error) {
+                const errorMessage = `Malformed data received from external data service webhook: ${error}`;
+                console.error(formatLogMessage(errorMessage));
+                result.status(400).json({ errorMessage });
+                return;
+            }
+
+            console.log(formatLogMessage(`Data update received from external data service. Notifying webhook subscribers.`));
+            webhook.notifySubscribers(taskData);
+            result.send();
         }
     });
 

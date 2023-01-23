@@ -49,9 +49,10 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
     /**
      * Mock webhook for notifying subscibers to changes in external data.
      */
-    const webhook = new MockWebhook<string>();
+    const webhook = new MockWebhook<TaskData>();
 
-    function notifyWebhookSubscribers(newData: string): void {
+    function notifyWebhookSubscribers(newData: TaskData): void {
+        console.log(formatLogMessage("External data has changed. Notifying webhook subscribers."));
         webhook.notifySubscribers(newData);
     }
 

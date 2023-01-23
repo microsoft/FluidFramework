@@ -137,7 +137,6 @@ describe("mock-external-data-service: webhook", () => {
         // Bind listener
         let wasHookNotifiedForChange = false;
         localServiceApp.post("/task-list-hook", (_, result) => {
-            console.log("TEST: Webhook called!")
             wasHookNotifiedForChange = true;
             result.send();
         });
