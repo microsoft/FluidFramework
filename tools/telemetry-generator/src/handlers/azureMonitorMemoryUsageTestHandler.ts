@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-module.exports = function handler(fileData, logger) {
-    fileData.tests.forEach((testData) => {
+module.exports = async function handler(fileData, logger) {
+    fileData.tests.forEach(async (testData) => {
         const heapUsedAvgMetricName = `performance_benchmark_memoryUsage_${fileData.suiteName}_${testData.benchmarkName}_heapUsedAvg`;
         const heapUsedStdDevMetricName = `performance_benchmark_memoryUsage_${fileData.suiteName}_${testData.benchmarkName}_heapUsedStdDev`;
         // logger.send({
@@ -16,14 +16,14 @@ module.exports = function handler(fileData, logger) {
         //     heapUsedAvg: testData.testData.stats.mean,
         //     heapUsedStdDev: testData.testData.stats.deviation,
         // });
-        logger.trackMetric({ name: heapUsedAvgMetricName, value: testData.testData.stats.mean }, {
+        await logger.trackMetric({ name: heapUsedAvgMetricName, value: testData.testData.stats.mean }, {
             category: "performance",
             eventName: "Benchmark",
             benchmarkType: "MemoryUsage",
             suiteName: fileData.suiteName,
             testName: testData.testName,
         });
-        logger.trackMetric({ name: heapUsedStdDevMetricName, value: testData.testData.stats.deviation }, {
+        await logger.trackMetric({ name: heapUsedStdDevMetricName, value: testData.testData.stats.deviation }, {
             category: "performance",
             eventName: "Benchmark",
             benchmarkType: "MemoryUsage",
