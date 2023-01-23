@@ -35,7 +35,6 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
         private readonly mergeTreeClient: Client,
     ) {
         assert(deltaArgs.deltaSegments.length > 0, 0x2d8 /* "Empty change event should not be emitted." */);
-        this.isEmpty = false;
         this.deltaOperation = deltaArgs.operation;
 
         this.sortedRanges = new Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>(
