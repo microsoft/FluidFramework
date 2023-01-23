@@ -193,6 +193,7 @@ describe("SequenceField - toDelta", () => {
         const moveIn: Delta.MoveIn = {
             type: Delta.MarkType.MoveIn,
             moveId: deltaMoveId,
+            count: 10,
         };
         const expected: Delta.MarkList = [42, moveOut, 8, moveIn];
         const actual = toDelta(changeset);
@@ -270,7 +271,7 @@ describe("SequenceField - toDelta", () => {
             },
         ];
         const nestedMoveDelta = new Map([
-            [fooField, [{ type: Delta.MarkType.MoveIn, moveId: deltaMoveId }]],
+            [fooField, [{ type: Delta.MarkType.MoveIn, moveId: deltaMoveId, count: 42 }]],
         ]);
         const mark: Delta.InsertAndModify = {
             type: Delta.MarkType.InsertAndModify,

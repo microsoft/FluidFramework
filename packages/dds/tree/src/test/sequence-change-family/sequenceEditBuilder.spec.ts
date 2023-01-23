@@ -292,6 +292,7 @@ describe("SequenceEditBuilder", () => {
                                     {
                                         type: Delta.MarkType.MoveIn,
                                         moveId,
+                                        count: 10,
                                     },
                                 ],
                             ],
@@ -320,6 +321,7 @@ describe("SequenceEditBuilder", () => {
                                     {
                                         type: Delta.MarkType.MoveIn,
                                         moveId,
+                                        count: 10,
                                     },
                                     15,
                                     {
@@ -359,10 +361,12 @@ describe("SequenceEditBuilder", () => {
                                     {
                                         type: Delta.MarkType.MoveIn,
                                         moveId,
+                                        count: 15,
                                     },
                                     {
                                         type: Delta.MarkType.MoveIn,
                                         moveId: moveId2,
+                                        count: 5,
                                     },
                                     {
                                         type: Delta.MarkType.MoveOut,
@@ -407,6 +411,7 @@ describe("SequenceEditBuilder", () => {
                                     {
                                         type: Delta.MarkType.MoveIn,
                                         moveId,
+                                        count: 10,
                                     },
                                 ],
                             ],
@@ -459,6 +464,7 @@ describe("SequenceEditBuilder", () => {
                                                     {
                                                         type: Delta.MarkType.MoveIn,
                                                         moveId,
+                                                        count: 3,
                                                     },
                                                 ],
                                             ],
@@ -498,6 +504,7 @@ describe("SequenceEditBuilder", () => {
                                                     {
                                                         type: Delta.MarkType.MoveIn,
                                                         moveId,
+                                                        count: 3,
                                                     },
                                                 ],
                                             ],
@@ -576,6 +583,7 @@ describe("SequenceEditBuilder", () => {
                                                     {
                                                         type: Delta.MarkType.MoveIn,
                                                         moveId,
+                                                        count: 3,
                                                     },
                                                 ],
                                             ],
@@ -656,6 +664,7 @@ describe("SequenceEditBuilder", () => {
                                                                     {
                                                                         type: Delta.MarkType.MoveIn,
                                                                         moveId,
+                                                                        count: 3,
                                                                     },
                                                                 ],
                                                             ],
@@ -706,6 +715,7 @@ describe("SequenceEditBuilder", () => {
                     {
                         type: Delta.MarkType.MoveIn,
                         moveId,
+                        count: 10,
                     },
                 ],
             ],
@@ -730,6 +740,7 @@ describe("SequenceEditBuilder", () => {
                                     {
                                         type: Delta.MarkType.MoveIn,
                                         moveId,
+                                        count: 10,
                                     },
                                 ],
                             ],

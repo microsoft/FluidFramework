@@ -79,6 +79,11 @@ export interface MoveEffect<T> {
     detacher?: RevisionTag;
 }
 
+export enum MoveEnd {
+    Source,
+    Dest,
+}
+
 export enum PairedMarkUpdate {
     /**
      * Indicates that the mark's matching mark is now inactive.
@@ -101,10 +106,6 @@ export interface MovePartition<TNodeChange> {
      * When set, updates the mark's paired mark status.
      */
     pairedMarkStatus?: PairedMarkUpdate;
-    /**
-     * When set, updates the mark's `detachedBy` field.
-     */
-    detachedBy?: RevisionTag;
 }
 
 export function splitMove<T>(
