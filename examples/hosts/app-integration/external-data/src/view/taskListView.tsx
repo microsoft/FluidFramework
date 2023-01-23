@@ -36,8 +36,6 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
         const showSavedName = (): void => {
             setSavedName(task.diffName);
             setSavedDiffType(task.diffType);
-            console.log(savedName);
-            console.log(savedDiffType);
         }
         task.on("priorityChanged", updateFromRemotePriority);
         task.on("externalPriorityChanged", showSavedPriority);
@@ -48,7 +46,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
             task.off("externalPriorityChanged", showSavedPriority);
             task.off("externalNameChanged", showSavedName);
         };
-    }, [task]);
+    }, [task, savedName, savedPriority, savedDiffType]);
 
     const inputHandler = (e: React.FormEvent): void => {
         const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
