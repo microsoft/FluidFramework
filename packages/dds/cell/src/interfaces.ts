@@ -5,7 +5,6 @@
 
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import { Serializable } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { AttributionKey } from "./cell";
 
 /**
@@ -106,22 +105,8 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
 
     /**
      * @returns the AttributionKey associated with the cell's most recent change.
-     *
-     * @returns - the AttributionKey of the cell
      */
     getAttribution(): AttributionKey | undefined;
-
-    /**
-     * Update the cell AttributionKey.
-     */
-    setAttribution(message: ISequencedDocumentMessage): void;
-
-    /**
-     * Check if the attribution exists
-     *
-     * @returns - `true` if the cell attributor is not undefined, `false` otherwise
-     */
-    hasAttribution(): boolean;
 }
 
 /**

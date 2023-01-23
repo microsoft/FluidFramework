@@ -51,12 +51,14 @@ interface ICellContent {
     value: unknown;
     /**
      * The attribution key contained in the `Cell`.
+     * @alpha
      */
     attribution: unknown;
 }
 
 /**
  * {@inheritDoc ICellOptions}
+ * @alpha
  */
 export interface ICellOptions {
     /**
@@ -67,6 +69,7 @@ export interface ICellOptions {
 
 /**
  * {@inheritDoc ICellAttributionOptions}
+ * @alpha
  */
 export interface ICellAttributionOptions {
     /**
@@ -233,6 +236,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
 
     /**
      * {@inheritDoc ISharedCell.getAttribution}
+     * @alpha
      */
     public getAttribution(): AttributionKey | undefined {
         return this.attribution;
@@ -240,16 +244,11 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
 
     /**
      * {@inheritDoc ISharedCell.setAttribution}
+     * @internal
+     * @alpha
      */
-    public setAttribution(message: ISequencedDocumentMessage): void {
+    private setAttribution(message: ISequencedDocumentMessage): void {
         this.attribution = { type: "op", seq: message.sequenceNumber };
-    }
-
-    /**
-     * {@inheritDoc ISharedCell.hasAttribution}
-     */
-    public hasAttribution(): boolean {
-        return this.attribution !== undefined;
     }
 
     /**

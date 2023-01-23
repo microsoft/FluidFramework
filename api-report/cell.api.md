@@ -22,10 +22,10 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
     empty(): boolean;
     get(): Serializable<T> | undefined;
     // Warning: (ae-forgotten-export) The symbol "AttributionKey" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
     getAttribution(): AttributionKey | undefined;
-    hasAttribution(): boolean;
     set(value: Serializable<T>): void;
-    setAttribution(message: ISequencedDocumentMessage): void;
 }
 
 // @public
@@ -43,12 +43,9 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     delete(): void;
     empty(): boolean;
     get(): Serializable<T> | undefined;
+    // @alpha (undocumented)
     getAttribution(): AttributionKey | undefined;
     static getFactory(): IChannelFactory;
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: No member was found with name "hastAttribution"
-    //
-    // (undocumented)
-    hasAttribution(): boolean;
     protected initializeLocalCore(): void;
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
@@ -60,7 +57,6 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected rollback(content: any, localOpMetadata: unknown): void;
     set(value: Serializable<T>): void;
-    setAttribution(message: ISequencedDocumentMessage): void;
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }
 
