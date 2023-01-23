@@ -206,7 +206,7 @@ stages:
             script: |
               echo $(app-insights-connection-string)
               ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-              node --require @ff-internal/aria-logger bin/run azureMonitor --handlerModule $(toolAbsolutePath)/dist/handlers/azureMonitorExecutionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString $(app-insights-connection-string);
+              node --require @ff-internal/aria-logger bin/run azureMonitor --handlerModule $(toolAbsolutePath)/dist/handlers/azureMonitorExecutionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(app-insights-connection-string)';
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - Perf tests output - execution time
