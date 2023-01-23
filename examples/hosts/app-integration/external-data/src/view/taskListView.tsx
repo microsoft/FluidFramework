@@ -45,8 +45,8 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
         updateFromRemotePriority();
         return (): void => {
             task.off("priorityChanged", updateFromRemotePriority);
-            task.on("externalPriorityChanged", showSavedPriority);
-            task.on("externalNameChanged", showSavedName);
+            task.off("externalPriorityChanged", showSavedPriority);
+            task.off("externalNameChanged", showSavedName);
         };
     }, [task]);
 

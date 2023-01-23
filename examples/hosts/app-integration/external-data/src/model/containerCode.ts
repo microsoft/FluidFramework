@@ -63,8 +63,7 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
         // Register listener only once the model is fully loaded and ready
         runtime.on("signal", (message) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        if ('content' in message && 'type' in message.content && message.content.type === SignalType.ExternalDataChanged) {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        if (message?.content?.type === SignalType.ExternalDataChanged) {        // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 taskList.importExternalData();
             }
         });

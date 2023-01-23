@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from "react";
 import isEqual from 'lodash.isequal'
 import type { TaskData } from "../model-interface";
-import { customerServicePort  } from "../mock-service-interface";
+import { customerServicePort } from "../mock-service-interface";
 
 /**
  * {@link DebugView} input props.
@@ -73,7 +73,7 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
 
         // Run once immediately to run without waiting.
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        pollForServiceUpdates();
+        pollForServiceUpdates().catch(console.error);
 
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         const timer = setInterval(pollForServiceUpdates, 3000); // Poll every 3 seconds
@@ -168,7 +168,7 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
 
 
 interface ITaskRowProps {
-    task: ExternalDataTask
+    task: ExternalDataTask;
 }
 
 /**
@@ -177,21 +177,21 @@ interface ITaskRowProps {
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
     const { task } = props;
 
-    const IdChangeHandler = (e: React.SyntheticEvent<HTMLInputElement>): void => {
+    const idChangeHandler = (e: React.SyntheticEvent<HTMLInputElement>): void => {
         task.id = e.currentTarget.value;
     };
-    const NameChangeHandler = (e: React.SyntheticEvent<HTMLInputElement>): void => {
+    const nameChangeHandler = (e: React.SyntheticEvent<HTMLInputElement>): void => {
         task.name = e.currentTarget.value;
     };
-    const PriorityChangeHandler = (e: React.SyntheticEvent<HTMLInputElement>): void => {
+    const priorityChangeHandler = (e: React.SyntheticEvent<HTMLInputElement>): void => {
         task.priority =  Number.parseInt(e.currentTarget.value, 10);
     };
 
     return (
         <tr>
-            <td><input defaultValue={ task.id }  style={{ width: "30px" }} onChange={ IdChangeHandler }></input></td>
-            <td><input defaultValue={ task.name } style={{ width: "200px" }} onChange={ NameChangeHandler }></input></td>
-            <td><input defaultValue={ task.priority } type="number" style={{ width: "50px" }} onChange={ PriorityChangeHandler }></input></td>
+            <td><input defaultValue={ task.id }  style={{ width: "30px" }} onChange={ idChangeHandler }></input></td>
+            <td><input defaultValue={ task.name } style={{ width: "200px" }} onChange={ nameChangeHandler }></input></td>
+            <td><input defaultValue={ task.priority } type="number" style={{ width: "50px" }} onChange={ priorityChangeHandler }></input></td>
         </tr>
     );
 };
@@ -253,10 +253,6 @@ export const TaskListView: React.FC<IDebugViewProps> = () => {
         <TaskRow key={task.id} task={ task } />
     ));
     const saveChanges = async (): Promise<void> => {
-        // const taskStrings = tasks.map((task) => {
-        //     return `${task.id}:${task.name}:${task.priority}`;
-        // });
-        // const stringDataToWrite = `${taskStrings.join("\n")}`;
         const formattedTasks = {}
         for (const task of tasks) {
             formattedTasks[task.id] = {

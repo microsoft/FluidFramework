@@ -315,7 +315,7 @@ export class TaskList extends DataObject implements ITaskList {
                 priority: task.priority,
             };
         }
-        console.log(formattedTasks);
+
         try {
             await fetch(
                 `http://localhost:${customerServicePort}/set-tasks`,
