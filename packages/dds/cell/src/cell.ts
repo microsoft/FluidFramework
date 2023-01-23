@@ -246,7 +246,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     }
 
     /**
-     * {@inheritDoc ISharedCell.hastAttribution}
+     * {@inheritDoc ISharedCell.hasAttribution}
      */
     public hasAttribution(): boolean {
         return this.attribution !== undefined;
