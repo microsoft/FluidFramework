@@ -205,10 +205,20 @@ class RebaseQueue<T> {
         const baseMark = this.baseMarks.peek();
         const newMark = this.newMarks.peek();
 
-        if (baseMark === undefined || newMark === undefined) {
+        if (baseMark === undefined && newMark === undefined) {
+            return {};
+        } else if (baseMark === undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const length = getInputLength(newMark!);
+            return {
+                baseMark: length > 0 ? length : undefined,
+                newMark: this.newMarks.tryDequeue(),
+            };
+        } else if (newMark === undefined) {
+            const length = getInputLength(baseMark);
             return {
                 baseMark: this.baseMarks.tryDequeue(),
-                newMark: this.newMarks.tryDequeue(),
+                newMark: length > 0 ? length : undefined,
             };
         } else if (isAttach(baseMark) && isAttach(newMark)) {
             if (
