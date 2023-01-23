@@ -149,7 +149,7 @@ describe("SequenceField - Rebase", () => {
             // Overlapping revive is no longer conflicted
             Change.revive(1, 1, tag2, 1),
             // Later revive is unaffected
-            Change.revive(2, 1, tag1, 3, tag2, [{ revision: tag2, offset: 1 }]),
+            Change.revive(2, 1, tag1, 3, tag2),
         ]);
         assert.deepEqual(actual, expected);
     });
@@ -164,7 +164,7 @@ describe("SequenceField - Rebase", () => {
             // Overlapping revive is now blocked
             Change.revive(1, 1, tag1, 1, tag2, undefined, tag3),
             // Later revive gets linage
-            Change.revive(1, 1, tag1, 3, tag2, [{ revision: tag3, offset: 1 }]),
+            Change.revive(1, 1, tag1, 3, tag2),
         ]);
         assert.deepEqual(actual, expected);
     });
@@ -194,8 +194,8 @@ describe("SequenceField - Rebase", () => {
             // Overlapping revive is no longer conflicted.
             // It now references the target node to revive using the latest delete.
             Change.intentionalRevive(1, 1, tag2, 1),
-            // Later revive is unaffected aside from lineage
-            Change.intentionalRevive(2, 1, tag1, 3, tag2, [{ revision: tag2, offset: 1 }]),
+            // Later revive is unaffected
+            Change.intentionalRevive(2, 1, tag1, 3, tag2),
         ]);
         assert.deepEqual(actual, expected);
     });
@@ -211,7 +211,7 @@ describe("SequenceField - Rebase", () => {
             // It now references the target node to revive using the latest delete.
             Change.intentionalRevive(1, 1, tag3, 1),
             // Later revive gets linage
-            Change.intentionalRevive(2, 1, tag1, 3, tag2, [{ revision: tag3, offset: 1 }]),
+            Change.intentionalRevive(2, 1, tag1, 3, tag2),
         ]);
         assert.deepEqual(actual, expected);
     });
