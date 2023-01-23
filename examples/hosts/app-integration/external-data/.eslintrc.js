@@ -4,9 +4,8 @@
  */
 
 module.exports = {
-    extends: [
-        require.resolve("@fluidframework/eslint-config-fluid/strict"),
-        "prettier",
+    "extends": [
+        require.resolve("@fluidframework/eslint-config-fluid"), "prettier",
     ],
     rules: {
         // Fine for tests to use node.js modules.

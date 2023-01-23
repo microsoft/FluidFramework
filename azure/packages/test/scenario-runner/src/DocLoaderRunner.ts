@@ -5,14 +5,16 @@
 import child_process from "child_process";
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
+
 import { IRunConfig, IRunner, IRunnerEvents, IRunnerStatus, RunnnerStatus } from "./interface";
 import { delay } from "./utils";
 
 export interface AzureClientConfig {
     type: "remote" | "local";
-    endpoint: string;
+    endpoint?: string;
     key?: string;
     tenantId?: string;
+    useSecureTokenProvider?: boolean;
 }
 
 export interface DocLoaderSchema {
@@ -25,6 +27,7 @@ export interface DocLoaderRunnerConfig {
     schema: DocLoaderSchema;
     docIds: string[];
     clientStartDelayMs: number;
+    numOfLoads?: number;
 }
 
 export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
@@ -59,27 +62,30 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
                 JSON.stringify(this.c.schema),
                 "--connType",
                 connection.type,
-                "--connEndpoint",
-                connection.endpoint,
+                ...(connection.endpoint ? ["--connEndpoint", connection.endpoint] : []),
+                ...(connection.useSecureTokenProvider ? ["--secureTokenProvider"] : []),
             ];
             childArgs.push("--verbose");
             runnerArgs.push(childArgs);
         }
 
         const children: Promise<boolean>[] = [];
-        for (const runnerArg of runnerArgs) {
-            try {
-                children.push(this.createChild(runnerArg));
-            } catch {
-                throw new Error("Failed to spawn child");
+        const numOfLoads = this.c.numOfLoads ?? 1;
+        for (let j = 0; j < numOfLoads; j++) {
+            for (const runnerArg of runnerArgs) {
+                try {
+                    children.push(this.createChild(runnerArg));
+                } catch {
+                    throw new Error("Failed to spawn child");
+                }
+                await delay(this.c.clientStartDelayMs);
             }
-            await delay(this.c.clientStartDelayMs);
         }
 
         try {
             await Promise.all(children);
         } catch {
-            throw new Error("Not all clients closed sucesfully.");
+            throw new Error("Not all clients closed sucesfully");
         }
     }
 
@@ -100,7 +106,7 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
     private async createChild(childArgs: string[]): Promise<boolean> {
         const envVar = { ...process.env };
         const runnerProcess = child_process.spawn("node", childArgs, {
-            stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
+            stdio: ["inherit", "inherit", "inherit", "ipc"],
             env: envVar,
         });
 

@@ -113,11 +113,14 @@ const formattedSectionText = (sectionBody, maybeHeaderText) => {
 }
 
 /**
- * Prepends the {@link generatedContentNotice} to the provided Markdown contents.
- * @param {string} contents - The Markdown contents to be included.
+ * Bundles the provided generated contents with the {@link generatedContentNotice}, as well as
+ * prettier-ignore pragmas to ensure there is not contention between our content generation and prettier's
+ * formatting opinions.
+ *
+ * @param {string} contents - The generated Markdown contents to be included.
  */
-const withGeneratedContentNotice = (contents) => {
-    return [generatedContentNotice, contents].join("\n");
+const formattedEmbedBody = (contents) => {
+    return ["\n<!-- prettier-ignore-start -->\n", generatedContentNotice, contents, "<!-- prettier-ignore-end -->\n"].join("\n");
 }
 
 /**
@@ -262,22 +265,22 @@ const mdMagicConfig = {
         // includes relative to the repo root
         INCLUDE(content, options, config) {
             options.path = pathLib.resolve(pathLib.join(getRepoRoot(), options.path));
-            return withGeneratedContentNotice(includeContent(options, config));
+            return formattedEmbedBody(includeContent(options, config));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (INCLUDE_ROOT:path=../file.js) --> */
         // includes relative to the file calling the include
         INCLUDE_RELATIVE(content, options) {
             options.path = pathLib.normalize(pathLib.join(pathLib.dirname(config.originalPath), options.path));
-            return withGeneratedContentNotice(includeContent(options, config));
+            return formattedEmbedBody(includeContent(options, config));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) --> */
         GET_STARTED(content, options, config) {
             const jsonPath = getPackageJsonPathFromOriginalPath(config.originalPath);
-            return withGeneratedContentNotice(getStartedInfo(jsonPath, options?.tinylicious ?? false));
+            return formattedEmbedBody(getStartedInfo(jsonPath, options?.tinylicious ?? false));
         },
         PKGJSON(content, options, config) {
             options.pkg = getPackageJsonPathFromOriginalPath(config.originalPath);
-            return withGeneratedContentNotice(require("markdown-magic-package-json")(content, options, config));
+            return formattedEmbedBody(require("markdown-magic-package-json")(content, options, config));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (README_SIMPLE:installation=TRUE&apiDocs=TRUE&scripts=TRUE&contributionGuidelines=TRUE&help=TRUE&trademark=TRUE&devDependency=FALSE) --> */
         README_SIMPLE(content, options, config) {
@@ -310,34 +313,34 @@ const mdMagicConfig = {
                 sections.push(generateTrademarkSection(true));
             }
 
-            return withGeneratedContentNotice(sections.join(""));
+            return formattedEmbedBody(sections.join(""));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) --> */
         README_API_DOCS_SECTION(content, options, config) {
             const includeHeading = options.includeHeading !== "FALSE";
             const pkg = getPackageJsonFromOriginalPath(config.originalPath);
-            return withGeneratedContentNotice(generateApiDocsLinkSection(pkg, includeHeading));
+            return formattedEmbedBody(generateApiDocsLinkSection(pkg, includeHeading));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=FALSE) --> */
         README_INSTALLATION_SECTION(content, options, config) {
             const includeHeading = options.includeHeading !== "FALSE";
             const pkg = getPackageJsonFromOriginalPath(config.originalPath);
-            return withGeneratedContentNotice(generateInstallationSection(pkg, options.devDependency, includeHeading));
+            return formattedEmbedBody(generateInstallationSection(pkg, options.devDependency, includeHeading));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) --> */
         README_TRADEMARK_SECTION(content, options, config) {
             const includeHeading = options.includeHeading !== "FALSE";
-            return withGeneratedContentNotice(generateTrademarkSection(includeHeading));
+            return formattedEmbedBody(generateTrademarkSection(includeHeading));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) --> */
         README_CONTRIBUTION_GUIDELINES_SECTION(content, options, config) {
             const includeHeading = options.includeHeading !== "FALSE";
-            return withGeneratedContentNotice(generateContributionGuidelinesSection(includeHeading));
+            return formattedEmbedBody(generateContributionGuidelinesSection(includeHeading));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) --> */
         README_HELP_SECTION(content, options, config) {
             const includeHeading = options.includeHeading !== "FALSE";
-            return withGeneratedContentNotice(generateHelpSection(includeHeading));
+            return formattedEmbedBody(generateHelpSection(includeHeading));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (TEMPLATE:src="<name-of-template-file under `/.md-magic-templates`>") --> */
         TEMPLATE(content, options, config) {
@@ -346,13 +349,13 @@ const mdMagicConfig = {
 
             options = options || {};
             options.src = pathLib.relative(dir, pathLib.join(mdMagicTemplatesPath, options.src));
-            return withGeneratedContentNotice(template({ pkg: pkg })(content, options, config));
+            return formattedEmbedBody(template({ pkg: pkg })(content, options, config));
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (SCRIPTS:includeHeading=TRUE) --> */
         SCRIPTS(content, options, config) {
             const includeHeading = options.includeHeading !== "FALSE";
             const scriptsTable = scripts(content, options, config);
-            return withGeneratedContentNotice(generateScriptsSection(scriptsTable, includeHeading));
+            return formattedEmbedBody(generateScriptsSection(scriptsTable, includeHeading));
         },
         FETCH: fetchFunc,
     },

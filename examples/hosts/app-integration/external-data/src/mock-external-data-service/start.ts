@@ -4,7 +4,7 @@
  */
 
 import { externalDataServicePort } from "../mock-external-data-service-interface";
-import { ExternalDataSource } from "./externalData";
+import { ExternalDataSource } from "./externalDataSource";
 import { initializeExternalDataService } from "./service";
 
 /**

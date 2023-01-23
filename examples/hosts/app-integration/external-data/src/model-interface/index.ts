@@ -12,6 +12,7 @@ import { SharedString } from "@fluidframework/sequence";
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IAppModelEvents extends IEvent { }
 
+
 /**
  * For this simple demo, our app model only needs a single member taskList.
  */
@@ -116,3 +117,5 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
     // Alternate: inject an EventEmitter that raises the events from external.
     // readonly handleExternalMessage: (message) => void;
 }
+
+export { assertValidTaskData, TaskData } from "./TaskData";

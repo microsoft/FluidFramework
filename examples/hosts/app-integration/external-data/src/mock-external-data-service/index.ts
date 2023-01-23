@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { ExternalDataSource } from "./externalData";
+export { ExternalDataSource } from "./externalDataSource";
 export { initializeExternalDataService } from "./service";

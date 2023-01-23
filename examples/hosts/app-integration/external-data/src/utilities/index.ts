@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { parseStringData, ParsedTaskData } from "./dataParsing";
 export { MockWebhook, SubscriberUrl } from "./webhook";

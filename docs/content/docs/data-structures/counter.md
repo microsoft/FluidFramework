@@ -8,6 +8,9 @@ menuPosition: 5
      content, so you should commit the resulting changes. -->
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=packages/dds/counter/README.md&start=2&end=140) -->
+
+<!-- prettier-ignore-start -->
+
 <!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 ## Introduction
 
@@ -147,6 +150,8 @@ In the code above, whenever a user presses either the Increment or Decrement but
 This causes the `incremented` event to be sent to all of the clients who have this container open.
 
 Since `updateCounterValueLabel` is listening for all `incremented` events, the view will always refresh with the appropriate updated value any time a collaborator increments or decrements the counter value.
+<!-- prettier-ignore-end -->
+
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 ## API documentation

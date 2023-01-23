@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import isEqual from 'lodash.isequal'
 import React, { useEffect, useState } from "react";
 
 import { externalDataServicePort } from "../mock-external-data-service-interface";
-import type { IAppModel } from "../model-interface";
-import { parseStringData } from "../utilities";
+import type { IAppModel, TaskData } from "../model-interface";
 
 /**
  * {@link DebugView} input props.
@@ -40,11 +40,12 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
     );
 };
 
+
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface IExternalDataViewProps {}
 
 const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalDataViewProps) => {
-    const [externalData, setExternalData] = useState<string | undefined>();
+    const [externalData, setExternalData] = useState({});
     useEffect(() => {
         // HACK: Once we have external changes triggering the appropriate Fluid signal, we can simply listen
         // for changes coming into the model that way.
@@ -63,9 +64,8 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
                 );
 
                 const responseBody = await response.json() as Record<string, unknown>;
-
-                const newData = responseBody.taskList as string;
-                if(newData !== undefined && newData !== externalData) {
+                const newData = responseBody.taskList as TaskData;
+                if(newData !== undefined && !isEqual(newData,externalData)) {
                     console.log("APP: External data has changed. Updating local state with:\n", newData)
                     setExternalData(newData);
                 }
@@ -84,15 +84,12 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
             clearInterval(timer);
         }
     }, [externalData, setExternalData]);
-
-    const parsedExternalData = externalData === undefined
+    const parsedExternalData = isEqual(externalData, {})
         ? []
-        : parseStringData(externalData);
-
-    console.log(parsedExternalData);
-    const taskRows = parsedExternalData.map(({ id, name, priority }) => (
-        <tr key={ id }>
-            <td>{ id }</td>
+        : Object.entries(externalData as TaskData);
+    const taskRows = parsedExternalData.map(([key, {name, priority}]) => (
+        <tr key={ key }>
+            <td>{ key }</td>
             <td>{ name }</td>
             <td>{ priority }</td>
         </tr>

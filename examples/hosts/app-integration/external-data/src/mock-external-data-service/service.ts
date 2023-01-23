@@ -9,8 +9,9 @@ import cors from "cors";
 import express from "express";
 import { isWebUri } from "valid-url";
 
+import { assertValidTaskData, TaskData } from '../model-interface';
 import { MockWebhook } from '../utilities';
-import { ExternalDataSource } from './externalData';
+import { ExternalDataSource } from './externalDataSource';
 
 /**
  * {@link initializeExternalDataService} input properties.
@@ -36,7 +37,7 @@ export interface ServiceProps {
  */
 export async function initializeExternalDataService(props: ServiceProps): Promise<Server> {
     const { port } = props;
-    const externalDataSource = props.externalDataSource ?? new ExternalDataSource();
+    const externalDataSource: ExternalDataSource = props.externalDataSource ?? new ExternalDataSource();
 
     /**
      * Helper function to prepend service-specific metadata to messages logged by this service.
@@ -79,7 +80,12 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
      *
      * ```json
      * {
-     *  data: string
+     *  taskList: {
+     *      [id: string]: {
+     *          name: string,
+     *          priority: number
+     *      }
+     *  }
      * }
      * ```
      */
@@ -108,15 +114,23 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
      *
      * ```json
      * {
-     *  taskList: string // TODO: object instead
+     *  taskList: {
+     *      [id: string]: {
+     *          name: string,
+     *          priority: number
+     *      }
+     *  }
      * }
      * ```
      */
     expressApp.get("/fetch-tasks", (_, result) => {
         externalDataSource.fetchData().then(
-            (data) => {
-                console.log(formatLogMessage(`Returning current task list:\n"${data}".`));
-                result.send({ taskList: data });
+            (response) => {
+                const responseBody = JSON.parse(response.body.toString()) as Record<string | number | symbol, unknown>;
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+                const taskList = assertValidTaskData((responseBody as any).taskList);
+                console.log(formatLogMessage(`Returning current task list:\n"${taskList}".`));
+                result.send({ taskList });
             },
             (error) => {
                 console.error(formatLogMessage(`Encountered an error while reading from mock external data source.`), error);
@@ -128,23 +142,26 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
     /**
      * Updates external data store with new tasks list (complete override).
      *
-     * Expected input data format:
-     *
-     * ```json
-     * {
-     *  taskList: string // TODO: object instead
-     * }
-     * ```
+     * Expected input data format: {@link TaskData}.
      */
     expressApp.post("/set-tasks", (request, result) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const taskList = request.body.taskList as string;
-        if (taskList === undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+        const maybeTaskData = request.body.taskList;
+        if (maybeTaskData === undefined) {
             const errorMessage = 'Caller failed to provide task list to set. Must provide "taskList" parameter.';
             console.error(formatLogMessage(errorMessage));
             result.status(400).json({ message: errorMessage });
         } else {
-            externalDataSource.writeData(taskList).then(
+            let taskData: TaskData;
+            try{
+                taskData = assertValidTaskData(maybeTaskData);
+            } catch (error) {
+                const errorMessage = "Input task list data was malformed.";
+                console.error(errorMessage, error);
+                result.status(400).json({ message: errorMessage });
+                return;
+            }
+            externalDataSource.writeData(taskData).then(
                 () => {
                     console.log(formatLogMessage("Data set request completed!"));
                     result.send();

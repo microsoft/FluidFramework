@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/schemas",
-  "version": "2.0.0-internal.2.3.0",
+  "version": "2.0.0-internal.2.4.0",
   "description": "Centralized package for storing schemas used by the samples.",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -30,6 +30,7 @@
     "tsc": "tsc"
   },
   "devDependencies": {
+    "@fluidframework/build-common": "^1.1.0",
     "@rushstack/eslint-config": "^2.5.1",
     "concurrently": "^6.2.0",
     "eslint": "~8.6.0",

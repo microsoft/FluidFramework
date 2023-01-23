@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { clone, fail, getOrAddEmptyToMap } from "../../util";
+import { assert } from "@fluidframework/common-utils";
+import { clone, fail, unreachableCase } from "../../util";
 import { RevisionTag, TaggedChange } from "../../core";
 import { IdAllocator } from "../modular-schema";
 import {
@@ -44,13 +44,12 @@ import {
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
 import {
+    getMoveEffect,
+    getOrAddEffect,
     MoveEffectTable,
+    MoveEnd,
     newMoveEffectTable,
     PairedMarkUpdate,
-    removeMoveDest,
-    updateMoveDestPairing,
-    updateMoveSrcDetacher,
-    updateMoveSrcPairing,
 } from "./moveEffectTable";
 import { MarkQueue } from "./markQueue";
 
@@ -91,12 +90,7 @@ function rebaseMarkList<TNodeChange>(
     genId: IdAllocator,
 ): MarkList<TNodeChange> {
     const moveEffects = newMoveEffectTable<TNodeChange>();
-
-    // Necessary so we don't have to re-split any marks when applying move effects.
-    moveEffects.allowMerges = false;
-    const factory = new MarkListFactory<TNodeChange>(moveEffects);
-
-    const splitBaseMarks: MarkList<TNodeChange> = [];
+    const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects, true);
     const queue = new RebaseQueue(baseRevision, baseMarkList, currMarkList, genId, moveEffects);
 
     // Each attach mark in `currMarkList` should have a lineage event added for `baseRevision` if a node adjacent to
@@ -114,11 +108,14 @@ function rebaseMarkList<TNodeChange>(
             // TODO support rebasing over composite changeset
             assert(
                 baseMark.revision === baseRevision,
-                "Unable to keep track of the base input offset in composite changeset",
+                0x4f3 /* Unable to keep track of the base input offset in composite changeset */,
             );
         }
         if (baseMark === undefined) {
-            assert(currMark !== undefined, "Non-empty queue should return at least one mark");
+            assert(
+                currMark !== undefined,
+                0x4f4 /* Non-empty queue should return at least one mark */,
+            );
             if (isAttach(currMark)) {
                 handleCurrAttach(
                     currMark,
@@ -145,11 +142,11 @@ function rebaseMarkList<TNodeChange>(
         } else {
             assert(
                 !isNewAttach(baseMark) && !isNewAttach(currMark),
-                "A new attach cannot be at the same position as another mark",
+                0x4f5 /* A new attach cannot be at the same position as another mark */,
             );
             assert(
                 getInputLength(baseMark) === getInputLength(currMark),
-                "The two marks should be the same size",
+                0x4f6 /* The two marks should be the same size */,
             );
 
             const rebasedMark = rebaseMark(
@@ -175,19 +172,13 @@ function rebaseMarkList<TNodeChange>(
                 baseDetachOffset = 0;
             }
         }
-        if (baseMark !== undefined) {
-            splitBaseMarks.push(baseMark);
-        }
     }
 
     if (baseDetachOffset > 0 && baseRevision !== undefined) {
         updateLineage(lineageRequests, baseRevision);
     }
 
-    moveEffects.allowMerges = true;
-
-    // TODO: It's not convenient to store splitBaseMarks for cross-field move effects.
-    return applyMoveEffects(baseRevision, splitBaseMarks, factory.list, moveEffects);
+    return applyMoveEffects(baseRevision, baseMarkList, factory.list, moveEffects);
 }
 
 class RebaseQueue<T> {
@@ -202,8 +193,8 @@ class RebaseQueue<T> {
         genId: IdAllocator,
         moveEffects: MoveEffectTable<T>,
     ) {
-        this.baseMarks = new MarkQueue(baseMarks, baseRevision, moveEffects, genId);
-        this.newMarks = new MarkQueue(newMarks, undefined, moveEffects, genId, true);
+        this.baseMarks = new MarkQueue(baseMarks, baseRevision, moveEffects, false, genId);
+        this.newMarks = new MarkQueue(newMarks, undefined, moveEffects, true, genId);
     }
 
     public isEmpty(): boolean {
@@ -298,7 +289,7 @@ class RebaseQueue<T> {
         ) {
             assert(
                 newMark.detachIndex !== undefined,
-                "A conflicted ReturnFrom should have a detachIndex",
+                0x4f7 /* A conflicted ReturnFrom should have a detachIndex */,
             );
             const newMarkLength = newMark.count;
             const baseMarkLength = getOutputLength(baseMark);
@@ -416,7 +407,12 @@ function rebaseMark<TNodeChange>(
                 isObjMark(currMark) &&
                 (currMark.type === "MoveOut" || currMark.type === "ReturnFrom")
             ) {
-                removeMoveDest(moveEffects, currMark.id);
+                getOrAddEffect(
+                    moveEffects,
+                    MoveEnd.Dest,
+                    currMark.revision,
+                    currMark.id,
+                ).shouldRemove = true;
             }
             return 0;
         }
@@ -425,7 +421,7 @@ function rebaseMark<TNodeChange>(
             const baseMarkRevision = baseMark.revision ?? baseRevision;
             assert(
                 isDetachMark(currMark) || isReattach(currMark),
-                "Only a detach or a reattach can overlap with a non-inert reattach",
+                0x4f8 /* Only a detach or a reattach can overlap with a non-inert reattach */,
             );
             const currMarkType = currMark.type;
             switch (currMarkType) {
@@ -434,28 +430,32 @@ function rebaseMark<TNodeChange>(
                 case "ReturnFrom": {
                     assert(
                         currMarkType === "ReturnFrom",
-                        "TODO: support conflict management for other detach marks",
+                        0x4f9 /* TODO: support conflict management for other detach marks */,
                     );
                     assert(
                         isConflicted(currMark) && currMark.conflictsWith === baseMarkRevision,
-                        "Invalid reattach mark overlap",
+                        0x4fa /* Invalid reattach mark overlap */,
                     );
                     // The nodes that currMark aims to detach are being reattached by baseMark
                     const newCurrMark = clone(currMark) as ReturnFrom<TNodeChange>;
                     delete newCurrMark.conflictsWith;
                     delete newCurrMark.detachIndex;
-                    updateMoveDestPairing(
+                    getOrAddEffect(
                         moveEffects,
+                        MoveEnd.Dest,
+                        newCurrMark.revision,
                         newCurrMark.id,
-                        PairedMarkUpdate.Reactivated,
-                    );
+                    ).pairedMarkStatus = PairedMarkUpdate.Reactivated;
                     return newCurrMark;
                 }
                 case "Revive":
                 case "ReturnTo": {
                     if (currMark.isIntention) {
                         // Past this point, currMark must be a reattach.
-                        assert(isActiveReattach(currMark), `Invalid reattach mark overlap`);
+                        assert(
+                            isActiveReattach(currMark),
+                            0x4fb /* Invalid reattach mark overlap */,
+                        );
                         // The nodes that currMark aims to reattach are being reattached by baseMark
                         return {
                             ...clone(currMark),
@@ -466,23 +466,27 @@ function rebaseMark<TNodeChange>(
                     if (isActiveReattach(currMark)) {
                         // The nodes that currMark aims to reattach are being reattached by baseMark
                         if (currMarkType === "ReturnTo") {
-                            updateMoveSrcPairing(
+                            getOrAddEffect(
                                 moveEffects,
+                                MoveEnd.Source,
+                                currMark.revision,
                                 currMark.id,
-                                PairedMarkUpdate.Deactivated,
-                            );
+                            ).pairedMarkStatus = PairedMarkUpdate.Deactivated;
                         }
                         return {
                             ...clone(currMark),
                             conflictsWith: baseMarkRevision,
                         };
                     }
-                    assert(!isSkipLikeReattach(currMark), `Unsupported reattach mark overlap`);
+                    assert(
+                        !isSkipLikeReattach(currMark),
+                        0x4fc /* Unsupported reattach mark overlap */,
+                    );
                     // The nodes that currMark aims to reattach and were detached by `currMark.lastDetachedBy`
                     // are being reattached by baseMark.
                     assert(
                         currMark.lastDetachedBy === baseMark.detachedBy,
-                        `Invalid revive mark overlap`,
+                        0x4fd /* Invalid revive mark overlap */,
                     );
                     const revive = clone(currMark);
                     delete revive.lastDetachedBy;
@@ -510,40 +514,37 @@ function rebaseMark<TNodeChange>(
                     // The nodes that currMark aims to detach are being detached by baseMark
                     newCurrMark.conflictsWith = baseMarkRevision;
                     newCurrMark.detachIndex = baseInputOffset;
-                    updateMoveDestPairing(
+                    getOrAddEffect(
                         moveEffects,
+                        MoveEnd.Dest,
+                        newCurrMark.revision,
                         newCurrMark.id,
-                        PairedMarkUpdate.Deactivated,
-                    );
+                    ).pairedMarkStatus = PairedMarkUpdate.Deactivated;
                     return newCurrMark;
                 } else if (newCurrMark.type === "ReturnTo") {
                     assert(
                         isSkipLikeReattach(newCurrMark),
-                        "Only a skip-like reattach can overlap with a ReturnFrom",
+                        0x4fe /* Only a skip-like reattach can overlap with a ReturnFrom */,
                     );
-                    if (
-                        newCurrMark.conflictsWith === baseMarkRevision ||
-                        (baseMark.type === "ReturnFrom" &&
-                            newCurrMark.conflictsWith === baseMark.detachedBy)
-                    ) {
-                        // The already populated cells that currMark aimed to reattach content into
-                        // are having their contents detached by baseMark.
-                        // This makes it possible for currMark to be active again.
-                        newCurrMark.detachedBy = baseMarkRevision;
-                        newCurrMark.detachIndex = baseInputOffset;
-                        delete (newCurrMark as CanConflict).conflictsWith;
-                        updateMoveSrcDetacher(moveEffects, newCurrMark.id, baseMarkRevision);
-                        updateMoveSrcPairing(
-                            moveEffects,
-                            newCurrMark.id,
-                            PairedMarkUpdate.Reactivated,
-                        );
-                    }
+                    // The already populated cells that currMark aimed to reattach content into
+                    // are having their contents detached by baseMark.
+                    // This makes it possible for currMark to be active again.
+                    newCurrMark.detachedBy = baseMarkRevision;
+                    newCurrMark.detachIndex = baseInputOffset;
+                    delete (newCurrMark as CanConflict).conflictsWith;
+                    const effect = getOrAddEffect(
+                        moveEffects,
+                        MoveEnd.Source,
+                        newCurrMark.revision,
+                        newCurrMark.id,
+                    );
+                    effect.detacher = baseMarkRevision;
+                    effect.pairedMarkStatus = PairedMarkUpdate.Reactivated;
                     return newCurrMark;
                 } else if (newCurrMark.type === "Revive" && !newCurrMark.isIntention) {
                     assert(
                         isSkipLikeReattach(newCurrMark),
-                        "Only a skip-like reattach can overlap with a ReturnFrom",
+                        0x4ff /* Only a skip-like reattach can overlap with a ReturnFrom */,
                     );
                     // The already populated cells that currMark aimed to revive content into
                     // are having their contents detached by baseMark.
@@ -556,7 +557,12 @@ function rebaseMark<TNodeChange>(
                     newCurrMark.detachIndex = baseInputOffset;
                     return newCurrMark;
                 } else {
-                    getOrAddEmptyToMap(moveEffects.movedMarks, baseMark.id).push(newCurrMark);
+                    getOrAddEffect(
+                        moveEffects,
+                        MoveEnd.Dest,
+                        baseMark.revision ?? baseRevision,
+                        baseMark.id,
+                    ).movedMark = newCurrMark;
                 }
             }
             return 0;
@@ -572,36 +578,41 @@ function applyMoveEffects<TNodeChange>(
     rebasedMarks: MarkList<TNodeChange>,
     moveEffects: MoveEffectTable<TNodeChange>,
 ): Changeset<TNodeChange> {
+    // Is it correct to use ComposeQueue here?
+    // If we used a special AmendRebaseQueue, we could ignore any base marks which don't have associated move-ins
     const queue = new ComposeQueue<TNodeChange>(
         baseRevision,
         baseMarks,
         undefined,
         rebasedMarks,
-        () => fail("Should not split moves while applying move effects"),
+        () => fail("Should not generate new IDs when applying move effects"),
         moveEffects,
-        false,
-        true,
     );
-    const factory = new MarkListFactory<TNodeChange>(moveEffects);
+    const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects);
 
     let offset = 0;
     while (!queue.isEmpty()) {
         const { baseMark, newMark } = queue.pop();
         if (isObjMark(baseMark) && (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")) {
-            const movedMarks = moveEffects.movedMarks.get(baseMark.id);
-            if (movedMarks !== undefined) {
+            const effect = getMoveEffect(
+                moveEffects,
+                MoveEnd.Dest,
+                baseMark.revision ?? baseRevision,
+                baseMark.id,
+            );
+            if (effect.movedMark !== undefined) {
                 factory.pushOffset(offset);
                 offset = 0;
-                factory.push(...movedMarks);
-                const size = movedMarks.reduce<number>(
-                    (count, mark) => count + getInputLength(mark),
-                    0,
-                );
-                factory.pushOffset(-size);
+                factory.push(effect.movedMark);
+                factory.pushOffset(-getInputLength(effect.movedMark));
+                delete effect.movedMark;
             }
         }
         if (newMark === undefined) {
-            assert(baseMark !== undefined, "Non-empty RebaseQueue should return at least one mark");
+            assert(
+                baseMark !== undefined,
+                0x500 /* Non-empty RebaseQueue should return at least one mark */,
+            );
             offset += getOutputLength(baseMark);
             continue;
         }
@@ -613,7 +624,7 @@ function applyMoveEffects<TNodeChange>(
 
     // We may have discovered new mergeable marks while applying move effects, as we may have moved a MoveOut next to another MoveOut.
     // A second pass through MarkListFactory will handle any remaining merges.
-    const factory2 = new MarkListFactory<TNodeChange>(moveEffects);
+    const factory2 = new MarkListFactory<TNodeChange>(undefined, moveEffects);
     for (const mark of factory.list) {
         factory2.push(mark);
     }

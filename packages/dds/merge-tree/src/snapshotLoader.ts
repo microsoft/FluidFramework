@@ -199,7 +199,7 @@ export class SnapshotLoader {
 
         assert(
             chunksWithAttribution === 0 || chunksWithAttribution === headerMetadata.orderedChunkMetadata.length,
-            "all or no chunks should have attribution information",
+            0x4c0 /* all or no chunks should have attribution information */,
         );
 
         assert(
