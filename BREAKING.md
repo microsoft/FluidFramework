@@ -35,7 +35,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ### Sub Directory creation with same name fail in Shared Directory DDS
 If user tries to create a sub directory with name `Foo` and `Foo` sub directory already exists, then instead of submitting an OP
-unneccessarily, the `createSubDirectory` method with throw an error.
+unneccessarily, the `createSubDirectory` method will throw an error.
 
 ### existing parameter is now required in IRuntimeFactory::instantiateRuntime
 The `existing` flag was added as optional in client version 0.44 and has been updated to be expected
