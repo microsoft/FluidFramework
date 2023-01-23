@@ -9,6 +9,7 @@
         "composite": true,
         "types": [
             "mocha",
+            "node"
         ]
     },
     "include": [

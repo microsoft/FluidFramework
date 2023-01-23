@@ -56,6 +56,7 @@ export class DocumentService implements api.IDocumentService {
         protected tenantId: string,
         protected documentId: string,
         protected ordererRestWrapper: RouterliciousOrdererRestWrapper,
+        private readonly documentStorageServicePolicies: api.IDocumentStorageServicePolicies,
         private readonly driverPolicies: IRouterliciousDriverPolicies,
         private readonly blobCache: ICache<ArrayBufferLike>,
         private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>,
@@ -116,18 +117,11 @@ export class DocumentService implements api.IDocumentService {
         // Initialize storageManager and noCacheStorageManager
         const storageManager = await getStorageManager();
         const noCacheStorageManager = await getStorageManager(true);
-        const documentStorageServicePolicies: api.IDocumentStorageServicePolicies = {
-            caching: this.driverPolicies.enablePrefetch
-                ? api.LoaderCachingPolicy.Prefetch
-                : api.LoaderCachingPolicy.NoCaching,
-            minBlobSize: this.driverPolicies.aggregateBlobsSmallerThanBytes,
-        };
-
         this.documentStorageService = new DocumentStorageService(
             this.documentId,
             storageManager,
             this.logger,
-            documentStorageServicePolicies,
+            this.documentStorageServicePolicies,
             this.driverPolicies,
             this.blobCache,
             this.snapshotTreeCache,

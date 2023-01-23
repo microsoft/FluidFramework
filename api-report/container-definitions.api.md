@@ -4,8 +4,6 @@
 
 ```ts
 
-/// <reference types="node" />
-
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { EventEmitter } from 'events';
 import { FluidObject } from '@fluidframework/core-interfaces';
@@ -137,6 +135,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly connectionState: ConnectionState;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     disconnect(): void;
+    dispose?(error?: ICriticalContainerError): void;
     // @alpha
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -168,6 +167,8 @@ export interface IContainerContext extends IDisposable {
     readonly connected: boolean;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    // (undocumented)
+    readonly disposeFn?: (error?: ICriticalContainerError) => void;
     // @deprecated (undocumented)
     readonly existing: boolean | undefined;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
@@ -213,6 +214,7 @@ export interface IContainerEvents extends IEvent {
     (event: "disconnected", listener: () => void): any;
     (event: "attached", listener: () => void): any;
     (event: "closed", listener: (error?: ICriticalContainerError) => void): any;
+    (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
     (event: "warning", listener: (error: ContainerWarning) => void): any;
     (event: "op", listener: (message: ISequencedDocumentMessage) => void): any;
     (event: "dirty", listener: (dirty: boolean) => void): any;

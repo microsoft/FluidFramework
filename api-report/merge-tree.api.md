@@ -99,14 +99,6 @@ export interface BlockUpdateActions {
 export class Client extends TypedEventEmitter<IClientEvents> {
     constructor(specToSegment: (spec: IJSONSegment) => ISegment, logger: ITelemetryLogger, options?: PropertySet);
     // (undocumented)
-    accumOps: number;
-    // (undocumented)
-    accumTime: number;
-    // (undocumented)
-    accumWindow: number;
-    // (undocumented)
-    accumWindowTime: number;
-    // (undocumented)
     addLongClientId(longClientId: string): void;
     annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined;
     annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, consensusCallback: (m: Marker) => void): IMergeTreeAnnotateMsg | undefined;
@@ -176,21 +168,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     load(runtime: IFluidDataStoreRuntime, storage: IChannelStorageService, serializer: IFluidSerializer): Promise<{
         catchupOpsP: Promise<ISequencedDocumentMessage[]>;
     }>;
-    // (undocumented)
-    localOps: number;
     localReferencePositionToPosition(lref: ReferencePosition): number;
-    // (undocumented)
-    localTime: number;
     // (undocumented)
     localTransaction(groupOp: IMergeTreeGroupMsg): void;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)
     longClientId: string | undefined;
-    // (undocumented)
-    maxWindowTime: number;
-    // (undocumented)
-    measureOps: boolean;
     peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
@@ -911,30 +895,6 @@ export interface MergeTreeRevertibleDriver {
     localReferencePositionToPosition(lref: LocalReferencePosition): number;
     // (undocumented)
     removeRange(start: number, end: number): any;
-}
-
-// @public (undocumented)
-export interface MergeTreeStats {
-    // (undocumented)
-    histo: number[];
-    // (undocumented)
-    leafCount: number;
-    // (undocumented)
-    liveCount: number;
-    // (undocumented)
-    maxHeight: number;
-    // (undocumented)
-    maxOrdTime?: number;
-    // (undocumented)
-    nodeCount: number;
-    // (undocumented)
-    ordTime?: number;
-    // (undocumented)
-    packTime?: number;
-    // (undocumented)
-    removedLeafCount: number;
-    // (undocumented)
-    windowTime?: number;
 }
 
 // @public (undocumented)
