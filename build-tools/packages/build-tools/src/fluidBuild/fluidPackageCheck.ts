@@ -487,14 +487,14 @@ export class FluidPackageCheck {
 
     private static checkLintScriptsHelper(
         pkg: Package,
+        scriptKey: string,
         script: string,
-        isLint: boolean,
         fix: boolean,
     ) {
-        const lintType = isLint ? "lint" : "lint:fix";
+        const lintType = scriptKey === "lint" ? "lint" : "lint:fix";
 
-        const prettier = isLint ? "npm run prettier" : "npm run prettier:fix";
-        const eslint = isLint ? "npm run eslint" : "npm run eslint:fix";
+        const prettier = scriptKey === "lint" ? "npm run prettier" : "npm run prettier:fix";
+        const eslint = scriptKey === "lint" ? "npm run eslint" : "npm run eslint:fix";
 
         const hasPrettier = script?.includes(prettier);
         const endsWithEslint = script?.endsWith(eslint);
@@ -532,21 +532,18 @@ export class FluidPackageCheck {
                 1. Must end with "npm run eslint" / "npm run eslint:fix" respectively
                 2. Must contain "npm run prettier" / "npm run prettier:fix" respectively
             */
-            const lintScript = pkg.getScript("lint");
-            const lintFixScript = pkg.getScript("lint:fix");
+            const scripts = ["lint", "lint:fix"];
 
-            const scripts = [lintScript, lintFixScript];
-            let lintFlag = true;
+            for (const scriptKey of scripts) {
+                let script = pkg.getScript(scriptKey);
 
-            for (let script of scripts) {
                 if (script === undefined) {
                     script = "";
                 }
-                const expectedScript = this.checkLintScriptsHelper(pkg, script, lintFlag, fix);
-                lintFlag = !lintFlag;
+                const expectedScript = this.checkLintScriptsHelper(pkg, scriptKey, script, fix);
 
                 if (fix) {
-                    pkg.packageJson.scripts[script] = expectedScript;
+                    pkg.packageJson.scripts[scriptKey] = expectedScript;
                     fixed = true;
                 }
             }
