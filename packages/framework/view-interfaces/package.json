@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/view-interfaces",
-  "version": "2.0.0-internal.2.3.0",
+  "version": "2.0.0-internal.2.4.0",
   "description": "View interfaces for rendering views",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -33,10 +33,10 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": ">=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0"
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0"
   },
   "devDependencies": {
-    "@fluid-tools/build-cli": "^0.7.0",
+    "@fluid-tools/build-cli": "^0.8.0-121856",
     "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@fluidframework/view-interfaces-previous": "npm:@fluidframework/view-interfaces@2.0.0-internal.2.2.0",
