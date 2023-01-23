@@ -26,7 +26,6 @@ export class EntryPoint extends Command {
         }),
         connectionString: Flags.string({
             char: "c",
-            multiple: true,
             required: true,
             description: "The connection string to initialize the azure telemetry client with",
         }),
