@@ -917,7 +917,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
         }
 
         assert.notEqual(error, undefined, "No error");
-        assert.notEqual(error?.message, errorMessage, "Unexpected error message");
+        assert.equal(error?.message, "Directory with name subDirName already exists", "Unexpected error message");
         assert.equal(containerRuntime.disposed, false);
         assert.equal(sharedDir.countSubDirectory(), 1);
         assert.notEqual(sharedDir.getSubDirectory("subDirName"), undefined);
