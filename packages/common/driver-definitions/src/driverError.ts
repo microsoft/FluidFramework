@@ -98,8 +98,7 @@ export enum DriverErrorType {
     usageError = "usageError",
 
     /**
-     * File is locked for read/write by storage, e.g. whole collection is locked and access is denied,
-     * or file is locked for editing
+     * File is locked for read/write by storage, e.g. whole collection is locked and access denied.
      */
     fileIsLocked = "fileIsLocked",
 }
