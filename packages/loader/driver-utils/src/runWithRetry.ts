@@ -84,6 +84,7 @@ export async function runWithRetry<T>(
                 );
             }
 
+            // logging the first failed retry
             if(numRetries === 0) {
                 logger.sendTelemetryEvent({
                     eventName: `${fetchCallName}_firstFailed`,
@@ -91,6 +92,7 @@ export async function runWithRetry<T>(
                     fetchCallName,
                 }, err);
             }
+
             numRetries++;
             lastError = err;
             // If the error is throttling error, then wait for the specified time before retrying.
