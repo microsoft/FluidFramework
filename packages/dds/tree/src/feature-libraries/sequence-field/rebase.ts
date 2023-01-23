@@ -600,7 +600,6 @@ function applyMoveEffects<TNodeChange>(
     );
     const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects);
 
-    let offset = 0;
     while (!queue.isEmpty()) {
         const { baseMark, newMark } = queue.pop();
         if (isObjMark(baseMark) && (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")) {
@@ -611,25 +610,15 @@ function applyMoveEffects<TNodeChange>(
                 baseMark.id,
             );
             if (effect.movedMark !== undefined) {
-                factory.pushOffset(offset);
-                offset = 0;
                 factory.push(effect.movedMark);
                 factory.pushOffset(-getInputLength(effect.movedMark));
                 delete effect.movedMark;
             }
         }
-        if (newMark === undefined) {
-            assert(
-                baseMark !== undefined,
-                0x500 /* Non-empty RebaseQueue should return at least one mark */,
-            );
-            offset += getOutputLength(baseMark);
-            continue;
-        }
 
-        // TODO: Offset wouldn't be needed if queue returned skip instead of undefined in cases where it should return two marks
-        offset = 0;
-        factory.push(newMark);
+        if (newMark !== undefined) {
+            factory.push(newMark);
+        }
     }
 
     // We may have discovered new mergeable marks while applying move effects, as we may have moved a MoveOut next to another MoveOut.
