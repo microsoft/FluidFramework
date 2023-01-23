@@ -486,7 +486,7 @@ export class FluidPackageCheck {
     }
 
     private static checkLintScripts(pkg: Package, fix: boolean) {
-        const checkLintScriptsHelper = (
+        const verifyLintScriptStructure = (
             pkg: Package,
             scriptKey: string,
             script: string,
@@ -540,7 +540,7 @@ export class FluidPackageCheck {
                 if (script === undefined) {
                     script = "";
                 }
-                const expectedScript = checkLintScriptsHelper(pkg, scriptKey, script, fix);
+                const expectedScript = verifyLintScriptStructure(pkg, scriptKey, script, fix);
 
                 if (fix) {
                     pkg.packageJson.scripts[scriptKey] = expectedScript;
