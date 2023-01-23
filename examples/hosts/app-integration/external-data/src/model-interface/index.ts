@@ -37,14 +37,22 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
  */
 export interface ITaskEvents extends IEvent {
     /**
-     * Emitted when the name or priority have changed respectively.
+     * Emitted when the name has changed.
      */
-    (event:
-        "nameChanged" |
-        "priorityChanged" |
-        "externalNameChanged" |
-        "externalPriorityChanged",
-        listener: ( changedData: string) => void);
+    (event: "nameChanged", listener: () => void);
+    /**
+     * Emitted when the priority has changed.
+     */
+    (event: "priorityChanged", listener: () => void);
+    /**
+     * Emitted when the externalName has changed.
+     */
+    (event: "externalNameChanged", listener: () => void);
+
+    /**
+     * Emitted when extneralPriority has changed.
+     */
+    (event: "externalPriorityChanged", listener: () => void);
 }
 
 /**
