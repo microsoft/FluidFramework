@@ -34,7 +34,7 @@ const bearerSecret = "";
 const user: IInsecureUser = {
     id: "test", // Required value
     name: "Test User", // Required value that we included
-} as IInsecureUser;
+};
 
 // Create or load the Fluid container using specified document info and render the root component.
 // The method parses the browser URL and retrieves the container ID.
