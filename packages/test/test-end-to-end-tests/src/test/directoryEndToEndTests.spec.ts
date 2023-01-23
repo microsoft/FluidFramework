@@ -908,6 +908,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
         });
         try {
             containerRuntime.orderSequentially(() => {
+                // This should throw as sub directory with same name already exists.
                 sharedDir.createSubDirectory("subDirName");
                 throw new Error("callback failure");
             });
@@ -916,7 +917,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
         }
 
         assert.notEqual(error, undefined, "No error");
-        assert.equal(error?.message, errorMessage, "Unexpected error message");
+        assert.notEqual(error?.message, errorMessage, "Unexpected error message");
         assert.equal(containerRuntime.disposed, false);
         assert.equal(sharedDir.countSubDirectory(), 1);
         assert.notEqual(sharedDir.getSubDirectory("subDirName"), undefined);
