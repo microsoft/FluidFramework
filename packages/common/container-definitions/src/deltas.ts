@@ -21,9 +21,25 @@ import {
 export interface IConnectionDetails {
     clientId: string;
     claims: ITokenClaims;
+
+    /**
+     * @deprecated No replacement API recommended.
+     */
     existing: boolean;
+
+    /**
+     * @deprecated No replacement API recommended.
+     */
     mode: ConnectionMode;
+
+    /**
+     * @deprecated No replacement API recommended.
+     */
     version: string;
+
+    /**
+     * @deprecated No replacement API recommended.
+     */
     initialClients: ISignalClient[];
     serviceConfiguration: IClientConfiguration;
 
