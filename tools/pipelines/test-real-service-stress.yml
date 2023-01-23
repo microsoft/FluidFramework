@@ -19,7 +19,7 @@ resources:
   pipelines:
   - pipeline: client   # Name of the pipeline resource
     source: Build - client packages
-    branch: main # Default branch for manual/scheduled triggers if none is selected
+    branch: test/gc-stress # Default branch for manual/scheduled triggers if none is selected
     trigger:
       branches:
       - release/*
@@ -38,7 +38,7 @@ variables:
 
 lockBehavior: sequential
 stages:
-  stress tests odsp
+  # stress tests odsp
   - stage:
     displayName:  Stress tests - Odsp
     dependsOn: []
@@ -69,6 +69,7 @@ stages:
         poolBuild: Large
         testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 150
         testCommand: start:t9s:gc:ci
         env:
