@@ -10,6 +10,7 @@ import {
     ICollection,
     IContext,
     IControlMessage,
+    IDeltaService,
     IDocument,
     ILambdaStartControlMessageContents,
     IPartitionLambda,
@@ -33,6 +34,7 @@ import { SummaryReader } from "./summaryReader";
 import { SummaryWriter } from "./summaryWriter";
 import { initializeProtocol, sendToDeli } from "./utils";
 import { ILatestSummaryState } from "./interfaces";
+import { PendingMessageReader } from "./pendingMessageReader";
 
 const DefaultScribe: IScribe = {
     lastClientSummaryHead: undefined,
@@ -55,6 +57,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         private readonly documentCollection: ICollection<IDocument>,
         private readonly messageCollection: ICollection<ISequencedOperationMessage>,
         private readonly producer: IProducer,
+        private readonly deltaManager: IDeltaService,
         private readonly tenantManager: ITenantManager,
         private readonly serviceConfiguration: IServiceConfiguration,
         private readonly enableWholeSummaryUpload: boolean,
@@ -206,13 +209,15 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             this.documentCollection,
             this.messageCollection);
 
+        const pendingMessageReader = new PendingMessageReader(tenantId, documentId, this.deltaManager);
+
         const scribeLambda = new ScribeLambda(
             context,
             document.tenantId,
             document.documentId,
             summaryWriter,
             summaryReader,
-            undefined,
+            pendingMessageReader,
             checkpointManager,
             lastCheckpoint,
             this.serviceConfiguration,
