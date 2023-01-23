@@ -105,7 +105,7 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
     delete(): void;
 
     /**
-     * Retrieves the cell attributor.
+     * @returns the AttributionKey associated with the cell's most recent change.
      *
      * @returns - the AttributionKey of the cell
      */
