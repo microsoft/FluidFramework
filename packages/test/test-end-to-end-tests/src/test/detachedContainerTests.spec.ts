@@ -655,7 +655,7 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
 
     itExpects("Container should be closed on failed attach with non retryable error", [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "Test Error" },
-        { eventName: "fluid:telemetry:Container:ContainerDispose", error: "Test Error" },
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "Test Error", disposed: true },
     ], async () => {
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 

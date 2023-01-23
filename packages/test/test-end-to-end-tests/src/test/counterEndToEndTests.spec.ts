@@ -187,9 +187,10 @@ describeNoCompat("SharedCounter orderSequentially", (getTestObjectProvider) => {
             errorType: ContainerErrorType.dataProcessingError,
         },
         {
-            eventName: "fluid:telemetry:Container:ContainerDispose",
+            eventName: "fluid:telemetry:Container:ContainerClose",
             error: "RollbackError: rollback not supported",
             errorType: ContainerErrorType.dataProcessingError,
+            disposed: true,
         },
     ],
     async () => {
