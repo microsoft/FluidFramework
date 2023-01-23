@@ -485,43 +485,43 @@ export class FluidPackageCheck {
         return false;
     }
 
-    private static checkLintScriptsHelper(
-        pkg: Package,
-        scriptKey: string,
-        script: string,
-        fix: boolean,
-    ) {
-        const lintType = scriptKey === "lint" ? "lint" : "lint:fix";
+    private static checkLintScripts(pkg: Package, fix: boolean) {
+        const checkLintScriptsHelper = (
+            pkg: Package,
+            scriptKey: string,
+            script: string,
+            fix: boolean,
+        ) => {
+            const lintType = scriptKey === "lint" ? "lint" : "lint:fix";
 
-        const prettier = scriptKey === "lint" ? "npm run prettier" : "npm run prettier:fix";
-        const eslint = scriptKey === "lint" ? "npm run eslint" : "npm run eslint:fix";
+            const prettier = scriptKey === "lint" ? "npm run prettier" : "npm run prettier:fix";
+            const eslint = scriptKey === "lint" ? "npm run eslint" : "npm run eslint:fix";
 
-        const hasPrettier = script?.includes(prettier);
-        const endsWithEslint = script?.endsWith(eslint);
+            const hasPrettier = script?.includes(prettier);
+            const endsWithEslint = script?.endsWith(eslint);
 
-        if (!(hasPrettier && endsWithEslint)) {
-            this.logWarn(pkg, `non-conformant ${lintType} script`, fix);
+            if (!(hasPrettier && endsWithEslint)) {
+                this.logWarn(pkg, `non-conformant ${lintType} script`, fix);
 
-            if (script === "") {
-                this.logWarn(pkg, `${lintType} script is missing!`, fix);
-                script = `${prettier} && ${eslint}`;
-            } else {
-                if (!hasPrettier) {
-                    this.logWarn(pkg, `${lintType} script must include: ${prettier}`, fix);
-                    script = `${prettier} && ${script}`;
-                }
+                if (script === "") {
+                    this.logWarn(pkg, `${lintType} script is missing!`, fix);
+                    script = `${prettier} && ${eslint}`;
+                } else {
+                    if (!hasPrettier) {
+                        this.logWarn(pkg, `${lintType} script must include: ${prettier}`, fix);
+                        script = `${prettier} && ${script}`;
+                    }
 
-                if (!endsWithEslint) {
-                    this.logWarn(pkg, `${lintType} script must end with: ${eslint}`, fix);
-                    script = `${script} && ${eslint}`;
+                    if (!endsWithEslint) {
+                        this.logWarn(pkg, `${lintType} script must end with: ${eslint}`, fix);
+                        script = `${script} && ${eslint}`;
+                    }
                 }
             }
-        }
 
-        return script;
-    }
+            return script;
+        };
 
-    private static checkLintScripts(pkg: Package, fix: boolean) {
         let fixed = false;
         if (pkg.getScript("build")) {
             // TODO: add prettier check comment once prettier is enforced globally, hasPrettier commented out to discard build warnings from "lint" & "lint:fix" scripts
@@ -540,7 +540,7 @@ export class FluidPackageCheck {
                 if (script === undefined) {
                     script = "";
                 }
-                const expectedScript = this.checkLintScriptsHelper(pkg, scriptKey, script, fix);
+                const expectedScript = checkLintScriptsHelper(pkg, scriptKey, script, fix);
 
                 if (fix) {
                     pkg.packageJson.scripts[scriptKey] = expectedScript;
