@@ -83,6 +83,14 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
         this.diffType = "none";
         this.emit('externalNameChanged');
     }
+    public ignoreChange = async (): Promise<void> => {
+        this.diffPriority = this.DEFAULT_PRIORITY;
+        this.diffType = "none";
+        this.emit('externalPriorityChanged');
+        this.diffName = '';
+        this.diffType = "none";
+        this.emit('externalNameChanged');
+    }
 }
 
 /**

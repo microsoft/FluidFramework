@@ -105,6 +105,10 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
                 <button
                     onClick={ task.acceptChange } style={{ visibility: showAcceptButton }}>Accept change</button>
             </td>
+            <td>
+                <button
+                    onClick={ task.ignoreChange } style={{ visibility: showAcceptButton }}>Ignore change</button>
+            </td>
         </tr>
     );
 };
