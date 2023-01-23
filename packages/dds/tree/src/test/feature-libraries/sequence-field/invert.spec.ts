@@ -151,7 +151,7 @@ describe("SequenceField - Invert", () => {
         const input = composeAnonChanges([Change.modify(3, childChange1), Change.move(2, 2, 0)]);
         const expected = composeAnonChanges([
             Change.modify(1, inverseChildChange1),
-            Change.return(0, 2, 2, tag, 0),
+            Change.return(0, 2, 2, tag, 2),
         ]);
         const actual = invert(input);
         assert.deepEqual(actual, expected);

@@ -172,11 +172,17 @@ export interface CrossFieldManager<T = unknown> {
 }
 
 // @public (undocumented)
-interface CrossFieldTable {
+interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
     // (undocumented)
     dstQueries: MoveQuerySet;
     // (undocumented)
     isInvalidated: boolean;
+    // (undocumented)
+    mapDst: NestedMap<RevisionTag | undefined, MoveId_2, T>;
+    // (undocumented)
+    mapSrc: NestedMap<RevisionTag | undefined, MoveId_2, T>;
+    // (undocumented)
+    reset: () => void;
     // (undocumented)
     srcQueries: MoveQuerySet;
 }
@@ -1054,10 +1060,7 @@ export const neverTree: TreeSchema;
 type NewAttach<TNodeChange = NodeChangeType> = Insert_2<TNodeChange> | MoveIn_2;
 
 // @public (undocumented)
-function newCrossFieldManager<T = unknown>(table?: CrossFieldTable): CrossFieldManager<T>;
-
-// @public (undocumented)
-function newCrossFieldTable(): CrossFieldTable;
+function newCrossFieldTable<T = unknown>(): CrossFieldTable<T>;
 
 // @public (undocumented)
 function newMoveEffectTable<T>(): MoveEffectTable<T>;
@@ -1352,7 +1355,6 @@ declare namespace SequenceField {
         isDetachMark,
         isReattach,
         DetachedNodeTracker,
-        newCrossFieldManager,
         newCrossFieldTable,
         newMoveEffectTable,
         CrossFieldTable,

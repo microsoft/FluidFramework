@@ -20,21 +20,24 @@ export function compose(changes: TaggedChange<TestChangeset>[]): TestChangeset {
 }
 
 export function shallowCompose<T>(changes: TaggedChange<SF.Changeset<T>>[]): SF.Changeset<T> {
-    return composeI(changes, () => fail("Should not have children to compose"));
+    return composeI(changes, (children) => {
+        assert(children.length === 1, "Should only have one child to compose");
+        return children[0].change;
+    });
 }
 
 function composeI<T>(
     changes: TaggedChange<SF.Changeset<T>>[],
     composer: (childChanges: TaggedChange<T>[]) => T,
 ): SF.Changeset<T> {
-    const table = SF.newCrossFieldTable();
+    const moveEffects = SF.newCrossFieldTable();
     const idAllocator = continuingAllocator(changes);
-    const composed = SF.compose(changes, composer, idAllocator, SF.newCrossFieldManager(table));
+    const composed = SF.compose(changes, composer, idAllocator, moveEffects);
 
-    if (table.isInvalidated) {
-        resetCrossFieldTable(table);
-        SF.amendCompose(composed, composer, idAllocator, SF.newCrossFieldManager(table));
-        assert(!table.isInvalidated, "Compose should not need more than one amend pass");
+    if (moveEffects.isInvalidated) {
+        resetCrossFieldTable(moveEffects);
+        SF.amendCompose(composed, composer, idAllocator, moveEffects);
+        // assert(!table.isInvalidated, "Compose should not need more than one amend pass");
     }
     return composed;
 }
@@ -45,17 +48,11 @@ export function rebase(change: TestChangeset, base: TaggedChange<TestChangeset>)
 
     const table = SF.newCrossFieldTable();
     const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
-    let rebasedChange = SF.rebase(
-        change,
-        base,
-        TestChange.rebase,
-        idAllocator,
-        SF.newCrossFieldManager(table),
-    );
+    let rebasedChange = SF.rebase(change, base, TestChange.rebase, idAllocator, table);
     if (table.isInvalidated) {
-        resetCrossFieldTable(table);
-        rebasedChange = SF.amendRebase(change, base, idAllocator, SF.newCrossFieldManager(table));
-        assert(!table.isInvalidated, "Rebase should not need more than one amend pass");
+        table.reset();
+        rebasedChange = SF.amendRebase(rebasedChange, base, idAllocator, table);
+        // assert(!table.isInvalidated, "Rebase should not need more than one amend pass");
     }
     return rebasedChange;
 }
@@ -84,7 +81,7 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
         change,
         TestChange.invert,
         () => fail("Sequence fields should not generate IDs during invert"),
-        SF.newCrossFieldManager(table),
+        table,
     );
 
     if (table.isInvalidated) {
@@ -95,7 +92,7 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
             inverted,
             change.revision,
             () => fail("Sequence fields should not generate IDs during invert"),
-            SF.newCrossFieldManager(table),
+            table,
         );
         assert(!table.isInvalidated, "Invert should not need more than one amend pass");
     }

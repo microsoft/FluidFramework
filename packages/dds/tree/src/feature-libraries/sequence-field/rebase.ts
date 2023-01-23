@@ -144,7 +144,22 @@ function rebaseMarkList<TNodeChange>(
                 baseDetachOffset += detachLength;
                 baseInputIndex += detachLength;
             } else if (isAttach(baseMark)) {
-                factory.pushOffset(getOutputLength(baseMark));
+                if (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo") {
+                    const effect = getMoveEffect(
+                        moveEffects,
+                        CrossFieldTarget.Destination,
+                        baseMark.revision ?? baseRevision,
+                        baseMark.id,
+                    );
+                    if (effect.movedMark !== undefined) {
+                        factory.push(effect.movedMark);
+                        delete effect.movedMark;
+                    } else {
+                        factory.pushOffset(getOutputLength(baseMark));
+                    }
+                } else {
+                    factory.pushOffset(getOutputLength(baseMark));
+                }
             }
         } else {
             assert(
@@ -185,7 +200,7 @@ function rebaseMarkList<TNodeChange>(
         updateLineage(lineageRequests, baseRevision);
     }
 
-    return amendRebaseI(baseRevision, baseMarkList, factory.list, moveEffects);
+    return factory.list;
 }
 
 class RebaseQueue<T> {

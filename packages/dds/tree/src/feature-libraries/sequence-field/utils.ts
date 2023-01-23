@@ -824,50 +824,70 @@ export function areComposable(changes: TaggedChange<Changeset<unknown>>[]): bool
     return true;
 }
 
-export interface CrossFieldTable {
+export interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
     srcQueries: MoveQuerySet;
     dstQueries: MoveQuerySet;
     isInvalidated: boolean;
+    mapSrc: NestedMap<RevisionTag | undefined, MoveId, T>;
+    mapDst: NestedMap<RevisionTag | undefined, MoveId, T>;
+    reset: () => void;
 }
 
-export function newCrossFieldTable(): CrossFieldTable {
-    return {
-        srcQueries: new Map(),
-        dstQueries: new Map(),
-        isInvalidated: false,
-    };
-}
+export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
+    const srcQueries: MoveQuerySet = new Map();
+    const dstQueries: MoveQuerySet = new Map();
+    const mapSrc: NestedMap<RevisionTag | undefined, MoveId, T> = new Map();
+    const mapDst: NestedMap<RevisionTag | undefined, MoveId, T> = new Map();
 
-export function newMoveEffectTable<T>(): MoveEffectTable<T> {
-    return newCrossFieldManager();
-}
-
-export function newCrossFieldManager<T = unknown>(
-    table: CrossFieldTable = newCrossFieldTable(),
-): CrossFieldManager<T> {
-    const mapSrc: NestedMap<RevisionTag | undefined, MoveId, unknown> = new Map();
-    const mapDst: NestedMap<RevisionTag | undefined, MoveId, unknown> = new Map();
     const getMap = (target: CrossFieldTarget) =>
         target === CrossFieldTarget.Source ? mapSrc : mapDst;
 
     const getQueries = (target: CrossFieldTarget) =>
-        target === CrossFieldTarget.Source ? table.srcQueries : table.dstQueries;
+        target === CrossFieldTarget.Source ? srcQueries : dstQueries;
 
-    const manager: CrossFieldManager<T> = {
-        get: (target, revision, id) => {
+    const table = {
+        srcQueries,
+        dstQueries,
+        isInvalidated: false,
+        mapSrc,
+        mapDst,
+
+        get: (target: CrossFieldTarget, revision: RevisionTag | undefined, id: MoveId) => {
             const result = tryGetFromNestedMap(getMap(target), revision, id);
             addToNestedSet(getQueries(target), revision, id);
-            return result as T | undefined;
+            return result;
         },
-        getOrCreate: (target, revision, id, defaultValue) => {
+        getOrCreate: (
+            target: CrossFieldTarget,
+            revision: RevisionTag | undefined,
+            id: MoveId,
+            defaultValue: T,
+        ) => {
             if (nestedSetContains(getQueries(target), revision, id)) {
                 table.isInvalidated = true;
             }
-            return getOrAddInNestedMap(getMap(target), revision, id, defaultValue) as T;
+            return getOrAddInNestedMap<RevisionTag | undefined, MoveId, T>(
+                getMap(target),
+                revision,
+                id,
+                defaultValue,
+            );
         },
-        consume: (target, revision, id) => deleteFromNestedMap(getMap(target), revision, id),
+        consume: (target: CrossFieldTarget, revision: RevisionTag | undefined, id: MoveId) =>
+            deleteFromNestedMap(getMap(target), revision, id),
+
+        reset: () => {
+            table.isInvalidated = false;
+            table.srcQueries.clear();
+            table.dstQueries.clear();
+        },
     };
-    return manager;
+
+    return table;
+}
+
+export function newMoveEffectTable<T>(): MoveEffectTable<T> {
+    return newCrossFieldTable();
 }
 
 export type NestedSet<Key1, Key2> = NestedMap<Key1, Key2, boolean>;

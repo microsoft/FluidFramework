@@ -69,7 +69,6 @@ export {
     isDetachMark,
     isReattach,
     DetachedNodeTracker,
-    newCrossFieldManager,
     newCrossFieldTable,
     newMoveEffectTable,
     CrossFieldTable,
