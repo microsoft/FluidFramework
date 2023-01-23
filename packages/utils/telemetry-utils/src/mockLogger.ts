@@ -26,11 +26,17 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
 	}
 
 	/**
-	 * Search events logged since the last time matchEvents was called, looking for the given expected
-	 * events in order.
+	 * Search events logged since the last time {@link MockLogger.matchEvents}, {@link MockLogger.matchAnyEvent}, or {@link MockLogger.matchEventStrict}
+	 * were called, looking for all the given expected events in order.
+	 * This doesn't necessarily mean that the expected events are the only ones present; it means that they are present-
+	 * and in the specified order, but other events might be interleaved.
+	 * To look for *only* the specified events, use {@link MockLogger.matchEventStrict}.
 	 * @param expectedEvents - events in order that are expected to appear in the recorded log.
 	 * These event objects may be subsets of the logged events.
 	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
+	 *
+	 * @remarks
+	 * Calling this method will clear the internal buffer of saved events.
 	 */
 	matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean {
 		const matchedExpectedEventCount = this.getMatchedEventsCount(expectedEvents);
@@ -39,7 +45,12 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
 		return unmatchedExpectedEventCount === 0;
 	}
 
-	/** Asserts that matchEvents is true, and prints the actual/expected output if not */
+	/**
+	 * Asserts that {@link MockLogger.matchEvents} is true, and prints the actual/expected output if not.
+	 *
+	 * @remarks
+	 * Calling this method will clear the internal buffer of saved events.
+	 */
 	assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string) {
 		const actualEvents = this.events;
 		if (!this.matchEvents(expectedEvents)) {
@@ -53,19 +64,27 @@ ${JSON.stringify(actualEvents)}`);
 	}
 
 	/**
-	 * Search events logged since the last time matchEvents was called, looking for any of the given
-	 * expected events.
+	 * Search events logged since the last time {@link MockLogger.matchEvents}, {@link MockLogger.matchAnyEvent}, or {@link MockLogger.matchEventStrict}
+	 * were called, looking for any of the given expected events.
 	 * @param expectedEvents - events that are expected to appear in the recorded log.
 	 * These event objects may be subsets of the logged events.
 	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
 	 * @returns if any of the expected events is found.
+	 *
+	 * @remarks
+	 * Calling this method will clear the internal buffer of saved events.
 	 */
 	matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean {
 		const matchedExpectedEventCount = this.getMatchedEventsCount(expectedEvents);
 		return matchedExpectedEventCount > 0;
 	}
 
-	/** Asserts that matchAnyEvent is true, and prints the actual/expected output if not */
+	/**
+	 * Asserts that {@link MockLogger.matchAnyEvent} is true, and prints the actual/expected output if not.
+	 *
+	 * @remarks
+	 * Calling this method will clear the internal buffer of saved events.
+	 */
 	assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string) {
 		const actualEvents = this.events;
 		if (!this.matchAnyEvent(expectedEvents)) {
@@ -79,17 +98,25 @@ ${JSON.stringify(actualEvents)}`);
 	}
 
 	/**
-	 * Search events logged since the last time matchEvents was called, looking only for the given expected
-	 * events in order.
+	 * Search events logged since the last time {@link MockLogger.matchEvents}, {@link MockLogger.matchAnyEvent}, or {@link MockLogger.matchEventStrict}
+	 * were called, looking for exactly the given expected events in order (and no others).
 	 * @param expectedEvents - events in order that are expected to be the only events in the recorded log.
 	 * These event objects may be subsets of the logged events.
 	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
+	 *
+	 * @remarks
+	 * Calling this method will clear the internal buffer of saved events.
 	 */
 	matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean {
 		return expectedEvents.length === this.events.length && this.matchEvents(expectedEvents);
 	}
 
-	/** Asserts that matchEvents is true, and prints the actual/expected output if not */
+	/**
+	 * Asserts that {@link MockLogger.matchEventStrict} is true for the given events, and prints the actual/expected output if not.
+	 *
+	 * @remarks
+	 * Calling this method will clear the internal buffer of saved events.
+	 */
 	assertMatchStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string) {
 		const actualEvents = this.events;
 		if (!this.matchEventStrict(expectedEvents)) {
@@ -102,7 +129,12 @@ ${JSON.stringify(actualEvents)}`);
 		}
 	}
 
-	/** Asserts that matchAnyEvent is false for the given events, and prints the actual/expected output if not */
+	/**
+	 * Asserts that {@link MockLogger.matchAnyEvent} is false for the given events, and prints the actual/expected output if not.
+	 *
+	 * @remarks
+	 * Calling this method will clear the internal buffer of saved events.
+	 */
 	assertMatchNone(disallowedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string) {
 		const actualEvents = this.events;
 		if (this.matchAnyEvent(disallowedEvents)) {
