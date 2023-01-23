@@ -19,6 +19,7 @@ resources:
   pipelines:
   - pipeline: client   # Name of the pipeline resource
     source: Build - client packages
+    branch: test/gc-stress # Default branch for manual/scheduled triggers if none is selected
     trigger:
       branches:
       - release/*
@@ -31,10 +32,13 @@ variables:
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
+- name: testPackage
+  value: "@fluid-internal/test-service-load"
+  readonly: true
 
 lockBehavior: sequential
 stages:
-  stress tests odsp
+  # stress tests odsp
   - stage:
     displayName:  Stress tests - Odsp
     dependsOn: []
@@ -65,6 +69,7 @@ stages:
         poolBuild: Large
         testPackage: "@fluid-internal/test-service-load"
         testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 150
         testCommand: start:t9s:gc:ci
         env:
