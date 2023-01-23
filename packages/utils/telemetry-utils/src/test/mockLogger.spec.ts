@@ -163,4 +163,40 @@ describe("MockLogger", () => {
 			);
 		});
 	});
+
+	describe("assertMatch", () => {
+		let mockLogger: MockLogger;
+		beforeEach(() => {
+			mockLogger = new MockLogger();
+		});
+
+		it("doesn't throw if looking for an empty array and no events", () => {
+			mockLogger.assertMatch([]);
+			// Doesn't throw
+		});
+
+		it("doesn't throw if looking for an empty array and events exist", () => {
+			mockLogger.sendTelemetryEvent({ eventName: "A", a: 1 });
+			mockLogger.assertMatch([]);
+			// Doesn't throw
+		});
+
+		it("throws when expected event is not found", () => {
+			mockLogger.sendTelemetryEvent({ eventName: "A", a: 1 });
+			try {
+				mockLogger.assertMatch([{ eventName: "B", a: 2 }], "my error message");
+				assert.fail("Did not throw as expected");
+			} catch (err: any) {
+				assert.strictEqual(
+					err?.message,
+					`my error message
+expected:
+[{"eventName":"B","a":2}]
+
+actual:
+[{"category":"generic","eventName":"A","a":1}]`,
+				);
+			}
+		});
+	});
 });
