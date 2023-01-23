@@ -39,10 +39,7 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
 	 * Calling this method will clear the internal buffer of saved events.
 	 */
 	matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean {
-		const matchedExpectedEventCount = this.getMatchedEventsCount(expectedEvents);
-		// How many expected events were left over? Hopefully none.
-		const unmatchedExpectedEventCount = expectedEvents.length - matchedExpectedEventCount;
-		return unmatchedExpectedEventCount === 0;
+		return this.getMatchedEventsCount(expectedEvents) === expectedEvents.length;
 	}
 
 	/**
@@ -75,8 +72,7 @@ ${JSON.stringify(actualEvents)}`);
 	 * Calling this method will clear the internal buffer of saved events.
 	 */
 	matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean {
-		const matchedExpectedEventCount = this.getMatchedEventsCount(expectedEvents);
-		return matchedExpectedEventCount > 0;
+		return this.getMatchedEventsCount(expectedEvents) > 0;
 	}
 
 	/**
@@ -108,6 +104,8 @@ ${JSON.stringify(actualEvents)}`);
 	 * Calling this method will clear the internal buffer of saved events.
 	 */
 	matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean {
+		// Note: order matters here; we need to compare against this.events.length before calling this.matchEvents, because
+		// that function will clear this.events.
 		return expectedEvents.length === this.events.length && this.matchEvents(expectedEvents);
 	}
 
