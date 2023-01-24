@@ -7,6 +7,13 @@ import { FieldKey, CursorLocationType, FieldUpPath, UpPath } from "../../core";
 import { fail } from "../../util";
 import { ChunkedCursor, cursorChunk, dummyRoot, TreeChunk } from "./chunk";
 
+/**
+ * Chunk that is empty.
+ *
+ * Since all emptiness is the same, this is a singleton.
+ *
+ * Useful for when a chunk or cursor is needed for an empty field or detached sequence.
+ */
 export const emptyChunk: TreeChunk = {
     topLevelLength: 0,
     cursor(): ChunkedCursor {
