@@ -111,7 +111,7 @@ interface PendingBlob {
     uploadP: Promise<ICreateBlobResponse>;
     localUploadTime?: number;
     serverUploadTime?: number;
-    minTTL?: number;
+    minTTLInSeconds?: number;
 }
 
 export interface IPendingBlobs { [id: string]: { blob: string; }; }
@@ -374,10 +374,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         return PerformanceEvent.timedExecAsync(
             this.mc.logger,
             { eventName: "createBlob" },
-            async () => {
-                const res: ICreateBlobResponseWithTTL = await this.getStorage().createBlob(blob);
-                return res;
-            },
+            async () => this.getStorage().createBlob(blob),
             { end: true, cancel: this.runtime.connected ? "error" : "generic" },
         ).then(
             (response) => this.onUploadResolve(localId, response),
@@ -414,7 +411,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
             0x386 /* Must have pending blob entry for uploaded blob */);
         entry.storageId = response.id;
         entry.localUploadTime = Date.now();
-        entry.minTTL = response.minTTLInSeconds;
+        entry.minTTLInSeconds = response.minTTLInSeconds;
         entry.serverUploadTime = this.getCurrentReferenceTimestampMs();
         if (this.runtime.connected) {
             if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
@@ -523,21 +520,20 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
         let timeLapseSinceServerUpload: number = 0;
         let expiredUsingLocalTime;
         let expiredUsingServerTime;
-        const minTTL: number  | undefined = pendingEntry.minTTL;
         if(pendingEntry.localUploadTime){
             timeLapseSinceLocalUpload = (Date.now() - pendingEntry.localUploadTime) / 1000;
-            expiredUsingLocalTime = (minTTL?? 0) - timeLapseSinceLocalUpload < 0 ? true : false;
+            expiredUsingLocalTime = (pendingEntry.minTTLInSeconds?? 0) - timeLapseSinceLocalUpload < 0 ? true : false;
         }
         if(pendingEntry.serverUploadTime){
             timeLapseSinceServerUpload = (Date.now() - pendingEntry.serverUploadTime) / 1000;
-            expiredUsingServerTime = (minTTL?? 0) - timeLapseSinceServerUpload < 0 ? true : false;
+            expiredUsingServerTime = (pendingEntry.minTTLInSeconds?? 0) - timeLapseSinceServerUpload < 0 ? true : false;
         }
         this.mc.logger.sendTelemetryEvent({
             eventName,
             entryStatus: pendingEntry.status,
             timeLapseSinceLocalUpload,
             timeLapseSinceServerUpload,
-            minTTL,
+            minTTLInSeconds: pendingEntry.minTTLInSeconds,
             expiredUsingLocalTime,
             expiredUsingServerTime,
         });
