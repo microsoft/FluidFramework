@@ -66,8 +66,9 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
             error: "Op was submitted from within a `ensureNoDataModelChanges` callback",
         },
         {
-            eventName: "fluid:telemetry:Container:ContainerDispose",
+            eventName: "fluid:telemetry:Container:ContainerClose",
             error: "Op was submitted from within a `ensureNoDataModelChanges` callback",
+            disposed: true,
         }], async () => {
             await setupContainers({
                 ...testContainerConfig,
