@@ -8992,6 +8992,7 @@ importers:
       '@fluid-tools/build-cli': ^0.8.0-121856
       '@fluidframework/agent-scheduler': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
       '@fluidframework/aqueduct': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/attributor': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/cell': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
       '@fluidframework/common-definitions': ^0.20.1
@@ -9057,6 +9058,7 @@ importers:
       '@fluid-tools/benchmark': 0.45.112032
       '@fluidframework/agent-scheduler': link:../../framework/agent-scheduler
       '@fluidframework/aqueduct': link:../../framework/aqueduct
+      '@fluidframework/attributor': link:../../framework/attributor
       '@fluidframework/cell': link:../../dds/cell
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.0.0
@@ -9445,6 +9447,7 @@ importers:
       '@fluid-experimental/sequence-deprecated': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
       '@fluid-tools/build-cli': ^0.8.0-121856
       '@fluidframework/aqueduct': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/attributor': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.8.0-121856
       '@fluidframework/cell': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
@@ -9497,6 +9500,7 @@ importers:
     dependencies:
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
       '@fluidframework/aqueduct': link:../../framework/aqueduct
+      '@fluidframework/attributor': link:../../framework/attributor
       '@fluidframework/cell': link:../../dds/cell
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.0.0
