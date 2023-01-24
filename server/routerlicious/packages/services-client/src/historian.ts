@@ -133,7 +133,7 @@ export class Historian implements IHistorian {
         return this.restWrapper.post<IWriteSummaryResponse>(
             `/git/summaries`,
             summary,
-            this.getQueryString(initial === undefined ? undefined : { initial }),
+            this.getQueryString(initial !== undefined ? { initial } : undefined),
         );
     }
     public async deleteSummary(softDelete: boolean): Promise<void> {
