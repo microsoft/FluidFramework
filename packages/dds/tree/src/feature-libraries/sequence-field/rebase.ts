@@ -558,26 +558,20 @@ function rebaseMark<TNodeChange>(
                         isSkipLikeReattach(newCurrMark),
                         0x4fe /* Only a skip-like reattach can overlap with a ReturnFrom */,
                     );
-                    if (
-                        newCurrMark.conflictsWith === baseMarkRevision ||
-                        (baseMark.type === "ReturnFrom" &&
-                            newCurrMark.conflictsWith === baseMark.detachedBy)
-                    ) {
-                        // The already populated cells that currMark aimed to reattach content into
-                        // are having their contents detached by baseMark.
-                        // This makes it possible for currMark to be active again.
-                        newCurrMark.detachedBy = baseMarkRevision;
-                        newCurrMark.detachIndex = baseInputOffset;
-                        delete (newCurrMark as CanConflict).conflictsWith;
-                        const effect = getOrAddEffect(
-                            moveEffects,
-                            CrossFieldTarget.Source,
-                            newCurrMark.revision,
-                            newCurrMark.id,
-                        );
-                        effect.detacher = baseMarkRevision;
-                        effect.pairedMarkStatus = PairedMarkUpdate.Reactivated;
-                    }
+                    // The already populated cells that currMark aimed to reattach content into
+                    // are having their contents detached by baseMark.
+                    // This makes it possible for currMark to be active again.
+                    newCurrMark.detachedBy = baseMarkRevision;
+                    newCurrMark.detachIndex = baseInputOffset;
+                    delete (newCurrMark as CanConflict).conflictsWith;
+                    const effect = getOrAddEffect(
+                        moveEffects,
+                        CrossFieldTarget.Source,
+                        newCurrMark.revision,
+                        newCurrMark.id,
+                    );
+                    effect.detacher = baseMarkRevision;
+                    effect.pairedMarkStatus = PairedMarkUpdate.Reactivated;
                     return newCurrMark;
                 } else if (newCurrMark.type === "Revive" && !newCurrMark.isIntention) {
                     assert(
