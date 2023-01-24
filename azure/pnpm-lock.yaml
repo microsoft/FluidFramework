@@ -191,12 +191,15 @@ importers:
 
   packages/external-controller:
     specifiers:
-      '@fluid-experimental/get-container': ^1.4.0-121020
       '@fluidframework/azure-client': ^1.2.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/container-definitions': ^1.4.0-121020
+      '@fluidframework/container-loader': ^1.4.0-121020
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/fluid-static': ^1.4.0-121020
+      '@fluidframework/local-driver': ^1.4.0-121020
+      '@fluidframework/server-local-server': ^0.1036.5000
       '@fluidframework/test-client-utils': 1.4.0-121020
       '@fluidframework/test-tools': ^0.2.3074
       '@rushstack/eslint-config': ^2.5.1
@@ -235,10 +238,13 @@ importers:
       events: 3.3.0
       fluid-framework: 1.4.0-121020
     devDependencies:
-      '@fluid-experimental/get-container': 1.4.0-121020
       '@fluidframework/build-common': 1.1.0
+      '@fluidframework/container-definitions': 1.4.0-121020
+      '@fluidframework/container-loader': 1.4.0-121020
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/fluid-static': 1.4.0-121020
+      '@fluidframework/local-driver': 1.4.0-121020
+      '@fluidframework/server-local-server': 0.1036.5000
       '@fluidframework/test-client-utils': 1.4.0-121020
       '@fluidframework/test-tools': 0.2.3074
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
@@ -901,29 +907,6 @@ packages:
       - supports-color
     dev: true
 
-  /@fluid-experimental/get-container/1.4.0-121020:
-    resolution: {integrity: sha512-+Kdhj2ZN+bJDo+3LrmzM2BT1oHv5XyDg3BqbZY0ZrDiSY8sIfrGnhrcSNh1CmcU0PogYD55bMOKMpA7UWlwbaQ==}
-    dependencies:
-      '@fluidframework/container-definitions': 1.4.0-121020
-      '@fluidframework/container-loader': 1.4.0-121020
-      '@fluidframework/core-interfaces': 1.4.0-121020
-      '@fluidframework/driver-definitions': 1.4.0-121020
-      '@fluidframework/driver-utils': 1.4.0-121020
-      '@fluidframework/local-driver': 1.4.0-121020
-      '@fluidframework/protocol-definitions': 0.1028.2000
-      '@fluidframework/routerlicious-driver': 1.4.0-121020
-      '@fluidframework/server-local-server': 0.1036.5000
-      '@fluidframework/test-runtime-utils': 1.4.0-121020
-      '@fluidframework/tinylicious-driver': 1.4.0-121020
-      jsonwebtoken: 8.5.1
-    transitivePeerDependencies:
-      - bufferutil
-      - debug
-      - encoding
-      - supports-color
-      - utf-8-validate
-    dev: true
-
   /@fluid-tools/version-tools/0.4.8000:
     resolution: {integrity: sha512-HdcfcgtVP4gbuv7aSlR6qPf6d8govOwHCkPy+OOQ0WGPH2nOVWz5urhOkLgqd863fUqNGoO+jU1va4K8a/A2vA==}
     engines: {node: '>=14.0.0'}
@@ -1047,7 +1030,7 @@ packages:
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/routerlicious-driver': 1.3.4
       '@fluidframework/runtime-utils': 1.3.4
-      '@fluidframework/server-services-client': 0.1036.5000
+      '@fluidframework/server-services-client': 0.1036.5001
       axios: 0.26.1
       uuid: 8.3.2
     transitivePeerDependencies:
@@ -2681,25 +2664,6 @@ packages:
       - encoding
       - supports-color
       - utf-8-validate
-
-  /@fluidframework/tinylicious-driver/1.4.0-121020:
-    resolution: {integrity: sha512-NFlB9McJQ7VqhxNwJmbTV/tb4ok25CsoWLCxzYD5sv7liNJSpz56srB4abrJs7vyjIjw2izSl8H+jJQ2RxwDSQ==}
-    dependencies:
-      '@fluidframework/core-interfaces': 1.4.0-121020
-      '@fluidframework/driver-definitions': 1.4.0-121020
-      '@fluidframework/driver-utils': 1.4.0-121020
-      '@fluidframework/protocol-definitions': 0.1028.2000
-      '@fluidframework/routerlicious-driver': 1.4.0-121020
-      '@fluidframework/server-services-client': 0.1036.5001
-      jsrsasign: 10.6.0
-      uuid: 8.3.2
-    transitivePeerDependencies:
-      - bufferutil
-      - debug
-      - encoding
-      - supports-color
-      - utf-8-validate
-    dev: true
 
   /@fluidframework/view-interfaces/1.3.4:
     resolution: {integrity: sha512-BCXtZ33JCvwxm+iyxZc2L/JjBoOkKBI3U5hcHDtKh0fk1RCgjbLHpgsMSyf7FNCA33TRcvoJ83fRcfm2Apvxhg==}
