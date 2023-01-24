@@ -57,10 +57,6 @@ variables:
     value: $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
   - group: imamsean-azure-monitor
-  - name: buildId
-    value: $(Build.BuildId)
-  - name: branchName
-    value: $(Build.SourceBranchName)
 
 stages:
   # Performance unit tests - runtime
@@ -77,9 +73,6 @@ stages:
         poolBuild: ${{ parameters.poolBuild }}
         testWorkspace: ${{ variables.testWorkspace }}
         artifactPipeline: ${{ variables.artifactPipeline }}
-        env:
-          BUILD_ID: ${{ variables.buildId }}
-          BRANCH_NAME: ${{ variables.branchName }}
         customSteps:
 
         # Download artifact with test files
@@ -214,6 +207,9 @@ stages:
               echo $(app-insights-connection-string)
               ls -laR ${{ variables.consolidatedTestsOutputFolder }};
               node --require @ff-internal/aria-logger bin/run azureMonitor --handlerModule $(toolAbsolutePath)/dist/handlers/azureMonitorExecutionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(app-insights-connection-string)';
+          env:
+            BUILD_ID: $(Build.BuildId)
+            BRANCH_NAME: $(Build.SourceBranchName)
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - Perf tests output - execution time
