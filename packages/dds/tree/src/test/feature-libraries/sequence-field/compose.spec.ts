@@ -15,7 +15,7 @@ import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
-import { compose, normalizeMoveIds, shallowCompose } from "./utils";
+import { compose, composeNoVerify, normalizeMoveIds, shallowCompose } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = brand(1);
@@ -43,10 +43,10 @@ describe("SequenceField - Compose", () => {
                         });
                     } else {
                         it(title, () => {
-                            const ab = compose([taggedA, taggedB]);
-                            const left = compose([makeAnonChange(ab), taggedC]);
-                            const bc = compose([taggedB, taggedC]);
-                            const right = compose([taggedA, makeAnonChange(bc)]);
+                            const ab = composeNoVerify([taggedA, taggedB]);
+                            const left = composeNoVerify([makeAnonChange(ab), taggedC]);
+                            const bc = composeNoVerify([taggedB, taggedC]);
+                            const right = composeNoVerify([taggedA, makeAnonChange(bc)]);
 
                             normalizeMoveIds(left);
                             normalizeMoveIds(right);

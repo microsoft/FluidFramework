@@ -15,6 +15,10 @@ export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
     return compose(changes.map(makeAnonChange));
 }
 
+export function composeNoVerify(changes: TaggedChange<TestChangeset>[]): TestChangeset {
+    return composeI(changes, (childChanges) => TestChange.compose(childChanges, false));
+}
+
 export function compose(changes: TaggedChange<TestChangeset>[]): TestChangeset {
     return composeI(changes, TestChange.compose);
 }
