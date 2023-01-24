@@ -20,11 +20,14 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 ## 2.0.0-internal.2.4.0 Upcoming changes
 - [Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`](#deprecate-ensurecontainerconnected-in-fluidframeworktest-utils)
 - [Deprecate `AzureFunctionTokenProvider` in `@fluidframework/azure-clients`](#deprecate-`AzureFunctionTokenProvider`-in-fluidframeworkazure-client)
+- [Deprecate internal connection details from `IConnectionDetails`](#deprecate-internal-connection-details-from-IConnectionDetails)
+
 
 ### Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`
 
 `ensureContainerConnected()` is now deprecated.
 Use `waitForContainerConnection()` from the same package instead.
+
 
 **NOTE**: the default value for the `failOnContainerClose` parameter of `waitForContainerConnection()` is currently set
 to `false` for backwards compatibility but will change to `true` in a future release.
@@ -33,12 +36,21 @@ immediately, instead of potentially being hidden by a timeout.
 It is recommended that you start passing `failOnContainerClose=true` when calling `waitForContainerConnection()` in
 preparation for this upcoming breaking change.
 
+
 ### Deprecate `AzureFunctionTokenProvider` in `@fluidframework/azure-client`
 
 `AzureFunctionTokenProvider` is now deprecated.
 The @fluidframework/azure-client will no longer expose the AzureFunctionTokenProvider as it is not a
 production ready token provider implementation. Developers who are currently consuming this token provider
 should look to implement a [custom token provider](https://learn.microsoft.com/en-us/azure/azure-fluid-relay/how-tos/azure-function-token-provider) as a replacement.
+
+
+### Deprecate internal connection details from `IConnectionDetails`
+
+Deprecating `existing`, `mode`, `version` and `initialClients` in `IConnectionDetails`, no longer exposing these to runtime. No replacement API recommended. Reasons for deprecation:
+- `existing` : this will always be true, which no longer provides useful information
+- `mode` : this is implementation detail of connection
+- `initialClients` and `version` : these are implementation details of handshake protocol of establishing connection, and should not be accessible.
 
 
 # 2.0.0-internal.2.3.0
@@ -58,6 +70,8 @@ Please see the [Closure](packages/loader/container-loader/README.md#Closure) sec
 # 2.0.0-internal.2.2.0
 
 ## 2.0.0-internal.2.2.0 Upcoming changes
+- [Deprecated events and event parameters on IContainer and IDeltaManager](#deprecated-events-and-event-parameters-on-icontainer-and-ideltamanager)
+- [Added fileIsLocked errorType to DriverErrorType enum](#Added-fileIsLocked-errorType-to-DriverErrorType-enum)
 
 ### Deprecated events and event parameters on IContainer and IDeltaManager
 
@@ -87,6 +101,12 @@ The following legacy events and event parameters have been marked as deprecated 
     - "pong": Event deprecated in its entirety.
         - This event has been unused and unsupported for some time.
           No replacement API recommended.
+
+
+### Added `fileIsLocked` errorType to DriverErrorType enum
+Added `fileIsLocked` errorType in DriverErrorType enum. This error happens when file is locked for read/write by storage, e.g. whole collection is locked and access is denied, or file is locked for editing.
+
+This is not breaking change yet. But if application uses dynamic driver loading, current version of application may start receiving these errors from future versions of driver.
 
 # 2.0.0-internal.2.1.0
 

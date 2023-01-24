@@ -12,6 +12,7 @@ import {
     IGarbageCollectionDetailsBase,
     IGarbageCollectionSnapshotData,
     gcBlobPrefix,
+    gcDeletedBlobKey,
     gcTombstoneBlobKey,
 } from "@fluidframework/runtime-definitions";
 /**
@@ -270,8 +271,8 @@ export class GCDataBuilder implements IGarbageCollectionData {
 }
 
 /**
- * Gets the base garbage collection state from the given snapshot tree. It contains GC state and tombstone state.
- * The GC state may be written into multiple blobs. Merge the GC state from all such blobs into one.
+ * Gets the base garbage collection state from the given snapshot tree. It contains GC state, deleted nodes and
+ * tombstones. The GC state may be written into multiple blobs. Merge the GC state from all such blobs into one.
  */
 export async function getGCDataFromSnapshot(
     gcSnapshotTree: ISnapshotTree,
@@ -279,7 +280,15 @@ export async function getGCDataFromSnapshot(
 ): Promise<IGarbageCollectionSnapshotData> {
     let rootGCState: IGarbageCollectionState = { gcNodes: {} };
     let tombstones: string[] | undefined;
+    let deletedNodes: string[] | undefined;
     for (const key of Object.keys(gcSnapshotTree.blobs)) {
+        // Update deleted nodes blob.
+        if (key === gcDeletedBlobKey) {
+            deletedNodes = await readAndParseBlob<string[]>(gcSnapshotTree.blobs[key]);
+            continue;
+        }
+
+        // Update tombstone blob.
         if (key === gcTombstoneBlobKey) {
             tombstones = await readAndParseBlob<string[]>(gcSnapshotTree.blobs[key]);
             continue;
@@ -299,5 +308,5 @@ export async function getGCDataFromSnapshot(
         // Merge the GC state of this blob into the root GC state.
         rootGCState = concatGarbageCollectionStates(rootGCState, gcState);
     }
-    return { gcState: rootGCState, tombstones };
+    return { gcState: rootGCState, tombstones, deletedNodes };
 }
