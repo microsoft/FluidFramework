@@ -215,7 +215,7 @@ export function testSpecializedCursor<TData, TCursor extends ITreeCursor>(config
 /**
  * Tests a cursor implementation that is rooted at a field.
  * Prefer using `testGeneralPurposeTreeCursor` when possible:
- * `testTreeCursor` should only be used when testing a cursor that is not truly general purpose (can not be build from any arbitrary tree).
+ * `testTreeCursor` should only be used when testing a cursor that is not truly general purpose (cannot be built from any arbitrary tree).
  *
  * @param cursorName - The name of the cursor used as part of the test suite name.
  * @param builders - a collection of optional `TData` builders. The more of these are provided, the larger the test suite will be.
@@ -708,7 +708,7 @@ function checkFieldTraversal(cursor: ITreeCursor, expectedPath: FieldUpPath): vo
         cursor.enterNode(index);
         assert(!cursor.seekNodes(Number.POSITIVE_INFINITY));
 
-        // Seek before beginning end should exit
+        // Seek before beginning should exit
         cursor.enterNode(index);
         assert(!cursor.seekNodes(-(index + 1)));
         cursor.enterNode(index);

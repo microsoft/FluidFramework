@@ -40,7 +40,7 @@ export interface TreeChunk extends ReferenceCounted {
     /**
      * Creates a cursor for navigating the content of this chunk.
      *
-     * Starts in "fields" mode in a the `dummyRoot` field containing the top level nodes.
+     * Starts in "fields" mode in a `dummyRoot` field containing the top level nodes.
      *
      * This cursor does not own a reference to the data:
      * it is up to the caller of this function to ensure the cursor is not used after they release their owning ref to this chunk.
