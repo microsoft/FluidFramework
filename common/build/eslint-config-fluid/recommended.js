@@ -3,6 +3,14 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * "Recommended" eslint configuration.
+ *
+ * This is the fluid-framework repository's default configuration.
+ * Recommended for use production packages whose APIs we do not expect the majority of our customers to use directly.
+ *
+ * For packages whose APIs are intended for wide use, the "Strict" configuration should be used instead.
+ */
 module.exports = {
     extends: ["./minimal.js", "plugin:unicorn/recommended", "plugin:editorconfig/all"],
     plugins: ["editorconfig", "eslint-plugin-tsdoc"],
@@ -30,7 +38,18 @@ module.exports = {
             },
         ],
         "unicorn/empty-brace-spaces": "off",
+
+        // Rationale: Destructuring of `Array.entries()` in order to get the index variable results in a
+        //            significant performance regression [node 14 x64].
+        "unicorn/no-for-loop": "off",
+
         "unicorn/prevent-abbreviations": "off",
+
+        /**
+         * "node:" imports are not supported prior to Node.js v16.
+         * TODO: re-enable this (remove override) once the repo has been updated to v16.
+         */
+        "unicorn/prefer-node-protocol": "off",
 
         /**
          * Disallows the `any` type.
@@ -103,12 +122,12 @@ module.exports = {
             // Rules only for TypeScript files
             files: ["**/*.{ts,tsx}"],
             rules: {
-                "editorconfig/indent": "off", // We use tsfmt for "official" formatting.
+                "editorconfig/indent": "off",
             },
         },
         {
             // Rules only for type validation files
-            files: ["**/types/*validate*Previous.ts"],
+            files: ["**/types/*validate*Previous*.ts"],
             rules: {
                 "@typescript-eslint/no-explicit-any": "off",
                 "@typescript-eslint/no-unsafe-argument": "off",

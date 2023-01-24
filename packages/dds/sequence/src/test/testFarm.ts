@@ -5,7 +5,6 @@
 
 // TODO: Some of these should be fixed
 /* eslint-disable no-bitwise */
-/* eslint-disable max-len */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable guard-for-in */
 /* eslint-disable @typescript-eslint/no-for-in-array */
@@ -162,7 +161,7 @@ export function TestPack(verbose = true) {
         }
         const aveTime = (client.accumTime / client.accumOps).toFixed(1);
         const aveLocalTime = (client.localTime / client.localOps).toFixed(1);
-        const stats = client.mergeTree.getStats();
+        const stats = MergeTree.getStats(client.mergeTree);
         const packTime = stats.packTime;
         const ordTime = stats.ordTime;
         const aveOrdTime = ((ordTime ?? 0) / (client.accumOps)).toFixed(1);
@@ -626,7 +625,7 @@ export function TestPack(verbose = true) {
             */
             // console.log(server.getText());
             // console.log(server.mergeTree.toString());
-            // console.log(server.mergeTree.getStats());
+            // console.log(MergeTree.getStats(server.mergeTree));
             if (0 === (roundCount % 100)) {
                 const clockStart = clock();
                 if (checkTextMatch()) {
@@ -638,7 +637,7 @@ export function TestPack(verbose = true) {
                 if (verbose) {
                     console.log(`wall clock is ${((Date.now() - startTime) / 1000.0).toFixed(1)}`);
                 }
-                const stats = testServer.mergeTree.getStats();
+                const stats = MergeTree.getStats(testServer.mergeTree);
                 const liveAve = (stats.liveCount / stats.nodeCount).toFixed(1);
                 const posLeaves = stats.leafCount - stats.removedLeafCount;
                 let aveExtractSnapTime = "off";

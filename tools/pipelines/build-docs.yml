@@ -209,12 +209,12 @@ stages:
             PackageName: 'fluidframework-docs'
             PackageVersion: '$(Build.BuildId)'
 
-        - task: PublishBuildArtifacts@1
+        - task: PublishPipelineArtifact@1
           displayName: 'Publish site build artifact'
           inputs:
-            PathtoPublish: '$(Build.SourcesDirectory)/docs/public'
-            ArtifactName: 'fluidframework-docs'
-            publishLocation: 'Container'
+            targetPath: '$(Build.SourcesDirectory)/docs/public'
+            artifactName: 'fluidframework-docs'
+            publishLocation: 'pipeline'
 
   # BEGIN Secure development tasks
 - stage: guardian
@@ -279,7 +279,7 @@ stages:
           condition: eq('${{ parameters.publishGuardianBaselines }}', 'true')
           inputs:
             targetPath: '$(Build.ArtifactStagingDirectory)\.gdnbaselines'
-            artifact: .gdn
+            artifactName: .gdn
 # END Secure development tasks
 
 - stage: deploy

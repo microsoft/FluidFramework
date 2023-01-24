@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     BaseSegment,
@@ -10,7 +11,6 @@ import {
     IJSONSegment,
     IMergeTreeDeltaOp,
     ISegment,
-    LocalReferenceCollection,
     PropertySet,
 } from "@fluidframework/merge-tree";
 import {
@@ -73,15 +73,8 @@ export class PaddingSegment extends BaseSegment {
     }
 
     public append(segment: ISegment) {
-        if (!PaddingSegment.is(segment)) {
-            throw new Error("can only append padding segment");
-        }
-
-        // Note: Must call 'appendLocalRefs' before modifying this segment's length as
-        //       'this.cachedLength' is used to adjust the offsets of the local refs.
-        LocalReferenceCollection.append(this, segment);
-
-        this.cachedLength += segment.cachedLength;
+        assert(PaddingSegment.is(segment), "can only append padding segment");
+        super.append(segment);
     }
 
     // Returns true if entire run removed

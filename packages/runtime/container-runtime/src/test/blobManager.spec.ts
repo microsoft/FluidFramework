@@ -11,7 +11,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/protocol-definitions";
+import { IClientDetails, ISequencedDocumentMessage, SummaryType } from "@fluidframework/protocol-definitions";
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager";
@@ -43,6 +43,7 @@ class NonDedupeStorage extends BaseMockBlobStorage {
 }
 
 class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements IBlobManagerRuntime {
+    public readonly clientDetails: IClientDetails = { capabilities: { interactive: true } };
     constructor(snapshot: IBlobManagerLoadInfo = {}, attached = false) {
         super();
         this.attachState = attached ? AttachState.Attached : AttachState.Detached;
@@ -50,7 +51,8 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
             undefined as any, // routeContext
             snapshot,
             () => this.getStorage(),
-            (blobId, localId) => this.sendBlobAttachOp(blobId, localId),
+            (localId: string, blobId?: string) => this.sendBlobAttachOp(localId, blobId),
+            () => undefined,
             () => undefined,
             this,
         );
@@ -88,8 +90,8 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
         } as unknown as IDocumentStorageService;
     }
 
-    public sendBlobAttachOp(blobId?: string, localId?: string) {
-        this.ops.push({ metadata: { blobId, localId } });
+    public sendBlobAttachOp(localId: string, blobId?: string) {
+        this.ops.push({ metadata: { localId, blobId } });
     }
 
     public async createBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
@@ -159,7 +161,7 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
 
     public async connect() {
         assert(!this.connected);
-        await new Promise<void>((r) => setTimeout(r, 0));
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
         if (this.blobManager.hasPendingOfflineUploads) {
             const uploadP = this.blobManager.onConnected();
             this.processing = true;
@@ -180,9 +182,9 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
         this.emit("disconnected");
     }
 
-    public async remoteUpload(blob: ArrayBufferLike, redirected = false) {
+    public async remoteUpload(blob: ArrayBufferLike) {
         const response = await this.storage.createBlob(blob);
-        const op = { metadata: { blobId: response.id, localId: redirected ? uuid() : undefined } };
+        const op = { metadata: { localId: uuid(), blobId: response.id } };
         this.blobManager.processBlobAttachOp(op as ISequencedDocumentMessage, false);
         return op;
     }
@@ -218,9 +220,9 @@ describe("BlobManager", () => {
         // ensures this blob will be processed next time runtime.processBlobs() is called
         waitForBlob = async (blob) => {
             if (!runtime.unprocessedBlobs.has(blob)) {
-                await new Promise<void>((res) => runtime.on("blob", () => {
+                await new Promise<void>((resolve) => runtime.on("blob", () => {
                     if (!runtime.unprocessedBlobs.has(blob)) {
-                        res();
+                        resolve();
                     }
                 }));
             }
@@ -232,6 +234,12 @@ describe("BlobManager", () => {
             handlePs.push(handleP);
             await waitForBlob(blob);
         };
+
+        const onNoPendingBlobs = () => {
+            assert((runtime.blobManager as any).pendingBlobs.size === 0);
+        };
+
+        runtime.blobManager.on("noPendingBlobs", () => onNoPendingBlobs());
     });
 
     afterEach(async () => {
@@ -254,12 +262,47 @@ describe("BlobManager", () => {
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
-        assert.strictEqual(summaryData.redirectTable, undefined);
+        assert.strictEqual(summaryData.redirectTable.size, 1);
+    });
+
+    it("hasPendingBlobs", async () => {
+        await runtime.attach();
+        await runtime.connect();
+
+        assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
+        await createBlob(IsoBuffer.from("blob", "utf8"));
+        await createBlob(IsoBuffer.from("blob2", "utf8"));
+        assert.strictEqual(runtime.blobManager.hasPendingBlobs, true);
+        await runtime.processAll();
+        assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
+        const summaryData = validateSummary(runtime);
+        assert.strictEqual(summaryData.ids.length, 2);
+        assert.strictEqual(summaryData.redirectTable.size, 2);
+    });
+
+    it("NoPendingBlobs count", async () => {
+        await runtime.attach();
+        await runtime.connect();
+        let count = 0;
+        runtime.blobManager.on("noPendingBlobs", () => count++);
+
+        await createBlob(IsoBuffer.from("blob", "utf8"));
+        await runtime.processAll();
+        assert.strictEqual(count, 1);
+        await createBlob(IsoBuffer.from("blob2", "utf8"));
+        await createBlob(IsoBuffer.from("blob3", "utf8"));
+        await runtime.processAll();
+        assert.strictEqual(count, 2);
+        const summaryData = validateSummary(runtime);
+        assert.strictEqual(summaryData.ids.length, 3);
+        assert.strictEqual(summaryData.redirectTable.size, 3);
     });
 
     it("detached snapshot", async () => {
+        assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
         await createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.processAll();
+        assert.strictEqual(runtime.blobManager.hasPendingBlobs, true);
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
@@ -269,8 +312,9 @@ describe("BlobManager", () => {
     it("detached->attached snapshot", async () => {
         await createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.processAll();
+        assert.strictEqual(runtime.blobManager.hasPendingBlobs, true);
         await runtime.attach();
-
+        assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
         assert.strictEqual(summaryData.redirectTable.size, 1);
@@ -371,7 +415,7 @@ describe("BlobManager", () => {
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
-        assert.strictEqual(summaryData.redirectTable.size, 4);
+        assert.strictEqual(summaryData.redirectTable.size, 6);
     });
 
     it("handles deduped IDs in detached", async () => {
@@ -409,7 +453,7 @@ describe("BlobManager", () => {
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
-        assert.strictEqual(summaryData.redirectTable.size, 2);
+        assert.strictEqual(summaryData.redirectTable.size, 4);
     });
 
     it("can load from summary", async () => {
@@ -428,12 +472,12 @@ describe("BlobManager", () => {
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
-        assert.strictEqual(summaryData.redirectTable.size, 2);
+        assert.strictEqual(summaryData.redirectTable.size, 3);
 
         const runtime2 = new MockRuntime(summaryData, true);
         const summaryData2 = validateSummary(runtime2);
         assert.strictEqual(summaryData2.ids.length, 1);
-        assert.strictEqual(summaryData2.redirectTable.size, 2);
+        assert.strictEqual(summaryData2.redirectTable.size, 3);
     });
 
     it("handles duplicate remote upload", async () => {
@@ -446,7 +490,7 @@ describe("BlobManager", () => {
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
-        assert.strictEqual(summaryData.redirectTable, undefined);
+        assert.strictEqual(summaryData.redirectTable.size, 2);
     });
 
     it("handles duplicate remote upload between upload and op", async () => {
@@ -460,7 +504,7 @@ describe("BlobManager", () => {
 
         const summaryData = validateSummary(runtime);
         assert.strictEqual(summaryData.ids.length, 1);
-        assert.strictEqual(summaryData.redirectTable, undefined);
+        assert.strictEqual(summaryData.redirectTable.size, 2);
     });
 
     it("handles duplicate remote upload with local ID", async () => {
@@ -469,7 +513,7 @@ describe("BlobManager", () => {
         await createBlob(IsoBuffer.from("blob", "utf8"));
         await runtime.processBlobs();
         await runtime.connect();
-        await runtime.remoteUpload(IsoBuffer.from("blob", "utf8"), true);
+        await runtime.remoteUpload(IsoBuffer.from("blob", "utf8"));
         await runtime.processAll();
 
         const summaryData = validateSummary(runtime);

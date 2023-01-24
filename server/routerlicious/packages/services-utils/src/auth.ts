@@ -7,7 +7,7 @@
 // eslint-disable-next-line import/no-unresolved
 import { Params } from "express-serve-static-core";
 import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
-import * as jwt from "jsonwebtoken";
+import { decode, sign } from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
 import {
     NetworkError,
@@ -29,7 +29,7 @@ export function validateTokenClaims(
     documentId: string,
     tenantId: string,
     requireDocumentId = true): ITokenClaims {
-    const claims = jwt.decode(token) as ITokenClaims;
+    const claims = decode(token) as ITokenClaims;
     if (!claims) {
         throw new NetworkError(403, "Missing token claims.");
     }
@@ -55,7 +55,7 @@ export function validateTokenClaims(
  */
 export function getCreationToken(token: string, key: string, documentId: string, lifetime = 5 * 60) {
     // Current time in seconds
-    const tokenClaims = jwt.decode(token) as ITokenClaims;
+    const tokenClaims = decode(token) as ITokenClaims;
 
     const { tenantId, user } = tokenClaims;
 
@@ -93,7 +93,7 @@ export function generateToken(
         ver,
     };
 
-    return jwt.sign(claims, key, { jwtid: uuid() });
+    return sign(claims, key, { jwtid: uuid() });
 }
 
 export function generateUser(): IUser {

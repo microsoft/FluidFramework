@@ -24,6 +24,10 @@ export enum LumberEventName {
     ServiceSummary = "ServiceSummary",
     SummaryReader = "SummaryReader",
 
+    // Retries
+    RunWithRetry = "RunWithRetry",
+    RequestWithRetry = "RequestWithRetry",
+
     // Reliability
     SessionResult = "SessionResult",
     StartSessionResult = "StartSessionResult",
@@ -31,5 +35,11 @@ export enum LumberEventName {
 
     // Miscellaneous
     ConnectDocument = "ConnectDocument",
+    ConnectDocumentAddClient = "ConnectDocumentAddClient",
+    ConnectDocumentGetClients = "ConnectDocumentGetClients",
+    ConnectDocumentOrdererConnection = "ConnectDocumentOrdererConnection",
+    CreateDocumentUpdateDocumentCollection = "CreateDocumentUpdateDocumentCollection",
+    CreateDocInitialSummaryWrite = "CreateDocInitialSummaryWrite",
+    RiddlerFetchTenantKey = "RiddlerFetchTenantKey",
     HttpRequest = "HttpRequest",
 }

@@ -5,7 +5,7 @@
 import * as path from "path";
 
 import { commonOptions } from "./commonOptions";
-import { IPackageManifest } from "./fluidRepo";
+import { IFluidBuildConfig } from "./fluidRepo";
 import { defaultLogger } from "./logging";
 import { existsSync, lookUpDirAsync, readJsonAsync, readJsonSync, realpathAsync } from "./utils";
 
@@ -17,7 +17,7 @@ async function isFluidRootLerna(dir: string) {
         verbose(`InferRoot: lerna.json not found`);
         return false;
     }
-    const rootPackageManifest = await getPackageManifest(dir);
+    const rootPackageManifest = await getFluidBuildConfig(dir);
     if (
         rootPackageManifest.repoPackages.server !== undefined &&
         !existsSync(path.join(dir, rootPackageManifest.repoPackages.server as string, "lerna.json"))
@@ -101,7 +101,13 @@ export async function getResolvedFluidRoot() {
     return await realpathAsync(resolvedRoot);
 }
 
-export function getPackageManifest(rootDir: string): IPackageManifest {
+/**
+ * Loads an IFluidBuildConfig from a package.json file in a directory.
+ *
+ * @param rootDir - The path to the root package.json to load.
+ * @returns The fluidBuild section of the package.json.
+ */
+export function getFluidBuildConfig(rootDir: string): IFluidBuildConfig {
     const jsonPath = path.join(rootDir, "package.json");
     if (!existsSync(jsonPath)) {
         throw new Error(`Root package.json not found in: ${rootDir}`);

@@ -23,12 +23,12 @@ export const PlotCoordinateView: React.FC<IPlotCoordinateViewProps> = (props: IP
     const [y, setY] = React.useState(props.model.y);
 
     React.useEffect(() => {
-        const onCoordinateChanged = () => {
+        const onCoordinateChanged = (): void => {
             setX(props.model.x);
             setY(props.model.y);
         };
         props.model.on("coordinateChanged", onCoordinateChanged);
-        return () => {
+        return (): void => {
             props.model.off("coordinateChanged", onCoordinateChanged);
         };
     }, [props.model]);

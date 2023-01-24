@@ -4,6 +4,6 @@
  */
 
 import { mapTreeFromCursor, singleMapTreeCursor } from "../../feature-libraries";
-import { testJsonableTreeCursor } from "../cursorTestSuite";
+import { testGeneralPurposeTreeCursor } from "../cursorTestSuite";
 
-testJsonableTreeCursor("mapTreeCursor", singleMapTreeCursor, mapTreeFromCursor);
+testGeneralPurposeTreeCursor("mapTreeCursor", singleMapTreeCursor, mapTreeFromCursor);

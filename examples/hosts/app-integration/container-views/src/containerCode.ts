@@ -3,53 +3,68 @@
  * Licensed under the MIT License.
  */
 
-import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluidframework/aqueduct";
+import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
+import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
+import { IFluidMountableView } from "@fluidframework/view-interfaces";
+
 import React from "react";
 
-import { DiceRoller, DiceRollerInstantiationFactory } from "./model";
+import { IDiceRoller } from "./interface";
+import { DiceRollerInstantiationFactory } from "./model";
 import { DiceRollerView } from "./view";
 
-const dataStoreId = "modelDataStore";
-
-// The defaultViewRequestHandler responds to empty requests with the default view (a DiceRollerView).  Since we wrap
-// it with a mountableViewRequestHandler below, the view will be wrapped in a MountableView if the requester includes
-// the mountableView request header.
-const defaultViewRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
-    if (request.pathParts.length === 0) {
-        const objectRequest = RequestParser.create({
-            url: ``,
-            headers: request.headers,
-        });
-        const model = await requestFluidObject<DiceRoller>(
-            await runtime.getRootDataStore(dataStoreId),
-            objectRequest);
-        const viewResponse = React.createElement(DiceRollerView, { model });
-        return { status: 200, mimeType: "fluid/object", value: viewResponse };
-    }
-};
 
 /**
- * The DiceRollerContainerRuntimeFactory creates the single DiceRoller model and also provides a request handler that
- * can bind the DiceRoller to a DiceRollerView.
+ * The data model for our application.
+ *
+ * @remarks Since this is a simple example it's just a single data object.  More advanced scenarios may have more
+ * complex models.
  */
-export class DiceRollerContainerRuntimeFactory extends BaseContainerRuntimeFactory {
+export interface IMountableViewAppModel {
+    readonly mountableView: IFluidMountableView;
+}
+
+class MountableViewAppModel implements IMountableViewAppModel {
+    public constructor(public readonly mountableView: IFluidMountableView) { }
+}
+
+const diceRollerId = "dice-roller";
+
+/**
+ * The runtime factory for our Fluid container.
+ */
+export class DiceRollerContainerRuntimeFactory
+    extends ModelContainerRuntimeFactory<IMountableViewAppModel> {
     constructor() {
-        // We'll use a MountableView so the app can display us, and add our default view request handler.
         super(
-            new Map([[DiceRollerInstantiationFactory.type, Promise.resolve(DiceRollerInstantiationFactory)]]),
-            undefined,
-            [mountableViewRequestHandler(MountableView, [defaultViewRequestHandler])],
+            new Map([
+                DiceRollerInstantiationFactory.registryEntry,
+            ]), // registryEntries
         );
     }
 
     /**
-     * Create the single DiceRoller model for the container on first initialization.
+     * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        const dataStore = await runtime.createDataStore(DiceRollerInstantiationFactory.type);
-        await dataStore.trySetAlias(dataStoreId);
+        const diceRoller = await runtime.createDataStore(DiceRollerInstantiationFactory.type);
+        await diceRoller.trySetAlias(diceRollerId);
+    }
+
+    /**
+     * {@inheritDoc ModelContainerRuntimeFactory.createModel}
+     */
+    protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+        const diceRoller = await requestFluidObject<IDiceRoller>(
+            await runtime.getRootDataStore(diceRollerId),
+            "",
+        );
+        const mountableView = new MountableView(
+            React.createElement(DiceRollerView, { model: diceRoller }),
+        );
+        return new MountableViewAppModel(mountableView);
     }
 }

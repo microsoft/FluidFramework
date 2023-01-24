@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { DataTransformationCallback } from "./migrationInterfaces";
+import type { DataTransformationCallback } from "@fluid-example/example-utils";
 
 /**
  * Read the version of the string data, to understand how to parse it.  This is shared between versions.
@@ -34,6 +34,12 @@ export function parseStringDataVersionOne(stringData: string) {
     }
     const itemStrings = stringData.split("\n");
     itemStrings.shift(); // remove version line
+
+    // Account for empty inventory list
+    if (itemStrings.length === 1 && itemStrings[0] === "") {
+        return [];
+    }
+
     return itemStrings.map((itemString) => {
         const [itemNameString, itemQuantityString] = itemString.split(":");
         return { name: itemNameString, quantity: parseInt(itemQuantityString, 10) };
@@ -53,6 +59,12 @@ export function parseStringDataVersionTwo(stringData: string) {
     }
     const itemStrings = stringData.split("\n");
     itemStrings.shift(); // remove version line
+
+    // Account for empty inventory list
+    if (itemStrings.length === 1 && itemStrings[0] === "") {
+        return [];
+    }
+
     return itemStrings.map((itemString) => {
         const [itemNameString, itemQuantityString] = itemString.split("\t");
         return { name: itemNameString, quantity: parseInt(itemQuantityString, 10) };

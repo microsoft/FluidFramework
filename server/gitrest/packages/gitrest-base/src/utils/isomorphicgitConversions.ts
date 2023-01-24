@@ -32,8 +32,8 @@ function oidToCommitHash(oid: string): resources.ICommitHash {
 
 function getIAuthorOrICommitterOrITaggerFromIsoGitData(
     isoGitObjectData: isomorphicGit.CommitObject["author"]
-                    | isomorphicGit.CommitObject["committer"]
-                    | isomorphicGit.TagObject["tagger"],
+        | isomorphicGit.CommitObject["committer"]
+        | isomorphicGit.TagObject["tagger"],
 ): resources.IAuthor | resources.ICommitter | resources.ITagger {
     return {
         date: new Date(isoGitObjectData.timestamp * 1000).toISOString(),
@@ -104,7 +104,7 @@ export function blobToIBlob(
     readBlobResponse: isomorphicGit.ReadBlobResult,
     owner: string,
     repo: string,
-    ): resources.IBlob {
+): resources.IBlob {
     const buffer = Buffer.from(readBlobResponse.blob).toString("base64");
     const sha = readBlobResponse.oid;
     return {
@@ -166,7 +166,7 @@ export async function tagToITag(tagResult: isomorphicGit.ReadTagResult): Promise
         message: tagResult.tag.message,
         object: {
             sha: tagResult.tag.object,
-            type:tagResult.tag.type,
+            type: tagResult.tag.type,
             url: "",
         },
         sha: tagResult.oid,

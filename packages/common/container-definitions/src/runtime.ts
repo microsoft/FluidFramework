@@ -108,8 +108,9 @@ export interface IRuntime extends IDisposable {
  * Payload type for IContainerContext.submitBatchFn()
  */
 export interface IBatchMessage {
-    contents: string;
+    contents?: string;
     metadata: Record<string, unknown> | undefined;
+    compression?: string;
 }
 
 /**
@@ -121,6 +122,7 @@ export interface IBatchMessage {
  * and the Container has created a new ContainerContext.
  */
 export interface IContainerContext extends IDisposable {
+    /** @deprecated Please pass in existing directly in instantiateRuntime */
     readonly existing: boolean | undefined;
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
@@ -134,6 +136,7 @@ export interface IContainerContext extends IDisposable {
     readonly submitBatchFn: (batch: IBatchMessage[]) => number;
     readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
     readonly submitSignalFn: (contents: any) => void;
+    readonly disposeFn?: (error?: ICriticalContainerError) => void;
     readonly closeFn: (error?: ICriticalContainerError) => void;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly quorum: IQuorumClients;

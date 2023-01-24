@@ -4,7 +4,6 @@
  */
 
 /* eslint-disable @typescript-eslint/dot-notation */
-/* eslint-disable max-len */
 
 import { strict as assert } from "assert";
 import { stub } from "sinon";
@@ -97,6 +96,29 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
             const expectedNavParam = new URLSearchParams(sharelink).get("nav");
             assert(actualNavParam !== undefined, "Nav param should be defined!!");
             assert.strictEqual(expectedNavParam, actualNavParam, "Nav param should match");
+        });
+
+        it(`getAbsoluteUrl - Should resolve and then getAbsoluteUrl should pick dataStorePath from resolvedUrl, hasVersion: ${urlWithNav.hasVersion}, hasContext: ${urlWithNav.hasContext}`, async () => {
+            const resolvedUrl1 = await mockGetFileLink(Promise.resolve(sharelink), async () => {
+                return urlResolverWithShareLinkFetcher.resolve({ url: urlWithNav.url });
+            });
+            const absoluteUrl = await urlResolverWithShareLinkFetcher.getAbsoluteUrl(resolvedUrl1, "");
+            const actualNavParam = new URLSearchParams(absoluteUrl).get("nav");
+            const expectedNavParam = new URLSearchParams(sharelink).get("nav");
+            assert(actualNavParam !== undefined, "Nav param should be defined!!");
+            assert.strictEqual(expectedNavParam, actualNavParam, "Nav param should match");
+
+            // Then resolve again.
+            const resolvedUrl2 = await mockGetFileLink(Promise.resolve(sharelink), async () => {
+                return urlResolverWithShareLinkFetcher.resolve({ url: absoluteUrl });
+            });
+            assert.strictEqual(resolvedUrl2.dataStorePath, dataStorePath, "dataStorePath should be preserved");
+            assert.strictEqual(resolvedUrl2.driveId, driveId, "Drive id should be equal");
+            assert.strictEqual(resolvedUrl2.siteUrl, siteUrl, "SiteUrl should be equal");
+            assert.strictEqual(resolvedUrl2.itemId, itemId, "Item id should be equal");
+            assert.strictEqual(resolvedUrl2.fileVersion, urlWithNav.hasVersion ? fileVersion : undefined);
+            assert.strictEqual(resolvedUrl2.hashedDocumentId, await getHashedDocumentId(driveId, itemId), "Doc id should be equal");
+            assert(resolvedUrl2.endpoints.snapshotStorageUrl !== undefined, "Snapshot url should not be empty");
         });
     }
 

@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import { MarkListFactory, Transposed as T } from "../../feature-libraries/sequence-change-family";
-import { TreeSchemaIdentifier } from "../../schema-stored";
+import { TreeSchemaIdentifier } from "../../core";
 import { brand } from "../../util";
 
 const dummyMark: T.Detach = { type: "Delete", id: 0, count: 1 };

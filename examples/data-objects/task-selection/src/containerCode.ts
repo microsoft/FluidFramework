@@ -3,33 +3,72 @@
  * Licensed under the MIT License.
  */
 
-import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
+import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
+import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
+import { IDiceRoller } from "./interface";
 import { OldestClientDiceRollerInstantiationFactory } from "./oldestClientDiceRoller";
 import { TaskManagerDiceRollerInstantiationFactory } from "./taskManagerDiceRoller";
 
-const registryEntries = new Map([
-    OldestClientDiceRollerInstantiationFactory.registryEntry,
-    TaskManagerDiceRollerInstantiationFactory.registryEntry,
-]);
-
-export const taskManagerDiceId = "taskManagerDice";
-export const oldestClientDiceId = "oldestClientDice";
-
-class TaskSelectionContainerRuntimeFactory extends BaseContainerRuntimeFactory {
-    constructor() {
-        super(registryEntries, undefined, [rootDataStoreRequestHandler]);
-    }
-
-    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        // We'll create a dice roller for each methodology.
-        const taskManagerDice = await runtime.createDataStore(TaskManagerDiceRollerInstantiationFactory.type);
-        await taskManagerDice.trySetAlias(taskManagerDiceId);
-        const oldestClientDice = await runtime.createDataStore(OldestClientDiceRollerInstantiationFactory.type);
-        await oldestClientDice.trySetAlias(oldestClientDiceId);
-    }
+/**
+ * The data model for our application.
+ *
+ * @remarks Since this is a simple example it's just a single data object.  More advanced scenarios may have more
+ * complex models.
+ */
+export interface ITaskSelectionAppModel {
+    readonly taskManagerDiceRoller: IDiceRoller;
+    readonly oldestClientDiceRoller: IDiceRoller;
 }
 
-export const TaskSelectionFactory = new TaskSelectionContainerRuntimeFactory();
+class TaskSelectionAppModel implements ITaskSelectionAppModel {
+    public constructor(
+        public readonly taskManagerDiceRoller: IDiceRoller,
+        public readonly oldestClientDiceRoller: IDiceRoller,
+    ) { }
+}
+
+const taskManagerDiceId = "taskManagerDice";
+const oldestClientDiceId = "oldestClientDice";
+
+/**
+ * The runtime factory for our Fluid container.
+ */
+export class TaskSelectionContainerRuntimeFactory
+    extends ModelContainerRuntimeFactory<ITaskSelectionAppModel> {
+    constructor() {
+        super(
+            new Map([
+                TaskManagerDiceRollerInstantiationFactory.registryEntry,
+                OldestClientDiceRollerInstantiationFactory.registryEntry,
+            ]), // registryEntries
+        );
+    }
+
+    /**
+     * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
+     */
+    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+        const taskManagerDiceRoller = await runtime.createDataStore(TaskManagerDiceRollerInstantiationFactory.type);
+        await taskManagerDiceRoller.trySetAlias(taskManagerDiceId);
+        const oldestClientDiceRoller = await runtime.createDataStore(OldestClientDiceRollerInstantiationFactory.type);
+        await oldestClientDiceRoller.trySetAlias(oldestClientDiceId);
+    }
+
+    /**
+     * {@inheritDoc ModelContainerRuntimeFactory.createModel}
+     */
+    protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+        const taskManagerDiceRoller = await requestFluidObject<IDiceRoller>(
+            await runtime.getRootDataStore(taskManagerDiceId),
+            "",
+        );
+        const oldestClientDiceRoller = await requestFluidObject<IDiceRoller>(
+            await runtime.getRootDataStore(oldestClientDiceId),
+            "",
+        );
+        return new TaskSelectionAppModel(taskManagerDiceRoller, oldestClientDiceRoller);
+    }
+}

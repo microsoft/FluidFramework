@@ -4,8 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangeRebaser, TaggedChange } from "../../rebase";
-import { AnchorSet } from "../../tree";
+import { ChangeRebaser, TaggedChange, AnchorSet } from "../../core";
 import { generateFuzzyCombinedChange } from "./fuzz";
 
 const testSeed = 432167897;
@@ -13,7 +12,7 @@ const testSeed = 432167897;
 type TestChange = TestChange[] | { I: TestChange } | { C: TestChange; O: TestChange } | number;
 
 const testRebaser: ChangeRebaser<TestChange> = {
-    compose: (changes: TestChange[]) => changes,
+    compose: (changes: TaggedChange<TestChange>[]) => changes.map((c) => c.change),
     invert: (change: TaggedChange<TestChange>) => ({ I: change.change }),
     rebase: (change: TestChange, over: TaggedChange<TestChange>) => ({ C: change, O: over.change }),
     rebaseAnchors: (anchor: AnchorSet, over: TestChange) => {},

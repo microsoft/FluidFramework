@@ -12,10 +12,11 @@ import {
     AnchorSet,
     Delta,
     FieldKey,
-    ITreeCursorSynchronous,
     UpPath,
     Value,
     ITreeCursor,
+    ReadonlyRepairDataStore,
+    RevisionTag,
 } from "../core";
 import { brand } from "../util";
 import {
@@ -23,11 +24,11 @@ import {
     ModularChangeFamily,
     ModularEditBuilder,
     FieldChangeset,
-    FieldChangeMap,
+    ModularChangeset,
 } from "./modular-schema";
 import { forbidden, optional, sequence, value as valueFieldKind } from "./defaultFieldKinds";
 
-export type DefaultChangeset = FieldChangeMap;
+export type DefaultChangeset = ModularChangeset;
 
 const defaultFieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
     [valueFieldKind, optional, sequence, forbidden].map((f) => [f.identifier, f]),
@@ -53,15 +54,15 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
         return this.modularFamily.encoder;
     }
 
-    intoDelta(change: DefaultChangeset): Delta.Root<ITreeCursorSynchronous> {
-        return this.modularFamily.intoDelta(change);
+    intoDelta(change: DefaultChangeset, repairStore?: ReadonlyRepairDataStore): Delta.Root {
+        return this.modularFamily.intoDelta(change, repairStore);
     }
 
     buildEditor(
-        deltaReceiver: (delta: Delta.Root<ITreeCursorSynchronous>) => void,
+        changeReceiver: (change: DefaultChangeset) => void,
         anchorSet: AnchorSet,
     ): DefaultEditBuilder {
-        return new DefaultEditBuilder(this, deltaReceiver, anchorSet);
+        return new DefaultEditBuilder(this, changeReceiver, anchorSet);
     }
 }
 
@@ -112,10 +113,14 @@ export class DefaultEditBuilder
 
     constructor(
         family: ChangeFamily<unknown, DefaultChangeset>,
-        deltaReceiver: (delta: Delta.Root) => void,
+        changeReceiver: (change: DefaultChangeset) => void,
         anchors: AnchorSet,
     ) {
-        this.modularBuilder = new ModularEditBuilder(family, deltaReceiver, anchors);
+        this.modularBuilder = new ModularEditBuilder(family, changeReceiver, anchors);
+    }
+
+    public apply(change: DefaultChangeset): void {
+        this.modularBuilder.apply(change);
     }
 
     public setValue(path: UpPath, value: Value): void {
@@ -155,6 +160,36 @@ export class DefaultEditBuilder
             delete: (index: number, count: number): void => {
                 const change: FieldChangeset = brand(
                     sequence.changeHandler.editor.delete(index, count),
+                );
+                this.modularBuilder.submitChange(parent, field, sequence.identifier, change);
+            },
+            move: (sourceIndex: number, count: number, destIndex: number): void => {
+                const change: FieldChangeset = brand(
+                    sequence.changeHandler.editor.move(sourceIndex, count, destIndex),
+                );
+                this.modularBuilder.submitChange(
+                    parent,
+                    field,
+                    sequence.identifier,
+                    change,
+                    brand(0),
+                );
+            },
+            revive: (
+                index: number,
+                count: number,
+                detachedBy: RevisionTag,
+                detachIndex: number,
+                isIntention?: true,
+            ): void => {
+                const change: FieldChangeset = brand(
+                    sequence.changeHandler.editor.revive(
+                        index,
+                        count,
+                        detachedBy,
+                        detachIndex,
+                        isIntention,
+                    ),
                 );
                 this.modularBuilder.submitChange(parent, field, sequence.identifier, change);
             },
@@ -200,4 +235,29 @@ export interface SequenceFieldEditBuilder {
      * @param count - The number of elements to delete.
      */
     delete(index: number, count: number): void;
+
+    /**
+     * Issues a change which moves `count` elements starting at `sourceIndex` to `destIndex`.
+     * @param sourceIndex - the index of the first moved element.
+     * @param count - the number of elements to move.
+     * @param destIndex - the index the elements are moved to, interpreted after removing the moving elements.
+     */
+    move(sourceIndex: number, count: number, destIndex: number): void;
+
+    /**
+     * Revives a contiguous range of deleted nodes.
+     * @param index - The index at which to revive the node (this will become the index of the first revived node).
+     * @param count - The number of nodes to revive.
+     * @param detachedBy - The revision of the edit that deleted the nodes.
+     * @param detachIndex - The index of the first node to revive in the input context of edit `detachedBy`.
+     * @param isIntention - If true, the node will be revived even if edit `detachedBy` did not ultimately
+     * delete them. If false, only those nodes that were deleted by `detachedBy` (and not revived) will be revived.
+     */
+    revive(
+        index: number,
+        count: number,
+        detachedBy: RevisionTag,
+        detachIndex: number,
+        isIntention?: true,
+    ): void;
 }

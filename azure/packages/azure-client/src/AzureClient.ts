@@ -17,7 +17,7 @@ import {
     IFluidContainer,
     RootDataObject,
 } from "@fluidframework/fluid-static";
-import { SummaryType } from "@fluidframework/protocol-definitions";
+import { IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
@@ -56,7 +56,7 @@ export class AzureClient {
      * Creates a new client instance using configuration parameters.
      * @param props - Properties for initializing a new AzureClient instance
      */
-    constructor(private readonly props: AzureClientProps) {
+    public constructor(private readonly props: AzureClientProps) {
         // remove trailing slash from URL if any
         props.connection.endpoint = props.connection.endpoint.replace(/\/$/, "");
         this.urlResolver = new AzureUrlResolver();
@@ -210,11 +210,22 @@ export class AzureClient {
         };
 
         const codeLoader = { load };
+        const client: IClient = {
+            details: {
+                capabilities: { interactive: true },
+            },
+            permission: [],
+            scopes: [],
+            user: { id: "" },
+            mode: "write",
+        };
+
         return new Loader({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
             logger: this.props.logger,
+            options: { client },
         });
     }
 

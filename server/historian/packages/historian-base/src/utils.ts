@@ -11,7 +11,7 @@ import { getParam } from "@fluidframework/server-services-utils";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import * as jwt from "jsonwebtoken";
+import { decode } from "jsonwebtoken";
 import winston from "winston";
 import safeStringify from "json-stringify-safe";
 
@@ -33,8 +33,8 @@ export function normalizePort(val) {
 }
 
 export function getTokenLifetimeInSec(token: string): number {
-    const claims = jwt.decode(token) as ITokenClaims;
-    if (claims && claims.exp) {
+    const claims = decode(token) as ITokenClaims;
+    if (claims?.exp) {
         return (claims.exp - Math.round((new Date().getTime()) / 1000));
     }
     return undefined;
@@ -56,7 +56,7 @@ export function getTenantIdFromRequest(params: Params) {
 export function getDocumentIdFromRequest(tenantId: string, authorization: string) {
     try {
         const token = parseToken(tenantId, authorization);
-        const decoded = jwt.decode(token) as ITokenClaims;
+        const decoded = decode(token) as ITokenClaims;
         return decoded.documentId;
     } catch (err) {
         return "-";
@@ -87,16 +87,16 @@ export function parseToken(tenantId: string, authorization: string): string {
  * Check a given path string for path traversal (e.g. "../" or "/").
  * TODO: replace with containsPathTraversal from services-shared
  */
- export function containsPathTraversal(path: string): boolean {
+export function containsPathTraversal(path: string): boolean {
     const parsedPath = parse(path);
     return parsedPath.dir.includes("..") || parsedPath.dir.startsWith("/");
 }
 
 /**
  * Pass into `.catch()` block of a RestWrapper call to output a more standardized network error.
- * @param url request url to be output in error log
- * @param method request method (e.g. "GET", "POST") to be output in error log
- * @param lumberProperties Collection of Lumberjack telemetry properties associated with the request
+ * @param url - request url to be output in error log
+ * @param method - request method (e.g. "GET", "POST") to be output in error log
+ * @param lumberProperties - Collection of Lumberjack telemetry properties associated with the request
  */
 export function getRequestErrorTranslator(
     url: string,
@@ -108,9 +108,7 @@ export function getRequestErrorTranslator(
             // BasicRestWrapper throws NetworkErrors that describe the error details associated with the network call.
             // Here, we log information associated with the error for debugging purposes, and re-throw.
             const networkError = error as NetworkError;
-            // eslint-disable-next-line max-len
             winston.error(`${standardLogErrorMessage}: [statusCode: ${networkError.code}], [details: ${safeStringify(networkError.details) ?? "undefined"}]`);
-            // eslint-disable-next-line max-len
             Lumberjack.error(`${standardLogErrorMessage}: [statusCode: ${networkError.code}], [details: ${safeStringify(networkError.details) ?? "undefined"}]`, lumberProperties);
             throw error;
         } else if (typeof error === "number" || !Number.isNaN(Number.parseInt(error, 10))) {

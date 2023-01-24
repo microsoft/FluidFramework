@@ -1,0 +1,42 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# "Test - DDS Stress" pipeline
+
+name: $(Build.BuildId)
+
+trigger: none
+pr: none
+
+resources:
+  pipelines:
+  - pipeline: client   # Name of the pipeline resource
+    source: Build - client packages
+    branch: main # Default branch for manual/scheduled triggers if none is selected
+    trigger:
+      branches:
+      - release/*
+      - main
+      - next
+
+variables:
+- name: testWorkspace
+  value: $(Pipeline.Workspace)/test
+
+stages:
+  - template: templates/include-conditionally-run-stress-tests.yml
+    parameters:
+      artifactBuildId: $(resources.pipeline.client.runID)
+      packages:
+      - name: "@fluidframework/sequence"
+        affectedPaths:
+        - packages/dds/sequence
+        - packages/dds/merge-tree
+        testFileTarName: sequence
+        testCommand: test:stress
+      - name: "@fluid-experimental/tree"
+        affectedPaths:
+        - experimental/dds/tree
+        testFileTarName: experimental-tree
+        testCommand: test:stress
+      testWorkspace: ${{ variables.testWorkspace }}

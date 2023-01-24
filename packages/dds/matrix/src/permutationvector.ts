@@ -10,7 +10,6 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     BaseSegment,
     ISegment,
-    LocalReferenceCollection,
     Client,
     IMergeTreeDeltaOpArgs,
     IMergeTreeDeltaCallbackArgs,
@@ -112,14 +111,6 @@ export class PermutationSegment extends BaseSegment {
         return this.start === Handle.unallocated
             ? asPerm.start === Handle.unallocated
             : asPerm.start === this.start + this.cachedLength;
-    }
-
-    public append(segment: ISegment) {
-        // Note: Must call 'LocalReferenceCollection.append(..)' before modifying this segment's length as
-        //       'this.cachedLength' is used to adjust the offsets of the local refs.
-        LocalReferenceCollection.append(this, segment);
-
-        this.cachedLength += segment.cachedLength;
     }
 
     protected createSplitSegmentAt(pos: number) {

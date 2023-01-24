@@ -64,6 +64,11 @@ export interface IStageStatus {
     details: unknown;
 }
 
+interface IConnectionConfig {
+    type: string;
+    endpoint: string;
+}
+
 export class TestOrchestrator {
     private readonly runId = uuid();
     private runStatus: RunStatus = "notStarted";
@@ -75,36 +80,36 @@ export class TestOrchestrator {
     }
 
     public static getConfigs(): VersionedRunConfig[] {
-        return [
-            { version: "v1", config: this.getConfig("v1") },
-            { version: "v2", config: this.getConfig("v2") },
-        ];
+        return [{ version: "v1", config: this.getConfig("v1") }];
     }
 
     public static getConfig(version: string): RunConfig {
         return yaml.load(fs.readFileSync(this.getConfigFileName(version), "utf8")) as RunConfig;
     }
 
-    public async run(): Promise<void> {
+    public async run(): Promise<boolean> {
         this.runStatus = "running";
+        const connConfig: IConnectionConfig = this.doc.env.connectionConfig as IConnectionConfig;
         const logger = await getLogger({
             runId: this.runId,
             scenarioName: this.doc?.title,
             namespace: "scenario:runner",
+            endpoint: connConfig.endpoint,
         });
 
-        await PerformanceEvent.timedExecAsync(
+        const success = await PerformanceEvent.timedExecAsync(
             logger,
             { eventName: "RunStages" },
             async () => {
-                await this.execRun(logger);
+                return this.execRun(logger);
             },
             { start: true, end: true, cancel: "generic" },
         );
         this.runStatus = "done";
+        return success;
     }
 
-    private async execRun(logger: TelemetryLogger): Promise<void> {
+    private async execRun(logger: TelemetryLogger): Promise<boolean> {
         if (!this.doc) {
             throw new Error("Invalid config.");
         }
@@ -147,11 +152,12 @@ export class TestOrchestrator {
                         description: error as string,
                         details: {},
                     });
-                    console.log("Stage existed with error:", stage.name, error);
-                    break;
+                    console.log("Stage exited with error:", stage.name, error);
+                    return false;
                 }
             }
         }
+        return true;
     }
 
     public getStatus(): IRunStatus {
@@ -232,10 +238,7 @@ export class TestOrchestrator {
     private static getConfigFileName(version: string): string {
         switch (version) {
             case "v1": {
-                return "./testConfig.yml";
-            }
-            case "v2": {
-                return "./testConfigV2.yml";
+                return "./testConfig_v1.yml";
             }
             default: {
                 return "";

@@ -52,6 +52,7 @@ import { ITreeEntry } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
+import { ScopeType } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public (undocumented)
@@ -68,7 +69,8 @@ export interface IMockContainerRuntimePendingMessage {
 export class InsecureTokenProvider implements ITokenProvider {
     constructor(
     tenantKey: string,
-    user: IUser);
+    user: IUser,
+    scopes?: ScopeType[] | undefined);
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
@@ -342,6 +344,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
     constructor(overrides?: {
         clientId?: string;
+        entryPoint?: IFluidHandle<FluidObject>;
     });
     // (undocumented)
     get absolutePath(): string;
@@ -375,6 +378,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     get disposed(): boolean;
     // (undocumented)
     readonly documentId: string;
+    // (undocumented)
+    readonly entryPoint?: IFluidHandle<FluidObject>;
     // (undocumented)
     readonly existing: boolean;
     // (undocumented)
