@@ -20,6 +20,7 @@ import {
 } from "@fluidframework/test-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluidframework/test-drivers";
+import { mixinAttributor } from "@fluidframework/attributor";
 import { pkgVersion } from "./packageVersion";
 import { getLoaderApi, getContainerRuntimeApi, getDataRuntimeApi, getDriverApi } from "./testApi";
 
@@ -116,7 +117,9 @@ export async function getVersionedTestObjectProvider(
     const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(dataRuntimeApi);
     const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
         const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
-        const factoryCtor = createTestContainerRuntimeFactory(containerRuntimeApi.ContainerRuntime);
+        const runtimeCtor = containerOptions?.enableAttribution === true ?
+            mixinAttributor(containerRuntimeApi.ContainerRuntime) : containerRuntimeApi.ContainerRuntime;
+        const factoryCtor = createTestContainerRuntimeFactory(runtimeCtor);
         return new factoryCtor(TestDataObjectType, dataStoreFactory, containerOptions?.runtimeOptions,
             [innerRequestHandler]);
     };
