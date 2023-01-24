@@ -6,36 +6,12 @@
 import {
     MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils";
-import { benchmarkMemory } from "@fluid-tools/benchmark";
+import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { DirectoryFactory, SharedDirectory } from "../../directory";
 
-function createLocalDirectory(id: string) {
+function createLocalDirectory(id: string): SharedDirectory {
     const directory = new SharedDirectory(id, new MockFluidDataStoreRuntime(), DirectoryFactory.Attributes);
     return directory;
-}
-
-function createTestForAddingIntegerEntries(howManyEntries: number): () => Promise<unknown> {
-    return async () => {
-        const dir = createLocalDirectory("testDirectory");
-        for (let i = 0; i < howManyEntries; i++) {
-            dir.set(i.toString().padStart(6, "0"), i);
-        }
-    };
-}
-
-function createTestForAddingIntegerEntriesAndClearing(
-    howManyEntries: number,
-    runGC: boolean = false): () => Promise<unknown> {
-    return async () => {
-        const dir = createLocalDirectory("testDirectory");
-        for (let i = 0; i < howManyEntries; i++) {
-            dir.set(i.toString().padStart(6, "0"), i);
-        }
-        dir.clear();
-        if (runGC === true) {
-            global.gc();
-        }
-    };
 }
 
 describe("SharedDirectory memory usage", () => {
@@ -57,30 +33,49 @@ describe("SharedDirectory memory usage", () => {
         // See the comment at the top of the test suite for more details.
     });
 
-    benchmarkMemory({
-        title: "Create empty directory",
-        minSampleCount: 1000,
-        benchmarkFn: async () => {
-            createLocalDirectory("testDirectory");
-        },
-    });
+    benchmarkMemory(new class implements IMemoryTestObject {
+        public readonly title = "Create empty directory";
+        public readonly minSampleCount = 500;
+
+        private dir: SharedDirectory = createLocalDirectory("testDirectory");
+
+        public async run (): Promise<void> {
+            this.dir = createLocalDirectory("testDirectory");
+        };
+    }());
 
     const numbersOfEntriesForTests = [1000, 10_000, 100_000];
 
-    numbersOfEntriesForTests.forEach((x) => {
-        benchmarkMemory({
-            title: `Add ${x} integers to a local directory`,
-            benchmarkFn: createTestForAddingIntegerEntries(x),
-        });
+    for (const x of numbersOfEntriesForTests) {
+        benchmarkMemory(new class implements IMemoryTestObject {
+            public readonly title = `Add ${x} integers to a local directory`;
+            private dir: SharedDirectory = createLocalDirectory("testDirectory");
 
-        benchmarkMemory({
-            title: `Add ${x} integers to a local directory, clear it`,
-            benchmarkFn: createTestForAddingIntegerEntriesAndClearing(x),
-        });
+            public async run (): Promise<void> {
+                for (let i = 0; i < x; i++) {
+                    this.dir.set(i.toString().padStart(6, "0"), i);
+                }
+            }
 
-        benchmarkMemory({
-            title: `Add ${x} integers to a local directory, clear it, run GC`,
-            benchmarkFn: createTestForAddingIntegerEntriesAndClearing(x, true),
+            public beforeIteration(): void {
+                this.dir = createLocalDirectory("testDirectory");
+            }
+        }());
+
+        benchmarkMemory(new class implements IMemoryTestObject {
+            public readonly title = `Add ${x} integers to a local directory, clear it`;
+            private dir: SharedDirectory = createLocalDirectory("testDirectory");
+
+            public async run(): Promise<void> {
+                for (let i = 0; i < x; i++) {
+                    this.dir.set(i.toString().padStart(6, "0"), i);
+                }
+                this.dir.clear();
+            }
+
+            public beforeIteration(): void {
+                this.dir = createLocalDirectory("testDirectory");
+            }
         });
-    });
+    }
 });

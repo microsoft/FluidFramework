@@ -10,8 +10,8 @@ import {
 } from "@fluidframework/aqueduct";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
-import { ITaskManager, TaskManager } from "@fluid-experimental/task-manager";
-import { IDirectory, ISharedDirectory } from "@fluidframework/map";
+import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
+import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import random from "random-js";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -37,6 +37,7 @@ export interface ILoadTest {
 
 const taskManagerKey = "taskManager";
 const counterKey = "counter";
+const sharedMapKey = "sharedMap";
 const startTimeKey = "startTime";
 const taskTimeKey = "taskTime";
 const gcDataStoreKey = "dataStore";
@@ -152,14 +153,22 @@ export class LoadTestDataStoreModel {
             runDir.set(counterKey, SharedCounter.create(runtime).handle);
             runDir.set(startTimeKey, Date.now());
         }
+        if (!runDir.has(sharedMapKey)) {
+            runDir.set(sharedMapKey, SharedMap.create(runtime).handle);
+        }
+
         const counter = await runDir.get<IFluidHandle<ISharedCounter>>(counterKey)?.get();
         const taskmanager = await root.get<IFluidHandle<ITaskManager>>(taskManagerKey)?.get();
+        const sharedmap = await runDir.get<IFluidHandle<ISharedMap>>(sharedMapKey)?.get();
 
         if (counter === undefined) {
             throw new Error("counter not available");
         }
         if (taskmanager === undefined) {
             throw new Error("taskmanager not available");
+        }
+        if (sharedmap === undefined) {
+            throw new Error("sharedmap not available");
         }
 
         const gcDataStore = await this.getGCDataStore(config, root, containerRuntime);
@@ -171,6 +180,7 @@ export class LoadTestDataStoreModel {
             taskmanager,
             runDir,
             counter,
+            sharedmap,
             runDir,
             gcDataStore.handle,
             logger,
@@ -204,6 +214,7 @@ export class LoadTestDataStoreModel {
         private readonly taskManager: ITaskManager,
         private readonly dir: IDirectory,
         public readonly counter: ISharedCounter,
+        public readonly sharedmap: ISharedMap,
         private readonly runDir: IDirectory,
         private readonly gcDataStoreHandle: IFluidHandle,
         private readonly logger: TelemetryLogger,
@@ -213,10 +224,14 @@ export class LoadTestDataStoreModel {
         this.taskId = `op_sender${config.runId % halfClients}`;
         this.partnerId = (this.config.runId + halfClients) % this.config.testConfig.numClients;
         const changed = (taskId) => {
-            if (taskId === this.taskId && this.taskStartTime !== 0) {
-                this.dir.set(taskTimeKey, this.totalTaskTime);
-                this.taskStartTime = 0;
-            }
+            this.deferUntilConnected(
+                () => {
+                    if (taskId === this.taskId && this.taskStartTime !== 0) {
+                        this.dir.set(taskTimeKey, this.totalTaskTime);
+                        this.taskStartTime = 0;
+                    }
+                },
+                (error) => this.logger.sendErrorEvent({ eventName: "TaskManager_OnValueChanged" }, error));
         };
         this.taskManager.on("lost", changed);
         this.taskManager.on("assigned", changed);
@@ -233,7 +248,7 @@ export class LoadTestDataStoreModel {
             this.blobCount = Math.trunc(this.counter.value * blobsPerOp);
 
             // upload blobs progressively as the counter is incremented
-            this.counter.on("op", (_, local) => {
+            this.counter.on("op", (_, local) => this.deferUntilConnected(() => {
                 const value = this.counter.value;
                 if (!local) {
                     // this is an old op, we should have already uploaded this blob
@@ -247,7 +262,7 @@ export class LoadTestDataStoreModel {
                 if (newBlobs > 0) {
                     this.blobUploads.push(...[...Array(newBlobs)].map(async () => this.writeBlob(this.blobCount++)));
                 }
-            });
+            }, (error) => this.logger.sendErrorEvent({ eventName: "Counter_OnOp" }, error)));
         }
 
         // download any blobs our partner may upload
@@ -272,6 +287,21 @@ export class LoadTestDataStoreModel {
         for (const key of this.root.keys()) {
             readBlob(key);
         }
+    }
+
+    private deferUntilConnected(
+        callback:() => void,
+        errorHandler: (error) => void,
+    ) {
+        Promise.resolve().then(() => {
+            if (this.runtime.connected) {
+                callback();
+            } else {
+                this.runtime.once("connected", () => {
+                    callback();
+                });
+            }
+        }).catch((error) => errorHandler(error));
     }
 
     public get startTime(): number {
@@ -471,37 +501,71 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
     async sendOps(dataModel: LoadTestDataStoreModel, config: IRunConfig) {
         const cycleMs = config.testConfig.readWriteCycleMs;
         const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
+        const opsSendType = config.testConfig.opsSendType ?? "staggeredReadWrite"
         const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
         const opsGapMs = cycleMs / opsPerCycle;
-        try {
-            while (dataModel.counter.value < clientSendCount && !this.disposed) {
-                // this enables a quick ramp down. due to restart, some clients can lag
-                // leading to a slow ramp down. so if there are less than half the clients
-                // and it's partner is done, return true to complete the runner.
+        const opSizeinBytes = (typeof config.testConfig.opSizeinBytes === 'undefined') ?
+        0 : config.testConfig.opSizeinBytes;
+        assert(opSizeinBytes >= 0, "opSizeinBytes must be greater than or equal to zero.");
+        const generateStringOfSize = (sizeInBytes: number): string => new Array(sizeInBytes + 1).join("0");
+        let opsSent = 0;
+
+        const sendSingleOp = opSizeinBytes === 0 ? () => {
+            dataModel.counter.increment(1);
+        } : () => {
+            const opPayload = generateStringOfSize(opSizeinBytes);
+            const opKey = Math.random().toString();
+            dataModel.sharedmap.set(opKey, opPayload);
+        }
+
+        const updateOpsSent =  opSizeinBytes === 0 ? () => {
+            opsSent = dataModel.counter.value;
+        } : () => {
+            opsSent++;
+        }
+
+        const enableQuickRampDown = () => {
+            return (opsSendType === "staggeredReadWrite" && opSizeinBytes === 0)? true : false;
+        }
+
+        const sendSingleOpAndThenWait = opsSendType === "staggeredReadWrite" ? async () => {
+            if (dataModel.assigned()) {
+                sendSingleOp();
+                updateOpsSent();
+                if (opsSent % opsPerCycle === 0) {
+                    dataModel.abandonTask();
+                    await delay(cycleMs / 2);
+                } else {
+                    await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng));
+                }
+            } else {
+                await dataModel.volunteerForTask();
+            }
+      } : async () => {
+        sendSingleOp();
+        updateOpsSent();
+        await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng))
+      }
+
+      try
+      {
+        while(opsSent < clientSendCount && !this.disposed)
+        {
+            // this enables a quick ramp down. due to restart, some clients can lag
+            // leading to a slow ramp down. so if there are less than half the clients
+            // and it's partner is done, return true to complete the runner.
+            if (enableQuickRampDown()) {
                 if (this.runtime.getAudience().getMembers().size < config.testConfig.numClients / 2
                     && ((await dataModel.getPartnerCounter())?.value ?? 0) >= clientSendCount) {
-                    return true;
-                }
-
-                if (dataModel.assigned()) {
-                    dataModel.counter.increment(1);
-                    if (dataModel.counter.value % opsPerCycle === 0) {
-                        await dataModel.blobFinish();
-                        dataModel.abandonTask();
-                        // give our partner a half cycle to get the task
-                        await delay(cycleMs / 2);
-                    } else {
-                        // Random jitter of +- 50% of opWaitMs
-                        await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng));
-                    }
-                } else {
-                    await dataModel.volunteerForTask();
-                }
+                        return true;
+                        }
             }
-            return !this.runtime.disposed;
-        } finally {
-            dataModel.printStatus();
+            await sendSingleOpAndThenWait();
         }
+        return !this.runtime.disposed;
+      } finally {
+        dataModel.printStatus();
+      }
     }
 
     async sendSignals(config: IRunConfig) {

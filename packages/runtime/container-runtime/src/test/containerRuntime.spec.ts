@@ -15,7 +15,7 @@ import { GenericError, DataProcessingError } from "@fluidframework/container-uti
 import {
     ISequencedDocumentMessage, MessageType,
 } from "@fluidframework/protocol-definitions";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode, NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 import {
     ConfigTypes,
     IConfigProviderBase,
@@ -23,7 +23,9 @@ import {
     MockLogger,
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
-import { ContainerMessageType, ContainerRuntime } from "../containerRuntime";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
+import { ContainerMessageType, ContainerRuntime, IContainerRuntimeOptions } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 
@@ -372,7 +374,6 @@ describe("Runtime", () => {
                 };
             };
             const getMockPendingStateManager = (): PendingStateManager => {
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 let pendingMessages = 0;
                 return {
                     replayPendingStates: () => { },
@@ -597,6 +598,60 @@ describe("Runtime", () => {
                     (e) => e.errorType === ContainerErrorType.usageError
                         && e.message === `Id cannot contain slashes: '${invalidId}'`);
             });
+        });
+
+        it("supports mixin classes", async () => {
+            const makeMixin = <T>(Base: typeof ContainerRuntime, methodName: string, methodReturn: T) =>
+                class MixinContainerRuntime extends Base {
+                    public static async load(
+                        context: IContainerContext,
+                        registryEntries: NamedFluidDataStoreRegistryEntries,
+                        requestHandler?: ((
+                            request: IRequest,
+                            runtime: IContainerRuntime
+                        ) => Promise<IResponse>) | undefined,
+                        runtimeOptions?: IContainerRuntimeOptions,
+                        containerScope?: FluidObject,
+                        existing?: boolean | undefined,
+                        containerRuntimeCtor: typeof ContainerRuntime = MixinContainerRuntime,
+                    ): Promise<ContainerRuntime> {
+                        return Base.load(
+                            context,
+                            registryEntries,
+                            requestHandler,
+                            runtimeOptions,
+                            containerScope,
+                            existing,
+                            containerRuntimeCtor
+                        );
+                    }
+
+                    public [methodName](): T {
+                        return methodReturn;
+                    }
+                } as typeof ContainerRuntime;
+
+            const getMockContext = ((): Partial<IContainerContext> => {
+                return {
+                    attachState: AttachState.Attached,
+                    deltaManager: new MockDeltaManager(),
+                    quorum: new MockQuorumClients(),
+                    taggedLogger: new MockLogger(),
+                    clientDetails: { capabilities: { interactive: true } },
+                    closeFn: (_error?: ICriticalContainerError): void => { },
+                    updateDirtyContainerState: (_dirty: boolean) => { },
+                };
+            });
+
+            const runtime = await makeMixin(makeMixin(ContainerRuntime, "method1", "mixed in return"), "method2", 42).load(
+                getMockContext() as IContainerContext,
+                [],
+                undefined, // requestHandler
+                {}, // runtimeOptions
+            );
+
+            assert.equal((runtime as unknown as { method1: () => any; }).method1(), "mixed in return");
+            assert.equal((runtime as unknown as { method2: () => any; }).method2(), 42);
         });
     });
 });

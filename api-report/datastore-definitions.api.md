@@ -5,6 +5,7 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
@@ -101,6 +102,7 @@ export interface IFluidDataStoreRuntime extends IFluidRouter, IEventProvider<IFl
     createChannel(id: string | undefined, type: string): IChannel;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    readonly entryPoint?: IFluidHandle<FluidObject>;
     getAudience(): IAudience;
     getChannel(id: string): Promise<IChannel>;
     getQuorum(): IQuorumClients;

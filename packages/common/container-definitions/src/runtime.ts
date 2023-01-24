@@ -108,8 +108,9 @@ export interface IRuntime extends IDisposable {
  * Payload type for IContainerContext.submitBatchFn()
  */
 export interface IBatchMessage {
-    contents: string;
+    contents?: string;
     metadata: Record<string, unknown> | undefined;
+    compression?: string;
 }
 
 /**
@@ -135,6 +136,7 @@ export interface IContainerContext extends IDisposable {
     readonly submitBatchFn: (batch: IBatchMessage[]) => number;
     readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
     readonly submitSignalFn: (contents: any) => void;
+    readonly disposeFn?: (error?: ICriticalContainerError) => void;
     readonly closeFn: (error?: ICriticalContainerError) => void;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly quorum: IQuorumClients;

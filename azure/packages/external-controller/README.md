@@ -10,10 +10,6 @@ This implementation demonstrates plugging that Container into a standalone appli
 [Tinylicious](/server/tinylicious), so there are a few extra steps to get started. We bring our own view that we will
 bind to the data in the container.
 
-<!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
-<!-- This section is automatically generated.
-To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
-
 ## Getting Started
 
 You can run this example using the following steps:
@@ -21,10 +17,10 @@ You can run this example using the following steps:
 1. Run `npm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
       `npm run build:fast -- --nolint @fluid-example/app-integration-external-controller`
-1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](../../../server/tinylicious).
-1. Run `npm run start` from this directory (azure/packages/external-controller) and open <http://localhost:8080> in a web browser to see the app running.
-
-<!-- AUTO-GENERATED-CONTENT:END -->
+1. This example can be run against the `tinylicious` service, or the `azure` service.
+    - To run against `tinylicious`, run `npm start` from this directory (examples/hosts/app-integration/external-data) and open <http://localhost:8080> in a web browser to see the app running.
+    - To run against `azure`, run `npm run start:azure`.
+        - Note: this option requires additional steps outlined [below](#backed-locally-and-running-with-live-azure-fluid-relay-service-instance).
 
 ## Testing
 
@@ -57,7 +53,7 @@ To run the the `AzureClient` against our local Tinylicious instance, we set the 
 since we are running it locally, and an object identifying the current user. For running the instance locally,
 the endpoint URL would point to the Tinylicious instance on the default values of `http://localhost:7070`.
 
-To launch the local Tinylicious service instance, run `npx tinylicious` from your terminal window.
+To launch the local Tinylicious service instance, run `npm run start:tinylicious` from your terminal window.
 
 When running the live Azure Fluid Relay Instance, we would require the tenant ID and service discovery endpoint URL. We make use of
 `AzureFunctionTokenProvider` which takes in the Azure function URL and an object identifying the current user, thereby
@@ -86,3 +82,65 @@ const connectionConfig: AzureConnectionConfig = useAzure
 In this way, we can toggle between remote and local mode using the same config format. We make use of
 `AzureFunctionTokenProvider` for running against live Azure Fluid Relay instance since it is more secured, without exposing the tenant
 secret key in the client-side code whereas while running the service locally for development purpose, we make use of `InsecureTokenProvider`.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+
+## Contribution Guidelines
+
+There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
+
+-   Participate in Q&A in our [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+-   [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
+-   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+-   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
+
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
+
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+
+## Help
+
+Not finding what you're looking for in this README?
+Check out our [GitHub Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
+
+Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Thank you!
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->

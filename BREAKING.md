@@ -15,16 +15,108 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - Avoid using code formatting in the title (it's fine to use in the body).
 - To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.2.4.0
+
+## 2.0.0-internal.2.4.0 Upcoming changes
+- [Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`](#deprecate-ensurecontainerconnected-in-fluidframeworktest-utils)
+- [Deprecate internal connection details from `IConnectionDetails`](#deprecate-internal-connection-details-from-IConnectionDetails)
+
+### Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`
+
+`ensureContainerConnected()` is now deprecated.
+Use `waitForContainerConnection()` from the same package instead.
+
+
+**NOTE**: the default value for the `failOnContainerClose` parameter of `waitForContainerConnection()` is currently set
+to `false` for backwards compatibility but will change to `true` in a future release.
+This is overall a safer default because it ensures that unexpected errors which cause the Container to close are surfaced
+immediately, instead of potentially being hidden by a timeout.
+It is recommended that you start passing `failOnContainerClose=true` when calling `waitForContainerConnection()` in
+preparation for this upcoming breaking change.
+
+
+### Deprecate internal connection details from `IConnectionDetails`
+
+Deprecating `existing`, `mode`, `version` and `initialClients` in `IConnectionDetails`, no longer exposing these to runtime. No replacement API recommended. Reasons for deprecation:
+- `existing` : this will always be true, which no longer provides useful information
+- `mode` : this is implementation detail of connection
+- `initialClients` and `version` : these are implementation details of handshake protocol of establishing connection, and should not be accessible.
+
+# 2.0.0-internal.2.3.0
+
+## 2.0.0-internal.2.3.0 Upcoming changes
+- [Upcoming changes to container closure](#Upcoming-changes-to-container-closure)
+
+### Upcoming changes to container closure
+
+In the next major release, calling `IContainer.close(...)` will no longer dispose the container runtime, document service, or document storage service.
+
+If the container is not expected to be used after the `close(...)` call, replace it instead with a `IContainer.dispose(...)` call. This change will no longer switch the container to "readonly" mode and relevant code should instead listen to the Container's "disposed" event.
+Otherwise, to retain all current behavior, add a call to `IContainer.dispose(...)` after every `close(...)` call (passing the same error object if present).
+
+Please see the [Closure](packages/loader/container-loader/README.md#Closure) section of Loader README.md for more details.
+
+# 2.0.0-internal.2.2.0
+
+## 2.0.0-internal.2.2.0 Upcoming changes
+- [Deprecated events and event parameters on IContainer and IDeltaManager](#deprecated-events-and-event-parameters-on-icontainer-and-ideltamanager)
+- [Added fileIsLocked errorType to DriverErrorType enum](#Added-fileIsLocked-errorType-to-DriverErrorType-enum)
+
+### Deprecated events and event parameters on IContainer and IDeltaManager
+
+The following legacy events and event parameters have been marked as deprecated due to being legacy and/or unsupported API patterns:
+
+- IContainerEvents
+    - "contextChanged": Event deprecated in its entirety.
+        - Represents a legacy design that is mostly no longer supported (only ever emitted during Container instantiation, and there are no recommended patterns for consuming it).
+          No replacement API recommended.
+    - "dirty": Event parameter "dirty" deprecated.
+        - The parameter is unneeded, as the event itself signals the current "dirty" state (true).
+    - "saved": Event parameter "dirty" deprecated.
+        - The parameter is unneeded, as the event itself signals the current "dirty" state (false).
+- IDeltaManagerEvents
+    - "prepareSend": Event deprecated in its entirety.
+        - No longer required by the runtime, and only currently used for backwards compatability.
+          No replacement API recommended.
+    - "submitOp": Event deprecated in its entirety.
+        - No longer required by the runtime, and only currently used for backwards compatability.
+          No replacement API recommended.
+    - "allSentOpsAckd": Event deprecated in its entirety.
+        - This event has been unused and unsupported for some time.
+          No replacement API recommended.
+    - "processTime": Event deprecated in its entirety.
+        - This event has been unused and unsupported for some time.
+          No replacement API recommended.
+    - "pong": Event deprecated in its entirety.
+        - This event has been unused and unsupported for some time.
+          No replacement API recommended.
+
+
+### Added `fileIsLocked` errorType to DriverErrorType enum
+Added `fileIsLocked` errorType in DriverErrorType enum. This error happens when file is locked for read/write by storage, e.g. whole collection is locked and access is denied, or file is locked for editing.
+
+This is not breaking change yet. But if application uses dynamic driver loading, current version of application may start receiving these errors from future versions of driver.
+
 # 2.0.0-internal.2.1.0
 
 ## 2.0.0-internal.2.1.0 Upcoming changes
+
 - [Deprecated ISummarizerRuntime batchEnd listener](#Deprecated-ISummarizerRuntime-batchEnd-listener)
+- [Deprecate ISummaryBaseConfiguration.summarizerClientElection](#Deprecate-ISummaryBaseConfigurationsummarizerClientElection)
 
 ### Deprecated ISummarizerRuntime batchEnd listener
 The `"batchEnd"` listener in `ISummarizerRuntime` has been deprecated and will be removed in a future release. Please remove all usage and implementations of `ISummarizerRuntime.on("batchEnd", ...)` and `ISummarizerRuntime.removeListener("batchEnd", ...)`.
 If these methods are needed, please refer to the `IContainerRuntimeBase` interface.
 
+### Deprecate-ISummaryBaseConfigurationsummarizerClientElection
+`ISummaryBaseConfiguration.summarizerClientElection` has been deprecated and will be removed in a future release.
+There will be no replacement for this property.
+
 ## 2.0.0-internal.2.1.0 Breaking changes
+- [Package @fluid-experimental/task-manager renamed to @fluidframework/task-manager](#Package-fluid-experimental/task-manager-renamed-to-fluidframework/task-manager)
+
+### Package @fluid-experimental/task-manager renamed to @fluidframework/task-manager
+The package `@fluid-experimental/task-manager` is no longer experimental and has therefore been renamed to `@fluidframework/task-manager`. Update all imports to the new package name to accommodate this change.
 
 # 2.0.0-internal.2.0.0
 
@@ -34,6 +126,7 @@ If these methods are needed, please refer to the `IContainerRuntimeBase` interfa
 - [Move TelemetryNullLogger and BaseTelemetryNullLogger to telemetry-utils package](#Move-`TelemetryNullLogger`-and-`BaseTelemetryNullLogger`-to-telemetry-utils-package)
 - [Minor event naming correction on IFluidContainerEvents](#IFluidContainerEvents-event-naming-correction)
 - [IDocumentStorageServicePolicies.maximumCacheDurationMs policy must be exactly 5 days if defined](#idocumentstorageservicepoliciesmaximumcachedurationms-policy-must-be-exactly-5-days-if-defined)
+- [Static `FluidDataStoreRuntime.load` method is now deprecated](#static-FluidDataStoreRuntime.load-method-is-now-deprecated)
 
 ### Deprecate existing flag in runtime
 The `existing` flag in IContainerContext has been deprecated and will be removed in a future breaking change. Furthermore,
@@ -61,6 +154,11 @@ It's not a breaking change, but worth noting: we are now also exposing optional 
 ### IDocumentStorageServicePolicies.maximumCacheDurationMs policy must be exactly 5 days if defined
 Due to the dependency the Garbage Collection feature in the Runtime layer has on this policy, it must remain constant over time.
 So this has been codified in the type, switching from `number | undefined` to `FiveDaysMs | undefined` (with `type FiveDaysMs = 432000000`)
+
+### Static `FluidDataStoreRuntime.load` method is now deprecated
+
+Use `FluidDataStoreRuntime`'s constructor instead, and start providing the new `initializeEntrypoint` parameter
+to create the entrypoint / root object for the data store.
 
 ## 2.0.0-internal.2.0.0 Breaking changes
 - [Update to React 17](#Update-to-React-17)

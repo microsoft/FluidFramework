@@ -93,7 +93,6 @@ export class ConsensusRegisterCollection<T>
      * @param id - optional name of the consensus register collection
      * @returns newly create consensus register collection (but not attached yet)
      */
-    // eslint-disable-next-line @typescript-eslint/no-shadow
     public static create<T>(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, ConsensusRegisterCollectionFactory.Type) as ConsensusRegisterCollection<T>;
     }
@@ -197,7 +196,6 @@ export class ConsensusRegisterCollection<T>
 
         for (const key of Object.keys(dataObj)) {
             assert(dataObj[key].atomic?.value.type !== "Shared",
-                // eslint-disable-next-line max-len
                 0x06d /* "SharedObjects contained in ConsensusRegisterCollection can no longer be deserialized as of 0.17" */);
 
             this.data.set(key, dataObj[key]);
@@ -321,7 +319,6 @@ export class ConsensusRegisterCollection<T>
     }
 
     private parse(content: string, serializer: IFluidSerializer): any {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return serializer.parse(content);
     }
 

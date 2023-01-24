@@ -193,9 +193,7 @@ Because Fluid is very client-centric, deployment is very simple.
 
 ### How does Fluid Framework deal with conflict resolution?
 
-This depends a great deal on the specific DDS. But, regardless of the final state of the data, operations are stored
-in the Fluid ops stream. So, in cases where a client is unhappy with the final state, there are approaches for
-achieving consensus that can be built into the DDS or handled by the client.
+Conflict resolution is built into the DDSes, and the strategies vary between DDSes.  For example the SharedMap uses a last-write-wins approach, whereas SharedString attempts to apply all changes while preserving user intention.  The strategies used by each DDS are detailed on their respective documentation pages.
 
 ### Can we create custom strategies to handle update collisions to the distributed data structure?
 

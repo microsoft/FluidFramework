@@ -1,6 +1,6 @@
 # @fluid-internal/tree
 
-This DDS is not yet ready for public consumption. See (#8273)[https://github.com/microsoft/FluidFramework/issues/8273].
+This DDS is not yet ready for public consumption. See [roadmap.md](docs/roadmap.md).
 
 ## Motivation
 
@@ -58,6 +58,21 @@ which could make their way back into the framework, enabling some features speci
 From this perspective, this tree serves as a proof of concept for abstractions and features which could benefit the framework, but are easier to implement within a DDS initially.
 This tree serves to get these feature into the hands of users much faster than could be done at the framework level.
 
+## Recommended Developer Workflow
+
+This package can be developed using any of the [regular workflows for working on Fluid Framework](../../../README.md) and/or its Client release group of packages, but for work only touching the tree package, there is an optional workflow that might be more ergonomic:
+
+-   Open the [.vscode/Tree.code-workspace](.vscode/Tree.code-workspace) in VS Code.
+    This will recommend a test runner extension, which should be installed.
+-   Build the Client release group as normal (for example: `npm i && npm run build:fast` in the repository root).
+-   After editing the tree project, run `npm run build` in its directory.
+-   Run tests using the "Testing" side panel in VS Code, or using the inline `Run | Debug` buttons which should show up above tests in the source:
+    both of these are provided by the mocha testing extension thats recommended by the workspace.
+    Note that this does not build the tests, so always be sure to build first.
+
+This package uses [`good-fences`](https://github.com/smikula/good-fences) to manage intra-package dependencies in `fence.json` files.
+If modifying such dependencies, learn how `good-fences` works, and review (and update if needed) the "Architecture" section below.
+
 ## Architecture
 
 This section covers the internal structure of the Tree DDS.
@@ -94,12 +109,12 @@ When nothing in that container references the DDS anymore, it may get garbage co
 The tree DDS itself, or more specifically [`shared-tree-core`](./src/shared-tree-core/README.md) is composed of a collection of indexes (just like a database) which contribute data which get persisted as part of the summary in the container.
 `shared-tree-core` owns these databases, and is responsible for populating them from summaries and updating them when summarizing.
 
-TODO: When support for multiple branches is added, do we want to have indexes for each branch, and if so, maybe their ownership should move to a branch-specific structure (like checkout?).
+See [indexes and branches](./docs/indexes%20and%20branches.md) for details on how this works with branches.
 
-When applications want access to the `tree`'s data, they do so through a [`checkout`](./src/checkout/README.md) which abstracts the indexes into nice application facing APIs.
+When applications want access to the `tree`'s data, they do so through a [`checkout`](./src/core/checkout/README.md) which abstracts the indexes into nice application facing APIs.
 Checkouts may also have state from the application, including:
 
--   [`view-schema`](./src/schema-view/README.md)
+-   [`view-schema`](./src/core/schema-view/README.md)
 -   adapters for out-of-schema data
 -   request or hints for what subsets of the tree to keep in memory
 -   pending transactions
@@ -108,7 +123,7 @@ Checkouts may also have state from the application, including:
 [`shared-tree`](./src/shared-tree/) provides a default checkout which it owns, but applications can create more if desired, which they will own.
 Since checkouts subscribe to events from `shared-tree`, explicitly disposing any additionally created ones of is required to avoid leaks.
 
-[transactions](./src/transaction/README.md) are created from `checkouts` and are currently synchronous.
+[transactions](./src/core/transaction/README.md) are created from `checkouts` and are currently synchronous.
 Support for asynchronous transactions, with the application managing the lifetime and ensuring it does not exceed the lifetime of the checkout,
 could be added in the future.
 
@@ -144,7 +159,7 @@ TODO: Eventually these two approaches should be able to be mixed and matched for
 For now deltas are global.
 
 Note that the first pattern is implemented using the second.
-It works by storing the tree data in a [`forest`](./src/forest/README.md) which updates itself using deltas.
+It works by storing the tree data in a [`forest`](./src/core/forest/README.md) which updates itself using deltas.
 When an application chooses to use the second pattern,
 it can be thought of as opting into a specialized application (or domain) specific tree representation.
 From that perspective the first pattern amounts to using the platform-provided general purpose tree representation:
@@ -153,7 +168,7 @@ this should usually be easier, but may incur some performance overhead in specif
 When views want to hold onto part of the tree (for the first pattern),
 they do so with "anchors" which have well defined behavior across edits.
 
-TODO: Note that as some point the application will want their [`view-schema`](./src/schema-view/README.md) applied to the tree from the checkout.
+TODO: Note that as some point the application will want their [`view-schema`](./src/core/schema-view/README.md) applied to the tree from the checkout.
 The system for doing this is called "schematize" and is currently not implemented.
 When it is more designed, some details for how it works belong in this section (as well as the section below).
 
@@ -258,7 +273,7 @@ Some of the principles used to guide this are:
     Try to keep the total number of dependencies of a given component small when possible.
     This applies both at the module level, but also for the actual object defined by those modules.
     One particular kind of dependency we make a particular effort to avoid are dependencies on stateful systems from code that has complex conditional logic.
-    One example of this is in [rebase](./src/rebase/README.md) where we ensured that the stateful system, `Rebaser` is not depended on by the actual change specific rebase policy.
+    One example of this is in [rebase](./src/core/rebase/README.md) where we ensured that the stateful system, `Rebaser` is not depended on by the actual change specific rebase policy.
     Instead the actual replace policy logic for changes is behind the `ChangeRebaser` interface, which does not depend on `Rebaser` and exposes the policy as pure functions (and thus is stateless).
     This is important for testability, since complex conditional logic (like `ChangeRebaser` implementations) require extensive unit testing,
     which is very difficult (and often slow) for stateful systems and systems with lots of dependencies.
@@ -288,10 +303,10 @@ flowchart
         subgraph core ["core libraries"]
             direction TB
             checkout-->forest
-            shared-tree-core-->change-family
             forest-->schema-stored
-            change-family-->rebase
+            change-family-->repair
             edit-manager-->change-family
+            repair-->rebase
             rebase-->tree
             schema-stored-->dependency-tracking
             schema-view-->schema-stored
@@ -300,8 +315,10 @@ flowchart
             dependency-tracking
             forest-->tree
         end
-        core-->util
-        feature-->core
+        core-->events-->util
+        id-compressor-->util
+        feature-->shared-tree-core
+        shared-tree-core-->core
         shared-tree-->feature
         subgraph feature ["feature-libraries"]
             direction TB
@@ -310,7 +327,8 @@ flowchart
             defaultSchema-->defaultFieldKinds-->modular-schema
             forestIndex-->treeTextCursor
             modular-schema
-            object-forest-->treeTextCursor
+            object-forest-->mapTreeCursor-->treeCursorUtils
+            chunked-forest-->treeCursorUtils
             schemaIndex
             sequence-change-family-->treeTextCursor
         end
@@ -327,16 +345,6 @@ flowchart
 The design issues here all impact the architectural role of top-level modules in this package in a way that when fixed will likely require changes to the architectural details covered above.
 Smaller scoped issues which will not impact the overall architecture should be documented in more localized locations.
 
-## How should indexes relate to branches?
-
-Some possible options:
-
--   Use copy on write in indexes, and keep all needed indexes for all needed revisions within edit-manager. Provide all relevant indexes to `ChangeRebaser`. Maybe allow `ChangeRebaser` to compute intermediate indexes as needed.
--   Keep a single index, and adjust it to the needed location in the branch tree as needed using deltas.
--   Keep multiple indexes, one at each branch head, updated via mutation.
--   Keep a single reference index (maybe after the latest sequenced edit), and make delta indexes referencing it for the other required branches.
--   Something else?
-
 ## How should specialized sub-tree handling compose?
 
 Applications should have a domain model that can mix editable tree nodes with custom implementations as needed.
@@ -345,4 +353,4 @@ This is important for performance/scalability and might be how we do virtualizat
 This might also be the layer at which we hook up schematize.
 Alternatively, it might be an explicitly two-phase setup (schematize then normalize), but we might share logic between the two and have non-copying bypasses.
 
-How all this relates to [dependency-tracking](./src/dependency-tracking/README.md) is to be determined.
+How all this relates to [dependency-tracking](./src/core/dependency-tracking/README.md) is to be determined.

@@ -18,25 +18,21 @@ import {
     IForestSubscription,
     StoredSchemaRepository,
     InMemoryStoredSchemaRepository,
-    Index,
-    SharedTreeCore,
     Checkout as TransactionCheckout,
-    runSynchronousTransaction,
     Anchor,
     AnchorLocator,
     AnchorSet,
     UpPath,
     EditManager,
 } from "../core";
+import { SharedTreeCore } from "../shared-tree-core";
 import {
     defaultSchemaPolicy,
     EditableTreeContext,
     ForestIndex,
-    ObjectForest,
     SchemaIndex,
     DefaultChangeFamily,
     defaultChangeFamily,
-    FieldChangeMap,
     DefaultEditBuilder,
     IDefaultEditBuilder,
     UnwrappedEditableField,
@@ -44,6 +40,10 @@ import {
     SchemaEditor,
     DefaultChangeset,
     EditManagerIndex,
+    runSynchronousTransaction,
+    buildForest,
+    ContextuallyTypedNodeData,
+    ModularChangeset,
 } from "../feature-libraries";
 
 /**
@@ -54,7 +54,9 @@ import {
  */
 export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObject, AnchorLocator {
     /**
-     * Root field of the tree.
+     * Gets or sets the root field of the tree.
+     *
+     * See {@link EditableTreeContext.unwrappedRoot} on how its setter works.
      *
      * Currently this editable tree's fields do not update on edits,
      * so holding onto this root object across edits will only work if its an unwrapped node.
@@ -62,9 +64,11 @@ export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObje
      *
      * Currently any access to this view of the tree may allocate cursors and thus require
      * `context.prepareForEdit()` before editing can occur.
-     * TODO: Make this happen automatically.
      */
-    readonly root: UnwrappedEditableField;
+    // TODO: either rename this or `EditableTreeContext.unwrappedRoot` to avoid name confusion.
+    get root(): UnwrappedEditableField;
+
+    set root(data: ContextuallyTypedNodeData | undefined);
 
     /**
      * Context for controlling the EditableTree nodes produced from {@link ISharedTree.root}.
@@ -100,7 +104,11 @@ export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObje
  * TODO: expose or implement Checkout.
  */
 class SharedTree
-    extends SharedTreeCore<FieldChangeMap, DefaultChangeFamily>
+    extends SharedTreeCore<
+        DefaultChangeset,
+        DefaultChangeFamily,
+        [SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset, DefaultChangeFamily>]
+    >
     implements ISharedTree
 {
     public readonly context: EditableTreeContext;
@@ -120,18 +128,17 @@ class SharedTree
     ) {
         const anchors = new AnchorSet();
         const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-        const forest = new ObjectForest(schema, anchors);
+        const forest = buildForest(schema, anchors);
         const editManager: EditManager<DefaultChangeset, DefaultChangeFamily> = new EditManager(
             defaultChangeFamily,
             anchors,
         );
-        const indexes: Index<DefaultChangeset>[] = [
-            new SchemaIndex(runtime, schema),
-            new ForestIndex(runtime, forest),
-            new EditManagerIndex(runtime, editManager),
-        ];
         super(
-            indexes,
+            (events) => [
+                new SchemaIndex(runtime, events, schema),
+                new ForestIndex(runtime, events, forest),
+                new EditManagerIndex(runtime, editManager),
+            ],
             defaultChangeFamily,
             editManager,
             anchors,
@@ -159,6 +166,10 @@ class SharedTree
 
     public get root(): UnwrappedEditableField {
         return this.context.unwrappedRoot;
+    }
+
+    public set root(data: ContextuallyTypedNodeData | undefined) {
+        this.context.unwrappedRoot = data;
     }
 
     public runTransaction(

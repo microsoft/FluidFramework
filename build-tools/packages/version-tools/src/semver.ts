@@ -195,7 +195,7 @@ export function isPrereleaseVersion(version: string | semver.SemVer | undefined)
  * internal and virtualPatch version schemes.
  *
  * @param version - The version to calculate previous versions for.
- * @returns A tuple of previous major version and previous minor version.
+ * @returns A 3-tuple of previous major, minor, and patch versions.
  *
  * @remarks
  *
@@ -216,10 +216,11 @@ export function isPrereleaseVersion(version: string | semver.SemVer | undefined)
  */
 export function getPreviousVersions(
     version: ReleaseVersion,
-): [ReleaseVersion | undefined, ReleaseVersion | undefined] {
+): [ReleaseVersion | undefined, ReleaseVersion | undefined, ReleaseVersion | undefined] {
     const scheme = detectVersionScheme(version);
     let previousMajorVersion: ReleaseVersion | undefined;
     let previousMinorVersion: ReleaseVersion | undefined;
+    let previousPatchVersion: ReleaseVersion | undefined;
 
     if (scheme === "internal") {
         const [pubVer, intVer] = fromInternalScheme(version);
@@ -232,12 +233,15 @@ export function getPreviousVersions(
                 ? "1.0.0"
                 : toInternalScheme(pubVer, `${intVer.major - 1}.0.0`).version;
 
-        previousMinorVersion =
-            intVer.minor === 0
-                ? toInternalScheme(pubVer, `${intVer.major}.${Math.max(0, intVer.minor - 1)}.0`)
-                      .version
-                : toInternalScheme(pubVer, `${intVer.major}.${Math.max(0, intVer.minor - 1)}.0`)
-                      .version;
+        previousMinorVersion = toInternalScheme(
+            pubVer,
+            `${intVer.major}.${Math.max(0, intVer.minor - 1)}.0`,
+        ).version;
+
+        previousPatchVersion = toInternalScheme(
+            pubVer,
+            `${intVer.major}.${intVer.minor}.${Math.max(0, intVer.patch - 1)}`,
+        ).version;
     } else if (scheme === "virtualPatch") {
         const ver = fromVirtualPatchScheme(version);
         if (ver.major <= 1) {
@@ -247,18 +251,25 @@ export function getPreviousVersions(
         previousMinorVersion = toVirtualPatchScheme(
             `${ver.major}.${Math.max(0, ver.minor - 1)}.0`,
         ).version;
+        previousPatchVersion = toVirtualPatchScheme(
+            `${ver.major}.${ver.minor}.${Math.max(0, ver.patch - 1)}`,
+        ).version;
     } else {
         const ver = semver.parse(version);
         if (ver === null) {
             throw new Error(`Couldn't parse version string: ${version}`);
         }
 
-        previousMajorVersion = ver.major <= 1 ? undefined : `${ver.major - 1}.0.0`;
+        previousMajorVersion = ver.major <= 1 ? "1.0.0" : `${ver.major - 1}.0.0`;
         previousMinorVersion =
             ver.minor === 0 && ver.major === 0
                 ? undefined
                 : `${ver.major}.${Math.max(0, ver.minor - 1)}.0`;
+        previousPatchVersion =
+            ver.minor === 0 && ver.major === 0 && ver.patch === 0
+                ? undefined
+                : `${ver.major}.${ver.minor}.${Math.max(0, ver.patch - 1)}`;
     }
 
-    return [previousMajorVersion, previousMinorVersion];
+    return [previousMajorVersion, previousMinorVersion, previousPatchVersion];
 }

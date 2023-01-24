@@ -81,10 +81,19 @@ function getNackReconnectInfo(nackContent: INackContent) {
  * Implementation of IDocumentDeltaConnection that does not support submitting
  * or receiving ops. Used in storage-only mode.
  */
+const clientNoDeltaStream: IClient = {
+    mode: "read",
+    details: { capabilities: { interactive: true } },
+    permission: [],
+    user: { id: "storage-only client" }, // we need some "fake" ID here.
+    scopes: [],
+};
+const clientIdNoDeltaStream: string = "storage-only client";
+
 class NoDeltaStream
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
     implements IDocumentDeltaConnection, IDisposable {
-    clientId: string = "storage-only client";
+    clientId = clientIdNoDeltaStream;
     claims: ITokenClaims = {
         scopes: [ScopeType.DocRead],
     } as any;
@@ -94,7 +103,7 @@ class NoDeltaStream
     version: string = "";
     initialMessages: ISequencedDocumentMessage[] = [];
     initialSignals: ISignalMessage[] = [];
-    initialClients: ISignalClient[] = [];
+    initialClients: ISignalClient[] = [{ client: clientNoDeltaStream, clientId: clientIdNoDeltaStream }];
     serviceConfiguration: IClientConfiguration = {
         maxMessageSize: 0,
         blockSize: 0,
@@ -168,7 +177,7 @@ export class ConnectionManager implements IConnectionManager {
 
     private clientSequenceNumber = 0;
     private clientSequenceNumberObserved = 0;
-    /** Counts the number of noops sent by the client which may not be acked. */
+    /** Counts the number of non-runtime ops sent by the client which may not be acked. */
     private localOpsToIgnore = 0;
 
     /** track clientId used last time when we sent any ops */
@@ -180,7 +189,7 @@ export class ConnectionManager implements IConnectionManager {
 
     private _connectionProps: ITelemetryProperties = {};
 
-    private closed = false;
+    private _disposed = false;
 
     private readonly _outbound: DeltaQueue<IDocumentMessage[]>;
 
@@ -258,7 +267,7 @@ export class ConnectionManager implements IConnectionManager {
      * It is undefined if we have not yet established websocket connection
      * and do not know if user has write access to a file.
      */
-    private get readonly() {
+    private get readonly(): boolean | undefined {
         if (this._forceReadonly) {
             return true;
         }
@@ -318,11 +327,11 @@ export class ConnectionManager implements IConnectionManager {
         });
     }
 
-    public dispose(error?: ICriticalContainerError) {
-        if (this.closed) {
+    public dispose(error?: ICriticalContainerError, switchToReadonly: boolean = true) {
+        if (this._disposed) {
             return;
         }
-        this.closed = true;
+        this._disposed = true;
 
         this.pendingConnection = undefined;
 
@@ -338,10 +347,12 @@ export class ConnectionManager implements IConnectionManager {
         // This raises "disconnect" event if we have active connection.
         this.disconnectFromDeltaStream(disconnectReason);
 
-        // Notify everyone we are in read-only state.
-        // Useful for data stores in case we hit some critical error,
-        // to switch to a mode where user edits are not accepted
-        this.set_readonlyPermissions(true);
+        if (switchToReadonly) {
+            // Notify everyone we are in read-only state.
+            // Useful for data stores in case we hit some critical error,
+            // to switch to a mode where user edits are not accepted
+            this.set_readonlyPermissions(true);
+        }
     }
 
     /**
@@ -429,7 +440,7 @@ export class ConnectionManager implements IConnectionManager {
     }
 
     private async connectCore(connectionMode?: ConnectionMode): Promise<void> {
-        assert(!this.closed, 0x26a /* "not closed" */);
+        assert(!this._disposed, 0x26a /* "not closed" */);
 
         if (this.connection !== undefined) {
             return;  // Connection attempt already completed successfully
@@ -476,7 +487,7 @@ export class ConnectionManager implements IConnectionManager {
 
         // This loop will keep trying to connect until successful, with a delay between each iteration.
         while (connection === undefined) {
-            if (this.closed) {
+            if (this._disposed) {
                 throw new Error("Attempting to connect a closed DeltaManager");
             }
             if (abortSignal.aborted === true) {
@@ -571,7 +582,13 @@ export class ConnectionManager implements IConnectionManager {
      * @param args - The connection arguments
      */
     private triggerConnect(connectionMode: ConnectionMode) {
-        assert(this.connection === undefined, 0x239 /* "called only in disconnected state" */);
+        // reconnect() has async await of waitForConnectedState(), and that causes potential race conditions
+        // where we might already have a connection. If it were to happen, it's possible that we will connect
+        // with different mode to `connectionMode`. Glancing through the caller chains, it looks like code should be
+        // fine (if needed, reconnect flow will get triggered again). Places where new mode matters should encode it
+        // directly in connectCore - see this.shouldJoinWrite() test as an example.
+        // assert(this.connection === undefined, 0x239 /* "called only in disconnected state" */);
+
         if (this.reconnectMode !== ReconnectMode.Enabled) {
             return;
         }
@@ -650,6 +667,9 @@ export class ConnectionManager implements IConnectionManager {
         // But if we ask read, server can still give us write.
         const readonly = !connection.claims.scopes.includes(ScopeType.DocWrite);
 
+        if (connection.mode !== requestedMode) {
+            this.logger.sendTelemetryEvent({ eventName: "ConnectionModeMismatch", requestedMode, mode: connection.mode });
+        }
         // This connection mode validation logic is moving to the driver layer in 0.44.  These two asserts can be
         // removed after those packages have released and become ubiquitous.
         assert(requestedMode === "read" || readonly === (this.connectionMode === "read"),
@@ -658,7 +678,7 @@ export class ConnectionManager implements IConnectionManager {
 
         this.set_readonlyPermissions(readonly);
 
-        if (this.closed) {
+        if (this._disposed) {
             // Raise proper events, Log telemetry event and close connection.
             this.disconnectFromDeltaStream("ConnectionManager already closed");
             return;
@@ -808,7 +828,7 @@ export class ConnectionManager implements IConnectionManager {
         }
 
         // If closed then we can't reconnect
-        if (this.closed || this.reconnectMode !== ReconnectMode.Enabled) {
+        if (this._disposed || this.reconnectMode !== ReconnectMode.Enabled) {
             return;
         }
 

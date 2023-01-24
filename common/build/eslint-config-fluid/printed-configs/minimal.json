@@ -8,7 +8,9 @@
         "Atomics": "readonly",
         "SharedArrayBuffer": "readonly"
     },
-    "ignorePatterns": [],
+    "ignorePatterns": [
+        "**/packageVersion.ts"
+    ],
     "parserOptions": {
         "ecmaFeatures": {
             "jsx": true
@@ -550,7 +552,12 @@
             1
         ],
         "import/no-nodejs-modules": [
-            "warn"
+            "error",
+            {
+                "allow": [
+                    "events"
+                ]
+            }
         ],
         "import/no-unassigned-import": [
             "error"
@@ -1177,6 +1184,9 @@
                     "pascalCase": true
                 }
             }
+        ],
+        "unicorn/no-for-loop": [
+            "off"
         ],
         "unicorn/no-nested-ternary": [
             "off"
