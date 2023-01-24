@@ -11,6 +11,29 @@ import { Sequencer, TestTree, TestTreeEdit } from "./testTree";
 
 describe("Editing", () => {
     describe("Sequence Field", () => {
+        it("can order concurrent inserts within concurrently deleted content", () => {
+            const sequencer = new Sequencer();
+            const tree1 = TestTree.fromJson(["A", "B", "C", "D"]);
+            const tree2 = tree1.fork();
+            const tree3 = tree1.fork();
+            const tree4 = tree1.fork();
+
+            // Make deletions in two steps to ensure that gap tracking handles comparing insertion places that
+            // were affected by different deletes.
+            const delAB = remove(tree1, 0, 2);
+            const delCD = remove(tree2, 2, 2);
+            const addX = insert(tree3, 1, "x");
+            const addY = insert(tree4, 3, "y");
+
+            const sequenced = sequencer.sequence([delAB, delCD, addX, addY]);
+            tree1.receive(sequenced);
+            tree2.receive(sequenced);
+            tree3.receive(sequenced);
+            tree4.receive(sequenced);
+
+            expectJsonTree([tree1, tree2, tree3, tree4], ["x", "y"]);
+        });
+
         it("can rebase local dependent inserts", () => {
             const sequencer = new Sequencer();
             const tree1 = TestTree.fromJson("y");
