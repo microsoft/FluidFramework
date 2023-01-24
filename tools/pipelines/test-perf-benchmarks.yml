@@ -67,15 +67,15 @@ stages:
       - name: consolidatedTestsOutputFolder
         value: ${{ variables.testWorkspace }}/benchmarkOutput
         readonly: true
-    env:
-      BUILD_ID: $(Build.BuildId)
-      BRANCH_NAME: $(Build.SourceBranchName)
     jobs:
     - template: templates/include-test-perf-benchmarks.yml
       parameters:
         poolBuild: ${{ parameters.poolBuild }}
         testWorkspace: ${{ variables.testWorkspace }}
         artifactPipeline: ${{ variables.artifactPipeline }}
+        env:
+          BUILD_ID: $(Build.BuildId)
+          BRANCH_NAME: $(Build.SourceBranchName)
         customSteps:
 
         # Download artifact with test files
