@@ -614,21 +614,6 @@ function makeCrossFieldManager<T>(
             }
             return table.get(id);
         },
-        consume: (
-            target: CrossFieldTarget,
-            revision: RevisionTag | undefined,
-            id: ChangesetLocalId,
-        ) => {
-            const table =
-                target === CrossFieldTarget.Source
-                    ? crossFieldTable.srcTable
-                    : crossFieldTable.dstTable;
-            table.delete(id);
-            const queries = target === CrossFieldTarget.Source ? srcQueries : dstQueries;
-            if (queries !== undefined) {
-                queries.delete(id);
-            }
-        },
     };
 }
 

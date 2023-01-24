@@ -164,8 +164,6 @@ export const createField: unique symbol;
 // @public (undocumented)
 export interface CrossFieldManager<T = unknown> {
     // (undocumented)
-    consume: (target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId) => void;
-    // (undocumented)
     get: (target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId) => T | undefined;
     // (undocumented)
     getOrCreate: (target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, newValue: T) => T;

@@ -190,11 +190,6 @@ export interface CrossFieldManager<T = unknown> {
         revision: RevisionTag | undefined,
         id: ChangesetLocalId,
     ) => T | undefined;
-    consume: (
-        target: CrossFieldTarget,
-        revision: RevisionTag | undefined,
-        id: ChangesetLocalId,
-    ) => void;
 }
 
 /**
