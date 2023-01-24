@@ -6,7 +6,8 @@
 import fs from "fs";
 import path from "path";
 import { Command, Flags } from "@oclif/core";
-import { ApplicationInsights } from '@microsoft/applicationinsights-web'
+// import { ApplicationInsights } from '@microsoft/applicationinsights-web'
+import * as appInsight from 'applicationinsights';
 
 export class EntryPoint extends Command {
     static flags = {
@@ -58,15 +59,18 @@ export class EntryPoint extends Command {
 
         console.log(`obtained connection string: ${flags.connectionString}`)
 
+        appInsight.setup(flags.connectionString)
+        .start();
+        const logger = appInsight.defaultClient;
 
-        const logger = new ApplicationInsights({
-            config: {
-                connectionString: flags.connectionString
-            }
-        })
+        // const appInsights = new ApplicationInsights({
+        //     config: {
+        //         connectionString: flags.connectionString
+        //     }
+        // })
+        // const logger = appInsights.defaultClient;
 
-        const dirs = [...flags.dir];
-
+        const dirs = [...flags.dir]
         const filesToProcess: string[] = [];
 
         while (dirs.length > 0) {
