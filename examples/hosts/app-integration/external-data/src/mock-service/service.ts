@@ -142,8 +142,6 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
         } else {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             const taskList = request.body.taskList as TaskData;
-            console.log(taskList)
-
             console.log(`SERVICE: Setting task list to "${taskList}"...`);
             externalDataSource.writeData(taskList).then(
                 () => {

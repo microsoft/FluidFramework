@@ -127,7 +127,6 @@ export class TaskList extends DataObject implements ITaskList {
             priority: draftPriorityCell.handle as IFluidHandle<ISharedCell<number>>,
         };
         this.draftData.set(id, draftDataPT);
-        console.log(this.root.get)
     };
 
     public readonly deleteTask = (id: string): void => {
@@ -270,7 +269,7 @@ export class TaskList extends DataObject implements ITaskList {
         // sync'ing perhaps this should only include ack'd changes (by spinning up a second local client same
         // as what we do for summarization).
         const tasks = this.getTasks();
-        const formattedTasks = {}
+        const formattedTasks:TaskData = {};
         for (const task of tasks) {
             formattedTasks[task.id] = {
                 name: task.name.getText(),

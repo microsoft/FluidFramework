@@ -29,22 +29,30 @@ export interface IDebugViewProps {
  * For the purposes of this test app, it is useful to be able to see both data sources side-by-side.
  */
 export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
+    const [unsynchronizedChangesCount, setUnsynchronizedChangesCount] = useState(0);
+    const handleUnsynchronizedChangesCountUpdate = (count: number): void => {
+        setUnsynchronizedChangesCount(count);
+    }
+
     return (
         <div>
             <h2 style={{ textDecoration: "underline" }}>Debug info</h2>
-            <ExternalDataView />
-            <SyncStatusView />
-            <ControlsView model={ props.model }/>
+            <ExternalDataView unsynchronizedChangesCount={unsynchronizedChangesCount} setUnsynchronizedChangesCount={setUnsynchronizedChangesCount} />
+            <SyncStatusView unsynchronizedChangesCount={unsynchronizedChangesCount} handleCountUpdate={handleUnsynchronizedChangesCountUpdate} />
+            <ControlsView model={props.model} />
         </div>
     );
 };
 
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface IExternalDataViewProps {}
+interface IExternalDataViewProps {
+    unsynchronizedChangesCount: number;
+    setUnsynchronizedChangesCount: (count: number) => void;
+}
 
 const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalDataViewProps) => {
-    const [externalData, setExternalData] = useState({});
+    const [externalData, setExternalData] = useState<TaskData>({});
     useEffect(() => {
         // HACK: Once we have external changes triggering the appropriate Fluid signal, we can simply listen
         // for changes coming into the model that way.
@@ -64,11 +72,28 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
 
                 const responseBody = await response.json() as Record<string, unknown>;
                 const newData = responseBody.taskList as TaskData;
-                if(newData !== undefined && !isEqual(newData,externalData)) {
+                if (newData !== undefined && !isEqual(newData, externalData)) {
                     console.log("APP: External data has changed. Updating local state with:\n", newData)
+                    const updatedExternalData = Object.entries(newData);
+                    let count = 0;
+                    // eslint-disable-next-line unicorn/no-array-for-each
+                    updatedExternalData.forEach(([id, { name, priority }]) => {
+                        const existing = externalData[id] as {
+                            name: string;
+                            priority: number;
+                        };
+                        if (existing === undefined) {
+                            count++;
+                        } else if (existing.name !== name || existing.priority !== priority) {
+                            count++;
+                        }
+                    });
+                    props.setUnsynchronizedChangesCount(count)
                     setExternalData(newData);
+                } else {
+                    props.setUnsynchronizedChangesCount(0);
                 }
-            } catch(error) {
+            } catch (error) {
                 console.error(`APP: An error was encountered while polling external data:\n${error}`);
             }
         }
@@ -85,12 +110,12 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
     }, [externalData, setExternalData]);
     const parsedExternalData = isEqual(externalData, {})
         ? []
-        : Object.entries(externalData as TaskData);
-    const taskRows = parsedExternalData.map(([key, {name, priority}]) => (
-        <tr key={ key }>
-            <td>{ key }</td>
-            <td>{ name }</td>
-            <td>{ priority }</td>
+        : Object.entries(externalData);
+    const taskRows = parsedExternalData.map(([key, { name, priority }]) => (
+        <tr key={key}>
+            <td>{key}</td>
+            <td>{name}</td>
+            <td>{priority}</td>
         </tr>
     ));
 
@@ -107,7 +132,7 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
                         </tr>
                     </thead>
                     <tbody>
-                        { taskRows }
+                        {taskRows}
                     </tbody>
                 </table>
             </div>
@@ -116,16 +141,20 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface ISyncStatusViewProps { }
+interface ISyncStatusViewProps {
+    unsynchronizedChangesCount: number;
+    handleCountUpdate: (count: number) => void;
+}
 
 // TODO: Implement the statuses below
 const SyncStatusView: React.FC<ISyncStatusViewProps> = (props: ISyncStatusViewProps) => {
+    useEffect(() => { }, [props.unsynchronizedChangesCount]);
     return (
         <div>
             <h3>Sync status</h3>
             <div style={{ margin: "10px 0" }}>
                 Fluid has [no] unsync'd changes (not implemented)<br />
-                External data source has [no] unsync'd changes (not implemented)<br />
+                External data source has {props.unsynchronizedChangesCount} unsync'd changes.<br />
                 Current sync activity: [idle | fetching | writing | resolving conflicts?] (not implemented)<br />
             </div>
         </div>
@@ -162,8 +191,8 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
         <div>
             <h3>Debug controls</h3>
             <div style={{ margin: "10px 0" }}>
-                <button onClick={ debugResetExternalData }>Reset external data</button><br />
-                <button onClick={ props.model.debugSendCustomSignal }>Trigger external data change signal</button><br />
+                <button onClick={debugResetExternalData}>Reset external data</button><br />
+                <button onClick={props.model.debugSendCustomSignal}>Trigger external data change signal</button><br />
             </div>
         </div>
     );
