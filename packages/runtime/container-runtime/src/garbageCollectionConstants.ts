@@ -31,7 +31,7 @@ export const throwOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombston
 // Feature gate to enable GC version upgrade.
 export const gcVersionUpgradeToV2Key = "Fluid.GarbageCollection.GCVersionUpgradeToV2";
 // Feature gate to enable GC sweep for datastores.
-export const sweepDatastoresKey = "Fluid.GarbageCollection.SweepDatastores";
+export const sweepDatastoresKey = "Fluid.GarbageCollection.SweepDataStores";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;

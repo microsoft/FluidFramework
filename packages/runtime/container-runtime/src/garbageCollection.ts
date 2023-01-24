@@ -861,7 +861,7 @@ export class GarbageCollector implements IGarbageCollector {
         // If this call is because we are refreshing from a snapshot due to an ack, it is likely that the GC state
         // in the snapshot is newer than this client's. And so, the deleted / tombstone nodes need to be updated.
         if (this.shouldRunSweep) {
-            const snapshotDeletedNodes = snapshotData?.tombstones ? new Set(snapshotData.tombstones) : undefined;
+            const snapshotDeletedNodes = snapshotData?.deletedNodes ? new Set(snapshotData.deletedNodes) : undefined;
             // If the snapshot contains deleted nodes that are not yet deleted by this client, ask the runtime to
             // delete them.
             if (snapshotDeletedNodes !== undefined) {
@@ -873,6 +873,12 @@ export class GarbageCollector implements IGarbageCollector {
                 }
                 if (newDeletedNodes.length > 0) {
                     // Call container runtime to delete these nodes and add deleted nodes to this.deletedNodes.
+                    const deletedNodes = this.runtime.updateUnusedRoutes(newDeletedNodes);
+                    deletedNodes.forEach((node, index) => {
+                        assert(node === newDeletedNodes[index], "The runtime should delete exactly the same nodes as in the snapshot!");
+                    });
+                    this.updateSweptNodeState(newDeletedNodes);
+                    newDeletedNodes.forEach(item => this.deletedNodes.add(item))
                 }
             }
         } else if (this.tombstoneMode) {
@@ -1016,7 +1022,10 @@ export class GarbageCollector implements IGarbageCollector {
         this.updateStateSinceLastRun(gcData, logger);
 
         // Update the current state and update the runtime of all routes or ids that used as per the GC run.
-        this.updateCurrentState(gcData, gcResult, currentReferenceTimestampMs);
+        this.gcDataFromLastRun = cloneGCData(gcData);
+        this.tombstones = [];
+        this.newReferencesSinceLastRun.clear();
+        const sweepReadyNodes = this.updateTrackersAndGetSweepReadyNodes(gcResult, currentReferenceTimestampMs);
         this.runtime.updateUsedRoutes(gcResult.referencedNodeIds);
 
         // Log events for objects that are ready to be deleted by sweep. When we have sweep enabled, we will
@@ -1027,13 +1036,14 @@ export class GarbageCollector implements IGarbageCollector {
         // involving access to deleted data.
         if (this.sweepDataStoresMode) {
             const allRoutes = gcResult.deletedNodeIds.concat(gcResult.referencedNodeIds);
-            this.validateSweepRoutes(this.tombstones, allRoutes);
-            const removedRoutes = this.runtime.updateUnusedRoutes(this.tombstones);
-            this.removeSweptNodes(removedRoutes);
+            this.validateSweepRoutes(sweepReadyNodes, allRoutes);
+            const removedRoutes = this.runtime.updateUnusedRoutes(sweepReadyNodes);
+            this.updateSweptNodeState(removedRoutes);
         } else if (this.testMode) {
             const removedRoutes = this.runtime.updateUnusedRoutes(gcResult.deletedNodeIds);
-            this.removeSweptNodes(removedRoutes);
+            this.updateSweptNodeState(removedRoutes);
         } else if (this.tombstoneMode) {
+            this.tombstones = sweepReadyNodes;
             // If we are running in GC tombstone mode, update tombstoned routes. This enables testing scenarios
             // involving access to "deleted" data without actually deleting the data from summaries.
             // Note: we will not tombstone in test mode.
@@ -1352,15 +1362,10 @@ export class GarbageCollector implements IGarbageCollector {
      * @param gcResult - The result of the GC run on the gcData.
      * @param currentReferenceTimestampMs - The timestamp to be used for unreferenced nodes' timestamp.
      */
-    private updateCurrentState(
-        gcData: IGarbageCollectionData,
+    private updateTrackersAndGetSweepReadyNodes(
         gcResult: IGCResult,
         currentReferenceTimestampMs: number,
     ) {
-        this.gcDataFromLastRun = cloneGCData(gcData);
-        this.tombstones = [];
-        this.newReferencesSinceLastRun.clear();
-
         // Iterate through the referenced nodes and stop tracking if they were unreferenced before.
         for (const nodeId of gcResult.referencedNodeIds) {
             const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
@@ -1376,7 +1381,10 @@ export class GarbageCollector implements IGarbageCollector {
          * If a node became unreferenced in this run, start tracking it.
          * If a node was already unreferenced, update its tracking information. Since the current reference time is
          * from the ops seen, this will ensure that we keep updating the unreferenced state as time moves forward.
+         *
+         * If a node is sweep ready store and return it.
          */
+        const sweepReadyNodes: string[] = [];
         for (const nodeId of gcResult.deletedNodeIds) {
             const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
             if (nodeStateTracker === undefined) {
@@ -1391,11 +1399,13 @@ export class GarbageCollector implements IGarbageCollector {
                 );
             } else {
                 nodeStateTracker.updateTracking(currentReferenceTimestampMs);
-                if ((this.tombstoneMode || this.shouldRunSweep) && nodeStateTracker.state === UnreferencedState.SweepReady) {
-                    this.tombstones.push(nodeId);
+                if (nodeStateTracker.state === UnreferencedState.SweepReady) {
+                    sweepReadyNodes.push(nodeId);
                 }
             }
         }
+
+        return sweepReadyNodes;
     }
 
     private validateSweepRoutes(sweepRoutes: string[], allRoutes: string[]) {
@@ -1411,9 +1421,9 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Removes data stores that are swept from GC state except for the tombstones
+     * Removes nodes that are swept from GC state and updates the deleted nodes
      */
-    private removeSweptNodes(gcNodes: string[]) {
+    private updateSweptNodeState(gcNodes: string[]) {
         for (const nodeId of gcNodes) {
             const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
             if (nodeStateTracker !== undefined) {
@@ -1433,6 +1443,7 @@ export class GarbageCollector implements IGarbageCollector {
             }
         });
         this.gcDataFromLastRun = { gcNodes: remainingNodes };
+        gcNodes.forEach((node) => this.deletedNodes.add(node));
     }
 
     /**

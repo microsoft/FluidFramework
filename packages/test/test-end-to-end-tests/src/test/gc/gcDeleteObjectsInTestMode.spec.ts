@@ -201,7 +201,7 @@ describeNoCompat("GC delete objects in test mode", (getTestObjectProvider) => {
                 },
                 loaderProps: { configProvider: mockConfigProvider(settings) },
             };
-            settings["Fluid.GarbageCollection.SweepDatastores"] = deleteContent;
+            settings["Fluid.GarbageCollection.SweepDataStores"] = deleteContent;
             const container = await provider.makeTestContainer(testContainerConfig);
             mainDataStore = await requestFluidObject<ITestDataObject>(container, "/");
             containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;

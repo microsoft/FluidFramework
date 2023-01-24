@@ -19,7 +19,7 @@ import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { LoaderHeader } from "@fluidframework/container-definitions";
-import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils";
+import { getGCStateFromSummary, getGCSweepStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils";
 
 /**
  * Validates that an unreferenced datastore and blob goes through all the GC sweep phases without overlapping.
@@ -68,7 +68,7 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
             this.skip();
         }
 
-        settings["Fluid.GarbageCollection.SweepDatastores"] = true;
+        settings["Fluid.GarbageCollection.SweepDataStores"] = true;
         settings["Fluid.GarbageCollection.RunSweep"] = true;
         settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
         settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
@@ -104,13 +104,16 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
         // GC graph check
         const gcState = getGCStateFromSummary(summaryTree1);
         assert(gcState !== undefined, "Expected GC state to be generated");
-        assert(gcState.gcNodes[dataStoreHandle.absolutePath] !== undefined, "Datastore should exist on gc graph");
-        assert(gcState.gcNodes[dataStoreHandle.absolutePath].unreferencedTimestampMs !== undefined, "Datastore should be unreferenced");
+        assert(gcState.gcNodes[dataStoreHandle.absolutePath] !== undefined, "Data Store should exist on gc graph");
+        assert(gcState.gcNodes[dataStoreHandle.absolutePath].unreferencedTimestampMs !== undefined, "Data Store should be unreferenced");
         assert(gcState.gcNodes[blobHandle.absolutePath] !== undefined, "Blob should exist on gc graph");
         assert(gcState.gcNodes[blobHandle.absolutePath].unreferencedTimestampMs !== undefined, "Blob should be unreferenced");
         // GC Tombstone check
         const tombstoneState1 = getGCTombstoneStateFromSummary(summaryTree1);
         assert(tombstoneState1 === undefined, "Nothing should be tombstoned");
+        // GC Sweep check
+        const sweepState1 = getGCSweepStateFromSummary(summaryTree1);
+        assert(sweepState1 === undefined, "Nothing should be swept");
         // Summary check
         assert(await isDataStoreInSummaryTree(summaryTree1, dataStoreId), "Data Store should be in the summary!");
 
@@ -134,12 +137,15 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
         // GC graph check
         const gcState3 = getGCStateFromSummary(summaryTree3);
         assert(gcState3 !== undefined, "Expected GC state to be generated");
-        assert(!(dataStoreHandle.absolutePath in gcState3.gcNodes), "Datastore should not exist on gc graph");
+        assert(!(dataStoreHandle.absolutePath in gcState3.gcNodes), "Data Store should not exist on gc graph");
         // GC Tombstone check
         const tombstoneState3 = getGCTombstoneStateFromSummary(summaryTree3);
-        assert(tombstoneState3 !== undefined, "Should have tombstone state");
-        assert(tombstoneState3.includes(dataStoreHandle.absolutePath), "Datastore should be tombstoned");
-        assert(tombstoneState3.includes(blobHandle.absolutePath), "Blob should be tombstoned");
+        assert(tombstoneState3 === undefined, "Nothing should be tombstoned");
+        // GC Sweep check
+        const sweepState = getGCSweepStateFromSummary(summaryTree3);
+        assert(sweepState !== undefined, "Should have sweep state");
+        assert(sweepState.includes(dataStoreHandle.absolutePath), "Data Store should be swept");
+        // assert(sweepState.includes(blobHandle.absolutePath), "Blob should be tombstoned");
         // Summary check
         assert(!(await isDataStoreInSummaryTree(summaryTree3, dataStoreId)), "Data Store should not be in the summary!");
 

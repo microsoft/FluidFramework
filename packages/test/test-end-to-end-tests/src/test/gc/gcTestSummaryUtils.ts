@@ -8,6 +8,7 @@ import { concatGarbageCollectionStates } from "@fluidframework/garbage-collector
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
     gcBlobPrefix,
+    gcDeletedBlobKey,
     gcTombstoneBlobKey,
     gcTreeKey,
     IGarbageCollectionState,
@@ -63,4 +64,26 @@ export function getGCTombstoneStateFromSummary(summaryTree: ISummaryTree): strin
 
     assert(tombstoneBlob.type === SummaryType.Blob, "Tombstone state is not a blob");
     return JSON.parse(tombstoneBlob.content as string) as string[];
+}
+
+/**
+ * Returns the sweep data from the GC tree in the summary.
+ * Note that it assumes that the sweep data in the GC tree is a summary blob and not summary handle.
+ * @param summaryTree - The summary tree that contains the GC summary.
+ * @returns The sweep data if it exists, undefined otherwise.
+ */
+export function getGCSweepStateFromSummary(summaryTree: ISummaryTree): string[] | undefined {
+    const rootGCTree = summaryTree.tree[gcTreeKey];
+    if (rootGCTree === undefined) {
+        return undefined;
+    }
+
+    assert(rootGCTree.type === SummaryType.Tree, "GC data should be a tree");
+    const sweepBlob = rootGCTree.tree[gcDeletedBlobKey];
+    if (sweepBlob === undefined) {
+        return undefined;
+    }
+
+    assert(sweepBlob.type === SummaryType.Blob, "Sweep state is not a blob");
+    return JSON.parse(sweepBlob.content as string) as string[];
 }
