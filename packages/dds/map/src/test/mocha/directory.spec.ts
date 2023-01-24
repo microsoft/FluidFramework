@@ -1482,7 +1482,7 @@ describe("Directory", () => {
                     directory1.createSubDirectory("foo")
                     assert.fail("Directory creation should fail");
                 } catch (err: any) {
-                    assert.strictEqual(err.message, "Directory with name foo already exists", "Creation should fail");
+                    assert.strictEqual(err.message, "Directory with name foo already exists", "Unexpected error thrown");
                 }
             });
         });
