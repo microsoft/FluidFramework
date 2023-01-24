@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 import chalk from "chalk";
 import { Machine } from "jssm";
 
-import { InstructionalPrompt, mapADOLinks } from "../instructionalPromptWriter";
+import { type InstructionalPrompt, mapADOLinks } from "../instructionalPromptWriter";
 import { difference, generateReleaseBranchName, getPreReleaseDependencies } from "../lib";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";

@@ -2,11 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { MonoRepoKind } from "@fluidframework/build-tools";
 import { StringBuilder } from "@rushstack/node-core-library";
 import chalk from "chalk";
 
 import { indentString } from "./lib";
 import { CommandLogger } from "./logging";
+import { ReleaseGroup, ReleasePackage } from "./releaseGroups";
 
 /**
  * An instructional prompt to display to a user in a terminal. A prompt can have any number of sections, and each
@@ -45,56 +47,31 @@ interface Section {
 }
 
 /**
- * Links to ADO pipeline for all release group
+ * Map release groups to ADO pipeline
  */
+export const ADOPipelineLinks = new Map<ReleasePackage | ReleaseGroup, string>([
+    [MonoRepoKind.Client, "https://dev.azure.com/fluidframework/internal/_build?definitionId=12"],
+    [MonoRepoKind.Server, "https://dev.azure.com/fluidframework/internal/_build?definitionId=30"],
+    [MonoRepoKind.Azure, "https://dev.azure.com/fluidframework/internal/_build?definitionId=85"],
+    [MonoRepoKind.BuildTools, "https://dev.azure.com/fluidframework/internal/_build?definitionId=14"],
+    ["@fluid-tools/api-markdown-documenter", "https://dev.azure.com/fluidframework/internal/_build?definitionId=97"],
+    ["@fluid-tools/benchmark", "https://dev.azure.com/fluidframework/internal/_build?definitionId=96"],
+    ["@fluidframework/test-tools", "https://dev.azure.com/fluidframework/internal/_build?definitionId=13"],
+    ["tinylicious", "https://dev.azure.com/fluidframework/internal/_build?definitionId=22"],
+    ["@fluidframework/build-common", "https://dev.azure.com/fluidframework/internal/_build?definitionId=3"],
+    ["@fluidframework/eslint-config-fluid", "https://dev.azure.com/fluidframework/internal/_build?definitionId=7"],
+    ["@fluidframework/common-definitions", "https://dev.azure.com/fluidframework/internal/_build?definitionId=8"],
+    ["@fluidframework/common-utils", "https://dev.azure.com/fluidframework/internal/_build?definitionId=10"],
+    ["@fluidframework/protocol-definitions", "https://dev.azure.com/fluidframework/internal/_build?definitionId=67"]
+  ]);
 
-export enum ADOPipelineLinks {
-    CLIENT = "https://dev.azure.com/fluidframework/internal/_build?definitionId=12",
-    SERVER = "https://dev.azure.com/fluidframework/internal/_build?definitionId=30",
-    BUILDTOOLS = "https://dev.azure.com/fluidframework/internal/_build?definitionId=14",
-    AZURE = "https://dev.azure.com/fluidframework/internal/_build?definitionId=85",
-    APIMARKDOWNDOCUMENTER = "https://dev.azure.com/fluidframework/internal/_build?definitionId=97",
-    BENCHMARK = "https://dev.azure.com/fluidframework/internal/_build?definitionId=96",
-    TESTTOOLS = "https://dev.azure.com/fluidframework/internal/_build?definitionId=13",
-    TINYLICIOUS = "https://dev.azure.com/fluidframework/internal/_build?definitionId=22",
-    BUILDCOMMON = "https://dev.azure.com/fluidframework/internal/_build?definitionId=3",
-    ESLINTCONFLIGFLUID = "https://dev.azure.com/fluidframework/internal/_build?definitionId=7",
-    COMMONDEFINITIONS = "https://dev.azure.com/fluidframework/internal/_build?definitionId=8",
-    COMMONUTILS = "https://dev.azure.com/fluidframework/internal/_build?definitionId=10",
-    PROTOCOLDEFINITIONS = "https://dev.azure.com/fluidframework/internal/_build?definitionId=67",
-}
 
 /**
  *
  * Returns ADO pipeline link for the releaseGroup
  */
-export const mapADOLinks = (releaseGroup: string | undefined): string => {
-    const adoLink = releaseGroup === "client"
-            ? ADOPipelineLinks.CLIENT
-            : releaseGroup === "server"
-            ? ADOPipelineLinks.SERVER
-            : releaseGroup === "azure"
-            ? ADOPipelineLinks.AZURE
-            : releaseGroup === "build-tools"
-            ? ADOPipelineLinks.BUILDTOOLS
-            : releaseGroup === "@fluid-tools/api-markdown-documenter"
-            ? ADOPipelineLinks.APIMARKDOWNDOCUMENTER
-            : releaseGroup ===  "@fluid-tools/benchmark"
-            ? ADOPipelineLinks.BENCHMARK
-            : releaseGroup === "@fluidframework/test-tools"
-            ? ADOPipelineLinks.TESTTOOLS
-            : releaseGroup === "tinylicious"
-            ? ADOPipelineLinks.TINYLICIOUS
-            : releaseGroup === "@fluidframework/build-common"
-            ? ADOPipelineLinks.BUILDCOMMON
-            : releaseGroup === "@fluidframework/eslint-config-fluid"
-            ? ADOPipelineLinks.ESLINTCONFLIGFLUID
-            : releaseGroup === "@fluidframework/common-definitions"
-            ? ADOPipelineLinks.COMMONDEFINITIONS
-            : releaseGroup === "@fluidframework/common-utils"
-            ? ADOPipelineLinks.COMMONUTILS
-            : ADOPipelineLinks.PROTOCOLDEFINITIONS;
-    return adoLink;
+export const mapADOLinks = (releaseGroup: ReleaseGroup | ReleasePackage | undefined): string | undefined => {
+    return releaseGroup === undefined ? "" : ADOPipelineLinks.get(releaseGroup);
 }
 
 /**
