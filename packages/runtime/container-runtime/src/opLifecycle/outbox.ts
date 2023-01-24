@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { GenericError } from "@fluidframework/container-utils";
@@ -28,6 +29,7 @@ export interface IOutboxParameters {
     readonly config: IOutboxConfig,
     readonly compressor: OpCompressor;
     readonly splitter: OpSplitter;
+    readonly logger: ITelemetryLogger;
 }
 
 export class Outbox {
@@ -45,11 +47,11 @@ export class Outbox {
             hardLimit,
             softLimit,
             enableOpReentryCheck: params.config.enableOpReentryCheck,
-        });
+        }, params.logger);
         this.mainBatch = new BatchManager({
             hardLimit,
             enableOpReentryCheck: params.config.enableOpReentryCheck,
-        });
+        }, params.logger);
     }
 
     public get isEmpty(): boolean {
@@ -176,7 +178,11 @@ export class Outbox {
         } else {
             // returns clientSequenceNumber of last message in a batch
             clientSequenceNumber = this.params.containerContext.submitBatchFn(
-                batch.content.map((message) => ({ contents: message.contents, metadata: message.metadata })));
+                batch.content.map((message) => ({
+                    contents: message.contents,
+                    metadata: message.metadata,
+                    compression: message.compression,
+                })));
         }
 
         // Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.

@@ -56,8 +56,10 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
+    "@fluid-tools/build-cli": "^0.8.0-121856",
     "@fluidframework/aqueduct": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
-    "@fluidframework/build-tools": "^0.7.0",
+    "@fluidframework/build-common": "^1.1.0",
+    "@fluidframework/build-tools": "^0.8.0-121856",
     "@fluidframework/container-runtime": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluidframework/container-runtime-definitions": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",
     "@fluidframework/eslint-config-fluid": "^2.0.0",
@@ -66,6 +68,7 @@
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
+    "@types/node": "^14.18.36",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",
     "eslint": "~8.6.0",
@@ -73,7 +76,7 @@
     "prettier": "~2.6.2",
     "rimraf": "^2.6.2",
     "start-server-and-test": "^1.11.7",
-    "tinylicious": "0.4.89251",
+    "tinylicious": "0.5.0",
     "typescript": "~4.5.5"
   },
   "peerDependencies": {

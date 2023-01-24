@@ -9,12 +9,13 @@ import { ISequencedDocumentMessage, ISummaryTree, ITree, MessageType } from "@fl
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
 import random from "random-js";
+import { Trace } from "@fluidframework/common-utils";
 import { Client } from "../client";
 import {
     List,
 } from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
-import { IMergeBlock, ISegment, Marker, MaxNodesInBlock, MergeTreeStats } from "../mergeTreeNodes";
+import { IMergeBlock, ISegment, Marker, MaxNodesInBlock } from "../mergeTreeNodes";
 import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
 import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
@@ -50,6 +51,12 @@ mt.seedWithArray([0xDEADBEEF, 0xFEEDBED]);
 export class TestClient extends Client {
     public static searchChunkSize = 256;
     public static readonly serializer = new TestSerializer();
+    public measureOps = false;
+    public accumTime = 0;
+    public accumWindowTime = 0;
+    public accumWindow = 0;
+    public accumOps = 0;
+    public maxWindowTime = 0;
 
     /**
      * Used for in-memory testing.  This will queue a reference string for each client message.
@@ -426,6 +433,49 @@ export class TestClient extends Client {
         assert(segmentsWithAttribution === 0 || segmentsWithoutAttribution === 0);
         return segmentsWithAttribution !== 0 ? seqs : undefined;
     }
+
+    /**
+     * Override and add some test only metrics
+     */
+    public applyMsg(msg: ISequencedDocumentMessage, local: boolean = false) {
+        let traceStart: Trace | undefined;
+        if (this.measureOps) {
+            traceStart = Trace.start();
+        }
+
+        super.applyMsg(msg, local);
+
+        if (traceStart) {
+            this.accumTime += elapsedMicroseconds(traceStart);
+            this.accumOps++;
+            this.accumWindow += (this.getCurrentSeq() - this.getCollabWindow().minSeq);
+        }
+        
+    }
+
+    /**
+     * Override and add some test only metrics
+     */
+    updateMinSeq(minSeq: number) {
+        let trace: Trace | undefined;
+        if (this.measureOps) {
+            trace = Trace.start();
+        }
+
+        super.updateMinSeq(minSeq);
+        if (trace) {
+            const elapsed = elapsedMicroseconds(trace);
+            this.accumWindowTime += elapsed;
+            if (elapsed > this.maxWindowTime) {
+                this.maxWindowTime = elapsed;
+            }
+        }
+
+    }
+}
+
+function elapsedMicroseconds(trace: Trace) {
+    return trace.trace().duration * 1000;
 }
 
 // the client doesn't submit ops, so this adds a callback to capture them
@@ -462,6 +512,20 @@ export const createRevertDriver =
 
     };
 };
+
+export interface MergeTreeStats {
+    maxHeight: number;
+    nodeCount: number;
+    leafCount: number;
+    removedLeafCount: number;
+    liveCount: number;
+    histo: number[];
+    windowTime?: number;
+    packTime?: number;
+    ordTime?: number;
+    maxOrdTime?: number;
+}
+
 
 export function getStats(tree: MergeTree) {
     const nodeGetStats = (block: IMergeBlock): MergeTreeStats => {

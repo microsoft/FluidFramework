@@ -69,13 +69,13 @@ export const createDocumentId: () => string;
 export function createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, documentServiceFactory: IDocumentServiceFactory, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger, options?: ILoaderOptions): IHostLoader;
 
 // @public (undocumented)
-export function createSummarizer(provider: ITestObjectProvider, container: IContainer, summaryVersion?: string, gcOptions?: IGCRuntimeOptions, configProvider?: IConfigProviderBase): Promise<ISummarizer>;
+export function createSummarizer(provider: ITestObjectProvider, container: IContainer, summaryVersion?: string, gcOptions?: IGCRuntimeOptions, configProvider?: IConfigProviderBase, logger?: ITelemetryBaseLogger): Promise<ISummarizer>;
 
 // @public (undocumented)
 export function createSummarizerFromFactory(provider: ITestObjectProvider, container: IContainer, dataStoreFactory: IFluidDataStoreFactory, summaryVersion?: string, containerRuntimeFactoryType?: typeof ContainerRuntimeFactoryWithDefaultDataStore, registryEntries?: NamedFluidDataStoreRegistryEntries): Promise<ISummarizer>;
 
 // @public (undocumented)
-export function createSummarizerWithContainer(provider: ITestObjectProvider, absoluteUrl: string | undefined, summaryVersion?: string, gcOptions?: IGCRuntimeOptions, configProvider?: IConfigProviderBase): Promise<{
+export function createSummarizerWithContainer(provider: ITestObjectProvider, absoluteUrl: string | undefined, summaryVersion?: string, gcOptions?: IGCRuntimeOptions, configProvider?: IConfigProviderBase, logger?: ITelemetryBaseLogger): Promise<{
     container: IContainer;
     summarizer: ISummarizer;
 }>;
@@ -107,7 +107,7 @@ export enum DataObjectFactoryType {
 // @public (undocumented)
 export const defaultTimeoutDurationMs = 250;
 
-// @public (undocumented)
+// @public @deprecated
 export function ensureContainerConnected(container: Container): Promise<void>;
 
 // @public
@@ -235,10 +235,11 @@ export const mockConfigProvider: (settings?: Record<string, ConfigTypes>) => ICo
 // @public
 export const retryWithEventualValue: <T>(callback: () => Promise<T>, check: (value: T) => boolean, defaultValue: T, maxTries?: number, backOffMs?: number) => Promise<T>;
 
-// @public (undocumented)
+// @public
 export function summarizeNow(summarizer: ISummarizer, reason?: string): Promise<{
     summaryTree: ISummaryTree;
     summaryVersion: string;
+    summaryRefSeq: number;
 }>;
 
 // @public (undocumented)
@@ -362,8 +363,8 @@ export interface TimeoutWithValue<T = void> {
     value: T;
 }
 
-// @public (undocumented)
-export function waitForContainerConnection(container: IContainer): Promise<void>;
+// @public
+export function waitForContainerConnection(container: IContainer, failOnContainerClose?: boolean, timeoutOptions?: TimeoutWithError): Promise<void>;
 
 // @public
 export function wrapDocumentService(innerDocService: IDocumentService, uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => ISummaryContext): IDocumentService;

@@ -10,8 +10,8 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedMap } from "@fluidframework/map";
 
-import { customerServicePort, ParsedTaskData, parseStringData } from "../mock-service-interface";
-import type { ITask, ITaskEvents, ITaskList } from "../model-interface";
+import { customerServicePort } from "../mock-service-interface";
+import type { ITask, ITaskEvents, ITaskList, TaskData } from "../model-interface";
 
 class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
     public get id(): string {
@@ -127,10 +127,11 @@ export class TaskList extends DataObject implements ITaskList {
             priority: draftPriorityCell.handle as IFluidHandle<ISharedCell<number>>,
         };
         this.draftData.set(id, draftDataPT);
+        console.log(this.root.get)
     };
 
     public readonly deleteTask = (id: string): void => {
-        this.handleTaskDeleted(id);
+        this.draftData.delete(id);
     };
 
     public readonly getTasks = (): Task[] => {
@@ -142,7 +143,7 @@ export class TaskList extends DataObject implements ITaskList {
     };
 
     private readonly handleTaskAdded = async (id: string): Promise<void> => {
-        const taskData = this.root.get(id) as PersistedTask;
+        const taskData = this._draftData?.get(id) as PersistedTask;
         if (taskData === undefined) {
             throw new Error("Newly added task is missing from map.");
         }
@@ -152,7 +153,7 @@ export class TaskList extends DataObject implements ITaskList {
             taskData.priority.get(),
         ]);
         // It's possible the task was deleted while getting the name/priority, in which case quietly exit.
-        if (this.root.get(id) === undefined) {
+        if (this._draftData?.get(id) === undefined) {
             return;
         }
         const newTask = new Task(id, nameSharedString, prioritySharedCell);
@@ -190,7 +191,10 @@ export class TaskList extends DataObject implements ITaskList {
     public async importExternalData(): Promise<void> {
         console.log('TASK-LIST: Fetching external data from service...');
 
-        let updatedExternalData: ParsedTaskData[] | undefined;
+        let updatedExternalData: [string, {
+            name: string;
+            priority: number;
+        }][];
         try {
             const response = await fetch(
                 `http://localhost:${customerServicePort}/fetch-tasks`,
@@ -204,12 +208,11 @@ export class TaskList extends DataObject implements ITaskList {
             );
 
             const responseBody = await response.json() as Record<string, unknown>;
-            const data = responseBody.taskList as string;
-            if(data === undefined) {
+            if (responseBody.taskList === undefined) {
                 throw new Error("Task list fetch returned no data.");
             }
-
-            updatedExternalData = parseStringData(data);
+            const data = responseBody.taskList as TaskData;
+            updatedExternalData = Object.entries(data);
             console.log("TASK-LIST: Data imported from service.", updatedExternalData);
         } catch (error) {
             console.error(`Task list fetch failed due to an error:\n${error}`);
@@ -220,7 +223,7 @@ export class TaskList extends DataObject implements ITaskList {
         }
 
         // TODO: Delete any items that are in the root but missing from the external data
-        const updateTaskPs = updatedExternalData.map(async ({ id, name, priority }) => {
+        const updateTaskPs = updatedExternalData.map(async ([id, { name, priority }]) => {
             const currentTask = this.draftData.get<PersistedTask>(id);
             // Write external data into savedData map.
             this.savedData.set(id, currentTask);
@@ -267,11 +270,13 @@ export class TaskList extends DataObject implements ITaskList {
         // sync'ing perhaps this should only include ack'd changes (by spinning up a second local client same
         // as what we do for summarization).
         const tasks = this.getTasks();
-        const taskStrings = tasks.map((task) => {
-            return `${task.id}:${task.name.getText()}:${task.priority.toString()}`;
-        });
-        const stringDataToWrite = `${taskStrings.join("\n")}`;
-
+        const formattedTasks = {}
+        for (const task of tasks) {
+            formattedTasks[task.id] = {
+                name: task.name.getText(),
+                priority: task.priority,
+            };
+        }
         try {
             await fetch(
                 `http://localhost:${customerServicePort}/set-tasks`,
@@ -281,7 +286,7 @@ export class TaskList extends DataObject implements ITaskList {
                         "Access-Control-Allow-Origin": "*",
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({ taskList: stringDataToWrite }),
+                    body: JSON.stringify({ taskList: formattedTasks }),
                 }
             );
         } catch (error) {
@@ -318,13 +323,13 @@ export class TaskList extends DataObject implements ITaskList {
         }
         this._draftData = await draft.get();
 
-        this.root.on("valueChanged", (changed) => {
+        this._draftData.on("valueChanged", (changed) => {
             if (changed.previousValue === undefined) {
                 // Must be from adding a new task
                 this.handleTaskAdded(changed.key).catch((error) => {
                     console.error(error);
                 });
-            } else if (this.root.get(changed.key) === undefined) {
+            } else if (this.draftData.get(changed.key) === undefined) {
                 // Must be from a deletion
                 this.handleTaskDeleted(changed.key);
             } else {

@@ -9,8 +9,8 @@ import {
     DisposingDependee,
     // Allow importing from this specific file which is being tested:
     /* eslint-disable-next-line import/no-internal-modules */
-} from "../../dependency-tracking/disposingDependee";
-import { InvalidationToken, recordDependency } from "../../dependency-tracking";
+} from "../../core/dependency-tracking/disposingDependee";
+import { InvalidationToken, recordDependency } from "../../core";
 import { MockDependent } from "../utils";
 
 describe("DisposingDependee", () => {

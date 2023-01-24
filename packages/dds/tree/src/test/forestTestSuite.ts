@@ -21,6 +21,8 @@ import {
     rootFieldKey,
     rootFieldKeySymbol,
     UpPath,
+    clonePath,
+    ITreeCursor,
 } from "../core";
 import {
     cursorToJsonObject,
@@ -32,7 +34,6 @@ import {
     jsonBoolean,
     jsonString,
 } from "../domains";
-import { clonePath, ITreeCursor } from "../tree";
 import { brand, brandOpaque } from "../util";
 import {
     FieldKinds,
@@ -45,13 +46,29 @@ import { MockDependent } from "./utils";
 import { testGeneralPurposeTreeCursor } from "./cursorTestSuite";
 
 /**
+ * Configuration for the forest test suite.
+ */
+export interface ForestTestConfiguration {
+    suiteName: string;
+    factory: (schema: StoredSchemaRepository) => IEditableForest;
+
+    /**
+     * If true, skip the tests that ensure errors are thrown when applying deltas without clearing cursors.
+     *
+     * @remarks Errors from current cursors during edits are not required by the Forest API specification,
+     * but are nice for debugging.
+     * Performance oriented forest implementations may opt out of this check.
+     * Applications wanting help debugging invalid forest API use should use cursors that include this check.
+     */
+    skipCursorErrorCheck?: true;
+}
+
+/**
  * Generic forest test suite
  */
-export function testForest(
-    suiteName: string,
-    factory: (schema: StoredSchemaRepository) => IEditableForest,
-): void {
-    describe(suiteName, () => {
+export function testForest(config: ForestTestConfiguration): void {
+    const factory = config.factory;
+    describe(config.suiteName, () => {
         const nestedContent: JsonableTree[] = [
             {
                 type: jsonObject.name,
@@ -89,10 +106,11 @@ export function testForest(
                     const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
                     const forest = factory(schema);
 
-                    schema.update(jsonSchemaData);
-
                     const rootFieldSchema = fieldSchema(FieldKinds.optional, jsonRoot.types);
-                    schema.updateFieldSchema(rootFieldKey, rootFieldSchema);
+                    schema.update({
+                        ...jsonSchemaData,
+                        globalFieldSchema: new Map([[rootFieldKey, rootFieldSchema]]),
+                    });
 
                     // Check schema is actually valid. If we forgot to add some required types this would fail.
                     assert(!isNeverField(defaultSchemaPolicy, schema, rootFieldSchema));
@@ -369,17 +387,19 @@ export function testForest(
         });
 
         describe("can apply deltas with", () => {
-            it("ensures cursors are cleared before applying deltas", () => {
-                const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
-                const content: JsonableTree[] = [{ type: jsonNumber.name, value: 1 }];
-                initializeForest(forest, content.map(singleTextCursor));
-                const cursor = forest.allocateCursor();
-                moveToDetachedField(forest, cursor);
+            if (!config.skipCursorErrorCheck) {
+                it("ensures cursors are cleared before applying deltas", () => {
+                    const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+                    const content: JsonableTree[] = [{ type: jsonNumber.name, value: 1 }];
+                    initializeForest(forest, content.map(singleTextCursor));
+                    const cursor = forest.allocateCursor();
+                    moveToDetachedField(forest, cursor);
 
-                const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: 2 };
-                const delta: Delta.Root = new Map([[rootFieldKeySymbol, [setValue]]]);
-                assert.throws(() => forest.applyDelta(delta));
-            });
+                    const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: 2 };
+                    const delta: Delta.Root = new Map([[rootFieldKeySymbol, [setValue]]]);
+                    assert.throws(() => forest.applyDelta(delta));
+                });
+            }
 
             it("set value", () => {
                 const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
@@ -530,6 +550,7 @@ export function testForest(
                 };
                 const moveIn: Delta.MoveIn = {
                     type: Delta.MarkType.MoveIn,
+                    count: 1,
                     moveId,
                 };
                 const modify: Delta.Modify = {
@@ -607,7 +628,7 @@ export function testForest(
                     ]),
                 };
                 const delta: Delta.Root = new Map([
-                    [rootFieldKeySymbol, [mark, { type: Delta.MarkType.MoveIn, moveId }]],
+                    [rootFieldKeySymbol, [mark, { type: Delta.MarkType.MoveIn, count: 1, moveId }]],
                 ]);
                 forest.applyDelta(delta);
 
@@ -636,7 +657,7 @@ export function testForest(
                                 },
                             ],
                         ],
-                        [yField, [{ type: Delta.MarkType.MoveIn, moveId }]],
+                        [yField, [{ type: Delta.MarkType.MoveIn, count: 1, moveId }]],
                     ]),
                 };
                 const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);

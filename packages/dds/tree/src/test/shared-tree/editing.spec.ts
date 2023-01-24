@@ -5,12 +5,35 @@
 import { strict as assert } from "assert";
 import { singleTextCursor } from "../../feature-libraries";
 import { jsonString } from "../../domains";
-import { rootFieldKeySymbol } from "../../tree";
-import { JsonCompatible } from "../../util";
+import { brand, JsonCompatible } from "../../util";
+import { rootFieldKeySymbol } from "../../core";
 import { Sequencer, TestTree, TestTreeEdit } from "./testTree";
 
 describe("Editing", () => {
     describe("Sequence Field", () => {
+        it("can order concurrent inserts within concurrently deleted content", () => {
+            const sequencer = new Sequencer();
+            const tree1 = TestTree.fromJson(["A", "B", "C", "D"]);
+            const tree2 = tree1.fork();
+            const tree3 = tree1.fork();
+            const tree4 = tree1.fork();
+
+            // Make deletions in two steps to ensure that gap tracking handles comparing insertion places that
+            // were affected by different deletes.
+            const delAB = remove(tree1, 0, 2);
+            const delCD = remove(tree2, 2, 2);
+            const addX = insert(tree3, 1, "x");
+            const addY = insert(tree4, 3, "y");
+
+            const sequenced = sequencer.sequence([delAB, delCD, addX, addY]);
+            tree1.receive(sequenced);
+            tree2.receive(sequenced);
+            tree3.receive(sequenced);
+            tree4.receive(sequenced);
+
+            expectJsonTree([tree1, tree2, tree3, tree4], ["x", "y"]);
+        });
+
         it("can rebase local dependent inserts", () => {
             const sequencer = new Sequencer();
             const tree1 = TestTree.fromJson("y");
@@ -33,10 +56,7 @@ describe("Editing", () => {
             const tree1 = TestTree.fromJson(["x", "y"]);
             const tree2 = tree1.fork();
 
-            const delY = tree1.runTransaction((forest, editor) => {
-                const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-                field.delete(1, 1);
-            });
+            const delY = remove(tree1, 1, 1);
 
             const addW = insert(tree2, 0, "w");
 
@@ -136,6 +156,58 @@ describe("Editing", () => {
                 ["a", "b", "c", "r", "s", "t", "x", "y", "z"],
             );
         });
+
+        // TODO: Enable once local branch repair data is supported
+        it.skip("revert-only revive", () => {
+            const sequencer = new Sequencer();
+            const tree1 = TestTree.fromJson(["a", "b", "c"]);
+            const tree2 = tree1.fork();
+
+            const delB = remove(tree1, 1, 1);
+
+            const delABC = remove(tree2, 0, 3);
+
+            const seqDelB = sequencer.sequence(delB);
+            const seqDelABC = sequencer.sequence(delABC);
+
+            const revABC = tree2.runTransaction((forest, editor) => {
+                const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+                field.revive(0, 3, brand(seqDelABC.seqNumber), 1);
+            });
+
+            const seqRevABC = sequencer.sequence(revABC);
+            const sequenced = [seqDelB, seqDelABC, seqRevABC];
+            tree1.receive(sequenced);
+            tree2.receive(sequenced);
+
+            expectJsonTree([tree1, tree2], ["a", "c"]);
+        });
+
+        // TODO: Enable once local branch repair data is supported
+        it.skip("intentional revive", () => {
+            const sequencer = new Sequencer();
+            const tree1 = TestTree.fromJson(["a", "b", "c"]);
+            const tree2 = tree1.fork();
+
+            const delB = remove(tree1, 1, 1);
+
+            const delABC = remove(tree2, 0, 3);
+
+            const seqDelB = sequencer.sequence(delB);
+            const seqDelABC = sequencer.sequence(delABC);
+
+            const revABC = tree2.runTransaction((forest, editor) => {
+                const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+                field.revive(0, 3, brand(seqDelABC.seqNumber), 1, true);
+            });
+
+            const seqRevABC = sequencer.sequence(revABC);
+            const sequenced = [seqDelB, seqDelABC, seqRevABC];
+            tree1.receive(sequenced);
+            tree2.receive(sequenced);
+
+            expectJsonTree([tree1, tree2], ["a", "b", "c"]);
+        });
     });
 });
 
@@ -151,6 +223,13 @@ function insert(tree: TestTree, index: number, ...values: string[]): TestTreeEdi
         const field = editor.sequenceField(undefined, rootFieldKeySymbol);
         const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
         field.insert(index, nodes);
+    });
+}
+
+function remove(tree: TestTree, index: number, count: number): TestTreeEdit {
+    return tree.runTransaction((forest, editor) => {
+        const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+        field.delete(index, count);
     });
 }
 

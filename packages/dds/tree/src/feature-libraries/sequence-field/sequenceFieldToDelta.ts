@@ -45,19 +45,18 @@ export function sequenceFieldToDelta<TNodeChange>(
                 case "ReturnTo": {
                     const moveMark: Delta.MoveIn = {
                         type: Delta.MarkType.MoveIn,
+                        count: mark.count,
                         moveId: brandOpaque<Delta.MoveId>(mark.id),
                     };
                     out.pushContent(moveMark);
                     break;
                 }
                 case "Modify": {
-                    if (mark.tomb === undefined) {
-                        const modify = deltaFromChild(mark.changes, inputIndex);
-                        if (modify.setValue !== undefined || modify.fields !== undefined) {
-                            out.pushContent(modify);
-                        } else {
-                            out.pushOffset(1);
-                        }
+                    const modify = deltaFromChild(mark.changes, inputIndex);
+                    if (modify.setValue !== undefined || modify.fields !== undefined) {
+                        out.pushContent(modify);
+                    } else {
+                        out.pushOffset(1);
                     }
                     break;
                 }
@@ -80,15 +79,21 @@ export function sequenceFieldToDelta<TNodeChange>(
                     break;
                 }
                 case "Revive": {
-                    const insertMark: Delta.Insert = {
-                        type: Delta.MarkType.Insert,
-                        content: reviver(
-                            mark.detachedBy ?? fail(ERR_NO_REVISION_ON_REVIVE),
-                            mark.detachIndex,
-                            mark.count,
-                        ),
-                    };
-                    out.pushContent(insertMark);
+                    if (mark.conflictsWith === undefined) {
+                        const insertMark: Delta.Insert = {
+                            type: Delta.MarkType.Insert,
+                            content: reviver(
+                                mark.detachedBy ??
+                                    mark.lastDetachedBy ??
+                                    fail(ERR_NO_REVISION_ON_REVIVE),
+                                mark.detachIndex,
+                                mark.count,
+                            ),
+                        };
+                        out.pushContent(insertMark);
+                    } else if (mark.lastDetachedBy === undefined) {
+                        out.pushOffset(mark.count);
+                    }
                     break;
                 }
                 default:

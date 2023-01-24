@@ -9,7 +9,7 @@ import {
 import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { MapFactory, SharedMap } from "../../map";
 
-function createLocalMap(id: string) {
+function createLocalMap(id: string): SharedMap {
     const map = new SharedMap(id, new MockFluidDataStoreRuntime(), MapFactory.Attributes);
     return map;
 }
@@ -34,48 +34,48 @@ describe("SharedMap memory usage", () => {
     });
 
     benchmarkMemory(new class implements IMemoryTestObject {
-        title = "Create empty map";
-        minSampleCount = 500;
+        public readonly title = "Create empty map";
+        public readonly minSampleCount = 500;
 
         private map: SharedMap = createLocalMap("testMap");
 
-        async run() {
+        public async run(): Promise<void> {
             this.map = createLocalMap("testMap");
         }
     }());
 
     const numbersOfEntriesForTests = [1000, 10_000, 100_000];
 
-    numbersOfEntriesForTests.forEach((x) => {
+    for (const x of numbersOfEntriesForTests) {
         benchmarkMemory(new class implements IMemoryTestObject {
-            title = `Add ${x} integers to a local map`;
+            public readonly title = `Add ${x} integers to a local map`;
             private map: SharedMap = createLocalMap("testMap");
 
-            async run() {
+            public async run(): Promise<void> {
                 for (let i = 0; i < x; i++) {
                     this.map.set(i.toString().padStart(6, "0"), i);
                 }
             }
 
-            beforeIteration() {
+            public beforeIteration(): void {
                 this.map = createLocalMap("testMap");
             }
         }());
 
         benchmarkMemory(new class implements IMemoryTestObject {
-            title = `Add ${x} integers to a local map, clear it`;
+            public readonly title = `Add ${x} integers to a local map, clear it`;
             private map: SharedMap = createLocalMap("testMap");
 
-            async run() {
+            public async run(): Promise<void> {
                 for (let i = 0; i < x; i++) {
                     this.map.set(i.toString().padStart(6, "0"), i);
                 }
                 this.map.clear();
             }
 
-            beforeIteration() {
+            public beforeIteration(): void {
                 this.map = createLocalMap("testMap");
             }
         }());
-    });
+    }
 });

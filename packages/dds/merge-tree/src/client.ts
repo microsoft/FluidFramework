@@ -11,7 +11,7 @@ import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import type { IEventThisPlaceHolder, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, Trace, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
@@ -61,9 +61,7 @@ import {
     IMergeTreeDeltaOpArgs
 } from "./index";
 
-function elapsedMicroseconds(trace: Trace) {
-    return trace.trace().duration * 1000;
-}
+type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs,"sequencedMessage"> & Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;
 
 /**
  * Emitted before this client's merge-tree normalizes its segments on reconnect, potentially
@@ -79,14 +77,6 @@ export interface IClientEvents {
 }
 
 export class Client extends TypedEventEmitter<IClientEvents> {
-    public measureOps = false;
-    public accumTime = 0;
-    public localTime = 0;
-    public localOps = 0;
-    public accumWindowTime = 0;
-    public accumWindow = 0;
-    public accumOps = 0;
-    public maxWindowTime = 0;
     public longClientId: string | undefined;
 
     private readonly _mergeTree: MergeTree;
@@ -250,22 +240,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
             segment);
 
         const opArgs = { op };
-        let traceStart: Trace | undefined;
-        if (this.measureOps) {
-            traceStart = Trace.start();
-        }
-
-        this._mergeTree.insertAtReferencePosition(
-            refPos,
-            segment,
-            opArgs);
-
-        this.completeAndLogOp(
-            opArgs,
-            this.getClientSequenceArgs(opArgs),
-            { start: op.pos1 },
-            traceStart);
-
+        this._mergeTree.insertAtReferencePosition(refPos, segment, opArgs);
         return op;
     }
 
@@ -339,7 +314,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     }
 
     public getCollabWindow(): CollaborationWindow {
-        return this._mergeTree.getCollabWindow();
+        return this._mergeTree.collabWindow;
     }
 
     /**
@@ -413,11 +388,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);
 
-        let traceStart: Trace | undefined;
-        if (this.measureOps) {
-            traceStart = Trace.start();
-        }
-
         this._mergeTree.markRangeRemoved(
             range.start,
             range.end,
@@ -425,9 +395,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
             clientArgs.clientId,
             clientArgs.sequenceNumber,
             false,
-            opArgs);
-
-        this.completeAndLogOp(opArgs, clientArgs, range, traceStart);
+            opArgs
+        );
 
         return true;
     }
@@ -447,11 +416,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
             return false;
         }
 
-        let traceStart: Trace | undefined;
-        if (this.measureOps) {
-            traceStart = Trace.start();
-        }
-
         this._mergeTree.annotateRange(
             range.start,
             range.end,
@@ -460,9 +424,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
             clientArgs.referenceSequenceNumber,
             clientArgs.clientId,
             clientArgs.sequenceNumber,
-            opArgs);
-
-        this.completeAndLogOp(opArgs, clientArgs, range, traceStart);
+            opArgs
+        );
 
         return true;
     }
@@ -491,10 +454,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
             return false;
         }
 
-        let traceStart: Trace | undefined;
-        if (this.measureOps) {
-            traceStart = Trace.start();
-        }
 
         this._mergeTree.insertSegments(
             range.start,
@@ -502,42 +461,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
             clientArgs.referenceSequenceNumber,
             clientArgs.clientId,
             clientArgs.sequenceNumber,
-            opArgs);
-
-        this.completeAndLogOp(opArgs, clientArgs, range, traceStart);
-
+            opArgs
+        );
         return true;
     }
 
-    /**
-     *
-     * @param opArgs - The op args of the op to complete
-     * @param clientArgs - The client args for the op
-     * @param range - The range the op applied to
-     * @param clockStart - Optional. The clock start if timing data should be updated.
-     */
-    private completeAndLogOp(
-        opArgs: IMergeTreeDeltaOpArgs,
-        clientArgs: IMergeTreeClientSequenceArgs,
-        range: Partial<IIntegerRange>,
-        traceStart?: Trace) {
-        if (!opArgs.sequencedMessage) {
-            if (traceStart) {
-                this.localTime += elapsedMicroseconds(traceStart);
-                this.localOps++;
-            }
-        } else {
-            assert(this._mergeTree.getCollabWindow().currentSeq < clientArgs.sequenceNumber,
-                0x030 /* "Incoming remote op sequence# <= local collabWindow's currentSequence#" */);
-            assert(this._mergeTree.getCollabWindow().minSeq <= opArgs.sequencedMessage.minimumSequenceNumber,
-                0x031 /* "Incoming remote op minSequence# < local collabWindow's minSequence#" */);
-            if (traceStart) {
-                this.accumTime += elapsedMicroseconds(traceStart);
-                this.accumOps++;
-                this.accumWindow += (this.getCurrentSeq() - this.getCollabWindow().minSeq);
-            }
-        }
-    }
+
 
     /**
      * Returns a valid range for the op, or undefined
@@ -645,25 +574,15 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         return this.getClientSequenceArgsForMessage(opArgs.sequencedMessage);
     }
 
-    private ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs) {
-        const ackOp = (deltaOpArgs: IMergeTreeDeltaOpArgs) => {
-            let trace: Trace | undefined;
-            if (this.measureOps) {
-                trace = Trace.start();
-            }
-
+    private ackPendingSegment(opArgs: IMergeTreeDeltaRemoteOpArgs) {
+        const ackOp = (deltaOpArgs: IMergeTreeDeltaRemoteOpArgs) => {
             this._mergeTree.ackPendingSegment(deltaOpArgs);
             if (deltaOpArgs.op.type === MergeTreeDeltaType.ANNOTATE) {
                 if (deltaOpArgs.op.combiningOp && (deltaOpArgs.op.combiningOp.name === "consensus")) {
-                    this.updateConsensusProperty(deltaOpArgs.op, deltaOpArgs.sequencedMessage!);
+                    this.updateConsensusProperty(deltaOpArgs.op, deltaOpArgs.sequencedMessage);
                 }
             }
 
-            if (trace) {
-                this.accumTime += elapsedMicroseconds(trace);
-                this.accumOps++;
-                this.accumWindow += (this.getCurrentSeq() - this.getCollabWindow().minSeq);
-            }
         };
 
         if (opArgs.op.type === MergeTreeDeltaType.GROUP) {
@@ -798,10 +717,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         return opList;
     }
 
-    private applyRemoteOp(opArgs: IMergeTreeDeltaOpArgs) {
+    private applyRemoteOp(opArgs: IMergeTreeDeltaRemoteOpArgs) {
         const op = opArgs.op;
         const msg = opArgs.sequencedMessage;
-        this.getOrAddShortClientId(msg!.clientId);
+        this.getOrAddShortClientId(msg.clientId);
         switch (op.type) {
             case MergeTreeDeltaType.INSERT:
                 this.applyInsertOp(opArgs);
@@ -859,7 +778,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         this.getOrAddShortClientId(msg.clientId);
         // Apply if an operation message
         if (msg.type === MessageType.Operation) {
-            const opArgs: IMergeTreeDeltaOpArgs = {
+            const opArgs: IMergeTreeDeltaRemoteOpArgs = {
                 op: msg.contents as IMergeTreeOp,
                 sequencedMessage: msg,
             };
@@ -874,7 +793,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     }
 
     public updateSeqNumbers(min: number, seq: number) {
-        const collabWindow = this._mergeTree.getCollabWindow();
+        const collabWindow = this.getCollabWindow();
         // Equal is fine here due to SharedSegmentSequence<>.snapshotContent() potentially updating with same #
         assert(collabWindow.currentSeq <= seq,
             0x038 /* "Incoming op sequence# < local collabWindow's currentSequence#" */);
@@ -1037,18 +956,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     }
 
     updateMinSeq(minSeq: number) {
-        let trace: Trace | undefined;
-        if (this.measureOps) {
-            trace = Trace.start();
-        }
         this._mergeTree.setMinSeq(minSeq);
-        if (trace) {
-            const elapsed = elapsedMicroseconds(trace);
-            this.accumWindowTime += elapsed;
-            if (elapsed > this.maxWindowTime) {
-                this.maxWindowTime = elapsed;
-            }
-        }
     }
 
     getContainingSegment<T extends ISegment>(pos: number, sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">, localSeq?: number) {

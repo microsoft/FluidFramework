@@ -16,7 +16,7 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
 } from "@fluidframework/protocol-definitions";
-import type { Socket, io as SocketIOClientStatic } from "socket.io-client";
+import { Socket, io as SocketIOClientStatic } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import { IOdspSocketError, IGetOpsResponse, IFlushOpsResponse } from "./contracts";
@@ -202,7 +202,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      * @param tenantId - the ID of the tenant
      * @param documentId - document ID
      * @param token - authorization token for storage service
-     * @param io - websocket library
      * @param client - information about the client
      * @param mode - mode of the client
      * @param url - websocket URL
@@ -215,7 +214,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         tenantId: string,
         documentId: string,
         token: string | null,
-        io: typeof SocketIOClientStatic,
         client: IClient,
         url: string,
         telemetryLogger: ITelemetryLogger,
@@ -234,7 +232,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         const socketReferenceKey = enableMultiplexing ? key : `${key},${tenantId},${documentId}`;
 
         const socketReference = OdspDocumentDeltaConnection.getOrCreateSocketIoReference(
-            io, timeoutMs, socketReferenceKey, url, enableMultiplexing, tenantId, documentId, telemetryLogger);
+            timeoutMs, socketReferenceKey, url, enableMultiplexing, tenantId, documentId, telemetryLogger);
 
         const socket = socketReference.socket;
 
@@ -316,7 +314,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      * Gets or create a socket io connection for the given key
      */
     private static getOrCreateSocketIoReference(
-        io: typeof SocketIOClientStatic,
         timeoutMs: number,
         key: string,
         url: string,
@@ -332,7 +329,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
         const query = enableMultiplexing ? undefined : { documentId, tenantId };
 
-        const socket = io(
+        const socket = SocketIOClientStatic(
             url,
             {
                 multiplex: false, // Don't rely on socket.io built-in multiplexing

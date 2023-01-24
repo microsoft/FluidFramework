@@ -102,7 +102,7 @@ export const mixinAttributor = (
             const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
             const { audience, deltaManager } = context;
-            assert(audience !== undefined, "Audience must exist when instantiating attribution-providing runtime");
+            assert(audience !== undefined, 0x508 /* Audience must exist when instantiating attribution-providing runtime */);
 
             const runtime = await Base.load(
                 context,
@@ -153,7 +153,7 @@ class RuntimeAttributor implements IRuntimeAttributor {
 
     public get(key: AttributionKey): AttributionInfo {
         assert(this.opAttributor !== undefined,
-            "RuntimeAttributor must be initialized before getAttributionInfo can be called");
+            0x509 /* RuntimeAttributor must be initialized before getAttributionInfo can be called */);
         
         return this.opAttributor.getAttributionInfo(key.seq);
     }
@@ -200,7 +200,7 @@ class RuntimeAttributor implements IRuntimeAttributor {
 
         if (attributorTree !== undefined) {
             const id = attributorTree.blobs[opBlobName];
-            assert(id !== undefined, "Attributor tree should have op attributor summary blob.");
+            assert(id !== undefined, 0x50a /* Attributor tree should have op attributor summary blob. */);
             const blobContents = await readBlob(id);
             const attributorSnapshot = bufferToString(blobContents, "utf8");
             this.opAttributor = this.encoder.decode(attributorSnapshot);
@@ -215,7 +215,7 @@ class RuntimeAttributor implements IRuntimeAttributor {
             return undefined;
         }
 
-        assert(this.opAttributor !== undefined, "RuntimeAttributor should be initialized before summarization");
+        assert(this.opAttributor !== undefined, 0x50b /* RuntimeAttributor should be initialized before summarization */);
         const builder = new SummaryTreeBuilder();
         builder.addBlob(opBlobName, this.encoder.encode(this.opAttributor));
         return builder.getSummaryTree();

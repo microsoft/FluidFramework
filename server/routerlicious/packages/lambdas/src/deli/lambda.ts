@@ -17,6 +17,7 @@ import {
     ScopeType,
     ISignalMessage,
     ISummaryAck,
+    ISummaryContent,
     IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { canSummarize, defaultHash, getNextHash, isNetworkError } from "@fluidframework/server-services-client";
@@ -1190,10 +1191,23 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         } as any;
         if (message.operation.type === MessageType.Summarize || message.operation.type === MessageType.NoClient) {
             const augmentedOutputMessage = outputMessage as ISequencedDocumentAugmentedMessage;
-            if (message.operation.type === MessageType.Summarize ||
-                this.serviceConfiguration.scribe.generateServiceSummary) {
-                // only add additional content if scribe will use this op for generating a summary
-                // NoClient ops are ignored by scribe when generateServiceSummary is disabled
+
+            // only add additional content if scribe will use this op for generating a summary
+            // NoClient ops are ignored by scribe when generateServiceSummary is disabled
+            let addAdditionalContent = false;
+
+            if (this.serviceConfiguration.scribe.generateServiceSummary) {
+                addAdditionalContent = true;
+            } else if (message.operation.type === MessageType.Summarize) {
+                // no need to add additionalContent for summarize messages using the single commit flow
+                // because scribe will not be involved
+                if (!this.serviceConfiguration.deli.skipSummarizeAugmentationForSingleCommmit ||
+                    !(JSON.parse(message.operation.contents) as ISummaryContent).details?.includesProtocolTree) {
+                    addAdditionalContent = true;
+                }
+            }
+
+            if (addAdditionalContent) {
                 const checkpointData = JSON.stringify(this.generateDeliCheckpoint());
                 augmentedOutputMessage.additionalContent = checkpointData;
             }
@@ -1699,6 +1713,13 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                     checkpointParams.clear = true;
                 }
                 void this.checkpointContext.checkpoint(checkpointParams);
+                const checkpointReason = CheckpointReason[checkpointParams.reason];
+                const checkpointResult = `Writing checkpoint. Reason: ${checkpointReason}`;
+                const lumberjackProperties = {
+                    ...getLumberBaseProperties(this.documentId, this.tenantId),
+                    checkpointReason,
+                };
+                Lumberjack.info(checkpointResult, lumberjackProperties);
             },
             (error) => {
                 const errorMsg = `Could not send message to scriptorium`;

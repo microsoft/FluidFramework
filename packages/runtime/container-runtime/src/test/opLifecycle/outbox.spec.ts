@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { IBatchMessage, IContainerContext, IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { PendingStateManager } from "../../pendingStateManager";
 import { BatchMessage, IBatch, OpCompressor, OpSplitter, Outbox } from "../../opLifecycle";
 import {
@@ -112,8 +113,8 @@ describe("Outbox", () => {
     };
 
     const batchedMessage = (message: BatchMessage, batchMarker: boolean | undefined = undefined) => batchMarker === undefined ?
-        { contents: message.contents, metadata: message.metadata } :
-        { contents: message.contents, metadata: { ...message.metadata, batch: batchMarker } };
+        { contents: message.contents, metadata: message.metadata, compression: undefined } :
+        { contents: message.contents, metadata: { ...message.metadata, batch: batchMarker }, compression: undefined };
 
     const addBatchMetadata = (messages: BatchMessage[]): BatchMessage[] => {
         if (messages.length > 1) {
@@ -153,7 +154,8 @@ describe("Outbox", () => {
         config: {
             maxBatchSizeInBytes: maxBatchSize,
             compressionOptions,
-        }
+        },
+        logger: new MockLogger(),
     });
 
     beforeEach(() => {

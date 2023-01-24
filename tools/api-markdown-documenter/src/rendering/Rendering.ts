@@ -189,7 +189,7 @@ function createMarkdownDocument(
     return {
         contents,
         apiItem,
-        path: getFilePathForApiItem(apiItem, config, /* includeExtension: */ true),
+        path: getFilePathForApiItem(apiItem, config),
     };
 }
 

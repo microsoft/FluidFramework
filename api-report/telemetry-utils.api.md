@@ -139,10 +139,47 @@ export function isFluidError(e: any): e is IFluidErrorBase;
 export const isILoggingError: (x: any) => x is ILoggingError;
 
 // @public
-export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType;
+export function isTaggedTelemetryPropertyValue(x: ITaggedTelemetryPropertyTypeExt | TelemetryEventPropertyTypeExt): x is ITaggedTelemetryPropertyType | ITaggedTelemetryPropertyTypeExt;
 
 // @public
 export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "errorInstanceId">;
+
+// @public
+export interface ITaggedTelemetryPropertyTypeExt {
+    // (undocumented)
+    tag: string;
+    // (undocumented)
+    value: TelemetryEventPropertyTypeExt;
+}
+
+// @public
+export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
+    // (undocumented)
+    eventName: string;
+}
+
+// @public
+export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
+    // (undocumented)
+    category: string;
+    // (undocumented)
+    eventName: string;
+}
+
+// @public
+export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
+    // (undocumented)
+    category?: TelemetryEventCategory;
+    // (undocumented)
+    eventName: string;
+}
+
+// @public
+export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
+    sendErrorEvent(event: ITelemetryErrorEventExt, error?: any): void;
+    sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: any): void;
+    sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any): void;
+}
 
 // @public (undocumented)
 export interface ITelemetryLoggerPropertyBag {
@@ -156,6 +193,18 @@ export interface ITelemetryLoggerPropertyBags {
     all?: ITelemetryLoggerPropertyBag;
     // (undocumented)
     error?: ITelemetryLoggerPropertyBag;
+}
+
+// @public
+export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
+    // (undocumented)
+    duration?: number;
+}
+
+// @public
+export interface ITelemetryPropertiesExt {
+    // (undocumented)
+    [index: string]: TelemetryEventPropertyTypeExt | ITaggedTelemetryPropertyTypeExt;
 }
 
 // @public (undocumented)
@@ -273,11 +322,14 @@ export enum TelemetryDataTag {
     UserData = "UserData"
 }
 
+// @public
+export type TelemetryEventPropertyTypeExt = string | number | boolean | undefined | (string | number | boolean)[];
+
 // @public (undocumented)
 export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 
 // @public
-export abstract class TelemetryLogger implements ITelemetryLogger {
+export abstract class TelemetryLogger implements ITelemetryLoggerExt {
     constructor(namespace?: string | undefined, properties?: ITelemetryLoggerPropertyBags | undefined);
     // (undocumented)
     static readonly eventNamespaceSeparator = ":";
@@ -295,9 +347,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     static sanitizePkgName(name: string): string;
     abstract send(event: ITelemetryBaseEvent): void;
     sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
-    protected sendTelemetryEventCore(event: ITelemetryGenericEvent & {
+    sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: any): void;
+    sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any): void;
+    protected sendTelemetryEventCore(event: ITelemetryGenericEventExt & {
         category: TelemetryEventCategory;
     }, error?: any): void;
 }
