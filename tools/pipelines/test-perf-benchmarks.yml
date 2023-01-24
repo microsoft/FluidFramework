@@ -57,6 +57,10 @@ variables:
     value: $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
   - group: imamsean-azure-monitor
+  - name: buildId
+    value: $(Build.BuildId)
+  - name: branchName
+    value: $(Build.SourceBranchName)
 
 stages:
   # Performance unit tests - runtime
@@ -74,8 +78,8 @@ stages:
         testWorkspace: ${{ variables.testWorkspace }}
         artifactPipeline: ${{ variables.artifactPipeline }}
         env:
-          BUILD_ID: $(Build.BuildId)
-          BRANCH_NAME: $(Build.SourceBranchName)
+          BUILD_ID: ${{ variables.buildId }}
+          BRANCH_NAME: ${{ variables.branchName }}
         customSteps:
 
         # Download artifact with test files
