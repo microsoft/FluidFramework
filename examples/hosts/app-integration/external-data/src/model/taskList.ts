@@ -12,6 +12,7 @@ import { SharedMap } from "@fluidframework/map";
 
 import { customerServicePort } from "../mock-service-interface";
 import type { ITask, ITaskEvents, ITaskList, TaskData } from "../model-interface";
+import { DEFAULT_DIFF_NAME, DEFAULT_DIFF_PRIORITY, DEFAULT_DIFF_TYPE } from "../model-interface";
 
 class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
     public get id(): string {
@@ -31,19 +32,13 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
     public set priority(newValue: number) {
         this._priority.set(newValue);
     }
-    public diffName: string;
-    public diffPriority: number;
-    public diffType: string;
-    public DEFAULT_PRIORITY: number = Number.POSITIVE_INFINITY;
-    public DEFAULT_NAME: string = "";
-    public DEFAULT_DIFF_TYPE: string = "none";
     public constructor(
         private readonly _id: string,
         private readonly _name: SharedString,
         private readonly _priority: ISharedCell<number>,
-        diffName: string = "",
-        diffPriority: number = Number.POSITIVE_INFINITY,
-        diffType: string = "none",
+        public diffName: string = DEFAULT_DIFF_NAME,
+        public diffPriority: number = DEFAULT_DIFF_PRIORITY,
+        public diffType: string = DEFAULT_DIFF_TYPE,
     ) {
         super();
         this._name.on("sequenceDelta", () => {
@@ -52,44 +47,37 @@ class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
         this._priority.on("valueChanged", () => {
             this.emit("priorityChanged");
         });
-        this.diffType = "none";
-        this.diffName = "";
-        this.diffPriority = Number.POSITIVE_INFINITY;
     }
-    public externalNameChanged = async (savedName: string): Promise<void> => {
+    private readonly resetDiffProperties = (): void => {
+        this.diffPriority = DEFAULT_DIFF_PRIORITY;
+        this.diffType = "none";
+        this.emit('externalPriorityChanged');
+        this.diffName = '';
+        this.diffType = "none";
+        this.emit('externalNameChanged');
+    }
+    public externalNameChanged = (savedName: string): void => {
         this.diffName = savedName;
         this.diffType = "change";
         this.emit('externalNameChanged');
     }
-    public externalPriorityChanged = async (savedPriority: number): Promise<void> => {
+    public externalPriorityChanged = (savedPriority: number): void => {
         this.diffPriority = savedPriority;
         this.diffType = "change";
         this.emit('externalPriorityChanged');
     }
-    public acceptChange = async (): Promise<void> => {
-        if (this.diffPriority !== this.DEFAULT_PRIORITY) {
+    public acceptChange = (): void => {
+        if (this.diffPriority !== DEFAULT_DIFF_PRIORITY) {
             this._priority.set(this.diffPriority);
         }
         if (this.diffName !== '') {
             const oldString = this._name.getText()
-            console.log(this.name.getText());
             this._name.replaceText(0, oldString.length, this.diffName);
-            console.log(this.name.getText());
         }
-        this.diffPriority = this.DEFAULT_PRIORITY;
-        this.diffType = "none";
-        this.emit('externalPriorityChanged');
-        this.diffName = '';
-        this.diffType = "none";
-        this.emit('externalNameChanged');
+        this.resetDiffProperties();
     }
-    public ignoreChange = async (): Promise<void> => {
-        this.diffPriority = this.DEFAULT_PRIORITY;
-        this.diffType = "none";
-        this.emit('externalPriorityChanged');
-        this.diffName = '';
-        this.diffType = "none";
-        this.emit('externalNameChanged');
+    public ignoreChange = (): void => {
+        this.resetDiffProperties();
     }
 }
 

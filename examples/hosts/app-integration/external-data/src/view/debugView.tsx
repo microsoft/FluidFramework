@@ -9,13 +9,6 @@ import type { TaskData } from "../model-interface";
 import { customerServicePort } from "../mock-service-interface";
 
 /**
- * {@link DebugView} input props.
- */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IDebugViewProps {
-}
-
-/**
  * "Debug" view of external data source.
  *
  * @remarks
@@ -25,7 +18,7 @@ export interface IDebugViewProps {
  *
  * For the purposes of this test app, it is useful to be able to see both data sources side-by-side.
  */
-export const DebugView: React.FC<IDebugViewProps> = () => {
+export const DebugView: React.FC = () => {
     return (
         <div>
             <h2 style={{ textDecoration: "underline" }}>External Data Server App</h2>
@@ -38,10 +31,7 @@ export const DebugView: React.FC<IDebugViewProps> = () => {
 };
 
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface IExternalDataViewProps {}
-
-const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalDataViewProps) => {
+const ExternalDataView: React.FC = () => {
     const [externalData, setExternalData] = useState({});
     useEffect(() => {
         // HACK: Once we have external changes triggering the appropriate Fluid signal, we can simply listen
@@ -72,7 +62,6 @@ const ExternalDataView: React.FC<IExternalDataViewProps> = (props: IExternalData
         }
 
         // Run once immediately to run without waiting.
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         pollForServiceUpdates().catch(console.error);
 
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -130,10 +119,6 @@ const SyncStatusView: React.FC<ISyncStatusViewProps> = (props: ISyncStatusViewPr
     );
 };
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface IControlsViewProps {
-}
-
 /**
  * Invoke service function to reset the external data source to its original contents.
  */
@@ -155,7 +140,7 @@ function debugResetExternalData(): void {
 // TODO: Implement simulation of an external data change.  Maybe include UI for the debug user to edit the data
 // themselves (as if they were editing it outside of Fluid).
 // TODO: Consider how we might simulate errors/failures here to play with retry and recovery.
-const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
+const ControlsView: React.FC = () => {
     return (
         <div>
             <h3>Debug controls</h3>
@@ -209,7 +194,7 @@ class ExternalDataTask {
 /**
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
  */
-export const TaskListView: React.FC<IDebugViewProps> = () => {
+export const TaskListView: React.FC = () => {
     const [externalData, setExternalData] = useState({});
     useEffect(() => {
         // HACK: Once we have external changes triggering the appropriate Fluid signal, we can simply listen
@@ -240,8 +225,7 @@ export const TaskListView: React.FC<IDebugViewProps> = () => {
         }
 
         // Run once immediately to run without waiting.
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        pollForServiceUpdates();
+        pollForServiceUpdates().catch(console.error);
 
         return (): void => {}
     }, [externalData, setExternalData]);

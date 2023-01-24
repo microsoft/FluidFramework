@@ -55,6 +55,10 @@ export interface ITaskEvents extends IEvent {
     (event: "externalPriorityChanged", listener: () => void);
 }
 
+export const DEFAULT_DIFF_PRIORITY: number = Number.POSITIVE_INFINITY;
+export const DEFAULT_DIFF_NAME: string = "BLANK_NAME";
+export const DEFAULT_DIFF_TYPE: string = "none";
+
 /**
  * A single task, with functionality to inspect and modify its data.  Changes to this object will update the state
  * of the Fluid object, but will not automatically update the external data source.
@@ -87,23 +91,19 @@ export interface ITask extends IEventProvider<ITaskEvents> {
     /**
      * Trigger event to render change to UI.
      */
-    readonly externalNameChanged:(name: string) => Promise<void>;
+    readonly externalNameChanged:(name: string) => void;
     /**
      * Trigger event to render change to UI.
      */
-    readonly externalPriorityChanged:(priority: number) => Promise<void>;
+    readonly externalPriorityChanged:(priority: number) => void;
     /**
      * Save the proposed changes to SavedData.
      */
-    readonly acceptChange:() => Promise<void>;
+    readonly acceptChange:() => void;
     /**
      * Ignore the proposed changes to SavedData.
      */
-    readonly ignoreChange:() => Promise<void>;
-
-    readonly DEFAULT_PRIORITY: number;
-    readonly DEFAULT_NAME: string;
-    readonly DEFAULT_DIFF_TYPE: string;
+    readonly ignoreChange:() => void;
 }
 
 /**

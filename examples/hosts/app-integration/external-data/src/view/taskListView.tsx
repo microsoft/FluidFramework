@@ -9,6 +9,8 @@ import React, { useEffect, useRef, useState } from "react";
 
 import type { ITask, ITaskList } from "../model-interface";
 
+import { DEFAULT_DIFF_PRIORITY, DEFAULT_DIFF_NAME } from "../model-interface";
+
 interface ITaskRowProps {
     readonly task: ITask;
     readonly deleteTask: () => void;
@@ -54,8 +56,8 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
     };
 
     const diffVisible = savedDiffType === "none";
-    const showPriority = !diffVisible && savedPriority !== task.DEFAULT_PRIORITY ? "visible" : "hidden";
-    const showName = !diffVisible && savedName !== task.DEFAULT_NAME ? "visible" : "hidden";
+    const showPriority = !diffVisible && savedPriority !== DEFAULT_DIFF_PRIORITY ? "visible" : "hidden";
+    const showName = !diffVisible && savedName !== DEFAULT_DIFF_NAME ? "visible" : "hidden";
     const showAcceptButton = diffVisible ? "hidden" : "visible";
 
     let diffColor: string = "white";
