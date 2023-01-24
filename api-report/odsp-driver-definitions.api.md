@@ -83,6 +83,8 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
         containerPackageName?: string;
     };
     // (undocumented)
+    dataStorePath?: string;
+    // (undocumented)
     endpoints: {
         snapshotStorageUrl: string;
         attachmentPOSTStorageUrl: string;
