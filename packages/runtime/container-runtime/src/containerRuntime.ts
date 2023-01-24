@@ -481,6 +481,30 @@ export enum RuntimeHeaders {
     viaHandle = "viaHandle",
 }
 
+/** True if a tombstoned object should be returned without erroring */
+export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
+
+/** Tombstone error responses will have this header set to true */
+export const TombstoneResponseHeaderKey = "isTombstoned"
+
+/**
+ * The full set of parsed header data that may be found on Runtime requests
+ */
+export interface RuntimeHeaderData {
+    wait?: boolean;
+    externalRequest?: boolean;
+    viaHandle?: boolean;
+    allowTombstone?: boolean;
+}
+
+/** Default values for Runtime Headers */
+export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
+    wait: true,
+    externalRequest: false,
+    viaHandle: false,
+    allowTombstone: false,
+}
+
 /**
  * Available compression algorithms for op compression.
  */
@@ -1461,16 +1485,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private async getDataStoreFromRequest(id: string, request: IRequest): Promise<IFluidRouter> {
-        const wait = typeof request.headers?.[RuntimeHeaders.wait] === "boolean"
-            ? request.headers?.[RuntimeHeaders.wait]
-            : true;
-        const viaHandle = typeof request.headers?.[RuntimeHeaders.viaHandle] === "boolean"
-            ? request.headers?.[RuntimeHeaders.viaHandle]
-            : false;
+        const headerData: RuntimeHeaderData = {};
+        if (typeof request.headers?.[RuntimeHeaders.wait] === "boolean") {
+            headerData.wait = request.headers[RuntimeHeaders.wait];
+        }
+        if (typeof request.headers?.[RuntimeHeaders.viaHandle] === "boolean") {
+            headerData.viaHandle = request.headers[RuntimeHeaders.viaHandle];
+        }
+        if (typeof request.headers?.[AllowTombstoneRequestHeaderKey] === "boolean") {
+            headerData.allowTombstone = request.headers[AllowTombstoneRequestHeaderKey];
+        }
 
         await this.dataStores.waitIfPendingAlias(id);
         const internalId = this.internalId(id);
-        const dataStoreContext = await this.dataStores.getDataStore(internalId, wait, viaHandle);
+        const dataStoreContext = await this.dataStores.getDataStore(internalId, headerData);
 
         /**
          * If GC should run and this an external app request with "externalRequest" header, we need to return
@@ -1861,7 +1889,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private async getRootDataStoreChannel(id: string, wait = true): Promise<IFluidDataStoreChannel> {
         await this.dataStores.waitIfPendingAlias(id);
         const internalId = this.internalId(id);
-        const context = await this.dataStores.getDataStore(internalId, wait, false /* viaHandle */);
+        const context = await this.dataStores.getDataStore(internalId, { wait });
         assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
         return context.realize();
     }

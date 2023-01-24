@@ -68,7 +68,7 @@
     "use-resize-observer": "^7.0.0"
   },
   "devDependencies": {
-    "@fluid-tools/build-cli": "^0.7.0",
+    "@fluid-tools/build-cli": "^0.8.0-121856",
     "@fluidframework/build-common": "^1.1.0",
     "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.0.0 <2.0.0-internal.4.0.0",

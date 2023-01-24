@@ -68,6 +68,7 @@ export const insert: TestOperation =
 export interface IConfigRange {
     min: number;
     max: number;
+    growthFunc?: (input: number) => number;
 }
 
 export function doOverRange(
@@ -86,6 +87,67 @@ export function doOverRange(
         lastCurrent = current;
         doAction(current);
     }
+}
+
+export function resolveRange(range: IConfigRange, defaultGrowthFunc: (input: number) => number): number[] {
+    const results: number[] = [];
+    doOverRange(range, range.growthFunc ?? defaultGrowthFunc, (num) => { results.push(num); })
+    return results;
+}
+
+export function resolveRanges<T extends object>(ranges: T, defaultGrowthFunc: (input: number) => number): ResolvedRanges<T> {
+    return Object.entries(ranges)
+        .filter(([_, value]) => isConfigRange(value))
+        .map(([key, value]) => [key, resolveRange(value, defaultGrowthFunc)] as const)
+        .reduce((prev, [key, resolvedRange]) => { prev[key] = resolvedRange; return prev; }, {}) as ResolvedRanges<T>;
+}
+
+function isConfigRange(t: any): t is IConfigRange { 
+    return typeof t === 'object' && typeof t.min === 'number' && typeof t.max === 'number';
+}
+
+type ReplaceRangeWith<T, TReplace> = T extends { min: number; max: number } ? TReplace : never;
+
+type RangePropertyNames<T> = { [K in keyof T]-?: T[K] extends IConfigRange ? K : never }[keyof T]
+
+type PickFromRanges<T> = {
+    [K in RangePropertyNames<T>]: ReplaceRangeWith<T[K], number>
+}
+
+type ResolvedRanges<T> = {
+    [K in RangePropertyNames<T>]: ReplaceRangeWith<T[K], number[]>
+}
+
+interface ProvidesGrowthFunc {
+    growthFunc: (input: number) => number;
+}
+
+export function doOverRanges<T extends ProvidesGrowthFunc>(
+    ranges: T,
+    doAction: (selection: PickFromRanges<T>, description: string) => void
+) {
+    const rangeEntries: [string, IConfigRange][] = Object.entries(ranges)
+        .filter(([_, value]) => isConfigRange(value));
+
+    const doOverRangesHelper = (selections: [string, number][]) => {
+        if (selections.length === rangeEntries.length) {
+            const selectionsObj = {};
+            for (const [key, value] of selections) {
+                selections[key] = value;
+            }
+            const description = selections.map(([key, value]) => `${key}:${value}`).join('_');
+            doAction(selectionsObj as PickFromRanges<T>, description);
+        } else {
+            const [key, value] = rangeEntries[selections.length];
+            doOverRange(value, value.growthFunc ?? ranges.growthFunc, (selection) => {
+                selections.push([key, selection]);
+                doOverRangesHelper(selections)
+                selections.pop();
+            });
+        }
+    }
+
+    doOverRangesHelper([]);
 }
 
 export interface IMergeTreeOperationRunnerConfig {

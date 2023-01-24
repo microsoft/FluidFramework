@@ -60,6 +60,7 @@ function testTreeVisit(marks: Delta.MarkList, expected: Readonly<VisitScript>): 
 
 const rootKey: FieldKey = brand("root");
 const fooKey: FieldKey = brand("foo");
+const barKey: FieldKey = brand("bar");
 const nodeX = { type: jsonString.name, value: "X" };
 const content = [singleTextCursor(nodeX)];
 
@@ -195,7 +196,7 @@ describe("visit", () => {
         testTreeVisit(delta, expected);
     });
 
-    it("move children", () => {
+    it("move children to the right", () => {
         const moveId: Delta.MoveId = brand(1);
         const moveOut: Delta.MoveOut = {
             type: Delta.MarkType.MoveOut,
@@ -205,6 +206,7 @@ describe("visit", () => {
 
         const moveIn: Delta.MoveIn = {
             type: Delta.MarkType.MoveIn,
+            count: 2,
             moveId,
         };
 
@@ -233,6 +235,105 @@ describe("visit", () => {
             ["enterField", fooKey],
             ["onMoveIn", 5, 2, moveId],
             ["exitField", fooKey],
+            ["exitNode", 0],
+            ["exitField", rootKey],
+        ];
+
+        testVisit(delta, expected);
+    });
+
+    it("move children to the left", () => {
+        const moveId: Delta.MoveId = brand(1);
+        const moveOut: Delta.MoveOut = {
+            type: Delta.MarkType.MoveOut,
+            count: 2,
+            moveId,
+        };
+
+        const moveIn: Delta.MoveIn = {
+            type: Delta.MarkType.MoveIn,
+            count: 2,
+            moveId,
+        };
+
+        const delta: Delta.Root = new Map([
+            [
+                rootKey,
+                [
+                    {
+                        type: Delta.MarkType.Modify,
+                        fields: new Map([[fooKey, [2, moveIn, 3, moveOut]]]),
+                    },
+                ],
+            ],
+        ]);
+
+        const expected: VisitScript = [
+            ["enterField", rootKey],
+            ["enterNode", 0],
+            ["enterField", fooKey],
+            ["onMoveOut", 5, 2, moveId],
+            ["exitField", fooKey],
+            ["exitNode", 0],
+            ["exitField", rootKey],
+            ["enterField", rootKey],
+            ["enterNode", 0],
+            ["enterField", fooKey],
+            ["onMoveIn", 2, 2, moveId],
+            ["exitField", fooKey],
+            ["exitNode", 0],
+            ["exitField", rootKey],
+        ];
+
+        testVisit(delta, expected);
+    });
+
+    it("move cousins", () => {
+        const moveId: Delta.MoveId = brand(1);
+        const moveOut: Delta.MoveOut = {
+            type: Delta.MarkType.MoveOut,
+            count: 2,
+            moveId,
+        };
+
+        const moveIn: Delta.MoveIn = {
+            type: Delta.MarkType.MoveIn,
+            count: 2,
+            moveId,
+        };
+
+        const delta: Delta.Root = new Map([
+            [
+                rootKey,
+                [
+                    {
+                        type: Delta.MarkType.Modify,
+                        fields: new Map([
+                            [fooKey, [moveIn]],
+                            [barKey, [moveOut]],
+                        ]),
+                    },
+                ],
+            ],
+        ]);
+
+        const expected: VisitScript = [
+            ["enterField", rootKey],
+            ["enterNode", 0],
+            ["enterField", fooKey],
+            ["exitField", fooKey],
+            ["enterField", barKey],
+            ["onMoveOut", 0, 2, moveId],
+            ["exitField", barKey],
+            ["exitNode", 0],
+            ["exitField", rootKey],
+            ["enterField", rootKey],
+            ["enterNode", 0],
+            ["enterField", fooKey],
+            ["onMoveIn", 0, 2, moveId],
+            ["exitField", fooKey],
+            ["enterField", barKey],
+            ["exitField", barKey],
             ["exitNode", 0],
             ["exitField", rootKey],
         ];

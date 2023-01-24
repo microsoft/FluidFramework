@@ -114,7 +114,6 @@ export interface IConnectionDetails {
 
 // @public
 export interface IConnectionDetailsInternal extends IConnectionDetails {
-    // (undocumented)
     initialClients: ISignalClient[];
     // (undocumented)
     mode: ConnectionMode;
