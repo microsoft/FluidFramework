@@ -406,14 +406,14 @@ function applyPrefix(prefix: PathRootPrefix, path: UpPath | undefined): UpPath |
                     rootFieldOverride: inner.rootFieldOverride,
                     indexOffset: inner.indexOffset,
                 };
-                return new PrefixedPath(composedPrefix, path);
+                return new PrefixedPath(composedPrefix, path.path);
             } else {
                 const composedPrefix: PathRootPrefix = {
                     parent: prefix.parent,
                     rootFieldOverride: prefix.rootFieldOverride ?? inner.rootFieldOverride,
                     indexOffset: (inner.indexOffset ?? 0) + (prefix.indexOffset ?? 0),
                 };
-                return new PrefixedPath(composedPrefix, path);
+                return new PrefixedPath(composedPrefix, path.path);
             }
         } else {
             return new PrefixedPath(prefix, path);
@@ -421,7 +421,12 @@ function applyPrefix(prefix: PathRootPrefix, path: UpPath | undefined): UpPath |
     }
 }
 
-class PrefixedPath implements UpPath {
+/**
+ * Wrapper around a path that adds a prefix to the root.
+ *
+ * Exported for testing: use `prefixPath` and `prefixFieldPath` to construct.
+ */
+export class PrefixedPath implements UpPath {
     public readonly parentField: FieldKey;
     public readonly parentIndex: number;
     public constructor(public readonly prefix: PathRootPrefix, public readonly path: UpPath) {
