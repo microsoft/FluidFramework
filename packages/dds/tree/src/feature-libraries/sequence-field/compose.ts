@@ -570,8 +570,21 @@ export class ComposeQueue<T> {
     private popImpl(): ComposeMarks<T> {
         let baseMark = this.baseMarks.peek();
         let newMark = this.newMarks.peek();
-        if (baseMark === undefined || newMark === undefined) {
-            return { baseMark: this.baseMarks.tryDequeue(), newMark: this.newMarks.tryDequeue() };
+        if (baseMark === undefined && newMark === undefined) {
+            return {};
+        } else if (baseMark === undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const length = getInputLength(newMark!);
+            return {
+                baseMark: length > 0 ? length : undefined,
+                newMark: this.newMarks.tryDequeue(),
+            };
+        } else if (newMark === undefined) {
+            const length = getOutputLength(baseMark);
+            return {
+                baseMark: this.baseMarks.tryDequeue(),
+                newMark: length > 0 ? length : undefined,
+            };
         } else if (isAttach(newMark)) {
             if (isActiveReattach(newMark) && isDetachMark(baseMark)) {
                 const newRev = newMark.revision ?? this.newRevision;

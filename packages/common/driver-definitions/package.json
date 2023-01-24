@@ -62,6 +62,31 @@
     "version": "2.0.0-internal.2.3.0",
     "baselineRange": ">=2.0.0-internal.2.2.0 <2.0.0-internal.2.3.0",
     "baselineVersion": "2.0.0-internal.2.2.0",
-    "broken": {}
+    "broken": {
+      "TypeAliasDeclaration_DriverError": {
+        "backCompat": false
+      },
+      "EnumDeclaration_DriverErrorType": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IDriverBasicError": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IGenericNetworkError": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IDriverErrorBase": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IThrottlingWarning": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IAuthorizationError": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ILocationRedirectionError": {
+        "backCompat": false
+      }
+    }
   }
 }
