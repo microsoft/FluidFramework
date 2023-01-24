@@ -3435,6 +3435,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-utils': ^1.0.0
       '@fluidframework/container-definitions': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/container-loader': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
       '@fluidframework/driver-definitions': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
@@ -3447,6 +3448,7 @@ importers:
       '@fluidframework/sequence': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
       '@fluidframework/server-local-server': ^0.1038.2000
       '@fluidframework/shared-object-base': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
+      '@fluidframework/test-drivers': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
       '@fluidframework/test-utils': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
       '@microsoft/api-extractor': ^7.22.2
@@ -3497,12 +3499,14 @@ importers:
       '@fluid-experimental/property-common': link:../property-common
       '@fluid-experimental/property-dds-previous': /@fluid-experimental/property-dds/2.0.0-internal.2.1.0
       '@fluidframework/build-common': 1.1.0
+      '@fluidframework/container-loader': link:../../../../packages/loader/container-loader
       '@fluidframework/driver-definitions': link:../../../../packages/common/driver-definitions
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/local-driver': link:../../../../packages/drivers/local-driver
       '@fluidframework/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@fluidframework/sequence': link:../../../../packages/dds/sequence
       '@fluidframework/server-local-server': 0.1038.2000
+      '@fluidframework/test-drivers': link:../../../../packages/test/test-drivers
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../../packages/test/test-utils
       '@microsoft/api-extractor': 7.22.2
@@ -4850,6 +4854,52 @@ importers:
       rimraf: 2.7.1
       typescript: 4.5.5
 
+  packages/common/core-utils:
+    specifiers:
+      '@fluid-tools/benchmark': ^0.45.0
+      '@fluid-tools/build-cli': ^0.8.0-121856
+      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-tools': ^0.8.0-121856
+      '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/mocha-test-setup': '>=2.0.0-internal.2.4.0 <2.0.0-internal.3.0.0'
+      '@microsoft/api-extractor': ^7.22.2
+      '@rushstack/eslint-config': ^2.5.1
+      '@types/mocha': ^9.1.1
+      '@types/node': ^14.18.36
+      concurrently: ^6.2.0
+      copyfiles: ^2.4.1
+      cross-env: ^7.0.2
+      eslint: ~8.6.0
+      eslint-config-prettier: ~8.5.0
+      mocha: ^10.0.0
+      nyc: ^15.0.0
+      prettier: ~2.6.2
+      rimraf: ^2.6.2
+      source-map-support: ^0.5.16
+      typescript: ~4.5.5
+    devDependencies:
+      '@fluid-tools/benchmark': 0.45.112032
+      '@fluid-tools/build-cli': 0.8.0-121856
+      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-tools': 0.8.0-121856
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
+      '@microsoft/api-extractor': 7.22.2
+      '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
+      '@types/mocha': 9.1.1
+      '@types/node': 14.18.36
+      concurrently: 6.3.0
+      copyfiles: 2.4.1
+      cross-env: 7.0.3
+      eslint: 8.6.0
+      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      mocha: 10.2.0
+      nyc: 15.1.0
+      prettier: 2.6.2
+      rimraf: 2.7.1
+      source-map-support: 0.5.21
+      typescript: 4.5.5
+
   packages/common/driver-definitions:
     specifiers:
       '@fluid-tools/build-cli': ^0.8.0-121856
@@ -5860,6 +5910,7 @@ importers:
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
       '@types/diff': ^3.5.1
+      '@types/easy-table': ^0.0.32
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.36
       '@types/ungap__structured-clone': ^0.3.0
@@ -5869,6 +5920,7 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.2
       diff: ^3.5.0
+      easy-table: ^1.1.1
       eslint: ~8.6.0
       eslint-config-prettier: ~8.5.0
       good-fences: ^1.1.1
@@ -5910,6 +5962,7 @@ importers:
       '@microsoft/api-extractor': 7.22.2
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/diff': 3.5.5
+      '@types/easy-table': 0.0.32
       '@types/mocha': 9.1.1
       '@types/node': 14.18.36
       '@types/ungap__structured-clone': 0.3.0
@@ -5918,6 +5971,7 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
+      easy-table: 1.2.0
       eslint: 8.6.0
       eslint-config-prettier: 8.5.0_eslint@8.6.0
       good-fences: 1.1.2
@@ -20437,6 +20491,10 @@ packages:
 
   /@types/double-ended-queue/2.1.1:
     resolution: {integrity: sha512-O2+umEIlHBVyi+ePmucPjpINqTvSnsz+hAok0D4IpvrOsIsDr6c34B0AbNXW2UDVYuxbv51z5dxnrRt23ohgWg==}
+
+  /@types/easy-table/0.0.32:
+    resolution: {integrity: sha512-zKh0f/ixYFnr3Ldf5ZJTi1ZpnRqAynTTtVyGvWDf/TT12asE8ac98t3/WGWfFdRPp/qsccxg82C/Kl3NPNhqEw==}
+    dev: true
 
   /@types/enzyme/3.10.12:
     resolution: {integrity: sha512-xryQlOEIe1TduDWAOphR0ihfebKFSWOXpIsk+70JskCfRfW+xALdnJ0r1ZOTo85F9Qsjk6vtlU7edTYHbls9tA==}
