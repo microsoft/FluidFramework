@@ -8,12 +8,11 @@ import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import {
     uniformChunk,
     TreeShape,
-    dummyRoot,
     ChunkShape,
     UniformChunk,
     // eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk";
-import { testSpecializedCursor, TestTree } from "../../cursorTestSuite";
+import { TestField, testSpecializedFieldCursor } from "../../cursorTestSuite";
 import {
     cursorToJsonObject,
     jsonArray,
@@ -33,6 +32,8 @@ import {
     singleTextCursor,
     TreeChunk,
 } from "../../../feature-libraries";
+// eslint-disable-next-line import/no-internal-modules
+import { dummyRoot } from "../../../feature-libraries/chunked-forest";
 
 const xField: FieldKey = brand("x");
 const yField: FieldKey = brand("y");
@@ -50,7 +51,7 @@ const polygon = new TreeShape(jsonArray.name, false, [
     [EmptyKey, pointShape, sides],
 ]).withTopLevelLength(1);
 
-const polygonTree: TestTree<TreeChunk> = {
+const polygonTree = {
     name: "polygon",
     dataFactory: () =>
         uniformChunk(
@@ -142,6 +143,9 @@ const testTrees = [
 // Validate a few aspects of shapes that are easier to verify here than via checking the cursor.
 function validateShape(shape: ChunkShape): void {
     shape.positions.forEach((info, positionIndex) => {
+        if (info === undefined) {
+            return;
+        }
         assert.equal(
             info.parent,
             info.indexOfParentPosition === undefined
@@ -153,6 +157,7 @@ function validateShape(shape: ChunkShape): void {
                 // TODO: if we keep all the duplicated position info, inline positionIndex into field offsets to save the addition.
                 const offset = v.offset + index * v.shape.positions.length;
                 const element = shape.positions[offset + positionIndex];
+                assert(element !== undefined);
                 assert.equal(element.parentIndex, index);
                 assert.equal(element.parentField, k);
                 assert.equal(element.parent, info);
@@ -162,20 +167,14 @@ function validateShape(shape: ChunkShape): void {
 }
 
 // testing is per node, and our data can have multiple nodes at the root, so split tests as needed:
-const testData: TestTree<[number, TreeChunk]>[] = testTrees.flatMap(
-    ({ name, dataFactory, reference }) => {
-        const out: TestTree<[number, TreeChunk]>[] = [];
-        for (let index = 0; index < reference.length; index++) {
-            out.push({
-                name: reference.length > 1 ? `${name} part ${index + 1}` : name,
-                dataFactory: () => [index, dataFactory()],
-                reference: reference[index],
-                path: { parent: undefined, parentIndex: index, parentField: dummyRoot },
-            });
-        }
-        return out;
-    },
-);
+const testData: TestField<TreeChunk>[] = testTrees.map(({ name, dataFactory, reference }) => {
+    return {
+        name,
+        dataFactory,
+        reference,
+        path: { parent: undefined, field: dummyRoot },
+    };
+});
 
 describe("uniformChunk", () => {
     describe("shapes", () => {
@@ -186,8 +185,8 @@ describe("uniformChunk", () => {
         }
     });
 
-    testSpecializedCursor<[number, TreeChunk], ITreeCursorSynchronous>({
-        cursorName: "uniformChunkCursor",
+    testSpecializedFieldCursor<TreeChunk, ITreeCursorSynchronous>({
+        cursorName: "uniformChunk",
         builders: {
             withKeys: (keys) => {
                 const schema: TreeSchemaIdentifier = brand("fakeSchema");
@@ -196,30 +195,45 @@ describe("uniformChunk", () => {
                     false,
                     keys.map((key) => [key, emptyShape, 1] as const),
                 );
-                return [0, uniformChunk(withKeysShape.withTopLevelLength(1), [])];
+                return uniformChunk(withKeysShape.withTopLevelLength(1), []);
             },
         },
-        cursorFactory: (data: [number, TreeChunk]): ITreeCursorSynchronous => {
-            const cursor = data[1].cursor();
-            assert(cursor.seekNodes(data[0]));
-            return cursor;
-        },
+        cursorFactory: (data: TreeChunk): ITreeCursorSynchronous => data.cursor(),
         testData,
     });
 
     const cursorSources = [
-        { name: "uniformChunk", factory: (data: TreeChunk) => data.cursor() },
+        {
+            name: "uniformChunk",
+            factory: (data: TreeChunk) => {
+                const cursor = data.cursor();
+                cursor.enterNode(0);
+                return cursor;
+            },
+        },
         {
             name: "jsonable",
-            factory: (data: TreeChunk) => singleTextCursor(jsonableTreeFromCursor(data.cursor())),
+            factory: (data: TreeChunk) => {
+                const cursor = data.cursor();
+                cursor.enterNode(0);
+                return singleTextCursor(jsonableTreeFromCursor(cursor));
+            },
         },
         {
             name: "mapTree",
-            factory: (data: TreeChunk) => singleMapTreeCursor(mapTreeFromCursor(data.cursor())),
+            factory: (data: TreeChunk) => {
+                const cursor = data.cursor();
+                cursor.enterNode(0);
+                return singleMapTreeCursor(mapTreeFromCursor(cursor));
+            },
         },
         {
             name: "json",
-            factory: (data: TreeChunk) => singleJsonCursor(cursorToJsonObject(data.cursor())),
+            factory: (data: TreeChunk) => {
+                const cursor = data.cursor();
+                cursor.enterNode(0);
+                return singleJsonCursor(cursorToJsonObject(cursor));
+            },
         },
     ];
 
@@ -244,6 +258,7 @@ describe("uniformChunk", () => {
                 title: "Polygon access",
                 before: () => {
                     cursor = polygonTree.dataFactory().cursor();
+                    cursor.enterNode(0);
                 },
                 benchmarkFn: () => {
                     let x = 0;

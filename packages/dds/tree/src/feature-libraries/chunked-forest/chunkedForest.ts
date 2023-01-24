@@ -24,6 +24,7 @@ import {
     FieldAnchor,
     ForestEvents,
     ITreeSubscriptionCursorState,
+    rootFieldKeySymbol,
 } from "../../core";
 import { brand, fail, getOrAddEmptyToMap } from "../../util";
 import { createEmitter } from "../../events";
@@ -208,7 +209,8 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
             [],
             [],
             [],
-            [this.roots],
+            [],
+            [],
             0,
             0,
             0,
@@ -231,14 +233,19 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
         destination: FieldAnchor,
         cursorToMove: ITreeSubscriptionCursor,
     ): TreeNavigationResult {
+        assert(
+            cursorToMove instanceof Cursor,
+            "ChunkedForest must only be given its own Cursor type",
+        );
         if (destination.parent === undefined) {
-            this.moveCursorToPath(undefined, cursorToMove);
-        } else {
-            const result = this.tryMoveCursorToNode(destination.parent, cursorToMove);
-            if (result !== TreeNavigationResult.Ok) {
-                return result;
-            }
+            cursorToMove.setToDetachedSequence(destination.fieldKey);
+            return TreeNavigationResult.Ok;
         }
+        const result = this.tryMoveCursorToNode(destination.parent, cursorToMove);
+        if (result !== TreeNavigationResult.Ok) {
+            return result;
+        }
+
         cursorToMove.enterField(destination.fieldKey);
         return TreeNavigationResult.Ok;
     }
@@ -264,10 +271,17 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
             keyStack.push(path.parentField);
             path = path.parent;
         }
-        cursorToMove.setToAboveDetachedSequences();
+        cursorToMove.clear();
         while (keyStack.length > 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            cursorToMove.enterField(keyStack.pop()!);
+            const key = keyStack.pop()!;
+            if (cursorToMove.state === ITreeSubscriptionCursorState.Cleared) {
+                cursorToMove.setToDetachedSequence(key);
+                cursorToMove.state = ITreeSubscriptionCursorState.Current;
+            } else {
+                cursorToMove.enterField(key);
+            }
+
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             cursorToMove.enterNode(indexStack.pop()!);
         }
@@ -278,6 +292,7 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
     public constructor(
         public readonly forest: ChunkedForest,
         public state: ITreeSubscriptionCursorState,
+        root: BasicChunk[],
         siblingStack: SiblingsOrKey[],
         indexStack: number[],
         indexOfChunkStack: number[],
@@ -288,6 +303,7 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
         indexWithinChunk: number,
     ) {
         super(
+            root,
             siblingStack,
             indexStack,
             indexOfChunkStack,
@@ -299,12 +315,13 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
         );
     }
 
-    public setToAboveDetachedSequences(): void {
+    public setToDetachedSequence(key: FieldKey): void {
+        this.root = (this.forest.roots.fields.get(key) ?? []) as BasicChunk[];
         this.siblingStack.length = 0;
         this.indexStack.length = 0;
         this.indexOfChunkStack.length = 0;
         this.indexWithinChunkStack.length = 0;
-        this.siblings = [this.forest.roots];
+        this.siblings = [key];
         this.index = 0;
         this.indexOfChunk = 0;
         this.indexWithinChunk = 0;
@@ -316,6 +333,7 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
         return new Cursor(
             this.forest,
             this.state,
+            this.root,
             [...this.siblingStack],
             [...this.indexStack],
             [...this.indexOfChunkStack],
@@ -348,7 +366,7 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
 
     public clear(): void {
         this.state = ITreeSubscriptionCursorState.Cleared;
-        this.setToAboveDetachedSequences();
+        this.setToDetachedSequence(rootFieldKeySymbol);
     }
 }
 
