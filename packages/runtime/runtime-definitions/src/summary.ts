@@ -117,6 +117,7 @@ export interface IGarbageCollectionSummaryDetailsLegacy {
 export interface IGarbageCollectionSnapshotData {
     gcState: IGarbageCollectionState;
     tombstones: string[] | undefined;
+    deletedNodes: string[] | undefined;
 }
 
 

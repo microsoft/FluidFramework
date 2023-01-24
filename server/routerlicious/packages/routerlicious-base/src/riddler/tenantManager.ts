@@ -53,6 +53,7 @@ export interface ITenantDocument {
 }
 
 export class TenantManager {
+    private readonly isCacheEnabled;
     constructor(
         private readonly mongoManager: MongoManager,
         private readonly collectionName: string,
@@ -62,6 +63,7 @@ export class TenantManager {
         private readonly secretManager: ISecretManager,
         private readonly cache?: ICache
     ) {
+        this.isCacheEnabled = this.cache ? true : false;
     }
 
     /**
@@ -79,10 +81,12 @@ export class TenantManager {
             if (isNetworkError(error)) {
                 if (error.code === 403 && !tenantKeys.key2){
                     // Delete key from cache when there is a 403 error and no key2 to validate
-                    Lumberjack.info(`Error with tenant key 1 token verification while key 2 is not present. Deleting key from cache.`, lumberProperties);
-                    await this.deleteKeyFromCache(tenantId).catch((err) => {
-                        Lumberjack.error(`Error deleting keys from the cache.`, lumberProperties, err);
-                    });
+                    if (!bypassCache && this.isCacheEnabled) {
+                        Lumberjack.info(`Error with tenant key 1 token verification while key 2 is not present. Deleting key from cache.`, lumberProperties);
+                        await this.deleteKeyFromCache(tenantId).catch((err) => {
+                            Lumberjack.error(`Error deleting keys from the cache.`, lumberProperties, err);
+                        });
+                    }
                     throw error;
                 }
                 if (error.code === 401 || !tenantKeys.key2) {
@@ -92,7 +96,6 @@ export class TenantManager {
                 }
             }
         }
-        
         // If Key 1 validation fails, try with Key 2
         try {
             await this.validateTokenWithKey(tenantKeys.key2, KeyName.key2, token);
@@ -100,11 +103,12 @@ export class TenantManager {
             if (isNetworkError(error)) {
                 if (error.code === 403) {
                     // Delete key from cache on 403
-                    Lumberjack.info(`Error with key 2 token validation. Deleting key from cache.`, lumberProperties);
-                    await this.deleteKeyFromCache(tenantId).catch((err) => {
-                        Lumberjack.error(`Error deleting keys from the cache.`, lumberProperties, err);
-                    });
-                    if (bypassCache === false) {
+                    if (!bypassCache && this.isCacheEnabled) {
+                        // We tried reading from the cache and it failed
+                        Lumberjack.info(`Error with key 2 token validation. Deleting key from cache.`, lumberProperties);
+                        await this.deleteKeyFromCache(tenantId).catch((err) => {
+                            Lumberjack.error(`Error deleting keys from the cache.`, lumberProperties, err);
+                        });
                         // Assume we used a cached key, and try again by bypassing cache.
                         return this.validateToken(
                             tenantId,
@@ -281,14 +285,14 @@ export class TenantManager {
     /**
      * Retrieves the secret for the given tenant
      */
-    public async getTenantKeys(tenantId: string, includeDisabledTenant = false, disableCache=false): Promise<ITenantKeys> {
-        const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId, includeDisabledTenant, disableCache };
+    public async getTenantKeys(tenantId: string, includeDisabledTenant = false, bypassCache=false): Promise<ITenantKeys> {
+        const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId, includeDisabledTenant, bypassCache };
         const fetchTenantKeyMetric = Lumberjack.newLumberMetric(LumberEventName.RiddlerFetchTenantKey);
         let uncaughtException;
         let retrievedFromCache = false;
 
         try {
-            if(!disableCache) {
+            if(!bypassCache && this.isCacheEnabled) {
                 // Read from cache first
                 const cachedKey = await this.getKeyFromCache(tenantId);
 
@@ -335,13 +339,14 @@ export class TenantManager {
             Lumberjack.info("Tenant key2 doesn't exist.", lumberProperties);
         }
 
-        const cacheKeys = {
-            key1: encryptedTenantKey1,
-            key2: encryptedTenantKey2,
-        };
-
-        const setKeyInCacheSucceeded = await this.setKeyInCache(tenantId, cacheKeys);
-        fetchTenantKeyMetric.setProperty("settingKeyInCacheSucceeded", setKeyInCacheSucceeded);
+        if (!bypassCache && this.isCacheEnabled) {
+            const cacheKeys = {
+                key1: encryptedTenantKey1,
+                key2: encryptedTenantKey2,
+            };
+            const setKeyInCacheSucceeded = await this.setKeyInCache(tenantId, cacheKeys);
+            fetchTenantKeyMetric.setProperty("settingKeyInCacheSucceeded", setKeyInCacheSucceeded);
+        }
 
         return {
             key1: tenantKey1,
@@ -379,8 +384,10 @@ export class TenantManager {
         }
 
         // Delete old key from the cache
-        Lumberjack.info(`Deleting old key from cache`, { [BaseTelemetryProperties.tenantId]: tenantId });
-        await this.deleteKeyFromCache(tenantId);
+        if (this.isCacheEnabled) {
+            Lumberjack.info(`Deleting old key from cache`, { [BaseTelemetryProperties.tenantId]: tenantId });
+            await this.deleteKeyFromCache(tenantId);
+        }
 
         const tenantKeys = await this.getUpdatedTenantKeys(
             tenantDocument.key,
@@ -419,12 +426,15 @@ export class TenantManager {
                 throw new NetworkError(500, "Tenant key1 decryption failed.");
             }
 
-            const cacheKeys = {
-                key1,
-                key2: this.secretManager.encryptSecret(newTenantKey)
-            };
+            // Only create and set keys in cache if it is enabled
+            if (this.isCacheEnabled) {
+                const cacheKeys = {
+                    key1,
+                    key2: this.secretManager.encryptSecret(newTenantKey)
+                };
+                await this.setKeyInCache(tenantId, cacheKeys);
+            }
 
-            await this.setKeyInCache(tenantId, cacheKeys);
             return {
                 key1: decryptedTenantKey1,
                 key2: newTenantKey,
@@ -437,13 +447,16 @@ export class TenantManager {
             winston.info("Tenant key2 doesn't exist.");
             Lumberjack.info("Tenant key2 doesn't exist.", { [BaseTelemetryProperties.tenantId]: tenantId });
 
-            const cacheKey1 = {
-                key1: this.secretManager.encryptSecret(newTenantKey),
-                key2: "",
-            };
+            // Only create and set keys in cache if it is enabled
+            if (this.isCacheEnabled) {
+                const cacheKey1 = {
+                    key1: this.secretManager.encryptSecret(newTenantKey),
+                    key2: "",
+                };
+                await this.setKeyInCache(tenantId, cacheKey1);
+                Lumberjack.info(`Added new key to cache.`, lumberProperties);
 
-            await this.setKeyInCache(tenantId, cacheKey1);
-            Lumberjack.info(`Added new key to cache.`, lumberProperties);
+            }
 
             return {
                 key1: newTenantKey,
